@@ -1,0 +1,62 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  studentId    String   @unique
+  name         String?
+  email        String?
+  facultyId    String?
+  role         String   @default("student")
+  
+  gender       String?
+  major        String?
+  year         String?
+
+  isVoted      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  candidateId  Int?
+  candidate    Candidate? @relation(fields: [candidateId], references: [id])
+}
+
+model Member {
+  id           Int      @id @default(autoincrement())
+  studentId    String   @unique
+  name         String
+  email        String
+  imageUrl     String
+  
+  position     String?
+
+  candidateId  Int
+  candidate    Candidate @relation(fields: [candidateId], references: [id])
+}
+
+model Candidate {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  number       Int
+
+  logoUrl      String?
+  
+  members      Member[]
+  voters       User[]
+  
+  // เพิ่มคะแนนสะสม (ถ้าจะใช้ Realtime update)
+  score        Int      @default(0)
+}
+
+model SystemConfig {
+  id           Int      @id @default(1)
+  isVoteOpen   Boolean  @default(false)
+  showResult   Boolean  @default(false)
+}
