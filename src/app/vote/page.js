@@ -80,7 +80,7 @@ export default function VotePage() {
       
       // ปิด Modal และไปหน้าผลลัพธ์
       setIsConfirmModalOpen(false);
-      router.push("/results");
+      router.push("/success");
 
     } catch (error) {
       alert("❌ เกิดข้อผิดพลาด: " + error.message);

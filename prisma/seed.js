@@ -168,7 +168,7 @@ async function main() {
         data: { score: { increment: 1 } }
       })
     }
-
+ 
     await prisma.user.create({
       data: {
         studentId: realStudentId,
