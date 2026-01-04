@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
-// ✅ 1. เตรียมรายชื่อตำแหน่ง 20 ลำดับ
+// 1. เตรียมรายชื่อตำแหน่ง 20 ลำดับ
 const positions = [
   "นายกสโมสรนักศึกษา",
   "อุปนายกกิจการภายใน",
@@ -29,19 +29,16 @@ const positions = [
 const generatePartyMembers = (partyNumber, startStudentIdPrefix) => {
   const members = [];
   
-  // ✅ 2. แก้ Loop ให้เป็น 20 คน
   for (let i = 0; i < 20; i++) {
     const runningNum = String(i + 1).padStart(3, '0');
     const studentId = `${startStudentIdPrefix}${runningNum}`;
     
     const name = `ผู้สมัครลำดับที่ ${i + 1} พรรคเบอร์ ${partyNumber}`;
-    // หมายเหตุ: ต้องมั่นใจว่ามีรูป 16.jpg - 20.jpg ด้วย หรือถ้าไม่มี Frontend จะโชว์ไอคอนแทนให้เอง
     const imagePath = `/images/members/party_${partyNumber}/${i + 1}.jpg`;
 
     members.push({
       studentId: studentId,
       name: name,
-      // ✅ 3. ใส่ตำแหน่งลงไป (ถ้า i เกิน 20 จะ fallback เป็น "สมาชิกพรรค")
       position: positions[i] || "สมาชิกพรรค", 
       email: `${studentId}@email.psu.ac.th`,
       imageUrl: imagePath 
@@ -131,7 +128,6 @@ async function main() {
             name: m.name,
             email: m.email,
             imageUrl: m.imageUrl,
-            // ✅ 4. บันทึก position ลง DB
             position: m.position, 
             candidateId: candidate.id
           }
@@ -149,6 +145,9 @@ async function main() {
   const genders = ['ชาย', 'หญิง']
   const yearPrefixMap = { 'ปี 1': '68', 'ปี 2': '67', 'ปี 3': '66', 'ปี 4': '65', 'อื่นๆ': '64' }
 
+  // รายชื่อ Admin ที่เราจองไว้ (ห้ามให้ระบบสุ่ม Voter ไปทับ)
+  const reservedAdminIds = ['6610510149', '6610510129'];
+
   for (let i = 0; i < votersCount; i++) {
     const randomMajor = majors[Math.floor(Math.random() * majors.length)]
     const randomYear = years[Math.floor(Math.random() * years.length)]
@@ -156,11 +155,16 @@ async function main() {
     const runningNumber = String(100 + i).padStart(3, '0');
     const realStudentId = `${yearPrefixMap[randomYear] || '64'}10510${runningNumber}`;
 
+    // ✅ แก้ไข 1: เช็คว่า ID ที่สุ่มได้ ไปชนกับ Admin หรือไม่?
+    if (reservedAdminIds.includes(realStudentId)) {
+        console.log(`Skipping reserved ID: ${realStudentId}`);
+        continue; // ถ้าชน ให้ข้ามรอบนี้ไปเลย (ไม่สร้าง User นี้)
+    }
+
     const isVoted = Math.random() < 0.8 
     let votedCandidateId = null
 
     if (isVoted) {
-      // สุ่มเลือกพรรค (ไม่รวมงดออกเสียง หรือรวมก็ได้ แล้วแต่ Logic แต่ในที่นี้เอาเฉพาะที่มีใน createdCandidates)
       const randomCandidate = createdCandidates[Math.floor(Math.random() * createdCandidates.length)]
       votedCandidateId = randomCandidate.id
       await prisma.candidate.update({
@@ -168,7 +172,7 @@ async function main() {
         data: { score: { increment: 1 } }
       })
     }
- 
+
     await prisma.user.create({
       data: {
         studentId: realStudentId,
@@ -184,15 +188,37 @@ async function main() {
   }
   
   // 5. User พิเศษ (Admin)
-  await prisma.user.create({
-    data: {
-      studentId: '6610510149',
-      name: 'แอดมินทดสอบ (ยังไม่โหวต)',
-      email: 'admin@test.com',
-      gender: 'ชาย', major: 'BIS', year: 'ปี 3',
-      isVoted: false, candidateId: null
-    }
-  })
+  // ✅ แก้ไข 2: ใช้ Logic ลบก่อนสร้าง (กันเหนียว เผื่อมีหลุดมา)
+  console.log('✨ Creating Admins...');
+  
+  // ลบออกก่อนถ้ามี (เพื่อความชัวร์ 100%)
+  await prisma.user.deleteMany({
+    where: { studentId: { in: reservedAdminIds } }
+  });
+
+  // สร้างใหม่
+  await prisma.user.createMany({
+    data: [
+      {
+        studentId: '6610510149',
+        name: 'Teerapab Boonsri',
+        email: '6610510149@email.psu.ac.th',
+        gender: 'ชาย', major: 'BIS', year: 'ปี 3',
+        isVoted: false, candidateId: null,
+        role: 'ADMIN',
+        password: '1150',
+      },
+      {
+        studentId: '6610510129',
+        name: 'Thanutchaporn Awapark',
+        email: '6610510129@email.psu.ac.th',
+        gender: 'หญิง', major: 'BIS', year: 'ปี 3',
+        isVoted: false, candidateId: null,
+        role: 'ADMIN',
+        password: '1234'
+      }
+    ]
+  });
 
   console.log(`✅ Seeded complete!`)
 }

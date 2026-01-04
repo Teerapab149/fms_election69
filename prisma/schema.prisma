@@ -16,7 +16,7 @@ model User {
   email        String?
   facultyId    String?
   role         String   @default("student")
-  
+  password  String?
   gender       String?
   major        String?
   year         String?
@@ -59,4 +59,5 @@ model SystemConfig {
   id           Int      @id @default(1)
   isVoteOpen   Boolean  @default(false)
   showResult   Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
 }

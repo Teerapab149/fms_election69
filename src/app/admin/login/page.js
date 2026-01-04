@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(''); // เคลียร์ Error เก่าทุกครั้งที่กดปุ่มใหม่
+    setError(''); 
 
     try {
       const res = await fetch('/api/admin/login', {

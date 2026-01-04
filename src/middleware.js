@@ -1,7 +1,7 @@
 // src/middleware.js
 import { NextResponse } from 'next/server';
 
-export function middleware(request) {
+export function middleware(request) { 
   // อ่าน Path ปัจจุบัน
   const path = request.nextUrl.pathname;
 
