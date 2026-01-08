@@ -1,13 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Timer, Zap, Lock } from 'lucide-react'; // อย่าลืมลง lucide-react (หรือใช้ icon อื่นแทนได้)
+import { Timer, Zap, Lock } from 'lucide-react';
 
 export default function CountdownTimer() {
   // --------------------------------------------------------
   // ⚙️ ตั้งค่าวันเวลา (Config)
   // --------------------------------------------------------
   const ELECTION_START = new Date('2026-02-06T08:00:00'); // เริ่ม 6 ก.พ. 08:00
-  const ELECTION_END   = new Date('2026-02-06T16:00:00'); // จบ 6 ก.พ. 16:00
+  const ELECTION_END   = new Date('2026-02-06T17:30:00'); // จบ 6 ก.พ. 16:00
 
   // State
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });

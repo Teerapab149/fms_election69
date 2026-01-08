@@ -1,11 +1,11 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
+  "/party/page": "app/party/page.js",
   "/page": "app/page.js",
-  "/admin/login/page": "app/admin/login/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/login/page": "app/login/page.js",
-  "/vote/page": "app/vote/page.js",
   "/results/page": "app/results/page.js",
-  "/api/results/route": "app/api/results/route.js",
-  "/api/check-status/route": "app/api/check-status/route.js"
+  "/login/page": "app/login/page.js",
+  "/candidates/page": "app/candidates/page.js",
+  "/api/party/route": "app/api/party/route.js",
+  "/api/home-info/route": "app/api/home-info/route.js",
+  "/api/gallery/route": "app/api/gallery/route.js"
 }

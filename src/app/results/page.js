@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
-// ✅ 1. Import Component ใหม่เข้ามา
 import ResultCard from "../../components/ResultCard";
 import PartyDetailModal from "../../components/PartyDetailModal";
 

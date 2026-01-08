@@ -44,14 +44,14 @@ model Member {
 model Candidate {
   id           Int      @id @default(autoincrement())
   name         String   @unique
-  number       Int
-
+  number       Int      @unique
+  slogan       String?
   logoUrl      String?
+  groupImageUrl String?
   
   members      Member[]
   voters       User[]
   
-  // เพิ่มคะแนนสะสม (ถ้าจะใช้ Realtime update)
   score        Int      @default(0)
 }
 

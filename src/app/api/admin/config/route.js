@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from "@/lib/db";
+import { db } from "../../../../lib/db";
 
 // GET: เอาไว้ให้หน้าเว็บเช็คว่าตอนนี้เปิดหรือปิดอยู่
 export async function GET() {

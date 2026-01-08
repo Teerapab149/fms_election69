@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "../../../../lib/db";
 
 export async function POST(request) {
   try {
@@ -14,7 +12,7 @@ export async function POST(request) {
     }
 
     // 2. ค้นหาใน Database
-    const user = await prisma.user.findFirst({
+    const user = await db.user.findFirst({
       where: { studentId: studentId },
     });
 

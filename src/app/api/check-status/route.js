@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
@@ -11,7 +9,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Missing studentId" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { studentId: String(studentId) }, // แปลงเป็น String กันเหนียว
       select: { isVoted: true } // ดึงมาแค่สถานะโหวตพอ ประหยัดแรง
     });

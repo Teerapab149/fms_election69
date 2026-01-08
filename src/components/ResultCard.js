@@ -8,9 +8,7 @@ export default function ResultCard({ candidate, rank, totalVotes, isElectionEnde
 
     const percentage = totalVotes > 0 ? (candidate.score / totalVotes) * 100 : 0;
     const isWinner = rank === 1; // เช็คว่าเป็นที่ 1 หรือไม่
-
-    // Path รูปภาพ
-    const imageSrc = candidate.image || (candidate.number ? `/images/candidates/logo/${candidate.number}.jpg` : null);
+    const imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
 
     return (
         <div

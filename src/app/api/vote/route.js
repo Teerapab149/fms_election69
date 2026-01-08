@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "../../../lib/db";
 
 export async function POST(request) {
   try {
@@ -13,8 +11,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
 
-    // 2. เช็คว่า User นี้เคยโหวตไปหรือยัง? (กันเหนียวฝั่ง Server)
-    const user = await prisma.user.findFirst({
+    // 2. เช็คว่า User นี้เคยโหวตไปหรือยัง
+    const user = await db.user.findFirst({
       where: { studentId: studentId }
     });
 
@@ -27,14 +25,14 @@ export async function POST(request) {
     }
 
     // 3. เริ่ม Transaction (ทำพร้อมกัน 2 อย่าง: บวกคะแนนพรรค + แปะป้ายว่าโหวตแล้ว)
-    await prisma.$transaction([
+    await db.$transaction([
       // 3.1 เพิ่มคะแนนให้พรรค
-      prisma.candidate.update({
+      db.candidate.update({
         where: { id: parseInt(candidateId) },
         data: { score: { increment: 1 } },
       }),
       // 3.2 อัปเดตสถานะ User ว่าโหวตแล้ว
-      prisma.user.update({
+      db.user.update({
         where: { id: user.id },
         data: { 
           isVoted: true,
