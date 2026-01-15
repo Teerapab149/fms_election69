@@ -44,7 +44,7 @@ export default function PartyPage() {
       }
     };
     fetchData();
-  }, [partyIdFromUrl]);
+  }, [partyIdFromUrl, router]);
 
   useEffect(() => {
     if (!activeParty?.id) return;
@@ -122,7 +122,7 @@ export default function PartyPage() {
             <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-300">
               <button onClick={() => setIsLightBoxOpen(false)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all"><X size={28} /></button>
               <div className="relative w-full h-full flex items-center justify-center p-4">
-                <img src={galleryImages[currentBgIndex]} className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300" />
+                <img src={galleryImages[currentBgIndex]} className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300" alt="Lightbox" />
                 {galleryImages.length > 1 && (
                   <>
                     <button onClick={prevSlide} className="absolute left-4 md:left-10 p-4 text-white/50 hover:text-white transition-all"><ChevronLeft size={48} /></button>
@@ -133,14 +133,9 @@ export default function PartyPage() {
             </div>
           )}
 
-          {/* Section 2: Chart (Full Screen with New PartyChart Component) */}
+          {/* Section 2: Chart */}
           <section ref={chartSectionRef} className="relative w-full h-screen bg-[#02040a] flex flex-col border-t border-slate-900 overflow-hidden">
-
-            {/* Header ของ Section 2 */}
-            {/* ✅ ใช้ flex-col ตลอดเวลา เพื่อให้เรียงจากบนลงล่างเสมอ */}
             <div className="absolute top-0 left-0 w-full z-20 pt-8 px-6 md:px-16 flex flex-col items-start gap-3 pointer-events-none">
-
-              {/* 1. ส่วนหัวข้อ (Title) */}
               <div className="flex flex-col gap-1 select-none relative z-10">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div>
@@ -156,8 +151,6 @@ export default function PartyPage() {
                   </h2>
                 </div>
               </div>
-
-              {/* 2. ปุ่ม Navigator (อยู่ด้านล่างหัวข้อ ชิดซ้ายเสมอ) */}
               <div className="pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
                 <button
                   onClick={scrollToList}
@@ -168,30 +161,24 @@ export default function PartyPage() {
                     boxShadow: `0 8px 32px -8px ${currentTheme.main}20`
                   }}
                 >
-                  {/* ข้อความ */}
                   <div className="flex flex-col items-start justify-center">
                     <span className="text-[10px] md:text-xs font-bold text-white leading-none group-hover:text-[var(--theme-main)] transition-colors" style={{ '--theme-main': currentTheme.main }}>
                       ดูรายชื่อทั้งหมด
                     </span>
                   </div>
-
-                  {/* ไอคอนวงกลม */}
                   <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:rotate-180"
                     style={{ backgroundColor: currentTheme.main }}>
                     <ChevronDown size={14} className="text-white drop-shadow-md" />
                   </div>
                 </button>
               </div>
-
             </div>
-
-            {/* ตัว Chart */}
             <div ref={chartContainerRef} className="flex-1 relative w-full h-full">
-              <PartyChart members={activeParty.members || []} theme={currentTheme} onMemberClick={setSelectedMember} />
+              <PartyChart members={activeParty?.members || []} theme={currentTheme} onMemberClick={setSelectedMember} />
             </div>
           </section>
 
-          {/* Section 3: The Candidates List (Original) */}
+          {/* Section 3: The Candidates List */}
           <section ref={listSectionRef} className="w-full bg-slate-50/50 py-16 md:py-24 px-4 md:px-20 border-t border-slate-100 relative overflow-hidden">
             <div className="max-w-6xl mx-auto relative z-10">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 md:mb-20 gap-6">
@@ -216,24 +203,28 @@ export default function PartyPage() {
                   {/* 1. President */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-6 flex items-center gap-3"><div className="w-12 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div> The President</h3>
-                    <div onClick={() => setSelectedMember(activeParty.members[0])} className="group relative bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border-2 transition-all duration-500 cursor-pointer flex flex-row items-center gap-5 md:gap-10 overflow-hidden hover:scale-[1.01]" style={{ borderColor: `${currentTheme.main}30` }}>
-                      <div className="w-28 h-28 md:w-56 md:h-56 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 shrink-0 ring-4 ring-slate-50">
-                        <div className="absolute top-2 right-2 w-7 h-7 md:w-12 md:h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg z-20 border-2 border-slate-50"><Crown className="w-4 h-4 md:w-7 md:h-7" style={{ color: currentTheme.main }} /></div>
-                        <MemberImage url={activeParty.members[0].imageUrl} />
+                    {activeParty?.members?.[0] ? (
+                      <div onClick={() => setSelectedMember(activeParty.members[0])} className="group relative bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border-2 transition-all duration-500 cursor-pointer flex flex-row items-center gap-5 md:gap-10 overflow-hidden hover:scale-[1.01]" style={{ borderColor: `${currentTheme.main}30` }}>
+                        <div className="w-28 h-28 md:w-56 md:h-56 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 shrink-0 ring-4 ring-slate-50">
+                          <div className="absolute top-2 right-2 w-7 h-7 md:w-12 md:h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg z-20 border-2 border-slate-50"><Crown className="w-4 h-4 md:w-7 md:h-7" style={{ color: currentTheme.main }} /></div>
+                          <MemberImage url={activeParty.members[0].imageUrl} />
+                        </div>
+                        <div className="flex-1 min-w-0 relative z-10">
+                          <div className="inline-block px-3 py-1 rounded-lg text-white font-black text-[9px] md:text-xs mb-2 md:mb-4 shadow-md uppercase tracking-widest" style={{ backgroundColor: currentTheme.main }}>CANDIDATE #1</div>
+                          <h4 className="text-xl md:text-5xl font-black text-slate-900 mb-1 md:mb-2 leading-tight truncate">{activeParty.members[0].name}</h4>
+                          <p className="text-sm md:text-2xl font-bold mb-2" style={{ color: currentTheme.main }}>{activeParty.members[0].position || "นายกสโมสรนักศึกษา"}</p>
+                          <button className="flex items-center text-[10px] md:text-sm font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-widest">View Profile <ChevronRight size={14} className="ml-1" /></button>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0 relative z-10">
-                        <div className="inline-block px-3 py-1 rounded-lg text-white font-black text-[9px] md:text-xs mb-2 md:mb-4 shadow-md uppercase tracking-widest" style={{ backgroundColor: currentTheme.main }}>CANDIDATE #1</div>
-                        <h4 className="text-xl md:text-5xl font-black text-slate-900 mb-1 md:mb-2 leading-tight truncate">{activeParty.members[0].name}</h4>
-                        <p className="text-sm md:text-2xl font-bold mb-2" style={{ color: currentTheme.main }}>{activeParty.members[0].position || "นายกสโมสรนักศึกษา"}</p>
-                        <button className="flex items-center text-[10px] md:text-sm font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-widest">View Profile <ChevronRight size={14} className="ml-1" /></button>
-                      </div>
-                    </div>
+                    ) : (
+                      <div className="p-10 text-center bg-slate-100 rounded-[2rem] text-slate-400 font-bold">ยังไม่มีข้อมูลผู้สมัครนายก</div>
+                    )}
                   </div>
                   {/* 2. Executives */}
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-6 flex items-center gap-3"><div className="w-12 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div> Core Executives</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                      {activeParty.members.slice(1, 5).map((member, idx) => (
+                      {activeParty?.members?.slice(1, 5).map((member, idx) => (
                         <div key={member.id} onClick={() => setSelectedMember(member)} className="group bg-white p-4 md:p-6 rounded-[1.8rem] md:rounded-[2.5rem] shadow-lg border-2 border-transparent hover:border-slate-100 transition-all duration-300 cursor-pointer flex flex-row items-center gap-4 md:gap-6" style={{ borderLeftColor: currentTheme.main, borderLeftWidth: '6px' }}>
                           <div className="w-20 h-20 md:w-32 md:h-32 rounded-[1.2rem] md:rounded-[2.1rem] overflow-hidden shadow-md shrink-0 relative ring-2 ring-slate-50">
                             <div className="absolute top-2 left-1.5 w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white font-black text-[10px] md:text-xs z-10 shadow-lg border-2 border-white" style={{ backgroundColor: currentTheme.main }}>{idx + 2}</div>
@@ -252,7 +243,7 @@ export default function PartyPage() {
                   <div>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-8 flex items-center gap-3"><div className="w-12 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div> Department Heads</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-                      {activeParty.members.slice(5).map((member, idx) => (
+                      {activeParty?.members?.slice(5).map((member, idx) => (
                         <div key={member.id} onClick={() => setSelectedMember(member)} className="group bg-white/70 hover:bg-white p-3 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 cursor-pointer flex flex-row items-center gap-4" style={{ borderLeft: `4px solid ${currentTheme.main}` }}>
                           <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1rem] md:rounded-[1.5rem] overflow-hidden shadow-inner shrink-0 relative">
                             <div className="absolute top-1 left-1 w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-white font-black text-[12px] z-10 shadow-md" style={{ backgroundColor: currentTheme.main }}>{idx + 6}</div>

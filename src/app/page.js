@@ -5,346 +5,286 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '../components/Navbar';
 import CountdownTimer from '../components/CountdownTimer';
-import { LogIn, Vote, BarChart3, PieChart, Sparkles, TrendingUp, CheckCircle2, Users, ArrowRight, User } from "lucide-react";
+import MeetCandidatesCard from '../components/MeetCandidatesCard';
+
+import { TrendingUp, CheckCircle2, ArrowRight, Calendar, Users, PieChart, LogIn, Vote, BarChart3 } from "lucide-react";
 
 export default function Home() {
   const [stats, setStats] = useState({ totalEligible: 0, totalVoted: 0, percentage: "0.00" });
   const [candidates, setCandidates] = useState([]);
   const [user, setUser] = useState(null);
   const [mounted, setMounted] = useState(false);
-
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
 
-  const slideshowImages = [
-    "/images/prob/samo49_1.png"
-  ];
-
+  const slideshowImages = ["/images/prob/samo49_1.png"];
   const isMultiImage = slideshowImages.length > 1;
+  const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
 
-  const extendedImages = isMultiImage
-    ? [...slideshowImages, slideshowImages[0]]
-    : slideshowImages;
-
-  // ✅ 1. useEffect หลัก: เช็ค User และ ดึงข้อมูล Stats/Candidates
   useEffect(() => {
     setMounted(true);
     const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-    }
+    if (storedUser) setUser(JSON.parse(storedUser));
 
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/home-info'); // เรียก API
+        const res = await fetch('/api/home-info');
         if (!res.ok) throw new Error("Failed to fetch");
-
         const data = await res.json();
-
-        // เก็บข้อมูลผู้สมัครลง State (เพื่อเอาไปโชว์ในวงกลม)
-        if (data.candidates) {
-          setCandidates(data.candidates);
-        }
-
-        // อัปเดต Stats
+        if (data.candidates) setCandidates(data.candidates);
         const eligible = data.stats?.totalEligible || 0;
         const voted = data.stats?.totalVoted || 0;
-        const percent = eligible > 0
-          ? ((voted / eligible) * 100).toFixed(2)
-          : "0.00";
-
-        setStats({
-          totalEligible: eligible,
-          totalVoted: voted,
-          percentage: percent
-        });
-
-      } catch (error) {
-        console.error("Error fetching home data:", error);
-      }
+        const percent = eligible > 0 ? ((voted / eligible) * 100).toFixed(2) : "0.00";
+        setStats({ totalEligible: eligible, totalVoted: voted, percentage: percent });
+      } catch (error) { console.error("Error fetching home data:", error); }
     };
+    fetchData();
+  }, []);
 
-    fetchData(); // ⚠️ อย่าลืมเรียกฟังก์ชันนี้
-  }, []); // ⚠️ ปิดวงเล็บ useEffect ตรงนี้
-
-  // 2. Loop Effect (ทำงานเฉพาะเมื่อมีหลายรูป)
   useEffect(() => {
     if (!isMultiImage) return;
-
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => prevIndex + 1);
       setIsTransitioning(true);
-    }, 10000); // 10 วินาที
+    }, 10000);
     return () => clearInterval(interval);
   }, [isMultiImage]);
 
-  // 3. Magic Reset Effect (ทำงานเฉพาะเมื่อมีหลายรูป)
   useEffect(() => {
     if (!isMultiImage) return;
-
     if (currentImageIndex === extendedImages.length - 1) {
       const resetTimeout = setTimeout(() => {
         setIsTransitioning(false);
         setCurrentImageIndex(0);
-      }, 1500); // ต้องตรงกับ duration ใน style
+      }, 1500);
       return () => clearTimeout(resetTimeout);
     }
   }, [currentImageIndex, extendedImages.length, isMultiImage]);
 
-  // ✅ Component ย่อยสำหรับจัดการรูปภาพ (ใส่ไว้ในไฟล์ page.js ได้เลย)
-  const CandidateAvatar = ({ logoUrl, index }) => {
-    const [imageError, setImageError] = useState(false);
-
-    // ถ้าไม่มี URL หรือ โหลดรูปแล้ว Error ให้โชว์ไอคอน User
-    if (!logoUrl || imageError) {
-      return (
-        <User
-          size={20}
-          className={`opacity-70 ${index === 0 ? 'text-blue-600' : index === 1 ? 'text-purple-600' : 'text-pink-600'
-            }`}
-        />
-      );
-    }
-
-    // ถ้ามี URL ให้ลองโหลดรูป
-    return (
-      <Image
-        src={logoUrl}
-        alt={`Candidate ${index + 1}`}
-        fill
-        className="object-cover" // ✅ บังคับให้รูปไม่เบี้ยวและเต็มวงกลม
-        onError={() => setImageError(true)} // ✅ ดัก Error ตรงนี้
-        sizes="44px"
-      />
-    );
-  };
-
-
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/20 text-gray-900 font-sans selection:bg-purple-300 relative overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
 
-      {/* ================= BACKGROUND DECORATION ================= */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-purple-300/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-0 right-0 w-[250px] h-[250px] md:w-[500px] md:h-[500px] bg-pink-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+      {/* --- Background --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[100px]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+        <div className="bg-noise"></div>
       </div>
 
-      {/* Watermark 2026 */}
-      <div className="hidden lg:flex fixed top-0 right-1 h-full items-center justify-end z-0 pointer-events-none select-none overflow-hidden">
-        <span className="text-[17em] font-black text-gray-900 opacity-[0.03] leading-none tracking-tighter transform rotate-90 translate-x-[20%] whitespace-nowrap">2026</span>
-      </div>
-
-      {/* ================= CONTENT ================= */}
-      <div className="relative z-10 flex flex-col flex-grow">
+      <div className="relative z-50 shrink-0">
         <Navbar />
+      </div>
 
-        <main className="flex-grow flex flex-col justify-center py-8 md:py-10 px-4 md:px-8">
-          <div className="container mx-auto max-w-7xl">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20">
+      {/* --- Main Content --- */}
+      {/* เพิ่ม lg:px-24 ช่วยเรื่อง Alignment ไม่ให้ชิดขอบจอ Notebook เกินไป */}
+      <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
+        <div className="container mx-auto max-w-[1400px] w-full">
 
-              {/* ===== LEFT SIDE (Text / Content) ===== */}
-              <div className="w-full lg:w-1/2 text-center lg:text-left space-y-8 md:space-y-10 relative z-20">
-                <div className="flex justify-center lg:justify-start w-full">
-                  <div className="relative group inline-flex justify-center items-center cursor-pointer animate-heartbeat hover:animate-none">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
-                    <div className="relative flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-white/90 backdrop-blur-sm border border-purple-200/50 shadow-lg">
-                      <span className="relative flex h-2 w-2 md:h-2.5 md:w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 md:h-2.5 md:w-2.5 bg-purple-500"></span>
-                      </span>
-                      <span className="text-[12px] md:text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 uppercase tracking-widest">
-                        Your Vote Matters
-                      </span>
-                      <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-purple-500" />
-                    </div>
-                  </div>
+          {/* ✅ 1. Alignment Fix: เพิ่ม gap-16/gap-24 เพื่อแยกซ้ายขวาให้สมดุล (Balance) */}
+          <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-16 xl:gap-24">
+
+            {/* ======================= LEFT SIDE ======================= */}
+            <div className="w-full lg:w-5/12 xl:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 lg:space-y-5 xl:space-y-8 relative z-20 animate-fade-in-up">
+
+              {/* ✅ 3. Timer Fix: เพิ่ม mb-4 ให้ Timer ดูมีพื้นที่ ไม่เบียดหัวข้อ */}
+              <div className="flex justify-center lg:justify-start w-full mb-1 lg:mb-0">
+                <CountdownTimer />
+              </div>
+
+              {/* HEADLINE */}
+              <div className="space-y-3 lg:space-y-2 xl:space-y-4">
+                <div className="flex items-center justify-center lg:justify-start relative">
+                  <h1 className="flex items-baseline gap-2 md:gap-3 font-black tracking-tight leading-none whitespace-nowrap select-none">
+                    <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-slate-900 drop-shadow-sm">
+                      SAMO
+                    </span>
+                    <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
+                      49
+                      <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping"></span>
+                    </span>
+                  </h1>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex flex-row items-center justify-center lg:justify-start gap-1 md:gap-2">
-                    <h1 className="text-7xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none">
-                      <span className="text-transparent bg-clip-text pr-2 bg-gradient-to-br from-gray-900 via-purple-900 to-pink-900 pb-2">SAMO</span>
-                    </h1>
-                    <div className="bg-gradient-to-br from-purple-700 to-pink-700 rounded-xl md:rounded-2xl p-1 md:p-2 rotate-3 hover:rotate-0 transition-transform duration-300 shadow-lg">
-                      <span className="text-5xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white">49</span>
-                    </div>
+                <div className="space-y-2 lg:space-y-1">
+                  <div className="space-y-0.5">
+                    <h2 className="text-lg sm:text-2xl lg:text-2xl xl:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
+                      โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-[#D946EF]">คณะกรรมการบริหาร</span>
+                    </h2>
+                    <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-500">
+                      สโมสรนักศึกษาคณะวิทยาการจัดการ
+                    </h3>
                   </div>
-                  <div className="flex items-center justify-center lg:justify-start gap-4">
-                    <div className="h-8 w-1.5 bg-gradient-to-b from-purple-800 via-purple-600 to-purple-800 rounded-full"></div>
-                    <p className="text-lg md:text-xl font-bold text-gray-500 tracking-[0.3em] uppercase">FMS Election 2026</p>
+
+                  <div className="flex justify-center lg:justify-start pt-2">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm hover:bg-purple-100 transition-colors cursor-default">
+                      <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      ประจำปีการศึกษา 2569
+                    </span>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-800 leading-tight">โครงการเลือกตั้งคณะกรรมการบริหาร</h2>
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-500">สโมสรนักศึกษาคณะวิทยาการจัดการ</h3>
-                  <div className="inline-block mt-2 px-3 py-1 bg-purple-100 text-purple-700 text-sm font-bold rounded-lg">ประจำปีการศึกษา 2569</div>
-                </div>
-
-                <div className="flex flex-col items-center lg:items-start gap-4 md:gap-6 pt-4">
-                  <Link href={mounted && user?.isVoted ? "/results" : "/vote"} className="w-full sm:w-auto">
-                    <button className={`w-full sm:w-auto group relative overflow-hidden rounded-2xl text-white transition-all duration-300 hover:scale-105 ${mounted && user?.isVoted ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg' : 'bg-gradient-to-r from-[#8A2680] to-purple-600 shadow-lg'}`}>
-                      <span className="relative flex items-center justify-center gap-3 py-4 px-10 font-bold text-xl">
-                        {mounted && user?.isVoted ? <>ดูผลคะแนน <BarChart3 /></> : mounted && user ? <>Vote Now <Vote className="animate-pulse" /></> : <>เข้าสู่ระบบ <LogIn /></>}
-                      </span>
-                    </button>
-                  </Link>
-                  <div className="w-full sm:w-auto"><CountdownTimer /></div>
                 </div>
               </div>
 
-              {/* ===== RIGHT SIDE (Stats & Image Slideshow) ===== */}
-              <div className="relative flex flex-col items-center w-full lg:w-1/2 mt-10 lg:mt-0 gap-8">
+              {/* Dynamic Button */}
+              <div className="w-full flex justify-center lg:justify-start pt-1">
+                {(() => {
+                  let btnConfig = {
+                    href: "/login",
+                    text: "เข้าสู่ระบบ / Sign in",
+                    gradientBase: "from-[#691E61] via-[#8A2680] to-[#C026D3]",
+                    gradientHover: "from-[#1e3a8a] via-[#1d4ed8] to-[#3b82f6]",
+                    glowColor: "from-[#8A2680] to-[#3b82f6]",
+                    shadow: "shadow-[0_10px_20px_-5px_rgba(138,38,128,0.4)]",
+                    icon: <LogIn className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-1" />,
+                    animation: ""
+                  };
 
-                {/* ✅ Compact & Balanced Design - เหมาะทุกหน้าจอ */}
-                <Link href="/candidates" className="group block mb-6 w-full max-w-[85%] sm:max-w-md lg:max-w-full mx-auto">
-                  <div className="relative transition-all duration-400 transform group-hover:-translate-y-2 group-hover:scale-[1.02]">
+                  if (mounted && user) {
+                    if (!user.isVoted) {
+                      btnConfig = {
+                        href: "/vote",
+                        text: "ลงคะแนน / Vote Now",
+                        gradientBase: "from-[#F59E0B] via-[#D97706] to-[#B45309]",
+                        gradientHover: "from-[#9f1239] via-[#be123c] to-[#e11d48]",
+                        glowColor: "from-[#F59E0B] to-[#e11d48]",
+                        shadow: "shadow-[0_15px_30px_-8px_rgba(245,158,11,0.4)]",
+                        icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
+                        animation: "animate-pulse"
+                      };
+                    } else {
+                      btnConfig = {
+                        href: "/results",
+                        text: "ดูผลคะแนน / Results",
+                        gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
+                        gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
+                        glowColor: "from-[#0ea5e9] to-[#14b8a6]",
+                        shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
+                        icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
+                        animation: ""
+                      };
+                    }
+                  }
 
-                    {/* ✨ Subtle Gradient Border */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400/60 via-purple-400/60 to-pink-400/60 rounded-[1.5rem] opacity-50 group-hover:opacity-80 blur transition-all duration-500"></div>
-
-                    {/* Soft glow */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 rounded-[1.5rem] blur-xl opacity-40 group-hover:opacity-70 transition-all duration-500"></div>
-
-                    {/* การ์ดหลัก - ขนาดพอดี */}
-                    <div className="relative w-full bg-gradient-to-br from-white via-blue-50/20 to-purple-50/20 rounded-[1.4rem] p-4 md:p-5 flex items-center justify-between gap-3 overflow-hidden border border-white/80 shadow-lg group-hover:shadow-xl transition-all duration-400 backdrop-blur-sm">
-
-                      {/* Background Pattern - เบาลง */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30 -z-10"></div>
-
-                      {/* Decorative shape - ขนาดเล็กลง */}
-                      <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-bl from-blue-100/30 via-purple-100/20 to-pink-100/30 rounded-bl-[4rem] -z-10 transition-all duration-600 group-hover:scale-125 group-hover:rotate-6"></div>
-
-                      <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-purple-200/20 to-pink-200/20 rounded-full blur-2xl -z-10 transition-all duration-600 group-hover:scale-150"></div>
-
-                      {/* Minimal sparkle - เหลือ 1 จุด */}
-                      <div className="absolute top-3 right-6 w-2 h-2 bg-purple-300/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 animate-ping"></div>
-
-                      {/* 👈 ฝั่งซ้าย: ข้อความชัดเจน */}
-                      <div className="flex-1 flex flex-col gap-1 md:gap-1.5 z-10">
-                        <div className="flex items-center gap-2">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400/70 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-blue-500 to-purple-500"></span>
+                  return (
+                    <Link href={btnConfig.href} className="group relative w-[90%] sm:w-auto inline-block">
+                      <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}></div>
+                      <button className={`relative w-full sm:w-auto overflow-hidden rounded-xl bg-gradient-to-r ${btnConfig.gradientBase} px-10 py-4 text-lg font-bold text-white ${btnConfig.shadow} ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate`}>
+                        <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${btnConfig.gradientHover} opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100`}></div>
+                        <span className="relative z-20 flex items-center justify-center gap-3 drop-shadow-sm">
+                          {btnConfig.text}
+                          <span className="bg-white/20 p-1.5 rounded-lg backdrop-blur-md shadow-inner border border-white/10">
+                            {btnConfig.icon}
                           </span>
-                          <p className="text-[9px] md:text-[10px] font-extrabold tracking-wider uppercase text-blue-600">
-                            Meet The Candidates
-                          </p>
+                        </span>
+                        <div className="absolute inset-0 z-30 flex h-full w-full justify-center pointer-events-none">
+                          <div className="relative h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:animate-shine skew-x-20" />
                         </div>
+                      </button>
+                    </Link>
+                  );
+                })()}
+              </div>
 
-                        <h3 className="text-sm md:text-base font-black text-slate-900 leading-tight group-hover:text-purple-700 transition-colors duration-300">
-                          ยังไม่รู้จักผู้สมัคร?
-                        </h3>
+              {/* Meet Candidates */}
+              <div className="w-full max-w-[400px] lg:max-w-[350px] xl:max-w-[420px] pt-1">
+                <MeetCandidatesCard candidates={candidates} />
+              </div>
+            </div>
 
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] md:text-xs font-bold text-slate-600 group-hover:text-slate-800 transition-colors">
-                            ทำความรู้จักเลย
-                          </span>
-                          <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] md:text-[10px] font-black px-2 md:px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md shadow-purple-400/40 group-hover:shadow-lg group-hover:shadow-purple-400/50 group-hover:scale-105 transition-all duration-300">
-                            คลิก <ArrowRight size={9} className="group-hover:translate-x-0.5 transition-transform" />
-                          </span>
-                        </div>
-                      </div>
+            {/* ======================= RIGHT SIDE ======================= */}
+            <div className="w-full lg:w-6/12 xl:w-6/12 flex flex-col items-center justify-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
 
-                      {/* 👉 ฝั่งขวา: Avatar Stack - ขนาดพอดี */}
-                      <div className="flex items-center -space-x-2.5 md:-space-x-3 pl-2 z-10">
-                        {candidates
-                          .filter(c => c.number !== 0)
-                          .slice(0, 4)
-                          .map((candidate, index) => (
-                            <div key={candidate.id || index} className={`
-              relative w-10 h-10 md:w-12 md:h-12 rounded-full border-[3px] border-white shadow-md flex items-center justify-center overflow-hidden
-              transform transition-all duration-400 
-              ${index === 0 ? 'z-30 group-hover:-translate-x-2 group-hover:scale-110 bg-gradient-to-br from-blue-100 to-cyan-200 shadow-blue-300/40 group-hover:shadow-lg group-hover:shadow-blue-300/50' : ''}
-              ${index === 1 ? 'z-20 group-hover:-translate-y-2 group-hover:scale-110 bg-gradient-to-br from-purple-100 to-purple-200 shadow-purple-300/40 group-hover:shadow-lg group-hover:shadow-purple-300/50' : ''}
-              ${index === 2 ? 'z-10 group-hover:translate-x-2 group-hover:scale-110 bg-gradient-to-br from-pink-100 to-pink-200 shadow-pink-300/40 group-hover:shadow-lg group-hover:shadow-pink-300/50' : ''}
-              ${index === 3 ? 'z-20 group-hover:-translate-y-2 group-hover:scale-110 bg-gradient-to-br from-indigo-100 to-blue-200 shadow-indigo-300/40 group-hover:shadow-lg group-hover:shadow-indigo-300/50' : ''}
-            `}>
-                              <CandidateAvatar logoUrl={candidate?.logoUrl} index={index} />
+              {/* ปรับ gap ระหว่าง Card ให้กว้างขึ้นเล็กน้อยเพื่อความโปร่ง */}
+              <div className="w-full max-w-[550px] lg:max-w-full xl:max-w-[600px] flex flex-col gap-5 lg:gap-6 xl:gap-8">
 
-                              {/* Subtle glow */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            </div>
-                          ))
-                        }
-
-                        {/* Arrow Button - ขนาดพอดี */}
-                        <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-white flex items-center justify-center text-white shadow-md shadow-purple-400/40 -ml-2 z-40 transform transition-all duration-400 group-hover:translate-x-2 group-hover:scale-110 group-hover:rotate-45 group-hover:shadow-lg group-hover:shadow-purple-400/50">
-                          <ArrowRight size={14} className="group-hover:scale-105 transition-transform" />
-                        </div>
-                      </div>
-
+                {/* Stats Card */}
+                <div className="relative z-20 w-full p-1">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-4 px-1">
+                    <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-purple-100 shadow-sm text-[#8A2680]">
+                      <TrendingUp className="w-5 h-5" />
+                      <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="text-sm lg:text-base font-bold text-slate-800 leading-tight">
+                        สถิติผู้เข้าร่วมลงคะแนนโหวต
+                      </h3>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-wide">
+                        อัปเดตข้อมูลแบบ Real-time
+                      </span>
                     </div>
                   </div>
-                </Link>
-                
-                {/* 1. Stats Cards */}
-                <div className="relative z-20 w-full max-w-[550px] bg-white/70 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-6 lg:p-8 hover:border-purple-200 transition-all duration-300">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-800">สถิติการลงคะแนน</h3>
-                    <TrendingUp className="w-6 h-6 text-green-500" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center p-3 bg-white/50 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                      <Users className="w-5 h-5 text-gray-400 mb-2" />
-                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">ผู้มีสิทธิ</div>
-                      <div className="text-2xl font-black text-gray-800">{stats.totalEligible.toLocaleString()}</div>
+
+                  {/* Bento Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Hero Card */}
+                    <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] p-5 pb-7 text-white shadow-xl shadow-purple-900/20 group hover:-translate-y-1 transition-transform duration-500">
+                      <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors"></div>
+                      <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl"></div>
+                      <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className="flex items-center gap-2 mb-2 opacity-90">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">ใช้สิทธิแล้ว (Voted)</span>
+                        </div>
+                        <div className="flex items-baseline justify-center gap-2">
+                          <span className="text-6xl lg:text-7xl font-black tracking-tighter drop-shadow-sm tabular-nums leading-none">
+                            {stats.totalVoted.toLocaleString()}
+                          </span>
+                          <span className="text-lg lg:text-xl font-bold opacity-80">คน</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-center p-3 bg-purple-50/50 rounded-2xl border border-purple-100 relative overflow-hidden hover:shadow-md transition-shadow">
-                      <CheckCircle2 className="w-5 h-5 text-purple-600 mb-2 relative z-10" />
-                      <div className="text-[10px] font-bold text-purple-600 uppercase tracking-wider relative z-10">ใช้สิทธิแล้ว</div>
-                      <div className="text-2xl font-black text-purple-900 relative z-10">{stats.totalVoted.toLocaleString()}</div>
+
+                    {/* Sub Card: Progress */}
+                    <div className="col-span-1 rounded-[24px] bg-white border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ความคืบหน้า</span>
+                        <PieChart className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-black text-slate-800 tabular-nums leading-none">
+                          {stats.percentage}<span className="text-sm text-slate-400 ml-0.5">%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${Math.min(parseFloat(stats.percentage) || 0, 100)}%` }}></div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-center p-3 bg-green-50/50 rounded-2xl border border-green-100 hover:shadow-md transition-shadow">
-                      <PieChart className="w-5 h-5 text-green-600 mb-2" />
-                      <div className="text-[10px] font-bold text-green-600 uppercase tracking-wider">ร้อยละ</div>
-                      <div className="flex items-baseline">
-                        <span className="text-2xl font-black text-green-800">{stats.percentage}</span>
-                        <span className="text-xs font-bold text-green-600 ml-1">%</span>
+
+                    {/* Sub Card: Eligible */}
+                    <div className="col-span-1 rounded-[24px] bg-white border-2 border-slate-100 p-4 shadow-sm flex flex-col justify-between group hover:border-purple-200 hover:shadow-md transition-all">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-purple-400">ผู้มีสิทธิรวม</span>
+                        <Users className="w-4 h-4 text-slate-300 group-hover:text-purple-400 transition-colors" />
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-slate-700 group-hover:text-purple-700 transition-colors tabular-nums leading-none">
+                          {stats.totalEligible.toLocaleString()}
+                        </span>
+                        <span className="text-xs font-bold text-slate-400">คน</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 2. Image Slideshow Container */}
-                <div className="relative z-10 w-full max-w-[550px] group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                  <div className="relative w-full aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-purple-200/40 border-[6px] border-white bg-white">
-                    <div
-                      className="flex h-full will-change-transform"
-                      style={{
-                        transform: `translateX(-${currentImageIndex * 100}%)`,
-                        transitionDuration: (isTransitioning && isMultiImage) ? '1500ms' : '0ms',
-                        transitionProperty: 'transform',
-                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
-                      }}
-                    >
+                {/* Slideshow */}
+                <div className="w-full relative group rounded-3xl overflow-hidden shadow-2xl border border-white bg-white aspect-[16/9] lg:aspect-[2/1] xl:aspect-[16/10] transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
+                  <div className="relative w-full h-full">
+                    <div className="flex h-full will-change-transform" style={{ transform: `translateX(-${currentImageIndex * 100}%)`, transitionDuration: (isTransitioning && isMultiImage) ? '1500ms' : '0ms', transitionProperty: 'transform', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
                       {extendedImages.map((src, index) => (
                         <div key={index} className="min-w-full h-full relative">
-                          <Image
-                            src={src}
-                            alt={`Campaign Poster ${index}`}
-                            fill
-                            className="object-cover"
-                            priority={index === 0}
-                          />
+                          <Image src={src} alt={`Campaign Poster ${index}`} fill className="object-cover object-top" priority={index === 0} />
                         </div>
                       ))}
                     </div>
                   </div>
-
                   {isMultiImage && (
-                    <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-2">
+                    <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1.5">
                       {slideshowImages.map((_, index) => (
-                        <div
-                          key={index}
-                          className={`h-1.5 rounded-full transition-all duration-500 ${(currentImageIndex % slideshowImages.length) === index
-                            ? "w-8 bg-purple-400"
-                            : "w-2 bg-purple-200"
-                            }`}
-                        ></div>
+                        <div key={index} className={`h-1.5 rounded-full transition-all duration-500 ${(currentImageIndex % slideshowImages.length) === index ? "w-8 bg-[#8A2680]" : "w-2 bg-slate-300"}`}></div>
                       ))}
                     </div>
                   )}
@@ -353,13 +293,23 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </main>
+        </div>
 
-        <footer className="w-full py-6 bg-white/50 backdrop-blur-md border-t border-gray-200/50 text-center relative z-50">
-          <p className="text-sm text-gray-500 font-medium">© FMS@PSU 2026. All Rights Reserved.</p>
-        </footer>
+      </main>
 
-      </div>
+      {/* Footer */}
+      <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
+        <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
+      </footer>
+
+      {/* Styles */}
+      <style jsx global>{`
+        @keyframes shine { 100% { transform: translateX(100%); } }
+        .animate-shine { animation: shine 1.5s infinite; }
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+      `}</style>
+
     </div>
   );
 }

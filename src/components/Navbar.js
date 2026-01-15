@@ -1,10 +1,11 @@
+// components/Navbar.js
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, LogOut, ChevronDown, X, Sparkles } from 'lucide-react'; // เพิ่ม Sparkles icon
+import { User, LogOut, ChevronDown, X, Sparkles, LogIn, Users } from 'lucide-react';
 
 export default function Navbar() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
       <div className="container mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
 
-        {/* ================= โซนโลโก้ (คงเดิม) ================= */}
+        {/* ================= โซนโลโก้ ================= */}
         <Link href="/" className="flex items-center gap-3 md:gap-4">
           <div className="hidden md:block transition-transform hover:scale-105 duration-300 flex-shrink-0">
             <Image
@@ -69,18 +70,15 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* ================= เมนู Desktop (ปรับปรุงตามรีเควส) ================= */}
-        <div className="hidden lg:flex items-center gap-4"> {/* ลด gap ลงนิดหน่อยเพื่อให้ปุ่ม Candidate เด่น */}
+        {/* ================= เมนู Desktop ================= */}
+        <div className="hidden lg:flex items-center gap-4">
 
           <div className="flex items-center gap-1">
-            {/* 1. ปุ่มหน้าแรก (Standard Button) */}
             <NavButton
               href="/"
               label="หน้าแรก"
               isActive={pathname === '/'}
             />
-
-            {/* 2. ปุ่มผลการลงคะแนน (Standard Button) */}
             <NavButton
               href="/results"
               label="ผลการลงคะแนนเสียง"
@@ -88,31 +86,39 @@ export default function Navbar() {
             />
           </div>
 
+          {/* ✅ MEET CANDIDATES (NEW DESIGN: Playful Gradient) */}
           <Link
             href="/candidates"
             className={`
-              relative flex items-center gap-2 px-6 py-2.5 rounded-xl ml-2 overflow-hidden transition-all duration-300 group border-2
+              group relative flex items-center gap-2 px-5 py-2 rounded-full ml-2 transition-all duration-300
               ${pathname.startsWith('/candidates') || pathname.startsWith('/party')
-                ? 'bg-[#8A2680] border-[#8A2680] text-white shadow-lg' // Active: สีเต็ม
-                : 'border-[#8A2680] text-[#8A2680] hover:text-white'   // Normal: แค่ขอบ
+                ? 'bg-gradient-to-r from-purple-100 to-pink-50 text-[#8A2680] shadow-inner font-bold' // Active
+                : 'bg-white hover:bg-purple-50 text-slate-600 hover:text-[#8A2680] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5' // Normal
               }
             `}
           >
-            {/* Layer สีที่จะสไลด์ขึ้นมา (Slide Up) */}
-            <span className={`absolute inset-0 w-full h-full bg-[#8A2680] transition-transform duration-300 ease-out origin-bottom
-              ${pathname.startsWith('/candidates') || pathname.startsWith('/party') ? 'scale-y-100' : 'scale-y-0 group-hover:scale-y-100'}`}
+            {/* Gradient Border Trick: ใช้ div ซ้อนด้านหลังทำเป็นขอบสีรุ้ง */}
+            <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[#8A2680] via-purple-400 to-pink-400 opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
+              <div className="w-full h-full rounded-full bg-white group-hover:bg-purple-50 transition-colors"></div>
+            </div>
+
+            {/* Icon: เปลี่ยนเป็น Users และเพิ่ม Animation ดุ๊กดิ๊ก */}
+            <Users
+              size={18}
+              className={`
+                transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12 
+                ${pathname.startsWith('/candidates') ? 'text-[#8A2680] fill-purple-200' : 'text-slate-400 group-hover:text-[#8A2680]'}
+              `}
             />
 
-            {/* ไอคอนและข้อความ (ต้องมี z-10 เพื่อลอยเหนือพื้นหลัง) */}
-            <Sparkles size={18} className="relative z-10 animate-pulse" />
-            <span className="relative z-10 text-sm font-bold tracking-wide">
-              Meet the Candidates
+            <span className="relative z-10 text-sm font-bold tracking-tight">
+              Meet Candidates
             </span>
           </Link>
 
-          {/* User Avatar Dropdown (คงเดิม) */}
-          {user && (
-            <div className="relative ml-4 pl-4 border-l border-gray-200" ref={dropdownRef}>
+          {/* User Profile / Login Logic */}
+          {user ? (
+            <div className="relative ml-2 pl-4 border-l border-gray-200" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100/80 transition-all duration-200 border border-transparent hover:border-gray-200 group"
@@ -142,10 +148,20 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+          ) : (
+            // Desktop Login Button (Black)
+            <Link
+              href="/login"
+              className="ml-3 flex items-center gap-2 px-5 py-2 rounded-full bg-slate-900 text-white font-bold text-sm shadow-md hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <LogIn size={18} strokeWidth={2.5} />
+              <span>เข้าสู่ระบบ</span>
+            </Link>
           )}
+
         </div>
 
-        {/* ================= Hamburger Button (Mobile คงเดิม) ================= */}
+        {/* ================= Hamburger Button ================= */}
         <button
           className="lg:hidden p-2 text-[#8A2680] rounded-xl hover:bg-purple-50 transition-colors focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -163,9 +179,10 @@ export default function Navbar() {
 
       </div>
 
-      {/* ================= Mobile Menu Dropdown (คงเดิม เพิ่ม Candidates) ================= */}
-      <div className={`lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl transition-all duration-300 ease-in-out origin-top overflow-hidden ${isMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+      {/* ================= Mobile Menu Dropdown ================= */}
+      <div className={`lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl transition-all duration-300 ease-in-out origin-top overflow-hidden ${isMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="flex flex-col p-4 space-y-2 pb-6">
+
           {user && (
             <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-2xl mb-4 border border-purple-100 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-[#8A2680] flex items-center justify-center text-white shadow-sm border border-grey-200">
@@ -177,8 +194,8 @@ export default function Navbar() {
               </div>
             </div>
           )}
+
           <MobileNavLink href="/" label="หน้าแรก" isActive={pathname === '/'} onClick={() => setIsMenuOpen(false)} />
-          {/* ✅ เพิ่มเมนู Mobile "ผู้สมัครรับเลือกตั้ง" */}
           <MobileNavLink
             href="/candidates"
             label="Meet the Candidates"
@@ -186,7 +203,8 @@ export default function Navbar() {
             onClick={() => setIsMenuOpen(false)}
           />
           <MobileNavLink href="/results" label="ผลการลงคะแนนเสียง" isActive={pathname === '/results'} onClick={() => setIsMenuOpen(false)} />
-          {user && (
+
+          {user ? (
             <>
               <div className="h-px bg-gray-100 my-2 mx-2"></div>
               <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all active:bg-red-100">
@@ -194,6 +212,16 @@ export default function Navbar() {
                 ออกจากระบบ
               </button>
             </>
+          ) : (
+            // Mobile Login Button (Black)
+            <Link
+              href="/login"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold shadow-md active:scale-95 transition-all mt-2"
+            >
+              <LogIn size={20} />
+              เข้าสู่ระบบ
+            </Link>
           )}
         </div>
       </div>
@@ -207,19 +235,14 @@ function NavButton({ href, label, isActive }) {
       href={href}
       className="relative px-4 py-2 group"
     >
-      {/* 1. ข้อความ (Text) */}
       <span className={`relative z-10 text-sm font-bold transition-colors duration-300 
         ${isActive ? 'text-[#8A2680]' : 'text-gray-500 group-hover:text-[#8A2680]'}`}
       >
         {label}
       </span>
-
-      {/* 2. พื้นหลังจางๆ (Background Pill) - จางๆ นุ่มๆ */}
       <span className={`absolute inset-0 bg-[#8A2680]/5 rounded-lg transform transition-all duration-300 ease-out origin-center
         ${isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100'}`}>
       </span>
-
-      {/* 3. เส้นขีดด้านล่าง (Animated Underline) - วิ่งจาก 0 -> 100% */}
       <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-[#8A2680] transition-all duration-300 ease-in-out
         ${isActive ? 'w-1/2 opacity-100' : 'w-0 opacity-0 group-hover:w-1/2 group-hover:opacity-50'}`}>
       </span>
@@ -227,11 +250,29 @@ function NavButton({ href, label, isActive }) {
   );
 }
 
-// MobileNavLink คงเดิม
+// ✅ FIX: MobileNavLink ดีไซน์ใหม่ (แบบมีแถบโค้งมนด้านซ้าย)
 function MobileNavLink({ href, label, onClick, isActive }) {
   return (
-    <Link href={href} onClick={onClick} className={`block w-full px-5 py-3 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-[#8A2680] text-white shadow-md shadow-purple-200' : 'text-gray-600 hover:bg-gray-50'}`}>
-      {label}
+    <Link
+      href={href}
+      onClick={onClick}
+      // ใช้ relative เพื่อให้วางแถบ indicator ได้
+      className={`
+        relative flex items-center w-full px-5 py-3 text-sm font-bold transition-all duration-200 rounded-xl overflow-hidden
+        ${isActive
+          ? 'bg-purple-50 text-[#8A2680]' // Active: พื้นม่วงจางๆ
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' // Normal
+        }
+      `}
+    >
+      <span className={`absolute left-0 top-0 h-full w-1.5 bg-[#8A2680] rounded-r-full transition-all duration-300 ease-out origin-left
+         ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`}>
+      </span>
+
+      {/* ขยับข้อความหนีแถบเล็กน้อยเมื่อ Active */}
+      <span className={`transition-all duration-200 ${isActive ? 'pl-2' : ''}`}>
+        {label}
+      </span>
     </Link>
   );
 }

@@ -1,30 +1,31 @@
+// components/CountdownTimer.js
 'use client';
 import { useState, useEffect } from 'react';
-import { Timer, Zap, Lock } from 'lucide-react';
+import { Zap, Clock, CalendarDays, Hourglass, Flag } from 'lucide-react';
 
-export default function CountdownTimer() {
-  // --------------------------------------------------------
-  // ⚙️ ตั้งค่าวันเวลา (Config)
-  // --------------------------------------------------------
-  const ELECTION_START = new Date('2026-02-06T08:00:00'); // เริ่ม 6 ก.พ. 08:00
-  const ELECTION_END   = new Date('2026-02-06T17:30:00'); // จบ 6 ก.พ. 16:00
+export default function CountdownTimer({ compact = false }) {
 
-  // State
+  // กำหนดเวลา (Time Configuration)
+  const ELECTION_2026_START = new Date('2026-02-06T08:30:00');
+  const ELECTION_2026_END   = new Date('2026-02-06T17:30:00');
+  const ELECTION_2027_START = new Date('2027-02-06T08:30:00');
+
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [phase, setPhase] = useState('LOADING'); // LOADING, WAITING, RUNNING, ENDED
+  const [phase, setPhase] = useState('LOADING');
 
   useEffect(() => {
     const calculate = () => {
       const now = new Date();
-      if (now < ELECTION_START) {
-        setPhase('WAITING');
-        return ELECTION_START - now;
-      } else if (now >= ELECTION_START && now < ELECTION_END) {
+      
+      if (now < ELECTION_2026_START) {
+        setPhase('BEFORE');
+        return ELECTION_2026_START - now;
+      } else if (now >= ELECTION_2026_START && now < ELECTION_2026_END) {
         setPhase('RUNNING');
-        return ELECTION_END - now;
+        return ELECTION_2026_END - now;
       } else {
-        setPhase('ENDED');
-        return 0;
+        setPhase('NEXT_YEAR');
+        return ELECTION_2027_START - now;
       }
     };
 
@@ -43,109 +44,89 @@ export default function CountdownTimer() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []); // Run once on mount
+  }, []);
 
-  // --------------------------------------------------------
-  // 🎨 ส่วนแสดงผล (Render)
-  // --------------------------------------------------------
-  
-  if (phase === 'LOADING') return null; // กันภาพกระตุกตอนโหลด
+  const getConfig = () => {
+    switch (phase) {
+      case 'RUNNING':
+        return {
+          label: "CLOSES IN",
+          icon: <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 animate-pulse" />,
+          badgeBg: "bg-red-500",
+          textMain: "text-red-600",
+          textSub: "text-red-400", // ปรับสีหน่วยให้เข้มขึ้น อ่านง่ายขึ้น
+          border: "border-red-100",
+          shadow: "shadow-[0_2px_15px_rgba(239,68,68,0.2)]"
+        };
+      case 'NEXT_YEAR':
+        return {
+          label: "SEE YOU 2027",
+          icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
+          badgeBg: "bg-slate-800",
+          textMain: "text-slate-700",
+          textSub: "text-slate-400",
+          border: "border-slate-200",
+          shadow: "shadow-sm"
+        };
+      case 'BEFORE':
+      default:
+        return {
+          label: "STARTS IN",
+          icon: <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
+          badgeBg: "bg-[#9D3292]",
+          textMain: "text-[#9D3292]",
+          textSub: "text-purple-400", // ปรับสีหน่วยให้เข้มขึ้น
+          border: "border-purple-100",
+          shadow: "shadow-[0_2px_10px_rgba(157,50,146,0.15)]"
+        };
+    }
+  };
 
-  // 1. จบการเลือกตั้ง (ENDED)
-  if (phase === 'ENDED') {
-    return (
-      <div className="flex items-center gap-3 px-6 py-4 bg-gray-100/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-500 font-bold shadow-sm select-none">
-        <Lock className="w-5 h-5" />
-        <span>ปิดรับลงคะแนนแล้ว / Election Closed</span>
-      </div>
-    );
-  }
+  const config = getConfig();
 
-  // 2. กำหนดธีมสี (WAITING vs RUNNING)
-  const isRunning = phase === 'RUNNING';
-
-  const theme = isRunning
-    ? {
-        label: "Time Left",
-        icon: <Zap className="w-4 h-4 fill-white animate-pulse" />,
-        badgeStyle: "bg-red-500 text-white shadow-red-200",
-        boxStyle: "border-red-100 bg-red-50/50",
-        numColor: "text-red-600",
-        containerBorder: "border-red-100 shadow-[0_4px_20px_-4px_rgba(239,68,68,0.2)]"
-      }
-    : {
-        label: "Starts In",
-        icon: <Timer className="w-4 h-4" />,
-        badgeStyle: "bg-purple-100 text-purple-700 border border-purple-200",
-        boxStyle: "border-purple-100 bg-white",
-        numColor: "text-[#8A2680]",
-        containerBorder: "border-purple-100/50 shadow-[0_4px_20px_-4px_rgba(138,38,128,0.1)]"
-      };
+  if (phase === 'LOADING') return (
+    <div className="w-48 h-12 bg-slate-100 animate-pulse rounded-full lg:w-64 lg:h-16"></div>
+  );
 
   return (
-    <div className={`flex flex-col items-center lg:items-start gap-3 select-none animate-fade-in`}>
-      
-      {/* Label Badge */}
-      <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-sm w-fit transition-colors duration-500 ${theme.badgeStyle}`}>
-        {theme.icon}
-        {theme.label}
-      </div>
+    // ✅ Wrapper: เพิ่ม padding (p-1.5, lg:p-2) และ gap (gap-3, lg:gap-5) ให้กว้างขึ้น
+    <div className={`group relative inline-flex items-center gap-3 p-1.5 pr-6 lg:gap-5 lg:p-2 lg:pr-10 bg-white border rounded-full transition-all duration-300 cursor-default hover:-translate-y-0.5 select-none ${config.border} ${config.shadow} ${compact ? '' : ''}`}>
+       
+       {/* Badge Label: ขยายขนาด Font และ Padding */}
+       <div className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 rounded-full ${config.badgeBg} text-white shadow-sm transition-all`}>
+          {config.icon}
+          <span className="text-[10px] sm:text-xs lg:text-sm font-bold uppercase tracking-wider translate-y-[0.5px] whitespace-nowrap">
+             {config.label}
+          </span>
+       </div>
 
-      {/* Timer Container */}
-      <div className={`flex items-center p-1.5 md:p-2 bg-white/60 backdrop-blur-md rounded-2xl border transition-all duration-500 ${theme.containerBorder}`}>
-        
-        {/* Days (โชว์เฉพาะถ้า > 0) */}
-        {timeLeft.days > 0 && (
-          <>
-            <TimeBox value={timeLeft.days} label="DAYS" theme={theme} />
-            <Separator color={theme.numColor} />
-          </>
-        )}
+       {/* ตัวเลขเวลานับถอยหลัง: ปรับ Gap ให้ห่างขึ้น */}
+       <div className={`flex items-baseline gap-1.5 sm:gap-2 lg:gap-3 ${config.textMain}`}>
+          <TimeUnit value={timeLeft.days} unit="d" colorSub={config.textSub} />
+          <Separator color={config.textSub} />
+          <TimeUnit value={timeLeft.hours} unit="h" colorSub={config.textSub} />
+          <Separator color={config.textSub} />
+          <TimeUnit value={timeLeft.minutes} unit="m" colorSub={config.textSub} />
+          <Separator color={config.textSub} />
+          <TimeUnit value={timeLeft.seconds} unit="s" colorSub={config.textSub} />
+       </div>
 
-        {/* Hours */}
-        <TimeBox value={timeLeft.hours} label="HOURS" theme={theme} />
-        <Separator color={theme.numColor} />
-
-        {/* Minutes */}
-        <TimeBox value={timeLeft.minutes} label="MINS" theme={theme} />
-        <Separator color={theme.numColor} />
-
-        {/* Seconds */}
-        <TimeBox value={timeLeft.seconds} label="SECS" theme={theme} isLast />
-
-      </div>
     </div>
   );
 }
 
-// --- Sub-Components ---
-
-const TimeBox = ({ value, label, theme, isLast }) => (
-  <div className="flex flex-col items-center group min-w-[3.5rem] md:min-w-[4.5rem]">
-    <div className={`
-        flex items-center justify-center 
-        w-12 h-12 md:w-16 md:h-16 
-        rounded-xl md:rounded-2xl border 
-        transition-colors duration-500
-        ${theme.boxStyle}
-    `}>
-      <span className={`text-xl md:text-3xl font-black tabular-nums leading-none tracking-tight ${theme.numColor}`}>
-        {String(value).padStart(2, '0')}
-      </span>
-    </div>
-    <span className="text-[8px] md:text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider">
-      {label}
+// ✅ TimeUnit: ขยายขนาด Font (text-lg -> text-3xl)
+const TimeUnit = ({ value, unit, colorSub }) => (
+  <div className="flex items-baseline">
+    <span className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-black tabular-nums tracking-tight leading-none transition-all">
+      {String(value).padStart(2, '0')}
     </span>
+    {/* ปรับขนาดหน่วย (d, h, m, s) ให้ใหญ่ขึ้นและชัดขึ้น */}
+    <span className={`text-[12px] sm:text-xs lg:text-base font-bold uppercase ml-0.5 lg:ml-1 ${colorSub} transition-all`}>{unit}</span>
   </div>
 );
 
-// ✅ แก้ไข: ใช้ relative + top เพื่อดึงตัว : ขึ้นไปดื้อๆ เลยครับ (ชัวร์กว่า pb)
+// ✅ Separator: ตัวคั่น (:) ปรับขนาดตาม
 const Separator = ({ color }) => (
-  <span className={`
-    text-xl md:text-3xl font-black opacity-30 mx-0.5 md:mx-1
-    relative -top-2 md:-top-2  /* 👈 สั่งให้ลอยขึ้น 4px-8px */
-    ${color}
-  `}>
-    :
-  </span>
+  <span className={`font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl lg:pb-1 ${color} opacity-60`}>:</span>
 );
