@@ -10,54 +10,59 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  studentId    String   @unique
-  name         String?
-  email        String?
-  facultyId    String?
-  role         String   @default("student")
-  password  String?
-  gender       String?
-  major        String?
-  year         String?
+  id            Int      @id @default(autoincrement())
+  studentId     String   @unique
+  name          String?
+  email         String?
+  facultyId     String?
+  departmentId  String?
+  role          String   @default("student")
+  password      String?
+  gender        String?
+  major         String?
+  year          String?
 
-  isVoted      Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  isVoted       Boolean  @default(false)
+  isFormCompleted  Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
-  candidateId  Int?
-  candidate    Candidate? @relation(fields: [candidateId], references: [id])
+  candidateId   Int?
+  candidate     Candidate? @relation(fields: [candidateId], references: [id])
 }
 
 model Member {
-  id           Int      @id @default(autoincrement())
-  studentId    String   @unique
-  name         String
-  email        String
-  imageUrl     String
+  id            Int      @id @default(autoincrement())
+  studentId     String   @unique
+  name          String
+  imageUrl      String
   
-  position     String?
+  position      String?
 
-  candidateId  Int
-  candidate    Candidate @relation(fields: [candidateId], references: [id])
+  candidateId   Int
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
 }
 
 model Candidate {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  number       Int      @unique
-  slogan       String?
-  logoUrl      String?
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  number        Int      @unique
+  slogan        String?
+  logoUrl       String?
   groupImageUrl String?
   
-  members      Member[]
-  voters       User[]
+  logoMeaning   String?  // เก็บความหมายสัญลักษณ์ (Text ยาว)
+  missions      Json?    // เก็บพันธกิจ (แนะนำเป็น Json เพื่อเก็บเป็น Array ["ข้อ1", "ข้อ2"])
+  policies      Json?    // เก็บนโยบาย (แนะนำเป็น Json เพื่อเก็บเป็น Array ["ข้อ1", "ข้อ2"])
   
-  score        Int      @default(0)
+  members       Member[]
+  voters        User[]
+  
+  score         Int      @default(0)
 }
 
 model SystemConfig {
-  id           Int      @id @default(1)
-  isVoteOpen   Boolean  @default(false)
-  showResult   Boolean  @default(false)
-  updatedAt    DateTime @updatedAt
+  id            Int      @id @default(1)
+  isVoteOpen    Boolean  @default(false)
+  showResult    Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
 }

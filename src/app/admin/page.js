@@ -1,9 +1,12 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ResultCard from "../../components/ResultCard";
 import CandidateCard from "../../components/CandidateCard";
 import EditCandidateModal from "../../components/EditCandidateModal";
+import EditCandidateMember from "../../components/EditCandidateMember";
+import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
 import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2 } from "lucide-react";
@@ -12,12 +15,16 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 
+// ✅ 1. Import Config กลางมาใช้ (เหมือนหน้า User)
+import { ELECTION_CONFIG } from "../../utils/electionConfig";
+
+// 1. หน้าภาพรวม (Overview)
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [phase, setPhase] = useState('LOADING'); // LOADING, WAITING, RUNNING, ENDED
+  const [phase, setPhase] = useState('LOADING');
 
-  const ELECTION_START = new Date('2026-02-06T08:00:00'); // เริ่ม 6 ก.พ. 08:00
-  const ELECTION_END = new Date('2026-02-06T17:30:00'); // จบ 6 ก.พ. 16:00
+  // ✅ 2. ใช้เวลาจาก Config กลาง (ไม่ต้อง Hardcode แล้ว)
+  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
 
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -30,22 +37,32 @@ const OverviewTab = () => {
 
   const fetchResults = async () => {
     try {
-      const res = await fetch("/api/results");
+      const res = await fetch("/api/results?isAdmin=true");
       const data = await res.json();
 
       if (data.candidates) {
         const sortedCandidates = data.candidates.sort((a, b) => b.score - a.score);
         setCandidates(sortedCandidates);
-        setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+
+        if (typeof data.totalVotes !== 'undefined') {
+          setTotalVotes(data.totalVotes);
+        } else {
+          setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+        }
       }
 
       if (data.stats) {
-        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4', 'อื่นๆ'];
-        const sortedByYear = data.stats.byYear ? [...data.stats.byYear].sort((a, b) => {
-          const indexA = yearOrder.indexOf(a.name);
-          const indexB = yearOrder.indexOf(b.name);
-          return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-        }) : [];
+        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+
+        const sortedByYear = data.stats.byYear
+          ? data.stats.byYear
+            .filter(item => item.name !== 'อื่นๆ')
+            .sort((a, b) => {
+              const indexA = yearOrder.indexOf(a.name);
+              const indexB = yearOrder.indexOf(b.name);
+              return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+            })
+          : [];
 
         const genderOrder = ['ชาย', 'หญิง'];
         const sortedByGender = data.stats.byGender ? [...data.stats.byGender].sort((a, b) => {
@@ -92,8 +109,10 @@ const OverviewTab = () => {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     }, 1000);
-    const interval = setInterval(fetchResults, 5000);
+
     fetchResults();
+    const interval = setInterval(fetchResults, 5000);
+
     return () => {
       clearInterval(timer);
       clearInterval(interval);
@@ -132,7 +151,9 @@ const OverviewTab = () => {
             </div>
           </div>
           <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">Candidates</h3>
-          <p className="text-3xl font-black text-gray-800 mt-1">{candidates.filter((e) => e.number != 0).length} Teams</p>
+          <p className="text-3xl font-black text-gray-800 mt-1">
+            {candidates.filter((e) => parseInt(e.number) > 0).length} Teams
+          </p>
         </div>
 
         {/* Card 3 */}
@@ -168,12 +189,15 @@ const OverviewTab = () => {
   )
 };
 
-// 2. หน้าจัดการผู้สมัคร
+// 2. หน้าจัดการผู้สมัคร (Candidates)
 const CandidatesTab = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+  const [focusMemberId, setFocusMemberId] = useState(null);
 
   const [processing, setProcessing] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
@@ -184,7 +208,7 @@ const CandidatesTab = () => {
   const fetchResults = async () => {
     setCandidates([]);
     try {
-      const res = await fetch("/api/results");
+      const res = await fetch("/api/results?isAdmin=true");
       const data = await res.json();
 
       if (data.candidates) {
@@ -222,7 +246,14 @@ const CandidatesTab = () => {
 
   const handleEditClick = (candidate = null) => {
     setSelectedCandidate(candidate);
+    setFocusMemberId(null);
     setIsEditModalOpen(true);
+  };
+
+  const handleEditClickMember = (candidate = null, memberId = null) => {
+    setSelectedCandidate(candidate);
+    setFocusMemberId(memberId);
+    setIsEditMemberModalOpen(true);
   };
 
   useEffect(() => {
@@ -250,7 +281,7 @@ const CandidatesTab = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
               {
-                candidates.filter(e => e.number != 0).map((candidate, index) => {
+                candidates.filter(e => e.number > 0).map((candidate) => {
                   return (
                     <CandidateCard
                       key={candidate.id}
@@ -286,6 +317,14 @@ const CandidatesTab = () => {
           onUpdate={(actionType) => handleUpdateSuccess(actionType)}
         />
 
+        <EditCandidateMemberModal
+          isOpen={isEditMemberModalOpen}
+          onClose={() => setIsEditMemberModalOpen(false)}
+          candidate={selectedCandidate}
+          focusMemberId={focusMemberId}
+          onUpdate={handleUpdateSuccess}
+        />
+
       </div>
 
       <div className="p-3" />
@@ -294,10 +333,27 @@ const CandidatesTab = () => {
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-purple-50 text-purple-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
           <h3 className="text-base lg:text-xl font-bold text-slate-700">สมาชิกพรรค</h3>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-green-200 text-green-600 hover:bg-green-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95" >
-            <CalendarPlus2 className="w-4 h-4" />
-            New
-          </button>
+        </div>
+
+        <div>
+          {/* Members */}
+          {loading ? (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200"><p className="text-slate-400">Loading...</p></div>
+          ) : (
+            <div className="grid grid-cols-1 h-500 sm:grid-cols-2 lg:grid-cols-2 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
+              {
+                candidates.filter(e => e.number > 0).map((candidate, index) => {
+                  return (
+                    <div key={candidate.id}>
+                      <EditCandidateMember
+                        candidate={candidate}
+                        onClick={(memberId) => handleEditClickMember(candidate, memberId)}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
 
         <div>
@@ -309,7 +365,7 @@ const CandidatesTab = () => {
   )
 };
 
-// 3. หน้าตั้งค่า
+// 3. หน้าตั้งค่า (Settings)
 const SettingsTab = () => {
   const [isVoteOpen, setIsVoteOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -359,7 +415,7 @@ const SettingsTab = () => {
             setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
           } else {
             if (activeModal === 'RESET_CANDIDATES') {
-              setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
+              setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
             } else {
               setSuccessMessage({ title: '???', msg: '???' });
             }
@@ -493,7 +549,7 @@ const SettingsTab = () => {
   )
 };
 
-// 4. หน้า Monitor
+// 4. หน้า Monitor (ผลคะแนนสด)
 const MonitorTab = () => {
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -511,22 +567,34 @@ const MonitorTab = () => {
 
   const fetchResults = async () => {
     try {
-      const res = await fetch("/api/results");
+      const res = await fetch("/api/results?isAdmin=true");
       const data = await res.json();
 
       if (data.candidates) {
         const sortedCandidates = data.candidates.sort((a, b) => b.score - a.score);
         setCandidates(sortedCandidates);
-        setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+
+        if (typeof data.totalVotes !== 'undefined') {
+          setTotalVotes(data.totalVotes);
+        } else {
+          setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+        }
       }
 
       if (data.stats) {
-        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4', 'อื่นๆ'];
-        const sortedByYear = data.stats.byYear ? [...data.stats.byYear].sort((a, b) => {
-          const indexA = yearOrder.indexOf(a.name);
-          const indexB = yearOrder.indexOf(b.name);
-          return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-        }) : [];
+        // ✅ 1. กำหนด List ปีที่ต้องการให้แสดงเท่านั้น (Allow List)
+        const allowedYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+
+        // ✅ 2. กรองเฉพาะข้อมูลที่มีชื่อตรงกับ allowedYears เท่านั้น
+        const sortedByYear = data.stats.byYear
+          ? data.stats.byYear
+            .filter(item => allowedYears.includes(item.name.trim())) // .trim() กันเหนียวเรื่องเว้นวรรค
+            .sort((a, b) => {
+              const indexA = allowedYears.indexOf(a.name.trim());
+              const indexB = allowedYears.indexOf(b.name.trim());
+              return indexA - indexB;
+            })
+          : [];
 
         const genderOrder = ['ชาย', 'หญิง'];
         const sortedByGender = data.stats.byGender ? [...data.stats.byGender].sort((a, b) => {
@@ -553,8 +621,9 @@ const MonitorTab = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const ELECTION_START = new Date(2024, 1, 6, 8, 0, 0);
-  const ELECTION_END = new Date(2024, 1, 6, 16, 0, 0);
+  // ✅ 3. ใช้เวลาจาก Config กลาง
+  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+
   const now = currentTime;
   let electionStatus = "WAITING";
   let targetDate = ELECTION_START;
@@ -601,7 +670,7 @@ const MonitorTab = () => {
                   candidate={candidate}
                   rank={index + 1}
                   totalVotes={totalVotes}
-                  isElectionEnded={IS_ELECTION_ENDED}
+                  status="ENDED"
                 />
               );
             })}
@@ -612,71 +681,12 @@ const MonitorTab = () => {
       <div className='p-3'></div>
 
       <div>
-        {/* === Section 3: กราฟสถิติ === */}
+        {/* === Section 3: Charts Layout === */}
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8">
 
-          <div className="order-1 lg:order-2 grid grid-cols-2 gap-3 lg:flex lg:flex-col lg:gap-8 h-full">
-
-            {/* กราฟชั้นปี */}
-            <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 mb-2 lg:mb-6">
-                <div className="bg-yellow-100 p-1.5 lg:p-2 rounded-lg"><Medal className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" /></div>
-                <h3 className="text-sm lg:text-xl font-bold text-slate-700">ชั้นปี</h3>
-              </div>
-              <div className="h-[160px] lg:h-[250px] w-full text-xs font-medium">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={demographics.byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fill: '#64748b', fontSize: 14 }}
-                      interval={0}
-                    />
-                    <YAxis hide />
-                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                    <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* กราฟเพศ */}
-            <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 mb-2 lg:mb-6">
-                <div className="bg-blue-100 p-1.5 lg:p-2 rounded-lg"><PieIcon className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" /></div>
-                <h3 className="text-sm lg:text-xl font-bold text-slate-700">เพศ</h3>
-              </div>
-              <div className="h-[160px] lg:h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={demographics.byGender}
-                      cx="50%" cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value" stroke="none"
-                    >
-                      {demographics.byGender.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS_GENDER[index % COLORS_GENDER.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                    <Legend
-                      verticalAlign={"middle"}
-                      align={"right"}
-                      layout={"vertical"}
-                      iconType="circle"
-                      wrapperStyle={{ fontSize: '14px', paddingTop: '0' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* กราฟสาขา (ด้านล่างสุด) */}
-          <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
+          {/* 👈 LEFT COLUMN: Major Chart (กราฟสาขา) */}
+          {/* Mobile: Order 2 (Bottom), Desktop: Order 1 (Left) */}
+          <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 h-full">
             <div className="flex items-center gap-3 mb-4 lg:mb-8">
               <div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[#8A2680]" /></div>
               <h3 className="text-base lg:text-xl font-bold text-slate-700">แยกตามสาขา</h3>
@@ -710,11 +720,75 @@ const MonitorTab = () => {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Mobile: Order 1 (Top), Desktop: Order 2 (Right) */}
+          <div className="order-1 lg:order-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-8 h-full">
+
+            {/* 1. Year Chart (กราฟชั้นปี) */}
+            <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-2 lg:mb-6">
+                <div className="bg-yellow-100 p-1.5 lg:p-2 rounded-lg"><Medal className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" /></div>
+                <h3 className="text-sm lg:text-xl font-bold text-slate-700">ชั้นปี</h3>
+              </div>
+              <div className="h-[200px] w-full text-xs font-medium">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={demographics.byYear} // ✅ ใช้ข้อมูลได้เลย (ไม่มี "อื่นๆ" แล้ว)
+                    margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: '#64748b', fontSize: 14 }}
+                      interval={0}
+                    />
+                    <YAxis hide />
+                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                    <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={50} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 2. Gender Chart (กราฟเพศ) */}
+            <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-2 lg:mb-6">
+                <div className="bg-blue-100 p-1.5 lg:p-2 rounded-lg"><PieIcon className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" /></div>
+                <h3 className="text-sm lg:text-xl font-bold text-slate-700">เพศ</h3>
+              </div>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={demographics.byGender}
+                      cx="50%" cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value" stroke="none"
+                    >
+                      {demographics.byGender.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS_GENDER[index % COLORS_GENDER.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                    <Legend
+                      verticalAlign={"middle"}
+                      align={"right"}
+                      layout={"vertical"}
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '0' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
-
     </div>
-  )
+  );
 };
 
 
@@ -742,7 +816,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex">
 
-      {/* ✅ 3. Sidebar (เมนูด้านซ้าย) */}
+      {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full z-20">
         <div className="p-6 border-b border-gray-100 flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-[#8A2680] to-[#3B82F6] rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
@@ -781,10 +855,10 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ✅ 4. Main Content Area */}
+      {/* Main Content Area */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
 
-        {/* Top Bar (สำหรับ Mobile หรือแสดงสถานะ) */}
+        {/* Top Bar */}
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10 md:static">
           <div className="md:hidden font-bold text-gray-800">Admin Console</div> {/* Mobile Title */}
           <div className="ml-auto flex items-center gap-4">
@@ -795,7 +869,7 @@ export default function AdminDashboard() {
                 Online
               </p>
             </div>
-            {/* ปุ่ม Logout แบบเดิม (โชว์เฉพาะ Mobile เพราะ Desktop อยู่ใน Sidebar แล้ว) */}
+            {/* Mobile Logout */}
             <button onClick={handleLogout} className="md:hidden p-2 text-gray-500 hover:text-red-600 bg-gray-100 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             </button>
@@ -803,7 +877,6 @@ export default function AdminDashboard() {
         </header>
 
         <main className="flex-1 p-6 md:p-8 bg-gray-50">
-          {/* ✅ 5. แสดงผลตาม activeTab ที่เลือก */}
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
           {activeTab === 'settings' && <SettingsTab />}

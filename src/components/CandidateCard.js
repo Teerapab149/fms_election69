@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { Users } from "lucide-react";
 
-export default function ResultCard({ candidate, onClick }) {
+export default function CandidateCard({ candidate, onClick }) {
     const [imageError, setImageError] = useState(false);
     const isWinner = false
     const imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
 
     return (
-        <div onClick={onClick} className="group relative cursor-pointer overflow-hidden bg-white transition-all duration-300 lg:flex-col lg:items-stretch lg:rounded-2xl lg:border lg:shadow-none lg:py-0 lg:mb-0 hover:shadow-md transition-shadow">
+        <div 
+            onClick={onClick} 
+            // ❌ ลบ transition-shadow ออก เพราะ transition-all ครอบคลุมแล้ว
+            className="group relative cursor-pointer overflow-hidden bg-white transition-all duration-300 lg:flex-col lg:items-stretch lg:rounded-2xl lg:border lg:shadow-none lg:py-0 lg:mb-0 hover:shadow-md"
+        >
             <div className="relative shrink-0 bg-slate-50 overflow-hidden lg:w-full lg:h-48 lg:aspect-[4/3] lg:rounded-none lg:ml-0 lg:border-0" >
                 {imageSrc && !imageError ? (
                     <img

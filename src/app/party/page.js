@@ -1,50 +1,425 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from "next/navigation";
-import { useSearchParams } from 'next/navigation';
-import { Users, Loader2, X, User, ChevronDown, Move, Search, ChevronRight, Crown, Maximize2, ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Loader2, X, User, ChevronDown, Search, ChevronRight,
+  Crown, Maximize2, ChevronLeft, Target, Shield,
+  Flag, BookOpen, Star, Lightbulb, Quote, CheckCircle2
+} from 'lucide-react';
 import Navbar from "../../components/Navbar";
 import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
+import BackToVoteBar from "../../components/BackToVoteBar";
+import CandidateModal from '../../components/CandidateModal';
 
-export default function PartyPage() {
+// --- CONSTANTS ---
+const POSITION_ORDER = [
+  "นายกสโมสรนักศึกษา", "อุปนายกกิจการภายใน", "อุปนายกกิจการภายนอก", "เลขานุการ", "เหรัญญิก",
+  "ประธานฝ่ายประชาสัมพันธ์", "ประธานฝ่ายสวัสดิการ", "ประธานฝ่ายพัสดุ", "ประธานฝ่ายกีฬา",
+  "ประธานฝ่ายวิชาการ", "ประธานฝ่ายศิลปวัฒนธรรม", "ประธานฝ่ายข้อมูลกิจการนักศึกษา",
+  "ประธานฝ่ายเทคโนโลยีสารสนเทศ", "ประธานฝ่ายประเมินผล", "ประธานฝ่ายกิจกรรม",
+  "ประธานฝ่ายกราฟิกดีไซน์", "ประธานฝ่ายพิธีการ", "ประธานฝ่ายครีเอทีฟและสันทนาการ",
+  "ประธานฝ่ายสถานที่", "ประธานฝ่ายสาธารณสุข"
+];
+
+// ✅ PREPARE DATA HELPER
+// ฟังก์ชันนี้จะตรวจสอบข้อมูลจาก DB ว่ามีไหม ถ้าไม่มีให้ใส่ Default Text เพื่อไม่ให้หน้าเว็บโล่ง
+const preparePartyData = (party) => {
+  return {
+    ...party,
+    // 1. ความหมายโลโก้ (Text)
+    logoMeaning: party.logoMeaning || "ยังไม่มีข้อมูลความหมายสัญลักษณ์",
+
+    // 2. พันธกิจ (JSON Array) -> ตรวจสอบว่าเป็น Array จริงไหม
+    missions: (Array.isArray(party.missions) && party.missions.length > 0)
+      ? party.missions
+      : ["ยังไม่มีข้อมูลพันธกิจ"],
+
+    // 3. นโยบาย (JSON Array) -> ตรวจสอบว่าเป็น Array จริงไหม
+    policies: (Array.isArray(party.policies) && party.policies.length > 0)
+      ? party.policies
+      : ["ยังไม่มีข้อมูลนโยบาย"]
+  };
+};
+
+// --- SUB-COMPONENTS ---
+
+const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
+  const [currentBgIndex, setCurrentBgIndex] = useState(0);
+
+  useEffect(() => {
+    if (galleryImages.length <= 1) return;
+    const interval = setInterval(() => setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length), 5000);
+    return () => clearInterval(interval);
+  }, [galleryImages]);
+
+  return (
+    <section className="relative w-full bg-white border-b border-slate-100">
+      <div className="relative w-full cursor-pointer group bg-slate-100" onClick={onOpenLightbox}>
+        <div className="relative w-full aspect-[6/4] md:aspect-[20/9] lg:aspect-[2.5/1] overflow-hidden">
+          {galleryImages.length > 0 ? (
+            galleryImages.map((img, idx) => (
+              <div key={idx} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentBgIndex ? 'opacity-100' : 'opacity-0'}`}>
+                <img src={img} className="w-full h-full object-cover object-[center_30%]" alt={`Cover ${idx}`} loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+              </div>
+            ))
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-r ${theme.gradient}`} />
+          )}
+        </div>
+        {galleryImages.length > 0 && (
+          <button className="absolute bottom-4 right-4 z-20 px-4 py-2 bg-black/50 hover:bg-black/70 text-white rounded-lg backdrop-blur-md text-xs font-bold flex items-center gap-2 transition-all border border-white/10">
+            <Maximize2 size={14} /> <span className="hidden sm:inline">ดูภาพขยาย</span>
+          </button>
+        )}
+      </div>
+      <div className="w-full h-1.5" style={{ backgroundColor: theme.main }}></div>
+      <div className="max-w-[90rem] mx-auto px-4 md:px-12 w-full pb-8">
+        <div className="relative flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-8">
+          <div className="relative -mt-16 md:-mt-24 shrink-0 z-30">
+            <div className="w-32 h-32 md:w-52 md:h-52 rounded-full border-[6px] border-white bg-white shadow-2xl overflow-hidden p-1">
+              <img src={party.logoUrl} className="w-full h-full object-contain rounded-full" alt="Party Logo" loading="lazy" />
+            </div>
+          </div>
+          <div className="flex-1 min-w-0 pt-2 md:pb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-3 py-1 rounded-md text-white font-black text-sm shadow-sm" style={{ backgroundColor: theme.main }}>
+                NO. {party.number}
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-2 tracking-tight">{party.name}</h1>
+            <p className="text-slate-500 font-medium text-lg md:text-xl">{party.slogan}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ✅ Section 2: แสดงข้อมูลจริงจาก DB
+const PartyVisionSection = ({ party, theme }) => {
+  return (
+    <section className="relative w-full py-16 md:py-24 px-4 overflow-hidden bg-slate-50 border-b border-slate-200">
+
+      {/* Background Graphic */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-b from-[var(--theme-color)] to-transparent opacity-[0.03] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" style={{ '--theme-color': theme.main }} />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+          {/* ---------------- LEFT COLUMN: Identity & Mission (Col-Span 5) ---------------- */}
+          <div className="lg:col-span-5 flex flex-col gap-8">
+
+            {/* Box 1: ความหมายโลโก้ */}
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
+              <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: theme.main }}></div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-slate-50 text-slate-400">
+                  <Lightbulb size={20} />
+                </div>
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-wide">ความหมายสัญลักษณ์</h3>
+              </div>
+              {/* แสดงข้อมูลจริงจาก DB */}
+              <p className="text-slate-600 leading-relaxed text-sm md:text-base whitespace-pre-line">
+                {party.logoMeaning}
+              </p>
+              <Quote className="absolute bottom-4 right-6 text-slate-100 w-24 h-24 -z-10 transform rotate-12" />
+            </div>
+
+            {/* Box 2: พันธกิจ (Mission) */}
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 rounded-lg text-white shadow-md" style={{ backgroundColor: theme.main }}>
+                  <Flag size={20} />
+                </div>
+                <h3 className="text-xl font-black text-slate-800">พันธกิจของพรรค</h3>
+              </div>
+
+              <div className="space-y-6">
+                {/* Loop แสดงข้อมูลจริงจาก DB Array */}
+                {party.missions.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 items-start">
+                    <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm shadow-sm mt-0.5"
+                      style={{ backgroundColor: theme.main }}>
+                      {idx + 1}
+                    </span>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+                      {item}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* ---------------- RIGHT COLUMN: Policies (Col-Span 7) ---------------- */}
+          <div className="lg:col-span-7">
+            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-slate-100 h-full relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-10 opacity-5">
+                <Target size={200} style={{ color: theme.main }} />
+              </div>
+
+              <div className="flex items-center gap-4 mb-8 relative z-10">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <Star className="w-8 h-8 fill-current" style={{ color: theme.main }} />
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black text-slate-800">นโยบายของพรรค</h3>
+                  <p className="text-slate-400 font-medium text-sm">Policy Statement</p>
+                </div>
+              </div>
+
+              {/* Policy List: Loop ข้อมูลจริง */}
+              <div className="space-y-6 relative z-10">
+                {party.policies.map((policy, idx) => (
+                  <div key={idx} className="group flex gap-5 p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                    <div className="shrink-0 mt-1">
+                      <CheckCircle2 size={24} className="text-slate-300 group-hover:text-[var(--theme-color)] transition-colors" style={{ '--theme-color': theme.main }} />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-[var(--theme-color)] transition-colors" style={{ '--theme-color': theme.main }}>
+                        นโยบายข้อที่ {idx + 1}
+                      </h4>
+                      <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+                        {policy}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const PartyChartSection = ({ party, theme, onSelectMember, onScrollToList }) => {
+  return (
+    <section className="relative w-full h-[90vh] bg-[#02040a] flex flex-col border-t border-slate-900 overflow-hidden">
+      <div className="absolute top-0 left-0 w-full z-20 pt-8 px-6 flex justify-between items-start pointer-events-none">
+        <div className="flex flex-col gap-1 select-none">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-[2px]" style={{ backgroundColor: theme.main }}></div>
+            <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white/40 uppercase">Organizational Chart</span>
+          </div>
+          <h2 className="text-4xl md:text-6xl font-black text-white leading-none tracking-tighter shadow-black drop-shadow-md">
+            โครงสร้าง<span style={{ color: theme.main }}>ทีม</span>
+          </h2>
+        </div>
+        <button onClick={onScrollToList}
+          className="pointer-events-auto bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-all border border-white/10 hover:scale-110">
+          <ChevronDown />
+        </button>
+      </div>
+      <div className="flex-1 relative w-full h-full">
+        <PartyChart members={party.chartMembers} theme={theme} onMemberClick={onSelectMember} partyName={party.name} />
+      </div>
+    </section>
+  );
+};
+
+const CandidateList = ({ members, theme, onSelectMember }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const { president, executives, heads, filteredSearch, isSearching } = useMemo(() => {
+    const validMembers = members.filter(m => !m.isPlaceholder);
+    if (searchTerm) {
+      return {
+        isSearching: true,
+        filteredSearch: validMembers.filter(m =>
+          m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.position?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      };
+    }
+    return {
+      isSearching: false,
+      president: validMembers.find(m => m.position === POSITION_ORDER[0]),
+      executives: validMembers.filter(m => POSITION_ORDER.slice(1, 5).includes(m.position)),
+      heads: validMembers.filter(m => !POSITION_ORDER.slice(0, 5).includes(m.position)),
+      filteredSearch: []
+    };
+  }, [members, searchTerm]);
+
+  return (
+    <section className="w-full bg-white py-16 md:py-24 px-4 md:px-20 border-t border-slate-100 relative overflow-hidden">
+      <div className="max-w-6xl mx-auto relative z-10">
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter mb-2">
+              The Candidates <span style={{ color: theme.main }}>List</span>
+            </h2>
+            <p className="text-slate-500">รายชื่อผู้สมัครและคณะทำงาน</p>
+          </div>
+          <div className="relative group w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อ หรือตำแหน่ง..."
+              className="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-2 border-slate-100 focus:border-[var(--theme-color)] focus:outline-none transition-all"
+              style={{ '--theme-color': theme.main }}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {isSearching ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSearch.length > 0 ? filteredSearch.map(m => (
+              <MemberCard key={m.id} member={m} theme={theme} onClick={() => onSelectMember(m)} compact />
+            )) : <div className="col-span-full text-center py-20 text-slate-400">ไม่พบข้อมูลที่ค้นหา</div>}
+          </div>
+        ) : (
+          <div className="space-y-16">
+            {president && (
+              <div>
+                <SectionLabel theme={theme} label="THE PRESIDENT" />
+                <div onClick={() => onSelectMember(president)}
+                  className="group relative bg-white p-6 md:p-8 rounded-[2.5rem] shadow-2xl border-2 cursor-pointer hover:scale-[1.01] transition-all duration-500 flex flex-col md:flex-row items-center gap-8 overflow-hidden"
+                  style={{ borderColor: `${theme.main}20` }}>
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[var(--theme-color)] to-transparent opacity-5 rounded-bl-full pointer-events-none" style={{ '--theme-color': theme.main }} />
+                  <div className="w-40 h-40 md:w-56 md:h-56 rounded-[2rem] overflow-hidden shadow-lg shrink-0 relative ring-4 ring-slate-50">
+                    <div className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg z-20">
+                      <Crown className="w-5 h-5" style={{ color: theme.main }} />
+                    </div>
+                    <MemberImage url={president.imageUrl} />
+                  </div>
+                  <div className="flex-1 text-center md:text-left z-10">
+                    <span className="inline-block px-3 py-1 rounded-full text-white font-bold text-xs mb-3 shadow-md" style={{ backgroundColor: theme.main }}>CANDIDATE #1</span>
+                    <h3 className="text-2xl md:text-4xl font-black text-slate-900 mb-2 leading-tight">{president.name}</h3>
+                    <p className="text-lg md:text-2xl font-bold opacity-80 mb-4" style={{ color: theme.main }}>{president.position}</p>
+                    <button className="inline-flex items-center text-sm font-bold text-slate-400 group-hover:text-slate-600 transition-colors">
+                      VIEW PROFILE <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {executives.length > 0 && (
+              <div>
+                <SectionLabel theme={theme} label="CORE EXECUTIVES" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {executives.map((m, i) => <MemberCard key={m.id} member={m} theme={theme} onClick={() => onSelectMember(m)} index={i + 2} isExec />)}
+                </div>
+              </div>
+            )}
+            {heads.length > 0 && (
+              <div>
+                <SectionLabel theme={theme} label="DEPARTMENT HEADS" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {heads.map((m, i) => <MemberCard key={m.id} member={m} theme={theme} onClick={() => onSelectMember(m)} index={i + 6} />)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const SectionLabel = ({ theme, label }) => (
+  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-6 flex items-center gap-3">
+    <div className="w-8 h-[3px] rounded-full" style={{ backgroundColor: theme.main }}></div> {label}
+  </h3>
+);
+
+const MemberCard = ({ member, theme, onClick, index, isExec, compact }) => (
+  <div onClick={onClick}
+    className={`
+         group bg-white cursor-pointer transition-all duration-300 border border-slate-100 hover:border-slate-200 hover:shadow-xl
+         ${isExec ? 'p-4 rounded-[2rem] flex items-center gap-5 border-l-[6px]' : 'p-3 rounded-2xl flex items-center gap-4'}
+         ${compact ? 'border shadow-sm' : ''}
+       `}
+    style={{ borderLeftColor: isExec ? theme.main : undefined }}>
+    <div className={`relative overflow-hidden bg-slate-100 shrink-0 ${isExec ? 'w-24 h-24 rounded-2xl shadow-md' : 'w-16 h-16 rounded-xl'}`}>
+      {index && (
+        <div className="absolute top-1 left-1 w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px] z-10 shadow-sm" style={{ backgroundColor: theme.main }}>
+          {index}
+        </div>
+      )}
+      <MemberImage url={member.imageUrl} />
+    </div>
+    <div className="min-w-0 flex-1">
+      <h4 className={`font-black text-slate-800 truncate ${isExec ? 'text-lg' : 'text-sm'}`}>{member.name}</h4>
+      <p className={`font-bold truncate opacity-60 ${isExec ? 'text-xs uppercase mb-1' : 'text-[10px]'}`} style={{ color: theme.main }}>{member.position}</p>
+      {isExec && <div className="text-[10px] font-bold text-slate-300 group-hover:text-slate-500 transition-colors">PROFILE +</div>}
+    </div>
+  </div>
+);
+
+// --- MAIN CONTENT CONTROLLER ---
+
+function PartyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
-  const chartSectionRef = useRef(null);
-  const listSectionRef = useRef(null);
-  const chartContainerRef = useRef(null);
+  const source = searchParams.get('source');
+
   const [activeParty, setActiveParty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
-  const [currentBgIndex, setCurrentBgIndex] = useState(0);
-  const [showHint, setShowHint] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isLightBoxOpen, setIsLightBoxOpen] = useState(false);
-  const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
-  const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
-  const currentTheme = PARTY_THEMES[partyIdFromUrl] || DEFAULT_THEME;
+
+  const listSectionRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (partyIdFromUrl) {
-        try {
-          const res = await fetch('/api/party');
-          if (res.ok) {
-            const data = await res.json();
-            const foundParty = data.find(p => p.number == partyIdFromUrl || p.id == partyIdFromUrl);
-            console.log(foundParty)
-            if (foundParty) setActiveParty(foundParty);
+      try {
+        const res = await fetch('/api/party');
+        if (res.ok) {
+          const allParties = await res.json();
+          const validParties = allParties.filter(p => parseInt(p.number) > 0);
+          let targetParty = null;
+
+          if (validParties.length === 1) {
+            targetParty = validParties[0];
+          } else if (partyIdFromUrl) {
+            targetParty = validParties.find(p => p.number == partyIdFromUrl || p.id == partyIdFromUrl);
           }
-        } catch (error) { console.error("Error:", error); }
-        finally { setLoading(false); }
-      } else {
-        router.push("/candidates")
+
+          if (targetParty) {
+            if (partyIdFromUrl !== String(targetParty.number)) {
+              const newParams = new URLSearchParams(searchParams.toString());
+              newParams.set('id', targetParty.number);
+              router.replace(`?${newParams.toString()}`, { scroll: false });
+            }
+
+            // ✅ ใช้ preparePartyData แทน enrichPartyData เพื่อจัดการข้อมูลจริง
+            const enrichedParty = preparePartyData(targetParty);
+            const filledMembers = POSITION_ORDER.map(pos => {
+              const found = enrichedParty.members?.find(m => m.position === pos);
+              return found ? { ...found, isPlaceholder: false } : {
+                id: `empty-${pos}`, name: "ยังไม่มีผู้สมัคร", position: pos,
+                imageUrl: null, studentId: "-", isPlaceholder: true
+              };
+            });
+            const extraMembers = enrichedParty.members?.filter(m => !POSITION_ORDER.includes(m.position)) || [];
+            enrichedParty.chartMembers = [...filledMembers, ...extraMembers];
+
+            setActiveParty(enrichedParty);
+          } else {
+            router.push("/candidates");
+          }
+        } else {
+          router.push("/candidates");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
-  }, [partyIdFromUrl, router]);
+  }, [partyIdFromUrl, router, searchParams]);
 
   useEffect(() => {
     if (!activeParty?.id) return;
@@ -53,260 +428,75 @@ export default function PartyPage() {
       .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
   }, [activeParty]);
 
-  useEffect(() => {
-    if (galleryImages.length <= 1) return;
-    const interval = setInterval(() => setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length), 5000);
-    return () => clearInterval(interval);
-  }, [galleryImages]);
-
-  const scrollToList = () => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  const filteredMembers = activeParty?.members?.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.position?.toLowerCase().includes(searchTerm.toLowerCase())) || [];
+  const currentTheme = activeParty ? (PARTY_THEMES[activeParty.id] || PARTY_THEMES[activeParty.number] || DEFAULT_THEME) : DEFAULT_THEME;
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>;
+  if (!activeParty) return null;
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden">
       <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
 
-      {activeParty ? (
-        <main className="flex-1 flex flex-col pt-12 md:pt-16">
+      <main className="flex-1 flex flex-col pt-12 md:pt-16">
 
-          {/* Section 1: Banner */}
-          <section className="relative w-full bg-white border-b border-slate-100">
-            <div className="relative w-full cursor-pointer group bg-slate-100" onClick={() => setIsLightBoxOpen(true)}>
-              <div className="relative w-full aspect-[6/4] md:aspect-[20/9] lg:aspect-[2.5/1] overflow-hidden">
-                {galleryImages.length > 0 ? (
-                  galleryImages.map((img, idx) => (
-                    <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === currentBgIndex ? 'opacity-100' : 'opacity-0'}`}>
-                      <img src={img} className="w-full h-full object-cover object-[center_30%]" alt={`Cover ${idx}`} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-60"></div>
-                    </div>
-                  ))
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-r ${currentTheme.gradient}`} />
-                )}
-              </div>
-              {galleryImages.length > 1 && (
-                <>
-                  <button onClick={(e) => { e.stopPropagation(); prevSlide(); }} className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/30 hover:bg-black/60 text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 border border-white/10"><ChevronLeft size={24} className="md:w-8 md:h-8" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); nextSlide(); }} className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/30 hover:bg-black/60 text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 border border-white/10"><ChevronRight size={24} className="md:w-8 md:h-8" /></button>
-                </>
-              )}
-              {galleryImages.length > 0 && (
-                <button onClick={(e) => { e.stopPropagation(); setIsLightBoxOpen(true); }} className="absolute bottom-3 right-3 md:bottom-6 md:right-6 z-20 px-3 py-1.5 md:px-4 md:py-2 bg-black/50 hover:bg-black/70 text-white rounded-lg backdrop-blur-md text-[10px] md:text-xs font-bold flex items-center gap-2 transition-all border border-white/10"><Maximize2 size={14} /> <span className="hidden sm:inline">ดูภาพขยาย</span></button>
-              )}
-            </div>
-            <div className="w-full h-1 md:h-1.5" style={{ backgroundColor: currentTheme.main }}></div>
-            <div className="max-w-[90rem] mx-auto px-4 md:px-12 w-full pb-8">
-              <div className="relative flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-8">
-                <div className="relative -mt-16 md:-mt-24 shrink-0 z-30">
-                  <div className="w-32 h-32 md:w-52 md:h-52 rounded-full border-[6px] border-white bg-white shadow-xl overflow-hidden relative">
-                    <img src={activeParty.logoUrl} className="w-full h-full object-contain p-1" alt="Party Logo" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0 pt-2 md:pb-6">
-                  <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-2">{activeParty.name}</h1>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-slate-500 font-medium text-sm md:text-lg">
-                    <span className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-white font-bold text-xs" style={{ backgroundColor: currentTheme.main }}>NO. {activeParty.number}</span>
-                      {activeParty.slogan}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+        {/* 1. Banner */}
+        <PartyBanner
+          party={activeParty}
+          theme={currentTheme}
+          galleryImages={galleryImages}
+          onOpenLightbox={() => setIsLightBoxOpen(true)}
+        />
 
-          {/* LightBox */}
-          {isLightBoxOpen && (
-            <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-300">
-              <button onClick={() => setIsLightBoxOpen(false)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all"><X size={28} /></button>
-              <div className="relative w-full h-full flex items-center justify-center p-4">
-                <img src={galleryImages[currentBgIndex]} className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300" alt="Lightbox" />
-                {galleryImages.length > 1 && (
-                  <>
-                    <button onClick={prevSlide} className="absolute left-4 md:left-10 p-4 text-white/50 hover:text-white transition-all"><ChevronLeft size={48} /></button>
-                    <button onClick={nextSlide} className="absolute right-4 md:right-10 p-4 text-white/50 hover:text-white transition-all"><ChevronRight size={48} /></button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+        {/* 2. Vision & Policies (UP) */}
+        <PartyVisionSection party={activeParty} theme={currentTheme} />
 
-          {/* Section 2: Chart */}
-          <section ref={chartSectionRef} className="relative w-full h-screen bg-[#02040a] flex flex-col border-t border-slate-900 overflow-hidden">
-            <div className="absolute top-0 left-0 w-full z-20 pt-8 px-6 md:px-16 flex flex-col items-start gap-3 pointer-events-none">
-              <div className="flex flex-col gap-1 select-none relative z-10">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div>
-                  <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
-                    Organizational Chart
-                  </span>
-                </div>
-                <div className="relative">
-                  <div className="absolute -left-10 -top-10 w-32 h-32 blur-[50px] opacity-30 rounded-full"
-                    style={{ backgroundColor: currentTheme.main }}></div>
-                  <h2 className="relative text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-2xl leading-none">
-                    โครงสร้าง<span style={{ color: currentTheme.main }}>ทีม</span>
-                  </h2>
-                </div>
-              </div>
-              <div className="pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-                <button
-                  onClick={scrollToList}
-                  className="group relative flex items-center gap-3 pl-4 pr-1.5 py-1.5 rounded-full border backdrop-blur-xl transition-all duration-500 hover:scale-[1.02] active:scale-95 hover:pl-5"
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    borderColor: `${currentTheme.main}40`,
-                    boxShadow: `0 8px 32px -8px ${currentTheme.main}20`
-                  }}
-                >
-                  <div className="flex flex-col items-start justify-center">
-                    <span className="text-[10px] md:text-xs font-bold text-white leading-none group-hover:text-[var(--theme-main)] transition-colors" style={{ '--theme-main': currentTheme.main }}>
-                      ดูรายชื่อทั้งหมด
-                    </span>
-                  </div>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:rotate-180"
-                    style={{ backgroundColor: currentTheme.main }}>
-                    <ChevronDown size={14} className="text-white drop-shadow-md" />
-                  </div>
-                </button>
-              </div>
-            </div>
-            <div ref={chartContainerRef} className="flex-1 relative w-full h-full">
-              <PartyChart members={activeParty?.members || []} theme={currentTheme} onMemberClick={setSelectedMember} />
-            </div>
-          </section>
+        {/* 3. Chart (DOWN) */}
+        <PartyChartSection
+          party={activeParty}
+          theme={currentTheme}
+          onSelectMember={setSelectedMember}
+          onScrollToList={() => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+        />
 
-          {/* Section 3: The Candidates List */}
-          <section ref={listSectionRef} className="w-full bg-slate-50/50 py-16 md:py-24 px-4 md:px-20 border-t border-slate-100 relative overflow-hidden">
-            <div className="max-w-6xl mx-auto relative z-10">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 md:mb-20 gap-6">
-                <div className="animate-in fade-in slide-in-from-left duration-700">
-                  <h2 className="text-3xl md:text-6xl font-black text-slate-900 tracking-tighter mb-2">The Candidates <span style={{ color: currentTheme.main }}>List</span></h2>
-                  <div className="flex gap-1">
-                    <div className="w-16 h-1.5 rounded-full" style={{ backgroundColor: currentTheme.main }}></div>
-                    <div className="w-4 h-1.5 rounded-full opacity-30" style={{ backgroundColor: currentTheme.main }}></div>
-                  </div>
-                  <p className="text-slate-500 font-medium text-sm md:text-lg leading-relaxed">
-                    รายชื่อผู้สมัครเลือกตั้ง <span className="text-transparent bg-clip-text bg-gradient-to-r py-1" style={{ backgroundImage: `linear-gradient(to right, ${currentTheme.main}, ${currentTheme.middle[0]})`, WebkitBackgroundClip: 'text', display: 'inline-block' }}>{activeParty.name}</span>
-                  </p>
-                </div>
-                <div className="relative group w-full md:w-80">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input type="text" placeholder="ค้นหาตามชื่อ หรือตำแหน่ง..." className="w-full pl-12 pr-4 py-4 rounded-[1.5rem] md:rounded-[2rem] bg-white border-2 border-slate-100 focus:outline-none transition-all shadow-sm focus:shadow-xl text-sm md:text-base" onChange={(e) => setSearchTerm(e.target.value)} />
-                </div>
-              </div>
+        {/* 4. List */}
+        <div ref={listSectionRef}>
+          <CandidateList members={activeParty.members} theme={currentTheme} onSelectMember={setSelectedMember} />
+        </div>
 
-              {searchTerm === "" ? (
-                <div className="space-y-12 md:space-y-20">
-                  {/* 1. President */}
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-6 flex items-center gap-3"><div className="w-12 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div> The President</h3>
-                    {activeParty?.members?.[0] ? (
-                      <div onClick={() => setSelectedMember(activeParty.members[0])} className="group relative bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] shadow-xl border-2 transition-all duration-500 cursor-pointer flex flex-row items-center gap-5 md:gap-10 overflow-hidden hover:scale-[1.01]" style={{ borderColor: `${currentTheme.main}30` }}>
-                        <div className="w-28 h-28 md:w-56 md:h-56 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl relative z-10 shrink-0 ring-4 ring-slate-50">
-                          <div className="absolute top-2 right-2 w-7 h-7 md:w-12 md:h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg z-20 border-2 border-slate-50"><Crown className="w-4 h-4 md:w-7 md:h-7" style={{ color: currentTheme.main }} /></div>
-                          <MemberImage url={activeParty.members[0].imageUrl} />
-                        </div>
-                        <div className="flex-1 min-w-0 relative z-10">
-                          <div className="inline-block px-3 py-1 rounded-lg text-white font-black text-[9px] md:text-xs mb-2 md:mb-4 shadow-md uppercase tracking-widest" style={{ backgroundColor: currentTheme.main }}>CANDIDATE #1</div>
-                          <h4 className="text-xl md:text-5xl font-black text-slate-900 mb-1 md:mb-2 leading-tight truncate">{activeParty.members[0].name}</h4>
-                          <p className="text-sm md:text-2xl font-bold mb-2" style={{ color: currentTheme.main }}>{activeParty.members[0].position || "นายกสโมสรนักศึกษา"}</p>
-                          <button className="flex items-center text-[10px] md:text-sm font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-widest">View Profile <ChevronRight size={14} className="ml-1" /></button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-10 text-center bg-slate-100 rounded-[2rem] text-slate-400 font-bold">ยังไม่มีข้อมูลผู้สมัครนายก</div>
-                    )}
-                  </div>
-                  {/* 2. Executives */}
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-6 flex items-center gap-3"><div className="w-12 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div> Core Executives</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                      {activeParty?.members?.slice(1, 5).map((member, idx) => (
-                        <div key={member.id} onClick={() => setSelectedMember(member)} className="group bg-white p-4 md:p-6 rounded-[1.8rem] md:rounded-[2.5rem] shadow-lg border-2 border-transparent hover:border-slate-100 transition-all duration-300 cursor-pointer flex flex-row items-center gap-4 md:gap-6" style={{ borderLeftColor: currentTheme.main, borderLeftWidth: '6px' }}>
-                          <div className="w-20 h-20 md:w-32 md:h-32 rounded-[1.2rem] md:rounded-[2.1rem] overflow-hidden shadow-md shrink-0 relative ring-2 ring-slate-50">
-                            <div className="absolute top-2 left-1.5 w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white font-black text-[10px] md:text-xs z-10 shadow-lg border-2 border-white" style={{ backgroundColor: currentTheme.main }}>{idx + 2}</div>
-                            <MemberImage url={member.imageUrl} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-lg md:text-2xl font-black text-slate-800 truncate mb-0.5">{member.name}</h4>
-                            <p className="text-[10px] md:text-sm font-bold uppercase tracking-widest opacity-70 truncate mb-2" style={{ color: currentTheme.main }}>{member.position || "คณะผู้บริหาร"}</p>
-                            <div className="flex items-center text-[9px] md:text-xs font-black text-slate-300 group-hover:text-slate-500 transition-colors">PROFILE <ChevronRight size={12} className="ml-1" /></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {/* 3. Department Heads */}
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-8 flex items-center gap-3"><div className="w-12 h-[2px]" style={{ backgroundColor: currentTheme.main }}></div> Department Heads</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-                      {activeParty?.members?.slice(5).map((member, idx) => (
-                        <div key={member.id} onClick={() => setSelectedMember(member)} className="group bg-white/70 hover:bg-white p-3 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 cursor-pointer flex flex-row items-center gap-4" style={{ borderLeft: `4px solid ${currentTheme.main}` }}>
-                          <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1rem] md:rounded-[1.5rem] overflow-hidden shadow-inner shrink-0 relative">
-                            <div className="absolute top-1 left-1 w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-white font-black text-[12px] z-10 shadow-md" style={{ backgroundColor: currentTheme.main }}>{idx + 6}</div>
-                            <MemberImage url={member.imageUrl} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-slate-800 truncate text-sm md:text-lg leading-tight">{member.name}</h4>
-                            <p className="text-[12px] md:text-[14px] font-bold uppercase tracking-tighter opacity-50 truncate" style={{ color: currentTheme.main }}>{member.position || "ประธานฝ่าย"}</p>
-                            <div className="mt-1 text-[8px] font-black text-slate-300 group-hover:text-slate-400 transition-colors uppercase">Profile +</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredMembers.map((member) => (
-                    <div key={member.id} className="bg-white p-4 rounded-[1.5rem] shadow-sm border border-slate-50 flex items-center gap-4 cursor-pointer" onClick={() => setSelectedMember(member)}>
-                      <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0"><MemberImage url={member.imageUrl} /></div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-slate-800 truncate text-sm">{member.name}</h4>
-                        <p className="text-[10px] font-bold opacity-50 uppercase" style={{ color: currentTheme.main }}>{member.position}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+      </main>
 
-          {/* Modal Detail */}
-          {selectedMember && (
-            <>
-              <div className="fixed inset-0 bg-[#0f172a]/70 backdrop-blur-sm z-[100] animate-in fade-in" onClick={() => setSelectedMember(null)}></div>
-              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88%] md:w-[60%] max-w-sm bg-white p-6 rounded-[32px] shadow-2xl z-[101] border border-slate-100">
-                <button onClick={() => setSelectedMember(null)} className="absolute top-4 right-4 p-2 bg-slate-50 rounded-full text-slate-400"><X className="w-4 h-4" /></button>
-                <div className="text-center">
-                  <div className="w-24 h-24 md:w-36 md:h-36 mx-auto rounded-3xl overflow-hidden mb-4 relative border-[3px]" style={{ borderColor: currentTheme.main }}><MemberImage url={selectedMember.imageUrl} /></div>
-                  <h3 className="text-xl md:text-3xl font-black text-slate-800 mb-1 leading-tight">{selectedMember.name}</h3>
-                  <p style={{ color: currentTheme.main }} className="text-xs md:text-lg font-bold mb-6 uppercase tracking-wide">{selectedMember.position || "สมาชิกพรรค"}</p>
-                  <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center"><span className="text-[10px] text-slate-400 font-bold uppercase">ID</span><span className="font-black text-slate-800 font-mono text-base">{selectedMember.studentId || "-"}</span></div>
-                </div>
-              </div>
-            </>
-          )}
-
-        </main>
-      ) : (
-        <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-6 text-center animate-in fade-in duration-500">
-          <div className="w-24 h-24 mb-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-300"><Users size={48} /></div>
-          <h2 className="text-2xl font-black text-slate-800 mb-2">ไม่พบข้อมูลสมาชิก</h2>
-          <p className="text-slate-500 max-w-xs mx-auto">พรรค <span className="font-bold" style={{ color: currentTheme.main }}>{activeParty?.name}</span> ยังไม่ได้ทำการเพิ่มรายชื่อผู้สมัครในขณะนี้</p>
-          <button onClick={() => window.location.reload()} className="mt-8 px-6 py-2 rounded-full border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all">ลองใหม่อีกครั้ง</button>
-        </main>
+      {isLightBoxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-300">
+          <button onClick={() => setIsLightBoxOpen(false)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20"><X size={28} /></button>
+          <img src={galleryImages[0]} className="max-w-full max-h-[85vh] object-contain shadow-2xl" alt="Lightbox" />
+        </div>
       )}
-      <footer className="w-full py-6 bg-white/50 backdrop-blur-md border-t border-gray-200/50 text-center relative z-50"><p className="text-sm text-gray-500 font-medium">© FMS@PSU 2026. All Rights Reserved.</p></footer>
+
+      <CandidateModal
+        member={selectedMember}            
+        onClose={() => setSelectedMember(null)} 
+        themeColor={currentTheme.main}
+      />
+
+      {source === 'vote' && <BackToVoteBar />}
+
+      <footer className="w-full py-6 bg-white border-t border-slate-100 text-center relative z-50 mt-auto">
+        <p className="text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
+      </footer>
     </div>
+  );
+}
+
+export default function PartyPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>}>
+      <PartyContent />
+    </Suspense>
   );
 }
 
 function MemberImage({ url }) {
   const [error, setError] = useState(false);
-  if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-10 h-10 md:w-16 md:h-16" /></div>;
-  return <img src={url} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" />;
+  if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-1/2 h-1/2" /></div>;
+  return <img src={url} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" loading="lazy" />;
 }

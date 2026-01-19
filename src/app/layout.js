@@ -1,19 +1,24 @@
 import './globals.css';
-import { Prompt, Kanit } from 'next/font/google'; // 1. นำเข้าทั้ง Prompt และ Kanit
+import Providers from "../components/Providers";
+import { Prompt, Kanit } from 'next/font/google';
 
-// 2. ตั้งค่า Prompt (เหมือนเดิม)
+// 1. นำเข้า getServerSession
+import { getServerSession } from "next-auth";
+
+// ✅ 2. แก้ตรงนี้! นำเข้า authOptions จาก lib/auth
+import { authOptions } from "../lib/auth";
+
 const prompt = Prompt({
   subsets: ['thai', 'latin'],
   weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-prompt', 
+  variable: '--font-prompt',
   display: 'swap',
 });
 
-// 3. เพิ่มการตั้งค่า Kanit
 const kanit = Kanit({
   subsets: ['thai', 'latin'],
   weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-kanit', // ชื่อตัวแปรต้องไม่ซ้ำกับ prompt
+  variable: '--font-kanit',
   display: 'swap',
 });
 
@@ -22,12 +27,21 @@ export const metadata = {
   description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+
+  // 3. ดึง Session
+  const session = await getServerSession(authOptions);
+  console.log("SERVER SESSION STATUS:", session ? "✅ FOUND" : "❌ NULL");
+
   return (
     <html lang="th">
-      {/* 4. ใส่ตัวแปรทั้ง 2 ตัวลงใน body (คั่นด้วยเว้นวรรค) */}
       <body className={`${prompt.variable} ${kanit.variable} font-sans antialiased`}>
-        {children}
+
+        {/* 4. ส่ง Session เข้าไป */}
+        <Providers session={session}>
+          {children}
+        </Providers>
+
       </body>
     </html>
   );

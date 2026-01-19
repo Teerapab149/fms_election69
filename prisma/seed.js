@@ -101,7 +101,13 @@ async function main() {
       number: 0,
       logoUrl: null,
       members: []
-    }
+    },
+    {
+     name: 'ไม่รับรอง',
+      number: -1,
+      logoUrl: null,
+      members: []
+    },
   ];
 
   const createdCandidates = []

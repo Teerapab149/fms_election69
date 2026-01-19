@@ -1,27 +1,21 @@
-// components/Navbar.js
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, LogOut, ChevronDown, X, Sparkles, LogIn, Users } from 'lucide-react';
+import { useSession, signOut } from "next-auth/react";
+import { User, LogOut, ChevronDown, X, LogIn, Users } from 'lucide-react';
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const userStr = localStorage.getItem("currentUser");
-    if (userStr) {
-      setUser(JSON.parse(userStr));
-    }
-  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -35,13 +29,15 @@ export default function Navbar() {
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    setUser(null);
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
     window.location.href = "/";
     setIsMenuOpen(false);
     setIsProfileOpen(false);
   };
+
+  const isLoggedIn = status === "authenticated" && session;
+  const user = session?.user;
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
@@ -86,23 +82,20 @@ export default function Navbar() {
             />
           </div>
 
-          {/* ✅ MEET CANDIDATES (NEW DESIGN: Playful Gradient) */}
           <Link
             href="/candidates"
             className={`
               group relative flex items-center gap-2 px-5 py-2 rounded-full ml-2 transition-all duration-300
               ${pathname.startsWith('/candidates') || pathname.startsWith('/party')
-                ? 'bg-gradient-to-r from-purple-100 to-pink-50 text-[#8A2680] shadow-inner font-bold' // Active
-                : 'bg-white hover:bg-purple-50 text-slate-600 hover:text-[#8A2680] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5' // Normal
+                ? 'bg-gradient-to-r from-purple-100 to-pink-50 text-[#8A2680] shadow-inner font-bold'
+                : 'bg-white hover:bg-purple-50 text-slate-600 hover:text-[#8A2680] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5'
               }
             `}
           >
-            {/* Gradient Border Trick: ใช้ div ซ้อนด้านหลังทำเป็นขอบสีรุ้ง */}
             <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[#8A2680] via-purple-400 to-pink-400 opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
               <div className="w-full h-full rounded-full bg-white group-hover:bg-purple-50 transition-colors"></div>
             </div>
 
-            {/* Icon: เปลี่ยนเป็น Users และเพิ่ม Animation ดุ๊กดิ๊ก */}
             <Users
               size={18}
               className={`
@@ -116,8 +109,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* User Profile / Login Logic */}
-          {user ? (
+          {isLoggedIn ? (
             <div className="relative ml-2 pl-4 border-l border-gray-200" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -125,7 +117,7 @@ export default function Navbar() {
               >
                 <div className="hidden xl:block text-right mr-1">
                   <p className="text-sm font-bold text-gray-700 group-hover:text-[#8A2680] leading-none transition-colors">{user.name}</p>
-                  <p className="text-[10px] text-gray-400 font-medium">{user.studentId}</p>
+                  <p className="text-[10px] text-gray-400 font-medium">{user.studentId || user.email}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#8A2680] to-purple-400 flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105">
                   <User size={20} />
@@ -137,7 +129,7 @@ export default function Navbar() {
                 <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                   <div className="p-5 border-b border-gray-50 bg-gray-50/50">
                     <p className="text-sm font-bold text-gray-800">{user.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{user.studentId}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{user.studentId || user.email}</p>
                   </div>
                   <div className="p-2">
                     <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors">
@@ -149,7 +141,6 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            // Desktop Login Button (Black)
             <Link
               href="/login"
               className="ml-3 flex items-center gap-2 px-5 py-2 rounded-full bg-slate-900 text-white font-bold text-sm shadow-md hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
@@ -183,14 +174,14 @@ export default function Navbar() {
       <div className={`lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl transition-all duration-300 ease-in-out origin-top overflow-hidden ${isMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="flex flex-col p-4 space-y-2 pb-6">
 
-          {user && (
+          {isLoggedIn && (
             <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-2xl mb-4 border border-purple-100 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-[#8A2680] flex items-center justify-center text-white shadow-sm border border-grey-200">
                 <User size={24} />
               </div>
               <div>
                 <p className="text-base font-bold text-gray-800">{user.name}</p>
-                <p className="text-sm text-gray-500 font-mono bg-white px-2 py-0.5 rounded-lg inline-block mt-1 border border-gray-100">{user.studentId}</p>
+                <p className="text-sm text-gray-500 font-mono bg-white px-2 py-0.5 rounded-lg inline-block mt-1 border border-gray-100">{user.studentId || user.email}</p>
               </div>
             </div>
           )}
@@ -204,7 +195,7 @@ export default function Navbar() {
           />
           <MobileNavLink href="/results" label="ผลการลงคะแนนเสียง" isActive={pathname === '/results'} onClick={() => setIsMenuOpen(false)} />
 
-          {user ? (
+          {isLoggedIn ? (
             <>
               <div className="h-px bg-gray-100 my-2 mx-2"></div>
               <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all active:bg-red-100">
@@ -213,7 +204,6 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            // Mobile Login Button (Black)
             <Link
               href="/login"
               onClick={() => setIsMenuOpen(false)}
@@ -250,18 +240,16 @@ function NavButton({ href, label, isActive }) {
   );
 }
 
-// ✅ FIX: MobileNavLink ดีไซน์ใหม่ (แบบมีแถบโค้งมนด้านซ้าย)
 function MobileNavLink({ href, label, onClick, isActive }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      // ใช้ relative เพื่อให้วางแถบ indicator ได้
       className={`
         relative flex items-center w-full px-5 py-3 text-sm font-bold transition-all duration-200 rounded-xl overflow-hidden
         ${isActive
-          ? 'bg-purple-50 text-[#8A2680]' // Active: พื้นม่วงจางๆ
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' // Normal
+          ? 'bg-purple-50 text-[#8A2680]'
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         }
       `}
     >
@@ -269,7 +257,6 @@ function MobileNavLink({ href, label, onClick, isActive }) {
          ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`}>
       </span>
 
-      {/* ขยับข้อความหนีแถบเล็กน้อยเมื่อ Active */}
       <span className={`transition-all duration-200 ${isActive ? 'pl-2' : ''}`}>
         {label}
       </span>

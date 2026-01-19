@@ -1,43 +1,110 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Anchor, Wind, User, ChevronRight, Lock, Unlock, Hand, X, List, ChevronDown, ChevronLeft } from 'lucide-react';
+import { Anchor, Wind, User, Hand, Lock, Sun, Moon, Cloud } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DEFAULT_THEME } from "../utils/PartyTheme";
 
+// 🔒 ZONE 1 & 2: Fixed Roles
+const FIXED_ROLES = {
+  PRESIDENT: "นายกสโมสรนักศึกษา",
+  EXECUTIVES: [
+    "อุปนายกกิจการภายใน",
+    "อุปนายกกิจการภายนอก",
+    "เลขานุการ",
+    "เหรัญญิก"
+  ]
+};
+
+// 🌊 ZONE 3: Hull Priority Sorting
+const HULL_PRIORITY = [
+  "ประธานฝ่ายประชาสัมพันธ์",
+  "ประธานฝ่ายสวัสดิการ",
+  "ประธานฝ่ายพัสดุ",
+  "ประธานฝ่ายกีฬา",
+  "ประธานฝ่ายวิชาการ",
+  "ประธานฝ่ายศิลปวัฒนธรรม",
+  "ประธานฝ่ายข้อมูลกิจการนักศึกษา",
+  "ประธานฝ่ายเทคโนโลยีสารสนเทศ",
+  "ประธานฝ่ายประเมินผล",
+  "ประธานฝ่ายกิจกรรม",
+  "ประธานฝ่ายกราฟิกดีไซน์",
+  "ประธานฝ่ายพิธีการ",
+  "ประธานฝ่ายครีเอทีฟและสันทนาการ",
+  "ประธานฝ่ายสถานที่",
+  "ประธานฝ่ายสาธารณสุข"
+];
+
+// ✅ Optimized: ใช้ Bitwise เพื่อความเร็ว และลดการสร้าง String ใหม่
 const hexToRgb = (hex) => {
-  if (!hex) return '51, 65, 85';
-  hex = hex.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  return `${r}, ${g}, ${b}`;
+  if (!hex) return '81, 101, 133'; // Default slate-600 ish
+  const c = hex.replace('#', '');
+  const n = parseInt(c, 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
 }
 
-export default function PartyChart({ members = [], theme: providedTheme, onMemberClick }) {
-  const president = members[0];
-  const executives = members.slice(1, 5);
-  const crewRaw = members.slice(5);
-  const crewGrid = [...crewRaw, ...Array(Math.max(0, 15 - crewRaw.length)).fill(null)].slice(0, 15);
-  const allMembersList = members.filter(m => m);
+export default function PartyChart({ members = [], theme: providedTheme, onMemberClick, partyName }) {
 
+  // ✅ Optimized: Cache Priority Map เพื่อ Lookup แบบ O(1) แทน .indexOf O(N)
+  const priorityMap = useMemo(() => 
+    HULL_PRIORITY.reduce((acc, role, i) => ({ ...acc, [role]: i }), {}), 
+  []);
+
+  // ✅ Logic การจัดตำแหน่งคน
+  const organizedData = useMemo(() => {
+    const realMembers = members.filter(m => !m.isPlaceholder);
+    const president = realMembers.find(m => m.position === FIXED_ROLES.PRESIDENT) || null;
+    const executives = FIXED_ROLES.EXECUTIVES.map(role => 
+      realMembers.find(m => m.position === role) || null
+    );
+
+    const usedIds = new Set([president?.id, ...executives.map(e => e?.id)].filter(Boolean));
+    let crew = realMembers.filter(m => !usedIds.has(m.id));
+
+    // Optimized Sort
+    crew.sort((a, b) => {
+      const pA = priorityMap[a.position] ?? 999;
+      const pB = priorityMap[b.position] ?? 999;
+      return pA - pB;
+    });
+
+    const crewGrid = [...crew, ...Array(Math.max(0, 15 - crew.length)).fill(null)].slice(0, Math.max(15, crew.length));
+    return { president, executives, crewGrid };
+  }, [members, priorityMap]);
+
+  const { president, executives, crewGrid } = organizedData;
   const currentTheme = providedTheme || DEFAULT_THEME;
   const mainColor = currentTheme.main;
-  const mainRgb = hexToRgb(mainColor);
+  
+  // ✅ Optimized: Memoize RGB Calculation
+  const mainRgb = useMemo(() => hexToRgb(mainColor), [mainColor]);
+  
   const [isInteractive, setIsInteractive] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNightMode, setIsNightMode] = useState(true);
 
-  const particles = useMemo(() => [...Array(40)].map((_, i) => ({
+  // Particles: ดาว (Night)
+  const stars = useMemo(() => [...Array(40)].map((_, i) => ({
     id: i, left: Math.random() * 100, top: Math.random() * 100,
     size: Math.random() * 2 + 1, opacity: Math.random() * 0.6,
     duration: Math.random() * 4 + 3
   })), []);
 
+  // Particles: เมฆ (Day)
+  const clouds = useMemo(() => [...Array(6)].map((_, i) => ({
+    id: i, 
+    left: Math.random() * 100, 
+    top: Math.random() * 35, 
+    scale: Math.random() * 0.8 + 0.8, 
+    opacity: Math.random() * 0.3 + 0.5,
+    duration: Math.random() * 30 + 40
+  })), []);
+
   return (
     <div
-      className="relative w-full h-full bg-[#02040a] overflow-hidden font-sans select-none flex flex-col lg:flex-row"
+      className="relative w-full h-full bg-[#02040a] overflow-hidden font-sans select-none flex flex-col lg:flex-row transition-colors duration-1000"
       style={{
         '--theme-main': mainColor,
         '--theme-rgb': mainRgb,
+        backgroundColor: isNightMode ? '#02040a' : '#38bdf8'
       }}
     >
       <style jsx global>{`
@@ -54,28 +121,125 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
            box-shadow: 0 20px 50px rgba(0,0,0,0.8); 
         }
         .crew-card { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
-        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: var(--theme-main); }
+        /* ✅ Optimization: Hardware Acceleration Hints */
+        .will-change-transform { will-change: transform; }
+        .will-change-opacity { will-change: opacity; }
       `}</style>
 
-      {/* --- BACKGROUND --- */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#020617]" />
-        <div className="absolute top-[-10%] right-[20%] -translate-x-1/2 w-[800px] h-[500px] blur-[100px] rounded-full opacity-20 transition-colors duration-1000" style={{ backgroundColor: mainColor }} />
-        {particles.map(p => (
-          <div key={p.id} className="absolute bg-white rounded-full animate-pulse" style={{ left: `${p.left}%`, top: `${p.top}%`, width: `${p.size}px`, height: `${p.size}px`, opacity: p.opacity, animationDuration: `${p.duration}s` }} />
-        ))}
-        <div className="absolute bottom-0 w-full h-[200px] overflow-hidden">
-          <div className="absolute bottom-0 w-[200%] h-full opacity-10" style={{ background: 'url("https://svgshare.com/i/sFq.svg") repeat-x', backgroundSize: '50% 100%', animation: 'wave-drift 60s linear infinite' }} />
+      {/* ================= BACKGROUND SYSTEM ================= */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden transition-all duration-1000 ease-in-out">
+        
+        {/* ==================== 🌙 NIGHT THEME LAYER ==================== */}
+        <div className={`absolute inset-0 transition-opacity duration-1000 will-change-opacity ${isNightMode ? 'opacity-100' : 'opacity-0'}`}>
+            {/* 1. Night Sky */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_var(--tw-gradient-stops))] from-[#1e3a8a]/30 via-[#0f172a] to-[#020617]" />
+            
+            {/* 2. Aurora */}
+            <div className="absolute top-[-50%] left-[-20%] w-[150%] h-[100%] rounded-[100%] blur-[150px] opacity-40 mix-blend-screen animate-pulse will-change-transform"
+              style={{ background: `radial-gradient(circle, ${mainColor} 0%, transparent 70%)`, animationDuration: '15s' }} 
+            />
+
+            {/* 3. Stars */}
+            {stars.map((p) => (
+              <div key={p.id} className="absolute bg-white rounded-full animate-pulse shadow-[0_0_3px_#ffffff80]" 
+                style={{ left: `${p.left}%`, top: `${p.top * 0.6}%`, width: `${p.size}px`, height: `${p.size}px`, opacity: p.opacity, animationDuration: `${p.duration}s` }} 
+              />
+            ))}
+
+            {/* 4. Deep Sea Water */}
+            <div className="absolute bottom-0 w-full h-[25%] z-10 overflow-hidden">
+               <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#0a1229] to-[#0f172a]/80" />
+               {/* Reflection */}
+               <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[30%] h-[150%] blur-[40px] opacity-40 mix-blend-overlay will-change-transform"
+                 style={{ background: `linear-gradient(to bottom, ${mainColor}, transparent)`, transform: 'perspective(500px) rotateX(60deg) scaleY(2)' }}
+               />
+            </div>
         </div>
+
+        {/* ==================== ☀️ DAY THEME LAYER ==================== */}
+        <div className={`absolute inset-0 transition-opacity duration-1000 will-change-opacity ${!isNightMode ? 'opacity-100' : 'opacity-0'}`}>
+            {/* 1. Day Sky */}
+            <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-400 to-blue-600" />
+
+            {/* 2. Sun */}
+            <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-[80px] opacity-60 mix-blend-screen"
+               style={{ background: 'radial-gradient(circle, #fef08a 0%, #facc15 40%, transparent 70%)' }} 
+            />
+            
+            {/* 3. Moving Clouds */}
+            {clouds.map((c) => (
+               <div key={`cloud-${c.id}`} className="absolute text-white/60 blur-[2px] will-change-transform" 
+                 style={{ 
+                   left: `${c.left}%`, top: `${c.top}%`, 
+                   transform: `scale(${c.scale})`, 
+                   opacity: c.opacity,
+                   animation: `wave-drift ${c.duration}s linear infinite` 
+                 }}>
+                 <Cloud size={120} fill="white" className="drop-shadow-lg" />
+               </div>
+            ))}
+
+            {/* 4. Birds (SVG) */}
+            <div className="absolute top-[15%] left-[20%] opacity-60 animate-pulse" style={{ animationDuration: '4s' }}>
+                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" stroke="white" strokeWidth="2"><path d="M0 10 Q 10 0, 20 10 T 40 10" /></svg>
+            </div>
+            <div className="absolute top-[18%] left-[23%] opacity-50 animate-pulse" style={{ animationDuration: '4.5s' }}>
+                <svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="white" strokeWidth="2"><path d="M0 10 Q 10 0, 20 10 T 40 10" /></svg>
+            </div>
+
+            {/* 5. Day Water */}
+            <div className="absolute bottom-0 w-full h-[25%] z-10 overflow-hidden">
+               <div className="absolute inset-0 bg-gradient-to-t from-blue-900 via-blue-700 to-blue-500/80" />
+               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-full blur-[50px] opacity-40 bg-yellow-200 mix-blend-overlay" />
+               <div className="absolute inset-0 opacity-40 mix-blend-overlay will-change-transform"
+                 style={{
+                   backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
+                   animation: 'wave-drift 100s linear infinite',
+                 }}
+               />
+            </div>
+        </div>
+
+        {/* ==================== COMMON LAYERS ==================== */}
+        
+        {/* Islands Silhouette */}
+        <div className={`absolute bottom-[18%] left-0 w-full h-[20%] z-0 transition-colors duration-1000 ${isNightMode ? 'opacity-40 text-[#0f172a]' : 'opacity-60 text-blue-900'}`}>
+            <svg className="w-full h-full fill-current" preserveAspectRatio="none" viewBox="0 0 1440 320"><path d="M0,256L48,261.3C96,267,192,277,288,266.7C384,256,480,224,576,213.3C672,203,768,213,864,229.3C960,245,1056,267,1152,266.7C1248,267,1344,245,1392,234.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>
+        </div>
+
+        {/* Waves Animation */}
+        <div className="absolute bottom-0 w-full h-[20%] z-20 pointer-events-none">
+           <div className={`absolute bottom-0 w-[200%] h-full mix-blend-soft-light transition-opacity duration-1000 will-change-transform ${isNightMode ? 'opacity-20' : 'opacity-40'}`} 
+             style={{ background: 'url("https://svgshare.com/i/sFq.svg") repeat-x', backgroundSize: '50% 100%', animation: 'wave-drift 40s linear infinite' }} 
+           />
+           <div className={`absolute bottom-[-5%] left-[-20%] w-[200%] h-[110%] mix-blend-soft-light transition-opacity duration-1000 will-change-transform ${isNightMode ? 'opacity-10' : 'opacity-30'}`} 
+             style={{ background: 'url("https://svgshare.com/i/sFq.svg") repeat-x', backgroundSize: '50% 100%', animation: 'wave-drift 25s linear infinite reverse' }} 
+           />
+        </div>
+        
+        {/* Fog Overlay */}
+        <div className={`absolute bottom-0 left-0 w-full h-[150px] bg-gradient-to-t transition-colors duration-1000 z-20 pointer-events-none ${isNightMode ? 'from-[#02040a] to-transparent' : 'from-[#1e3a8a] to-transparent'}`} />
       </div>
 
-      {/* ================= RIGHT COLUMN: SHIP CHART AREA (70%) ================= */}
+      {/* ================= CONTENT AREA ================= */}
       <div className="relative w-full h-full lg:flex-1 overflow-hidden z-10 order-2 lg:order-2">
-        {/* ปุ่มควบคุม Lock/Unlock (ย้ายมาตรงกลางล่าง) */}
+        {/* Controls */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-2">
+          
+          <button
+            onClick={() => setIsNightMode(!isNightMode)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full border backdrop-blur-md shadow-2xl transition-all active:scale-95 hover:-translate-y-1 
+              ${isNightMode 
+                ? 'bg-indigo-900/40 border-indigo-500/30 text-indigo-100 hover:bg-indigo-900/60' 
+                : 'bg-sky-500/20 border-sky-400/50 text-sky-900 hover:bg-sky-500/30'
+              }`}
+          >
+            {isNightMode ? <Moon size={18} className="text-yellow-200" /> : <Sun size={18} className="text-orange-500" />}
+            <span className="text-xs font-bold tracking-wide uppercase">
+              {isNightMode ? 'Night' : 'Day'}
+            </span>
+          </button>
+
           <button
             onClick={() => setIsInteractive(!isInteractive)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-full border backdrop-blur-md shadow-2xl transition-all active:scale-95 hover:-translate-y-1 ${isInteractive
@@ -90,7 +254,14 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
           </button>
         </div>
 
-        <TransformWrapper disabled={!isInteractive} initialScale={0.5} minScale={0.3} maxScale={2} centerOnInit={true} smooth={true}>
+        <TransformWrapper
+          disabled={!isInteractive}
+          initialScale={1}
+          minScale={0.2}
+          maxScale={3}
+          centerOnInit={true}
+          smooth={true}
+        >
           {({ zoomIn, zoomOut, resetTransform }) => (
             <>
               <div className={`absolute bottom-20 left-4 z-50 flex flex-col gap-2 transition-all duration-300 ${isInteractive ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}>
@@ -100,14 +271,22 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
               </div>
 
               <TransformComponent wrapperClass="!w-full !h-full" contentClass="w-full h-full flex items-center justify-center">
-                <div className="relative w-[1200px] h-[1050px] flex flex-col items-center justify-center origin-center scale-75 md:scale-90 lg:scale-100">
-                  {/* Mast */}
+                <div className={`
+                    relative w-[1200px] h-[1050px] 
+                    flex flex-col items-center justify-center origin-center
+                    scale-[0.35] xs:scale-[0.45] sm:scale-[0.6]
+                    md:scale-[0.8] lg:scale-[0.9] xl:scale-[0.75]
+                    mt-0 md:mt-10
+                    transition-transform duration-500 ease-out
+                `}>
+
+                  {/* เสากระโดง (Mast) */}
                   <div className="absolute bottom-[350px] left-1/2 -translate-x-1/2 w-4 h-[750px] z-0 shadow-2xl rounded-full"
                     style={{ background: `linear-gradient(to top, #1a1a1a, ${mainColor}40, #1a1a1a)` }} />
 
                   {/* 1. PRESIDENT */}
                   <div className="relative z-30 mb-2 flex flex-col items-center">
-                    {president && (
+                    {president ? (
                       <div className="relative group cursor-pointer" onClick={() => onMemberClick(president)}>
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full blur-[60px] transition-all" style={{ backgroundColor: `${mainColor}20` }} />
                         <div className="w-[220px] relative">
@@ -125,10 +304,16 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
                           </div>
                         </div>
                       </div>
+                    ) : (
+                      <div className="w-[220px] h-[280px] flex flex-col items-center justify-center opacity-30">
+                        <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4"><Anchor size={32} /></div>
+                        <span className="text-white/50 font-bold tracking-widest uppercase text-sm">ตำแหน่งว่าง</span>
+                        <span className="text-white/30 text-[10px] mt-1">{FIXED_ROLES.PRESIDENT}</span>
+                      </div>
                     )}
                   </div>
 
-                  {/* 2. EXECUTIVES & CREW (Hull) */}
+                  {/* 2. EXECUTIVES */}
                   <div className="relative z-20 w-[900px] flex justify-center items-start gap-8 mb-4">
                     <svg className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[850px] h-[100px] -z-10 overflow-visible" viewBox="0 0 850 100">
                       <path d="M0,20 Q425,80 850,20" fill="none" stroke="#2d3748" strokeWidth="8" strokeLinecap="round" />
@@ -138,33 +323,39 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
                       </g>
                     </svg>
                     {executives.map((member, idx) => (
-                      <div key={member.id} className="relative group cursor-pointer" style={{ marginTop: (idx === 1 || idx === 2) ? '45px' : '10px' }} onClick={() => onMemberClick(member)}>
-                        <div className="w-36 bg-[#1e293b] border border-white/10 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-2 relative">
-                          <div className="h-32 w-full relative">
-                            <MemberImage url={member.imageUrl} />
-                            <div className="absolute top-1 right-1 px-1.5 py-0.5 text-white text-[9px] font-bold rounded" style={{ backgroundColor: mainColor }}>{idx + 2}</div>
+                      <div key={idx} className="relative group" style={{ marginTop: (idx === 1 || idx === 2) ? '45px' : '10px' }}>
+                        {member ? (
+                          <div
+                            className="w-36 bg-[#1e293b] border border-white/10 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-2 relative cursor-pointer"
+                            onClick={() => onMemberClick(member)}
+                          >
+                            <div className="h-32 w-full relative">
+                              <MemberImage url={member.imageUrl} />
+                            </div>
+                            <div className="p-2 bg-[#0f172a] text-center border-t border-white/5">
+                              <h4 className="text-[12px] font-bold text-white truncate group-hover:text-[var(--theme-main)]">{member.name}</h4>
+                              <p className="text-[10px] text-slate-400 uppercase truncate">{member.position}</p>
+                            </div>
                           </div>
-                          <div className="p-2 bg-[#0f172a] text-center border-t border-white/5">
-                            <h4 className="text-[12px] font-bold text-white truncate group-hover:text-[var(--theme-main)]">{member.name}</h4>
-                            <p className="text-[12px] text-slate-400 uppercase">{member.position}</p>
+                        ) : (
+                          <div className="w-36 h-48 rounded-lg border border-white/5 bg-white/5 flex flex-col items-center justify-center opacity-30 border-dashed">
+                            <User size={24} className="mb-2" />
+                            <span className="text-[10px] uppercase font-bold text-white/50 text-center px-2">
+                              {FIXED_ROLES.EXECUTIVES[idx]}
+                            </span>
                           </div>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
 
                   {/* 3. THE HULL (ท้องเรือ) */}
                   <div className="relative z-20 -mt-4">
-
-                    {/* ✅ Container ท้องเรือ (ยังคงอยู่เหมือนเดิม) */}
                     <div className="w-[1100px] min-h-[420px] hull-texture rounded-b-[200px] rounded-t-[50px] relative px-10 py-8 flex flex-col items-center">
-
-                      {/* ชื่อพรรคจางๆ เป็น Background */}
                       <div className="absolute top-2 text-white/5 text-[80px] font-black uppercase tracking-[0.2em] pointer-events-none select-none text-center w-full leading-none">
-                        {currentTheme?.name || 'VANGUARD'}
+                        {partyName || 'FMS ELECTION'}
                       </div>
 
-                      {/* ✅ Grid การ์ดสมาชิกแบบ Full Frame */}
                       <div className="grid grid-cols-5 gap-3 z-10 w-full max-w-[950px]">
                         {crewGrid.map((member, idx) => (
                           member ? (
@@ -174,36 +365,24 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
                               onClick={() => onMemberClick(member)}
                               style={{ borderColor: 'rgba(255,255,255,0.1)' }}
                             >
-
-                              {/* 1. รูปภาพ (ขยายเต็มพื้นที่) */}
                               <div className="absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-110">
                                 <MemberImage url={member.imageUrl} />
                               </div>
-
-                              {/* 2. Gradient Overlay (ไล่สีดำด้านล่าง ให้อ่านตัวหนังสือออก) */}
                               <div className="absolute inset-0 bg-gradient-to-t from-[#02040a] via-black/20 to-transparent opacity-90" />
+                              <div className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-300 mix-blend-overlay" style={{ backgroundColor: mainColor }} />
 
-                              {/* 3. แสงสีพรรคจางๆ (Theme Tint Overlay) */}
-                              <div className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-300 mix-blend-overlay"
-                                style={{ backgroundColor: mainColor }} />
-
-                              {/* 4. ข้อมูล (วางซ้อนด้านล่าง) */}
                               <div className="absolute bottom-0 w-full p-1.5 flex flex-col items-center justify-end">
-                                {/* ตำแหน่งสมาชิก */}
                                 <p className="text-[10px] font-bold text-white truncate w-full text-center drop-shadow-md group-hover:text-[var(--theme-main)] transition-colors">
                                   {member.position}
                                 </p>
-                                {/* ขีดเส้นใต้สีพรรค */}
-                                <div className="h-[2px] w-0 group-hover:w-1/2 mt-0.5 transition-all duration-300 rounded-full"
-                                  style={{ backgroundColor: mainColor }} />
+                                <p className="text-[9px] text-slate-300 truncate w-full text-center opacity-80">
+                                  {member.name}
+                                </p>
+                                <div className="h-[2px] w-0 group-hover:w-1/2 mt-0.5 transition-all duration-300 rounded-full" style={{ backgroundColor: mainColor }} />
                               </div>
-
-                              {/* กรอบเรืองแสงเมื่อ Hover */}
                               <div className="absolute inset-0 border-2 border-transparent group-hover:border-[var(--theme-main)] rounded-xl pointer-events-none transition-colors duration-300" />
-
                             </div>
                           ) : (
-                            // ช่องว่าง (Empty Slot)
                             <div key={`empty-${idx}`} className="h-[120px] rounded-xl border border-white/5 bg-white/5 flex items-center justify-center opacity-20">
                               <Anchor size={16} />
                             </div>
@@ -218,79 +397,28 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
           )}
         </TransformWrapper>
       </div>
-
     </div>
   );
 }
 
-function MemberList({ members, currentTheme, onMemberClick }) {
-  const mainColor = currentTheme.main;
-  const textColor = currentTheme.textOnDark; // ✅ ใช้สี Text สำหรับพื้นหลังมืด
-
-  return (
-    <>
-      {members.map((member, index) => {
-        let positionTitle = member.position || "สมาชิกพรรค";
-
-        // กำหนดชื่อตำแหน่งตามลำดับความสำคัญ
-        if (index === 0) positionTitle = "นายกสโมสรนักศึกษา";
-        else if (index >= 1 && index <= 4) positionTitle = "คณะกรรมการบริหาร";
-
-        return (
-          <div
-            key={member.id || index}
-            onClick={() => onMemberClick(member)}
-            className="group flex items-center gap-4 p-4 rounded-2xl border border-white/5 bg-[#162032]/40 cursor-pointer transition-all duration-300 hover:bg-[#1e293b] hover:border-white/20 active:scale-[0.98] relative overflow-hidden"
-          >
-            {/* ✅ เลขลำดับ: จัดเป็นวงกลมด้านในแถวให้ดูปกติและสะอาดตา */}
-            <div
-              className="flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center text-xs font-black transition-all duration-300 group-hover:scale-110"
-              style={{
-                backgroundColor: `${mainColor}15`,
-                borderColor: index === 0 ? mainColor : 'rgba(255,255,255,0.1)',
-                color: index === 0 ? mainColor : '#94a3b8'
-              }}
-            >
-              {index + 1}
-            </div>
-
-            <div className="flex-1 min-w-0">
-              {/* ✅ โชว์แค่ชื่อตำแหน่ง และใช้สี textOnDark */}
-              <h4
-                className="text-sm font-bold truncate transition-colors"
-                style={{ color: textColor }}
-              >
-                {positionTitle}
-              </h4>
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.1em] mt-0.5 font-medium">
-                คลิกดูรายละเอียด
-              </p>
-            </div>
-
-            <ChevronRight
-              size={16}
-              className="text-slate-600 transition-all transform group-hover:translate-x-1"
-              style={{ color: index === 0 ? mainColor : undefined }}
-            />
-
-            {/* แถบสีด้านล่างแสดงเอกลักษณ์พรรคตอน Hover */}
-            <div
-              className="absolute bottom-0 left-0 w-full h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"
-              style={{ backgroundColor: mainColor }}
-            />
-          </div>
-        );
-      })}
-    </>
-  );
-}
-
+// ✅ Optimized: ใช้ memoize ภายใน component ใหญ่ หรือแยกไฟล์ก็ได้ แต่ในที่นี้เน้นใส่ decoding="async"
 function MemberImage({ url, large = false }) {
   const [error, setError] = useState(false);
+  
   if (error || !url) return (
     <div className={`w-full h-full flex items-center justify-center bg-slate-100 text-slate-300 ${large ? 'bg-[#162032] text-slate-600' : ''}`}>
       <Wind size={large ? 32 : 16} className="opacity-40" />
     </div>
   );
-  return <img src={url} alt="" className="w-full h-full object-cover" onError={() => setError(true)} />;
+
+  return (
+    <img 
+      src={url} 
+      alt="" 
+      decoding="async" 
+      loading="lazy"
+      className="w-full h-full object-cover" 
+      onError={() => setError(true)} 
+    />
+  );
 }

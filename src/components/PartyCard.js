@@ -1,104 +1,159 @@
-"use client";
+'use client';
 
-import { useState } from "react"; // ✅ 1. เพิ่ม import useState
-import { Users, FileText, XCircle } from "lucide-react";
+import { useState } from 'react';
+import Link from 'next/link'; // ✅ กลับมาใช้ Link
+import { Check, Users, UserX, Ban, PlayCircle } from 'lucide-react'; // ใช้ไอคอน Play หรือ FileText ตามชอบ
 
-export default function PartyCard({ party, isSelected, onSelect, onViewDetails, isVoteNo }) {
-  // ✅ 2. สร้าง State สำหรับเช็คว่ารูปเสียหรือไม่
+export default function PartyCard({ party, isSelected, onSelect, variant = 'grid' }) {
+  const isHero = variant === 'hero';
+  
+  const isVoteNo = party.number === 0 || party.number === '0';         
+  const isDisapprove = party.number === -1 || party.number === '-1';   
+  const isSpecialOption = isVoteNo || isDisapprove;                    
+
   const [imageError, setImageError] = useState(false);
 
-  if (!party) return null;
+  // 🎨 COLOR THEME
+  let themeColor = 'purple'; 
+  if (isVoteNo) themeColor = 'orange';
+  if (isDisapprove) themeColor = 'red';
+
+  const colorMap = {
+    purple: {
+      border: 'border-[#8A2680]',
+      bg: 'bg-purple-50',
+      text: 'text-[#8A2680]',
+      badge: 'bg-[#8A2680]',
+      shadow: 'shadow-purple-200'
+    },
+    red: {
+      border: 'border-red-500',
+      bg: 'bg-red-50',
+      text: 'text-red-600',
+      badge: 'bg-red-500',
+      shadow: 'shadow-red-200'
+    },
+    orange: {
+      border: 'border-orange-500',
+      bg: 'bg-orange-50',
+      text: 'text-orange-600',
+      badge: 'bg-orange-500',
+      shadow: 'shadow-orange-200'
+    }
+  };
+
+  const theme = colorMap[themeColor];
+  const SpecialIcon = isDisapprove ? UserX : Ban; 
 
   return (
-    <div 
+    <div
       onClick={() => onSelect(party.id)}
       className={`
-        relative flex flex-col items-center text-center transition-all duration-200 cursor-pointer group bg-white border-2
-        rounded-2xl md:rounded-[2rem] 
-        p-5 md:p-6
-        h-full justify-between
+        relative group cursor-pointer flex flex-col items-center text-center select-none transition-all duration-300 ease-out
+        bg-white overflow-hidden
         
+        /* Shape & Shadow */
+        ${isHero 
+          ? 'rounded-2xl md:rounded-[2rem] shadow-sm md:shadow-xl hover:shadow-lg scale-[1.01]' 
+          : 'rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 h-full'
+        }
+
+        /* Border Logic */
+        border-2
         ${isSelected 
-          ? (isVoteNo 
-              ? 'border-red-500 ring-2 ring-red-100 bg-red-50 shadow-lg scale-[1.02] z-10'
-              : 'border-[#8A2680] ring-2 ring-purple-100 shadow-xl scale-[1.02] z-10'
-            )
-          : 'border-slate-100 hover:border-slate-300 hover:shadow-md'
+           ? `border-4 ${theme.border} ${theme.bg}` 
+           : 'border-slate-100 hover:border-slate-300'
         }
       `}
     >
-      {/* Checkmark */}
-      {isSelected && (
-        <div className={`absolute top-2 right-2 md:top-3 md:right-3 text-white rounded-full p-0.5 animate-scale-in z-20 ${isVoteNo ? 'bg-red-500' : 'bg-[#8A2680]'}`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-        </div>
-      )}
-
-      {/* --- Logo / Icon (ตรงกลาง) --- */}
+      {/* 1. Badge มุมซ้ายบน */}
       <div className={`
-        mb-3 md:mb-4 p-0.5 md:p-1 rounded-full flex items-center justify-center overflow-hidden border-2 md:border-4 transition-all
-        w-20 h-20 md:w-24 md:h-24 mx-auto shrink-0 bg-white
-        ${isSelected 
-           ? (isVoteNo ? 'border-red-500' : 'border-[#8A2680]') 
-           : 'border-slate-50 group-hover:border-slate-200'
-        }
+        absolute top-2 left-2 z-20 px-2 py-0.5 md:top-3 md:left-3 md:px-3 md:py-1 
+        rounded-md font-black text-white text-[10px] md:text-xs tracking-wide shadow-sm
+        ${isSelected ? theme.badge : (isSpecialOption ? 'bg-slate-400' : 'bg-slate-800')}
       `}>
-        {isVoteNo ? (
-             // กรณีงดออกเสียง (ใช้ XCircle)
-             <div className={`w-full h-full rounded-full flex items-center justify-center ${isSelected ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <XCircle className="w-10 h-10 md:w-12 md:h-12" />
-             </div>
-        ) : (party.logoUrl && !imageError) ? (
-          // ✅ กรณีมี URL รูปภาพ และโหลดผ่าน (ใช้ object-contain + p-1 ให้รูปสวย)
-          <img 
-            src={party.logoUrl} 
-            alt={party.name} 
-            className="w-full h-full object-contain rounded-full p-1 bg-white"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-           // ✅ Fallback Icon: แสดงเมื่อไม่มี URL หรือรูปเสีย
-           <div className="w-full h-full rounded-full flex items-center justify-center bg-slate-100 text-slate-300">
-             <Users className="w-8 h-8 md:w-10 md:h-10" />
-           </div>
-        )}
+        {isVoteNo ? 'NO VOTE' : isDisapprove ? 'NO' : `NO. ${party.number}`}
       </div>
 
-      {/* --- ชื่อพรรค --- */}
-      <h3 className={`
-        font-bold mb-1 md:mb-2 line-clamp-2 w-full transition-colors leading-tight
-        text-sm md:text-lg 
-        ${isSelected 
-            ? (isVoteNo ? 'text-red-600' : 'text-[#8A2680]') 
-            : 'text-slate-800'
-        }
+      {/* 3. Content Body */}
+      <div className={`
+        w-full flex flex-col items-center flex-grow relative z-10
+        ${isHero ? 'p-3 pt-8 pb-6 md:p-8 md:pt-12 md:pb-8' : 'p-3 pt-8 pb-4'}
       `}>
-        {party.name}
-      </h3>
-      
-      {/* --- เบอร์พรรค --- */}
-      <span className={`
-        font-bold rounded-full mb-3 md:mb-4
-        text-xs px-3 py-1
-        ${isVoteNo 
-            ? (isSelected ? 'bg-red-200 text-red-800' : 'bg-slate-100 text-slate-500')
-            : (isSelected ? 'bg-[#8A2680] text-white' : 'bg-purple-50 text-purple-700')
-        }
-      `}>
-        {isVoteNo ? 'No Vote' : `เบอร์ ${party.number}`}
-      </span>
-      
-      {/* --- ปุ่มดูรายละเอียด --- */}
-      {!isVoteNo && (
-          <div className="mt-auto w-full">
-            <button 
-              onClick={(e) => { e.stopPropagation(); onViewDetails(party); }}
-              className="flex items-center justify-center gap-1 text-slate-500 hover:text-[#8A2680] transition-colors font-medium rounded-lg hover:bg-purple-50 w-full py-2 bg-slate-50"
+        
+        {/* รูปโลโก้ */}
+        <div className={`
+          relative flex items-center justify-center rounded-full bg-white mb-2 md:mb-3
+          border-[3px] overflow-hidden shadow-inner
+          ${isSelected ? `${theme.border} ${theme.shadow} shadow-lg` : 'border-slate-100'}
+          
+          ${isHero 
+            ? 'w-20 h-20 md:w-44 md:h-44' 
+            : 'w-16 h-16 md:w-24 md:h-24'
+          }
+        `}>
+          {isSpecialOption ? (
+              <SpecialIcon className={`w-1/2 h-1/2 ${isSelected ? theme.text : 'text-slate-300'}`} />
+          ) : (party.logoUrl && !imageError) ? (
+              <img
+                src={party.logoUrl}
+                alt={party.name}
+                className="w-full h-full object-contain p-2 transition-transform duration-500 hover:scale-110"
+                onError={() => setImageError(true)}
+              />
+          ) : (
+              <Users className="w-1/2 h-1/2 text-slate-300" />
+          )}
+
+          {/* Checkmark Overlay */}
+          {isSelected && (
+            <div className={`absolute inset-0 bg-black/10 flex items-center justify-center backdrop-blur-[1px]`}>
+               <div className={`p-1.5 rounded-full ${theme.badge} text-white shadow-lg animate-in zoom-in duration-200`}>
+                  <Check size={isHero ? 24 : 16} strokeWidth={4} />
+               </div>
+            </div>
+          )}
+        </div>
+
+        {/* ชื่อพรรค */}
+        <h3 className={`
+          font-black leading-tight line-clamp-2 w-full px-1 mb-1 transition-colors
+          ${isHero ? 'text-base md:text-3xl' : 'text-xs md:text-base'}
+          ${isSelected ? theme.text : 'text-slate-700'}
+        `}>
+          {party.name}
+        </h3>
+
+        {/* ✅ 4. Link ไปหน้าแยก (อยู่ตำแหน่งใหม่ ด้านล่าง) */}
+        {!isSpecialOption && (
+          <div className="mt-2 md:mt-3 z-30">
+            <Link
+              href={`/party?id=${party.number}&source=vote`} // หรือ path ที่คุณตั้งไว้
+              onClick={(e) => e.stopPropagation()} // ✋ กันไม่ให้กดแล้วเลือกพรรค
+              className={`
+                flex items-center gap-1.5
+                px-3 py-1 md:px-4 md:py-1.5
+                rounded-full
+                text-[10px] md:text-xs font-bold
+                transition-all duration-200
+                border
+                ${isSelected 
+                  ? 'bg-white/50 border-purple-200 text-purple-700 hover:bg-purple-100' 
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-white hover:border-[#8A2680] hover:text-[#8A2680] hover:shadow-sm'
+                }
+              `}
             >
-              <FileText className="w-4 h-4" />
-              <span className="text-xs md:text-sm">ดูรายชื่อ</span>
-            </button>
+              <span>ดูรายละเอียด</span>
+              <PlayCircle size={12} className="md:w-3.5 md:h-3.5" />
+            </Link>
           </div>
+        )}
+
+      </div>
+
+      {/* Glow Effect */}
+      {isSelected && (
+        <div className={`absolute inset-0 z-0 opacity-10 bg-gradient-to-b from-transparent to-${themeColor}-500 pointer-events-none`}></div>
       )}
     </div>
   );
