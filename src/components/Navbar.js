@@ -30,12 +30,28 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
+    // 1. สั่งลบ Session ใน NextAuth ก่อน (ล้างสถานะในแอปเรา)
     await signOut({ redirect: false });
-    window.location.href = "/";
-    setIsMenuOpen(false);
-    setIsProfileOpen(false);
+
+    // 2. เตรียม URL สำหรับ Redirect กลับมา (เช่น http://localhost:3000)
+    const baseUrl = window.location.origin;
+
+    /**
+     * 3. URL สำหรับสั่ง Logout ที่เซิร์ฟเวอร์มหาลัย
+     * เพิ่มพารามิเตอร์ ?post_logout_redirect_uri เพื่อบอกให้ SSO 
+     * ส่งผู้ใช้กลับมาที่เว็บของเราหลังจากล้างเซสชันเสร็จแล้ว
+     */
+    const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+
+    // 4. นำทางผู้ใช้ไปที่หน้า Logout ของมหาลัย
+    window.location.href = psuLogoutUrl;
+
+    // ปิด UI ต่างๆ
+    if (typeof setIsMenuOpen === 'function') setIsMenuOpen(false);
+    if (typeof setIsProfileOpen === 'function') setIsProfileOpen(false);
   };
 
+  
   const isLoggedIn = status === "authenticated" && session;
   const user = session?.user;
 

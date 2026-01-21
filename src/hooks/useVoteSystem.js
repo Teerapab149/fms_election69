@@ -1,4 +1,3 @@
-// src/hooks/useVoteSystem.js
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -7,6 +6,8 @@ import { useSession } from "next-auth/react";
 
 export function useVoteSystem() {
   const router = useRouter();
+
+  // 1. 🟢 ใช้ Session จริงจาก NextAuth
   const { data: session, status, update } = useSession();
 
   // --- State ---
@@ -14,51 +15,43 @@ export function useVoteSystem() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Selection State (This drives the footer)
-  const [selectedPartyId, setSelectedPartyId] = useState(null);
 
-  // ✅ เพิ่ม Ref เพื่อป้องกันการ Fetch ซ้ำซ้อน (ช่วยเรื่อง Performance)
+  // Selection State
+  const [selectedPartyId, setSelectedPartyId] = useState(null);
   const isFetchingRef = useRef(false);
 
-  // --- 1. Fetch Data & Auth Guard ---
+  // --- 2. 🟢 Fetch Data & Auth Guard (โหมดใช้งานจริง) ---
   useEffect(() => {
+    // ป้องกันการทำงานขณะกำลังโหลด Session
     if (status === "loading") return;
+
+    // ถ้าไม่ได้ Login ให้เด้งไปหน้า Login
     if (status === "unauthenticated") {
       router.replace("/login");
       return;
     }
 
     const fetchData = async () => {
-      // ป้องกันการเรียกซ้ำ
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
 
       try {
         const studentId = session?.user?.studentId || session?.user?.id;
-
-        // ✅ FIX 1 (iPad): เพิ่ม Timestamp เพื่อแก้ปัญหา Caching
         const timestamp = new Date().getTime();
 
-        // Fetch parallel พร้อม headers ห้าม Cache
+        // ยิง API ไปที่ Backend จริงๆ
         const [candidatesRes, userStatusRes] = await Promise.all([
-          fetch(`/api/results?t=${timestamp}`, {
-             cache: 'no-store',
-             headers: { 'Cache-Control': 'no-cache, no-store' }
-          }),
-          fetch(`/api/check-status?studentId=${studentId}&t=${timestamp}`, {
-             cache: 'no-store',
-             headers: { 'Cache-Control': 'no-cache, no-store' }
-          })
+          fetch(`/api/results?t=${timestamp}`),
+          fetch(`/api/check-status?studentId=${studentId}&t=${timestamp}`)
         ]);
 
         const candidatesData = await candidatesRes.json();
 
-        // Check if user already voted
+        // ตรวจสอบสถานะว่าเคยโหวตหรือยัง
         if (userStatusRes.ok) {
           const userData = await userStatusRes.json();
           if (userData.isVoted) {
-            router.replace("/results");
+            router.replace("/results"); // ถ้าโหวตแล้วให้ไปหน้าผล
             return;
           }
           setCurrentUser({ ...session.user, ...userData });
@@ -66,13 +59,11 @@ export function useVoteSystem() {
           setCurrentUser(session.user);
         }
 
-        // Set Candidates
+        // เซ็ตข้อมูลผู้สมัคร
         if (candidatesData.candidates) {
-          // ✅ FIX 3: Safe Sort (สร้าง Array ใหม่ก่อนเรียง เพื่อไม่ให้กระทบ State โดยตรง)
           const sorted = [...candidatesData.candidates].sort((a, b) => a.number - b.number);
           setCandidates(sorted);
         }
-
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -82,11 +73,9 @@ export function useVoteSystem() {
     };
 
     fetchData();
-
-  // ✅ FIX 2 (Mobile): เปลี่ยน dependency จาก session เป็น session?.user?.id เพื่อแก้ Infinite Loop
   }, [status, session?.user?.id, router]);
 
-  // --- 2. Computed Data (Helpers) ---
+  // --- 3. Computed Data (Logic เดิม) ---
   const { regularParties, specialOptions, isSingleParty } = useMemo(() => {
     const regular = candidates.filter(c => parseInt(c.number) > 0);
     const abstain = candidates.find(c => parseInt(c.number) === 0);
@@ -101,17 +90,15 @@ export function useVoteSystem() {
 
   const selectedParty = candidates.find(c => c.id === selectedPartyId);
 
-  // --- 3. Actions ---
-
-  // Select Party (Toggle logic)
+  // --- 4. Actions ---
   const handleSelectParty = (id) => {
     setSelectedPartyId(prev => prev === id ? null : id);
   };
 
-  // Submit Vote (API Call)
+  // 5. 🟢 Submit Vote (ยิง API จริง)
   const submitVote = async () => {
     if (!currentUser || selectedPartyId === null) return;
-    
+
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/vote", {
@@ -124,24 +111,20 @@ export function useVoteSystem() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "โหวตไม่สำเร็จ");
 
-      // Refresh Session immediately
+      // อัปเดต Session ว่าโหวตแล้ว และไปหน้าสำเร็จ
       await update({ isVoted: true });
-
-      // Redirect
       router.replace("/success?voted=true");
-      return true; // Success signal
-
+      return true;
     } catch (error) {
       alert("❌ เกิดข้อผิดพลาด: " + error.message);
       setIsSubmitting(false);
-      return false; // Fail signal
+      return false;
     }
   };
 
   return {
-    // Data
     session,
     isLoading,
     isSubmitting,
@@ -149,13 +132,9 @@ export function useVoteSystem() {
     regularParties,
     specialOptions,
     isSingleParty,
-    
-    // Selection
     selectedPartyId,
     selectedParty,
-    
-    // Actions
-    handleSelectParty, // ใช้ชื่อเดิมตามโค้ดคุณ
+    handleSelectParty,
     submitVote
   };
 }
