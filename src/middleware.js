@@ -23,8 +23,6 @@ export function middleware(request) {
      return NextResponse.redirect(new URL('/admin', request.url));
   }
 
-  // ผ่านได้
-  return NextResponse.next();
 }
 
 // กำหนดขอบเขตงานของยาม (เฝ้าแค่เส้นทาง /admin)

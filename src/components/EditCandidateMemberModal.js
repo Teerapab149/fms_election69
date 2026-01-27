@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Trash2, Loader2, Upload, User, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import { getEncryptedToken } from "../utils/auth";
 
 const PREDEFINED_POSITIONS = [
     "นายกสโมสรนักศึกษา",
@@ -51,6 +52,18 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
             const priorityB = indexB === -1 ? 999 : indexB;
             return priorityA - priorityB;
         });
+    };
+
+    const MAJOR_SHORT = {
+        "บัญชี": "ACC",
+        "การตลาด": "MKT",
+        "รัฐประศาสนศาสตร์": "PA",
+        "การเงินและการลงทุน": "FIN",
+        "การจัดการโลจิสติกส์และโซ่อุปทาน": "LSM",
+        "ระบบสารสนเทศทางธุรกิจ": "BIS",
+        "การจัดการไมซ์": "MICE",
+        "การจัดการเเละความเป็นผู้ประกอบการ": "BBA",
+        "การจัดการทรัพยากรมนุษย์": "HRM"
     };
 
     useEffect(() => {
@@ -140,11 +153,8 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     const submitToBackend = async (finalMemberList) => {
         try {
             const data = new FormData();
-            data.append('name', candidate.name);
-            data.append('number', candidate.number);
 
             const membersPayload = finalMemberList.map(m => {
-
                 let imageUrlToSend = null;
                 if (m.previewUrl && !m.previewUrl.startsWith('blob:')) {
                     imageUrlToSend = m.previewUrl;
@@ -165,8 +175,15 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 data.append(`member_file_${currentMember.studentId}`, currentMember.imageFile);
             }
 
+            const encryptedToken = getEncryptedToken();
+            if (!encryptedToken) {
+                console.error("Encryption failed");
+                return;
+            }
+
             const res = await fetch(`/api/admin/candidates?id=${candidate.id}`, {
                 method: 'PUT',
+                headers: { 'x-admin-token': encryptedToken, },
                 body: data,
             });
 
@@ -260,6 +277,33 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                         readOnly={!!focusMemberId}
                                         className={`w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none ${focusMemberId ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">สาขา</label>
+                                    <div className="relative">
+                                        <select
+                                            name="major"
+                                            value={currentMember.major || ''}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none appearance-none bg-white"
+                                        >
+                                            <option value="">-- เลือกสาขา --</option>
+                                            {/* แก้ตรงนี้ครับ: ใช้ Object.keys(...) */}
+                                            {Object.keys(MAJOR_SHORT).map((majorName) => (
+                                                <option key={majorName} value={majorName}>
+                                                    {majorName}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        {/* ไอคอนลูกศรลง (เพื่อให้หน้าตาเหมือนช่องอื่น) */}
+                                        <div className="absolute right-3 top-3 pointer-events-none text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="relative group">

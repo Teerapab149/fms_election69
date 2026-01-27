@@ -1,8 +1,54 @@
 import { db } from "../../../../lib/db";
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 
+const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
+  ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
+  : null;
+
+function verifyAdminToken(request) {
+  const encryptedToken = request.headers.get('x-admin-token');
+  const now = Date.now();
+
+  if (!encryptedToken || !PRIVATE_KEY) {
+    return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
+  }
+
+  try { 
+    const buffer = Buffer.from(encryptedToken, "base64");
+    const decryptedData = crypto.privateDecrypt(
+      {
+        key: PRIVATE_KEY,
+        padding: crypto.constants.RSA_PKCS1_PADDING,
+      },
+      buffer
+    );
+
+    const decryptedString = decryptedData.toString("utf8");
+    const [secret, timestamp] = decryptedString.split('|');
+    const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
+
+    if (secret !== EXPECTED_SECRET) {
+      return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
+    }
+
+    if (now - parseInt(timestamp) > 3600000) {
+      return NextResponse.json({ error: "Token Expired" }, { status: 403 });
+    }
+
+    return null;
+
+  } catch (decryptionError) {
+    console.error("Decryption failed:", decryptionError);
+    return NextResponse.json({ error: "Invalid Token Format" }, { status: 403 });
+  }
+}
+
+
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
-export async function GET() {
+export async function GET(req) {
+  const authError = verifyAdminToken(req);
+  if (authError) return authError;
   try {
     // ดึงจำนวนคนทั้งหมด / คนที่โหวตแล้ว
     const totalVoters = await db.user.count({ where: { role: 'student' } }); // ไม่นับ Admin
@@ -36,6 +82,8 @@ export async function GET() {
 
 // 2. POST: สั่งการระบบ (Action)
 export async function POST(req) {
+  const authError = verifyAdminToken(req);
+  if (authError) return authError;
   try {
     const { action } = await req.json();
 

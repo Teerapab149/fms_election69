@@ -66,19 +66,33 @@ export default function ResultsPage() {
 
       // 1.3 เช็คเงื่อนไขโหวตและทำฟอร์มในช่วง Ongoing
       if (status === "authenticated" && session) {
-        if (!session.user.isVoted) {
-          setModalType("VOTE");
-          setShowAccessModal(true);
-          setIsAuthorized(false);
-        } else if (!session.user.isFormCompleted) {
-          setModalType("FORM");
-          setShowAccessModal(true);
-          setIsAuthorized(false);
-        } else {
-          // ผ่านเกณฑ์ครบถ้วน
-          setIsAuthorized(true);
-          setShowAccessModal(false);
-        }
+
+        (async () => {
+          const res = await fetch(`/api/check-status?studentId=${session?.user?.studentId}`);
+          const data = await res.json();
+
+          if (!data.isVoted) {
+            setModalType("VOTE");
+            setShowAccessModal(true);
+            setIsAuthorized(false);
+            return
+          };
+        })();
+
+        (async () => {
+          const res = await fetch(`/api/check-form?studentId=${session?.user?.studentId}`);
+          const data = await res.json();
+
+          if (!data.isFormCompleted) {
+            setModalType("FORM");
+            setShowAccessModal(true);
+            setIsAuthorized(false);
+            return
+          };
+        })();
+
+        setIsAuthorized(true);
+        setShowAccessModal(false);
         setLoading(false);
       }
     };

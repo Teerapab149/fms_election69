@@ -17,14 +17,19 @@ model User {
   facultyId     String?
   departmentId  String?
   role          String   @default("student")
-  password      String?
+  passwordHash  String?
   gender        String?
   major         String?
+  titleName     String?
+  subKeyId      String?
+  subMajorId    String?
+  subMajorNameThai    String?
   year          String?
 
   isVoted       Boolean  @default(false)
   isFormCompleted  Boolean  @default(false)
   createdAt     DateTime @default(now())
+  isAdmin       Boolean @default(false)
 
   candidateId   Int?
   candidate     Candidate? @relation(fields: [candidateId], references: [id])
@@ -34,8 +39,11 @@ model Member {
   id            Int      @id @default(autoincrement())
   studentId     String   @unique
   name          String
+
   imageUrl      String
-  
+  modalImageUrl String?
+
+  major         String?
   position      String?
 
   candidateId   Int
@@ -48,11 +56,14 @@ model Candidate {
   number        Int      @unique
   slogan        String?
   logoUrl       String?
-  groupImageUrl String?
-  
-  logoMeaning   String?  // เก็บความหมายสัญลักษณ์ (Text ยาว)
-  missions      Json?    // เก็บพันธกิจ (แนะนำเป็น Json เพื่อเก็บเป็น Array ["ข้อ1", "ข้อ2"])
-  policies      Json?    // เก็บนโยบาย (แนะนำเป็น Json เพื่อเก็บเป็น Array ["ข้อ1", "ข้อ2"])
+
+  groupImageUrls Json? 
+  officialImageUrl String?
+  mobileHeroImage Json?
+
+  logoMeaning   String?
+  missions      Json?    
+  policies      Json?    
   
   members       Member[]
   voters        User[]

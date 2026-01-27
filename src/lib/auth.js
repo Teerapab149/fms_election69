@@ -60,14 +60,14 @@ export const authOptions = {
 
       profile(profile) {
         // 🔍 ดูข้อมูลดิบจากมหาลัยใน Terminal
-        console.log("---------- [DEBUG] RAW PROFILE FROM PSU ----------");
+        /*console.log("---------- [DEBUG] RAW PROFILE FROM PSU ----------");
         console.log(JSON.stringify(profile, null, 2));
-        console.log("--------------------------------------------------");
+        console.log("--------------------------------------------------");*/
 
         // Mapping ข้อมูลแบบรองรับหลายเคส (Defensive Mapping)
         const studentId = profile.StudentID || profile.student_id || profile.preferred_username || profile.sub;
-        const facultyId = profile.FacultyID || profile.faculty_id || profile.facultyId;
-        const departmentId = profile.DepartmentID || profile.department_id || profile.departmentId;
+        const facultyId = profile.FacultyID || profile.faculty_id || profile.facultyId || profile.office_name_th;
+        const departmentId = profile.DepartmentID || profile.department_id || profile.departmentId || profile.department_th;
 
         // ตรวจสอบว่า studentId มีค่าจริงไหมก่อนส่งต่อ
         if (!studentId) {
@@ -82,6 +82,9 @@ export const authOptions = {
           facultyId: facultyId ? String(facultyId) : null,
           departmentId: departmentId ? String(departmentId) : null,
           uniToken: profile.Token || profile.token || null,
+          year: null,
+          groups: profile.groups,
+          isAdmin: false
         };
       },
     },
@@ -95,9 +98,20 @@ export const authOptions = {
       // ขั้นตอนนี้สำคัญ: 'user' จะมีค่าเฉพาะตอน Sign In ครั้งแรกเท่านั้น
       if (user) {
         console.log(`🔄 [DB Sync] Start upsert for studentId: ${user.studentId}`);
-        
+
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
+          const group = String(user.groups?.[0] || "").toLowerCase();
+          const roleMap = {
+            staff: "ADMIN",
+            student: "student",
+          };
+          let newRole = roleMap[group] || "student";
+          if (user.studentId === "6610510149") {
+            newRole = "ADMIN";
+          }
+          let setAdmin = newRole == "ADMIN" ? true : false;
+
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },
             update: {
@@ -105,7 +119,10 @@ export const authOptions = {
               email: user.email,
               facultyId: user.facultyId,
               departmentId: user.departmentId,
-              major: user.departmentId, // Map Department เข้าช่อง Major
+              year: user.year,
+              role: newRole,
+              isAdmin: setAdmin
+              //major: user.departmentId,
             },
             create: {
               studentId: user.studentId,
@@ -113,10 +130,12 @@ export const authOptions = {
               email: user.email,
               facultyId: user.facultyId,
               departmentId: user.departmentId,
-              major: user.departmentId,
-              role: 'student',
+              //major: user.departmentId,
+              role: newRole,
+              year: user.year,
               isVoted: false,
               isFormCompleted: false,
+              isAdmin: setAdmin
             }
           });
 
@@ -129,6 +148,7 @@ export const authOptions = {
           token.isVoted = dbUser.isVoted;
           token.facultyId = dbUser.facultyId;
           token.departmentId = dbUser.departmentId;
+          token.year = dbUser.year;
 
         } catch (error) {
           console.error("❌ [DB Sync] Error occurred during Prisma upsert:");

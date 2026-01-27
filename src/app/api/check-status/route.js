@@ -1,17 +1,18 @@
 import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
 
-export async function POST(request) {
+export async function GET(request) {
   try {
-    const { studentId } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get("studentId");
 
     if (!studentId) {
       return NextResponse.json({ error: "Missing studentId" }, { status: 400 });
     }
 
     const user = await db.user.findUnique({
-      where: { studentId: String(studentId) }, // แปลงเป็น String กันเหนียว
-      select: { isVoted: true } // ดึงมาแค่สถานะโหวตพอ ประหยัดแรง
+      where: { studentId: String(studentId) },
+      select: { isVoted: true },
     });
 
     if (!user) {

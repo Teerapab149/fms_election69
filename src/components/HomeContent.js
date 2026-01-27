@@ -27,14 +27,41 @@ export default function HomeContent({ initialData }) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(true);
 
+    // 🔐 เช็คสถานะ isVoted จาก Database จริง (ไม่พึ่ง session เพราะ JWT ไม่ update หลังโหวต)
+    const [isVotedReal, setIsVotedReal] = useState(false);
+    const [isCheckingVoted, setIsCheckingVoted] = useState(true);
+
     const slideshowImages = ["/images/prob/samo49_1.png"];
     const isMultiImage = slideshowImages.length > 1;
     const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
 
     useEffect(() => {
         setMounted(true);
-        // 💡 ถ้าต้องการ Realtime ค่อยเปิด fetch ตรงนี้เพิ่มได้ แต่ตอนนี้เรามีข้อมูลจาก Server แล้ว
     }, []);
+
+    // 🔐 Fetch สถานะ isVoted จริงจาก Database เมื่อมี session
+    useEffect(() => {
+        const checkVoteStatus = async () => {
+            if (session?.user?.studentId) {
+                try {
+                    const res = await fetch(`/api/check-status?studentId=${session.user.studentId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setIsVotedReal(data.isVoted === true);
+                    }
+                } catch (error) {
+                    console.error("Error checking vote status:", error);
+                }
+            }
+            setIsCheckingVoted(false);
+        };
+
+        if (status === "authenticated") {
+            checkVoteStatus();
+        } else if (status === "unauthenticated") {
+            setIsCheckingVoted(false);
+        }
+    }, [session?.user?.studentId, status]);
 
     useEffect(() => {
         if (!isMultiImage) return;
@@ -134,9 +161,9 @@ export default function HomeContent({ initialData }) {
                                         animation: ""
                                     };
 
-                                    // 2. เช็ค Session เพื่อเปลี่ยน config
+                                    // 2. เช็ค Session เพื่อเปลี่ยน config (ใช้ isVotedReal จาก DB แทน session)
                                     if (session) {
-                                        if (session.user?.isVoted === true) {
+                                        if (isVotedReal) {
                                             // เคส: โหวตแล้ว -> ไปหน้า Results
                                             btnConfig = {
                                                 isLoginAction: false, // ไม่ใช่ปุ่ม Login แล้ว เป็น Link

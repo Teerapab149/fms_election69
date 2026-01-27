@@ -8,22 +8,21 @@ import EditCandidateModal from "../../components/EditCandidateModal";
 import EditCandidateMember from "../../components/EditCandidateMember";
 import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
+import ErrorActionModal from "../../components/ErrorActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
+import { getEncryptedToken } from "../../utils/auth";
 import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
-} from 'recharts';
+} from 'recharts'; 
 
-// ✅ 1. Import Config กลางมาใช้ (เหมือนหน้า User)
 import { ELECTION_CONFIG } from "../../utils/electionConfig";
 
-// 1. หน้าภาพรวม (Overview)
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
 
-  // ✅ 2. ใช้เวลาจาก Config กลาง (ไม่ต้อง Hardcode แล้ว)
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
 
   const [candidates, setCandidates] = useState([]);
@@ -37,7 +36,15 @@ const OverviewTab = () => {
 
   const fetchResults = async () => {
     try {
-      const res = await fetch("/api/results?isAdmin=true");
+
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) {
+        console.error("Encryption failed");
+        return;
+      }
+
+      const res = await fetch("/api/results");
+
       const data = await res.json();
 
       if (data.candidates) {
@@ -189,7 +196,6 @@ const OverviewTab = () => {
   )
 };
 
-// 2. หน้าจัดการผู้สมัคร (Candidates)
 const CandidatesTab = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -208,7 +214,18 @@ const CandidatesTab = () => {
   const fetchResults = async () => {
     setCandidates([]);
     try {
-      const res = await fetch("/api/results?isAdmin=true");
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) {
+        console.error("Encryption failed");
+        return; 
+      }
+
+      const res = await fetch(`/api/results?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+            'x-admin-token': encryptedToken,
+        }
+      });
       const data = await res.json();
 
       if (data.candidates) {
@@ -365,7 +382,6 @@ const CandidatesTab = () => {
   )
 };
 
-// 3. หน้าตั้งค่า (Settings)
 const SettingsTab = () => {
   const [isVoteOpen, setIsVoteOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -376,10 +392,19 @@ const SettingsTab = () => {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
 
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState({ title: '', msg: '' });
+
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch('/api/admin/dashboard');
+        const encryptedToken = getEncryptedToken();
+        if (!encryptedToken) {
+          console.error("Encryption failed");
+          return;
+        }
+
+        const res = await fetch('/api/admin/dashboard', { headers: { 'x-admin-token': encryptedToken, } });
         const data = await res.json();
         if (data.stats) setIsVoteOpen(data.stats.isVoteOpen);
       } catch (error) {
@@ -397,9 +422,16 @@ const SettingsTab = () => {
     setProcessing(true);
 
     try {
+
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) {
+        console.error("Encryption failed");
+        return;
+      }
+
       const res = await fetch('/api/admin/dashboard', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
         body: JSON.stringify({ action: activeModal }),
       });
 
@@ -423,9 +455,12 @@ const SettingsTab = () => {
         }
 
         setIsSuccessOpen(true);
+      } else {
+        setErrorMessage({ title: `Error Code ${res.status}`, msg: res.statusText });
+        setIsErrorOpen(true);
       }
     } catch (error) {
-      console.error("Action failed", error);
+      console.error("Action failed!", error);
     } finally {
       setProcessing(false);
     }
@@ -513,6 +548,13 @@ const SettingsTab = () => {
         message={successMessage.msg}
       />
 
+      <ErrorActionModal
+        isOpen={isErrorOpen}
+        onClose={() => setIsErrorOpen(false)}
+        title={errorMessage.title}
+        message={errorMessage.msg}
+      />
+
       <ConfirmModal
         isOpen={activeModal === 'TOGGLE_VOTE'}
         onClose={() => setActiveModal(null)}
@@ -549,7 +591,6 @@ const SettingsTab = () => {
   )
 };
 
-// 4. หน้า Monitor (ผลคะแนนสด)
 const MonitorTab = () => {
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -567,7 +608,13 @@ const MonitorTab = () => {
 
   const fetchResults = async () => {
     try {
-      const res = await fetch("/api/results?isAdmin=true");
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) {
+        console.error("Encryption failed");
+        return;
+      }
+
+      const res = await fetch("/api/results");
       const data = await res.json();
 
       if (data.candidates) {
@@ -582,13 +629,11 @@ const MonitorTab = () => {
       }
 
       if (data.stats) {
-        // ✅ 1. กำหนด List ปีที่ต้องการให้แสดงเท่านั้น (Allow List)
         const allowedYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
 
-        // ✅ 2. กรองเฉพาะข้อมูลที่มีชื่อตรงกับ allowedYears เท่านั้น
         const sortedByYear = data.stats.byYear
           ? data.stats.byYear
-            .filter(item => allowedYears.includes(item.name.trim())) // .trim() กันเหนียวเรื่องเว้นวรรค
+            .filter(item => allowedYears.includes(item.name.trim()))
             .sort((a, b) => {
               const indexA = allowedYears.indexOf(a.name.trim());
               const indexB = allowedYears.indexOf(b.name.trim());
@@ -621,7 +666,6 @@ const MonitorTab = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ 3. ใช้เวลาจาก Config กลาง
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
 
   const now = currentTime;
@@ -684,8 +728,6 @@ const MonitorTab = () => {
         {/* === Section 3: Charts Layout === */}
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8">
 
-          {/* 👈 LEFT COLUMN: Major Chart (กราฟสาขา) */}
-          {/* Mobile: Order 2 (Bottom), Desktop: Order 1 (Left) */}
           <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 h-full">
             <div className="flex items-center gap-3 mb-4 lg:mb-8">
               <div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[#8A2680]" /></div>
@@ -733,7 +775,7 @@ const MonitorTab = () => {
               <div className="h-[200px] w-full text-xs font-medium">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={demographics.byYear} // ✅ ใช้ข้อมูลได้เลย (ไม่มี "อื่นๆ" แล้ว)
+                    data={demographics.byYear}
                     margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -799,13 +841,12 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
-      router.push('/');
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
-  // รายการเมนูสำหรับ Sidebar
   const menuItems = [
     { id: 'overview', label: 'ภาพรวม', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
     { id: 'candidates', label: 'จัดการผู้สมัคร', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },

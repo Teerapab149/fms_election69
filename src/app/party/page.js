@@ -97,7 +97,7 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
   );
 };
 
-// ✅ Section 2: แสดงข้อมูลจริงจาก DB
+// Section 2:
 const PartyVisionSection = ({ party, theme }) => {
   return (
     <section className="relative w-full py-16 md:py-24 px-4 overflow-hidden bg-slate-50 border-b border-slate-200">
@@ -374,7 +374,7 @@ function PartyContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/party');
+        const res = await fetch('/api/party', { cache: 'no-store' });
         if (res.ok) {
           const allParties = await res.json();
           const validParties = allParties.filter(p => parseInt(p.number) > 0);
@@ -473,8 +473,8 @@ function PartyContent() {
       )}
 
       <CandidateModal
-        member={selectedMember}            
-        onClose={() => setSelectedMember(null)} 
+        member={selectedMember}
+        onClose={() => setSelectedMember(null)}
         themeColor={currentTheme.main}
       />
 

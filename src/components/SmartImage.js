@@ -1,41 +1,43 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import smartcrop from 'smartcrop';
+import { getCropStyle, isPreloaded } from '../utils/imagePreloader';
 
-export default function SmartImage({ src, alt, className }) {
-  const [cropStyle, setCropStyle] = useState({ objectPosition: '50% 35%' }); // ค่า Default 35%
+export default function SmartImage({ src, alt, className, objectFit = 'cover', priority = false }) {
+  // ลองดึงจาก cache ก่อน (instant!)
+  const cachedStyle = getCropStyle(src);
+  const [cropStyle, setCropStyle] = useState(
+    cachedStyle || { objectPosition: '50% 35%' }
+  );
+  const [isLoaded, setIsLoaded] = useState(isPreloaded(src));
   const imgRef = useRef(null);
 
   useEffect(() => {
+    // ถ้ามี cached style แล้ว ไม่ต้องทำอะไร
+    if (cachedStyle) {
+      setCropStyle(cachedStyle);
+      setIsLoaded(true);
+      return;
+    }
+
     if (!src) return;
 
-    const img = new Image();
-    img.crossOrigin = "Anonymous"; // สำคัญสำหรับรูปจากภายนอก
-    img.src = src;
-
-    img.onload = () => {
-      // ให้ smartcrop วิเคราะห์รูป (width/height คือขนาดที่เราอยากได้คร่าวๆ)
-      smartcrop.crop(img, { width: 500, height: 500 }).then((result) => {
-        const crop = result.topCrop;
-        
-        // คำนวณจุดกึ่งกลางของพื้นที่ที่ AI เลือกมา
-        const centerX = (crop.x + crop.width / 2) / img.width * 100;
-        const centerY = (crop.y + crop.height / 2) / img.height * 100;
-
-        setCropStyle({
-          objectPosition: `${centerX}% ${centerY}%`
-        });
-      });
-    };
-  }, [src]);
+    // Fallback: ถ้าไม่มี cache ให้ใช้ default `center top` ไปเลย (ไม่คำนวณสดเพื่อลด CPU usage)
+    if (!cachedStyle) {
+      setIsLoaded(true);
+      setCropStyle({ objectPosition: '50% 35%' });
+    }
+  }, [src, cachedStyle]);
 
   return (
     <img
       ref={imgRef}
       src={src}
       alt={alt}
-      className={className}
-      style={{ ...cropStyle, objectFit: 'cover' }} // Merge objectPosition ที่คำนวณได้
+      className={`${className} transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      style={{ ...cropStyle, objectFit: objectFit }}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
     />
   );
 }

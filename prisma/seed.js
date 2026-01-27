@@ -36,13 +36,16 @@ const generatePartyMembers = (partyNumber, startStudentIdPrefix) => {
 
     const name = `ผู้สมัครลำดับที่ ${i + 1} พรรคเบอร์ ${partyNumber}`;
     const imagePath = `/images/members/party_${partyNumber}/${i + 1}.jpg`;
+    // ✅ เพิ่ม modalImageUrl เป็น .png ตามที่ user แจ้ง (Pattern: /images/members/party_X/Modal/Y.png)
+    const modalImagePath = `/images/members/party_${partyNumber}/Modal/${i + 1}.png`;
 
     members.push({
       studentId: studentId,
       name: name,
       position: positions[i] || "สมาชิกพรรค",
       email: `${studentId}@email.psu.ac.th`,
-      imageUrl: imagePath
+      imageUrl: imagePath,
+      modalImageUrl: modalImagePath
     });
   }
   return members;
@@ -74,36 +77,36 @@ async function main() {
       groupImageUrl: '/images/candidates/groupimage/party1',
       members: generatePartyMembers(1, '6610510')
     },
-    
-//    {
+
+    //    {
     //  name: 'พรรค Change FMS',
     //  number: 2,
     //  logoUrl: '/images/candidates/logo/2.jpg',
     //  groupImageUrl: '/images/candidates/groupimage/party2',
     //  members: generatePartyMembers(2, '6710510')
-//    },
-//    {
- //     name: 'พรรค New Gen',
- //     number: 3,
- //     logoUrl: '/images/candidates/logo/3.jpg',
- //     groupImageUrl: '/images/candidates/groupimage/party3',
-//      members: generatePartyMembers(3, '6810510')
- //   },
-  //  {
-  //    name: 'พรรค Future Forward',
-  //    number: 4,
-  //    logoUrl: '/images/candidates/logo/4.jpg',
-  //    groupImageUrl: '/images/candidates/groupimage/party4',
- //     members: generatePartyMembers(4, '6510510')
-  //  },
+    //    },
+    //    {
+    //     name: 'พรรค New Gen',
+    //     number: 3,
+    //     logoUrl: '/images/candidates/logo/3.jpg',
+    //     groupImageUrl: '/images/candidates/groupimage/party3',
+    //      members: generatePartyMembers(3, '6810510')
+    //   },
+    //  {
+    //    name: 'พรรค Future Forward',
+    //    number: 4,
+    //    logoUrl: '/images/candidates/logo/4.jpg',
+    //    groupImageUrl: '/images/candidates/groupimage/party4',
+    //     members: generatePartyMembers(4, '6510510')
+    //  },
     {
-     name: 'งดออกเสียง',
+      name: 'งดออกเสียง',
       number: 0,
       logoUrl: null,
       members: []
     },
     {
-     name: 'ไม่รับรอง',
+      name: 'ไม่รับรอง',
       number: -1,
       logoUrl: null,
       members: []

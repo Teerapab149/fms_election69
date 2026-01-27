@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth"; // เช็ค Path ให้ถูก
 import { db } from "../../../lib/db";
 
-export async function POST() {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

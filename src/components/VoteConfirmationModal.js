@@ -11,7 +11,7 @@ export default function VoteConfirmationModal({
   isDisapprove   // สำหรับ: ไม่รับรอง (Disapprove) - มีเฉพาะ Single
 }) {
   if (!isOpen) return null;
-
+ 
   // 🎨 ตั้งค่า Default Theme (สำหรับกรณีเลือกพรรค - Approve)
   let modalTheme = {
     color: 'text-[#8A2680]',           // สีข้อความหลัก

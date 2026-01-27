@@ -12,3 +12,7 @@ export const ELECTION_CONFIG = {
   // วิธีเทส: ปรับให้เป็น "อดีต" เพื่อให้สถานะเป็น ENDED (ดูผล)
   ELECTION_END: new Date('2026-02-06T017:30:00'),
 };
+
+export const ELECTION_YEAR = "2026";
+export const ELECTION_YEAR_TH = "2569";
+export const ELECTION_SLOGAN = "Your vote matter";

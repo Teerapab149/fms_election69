@@ -7,13 +7,11 @@ import path from 'path';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id'); // เช่น id = 1
+    const id = searchParams.get('id'); 
 
     if (!id) return NextResponse.json({ images: [] });
 
-    // ✅ 1. แก้ Path ให้ตรงกับที่คุณต้องการ
-    // โครงสร้างจะเป็น: public/images/candidates/groupimage/party1
-    const folderName = `party${id}`; // เติมคำว่า party หน้าเลข id
+    const folderName = `party${id}`;
     
     const directoryPath = path.join(
       process.cwd(), 

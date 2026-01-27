@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import { getEncryptedToken } from "../utils/auth";
 
 const PREDEFINED_POSITIONS = [
     "นายกสโมสรนักศึกษา",
@@ -32,13 +33,18 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         name: '',
         number: '',
         logoMeaning: '',
-        slogan: ''
+        slogan: '',
+        missions: '',
+        policies: ''
     });
 
     const [error, setError] = useState(null);
 
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
+
+    const [groupFiles, setGroupFiles] = useState([]);
+    const [groupPreviews, setGroupPreviews] = useState([]);
 
     const [members, setMembers] = useState([]);
     const [newMember, setNewMember] = useState({
@@ -48,6 +54,13 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         imageFile: null,
         previewUrl: ''
     });
+
+    const removeGroupImage = (indexToRemove) => {
+        setGroupPreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
+
+    const [existingImages, setExistingImages] = useState([]);
+    const [newGroupFiles, setNewGroupFiles] = useState([]);
 
     const [isLoading, setIsLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -62,6 +75,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         });
     };
 
+
     useEffect(() => {
         if (candidate) {
             setFormData({
@@ -69,9 +83,27 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 number: candidate.number || '',
                 slogan: candidate.slogan || '',
                 logoMeaning: candidate.logoMeaning || '',
+                missions: Array.isArray(candidate.missions) ? candidate.missions.join('\n') : (candidate.missions || ''),
+                policies: Array.isArray(candidate.policies) ? candidate.policies.join('\n') : (candidate.policies || ''),
             });
             setPreviewUrl(candidate.logoUrl || '');
             setSelectedFile(null);
+
+            let initialGroupImages = [];
+            if (Array.isArray(candidate.groupImageUrls)) {
+                initialGroupImages = candidate.groupImageUrls;
+            } else if (candidate.groupImageUrl) {
+                initialGroupImages = [candidate.groupImageUrl];
+            } else if (candidate.groupImageUrls && typeof candidate.groupImageUrls === 'string') {
+                try { initialGroupImages = JSON.parse(candidate.groupImageUrls) } catch (e) { }
+            }
+
+            setExistingImages(initialGroupImages);
+            setNewGroupFiles([]);
+
+            setGroupPreviews(initialGroupImages);
+            setGroupFiles([]);
+
             setMembers(sortMembers(candidate.members || []));
         } else {
             setFormData({
@@ -79,19 +111,28 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 number: '',
                 slogan: '',
                 logoMeaning: '',
+                missions: '',
+                policies: ''
             });
             setPreviewUrl('');
             setSelectedFile(null);
+
+            setGroupPreviews([]);
+            setGroupFiles([]);
+
+            setExistingImages([]);
+            setNewGroupFiles([]);
+
             setMembers([]);
         }
         setNewMember({ name: '', studentId: '', position: '', imageFile: null, previewUrl: '' });
-        setError(null); 
+        setError(null);
     }, [candidate, isOpen]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        if (error) setError(null); 
+        if (error) setError(null);
     };
 
     const handleFileChange = (e) => {
@@ -105,6 +146,34 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             const objectUrl = URL.createObjectURL(file);
             setPreviewUrl(objectUrl);
         }
+    };
+
+    const [officialImage, setOfficialImage] = useState(candidate?.officialImageUrl || null);
+
+    const handleOfficialImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+    };
+
+    const handleGroupFilesChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            const validFiles = files.filter(f => f.type.startsWith('image/'));
+            const newFilesWithPreview = validFiles.map(f => ({
+                file: f,
+                preview: URL.createObjectURL(f)
+            }));
+            setNewGroupFiles(prev => [...prev, ...newFilesWithPreview]);
+        }
+    };
+
+    const removeExistingImage = (index) => {
+        setExistingImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeNewImage = (index) => {
+        setNewGroupFiles(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleMemberChange = (e) => {
@@ -150,7 +219,14 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             data.append('number', formData.number);
             data.append('logoMeaning', formData.logoMeaning);
             data.append('slogan', formData.slogan);
+            data.append('missions', formData.missions);
+            data.append('policies', formData.policies);
             if (selectedFile) data.append('file', selectedFile);
+
+            data.append('existingGroupImages', JSON.stringify(existingImages));
+            newGroupFiles.forEach((item) => {
+                data.append('groupFiles', item.file);
+            });
 
             const sortedMembers = sortMembers(members);
 
@@ -168,16 +244,24 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 }
             });
 
+            const encryptedToken = getEncryptedToken();
+            if (!encryptedToken) {
+                console.error("Encryption failed");
+                return;
+            }
+
             let res;
             if (candidate) {
                 res = await fetch(`/api/admin/candidates?id=${candidate.id}`, {
                     method: 'PUT',
                     body: data,
+                    headers: { 'x-admin-token': encryptedToken, }
                 });
             } else {
                 res = await fetch(`/api/admin/candidates`, {
                     method: 'POST',
                     body: data,
+                    headers: { 'x-admin-token': encryptedToken, }
                 });
             }
 
@@ -204,8 +288,15 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     const handleConfirmDelete = async () => {
         setIsLoading(true);
         try {
+            const encryptedToken = getEncryptedToken();
+            if (!encryptedToken) {
+                console.error("Encryption failed");
+                return;
+            }
+
             const res = await fetch(`/api/admin/candidates?id=${candidate.id}`, {
                 method: 'DELETE',
+                headers: { 'x-admin-token': encryptedToken, }
             });
             if (!res.ok) {
                 throw console.log(res)
@@ -219,6 +310,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             setIsLoading(false);
         }
     };
+
 
     if (!isOpen) return null;
 
@@ -247,7 +339,6 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
 
                     <form id="candidate-form" onSubmit={handleSubmit} className="space-y-6">
 
-                        {/* รูปโปรไฟล์ */}
                         <div className="flex flex-col items-center gap-3">
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
@@ -262,10 +353,58 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                 </label>
                             </div>
-                            <p className="text-xs text-gray-400">รูปภาพสมาชิก</p>
+                            <p className="text-xs text-gray-400">รูปภาพผู้สมัคร</p>
                         </div>
 
-                        {/* --- Candidate Info --- */}
+                        <div className="w-full">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                รูปภาพรวมพรรค (เลือกได้หลายรูป)
+                            </label>
+
+                            <div className="grid grid-cols-3 gap-2">
+                                {existingImages.map((src, idx) => (
+                                    <div key={`old-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group">
+                                        <img src={src} className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeExistingImage(idx)}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {newGroupFiles.map((item, idx) => (
+                                    <div key={`new-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-green-200 group">
+                                        <img src={item.preview} className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeNewImage(idx)}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+
+                                <label className="aspect-video bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div className="bg-white p-1.5 rounded-full shadow-sm mb-1">
+                                        <Plus className="w-4 h-4 text-gray-600" />
+                                    </div>
+                                    <span className="text-[10px] text-gray-500">เพิ่มรูป</span>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleGroupFilesChange}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+
+
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                 <div>
@@ -296,25 +435,49 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">ความหมายสัญลักษณ์ <span className="text-red-500">*</span></label>
-                                    <input
+                                    <textarea
                                         type="text"
                                         name="logoMeaning"
                                         value={formData.logoMeaning}
                                         onChange={handleChange}
+                                        rows="4"
                                         required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน <span className="text-red-500">*</span></label>
-                                    <input
+                                    <textarea
                                         type="text"
                                         name="slogan"
                                         value={formData.slogan}
                                         onChange={handleChange}
+                                        rows="4"
                                         required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">พันธกิจ (Missions)</label>
+                                    <textarea
+                                        name="missions"
+                                        value={formData.missions}
+                                        onChange={handleChange}
+                                        rows="8"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">* ขึ้นบรรทัดใหม่เพื่อแยกข้อ</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">นโยบาย (Policies)</label>
+                                    <textarea
+                                        name="policies"
+                                        value={formData.policies}
+                                        onChange={handleChange}
+                                        rows="8"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">* ขึ้นบรรทัดใหม่เพื่อแยกข้อ</p>
                                 </div>
                             </div>
 
@@ -323,7 +486,6 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                     </form>
                 </div>
 
-                {/* Footer */}
                 <div className="px-6 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-100 shrink-0">
                     <div>
                         {candidate && (

@@ -37,6 +37,7 @@ export default function SuccessPage() {
   const [isCopied, setIsCopied] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "", action: null });
+  const [isVoted, setIsVoted] = useState(false);
 
   // ตรวจสอบว่าเพิ่ง Redirect มาจากหน้าโหวตหรือไม่
   const isJustVoted = searchParams.get('voted') === 'true';
@@ -58,29 +59,64 @@ export default function SuccessPage() {
     }
 
     if (status === "authenticated" && session) {
-      // ✅ แก้ปัญหาดีดกลับ: ถ้ามี isJustVoted หรือ session บอกว่าโหวตแล้ว ให้ผ่านได้
-      const hasVoted = isJustVoted || session.user?.isVoted;
 
-      if (!hasVoted) {
-        setAlertConfig({
-          title: "คุณยังไม่ได้ลงคะแนนเสียง",
-          message: "กรุณาทำการเลือกตั้งให้เสร็จสมบูรณ์ก่อน",
-          action: () => router.push("/vote")
-        });
-        setShowAlertModal(true);
-        return;
-      }
+      (async () => {
+        try {
+          let res = await fetch(
+            `/api/check-status?studentId=${session?.user?.studentId}`,
+            { method: "GET" }
+          );
 
-      // ตรวจสอบสถานะการทำฟอร์ม
-      if (session.user?.isFormCompleted) {
-        setIsUnlocked(true);
-      }
+          let data = await res.json();
+          const voted = !!data?.isVoted;
 
-      setUser({
-        studentId: session.user?.studentId || session.user?.id || "-",
-        name: session.user?.name || "นักศึกษา",
-      });
-      setIsAuthorized(true);
+          setIsVoted(voted);
+
+          if (!voted) {
+            router.replace("/vote");
+            return;
+          }
+
+          const hasVoted = voted;
+
+          if (!hasVoted) {
+            setAlertConfig({
+              title: "คุณยังไม่ได้ลงคะแนนเสียง",
+              message: "กรุณาทำการเลือกตั้งให้เสร็จสมบูรณ์ก่อน",
+              action: () => router.replace("/vote"),
+            });
+            setShowAlertModal(true);
+            return;
+          }
+
+          if (session.user?.isFormCompleted) {
+            setIsUnlocked(true);
+          }
+
+          setUser({
+            studentId: session.user?.studentId || session.user?.id || "-",
+            name: session.user?.name || "นักศึกษา",
+          });
+
+          setIsAuthorized(true);
+
+          res = await fetch(`/api/check-form?studentId=${session?.user?.studentId}`);
+          data = await res.json();
+
+          if (data.isFormCompleted) {
+            setIsUnlocked(true);
+          };
+
+        } catch (err) {
+          console.error(err);
+          setAlertConfig({
+            title: "เกิดข้อผิดพลาด",
+            message: "ไม่สามารถตรวจสอบสถานะได้ กรุณาลองใหม่",
+            action: () => router.replace("/vote"),
+          });
+          setShowAlertModal(true);
+        }
+      })();
     }
   }, [status, session, router, isJustVoted]); // ✅ เพิ่ม isJustVoted ใน dependency
 
@@ -99,7 +135,7 @@ export default function SuccessPage() {
   const handleConfirmSubmit = async () => {
     if (!canConfirm) return;
     try {
-      const res = await fetch("/api/complete-form", { method: "POST" });
+      const res = await fetch("/api/complete-form", { method: "GET" });
       if (!res.ok) throw new Error("Failed to update status");
 
       // อัปเดต Session ฝั่ง Client
@@ -316,7 +352,7 @@ export default function SuccessPage() {
             <div className="p-3 border-t border-gray-100 bg-white">
               <div className="flex flex-col items-center gap-2 w-full max-w-md mx-auto">
                 <button
-                  onClick={handleConfirmSubmit}
+                  onClick={() => handleConfirmSubmit()}
                   disabled={!canConfirm}
                   className={`w-full py-3 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 
                     ${canConfirm ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}

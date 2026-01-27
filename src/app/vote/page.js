@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import Navbar from '../../components/Navbar';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
 import { Loader2 } from 'lucide-react';
@@ -56,7 +55,10 @@ export default function VotePage() {
 
   const onConfirmVote = async () => {
     const success = await submitVote();
-    if (success) setIsConfirmModalOpen(false);
+    if (success) {
+      setIsConfirmModalOpen(false)
+      window.location.href = "/success"
+    };
   };
 
 
@@ -71,13 +73,7 @@ export default function VotePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F9FA] font-sans selection:bg-purple-100 pb-32 overflow-x-hidden relative">
-      <Navbar />
-
-      {/* Decor */}
-      <div className="fixed inset-0 z-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#94a3b8 1px, transparent 1px), linear-gradient(to right, #94a3b8 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-      <div className="fixed top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-purple-50/40 via-white/10 to-transparent z-0 pointer-events-none"></div>
-
+    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative">
       <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
 
         {/* Header (Only for Multi) */}
@@ -96,6 +92,7 @@ export default function VotePage() {
             selectedPartyId={selectedPartyId}
             onSelect={handleSelectParty}
             specialOptions={specialOptions}
+            user={session?.user}
           />
         ) : (
           <MultiPartyView
@@ -108,11 +105,17 @@ export default function VotePage() {
         )}
       </main>
 
-      {/* Sticky Footer (The only place that triggers Confirmation) */}
       <VoteFooter
         selectedParty={selectedParty}
-        onConfirm={() => setIsConfirmModalOpen(true)}
         isSubmitting={isSubmitting}
+        variant={isSingleParty ? "single" : "multi"}
+        partyPrimary={regularParties?.[0]?.themePrimary || "#4D2A67"}
+        partyGold={regularParties?.[0]?.themeGold || "#CDA176"}
+        onConfirm={
+          isSingleParty
+            ? onConfirmVote              // ✅ single: กดใน footer modal แล้วค่อย submitVote
+            : () => setIsConfirmModalOpen(true) // ✅ multi: เปิด VoteConfirmationModal เดิม
+        }
       />
 
       {/* Modals */}
@@ -123,14 +126,16 @@ export default function VotePage() {
         showVoteButton={false}
       />
 
-      <VoteConfirmationModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => setIsConfirmModalOpen(false)}
-        onConfirm={onConfirmVote} // Calls the hook's submit logic
-        party={selectedParty}
-        isVoteNo={selectedParty?.number === 0}
-        isDisapprove={selectedParty?.number === -1}
-      />
+      {!isSingleParty && (
+        <VoteConfirmationModal
+          isOpen={isConfirmModalOpen}
+          onClose={() => setIsConfirmModalOpen(false)}
+          onConfirm={onConfirmVote}
+          party={selectedParty}
+          isVoteNo={selectedParty?.number === 0}
+          isDisapprove={selectedParty?.number === -1}
+        />
+      )}
     </div>
   );
 }
