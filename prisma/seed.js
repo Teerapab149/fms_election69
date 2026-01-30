@@ -78,33 +78,13 @@ async function main() {
       members: generatePartyMembers(1, '6610510')
     },
 
-    //    {
-    //  name: 'พรรค Change FMS',
-    //  number: 2,
-    //  logoUrl: '/images/candidates/logo/2.jpg',
-    //  groupImageUrl: '/images/candidates/groupimage/party2',
-    //  members: generatePartyMembers(2, '6710510')
-    //    },
-    //    {
-    //     name: 'พรรค New Gen',
-    //     number: 3,
-    //     logoUrl: '/images/candidates/logo/3.jpg',
-    //     groupImageUrl: '/images/candidates/groupimage/party3',
-    //      members: generatePartyMembers(3, '6810510')
-    //   },
-    //  {
-    //    name: 'พรรค Future Forward',
-    //    number: 4,
-    //    logoUrl: '/images/candidates/logo/4.jpg',
-    //    groupImageUrl: '/images/candidates/groupimage/party4',
-    //     members: generatePartyMembers(4, '6510510')
-    //  },
     {
       name: 'งดออกเสียง',
       number: 0,
       logoUrl: null,
       members: []
     },
+
     {
       name: 'ไม่รับรอง',
       number: -1,
@@ -226,15 +206,6 @@ async function main() {
         isVoted: false, candidateId: null,
         role: 'ADMIN',
         password: '1234'
-      },
-      {
-        studentId: '9999',
-        name: 'เทพผู้อยู่เบื้องหลัง',
-        email: 'god@megumail',
-        gender: 'หญิง', major: 'BIS', year: 'ปี 3',
-        isVoted: false, candidateId: null,
-        role: 'ADMIN',
-        password: '9999'
       }
     ]
   });

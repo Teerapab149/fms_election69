@@ -52,7 +52,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
 
     const navItems = [
         { label: "Overview", id: "hero" },
-        { label: "Symbol", id: "symbol" },
+        { label: "Identity", id: "symbol" },
         { label: "Mission", id: "mission" },
         { label: "Policies", id: "policy" },
         { label: "Gallery", id: "gallery" },

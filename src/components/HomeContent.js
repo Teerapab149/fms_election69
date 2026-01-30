@@ -8,7 +8,7 @@ import { signIn, useSession } from "next-auth/react";
 import Navbar from '../components/Navbar';
 import CountdownTimer from '../components/CountdownTimer';
 import MeetCandidatesCard from '../components/MeetCandidatesCard';
-import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3 } from "lucide-react";
+import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
 
 export default function HomeContent({ initialData }) {
 
@@ -109,7 +109,7 @@ export default function HomeContent({ initialData }) {
                         <div className="w-full lg:w-5/12 xl:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 lg:space-y-5 xl:space-y-8 relative z-20 animate-fade-in-up">
 
                             <div className="flex justify-center lg:justify-start w-full mb-1 lg:mb-0">
-                                <CountdownTimer />
+                                <CountdownTimer systemMode={initialData?.systemMode || "AUTO"} />
                             </div>
 
                             {/* HEADLINE */}
@@ -162,7 +162,78 @@ export default function HomeContent({ initialData }) {
                                     };
 
                                     // 2. เช็ค Session เพื่อเปลี่ยน config (ใช้ isVotedReal จาก DB แทน session)
-                                    if (session) {
+                                    const sysMode = initialData?.systemMode || "AUTO";
+                                    const electionStatus = initialData?.electionStatus;
+
+                                    if (sysMode === "PAUSE") {
+                                        // Case: System Manual Pause (Maintenance)
+                                        btnConfig = {
+                                            isLoginAction: false,
+                                            href: "/closed",
+                                            text: "ระบบปิดปรับปรุงชั่วคราว / Maintenance",
+                                            gradientBase: "from-orange-500 via-orange-600 to-orange-700",
+                                            gradientHover: "from-orange-600 via-orange-700 to-orange-800",
+                                            glowColor: "from-orange-400 to-orange-600",
+                                            shadow: "shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)]",
+                                            icon: <Vote className="w-5 h-5 text-white animate-spin-slow" />,
+                                            animation: ""
+                                        };
+                                    } else if (sysMode === "ENDED" || (sysMode === "AUTO" && electionStatus === "ENDED")) {
+                                        // Case: System Manual End OR Auto Election Ended
+                                        btnConfig = {
+                                            isLoginAction: false,
+                                            href: "/results",
+                                            text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended",
+                                            gradientBase: "from-slate-700 via-slate-800 to-slate-900",
+                                            gradientHover: "from-slate-600 via-slate-700 to-slate-800",
+                                            glowColor: "from-slate-500 to-slate-700",
+                                            shadow: "shadow-[0_10px_20px_-5px_rgba(0,0,0,0.4)]",
+                                            icon: <Vote className="w-5 h-5 text-slate-400" />,
+                                            animation: ""
+                                        };
+                                    } else if (initialData?.isSystemOpen === false && !(sysMode === "AUTO" && electionStatus === "WAITING")) {
+                                        // Case: Legacy Toggle support (Fallback) - EXCLUDE WAITING (Let it fall through to Login/Vote)
+                                        btnConfig = {
+                                            isLoginAction: false,
+                                            href: "/closed",
+                                            text: "ระบบปิดรับลงคะแนน / Closed",
+                                            gradientBase: "from-slate-700 via-slate-800 to-slate-900",
+                                            gradientHover: "from-slate-600 via-slate-700 to-slate-800",
+                                            glowColor: "from-slate-500 to-slate-700",
+                                            shadow: "shadow-[0_10px_20px_-5px_rgba(0,0,0,0.4)]",
+                                            icon: <Vote className="w-5 h-5 text-slate-400" />,
+                                            animation: ""
+                                        };
+                                    } else if (sysMode === "MANUAL_OPEN") {
+                                        // Case: Forced Open
+                                        if (session) {
+                                            if (isVotedReal) {
+                                                btnConfig = {
+                                                    isLoginAction: false,
+                                                    href: "/results",
+                                                    text: "ดูผลคะแนน / Results",
+                                                    gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
+                                                    gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
+                                                    glowColor: "from-[#0ea5e9] to-[#14b8a6]",
+                                                    shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
+                                                    icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
+                                                    animation: ""
+                                                };
+                                            } else {
+                                                btnConfig = {
+                                                    isLoginAction: false,
+                                                    href: "/vote",
+                                                    text: "ลงคะแนน / Vote Now",
+                                                    gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
+                                                    gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
+                                                    glowColor: "from-[#34D399] to-[#059669]",
+                                                    shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
+                                                    icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
+                                                    animation: "animate-pulse"
+                                                };
+                                            }
+                                        }
+                                    } else if (session) {
                                         if (isVotedReal) {
                                             // เคส: โหวตแล้ว -> ไปหน้า Results
                                             btnConfig = {

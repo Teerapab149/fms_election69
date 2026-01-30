@@ -89,7 +89,34 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
     return images.filter(url => url && typeof url === 'string');
   }, [candidate?.mobileHeroImage]);
 
-  const heroImage = candidate?.officialImageUrl || carouselImages[0] || partyLogo;
+  // --- 2.2 OFFICIAL IMAGE PREPARATION (Desktop/Cover) ---
+  const officialImages = useMemo(() => {
+    const data = candidate?.officialImageUrl;
+    if (!data) return [];
+    let images = [];
+    try {
+      if (Array.isArray(data)) images = data;
+      else if (typeof data === 'string') {
+        const trimmed = data.trim();
+        if (trimmed.startsWith('[')) images = JSON.parse(trimmed);
+        else images = [trimmed];
+      }
+    } catch (e) {
+      console.error("Error parsing officialImageUrl:", e);
+      images = typeof data === 'string' ? [data] : [];
+    }
+    return images.filter(url => url && typeof url === 'string');
+  }, [candidate?.officialImageUrl]);
+
+  // --- 2.3 IMAGE FALLBACK LOGIC ---
+  // A. Hero Section Image (Priority: Official -> Mobile -> Group -> Logo)
+  const finalHeroImage = officialImages[0] || mobileHeroImages[0] || carouselImages[0] || partyLogo;
+
+  // B. Team Section Mobile Image (Priority: Mobile -> Official -> Group)
+  const finalTeamMobileImage = mobileHeroImages[0] || officialImages[0] || carouselImages[0];
+
+  // Old variable alias explicitly for existing references (if any)
+  const heroImage = finalHeroImage;
 
   useEffect(() => {
     const div = document.createElement('div');
@@ -400,7 +427,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
             <ChevronDown className="w-5 h-5 animate-bounce" />
           </div>
 
-          {/* === 2. SYMBOL MEANING (Light Gallery Theme - Hybrid Responsive Layout) === */}
+          {/* === 2. Logo Concept (Light Gallery Theme - Hybrid Responsive Layout) === */}
           <section id="symbol" className="w-full bg-[#FAFAF9] relative overflow-hidden py-16 lg:py-24">
             {/* Background Texture (Paper Grain) */}
             <div className="absolute inset-0 opacity-[0.4] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] mix-blend-multiply pointer-events-none"></div>
@@ -418,7 +445,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
                         The Identity
                       </span>
                       <h2 className="text-5xl md:text-7xl font-black text-[#1A1A1A] uppercase tracking-tighter leading-[0.9]">
-                        Symbol <br /> Meaning
+                        Logo <br /> Concept
                       </h2>
                     </div>
 
@@ -606,11 +633,11 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
                   {/* Fixed: Removed Parallax/Cropping. Uses standard <img> to ensure 100% visibility on all devices. */}
                   <div className="relative w-full">
 
-                    {/* 1. MOBILE VERTICAL IMAGE (If available in DB) */}
-                    {mobileHeroImages.length > 0 && (
+                    {/* 1. MOBILE VERTICAL IMAGE (Resolved with Fallback) */}
+                    {finalTeamMobileImage && (
                       <div className="block md:hidden w-full">
                         <img
-                          src={mobileHeroImages[0]}
+                          src={finalTeamMobileImage}
                           alt="Team Vertical"
                           className="w-full h-auto shadow-2xl"
                         />
@@ -619,7 +646,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
                     )}
 
                     {/* 2. DESKTOP/TABLET HORIZONTAL IMAGE */}
-                    <div className={`${mobileHeroImages.length > 0 ? 'hidden md:block' : 'block'} w-full`}>
+                    <div className={`${finalTeamMobileImage ? 'hidden md:block' : 'block'} w-full`}>
                       <img
                         src={carouselImages[0]}
                         alt="Team Horizontal"

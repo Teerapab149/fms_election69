@@ -35,8 +35,11 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
         name: '',
         studentId: '',
         position: '',
+        major: '',
         imageFile: null,
-        previewUrl: ''
+        previewUrl: '',
+        modalImageFile: null,
+        modalPreviewUrl: ''
     });
 
     const [showPositionList, setShowPositionList] = useState(false);
@@ -79,12 +82,24 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         id: target.id,
                         studentId: target.studentId,
                         position: target.position || '',
+                        major: target.major || '',
                         imageFile: null,
-                        previewUrl: target.imageUrl || ''
+                        previewUrl: target.imageUrl || '',
+                        modalImageFile: null,
+                        modalPreviewUrl: target.modalImageUrl || ''
                     });
                 }
             } else {
-                setCurrentMember({ name: '', studentId: '', position: '', imageFile: null, previewUrl: '' });
+                setCurrentMember({
+                    name: '',
+                    studentId: '',
+                    position: '',
+                    major: '',
+                    imageFile: null,
+                    previewUrl: '',
+                    modalImageFile: null,
+                    modalPreviewUrl: ''
+                });
             }
         }
         setError(null);
@@ -106,6 +121,21 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 ...prev,
                 imageFile: file,
                 previewUrl: URL.createObjectURL(file)
+            }));
+        }
+    };
+
+    const handleModalImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+            setCurrentMember(prev => ({
+                ...prev,
+                modalImageFile: file,
+                modalPreviewUrl: URL.createObjectURL(file)
             }));
         }
     };
@@ -162,17 +192,30 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                     imageUrlToSend = m.imageUrl;
                 }
 
+                let modalImageUrlToSend = null;
+                if (m.modalPreviewUrl && !m.modalPreviewUrl.startsWith('blob:')) {
+                    modalImageUrlToSend = m.modalPreviewUrl;
+                } else if (m.modalImageUrl && !m.modalImageUrl.startsWith('blob:')) {
+                    modalImageUrlToSend = m.modalImageUrl;
+                }
+
                 return {
                     name: m.name,
+                    id: m.id,
                     studentId: m.studentId,
                     position: m.position,
-                    existingImageUrl: imageUrlToSend
+                    major: m.major,
+                    existingImageUrl: imageUrlToSend,
+                    existingModalImageUrl: modalImageUrlToSend
                 };
             });
             data.append('members', JSON.stringify(membersPayload));
 
             if (currentMember.imageFile && !isLoading) {
                 data.append(`member_file_${currentMember.studentId}`, currentMember.imageFile);
+            }
+            if (currentMember.modalImageFile && !isLoading) {
+                data.append(`member_modal_file_${currentMember.studentId}`, currentMember.modalImageFile);
             }
 
             const encryptedToken = getEncryptedToken();
@@ -236,21 +279,25 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                     <form onSubmit={handleSubmit} className="space-y-5">
 
                         {/* 1. รูปโปรไฟล์ */}
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="relative group">
-                                <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
-                                    {currentMember.previewUrl ? (
-                                        <img src={currentMember.previewUrl} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-10 h-10 text-gray-300" />
-                                    )}
+                        {/* 1. รูปโปรไฟล์ & รูป Modal */}
+                        <div className="flex gap-6 justify-center">
+                            {/* รูปโปรไฟล์ */}
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="relative group">
+                                    <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
+                                        {currentMember.previewUrl ? (
+                                            <img src={currentMember.previewUrl} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-10 h-10 text-gray-300" />
+                                        )}
+                                    </div>
+                                    <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-blue-600">
+                                        <Upload className="w-4 h-4" />
+                                        <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                                    </label>
                                 </div>
-                                <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-blue-600">
-                                    <Upload className="w-4 h-4" />
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                                </label>
+                                <p className="text-xs text-gray-400">รูปภาพสมาชิก</p>
                             </div>
-                            <p className="text-xs text-gray-400">รูปภาพสมาชิก</p>
                         </div>
 
                         {/* 2. ข้อมูล text */}
@@ -345,6 +392,32 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                             )}
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* รูป Modal Moved to Bottom */}
+                        <div className="flex flex-col items-start gap-2 pt-2 border-t border-gray-100">
+                            <label className="block text-sm font-medium text-gray-700">รูปภาพถ่ายสมาชิกแบบโล่งๆ (ถ้ามี)</label>
+                            <div className="flex items-center gap-4">
+                                <div className="relative group">
+                                    <div className="w-24 h-24 rounded-lg bg-gray-100 border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center">
+                                        {currentMember.modalPreviewUrl ? (
+                                            <img src={currentMember.modalPreviewUrl} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center text-gray-300">
+                                                <ImageIcon className="w-8 h-8 opacity-50 mb-1" />
+                                                <span className="text-[10px]">No Image</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <label className="absolute bottom-[-6px] right-[-6px] bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-purple-600 transition-colors">
+                                        <Upload className="w-4 h-4" />
+                                        <input type="file" className="hidden" accept="image/*" onChange={handleModalImageChange} />
+                                    </label>
+                                </div>
+                                <div className="text-xs text-gray-500 max-w-[200px]">
+                                    ใช้สำหรับแสดงใน Popup ข้อมูลเพิ่มเติม (ควรเป็นรูป PNG พื้นหลังใส หรือรูปแนวตั้งที่เห็นตัวคนชัดเจน)
                                 </div>
                             </div>
                         </div>

@@ -123,17 +123,15 @@ export default function AutoIntro({
                                     Official Election {ELECTION_YEAR}
                                 </motion.div>
 
-                                <div className="flex flex-col items-center relative gap-0">
-                                    <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.1}>
-                                        ยินดีต้อนรับสู่
-                                    </MaskedText>
-                                    <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500 z-10" delay={0.4}>
-                                        การเลือกตั้ง
-                                    </MaskedText>
-                                    <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.7}>
-                                        สโมสรนักศึกษา
-                                    </MaskedText>
-                                </div>
+                                <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.1}>
+                                    ยินดีต้อนรับสู่
+                                </MaskedText>
+                                <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500 z-10" delay={0.4}>
+                                    การเลือกตั้งสโมสรนักศึกษา
+                                </MaskedText>
+                                <MaskedText className="text-3xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.7}>
+                                    คณะวิทยาการจัดการ ปี {ELECTION_YEAR}
+                                </MaskedText>
                             </motion.div>
                         )}
 
@@ -165,7 +163,7 @@ export default function AutoIntro({
 
                                 <div className="flex flex-col items-center w-full">
                                     <MaskedText className="text-sm md:text-2xl font-bold uppercase tracking-[0.4em] text-[#1a1a1a]/40 mb-4 h-8 md:h-10">
-                                        Present By
+                                        INTRODUCING
                                     </MaskedText>
 
                                     <div className="overflow-hidden w-full px-4 text-center flex justify-center">

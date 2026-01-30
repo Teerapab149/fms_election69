@@ -119,10 +119,10 @@ export const authOptions = {
               email: user.email,
               facultyId: user.facultyId,
               departmentId: user.departmentId,
-              year: user.year,
+              // ไม่ update year, major, gender หากมีค่าจาก dump file แล้ว
+              // จะถูก merge ใน logic ด้านล่าง
               role: newRole,
               isAdmin: setAdmin
-              //major: user.departmentId,
             },
             create: {
               studentId: user.studentId,
@@ -130,7 +130,6 @@ export const authOptions = {
               email: user.email,
               facultyId: user.facultyId,
               departmentId: user.departmentId,
-              //major: user.departmentId,
               role: newRole,
               year: user.year,
               isVoted: false,
@@ -138,6 +137,20 @@ export const authOptions = {
               isAdmin: setAdmin
             }
           });
+
+          // Merge logic: อัปเดต fields เฉพาะที่ยังว่างอยู่ (ไม่ overwrite ข้อมูลจาก dump file)
+          const fieldsToMerge = {};
+          if (!dbUser.year && user.year) {
+            fieldsToMerge.year = user.year;
+          }
+
+          // อัปเดตเฉพาะ fields ที่ว่าง
+          if (Object.keys(fieldsToMerge).length > 0) {
+            await db.user.update({
+              where: { studentId: user.studentId },
+              data: fieldsToMerge
+            });
+          }
 
           console.log(`✅ [DB Sync] Success: User ID ${dbUser.id} updated/created.`);
 

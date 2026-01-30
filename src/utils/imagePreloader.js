@@ -71,8 +71,51 @@ export async function preloadPartyImages(parties) {
         // Logo
         if (party.logoUrl) allImageUrls.push(party.logoUrl);
 
-        // Official Image
-        if (party.officialImageUrl) allImageUrls.push(party.officialImageUrl);
+        // Official Image (Robust Parsing)
+        if (party.officialImageUrl) {
+            try {
+                let images = [];
+                if (Array.isArray(party.officialImageUrl)) {
+                    images = party.officialImageUrl;
+                } else if (typeof party.officialImageUrl === 'string') {
+                    const trimmed = party.officialImageUrl.trim();
+                    if (trimmed.startsWith('[')) {
+                        images = JSON.parse(trimmed);
+                    } else {
+                        images = [trimmed];
+                    }
+                }
+                images.forEach(url => {
+                    if (url && typeof url === 'string') allImageUrls.push(url);
+                });
+            } catch (e) {
+                console.warn("Error parsing officialImageUrl:", e);
+                if (typeof party.officialImageUrl === 'string') allImageUrls.push(party.officialImageUrl);
+            }
+        }
+
+        // Mobile Hero Image (Robust Parsing)
+        if (party.mobileHeroImage) {
+            try {
+                let images = [];
+                if (Array.isArray(party.mobileHeroImage)) {
+                    images = party.mobileHeroImage;
+                } else if (typeof party.mobileHeroImage === 'string') {
+                    const trimmed = party.mobileHeroImage.trim();
+                    if (trimmed.startsWith('[')) {
+                        images = JSON.parse(trimmed);
+                    } else {
+                        images = [trimmed];
+                    }
+                }
+                images.forEach(url => {
+                    if (url && typeof url === 'string') allImageUrls.push(url);
+                });
+            } catch (e) {
+                console.warn("Error parsing mobileHeroImage:", e);
+                if (typeof party.mobileHeroImage === 'string') allImageUrls.push(party.mobileHeroImage);
+            }
+        }
 
         // Group Images
         if (party.groupImageUrls) {

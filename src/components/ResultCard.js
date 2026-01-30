@@ -3,21 +3,26 @@
 import { useState } from "react";
 import { Trophy, Users, Ban, UserX, Activity, Lock, Clock } from "lucide-react";
 
-export default function ResultCard({ candidate, rank, totalVotes, status, onClick }) {
+export default function ResultCard({ candidate, rank, totalVotes, status, isRevealed, onClick }) {
   const [imageError, setImageError] = useState(false);
 
   // ✅ 1. แยกสถานะ (รับค่า status ที่คำนวณมาจาก Config ในหน้า Page)
   const isEnded = status === "ENDED";
   const isOngoing = status === "ONGOING";
   // รวมสถานะ PRE_CAMPAIGN เข้ากับ WAITING เพื่อความปลอดภัย (กรณีเผลอเรนเดอร์การ์ดก่อนเวลา)
-  const isWaiting = status === "WAITING" || status === "PRE_CAMPAIGN"; 
-  
+  const isWaiting = status === "WAITING" || status === "PRE_CAMPAIGN" || status === "CLOSED";
+
+  // ⚡️ Revised Logic: Show Score ONLY if Revealed (even if Ended)
+  // User Requirement: If ended but not revealed, show "Hidden" style (not 0)
+  const showScore = (isEnded || isOngoing) && isRevealed;
+  const showHidden = (isEnded || isOngoing) && !isRevealed;
+
   const percentage = totalVotes > 0 ? (candidate.score / totalVotes) * 100 : 0;
-  const isWinner = isEnded && rank === 1; 
+  const isWinner = showScore && rank === 1; // ใช้ showScore แทน isEnded เพื่อให้ Highlight คนชนะตอน Reveal
 
   const imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
-  const isVoteNo = candidate.number == 0;         
-  const isDisapprove = candidate.number == -1;    
+  const isVoteNo = candidate.number == 0;
+  const isDisapprove = candidate.number == -1;
 
   // --- Visual Content (จัดการรูปภาพ/ไอคอน) ---
   let visualContent;
@@ -77,8 +82,8 @@ export default function ResultCard({ candidate, rank, totalVotes, status, onClic
       {/* 🔴 LIVE Badge (แสดงเฉพาะตอนเลือกตั้งอยู่) */}
       {isOngoing && (
         <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-red-100 text-red-600 px-2 py-1 rounded-full text-[10px] font-bold border border-red-200 animate-pulse">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            LIVE
+          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+          LIVE
         </div>
       )}
 
@@ -90,14 +95,14 @@ export default function ResultCard({ candidate, rank, totalVotes, status, onClic
       `}>
         {visualContent}
 
-        {/* Badge อันดับ (แสดงเฉพาะตอนจบเลือกตั้ง หรือขณะแข่ง) */}
+        {/* Badge อันดับ (แสดงเฉพาะตอนจบเลือกตั้ง หรือขณะแข่งที่เปิดเผยคะแนน) */}
         {!isWaiting && (
           <div className={`
               absolute top-0 left-0 flex items-center justify-center font-bold text-white shadow-sm
               ${isWinner ? 'w-8 h-8 lg:w-10 lg:h-10 text-sm lg:text-lg rounded-br-xl bg-yellow-500' : 'hidden lg:flex w-10 h-10 text-lg rounded-br-xl bg-[#8A2680]'}
-              ${isOngoing ? 'bg-slate-400' : ''} 
+              ${showHidden ? 'bg-slate-400' : ''} 
           `}>
-            {isEnded ? `#${rank}` : "?"}
+            {showScore ? `#${rank}` : "?"}
           </div>
         )}
       </div>
@@ -114,7 +119,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, onClic
             </h3>
             <div className="flex items-center gap-2 mt-0.5 text-slate-500">
               <p className="text-xs">{getSubText()}</p>
-              {!isWinner && isEnded && (
+              {!isWinner && showScore && (
                 <span className="lg:hidden text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-400 font-bold">
                   #{rank}
                 </span>
@@ -126,61 +131,61 @@ export default function ResultCard({ candidate, rank, totalVotes, status, onClic
 
         {/* ✅ ส่วนแสดงผลคะแนน (เปลี่ยนไปตาม Status) */}
         <div className="mt-auto w-full">
-          
-          {/* กรณี 1: จบแล้ว (ENDED) -> โชว์คะแนนจริง */}
-          {isEnded && (
-             <>
-                <div className="flex items-end justify-between mb-1">
-                    <span className={`font-black leading-none ${isWinner ? 'text-2xl text-yellow-600' : 'text-xl text-[#8A2680]'} lg:text-2xl`}>
-                    {candidate.score.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] lg:text-xs text-slate-400 font-medium">
-                    {percentage.toFixed(1)}%
-                    </span>
-                </div>
-                <div className="w-full h-1.5 lg:h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                    className={`h-full rounded-full transition-all duration-1000 ease-out 
-                        ${isWinner 
-                        ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
-                        : (isVoteNo ? 'bg-orange-400' : isDisapprove ? 'bg-red-500' : 'bg-gradient-to-r from-purple-400 to-[#8A2680]')
-                        }`}
-                    style={{ width: `${percentage}%` }}
-                    />
-                </div>
-             </>
+
+          {/* กรณี 1: จบแล้ว (ENDED) หรือ สั่งเปิด (Reveal) -> โชว์คะแนนจริง */}
+          {showScore && (
+            <>
+              <div className="flex items-end justify-between mb-1">
+                <span className={`font-black leading-none ${isWinner ? 'text-2xl text-yellow-600' : 'text-xl text-[#8A2680]'} lg:text-2xl`}>
+                  {candidate.score.toLocaleString()}
+                </span>
+                <span className="text-[10px] lg:text-xs text-slate-400 font-medium">
+                  {percentage.toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full h-1.5 lg:h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ease-out 
+                        ${isWinner
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                      : (isVoteNo ? 'bg-orange-400' : isDisapprove ? 'bg-red-500' : 'bg-gradient-to-r from-purple-400 to-[#8A2680]')
+                    }`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </>
           )}
 
-          {/* กรณี 2: กำลังแข่ง (ONGOING) -> โชว์ Animation ลับๆ */}
-          {isOngoing && (
-             <div className="space-y-2">
-                 <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
-                        <Activity size={14} className="animate-pulse text-[#8A2680]"/> 
-                        Voting in progress...
-                    </span>
-                    <Lock size={14} className="text-slate-300" />
-                 </div>
-                 <div className="w-full h-6 bg-slate-100 rounded-md overflow-hidden relative">
-                     <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(138,38,128,0.1)_25%,rgba(138,38,128,0.1)_50%,transparent_50%,transparent_75%,rgba(138,38,128,0.1)_75%,rgba(138,38,128,0.1)_100%)] bg-[size:20px_20px] animate-[progress-stripes_1s_linear_infinite]"></div>
-                     <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-slate-400 tracking-widest">HIDDEN SCORE</span>
-                     </div>
-                 </div>
-                 <style jsx>{`
+          {/* กรณี 2: กำลังแข่ง (ONGOING) หรือ จบแล้วแต่ไม่เปิด (ENDED & HIDDEN) -> โชว์ Animation ลับๆ */}
+          {showHidden && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+                  <Activity size={14} className="animate-pulse text-[#8A2680]" />
+                  {isEnded ? "Counting Votes..." : "Voting in progress..."}
+                </span>
+                <Lock size={14} className="text-slate-300" />
+              </div>
+              <div className="w-full h-6 bg-slate-100 rounded-md overflow-hidden relative">
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(138,38,128,0.1)_25%,rgba(138,38,128,0.1)_50%,transparent_50%,transparent_75%,rgba(138,38,128,0.1)_75%,rgba(138,38,128,0.1)_100%)] bg-[size:20px_20px] animate-[progress-stripes_1s_linear_infinite]"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-slate-400 tracking-widest">HIDDEN SCORE</span>
+                </div>
+              </div>
+              <style jsx>{`
                     @keyframes progress-stripes {
                         0% { background-position: 0 0; }
                         100% { background-position: 20px 0; }
                     }
                  `}</style>
-             </div>
+            </div>
           )}
 
           {/* กรณี 3: ยังไม่เริ่ม (WAITING / PRE_CAMPAIGN) -> สถานะรอ */}
           {isWaiting && (
             <div className="bg-slate-50 rounded-lg py-3 flex items-center justify-center gap-2 text-slate-400 border border-slate-100">
-                <Clock size={14} />
-                <span className="text-xs font-bold">รอเปิดลงคะแนน</span>
+              <Clock size={14} />
+              <span className="text-xs font-bold">รอเปิดลงคะแนน</span>
             </div>
           )}
 

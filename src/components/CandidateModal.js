@@ -23,7 +23,7 @@ export default function CandidateModal({ member, onClose }) {
   const idSuffix = member.studentId ? member.studentId.slice(-3) : "000";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 sm:p-8 overflow-y-auto">
       {/* 1. Seamless Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -61,7 +61,7 @@ export default function CandidateModal({ member, onClose }) {
 
         {/* LEFT: Image Section with Gradient Mask */}
         <div
-          className="relative w-full md:w-[45%] h-[450px] md:h-auto overflow-hidden cursor-zoom-in group"
+          className="relative w-full md:w-[45%] h-[320px] md:h-auto overflow-hidden cursor-zoom-in group"
           onClick={() => setIsLightboxOpen(true)}
         >
           <img
@@ -77,7 +77,7 @@ export default function CandidateModal({ member, onClose }) {
         </div>
 
         {/* RIGHT: Content Section */}
-        <div className="relative z-10 w-full md:w-[55%] p-5 md:p-10 flex flex-col justify-center -mt-20 md:mt-0">
+        <div className="relative z-10 w-full md:w-[55%] p-5 md:p-10 flex flex-col justify-center -mt-10 md:mt-0">
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}

@@ -14,7 +14,7 @@ function verifyAdminToken(request) {
     return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
   }
 
-  try { 
+  try {
     const buffer = Buffer.from(encryptedToken, "base64");
     const decryptedData = crypto.privateDecrypt(
       {
@@ -51,8 +51,10 @@ export async function GET(req) {
   if (authError) return authError;
   try {
     // ดึงจำนวนคนทั้งหมด / คนที่โหวตแล้ว
-    const totalVoters = await db.user.count({ where: { role: 'student' } }); // ไม่นับ Admin
-    const votedCount = await db.user.count({ where: { role: 'student', isVoted: true } });
+    const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+    const totalEligible = await db.user.count({ where: { year: { in: validYears } } });
+    const totalVoters = await db.user.count({ where: { year: { in: validYears } } });
+    const votedCount = await db.user.count({ where: { isVoted: true, year: { in: validYears } } });
 
     // ดึงสถานะระบบ (เปิด/ปิด)
     let config = await db.systemConfig.findFirst();
@@ -70,7 +72,9 @@ export async function GET(req) {
         totalVoters,
         votedCount,
         turnout: totalVoters > 0 ? ((votedCount / totalVoters) * 100).toFixed(2) : 0,
-        isVoteOpen: config.isVoteOpen
+        isVoteOpen: config.isVoteOpen,
+        showResult: config.showResult,
+        systemMode: config.systemMode || "AUTO"
       },
       candidates
     });
@@ -85,47 +89,65 @@ export async function POST(req) {
   const authError = verifyAdminToken(req);
   if (authError) return authError;
   try {
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action, mode } = body;
 
-    // กรณี: สลับเปิด/ปิด ระบบ
-    if (action === 'TOGGLE_VOTE') {
+    // กรณี: เปลี่ยนโหมดระบบ (AUTO, PAUSE, ENDED)
+    if (action === 'SET_MODE') {
+      const validModes = ["AUTO", "PAUSE", "ENDED", "MANUAL_OPEN"];
+
+      if (!validModes.includes(mode)) {
+        return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
+      }
+
       const config = await db.systemConfig.findFirst();
       await db.systemConfig.update({
         where: { id: config.id },
-        data: { isVoteOpen: !config.isVoteOpen }
+        data: { systemMode: mode }
+      });
+      return NextResponse.json({ message: "Success" });
+    }
+
+    // กรณี: สลับเปิด/ปิด การแสดงผล
+    if (action === 'TOGGLE_SHOW_RESULT') {
+      const config = await db.systemConfig.findFirst();
+      await db.systemConfig.update({
+        where: { id: config.id },
+        data: { showResult: !config.showResult }
       });
       return NextResponse.json({ message: "Success" });
     }
 
     // กรณี: ล้างคะแนนทั้งหมด (Reset) 
     if (action === 'RESET_VOTES') {
-      // 1. รีเซ็ต User ให้กลับเป็นยังไม่โหวต (เฉพาะ User ธรรมดา)
+      const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+      // 1. รีเซ็ต User ให้กลับเป็นยังไม่โหวต (เฉพาะนักศึกษาปี 1-4)
       await db.user.updateMany({
-        where: { role: 'USER' },
+        where: { year: { in: validYears } },
         data: { isVoted: false, candidateId: null }
       });
       // 2. รีเซ็ตคะแนนผู้สมัครเป็น 0
       await db.candidate.updateMany({
         data: { score: 0 }
       });
-      return NextResponse.json({ message: "Database Reset Successful" });
+      return NextResponse.json({ success: true, message: "Reset votes successfully for eligible students (Year 1-4)" });
     }
 
     // กรณี: ล้างข้อมูลพรรคทั้งหมด (Reset Candidates) 
     if (action === 'RESET_CANDIDATES') {
+      const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+      await db.candidate.updateMany({
+        data: { score: 0 }
+      });
+      // Also clear candidateId from users
       await db.user.updateMany({
-        where: {
-          isVoted: true
-        },
-        data: {
-          isVoted: false,
-          candidateId: null
-        }
+        where: { year: { in: validYears } },
+        data: { candidateId: null }
       });
       await db.member.deleteMany({});
       await db.candidate.deleteMany({});
       const newCandidate = await db.candidate.create({
-        data: { name: "งดออกเสียง", number: 0, slogan: null, logoUrl: null, groupImageUrl: null }
+        data: { name: "งดออกเสียง", number: 0, slogan: null, logoUrl: null, groupImageUrls: null }
       });
       return NextResponse.json({ message: "Database Reset Successful" });
     }
@@ -133,6 +155,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 
   } catch (error) {
+    console.error("Action Error:", error); // Debugging
     return NextResponse.json({ error: "Action failed" }, { status: 500 });
   }
 }

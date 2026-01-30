@@ -5,3 +5,26 @@ node_modules
 /src/generated/prisma
 
 .next
+
+# Debug & Scripts
+check_users.js
+debug_nesting.py
+debug_syntax.py
+debug_syntax_v2.py
+navbar_debug.js
+test-db.js
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs
+*.njsproj
+*.sln
+*.sw?

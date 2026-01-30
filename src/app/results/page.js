@@ -40,23 +40,50 @@ export default function ResultsPage() {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedParty, setSelectedParty] = useState(null);
+  const [isRevealed, setIsRevealed] = useState(false); // ✅ สถานะบังคับเปิดเผยข้อมูล
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
   // ==========================================
   useEffect(() => {
-    const checkAccess = () => {
+    const checkAccess = async () => {
       const now = new Date();
       const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
-      // 1.1 ถ้าจบการเลือกตั้งแล้ว (ENDED) ให้เข้าดูได้เลย ไม่ต้องเช็คอะไร
-      if (isEnded) {
+      // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
+      const resStatus = await fetch(`/api/check-status`); // ไม่ส่ง studentId เพื่อเช็ค Global
+      const statusData = await resStatus.json();
+
+      const isSystemClosed = statusData.systemMode === "PAUSE";
+      const isManualEnd = statusData.systemMode === "ENDED";
+      const isRevealed = statusData.showResult === true;
+
+      // ⚡️ NEW SYSTEM MODES logic:
+      if (isManualEnd || isEnded || isRevealed) {
         setIsAuthorized(true);
         setLoading(false);
         return;
       }
 
-      // 1.2 ถ้ายังไม่จบ ให้เช็คสถานะการล็อกอิน
+      // If system is strictly PAUSED
+      if (isSystemClosed) {
+        setModalType("MAINTENANCE");
+        setShowAccessModal(true);
+        setLoading(false);
+        return;
+      }
+
+      // 1.2 ถ้าต้องล็อก (ระบบเปิด + ยังไม่เปิดเผย) -> บังคับ Login
+
+      // ✅ EXCEPTION: ช่วงหาเสียง (Campaign Period) -> ให้คนทั่วไปดูหน้านี้ได้ (เพื่อดูรายชื่อผู้สมัคร)
+      // แต่ API จะไม่ส่งคะแนนมาให้ (ดูได้แค่ชื่อ รูป นโยบาย)
+      const isOngoing = statusData.electionStatus === "ONGOING";
+      if (now >= ELECTION_CONFIG.CAMPAIGN_START && now < ELECTION_CONFIG.ELECTION_START && !isSystemClosed && !isOngoing) {
+        setIsAuthorized(true);
+        setLoading(false);
+        return;
+      }
+
       if (status === "loading") return;
 
       if (status === "unauthenticated") {
@@ -64,32 +91,38 @@ export default function ResultsPage() {
         return;
       }
 
-      // 1.3 เช็คเงื่อนไขโหวตและทำฟอร์มในช่วง Ongoing
+      // 1.3 ถ้า Login แล้ว -> เช็คสถานะส่วนตัว (Vote/Form)
       if (status === "authenticated" && session) {
 
-        (async () => {
-          const res = await fetch(`/api/check-status?studentId=${session?.user?.studentId}`);
-          const data = await res.json();
+        // ✅ EXCEPTION: ถ้าเป็นช่วงหาเสียง หรือยังไม่เริ่มเลือกตั้ง -> ปล่อยผ่านเลย (ไม่ต้องเช็คโหวต)
+        if (now < ELECTION_CONFIG.ELECTION_START) {
+          setIsAuthorized(true);
+          setShowAccessModal(false);
+          setLoading(false);
+          return;
+        }
 
-          if (!data.isVoted) {
-            setModalType("VOTE");
-            setShowAccessModal(true);
-            setIsAuthorized(false);
-            return
-          };
-        })();
+        // เช็คสถานะส่วนตัวอีกรอบ (พร้อม studentId)
+        const resUser = await fetch(`/api/check-status?studentId=${session?.user?.studentId}`);
+        const userData = await resUser.json();
 
-        (async () => {
-          const res = await fetch(`/api/check-form?studentId=${session?.user?.studentId}`);
-          const data = await res.json();
+        // ถ้ายังไม่โหวต -> ห้ามเข้า (ต้องไปโหวตก่อน)
+        if (!userData.isVoted) {
+          setModalType("VOTE");
+          setShowAccessModal(true);
+          setIsAuthorized(false);
+          return
+        };
 
-          if (!data.isFormCompleted) {
-            setModalType("FORM");
-            setShowAccessModal(true);
-            setIsAuthorized(false);
-            return
-          };
-        })();
+        const resForm = await fetch(`/api/check-form?studentId=${session?.user?.studentId}`);
+        const formData = await resForm.json();
+
+        if (!formData.isFormCompleted) {
+          setModalType("FORM");
+          setShowAccessModal(true);
+          setIsAuthorized(false);
+          return
+        };
 
         setIsAuthorized(true);
         setShowAccessModal(false);
@@ -127,13 +160,20 @@ export default function ResultsPage() {
       if (data.status) setServerStatus(data.status);
       if (data.campaignDate) setCampaignDate(new Date(data.campaignDate));
 
+      // ✅ Fix: Always update boolean state (even if false)
+      setIsRevealed(!!data.isRevealed);
+
       if (typeof data.totalVotes !== 'undefined') {
         setTotalVotes(data.totalVotes);
       } else if (data.candidates) {
-        setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+        // Fallback: Calculate total votes as Sum of all candidates
+        const sumOfScores = data.candidates.reduce((acc, curr) => acc + curr.score, 0);
+        setTotalVotes(sumOfScores);
       }
 
       // ... (code ส่วน fetch data ด้านบน) ...
+
+      if (data.isRevealed) setIsRevealed(data.isRevealed);
 
       if (data.candidates) {
         let rawCandidates = data.candidates;
@@ -151,34 +191,30 @@ export default function ResultsPage() {
         }
 
         // ----------------------------------------------------
-        // 2️⃣ จัดลำดับ (Sorting) ตามสถานะเวลา (Ongoing vs Ended)
+        // 2️⃣ จัดลำดับ (Sorting) ตามสถานะความต้องการ
         // ----------------------------------------------------
         const sorted = rawCandidates.sort((a, b) => {
-
-          // --- 🟢 ถ้าจบการเลือกตั้งแล้ว (ENDED) -> เรียงตามคะแนนก่อน ---
-          if (isEnded) {
-            const scoreDiff = b.score - a.score; // คะแนนมาก -> น้อย
+          // A. ถ้าจบแล้ว หรือสั่งโชว์ผล -> ให้เรียงตาม "คะแนน" เป็นหลัก (มากไปน้อย)
+          if (data.status === "ENDED" || data.isRevealed) {
+            const scoreDiff = b.score - a.score;
             if (scoreDiff !== 0) return scoreDiff;
           }
 
-          // --- 🟡 ถ้ายังไม่จบ หรือ คะแนนเท่ากัน -> ใช้ Logic บัตรเลือกตั้ง ---
-
+          // B. ถ้าเป็นช่วงรอ/ยังไม่โชว์คะแนน หรือคะแนนเท่ากัน -> เรียงตามลำดับ "บัตรเลือกตั้ง"
           const numA = parseInt(a.number);
           const numB = parseInt(b.number);
+
+          // - เอาพรรค (เบอร์ > 0) ขึ้นก่อนกลุ่มพิเศษ (0, -1)
           const isPartyA = numA > 0;
           const isPartyB = numB > 0;
-
-          // A. เอาพรรค (เบอร์ > 0) ขึ้นก่อนพวกกลุ่มพิเศษ (0, -1)
           if (isPartyA && !isPartyB) return -1;
           if (!isPartyA && isPartyB) return 1;
 
-          // B. ถ้าประเภทเดียวกัน จัดเรียงภายในกลุ่ม
-          if (isPartyA) {
-            return numA - numB; // พรรค: เรียงเบอร์ 1, 2, 3 (น้อยไปมาก)
-          } else {
-            return numB - numA; // กลุ่มพิเศษ: เอา 0 (งดออกเสียง) ขึ้นก่อน -1 (ไม่รับรอง)
-            // เพราะ 0 > -1 ดังนั้น b - a จะทำให้ 0 มาก่อน
-          }
+          // - ถ้าในกลุ่มพรรคด้วยกัน: เรียงเบอร์ 1, 2, 3
+          if (isPartyA) return numA - numB;
+
+          // - ถ้าในกลุ่มพิเศษ: เอา 0 (งดออกเสียง) ขึ้นก่อน -1 (ไม่รับรอง)
+          return numB - numA;
         });
 
         setCandidates(sorted);
@@ -214,7 +250,7 @@ export default function ResultsPage() {
     const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
     if (!isEnded) {
-      const interval = setInterval(fetchResults, 5000);
+      const interval = setInterval(fetchResults, 3000);
       return () => clearInterval(interval);
     }
   }, [status]);
@@ -238,6 +274,14 @@ export default function ResultsPage() {
   }
 
   const finalStatus = serverStatus !== "WAITING" ? serverStatus : electionStatus;
+
+  // ✅ MANUAL OVERRIDE TIMER:
+  // ถ้า Status จาก Server บอกว่า ONGOING (เปิด Manual)
+  // ให้ปรับ TargetDate เป็นวันปิดรับคะแนนทันที (นับถอยหลังสู่การปิด)
+  if (finalStatus === "ONGOING") {
+    electionStatus = "ONGOING";
+    targetDate = ELECTION_END;
+  }
 
   const timeDiff = targetDate - now;
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
@@ -344,7 +388,19 @@ export default function ResultsPage() {
               <div className="flex flex-col lg:flex-row items-center justify-between mb-6 gap-4">
                 <h2 className="text-lg lg:text-2xl font-bold text-slate-700 flex flex-wrap items-center gap-2 justify-center lg:justify-start">
                   {finalStatus === "ENDED" ? (
-                    <><Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-yellow-500" /> สรุปผลการเลือกตั้ง (Official Results)</>
+                    isRevealed ? (
+                      <><Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-yellow-500" /> สรุปผลการเลือกตั้ง (Official Results)</>
+                    ) : (
+                      <div className="flex items-center gap-2 text-[#8A2680] font-bold">
+                        <div className="relative flex h-3 w-3 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
+                        </div>
+                        <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
+                          กำลังนับคะเเนนเสียงชาว FMS
+                        </span>
+                      </div>
+                    )
                   ) : finalStatus === "ONGOING" ? (
                     <div className="flex items-center gap-2 text-[#8A2680] font-bold">
                       <div className="relative flex h-3 w-3 shrink-0">
@@ -352,7 +408,7 @@ export default function ResultsPage() {
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
                       </div>
                       <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
-                        ขณะนี้กำลังนับคะแนนเสียงของชาว FMS อยู่
+                        {isRevealed ? "📊 สรุปผลคะแนนปัจจุบัน (Real-time Results)" : "ขณะนี้กำลังนับคะแนนเสียงอยู่"}
                       </span>
                     </div>
                   ) : (
@@ -383,59 +439,80 @@ export default function ResultsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
                   {candidates.map((candidate, index) => (
-                    <ResultCard key={candidate.id} candidate={candidate} rank={index + 1} totalVotes={totalVotes} status={finalStatus} onClick={() => setSelectedParty(candidate)} />
+                    <ResultCard
+                      key={candidate.id}
+                      candidate={candidate}
+                      rank={index + 1}
+                      totalVotes={totalVotes}
+                      status={finalStatus}
+                      isRevealed={isRevealed} // ✅ ส่งสถานะเปิดเผยไปที่การ์ด
+                      onClick={() => setSelectedParty(candidate)}
+                    />
                   ))}
                 </div>
               )}
             </div>
 
             {/* Charts Section (จากโค้ดเดิมของคุณ) */}
-            {finalStatus === "ENDED" ? (
-              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8 animate-fade-in-up">
-                <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
-                  <div className="flex items-center gap-3 mb-4 lg:mb-8"><div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[#8A2680]" /></div><h3 className="text-base lg:text-xl font-bold text-slate-700">แยกตามสาขา</h3></div>
-                  <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={demographics.byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                        <XAxis type="number" hide /><YAxis type="category" dataKey="name" width={50} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
-                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                        <Bar dataKey="value" fill={COLORS_BAR} radius={[0, 4, 4, 0]} barSize={isMobile ? 24 : 40} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="order-1 lg:order-2 grid grid-cols-2 gap-3 lg:flex lg:flex-col lg:gap-8 h-full">
-                  <div className="col-span-1 bg-white p-3 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <div className="flex items-center gap-2 mb-2 lg:mb-6"><div className="bg-yellow-100 p-1.5 lg:p-2 rounded-lg"><Medal className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" /></div><h3 className="text-sm lg:text-xl font-bold text-slate-700">ชั้นปี</h3></div>
-                    <div className="h-[160px] lg:h-[250px] w-full text-xs font-medium">
+            {(finalStatus === "ENDED" || isRevealed) ? (
+              isRevealed ? (
+                <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8 animate-fade-in-up">
+                  <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-3 mb-4 lg:mb-8"><div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[#8A2680]" /></div><h3 className="text-base lg:text-xl font-bold text-slate-700">แยกตามสาขา</h3></div>
+                    <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={demographics.byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: isMobile ? 10 : 14 }} interval={0} />
-                          <YAxis hide /><Tooltip cursor={{ fill: 'transparent' }} />
-                          <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={isMobile ? 24 : 50} />
+                        <BarChart data={demographics.byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                          <XAxis type="number" hide /><YAxis type="category" dataKey="name" width={50} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
+                          <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                          <Bar dataKey="value" fill={COLORS_BAR} radius={[0, 4, 4, 0]} barSize={isMobile ? 24 : 40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  <div className="col-span-1 bg-white p-3 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <div className="flex items-center gap-2 mb-2 lg:mb-6"><div className="bg-blue-100 p-1.5 lg:p-2 rounded-lg"><PieIcon className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" /></div><h3 className="text-sm lg:text-xl font-bold text-slate-700">เพศ</h3></div>
-                    <div className="h-[160px] lg:h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={demographics.byGender} cx="50%" cy="50%" innerRadius={isMobile ? 30 : 60} outerRadius={isMobile ? 50 : 90} paddingAngle={5} dataKey="value" stroke="none">
-                            {demographics.byGender.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS_GENDER[index % COLORS_GENDER.length]} />))}
-                          </Pie>
-                          <Tooltip /><Legend verticalAlign={isMobile ? "bottom" : "middle"} align={isMobile ? "center" : "right"} layout={isMobile ? "horizontal" : "vertical"} iconType="circle" wrapperStyle={{ fontSize: isMobile ? '10px' : '14px' }} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                  <div className="order-1 lg:order-2 grid grid-cols-2 gap-3 lg:flex lg:flex-col lg:gap-8 h-full">
+                    <div className="col-span-1 bg-white p-3 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
+                      <div className="flex items-center gap-2 mb-2 lg:mb-6"><div className="bg-yellow-100 p-1.5 lg:p-2 rounded-lg"><Medal className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" /></div><h3 className="text-sm lg:text-xl font-bold text-slate-700">ชั้นปี</h3></div>
+                      <div className="h-[160px] lg:h-[250px] w-full text-xs font-medium">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={demographics.byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: isMobile ? 10 : 14 }} interval={0} />
+                            <YAxis hide /><Tooltip cursor={{ fill: 'transparent' }} />
+                            <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={isMobile ? 24 : 50} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div className="col-span-1 bg-white p-3 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
+                      <div className="flex items-center gap-2 mb-2 lg:mb-6"><div className="bg-blue-100 p-1.5 lg:p-2 rounded-lg"><PieIcon className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" /></div><h3 className="text-sm lg:text-xl font-bold text-slate-700">เพศ</h3></div>
+                      <div className="h-[160px] lg:h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={demographics.byGender} cx="50%" cy="50%" innerRadius={isMobile ? 30 : 60} outerRadius={isMobile ? 50 : 90} paddingAngle={5} dataKey="value" stroke="none">
+                              {demographics.byGender.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS_GENDER[index % COLORS_GENDER.length]} />))}
+                            </Pie>
+                            <Tooltip /><Legend verticalAlign={isMobile ? "bottom" : "middle"} align={isMobile ? "center" : "right"} layout={isMobile ? "horizontal" : "vertical"} iconType="circle" wrapperStyle={{ fontSize: isMobile ? '10px' : '14px' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 lg:py-32 bg-white/50 border border-dashed border-slate-300 rounded-[2rem] text-center px-4 animate-in fade-in zoom-in-95 duration-500">
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-100 animate-pulse">
+                    <Activity className="w-10 h-10 lg:w-12 lg:h-12 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl lg:text-3xl font-black text-slate-700 mb-2">กำลังนับคะเเนนเสียงชาว FMS</h3>
+                  <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm lg:text-base">
+                    กรุณารอประกาศผลอย่างเป็นทางการ <br className="hidden md:block" />
+                    จากคณะกรรมการการเลือกตั้ง
+                  </p>
+                </div>
+              )
             ) : (
               <div className="text-center py-16 bg-white/50 border border-dashed border-slate-300 rounded-3xl">
                 <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"><BarChart3 className="text-slate-400" size={32} /></div>
@@ -476,6 +553,30 @@ export default function ResultsPage() {
                 <Home size={18} /> กลับหน้าหลัก
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAINTENANCE MODAL */}
+      {showAccessModal && modalType === "MAINTENANCE" && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl"></div>
+          <div className="relative bg-white w-full max-w-md p-10 rounded-[3rem] shadow-2xl text-center border border-slate-100">
+            <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-orange-100/50">
+              <Activity className="w-12 h-12 text-orange-500 animate-pulse" />
+            </div>
+            <h2 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">ระบบปิดปรับปรุง</h2>
+            <p className="text-slate-500 mb-10 leading-relaxed text-lg">
+              ขออภัยในความไม่สะดวก <br />
+              ขณะนี้ระบบปิดรับลงคะแนนชั่วคราว <br />
+              เพื่อตรวจสอบข้อมูลหรือปรับปรุงระบบ
+            </p>
+            <button
+              onClick={() => router.replace("/")}
+              className="w-full py-5 bg-slate-900 text-white rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+            >
+              <Home size={22} /> กลับหน้าหลัก
+            </button>
           </div>
         </div>
       )}

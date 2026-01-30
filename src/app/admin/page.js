@@ -11,11 +11,11 @@ import CompletedActionModal from "../../components/CompletedActionModal";
 import ErrorActionModal from "../../components/ErrorActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getEncryptedToken } from "../../utils/auth";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2 } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
-} from 'recharts'; 
+} from 'recharts';
 
 import { ELECTION_CONFIG } from "../../utils/electionConfig";
 
@@ -43,7 +43,9 @@ const OverviewTab = () => {
         return;
       }
 
-      const res = await fetch("/api/results");
+      const res = await fetch("/api/results", {
+        headers: { 'x-admin-token': encryptedToken }
+      });
 
       const data = await res.json();
 
@@ -217,13 +219,13 @@ const CandidatesTab = () => {
       const encryptedToken = getEncryptedToken();
       if (!encryptedToken) {
         console.error("Encryption failed");
-        return; 
+        return;
       }
 
       const res = await fetch(`/api/results?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
-            'x-admin-token': encryptedToken,
+          'x-admin-token': encryptedToken,
         }
       });
       const data = await res.json();
@@ -383,11 +385,13 @@ const CandidatesTab = () => {
 };
 
 const SettingsTab = () => {
-  const [isVoteOpen, setIsVoteOpen] = useState(false);
+  const [systemMode, setSystemMode] = useState("AUTO");
+  const [isShowResult, setIsShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   const [activeModal, setActiveModal] = useState(null);
+  const [pendingMode, setPendingMode] = useState(null);
 
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
@@ -406,7 +410,10 @@ const SettingsTab = () => {
 
         const res = await fetch('/api/admin/dashboard', { headers: { 'x-admin-token': encryptedToken, } });
         const data = await res.json();
-        if (data.stats) setIsVoteOpen(data.stats.isVoteOpen);
+        if (data.stats) {
+          setSystemMode(data.stats.systemMode || "AUTO");
+          setIsShowResult(data.stats.showResult);
+        }
       } catch (error) {
         console.error("Failed to fetch config", error);
       } finally {
@@ -420,43 +427,40 @@ const SettingsTab = () => {
     if (!activeModal) return;
 
     setProcessing(true);
-
     try {
-
       const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) {
-        console.error("Encryption failed");
-        return;
+      if (!encryptedToken) return;
+
+      let action = activeModal;
+      let body = { action };
+
+      if (action === 'SET_MODE') {
+        body.mode = pendingMode;
       }
 
       const res = await fetch('/api/admin/dashboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
-        body: JSON.stringify({ action: activeModal }),
+        body: JSON.stringify(body),
       });
 
       setActiveModal(null);
 
       if (res.ok) {
-
-        if (activeModal === 'TOGGLE_VOTE') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'สถานะการโหวตได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
-          setIsVoteOpen(!isVoteOpen);
-        } else {
-          if (activeModal === 'RESET_VOTES') {
-            setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
-          } else {
-            if (activeModal === 'RESET_CANDIDATES') {
-              setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
-            } else {
-              setSuccessMessage({ title: '???', msg: '???' });
-            }
-          }
+        if (action === 'SET_MODE') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${pendingMode} เรียบร้อยแล้ว` });
+          setSystemMode(pendingMode);
+        } else if (action === 'TOGGLE_SHOW_RESULT') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
+          setIsShowResult(!isShowResult);
+        } else if (action === 'RESET_VOTES') {
+          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
+        } else if (action === 'RESET_CANDIDATES') {
+          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
         }
-
         setIsSuccessOpen(true);
       } else {
-        setErrorMessage({ title: `Error Code ${res.status}`, msg: res.statusText });
+        setErrorMessage({ title: `Error ${res.status}`, msg: res.statusText });
         setIsErrorOpen(true);
       }
     } catch (error) {
@@ -466,35 +470,90 @@ const SettingsTab = () => {
     }
   };
 
+  const handleModeChange = (newMode) => {
+    if (newMode === systemMode) return; // ✅ Prevent redundant actions
+    setPendingMode(newMode);
+    setActiveModal('SET_MODE');
+  };
+
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-100 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-blue-50 text-blue-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
-        <h3 className="text-base lg:text-xl font-bold text-slate-700">ตั้งค่าระบบ</h3>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl"><Power className="h-6 w-6" /></div>
+        <h3 className="text-xl font-bold text-slate-700">ตั้งค่าระบบเลือกตั้ง (System Mode)</h3>
       </div>
-      <div className='p-3 gap-3'>
+
+      <div className='space-y-6'>
+        {/* --- 3-WAY MODE SELECTOR --- */}
+        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <h4 className="text-lg font-bold text-slate-800">ระบบการทำงาน</h4>
+              <p className="text-sm text-slate-500">เลือกโหมดการทำงานของระบบให้เหมาะสมกับสถานการณ์ปัจจุบัน</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200">
+              {[
+                { id: 'AUTO', label: 'AUTO (อัตโนมัติ)', color: 'bg-green-500', icon: <CalendarDays className="w-4 h-4" /> },
+                { id: 'MANUAL_OPEN', label: 'OPEN (เปิดระบบ)', color: 'bg-blue-600', icon: <Zap className="w-4 h-4" /> },
+                { id: 'PAUSE', label: 'PAUSE (ระงับ)', color: 'bg-orange-500', icon: <Hourglass className="w-4 h-4" /> },
+                { id: 'ENDED', label: 'ENDED (ปิดระบบ)', color: 'bg-red-500', icon: <Power className="w-4 h-4" /> }
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => handleModeChange(m.id)}
+                  disabled={systemMode === m.id || processing} // ✅ Disable if same mode or processing
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${systemMode === m.id
+                    ? `${m.color} text-white shadow-lg cursor-default`
+                    : 'text-slate-500 hover:bg-slate-300 disabled:opacity-50'
+                    }`}
+                >
+                  {m.icon}
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Current Status Badge */}
+          <div className="mt-6 flex items-center gap-3 py-3 px-4 bg-white/60 rounded-xl border border-dashed border-slate-200">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status:</span>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${systemMode === 'AUTO' ? 'bg-green-500' :
+                systemMode === 'MANUAL_OPEN' ? 'bg-blue-600' :
+                  systemMode === 'PAUSE' ? 'bg-orange-500' : 'bg-red-500'
+                }`} />
+              <span className="text-sm font-black text-slate-700">
+                {systemMode === "AUTO" ? "ระบบทำงานอัตโนมัติตามกำหนดเวลา" :
+                  systemMode === "MANUAL_OPEN" ? "เปิดรับคะแนนด้วยตนเอง (Force Open)" :
+                    systemMode === "PAUSE" ? "ระงับการโหวตชั่วคราว ( maintenance )" : "ปิดการเลือกตั้งอย่างเป็นทางการ"}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
           <div>
             <h4 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <Power className="w-5 h-5 text-purple-600" />
-              สถานะระบบเลือกตั้ง
+              <PieIcon className="w-5 h-5 text-purple-600" />
+              การแสดงผลคะแนน
             </h4>
+            <p className="text-xs text-slate-500 mt-1">บังคับโชว์ผลคะแนนแบบ Real-time แม้จะยังไม่ถึงเวลาปิดหีบ</p>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className={`text-sm font-bold transition-colors ${isVoteOpen ? 'text-green-600' : 'text-red-500'}`}>
-              {loading ? '' : (isVoteOpen ? '🟢 เปิดรับคะแนน' : '🔴 ปิดรับคะแนน')}
+            <span className={`text-sm font-bold transition-colors ${isShowResult ? 'text-green-600' : 'text-red-500'}`}>
+              {loading ? '' : (isShowResult ? '🟢 แสดงผล' : '🔴 ซ่อนผล')}
             </span>
 
-            {/* ปุ่ม Switch */}
             {loading ? '' : (
               <button
-                onClick={() => setActiveModal('TOGGLE_VOTE')}
+                onClick={() => setActiveModal('TOGGLE_SHOW_RESULT')}
                 disabled={loading || processing}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isVoteOpen ? 'bg-green-500' : 'bg-gray-300'
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isShowResult ? 'bg-green-500' : 'bg-gray-300'
                   } ${processing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
               >
-                <span className={`${isVoteOpen ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
+                <span className={`${isShowResult ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
               </button>
             )}
           </div>
@@ -506,7 +565,7 @@ const SettingsTab = () => {
           <div>
             <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              ล้างคะแนนโหวตทั้งหมด และรีเซ็ตสิทธิ์การโหวตทั้งหมด
+              ล้างคะแนนโหวตทั้งหมด
             </h4>
           </div>
 
@@ -526,7 +585,7 @@ const SettingsTab = () => {
           <div>
             <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              ล้างข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด
+              ล้างพรรคและสมาชิกทั้งหมด
             </h4>
           </div>
 
@@ -556,14 +615,24 @@ const SettingsTab = () => {
       />
 
       <ConfirmModal
-        isOpen={activeModal === 'TOGGLE_VOTE'}
+        isOpen={activeModal === 'SET_MODE'}
         onClose={() => setActiveModal(null)}
         onConfirm={handleConfirmAction}
-        title={isVoteOpen ? "ต้องการปิดระบบโหวต?" : "ต้องการเปิดระบบโหวต?"}
-        message={isVoteOpen
-          ? "เมื่อปิดระบบ นักศึกษาจะไม่สามารถลงคะแนนได้อีก แต่ยังสามารถดูผลคะแนนได้"
-          : "เมื่อเปิดระบบ นักศึกษาจะสามารถเริ่มลงคะแนนได้ทันที"}
-        variant="primary" // สีม่วง
+        title="เปลี่ยนโหมดการทำงาน?"
+        message={`คุณกำลังจะเปลี่ยนโหมดระบบเป็น "${pendingMode}" ยืนยันการดำเนินการหรือไม่?`}
+        variant="primary"
+        isLoading={processing}
+      />
+
+      <ConfirmModal
+        isOpen={activeModal === 'TOGGLE_SHOW_RESULT'}
+        onClose={() => setActiveModal(null)}
+        onConfirm={handleConfirmAction}
+        title={isShowResult ? "ซ่อนผลคะแนน?" : "แสดงผลคะแนน?"}
+        message={isShowResult
+          ? "เมื่อซ่อนผลคะแนน ข้อมูลสถิติและผลโหวตจะถูกปิดกั้น"
+          : "เมื่อแสดงผลคะแนน ทุกคนจะสามารถเข้าดูผลโหวตได้ทันที แม้ระบบโหวตจะปิดอยู่"}
+        variant="primary"
         isLoading={processing}
       />
 
@@ -573,7 +642,7 @@ const SettingsTab = () => {
         onConfirm={handleConfirmAction}
         title="⚠️ ยืนยันการล้างระบบ?"
         message={`ผลคะแนนทั้งหมดและสิทธิ์การโหวตของผู้ใช้ทุกคนจะถูกรีเซ็ต`}
-        variant="danger" // สีแดง
+        variant="danger"
         isLoading={processing}
       />
 
@@ -583,10 +652,9 @@ const SettingsTab = () => {
         onConfirm={handleConfirmAction}
         title="⚠️ ยืนยันการล้างระบบ?"
         message={`ข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมดจะถูกลบ`}
-        variant="danger" // สีแดง
+        variant="danger"
         isLoading={processing}
       />
-
     </div>
   )
 };
@@ -614,7 +682,9 @@ const MonitorTab = () => {
         return;
       }
 
-      const res = await fetch("/api/results");
+      const res = await fetch("/api/results", {
+        headers: { 'x-admin-token': encryptedToken }
+      });
       const data = await res.json();
 
       if (data.candidates) {
@@ -715,6 +785,7 @@ const MonitorTab = () => {
                   rank={index + 1}
                   totalVotes={totalVotes}
                   status="ENDED"
+                  isRevealed={true}
                 />
               );
             })}

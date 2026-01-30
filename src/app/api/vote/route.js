@@ -62,6 +62,38 @@ export async function POST(request) {
     const { candidateId } = body;
     // หมายเหตุ: ไม่ใช้ studentId จาก body อีกต่อไป เพื่อป้องกันการโหวตแทนคนอื่น
 
+    // 0. 🛑 SECURITY GATE:
+    const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
+    const mode = systemConfig?.systemMode || "AUTO";
+    const { ELECTION_END, ELECTION_START } = await import("../../../utils/electionConfig").then(m => m.ELECTION_CONFIG);
+    const now = Date.now();
+
+    // 0.1 Check Manual Modes First
+    if (mode === "PAUSE") {
+      return NextResponse.json({ error: "ระบบปิดปรับปรุงชั่วคราว (System Maintenance)" }, { status: 403 });
+    }
+
+    if (mode === "ENDED") {
+      return NextResponse.json({ error: "สิ้นสุดการลงคะแนนเเล้ว (Election Ended)" }, { status: 403 });
+    }
+
+    if (mode === "MANUAL_OPEN") {
+      if (now >= ELECTION_END) {
+        return NextResponse.json({ error: "หมดเวลาลงคะแนนเเล้ว (Auto Closed)" }, { status: 403 });
+      }
+      // Pass: Voting is forced open
+    }
+
+    // 0.2 Check Auto Mode (Scheduled Time)
+    if (mode === "AUTO") {
+      if (now < ELECTION_START) {
+        return NextResponse.json({ error: "ยังไม่ถึงเวลาลงคะแนน (Not Started)" }, { status: 403 });
+      }
+      if (now >= ELECTION_END) {
+        return NextResponse.json({ error: "หมดเวลาลงคะแนนเเล้ว (Auto Closed)" }, { status: 403 });
+      }
+    }
+
     // 1. ตรวจสอบข้อมูล
     if (candidateId === undefined) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
@@ -74,6 +106,12 @@ export async function POST(request) {
 
     if (!user) {
       return NextResponse.json({ error: "ไม่พบผู้ใช้งาน" }, { status: 404 });
+    }
+
+    // 🛑 Eligibility Check: Must be Year 1-4
+    const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+    if (!validYears.includes(user.year)) {
+      return NextResponse.json({ error: "เฉพาะนักศึกษาชั้นปีที่ 1-4 เท่านั้นที่มีสิทธิ์ลงคะแนน" }, { status: 403 });
     }
 
     if (user.isVoted) {

@@ -1,5 +1,11 @@
 {
+  "/admin/page": "app/admin/page.js",
+  "/results/page": "app/results/page.js",
   "/vote/page": "app/vote/page.js",
+  "/page": "app/page.js",
+  "/api/results/route": "app/api/results/route.js",
   "/admin/login/page": "app/admin/login/page.js",
-  "/admin/page": "app/admin/page.js"
+  "/api/admin/dashboard/route": "app/api/admin/dashboard/route.js",
+  "/api/home-info/route": "app/api/home-info/route.js",
+  "/api/check-status/route": "app/api/check-status/route.js"
 }

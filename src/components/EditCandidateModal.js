@@ -43,6 +43,14 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
 
+    const [officialFile, setOfficialFile] = useState(null);
+    const [officialPreview, setOfficialPreview] = useState('');
+
+    // Multiple Mobile Hero Images
+    const [mobileHeroFiles, setMobileHeroFiles] = useState([]);
+    const [mobileHeroPreviews, setMobileHeroPreviews] = useState([]);
+    const [existingMobileHeroImages, setExistingMobileHeroImages] = useState([]);
+
     const [groupFiles, setGroupFiles] = useState([]);
     const [groupPreviews, setGroupPreviews] = useState([]);
 
@@ -98,6 +106,25 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 try { initialGroupImages = JSON.parse(candidate.groupImageUrls) } catch (e) { }
             }
 
+            // Initialize Official (Mobile Hero) Preview
+            setOfficialPreview(candidate.officialImageUrl || '');
+            setOfficialFile(null);
+
+            // Initialize Mobile Hero (Vertical Team) - Multiple
+            let initialMobileHeroImages = [];
+            if (candidate.mobileHeroImage) {
+                if (Array.isArray(candidate.mobileHeroImage)) initialMobileHeroImages = candidate.mobileHeroImage;
+                else if (typeof candidate.mobileHeroImage === 'string') {
+                    try {
+                        const parsed = JSON.parse(candidate.mobileHeroImage);
+                        initialMobileHeroImages = Array.isArray(parsed) ? parsed : [candidate.mobileHeroImage];
+                    } catch (e) { initialMobileHeroImages = [candidate.mobileHeroImage]; }
+                }
+            }
+            setExistingMobileHeroImages(initialMobileHeroImages);
+            setMobileHeroPreviews([]);
+            setMobileHeroFiles([]);
+
             setExistingImages(initialGroupImages);
             setNewGroupFiles([]);
 
@@ -119,6 +146,13 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
 
             setGroupPreviews([]);
             setGroupFiles([]);
+
+            setOfficialPreview('');
+            setOfficialFile(null);
+
+            setExistingMobileHeroImages([]);
+            setMobileHeroPreviews([]);
+            setMobileHeroFiles([]);
 
             setExistingImages([]);
             setNewGroupFiles([]);
@@ -148,12 +182,43 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         }
     };
 
-    const [officialImage, setOfficialImage] = useState(candidate?.officialImageUrl || null);
-
-    const handleOfficialImageChange = async (e) => {
+    const handleOfficialFileChange = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+            setOfficialFile(file);
+            setOfficialPreview(URL.createObjectURL(file));
+        }
+    };
 
+    const handleMobileHeroFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            const newFiles = [];
+            const newPreviews = [];
+
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    newFiles.push(file);
+                    newPreviews.push({ file, url: URL.createObjectURL(file) });
+                }
+            });
+
+            setMobileHeroFiles(prev => [...prev, ...newFiles]);
+            setMobileHeroPreviews(prev => [...prev, ...newPreviews]);
+        }
+    };
+
+    const removeNewMobileHeroImage = (index) => {
+        setMobileHeroFiles(prev => prev.filter((_, i) => i !== index));
+        setMobileHeroPreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeExistingMobileHeroImage = (index) => {
+        setExistingMobileHeroImages(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleGroupFilesChange = (e) => {
@@ -221,7 +286,15 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             data.append('slogan', formData.slogan);
             data.append('missions', formData.missions);
             data.append('policies', formData.policies);
+            data.append('policies', formData.policies);
             if (selectedFile) data.append('file', selectedFile);
+            if (officialFile) data.append('officialImage', officialFile);
+
+            // Append Mobile Hero Images
+            data.append('existingMobileHeroImages', JSON.stringify(existingMobileHeroImages));
+            mobileHeroFiles.forEach((file) => {
+                data.append('mobileHeroFiles', file);
+            });
 
             data.append('existingGroupImages', JSON.stringify(existingImages));
             newGroupFiles.forEach((item) => {
@@ -353,8 +426,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                 </label>
                             </div>
-                            <p className="text-xs text-gray-400">รูปภาพผู้สมัคร</p>
+                            <p className="text-xs text-gray-400">รูปภาพผู้สมัคร (Logo)</p>
                         </div>
+
+
 
                         <div className="w-full">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -482,6 +557,94 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             </div>
 
                         </div>
+
+                        <div className="w-full">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">ข้อมูลพิเศษสำหรับ Mobile</label>
+                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-6">
+                                {/* Mobile Hero Cover */}
+                                <div className="flex flex-col items-center gap-3">
+                                    <p className="text-sm font-medium text-gray-600 w-full text-left">1. รูปเดี่ยวแนวตั้ง (Mobile Vote Page)</p>
+                                    <div className="relative group w-full aspect-[3/4] bg-white rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center shadow-sm">
+                                        {officialPreview ? (
+                                            <img src={officialPreview} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center text-gray-400">
+                                                <ImageIcon className="w-8 h-8 mb-1" />
+                                                <span className="text-xs">ยังไม่มีรูปภาพ</span>
+                                            </div>
+                                        )}
+                                        <label className="absolute bottom-2 right-2 bg-white border border-gray-200 p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-50 text-blue-600 transition-colors">
+                                            <Upload className="w-5 h-5" />
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleOfficialFileChange} />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-500 text-left w-full">แนะนำขนาด: 3:4 แนวตั้ง (ใช้สำหรับหน้าโหวตบนมือถือ - รูปใหญ่)</p>
+                                </div>
+
+                                <hr className="border-gray-200" />
+
+                                {/* Mobile Vertical Team (Multiple) */}
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex flex-col">
+                                            <p className="text-sm font-medium text-gray-600">2. รูปทีมแนวตั้ง (Mobile Vertical Team)</p>
+                                            <p className="text-xs text-gray-500">ใส่ได้หลายรูป (แนะนำอัตราส่วน 3:4)</p>
+                                        </div>
+                                        <label className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer shadow-sm transition-colors">
+                                            <Plus className="w-4 h-4" />
+                                            <span>เพิ่มรูปแนวตั้ง</span>
+                                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleMobileHeroFileChange} />
+                                        </label>
+                                    </div>
+
+                                    {/* Grid for Mobile Vertical Images */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2">
+                                        {/* Existing Images */}
+                                        {existingMobileHeroImages.map((url, index) => (
+                                            <div key={`existing-mh-${index}`} className="relative group aspect-[3/4] bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                                <img src={url} alt={`Team Vertical ${index + 1}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeExistingMobileHeroImage(index)}
+                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] p-1 text-center truncate">
+                                                    รูปเดิม
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {/* New Files */}
+                                        {mobileHeroPreviews.map((item, index) => (
+                                            <div key={`new-mh-${index}`} className="relative group aspect-[3/4] bg-white rounded-lg border border-blue-200 overflow-hidden shadow-sm ring-2 ring-blue-50">
+                                                <img src={item.url} alt={`New Vertical ${index + 1}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeNewMobileHeroImage(index)}
+                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                                <div className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-[10px] p-1 text-center truncate">
+                                                    กำลังอัปโหลด
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {existingMobileHeroImages.length === 0 && mobileHeroPreviews.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                            <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+                                            <p className="text-sm text-gray-500">ยังไม่มีรูปทีมแนวตั้ง</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+
 
                     </form>
                 </div>
