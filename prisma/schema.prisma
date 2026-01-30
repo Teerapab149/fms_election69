@@ -76,5 +76,6 @@ model SystemConfig {
   isVoteOpen    Boolean  @default(false)
   showResult    Boolean  @default(false)
   systemMode    String   @default("AUTO")
+  googleFormUrl String?
   updatedAt     DateTime @updatedAt
 }

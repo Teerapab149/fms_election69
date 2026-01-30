@@ -57,7 +57,9 @@ export async function GET(request) {
       isSystemOpen: isSystemOpen,
       showResult: config.showResult,
       systemMode: sysMode,
-      electionStatus: electionStatus
+      systemMode: sysMode,
+      electionStatus: electionStatus,
+      googleFormUrl: config.googleFormUrl || ""
     });
   } catch (error) {
     console.error(error);

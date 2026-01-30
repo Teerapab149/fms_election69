@@ -47,86 +47,100 @@ export default function ResultsPage() {
   // ==========================================
   useEffect(() => {
     const checkAccess = async () => {
-      const now = new Date();
-      const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
+      try {
+        const now = new Date();
+        const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
-      // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
-      const resStatus = await fetch(`/api/check-status`); // ไม่ส่ง studentId เพื่อเช็ค Global
-      const statusData = await resStatus.json();
+        // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
+        const resStatus = await fetch(`/api/check-status?t=${Date.now()}`); // Add timestamp to prevent caching
+        if (!resStatus.ok) throw new Error("Failed to fetch system status");
 
-      const isSystemClosed = statusData.systemMode === "PAUSE";
-      const isManualEnd = statusData.systemMode === "ENDED";
-      const isRevealed = statusData.showResult === true;
+        const statusData = await resStatus.json();
 
-      // ⚡️ NEW SYSTEM MODES logic:
-      if (isManualEnd || isEnded || isRevealed) {
-        setIsAuthorized(true);
-        setLoading(false);
-        return;
-      }
+        const isSystemClosed = statusData.systemMode === "PAUSE";
+        const isManualEnd = statusData.systemMode === "ENDED";
+        const isRevealed = statusData.showResult === true;
 
-      // If system is strictly PAUSED
-      if (isSystemClosed) {
-        setModalType("MAINTENANCE");
-        setShowAccessModal(true);
-        setLoading(false);
-        return;
-      }
-
-      // 1.2 ถ้าต้องล็อก (ระบบเปิด + ยังไม่เปิดเผย) -> บังคับ Login
-
-      // ✅ EXCEPTION: ช่วงหาเสียง (Campaign Period) -> ให้คนทั่วไปดูหน้านี้ได้ (เพื่อดูรายชื่อผู้สมัคร)
-      // แต่ API จะไม่ส่งคะแนนมาให้ (ดูได้แค่ชื่อ รูป นโยบาย)
-      const isOngoing = statusData.electionStatus === "ONGOING";
-      if (now >= ELECTION_CONFIG.CAMPAIGN_START && now < ELECTION_CONFIG.ELECTION_START && !isSystemClosed && !isOngoing) {
-        setIsAuthorized(true);
-        setLoading(false);
-        return;
-      }
-
-      if (status === "loading") return;
-
-      if (status === "unauthenticated") {
-        router.replace("/login");
-        return;
-      }
-
-      // 1.3 ถ้า Login แล้ว -> เช็คสถานะส่วนตัว (Vote/Form)
-      if (status === "authenticated" && session) {
-
-        // ✅ EXCEPTION: ถ้าเป็นช่วงหาเสียง หรือยังไม่เริ่มเลือกตั้ง -> ปล่อยผ่านเลย (ไม่ต้องเช็คโหวต)
-        if (now < ELECTION_CONFIG.ELECTION_START) {
+        // ⚡️ NEW SYSTEM MODES logic:
+        if (isManualEnd || isEnded || isRevealed) {
           setIsAuthorized(true);
-          setShowAccessModal(false);
           setLoading(false);
           return;
         }
 
-        // เช็คสถานะส่วนตัวอีกรอบ (พร้อม studentId)
-        const resUser = await fetch(`/api/check-status?studentId=${session?.user?.studentId}`);
-        const userData = await resUser.json();
-
-        // ถ้ายังไม่โหวต -> ห้ามเข้า (ต้องไปโหวตก่อน)
-        if (!userData.isVoted) {
-          setModalType("VOTE");
+        // If system is strictly PAUSED
+        if (isSystemClosed) {
+          setModalType("MAINTENANCE");
           setShowAccessModal(true);
-          setIsAuthorized(false);
-          return
-        };
+          setLoading(false);
+          return;
+        }
 
-        const resForm = await fetch(`/api/check-form?studentId=${session?.user?.studentId}`);
-        const formData = await resForm.json();
+        // 1.2 ถ้าต้องล็อก (ระบบเปิด + ยังไม่เปิดเผย) -> บังคับ Login
 
-        if (!formData.isFormCompleted) {
-          setModalType("FORM");
-          setShowAccessModal(true);
-          setIsAuthorized(false);
-          return
-        };
+        // ✅ EXCEPTION: ช่วงหาเสียง (Campaign Period) -> ให้คนทั่วไปดูหน้านี้ได้ (เพื่อดูรายชื่อผู้สมัคร)
+        // แต่ API จะไม่ส่งคะแนนมาให้ (ดูได้แค่ชื่อ รูป นโยบาย)
+        const isOngoing = statusData.electionStatus === "ONGOING";
+        if (now >= ELECTION_CONFIG.CAMPAIGN_START && now < ELECTION_CONFIG.ELECTION_START && !isSystemClosed && !isOngoing) {
+          setIsAuthorized(true);
+          setLoading(false);
+          return;
+        }
 
-        setIsAuthorized(true);
-        setShowAccessModal(false);
+        if (status === "loading") return;
+
+        if (status === "unauthenticated") {
+          router.replace("/login");
+          return;
+        }
+
+        // 1.3 ถ้า Login แล้ว -> เช็คสถานะส่วนตัว (Vote/Form)
+        if (status === "authenticated" && session) {
+
+          // ✅ EXCEPTION: ถ้าเป็นช่วงหาเสียง หรือยังไม่เริ่มเลือกตั้ง -> ปล่อยผ่านเลย (ไม่ต้องเช็คโหวต)
+          // 🔥 FIX: ถ้าโหมดเป็น "ONGOING" (Manual Open) ต้องไม่ปล่อยผ่าน ต้องเช็คเหมือนตอนเลือกตั้งปกติ
+          if (now < ELECTION_CONFIG.ELECTION_START && !isOngoing) {
+            setIsAuthorized(true);
+            setShowAccessModal(false);
+            setLoading(false);
+            return;
+          }
+
+          // เช็คสถานะส่วนตัวอีกรอบ (พร้อม studentId)
+          const resUser = await fetch(`/api/check-status?studentId=${session?.user?.studentId}&t=${Date.now()}`);
+          if (!resUser.ok) throw new Error("Failed to fetch user status");
+          const userData = await resUser.json();
+
+          // ถ้ายังไม่โหวต -> ห้ามเข้า (ต้องไปโหวตก่อน)
+          if (!userData.isVoted) {
+            setModalType("VOTE");
+            setShowAccessModal(true);
+            setIsAuthorized(false);
+            setLoading(false); // Ensure loading is off
+            return
+          };
+
+          const resForm = await fetch(`/api/check-form?studentId=${session?.user?.studentId}&t=${Date.now()}`);
+          if (!resForm.ok) throw new Error("Failed to fetch form status");
+          const formData = await resForm.json();
+
+          if (!formData.isFormCompleted) {
+            setModalType("FORM");
+            setShowAccessModal(true);
+            setIsAuthorized(false);
+            setLoading(false); // Ensure loading is off
+            return
+          };
+
+          setIsAuthorized(true);
+          setShowAccessModal(false);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Check Access Error:", error);
+        // Fallback: Stop loading, maybe deny access slightly gracefully or just show empty
         setLoading(false);
+        // Optional: Show alert or keeping unauthorized state
       }
     };
 
@@ -408,7 +422,7 @@ export default function ResultsPage() {
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
                       </div>
                       <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
-                        {isRevealed ? "📊 สรุปผลคะแนนปัจจุบัน (Real-time Results)" : "ขณะนี้กำลังนับคะแนนเสียงอยู่"}
+                        {isRevealed ? "📊 สรุปผลคะแนนปัจจุบัน (Real-time Results)" : "ขณะนี้กำลังนับคะแนนเสียงชาว FMS"}
                       </span>
                     </div>
                   ) : (

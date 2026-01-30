@@ -16,17 +16,18 @@ import {
   ShieldCheck,
   Megaphone,
   CheckCircle2,
-  Tag
+  Tag,
+  AlertCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function SuccessPage() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✅ ดึง Params จาก URL
+  const searchParams = useSearchParams();
   const { data: session, status, update } = useSession();
 
-  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdTYiywJP7i4xlNq31DzP6SAIYNFazQhHF40GEa1QuDy2lTCQ/formResponse";
-  const googleFormEmbedUrl = `${GOOGLE_FORM_URL}?embedded=true`;
+  /* REMOVED CONSTANT URL */
+  const [googleFormUrl, setGoogleFormUrl] = useState("");
 
   const [user, setUser] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -72,6 +73,10 @@ export default function SuccessPage() {
 
           setIsVoted(voted);
 
+          if (data.googleFormUrl) {
+            setGoogleFormUrl(data.googleFormUrl);
+          }
+
           if (!voted) {
             router.replace("/vote");
             return;
@@ -107,6 +112,8 @@ export default function SuccessPage() {
             setIsUnlocked(true);
           };
 
+
+
         } catch (err) {
           console.error(err);
           setAlertConfig({
@@ -123,13 +130,31 @@ export default function SuccessPage() {
   // =========================================================
   // Timer & Handlers (คงเดิม)
   // =========================================================
+  // =========================================================
+  // Timer & Handlers (Visible Countdown + Checkbox)
+  // =========================================================
+  const [timeLeft, setTimeLeft] = useState(15);
+  const [isChecked, setIsChecked] = useState(false);
+
   useEffect(() => {
-    let timer;
+    let interval;
     if (showModal) {
       setCanConfirm(false);
-      timer = setTimeout(() => { setCanConfirm(true); }, 5000);
+      setIsChecked(false);
+      setTimeLeft(15); // ตั้งเวลา 15 วินาที
+
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setCanConfirm(true);
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
-    return () => clearTimeout(timer);
+    return () => clearInterval(interval);
   }, [showModal]);
 
   const handleConfirmSubmit = async () => {
@@ -331,7 +356,7 @@ export default function SuccessPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 text-xs">
-                  <ShieldCheck size={16} /> <span>ไม่จำเป็นต้อง Login Google ก็กรอกได้</span>
+                  <ShieldCheck size={16} /> <span>ไม่จำเป็นต้อง Login Google</span>
                 </div>
                 <button onClick={() => setShowModal(false)} className="hidden md:block text-gray-400 hover:text-gray-600"><X size={24} /></button>
               </div>
@@ -345,19 +370,67 @@ export default function SuccessPage() {
                   <span className="text-slate-400 text-sm font-medium">กำลังโหลด...</span>
                 </div>
               )}
-              <iframe src={googleFormEmbedUrl} className="w-full h-full border-0" onLoad={() => setIsFormLoaded(true)} title="Evaluation Form"></iframe>
+              {googleFormUrl ? (
+                <iframe src={`${googleFormUrl}?embedded=true`} className="w-full h-full border-0" onLoad={() => setIsFormLoaded(true)} title="Evaluation Form"></iframe>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+                  <div className="bg-slate-100 p-4 rounded-full mb-3">
+                    <AlertCircle size={32} />
+                  </div>
+                  <p className="font-bold text-slate-600">ไม่พบลิงก์แบบประเมิน</p>
+                  <p className="text-sm">กรุณาแจ้งผู้ดูแลระบบให้ตรวจสอบการตั้งค่า</p>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 border-t border-gray-100 bg-white">
-              <div className="flex flex-col items-center gap-2 w-full max-w-md mx-auto">
+            <div className="p-4 border-t border-gray-100 bg-white">
+              <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
+
+                {/* Visual Timer & Checkbox */}
+                <div className="w-full">
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[#8A2680] hover:bg-purple-50'}`}>
+                    <div className="relative flex items-center justify-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => setIsChecked(e.target.checked)}
+                        disabled={timeLeft > 0}
+                        className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded focus:ring-2 focus:ring-[#8A2680] checked:bg-[#8A2680] checked:border-[#8A2680] transition-all"
+                      />
+                      <Check size={14} className="absolute text-white scale-0 peer-checked:scale-100 transition-transform pointer-events-none" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={`text-sm font-bold ${isChecked ? 'text-[#8A2680]' : 'text-slate-600'}`}>
+                        ข้าพเจ้าได้ทำแบบประเมินเรียบร้อยแล้ว
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        * กรุณากรอกแบบประเมินให้ครบถ้วนก่อนบันทึก
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
                 <button
                   onClick={() => handleConfirmSubmit()}
-                  disabled={!canConfirm}
-                  className={`w-full py-3 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 
-                    ${canConfirm ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  disabled={!canConfirm || !isChecked}
+                  className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg
+                    ${(!canConfirm || !isChecked)
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                      : 'bg-[#8A2680] text-white hover:bg-[#701e68] hover:shadow-purple-200 hover:-translate-y-0.5'
+                    }`}
                 >
-                  {canConfirm ? <><Check size={16} strokeWidth={3} /> ยืนยันการส่งฟอร์ม</> : <><Loader2 size={16} className="animate-spin" /> กรุณากรอกให้ครบถ้วน...</>}
+                  {timeLeft > 0 ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>กรุณาทำแบบประเมิน ({timeLeft} วินาที)</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      <span>บันทึกข้อมูล</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

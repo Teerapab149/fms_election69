@@ -74,7 +74,8 @@ export async function GET(req) {
         turnout: totalVoters > 0 ? ((votedCount / totalVoters) * 100).toFixed(2) : 0,
         isVoteOpen: config.isVoteOpen,
         showResult: config.showResult,
-        systemMode: config.systemMode || "AUTO"
+        systemMode: config.systemMode || "AUTO",
+        googleFormUrl: config.googleFormUrl || ""
       },
       candidates
     });
@@ -114,6 +115,29 @@ export async function POST(req) {
       await db.systemConfig.update({
         where: { id: config.id },
         data: { showResult: !config.showResult }
+      });
+      return NextResponse.json({ message: "Success" });
+    }
+
+    // กรณี: อัปเดตลิงก์ Google Form
+    if (action === 'SET_GOOGLE_FORM') {
+      const { url } = body;
+      let config = await db.systemConfig.findFirst();
+
+      // ✅ Fix: หากยังไม่มี Config ให้สร้างใหม่ (ป้องกัน Crash)
+      if (!config) {
+        config = await db.systemConfig.create({
+          data: {
+            systemMode: "AUTO",
+            isVoteOpen: false,
+            showResult: false
+          }
+        });
+      }
+
+      await db.systemConfig.update({
+        where: { id: config.id },
+        data: { googleFormUrl: url || "" } // ป้องกัน undefined
       });
       return NextResponse.json({ message: "Success" });
     }

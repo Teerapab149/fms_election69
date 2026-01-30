@@ -11,7 +11,7 @@ import CompletedActionModal from "../../components/CompletedActionModal";
 import ErrorActionModal from "../../components/ErrorActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getEncryptedToken } from "../../utils/auth";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -386,6 +386,7 @@ const CandidatesTab = () => {
 
 const SettingsTab = () => {
   const [systemMode, setSystemMode] = useState("AUTO");
+  const [googleFormUrl, setGoogleFormUrl] = useState("");
   const [isShowResult, setIsShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -412,6 +413,7 @@ const SettingsTab = () => {
         const data = await res.json();
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
+          setGoogleFormUrl(data.stats.googleFormUrl || "");
           setIsShowResult(data.stats.showResult);
         }
       } catch (error) {
@@ -438,6 +440,10 @@ const SettingsTab = () => {
         body.mode = pendingMode;
       }
 
+      if (action === 'SET_GOOGLE_FORM') {
+        body.url = googleFormUrl;
+      }
+
       const res = await fetch('/api/admin/dashboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
@@ -450,6 +456,8 @@ const SettingsTab = () => {
         if (action === 'SET_MODE') {
           setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${pendingMode} เรียบร้อยแล้ว` });
           setSystemMode(pendingMode);
+        } else if (action === 'SET_GOOGLE_FORM') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'อัปเดตลิงก์ Google Form เรียบร้อยแล้ว' });
         } else if (action === 'TOGGLE_SHOW_RESULT') {
           setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
           setIsShowResult(!isShowResult);
@@ -530,6 +538,30 @@ const SettingsTab = () => {
               </span>
             </div>
           </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-start md:items-end gap-3 p-6 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="w-full">
+            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
+              <LinkIcon className="w-5 h-5 text-indigo-600" />
+              Link Google Form
+            </h4>
+            <p className="text-xs text-slate-500 mb-2">ลิงก์สำหรับหน้าประเมินผล (Success Page)</p>
+            <input
+              type="text"
+              value={googleFormUrl}
+              onChange={(e) => setGoogleFormUrl(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              placeholder="https://docs.google.com/forms/..."
+            />
+          </div>
+          <button
+            onClick={() => setActiveModal('SET_GOOGLE_FORM')}
+            className="shrink-0 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm shadow-md hover:bg-indigo-700 transition-all flex items-center gap-2"
+          >
+            <Save size={16} />
+            Save
+          </button>
         </div>
 
         <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
@@ -655,7 +687,17 @@ const SettingsTab = () => {
         variant="danger"
         isLoading={processing}
       />
-    </div>
+
+      <ConfirmModal
+        isOpen={activeModal === 'SET_GOOGLE_FORM'}
+        onClose={() => setActiveModal(null)}
+        onConfirm={handleConfirmAction}
+        title="บันทึกลิงก์ Google Form?"
+        message={`ต้องการอัปเดตลิงก์ Google Form ใช่หรือไม่?`}
+        variant="primary"
+        isLoading={processing}
+      />
+    </div >
   )
 };
 
