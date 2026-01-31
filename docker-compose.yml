@@ -19,5 +19,11 @@ services:
       - NODE_ENV=production
       # Override Database URL to point to host machine
       - DATABASE_URL=postgresql://postgres:teerapab1150@host.docker.internal:5432/fms_election?schema=public
+
+      # NextAuth Configuration (Required for Subpath & Production)
+      - NEXTAUTH_URL=https://cvs.fms.psu.ac.th/fms-ovs
+      - NEXTAUTH_SECRET=teerapabmegu1150fms_election2026dontcopymeplsah
+      - AUTHENTIK_REDIRECT_URI=https://cvs.fms.psu.ac.th/fms-ovs/api/auth/callback/authentik
+
     extra_hosts:
       - "host.docker.internal:host-gateway"
