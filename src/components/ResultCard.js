@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trophy, Users, Ban, UserX, Activity, Lock, Clock } from "lucide-react";
+import { getPath } from "../utils/basePath";
 
 export default function ResultCard({ candidate, rank, totalVotes, status, isRevealed, onClick }) {
   const [imageError, setImageError] = useState(false);
@@ -20,7 +21,11 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
   const percentage = totalVotes > 0 ? (candidate.score / totalVotes) * 100 : 0;
   const isWinner = showScore && rank === 1; // ใช้ showScore แทน isEnded เพื่อให้ Highlight คนชนะตอน Reveal
 
-  const imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
+  let imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
+  if (imageSrc && imageSrc.startsWith('/images/')) {
+    imageSrc = getPath(imageSrc);
+  }
+
   const isVoteNo = candidate.number == 0;
   const isDisapprove = candidate.number == -1;
 

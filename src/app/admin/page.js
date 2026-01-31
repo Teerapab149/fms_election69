@@ -1,4 +1,5 @@
 'use client';
+import { getPath } from "../../utils/basePath";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -43,7 +44,7 @@ const OverviewTab = () => {
         return;
       }
 
-      const res = await fetch("/api/results", {
+      const res = await fetch(getPath("/api/results"), {
         headers: { 'x-admin-token': encryptedToken }
       });
 
@@ -222,7 +223,7 @@ const CandidatesTab = () => {
         return;
       }
 
-      const res = await fetch(`/api/results?t=${Date.now()}`, {
+      const res = await fetch(getPath(`/api/results?t=${Date.now()}`), {
         cache: 'no-store',
         headers: {
           'x-admin-token': encryptedToken,
@@ -409,7 +410,7 @@ const SettingsTab = () => {
           return;
         }
 
-        const res = await fetch('/api/admin/dashboard', { headers: { 'x-admin-token': encryptedToken, } });
+        const res = await fetch(getPath('/api/admin/dashboard'), { headers: { 'x-admin-token': encryptedToken, } });
         const data = await res.json();
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
@@ -444,7 +445,7 @@ const SettingsTab = () => {
         body.url = googleFormUrl;
       }
 
-      const res = await fetch('/api/admin/dashboard', {
+      const res = await fetch(getPath('/api/admin/dashboard'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
         body: JSON.stringify(body),
@@ -724,7 +725,7 @@ const MonitorTab = () => {
         return;
       }
 
-      const res = await fetch("/api/results", {
+      const res = await fetch(getPath("/api/results"), {
         headers: { 'x-admin-token': encryptedToken }
       });
       const data = await res.json();

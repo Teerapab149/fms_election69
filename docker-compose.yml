@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BASE_PATH=/fms-ovs
+        - ASSET_PREFIX=/fms-ovs
+    container_name: fms-election-web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # ตั้งค่า Path ที่นี่
+      - BASE_PATH=/fms-ovs
+      - ASSET_PREFIX=/fms-ovs
+      - NODE_ENV=production
+      # Override Database URL to point to host machine
+      - DATABASE_URL=postgresql://postgres:teerapab1150@host.docker.internal:5432/fms_election?schema=public
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

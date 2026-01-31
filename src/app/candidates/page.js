@@ -1,4 +1,5 @@
 'use client';
+import { getPath } from "../../utils/basePath";
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -15,7 +16,7 @@ export default function CandidatesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/party');
+        const res = await fetch(getPath('/api/party'));
         if (res.ok) {
           const data = await res.json();
           const realParties = data.filter(p => p && parseInt(p.number) > 0);
@@ -137,7 +138,7 @@ function PartyCard({ party }) {
   useEffect(() => {
     const fetchPartyGallery = async () => {
       try {
-        const res = await fetch(`/api/gallery?id=${party.id}`);
+        const res = await fetch(getPath(`/api/gallery?id=${party.id}`));
         if (res.ok) {
           const data = await res.json();
           if (data.images && data.images.length > 0) {

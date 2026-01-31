@@ -1,4 +1,5 @@
 'use client';
+import { getPath } from "../utils/basePath";
 
 import { useState, useEffect } from 'react';
 import { X, Save, Trash2, Loader2, Upload, User, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
@@ -224,7 +225,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 return;
             }
 
-            const res = await fetch(`/api/admin/candidates?id=${candidate.id}`, {
+            const res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                 method: 'PUT',
                 headers: { 'x-admin-token': encryptedToken, },
                 body: data,

@@ -1,5 +1,6 @@
 // src/components/HomeContent.js
 "use client";
+import { getPath } from "../utils/basePath";
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -31,7 +32,7 @@ export default function HomeContent({ initialData }) {
     const [isVotedReal, setIsVotedReal] = useState(false);
     const [isCheckingVoted, setIsCheckingVoted] = useState(true);
 
-    const slideshowImages = ["/images/prob/samo49_1.png"];
+    const slideshowImages = [getPath("/images/prob/samo49_1.png")];
     const isMultiImage = slideshowImages.length > 1;
     const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
 
@@ -44,7 +45,7 @@ export default function HomeContent({ initialData }) {
         const checkVoteStatus = async () => {
             if (session?.user?.studentId) {
                 try {
-                    const res = await fetch(`/api/check-status?studentId=${session.user.studentId}`);
+                    const res = await fetch(getPath(`/api/check-status?studentId=${session.user.studentId}`));
                     if (res.ok) {
                         const data = await res.json();
                         setIsVotedReal(data.isVoted === true);

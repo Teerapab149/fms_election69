@@ -1,6 +1,7 @@
 'use client';
+import { getPath } from "../../../utils/basePath";
 
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -16,7 +17,7 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(getPath('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,4 +1,5 @@
 "use client";
+import { getPath } from "../../utils/basePath";
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation'; // ✅ เพิ่ม useSearchParams
@@ -64,7 +65,7 @@ export default function SuccessPage() {
       (async () => {
         try {
           let res = await fetch(
-            `/api/check-status?studentId=${session?.user?.studentId}`,
+            getPath(`/api/check-status?studentId=${session?.user?.studentId}`),
             { method: "GET" }
           );
 
@@ -105,7 +106,7 @@ export default function SuccessPage() {
 
           setIsAuthorized(true);
 
-          res = await fetch(`/api/check-form?studentId=${session?.user?.studentId}`);
+          res = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}`));
           data = await res.json();
 
           if (data.isFormCompleted) {
@@ -160,7 +161,7 @@ export default function SuccessPage() {
   const handleConfirmSubmit = async () => {
     if (!canConfirm) return;
     try {
-      const res = await fetch("/api/complete-form", { method: "GET" });
+      const res = await fetch(getPath("/api/complete-form"), { method: "GET" });
       if (!res.ok) throw new Error("Failed to update status");
 
       // อัปเดต Session ฝั่ง Client

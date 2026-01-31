@@ -1,18 +1,19 @@
 'use client';
+import { getPath } from "../utils/basePath";
 
 import { useState, useEffect } from 'react';
 import { User, ChevronDown, ChevronUp, Pencil, Users } from "lucide-react";
 
 export default function MembersManager({ shouldRefresh, onEditParty }) {
   const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [expandedPartyId, setExpandedPartyId] = useState(null); // เก็บ ID พรรคที่เปิดอยู่
 
   // ฟังก์ชันดึงข้อมูลสมาชิก
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/members');
+      const res = await fetch(getPath('/api/admin/members'));
       if (!res.ok) throw new Error('Failed to fetch members');
       const data = await res.json();
       setMembers(data);
@@ -31,20 +32,20 @@ export default function MembersManager({ shouldRefresh, onEditParty }) {
   // 🛠️ Logic จัดกลุ่มสมาชิกตามพรรค (Group by Candidate)
   const groupedMembers = members.reduce((acc, member) => {
     const candidateId = member.candidateId;
-    
+
     if (!acc[candidateId]) {
       acc[candidateId] = {
         candidateInfo: member.candidate,
         membersList: []
       };
     }
-    
+
     acc[candidateId].membersList.push(member);
     return acc;
   }, {});
 
   // แปลง Object กลับเป็น Array เพื่อเอาไป map แสดงผล และเรียงตามเบอร์พรรค
-  const sortedGroups = Object.values(groupedMembers).sort((a, b) => 
+  const sortedGroups = Object.values(groupedMembers).sort((a, b) =>
     (a.candidateInfo?.number || 999) - (b.candidateInfo?.number || 999)
   );
 
@@ -68,12 +69,12 @@ export default function MembersManager({ shouldRefresh, onEditParty }) {
         const isOpen = expandedPartyId === candidateInfo.id;
 
         return (
-          <div 
-            key={candidateInfo.id} 
+          <div
+            key={candidateInfo.id}
             className={`border rounded-xl overflow-hidden transition-all duration-300 ${isOpen ? 'border-purple-200 shadow-md bg-white' : 'border-gray-100 bg-white hover:border-purple-100'}`}
           >
             {/* --- Header ของพรรค (กดเพื่อเปิด/ปิด) --- */}
-            <div 
+            <div
               onClick={() => toggleAccordion(candidateInfo.id)}
               className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
             >
@@ -154,15 +155,15 @@ export default function MembersManager({ shouldRefresh, onEditParty }) {
                     </tbody>
                   </table>
                 </div>
-                
+
                 {/* Footer ของ Card */}
                 <div className="p-3 text-center border-t border-gray-100 bg-white">
-                    <button 
-                        onClick={() => onEditParty(candidateInfo)}
-                        className="text-xs text-purple-600 font-bold hover:underline flex items-center justify-center gap-1"
-                    >
-                        <Pencil className="w-3 h-3" /> จัดการสมาชิกพรรคนี้
-                    </button>
+                  <button
+                    onClick={() => onEditParty(candidateInfo)}
+                    className="text-xs text-purple-600 font-bold hover:underline flex items-center justify-center gap-1"
+                  >
+                    <Pencil className="w-3 h-3" /> จัดการสมาชิกพรรคนี้
+                  </button>
                 </div>
               </div>
             )}

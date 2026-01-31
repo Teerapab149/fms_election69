@@ -1,4 +1,5 @@
 'use client';
+import { getPath } from "../utils/basePath";
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle } from "lucide-react";
@@ -325,13 +326,13 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
 
             let res;
             if (candidate) {
-                res = await fetch(`/api/admin/candidates?id=${candidate.id}`, {
+                res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                     method: 'PUT',
                     body: data,
                     headers: { 'x-admin-token': encryptedToken, }
                 });
             } else {
-                res = await fetch(`/api/admin/candidates`, {
+                res = await fetch(getPath(`/api/admin/candidates`), {
                     method: 'POST',
                     body: data,
                     headers: { 'x-admin-token': encryptedToken, }
@@ -367,7 +368,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 return;
             }
 
-            const res = await fetch(`/api/admin/candidates?id=${candidate.id}`, {
+            const res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                 method: 'DELETE',
                 headers: { 'x-admin-token': encryptedToken, }
             });

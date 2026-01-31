@@ -1,4 +1,5 @@
 "use client";
+import { getPath } from "../../utils/basePath";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -45,7 +46,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
   // --- 1. DATA ---
   const partyName = candidate?.name || "The Unity Concord";
   const partyNumber = candidate?.number || 1;
-  const placeholderPath = "/images/logo/fms_logo50_color.png";
+  const placeholderPath = getPath("/images/logo/fms_logo50_color.png");
   const partyLogo = candidate?.logoUrl || placeholderPath;
   const partyImage = placeholderPath;
   const policies = candidate?.policies || [];

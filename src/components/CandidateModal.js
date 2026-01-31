@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2 } from 'lucide-react';
 import { ELECTION_CONFIG, ELECTION_YEAR, ELECTION_SLOGAN } from '../utils/electionConfig';
 import SimpleLightbox from './vote/SimpleLightbox';
+import { getPath } from '../utils/basePath';
 
 export default function CandidateModal({ member, onClose }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -14,7 +15,13 @@ export default function CandidateModal({ member, onClose }) {
   const BRAND_BLUE = "#2e3a59";
 
   useEffect(() => {
-    if (member) setDisplayImage(member.modalImageUrl || member.imageUrl);
+    if (member) {
+      let img = member.modalImageUrl || member.imageUrl;
+      if (img && img.startsWith('/images/')) {
+        img = getPath(img);
+      }
+      setDisplayImage(img);
+    }
   }, [member]);
 
   if (!member) return null;

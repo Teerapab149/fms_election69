@@ -1,3 +1,4 @@
+import { getPath } from "../utils/basePath";
 export default function MonitorTab({ shouldRefresh, onEditParty }) {
     const [candidates, setCandidates] = useState([]);
     const [totalVotes, setTotalVotes] = useState(0);
@@ -15,7 +16,7 @@ export default function MonitorTab({ shouldRefresh, onEditParty }) {
 
     const fetchResults = async () => {
         try {
-            const res = await fetch("/api/results");
+            const res = await fetch(getPath("/api/results"));
             const data = await res.json();
 
             if (data.candidates) {
@@ -49,7 +50,7 @@ export default function MonitorTab({ shouldRefresh, onEditParty }) {
         } finally {
             setLoading(false);
         }
-    }; 
+    };
 
     useEffect(() => {
         fetchResults();

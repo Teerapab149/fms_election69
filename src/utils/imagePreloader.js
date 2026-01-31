@@ -1,6 +1,7 @@
 "use client";
 
 import smartcrop from 'smartcrop';
+import { getPath } from './basePath';
 
 // Global cache สำหรับเก็บผลลัพธ์ smartcrop
 const cropCache = new Map();
@@ -147,8 +148,11 @@ export async function preloadPartyImages(parties) {
         }
     });
 
-    // ลบรายการซ้ำ
-    const uniqueUrls = [...new Set(allImageUrls)];
+    // ลบรายการซ้ำ และใส่ getPath
+    const uniqueUrls = [...new Set(allImageUrls)].map(url => {
+        if (url && url.startsWith('/')) return getPath(url);
+        return url;
+    });
 
     console.log(`🖼️ Preloading ${uniqueUrls.length} images...`);
 

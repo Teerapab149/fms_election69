@@ -1,4 +1,5 @@
 "use client";
+import { getPath } from "../../utils/basePath";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -154,7 +155,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
                     >
                         <div className="relative w-[100px] md:w-[130px] h-6 md:h-7">
                             <Image
-                                src="/images/logo/FMS_Standard_Logo_PNG.png"
+                                src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")}
                                 alt="PSU FMS"
                                 fill
                                 className="object-contain"

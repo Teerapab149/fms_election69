@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { getEncryptedToken } from "../utils/auth";
 import { preloadPartyImages } from "../utils/imagePreloader";
+import { getPath } from "../utils/basePath";
 
 /**
  * Hook สำหรับจัดการระบบโหวต (Production Mode Only)
@@ -47,7 +48,7 @@ export function useVoteSystem() {
 
     try {
       // A. Check User & System Status
-      const resStatus = await fetch(`/api/check-status?studentId=${studentId}`);
+      const resStatus = await fetch(getPath(`/api/check-status?studentId=${studentId}`));
       if (!resStatus.ok) throw new Error("Failed to check status");
 
       const statusData = await resStatus.json();
@@ -65,7 +66,7 @@ export function useVoteSystem() {
       }
 
       // B. Fetch Candidates (Real Only)
-      const resParty = await fetch('/api/party');
+      const resParty = await fetch(getPath('/api/party'));
       if (!resParty.ok) throw new Error("Failed to fetch candidates");
 
       const partyData = await resParty.json();
@@ -103,7 +104,7 @@ export function useVoteSystem() {
         throw new Error("Security check failed");
       }
 
-      const res = await fetch('/api/vote', {
+      const res = await fetch(getPath('/api/vote'), {
         method: 'POST',
         body: JSON.stringify({
           studentId: session?.user?.studentId,

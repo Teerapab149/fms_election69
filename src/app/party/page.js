@@ -1,4 +1,5 @@
 'use client';
+import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -543,7 +544,7 @@ function PartyContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/party', { cache: 'no-store' });
+        const res = await fetch(getPath('/api/party'), { cache: 'no-store' });
         if (res.ok) {
           const allParties = await res.json();
           const validParties = allParties.filter(p => parseInt(p.number) > 0);
@@ -592,7 +593,7 @@ function PartyContent() {
 
   useEffect(() => {
     if (!activeParty?.id) return;
-    fetch(`/api/gallery?id=${activeParty.id}`)
+    fetch(getPath(`/api/gallery?id=${activeParty.id}`))
       .then(res => res.json())
       .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
   }, [activeParty]);

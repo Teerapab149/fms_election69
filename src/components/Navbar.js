@@ -1,5 +1,7 @@
 "use client";
 
+import { getPath } from '../utils/basePath';
+
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -51,7 +53,7 @@ export default function Navbar() {
     if (typeof setIsProfileOpen === 'function') setIsProfileOpen(false);
   };
 
-  
+
   const isLoggedIn = status === "authenticated" && session;
   const user = session?.user;
 
@@ -63,7 +65,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-3 md:gap-4">
           <div className="hidden md:block transition-transform hover:scale-105 duration-300 flex-shrink-0">
             <Image
-              src="/images/logo/fms_logo50_color.png"
+              src={getPath("/images/logo/fms_logo50_color.png")}
               alt="FMS 50th"
               width={480}
               height={480}
@@ -73,7 +75,7 @@ export default function Navbar() {
           </div>
           <div className="hidden md:block h-6 md:h-10 w-[1px] bg-gray-300/50 mx-1"></div>
           <Image
-            src="/images/logo/FMS_Standard_Logo_PNG.png"
+            src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")}
             alt="FMS Name"
             width={1200}
             height={384}

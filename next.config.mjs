@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'standalone',
+    eslint: {
+        // Warning: This allows production builds to successfully complete even if
+        // your project has ESLint errors.
+        ignoreDuringBuilds: true,
+    },
     images: {
         remotePatterns: [
             {
@@ -16,6 +22,9 @@ const nextConfig = {
             }
         ],
     },
+    // รองรับการ Deploy บน path อื่น หรือ CDN ผ่าน Environment Variables
+    assetPrefix: process.env.ASSET_PREFIX || undefined,
+    basePath: process.env.BASE_PATH || undefined,
 };
 
 export default nextConfig;

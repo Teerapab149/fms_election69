@@ -1,4 +1,5 @@
 "use client";
+import { getPath } from "../../utils/basePath";
 
 import { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react";
@@ -11,7 +12,7 @@ export default function ClosedPage() {
     const [statusData, setStatusData] = useState(null);
 
     useEffect(() => {
-        fetch('/api/check-status').then(res => res.json()).then(setStatusData);
+        fetch(getPath('/api/check-status')).then(res => res.json()).then(setStatusData);
     }, []);
 
     const getMessage = () => {

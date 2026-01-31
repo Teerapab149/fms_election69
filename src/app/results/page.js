@@ -7,6 +7,7 @@ import Navbar from "../../components/Navbar";
 import ResultCard from "../../components/ResultCard";
 import PartyDetailModal from "../../components/PartyDetailModal";
 import { ELECTION_CONFIG } from "../../utils/electionConfig";
+import { getPath } from "../../utils/basePath";
 
 import { Users, Trophy, PieChart as PieIcon, BarChart3, Medal, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import {
@@ -52,7 +53,7 @@ export default function ResultsPage() {
         const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
         // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
-        const resStatus = await fetch(`/api/check-status?t=${Date.now()}`); // Add timestamp to prevent caching
+        const resStatus = await fetch(getPath(`/api/check-status?t=${Date.now()}`)); // Add timestamp to prevent caching
         if (!resStatus.ok) throw new Error("Failed to fetch system status");
 
         const statusData = await resStatus.json();
@@ -107,7 +108,7 @@ export default function ResultsPage() {
           }
 
           // เช็คสถานะส่วนตัวอีกรอบ (พร้อม studentId)
-          const resUser = await fetch(`/api/check-status?studentId=${session?.user?.studentId}&t=${Date.now()}`);
+          const resUser = await fetch(getPath(`/api/check-status?studentId=${session?.user?.studentId}&t=${Date.now()}`));
           if (!resUser.ok) throw new Error("Failed to fetch user status");
           const userData = await resUser.json();
 
@@ -120,7 +121,7 @@ export default function ResultsPage() {
             return
           };
 
-          const resForm = await fetch(`/api/check-form?studentId=${session?.user?.studentId}&t=${Date.now()}`);
+          const resForm = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}&t=${Date.now()}`));
           if (!resForm.ok) throw new Error("Failed to fetch form status");
           const formData = await resForm.json();
 
@@ -168,7 +169,7 @@ export default function ResultsPage() {
 
   const fetchResults = async () => {
     try {
-      const res = await fetch("/api/results");
+      const res = await fetch(getPath("/api/results"));
       const data = await res.json();
 
       if (data.status) setServerStatus(data.status);
