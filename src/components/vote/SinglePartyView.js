@@ -769,7 +769,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
           </section>
 
           <footer className="py-4 bg-black text-white text-center border-t border-white/10">
-            <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><Image src="/images/logo/fms_logo50_color.png" width={40} height={40} alt="FMS" className="grayscale" /><div className="h-8 w-px bg-white/20" /><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p></div>
+            <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><Image src={getPath("/images/logo/fms_logo50_color.png")} width={40} height={40} alt="FMS" className="grayscale" /><div className="h-8 w-px bg-white/20" /><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p></div>
           </footer>
         </div>
       </div>

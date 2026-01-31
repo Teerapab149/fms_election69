@@ -954,7 +954,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
+      await fetch(getPath('/api/admin/logout'), { method: 'POST' });
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);

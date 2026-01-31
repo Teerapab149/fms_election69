@@ -1,7 +1,7 @@
 // src/middleware.js
 import { NextResponse } from 'next/server';
 
-export function middleware(request) { 
+export function middleware(request) {
   // อ่าน Path ปัจจุบัน
   const path = request.nextUrl.pathname;
 
@@ -15,12 +15,14 @@ export function middleware(request) {
 
   // 🛡️ กฎข้อที่ 1: จะเข้า Admin แต่ "ไม่มี" บัตรผ่าน -> ดีดไป Login
   if (isAdminPage && !isLoginPage && !token) {
-    return NextResponse.redirect(new URL('/admin/login', request.url));
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    return NextResponse.redirect(new URL(`${basePath}/admin/login`, request.url));
   }
 
   // 🛡️ กฎข้อที่ 2: มีบัตรผ่านแล้ว แต่อยากเข้าหน้า Login -> ดีดกลับไป Admin (ไม่ต้องล็อกอินซ้ำ)
   if (isLoginPage && token) {
-     return NextResponse.redirect(new URL('/admin', request.url));
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    return NextResponse.redirect(new URL(`${basePath}/admin`, request.url));
   }
 
 }
