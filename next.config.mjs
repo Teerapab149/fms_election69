@@ -25,6 +25,14 @@ const nextConfig = {
     // รองรับการ Deploy บน path อื่น หรือ CDN ผ่าน Environment Variables
     assetPrefix: process.env.ASSET_PREFIX || undefined,
     basePath: process.env.BASE_PATH || undefined,
+    async rewrites() {
+        return [
+            {
+                source: '/api/auth/authentik/callback',
+                destination: '/api/auth/callback/authentik',
+            },
+        ];
+    },
 };
 
 export default nextConfig;

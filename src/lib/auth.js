@@ -18,7 +18,10 @@ export const authOptions = {
 
       authorization: {
         url: `${AUTHENTIK_BASE_URL}/application/o/authorize/`,
-        params: { scope: "openid email profile" },
+        params: {
+          scope: "openid email profile",
+          redirect_uri: REDIRECT_URI,
+        },
       },
 
       token: {
