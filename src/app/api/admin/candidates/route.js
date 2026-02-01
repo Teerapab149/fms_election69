@@ -99,32 +99,59 @@ function verifyAdminToken(request) {
   }
 }
 
-const PREDEFINED_POSITIONS = [
-  "นายกสโมสรนักศึกษา",
-  "อุปนายกกิจการภายใน",
-  "อุปนายกกิจการภายนอก",
-  "เลขานุการ",
-  "เหรัญญิก",
-  "ประธานฝ่ายประชาสัมพันธ์",
-  "ประธานฝ่ายสวัสดิการ",
-  "ประธานฝ่ายพัสดุ",
-  "ประธานฝ่ายกีฬา",
-  "ประธานฝ่ายวิชาการ",
-  "ประธานฝ่ายศิลปวัฒนธรรม",
-  "ประธานฝ่ายข้อมูลกิจการนักศึกษา",
-  "ประธานฝ่ายเทคโนโลยีสารสนเทศ",
-  "ประธานฝ่ายประเมินผล",
-  "ประธานฝ่ายกิจกรรม",
-  "ประธานฝ่ายกราฟิกดีไซน์",
-  "ประธานฝ่ายพิธีการ",
-  "ประธานฝ่ายครีเอทีฟและสันทนาการ",
-  "ประธานฝ่ายสถานที่",
-  "ประธานฝ่ายสาธารณสุข"
-];
+function getPositionPriority(position) {
+  if (!position) return 999;
+  const p = position.trim();
+
+  // 1. นายก... (President)
+  if (p.startsWith("นายก")) return 1;
+
+  // 2. อุปนายก... (Vice President) - รวมถึง "อุปนายกฝ่าย..."
+  if (p.startsWith("อุปนายก")) return 2;
+
+  // 3. Department Heads (Starts with "ประธาน") -> Priority 4 (Last)
+  if (p.startsWith("ประธาน")) return 4;
+
+  // 4. Unique Leaders (Secretary, Treasurer, etc.) -> Priority 3
+  // พวกที่ไม่ได้ขึ้นต้นด้วย ประธาน (เช่น เลขานุการ, เหรัญญิก)
+  return 3;
+}
 
 function getPositionNumber(positionName) {
-  const index = PREDEFINED_POSITIONS.indexOf(positionName);
-  return index !== -1 ? index + 1 : 999;
+  // Return priority group as base, plus a hash or simple mapped index to differentiate within group if needed
+  // For now, we just want to sort by category. 
+  // But wait, the previous logic returned specific indexes 1-20.
+  // We should try to preserve specific order for known unique positions if possible, 
+  // but adhere to the categories.
+
+  const priority = getPositionPriority(positionName);
+
+  // Refine sorted value: Priority * 100 + Sub-index
+  // 100-199: President
+  // 200-299: VP
+  // 300-399: Unique Execs
+  // 400+: Department Heads
+
+  if (priority === 1) return 1; // นายก
+  if (priority === 2) {
+    if (positionName.includes("ภายใน")) return 201;
+    if (positionName.includes("ภายนอก")) return 202;
+    return 299;
+  }
+  if (priority === 3) {
+    // Common unique roles
+    if (positionName.includes("เลขา")) return 301;
+    if (positionName.includes("เหรัญญิก")) return 302;
+    return 399;
+  }
+  if (priority === 4) {
+    // Sort heads alphabetically or keep them equal? 
+    // User said "joined manually" for unique, followed by department heads.
+    // Let's return 400 so they are at the end.
+    return 400;
+  }
+
+  return 999;
 }
 
 function textToJsonArray(text) {

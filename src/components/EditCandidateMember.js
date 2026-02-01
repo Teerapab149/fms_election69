@@ -23,7 +23,7 @@ export default function EditCandidateMember({ candidate, onClick }) {
           <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg w-12 h-12 flex items-center justify-center border border-blue-100 shrink-0">
             {candidate.logoUrl ? (
               <img
-                src={candidate.logoUrl}
+                src={getPath(candidate.logoUrl)}
                 alt={candidate.name}
                 className="w-full h-full object-cover rounded-md"
               />

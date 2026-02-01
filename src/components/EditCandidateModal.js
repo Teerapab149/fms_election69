@@ -6,29 +6,6 @@ import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus,
 import ConfirmModal from "./ConfirmModal";
 import { getEncryptedToken } from "../utils/auth";
 
-const PREDEFINED_POSITIONS = [
-    "นายกสโมสรนักศึกษา",
-    "อุปนายกกิจการภายใน",
-    "อุปนายกกิจการภายนอก",
-    "เลขานุการ",
-    "เหรัญญิก",
-    "ประธานฝ่ายประชาสัมพันธ์",
-    "ประธานฝ่ายสวัสดิการ",
-    "ประธานฝ่ายพัสดุ",
-    "ประธานฝ่ายกีฬา",
-    "ประธานฝ่ายวิชาการ",
-    "ประธานฝ่ายศิลปวัฒนธรรม",
-    "ประธานฝ่ายข้อมูลกิจการนักศึกษา",
-    "ประธานฝ่ายเทคโนโลยีสารสนเทศ",
-    "ประธานฝ่ายประเมินผล",
-    "ประธานฝ่ายกิจกรรม",
-    "ประธานฝ่ายกราฟิกดีไซน์",
-    "ประธานฝ่ายพิธีการ",
-    "ประธานฝ่ายครีเอทีฟและสันทนาการ",
-    "ประธานฝ่ายสถานที่",
-    "ประธานฝ่ายสาธารณสุข"
-];
-
 export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdate }) {
     const [formData, setFormData] = useState({
         name: '',
@@ -74,13 +51,39 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     const [isLoading, setIsLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+    const getPositionPriority = (position) => {
+        if (!position) return 999;
+        const p = position.trim();
+        if (p.startsWith("นายก")) return 1;
+        if (p.startsWith("อุปนายก")) return 2;
+        if (p.startsWith("ประธาน")) return 4;
+        return 3;
+    };
+
     const sortMembers = (membersList) => {
         return [...membersList].sort((a, b) => {
-            const indexA = PREDEFINED_POSITIONS.indexOf(a.position);
-            const indexB = PREDEFINED_POSITIONS.indexOf(b.position);
-            const priorityA = indexA === -1 ? 999 : indexA;
-            const priorityB = indexB === -1 ? 999 : indexB;
-            return priorityA - priorityB;
+            const priorityA = getPositionPriority(a.position);
+            const priorityB = getPositionPriority(b.position);
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
+            // Sub-sorting within same priority group
+            if (priorityA === 2) { // VP
+                if (a.position?.includes("ภายใน") && !b.position?.includes("ภายใน")) return -1;
+                if (!a.position?.includes("ภายใน") && b.position?.includes("ภายใน")) return 1;
+                if (a.position?.includes("ภายนอก") && !b.position?.includes("ภายนอก")) return -1;
+                if (!a.position?.includes("ภายนอก") && b.position?.includes("ภายนอก")) return 1;
+            }
+            if (priorityA === 3) { // Unique
+                if (a.position?.includes("เลขา") && !b.position?.includes("เลขา")) return -1;
+                if (!a.position?.includes("เลขา") && b.position?.includes("เลขา")) return 1;
+                if (a.position?.includes("เหรัญญิก") && !b.position?.includes("เหรัญญิก")) return -1;
+                if (!a.position?.includes("เหรัญญิก") && b.position?.includes("เหรัญญิก")) return 1;
+            }
+
+            return 0;
         });
     };
 

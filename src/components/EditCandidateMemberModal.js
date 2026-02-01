@@ -287,7 +287,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                 <div className="relative group">
                                     <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
                                         {currentMember.previewUrl ? (
-                                            <img src={currentMember.previewUrl} className="w-full h-full object-cover" />
+                                            <img src={currentMember.previewUrl.startsWith('blob:') ? currentMember.previewUrl : getPath(currentMember.previewUrl)} className="w-full h-full object-cover" />
                                         ) : (
                                             <User className="w-10 h-10 text-gray-300" />
                                         )}
@@ -404,7 +404,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                 <div className="relative group">
                                     <div className="w-24 h-24 rounded-lg bg-gray-100 border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center">
                                         {currentMember.modalPreviewUrl ? (
-                                            <img src={currentMember.modalPreviewUrl} className="w-full h-full object-cover" />
+                                            <img src={currentMember.modalPreviewUrl.startsWith('blob:') ? currentMember.modalPreviewUrl : getPath(currentMember.modalPreviewUrl)} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="flex flex-col items-center text-gray-300">
                                                 <ImageIcon className="w-8 h-8 opacity-50 mb-1" />

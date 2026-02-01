@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { Users } from "lucide-react";
 
+import { getPath } from "../utils/basePath";
+
 export default function CandidateCard({ candidate, onClick }) {
     const [imageError, setImageError] = useState(false);
     const isWinner = false
-    const imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
+    const imageSrc = candidate.image || (candidate.logoUrl ? getPath(candidate.logoUrl) : null);
 
     return (
-        <div 
-            onClick={onClick} 
+        <div
+            onClick={onClick}
             // ❌ ลบ transition-shadow ออก เพราะ transition-all ครอบคลุมแล้ว
             className="group relative cursor-pointer overflow-hidden bg-white transition-all duration-300 lg:flex-col lg:items-stretch lg:rounded-2xl lg:border lg:shadow-none lg:py-0 lg:mb-0 hover:shadow-md"
         >

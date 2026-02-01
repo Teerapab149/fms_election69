@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - BASE_PATH=/fms-ovs
-        - ASSET_PREFIX=/fms-ovs
+        - BASE_PATH=${BASE_PATH}
+        - ASSET_PREFIX=${ASSET_PREFIX}
     container_name: fms-election-web
     restart: always
     ports:
@@ -17,21 +17,21 @@ services:
     volumes:
       - ./public/images:/app/public/images
     environment:
-      # ตั้งค่า Path ที่นี่
-      - BASE_PATH=/fms-ovs
-      - NEXT_PUBLIC_BASE_PATH=/fms-ovs
-      - ASSET_PREFIX=/fms-ovs
+      # Use variables from .env
+      - BASE_PATH=${BASE_PATH}
+      - NEXT_PUBLIC_BASE_PATH=${BASE_PATH}
+      - ASSET_PREFIX=${ASSET_PREFIX}
       - NODE_ENV=production
 
-      # URL Configuration for Production
-      - NEXTAUTH_URL=https://cvs.fms.psu.ac.th/fms-ovs
-      - AUTHENTIK_REDIRECT_URI=https://cvs.fms.psu.ac.th/fms-ovs/api/auth/authentik/callback
+      # URL Configuration
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - AUTHENTIK_REDIRECT_URI=${AUTHENTIK_REDIRECT_URI}
 
-      # Internal Database URL (Pointing to the 'db' service below)
-      - DATABASE_URL=postgresql://postgres:teerapab1150@db:5432/fms_election?schema=public
+      # Database
+      - DATABASE_URL=${DATABASE_URL}
 
-      # Secret Keys
-      - NEXTAUTH_SECRET=teerapabmegu1150fms_election2026dontcopymeplsah
+      # Secrets
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 
     command: node --security-revert=CVE-2023-46809 server.js
 

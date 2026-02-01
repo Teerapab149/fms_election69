@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError(''); 
 
     try {
       const res = await fetch(getPath('/api/admin/login'), {

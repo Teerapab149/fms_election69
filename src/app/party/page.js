@@ -379,18 +379,31 @@ const CandidateList = ({ members, theme, onSelectMember }) => {
         )
       };
     }
+
+    const getPositionPriority = (position) => {
+      if (!position) return 999;
+      const p = position.trim();
+      if (p.startsWith("นายก")) return 1;
+      if (p.startsWith("อุปนายก")) return 2;
+      if (p.startsWith("ประธาน")) return 4;
+      return 3;
+    };
+
+    // Sort all members by priority first
+    const sortedMembers = [...validMembers].sort((a, b) => {
+      const pA = getPositionPriority(a.position);
+      const pB = getPositionPriority(b.position);
+      return pA - pB || (a.number || 999) - (b.number || 999);
+    });
+
     return {
       isSearching: false,
-      president: validMembers.find(m => m.number === 1 || m.position === "นายกสโมสรนักศึกษา"),
-      executives: validMembers.filter(m =>
-        (m.number >= 2 && m.number <= 5) ||
-        ["อุปนายกกิจการภายใน", "อุปนายกกิจการภายนอก", "เลขานุการ", "เหรัญญิก"].includes(m.position)
-      ).sort((a, b) => (a.number || 999) - (b.number || 999)),
-      heads: validMembers.filter(m =>
-        (m.number > 5 || m.number === 0) &&
-        m.position !== "นายกสโมสรนักศึกษา" &&
-        !["อุปนายกกิจการภายใน", "อุปนายกกิจการภายนอก", "เลขานุการ", "เหรัญญิก"].includes(m.position)
-      ).sort((a, b) => (a.number || 999) - (b.number || 999)),
+      president: sortedMembers.find(m => getPositionPriority(m.position) === 1),
+      executives: sortedMembers.filter(m => {
+        const p = getPositionPriority(m.position);
+        return p === 2 || p === 3;
+      }),
+      heads: sortedMembers.filter(m => getPositionPriority(m.position) === 4),
       filteredSearch: []
     };
   }, [members, searchTerm]);
