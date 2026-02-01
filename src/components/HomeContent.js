@@ -285,7 +285,7 @@ export default function HomeContent({ initialData }) {
                                         // ✅ กรณีปุ่ม Login: ใช้ div + onClick (Direct Login)
                                         return (
                                             <div
-                                                onClick={() => signIn("authentik", { callbackUrl: "/" })}
+                                                onClick={() => signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote" })}
                                                 className="group relative w-[90%] sm:w-auto inline-block cursor-pointer"
                                             >
                                                 <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}></div>
