@@ -97,7 +97,12 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // ✅ Capture ID Token from provider for Logout
+      if (account && account.id_token) {
+        token.id_token = account.id_token;
+      }
+
       // ขั้นตอนนี้สำคัญ: 'user' จะมีค่าเฉพาะตอน Sign In ครั้งแรกเท่านั้น
       if (user) {
         console.log(`🔄 [DB Sync] Start upsert for studentId: ${user.studentId}`);
@@ -182,6 +187,8 @@ export const authOptions = {
         session.user.isVoted = token.isVoted;
         session.user.facultyId = token.facultyId;
         session.user.departmentId = token.departmentId;
+        // ✅ Pass ID Token to client for Logout
+        session.id_token = token.id_token;
       }
       return session;
     },

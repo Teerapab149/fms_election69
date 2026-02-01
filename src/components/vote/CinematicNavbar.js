@@ -17,6 +17,7 @@ import { signIn, signOut } from "next-auth/react";
  */
 
 const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyName, partyLogoUrl, user, scrollContainerRef, theme = "dark" }) {
+    const { data: session } = useSession(); // ✅ Use session to get id_token for logout
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -27,10 +28,18 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
         const baseUrl = `${origin}${basePath}`;
 
         // PSU SSO Logout URL
-        const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+        let psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+
+        // ✅ Append id_token_hint if available (Crucial for skipping logout confirmation and ensuring true logout)
+        if (session?.id_token) {
+            psuLogoutUrl += `&id_token_hint=${session.id_token}`;
+        }
 
         try {
-            await signOut({ callbackUrl: psuLogoutUrl });
+            // ✅ Clear Local Session first (no redirect)
+            await signOut({ redirect: false });
+            // ✅ Then Force Redirect to PSU SSO Logout
+            window.location.href = psuLogoutUrl;
         } catch (error) {
             console.error("Logout failed:", error);
             window.location.href = psuLogoutUrl;

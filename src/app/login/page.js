@@ -40,7 +40,7 @@ export default function LoginPage() {
     try {
       // ✅ เรียกใช้ Provider "authentik" ตามที่เราตั้งใน auth.js
       await signIn("authentik", {
-        callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote" // ระบุ path ปลายทางให้ชัดเจน
+        callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" // ระบุ path ปลายทางให้ชัดเจน (Default to /fms-ovs)
       });
     } catch (err) {
       console.error(err);

@@ -46,7 +46,12 @@ export default function ClosedPage() {
         const baseUrl = `${origin}${basePath}`;
 
         // 2. URL สำหรับ Logout ที่ PSU SSO
-        const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+        let psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+
+        // ✅ Append id_token_hint if available (Crucial for skipping logout confirmation and ensuring true logout)
+        if (session?.id_token) {
+            psuLogoutUrl += `&id_token_hint=${session.id_token}`;
+        }
 
         // 3. ใช้ signOut แบบ redirect ของ NextAuth
         try {

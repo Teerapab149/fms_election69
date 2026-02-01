@@ -4,7 +4,7 @@
  */
 export const getPath = (path) => {
     // Get base path from environment variable (injected at build time)
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
 
     // Ensure path starts with /
     const cleanPath = path.startsWith('/') ? path : `/${path}`;

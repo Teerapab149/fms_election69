@@ -40,11 +40,18 @@ export default function Navbar() {
     const origin = window.location.origin; // e.g., https://cvs.fms.psu.ac.th
     const returnUrl = `${origin}${basePath}`; // -> https://cvs.fms.psu.ac.th/fms-ovs
 
-    // 3. PSU SSO Logout URL with encoded redirect_uri
-    const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+    // 3. PSU SSO Logout URL
+    let psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+
+    if (session?.id_token) {
+      psuLogoutUrl += `&id_token_hint=${session.id_token}`;
+    }
 
     try {
-      await signOut({ callbackUrl: psuLogoutUrl });
+      // ✅ Clear Local Session first (no redirect)
+      await signOut({ redirect: false });
+      // ✅ Then Force Redirect to PSU SSO Logout
+      window.location.href = psuLogoutUrl;
     } catch (error) {
       console.error("Logout failed:", error);
       window.location.href = psuLogoutUrl;
