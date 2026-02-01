@@ -1,4 +1,5 @@
 'use client';
+import { getPath } from "../utils/basePath";
 import React, { useMemo, useRef } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { User, Anchor, ChevronDown } from 'lucide-react';
@@ -112,7 +113,7 @@ const MemberCard = React.memo(({ member, onClick, isExecutive = false }) => {
         <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 relative">
           {(member.modalImageUrl || member.imageUrl) ? (
             <img
-              src={member.modalImageUrl || member.imageUrl}
+              src={getPath(member.modalImageUrl || member.imageUrl)}
               alt={member.name}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
               loading="lazy"
@@ -144,28 +145,22 @@ const MemberCard = React.memo(({ member, onClick, isExecutive = false }) => {
 
 export default function PartyChart({ members = [], theme: providedTheme, onMemberClick }) {
   // --- SORTING LOGIC ---
-  const priorityMap = useMemo(() =>
-    HULL_PRIORITY.reduce((acc, role, i) => ({ ...acc, [role]: i }), {}),
-    []);
-
   const { president, executives, crew } = useMemo(() => {
+    // 1. Filter Check
     const realMembers = members.filter(m => !m.isPlaceholder);
-    const pres = realMembers.find(m => m.position === FIXED_ROLES.PRESIDENT) || null;
-    const execs = FIXED_ROLES.EXECUTIVES.map(role =>
-      realMembers.find(m => m.position === role) || null
-    ).filter(Boolean);
 
-    const usedIds = new Set([pres?.id, ...execs.map(e => e?.id)].filter(Boolean));
-    let cr = realMembers.filter(m => !usedIds.has(m.id));
+    // 2. Sort by Number (Priority) or ID
+    realMembers.sort((a, b) => (a.number || 999) - (b.number || 999));
 
-    cr.sort((a, b) => {
-      const pA = priorityMap[a.position] ?? 999;
-      const pB = priorityMap[b.position] ?? 999;
-      return pA - pB;
-    });
+    // 3. Categorize by Number (1: Pres, 2-5: Execs, Rest: Crew)
+    const pres = realMembers.find(m => m.number === 1) || realMembers[0] || null;
+    const remainingAfterPres = realMembers.filter(m => m.id !== pres?.id);
 
-    return { president: pres, executives: execs, crew: cr };
-  }, [members, priorityMap]);
+    const execs = remainingAfterPres.filter(m => m.number >= 2 && m.number <= 5);
+    const cr = remainingAfterPres.filter(m => !(m.number >= 2 && m.number <= 5));
+
+    return { president: pres, executives: execs.slice(0, 4), crew: cr };
+  }, [members]);
 
   // --- SCROLL ANIMATIONS ---
   const containerRef = useRef(null);
@@ -216,7 +211,7 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
               {/* Image Area */}
               <div className="flex-1 rounded-[2.5rem] overflow-hidden bg-slate-900 relative">
                 {(president?.modalImageUrl || president?.imageUrl) ? (
-                  <img src={president.modalImageUrl || president.imageUrl} className="w-full h-full object-cover" />
+                  <img src={getPath(president.modalImageUrl || president.imageUrl)} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white/20"><User size={64} /></div>
                 )}

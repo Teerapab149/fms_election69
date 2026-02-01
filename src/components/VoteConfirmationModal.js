@@ -2,16 +2,17 @@
 
 import { X, Check, AlertCircle, Ban, UserX, UserCheck } from "lucide-react";
 
-export default function VoteConfirmationModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  party, 
+export default function VoteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  party,
   isVoteNo,      // สำหรับ: งดออกเสียง (Abstain) - มีทั้ง Single/Multi
-  isDisapprove   // สำหรับ: ไม่รับรอง (Disapprove) - มีเฉพาะ Single
+  isDisapprove,   // สำหรับ: ไม่รับรอง (Disapprove) - มีเฉพาะ Single
+  isSubmitting    // ✅ New Prop
 }) {
   if (!isOpen) return null;
- 
+
   // 🎨 ตั้งค่า Default Theme (สำหรับกรณีเลือกพรรค - Approve)
   let modalTheme = {
     color: 'text-[#8A2680]',           // สีข้อความหลัก
@@ -25,7 +26,7 @@ export default function VoteConfirmationModal({
     subLabel: `เบอร์ ${party?.number}`, // ข้อความรอง
     // ไอคอนในการ์ด
     icon: party?.logoUrl ? (
-      <img src={party.logoUrl} alt={party.name} className="w-full h-full object-contain p-1" />
+      <img src={getPath(party.logoUrl)} alt={party.name} className="w-full h-full object-contain p-1" />
     ) : (
       <div className="font-bold text-slate-300">No Img</div>
     ),
@@ -48,7 +49,7 @@ export default function VoteConfirmationModal({
       icon: <Ban className="text-orange-500 w-8 h-8" strokeWidth={2.5} />,
       topIcon: <Ban size={32} />
     };
-  } 
+  }
   // 🔴 CASE: ไม่รับรอง (Disapprove) - (จะทำงานเฉพาะตอน Single Party ที่มีปุ่มนี้)
   else if (isDisapprove) {
     modalTheme = {
@@ -69,18 +70,19 @@ export default function VoteConfirmationModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 animate-fade-in">
       {/* Backdrop (พื้นหลังมืด) */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={!isSubmitting ? onClose : undefined}
       />
 
       {/* Modal Content */}
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 md:p-8 transform transition-all scale-100 animate-scale-in border border-slate-100">
-        
+
         {/* ปุ่มกากบาท Close */}
-        <button 
+        <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+          disabled={isSubmitting}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
         >
           <X size={20} />
         </button>
@@ -105,20 +107,20 @@ export default function VoteConfirmationModal({
           `}>
             {/* Logo หรือ Icon ในการ์ด */}
             <div className="shrink-0 w-16 h-16 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm">
-               {modalTheme.icon}
+              {modalTheme.icon}
             </div>
-            
+
             {/* ข้อความ */}
             <div className="min-w-0 flex-1">
-               <p className={`text-[10px] font-bold uppercase mb-0.5 ${modalTheme.subTitleColor}`}>
-                 ท่านเลือก
-               </p>
-               <h4 className={`text-lg md:text-xl font-bold truncate leading-tight ${modalTheme.titleColor}`}>
-                 {modalTheme.label}
-               </h4>
-               <p className="text-xs md:text-sm text-slate-500 truncate">
-                 {modalTheme.subLabel}
-               </p>
+              <p className={`text-[10px] font-bold uppercase mb-0.5 ${modalTheme.subTitleColor}`}>
+                ท่านเลือก
+              </p>
+              <h4 className={`text-lg md:text-xl font-bold truncate leading-tight ${modalTheme.titleColor}`}>
+                {modalTheme.label}
+              </h4>
+              <p className="text-xs md:text-sm text-slate-500 truncate">
+                {modalTheme.subLabel}
+              </p>
             </div>
           </div>
 
@@ -126,18 +128,31 @@ export default function VoteConfirmationModal({
           <div className="flex flex-col md:flex-row gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50"
             >
               ยกเลิก
             </button>
             <button
               onClick={onConfirm}
+              disabled={isSubmitting} // ✅ Disable button
               className={`
                 flex-1 px-6 py-3 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95
                 ${modalTheme.confirmBtn}
+                ${isSubmitting ? 'opacity-70 cursor-wait' : ''}
               `}
             >
-              <Check size={20} strokeWidth={3} /> ยืนยัน
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                <><Check size={20} strokeWidth={3} /> ยืนยัน</>
+              )}
             </button>
           </div>
         </div>

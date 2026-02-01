@@ -14,14 +14,15 @@ export function middleware(request) {
   const token = request.cookies.get('admin_token')?.value;
 
   // 🛡️ กฎข้อที่ 1: จะเข้า Admin แต่ "ไม่มี" บัตรผ่าน -> ดีดไป Login
+  // 🛡️ กฎข้อที่ 1: จะเข้า Admin แต่ "ไม่มี" บัตรผ่าน -> ดีดไป Login
   if (isAdminPage && !isLoginPage && !token) {
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
     return NextResponse.redirect(new URL(`${basePath}/admin/login`, request.url));
   }
 
   // 🛡️ กฎข้อที่ 2: มีบัตรผ่านแล้ว แต่อยากเข้าหน้า Login -> ดีดกลับไป Admin (ไม่ต้องล็อกอินซ้ำ)
   if (isLoginPage && token) {
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
     return NextResponse.redirect(new URL(`${basePath}/admin`, request.url));
   }
 

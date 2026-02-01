@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { getPath } from '../../utils/basePath';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
 import { Loader2 } from 'lucide-react';
@@ -39,6 +40,9 @@ export default function VotePage() {
   const [partyForModal, setPartyForModal] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+  // ✅ Prevent double click during redirect
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   // --- Handlers ---
   const handleViewDetails = (party) => {
     setPartyForModal(party);
@@ -54,10 +58,13 @@ export default function VotePage() {
   };
 
   const onConfirmVote = async () => {
+    if (isRedirecting) return; // 🔒 Guard
+
     const success = await submitVote();
     if (success) {
+      setIsRedirecting(true); // 🔒 Lock UI
       setIsConfirmModalOpen(false)
-      window.location.href = "/success"
+      window.location.href = getPath("/success");
     };
   };
 
@@ -107,7 +114,7 @@ export default function VotePage() {
 
       <VoteFooter
         selectedParty={selectedParty}
-        isSubmitting={isSubmitting}
+        isSubmitting={isSubmitting || isRedirecting} // ✅ Disable when redirecting too
         variant={isSingleParty ? "single" : "multi"}
         partyPrimary={regularParties?.[0]?.themePrimary || "#4D2A67"}
         partyGold={regularParties?.[0]?.themeGold || "#CDA176"}
@@ -134,6 +141,7 @@ export default function VotePage() {
           party={selectedParty}
           isVoteNo={selectedParty?.number === 0}
           isDisapprove={selectedParty?.number === -1}
+          isSubmitting={isSubmitting || isRedirecting} // ✅ Pass explicit submitting state to modal (if supported)
         />
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SmartImage from "../SmartImage";
+import { getPath } from "../../utils/basePath"; // ✅ Import added
 import { ELECTION_CONFIG, ELECTION_YEAR, ELECTION_SLOGAN } from '../../utils/electionConfig';
 
 // --- Configuration ---
@@ -66,18 +67,20 @@ export default function AutoIntro({
 }) {
     const [step, setStep] = useState(1);
 
-    useEffect(() => {
-        if (finished) return;
+    // ❌ Removed fixed setTimeout logic that caused skipping on lag
+    // Replaced with onAnimationComplete callbacks on the elements themselves
 
-        // Sequence Timer (Slower for better readability)
-        const step1Timer = setTimeout(() => setStep(2), 4000);
-        const step2Timer = setTimeout(() => onComplete?.(), 8000);
+    const handleStep1Complete = () => {
+        // 快ขึ้น: Wait a bit for reading time after animation finishes (Reduced 2.5s -> 1.5s)
+        setTimeout(() => setStep(2), 1500);
+    };
 
-        return () => {
-            clearTimeout(step1Timer);
-            clearTimeout(step2Timer);
-        };
-    }, [finished, onComplete]);
+    const handleStep2Complete = () => {
+        // 快ขึ้น: Wait a bit for impact, then finish (Reduced 4.0s -> 2.0s)
+        setTimeout(() => onComplete?.(), 2000);
+    };
+
+    if (finished) return null;
 
     return (
         <AnimatePresence mode="wait">
@@ -97,13 +100,15 @@ export default function AutoIntro({
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
                 />
 
-                {/* 2. Top Progress Bar */}
-                <motion.div
-                    className="absolute top-0 left-0 h-1.5 bg-[#1a1a1a] z-50 origin-left"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 8, ease: "linear" }}
-                />
+                {/* 2. Top Progress Bar (Visual Indicator Only now) */}
+                {step === 1 && (
+                    <motion.div
+                        className="absolute top-0 left-0 h-1.5 bg-[#1a1a1a] z-50 origin-left"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 3, ease: "linear" }}
+                    />
+                )}
 
                 {/* 3. Content Container */}
                 <div className="relative z-10 w-full max-w-7xl px-4 md:px-12 flex flex-col items-center justify-center h-full">
@@ -126,12 +131,28 @@ export default function AutoIntro({
                                 <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.1}>
                                     ยินดีต้อนรับสู่
                                 </MaskedText>
-                                <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500 z-10" delay={0.4}>
+                                <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500 z-10" delay={0.2}>
                                     การเลือกตั้งสโมสรนักศึกษา
                                 </MaskedText>
-                                <MaskedText className="text-3xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.7}>
-                                    คณะวิทยาการจัดการ ปี {ELECTION_YEAR}
-                                </MaskedText>
+                                {/* ✅ Last Element Triggers Transition */}
+                                <div className="overflow-hidden">
+                                    <motion.div
+                                        initial="hidden"
+                                        animate="show"
+                                        exit="exit"
+                                        variants={{
+                                            hidden: { y: "140%" },
+                                            show: { y: "0%", transition: { duration: 0.8, ease: EASE_CUSTOM, delay: 0.3 } },
+                                            exit: { y: "-110%", transition: { duration: 0.4, ease: [0.33, 1, 0.68, 1], delay: 0 } }
+                                        }}
+                                        className="block will-change-transform py-[0.4em] -my-[0.3em]"
+                                        onAnimationComplete={handleStep1Complete} // 🎯 Trigger
+                                    >
+                                        <span className="text-3xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10">
+                                            คณะวิทยาการจัดการ ปี {ELECTION_YEAR}
+                                        </span>
+                                    </motion.div>
+                                </div>
                             </motion.div>
                         )}
 
@@ -150,12 +171,12 @@ export default function AutoIntro({
                                         initial={{ scale: 0, rotate: -20, opacity: 0 }}
                                         animate={{ scale: 1, rotate: 0, opacity: 1 }}
                                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                        className="h-32 w-32 md:h-56 md:w-56 relative drop-shadow-[0_20px_50px_rgba(0,0,0,0.2)] mb-2"
+                                        className="relative w-40 h-40 md:w-64 md:h-64 mb-6 shadow-2xl rounded-full bg-white p-4"
                                     >
                                         <SmartImage
-                                            src={partyLogoUrl}
+                                            src={getPath(partyLogoUrl)}
                                             alt="Party Logo"
-                                            className="h-full w-full object-contain"
+                                            className="w-full h-full object-contain drop-shadow-lg"
                                             priority={true}
                                         />
                                     </motion.div>
@@ -169,7 +190,8 @@ export default function AutoIntro({
                                     <div className="overflow-hidden w-full px-4 text-center flex justify-center">
                                         <motion.div
                                             variants={textRevealVariants}
-                                            className="block w-full py-2" // Added padding to prevent ascender crop
+                                            className="block w-full py-2"
+                                            onAnimationComplete={handleStep2Complete} // 🎯 Trigger Finish
                                         >
                                             <h2 className="text-4xl md:text-7xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.8] text-[#1a1a1a] drop-shadow-xl filter">
                                                 {partyName}

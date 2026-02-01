@@ -16,8 +16,10 @@ const MemberModal = ({ member, onClose }) => {
                 <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-black/5 hover:bg-black/10 text-black rounded-full transition-all">
                     <X size={24} />
                 </button>
-                <div className="w-full md:w-1/2 relative h-[400px] md:h-auto bg-gray-100">
-                    <SmartImage src={member.imageUrl} alt={member.name} className="w-full h-full object-cover" />
+                <div className="relative w-full aspect-[3/4] md:aspect-[4/5] overflow-hidden bg-slate-100">
+                    <SmartImage src={getPath(member.imageUrl)} alt={member.name} className="w-full h-full object-cover" />
+
+                    {/* Gradient Overlay */}
                 </div>
                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
                     <div className="inline-block px-3 py-1 rounded-full bg-[#f8f8f8] border border-black/5 text-[#B8860B] text-xs font-bold uppercase tracking-widest mb-4 w-fit">

@@ -10,7 +10,12 @@ function verifyAdminToken(request) {
   const encryptedToken = request.headers.get('x-admin-token');
   const now = Date.now();
 
-  if (!encryptedToken || !PRIVATE_KEY) {
+  if (!encryptedToken) { // Added Log
+    console.error("verifyAdminToken: Missing x-admin-token header");
+    return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
+  }
+  if (!PRIVATE_KEY) { // Added Log
+    console.error("verifyAdminToken: Missing PRIVATE_KEY in env");
     return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
   }
 
@@ -29,17 +34,19 @@ function verifyAdminToken(request) {
     const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
 
     if (secret !== EXPECTED_SECRET) {
+      console.error(`verifyAdminToken: Secret Mismatch. Got: '${secret}', Expected: '${EXPECTED_SECRET}'`);
       return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
     }
 
     if (now - parseInt(timestamp) > 3600000) {
+      console.error(`verifyAdminToken: Token Expired. Diff: ${now - parseInt(timestamp)}ms`);
       return NextResponse.json({ error: "Token Expired" }, { status: 403 });
     }
 
     return null;
 
   } catch (decryptionError) {
-    console.error("Decryption failed:", decryptionError);
+    console.error("verifyAdminToken: Decryption failed:", decryptionError.message);
     return NextResponse.json({ error: "Invalid Token Format" }, { status: 403 });
   }
 }

@@ -8,7 +8,7 @@ services:
       args:
         - BASE_PATH=/fms-ovs
         - ASSET_PREFIX=/fms-ovs
-    container_name: fms-election-web
+    container_name: fms-election-web-local
     restart: always
     ports:
       - "3000:3000"
@@ -16,6 +16,8 @@ services:
       - .env
     volumes:
       - ./public/images:/app/public/images
+    depends_on:
+      - db
     environment:
       # ตั้งค่า Path ที่นี่
       - BASE_PATH=/fms-ovs
@@ -23,28 +25,34 @@ services:
       - ASSET_PREFIX=/fms-ovs
       - NODE_ENV=production
 
-      # URL Configuration for Production
-      - NEXTAUTH_URL=https://cvs.fms.psu.ac.th/fms-ovs
-      - AUTHENTIK_REDIRECT_URI=https://cvs.fms.psu.ac.th/fms-ovs/api/auth/authentik/callback
+      # URL Configuration for LOCALHOST Testing
+      - NEXTAUTH_URL=http://localhost:3000/fms-ovs
+      - AUTHENTIK_REDIRECT_URI=http://localhost:3000/fms-ovs/api/auth/authentik/callback
 
-      # Internal Database URL (Pointing to the 'db' service below)
+      # Override Database URL to point to the internal 'db' container
       - DATABASE_URL=postgresql://postgres:teerapab1150@db:5432/fms_election?schema=public
 
-      # Secret Keys
+      # Secret Keys (Using default or from .env)
       - NEXTAUTH_SECRET=teerapabmegu1150fms_election2026dontcopymeplsah
 
     command: node --security-revert=CVE-2023-46809 server.js
 
+    # Enable host networking for Windows
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   db:
     image: postgres:15-alpine
-    container_name: fms-election-db
+    container_name: fms-election-db-local
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: teerapab1150
       POSTGRES_DB: fms_election
+    ports:
+      - "5433:5432" # Host:5433 -> Container:5432 (Avoid conflict with local Postgres)
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data_prod:
+  postgres_data:

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { User, ChevronDown, Edit, Users } from "lucide-react";
+import { getPath } from "../utils/basePath";
 
 export default function EditCandidateMember({ candidate, onClick }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -81,7 +82,7 @@ export default function EditCandidateMember({ candidate, onClick }) {
                 >
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                     {member.imageUrl ? (
-                      <img src={member.imageUrl} className="w-full h-full object-cover" alt={member.name} />
+                      <img src={getPath(member.imageUrl)} className="w-full h-full object-cover" alt={member.name} />
                     ) : (
                       <User className="w-4 h-4 text-gray-400" />
                     )}

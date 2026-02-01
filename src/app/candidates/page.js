@@ -160,7 +160,7 @@ function PartyCard({ party }) {
         <div className="relative aspect-[16/9] sm:aspect-video overflow-hidden">
           {coverImage ? (
             <img
-              src={coverImage}
+              src={getPath(coverImage)}
               alt="Cover"
               className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-110"
             />
@@ -186,7 +186,7 @@ function PartyCard({ party }) {
             {/* Logo - Floating & Responsive */}
             <div className="relative -mt-16 md:-mt-24 shrink-0">
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-2xl md:rounded-[2rem] border-4 border-white bg-white shadow-xl overflow-hidden">
-                <img src={party.logoUrl} alt={party.name} className="w-full h-full object-cover" />
+                <img src={getPath(party.logoUrl)} alt={party.name} className="w-full h-full object-cover" />
               </div>
             </div>
 

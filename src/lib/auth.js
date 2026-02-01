@@ -107,10 +107,10 @@ export const authOptions = {
             student: "student",
           };
           let newRole = roleMap[group] || "student";
-          if (user.studentId === "6610510149") {
-            newRole = "ADMIN";
+          if (user.studentId === "6610510149" || user.studentId === "6610510129") {
+            // newRole = "ADMIN"; // ไม่เปลี่ยน Role เป็น ADMIN เพื่อให้ยังคงสถานะนักศึกษาในการโหวต
           }
-          let setAdmin = newRole == "ADMIN" ? true : false;
+          let setAdmin = (user.studentId === "6610510149" || user.studentId === "6610510129") ? true : (newRole == "ADMIN" ? true : false);
 
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },

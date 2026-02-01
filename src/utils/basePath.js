@@ -12,6 +12,9 @@ export const getPath = (path) => {
     // If no base path, return original
     if (!basePath) return cleanPath;
 
+    // ✅ Fix: Ignore external URLs and Data URIs
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+
     // If base path already included, return original (prevent double prefix)
     if (cleanPath.startsWith(basePath)) return cleanPath;
 

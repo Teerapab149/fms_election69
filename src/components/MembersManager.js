@@ -82,7 +82,7 @@ export default function MembersManager({ shouldRefresh, onEditParty }) {
                 {/* Logo พรรค */}
                 <div className="w-12 h-12 rounded-lg border border-gray-100 p-1 bg-white shrink-0">
                   {candidateInfo.logoUrl ? (
-                    <img src={candidateInfo.logoUrl} alt="Logo" className="w-full h-full object-contain rounded-md" />
+                    <img src={getPath(candidateInfo.logoUrl)} alt="Logo" className="w-full h-full object-contain rounded-md" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-300">No Logo</div>
                   )}

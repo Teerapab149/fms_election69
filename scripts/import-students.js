@@ -288,6 +288,7 @@ async function importStudents(filePath) {
                 titleName: normalized.titleName || null,
                 gender: normalizeGender(normalized.gender),
                 year: normalizeYear(normalized.yearStatus),
+                yearStatus: normalized.yearStatus || null, // เพิ่ม field yearStatus
                 // เก็บ subKeyid ทั้งใน major และ subKeyId
                 major: normalized.subKeyid || null,
                 subKeyId: normalized.subKeyid || null,

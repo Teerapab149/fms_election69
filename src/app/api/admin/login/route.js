@@ -42,7 +42,7 @@ export async function POST(request) {
             );
         }
 
-        const isAllowed = (user.role === "ADMIN" && user.isAdmin === true);
+        const isAllowed = (user.isAdmin === true);
 
         if (!isAllowed) {
             return NextResponse.json(

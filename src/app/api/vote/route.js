@@ -47,8 +47,8 @@ function verifyAdminToken(request) {
 }
 
 export async function POST(request) {
-  const authError = verifyAdminToken(request);
-  if (authError) return authError;
+  // const authError = verifyAdminToken(request);
+  // if (authError) return authError;
   try {
     // 🔐 Security Fix: ดึง studentId จาก verified session แทน request body
     const session = await getServerSession(authOptions);

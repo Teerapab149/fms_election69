@@ -32,25 +32,28 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    // 1. สั่งลบ Session ใน NextAuth ก่อน (ล้างสถานะในแอปเรา)
-    await signOut({ redirect: false });
+    // 1. เตรียม URL สำหรับ Redirect กลับมา
+    // Hardcode fallback prevention: ถ้าไม่มี env ให้ใช้ '/fms-ovs' ไปเลยเพื่อความชัวร์ใน Local
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
+    const origin = window.location.origin;
+    // ป้องกัน double slash ถ้า basePath มี / นำหน้า และ origin มี / ลงท้าย (ซึ่งปกติ origin ไม่มี)
+    const baseUrl = `${origin}${basePath}`;
 
-    // 2. เตรียม URL สำหรับ Redirect กลับมา (เช่น http://localhost:3000)
-    const baseUrl = window.location.origin;
-
-    /**
-     * 3. URL สำหรับสั่ง Logout ที่เซิร์ฟเวอร์มหาลัย
-     * เพิ่มพารามิเตอร์ ?post_logout_redirect_uri เพื่อบอกให้ SSO 
-     * ส่งผู้ใช้กลับมาที่เว็บของเราหลังจากล้างเซสชันเสร็จแล้ว
-     */
+    // 2. URL สำหรับ Logout ที่ PSU SSO
     const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
 
-    // 4. นำทางผู้ใช้ไปที่หน้า Logout ของมหาลัย
-    window.location.href = psuLogoutUrl;
+    // 3. ใช้ signOut แบบ redirect ของ NextAuth
+    try {
+      await signOut({ callbackUrl: psuLogoutUrl });
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Fallback: ถ้า signOut พัง ให้ Force Redirect ไปที่ SSO เลย
+      window.location.href = psuLogoutUrl;
+    }
 
-    // ปิด UI ต่างๆ
-    if (typeof setIsMenuOpen === 'function') setIsMenuOpen(false);
-    if (typeof setIsProfileOpen === 'function') setIsProfileOpen(false);
+    // ปิด UI
+    setIsMenuOpen(false);
+    setIsProfileOpen(false);
   };
 
 

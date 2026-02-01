@@ -1,90 +1,106 @@
 const { PrismaClient } = require('@prisma/client');
-const { Group } = require('lucide-react');
-const prisma = new PrismaClient()
-
-// 1. เตรียมรายชื่อตำแหน่ง 20 ลำดับ
-const positions = [
-  "นายกสโมสรนักศึกษา",
-  "อุปนายกกิจการภายใน",
-  "อุปนายกกิจการภายนอก",
-  "เลขานุการ",
-  "เหรัญญิก",
-  "ประธานฝ่ายประชาสัมพันธ์",
-  "ประธานฝ่ายสวัสดิการ",
-  "ประธานฝ่ายพัสดุ",
-  "ประธานฝ่ายกีฬา",
-  "ประธานฝ่ายวิชาการ",
-  "ประธานฝ่ายศิลปวัฒนธรรม",
-  "ประธานฝ่ายข้อมูลกิจการนักศึกษา",
-  "ประธานฝ่ายเทคโนโลยีสารสนเทศ",
-  "ประธานฝ่ายประเมินผล",
-  "ประธานฝ่ายกิจกรรม",
-  "ประธานฝ่ายกราฟิกดีไซน์",
-  "ประธานฝ่ายพิธีการ",
-  "ประธานฝ่ายครีเอทีฟและสันทนาการ",
-  "ประธานฝ่ายสถานที่",
-  "ประธานฝ่ายสาธารณสุข"
-];
-
-// --- Helper Function: สร้างรายชื่อสมาชิก 20 คน ---
-const generatePartyMembers = (partyNumber, startStudentIdPrefix) => {
-  const members = [];
-
-  for (let i = 0; i < 20; i++) {
-    const runningNum = String(i + 1).padStart(3, '0');
-    const studentId = `${startStudentIdPrefix}${runningNum}`;
-
-    const name = `ผู้สมัครลำดับที่ ${i + 1} พรรคเบอร์ ${partyNumber}`;
-    const imagePath = `/images/members/party_${partyNumber}/${i + 1}.jpg`;
-    // ✅ เพิ่ม modalImageUrl เป็น .png ตามที่ user แจ้ง (Pattern: /images/members/party_X/Modal/Y.png)
-    const modalImagePath = `/images/members/party_${partyNumber}/Modal/${i + 1}.png`;
-
-    members.push({
-      studentId: studentId,
-      name: name,
-      position: positions[i] || "สมาชิกพรรค",
-      email: `${studentId}@email.psu.ac.th`,
-      imageUrl: imagePath,
-      modalImageUrl: modalImagePath
-    });
-  }
-  return members;
-};
+const bcrypt = require('bcryptjs'); // Import bcryptjs
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Start seeding (Full 20 Members)...')
+  console.log('🌱 Start seeding...');
 
   // 1. ล้างข้อมูลเก่า
   try {
-    // คำสั่งสำหรับ PostgreSQL
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Member" RESTART IDENTITY CASCADE;`)
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "User" RESTART IDENTITY CASCADE;`)
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Candidate" RESTART IDENTITY CASCADE;`)
-    console.log('🧹 Database cleaned (TRUNCATE)')
+    // เพิ่ม SystemConfig ลงใน Truncate list
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "SystemConfig" RESTART IDENTITY CASCADE;`);
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Member" RESTART IDENTITY CASCADE;`);
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "User" RESTART IDENTITY CASCADE;`);
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Candidate" RESTART IDENTITY CASCADE;`);
+    console.log('🧹 Database cleaned');
   } catch (error) {
-    console.log('⚠️ Truncate failed, using deleteMany...')
-    await prisma.member.deleteMany()
-    await prisma.user.deleteMany()
-    await prisma.candidate.deleteMany()
+    console.log('⚠️ Truncate failed, using deleteMany...');
+    await prisma.systemConfig.deleteMany(); // Clear Config
+    await prisma.member.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.candidate.deleteMany();
   }
 
-  // 2. ข้อมูลพรรค
+  // 2. สร้าง SystemConfig (สำคัญมาก! ระบบต้องมี ID=1 เสมอ)
+  await prisma.systemConfig.create({
+    data: {
+      id: 1,
+      isVoteOpen: true,
+      showResult: false, // ปิดผลโหวตไว้ก่อน
+      systemMode: "AUTO", // ใช้โหมด AUTO ตามเวลา
+      googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSf7K7cYHd2819ODsQmWzWk1NDIhELS56vuZwBj2RONCZGK25w/viewform?fbzx=-1022028266153116941&pli=1" // ตัวอย่าง URL
+    }
+  });
+  console.log('✅ SystemConfig created.');
+
+  // 3. ข้อมูลสมาชิกพรรค SAMO Together (21 คน จากไฟล์ที่อัปโหลด)
+  const samoMembers = [
+    { no: 1, studentId: '6710517152', name: 'สมิตานันท์ ธรณสุนทร', position: 'นายกสโมสรนักศึกษา', major: 'บัญชี' },
+    { no: 2, studentId: '6710515096', name: 'สุภัคกานต์ สุทธิพันธ์', position: 'อุปนายกฝ่ายกิจการภายใน', major: 'รัฐประศาสนศาสตร์' },
+    { no: 3, studentId: '6710515043', name: 'นันทณัฐ หัสชัย', position: 'อุปนายกฝ่ายกิจการภายนอก', major: 'รัฐประศาสนศาสตร์' },
+    { no: 4, studentId: '6810510535', name: 'พิรญาณ์ โกกิละวาที', position: 'เลขานุการ', major: 'การตลาด' },
+    { no: 5, studentId: '6710517051', name: 'ธนกร แก้วมณี', position: 'เหรัญญิก', major: 'บัญชี' },
+    { no: 6, studentId: '6810510487', name: 'อิดริส หมัดตะพงศ์', position: 'ประธานฝ่ายประชาสัมพันธ์', major: 'ระบบสารสนเทศทางธุรกิจ' },
+    { no: 7, studentId: '6810515075', name: 'บุญสิตา วัยภักดิ์', position: 'ประธานฝ่ายสวัสดิการ', major: 'รัฐประศาสนศาสตร์' },
+    { no: 8, studentId: '6810517021', name: 'ชยุตพงศ์ วิธธีระ', position: 'ประธานฝ่ายพัสดุ', major: 'บัญชี' },
+    { no: 9, studentId: '6810515043', name: 'วัชรโรจน์ ไกรสุวรรณสาร', position: 'ประธานฝ่ายกีฬา', major: 'รัฐประศาสนศาสตร์' },
+    { no: 10, studentId: '6810510416', name: 'ภัทรวดี นิ่มแก้ว', position: 'ประธานฝ่ายวิชาการ', major: 'การจัดการโลจิสติกส์และโซ่อุปทาน' },
+    { no: 11, studentId: '6810510485', name: 'อาทิตยา ดีแก้ว', position: 'ประธานฝ่ายศิลปวัฒนธรรม', major: 'การเงินและการลงทุน' },
+    { no: 12, studentId: '6810517075', name: 'เมธาวดี มากทอง', position: 'ประธานฝ่ายข้อมูลกิจกรรมนักศึกษา', major: 'บัญชี' },
+    { no: 13, studentId: '6810515088', name: 'วิษณุ บุญเดช', position: 'ประธานฝ่ายเทคโนโลยีสารสนเทศ', major: 'รัฐประศาสนศาสตร์' },
+    { no: 14, studentId: '6710517210', name: 'ณัฐชนน คงแก้ว', position: 'ประธานฝ่ายประเมินผล', major: 'บัญชี' },
+    { no: 15, studentId: '6710517046', name: 'ธาวัลย์ มณีสกด', position: 'ประธานฝ่ายสันทนาการ', major: 'บัญชี' },
+    { no: 16, studentId: '6810510353', name: 'ณาสิตา บุญโรจน์พงศ์', position: 'ประธานฝ่ายสาธารณสุข', major: 'การเงินและการลงทุน' },
+    { no: 17, studentId: '6710510171', name: 'นพวิชญ์ นพคุณ', position: 'ประธานฝ่ายสถานที่', major: 'การจัดการโลจิสติกส์และโซ่อุปทาน' },
+    { no: 18, studentId: '6810510063', name: 'ชุติมน เรืองชัย', position: 'ประธานฝ่ายกิจกรรม', major: 'การเงินและการลงทุน' },
+    { no: 19, studentId: '6810515130', name: 'อนุชา ชูชุม', position: 'ประธานฝ่ายครีเอทีฟ', major: 'รัฐประศาสนศาสตร์' },
+    { no: 20, studentId: '6810510023', name: 'กุลจิรา ไกรวงค์', position: 'ประธานฝ่ายพิธีการ', major: 'การตลาด' },
+    { no: 21, studentId: '6810517132', name: 'จุพลณัฐ วิรุฬห์กรสกุล', position: 'ประธานฝ่ายจัดซื้อจัดจ้าง', major: 'บัญชี' }
+  ];
+
+  // 4. เตรียมข้อมูลพรรค
   const partiesData = [
     {
-      name: 'พรรค SAMO Together',
+      name: 'The Unity Concord Of FMS 2',
       number: 1,
-      logoUrl: '/images/candidates/logo/1.jpg',
-      groupImageUrl: '/images/candidates/groupimage/party1',
-      members: generatePartyMembers(1, '6610510')
-    },
+      // 1. Logo (Use actual filename found)
+      logoUrl: '/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769189878513.jpg',
+      // 2. Group Image (Use Official Image as fallback since groupimage folder is empty/mismatched)
+      groupImages: ['/images/candidates/officialimageUrl/party1/groupeditimage.PNG'],
+      // 3. Mobile Hero Vertical (Use 1.png found)
+      mobileHeroImages: ['/images/candidates/mobileheroimage/party1/1.png'],
+      // 4. Official Hero Section (Use groupeditimage.PNG found)
+      officialImageUrl: '/images/candidates/officialimageUrl/party1/groupeditimage.PNG',
 
+      members: samoMembers,
+      slogan: 'หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน',
+      logoMeaning: `The Unity Concord of FMS สะท้อนถึงความสำคัญของการรวมตัวกันเป็นหนึ่งเดียวกันในหมู่คณะ เพื่อสร้างความร่วมมือที่มีประสิทธิภาพในการดำเนินกิจกรรมหรือโครงการต่าง ๆ เพื่อประโยชน์ส่วนรวม 
+Unity คือ ความสามัคคี ซึ่งหมายถึงความสัมพันธ์ที่ทุกคนในหมู่คณะมีเป้าหมายร่วมกันเพื่อประโยชน์ส่วนรวม และเป็นการรวมตัวของบุคคลที่มีความหลากหลาย แต่สามารถทำงานร่วมกันเพื่อบรรลุเป้าหมายที่วางไว้ ซึ่งความสามัคคีเป็นรากฐานสำคัญของการสร้างความสำเร็จในงานต่าง ๆ 
+Concord คือ ความปรองดอง ซึ่งเน้นไปที่การสร้างความสัมพันธ์ที่สงบสุขในหมู่คณะที่ทุกคนสามารถทำงานร่วมกันด้วยความเคารพ ให้เกียรติ และประนีประนอมซึ่งกันและกัน
+ตัวเรือนั้น เกิดจากการผสมผสานระหว่างตัวอักษร F M และ S โดย
+F - ส่วนใบเรือจรดท้องเรือ ซึ่งใบเรือมีหน้าที่โอบอุ้มลมเพื่อขับเคลื่อนและนำพาเรือไปข้างหน้า เปรียบเสมือนพลังที่จะนำพาคณะวิทยาการจัดการไปข้างหน้าจนกระทั่งถึงจุดหมาย 
+M - โครงสร้างกลางเรือ ซึ่งเป็นหัวใจสำคัญที่จะช่วยค้ำจุนเรือไว้ เปรียบเสมือนความตั้งใจและมุ่งมั่นที่จะช่วยให้สมาชิกทุกคนยืนหยัดและก้าวไปพร้อมกันด้วยความสามัคคี
+S - หัวสิงห์ สิงห์มักจะถูกใช้เป็นสัญลักษณ์ของความเป็นผู้นำ ความกล้าหาญ และความแข็งแกร่ง โดยหัวสิงห์นั้นได้ชี้ไปยังทิศทางที่เรือกำลังมุ่งไปข้างหน้า แสดงถึงวิสัยทัศน์และความเด็ดเดี่ยวที่พร้อมฝ่าฟันอุปสรรค
+เลข 2 คือ การสานต่ออุดมการณ์ของการทำกิจกรรมเพื่อนักศึกษาคณะวิทยาการจัดการ ผ่านการนำประสบการณ์การดำเนินงานที่ผ่านมาเป็นรากฐานในการพัฒนา ปรับปรุง และต่อยอดเพื่อเพิ่มคุณค่าและประสิทธิภาพของกิจกรรม
+ดวงดาวทั้ง 9 ดวง เปรียบเสมือน 9 สาขาวิชาของคณะวิทยาการจัดการ ทำหน้าที่เป็นแสงนำทางให้แก่สิงห์สำเภา ขณะที่เรือสีม่วงสะท้อนถึงจิตวิญญาณของคณะวิทยาการจัดการที่มีความมั่นคง แข็งแกร่ง และพร้อมเผชิญทุกสถานการณ์`,
+      missions: [
+        'บูรณาการเสริมสร้างองค์ความรู้และพัฒนาเพื่อยกระดับทักษะด้านวิชาชีพรวมถึงกิจกรรมต่าง ๆ',
+        'มุ่งเน้นการสร้างสังคมที่มีความเป็นหนึ่งเดียวจากความหลากหลายและการเคารพสิทธิเพื่อการอยู่ร่วมกันอย่างสันติ',
+        'เปิดโอกาสในการแสดงศักยภาพและความสามารถในทุกด้านเพื่อพัฒนาทรัพยากรบุคคลให้เกิดประโยชน์สูงสุด'
+      ],
+      policies: [
+        { title: 'ยกระดับและพัฒนาโครงการ', desc: 'ยกระดับโครงการเดิมและพัฒนาโครงการใหม่เพื่อปรับเปลี่ยนรูปแบบและแนวคิดให้มีความเหมาะสมกับยุคสมัยมากขึ้น' },
+        { title: 'ส่งเสริมความคิดสร้างสรรค์', desc: 'ส่งเสริมกิจกรรมด้านความคิดสร้างสรรค์ และเปิดโอกาสให้นักศึกษาได้แสดงออกอย่างเหมาะสม ควบคู่กับการเสริมสร้างสุขภาพจิตที่ดีของนักศึกษาคณะวิทยาการจัดการ' },
+        { title: 'พื้นที่แสดงความคิดเห็น', desc: 'สร้างพื้นที่ในการแสดงออกความคิดเห็นและข้อเสนอแนะเพื่อนำมาพัฒนาและปรับปรุงการจัดกิจกรรมต่าง ๆ ให้เกิดประโยชน์สูงสุดแก่นักศึกษาคณะวิทยาการจัดการ' },
+        { title: 'สร้างเครือข่ายความร่วมมือ', desc: 'สร้างเครือข่ายชุมชนและองค์กรที่มุ่งเน้นความหลากหลายและการอยู่ร่วมกันอย่างสันติ ผ่านการจัดกิจกรรมเสริมสร้างความเข้าใจในวัฒนธรรมที่หลากหลาย' }
+      ]
+    },
     {
       name: 'งดออกเสียง',
       number: 0,
       logoUrl: null,
       members: []
     },
-
     {
       name: 'ไม่รับรอง',
       number: -1,
@@ -93,132 +109,203 @@ async function main() {
     },
   ];
 
-  const createdCandidates = []
+  const createdCandidates = [];
 
-  // 3. วนลูปสร้างพรรคและสมาชิก
+  // Map for irregularities in member filenames (based on file system check)
+  const memberImageMap = {
+    15: '15 สันทนาการ.png',
+    16: '16 สาธารณสุข.png',
+    17: '17 สถานที่.png',
+    18: '18 กิจกรรม.png',
+    19: '19.ครีเอทีฟ.png',
+    20: '20 พิธีการ.png',
+    21: '21.จัดซื้อจัดจ้าง.png'
+  };
+
+  // 5. สร้างพรรคและสมาชิก
   for (const p of partiesData) {
-    // สร้างพรรค
+    // สร้าง Candidate (พรรค)
     const candidate = await prisma.candidate.create({
       data: {
         name: p.name,
         number: p.number,
         score: 0,
-        logoUrl: p.logoUrl
-      }
-    })
-    createdCandidates.push(candidate)
-    console.log(`✅ Created: [${p.number}] ${candidate.name} (${p.members.length} members)`)
 
-    // สร้างสมาชิกในพรรค
+        // --- Image Fields Mapping ---
+        logoUrl: p.logoUrl,
+        groupImageUrls: p.groupImages,       // Map to Json
+        mobileHeroImage: p.mobileHeroImages, // Map to Json
+        officialImageUrl: p.officialImageUrl,// Map to String
+
+        slogan: p.slogan,
+        logoMeaning: p.logoMeaning,
+        missions: p.missions ? p.missions : undefined,
+        policies: p.policies ? p.policies : undefined,
+      }
+    });
+    createdCandidates.push(candidate);
+    console.log(`✅ Created Party: [${p.number}] ${candidate.name}`);
+
+    // สร้างสมาชิก (Members)
     if (p.members.length > 0) {
       for (const m of p.members) {
+        // ใช้ Mapping ถ้ามี ไม่งั้นใช้ .jpg ตามปกติ
+        const filename = memberImageMap[m.no] || `${m.no}.jpg`;
+        const imagePath = `/images/members/party_${p.number}/${filename}`;
+
+        // Modal - Default to .jpg unless missing (Note: 8-21 missing in Modal folder based on check, but leaving logic consistent)
+        const modalImagePath = `/images/members/party_${p.number}/Modal/${m.no}.jpg`;
+
         await prisma.member.create({
           data: {
             studentId: m.studentId,
             name: m.name,
-            email: m.email,
-            imageUrl: m.imageUrl,
+            number: m.no, // Saved for sorting
+            imageUrl: imagePath,
+            modalImageUrl: modalImagePath,
             position: m.position,
+            major: m.major,
             candidateId: candidate.id
           }
-        })
+        });
       }
+      console.log(`   - Added ${p.members.length} members`);
     }
   }
 
-  // 4. เสก User 500 คน (Voters)
+  // 6. เสก User 500 คน (Voters)
   const votersCount = 500;
-  console.log(`Populating ${votersCount} voters...`)
+  console.log(`Populating ${votersCount} voters...`);
 
-  const majors = ['PA', 'BBA', 'ACC', 'HRM', 'LSM', 'FIN', 'MKT', 'BIS', 'MICE']
-  const years = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4', 'อื่นๆ']
-  const genders = ['ชาย', 'หญิง']
-  const yearPrefixMap = { 'ปี 1': '68', 'ปี 2': '67', 'ปี 3': '66', 'ปี 4': '65', 'อื่นๆ': '64' }
+  // Mapping สาขาจริง (Mock Data ให้สมจริงตาม Database)
+  const majorData = [
+    { code: 'PA', name: 'รัฐประศาสนศาสตร์', id: 'M001' },
+    { code: 'BBA', name: 'การจัดการ', id: 'M002' },
+    { code: 'ACC', name: 'การบัญชี', id: 'M003' },
+    { code: 'HRM', name: 'การจัดการทรัพยากรมนุษย์', id: 'M004' },
+    { code: 'LSM', name: 'การจัดการโลจิสติกส์', id: 'M005' },
+    { code: 'FIN', name: 'การเงินและการลงทุน', id: 'M006' },
+    { code: 'MKT', name: 'การตลาด', id: 'M007' },
+    { code: 'BIS', name: 'ระบบสารสนเทศทางธุรกิจ', id: 'M008' },
+    { code: 'MICE', name: 'การจัดการไมซ์', id: 'M009' }
+  ];
+
+  const years = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+  const genders = ['M', 'F'];
+  const yearPrefixMap = { 'ปี 1': '68', 'ปี 2': '67', 'ปี 3': '66', 'ปี 4': '65' };
 
   // รายชื่อ Admin ที่เราจองไว้ (ห้ามให้ระบบสุ่ม Voter ไปทับ)
   const reservedAdminIds = ['6610510149', '6610510129'];
 
   for (let i = 0; i < votersCount; i++) {
-    const randomMajor = majors[Math.floor(Math.random() * majors.length)]
-    const randomYear = years[Math.floor(Math.random() * years.length)]
-    const randomGender = genders[Math.floor(Math.random() * genders.length)]
+    const selectedMajor = majorData[Math.floor(Math.random() * majorData.length)];
+    const randomYear = years[Math.floor(Math.random() * years.length)];
+    const randomGender = genders[Math.floor(Math.random() * genders.length)];
     const runningNumber = String(100 + i).padStart(3, '0');
     const realStudentId = `${yearPrefixMap[randomYear] || '64'}10510${runningNumber}`;
 
-    // ✅ แก้ไข 1: เช็คว่า ID ที่สุ่มได้ ไปชนกับ Admin หรือไม่?
+    // เช็คว่า ID ที่สุ่มได้ ไปชนกับ Admin หรือไม่
     if (reservedAdminIds.includes(realStudentId)) {
-      console.log(`Skipping reserved ID: ${realStudentId}`);
-      continue; // ถ้าชน ให้ข้ามรอบนี้ไปเลย (ไม่สร้าง User นี้)
+      continue;
     }
 
-    const isVoted = Math.random() < 0.8
-    let votedCandidateId = null
+    const isVoted = Math.random() < 0.8;
+    let votedCandidateId = null;
 
     if (isVoted) {
-      const randomCandidate = createdCandidates[Math.floor(Math.random() * createdCandidates.length)]
-      votedCandidateId = randomCandidate.id
+      // สุ่มโหวตให้ Candidate ที่สร้างไว้จริง (รวมทั้ง No Vote/Vote No)
+      const randomCandidate = createdCandidates[Math.floor(Math.random() * createdCandidates.length)];
+      votedCandidateId = randomCandidate.id;
+
+      // อัปเดตคะแนน
       await prisma.candidate.update({
         where: { id: votedCandidateId },
         data: { score: { increment: 1 } }
-      })
+      });
     }
+
+    // กำหนดคำนำหน้าชื่อ
+    const titleName = randomGender === 'M' ? 'นาย' : 'นางสาว';
+
+    // Mapping YearStatus
+    const yearStatusMap = { 'ปี 1': '1', 'ปี 2': '2', 'ปี 3': '3', 'ปี 4': '4' };
+    const yearStatus = yearStatusMap[randomYear] || '1';
 
     await prisma.user.create({
       data: {
         studentId: realStudentId,
+        titleName: titleName,
         name: `นักศึกษาทดสอบ ${i + 1}`,
         email: `${realStudentId}@email.psu.ac.th`,
         gender: randomGender,
-        major: randomMajor,
         year: randomYear,
-        isVoted: isVoted,
-        candidateId: votedCandidateId
-      }
-    })
-  }
+        yearStatus: yearStatus, // เก็บค่าดิบ (1-4)
 
-  // 5. User พิเศษ (Admin)
-  // ✅ แก้ไข 2: ใช้ Logic ลบก่อนสร้าง (กันเหนียว เผื่อมีหลุดมา)
+        // --- Mapping Fields ---
+        major: selectedMajor.code,           // ใช้ Code เป็นหลักสำหรับ Logic กราฟ
+        subKeyId: selectedMajor.code,        // Field นี้ใน Excel คือตัวย่อสาขา เหมือนกัน
+        subMajorId: selectedMajor.id,        // รหัสสาขา (สมมติ)
+        subMajorNameThai: selectedMajor.name,// ชื่อภาษาไทย
+
+        isVoted: isVoted,
+        candidateId: votedCandidateId,
+        isAdmin: false
+      }
+    });
+  }
+  console.log(`✅ 500 Voters created.`);
+
+  // 7. สร้าง Admin Users
   console.log('✨ Creating Admins...');
 
-  // ลบออกก่อนถ้ามี (เพื่อความชัวร์ 100%)
+  // สร้าง Admin Password Hash (ตาม Pattern ที่กำหนด)
+  const adminRawPassword1 = "6610510149@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL";
+  const adminPasswordHash1 = await bcrypt.hash(adminRawPassword1, 12);
+
+  const adminRawPassword2 = "6610510129@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL";
+  const adminPasswordHash2 = await bcrypt.hash(adminRawPassword2, 12);
+
+  // ลบออกก่อนถ้ามี (เพื่อความชัวร์)
   await prisma.user.deleteMany({
     where: { studentId: { in: reservedAdminIds } }
   });
 
-  // สร้างใหม่
   await prisma.user.createMany({
     data: [
       {
         studentId: '6610510149',
         name: 'Teerapab Boonsri',
         email: '6610510149@email.psu.ac.th',
-        gender: 'ชาย', major: 'BIS', year: 'ปี 3',
+        gender: 'M', major: 'BIS', year: 'ปี 3',
+        yearStatus: '3',
         isVoted: false, candidateId: null,
         role: 'ADMIN',
-        password: '1150',
+        isAdmin: true,
+        passwordHash: adminPasswordHash1,
       },
       {
         studentId: '6610510129',
         name: 'Thanutchaporn Awapark',
         email: '6610510129@email.psu.ac.th',
-        gender: 'หญิง', major: 'BIS', year: 'ปี 3',
+        gender: 'F', major: 'BIS', year: 'ปี 3',
+        yearStatus: '3',
         isVoted: false, candidateId: null,
         role: 'ADMIN',
-        password: '1234'
+        isAdmin: true,
+        passwordHash: adminPasswordHash2,
       }
     ]
   });
 
-  console.log(`✅ Seeded complete!`)
+  console.log(`✅ Seeded complete!`);
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

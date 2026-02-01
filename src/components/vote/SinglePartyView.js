@@ -47,7 +47,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
   const partyName = candidate?.name || "The Unity Concord";
   const partyNumber = candidate?.number || 1;
   const placeholderPath = getPath("/images/logo/fms_logo50_color.png");
-  const partyLogo = candidate?.logoUrl || placeholderPath;
+  const partyLogo = candidate?.logoUrl ? getPath(candidate.logoUrl) : placeholderPath;
   const partyImage = placeholderPath;
   const policies = candidate?.policies || [];
   const missions = candidate?.missions || [];
@@ -66,7 +66,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
         else images = [trimmed];
       }
     } catch (e) { console.error("Error parsing groupImageUrls:", e); images = typeof groupData === 'string' ? [groupData] : []; }
-    images = images.filter(url => url && typeof url === 'string');
+    images = images.filter(url => url && typeof url === 'string').map(url => getPath(url));
     if (images.length === 0) return [partyLogo];
     return images;
   }, [candidate?.groupImageUrls, partyLogo]);
@@ -87,7 +87,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
       console.error("Error parsing mobileHeroImage:", e);
       images = typeof mobileData === 'string' ? [mobileData] : [];
     }
-    return images.filter(url => url && typeof url === 'string');
+    return images.filter(url => url && typeof url === 'string').map(url => getPath(url));
   }, [candidate?.mobileHeroImage]);
 
   // --- 2.2 OFFICIAL IMAGE PREPARATION (Desktop/Cover) ---
@@ -106,7 +106,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
       console.error("Error parsing officialImageUrl:", e);
       images = typeof data === 'string' ? [data] : [];
     }
-    return images.filter(url => url && typeof url === 'string');
+    return images.filter(url => url && typeof url === 'string').map(url => getPath(url));
   }, [candidate?.officialImageUrl]);
 
   // --- 2.3 IMAGE FALLBACK LOGIC ---
@@ -118,6 +118,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
 
   // Old variable alias explicitly for existing references (if any)
   const heroImage = finalHeroImage;
+  console.log("DEBUG: heroImage path:", heroImage);
 
   useEffect(() => {
     const div = document.createElement('div');
@@ -278,7 +279,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
     <div className="fixed inset-0 z-[99999] bg-white text-[#1A1A1A] font-sans h-[100dvh]">
       {globalStyles}
 
-      <div className={`w-full h-full transition-transform duration-[1500ms] ease-[cubic-bezier(0.76,0,0.24,1)] will-change-transform ${introFinished ? "-translate-y-full" : "translate-y-0"}`}>
+      <div className={`w-full h-full transition-transform duration-[800ms] ease-[cubic-bezier(0.76,0,0.24,1)] will-change-transform ${introFinished ? "-translate-y-full" : "translate-y-0"}`}>
 
         {/* Intro */}
         <section className="w-full h-[100dvh] flex-shrink-0 relative">
@@ -702,7 +703,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
 
                       {/* Image Layer */}
                       <SmartImage
-                        src={m.imageUrl}
+                        src={m.imageUrl ? getPath(m.imageUrl) : null}
                         alt={m.name}
                         className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
                       />

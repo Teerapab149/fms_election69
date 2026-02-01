@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useMotionValue, useSpring, useTransform, animate } from "framer-motion";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import Image from "next/image";
+import SmartImage from "../SmartImage";
+import { getPath } from "../../utils/basePath";
 
 function cn(...inputs) {
     return twMerge(clsx(inputs));
@@ -96,7 +97,7 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
         if (typeof window !== 'undefined') {
             const w = window.innerWidth;
             const h = window.innerHeight;
-            // Start with max radius (full screen reveal)
+            // Start with max radius (full screen reveal) for the "Shrink" effect
             spotlightRadius.set(Math.max(w, h) * 1.5);
             mouseX.set(w / 2);
             mouseY.set(h / 2);
@@ -106,11 +107,12 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
     // 2. ACTIVATION EFFECT: Triggered when isActive becomes true
     useEffect(() => {
         if (typeof window !== 'undefined' && isActive) {
-            // INTRO ANIMATION: Shrink from Full Screen to Spotlight (Center)
+            // INTRO ANIMATION: Smoothly Shrink from Full Screen to Spotlight (Center)
+            // Sync with the 800ms slide-up transition of SinglePartyView
             animate(spotlightRadius, 280, {
-                duration: 2.5,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.2
+                duration: 1.2, // Match slide duration + settle time
+                ease: [0.76, 0, 0.24, 1], // Match the Bezier of the slide
+                delay: 0
             });
 
             // Enable mouse control immediately after zoom starts
@@ -287,12 +289,11 @@ function FloatingMember({ member, springX, springY }) {
             >
                 <div className="relative w-full h-full transition-all duration-500">
                     {member.imageUrl ? (
-                        <Image
-                            src={member.imageUrl}
+                        <SmartImage
+                            src={getPath(member.imageUrl)}
                             alt={member.name || "Member"}
-                            fill
-                            className="object-cover"
-                            sizes="150px"
+                            className="w-full h-full block"
+                            objectFit="cover"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-neutral-800 text-neutral-500">

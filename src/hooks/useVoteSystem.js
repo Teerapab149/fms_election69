@@ -56,12 +56,12 @@ export function useVoteSystem() {
 
       // 🛑 Strict Redirect if System Closed
       if (statusData.isSystemOpen === false) {
-        window.location.href = "/closed";
+        window.location.href = getPath("/closed");
         return;
       }
 
       if (statusData.isVoted) {
-        window.location.href = "/success";
+        window.location.href = getPath("/success");
         return;
       }
 

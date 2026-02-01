@@ -247,18 +247,14 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
 
 async function processMemberModalImage(memberData, formData, partyNumber, existingImagesMap = new Map()) {
   const file = formData.get(`member_modal_file_${memberData.studentId}`);
-  // User requested path: /images/members/party_{id}/Modal/{index}.jpg
-  // Will use position number or studentId for uniqueness if index is not reliable, or just 1, 2, 3...
-  // User example: /images/members/party_1/Modal/2.jpg
-  // I will use timestamp or studentId to avoid collisions. Using position number like existing implementation is good for consistency.
-
   const positionNum = getPositionNumber(memberData.position);
+  const studentId = memberData.studentId || `id_${Date.now()}`;
 
   if (file && typeof file !== "string") {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const fileName = `${positionNum}.jpg`; // Using position number as filename
+    const fileName = `${positionNum}_${studentId}.jpg`;
     const folderName = `party_${partyNumber}`;
     const uploadDir = path.join(process.cwd(), `public/images/members/${folderName}/Modal`);
 
@@ -270,7 +266,6 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
     return `/images/members/${folderName}/Modal/${fileName}`;
   }
 
-  // Handle existing or cleanup if needed
   if (memberData.existingModalImageUrl && memberData.existingModalImageUrl !== "") {
     return memberData.existingModalImageUrl;
   }
@@ -449,6 +444,7 @@ export async function PUT(req) {
             name: m.name,
             studentId: m.studentId,
             position: m.position,
+            number: getPositionNumber(m.position), // ✅ Save position sequence
             major: m.major,
             imageUrl: imageUrl,
             modalImageUrl: modalImageUrl,
@@ -513,6 +509,7 @@ export async function POST(req) {
         name: m.name,
         studentId: m.studentId,
         position: m.position,
+        number: getPositionNumber(m.position), // ✅ Save position sequence
         major: m.major,
         imageUrl: imageUrl,
         modalImageUrl: modalImageUrl,

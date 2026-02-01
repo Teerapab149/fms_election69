@@ -2,19 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link'; // ✅ กลับมาใช้ Link
+import { getPath } from "../utils/basePath";
 import { Check, Users, UserX, Ban, PlayCircle } from 'lucide-react'; // ใช้ไอคอน Play หรือ FileText ตามชอบ
 
 export default function PartyCard({ party, isSelected, onSelect, variant = 'grid' }) {
   const isHero = variant === 'hero';
-  
-  const isVoteNo = party.number === 0 || party.number === '0';         
-  const isDisapprove = party.number === -1 || party.number === '-1';   
-  const isSpecialOption = isVoteNo || isDisapprove;                    
+
+  const isVoteNo = party.number === 0 || party.number === '0';
+  const isDisapprove = party.number === -1 || party.number === '-1';
+  const isSpecialOption = isVoteNo || isDisapprove;
 
   const [imageError, setImageError] = useState(false);
 
   // 🎨 COLOR THEME
-  let themeColor = 'purple'; 
+  let themeColor = 'purple';
   if (isVoteNo) themeColor = 'orange';
   if (isDisapprove) themeColor = 'red';
 
@@ -43,7 +44,7 @@ export default function PartyCard({ party, isSelected, onSelect, variant = 'grid
   };
 
   const theme = colorMap[themeColor];
-  const SpecialIcon = isDisapprove ? UserX : Ban; 
+  const SpecialIcon = isDisapprove ? UserX : Ban;
 
   return (
     <div
@@ -53,16 +54,16 @@ export default function PartyCard({ party, isSelected, onSelect, variant = 'grid
         bg-white overflow-hidden
         
         /* Shape & Shadow */
-        ${isHero 
-          ? 'rounded-2xl md:rounded-[2rem] shadow-sm md:shadow-xl hover:shadow-lg scale-[1.01]' 
+        ${isHero
+          ? 'rounded-2xl md:rounded-[2rem] shadow-sm md:shadow-xl hover:shadow-lg scale-[1.01]'
           : 'rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 h-full'
         }
 
         /* Border Logic */
         border-2
-        ${isSelected 
-           ? `border-4 ${theme.border} ${theme.bg}` 
-           : 'border-slate-100 hover:border-slate-300'
+        ${isSelected
+          ? `border-4 ${theme.border} ${theme.bg}`
+          : 'border-slate-100 hover:border-slate-300'
         }
       `}
     >
@@ -80,37 +81,37 @@ export default function PartyCard({ party, isSelected, onSelect, variant = 'grid
         w-full flex flex-col items-center flex-grow relative z-10
         ${isHero ? 'p-3 pt-8 pb-6 md:p-8 md:pt-12 md:pb-8' : 'p-3 pt-8 pb-4'}
       `}>
-        
+
         {/* รูปโลโก้ */}
         <div className={`
           relative flex items-center justify-center rounded-full bg-white mb-2 md:mb-3
           border-[3px] overflow-hidden shadow-inner
           ${isSelected ? `${theme.border} ${theme.shadow} shadow-lg` : 'border-slate-100'}
           
-          ${isHero 
-            ? 'w-20 h-20 md:w-44 md:h-44' 
+          ${isHero
+            ? 'w-20 h-20 md:w-44 md:h-44'
             : 'w-16 h-16 md:w-24 md:h-24'
           }
         `}>
           {isSpecialOption ? (
-              <SpecialIcon className={`w-1/2 h-1/2 ${isSelected ? theme.text : 'text-slate-300'}`} />
+            <SpecialIcon className={`w-1/2 h-1/2 ${isSelected ? theme.text : 'text-slate-300'}`} />
           ) : (party.logoUrl && !imageError) ? (
-              <img
-                src={party.logoUrl}
-                alt={party.name}
-                className="w-full h-full object-contain p-2 transition-transform duration-500 hover:scale-110"
-                onError={() => setImageError(true)}
-              />
+            <img
+              src={getPath(party.logoUrl)}
+              alt={party.name}
+              className="w-full h-full object-contain p-2 transition-transform duration-500 hover:scale-110"
+              onError={() => setImageError(true)}
+            />
           ) : (
-              <Users className="w-1/2 h-1/2 text-slate-300" />
+            <Users className="w-1/2 h-1/2 text-slate-300" />
           )}
 
           {/* Checkmark Overlay */}
           {isSelected && (
             <div className={`absolute inset-0 bg-black/10 flex items-center justify-center backdrop-blur-[1px]`}>
-               <div className={`p-1.5 rounded-full ${theme.badge} text-white shadow-lg animate-in zoom-in duration-200`}>
-                  <Check size={isHero ? 24 : 16} strokeWidth={4} />
-               </div>
+              <div className={`p-1.5 rounded-full ${theme.badge} text-white shadow-lg animate-in zoom-in duration-200`}>
+                <Check size={isHero ? 24 : 16} strokeWidth={4} />
+              </div>
             </div>
           )}
         </div>
@@ -137,8 +138,8 @@ export default function PartyCard({ party, isSelected, onSelect, variant = 'grid
                 text-[10px] md:text-xs font-bold
                 transition-all duration-200
                 border
-                ${isSelected 
-                  ? 'bg-white/50 border-purple-200 text-purple-700 hover:bg-purple-100' 
+                ${isSelected
+                  ? 'bg-white/50 border-purple-200 text-purple-700 hover:bg-purple-100'
                   : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-white hover:border-[#8A2680] hover:text-[#8A2680] hover:shadow-sm'
                 }
               `}

@@ -97,7 +97,7 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
         {/* SPACER: Invisible relative image to force container height to match image aspect ratio on all devices */}
         {galleryImages.length > 0 && (
           <img
-            src={galleryImages[0]}
+            src={getPath(galleryImages[0])}
             className="w-full h-auto opacity-0 relative z-0 block pointer-events-none"
             alt="Spacer"
           />
@@ -107,7 +107,7 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
         {galleryImages.length > 0 ? (
           galleryImages.map((img, idx) => (
             <div key={idx} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-opacity ${idx === currentBgIndex ? 'opacity-100' : 'opacity-0'}`}>
-              <img src={img} className="w-full h-full object-cover object-top" alt={`Cover ${idx}`} />
+              <img src={getPath(img)} className="w-full h-full object-cover object-top" alt={`Cover ${idx}`} />
               {/* Dark Gradient Overlay for Text Readability - Fades out on Hover */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-500 group-hover:opacity-0 xl:block hidden"></div>
             </div>
@@ -138,7 +138,7 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
             <div className="shrink-0 relative group/logo">
               <div className="w-28 h-28 xl:w-64 xl:h-64 rounded-full bg-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center border-4 border-white/10 relative z-10 overflow-hidden ring-4 ring-white/20 backdrop-blur-sm"
                 onClick={() => onOpenLightbox(party.logoUrl)}>
-                <img src={party.logoUrl} className="w-full h-full object-contain object-center rounded-full bg-white cursor-pointer scale-110 hover:scale-125 transition-transform duration-500" alt="Party Logo" />
+                <img src={getPath(party.logoUrl)} className="w-full h-full object-contain object-center rounded-full bg-white cursor-pointer scale-110 hover:scale-125 transition-transform duration-500" alt="Party Logo" />
               </div>
               {/* Number Badge */}
               <div className="absolute -top-2 -right-2 xl:top-0 xl:right-0 bg-[var(--theme-color)] text-white w-10 h-10 xl:w-16 xl:h-16 flex items-center justify-center rounded-full font-black text-lg xl:text-3xl shadow-lg border-4 border-[#1a1a1a] z-20"
@@ -318,9 +318,16 @@ const PartyVisionSection = ({ party, theme }) => {
                     </span>
                   </div>
 
-                  <p className="text-xs sm:text-sm md:text-xl font-bold text-slate-800 leading-tight md:leading-relaxed group-hover:text-white transition-colors duration-500 drop-shadow-md">
-                    {policy}
-                  </p>
+                  <div className="text-xs sm:text-sm md:text-xl font-bold text-slate-800 leading-tight md:leading-relaxed group-hover:text-white transition-colors duration-500 drop-shadow-md">
+                    {typeof policy === 'object' ? (
+                      <>
+                        <div className="mb-2">{policy.title}</div>
+                        <div className="text-xs md:text-sm font-normal opacity-80">{policy.desc}</div>
+                      </>
+                    ) : (
+                      policy
+                    )}
+                  </div>
                 </div>
 
               </div>
@@ -374,9 +381,16 @@ const CandidateList = ({ members, theme, onSelectMember }) => {
     }
     return {
       isSearching: false,
-      president: validMembers.find(m => m.position === POSITION_ORDER[0]),
-      executives: validMembers.filter(m => POSITION_ORDER.slice(1, 5).includes(m.position)),
-      heads: validMembers.filter(m => !POSITION_ORDER.slice(0, 5).includes(m.position)),
+      president: validMembers.find(m => m.number === 1 || m.position === "นายกสโมสรนักศึกษา"),
+      executives: validMembers.filter(m =>
+        (m.number >= 2 && m.number <= 5) ||
+        ["อุปนายกกิจการภายใน", "อุปนายกกิจการภายนอก", "เลขานุการ", "เหรัญญิก"].includes(m.position)
+      ).sort((a, b) => (a.number || 999) - (b.number || 999)),
+      heads: validMembers.filter(m =>
+        (m.number > 5 || m.number === 0) &&
+        m.position !== "นายกสโมสรนักศึกษา" &&
+        !["อุปนายกกิจการภายใน", "อุปนายกกิจการภายนอก", "เลขานุการ", "เหรัญญิก"].includes(m.position)
+      ).sort((a, b) => (a.number || 999) - (b.number || 999)),
       filteredSearch: []
     };
   }, [members, searchTerm]);
@@ -563,17 +577,13 @@ function PartyContent() {
               router.replace(`?${newParams.toString()}`, { scroll: false });
             }
 
-            // ✅ ใช้ preparePartyData แทน enrichPartyData เพื่อจัดการข้อมูลจริง
+            // ✅ จัดการข้อมูลสมาชิก (Sort ตามเบอร์ 1-21)
             const enrichedParty = preparePartyData(targetParty);
-            const filledMembers = POSITION_ORDER.map(pos => {
-              const found = enrichedParty.members?.find(m => m.position === pos);
-              return found ? { ...found, isPlaceholder: false } : {
-                id: `empty-${pos}`, name: "ยังไม่มีผู้สมัคร", position: pos,
-                imageUrl: null, studentId: "-", isPlaceholder: true
-              };
-            });
-            const extraMembers = enrichedParty.members?.filter(m => !POSITION_ORDER.includes(m.position)) || [];
-            enrichedParty.chartMembers = [...filledMembers, ...extraMembers];
+
+            if (enrichedParty.members) {
+              enrichedParty.members.sort((a, b) => (a.number || 999) - (b.number || 999));
+            }
+            enrichedParty.chartMembers = enrichedParty.members || [];
 
             setActiveParty(enrichedParty);
           } else {
@@ -638,7 +648,7 @@ function PartyContent() {
       {lightboxImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-300" onClick={() => setLightboxImage(null)}>
           <button onClick={() => setLightboxImage(null)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20"><X size={28} /></button>
-          <img src={lightboxImage} className="max-w-full max-h-[85vh] object-contain shadow-2xl" alt="Lightbox" onClick={(e) => e.stopPropagation()} />
+          <img src={getPath(lightboxImage)} className="max-w-full max-h-[85vh] object-contain shadow-2xl" alt="Lightbox" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
 
@@ -667,6 +677,7 @@ export default function PartyPage() {
 
 function MemberImage({ url }) {
   const [error, setError] = useState(false);
+  // ✅ ใช้ getPath wrap url
   if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-1/2 h-1/2" /></div>;
-  return <img src={url} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" loading="lazy" />;
+  return <img src={getPath(url)} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" loading="lazy" />;
 }

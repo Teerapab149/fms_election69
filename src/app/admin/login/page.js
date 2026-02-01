@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        window.location.href = "/admin"
+        window.location.href = getPath("/admin")
       } else {
         setError(data.message || 'เข้าสู่ระบบไม่สำเร็จ');
       }

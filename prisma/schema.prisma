@@ -25,6 +25,7 @@ model User {
   subMajorId    String?
   subMajorNameThai    String?
   year          String?
+  yearStatus    String?
 
   isVoted       Boolean  @default(false)
   isFormCompleted  Boolean  @default(false)
@@ -39,6 +40,7 @@ model Member {
   id            Int      @id @default(autoincrement())
   studentId     String   @unique
   name          String
+  number        Int      @default(0)
 
   imageUrl      String
   modalImageUrl String?

@@ -417,7 +417,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
                                     {previewUrl ? (
-                                        <img src={previewUrl} className="w-full h-full object-cover" />
+                                        <img src={previewUrl.startsWith('blob:') ? previewUrl : getPath(previewUrl)} className="w-full h-full object-cover" />
                                     ) : (
                                         <User className="w-10 h-10 text-gray-300" />
                                     )}
@@ -440,7 +440,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             <div className="grid grid-cols-3 gap-2">
                                 {existingImages.map((src, idx) => (
                                     <div key={`old-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group">
-                                        <img src={src} className="w-full h-full object-cover" />
+                                        <img src={src.startsWith('blob:') ? src : getPath(src)} className="w-full h-full object-cover" />
                                         <button
                                             type="button"
                                             onClick={() => removeExistingImage(idx)}
@@ -564,10 +564,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-6">
                                 {/* Mobile Hero Cover */}
                                 <div className="flex flex-col items-center gap-3">
-                                    <p className="text-sm font-medium text-gray-600 w-full text-left">1. รูปเดี่ยวแนวตั้ง (Mobile Vote Page)</p>
+                                    <p className="text-sm font-medium text-gray-600 w-full text-left">1. รูปหมู่แนวตั้ง (Mobile SingleVote Page)*ไม่ต้องใส่ถ้ามีมากกว่า 1 พรรค</p>
                                     <div className="relative group w-full aspect-[3/4] bg-white rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center shadow-sm">
                                         {officialPreview ? (
-                                            <img src={officialPreview} className="w-full h-full object-cover" />
+                                            <img src={officialPreview.startsWith('blob:') ? officialPreview : getPath(officialPreview)} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="flex flex-col items-center text-gray-400">
                                                 <ImageIcon className="w-8 h-8 mb-1" />
@@ -603,7 +603,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         {/* Existing Images */}
                                         {existingMobileHeroImages.map((url, index) => (
                                             <div key={`existing-mh-${index}`} className="relative group aspect-[3/4] bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                                                <img src={url} alt={`Team Vertical ${index + 1}`} className="w-full h-full object-cover" />
+                                                <img src={url.startsWith('blob:') ? url : getPath(url)} alt={`Team Vertical ${index + 1}`} className="w-full h-full object-cover" />
                                                 <button
                                                     type="button"
                                                     onClick={() => removeExistingMobileHeroImage(index)}
