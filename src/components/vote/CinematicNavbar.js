@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, User, LogOut, X } from "lucide-react";
+import { signIn, signOut } from "next-auth/react";
 
 /**
  * CinematicNavbar component - Floating Capsule Style
@@ -14,9 +15,27 @@ import { Menu, User, LogOut, X } from "lucide-react";
  * 1. Mobile (< lg): Unified Center Dropdown (relative to Capsule).
  * 2. Desktop (>= lg): Right Anchored Dropdown (relative to Button).
  */
+
 const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyName, partyLogoUrl, user, scrollContainerRef, theme = "dark" }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+
+    // ✅ Shared Logout Logic
+    const handleLogout = async () => {
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
+        const origin = window.location.origin;
+        const baseUrl = `${origin}${basePath}`;
+
+        // PSU SSO Logout URL
+        const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+
+        try {
+            await signOut({ callbackUrl: psuLogoutUrl });
+        } catch (error) {
+            console.error("Logout failed:", error);
+            window.location.href = psuLogoutUrl;
+        }
+    };
 
     // Optimized Scroll Listener (Internal)
     useEffect(() => {
@@ -88,7 +107,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
                         </div>
                     </div>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={handleLogout}
                         className="w-full py-2 text-xs font-bold text-red-500 bg-white hover:bg-red-50 rounded-xl flex items-center justify-center gap-2 transition-colors border border-gray-100 shadow-sm"
                     >
                         <LogOut size={14} /> Sign Out

@@ -32,22 +32,21 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    // 1. เตรียม URL สำหรับ Redirect กลับมา
-    // Hardcode fallback prevention: ถ้าไม่มี env ให้ใช้ '/fms-ovs' ไปเลยเพื่อความชัวร์ใน Local
+    // 1. Check if we have NEXT_PUBLIC_BASE_PATH, otherwise default to '/fms-ovs'
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
-    const origin = window.location.origin;
-    // ป้องกัน double slash ถ้า basePath มี / นำหน้า และ origin มี / ลงท้าย (ซึ่งปกติ origin ไม่มี)
-    const baseUrl = `${origin}${basePath}`;
 
-    // 2. URL สำหรับ Logout ที่ PSU SSO
-    const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(baseUrl)}`;
+    // 2. Construct absolute return URL. Use window.location.origin but ensure we append basePath correctly
+    // If the app is hosted at /fms-ovs, we want to return there.
+    const origin = window.location.origin; // e.g., https://cvs.fms.psu.ac.th
+    const returnUrl = `${origin}${basePath}`; // -> https://cvs.fms.psu.ac.th/fms-ovs
 
-    // 3. ใช้ signOut แบบ redirect ของ NextAuth
+    // 3. PSU SSO Logout URL with encoded redirect_uri
+    const psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+
     try {
       await signOut({ callbackUrl: psuLogoutUrl });
     } catch (error) {
       console.error("Logout failed:", error);
-      // Fallback: ถ้า signOut พัง ให้ Force Redirect ไปที่ SSO เลย
       window.location.href = psuLogoutUrl;
     }
 
