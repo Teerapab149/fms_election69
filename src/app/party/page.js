@@ -179,7 +179,7 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
           <div className="flex items-end justify-between -mt-16 mb-2">
             <div className="w-36 h-36 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-white relative z-10 overflow-hidden"
               onClick={() => onOpenLightbox(party.logoUrl)}>
-              <img src={party.logoUrl} className="w-full h-full object-contain object-center rounded-full bg-white scale-110" alt="Party Logo" />
+              <img src={getPath(party.logoUrl)} className="w-full h-full object-contain object-center rounded-full bg-white scale-110" alt="Party Logo" />
             </div>
             <div className="bg-[var(--theme-color)] text-white w-16 h-16 flex items-center justify-center rounded-2xl font-black text-3xl shadow-lg mb-2"
               style={{ '--theme-color': theme.main }}>
