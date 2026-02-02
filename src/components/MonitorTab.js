@@ -33,10 +33,29 @@ export default function MonitorTab({ shouldRefresh, onEditParty }) {
                     return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
                 }) : [];
 
-                const genderOrder = ['ชาย', 'หญิง'];
-                const sortedByGender = data.stats.byGender ? [...data.stats.byGender].sort((a, b) => {
-                    return genderOrder.indexOf(a.name) - genderOrder.indexOf(b.name);
-                }) : [];
+                // Mapping Names (M -> Male, F -> Female)
+                const genderMap = {
+                    'm': 'Male',
+                    'f': 'Female',
+                    'ชาย': 'Male',
+                    'หญิง': 'Female',
+                    'male': 'Male',
+                    'female': 'Female'
+                };
+
+                const processedGender = data.stats.byGender ? data.stats.byGender.map(g => ({
+                    ...g,
+                    name: genderMap[String(g.name).toLowerCase()] || g.name
+                })) : [];
+
+                const genderOrder = ['Male', 'Female'];
+                const sortedByGender = processedGender.sort((a, b) => {
+                    const indexA = genderOrder.indexOf(a.name);
+                    const indexB = genderOrder.indexOf(b.name);
+                    const valA = indexA === -1 ? 999 : indexA;
+                    const valB = indexB === -1 ? 999 : indexB;
+                    return valA - valB;
+                });
 
                 setDemographics({
                     ...data.stats,
@@ -85,6 +104,13 @@ export default function MonitorTab({ shouldRefresh, onEditParty }) {
     if (days > 0) countdownText = `${days} วัน ${hours} ชม. ${minutes} น.`;
     else if (hours > 0) countdownText = `${hours} ชม. ${minutes} น. ${seconds} วิ.`;
     else countdownText = `${minutes} น. ${seconds} วิ.`;
+
+    const getGenderColor = (name) => {
+        const lowerName = String(name).toLowerCase();
+        if (['ชาย', 'm', 'male'].includes(lowerName)) return '#3b82f6'; // Blue
+        if (['หญิง', 'f', 'female'].includes(lowerName)) return '#ec4899'; // Pink
+        return '#94a3b8'; // Slate 400 (Gray) for unknown
+    };
 
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-100 hover:shadow-md transition-shadow">
@@ -163,7 +189,7 @@ export default function MonitorTab({ shouldRefresh, onEditParty }) {
                                             dataKey="value" stroke="none"
                                         >
                                             {demographics.byGender.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS_GENDER[index % COLORS_GENDER.length]} />
+                                                <Cell key={`cell-${index}`} fill={getGenderColor(entry.name)} />
                                             ))}
                                         </Pie>
                                         <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />

@@ -123,7 +123,7 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
         {galleryImages.length > 0 && (
           <button
             onClick={() => onOpenLightbox()}
-            className="absolute top-24 right-6 xl:top-10 xl:right-10 z-30 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md text-xs font-bold flex items-center gap-2 transition-all border border-white/20 hover:scale-105"
+            className="absolute bottom-10 right-4 xl:top-10 xl:right-10 xl:bottom-auto z-30 px-5 py-2.5 bg-slate-900/40 hover:bg-slate-900/60 text-white rounded-full backdrop-blur-md text-xs font-bold flex items-center gap-2 transition-all border border-white/20 hover:scale-105 shadow-lg"
           >
             <Maximize2 size={16} /> <span className="hidden sm:inline">VIEW GALLERY</span>
           </button>
@@ -223,12 +223,14 @@ const PartyVisionSection = ({ party, theme }) => {
         </div>
 
         {/* BENTO GRID LAYOUT */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* แก้ไข 1: เปลี่ยน md:grid-cols-12 เป็น lg:grid-cols-12 เพื่อให้ Tablet แนวตั้งเป็นคอลัมน์เดียว */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-          {/* 1. IDENTITY CARD (White, Wide, Scrollable) */}
-          <div className="md:col-span-8 bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-xl transition-all duration-500 h-[500px]">
+          {/* 1. IDENTITY CARD */}
+          {/* แก้ไข 2: เปลี่ยน md:col-span-8 เป็น lg:col-span-8 */}
+          <div className="lg:col-span-8 bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-xl transition-all duration-500 h-[500px]">
 
-            {/* Header Section (Fixed at top) */}
+            {/* Header Section */}
             <div className="p-8 md:p-12 pb-4 shrink-0 relative z-20 bg-white/95 backdrop-blur-sm">
               <div className="absolute top-0 right-0 p-12 opacity-[0.03] transition-transform duration-700 group-hover:scale-125 group-hover:rotate-12 pointer-events-none">
                 <Quote size={100} />
@@ -242,23 +244,36 @@ const PartyVisionSection = ({ party, theme }) => {
               </div>
             </div>
 
-            {/* Scrollable Content Section */}
+            {/* Scrollable Content */}
             <div className="px-8 md:px-12 pb-12 overflow-y-auto custom-scrollbar relative z-10 h-full">
               <p className="text-lg md:text-xl font-medium text-slate-800 leading-relaxed whitespace-pre-line pb-32">
                 {party.logoMeaning}
               </p>
             </div>
 
-            {/* Fade Overlay at Bottom */}
+            {/* Fade Overlay */}
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none z-20 rounded-b-[2rem]"></div>
           </div>
 
-          {/* 2. MISSION CARD (Theme Color, Dark Mode style) */}
-          <div className="md:col-span-4 p-8 md:p-12 rounded-[2rem] shadow-lg flex flex-col relative overflow-hidden group hover:shadow-2xl transition-all duration-500 text-white"
-            style={{ backgroundColor: theme.main }}>
+          {/* 2. MISSION CARD (แก้ไข: พื้นหลัง Dark Mode เข้มขึ้น, ตัดความสูงส่วนเกิน) */}
+          {/* เอา style backgroundColor ออกจาก div หลัก */}
+          <div className="lg:col-span-4 p-8 md:p-12 rounded-[2rem] shadow-lg flex flex-col relative overflow-hidden group hover:shadow-2xl transition-all duration-500 text-white">
 
-            {/* Abstract Lines */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
+            {/* ===================================================================== */}
+            {/* NEW: เลเยอร์พื้นหลังแบบเข้ม (Darkened Background Layer) */}
+            {/* เราสร้าง div ซ้อนไว้ข้างหลัง แล้วใส่สี theme.main พร้อมสั่ง filter brightness ให้มืดลง */}
+            <div className="absolute inset-0 pointer-events-none z-0"
+              style={{
+                backgroundColor: theme.main,
+                // brightness(0.5): ทำให้มืดลง 50% (ปรับเลขนี้ได้ 0.1-1.0 ยิ่งน้อยยิ่งมืด)
+                // saturate(1.2): เร่งสีให้สดขึ้นนิดหน่อยไม่ให้ดูทึบเกินไปเมื่อมืดลง
+                filter: 'brightness(0.5) saturate(1.2)'
+              }}
+            />
+            {/* ===================================================================== */}
+
+            {/* Abstract Lines (ของเดิม แต่ขยับ z-index ให้มาอยู่เหนือพื้นหลังเข้ม) */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none z-0">
               <svg width="100%" height="100%">
                 <pattern id="lines" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
                   <line x1="0" y1="0" x2="20" y2="20" stroke="currentColor" strokeWidth="1" />
@@ -267,18 +282,21 @@ const PartyVisionSection = ({ party, theme }) => {
               </svg>
             </div>
 
+            {/* Header Content (ต้องมี relative z-10 เพื่อลอยอยู่เหนือพื้นหลัง) */}
             <div className="flex items-center gap-4 mb-8 relative z-10">
               <span className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
                 <Flag size={24} />
               </span>
-              <h3 className="text-xl font-bold text-white/60 uppercase tracking-widest">พันธกิจ</h3>
+              <h3 className="text-xl font-bold text-white/80 uppercase tracking-widest">พันธกิจ</h3>
             </div>
 
-            <div className="space-y-6 relative z-10">
+            {/* List Content (ต้องมี relative z-10 เพื่อลอยอยู่เหนือพื้นหลัง) */}
+            <div className="space-y-6 relative z-10 pb-4"> {/* เพิ่ม padding bottom นิดหน่อย */}
               {party.missions.map((item, idx) => (
                 <div key={idx} className="flex gap-4 items-start group/item">
-                  <span className="text-white/40 font-mono text-xl pt-1">0{idx + 1}</span>
-                  <p className="text-lg md:text-xl font-medium leading-relaxed group-hover/item:translate-x-2 transition-transform duration-300">
+                  <span className="text-white/50 font-mono text-xl pt-1 font-bold">0{idx + 1}</span>
+                  {/* เพิ่ม font-medium และ ปรับ opacity text ให้อ่านง่ายที่สุด */}
+                  <p className="text-lg md:text-xl font-medium leading-relaxed text-white/95 group-hover/item:translate-x-2 transition-transform duration-300 drop-shadow-sm">
                     {item}
                   </p>
                 </div>
@@ -287,7 +305,7 @@ const PartyVisionSection = ({ party, theme }) => {
           </div>
 
           {/* 3. POLICIES START HEADER */}
-          <div className="md:col-span-12 mt-12 mb-6">
+          <div className="lg:col-span-12 mt-12 mb-6"> {/* เปลี่ยน md เป็น lg เพื่อความสม่ำเสมอ */}
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-4">
               <span className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center bg-white text-slate-400">
                 <Target size={20} />
@@ -297,15 +315,13 @@ const PartyVisionSection = ({ party, theme }) => {
           </div>
 
           {/* 4. POLICIES GRID */}
-          <div className="md:col-span-12 grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+          <div className="lg:col-span-12 grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {party.policies.map((policy, idx) => (
               <div key={idx} className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between group h-full relative overflow-hidden hover:border-transparent"
                 style={{ '--hover-color': theme.main }}>
 
-                {/* Flashy Fill Background on Hover (High Contrast) */}
+                {/* ... ส่วนเนื้อหา Policy คงเดิม ... */}
                 <div className="absolute inset-0 bg-[var(--hover-color)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                {/* Subtle Texture/Gradient on top of the solid color */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none mix-blend-overlay" />
 
                 <div className="relative z-10">
@@ -342,20 +358,12 @@ const PartyVisionSection = ({ party, theme }) => {
 
 const PartyChartSection = ({ party, theme, onSelectMember, onScrollToList }) => {
   return (
-    <section className="relative w-full bg-[#02040a] flex flex-col border-t border-slate-900">
-      <div className="absolute top-0 left-0 w-full z-20 pt-8 px-6 flex justify-between items-start pointer-events-none">
-        <div className="flex flex-col gap-1 select-none">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-[2px]" style={{ backgroundColor: theme.main }}></div>
-            <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-white/40 uppercase">Organizational Chart</span>
-          </div>
-          <h2 className="text-4xl md:text-6xl font-black text-white leading-none tracking-tighter shadow-black drop-shadow-md">
-            โครงสร้าง<span style={{ color: theme.main }}>ทีม</span>
-          </h2>
-        </div>
+    <section className="relative w-full flex flex-col overflow-visible">
+      <div className="absolute top-0 right-0 w-full z-20 pt-8 px-6 flex justify-end items-start pointer-events-none">
         <button onClick={onScrollToList}
-          className="pointer-events-auto bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-all border border-white/10 hover:scale-110">
-          <ChevronDown />
+          className="pointer-events-auto bg-slate-900/10 hover:bg-slate-900/20 text-slate-900 px-4 py-2 rounded-full backdrop-blur-md transition-all border border-slate-900/10 hover:scale-105 flex items-center gap-2 shadow-sm">
+          <span className="text-xs font-bold tracking-wider">รายชื่อ</span>
+          <ChevronDown size={16} />
         </button>
       </div>
       <div className="relative w-full">
@@ -364,6 +372,7 @@ const PartyChartSection = ({ party, theme, onSelectMember, onScrollToList }) => 
     </section>
   );
 };
+
 
 const CandidateList = ({ members, theme, onSelectMember }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -630,7 +639,7 @@ function PartyContent() {
     <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden relative">
       <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
 
-      <main className="flex-1 flex flex-col pt-24 xl:pt-16">
+      <main className="flex-1 flex flex-col pt-16 xl:pt-16">
 
         {/* 1. Banner */}
         <PartyBanner

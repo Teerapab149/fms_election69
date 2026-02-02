@@ -60,8 +60,8 @@ const Label = React.memo(function Label({ selectedParty, variant }) {
     <span
       className={
         isSingle
-          ? "truncate font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80"
-          : "text-[#4D2A67] truncate font-bold"
+          ? "break-words font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80"
+          : "text-[#4D2A67] break-words font-bold"
       }
     >
       <span className={isSingle ? "text-[var(--party-gold)] mr-2" : "text-slate-500 mr-2"}>
@@ -103,7 +103,7 @@ export default function VoteFooter({
   const canConfirm = !!selectedParty && !isSubmitting;
   // ✅ เช็คว่ามีค่าไหม เพื่อใช้ในการซ่อน/แสดง
   const isVisible = !!selectedParty;
-  
+
   const selectedType = useMemo(() => getType(selectedParty), [selectedParty]);
 
   const handleOpenModal = useCallback(() => {
@@ -138,12 +138,12 @@ export default function VoteFooter({
         className={[
           "fixed bottom-0 left-0 right-0 z-[100000] transition-all duration-500 cubic-bezier(0.32, 0.72, 0, 1)", // Cinematic easing
           // ✅ ถ้าไม่มี selection ให้ดันลงไปข้างล่าง (Hidden)
-          isVisible 
-            ? "translate-y-0 opacity-100" 
+          isVisible
+            ? "translate-y-0 opacity-100"
             : "translate-y-[150%] opacity-0 pointer-events-none",
-          
-          isSingle 
-            ? "p-4 md:p-6 pointer-events-none" 
+
+          isSingle
+            ? "p-4 md:p-6 pointer-events-none"
             : "bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         ].join(" ")}
       >
@@ -190,14 +190,14 @@ export default function VoteFooter({
             style={
               isSingle && canConfirm
                 ? {
-                    background: `linear-gradient(135deg, ${partyPrimary} 0%, ${partyPrimary} 30%, #2a1635 100%)`,
-                    boxShadow: `0 0 20px -5px ${partyPrimary}`
-                  }
+                  background: `linear-gradient(135deg, ${partyPrimary} 0%, ${partyPrimary} 30%, #2a1635 100%)`,
+                  boxShadow: `0 0 20px -5px ${partyPrimary}`
+                }
                 : {}
             }
           >
             {isSingle && canConfirm && (
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]" />
             )}
 
             {isSingle ? (
@@ -205,11 +205,11 @@ export default function VoteFooter({
             ) : (
               <CheckCircle2 size={18} />
             )}
-            
+
             <span>{isSingle ? "CONFIRM VOTE" : "ยืนยันการลงคะแนน"}</span>
           </button>
         </div>
-        
+
         {/* Safe Area for iPhone Home Indicator */}
         <div className="h-[env(safe-area-inset-bottom)] w-full" />
       </div>
@@ -235,78 +235,76 @@ export default function VoteFooter({
             >
               {/* Header */}
               <div className={`p-6 md:p-8 ${isSingle ? "bg-gradient-to-b from-white/5 to-transparent" : "bg-slate-50"}`}>
-                 <div className="flex items-start justify-between">
-                    <div>
-                        <div className="inline-flex items-center gap-2 mb-2">
-                             <div className={`w-2 h-2 rounded-full ${isSingle ? "bg-[var(--party-gold)] animate-pulse" : "bg-green-500"}`} />
-                             <span className={`text-[10px] font-black tracking-[0.25em] uppercase ${isSingle ? "text-white/50" : "text-slate-400"}`}>
-                                Confirmation
-                             </span>
-                        </div>
-                        <h3 className="text-2xl md:text-3xl font-black tracking-tight leading-none">
-                            ยืนยัน<br/>การลงคะแนน
-                        </h3>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="inline-flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${isSingle ? "bg-[var(--party-gold)] animate-pulse" : "bg-green-500"}`} />
+                      <span className={`text-[10px] font-black tracking-[0.25em] uppercase ${isSingle ? "text-white/50" : "text-slate-400"}`}>
+                        Confirmation
+                      </span>
                     </div>
-                    <button 
-                        onClick={() => !isSubmitting && setOpen(false)}
-                        className={`p-2 rounded-full transition-colors ${isSingle ? "bg-white/5 hover:bg-white/10 text-white" : "bg-slate-200 hover:bg-slate-300 text-slate-600"}`}
-                    >
-                        <X size={20} />
-                    </button>
-                 </div>
+                    <h3 className="text-2xl md:text-3xl font-black tracking-tight leading-none">
+                      ยืนยันการลงคะแนน
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => !isSubmitting && setOpen(false)}
+                    className={`p-2 rounded-full transition-colors ${isSingle ? "bg-white/5 hover:bg-white/10 text-white" : "bg-slate-200 hover:bg-slate-300 text-slate-600"}`}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               {/* Content */}
               <div className="px-6 md:px-8 pb-8">
-                 <div className={`rounded-3xl p-5 mb-6 ${isSingle ? "bg-white/5 border border-white/5" : "bg-slate-50 border border-slate-100"}`}>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${isSingle ? "text-white/40" : "text-slate-400"}`}>
-                        You have selected
-                    </p>
-                    <div className="text-lg">
-                        <Label selectedParty={selectedParty} variant={variant} />
-                    </div>
-                 </div>
+                <div className={`rounded-3xl p-5 mb-6 ${isSingle ? "bg-white/5 border border-white/5" : "bg-slate-50 border border-slate-100"}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${isSingle ? "text-white/40" : "text-slate-400"}`}>
+                    You have selected
+                  </p>
+                  <div className="text-base md:text-lg break-words overflow-hidden">
+                    <Label selectedParty={selectedParty} variant={variant} />
+                  </div>
+                </div>
 
-                 <p className={`text-sm text-center font-medium mb-6 ${isSingle ? "text-white/60" : "text-slate-500"}`}>
-                    {selectedType === "approve"
-                      ? "เมื่อยืนยันแล้วจะไม่สามารถแก้ไขผลได้อีก กรุณาตรวจสอบความถูกต้อง"
-                      : "คุณกำลังเลือกที่จะไม่รับรอง หรือ งดออกเสียง กรุณายืนยันการตัดสินใจ"}
-                 </p>
+                <p className={`text-sm text-center font-medium mb-6 ${isSingle ? "text-white/60" : "text-slate-500"}`}>
+                  {selectedType === "approve"
+                    ? <>เมื่อยืนยันแล้วจะไม่สามารถแก้ไขผลได้อีก<br />กรุณาตรวจสอบความถูกต้อง</>
+                    : "คุณกำลังเลือกที่จะไม่รับรอง หรือ งดออกเสียง กรุณายืนยันการตัดสินใจ"}
+                </p>
 
-                 <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={() => setOpen(false)}
-                        disabled={isSubmitting}
-                        className={`py-3.5 rounded-2xl font-bold text-sm transition-all ${
-                            isSingle 
-                            ? "bg-transparent border border-white/10 hover:bg-white/5 text-white/70" 
-                            : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-600"
-                        }`}
-                    >
-                        แก้ไข
-                    </button>
-                    
-                    <button
-                        onClick={handleConfirm}
-                        disabled={isSubmitting}
-                        className={`py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 ${
-                            isSingle
-                            ? "text-[#0B0613]" 
-                            : "bg-[#4D2A67] text-white"
-                        }`}
-                        style={isSingle ? {
-                             background: `linear-gradient(135deg, ${partyGold} 0%, #E6C6A0 100%)` 
-                        } : {}}
-                    >
-                        {isSubmitting ? (
-                            <span className="animate-pulse">Processing...</span>
-                        ) : (
-                            <>
-                                <CheckCircle2 size={18} /> ยืนยัน
-                            </>
-                        )}
-                    </button>
-                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setOpen(false)}
+                    disabled={isSubmitting}
+                    className={`py-3.5 rounded-2xl font-bold text-sm transition-all ${isSingle
+                      ? "bg-transparent border border-white/10 hover:bg-white/5 text-white/70"
+                      : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-600"
+                      }`}
+                  >
+                    แก้ไข
+                  </button>
+
+                  <button
+                    onClick={handleConfirm}
+                    disabled={isSubmitting}
+                    className={`py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 ${isSingle
+                      ? "text-[#0B0613]"
+                      : "bg-[#4D2A67] text-white"
+                      }`}
+                    style={isSingle ? {
+                      background: `linear-gradient(135deg, ${partyGold} 0%, #E6C6A0 100%)`
+                    } : {}}
+                  >
+                    {isSubmitting ? (
+                      <span className="animate-pulse">Processing...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={18} /> ยืนยัน
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>,

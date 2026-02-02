@@ -90,15 +90,17 @@ export default function AutoIntro({
                 animate="show"
                 variants={containerVariants}
             >
-                {/* 1. DYNAMIC AURORA BACKGROUND (No SVG = No Lag) */}
-                <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] bg-purple-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none mix-blend-multiply" />
-                <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] bg-amber-400/10 rounded-full blur-[120px] animate-pulse pointer-events-none mix-blend-multiply delay-1000" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-pink-500/5 rounded-full blur-[80px] animate-pulse pointer-events-none mix-blend-multiply delay-500" />
+                {/* 1. DYNAMIC AURORA BACKGROUND (GPU-Accelerated CSS Animation) */}
+                <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] rounded-full pointer-events-none mix-blend-multiply"
+                    style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%)', animation: 'pulse 4s ease-in-out infinite', willChange: 'opacity' }} />
+                <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] rounded-full pointer-events-none mix-blend-multiply"
+                    style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)', animation: 'pulse 4s ease-in-out infinite 1s', willChange: 'opacity' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] rounded-full pointer-events-none mix-blend-multiply"
+                    style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 70%)', animation: 'pulse 4s ease-in-out infinite 0.5s', willChange: 'opacity' }} />
 
-                {/* 1.1 NOISE TEXTURE (Lightweight & Performance Friendly) */}
-                <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
-                />
+                {/* 1.1 NOISE TEXTURE (Pure CSS - No SVG Filter) */}
+                <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none"
+                    style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")', backgroundSize: '200px 200px' }} />
 
                 {/* 2. Top Progress Bar (Visual Indicator Only now) */}
                 {step === 1 && (
@@ -170,7 +172,7 @@ export default function AutoIntro({
                                     <motion.div
                                         initial={{ scale: 0, rotate: -20, opacity: 0 }}
                                         animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                        transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
                                         className="relative w-40 h-40 md:w-64 md:h-64 mb-6 shadow-2xl rounded-full bg-white p-4"
                                     >
                                         <SmartImage

@@ -8,7 +8,11 @@ export default function EditCandidateMember({ candidate, onClick }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!candidate) return null;
-  const members = candidate.members || [];
+  const members = (candidate.members || []).sort((a, b) => {
+    const numA = a.number ? parseInt(a.number) : 999;
+    const numB = b.number ? parseInt(b.number) : 999;
+    return numA - numB;
+  });
 
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 transition-all w-full duration-300 overflow-hidden ${isExpanded ? 'ring-2 ring-blue-100 shadow-md' : 'hover:shadow-md'}`}>

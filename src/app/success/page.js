@@ -253,7 +253,7 @@ export default function SuccessPage() {
                         รับทรานสคริปต์กิจกรรม
                       </h3>
                       <p className="text-slate-500 text-xs md:text-sm mt-1">
-                        กรุณาทำแบบประเมินให้ครบถ้วนเพื่อรับสิทธิประโยชน์
+                        กรุณาทำแบบประเมินให้ครบถ้วน
                       </p>
                     </div>
 

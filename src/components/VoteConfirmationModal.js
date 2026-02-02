@@ -111,14 +111,14 @@ export default function VoteConfirmationModal({
             </div>
 
             {/* ข้อความ */}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <p className={`text-[10px] font-bold uppercase mb-0.5 ${modalTheme.subTitleColor}`}>
                 ท่านเลือก
               </p>
-              <h4 className={`text-lg md:text-xl font-bold truncate leading-tight ${modalTheme.titleColor}`}>
+              <h4 className={`text-base md:text-lg font-bold leading-tight break-words ${modalTheme.titleColor}`}>
                 {modalTheme.label}
               </h4>
-              <p className="text-xs md:text-sm text-slate-500 truncate">
+              <p className="text-xs md:text-sm text-slate-500 break-words">
                 {modalTheme.subLabel}
               </p>
             </div>

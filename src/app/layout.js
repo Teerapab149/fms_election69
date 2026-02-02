@@ -25,6 +25,21 @@ const kanit = Kanit({
 export const metadata = {
   title: 'SAMO 49 - FMS Election 2026',
   description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
+  openGraph: {
+    title: 'SAMO 49 - FMS Election 2026',
+    description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
+    siteName: 'FMS Election 2026',
+    images: [
+      {
+        url: '/images/prob/samo49_1.png', // ✅ Custom Open Graph Image
+        width: 1200,
+        height: 630,
+        alt: 'SAMO 49 Election Preview',
+      },
+    ],
+    locale: 'th_TH',
+    type: 'website',
+  },
 };
 
 export default async function RootLayout({ children }) {

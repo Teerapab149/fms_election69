@@ -7,6 +7,18 @@ const CLIENT_SECRET = process.env.AUTHENTIK_CLIENT_SECRET;
 const REDIRECT_URI = process.env.AUTHENTIK_REDIRECT_URI;
 
 export const authOptions = {
+  // 🔇 Disable client-side logging to prevent 404 errors on /api/auth/_log
+  logger: {
+    error(code, metadata) {
+      console.error(code, metadata);
+    },
+    warn(code) {
+      console.warn(code);
+    },
+    debug(code, metadata) {
+      // console.debug(code, metadata);
+    },
+  },
   providers: [
     {
       id: "authentik",

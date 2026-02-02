@@ -1,11 +1,11 @@
 'use client';
 import { getPath } from "../utils/basePath";
 import React, { useMemo, useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { User, Anchor, ChevronDown } from 'lucide-react';
-import { DEFAULT_THEME } from "../utils/PartyTheme";
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { User, Anchor, Zap, Star } from 'lucide-react';
+import SmartImage from "./SmartImage";
 
-// 🔒 FIXED ROLES
+// 🔒 FIXED ROLES (Keep Original Logic)
 const FIXED_ROLES = {
   PRESIDENT: "นายกสโมสรนักศึกษา",
   EXECUTIVES: [
@@ -16,7 +16,7 @@ const FIXED_ROLES = {
   ]
 };
 
-// 🌊 PRIORITY SORTING
+// 🌊 PRIORITY SORTING (Keep Original Logic)
 const HULL_PRIORITY = [
   "ประธานฝ่ายประชาสัมพันธ์",
   "ประธานฝ่ายสวัสดิการ",
@@ -35,23 +35,14 @@ const HULL_PRIORITY = [
   "ประธานฝ่ายสาธารณสุข"
 ];
 
-// --- UTILS ---
-const hexToRgb = (hex) => {
-  if (!hex) return '56, 189, 248'; // Sky blue default
-  const c = hex.replace('#', '');
-  const n = parseInt(c, 16);
-  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
-};
-
 // --- SUB-COMPONENTS ---
 
 // 1. Background Particles
 const DeepSeaParticles = () => {
-  // 20 static bubbles with simple infinite float animation
-  const particles = useMemo(() => Array.from({ length: 20 }).map((_, i) => ({
+  const particles = useMemo(() => Array.from({ length: 25 }).map((_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
-    size: Math.random() * 4 + 1, // 1px to 5px
+    size: Math.random() * 4 + 1,
     duration: Math.random() * 20 + 10,
     delay: Math.random() * 5
   })), []);
@@ -82,77 +73,66 @@ const DeepSeaParticles = () => {
   );
 };
 
-// 2. MemberCard - Memoized for performance
+// 2. MemberCard (Glassmorphism Rectangular Style)
 const MemberCard = React.memo(({ member, onClick, isExecutive = false }) => {
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-10%" }}
-      whileHover={{ scale: 1.05, y: -5 }}
       onClick={onClick}
-      className={`
-                group relative flex flex-col items-center
-                cursor-pointer transition-all duration-300 will-change-transform
-                ${isExecutive
-          ? 'p-6 rounded-[2rem] bg-white/10 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)]'
-          : 'p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-400/30'
-        }
-                backdrop-blur-md overflow-hidden
-            `}
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md transition-all duration-300 
+        ${isExecutive ? 'aspect-[3/4]' : 'aspect-[4/5]'}
+        desktop-hover-effect
+      `}
     >
-      {/* Hover Glow */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400/0 via-white/0 to-cyan-400/0 group-hover:from-cyan-400/10 group-hover:to-purple-500/10 transition-all duration-500" />
+      {/* Avatar Image Layer */}
+      <div className="absolute inset-0 z-0 bg-slate-900">
+        {(member.modalImageUrl || member.imageUrl) ? (
+          <SmartImage
+            src={getPath(member.modalImageUrl || member.imageUrl)}
+            alt={member.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 brightness-[1.12] contrast-[1.08]"
+            objectFit="cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-white/10">
+            <User size={isExecutive ? 64 : 48} />
+          </div>
+        )}
 
-      {/* Avatar */}
-      <div className={`
-                relative rounded-full p-[2px] bg-gradient-to-b from-white/50 to-white/10
-                ${isExecutive ? 'w-24 h-24 mb-4' : 'w-20 h-20 mb-3'}
-            `}>
-        <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 relative">
-          {(member.modalImageUrl || member.imageUrl) ? (
-            <img
-              src={getPath(member.modalImageUrl || member.imageUrl)}
-              alt={member.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/30"><User /></div>
-          )}
-        </div>
+        {/* Dynamic Gradient for Readability - Reduced opacity from 80 to 50 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
       </div>
 
-      {/* Info */}
-      <div className="text-center relative z-10 w-full px-2">
-        <h3 className={`font-black text-white leading-tight ${isExecutive ? 'text-lg' : 'text-sm md:text-base'}`}>
+      {/* Content Info */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 z-10 lg:translate-y-2 transform transition-transform duration-300 group-hover:translate-y-0">
+        {isExecutive && (
+          <div className="mb-1 flex items-center gap-1">
+            <Star size={10} className="text-cyan-400 fill-cyan-400" />
+            <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-400">Team Executive</span>
+          </div>
+        )}
+        <h3 className={`font-black text-white leading-tight drop-shadow-lg ${isExecutive ? 'text-lg md:text-xl' : 'text-sm md:text-base'}`}>
           {member.name}
         </h3>
-        <p className={`font-bold uppercase tracking-widest mt-1 text-cyan-200/80 truncate ${isExecutive ? 'text-xs' : 'text-[10px]'}`}>
-          {member.position}
+        <p className="mt-1 text-[10px] font-bold text-white/60 uppercase tracking-widest truncate">
+          {member.position || "Member"}
         </p>
       </div>
 
-      {/* Visual: Executive "Pod" shine */}
-      {isExecutive && (
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-      )}
+      {/* Decorative Border Glow */}
+      <div className="absolute inset-0 rounded-2xl border border-white/10 group-hover:border-white/30 transition-colors duration-300 pointer-events-none" />
     </motion.div>
-  )
+  );
 });
 
-
 export default function PartyChart({ members = [], theme: providedTheme, onMemberClick }) {
-  // --- SORTING LOGIC ---
+  // --- SORTING LOGIC (Keep Original Exactly) ---
   const { president, executives, crew } = useMemo(() => {
-    // 1. Filter Check
     const realMembers = members.filter(m => !m.isPlaceholder);
-
-    // 2. Sort by Number (Priority) or ID
     realMembers.sort((a, b) => (a.number || 999) - (b.number || 999));
 
-    // 3. Categorize by Number (1: Pres, 2-5: Execs, Rest: Crew)
     const pres = realMembers.find(m => m.number === 1) || realMembers[0] || null;
     const remainingAfterPres = realMembers.filter(m => m.id !== pres?.id);
 
@@ -162,135 +142,200 @@ export default function PartyChart({ members = [], theme: providedTheme, onMembe
     return { president: pres, executives: execs.slice(0, 4), crew: cr };
   }, [members]);
 
-  // --- SCROLL ANIMATIONS ---
+  // --- SCROLL ANIMATIONS (Diving Theme) ---
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end end"]
+    offset: ["start end", "end end"]
   });
 
-  // Interpolate Background: Surface (Sky) -> Deep (Navy) -> Abyss (Black)
+  // Interpolate Background: White (Surface) -> Sea Blue (Medium) -> Deep Navy (Abyss)
   const bgColor = useTransform(
     scrollYProgress,
-    [0, 0.4, 1],
-    ["#0ea5e9", "#1e1b4b", "#020617"] // Sky-500 -> Indigo-950 -> Slate-950
+    [0, 0.3, 0.6, 1],
+    ["#FFFFFF", "#0ea5e9", "#1e1b4b", "#020617"] // White -> Sky-500 -> Indigo-950 -> Slate-950
+  );
+
+  // 🎨 DYNAMIC TEXT COLOR: Dark on Surface, White in Depth
+  const textColor = useTransform(
+    scrollYProgress,
+    [0, 0.25],
+    ["#020617", "#ffffff"] // Darker Start for Light BG
+  );
+
+  const badgeColor = useTransform(
+    scrollYProgress,
+    [0, 0.25],
+    ["#0e7490", "rgba(34, 211, 238, 1)"] // Deep Cyan -> Bright Cyan
+  );
+
+  const badgeBg = useTransform(
+    scrollYProgress,
+    [0, 0.25],
+    ["rgba(8, 145, 178, 0.1)", "rgba(255, 255, 255, 0.05)"]
+  );
+
+  const badgeBorder = useTransform(
+    scrollYProgress,
+    [0, 0.25],
+    ["rgba(8, 145, 178, 0.3)", "rgba(34, 211, 238, 0.3)"]
   );
 
   return (
     <motion.div
       ref={containerRef}
-      className="relative w-full min-h-[200vh] pb-32 overflow-hidden"
+      className="relative w-full min-h-[150vh] pb-32 overflow-hidden"
       style={{ backgroundColor: bgColor }}
     >
-      {/* === GLOBAL BACKGROUND === */}
-      <div className="fixed inset-0 z-0">
-        {/* Sun Shafts (Top Only) */}
-        <div className="absolute top-0 left-0 right-0 h-[80vh] bg-gradient-to-b from-white/10 to-transparent pointer-events-none mix-blend-overlay" />
+      {/* === GLOBAL BACKGROUND FX === */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-white to-transparent opacity-20" />
         <DeepSeaParticles />
       </div>
 
       {/* === CONTENT CONTAINER === */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-20 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-8 pt-32 flex flex-col items-center">
 
-        {/* --- HERO: THE COMMANDER --- */}
-        <div className="relative w-full flex flex-col items-center mb-12">
-
-          {/* President Card - Large Glass Monolith */}
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1, type: "spring" }}
-            onClick={() => president && onMemberClick(president)}
-            className="relative cursor-pointer group z-20 mb-16"
+        {/* --- HEADER --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12 md:mb-20 relative z-30"
+          style={{ color: textColor }}
+        >
+          <motion.span
+            className="px-5 py-2 rounded-full border border-cyan-500/40 font-black text-[11px] uppercase tracking-[0.1em] mb-5 inline-block backdrop-blur-xl shadow-sm"
+            style={{
+              color: badgeColor,
+              backgroundColor: badgeBg,
+              borderColor: badgeBorder
+            }}
           >
-            {/* Backlight */}
-            <div className="absolute inset-0 bg-yellow-400/30 blur-[60px] rounded-full scale-150 animate-pulse" />
+            Organization Framework
+          </motion.span>
+          <h2 className="text-4xl md:text-8xl font-black tracking-tighter uppercase mb-2 drop-shadow-sm">
+            THE <motion.span
+              className="text-transparent bg-clip-text bg-gradient-to-r"
+              style={{ backgroundImage: useTransform(scrollYProgress, [0, 0.25], ["linear-gradient(to right, #0369a1, #1d4ed8)", "linear-gradient(to right, #22d3ee, #3b82f6)"]) }}
+            >CANDIDATES</motion.span>
+          </h2>
+          <motion.p
+            className="font-bold text-sm md:text-base tracking-tight text-slate-500"
+            style={{
+              color: useTransform(scrollYProgress, [0, 0.25], ["#334155", "#cbd5e1"]),
+              opacity: useTransform(scrollYProgress, [0, 0.3, 0.4], [1, 0.8, 0])
+            }}
+          >
+            โครงสร้างและคณะทำงานสโมสรนักศึกษา
+          </motion.p>
+        </motion.div>
 
-            {/* Card Body */}
-            <div className="relative w-64 md:w-80 aspect-[3/4] rounded-[3rem] bg-gradient-to-b from-white/30 to-white/5 backdrop-blur-xl border border-white/40 shadow-2xl flex flex-col p-3 overflow-hidden transition-transform duration-500 group-hover:scale-105">
-              {/* Image Area */}
-              <div className="flex-1 rounded-[2.5rem] overflow-hidden bg-slate-900 relative">
-                {(president?.modalImageUrl || president?.imageUrl) ? (
-                  <img src={getPath(president.modalImageUrl || president.imageUrl)} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/20"><User size={64} /></div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              </div>
+        {/* --- 1. THE PRESIDENT --- */}
+        {president && (
+          <div className="relative w-full flex justify-center mb-24 lg:mb-32">
+            {/* Glowing Backlight */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-cyan-400/20 blur-[120px] rounded-full animate-pulse-slow pointer-events-none" />
 
-              {/* Name Plate */}
-              <div className="absolute bottom-6 left-6 right-6 text-center">
-                <div className="inline-block px-3 py-1 mb-2 rounded-full bg-yellow-400 text-yellow-950 text-[10px] font-black uppercase tracking-widest shadow-lg">
-                  The President
-                </div>
-                <h1 className="text-2xl font-black text-white leading-none drop-shadow-md">
-                  {president?.name || "Vacant"}
-                </h1>
-              </div>
-            </div>
-          </motion.div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, type: "spring" }}
+              className="relative z-10 cursor-pointer"
+              onClick={() => onMemberClick(president)}
+            >
+              <div className="relative w-[300px] md:w-[380px] aspect-[4/5] group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-[3rem] opacity-20 blur-sm group-hover:opacity-40 transition-opacity" />
 
-          {/* Executives - The Vanguard */}
-          {/* Desktop: 4 cols | Mobile: 2 cols */}
-          <div className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 z-20">
-            {executives.map((exec, i) => (
-              <MemberCard
-                key={exec.id || i}
-                member={exec}
-                onClick={() => onMemberClick(exec)}
-                isExecutive={true}
-              />
-            ))}
-          </div>
-
-        </div>
-
-
-        {/* --- BODY: THE CREW (PARALLAX GRID) --- */}
-        <div className="relative w-full max-w-6xl">
-
-          {/* THE ANCHOR LINE (Center Spine) */}
-          <div className="absolute left-1/2 top-[-100px] bottom-0 w-[2px] -translate-x-1/2 z-0">
-            {/* Glowing Line */}
-            <div className="w-full h-full bg-gradient-to-b from-yellow-400/0 via-cyan-400/50 to-purple-900/0 shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
-          </div>
-
-          {/* Section Header */}
-          <div className="text-center mb-8 relative z-10">
-            <h2 className="text-white/40 font-bold tracking-[0.5em] text-sm mt-4 uppercase">THE PARTY MEMBERS</h2>
-          </div>
-
-          {/* THE MASONRY GRID */}
-          {/* 2 Cols Mobile, 4 Cols Desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 relative z-10">
-            {crew.map((member, i) => {
-              // Stagger effect: Offset even columns on desktop to create masonry look if desired
-              // Here we just keep clean grid but stagger entry animations via index
-              return (
-                <div key={member.id} className="relative">
-                  {/* Connector Dot (Desktop visual) */}
-                  <div className={`hidden md:block absolute top-8 w-3 h-3 rounded-full bg-cyan-400 border-2 border-slate-900 z-0
-                                    ${i % 2 === 0 ? '-right-[18px]' : '-left-[18px]'} 
-                                    opacity-0 // Hidden for cleaner look as requested, can enable if needed
-                                `} />
-
-                  <MemberCard
-                    member={member}
-                    onClick={() => onMemberClick(member)}
+                <div className="relative h-full w-full rounded-[2.5rem] bg-slate-900 border border-white/20 shadow-2xl overflow-hidden transition-all duration-500 group-hover:scale-[1.02]">
+                  <SmartImage
+                    src={getPath(president.modalImageUrl || president.imageUrl)}
+                    className="w-full h-full object-cover brightness-115 contrast-110 transition-opacity duration-500"
+                    alt={president.name}
+                    objectFit="cover"
                   />
+
+                  {/* President Metadata - Lightened background */}
+                  <div className="absolute bottom-0 inset-x-0 p-8 pt-12 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-95">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-400 text-black text-[10px] font-black uppercase tracking-widest rounded-full mb-3 shadow-lg">
+                      <Zap size={12} fill="currentColor" /> President
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-1">{president.name}</h1>
+                    <p className="text-cyan-200/60 font-medium tracking-wide">นายกสโมสรนักศึกษา</p>
+                  </div>
                 </div>
-              )
-            })}
+              </div>
+            </motion.div>
           </div>
+        )}
 
-          {/* Bottom Anchor */}
-          <div className="flex justify-center mt-32 opacity-40">
-            <Anchor className="text-purple-400 w-16 h-16 drop-shadow-[0_0_20px_rgba(168,85,247,0.6)]" />
+        {/* --- 2. EXECUTIVES --- */}
+        {executives.length > 0 && (
+          <div className="w-full mb-20 max-w-6xl">
+            <div className="flex items-center gap-6 mb-12 opacity-40">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white"></div>
+              <h3 className="text-white text-[10px] font-bold tracking-[0.5em] uppercase">Executive Board</h3>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white"></div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+              {executives.map((exec) => (
+                <MemberCard
+                  key={exec.id}
+                  member={exec}
+                  onClick={() => onMemberClick(exec)}
+                  isExecutive={true}
+                />
+              ))}
+            </div>
           </div>
+        )}
 
-        </div>
+        {/* --- 3. CREW --- */}
+        {crew.length > 0 && (
+          <div className="w-full max-w-6xl">
+            <div className="flex items-center justify-center mb-12 opacity-20">
+              <Anchor className="text-white w-8 h-8" />
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
+              {crew.map((member) => (
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  onClick={() => onMemberClick(member)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
+
+      <style jsx>{`
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.1; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.1); }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 8s ease-in-out infinite;
+        }
+
+        /* 📱 MOBILE FIX: Enable hover only on devices that support it */
+        @media (hover: hover) {
+          .desktop-hover-effect:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(255, 255, 255, 0.4) !important;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 211, 238, 0.2);
+          }
+        }
+
+        /* Smooth fallback for touch: Simple scale on active if needed */
+        .desktop-hover-effect:active {
+          transform: scale(0.98);
+          transition: transform 0.1s;
+        }
+      `}</style>
     </motion.div>
   );
 }

@@ -40,6 +40,7 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [introFinished, setIntroFinished] = useState(false);
+  const [contentReady, setContentReady] = useState(false); // Lazy render heavy content
   const [selectedMember, setSelectedMember] = useState(null);
   const [isMobileDockOpen, setIsMobileDockOpen] = useState(true);
 
@@ -51,7 +52,14 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
   const partyImage = placeholderPath;
   const policies = candidate?.policies || [];
   const missions = candidate?.missions || [];
-  const members = candidate?.members || [];
+  const members = useMemo(() => {
+    const rawMembers = candidate?.members || [];
+    return [...rawMembers].sort((a, b) => {
+      const numA = a.number ? parseInt(a.number) : 999;
+      const numB = b.number ? parseInt(b.number) : 999;
+      return numA - numB;
+    });
+  }, [candidate?.members]);
 
   // --- 2. IMAGE PREPARATION ---
   const carouselImages = useMemo(() => {
@@ -132,6 +140,22 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
     setBannerImages([...carouselImages, ...members.map(m => m.imageUrl)]);
   }, [carouselImages, members]);
 
+  // Lazy render heavy content after intro finishes (optimization)
+  useEffect(() => {
+    if (introFinished) {
+      const timer = setTimeout(() => setContentReady(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [introFinished]);
+
+  // Preload hero image during intro for instant display
+  useEffect(() => {
+    if (heroImage && !introFinished && typeof window !== 'undefined') {
+      const img = new window.Image();
+      img.src = heroImage;
+    }
+  }, [heroImage, introFinished]);
+
   // Optimization: handleContentScroll removed to prevent parent re-renders
   // Scroll checking logic moved to CinematicNavbar
 
@@ -152,12 +176,6 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
     container.style.pointerEvents = 'none';
 
     const start = container.scrollTop;
-    // Calculate distance relative to the container
-    // Since the container is the scrollable element, we need the target's position relative to it.
-    // However, getBoundingClientRect returns viewport coordinates.
-    // Target Top relative to Viewport - Container Top relative to Viewport + Current Scroll Position
-    // Actually, simply: targetEl.offsetTop is often enough if relatively positioned, but safely:
-    // targetRect.top - containerRect.top + container.scrollTop
     const targetRect = targetEl.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const relativeTop = targetRect.top - containerRect.top;
@@ -294,133 +312,70 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
           {/* === 1. HERO SECTION: Redesigned Layout === */}
           <section id="hero" className="relative overflow-hidden">
 
-            {/* --- MOBILE LAYOUT: With Top Padding for Navbar --- */}
-            <div className="lg:hidden relative w-full bg-gradient-to-b from-[#FAFAFA] via-[#F5F5F5] to-[#E5E5E5] flex flex-col">
 
-              {/* 1. Image Area (with subtle texture behind) */}
-              <div className="relative w-full shrink-0">
-                {/* Subtle Texture Behind Image */}
-                <div className="absolute inset-0 opacity-[0.15] bg-[url('https://www.transparenttextures.com/patterns/soft-wallpaper.png')] pointer-events-none" />
 
-                <SmartImage
-                  src={heroImage}
-                  alt="Party Official Image"
-                  className="w-full h-auto block relative z-10"
-                  objectFit="cover"
-                  priority={true}
-                />
+            {/* --- UNIFIED RESPONSIVE LAYOUT: "The Hero" Full Screen Cinematic --- */}
+            {contentReady && (
+              <LiquidHero className="flex min-h-[100dvh] items-center justify-center" members={members} isActive={introFinished}>
 
-                {/* Gradient for Text Contrast (Lighter) */}
-                <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#E5E5E5] to-transparent pointer-events-none z-10" />
+                {/* ===== CONTENT: Centered & Dark/Contrast ===== */}
+                <div className="flex flex-col items-center justify-center text-center w-full"> {/* Removed max-w-5xl here as the wrapper handles it, or keep it? Wrapper is max-w-6xl. Keep max-w-5xl for tightness. */}
 
-                {/* "Scroll to Explore" ON THE IMAGE */}
-                <div className="absolute bottom-14 md:bottom-56 left-0 w-full flex flex-col items-center justify-end z-20 pointer-events-none">
-                  <div className="flex flex-col items-center gap-1 animate-pulse">
-                    <span className="text-[10px] md:text-sm text-white font-black tracking-[0.3em] md:tracking-[0.4em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">SCROLL</span>
-                    <ChevronDown className="text-white w-5 h-5 md:w-8 md:h-8 animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Content Action Dock */}
-              {isMobileDockOpen ? (
-                <div className="relative -mt-20 w-full bg-gradient-to-br from-white/80 via-white/60 to-white/30 backdrop-blur-xl rounded-t-[3rem] px-8 md:px-12 pt-8 pb-10 z-30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_-10px_50px_rgba(0,0,0,0.1)] border-t border-l border-white/60 text-center flex-grow-0 animate-in slide-in-from-bottom-20 fade-in duration-700">
-                  {/* Minimize Button */}
-                  <button
-                    onClick={() => setIsMobileDockOpen(false)}
-                    className="absolute top-4 right-4 w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-black/5 rounded-full hover:bg-black/10 transition-colors"
-                  >
-                    <ChevronDown size={14} className="text-black/40 md:w-5 md:h-5" />
-                  </button>
-
-                  {/* Decorative Pill */}
-                  <div
-                    onClick={() => setIsMobileDockOpen(false)}
-                    className="w-12 h-1 md:w-16 md:h-1.5 bg-black/10 rounded-full mx-auto mb-4 cursor-pointer hover:bg-black/20 transition-colors"
-                  />
-
-                  <Reveal delay={200}>
-                    {/* Minimal Metadata - REDESIGNED */}
-                    <div className="flex flex-col items-center justify-center gap-1 mb-3 md:mb-5 animate-in zoom-in duration-500">
-                      {/* Party Name: BOLDER & CLEARER */}
-                      <span className="text-xl md:text-2xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#6A0DAD] via-[#A91079] to-[#E6C200] drop-shadow-sm leading-none">
-                        {partyName}
+                  <Reveal delay={0}>
+                    {/* Party Number Badge - Pill Shaped */}
+                    <div className="mb-6 lg:mb-8">
+                      <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[#1A1A1A] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm party-number-badge">
+                        พรรคหมายเลข {partyNumber}
                       </span>
                     </div>
 
-                    <p className="text-[#1A1A1A]/80 font-medium text-xs md:text-base leading-relaxed mb-5 md:mb-8 w-full max-w-sm md:max-w-lg mx-auto line-clamp-2 drop-shadow-sm">
-                      "{candidate?.slogan || "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"}"
+                    {/* Party Name - Dynamic Split for Mobile / Full for Desktop */}
+                    {(() => {
+                      const words = partyName.split(' ');
+                      const mid = Math.ceil(words.length / 2);
+                      const top = words.slice(0, mid).join(' ');
+                      const bottom = words.slice(mid).join(' ');
+
+                      return (
+                        <>
+                          {/* Mobile: Split 2 Lines */}
+                          <h1 className="md:hidden text-5xl font-black uppercase text-[#1A1A1A] leading-[0.9] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                            <span>{top}</span>
+                            <span>{bottom}</span>
+                          </h1>
+
+                          {/* Desktop: Single Line */}
+                          <h1 className="hidden md:block text-6xl xl:text-8xl font-black uppercase text-[#1A1A1A] leading-none tracking-tight mb-6 drop-shadow-sm" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                            {partyName}
+                          </h1>
+                        </>
+                      );
+                    })()}
+
+                    {/* Slogan - White text for maximum readability */}
+                    <p className="text-base md:text-xl lg:text-2xl text-white font-semibold leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                      {candidate?.slogan || "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"}
                     </p>
 
-                    <div className="flex flex-col gap-3 items-center">
-                      <button onClick={() => scrollTo('symbol')} className="group w-full max-w-[280px] md:max-w-[360px] px-6 py-3.5 md:py-4 bg-gradient-to-r from-[#FCD34D] to-[#B45309] text-white font-bold uppercase tracking-widest rounded-full hover:shadow-[0_0_20px_rgba(252,211,77,0.4)] transition-all shadow-lg text-[10px] md:text-sm flex items-center justify-center gap-2 transform active:scale-95 text-shadow-sm">
-                        <span>Discover Our Vision</span>
-                        <ChevronDown className="w-3 h-3 md:w-4 md:h-4 group-hover:translate-y-1 transition-transform" />
+                    {/* Action Buttons */}
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
+                      {/* Discover: Magenta Gradient */}
+                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[#D946EF] to-[#8B5CF6] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 discover-btn">
+                        <span className="relative z-10 flex items-center justify-center gap-2 text-xs lg:text-base">
+                          Discover Our Vision <ChevronDown className="w-4 h-4" />
+                        </span>
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                       </button>
 
-                      <button onClick={() => scrollTo('vote')} className="text-[10px] md:text-sm font-bold text-[#6A0DAD] hover:text-[#1A1A1A] transition-colors flex items-center gap-1 opacity-80 hover:opacity-100">
-                        <Target size={12} className="md:w-4 md:h-4" />
-                        <span>Ready to Vote? Tap here</span>
+                      {/* Vote: Glass styling (inverts automatically) */}
+                      <button onClick={() => scrollTo('vote')} className="vote-ready-btn w-full md:w-auto px-8 lg:px-10 py-3 lg:py-4 bg-white/30 backdrop-blur-md border border-black/10 text-[#1A1A1A] rounded-full font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-white transition-colors flex items-center justify-center gap-2 text-xs lg:text-base shadow-lg">
+                        <Target className="w-4 h-4" /> Ready to Vote?
                       </button>
                     </div>
                   </Reveal>
                 </div>
-              ) : (
-                <div className="relative -mt-12 w-full flex justify-center pb-8 z-30 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                  <button
-                    onClick={() => setIsMobileDockOpen(true)}
-                    className="flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-white/50 text-[#1A1A1A] font-bold text-xs md:text-sm uppercase tracking-wider hover:scale-105 transition-transform"
-                  >
-                    <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-[#6A0DAD] animate-pulse" />
-                    View Info & Vote
-                    <ChevronUp size={14} className="md:w-5 md:h-5" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* --- RESPONSIVE LAYOUT: "The Hero" Full Screen Cinematic --- */}
-            <LiquidHero className="hidden lg:flex min-h-[100dvh] items-center justify-center" members={members} isActive={introFinished}>
-
-              {/* ===== CONTENT: Centered & Dark/Contrast ===== */}
-              <div className="flex flex-col items-center justify-center text-center w-full"> {/* Removed max-w-5xl here as the wrapper handles it, or keep it? Wrapper is max-w-6xl. Keep max-w-5xl for tightness. */}
-
-                <Reveal delay={0}>
-                  {/* Party Number Badge - Pill Shaped */}
-                  <div className="mb-6 lg:mb-8">
-                    <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[#1A1A1A] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm party-number-badge">
-                      พรรคหมายเลข {partyNumber}
-                    </span>
-                  </div>
-
-                  {/* Party Name - Bold Charcoal */}
-                  <h1 className="text-4xl md:text-6xl xl:text-8xl font-black text-[#1A1A1A] leading-none tracking-tight mb-4 lg:mb-6 drop-shadow-sm">
-                    {partyName}
-                  </h1>
-
-                  {/* Slogan - Dark Gray */}
-                  <p className="text-base md:text-xl lg:text-2xl text-[#1A1A1A]/70 font-medium leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto">
-                    "{candidate?.slogan || "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"}"
-                  </p>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
-                    {/* Discover: Magenta Gradient */}
-                    <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[#D946EF] to-[#8B5CF6] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 discover-btn">
-                      <span className="relative z-10 flex items-center justify-center gap-2 text-xs lg:text-base">
-                        Discover Our Vision <ChevronDown className="w-4 h-4" />
-                      </span>
-                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                    </button>
-
-                    {/* Vote: Dark Outline */}
-                    <button onClick={() => scrollTo('vote')} className="w-full md:w-auto px-8 lg:px-10 py-3 lg:py-4 bg-transparent border-2 border-[#1A1A1A] text-[#1A1A1A] rounded-full font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-xs lg:text-base">
-                      <Target className="w-4 h-4" /> Ready to Vote?
-                    </button>
-                  </div>
-                </Reveal>
-              </div>
-            </LiquidHero>
+              </LiquidHero>
+            )}
           </section>
 
           {/* ===== SCROLL INDICATOR ===== */}
@@ -588,12 +543,6 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
                             </p>
                           )}
 
-                          {/* Bottom Arrow (Hidden on Mobile) */}
-                          <div className="mt-auto hidden md:flex justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-                            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
-                              <ArrowRight size={16} />
-                            </div>
-                          </div>
                         </div>
                       </div>
                     </div>
