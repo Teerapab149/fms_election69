@@ -12,11 +12,11 @@ function verifyAdminToken(request) {
 
   if (!encryptedToken) { // Added Log
     console.error("verifyAdminToken: Missing x-admin-token header");
-    return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
+    return NextResponse.json({ error: "Missing x-admin-token header" }, { status: 401 });
   }
   if (!PRIVATE_KEY) { // Added Log
     console.error("verifyAdminToken: Missing PRIVATE_KEY in env");
-    return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
+    return NextResponse.json({ error: "Missing ADMIN_PRIVATE_KEY in Server Environment" }, { status: 401 });
   }
 
   try {

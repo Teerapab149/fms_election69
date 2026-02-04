@@ -65,7 +65,10 @@ export default function ClosedPage() {
 
         // 3. ใช้ signOut แบบ redirect ของ NextAuth
         try {
-            await signOut({ callbackUrl: psuLogoutUrl });
+            // ✅ Clear Local Session first (no redirect)
+            await signOut({ redirect: false });
+            // ✅ Then Force Redirect to PSU SSO Logout
+            window.location.href = psuLogoutUrl;
         } catch (error) {
             console.error("Logout failed:", error);
             // Fallback: ถ้า signOut พัง ให้ Force Redirect ไปที่ SSO เลย

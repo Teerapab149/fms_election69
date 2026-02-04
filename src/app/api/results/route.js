@@ -12,7 +12,14 @@ const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
 function checkAdminAuth(request) {
   try {
     const encryptedToken = request.headers.get('x-admin-token');
-    if (!encryptedToken || !PRIVATE_KEY) return false;
+    if (!encryptedToken) {
+      console.log("CheckAdminAuth: Missing Header");
+      return "MISSING_HEADER";
+    }
+    if (!PRIVATE_KEY) {
+      console.log("CheckAdminAuth: Missing Private Key");
+      return "MISSING_KEY";
+    }
 
     const buffer = Buffer.from(encryptedToken, "base64");
     const decryptedData = crypto.privateDecrypt(
@@ -27,12 +34,13 @@ function checkAdminAuth(request) {
     const [secret, timestamp] = decryptedString.split('|');
     const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
 
-    if (secret !== EXPECTED_SECRET) return false;
-    if (Date.now() - parseInt(timestamp) > 3600000) return false;
+    if (secret !== EXPECTED_SECRET) return "INVALID_SECRET";
+    if (Date.now() - parseInt(timestamp) > 3600000) return "EXPIRED";
 
-    return true;
+    return "OK";
   } catch (error) {
-    return false;
+    console.error("CheckAdminAuth Error", error);
+    return "DECRYPT_ERROR";
   }
 }
 
@@ -41,7 +49,8 @@ export async function GET(request) {
     const now = Date.now();
 
     // ✅ Check Admin Auth (To bypass isHideScore)
-    const isAdmin = checkAdminAuth(request);
+    const authStatus = checkAdminAuth(request);
+    const isAdmin = authStatus === "OK";
 
     const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
 

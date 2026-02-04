@@ -8,6 +8,8 @@ services:
       args:
         - BASE_PATH=${BASE_PATH}
         - ASSET_PREFIX=${ASSET_PREFIX}
+        - NEXT_PUBLIC_ADMIN_PUBLIC_KEY=${NEXT_PUBLIC_ADMIN_PUBLIC_KEY}
+        - NEXT_PUBLIC_ADMIN_AUTH_SECRET=${NEXT_PUBLIC_ADMIN_AUTH_SECRET}
     container_name: fms-election-web
     restart: always
     ports:
@@ -32,6 +34,11 @@ services:
 
       # Secrets
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - ADMIN_PRIVATE_KEY=${ADMIN_PRIVATE_KEY}
+      - NEXT_PUBLIC_ADMIN_PUBLIC_KEY=${NEXT_PUBLIC_ADMIN_PUBLIC_KEY}
+      - ADMIN_AUTH_SECRET=${ADMIN_AUTH_SECRET}
+      - NEXT_PUBLIC_ADMIN_AUTH_SECRET=${NEXT_PUBLIC_ADMIN_AUTH_SECRET}
+      - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
 
     command: node --security-revert=CVE-2023-46809 server.js
 
