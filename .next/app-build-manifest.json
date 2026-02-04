@@ -17,10 +17,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/vote/page": [
+    "/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/vote/page.js"
+      "static/chunks/app/login/page.js"
     ],
     "/admin/login/page": [
       "static/chunks/webpack.js",
@@ -31,16 +31,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/page.js"
-    ],
-    "/closed/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/closed/page.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
     ]
   }
 }
