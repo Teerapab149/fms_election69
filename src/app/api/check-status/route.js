@@ -1,24 +1,66 @@
 import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
 
-export async function POST(request) {
+export async function GET(request) {
   try {
-    const { studentId } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get("studentId"); // Optional
 
-    if (!studentId) {
-      return NextResponse.json({ error: "Missing studentId" }, { status: 400 });
+    // Check System Config First
+    let config = await db.systemConfig.findFirst({ where: { id: 1 } });
+    if (!config) {
+      config = await db.systemConfig.create({ data: { id: 1, isVoteOpen: true, showResult: false } });
     }
 
-    const user = await db.user.findUnique({
-      where: { studentId: String(studentId) }, // แปลงเป็น String กันเหนียว
-      select: { isVoted: true } // ดึงมาแค่สถานะโหวตพอ ประหยัดแรง
+    const { ELECTION_START, ELECTION_END } = await import("../../../utils/electionConfig").then(m => m.ELECTION_CONFIG);
+    const now = Date.now();
+    const sysMode = config.systemMode || "AUTO";
+
+    let isSystemOpen = false;
+    let electionStatus = "WAITING";
+
+    if (sysMode === "MANUAL_OPEN") {
+      isSystemOpen = true;
+      electionStatus = "ONGOING";
+    } else if (sysMode === "PAUSE") {
+      isSystemOpen = false;
+      electionStatus = "CLOSED";
+    } else if (sysMode === "ENDED") {
+      isSystemOpen = false;
+      electionStatus = "ENDED";
+    } else {
+      // AUTO
+      if (now < ELECTION_START) {
+        isSystemOpen = false; // Voting page will redirect for now, which is expected behavior for 'restricted' pages
+        electionStatus = "WAITING";
+      } else if (now >= ELECTION_END) {
+        isSystemOpen = false;
+        electionStatus = "ENDED";
+      } else {
+        isSystemOpen = true;
+        electionStatus = "ONGOING";
+      }
+    }
+
+    let isVoted = false;
+
+    if (studentId) {
+      const user = await db.user.findUnique({
+        where: { studentId: String(studentId) },
+        select: { isVoted: true },
+      });
+      if (user) isVoted = user.isVoted;
+    }
+
+    return NextResponse.json({
+      isVoted: isVoted,
+      isSystemOpen: isSystemOpen,
+      showResult: config.showResult,
+      systemMode: sysMode,
+      systemMode: sysMode,
+      electionStatus: electionStatus,
+      googleFormUrl: config.googleFormUrl || ""
     });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ isVoted: user.isVoted });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

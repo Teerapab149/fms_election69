@@ -8,7 +8,7 @@ export async function GET() {
     // ✅ เปลี่ยน prisma. เป็น db.
     let teams = await db.candidate.findMany({
       orderBy: {
-        number: 'asc', 
+        number: 'asc',
       },
       include: {
         members: {
@@ -19,7 +19,7 @@ export async function GET() {
       }
     });
 
-    teams = teams.filter(e => e.number != 0);
+    // teams = teams.filter(e => e.number != 0); // Allow all candidates including Abstain
 
     return NextResponse.json(teams);
 

@@ -1,14 +1,14 @@
 'use client';
+import { getPath } from "../../../utils/basePath";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  
-  // State สำหรับเก็บ Error Message
+
   const [error, setError] = useState('');
 
   const handleAdminLogin = async (e) => {
@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
     setError(''); 
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(getPath('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -29,9 +29,8 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/admin');
+        window.location.href = getPath("/admin")
       } else {
-        //setError
         setError(data.message || 'เข้าสู่ระบบไม่สำเร็จ');
       }
 
@@ -44,7 +43,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white relative overflow-hidden p-4">
-      
+
       {/* Background Layers */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
@@ -54,16 +53,16 @@ export default function AdminLoginPage() {
       </div>
 
       <div className="relative z-10 bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(138,38,128,0.15)] w-full max-w-sm overflow-hidden border border-white/50">
-        
+
         {/* Header */}
         <div className="bg-gradient-to-r from-[#8A2680] to-[#3B82F6] p-6 text-center relative overflow-hidden">
           <div className="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-shimmer"></div>
           <div className="flex justify-center mb-2">
-             <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white drop-shadow-sm">
-                  <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3zM12 6.75a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0112 6.75z" clipRule="evenodd" />
-                </svg>
-             </div>
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white drop-shadow-sm">
+                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3zM12 6.75a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0112 6.75z" clipRule="evenodd" />
+              </svg>
+            </div>
           </div>
           <h1 className="text-xl font-black text-white tracking-widest uppercase drop-shadow-sm">Administrator</h1>
           <p className="text-white/80 text-xs mt-1 font-medium tracking-wider">เฉพาะเจ้าหน้าที่/กรรมการเลือกตั้ง</p>
@@ -71,7 +70,7 @@ export default function AdminLoginPage() {
 
         <div className="p-8">
           <form onSubmit={handleAdminLogin} className="space-y-5">
-            
+
             {/* ✅ 3. ส่วนแสดงผล Error Message (จะโชว์ก็ต่อเมื่อมี error) */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-medium animate-pulse">
@@ -85,8 +84,8 @@ export default function AdminLoginPage() {
             <div className="group">
               <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider group-focus-within:text-[#8A2680] transition-colors">Username</label>
               <div className="relative">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   // เพิ่ม: ถ้ามี error ให้ขอบเป็นสีแดง
                   className={`w-full pl-4 pr-4 py-3 rounded-xl border bg-gray-50/50 focus:bg-white outline-none transition-all text-sm font-medium text-gray-700 ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-[#8A2680] focus:ring-[#8A2680]/20 focus:ring-2'}`}
                   placeholder="Enter admin username"
@@ -99,9 +98,9 @@ export default function AdminLoginPage() {
             <div className="group">
               <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider group-focus-within:text-[#8A2680] transition-colors">Password</label>
               <div className="relative">
-                <input 
-                  type="password" 
-                   className={`w-full pl-4 pr-4 py-3 rounded-xl border bg-gray-50/50 focus:bg-white outline-none transition-all text-sm font-medium text-gray-700 font-sans ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-[#8A2680] focus:ring-[#8A2680]/20 focus:ring-2'}`}
+                <input
+                  type="password"
+                  className={`w-full pl-4 pr-4 py-3 rounded-xl border bg-gray-50/50 focus:bg-white outline-none transition-all text-sm font-medium text-gray-700 font-sans ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-[#8A2680] focus:ring-[#8A2680]/20 focus:ring-2'}`}
                   placeholder="••••••••"
                   onChange={() => setError('')} // ถ้าเริ่มพิมพ์ใหม่ ให้ error หายไป
                   required
@@ -109,8 +108,8 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full group relative overflow-hidden rounded-xl shadow-[0_4px_15px_-5px_rgba(138,38,128,0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_25px_-5px_rgba(138,38,128,0.6)] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >

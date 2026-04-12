@@ -1,13 +1,10 @@
 "use client";
 import { useEffect } from "react";
+import { NextResponse } from 'next/server'; 
 
 export default function AdminLogout() {
-  
+
   useEffect(() => {
-    // 1. ล้างข้อมูลให้เกลี้ยง
-    localStorage.removeItem("currentUser");
-    
-    // 2. ใช้ window.location.href ดีดออกทันที
     window.location.href = "/";
   }, []);
 

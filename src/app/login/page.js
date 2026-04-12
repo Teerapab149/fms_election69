@@ -1,165 +1,157 @@
 "use client";
 
-import { useState, useEffect } from "react"; // ✅ เพิ่ม useEffect
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; // ✅ เพิ่ม useSearchParams เพื่อดัก Error จาก URL
+import { signIn, useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
+import { Loader2, AlertCircle, LogIn, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // ดึงค่าจาก URL
+  const { data: session, status } = useSession();
 
-  const [studentId, setStudentId] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ เพิ่มส่วนนี้: เช็คทันทีที่เข้ามาหน้านี้ ว่าเคย Login ค้างไว้ไหม?
+  // ✅ เช็ค Error ที่เด้งกลับมาจาก NextAuth (เช่น กด Cancel หรือ Login ไม่ผ่าน)
   useEffect(() => {
-    const userStr = localStorage.getItem("currentUser");
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      setError("การยืนยันตัวตนล้มเหลว หรือถูกยกเลิก");
+    }
+  }, [searchParams]);
 
-    if (userStr) {
-      // ถ้ามีข้อมูล User อยู่แล้ว (ล็อกอินค้างไว้)
-      const user = JSON.parse(userStr);
-
-      // เช็คต่อเลยว่าโหวตยัง?
-      if (user.isVoted) {
-        router.push("/results"); // โหวตแล้ว -> ไปดูผล
+  // ✅ ถ้า Login อยู่แล้ว ให้เด้งไปหน้าอื่น
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      if (session.user.isVoted) {
+        router.replace("/results");
       } else {
-        router.push("/vote");    // ยังไม่โหวต -> ไปโหวต
+        router.replace("/vote");
       }
     }
-  }, [router]);
+  }, [status, session, router]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  const handleLogin = async () => {
     setLoading(true);
+    setError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, password }),
+      // ✅ เรียกใช้ Provider "authentik" ตามที่เราตั้งใน auth.js
+      await signIn("authentik", {
+        callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" // ระบุ path ปลายทางให้ชัดเจน (Default to /fms-ovs)
       });
-
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("ระบบหลังบ้านไม่ได้ส่ง JSON กลับมา (เช็คไฟล์ route.js)");
-      }
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      // Login สำเร็จ -> บันทึกลงเครื่อง
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-
-      // เช็คว่า User นี้โหวตหรือยัง แล้วดีดไปให้ถูกหน้า
-      if (data.user.isVoted) {
-        router.push("/results");
-      } else {
-        router.push("/vote");
-      }
-
     } catch (err) {
       console.error(err);
-      setError(err.message);
-    } finally {
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
       setLoading(false);
     }
   };
 
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">
-      <Navbar />
-      {/* Background Grid - ปรับให้จางลงอีกนิดเพื่อให้ดูแพง */}
-      <div className="fixed inset-0 z-0 opacity-[0.2] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-      <main className="flex-grow flex items-center justify-center p-4 relative z-10">
-        <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-2xl shadow-slate-200/50 w-full max-w-md border border-slate-100 animate-fade-in-up">
+      <div className="relative z-50 bg-white shadow-sm">
+        <Navbar />
+      </div>
 
-          <div className="text-center mb-10">
-            <div className="inline-block px-3 py-1 bg-blue-50 text-[#003087] text-[10px] font-bold tracking-widest uppercase rounded-full mb-4">
-              Official Authentication
+      <div className="flex-grow relative flex items-center justify-center w-full overflow-hidden">
+
+        <div className="absolute inset-0 z-0 opacity-[0.5] pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }}>
+        </div>
+
+        <main className="relative z-20 w-full px-4 flex justify-center py-10">
+
+          <div className="bg-white/95 backdrop-blur-md w-full max-w-[340px] md:max-w-[400px] 
+                            p-6 md:p-10 
+                            rounded-[1.5rem] md:rounded-[2rem] 
+                            shadow-2xl shadow-slate-300/50 border border-white/60 animate-fade-in-up text-center">
+
+            <div className="mb-6 flex flex-col items-center">
+              <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm text-[#003087]">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+
+              <div className="inline-block px-3 py-1 bg-blue-50 text-[#003087] text-[10px] font-bold tracking-widest uppercase rounded-full mb-3">
+                PSU Authentication
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black text-[#003087] tracking-tight mb-2">PSU PASSPORT</h1>
+              <p className="text-slate-500 text-sm font-medium">
+                ระบบยืนยันตัวตนสำหรับนักศึกษา<br />มหาวิทยาลัยสงขลานครินทร์
+              </p>
             </div>
-            <h1 className="text-3xl font-black text-[#003087] mb-2 tracking-tight">PSU PASSPORT</h1>
-            <p className="text-slate-400 text-sm">ระบบยืนยันตัวตนมหาวิทยาลัยสงขลานครินทร์</p>
-          </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+            {/* Error Alert */}
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm p-3.5 rounded-2xl text-center border border-red-100 flex items-center justify-center gap-2 animate-shake">
-                <span className="text-lg">⚠️</span> {error}
+              <div className="mb-4 bg-red-50 text-red-600 text-[13px] p-3 rounded-xl border border-red-100 flex items-center justify-center gap-2 animate-shake">
+                <AlertCircle className="w-4 h-4" /> {error}
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">Username</label>
-              <input
-                type="text"
-                placeholder="Ex. 6610510xxx"
-                className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-[#003087] focus:ring-4 focus:ring-blue-50 outline-none transition-all text-slate-800 placeholder:text-slate-300 font-medium"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-[#003087] focus:ring-4 focus:ring-blue-50 outline-none transition-all text-slate-800 placeholder:text-slate-300 font-medium"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
+            {/* Login Button */}
             <button
-              type="submit"
+              onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-[#003087] hover:bg-[#002466] text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-900/10 transition-all hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center text-lg"
+              className="w-full bg-[#003087] hover:bg-[#002466] text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/10 transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3 text-sm md:text-base group"
             >
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  กำลังตรวจสอบ...
-                </span>
-              ) : "เข้าสู่ระบบ (Sign In)"}
-            </button>
-          </form>
-
-          {/* ปุ่มกลับหน้าหลัก - ปรับให้เป็น Outline Button ที่ดูสะอาดตา */}
-          <div className="mt-8 pt-6 border-t border-slate-50 space-y-4">
-            <button
-              onClick={() => router.push("/")}
-              className="w-full py-3 rounded-2xl border border-slate-200 text-slate-500 font-semibold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-              กลับหน้าหลัก
+                <>
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  กำลังเชื่อมต่อระบบ...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  เข้าสู่ระบบด้วย PSU Passport
+                </>
+              )}
             </button>
 
-            {/* Admin Entrance - วางไว้ใต้ปุ่มกลับหน้าหลักอีกที */}
-            <div className="flex justify-center">
+            <p className="mt-4 text-[11px] text-slate-400">
+              ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย
+            </p>
+
+            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-4">
               <button
-                onClick={() => router.push("/admin")}
-                className="group flex items-center gap-2 opacity-30 hover:opacity-100 transition-all duration-500 py-2"
+                onClick={() => router.push("/")}
+                className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-500 font-semibold text-xs hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all active:scale-[0.98] flex justify-center items-center gap-2 group"
               >
-                <div className="w-1 h-1 rounded-full bg-slate-400 group-hover:bg-blue-500 transition-colors"></div>
-                <span className="text-[10px] tracking-[0.2em] text-slate-400 font-medium uppercase group-hover:text-slate-600">
-                  FMS ELECTION SYSTEM
-                </span>
-                <div className="w-1 h-1 rounded-full bg-slate-400 group-hover:bg-blue-500 transition-colors"></div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                กลับหน้าหลัก
               </button>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="text-[10px] tracking-[0.15em] font-bold text-slate-300 hover:text-[#8A2680] transition-colors uppercase py-1 select-none"
+                >
+                  FMS ELECTION SYSTEM
+                </button>
+              </div>
             </div>
+
           </div>
+        </main>
 
-        </div >
+      </div>
 
-      </main >
-    </div >
+      {/* Footer */}
+      <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
+        <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
+      </footer>
+    </div>
   );
 }

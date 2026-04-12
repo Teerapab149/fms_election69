@@ -10,54 +10,74 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  studentId    String   @unique
-  name         String?
-  email        String?
-  facultyId    String?
-  role         String   @default("student")
-  password  String?
-  gender       String?
-  major        String?
-  year         String?
+  id            Int      @id @default(autoincrement())
+  studentId     String   @unique
+  name          String?
+  email         String?
+  facultyId     String?
+  departmentId  String?
+  role          String   @default("student")
+  passwordHash  String?
+  gender        String?
+  major         String?
+  titleName     String?
+  subKeyId      String?
+  subMajorId    String?
+  subMajorNameThai    String?
+  year          String?
+  yearStatus    String?
 
-  isVoted      Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  isVoted       Boolean  @default(false)
+  isFormCompleted  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  isAdmin       Boolean @default(false)
 
-  candidateId  Int?
-  candidate    Candidate? @relation(fields: [candidateId], references: [id])
+  candidateId   Int?
+  candidate     Candidate? @relation(fields: [candidateId], references: [id])
 }
 
 model Member {
-  id           Int      @id @default(autoincrement())
-  studentId    String   @unique
-  name         String
-  email        String
-  imageUrl     String
-  
-  position     String?
+  id            Int      @id @default(autoincrement())
+  studentId     String   @unique
+  name          String
+  number        Int      @default(0)
 
-  candidateId  Int
-  candidate    Candidate @relation(fields: [candidateId], references: [id])
+  imageUrl      String
+  modalImageUrl String?
+
+  major         String?
+  position      String?
+
+  candidateId   Int
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
 }
 
 model Candidate {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  number       Int      @unique
-  slogan       String?
-  logoUrl      String?
-  groupImageUrl String?
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  number        Int      @unique
+  slogan        String?
+  logoUrl       String?
+
+  groupImageUrls Json? 
+  officialImageUrl String?
+  mobileHeroImage Json?
+
+  logoMeaning   String?
+  missions      Json?    
+  policies      Json?    
   
-  members      Member[]
-  voters       User[]
+  members       Member[]
+  voters        User[]
   
-  score        Int      @default(0)
+  score         Int      @default(0)
 }
 
 model SystemConfig {
-  id           Int      @id @default(1)
-  isVoteOpen   Boolean  @default(false)
-  showResult   Boolean  @default(false)
-  updatedAt    DateTime @updatedAt
+  id            Int      @id @default(1)
+  isVoteOpen    Boolean  @default(false)
+  showResult    Boolean  @default(false)
+  systemMode    String   @default("AUTO")
+  googleFormUrl String?
+  updatedAt     DateTime @updatedAt
 }

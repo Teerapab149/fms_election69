@@ -1,0 +1,18 @@
+// ตั้งค่าเวลาทั้งหมดที่นี่ที่เดียว!
+export const ELECTION_CONFIG = {
+  // 🟢 เวลาเปิดตัวผู้สมัคร (Campaign Start)
+  // วิธีเทส: ปรับปีเป็น 2025 เพื่อดูรายชื่อผู้สมัคร / ปรับปี 2027 เพื่อดูหน้า "ยังไม่เปิดเผย"
+  CAMPAIGN_START: new Date('2026-01-29T08:30:00'),
+
+  // 🟡 เวลาเริ่มเลือกตั้ง (Start Voting)
+  // วิธีเทส: ปรับให้เป็น "อดีต" เพื่อให้สถานะเป็น ONGOING
+  ELECTION_START: new Date('2026-02-06T08:30:00'),
+
+  // 🔴 เวลาปิดหีบ (End Voting)
+  // วิธีเทส: ปรับให้เป็น "อดีต" เพื่อให้สถานะเป็น ENDED (ดูผล)
+  ELECTION_END: new Date('2026-02-06T17:00:00'),
+};
+
+export const ELECTION_YEAR = "2026";
+export const ELECTION_YEAR_TH = "2569";
+export const ELECTION_SLOGAN = "Your vote matter";

@@ -2,13 +2,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Zap, Clock, CalendarDays, Hourglass, Flag } from 'lucide-react';
+import { ELECTION_CONFIG } from '../utils/electionConfig';
 
-export default function CountdownTimer({ compact = false }) {
+export default function CountdownTimer({ compact = false, systemMode = "AUTO" }) {
 
-  // กำหนดเวลา (Time Configuration)
-  const ELECTION_2026_START = new Date('2026-02-06T08:30:00');
-  const ELECTION_2026_END   = new Date('2026-02-06T17:30:00');
-  const ELECTION_2027_START = new Date('2027-02-06T08:30:00');
+  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+  // Fallback for next year logic if needed, or just standard behavior
+  const ELECTION_NEXT_YEAR = new Date(ELECTION_START);
+  ELECTION_NEXT_YEAR.setFullYear(ELECTION_NEXT_YEAR.getFullYear() + 1);
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
@@ -16,16 +17,33 @@ export default function CountdownTimer({ compact = false }) {
   useEffect(() => {
     const calculate = () => {
       const now = new Date();
-      
-      if (now < ELECTION_2026_START) {
-        setPhase('BEFORE');
-        return ELECTION_2026_START - now;
-      } else if (now >= ELECTION_2026_START && now < ELECTION_2026_END) {
+
+      // NEW: Manual System Mode Overrides
+      if (systemMode === "PAUSE") {
+        setPhase('PAUSED');
+        return 0;
+      }
+
+      if (systemMode === "ENDED") {
+        setPhase('MANUAL_ENDED');
+        return 0;
+      }
+
+      if (systemMode === "MANUAL_OPEN") {
         setPhase('RUNNING');
-        return ELECTION_2026_END - now;
+        return ELECTION_END - now;
+      }
+
+      // AUTO Mode (Time-based logic)
+      if (now < ELECTION_START) {
+        setPhase('BEFORE');
+        return ELECTION_START - now;
+      } else if (now >= ELECTION_START && now < ELECTION_END) {
+        setPhase('RUNNING');
+        return ELECTION_END - now;
       } else {
         setPhase('NEXT_YEAR');
-        return ELECTION_2027_START - now;
+        return ELECTION_NEXT_YEAR - now;
       }
     };
 
@@ -44,17 +62,37 @@ export default function CountdownTimer({ compact = false }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [ELECTION_START, ELECTION_END, ELECTION_NEXT_YEAR, systemMode]);
 
   const getConfig = () => {
     switch (phase) {
+      case 'PAUSED':
+        return {
+          label: "SYSTEM PAUSED",
+          icon: <Hourglass className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-orange-500 animate-spin" />,
+          badgeBg: "bg-orange-100 !text-orange-700",
+          textMain: "text-orange-600",
+          textSub: "text-orange-400",
+          border: "border-orange-200",
+          shadow: "shadow-sm shadow-orange-100"
+        };
+      case 'MANUAL_ENDED':
+        return {
+          label: "ELECTION ENDED",
+          icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-slate-500" />,
+          badgeBg: "bg-slate-200 !text-slate-700",
+          textMain: "text-slate-600",
+          textSub: "text-slate-400",
+          border: "border-slate-300",
+          shadow: "shadow-none"
+        };
       case 'RUNNING':
         return {
           label: "CLOSES IN",
           icon: <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 animate-pulse" />,
           badgeBg: "bg-red-500",
           textMain: "text-red-600",
-          textSub: "text-red-400", // ปรับสีหน่วยให้เข้มขึ้น อ่านง่ายขึ้น
+          textSub: "text-red-400",
           border: "border-red-100",
           shadow: "shadow-[0_2px_15px_rgba(239,68,68,0.2)]"
         };
@@ -75,7 +113,7 @@ export default function CountdownTimer({ compact = false }) {
           icon: <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-[#9D3292]",
           textMain: "text-[#9D3292]",
-          textSub: "text-purple-400", // ปรับสีหน่วยให้เข้มขึ้น
+          textSub: "text-purple-400",
           border: "border-purple-100",
           shadow: "shadow-[0_2px_10px_rgba(157,50,146,0.15)]"
         };
@@ -91,25 +129,25 @@ export default function CountdownTimer({ compact = false }) {
   return (
     // ✅ Wrapper: เพิ่ม padding (p-1.5, lg:p-2) และ gap (gap-3, lg:gap-5) ให้กว้างขึ้น
     <div className={`group relative inline-flex items-center gap-3 p-1.5 pr-6 lg:gap-5 lg:p-2 lg:pr-10 bg-white border rounded-full transition-all duration-300 cursor-default hover:-translate-y-0.5 select-none ${config.border} ${config.shadow} ${compact ? '' : ''}`}>
-       
-       {/* Badge Label: ขยายขนาด Font และ Padding */}
-       <div className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 rounded-full ${config.badgeBg} text-white shadow-sm transition-all`}>
-          {config.icon}
-          <span className="text-[10px] sm:text-xs lg:text-sm font-bold uppercase tracking-wider translate-y-[0.5px] whitespace-nowrap">
-             {config.label}
-          </span>
-       </div>
 
-       {/* ตัวเลขเวลานับถอยหลัง: ปรับ Gap ให้ห่างขึ้น */}
-       <div className={`flex items-baseline gap-1.5 sm:gap-2 lg:gap-3 ${config.textMain}`}>
-          <TimeUnit value={timeLeft.days} unit="d" colorSub={config.textSub} />
-          <Separator color={config.textSub} />
-          <TimeUnit value={timeLeft.hours} unit="h" colorSub={config.textSub} />
-          <Separator color={config.textSub} />
-          <TimeUnit value={timeLeft.minutes} unit="m" colorSub={config.textSub} />
-          <Separator color={config.textSub} />
-          <TimeUnit value={timeLeft.seconds} unit="s" colorSub={config.textSub} />
-       </div>
+      {/* Badge Label: ขยายขนาด Font และ Padding */}
+      <div className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 rounded-full ${config.badgeBg} text-white shadow-sm transition-all`}>
+        {config.icon}
+        <span className="text-[10px] sm:text-xs lg:text-sm font-bold uppercase tracking-wider translate-y-[0.5px] whitespace-nowrap">
+          {config.label}
+        </span>
+      </div>
+
+      {/* ตัวเลขเวลานับถอยหลัง: ปรับ Gap ให้ห่างขึ้น */}
+      <div className={`flex items-baseline gap-1.5 sm:gap-2 lg:gap-3 ${config.textMain}`}>
+        <TimeUnit value={timeLeft.days} unit="d" colorSub={config.textSub} />
+        <Separator color={config.textSub} />
+        <TimeUnit value={timeLeft.hours} unit="h" colorSub={config.textSub} />
+        <Separator color={config.textSub} />
+        <TimeUnit value={timeLeft.minutes} unit="m" colorSub={config.textSub} />
+        <Separator color={config.textSub} />
+        <TimeUnit value={timeLeft.seconds} unit="s" colorSub={config.textSub} />
+      </div>
 
     </div>
   );

@@ -13,7 +13,7 @@ export default function ConfirmationModal({
 }) {
     if (!isOpen) return null;
 
-    // กำหนดสีตามประเภทการใช้งาน
+    // กำหนดสีตามประเภทการใช้งาน 
     const isDanger = variant === 'danger';
     const iconColor = isDanger ? 'text-red-600 bg-red-100' : 'text-[#8A2680] bg-purple-100';
     const buttonColor = isDanger

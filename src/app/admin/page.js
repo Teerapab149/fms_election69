@@ -1,23 +1,30 @@
 'use client';
+import { getPath } from "../../utils/basePath";
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ResultCard from "../../components/ResultCard";
 import CandidateCard from "../../components/CandidateCard";
 import EditCandidateModal from "../../components/EditCandidateModal";
+import EditCandidateMember from "../../components/EditCandidateMember";
+import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
+import ErrorActionModal from "../../components/ErrorActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2 } from "lucide-react";
+import { getEncryptedToken } from "../../utils/auth";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 
+import { ELECTION_CONFIG } from "../../utils/electionConfig";
+
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [phase, setPhase] = useState('LOADING'); // LOADING, WAITING, RUNNING, ENDED
+  const [phase, setPhase] = useState('LOADING');
 
-  const ELECTION_START = new Date('2026-02-06T08:00:00'); // เริ่ม 6 ก.พ. 08:00
-  const ELECTION_END = new Date('2026-02-06T17:30:00'); // จบ 6 ก.พ. 16:00
+  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
 
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -30,27 +37,66 @@ const OverviewTab = () => {
 
   const fetchResults = async () => {
     try {
-      const res = await fetch("/api/results");
+
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) {
+        console.error("Encryption failed");
+        return;
+      }
+
+      const res = await fetch(getPath("/api/results"), {
+        headers: { 'x-admin-token': encryptedToken }
+      });
+
       const data = await res.json();
 
       if (data.candidates) {
         const sortedCandidates = data.candidates.sort((a, b) => b.score - a.score);
         setCandidates(sortedCandidates);
-        setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+
+        if (typeof data.totalVotes !== 'undefined') {
+          setTotalVotes(data.totalVotes);
+        } else {
+          setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
+        }
       }
 
       if (data.stats) {
-        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4', 'อื่นๆ'];
-        const sortedByYear = data.stats.byYear ? [...data.stats.byYear].sort((a, b) => {
-          const indexA = yearOrder.indexOf(a.name);
-          const indexB = yearOrder.indexOf(b.name);
-          return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-        }) : [];
+        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
 
-        const genderOrder = ['ชาย', 'หญิง'];
-        const sortedByGender = data.stats.byGender ? [...data.stats.byGender].sort((a, b) => {
-          return genderOrder.indexOf(a.name) - genderOrder.indexOf(b.name);
-        }) : [];
+        const sortedByYear = data.stats.byYear
+          ? data.stats.byYear
+            .filter(item => item.name !== 'อื่นๆ')
+            .sort((a, b) => {
+              const indexA = yearOrder.indexOf(a.name);
+              const indexB = yearOrder.indexOf(b.name);
+              return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+            })
+          : [];
+
+        // Mapping Names (M -> Male, F -> Female)
+        const genderMap = {
+          'm': 'Male',
+          'f': 'Female',
+          'ชาย': 'Male',
+          'หญิง': 'Female',
+          'male': 'Male',
+          'female': 'Female'
+        };
+
+        const processedGender = data.stats.byGender ? data.stats.byGender.map(g => ({
+          ...g,
+          name: genderMap[String(g.name).toLowerCase()] || g.name
+        })) : [];
+
+        const genderOrder = ['Male', 'Female'];
+        const sortedByGender = processedGender.sort((a, b) => {
+          const indexA = genderOrder.indexOf(a.name);
+          const indexB = genderOrder.indexOf(b.name);
+          const valA = indexA === -1 ? 999 : indexA;
+          const valB = indexB === -1 ? 999 : indexB;
+          return valA - valB;
+        });
 
         setDemographics({
           ...data.stats,
@@ -92,8 +138,10 @@ const OverviewTab = () => {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     }, 1000);
-    const interval = setInterval(fetchResults, 5000);
+
     fetchResults();
+    const interval = setInterval(fetchResults, 5000);
+
     return () => {
       clearInterval(timer);
       clearInterval(interval);
@@ -132,7 +180,9 @@ const OverviewTab = () => {
             </div>
           </div>
           <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">Candidates</h3>
-          <p className="text-3xl font-black text-gray-800 mt-1">{candidates.filter((e) => e.number != 0).length} Teams</p>
+          <p className="text-3xl font-black text-gray-800 mt-1">
+            {candidates.filter((e) => parseInt(e.number) > 0).length} Teams
+          </p>
         </div>
 
         {/* Card 3 */}
@@ -168,12 +218,14 @@ const OverviewTab = () => {
   )
 };
 
-// 2. หน้าจัดการผู้สมัคร
 const CandidatesTab = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+  const [focusMemberId, setFocusMemberId] = useState(null);
 
   const [processing, setProcessing] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
@@ -184,7 +236,18 @@ const CandidatesTab = () => {
   const fetchResults = async () => {
     setCandidates([]);
     try {
-      const res = await fetch("/api/results");
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) {
+        console.error("Encryption failed");
+        return;
+      }
+
+      const res = await fetch(getPath(`/api/results?t=${Date.now()}`), {
+        cache: 'no-store',
+        headers: {
+          'x-admin-token': encryptedToken,
+        }
+      });
       const data = await res.json();
 
       if (data.candidates) {
@@ -222,7 +285,14 @@ const CandidatesTab = () => {
 
   const handleEditClick = (candidate = null) => {
     setSelectedCandidate(candidate);
+    setFocusMemberId(null);
     setIsEditModalOpen(true);
+  };
+
+  const handleEditClickMember = (candidate = null, memberId = null) => {
+    setSelectedCandidate(candidate);
+    setFocusMemberId(memberId);
+    setIsEditMemberModalOpen(true);
   };
 
   useEffect(() => {
@@ -250,7 +320,7 @@ const CandidatesTab = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
               {
-                candidates.filter(e => e.number != 0).map((candidate, index) => {
+                candidates.filter(e => e.number > 0).map((candidate) => {
                   return (
                     <CandidateCard
                       key={candidate.id}
@@ -286,6 +356,14 @@ const CandidatesTab = () => {
           onUpdate={(actionType) => handleUpdateSuccess(actionType)}
         />
 
+        <EditCandidateMemberModal
+          isOpen={isEditMemberModalOpen}
+          onClose={() => setIsEditMemberModalOpen(false)}
+          candidate={selectedCandidate}
+          focusMemberId={focusMemberId}
+          onUpdate={handleUpdateSuccess}
+        />
+
       </div>
 
       <div className="p-3" />
@@ -294,10 +372,27 @@ const CandidatesTab = () => {
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-purple-50 text-purple-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
           <h3 className="text-base lg:text-xl font-bold text-slate-700">สมาชิกพรรค</h3>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-green-200 text-green-600 hover:bg-green-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95" >
-            <CalendarPlus2 className="w-4 h-4" />
-            New
-          </button>
+        </div>
+
+        <div>
+          {/* Members */}
+          {loading ? (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200"><p className="text-slate-400">Loading...</p></div>
+          ) : (
+            <div className="grid grid-cols-1 h-500 sm:grid-cols-2 lg:grid-cols-2 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
+              {
+                candidates.filter(e => e.number > 0).map((candidate, index) => {
+                  return (
+                    <div key={candidate.id}>
+                      <EditCandidateMember
+                        candidate={candidate}
+                        onClick={(memberId) => handleEditClickMember(candidate, memberId)}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
 
         <div>
@@ -309,23 +404,38 @@ const CandidatesTab = () => {
   )
 };
 
-// 3. หน้าตั้งค่า
 const SettingsTab = () => {
-  const [isVoteOpen, setIsVoteOpen] = useState(false);
+  const [systemMode, setSystemMode] = useState("AUTO");
+  const [googleFormUrl, setGoogleFormUrl] = useState("");
+  const [isShowResult, setIsShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   const [activeModal, setActiveModal] = useState(null);
+  const [pendingMode, setPendingMode] = useState(null);
 
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
 
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState({ title: '', msg: '' });
+
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch('/api/admin/dashboard');
+        const encryptedToken = getEncryptedToken();
+        if (!encryptedToken) {
+          console.error("Encryption failed");
+          return;
+        }
+
+        const res = await fetch(getPath('/api/admin/dashboard'), { headers: { 'x-admin-token': encryptedToken, } });
         const data = await res.json();
-        if (data.stats) setIsVoteOpen(data.stats.isVoteOpen);
+        if (data.stats) {
+          setSystemMode(data.stats.systemMode || "AUTO");
+          setGoogleFormUrl(data.stats.googleFormUrl || "");
+          setIsShowResult(data.stats.showResult);
+        }
       } catch (error) {
         console.error("Failed to fetch config", error);
       } finally {
@@ -339,71 +449,163 @@ const SettingsTab = () => {
     if (!activeModal) return;
 
     setProcessing(true);
-
     try {
-      const res = await fetch('/api/admin/dashboard', {
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) return;
+
+      let action = activeModal;
+      let body = { action };
+
+      if (action === 'SET_MODE') {
+        body.mode = pendingMode;
+      }
+
+      if (action === 'SET_GOOGLE_FORM') {
+        body.url = googleFormUrl;
+      }
+
+      const res = await fetch(getPath('/api/admin/dashboard'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: activeModal }),
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
+        body: JSON.stringify(body),
       });
 
       setActiveModal(null);
 
       if (res.ok) {
-
-        if (activeModal === 'TOGGLE_VOTE') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'สถานะการโหวตได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
-          setIsVoteOpen(!isVoteOpen);
-        } else {
-          if (activeModal === 'RESET_VOTES') {
-            setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
-          } else {
-            if (activeModal === 'RESET_CANDIDATES') {
-              setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
-            } else {
-              setSuccessMessage({ title: '???', msg: '???' });
-            }
-          }
+        if (action === 'SET_MODE') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${pendingMode} เรียบร้อยแล้ว` });
+          setSystemMode(pendingMode);
+        } else if (action === 'SET_GOOGLE_FORM') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'อัปเดตลิงก์ Google Form เรียบร้อยแล้ว' });
+        } else if (action === 'TOGGLE_SHOW_RESULT') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
+          setIsShowResult(!isShowResult);
+        } else if (action === 'RESET_VOTES') {
+          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
+        } else if (action === 'RESET_CANDIDATES') {
+          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
         }
-
         setIsSuccessOpen(true);
+      } else {
+        setErrorMessage({ title: `Error ${res.status}`, msg: res.statusText });
+        setIsErrorOpen(true);
       }
     } catch (error) {
-      console.error("Action failed", error);
+      console.error("Action failed!", error);
     } finally {
       setProcessing(false);
     }
   };
 
+  const handleModeChange = (newMode) => {
+    if (newMode === systemMode) return; // ✅ Prevent redundant actions
+    setPendingMode(newMode);
+    setActiveModal('SET_MODE');
+  };
+
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-100 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-blue-50 text-blue-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
-        <h3 className="text-base lg:text-xl font-bold text-slate-700">ตั้งค่าระบบ</h3>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl"><Power className="h-6 w-6" /></div>
+        <h3 className="text-xl font-bold text-slate-700">ตั้งค่าระบบเลือกตั้ง (System Mode)</h3>
       </div>
-      <div className='p-3 gap-3'>
+
+      <div className='space-y-6'>
+        {/* --- 3-WAY MODE SELECTOR --- */}
+        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <h4 className="text-lg font-bold text-slate-800">ระบบการทำงาน</h4>
+              <p className="text-sm text-slate-500">เลือกโหมดการทำงานของระบบให้เหมาะสมกับสถานการณ์ปัจจุบัน</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200">
+              {[
+                { id: 'AUTO', label: 'AUTO (อัตโนมัติ)', color: 'bg-green-500', icon: <CalendarDays className="w-4 h-4" /> },
+                { id: 'MANUAL_OPEN', label: 'OPEN (เปิดระบบ)', color: 'bg-blue-600', icon: <Zap className="w-4 h-4" /> },
+                { id: 'PAUSE', label: 'PAUSE (ระงับ)', color: 'bg-orange-500', icon: <Hourglass className="w-4 h-4" /> },
+                { id: 'ENDED', label: 'ENDED (ปิดระบบ)', color: 'bg-red-500', icon: <Power className="w-4 h-4" /> }
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => handleModeChange(m.id)}
+                  disabled={systemMode === m.id || processing} // ✅ Disable if same mode or processing
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${systemMode === m.id
+                    ? `${m.color} text-white shadow-lg cursor-default`
+                    : 'text-slate-500 hover:bg-slate-300 disabled:opacity-50'
+                    }`}
+                >
+                  {m.icon}
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Current Status Badge */}
+          <div className="mt-6 flex items-center gap-3 py-3 px-4 bg-white/60 rounded-xl border border-dashed border-slate-200">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status:</span>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${systemMode === 'AUTO' ? 'bg-green-500' :
+                systemMode === 'MANUAL_OPEN' ? 'bg-blue-600' :
+                  systemMode === 'PAUSE' ? 'bg-orange-500' : 'bg-red-500'
+                }`} />
+              <span className="text-sm font-black text-slate-700">
+                {systemMode === "AUTO" ? "ระบบทำงานอัตโนมัติตามกำหนดเวลา" :
+                  systemMode === "MANUAL_OPEN" ? "เปิดรับคะแนนด้วยตนเอง (Force Open)" :
+                    systemMode === "PAUSE" ? "ระงับการโหวตชั่วคราว ( maintenance )" : "ปิดการเลือกตั้งอย่างเป็นทางการ"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-start md:items-end gap-3 p-6 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="w-full">
+            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
+              <LinkIcon className="w-5 h-5 text-indigo-600" />
+              Link Google Form
+            </h4>
+            <p className="text-xs text-slate-500 mb-2">ลิงก์สำหรับหน้าประเมินผล (Success Page)</p>
+            <input
+              type="text"
+              value={googleFormUrl}
+              onChange={(e) => setGoogleFormUrl(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              placeholder="https://docs.google.com/forms/..."
+            />
+          </div>
+          <button
+            onClick={() => setActiveModal('SET_GOOGLE_FORM')}
+            className="shrink-0 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm shadow-md hover:bg-indigo-700 transition-all flex items-center gap-2"
+          >
+            <Save size={16} />
+            Save
+          </button>
+        </div>
+
         <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
           <div>
             <h4 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <Power className="w-5 h-5 text-purple-600" />
-              สถานะระบบเลือกตั้ง
+              <PieIcon className="w-5 h-5 text-purple-600" />
+              การแสดงผลคะแนน
             </h4>
+            <p className="text-xs text-slate-500 mt-1">บังคับโชว์ผลคะแนนแบบ Real-time แม้จะยังไม่ถึงเวลาปิดหีบ</p>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className={`text-sm font-bold transition-colors ${isVoteOpen ? 'text-green-600' : 'text-red-500'}`}>
-              {loading ? '' : (isVoteOpen ? '🟢 เปิดรับคะแนน' : '🔴 ปิดรับคะแนน')}
+            <span className={`text-sm font-bold transition-colors ${isShowResult ? 'text-green-600' : 'text-red-500'}`}>
+              {loading ? '' : (isShowResult ? '🟢 แสดงผล' : '🔴 ซ่อนผล')}
             </span>
 
-            {/* ปุ่ม Switch */}
             {loading ? '' : (
               <button
-                onClick={() => setActiveModal('TOGGLE_VOTE')}
+                onClick={() => setActiveModal('TOGGLE_SHOW_RESULT')}
                 disabled={loading || processing}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isVoteOpen ? 'bg-green-500' : 'bg-gray-300'
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isShowResult ? 'bg-green-500' : 'bg-gray-300'
                   } ${processing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
               >
-                <span className={`${isVoteOpen ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
+                <span className={`${isShowResult ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
               </button>
             )}
           </div>
@@ -415,7 +617,7 @@ const SettingsTab = () => {
           <div>
             <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              ล้างคะแนนโหวตทั้งหมด และรีเซ็ตสิทธิ์การโหวตทั้งหมด
+              ล้างคะแนนโหวตทั้งหมด
             </h4>
           </div>
 
@@ -435,7 +637,7 @@ const SettingsTab = () => {
           <div>
             <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              ล้างข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด
+              ล้างพรรคและสมาชิกทั้งหมด
             </h4>
           </div>
 
@@ -457,15 +659,32 @@ const SettingsTab = () => {
         message={successMessage.msg}
       />
 
+      <ErrorActionModal
+        isOpen={isErrorOpen}
+        onClose={() => setIsErrorOpen(false)}
+        title={errorMessage.title}
+        message={errorMessage.msg}
+      />
+
       <ConfirmModal
-        isOpen={activeModal === 'TOGGLE_VOTE'}
+        isOpen={activeModal === 'SET_MODE'}
         onClose={() => setActiveModal(null)}
         onConfirm={handleConfirmAction}
-        title={isVoteOpen ? "ต้องการปิดระบบโหวต?" : "ต้องการเปิดระบบโหวต?"}
-        message={isVoteOpen
-          ? "เมื่อปิดระบบ นักศึกษาจะไม่สามารถลงคะแนนได้อีก แต่ยังสามารถดูผลคะแนนได้"
-          : "เมื่อเปิดระบบ นักศึกษาจะสามารถเริ่มลงคะแนนได้ทันที"}
-        variant="primary" // สีม่วง
+        title="เปลี่ยนโหมดการทำงาน?"
+        message={`คุณกำลังจะเปลี่ยนโหมดระบบเป็น "${pendingMode}" ยืนยันการดำเนินการหรือไม่?`}
+        variant="primary"
+        isLoading={processing}
+      />
+
+      <ConfirmModal
+        isOpen={activeModal === 'TOGGLE_SHOW_RESULT'}
+        onClose={() => setActiveModal(null)}
+        onConfirm={handleConfirmAction}
+        title={isShowResult ? "ซ่อนผลคะแนน?" : "แสดงผลคะแนน?"}
+        message={isShowResult
+          ? "เมื่อซ่อนผลคะแนน ข้อมูลสถิติและผลโหวตจะถูกปิดกั้น"
+          : "เมื่อแสดงผลคะแนน ทุกคนจะสามารถเข้าดูผลโหวตได้ทันที แม้ระบบโหวตจะปิดอยู่"}
+        variant="primary"
         isLoading={processing}
       />
 
@@ -475,7 +694,7 @@ const SettingsTab = () => {
         onConfirm={handleConfirmAction}
         title="⚠️ ยืนยันการล้างระบบ?"
         message={`ผลคะแนนทั้งหมดและสิทธิ์การโหวตของผู้ใช้ทุกคนจะถูกรีเซ็ต`}
-        variant="danger" // สีแดง
+        variant="danger"
         isLoading={processing}
       />
 
@@ -485,235 +704,20 @@ const SettingsTab = () => {
         onConfirm={handleConfirmAction}
         title="⚠️ ยืนยันการล้างระบบ?"
         message={`ข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมดจะถูกลบ`}
-        variant="danger" // สีแดง
+        variant="danger"
         isLoading={processing}
       />
 
-    </div>
-  )
-};
-
-// 4. หน้า Monitor
-const MonitorTab = () => {
-  const [candidates, setCandidates] = useState([]);
-  const [totalVotes, setTotalVotes] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [demographics, setDemographics] = useState({
-    totalEligible: 0,
-    byMajor: [],
-    byYear: [],
-    byGender: []
-  });
-
-  const COLORS_GENDER = ['#3b82f6', '#ec4899'];
-  const COLORS_BAR = '#8A2680';
-
-  const fetchResults = async () => {
-    try {
-      const res = await fetch("/api/results");
-      const data = await res.json();
-
-      if (data.candidates) {
-        const sortedCandidates = data.candidates.sort((a, b) => b.score - a.score);
-        setCandidates(sortedCandidates);
-        setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
-      }
-
-      if (data.stats) {
-        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4', 'อื่นๆ'];
-        const sortedByYear = data.stats.byYear ? [...data.stats.byYear].sort((a, b) => {
-          const indexA = yearOrder.indexOf(a.name);
-          const indexB = yearOrder.indexOf(b.name);
-          return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-        }) : [];
-
-        const genderOrder = ['ชาย', 'หญิง'];
-        const sortedByGender = data.stats.byGender ? [...data.stats.byGender].sort((a, b) => {
-          return genderOrder.indexOf(a.name) - genderOrder.indexOf(b.name);
-        }) : [];
-
-        setDemographics({
-          ...data.stats,
-          byYear: sortedByYear,
-          byGender: sortedByGender
-        });
-      }
-
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchResults();
-    const interval = setInterval(fetchResults, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const ELECTION_START = new Date(2024, 1, 6, 8, 0, 0);
-  const ELECTION_END = new Date(2024, 1, 6, 16, 0, 0);
-  const now = currentTime;
-  let electionStatus = "WAITING";
-  let targetDate = ELECTION_START;
-
-  if (now < ELECTION_START) {
-    electionStatus = "WAITING";
-    targetDate = ELECTION_START;
-  } else if (now >= ELECTION_START && now < ELECTION_END) {
-    electionStatus = "ONGOING";
-    targetDate = ELECTION_END;
-  } else {
-    electionStatus = "ENDED";
-  }
-
-  const IS_ELECTION_ENDED = (electionStatus === "ENDED");
-  const timeDiff = targetDate - now;
-  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
-  const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
-  const seconds = Math.floor((timeDiff / 1000) % 60);
-
-  let countdownText = "";
-  if (days > 0) countdownText = `${days} วัน ${hours} ชม. ${minutes} น.`;
-  else if (hours > 0) countdownText = `${hours} ชม. ${minutes} น. ${seconds} วิ.`;
-  else countdownText = `${minutes} น. ${seconds} วิ.`;
-
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-100 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-green-50 text-green-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div>
-        <h3 className="text-base lg:text-xl font-bold text-slate-700">ผลคะแนนสด</h3>
-      </div>
-
-      <div>
-        {/* Candidates */}
-        {loading ? (
-          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200"><p className="text-slate-400">Loading...</p></div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
-            {candidates.map((candidate, index) => {
-              return (
-                <ResultCard
-                  key={candidate.id}
-                  candidate={candidate}
-                  rank={index + 1}
-                  totalVotes={totalVotes}
-                  isElectionEnded={IS_ELECTION_ENDED}
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className='p-3'></div>
-
-      <div>
-        {/* === Section 3: กราฟสถิติ === */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8">
-
-          <div className="order-1 lg:order-2 grid grid-cols-2 gap-3 lg:flex lg:flex-col lg:gap-8 h-full">
-
-            {/* กราฟชั้นปี */}
-            <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 mb-2 lg:mb-6">
-                <div className="bg-yellow-100 p-1.5 lg:p-2 rounded-lg"><Medal className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" /></div>
-                <h3 className="text-sm lg:text-xl font-bold text-slate-700">ชั้นปี</h3>
-              </div>
-              <div className="h-[160px] lg:h-[250px] w-full text-xs font-medium">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={demographics.byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fill: '#64748b', fontSize: 14 }}
-                      interval={0}
-                    />
-                    <YAxis hide />
-                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                    <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* กราฟเพศ */}
-            <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 mb-2 lg:mb-6">
-                <div className="bg-blue-100 p-1.5 lg:p-2 rounded-lg"><PieIcon className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" /></div>
-                <h3 className="text-sm lg:text-xl font-bold text-slate-700">เพศ</h3>
-              </div>
-              <div className="h-[160px] lg:h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={demographics.byGender}
-                      cx="50%" cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value" stroke="none"
-                    >
-                      {demographics.byGender.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS_GENDER[index % COLORS_GENDER.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                    <Legend
-                      verticalAlign={"middle"}
-                      align={"right"}
-                      layout={"vertical"}
-                      iconType="circle"
-                      wrapperStyle={{ fontSize: '14px', paddingTop: '0' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* กราฟสาขา (ด้านล่างสุด) */}
-          <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-3 mb-4 lg:mb-8">
-              <div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[#8A2680]" /></div>
-              <h3 className="text-base lg:text-xl font-bold text-slate-700">แยกตามสาขา</h3>
-            </div>
-            <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={demographics.byMajor}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 10, bottom: 10 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                  <XAxis type="number" hide />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={50}
-                    tick={{ fontSize: 14, fill: '#64748b' }}
-                  />
-                  <Tooltip
-                    cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill={COLORS_BAR}
-                    radius={[0, 4, 4, 0]}
-                    barSize={40}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
+      <ConfirmModal
+        isOpen={activeModal === 'SET_GOOGLE_FORM'}
+        onClose={() => setActiveModal(null)}
+        onConfirm={handleConfirmAction}
+        title="บันทึกลิงก์ Google Form?"
+        message={`ต้องการอัปเดตลิงก์ Google Form ใช่หรือไม่?`}
+        variant="primary"
+        isLoading={processing}
+      />
+    </div >
   )
 };
 
@@ -724,25 +728,23 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-      router.push('/');
+      await fetch(getPath('/api/admin/logout'), { method: 'POST' });
+      window.location.href = getPath('/admin/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
-  // รายการเมนูสำหรับ Sidebar
   const menuItems = [
     { id: 'overview', label: 'ภาพรวม', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
     { id: 'candidates', label: 'จัดการผู้สมัคร', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
-    { id: 'monitor', label: 'ผลคะแนนสด', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg> },
     { id: 'settings', label: 'ตั้งค่าระบบ', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex">
 
-      {/* ✅ 3. Sidebar (เมนูด้านซ้าย) */}
+      {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full z-20">
         <div className="p-6 border-b border-gray-100 flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-[#8A2680] to-[#3B82F6] rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
@@ -781,10 +783,10 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ✅ 4. Main Content Area */}
+      {/* Main Content Area */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
 
-        {/* Top Bar (สำหรับ Mobile หรือแสดงสถานะ) */}
+        {/* Top Bar */}
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10 md:static">
           <div className="md:hidden font-bold text-gray-800">Admin Console</div> {/* Mobile Title */}
           <div className="ml-auto flex items-center gap-4">
@@ -795,7 +797,7 @@ export default function AdminDashboard() {
                 Online
               </p>
             </div>
-            {/* ปุ่ม Logout แบบเดิม (โชว์เฉพาะ Mobile เพราะ Desktop อยู่ใน Sidebar แล้ว) */}
+            {/* Mobile Logout */}
             <button onClick={handleLogout} className="md:hidden p-2 text-gray-500 hover:text-red-600 bg-gray-100 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             </button>
@@ -803,11 +805,9 @@ export default function AdminDashboard() {
         </header>
 
         <main className="flex-1 p-6 md:p-8 bg-gray-50">
-          {/* ✅ 5. แสดงผลตาม activeTab ที่เลือก */}
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
           {activeTab === 'settings' && <SettingsTab />}
-          {activeTab === 'monitor' && <MonitorTab />}
         </main>
       </div>
 
