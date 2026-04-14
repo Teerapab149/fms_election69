@@ -13,6 +13,6 @@ export const ELECTION_CONFIG = {
   ELECTION_END: new Date('2026-02-06T17:00:00'),
 };
 
-export const ELECTION_YEAR = "2026";
-export const ELECTION_YEAR_TH = "2569";
+export const ELECTION_YEAR = "2027";
+export const ELECTION_YEAR_TH = "2570";
 export const ELECTION_SLOGAN = "Your vote matter";

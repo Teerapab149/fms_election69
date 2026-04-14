@@ -28,7 +28,29 @@ async function main() {
       isVoteOpen: true,
       showResult: false, // ปิดผลโหวตไว้ก่อน
       systemMode: "AUTO", // ใช้โหมด AUTO ตามเวลา
-      googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSf7K7cYHd2819ODsQmWzWk1NDIhELS56vuZwBj2RONCZGK25w/viewform?fbzx=-1022028266153116941&pli=1" // ตัวอย่าง URL
+      googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSf7K7cYHd2819ODsQmWzWk1NDIhELS56vuZwBj2RONCZGK25w/viewform?fbzx=-1022028266153116941&pli=1",
+      pageLayout: {
+        home: [
+          { type: "hero",           visible: true, order: 1, config: { showCountdown: true, showStatusBadge: true } },
+          { type: "meetCandidates", visible: true, order: 2, config: {} },
+          { type: "stats",          visible: true, order: 3, config: { showPercentage: true, showTotalEligible: true } },
+          { type: "electionBanner", visible: true, order: 4, config: {} },
+          { type: "voteCTA",        visible: true, order: 5, config: {} }
+        ],
+        vote: {
+          multiParty: {
+            gridCols: "auto",
+            cardVariant: "grid",
+            showDivider: true,
+            abstainStyle: "standard"
+          }
+        },
+        theme: {
+          primaryColor: "#8A2680",
+          accentColor: "#9333EA",
+          borderRadius: "rounded"
+        }
+      }
     }
   });
   console.log('✅ SystemConfig created.');

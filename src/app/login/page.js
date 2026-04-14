@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation"; // ✅ เพิ่ม useSearchParams เพื่อดัก Error จาก URL
 import { signIn, useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
-import { Loader2, AlertCircle, LogIn, ShieldCheck } from "lucide-react";
+import { Loader2, AlertCircle, LogIn, ShieldCheck, FlaskConical } from "lucide-react";
+import { getPath } from "../../utils/basePath";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +14,10 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Mock login state — ใช้เฉพาะ dev (NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true)
+  const [mockStudentId, setMockStudentId] = useState("");
+  const [mockLoading, setMockLoading] = useState(false);
 
   // ✅ เช็ค Error ที่เด้งกลับมาจาก NextAuth (เช่น กด Cancel หรือ Login ไม่ผ่าน)
   useEffect(() => {
@@ -32,6 +37,22 @@ export default function LoginPage() {
       }
     }
   }, [status, session, router]);
+
+  const handleMockLogin = async () => {
+    if (!mockStudentId.trim()) return;
+    setMockLoading(true);
+    setError("");
+    try {
+      await signIn("mock-login", {
+        studentId: mockStudentId.trim(),
+        callbackUrl: getPath("/vote")
+      });
+    } catch (err) {
+      console.error(err);
+      setError("Mock login ล้มเหลว");
+      setMockLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -123,6 +144,50 @@ export default function LoginPage() {
             <p className="mt-4 text-[11px] text-slate-400">
               ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย
             </p>
+
+            {/* ─── Mock Login — DEV ONLY ─────────────────────────────────────
+                แสดงเฉพาะเมื่อ NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true ใน .env.local
+                ห้ามใช้ใน production — Provider "mock-login" ไม่ถูก register ใน production
+            ─────────────────────────────────────────────────────────────── */}
+            {process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true" && (
+              <div className="mt-6 pt-5 border-t-2 border-dashed border-red-200">
+                <div className="flex items-center justify-center gap-1.5 mb-4">
+                  <FlaskConical className="w-3.5 h-3.5 text-red-500" />
+                  <span className="text-[10px] font-black tracking-widest uppercase text-red-500">
+                    DEV ONLY — Mock Login
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={mockStudentId}
+                    onChange={(e) => setMockStudentId(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleMockLogin()}
+                    placeholder="e.g. 6610510149"
+                    disabled={mockLoading}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all disabled:opacity-60"
+                  />
+                  <button
+                    onClick={handleMockLogin}
+                    disabled={mockLoading || !mockStudentId.trim()}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-sm shadow-md shadow-orange-200"
+                  >
+                    {mockLoading ? (
+                      <>
+                        <Loader2 className="animate-spin h-4 w-4" />
+                        กำลังเข้าสู่ระบบ...
+                      </>
+                    ) : (
+                      <>
+                        <FlaskConical className="w-4 h-4" />
+                        Mock Login
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-4">
               <button

@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma as db } from "../lib/prisma";
 
 const AUTHENTIK_BASE_URL = "https://psusso.psu.ac.th";
@@ -103,6 +104,61 @@ export const authOptions = {
         };
       },
     },
+
+    // ─── Mock Login — DEV ONLY (ใช้สำหรับทดสอบ local โดยไม่ต้องผ่าน PSU SSO) ───
+    // เปิดใช้งานโดยเพิ่มใน .env.local:
+    //   NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true
+    // Provider นี้จะไม่ถูก register เลยใน production (NODE_ENV === "production")
+    ...(process.env.NODE_ENV !== "production" ? [
+      CredentialsProvider({
+        id: "mock-login",
+        name: "Mock Login",
+        credentials: {
+          studentId: { label: "Student ID", type: "text" }
+        },
+        async authorize(credentials) {
+          if (!credentials?.studentId) return null;
+
+          // ลองดึงข้อมูลจริงจาก DB ก่อน (ถ้ามีนักศึกษา import ไว้แล้ว)
+          // ห่อด้วย try-catch: ถ้า DB ไม่พร้อม (local dev) ให้ข้ามไป fallback แทนการ throw
+          try {
+            const dbUser = await db.user.findUnique({
+              where: { studentId: credentials.studentId }
+            });
+
+            if (dbUser) {
+              return {
+                id: String(dbUser.id),
+                name: dbUser.name || "Mock User",
+                email: dbUser.email || `${credentials.studentId}@mock.dev`,
+                studentId: dbUser.studentId,
+                facultyId: dbUser.facultyId || "30",
+                departmentId: dbUser.departmentId || null,
+                year: dbUser.year || "ปี 1",
+                groups: dbUser.isAdmin ? ["staff"] : ["student"],
+                isAdmin: dbUser.isAdmin || false
+              };
+            }
+          } catch (e) {
+            // DB ไม่พร้อมใช้งาน (เช่น ยังไม่ได้รัน PostgreSQL ใน local) — ใช้ mock data แทน
+            console.warn("[mock-login] DB unavailable, falling back to mock data:", e.message);
+          }
+
+          // Fallback: สร้างข้อมูล mock ถ้าไม่พบใน DB หรือ DB ยังไม่พร้อม
+          return {
+            id: credentials.studentId,
+            name: `Mock Student ${credentials.studentId}`,
+            email: `${credentials.studentId}@mock.dev`,
+            studentId: credentials.studentId,
+            facultyId: "30",
+            departmentId: null,
+            year: "ปี 1",
+            groups: ["student"],
+            isAdmin: false
+          };
+        }
+      })
+    ] : []),
   ],
 
   session: { strategy: "jwt" },

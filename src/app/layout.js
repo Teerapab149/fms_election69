@@ -46,7 +46,6 @@ export default async function RootLayout({ children }) {
 
   // 3. ดึง Session
   const session = await getServerSession(authOptions);
-  console.log("SERVER SESSION STATUS:", session ? "✅ FOUND" : "❌ NULL");
 
   return (
     <html lang="th">
