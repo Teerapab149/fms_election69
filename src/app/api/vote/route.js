@@ -78,10 +78,7 @@ export async function POST(request) {
     }
 
     if (mode === "MANUAL_OPEN") {
-      if (now >= ELECTION_END) {
-        return NextResponse.json({ error: "หมดเวลาลงคะแนนเเล้ว (Auto Closed)" }, { status: 403 });
-      }
-      // Pass: Voting is forced open
+      // Pass: Voting is forced open, ignore time check
     }
 
     // 0.2 Check Auto Mode (Scheduled Time)

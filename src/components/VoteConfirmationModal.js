@@ -1,6 +1,8 @@
 "use client";
 
 import { X, Check, AlertCircle, Ban, UserX, UserCheck } from "lucide-react";
+import { getPath } from "../utils/basePath";
+
 
 export default function VoteConfirmationModal({
   isOpen,

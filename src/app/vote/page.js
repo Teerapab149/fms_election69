@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getPath } from '../../utils/basePath';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
 import { Loader2, Sparkles } from 'lucide-react';
-
 // Components
 import Navbar from '../../components/Navbar';
 import SinglePartyView from '../../components/vote/SinglePartyView';
@@ -33,7 +32,6 @@ export default function VotePage() {
     handleSelectParty,
     submitVote
   } = useVoteSystem();
-
   const handleSingleSelect = (id) => {
     handleSelectParty(id);
   };
@@ -44,6 +42,26 @@ export default function VotePage() {
 
   // ✅ Prevent double click during redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
+  const [voteConfig, setVoteConfig] = useState({});
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch(getPath('/api/admin/page-layout'));
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.vote?.multiParty) {
+            setVoteConfig(data.vote.multiParty);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch page layout, using defaults');
+      }
+    };
+    fetchConfig();
+  }, []);
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -85,31 +103,15 @@ export default function VotePage() {
   }
 
   return (
-    // DESIGN.md: Layer 0 background (#fff3fe)
-    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative" style={{ backgroundColor: '#fff3fe' }}>
+    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]">
 
-      {/* ─── Multi-party only: Background Decor + Navbar ───────────────────────
-          SinglePartyView handles its own portal layout — do NOT touch it
-          DESIGN.md: tonal depth with primary (#7244a8) tinted ambient blobs
-      ─────────────────────────────────────────────────────────────────────── */}
       {!isSingleParty && (
         <>
-          {/* Background Decor — primary-tinted blobs + subtle grid */}
+          {/* Background decoration — fixed, behind everything */}
           <div className="fixed inset-0 z-0 pointer-events-none">
-            {/* Top-right: primary/pink ambient glow */}
-            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] rounded-full blur-[80px] md:blur-[120px]"
-              style={{ background: 'radial-gradient(circle, rgba(114,68,168,0.08) 0%, rgba(195,146,252,0.06) 60%, transparent 100%)' }}
-            />
-            {/* Bottom-left: secondary blue tint */}
-            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] rounded-full blur-[80px] md:blur-[120px]"
-              style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, rgba(114,68,168,0.04) 60%, transparent 100%)' }}
-            />
-            {/* Center: subtle primary wash */}
-            <div className="absolute top-[30%] left-[40%] w-[30%] h-[25%] rounded-full blur-[100px]"
-              style={{ background: 'radial-gradient(circle, rgba(195,146,252,0.05) 0%, transparent 70%)' }}
-            />
-            {/* Grid overlay */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#3d254906_1px,transparent_1px),linear-gradient(to_bottom,#3d254906_1px,transparent_1px)] bg-[size:32px_32px] md:bg-[size:40px_40px]" />
+            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:30px_30px] md:bg-[size:40px_40px]"></div>
           </div>
 
           {/* Navbar */}
@@ -119,46 +121,7 @@ export default function VotePage() {
         </>
       )}
 
-      <main className="flex-grow container mx-auto px-4 sm:px-6 py-8 md:py-12 relative z-10 max-w-5xl w-full">
-
-        {/* Header (Only for Multi) — DESIGN.md: editorial voice, Display-LG scale */}
-        {!isSingleParty && (
-          <div className="text-center mb-10 md:mb-14 animate-fade-in-up">
-
-            {/* Chip badge — DESIGN.md: Glassmorphism + inset highlight */}
-            <div
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full backdrop-blur-xl mb-5 md:mb-7"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.65)',
-                boxShadow: '0 4px 20px rgba(61,37,73,0.05), inset 0 0.5px 0 rgba(255,255,255,0.6)',
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5" style={{ color: '#7244a8' }} />
-              <span className="text-[9px] md:text-[11px] font-bold tracking-[0.2em] uppercase" style={{ color: '#7244a8' }}>
-                ลงคะแนนเสียง
-              </span>
-            </div>
-
-            {/* Title — DESIGN.md: Display-LG, Signature Gradient */}
-            <h1 className="flex flex-col items-center justify-center font-black tracking-tighter leading-[1.15] mb-4 md:mb-6">
-              <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-1 sm:mb-2 text-[#3d2549]">
-                เลือกตั้ง<span className="text-transparent bg-clip-text ml-1" style={{ backgroundImage: 'linear-gradient(135deg, #7244a8, #c392fc)' }}>สโมสรนักศึกษา</span>
-              </div>
-              <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-[#3d2549]/70 tracking-tight">
-                คณะวิทยาการจัดการ ประจำปี {ELECTION_YEAR_TH}
-              </div>
-            </h1>
-
-            {/* User greeting — on-surface text */}
-            <p className="text-sm md:text-base font-medium" style={{ color: '#3d254980' }}>
-              สวัสดีคุณ{' '}
-              <span className="font-bold px-2.5 py-0.5 rounded-lg" style={{ color: '#7244a8', backgroundColor: '#f9e0ff' }}>
-                {session?.user?.name}
-              </span>
-              {' '}โปรดเลือกพรรคที่ต้องการ
-            </p>
-          </div>
-        )}
+      <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
 
         {isSingleParty ? (
           <SinglePartyView
@@ -175,6 +138,7 @@ export default function VotePage() {
             selectedPartyId={selectedPartyId}
             onSelect={handleSelectParty} // Multi view ก็น่าจะใช้ onSelect เหมือนกัน (เช็คไฟล์ MultiPartyView ด้วยว่ารับ props ชื่ออะไร)
             onViewDetails={handleViewDetails}
+            config={voteConfig}
           />
         )}
       </main>

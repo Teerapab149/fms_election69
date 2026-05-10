@@ -81,5 +81,6 @@ model SystemConfig {
   googleFormUrl String?
   pageLayout    Json?
   themeConfig   Json?
+  globalConfig  Json?
   updatedAt     DateTime @updatedAt
 }

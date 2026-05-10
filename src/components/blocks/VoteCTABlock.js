@@ -5,11 +5,79 @@ import { signIn } from "next-auth/react";
 import { LogIn, Vote, BarChart3 } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 
+function buildButtonStyle(cfg) {
+  if (!cfg) return undefined;
+
+  const style = {};
+
+  // Background
+  if (cfg.backgroundType === "gradient") {
+    const parts = [cfg.gradientFrom];
+    if (cfg.gradientVia) parts.push(cfg.gradientVia);
+    parts.push(cfg.gradientTo);
+    const direction = {
+      "to-r": "to right", "to-l": "to left",
+      "to-t": "to top", "to-b": "to bottom",
+      "to-tr": "to top right", "to-tl": "to top left",
+      "to-br": "to bottom right", "to-bl": "to bottom left"
+    }[cfg.gradientDirection] || "to right";
+    style.backgroundImage = `linear-gradient(${direction}, ${parts.join(", ")})`;
+    style.backgroundColor = cfg.gradientFrom; // fallback
+  } else if (cfg.backgroundType === "solid") {
+    style.backgroundColor = cfg.backgroundColor;
+    style.backgroundImage = "none";
+  }
+
+  // Text
+  if (cfg.textColor) style.color = cfg.textColor;
+  if (cfg.fontSize) {
+    const sizeMap = { xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem", xl: "1.25rem", "2xl": "1.5rem" };
+    style.fontSize = sizeMap[cfg.fontSize] || "1.125rem";
+  }
+  if (cfg.fontWeight) {
+    const weightMap = { normal: "400", medium: "500", semibold: "600", bold: "700", black: "900" };
+    style.fontWeight = weightMap[cfg.fontWeight] || "700";
+  }
+
+  // Radius
+  if (cfg.borderRadius) {
+    const radiusMap = { none: "0", sm: "0.125rem", md: "0.375rem", lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", "3xl": "1.5rem", full: "9999px" };
+    style.borderRadius = radiusMap[cfg.borderRadius] || "0.75rem";
+  }
+
+  // Border
+  if (cfg.borderWidth && cfg.borderWidth !== "0") {
+    style.borderWidth = `${cfg.borderWidth}px`;
+    style.borderStyle = "solid";
+    style.borderColor = cfg.borderColor || "transparent";
+  }
+
+  // Shadow
+  if (cfg.shadow && cfg.shadow !== "none") {
+    const shadowMap = {
+      sm: "0 1px 2px 0",
+      md: "0 4px 6px -1px",
+      lg: "0 10px 15px -3px",
+      xl: "0 20px 25px -5px",
+      "2xl": "0 25px 50px -12px"
+    };
+    const shadowColor = cfg.shadowColor ? `${cfg.shadowColor}66` : "rgba(0,0,0,0.25)";
+    style.boxShadow = `${shadowMap[cfg.shadow] || shadowMap.lg} ${shadowColor}`;
+  }
+
+  // Padding
+  if (cfg.paddingX) style.paddingLeft = style.paddingRight = `${parseInt(cfg.paddingX) * 0.25}rem`;
+  if (cfg.paddingY) style.paddingTop = style.paddingBottom = `${parseInt(cfg.paddingY) * 0.25}rem`;
+
+  return style;
+}
+
 // VoteCTABlock — ปุ่ม Dynamic ที่เปลี่ยนตาม election status + login state
 // LOCKED: logic ทั้งหมดของปุ่ม (redirect, election status check, login flow) ห้ามแก้ผ่าน config
 // config props: (reserved สำหรับ Phase 4 — theme color เท่านั้น)
 // data props:   session, isVotedReal, isCheckingVoted, initialData
-export default function VoteCTABlock({ config = {}, data = {} }) {
+// resolvedConfig: resolved template + override config from state-aware engine (H-2)
+export default function VoteCTABlock({ config = {}, data = {}, resolvedConfig = null }) {
   const { session, isVotedReal, isCheckingVoted, initialData } = data;
 
   // ─── Button config logic (เหมือน HomeContent.js เดิมทุกประการ) ───────────────
@@ -115,20 +183,32 @@ export default function VoteCTABlock({ config = {}, data = {} }) {
     }
   }
 
+  // Style overrides from editor config — null in legacy mode
+  const styleOverride = resolvedConfig;
+  const hasOverride = !!styleOverride;
+  const buttonInlineStyle = hasOverride ? buildButtonStyle(styleOverride) : undefined;
+  const textOverride = hasOverride ? styleOverride.text : null;
+
+  const legacyClassName = `relative w-full sm:w-auto overflow-hidden rounded-xl bg-gradient-to-r ${btnConfig.gradientBase} px-10 py-4 text-lg font-bold text-white ${btnConfig.shadow} ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate`;
+  const overrideClassName = `relative w-full sm:w-auto overflow-hidden ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate text-white`;
+  const btnClassName = hasOverride ? overrideClassName : legacyClassName;
+
   const InnerButton = () => (
-    <button
-      className={`relative w-full sm:w-auto overflow-hidden rounded-xl bg-gradient-to-r ${btnConfig.gradientBase} px-10 py-4 text-lg font-bold text-white ${btnConfig.shadow} ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate`}
-    >
-      <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${btnConfig.gradientHover} opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100`} />
+    <button className={btnClassName} style={buttonInlineStyle}>
+      {!hasOverride && (
+        <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${btnConfig.gradientHover} opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100`} />
+      )}
       <span className="relative z-20 flex items-center justify-center gap-3 drop-shadow-sm">
-        {btnConfig.text}
+        {textOverride ?? btnConfig.text}
         <span className="bg-white/20 p-1.5 rounded-lg backdrop-blur-md shadow-inner border border-white/10">
           {btnConfig.icon}
         </span>
       </span>
-      <div className="absolute inset-0 z-30 flex h-full w-full justify-center pointer-events-none">
-        <div className="relative h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:animate-shine skew-x-20" />
-      </div>
+      {!hasOverride && (
+        <div className="absolute inset-0 z-30 flex h-full w-full justify-center pointer-events-none">
+          <div className="relative h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:animate-shine skew-x-20" />
+        </div>
+      )}
     </button>
   );
 
@@ -143,16 +223,20 @@ export default function VoteCTABlock({ config = {}, data = {} }) {
           }
           className="group relative w-[90%] sm:w-auto inline-block cursor-pointer"
         >
-          <div
-            className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}
-          />
+          {!hasOverride && (
+            <div
+              className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}
+            />
+          )}
           <InnerButton />
         </div>
       ) : (
         <Link href={btnConfig.href} className="group relative w-[90%] sm:w-auto inline-block">
-          <div
-            className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}
-          />
+          {!hasOverride && (
+            <div
+              className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}
+            />
+          )}
           <InnerButton />
         </Link>
       )}

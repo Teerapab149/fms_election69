@@ -7,6 +7,8 @@ node_modules
 
 .next
 
+.md
+
 # Debug & Scripts
 check_users.js
 debug_nesting.py

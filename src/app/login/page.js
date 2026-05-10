@@ -6,6 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
 import { Loader2, AlertCircle, LogIn, ShieldCheck, FlaskConical } from "lucide-react";
 import { getPath } from "../../utils/basePath";
+import SiteFooter from "../../components/SiteFooter";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -213,10 +214,7 @@ export default function LoginPage() {
 
       </div>
 
-      {/* Footer */}
-      <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
-        <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
-      </footer>
+      <SiteFooter className="relative z-50 shrink-0 w-full mt-auto" />
     </div>
   );
 }

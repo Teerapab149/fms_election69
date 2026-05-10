@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export default function SuccessPage() {
+export default function SuccessPage({ editorMode = false } = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status, update } = useSession();
@@ -48,6 +48,8 @@ export default function SuccessPage() {
   // Auth Logic (Fix Race Condition)
   // =========================================================
   useEffect(() => {
+    if (editorMode) return;
+
     if (status === "loading") return;
 
     if (status === "unauthenticated") {
@@ -126,7 +128,7 @@ export default function SuccessPage() {
         }
       })();
     }
-  }, [status, session, router, isJustVoted]); // ✅ เพิ่ม isJustVoted ใน dependency
+  }, [status, session, router, isJustVoted, editorMode]);
 
   // =========================================================
   // Timer & Handlers (คงเดิม)
@@ -186,6 +188,14 @@ export default function SuccessPage() {
   const handleAlertConfirm = () => {
     setShowAlertModal(false);
     if (alertConfig.action) alertConfig.action();
+  }
+
+  if (editorMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-500 text-sm">Success page preview</p>
+      </div>
+    );
   }
 
   if (status === "loading" || (!isAuthorized && !showAlertModal)) {

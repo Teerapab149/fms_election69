@@ -1,20 +1,59 @@
 // components/CountdownTimer.js
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Zap, Clock, CalendarDays, Hourglass, Flag } from 'lucide-react';
-import { ELECTION_CONFIG } from '../utils/electionConfig';
+import { ELECTION_CONFIG, ELECTION_YEAR } from '../utils/electionConfig';
 
-export default function CountdownTimer({ compact = false, systemMode = "AUTO" }) {
+const ICON_MAP = { Flag, Zap, Hourglass, CalendarDays, Clock };
 
+function resolveIcon(iconName, fallback) {
+  return ICON_MAP[iconName] || fallback;
+}
+
+function mapForceStateToPhase(forceState) {
+  const map = {
+    before: 'BEFORE',
+    running: 'RUNNING',
+    paused: 'PAUSED',
+    manualEnded: 'MANUAL_ENDED',
+    nextYear: 'NEXT_YEAR'
+  };
+  return map[forceState] || 'BEFORE';
+}
+
+function buildShadowStyle(cfg) {
+  if (!cfg || !cfg.shadow || cfg.shadow === 'none') return 'none';
+  const shadowMap = { sm: '0 1px 2px 0', md: '0 4px 6px -1px', lg: '0 10px 15px -3px', xl: '0 20px 25px -5px', '2xl': '0 25px 50px -12px' };
+  const base = shadowMap[cfg.shadow] || shadowMap.md;
+  const color = cfg.shadowColor ? `${cfg.shadowColor}33` : 'rgba(0,0,0,0.15)';
+  return `${base} ${color}`;
+}
+
+export default function CountdownTimer({
+  compact = false,
+  systemMode = "AUTO",
+  resolvedConfig = null,
+  forceState = null
+}) {
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
-  // Fallback for next year logic if needed, or just standard behavior
-  const ELECTION_NEXT_YEAR = new Date(ELECTION_START);
-  ELECTION_NEXT_YEAR.setFullYear(ELECTION_NEXT_YEAR.getFullYear() + 1);
+
+  const ELECTION_NEXT_YEAR = useMemo(() => {
+    const d = new Date(ELECTION_START);
+    d.setFullYear(d.getFullYear() + 1);
+    return d;
+  }, []);
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
 
   useEffect(() => {
+    // forceState mode (used in admin gallery preview) — show frozen demo values
+    if (forceState) {
+      setPhase(mapForceStateToPhase(forceState));
+      setTimeLeft({ days: 12, hours: 4, minutes: 35, seconds: 20 });
+      return; // skip setInterval
+    }
+
     const calculate = () => {
       const now = new Date();
 
@@ -62,7 +101,7 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [ELECTION_START, ELECTION_END, ELECTION_NEXT_YEAR, systemMode]);
+  }, [ELECTION_START, ELECTION_END, ELECTION_NEXT_YEAR, systemMode, forceState]);
 
   const getConfig = () => {
     switch (phase) {
@@ -98,7 +137,7 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
         };
       case 'NEXT_YEAR':
         return {
-          label: "SEE YOU 2027",
+          label: `SEE YOU ${ELECTION_YEAR}`,
           icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-slate-800",
           textMain: "text-slate-700",
@@ -122,49 +161,83 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
 
   const config = getConfig();
 
+  // Build display label — replace {YEAR} placeholder with ELECTION_YEAR
+  const displayLabel = resolvedConfig
+    ? (resolvedConfig.label || config.label).replace('{YEAR}', ELECTION_YEAR)
+    : config.label;
+
+  // Resolve icon when resolvedConfig overrides it
+  let renderedIcon = config.icon;
+  if (resolvedConfig && resolvedConfig.iconName) {
+    const IconComp = resolveIcon(resolvedConfig.iconName, CalendarDays);
+    const animClass = resolvedConfig.iconAnimation === 'pulse' ? 'animate-pulse'
+      : resolvedConfig.iconAnimation === 'spin' ? 'animate-spin' : '';
+    renderedIcon = <IconComp className={`w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 ${animClass}`} />;
+  }
+
   if (phase === 'LOADING') return (
     <div className="w-48 h-12 bg-slate-100 animate-pulse rounded-full lg:w-64 lg:h-16"></div>
   );
 
   return (
     // ✅ Wrapper: เพิ่ม padding (p-1.5, lg:p-2) และ gap (gap-3, lg:gap-5) ให้กว้างขึ้น
-    <div className={`group relative inline-flex items-center gap-3 p-1.5 pr-6 lg:gap-5 lg:p-2 lg:pr-10 bg-white border rounded-full transition-all duration-300 cursor-default hover:-translate-y-0.5 select-none ${config.border} ${config.shadow} ${compact ? '' : ''}`}>
-
+    <div
+      className={`group relative inline-flex items-center gap-3 p-1.5 pr-6 lg:gap-5 lg:p-2 lg:pr-10 border rounded-full transition-all duration-300 cursor-default hover:-translate-y-0.5 select-none ${resolvedConfig ? '' : `bg-white ${config.border} ${config.shadow}`} ${compact ? '' : ''}`}
+      style={resolvedConfig ? {
+        backgroundColor: resolvedConfig.pillBackground || '#ffffff',
+        borderColor: resolvedConfig.borderColor || undefined,
+        boxShadow: buildShadowStyle(resolvedConfig),
+      } : undefined}
+    >
       {/* Badge Label: ขยายขนาด Font และ Padding */}
-      <div className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 rounded-full ${config.badgeBg} text-white shadow-sm transition-all`}>
-        {config.icon}
+      <div
+        className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 rounded-full shadow-sm transition-all ${resolvedConfig ? '' : `${config.badgeBg} text-white`}`}
+        style={resolvedConfig ? {
+          backgroundColor: resolvedConfig.badgeBackgroundColor,
+          color: resolvedConfig.badgeTextColor,
+        } : undefined}
+      >
+        {renderedIcon}
         <span className="text-[10px] sm:text-xs lg:text-sm font-bold uppercase tracking-wider translate-y-[0.5px] whitespace-nowrap">
-          {config.label}
+          {displayLabel}
         </span>
       </div>
 
       {/* ตัวเลขเวลานับถอยหลัง: ปรับ Gap ให้ห่างขึ้น */}
-      <div className={`flex items-baseline gap-1.5 sm:gap-2 lg:gap-3 ${config.textMain}`}>
-        <TimeUnit value={timeLeft.days} unit="d" colorSub={config.textSub} />
-        <Separator color={config.textSub} />
-        <TimeUnit value={timeLeft.hours} unit="h" colorSub={config.textSub} />
-        <Separator color={config.textSub} />
-        <TimeUnit value={timeLeft.minutes} unit="m" colorSub={config.textSub} />
-        <Separator color={config.textSub} />
-        <TimeUnit value={timeLeft.seconds} unit="s" colorSub={config.textSub} />
+      <div
+        className={`flex items-baseline gap-1.5 sm:gap-2 lg:gap-3 ${resolvedConfig ? '' : config.textMain}`}
+        style={resolvedConfig ? { color: resolvedConfig.textMain } : undefined}
+      >
+        <TimeUnit value={timeLeft.days} unit="d" colorSub={config.textSub} colorSubOverride={resolvedConfig?.textSub} />
+        <Separator color={config.textSub} colorOverride={resolvedConfig?.textSub} />
+        <TimeUnit value={timeLeft.hours} unit="h" colorSub={config.textSub} colorSubOverride={resolvedConfig?.textSub} />
+        <Separator color={config.textSub} colorOverride={resolvedConfig?.textSub} />
+        <TimeUnit value={timeLeft.minutes} unit="m" colorSub={config.textSub} colorSubOverride={resolvedConfig?.textSub} />
+        <Separator color={config.textSub} colorOverride={resolvedConfig?.textSub} />
+        <TimeUnit value={timeLeft.seconds} unit="s" colorSub={config.textSub} colorSubOverride={resolvedConfig?.textSub} />
       </div>
-
     </div>
   );
 }
 
 // ✅ TimeUnit: ขยายขนาด Font (text-lg -> text-3xl)
-const TimeUnit = ({ value, unit, colorSub }) => (
+const TimeUnit = ({ value, unit, colorSub, colorSubOverride }) => (
   <div className="flex items-baseline">
     <span className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-black tabular-nums tracking-tight leading-none transition-all">
       {String(value).padStart(2, '0')}
     </span>
     {/* ปรับขนาดหน่วย (d, h, m, s) ให้ใหญ่ขึ้นและชัดขึ้น */}
-    <span className={`text-[12px] sm:text-xs lg:text-base font-bold uppercase ml-0.5 lg:ml-1 ${colorSub} transition-all`}>{unit}</span>
+    <span
+      className={`text-[12px] sm:text-xs lg:text-base font-bold uppercase ml-0.5 lg:ml-1 ${colorSubOverride ? '' : colorSub} transition-all`}
+      style={colorSubOverride ? { color: colorSubOverride } : undefined}
+    >{unit}</span>
   </div>
 );
 
 // ✅ Separator: ตัวคั่น (:) ปรับขนาดตาม
-const Separator = ({ color }) => (
-  <span className={`font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl lg:pb-1 ${color} opacity-60`}>:</span>
+const Separator = ({ color, colorOverride }) => (
+  <span
+    className={`font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl lg:pb-1 ${colorOverride ? '' : color} opacity-60`}
+    style={colorOverride ? { color: colorOverride } : undefined}
+  >:</span>
 );

@@ -9,7 +9,7 @@ import { ELECTION_CONFIG } from "../utils/electionConfig";
 
 export const dynamic = "force-dynamic";
 
-async function getHomeData() {
+async function getHomeData(session) {
   try {
     // 🔥 FIX: Query DB directly instead of Fetching via HTTP Loopback (Docker Friendly)
     const candidates = await db.candidate.findMany({
@@ -32,6 +32,7 @@ async function getHomeData() {
     if (!config) {
       config = { systemMode: "AUTO" };
     }
+    const pageLayout = config?.pageLayout || null;
 
     const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
     const now = Date.now();
@@ -68,7 +69,17 @@ async function getHomeData() {
       stats: { totalEligible, totalVoted },
       isSystemOpen,
       systemMode: sysMode,
-      electionStatus
+      electionStatus,
+      pageLayout,
+      systemConfig: {
+        systemMode: sysMode,
+        isSystemOpen,
+        showResult: config?.showResult === true,
+      },
+      userData: session?.user ? {
+        isVoted: session.user.isVoted || false,
+        isFormCompleted: session.user.isFormCompleted || false,
+      } : null,
     };
 
   } catch (error) {
@@ -89,12 +100,12 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
 
   // 2. ดึงข้อมูล Home จาก Server
-  const homeData = await getHomeData();
+  const homeData = await getHomeData(session);
 
   return (
     <main>
       {/* 3. ส่งข้อมูลทั้งหมดไปให้ Client Component */}
-      <HomeContent session={session} initialData={homeData} />
+      <HomeContent session={session} initialData={homeData} pageLayout={homeData.pageLayout} />
     </main>
   );
 }

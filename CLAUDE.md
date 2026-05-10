@@ -189,3 +189,15 @@ ADMIN_AUTH_SECRET     # Secret for admin token validation
 - Valid voter years: `['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4']` เท่านั้น
 - Score ใน DB คือ actual vote count (increment on vote)
 - Election dates ตั้งค่าใน `utils/electionConfig.js` ไม่ได้อยู่ใน DB
+
+## ⚠️ Engineering Discipline
+
+Read DECISIONS.md → Pitfall Log section before starting any new spec.
+
+Rules enforced from past pitfalls:
+1. (P-LOG-001) Before adding EditorElement Wraps to a wrapper component, grep target child component for existing Wraps with same IDs to avoid duplicates.
+2. (P-LOG-002) Never render production pages with auth/redirect logic raw in admin editor — use static EditorPreview component or editorMode prop guard.
+3. (P-LOG-003) Multi-file specs MUST end with grep verification commands; actual command output MUST be pasted in the report.
+4. (P-LOG-004) Before writing any EditorPreview component, read the full production page source and list every visual element. No generic placeholders.
+
+After completing any meaningful work, invoke the self-reflection skill to consolidate lessons.

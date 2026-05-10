@@ -39,11 +39,11 @@ function verifyAdminToken(request) {
 // Default pageLayout สะท้อน UI ปัจจุบัน (ต้องตรงกับ STYLED_BLOCKS_ARCHITECTURE.md)
 const DEFAULT_PAGE_LAYOUT = {
   home: [
-    { type: "hero",           visible: true, order: 1, config: { showCountdown: true, showStatusBadge: true } },
+    { type: "hero", visible: true, order: 1, config: { showCountdown: true, showStatusBadge: true } },
     { type: "meetCandidates", visible: true, order: 2, config: {} },
-    { type: "stats",          visible: true, order: 3, config: { showPercentage: true, showTotalEligible: true } },
+    { type: "stats", visible: true, order: 3, config: { showPercentage: true, showTotalEligible: true } },
     { type: "electionBanner", visible: true, order: 4, config: {} },
-    { type: "voteCTA",        visible: true, order: 5, config: {} },
+    { type: "voteCTA", visible: true, order: 5, config: {} },
   ],
   vote: {
     multiParty: {

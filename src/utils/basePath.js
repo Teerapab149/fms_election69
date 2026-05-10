@@ -3,6 +3,13 @@
  * This ensures the app works correctly both locally (no path) and in Docker with subpath
  */
 export const getPath = (path) => {
+    if (path == null || typeof path !== 'string') {
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn('[getPath] received non-string input:', path, '— returning empty string');
+        }
+        return '';
+    }
+
     // Get base path from environment variable (injected at build time)
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
 
