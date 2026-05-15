@@ -11,6 +11,8 @@
  *     = template defaults + overrides merged
  */
 
+import { getDefaultStateConfig } from './elementCatalog';
+
 // ============================================================
 // TEMPLATES
 // ============================================================
@@ -461,15 +463,19 @@ export function listBackgrounds() {
 export function resolveStatefulConfig(templateId, elementId, stateId, overrides = {}) {
   const template = getTemplate(templateId);
   if (!template) {
-    // Fallback to statefulRegistry defaults
-    const { getDefaultStateConfig } = require('./statefulRegistry');
+    // No template at all — fall back to catalog defaults.
     return { ...getDefaultStateConfig(elementId, stateId), ...overrides };
   }
 
-  const templateConfig = template.elements?.[elementId]?.[stateId] || {};
+  // Template exists — use its element+state config if present and non-empty,
+  // otherwise fall back to catalog defaults (covers elements registered in
+  // catalog but not yet covered by this template's TEMPLATES.elements).
+  const templateConfig = template.elements?.[elementId]?.[stateId];
+  if (templateConfig && Object.keys(templateConfig).length > 0) {
+    return { ...templateConfig, ...overrides };
+  }
 
-  // Shallow merge — admin overrides take precedence
-  return { ...templateConfig, ...overrides };
+  return { ...getDefaultStateConfig(elementId, stateId), ...overrides };
 }
 
 /**

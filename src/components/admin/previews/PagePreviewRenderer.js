@@ -93,9 +93,6 @@ export default function PagePreviewRenderer({ pageId, pageLayout, deviceMode = '
       );
     case 'party':      return <PartyPreview primaryColor={primaryColor} />;
     case 'success':
-      // SuccessPage now respects editorMode (H-SUCCESS-FIX Part 2) — skips auth/redirect.
-      // Primary path is SuccessEditorPreview via PageDesignTab and /preview routing.
-      // This case is defensive only — should not normally be reached.
       return (
         <SuccessPage
           editorMode={true}

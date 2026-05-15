@@ -11,10 +11,9 @@ import {
   WeightToggle,
 } from "./controls/SharedInputs";
 import QuickStyleBar from "./QuickStyleBar";
-import { isStatefulElement } from "./statefulRegistry";
+import { isStatefulElement, getBinding, getElement } from "./elementCatalog";
 import StatefulGallery from "./StatefulGallery";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../../contexts/GlobalConfigContext";
-import { getBinding } from "./elementRegistry";
 
 const SECTION_LABELS = {
   hero: "Hero",
@@ -26,20 +25,6 @@ const SECTION_LABELS = {
   googleForm: "ฟอร์มประเมิน",
   header: "ส่วนหัว (Header)",
   partyCardGrid: "กริดรายชื่อพรรค"
-};
-
-const EXTRA_ELEMENTS_SCHEMA = {
-  "success-title": { type: "text", label: "หัวข้อสำเร็จ", section: "successMessage" },
-  "success-subtitle1": { type: "text", label: "ข้อความรอง 1", section: "successMessage" },
-  "success-subtitle2": { type: "text", label: "ข้อความรอง 2", section: "successMessage" },
-  "success-form-btn": { type: "button", label: "ปุ่มตอบแบบสอบถาม", section: "googleForm" },
-  "success-footer": { type: "text", label: "ข้อความ Footer", section: "successMessage" },
-  
-  "candidates-tagline": { type: "button", label: "ป้าย Tagline", section: "header" },
-  "candidates-title": { type: "text", label: "หัวข้อหลัก", section: "header" },
-  "candidates-subtitle": { type: "text", label: "คำบรรยาย", section: "header" },
-  "candidates-counter": { type: "button", label: "ป้ายนับจำนวน", section: "header" },
-  "candidates-party-card": { type: "card", label: "การ์ดพรรค", section: "partyCardGrid" },
 };
 
 function Stack({ children }) {
@@ -171,11 +156,16 @@ export default function PropertyPanel({
   }
 
   let element = elementConfigs?.[selectedElement];
-  if ((!element || !element.type) && EXTRA_ELEMENTS_SCHEMA[selectedElement]) {
-    element = {
-      ...EXTRA_ELEMENTS_SCHEMA[selectedElement],
-      config: element?.config || {}
-    };
+  if (!element || !element.type) {
+    const catalogElement = getElement(selectedElement);
+    if (catalogElement) {
+      element = {
+        type: catalogElement.type,
+        label: catalogElement.name,
+        section: catalogElement.section,
+        config: element?.config || {}
+      };
+    }
   }
 
   if (!element) {

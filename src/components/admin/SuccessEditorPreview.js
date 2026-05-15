@@ -2,16 +2,6 @@
 
 import { Check, Megaphone, CheckCircle2, Tag, Lock, BarChart3, ArrowRight } from 'lucide-react';
 
-/**
- * SuccessEditorPreview — static admin preview of /success page.
- * Mirrors production layout but with:
- *  - NO useSession, NO useRouter, NO API calls
- *  - simMode toggle for locked vs unlocked visual states
- *  - Inert buttons (no navigation)
- *
- * Production source: src/app/success/page.js (lines 214-341 main card view)
- * Per DIAGNOSE_SUCCESS_PAGE_REAL: NO Navbar, NO SiteFooter, full-screen centered card
- */
 export default function SuccessEditorPreview({
   simMode = "locked", // 'locked' | 'unlocked'
   selectedElement = null,

@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import HomeContent from '../../components/HomeContent';
 import PagePreviewRenderer from '../../components/admin/previews/PagePreviewRenderer';
-import SuccessEditorPreview from '../../components/admin/SuccessEditorPreview';
+import SuccessPage from '../../app/success/page';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
@@ -117,7 +117,14 @@ function PreviewContent() {
                     <ClosedEditorPreview simMode="waiting" />
                 )}
 
-                {pageId === 'success' && <SuccessEditorPreview simMode="locked" />}
+                {pageId === 'success' && (
+                    <SuccessPage
+                        editorMode={true}
+                        pageLayout={draftLayout}
+                        elementConfigs={draftLayout?.elementConfigs?.home || {}}
+                    />
+                )}
+                
                 {!['home', 'results', 'vote', 'candidates', 'closed', 'success'].includes(pageId) && (
                     <PagePreviewRenderer
                         pageId={pageId}

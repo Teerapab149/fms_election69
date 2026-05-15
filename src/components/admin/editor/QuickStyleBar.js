@@ -1,7 +1,7 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import { ELEMENT_PRESETS, PRESET_NAMES } from "./elementRegistry";
+import { ELEMENT_INSTANCES, PRESET_NAMES } from "./elementCatalog";
 
 // Compare currentConfig against a preset — true only if every preset key matches.
 function isPresetActive(currentConfig, presetConfig) {
@@ -23,7 +23,7 @@ export default function QuickStyleBar({
   onApplyPreset,
   onReset,
 }) {
-  const element = ELEMENT_PRESETS[elementId];
+  const element = ELEMENT_INSTANCES[elementId];
   if (!element) return null;
 
   const presets = element.presets || {};

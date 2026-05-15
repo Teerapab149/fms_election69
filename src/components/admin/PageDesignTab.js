@@ -20,7 +20,7 @@ import HomeContent from '../HomeContent';
 import {
   DUMMY_ELECTION,
 } from '../../utils/editorDummyData';
-import { getPresetDefaults, getElementPresets } from './editor/elementRegistry';
+import { getPresetDefaults, getElementPresets } from './editor/elementCatalog';
 import {
   ArrowUp, ArrowDown, Eye, EyeOff, Save, Loader2,
   ChevronDown, Info, LayoutGrid, Timer, Users, BarChart3,

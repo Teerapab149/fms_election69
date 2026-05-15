@@ -14,7 +14,7 @@ import EditorElement from './admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
 import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
 import { resolveStatefulConfig } from './admin/editor/templateEngine';
-import { getBinding, isBoundElement } from './admin/editor/elementRegistry';
+import { getBinding, isBoundElement } from './admin/editor/elementCatalog';
 import CountdownTimer from "../components/CountdownTimer";
 import { Calendar } from "lucide-react";
 import SiteFooter from './SiteFooter';

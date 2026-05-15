@@ -52,6 +52,32 @@
 **Decision:** LivePreview capture handler uses `e.target.closest('.group\\/editor')` to detect editor wraps and let those clicks through. Only blocks clicks NOT in a wrap.  
 **Reason:** EditorElement still needs onClick to fire for selection.
 
+### D-011: Phase 2 Type-Instance Catalog Refactor Complete (2026-05-16)
+
+Phase 2 of FMS election editor refactor complete. Migrated 3 fragmented registries (`elementRegistry`, `statefulRegistry`, `EXTRA_ELEMENTS_SCHEMA`) into a single unified `elementCatalog`.
+
+**Result:**
+- 36 element instances + 16 semantic types (was 31+ scattered across 3 sources)
+- 7 consumer files now reference single source of truth (`elementCatalog.js`)
+- Cross-reference validation runs in dev mode on module load
+- Stateful elements use proper resolution chain (`isStateful`-driven routing)
+- 4 previously-orphaned `results-*` elements now editable
+- `vote-divider-text` orphan registered (was Wrapped but unregistered)
+- `templateEngine.resolveStatefulConfig` silent-`{}` fallback bug fixed
+
+**Deferred bugs (will be fixed by Phase 3 rebuild):**
+- Template apply changes only countdown + voteCTA visually (other elements have preset data but apply logic incomplete — Phase 3 Canva-style system replaces template logic entirely)
+- StatefulGallery mini-template buttons not clickable (pre-existing Phase 1.5 issue — new template editor UI in Phase 3 will replace StatefulGallery)
+
+**Files deleted:**
+- `src/components/admin/editor/elementRegistry.js`
+- `src/components/admin/editor/statefulRegistry.js`
+
+**Files created (Step 2-3):**
+- `src/components/admin/editor/elementCatalog.js` — public API + helpers + `validateCatalog()` + module-load self-check
+- `src/components/admin/editor/elementInstances.js` — 36 instance definitions
+- `src/components/admin/editor/elementTypes.js` — 16 semantic type definitions
+
 ---
 
 ## 🎨 Design / UX Decisions
@@ -201,6 +227,74 @@ Tags: `#simMode` `#stateFork` `#editorPreview` `#lockedUnlocked`
 **Lesson:** An EditorPreview that doesn't match production is worse than no preview — it gives admin false design information. Cost of reading production first: 5 min. Cost of writing it wrong and fixing: 2 sessions.  
 **Mitigation rule:** Before writing any `*EditorPreview`, read the full production page source and write a render-order list in the spec: "1. check icon circle, 2. title, 3. subtitle, 4. activity card..." Only start writing JSX once every visible element is listed.  
 Tags: `#editorPreview` `#readFirst` `#visualAccuracy` `#diagnoseFirst`
+
+---
+
+### P-LOG-005: [2026-05-15] H-CATALOG-CORE — Don't Silently Deviate from Explicit Spec
+
+**Trigger:** When spec explicitly states a value/behavior (e.g., `presets: null`) but you think there might be a "better" choice.
+
+**Anti-pattern:**
+Make the deviation without asking, rationalize it ("it's ignored anyway"), then mention it casually in the report.
+
+**Correct pattern:**
+If you think the spec is wrong, STOP and ask the user before deviating. The user wrote the spec for a reason. Deviation requires explicit approval.
+
+**Detection:**
+After any task, grep diff for unexpected values that differ from spec. Flag "deviation from spec" in report explicitly, not buried in description.
+
+Tags: `#specDrafting` `#designAmbiguity` `#askDontAssume`
+
+---
+
+### P-LOG-006: [2026-05-15] H-CATALOG-CORE — Always Search for Orphan Wraps Before Migration
+
+**Trigger:** When migrating elements between registries or refactoring catalog systems.
+
+**Anti-pattern:**
+Trust initial diagnosis count without re-scanning ALL Wrap usages in production components. Discover orphans mid-execution (or never).
+
+**Correct pattern:**
+Before catalog creation, grep `<Wrap[[:space:]]+id="..."` across ALL production files. Compare against registry. Document orphans BEFORE writing instance entries.
+
+**Detection:**
+Final count of catalog instances should equal: registered + new + orphans found.
+
+Tags: `#orphanWraps` `#preMigrationDiscovery` `#fullScan`
+
+---
+
+### P-LOG-007: [2026-05-15] H-CATALOG-CORE — Validation Must Run on Module Load
+
+**Trigger:** When creating shared catalog/registry files that other consumers import.
+
+**Anti-pattern:**
+Define `validateCatalog()` function but never call it. Verification deferred until first consumer imports the catalog → validation gap until Step 3+.
+
+**Correct pattern:**
+Include `if (process.env.NODE_ENV !== 'production') validateCatalog();` at module bottom. Add a "loading log" so console confirms catalog imported.
+
+**Detection:**
+Browser console should print catalog status on dev startup. Absence = catalog either broken or not yet imported by any consumer.
+
+Tags: `#moduleLoadValidation` `#devConsole` `#earlyFailure`
+
+---
+
+### P-LOG-008: [2026-05-15] H-CATALOG-CORE — Grep Patterns Must Handle Mixed Case in JS Object Keys
+
+**Trigger:** Counting JavaScript object property keys via grep.
+
+**Anti-pattern:**
+Use pattern `[a-z][a-z0-9-]+` which excludes uppercase. Miss entries like `voteCTA-button`. Get wrong count.
+
+**Correct pattern:**
+Use case-insensitive pattern: `[A-Za-z][A-Za-z0-9-]+` or `[\w-]+`. Always double-check count matches expected, investigate any discrepancy.
+
+**Detection:**
+If count seems off by 1-3 from expected, suspect case sensitivity. Re-run with broader pattern.
+
+Tags: `#verification` `#regex` `#falseNegative` `#caseSensitivity`
 
 ---
 

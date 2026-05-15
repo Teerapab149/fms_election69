@@ -13,7 +13,12 @@
       "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; Get-ChildItem $base -Directory | ForEach-Object { $_.Name })",
       "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; Get-ChildItem \"$base\\\\architect-critical-mindset\" -Recurse | ForEach-Object { $_.FullName.Replace\\($base, ''\\) })",
       "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; Get-ChildItem $base -File | ForEach-Object { $_.Name })",
-      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; $a = Get-FileHash \"$base\\\\knowledge-base.md\" -Algorithm SHA256; $b = Get-FileHash \"$base\\\\knowledge-base \\(1\\).md\" -Algorithm SHA256; \"knowledge-base.md     : $\\($a.Hash\\)\"; \"knowledge-base \\(1\\).md : $\\($b.Hash\\)\"; if \\($a.Hash -eq $b.Hash\\) { \"STATUS: identical \\(safe to delete dup\\)\" } else { \"STATUS: DIFFERENT — need manual review\" }; \"sizes:\"; Get-Item \"$base\\\\knowledge-base.md\",\"$base\\\\knowledge-base \\(1\\).md\" | Select-Object Name, Length)"
+      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; $a = Get-FileHash \"$base\\\\knowledge-base.md\" -Algorithm SHA256; $b = Get-FileHash \"$base\\\\knowledge-base \\(1\\).md\" -Algorithm SHA256; \"knowledge-base.md     : $\\($a.Hash\\)\"; \"knowledge-base \\(1\\).md : $\\($b.Hash\\)\"; if \\($a.Hash -eq $b.Hash\\) { \"STATUS: identical \\(safe to delete dup\\)\" } else { \"STATUS: DIFFERENT — need manual review\" }; \"sizes:\"; Get-Item \"$base\\\\knowledge-base.md\",\"$base\\\\knowledge-base \\(1\\).md\" | Select-Object Name, Length)",
+      "Bash(grep -i \"\\\\.md$\")",
+      "Bash(dir src\\\\components\\\\admin\\\\editor /b)",
+      "Bash(grep -nE \"from ['\\\\\"]\\\\\\\\./statefulRegistry['\\\\\"]|from ['\\\\\"]\\\\\\\\./elementRegistry['\\\\\"]\" src/components/admin/editor/PropertyPanel.js)",
+      "Bash(grep -nE \"from ['\\\\\"]\\\\\\\\./statefulRegistry['\\\\\"]|from ['\\\\\"]\\\\\\\\./elementCatalog['\\\\\"]\" src/components/admin/editor/StatefulGallery.js)",
+      "Bash(git rm *)"
     ]
   }
 }

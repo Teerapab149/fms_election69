@@ -15,6 +15,13 @@
  */
 
 import { ELECTION_CONFIG } from '../../../utils/electionConfig';
+import { ELEMENT_INSTANCES } from './elementCatalog';
+
+// Derived at module load so the resolver's STATEFUL_ELEMENTS lookup keeps
+// the same shape as the old statefulRegistry export (object keyed by id).
+const STATEFUL_ELEMENTS = Object.fromEntries(
+  Object.entries(ELEMENT_INSTANCES).filter(([, inst]) => inst.isStateful)
+);
 
 export const STATE_RESOLVERS = {
 
@@ -50,9 +57,6 @@ export const STATE_RESOLVERS = {
  * Returns the state ID string, or null if element/resolver not found.
  */
 export function resolveElementState(elementId, context) {
-  // Import lazily to avoid circular dependency risk
-  const { STATEFUL_ELEMENTS } = require('./statefulRegistry');
-
   const element = STATEFUL_ELEMENTS[elementId];
   if (!element) return null;
 

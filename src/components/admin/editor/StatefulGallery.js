@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { getStatefulElement } from './statefulRegistry';
+import { getStatefulElement } from './elementCatalog';
 import { listTemplates, resolveStatefulConfig } from './templateEngine';
 import VoteCTABlock from '../../blocks/VoteCTABlock';
 import CountdownTimer from '../../CountdownTimer';
