@@ -33,8 +33,23 @@ import AutoIntro from "./AutoIntro";
 import CinematicNavbar from "./CinematicNavbar";
 import ThreeDCarousel from "./ThreeDCarousel";
 import LiquidHero from "./LiquidHero.js";
+import EditorElement from '../admin/editor/EditorElement';
+import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 
-export default function SinglePartyView({ candidate, selectedPartyId, onSelect, specialOptions, user }) {
+export default function SinglePartyView({
+  candidate,
+  selectedPartyId,
+  onSelect,
+  specialOptions,
+  user,
+  editorMode = false,
+  elementConfigs = null,
+  selectedElement = null,
+  hoveredElement = null,
+  onSelectElement = null,
+  onHoverElement = null,
+  onHoverEnd = null,
+}) {
   const [portalContainer, setPortalContainer] = useState(null);
   const [bannerImages, setBannerImages] = useState([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -290,6 +305,112 @@ export default function SinglePartyView({ candidate, selectedPartyId, onSelect, 
       body { overflow: hidden; } 
     `}</style>
   );
+
+  // Editor-mode helpers
+  const Wrap = ({ id, children }) => editorMode ? (
+    <EditorElement
+      id={id}
+      config={elementConfigs?.[id]}
+      isSelected={selectedElement === id}
+      isHovered={hoveredElement === id}
+      onSelect={onSelectElement}
+      onHover={onHoverElement}
+      onHoverEnd={onHoverEnd}
+    >{children}</EditorElement>
+  ) : children;
+
+  const cfg = (id, defaults = {}) => editorMode
+    ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
+    : defaults;
+
+  // 🛠️ Editor mode — simple inline preview (skips portal/intro for admin preview panel)
+  if (editorMode) {
+    return (
+      <div className="bg-[#1A1A1A] text-white p-8 min-h-[600px]">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="text-center mb-6">
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-4 uppercase tracking-tighter">Your Vote<br />Your Voice</h2>
+            <p className="text-white/60 text-sm">Shape the Future of FMS</p>
+          </div>
+
+          {/* Party card (approve / รับรอง) */}
+          <Wrap id="vote-party-card">
+            <button
+              type="button"
+              onClick={() => onSelect?.(candidate?.id)}
+              style={{
+                backgroundColor: cfg('vote-party-card').backgroundColor || undefined,
+                borderRadius: RADIUS_MAP[cfg('vote-party-card').borderRadius] || '1.5rem',
+                borderColor: cfg('vote-party-card').borderColor || undefined,
+                borderWidth: cfg('vote-party-card').borderColor ? '1px' : undefined,
+                borderStyle: cfg('vote-party-card').borderColor ? 'solid' : undefined,
+              }}
+              className="w-full bg-white/10 backdrop-blur-md border border-white/10 p-8 flex items-center justify-between text-left"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-14 h-14 rounded-full bg-emerald-400 text-white flex items-center justify-center">
+                  <CheckCircle2 />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white/60 mb-1">เลือกพรรค {candidate?.name || ''}</p>
+                  <h3 className="text-3xl font-black text-white">รับรอง</h3>
+                </div>
+              </div>
+              <span className="hidden md:block text-6xl font-black text-white/10">
+                {String(candidate?.number ?? 1).padStart(2, '0')}
+              </span>
+            </button>
+          </Wrap>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Disapprove */}
+            <Wrap id="vote-disapprove-button">
+              <button
+                type="button"
+                onClick={() => onSelect?.(specialOptions?.disapprove?.id)}
+                style={{
+                  backgroundColor: cfg('vote-disapprove-button').backgroundColor || undefined,
+                  color: cfg('vote-disapprove-button').textColor || undefined,
+                  borderRadius: RADIUS_MAP[cfg('vote-disapprove-button').borderRadius] || '1rem',
+                  borderColor: cfg('vote-disapprove-button').borderColor || undefined,
+                  borderWidth: cfg('vote-disapprove-button').borderColor ? '1px' : undefined,
+                  borderStyle: cfg('vote-disapprove-button').borderColor ? 'solid' : undefined,
+                }}
+                className="w-full p-6 rounded-2xl bg-[#2A2A2A] border border-white/20 flex flex-col items-center gap-3"
+              >
+                <XCircle className="text-white/80" size={32} />
+                <span className="font-bold text-lg text-white/90">
+                  {cfg('vote-disapprove-button').text || 'ไม่รับรอง'}
+                </span>
+              </button>
+            </Wrap>
+
+            {/* Abstain */}
+            <Wrap id="vote-abstain-button">
+              <button
+                type="button"
+                onClick={() => onSelect?.(specialOptions?.abstain?.id)}
+                style={{
+                  backgroundColor: cfg('vote-abstain-button').backgroundColor || undefined,
+                  color: cfg('vote-abstain-button').textColor || undefined,
+                  borderRadius: RADIUS_MAP[cfg('vote-abstain-button').borderRadius] || '1rem',
+                  borderColor: cfg('vote-abstain-button').borderColor || undefined,
+                  borderWidth: cfg('vote-abstain-button').borderColor ? '1px' : undefined,
+                  borderStyle: cfg('vote-abstain-button').borderColor ? 'solid' : undefined,
+                }}
+                className="w-full p-6 rounded-2xl bg-[#2A2A2A] border border-white/20 flex flex-col items-center gap-3"
+              >
+                <Ban className="text-white/80" size={32} />
+                <span className="font-bold text-lg text-white/90">
+                  {cfg('vote-abstain-button').text || 'งดออกเสียง'}
+                </span>
+              </button>
+            </Wrap>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!portalContainer) return null;
 

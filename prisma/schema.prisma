@@ -79,5 +79,8 @@ model SystemConfig {
   showResult    Boolean  @default(false)
   systemMode    String   @default("AUTO")
   googleFormUrl String?
+  pageLayout    Json?
+  themeConfig   Json?
+  globalConfig  Json?
   updatedAt     DateTime @updatedAt
 }

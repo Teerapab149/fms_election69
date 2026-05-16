@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { Lock, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Navbar from "../../components/Navbar";
+import SiteFooter from "../../components/SiteFooter";
 
 export default function ClosedPage() {
     const { data: session } = useSession();
@@ -115,9 +116,7 @@ export default function ClosedPage() {
                     </div>
                 </div>
 
-                <p className="mt-6 text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">
-                    © FMS@PSU 2026. All Rights Reserved.
-                </p>
+                <SiteFooter className="mt-6" />
 
             </main>
         </div >

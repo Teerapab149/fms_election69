@@ -108,8 +108,12 @@ export default function VoteFooter({
 
   const handleOpenModal = useCallback(() => {
     if (!canConfirm) return;
-    setOpen(true);
-  }, [canConfirm]);
+    if (variant === "multi") {
+      onConfirm?.(); // ข้าม Modal ภายในของ Footer และเรียก Modal ตัวใหม่เลย
+    } else {
+      setOpen(true);
+    }
+  }, [canConfirm, onConfirm, variant]);
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm) return;

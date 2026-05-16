@@ -2,7 +2,7 @@
 import { getPath } from "../../utils/basePath";
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation'; // ✅ เพิ่ม useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import {
   Check,
@@ -10,7 +10,7 @@ import {
   ArrowRight,
   X,
   User as UserIcon,
-  Loader2,
+  Loader2, 
   Lock,
   Copy,
   XCircle,
@@ -22,14 +22,25 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export default function SuccessPage() {
+// ✅ นำเข้าระบบแก้ไขจาก Editor
+import EditorElement from '../../components/admin/editor/EditorElement';
+import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
+
+export default function SuccessPage({ 
+  editorMode = false,
+  pageLayout = null,
+  elementConfigs = null,
+  selectedElement = null,
+  hoveredElement = null,
+  onSelectElement = null,
+  onHoverElement = null,
+  onHoverEnd = null
+} = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status, update } = useSession();
 
-  /* REMOVED CONSTANT URL */
   const [googleFormUrl, setGoogleFormUrl] = useState("");
-
   const [user, setUser] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -41,13 +52,44 @@ export default function SuccessPage() {
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "", action: null });
   const [isVoted, setIsVoted] = useState(false);
 
-  // ตรวจสอบว่าเพิ่ง Redirect มาจากหน้าโหวตหรือไม่
   const isJustVoted = searchParams.get('voted') === 'true';
 
   // =========================================================
-  // Auth Logic (Fix Race Condition)
+  // ✅ Editor Wrappers & Visibility Logic (แก้บั๊ก s.type)
+  // =========================================================
+  const Wrap = ({ id, children }) => editorMode ? (
+    <EditorElement
+      id={id}
+      config={elementConfigs?.[id]}
+      isSelected={selectedElement === id}
+      isHovered={hoveredElement === id}
+      onSelect={onSelectElement}
+      onHover={onHoverElement}
+      onHoverEnd={onHoverEnd}
+    >{children}</EditorElement>
+  ) : children;
+
+  const cfg = (id, defaults = {}) => editorMode
+    ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
+    : defaults;
+
+  const isSectionVisible = (typeStr) => {
+    if (!pageLayout?.success) return true;
+    // เปลี่ยนจาก s.id เป็น s.type เพื่อให้ตรงกับฐานข้อมูลของ Admin
+    const section = pageLayout.success.find(s => String(s.type).toLowerCase() === String(typeStr).toLowerCase());
+    return section ? section.visible !== false : true;
+  };
+
+  const isSuccessMessageVisible = isSectionVisible('SUCCESSMESSAGE');
+  // รองรับทั้งชื่อ googleForm และ googleFormLink เผื่อตั้งค่าไว้ต่างกัน
+  const isGoogleFormLinkVisible = isSectionVisible('GOOGLEFORMLINK') && isSectionVisible('GOOGLEFORM');
+
+  // =========================================================
+  // Auth Logic 
   // =========================================================
   useEffect(() => {
+    if (editorMode) return; // บายพาสระบบล็อคตอนเป็น Editor
+
     if (status === "loading") return;
 
     if (status === "unauthenticated") {
@@ -61,7 +103,6 @@ export default function SuccessPage() {
     }
 
     if (status === "authenticated" && session) {
-
       (async () => {
         try {
           let res = await fetch(
@@ -71,21 +112,16 @@ export default function SuccessPage() {
 
           let data = await res.json();
           const voted = !!data?.isVoted;
-
           setIsVoted(voted);
 
-          if (data.googleFormUrl) {
-            setGoogleFormUrl(data.googleFormUrl);
-          }
+          if (data.googleFormUrl) setGoogleFormUrl(data.googleFormUrl);
 
           if (!voted) {
             router.replace("/vote");
             return;
           }
 
-          const hasVoted = voted;
-
-          if (!hasVoted) {
+          if (!voted) {
             setAlertConfig({
               title: "คุณยังไม่ได้ลงคะแนนเสียง",
               message: "กรุณาทำการเลือกตั้งให้เสร็จสมบูรณ์ก่อน",
@@ -95,9 +131,7 @@ export default function SuccessPage() {
             return;
           }
 
-          if (session.user?.isFormCompleted) {
-            setIsUnlocked(true);
-          }
+          if (session.user?.isFormCompleted) setIsUnlocked(true);
 
           setUser({
             studentId: session.user?.studentId || session.user?.id || "-",
@@ -109,11 +143,7 @@ export default function SuccessPage() {
           res = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}`));
           data = await res.json();
 
-          if (data.isFormCompleted) {
-            setIsUnlocked(true);
-          };
-
-
+          if (data.isFormCompleted) setIsUnlocked(true);
 
         } catch (err) {
           console.error(err);
@@ -126,23 +156,22 @@ export default function SuccessPage() {
         }
       })();
     }
-  }, [status, session, router, isJustVoted]); // ✅ เพิ่ม isJustVoted ใน dependency
+  }, [status, session, router, isJustVoted, editorMode]);
 
   // =========================================================
-  // Timer & Handlers (คงเดิม)
-  // =========================================================
-  // =========================================================
-  // Timer & Handlers (Visible Countdown + Checkbox)
+  // Timer & Handlers
   // =========================================================
   const [timeLeft, setTimeLeft] = useState(15);
   const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
+    if (editorMode) return;
+
     let interval;
     if (showModal) {
       setCanConfirm(false);
       setIsChecked(false);
-      setTimeLeft(15); // ตั้งเวลา 15 วินาที
+      setTimeLeft(15);
 
       interval = setInterval(() => {
         setTimeLeft((prev) => {
@@ -156,7 +185,7 @@ export default function SuccessPage() {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [showModal]);
+  }, [showModal, editorMode]);
 
   const handleConfirmSubmit = async () => {
     if (!canConfirm) return;
@@ -164,9 +193,7 @@ export default function SuccessPage() {
       const res = await fetch(getPath("/api/complete-form"), { method: "GET" });
       if (!res.ok) throw new Error("Failed to update status");
 
-      // อัปเดต Session ฝั่ง Client
       await update({ isFormCompleted: true });
-
       setIsUnlocked(true);
       setShowModal(false);
     } catch (error) {
@@ -188,7 +215,7 @@ export default function SuccessPage() {
     if (alertConfig.action) alertConfig.action();
   }
 
-  if (status === "loading" || (!isAuthorized && !showAlertModal)) {
+  if (!editorMode && (status === "loading" || (!isAuthorized && !showAlertModal))) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:50px_50px]"></div>
@@ -199,7 +226,7 @@ export default function SuccessPage() {
   }
 
   // =========================================================
-  // Render (รักษาองค์ประกอบเดิมของคุณทั้งหมด)
+  // Render 
   // =========================================================
   return (
     <div className="min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-slate-50">
@@ -211,132 +238,139 @@ export default function SuccessPage() {
         <div className="absolute right-0 bottom-0 -z-10 h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-emerald-400 opacity-20 blur-[80px] md:blur-[120px]"></div>
       </div>
 
-      {isAuthorized && (
+      {(isAuthorized || editorMode) && (
         <div className="w-full max-w-lg animate-fade-in-up relative z-10">
           <div className="bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#8A2680] via-purple-500 to-pink-500"></div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="relative mb-6 group cursor-default">
-                <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full blur-xl opacity-30 group-hover:opacity-60 transition duration-700"></div>
-                <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-emerald-50 relative z-10 animate-bounce-gentle">
-                  <Check className="w-10 h-10 md:w-12 md:h-12 text-emerald-500 stroke-[3.5]" />
-                </div>
-              </div>
-
-              <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight mb-2">บันทึกคะแนนสำเร็จ!</h1>
-              <p className="text-slate-500 text-sm md:text-base mb-6 px-2 font-medium">
-                ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการขับเคลื่อน<br className="hidden sm:block" />กิจกรรมนักศึกษาคณะวิทยาการจัดการ
-              </p>
-
-              {/* Box: Announcement */}
-              <div className="w-full bg-gradient-to-br from-purple-50/80 to-white border border-purple-100/80 rounded-2xl p-5 shadow-[0_2px_15px_rgba(138,38,128,0.05)] relative overflow-hidden text-left pb-6 mb-4">
-
-                {/* Decorative Background Icon */}
-                <div className="absolute top-0 right-0 -mr-4 -mt-4 text-purple-100/50 opacity-20 pointer-events-none">
-                  <Megaphone size={100} />
-                </div>
-
-                {/* ส่วนเนื้อหาด้านบน (มีไอคอนซ้าย + ข้อความขวา) */}
-                <div className="flex gap-4 items-start relative z-10">
-                  {/* Icon Box */}
-                  <div className="bg-white p-3 rounded-2xl text-[#8A2680] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
-                    <Megaphone size={24} strokeWidth={2.5} />
+              {isSuccessMessageVisible && (
+                <>
+                  <div className="relative mb-6 group cursor-default">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full blur-xl opacity-30 group-hover:opacity-60 transition duration-700"></div>
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-emerald-50 relative z-10 animate-bounce-gentle">
+                      <Check className="w-10 h-10 md:w-12 md:h-12 text-emerald-500 stroke-[3.5]" />
+                    </div>
                   </div>
 
-                  {/* Text Content */}
-                  <div className="space-y-3 flex-1 min-w-0"> {/* min-w-0 ช่วยกันข้อความล้นในมือถือจอเล็ก */}
+                  {/* ✅ ห่อ Wrap หัวข้อ */}
+                  <Wrap id="success-title">
+                    <h1 className="text-2xl md:text-3xl font-black tracking-tight mb-2" style={{
+                      color: cfg('success-title').color || '#1e293b',
+                      fontSize: SIZE_MAP[cfg('success-title').fontSize] || undefined,
+                    }}>
+                      {cfg('success-title').text || 'บันทึกคะแนนสำเร็จ!'}
+                    </h1>
+                  </Wrap>
 
-                    {/* Header */}
-                    <div>
-                      <h3 className="font-bold text-[#8A2680] text-base md:text-lg leading-tight">
-                        รับทรานสคริปต์กิจกรรม
-                      </h3>
-                      <p className="text-slate-500 text-xs md:text-sm mt-1">
-                        กรุณาทำแบบประเมินให้ครบถ้วน
+                  {/* ✅ ห่อ Wrap Subtitle */}
+                  <Wrap id="success-subtitle1">
+                    <p className="text-sm md:text-base mb-6 px-2 font-medium" style={{
+                      color: cfg('success-subtitle1').color || '#64748b',
+                      fontSize: SIZE_MAP[cfg('success-subtitle1').fontSize] || undefined,
+                    }}>
+                      {cfg('success-subtitle1').text || 'ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการขับเคลื่อนกิจกรรมนักศึกษาคณะวิทยาการจัดการ'}
+                    </p>
+                  </Wrap>
+                </>
+              )}
+
+              {isGoogleFormLinkVisible && (
+                <>
+                  {/* Box: Announcement */}
+                  <div className="w-full bg-gradient-to-br from-purple-50/80 to-white border border-purple-100/80 rounded-2xl p-5 shadow-[0_2px_15px_rgba(138,38,128,0.05)] relative overflow-hidden text-left pb-6 mb-4">
+                    <div className="absolute top-0 right-0 -mr-4 -mt-4 text-purple-100/50 opacity-20 pointer-events-none">
+                      <Megaphone size={100} />
+                    </div>
+                    <div className="flex gap-4 items-start relative z-10">
+                      <div className="bg-white p-3 rounded-2xl text-[#8A2680] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
+                        <Megaphone size={24} strokeWidth={2.5} />
+                      </div>
+                      <div className="space-y-3 flex-1 min-w-0">
+                        <div>
+                          <h3 className="font-bold text-[#8A2680] text-base md:text-lg leading-tight">รับทรานสคริปต์กิจกรรม</h3>
+                          <p className="text-slate-500 text-xs md:text-sm mt-1">กรุณาทำแบบประเมินให้ครบถ้วน</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[#8A2680] text-xs font-bold border border-purple-200 whitespace-nowrap">
+                            <CheckCircle2 size={12} /><span>ชั่วโมงกิจกรรม 2 ชม.</span>
+                          </div>
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
+                            <Tag size={12} /><span>ประเภทเลือกเข้าร่วม</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative z-10 mt-4 pt-3 border-t border-purple-100/60">
+                      <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
+                        <span className="shrink-0">🔓</span>
+                        <span className="truncate">และ <span className="font-semibold text-[#8A2680] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span></span>
                       </p>
                     </div>
-
-                    {/* Tags / Badges Group */}
-                    <div className="flex flex-wrap gap-2">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[#8A2680] text-xs font-bold border border-purple-200 whitespace-nowrap">
-                        <CheckCircle2 size={12} />
-                        <span>ชั่วโมงกิจกรรม 2 ชม.</span>
-                      </div>
-
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
-                        <Tag size={12} />
-                        <span>ประเภทเลือกเข้าร่วม</span>
-                      </div>
-                    </div>
                   </div>
-                </div>
 
-                {/* ✅ ส่วน Footer ย้ายออกมาด้านนอก Flex แล้ว (จะกินเต็มความกว้าง) */}
-                <div className="relative z-10 mt-4 pt-3 border-t border-purple-100/60">
-                  <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
-                    <span className="shrink-0">🔓</span>
-                    <span className="truncate">
-                      และ <span className="font-semibold text-[#8A2680] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span>
-                    </span>
-                  </p>
-                </div>
+                  {/* Buttons */}
+                  <div className="w-full space-y-3 pd">
+                    
+                    {/* ✅ ห่อ Wrap ปุ่ม Google Form */}
+                    <Wrap id="success-form-btn">
+                      <button
+                        onClick={() => !editorMode && setShowModal(true)}
+                        disabled={isUnlocked && !editorMode}
+                        className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base shadow-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden group
+                          ${isUnlocked && !editorMode ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-none cursor-default' : 'bg-slate-900 text-white hover:bg-black hover:shadow-xl hover:-translate-y-1'}`}
+                        style={{
+                          backgroundColor: (!isUnlocked || editorMode) ? (cfg('success-form-btn').backgroundColor || undefined) : undefined,
+                          color: (!isUnlocked || editorMode) ? (cfg('success-form-btn').textColor || undefined) : undefined,
+                          borderRadius: RADIUS_MAP[cfg('success-form-btn').borderRadius] || undefined,
+                        }}
+                      >
+                        {(isUnlocked && !editorMode) ? (
+                          <><span>ส่งแบบประเมินเรียบร้อยแล้ว</span> <Check size={18} /></>
+                        ) : (
+                          <>
+                            <span className="relative flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                            </span>
+                            <span>{cfg('success-form-btn').text || 'เปิดแบบประเมิน (คลิกที่นี่)'}</span>
+                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                      </button>
+                    </Wrap>
 
-              </div>
+                    <div className="relative group/lock">
+                      <button
+                        onClick={() => { if (isUnlocked && !editorMode) router.push('/results'); }}
+                        disabled={!isUnlocked && !editorMode}
+                        className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base border transition-all duration-500 flex items-center justify-center gap-2
+                          ${(isUnlocked || editorMode) ? 'bg-[#8A2680] border-[#8A2680] text-white shadow-lg shadow-purple-200 hover:bg-[#701e68] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
+                      >
+                        {(isUnlocked || editorMode) ? (
+                          <>ไปดูผลคะแนน (Results) <BarChart3 size={18} /></>
+                        ) : (
+                          <><Lock size={16} /> <span>ล็อค: กรุณาทำแบบประเมินก่อน</span></>
+                        )}
+                      </button>
+                    </div>
 
-              {/* Buttons */}
-              <div className="w-full space-y-3 pd">
-                <button
-                  onClick={() => setShowModal(true)}
-                  disabled={isUnlocked}
-                  className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base shadow-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden group
-                    ${isUnlocked ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-none cursor-default' : 'bg-slate-900 text-white hover:bg-black hover:shadow-xl hover:-translate-y-1'}`}
-                >
-                  {isUnlocked ? (
-                    <><span>ส่งแบบประเมินเรียบร้อยแล้ว</span> <Check size={18} /></>
-                  ) : (
-                    <>
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
-                      </span>
-                      <span>เปิดแบบประเมิน (คลิกที่นี่)</span>
-                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </button>
-
-                <div className="relative group/lock">
-                  <button
-                    onClick={() => { if (isUnlocked) router.push('/results'); }}
-                    disabled={!isUnlocked}
-                    className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base border transition-all duration-500 flex items-center justify-center gap-2
-                      ${isUnlocked ? 'bg-[#8A2680] border-[#8A2680] text-white shadow-lg shadow-purple-200 hover:bg-[#701e68] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
-                  >
-                    {isUnlocked ? (
-                      <>ไปดูผลคะแนน (Results) <BarChart3 size={18} /></>
-                    ) : (
-                      <><Lock size={16} /> <span>ล็อค: กรุณาทำแบบประเมินก่อน</span></>
-                    )}
-                  </button>
-                </div>
-
-                <Link href="/" className="block pt-2">
-                  <button className="text-slate-400 text-xs md:text-sm font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg hover:bg-slate-50">กลับหน้าหลัก</button>
-                </Link>
-              </div>
+                    <Link href="/" className="block pt-2">
+                      <button className="text-slate-400 text-xs md:text-sm font-bold hover:text-slate-600 transition-colors py-2 px-4 rounded-lg hover:bg-slate-50">กลับหน้าหลัก</button>
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal & Alert (คงเดิมตามที่คุณส่งมา) */}
-      {showModal && (
+      {/* Modal & Alert */}
+      {showModal && !editorMode && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in" onClick={() => setShowModal(false)}></div>
           <div className="bg-white w-full sm:max-w-4xl h-[92vh] sm:h-[90vh] rounded-t-[2rem] sm:rounded-2xl shadow-2xl relative z-10 flex flex-col animate-in slide-in-from-bottom-10 overflow-hidden">
-
-            {/* Modal Header */}
             <div className="bg-white border-b border-gray-100 p-4 shrink-0 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="flex items-center gap-3 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
@@ -363,7 +397,6 @@ export default function SuccessPage() {
               </div>
             </div>
 
-            {/* Iframe */}
             <div className="flex-1 bg-slate-50 relative">
               {!isFormLoaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50">
@@ -384,11 +417,8 @@ export default function SuccessPage() {
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="p-4 border-t border-gray-100 bg-white">
               <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
-
-                {/* Visual Timer & Checkbox */}
                 <div className="w-full">
                   <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[#8A2680] hover:bg-purple-50'}`}>
                     <div className="relative flex items-center justify-center mt-0.5">
@@ -439,7 +469,6 @@ export default function SuccessPage() {
         </div>
       )}
 
-      {/* Security Alert Modal */}
       {showAlertModal && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 animate-in fade-in">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>

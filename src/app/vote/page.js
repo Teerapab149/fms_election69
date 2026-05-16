@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getPath } from '../../utils/basePath';
+import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
-import { Loader2 } from 'lucide-react';
-
+import { Loader2, Sparkles } from 'lucide-react';
 // Components
+import Navbar from '../../components/Navbar';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
 import VoteFooter from '../../components/vote/VoteFooter';
@@ -31,7 +32,6 @@ export default function VotePage() {
     handleSelectParty,
     submitVote
   } = useVoteSystem();
-
   const handleSingleSelect = (id) => {
     handleSelectParty(id);
   };
@@ -42,6 +42,26 @@ export default function VotePage() {
 
   // ✅ Prevent double click during redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
+  const [voteConfig, setVoteConfig] = useState({});
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch(getPath('/api/admin/page-layout'));
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.vote?.multiParty) {
+            setVoteConfig(data.vote.multiParty);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch page layout, using defaults');
+      }
+    };
+    fetchConfig();
+  }, []);
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -72,26 +92,36 @@ export default function VotePage() {
   // --- Render ---
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FA]">
-        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-4" />
-        <p className="text-slate-500 font-medium animate-pulse">กำลังตรวจสอบสิทธิ์...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FD]">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#8A2680]/20 to-purple-500/20 rounded-full blur-xl animate-pulse" />
+          <Loader2 className="relative w-12 h-12 text-[#8A2680] animate-spin mb-4" />
+        </div>
+        <p className="text-slate-500 font-semibold animate-pulse mt-4">กำลังตรวจสอบสิทธิ์...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative">
-      <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
+    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]">
 
-        {/* Header (Only for Multi) */}
-        {!isSingleParty && (
-          <div className="text-center mb-8 animate-fade-in-up">
-            <h1 className="text-3xl md:text-5xl font-black text-[#8A2680] mb-2 tracking-tight">เลือกตั้งสโมสรนักศึกษา</h1>
-            <p className="mt-2 text-sm md:text-base text-slate-500 font-medium">
-              สวัสดีคุณ <span className="font-bold text-[#8A2680]">{session?.user?.name}</span> โปรดเลือกพรรคที่ต้องการ
-            </p>
+      {!isSingleParty && (
+        <>
+          {/* Background decoration — fixed, behind everything */}
+          <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:30px_30px] md:bg-[size:40px_40px]"></div>
           </div>
-        )}
+
+          {/* Navbar */}
+          <div className="relative z-50">
+            <Navbar />
+          </div>
+        </>
+      )}
+
+      <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
 
         {isSingleParty ? (
           <SinglePartyView
@@ -108,6 +138,7 @@ export default function VotePage() {
             selectedPartyId={selectedPartyId}
             onSelect={handleSelectParty} // Multi view ก็น่าจะใช้ onSelect เหมือนกัน (เช็คไฟล์ MultiPartyView ด้วยว่ารับ props ชื่ออะไร)
             onViewDetails={handleViewDetails}
+            config={voteConfig}
           />
         )}
       </main>
@@ -144,6 +175,26 @@ export default function VotePage() {
           isSubmitting={isSubmitting || isRedirecting} // ✅ Pass explicit submitting state to modal (if supported)
         />
       )}
+
+      {/* Animation keyframes — scoped to vote page */}
+      <style jsx global>{`
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes stagger-fade-in {
+          from { opacity: 0; transform: translateY(20px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-stagger-card {
+          opacity: 0;
+          animation: stagger-fade-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
     </div>
   );
 }

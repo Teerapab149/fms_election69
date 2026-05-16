@@ -1,433 +1,412 @@
 // src/components/HomeContent.js
 "use client";
 import { getPath } from "../utils/basePath";
+import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import Navbar from "../components/Navbar";
+import BlockRenderer from "../components/blocks/BlockRenderer";
+import MeetCandidatesBlock from "../components/blocks/MeetCandidatesBlock";
+import VoteCTABlock from "../components/blocks/VoteCTABlock";
+import StatsBlock from "../components/blocks/StatsBlock";
+import ElectionBannerBlock from "../components/blocks/ElectionBannerBlock";
+import { useEditorPreview } from "../hooks/useEditorPreview";
+import EditorElement from './admin/editor/EditorElement';
+import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
+import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
+import { resolveStatefulConfig } from './admin/editor/templateEngine';
+import { getBinding, isBoundElement } from './admin/editor/elementCatalog';
+import CountdownTimer from "../components/CountdownTimer";
+import { Calendar } from "lucide-react";
+import SiteFooter from './SiteFooter';
+import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { signIn, useSession } from "next-auth/react";
-import Navbar from '../components/Navbar';
-import CountdownTimer from '../components/CountdownTimer';
-import MeetCandidatesCard from '../components/MeetCandidatesCard';
-import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
+const FALLBACK_BLOCKS = [
+  { type: "hero", visible: true, order: 1, config: { showCountdown: true, showStatusBadge: true } },
+  { type: "voteCTA", visible: true, order: 2, config: {} },
+  { type: "meetCandidates", visible: true, order: 3, config: {} },
+  { type: "stats", visible: true, order: 4, config: { showPercentage: true, showTotalEligible: true } },
+  { type: "electionBanner", visible: true, order: 5, config: {} },
+];
 
-export default function HomeContent({ initialData }) {
+export default function HomeContent({
+  initialData,
+  editorMode = false,
+  editorData = null,
+  elementConfigs = null,
+  selectedElement = null,
+  hoveredElement = null,
+  onSelectElement = null,
+  onHoverElement = null,
+  onHoverEnd = null,
+  pageLayout = null,
+  theme = null,
+}) {
+  const { data: session, status } = useSession();
+  const { isEditorMode, highlightedSection } = useEditorPreview();
+  const globalConfig = useGlobalConfig();
 
-    const { data: session, status } = useSession();
-    // ✅ ใช้ข้อมูลที่ Server ส่งมาเป็นค่าเริ่มต้นทันที (ไม่ต้องรอโหลด)
-    const [stats, setStats] = useState({
-        totalEligible: initialData?.stats?.totalEligible || 0,
-        totalVoted: initialData?.stats?.totalVoted || 0,
-        percentage: initialData?.stats?.totalEligible > 0
-            ? ((initialData.stats.totalVoted / initialData.stats.totalEligible) * 100).toFixed(2)
-            : "0.00"
-    });
+  const [stats, setStats] = useState({
+    totalEligible: initialData?.stats?.totalEligible || 0,
+    totalVoted: initialData?.stats?.totalVoted || 0,
+    percentage:
+      initialData?.stats?.totalEligible > 0
+        ? ((initialData.stats.totalVoted / initialData.stats.totalEligible) * 100).toFixed(2)
+        : "0.00",
+  });
 
-    const [candidates, setCandidates] = useState(initialData?.candidates || []);
-    const [mounted, setMounted] = useState(false);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [isTransitioning, setIsTransitioning] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [isVotedReal, setIsVotedReal] = useState(false);
+  const [isCheckingVoted, setIsCheckingVoted] = useState(true);
 
-    // 🔐 เช็คสถานะ isVoted จาก Database จริง (ไม่พึ่ง session เพราะ JWT ไม่ update หลังโหวต)
-    const [isVotedReal, setIsVotedReal] = useState(false);
-    const [isCheckingVoted, setIsCheckingVoted] = useState(true);
+  // 🧱 State สำหรับโหมดหน้าเว็บปกติ (ถ้าไม่มี Props pageLayout ส่งมา)
+  const [apiBlocks, setApiBlocks] = useState(FALLBACK_BLOCKS);
+  const [apiElementConfigs, setApiElementConfigs] = useState(null);
 
-    const slideshowImages = [getPath("/images/prob/samo49_1.png")];
-    const isMultiImage = slideshowImages.length > 1;
-    const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    // 🔐 Fetch สถานะ isVoted จริงจาก Database เมื่อมี session
-    useEffect(() => {
-        const checkVoteStatus = async () => {
-            if (session?.user?.studentId) {
-                try {
-                    const res = await fetch(getPath(`/api/check-status?studentId=${session.user.studentId}`));
-                    if (res.ok) {
-                        const data = await res.json();
-                        setIsVotedReal(data.isVoted === true);
-                    }
-                } catch (error) {
-                    console.error("Error checking vote status:", error);
-                }
-            }
-            setIsCheckingVoted(false);
-        };
-
-        if (status === "authenticated") {
-            checkVoteStatus();
-        } else if (status === "unauthenticated") {
-            setIsCheckingVoted(false);
+  useEffect(() => {
+    if (editorMode) { setIsCheckingVoted(false); return; }
+    const checkVoteStatus = async () => {
+      if (session?.user?.studentId) {
+        try {
+          const res = await fetch(getPath(`/api/check-status?studentId=${session.user.studentId}`));
+          if (res.ok) {
+            const data = await res.json();
+            setIsVotedReal(data.isVoted === true);
+          }
+        } catch (error) {
+          console.error("Error checking vote status:", error);
         }
-    }, [session?.user?.studentId, status]);
+      }
+      setIsCheckingVoted(false);
+    };
 
-    useEffect(() => {
-        if (!isMultiImage) return;
-        const interval = setInterval(() => {
-            setCurrentImageIndex((prevIndex) => prevIndex + 1);
-            setIsTransitioning(true);
-        }, 10000);
-        return () => clearInterval(interval);
-    }, [isMultiImage]);
+    if (status === "authenticated") {
+      checkVoteStatus();
+    } else if (status === "unauthenticated") {
+      setIsCheckingVoted(false);
+    }
+  }, [session?.user?.studentId, status, editorMode]);
 
-    useEffect(() => {
-        if (!isMultiImage) return;
-        if (currentImageIndex === extendedImages.length - 1) {
-            const resetTimeout = setTimeout(() => {
-                setIsTransitioning(false);
-                setCurrentImageIndex(0);
-            }, 1500);
-            return () => clearTimeout(resetTimeout);
-        }
-    }, [currentImageIndex, extendedImages.length, isMultiImage]);
+  // 🧱 Fetch pageLayout จาก API เฉพาะกรณีที่เข้ามาดูเว็บจริงๆ เท่านั้น
+  useEffect(() => {
+    if (editorMode || pageLayout) return;
+    fetch(getPath("/api/admin/page-layout"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.home) setApiBlocks(data.home);
+        if (data?.elementConfigs?.home) setApiElementConfigs(data.elementConfigs.home);
+      })
+      .catch((err) => {
+        console.error("[HomeContent] page-layout fetch failed:", err);
+      });
+  }, [editorMode, pageLayout]);
 
-    if (!mounted) return null;
+  if (!mounted) return null;
+
+  // ✅ การแก้บั๊ก: อ่านค่าโดยตรงจาก Props เสมอ เพื่อให้การตั้งค่า ซ่อน/โชว์ และลำดับ Sync กันทันที
+  const activeBlocks = pageLayout?.home || apiBlocks;
+
+  const Wrap = ({ id, children }) => editorMode ? (
+    <EditorElement
+      id={id}
+      config={elementConfigs?.[id]}
+      isSelected={selectedElement === id}
+      isHovered={hoveredElement === id}
+      onSelect={onSelectElement}
+      onHover={onHoverElement}
+      onHoverEnd={onHoverEnd}
+    >{children}</EditorElement>
+  ) : children;
+
+  const cfg = (id, defaults = {}) => editorMode
+    ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
+    : defaults;
+
+  const effectiveConfigs = editorMode
+    ? elementConfigs
+    : (pageLayout?.elementConfigs?.home || apiElementConfigs || {});
+
+  // Get text content — bound elements always read from globalConfig (synced with
+  // ตั้งค่าทั่วไป); unbound elements use admin override → default fallback.
+  const getText = (id, defaultText) => {
+    const binding = getBinding(id);
+    if (binding) {
+      return globalConfig[binding] ?? defaultText;
+    }
+    return effectiveConfigs?.[id]?.config?.text ?? defaultText;
+  };
+
+  // Get inline style object for text elements
+  // Returns undefined when no overrides so existing Tailwind classes win
+  const getTextStyle = (id) => {
+    const c = effectiveConfigs?.[id]?.config || {};
+    const style = {};
+    if (c.fontSize) style.fontSize = SIZE_MAP[c.fontSize];
+    if (c.color) style.color = c.color;
+    if (c.fontWeight) style.fontWeight = WEIGHT_MAP[c.fontWeight];
+    if (c.align) style.textAlign = c.align;
+    return Object.keys(style).length > 0 ? style : undefined;
+  };
+
+  // Check if a toggle element is visible
+  const isVisible = (id) => {
+    return effectiveConfigs?.[id]?.config?.visible !== false;
+  };
+
+  const blockData = { session, isVotedReal, isCheckingVoted, initialData, stats };
+
+  // Editor-mode synthesized data — real blocks need this shape; built from
+  // editorData (DUMMY_ELECTION) so preview renders sensible default values.
+  const editorBlockData = editorMode ? {
+    session: null,
+    isVotedReal: false,
+    isCheckingVoted: false,
+    initialData: {
+      systemMode: "AUTO",
+      electionStatus: "ACTIVE",
+      isSystemOpen: true,
+    },
+    stats: {
+      totalVoted: editorData?.totalVoted ?? 0,
+      totalEligible: editorData?.totalEligible ?? 0,
+      percentage: (editorData?.percentageVoted ?? 0).toFixed(2),
+    },
+  } : null;
+
+  const activeBlockData = editorMode ? editorBlockData : blockData;
+
+  // Build runtime context for state-aware elements (H-2)
+  const runtimeCtx = buildRuntimeContext({
+    session,
+    systemConfig: initialData?.systemConfig,
+    electionStatus: initialData?.electionStatus,
+    userData: initialData?.userData
+  });
+
+  // Resolve voteCTA-button state + config (template defaults + admin overrides)
+  const voteCTAState = resolveElementState('voteCTA-button', runtimeCtx);
+  const voteCTASourceTemplate = pageLayout?.sourceTemplate || 'classic';
+  const voteCTAOverrides = pageLayout?.elementOverrides?.['voteCTA-button']?.[voteCTAState] || {};
+  const voteCTAResolvedConfig = resolveStatefulConfig(
+    voteCTASourceTemplate,
+    'voteCTA-button',
+    voteCTAState,
+    voteCTAOverrides
+  );
+
+  // Resolve countdown state + config
+  const countdownState = resolveElementState('hero-countdown', runtimeCtx);
+  const countdownSourceTemplate = pageLayout?.sourceTemplate || 'classic';
+  const countdownOverrides = pageLayout?.elementOverrides?.['hero-countdown']?.[countdownState] || {};
+  const countdownResolvedConfig = resolveStatefulConfig(
+    countdownSourceTemplate,
+    'hero-countdown',
+    countdownState,
+    countdownOverrides
+  );
+
+  const ed = editorData || {};
+
+  // Hero — unified path for both editor and normal mode, matches HeroBlock styling 1:1
+  const renderHero = () => {
+    // hero-title is bound → resolves to globalConfig.electionName ("SAMO 49"); auto-split
+    // for the gradient digit. If admin enters a non-trailing-number string, the whole text
+    // renders solid.
+    const titleText = String(getText('hero-title', ed.title || globalConfig.electionName) ?? '');
+    const titleMatch = titleText.match(/^(.+?)\s*(\d+)$/);
+    const titlePart = titleMatch ? titleMatch[1].trim() : titleText;
+    const numberPart = titleMatch ? titleMatch[2] : '';
+
+    // hero-year-badge is bound to academicYearTh (atomic). Compose with prefix here so the
+    // admin only edits the year value itself.
+    const yearBadgeBound = isBoundElement('hero-year-badge');
+    const yearBadgeText = yearBadgeBound
+      ? `ประจำปีการศึกษา ${globalConfig.academicYearTh}`
+      : getText('hero-year-badge', `ประจำปีการศึกษา ${globalConfig.academicYearTh}`);
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
+      <div className="w-full text-center lg:text-left space-y-4 pt-8 md:pt-10 pb-0 animate-fade-in-up">
 
-            {/* --- Background --- */}
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]"></div>
-                <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[100px]"></div>
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]"></div>
-                <div className="bg-noise"></div>
+        {isVisible('hero-countdown') && (
+          <Wrap id="hero-countdown">
+            <div className="flex justify-center lg:justify-start">
+              <CountdownTimer
+                systemMode={initialData?.systemMode || "AUTO"}
+                resolvedConfig={countdownResolvedConfig}
+              />
             </div>
+          </Wrap>
+        )}
 
-            <div className="relative z-50 shrink-0">
-                <Navbar />
+        <div className="space-y-3">
+          {/* Title SAMO 49 */}
+          <Wrap id="hero-title">
+            <div className="flex items-center justify-center lg:justify-start">
+              <h1 className="flex items-baseline gap-2 md:gap-3 font-black tracking-tight leading-none whitespace-nowrap select-none">
+                <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-slate-900 drop-shadow-sm">
+                  {titlePart}
+                </span>
+                {numberPart && (
+                  <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
+                    {numberPart}
+                    <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping" />
+                  </span>
+                )}
+              </h1>
             </div>
+          </Wrap>
 
-            <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
-                <div className="container mx-auto max-w-[1400px] w-full">
+          {/* Subtitle */}
+          <Wrap id="hero-subtitle">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
+              {getText('hero-subtitle', globalConfig.campaignTitle).replace(globalConfig.committeeName, '')}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-[#D946EF]">
+                {globalConfig.committeeName}
+              </span>
+            </h2>
+          </Wrap>
 
-                    <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-16 xl:gap-24">
+          {/* Subtitle 2 */}
+          <Wrap id="hero-subtitle2">
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-slate-500">
+              {getText('hero-subtitle2', globalConfig.organizationName)}
+            </h3>
+          </Wrap>
 
-                        {/* ======================= LEFT SIDE ======================= */}
-                        <div className="w-full lg:w-5/12 xl:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 lg:space-y-5 xl:space-y-8 relative z-20 animate-fade-in-up">
+          {/* Year badge */}
+          {isVisible('hero-status-badge') && (
+            <Wrap id="hero-year-badge">
+              <div className="flex justify-center lg:justify-start pt-1">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {yearBadgeText}
+                </span>
+              </div>
+            </Wrap>
+          )}
+        </div>
+      </div>
+    );
+  };
 
-                            <div className="flex justify-center lg:justify-start w-full mb-1 lg:mb-0">
-                                <CountdownTimer systemMode={initialData?.systemMode || "AUTO"} />
-                            </div>
+  const BLOCK_COMPONENTS = {
+    meetCandidates: MeetCandidatesBlock,
+    voteCTA: VoteCTABlock,
+    stats: StatsBlock,
+    electionBanner: ElectionBannerBlock,
+  };
 
-                            {/* HEADLINE */}
-                            <div className="space-y-3 lg:space-y-2 xl:space-y-4">
-                                <div className="flex items-center justify-center lg:justify-start relative">
-                                    <h1 className="flex items-baseline gap-2 md:gap-3 font-black tracking-tight leading-none whitespace-nowrap select-none">
-                                        <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-slate-900 drop-shadow-sm">
-                                            SAMO
-                                        </span>
-                                        <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
-                                            49
-                                            <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping"></span>
-                                        </span>
-                                    </h1>
-                                </div>
+  // Editor-mode wrap IDs — block type → primary editable element ID
+  const WRAP_ID_MAP = {
+    voteCTA: 'voteCTA-button',
+    stats: 'stats-voted-card',
+    meetCandidates: 'meet-section',
+    electionBanner: 'banner-section',
+  };
 
-                                <div className="space-y-2 lg:space-y-1">
-                                    <div className="space-y-0.5">
-                                        <h2 className="text-lg sm:text-2xl lg:text-2xl xl:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
-                                            โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-[#D946EF]">คณะกรรมการบริหาร</span>
-                                        </h2>
-                                        <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-500">
-                                            สโมสรนักศึกษาคณะวิทยาการจัดการ
-                                        </h3>
-                                    </div>
+  // ✅ ฟังก์ชัน Render (ใช้ activeBlocks) — รวมโหมดปกติและ Editor
+  const renderColumn = (types) =>
+    activeBlocks
+      .filter((b) => types.includes(b.type) && b.visible !== false) // ฟิลเตอร์ซ่อน/โชว์
+      .sort((a, b) => a.order - b.order)
+      .map((block) => {
+        // Editor-mode element-level visibility toggles (driven by elementConfigs)
+        if (editorMode) {
+          if (block.type === 'electionBanner' && cfg('banner-section').visible === false) return null;
+          if (block.type === 'meetCandidates' && cfg('meet-section').visible === false) return null;
+        }
 
-                                    <div className="flex justify-center lg:justify-start pt-2">
-                                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm hover:bg-purple-100 transition-colors cursor-default">
-                                            <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                            ประจำปีการศึกษา 2569
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Dynamic Button */}
-                            <div className="w-full flex justify-center lg:justify-start pt-1">
-                                {(() => {
-
-                                    // 1. ตั้งค่า Default (สำหรับปุ่ม Login)
-                                    let btnConfig = {
-                                        isLoginAction: true, // ✅ เพิ่ม flag บอกว่านี่คือปุ่ม Login
-                                        text: "เข้าสู่ระบบ / Sign in",
-                                        gradientBase: "from-[#691E61] via-[#8A2680] to-[#C026D3]",
-                                        gradientHover: "from-[#1e3a8a] via-[#1d4ed8] to-[#3b82f6]",
-                                        glowColor: "from-[#8A2680] to-[#3b82f6]",
-                                        shadow: "shadow-[0_10px_20px_-5px_rgba(138,38,128,0.4)]",
-                                        icon: <LogIn className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-1" />,
-                                        animation: ""
-                                    };
-
-                                    // 2. เช็ค Session เพื่อเปลี่ยน config (ใช้ isVotedReal จาก DB แทน session)
-                                    const sysMode = initialData?.systemMode || "AUTO";
-                                    const electionStatus = initialData?.electionStatus;
-
-                                    if (sysMode === "PAUSE") {
-                                        // Case: System Manual Pause (Maintenance)
-                                        btnConfig = {
-                                            isLoginAction: false,
-                                            href: "/closed",
-                                            text: "ระบบปิดปรับปรุงชั่วคราว / Maintenance",
-                                            gradientBase: "from-orange-500 via-orange-600 to-orange-700",
-                                            gradientHover: "from-orange-600 via-orange-700 to-orange-800",
-                                            glowColor: "from-orange-400 to-orange-600",
-                                            shadow: "shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)]",
-                                            icon: <Vote className="w-5 h-5 text-white animate-spin-slow" />,
-                                            animation: ""
-                                        };
-                                    } else if (sysMode === "ENDED" || (sysMode === "AUTO" && electionStatus === "ENDED")) {
-                                        // Case: System Manual End OR Auto Election Ended
-                                        btnConfig = {
-                                            isLoginAction: false,
-                                            href: "/results",
-                                            text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended",
-                                            gradientBase: "from-slate-700 via-slate-800 to-slate-900",
-                                            gradientHover: "from-slate-600 via-slate-700 to-slate-800",
-                                            glowColor: "from-slate-500 to-slate-700",
-                                            shadow: "shadow-[0_10px_20px_-5px_rgba(0,0,0,0.4)]",
-                                            icon: <Vote className="w-5 h-5 text-slate-400" />,
-                                            animation: ""
-                                        };
-                                    } else if (initialData?.isSystemOpen === false && !(sysMode === "AUTO" && electionStatus === "WAITING")) {
-                                        // Case: Legacy Toggle support (Fallback) - EXCLUDE WAITING (Let it fall through to Login/Vote)
-                                        btnConfig = {
-                                            isLoginAction: false,
-                                            href: "/closed",
-                                            text: "ระบบปิดรับลงคะแนน / Closed",
-                                            gradientBase: "from-slate-700 via-slate-800 to-slate-900",
-                                            gradientHover: "from-slate-600 via-slate-700 to-slate-800",
-                                            glowColor: "from-slate-500 to-slate-700",
-                                            shadow: "shadow-[0_10px_20px_-5px_rgba(0,0,0,0.4)]",
-                                            icon: <Vote className="w-5 h-5 text-slate-400" />,
-                                            animation: ""
-                                        };
-                                    } else if (sysMode === "MANUAL_OPEN") {
-                                        // Case: Forced Open
-                                        if (session) {
-                                            if (isVotedReal) {
-                                                btnConfig = {
-                                                    isLoginAction: false,
-                                                    href: "/results",
-                                                    text: "ดูผลคะแนน / Results",
-                                                    gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
-                                                    gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
-                                                    glowColor: "from-[#0ea5e9] to-[#14b8a6]",
-                                                    shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
-                                                    icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
-                                                    animation: ""
-                                                };
-                                            } else {
-                                                btnConfig = {
-                                                    isLoginAction: false,
-                                                    href: "/vote",
-                                                    text: "ลงคะแนน / Vote Now",
-                                                    gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
-                                                    gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
-                                                    glowColor: "from-[#34D399] to-[#059669]",
-                                                    shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
-                                                    icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
-                                                    animation: "animate-pulse"
-                                                };
-                                            }
-                                        }
-                                    } else if (session) {
-                                        if (isVotedReal) {
-                                            // เคส: โหวตแล้ว -> ไปหน้า Results
-                                            btnConfig = {
-                                                isLoginAction: false, // ไม่ใช่ปุ่ม Login แล้ว เป็น Link
-                                                href: "/results",
-                                                text: "ดูผลคะแนน / Results",
-                                                gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
-                                                gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
-                                                glowColor: "from-[#0ea5e9] to-[#14b8a6]",
-                                                shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
-                                                icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
-                                                animation: ""
-                                            };
-                                        } else {
-                                            // เคส: ยังไม่โหวต -> ไปหน้า Vote
-                                            btnConfig = {
-                                                isLoginAction: false, // ไม่ใช่ปุ่ม Login แล้ว เป็น Link
-                                                href: "/vote",
-                                                text: "ลงคะแนน / Vote Now",
-                                                gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
-                                                gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
-                                                glowColor: "from-[#34D399] to-[#059669]",
-                                                shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
-                                                icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
-                                                animation: "animate-pulse"
-                                            };
-                                        }
-                                    }
-
-                                    // 3. สร้างไส้ในปุ่ม (เพื่อลดโค้ดซ้ำ เพราะหน้าตาเหมือนกันเป๊ะ)
-                                    const InnerButton = () => (
-                                        <button className={`relative w-full sm:w-auto overflow-hidden rounded-xl bg-gradient-to-r ${btnConfig.gradientBase} px-10 py-4 text-lg font-bold text-white ${btnConfig.shadow} ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate`}>
-                                            <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${btnConfig.gradientHover} opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100`}></div>
-                                            <span className="relative z-20 flex items-center justify-center gap-3 drop-shadow-sm">
-                                                {btnConfig.text}
-                                                <span className="bg-white/20 p-1.5 rounded-lg backdrop-blur-md shadow-inner border border-white/10">
-                                                    {btnConfig.icon}
-                                                </span>
-                                            </span>
-                                            <div className="absolute inset-0 z-30 flex h-full w-full justify-center pointer-events-none">
-                                                <div className="relative h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:animate-shine skew-x-20" />
-                                            </div>
-                                        </button>
-                                    );
-
-                                    // 4. เลือก Render ตามประเภทปุ่ม
-                                    if (btnConfig.isLoginAction) {
-                                        // ✅ กรณีปุ่ม Login: ใช้ div + onClick (Direct Login)
-                                        return (
-                                            <div
-                                                onClick={() => signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}
-                                                className="group relative w-[90%] sm:w-auto inline-block cursor-pointer"
-                                            >
-                                                <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}></div>
-                                                <InnerButton />
-                                            </div>
-                                        );
-                                    }
-
-                                    // ✅ กรณีปุ่มปกติ: ใช้ Link เหมือนเดิม
-                                    return (
-                                        <Link href={btnConfig.href} className="group relative w-[90%] sm:w-auto inline-block">
-                                            <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}></div>
-                                            <InnerButton />
-                                        </Link>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* Meet Candidates */}
-                            <div className="w-full max-w-[400px] lg:max-w-[350px] xl:max-w-[420px] pt-1">
-                                <MeetCandidatesCard candidates={candidates} />
-                            </div>
-                        </div>
-
-                        {/* ======================= RIGHT SIDE ======================= */}
-                        <div className="w-full lg:w-6/12 xl:w-6/12 flex flex-col items-center justify-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-
-                            <div className="w-full max-w-[550px] lg:max-w-full xl:max-w-[600px] flex flex-col gap-5 lg:gap-6 xl:gap-8">
-
-                                {/* Stats Card */}
-                                <div className="relative z-20 w-full p-1">
-                                    {/* Header */}
-                                    <div className="flex items-center gap-3 mb-4 px-1">
-                                        <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-purple-100 shadow-sm text-[#8A2680]">
-                                            <TrendingUp className="w-5 h-5" />
-                                            <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <h3 className="text-sm lg:text-base font-bold text-slate-800 leading-tight">
-                                                สถิติผู้เข้าร่วมลงคะแนนโหวต
-                                            </h3>
-                                            <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-                                                อัปเดตข้อมูลแบบ Real-time
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Bento Grid */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {/* Hero Card */}
-                                        <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] p-5 pb-7 text-white shadow-xl shadow-purple-900/20 group hover:-translate-y-1 transition-transform duration-500">
-                                            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors"></div>
-                                            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl"></div>
-                                            <div className="relative z-10 flex flex-col items-center text-center">
-                                                <div className="flex items-center gap-2 mb-2 opacity-90">
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest">ใช้สิทธิแล้ว (Voted)</span>
-                                                </div>
-                                                <div className="flex items-baseline justify-center gap-2">
-                                                    <span className="text-6xl lg:text-7xl font-black tracking-tighter drop-shadow-sm tabular-nums leading-none">
-                                                        {stats.totalVoted.toLocaleString()}
-                                                    </span>
-                                                    <span className="text-lg lg:text-xl font-bold opacity-80">คน</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Sub Card: Progress */}
-                                        <div className="col-span-1 rounded-[24px] bg-white border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ความคืบหน้า</span>
-                                                <PieChart className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
-                                            </div>
-                                            <div>
-                                                <div className="text-2xl font-black text-slate-800 tabular-nums leading-none">
-                                                    {stats.percentage}<span className="text-sm text-slate-400 ml-0.5">%</span>
-                                                </div>
-                                                <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
-                                                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${Math.min(parseFloat(stats.percentage) || 0, 100)}%` }}></div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Sub Card: Eligible */}
-                                        <div className="col-span-1 rounded-[24px] bg-white border-2 border-slate-100 p-4 shadow-sm flex flex-col justify-between group hover:border-purple-200 hover:shadow-md transition-all">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-purple-400">ผู้มีสิทธิรวม</span>
-                                                <Users className="w-4 h-4 text-slate-300 group-hover:text-purple-400 transition-colors" />
-                                            </div>
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-2xl font-black text-slate-700 group-hover:text-purple-700 transition-colors tabular-nums leading-none">
-                                                    {stats.totalEligible.toLocaleString()}
-                                                </span>
-                                                <span className="text-xs font-bold text-slate-400">คน</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Slideshow */}
-                                <div className="w-full relative group rounded-3xl overflow-hidden shadow-2xl border border-white bg-white aspect-[16/9] lg:aspect-[2/1] xl:aspect-[16/10] transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
-                                    <div className="relative w-full h-full">
-                                        <div className="flex h-full will-change-transform" style={{ transform: `translateX(-${currentImageIndex * 100}%)`, transitionDuration: (isTransitioning && isMultiImage) ? '1500ms' : '0ms', transitionProperty: 'transform', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                                            {extendedImages.map((src, index) => (
-                                                <div key={index} className="min-w-full h-full relative">
-                                                    <Image src={src} alt={`Campaign Poster ${index}`} fill className="object-cover object-top" priority={index === 0} />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {isMultiImage && (
-                                        <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1.5">
-                                            {slideshowImages.map((_, index) => (
-                                                <div key={index} className={`h-1.5 rounded-full transition-all duration-500 ${(currentImageIndex % slideshowImages.length) === index ? "w-8 bg-[#8A2680]" : "w-2 bg-slate-300"}`}></div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
+        let content;
+        if (block.type === 'hero') {
+          content = renderHero();
+        } else {
+          const Component = BLOCK_COMPONENTS[block.type];
+          if (!Component) return null;
+          const extraProps = block.type === 'voteCTA' ? { resolvedConfig: voteCTAResolvedConfig } : {};
+          const blockJSX = (
+            <Component config={block.config || {}} data={activeBlockData} {...extraProps} />
+          );
+          if (editorMode && WRAP_ID_MAP[block.type]) {
+            content = <Wrap id={WRAP_ID_MAP[block.type]}>{blockJSX}</Wrap>;
+          } else {
+            content = blockJSX;
+          }
+        }
+        const isHighlighted = isEditorMode && highlightedSection === block.type;
+        return (
+          <div key={block.type} data-editor-section={block.type} className="relative">
+            {content}
+            {isHighlighted && (
+              <div className="absolute inset-0 border-2 border-[#8A2680] rounded-lg pointer-events-none z-50 bg-[#8A2680]/5 animate-pulse">
+                <div className="absolute top-2 left-2 bg-[#8A2680] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md">
+                  {block.type}
                 </div>
+              </div>
+            )}
+          </div>
+        );
+      });
 
-            </main>
+  // 🛠️ Editor mode rendering — uses real block components via renderColumn
+  if (editorMode) {
+    return (
+      <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
+        <div className="relative z-50 shrink-0">
+          <Navbar />
+        </div>
+        <main className="flex-grow py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
+          <div className="container mx-auto max-w-[1400px] w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(480px,45%)] gap-6 lg:gap-8 items-start">
+              {/* LEFT COLUMN */}
+              <div className="space-y-4 lg:space-y-6">
+                {renderColumn(["hero", "meetCandidates", "voteCTA"])}
+              </div>
+              {/* RIGHT COLUMN */}
+              <div className="space-y-4 lg:space-y-6">
+                {renderColumn(["stats", "electionBanner"])}
+              </div>
+            </div>
+          </div>
+        </main>
+        <SiteFooter className="relative z-50 shrink-0 w-full mt-auto" />
+      </div>
+    );
+  }
 
-            {/* Footer */}
-            <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
-                <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
-            </footer>
-
-            {/* Styles */}
-            <style jsx global>{`
+  // --- Normal Rendering (Non-editor) ---
+  return (
+    <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="bg-noise" />
+      </div>
+      <div className="relative z-50 shrink-0">
+        <Navbar />
+      </div>
+      <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
+        <div className="container mx-auto max-w-[1400px] w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(480px,45%)] gap-6 lg:gap-8 items-start">
+            <div className="space-y-4 lg:space-y-6">
+              {renderColumn(["hero", "meetCandidates", "voteCTA"])}
+            </div>
+            <div className="space-y-4 lg:space-y-6">
+              {renderColumn(["stats", "electionBanner"])}
+            </div>
+          </div>
+        </div>
+      </main>
+      <SiteFooter className="relative z-50 shrink-0 w-full mt-auto" />
+      <style jsx global>{`
         @keyframes shine { 100% { transform: translateX(100%); } }
         .animate-shine { animation: shine 1.5s infinite; }
         @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
       `}</style>
-
-        </div>
-    );
+    </div>
+  );
 }

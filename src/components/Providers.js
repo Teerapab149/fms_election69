@@ -1,9 +1,10 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { GlobalConfigProvider } from "../contexts/GlobalConfigContext";
 
-// ✅ รับ session เข้ามาเป็น props
-export default function Providers({ children, session }) {
+// ✅ รับ session + globalConfig เข้ามาเป็น props
+export default function Providers({ children, session, globalConfig }) {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   return (
@@ -15,7 +16,9 @@ export default function Providers({ children, session }) {
       refetchWhenOffline={false}
       refetchOnMount={false}
     >
-      {children}
+      <GlobalConfigProvider value={globalConfig}>
+        {children}
+      </GlobalConfigProvider>
     </SessionProvider>
   );
 }

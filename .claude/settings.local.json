@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma:*)",
+      "Bash(npx next:*)",
+      "Bash(node -e \"require\\('./src/utils/templatePresets.js'\\); console.log\\('OK'\\)\")",
+      "Bash(node --input-type=module -e \"import\\('./src/utils/templatePresets.js'\\).then\\(\\(\\) => console.log\\('OK'\\)\\).catch\\(e => { console.error\\(e\\); process.exit\\(1\\); }\\)\")",
+      "Bash(npm run:*)",
+      "Bash(powershell.exe -c \"[console]::beep\\(800,400\\); [console]::beep\\(1200,400\\)\")",
+      "Bash(findstr /i \"error export encountered failed\")",
+      "Bash(tasklist)",
+      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; New-Item -ItemType Directory -Force -Path \"$base\\\\architect-critical-mindset\\\\references\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\next-app-router\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\prisma-database\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\react-component\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\debugging-detective\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\ui-ux-craftsman\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\fms-step-executor\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\fms-add-template\" | Out-Null; New-Item -ItemType Directory -Force -Path \"$base\\\\fms-add-element\" | Out-Null; Get-ChildItem $base | Select-Object Name)",
+      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; Get-ChildItem $base -Directory | ForEach-Object { $_.Name })",
+      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; Get-ChildItem \"$base\\\\architect-critical-mindset\" -Recurse | ForEach-Object { $_.FullName.Replace\\($base, ''\\) })",
+      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; Get-ChildItem $base -File | ForEach-Object { $_.Name })",
+      "PowerShell($base = \"$env:USERPROFILE\\\\.claude\\\\skills\"; $a = Get-FileHash \"$base\\\\knowledge-base.md\" -Algorithm SHA256; $b = Get-FileHash \"$base\\\\knowledge-base \\(1\\).md\" -Algorithm SHA256; \"knowledge-base.md     : $\\($a.Hash\\)\"; \"knowledge-base \\(1\\).md : $\\($b.Hash\\)\"; if \\($a.Hash -eq $b.Hash\\) { \"STATUS: identical \\(safe to delete dup\\)\" } else { \"STATUS: DIFFERENT — need manual review\" }; \"sizes:\"; Get-Item \"$base\\\\knowledge-base.md\",\"$base\\\\knowledge-base \\(1\\).md\" | Select-Object Name, Length)",
+      "Bash(grep -i \"\\\\.md$\")",
+      "Bash(dir src\\\\components\\\\admin\\\\editor /b)",
+      "Bash(grep -nE \"from ['\\\\\"]\\\\\\\\./statefulRegistry['\\\\\"]|from ['\\\\\"]\\\\\\\\./elementRegistry['\\\\\"]\" src/components/admin/editor/PropertyPanel.js)",
+      "Bash(grep -nE \"from ['\\\\\"]\\\\\\\\./statefulRegistry['\\\\\"]|from ['\\\\\"]\\\\\\\\./elementCatalog['\\\\\"]\" src/components/admin/editor/StatefulGallery.js)",
+      "Bash(git rm *)"
+    ]
+  }
+}

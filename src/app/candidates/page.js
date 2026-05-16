@@ -4,16 +4,65 @@ import { getPath } from "../../utils/basePath";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Users, ChevronRight, Loader2, User, Sparkles, Megaphone } from 'lucide-react';
+import { Users, ChevronRight, Loader2, Sparkles, Megaphone } from 'lucide-react';
 import Navbar from "../../components/Navbar";
 import { PARTY_THEMES, DEFAULT_THEME } from '../../utils/PartyTheme';
 
-export default function CandidatesPage() {
+import EditorElement from '../../components/admin/editor/EditorElement';
+import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
+import SiteFooter from '../../components/SiteFooter';
+import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
+
+export default function CandidatesPage({
+  candidates: editorCandidates = null,
+  editorMode = false,
+  pageLayout = null,
+  elementConfigs = null,
+  selectedElement = null,
+  hoveredElement = null,
+  onSelectElement = null,
+  onHoverElement = null,
+  onHoverEnd = null,
+}) {
   const router = useRouter();
-  const [parties, setParties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const globalConfig = useGlobalConfig();
+  const [parties, setParties] = useState(editorMode ? (editorCandidates || []) : []);
+  const [loading, setLoading] = useState(!editorMode);
+  const [apiLayout, setApiLayout] = useState(null);
+
+  const Wrap = ({ id, children }) => editorMode ? (
+    <EditorElement
+      id={id}
+      config={elementConfigs?.[id]}
+      isSelected={selectedElement === id}
+      isHovered={hoveredElement === id}
+      onSelect={onSelectElement}
+      onHover={onHoverElement}
+      onHoverEnd={onHoverEnd}
+    >{children}</EditorElement>
+  ) : children;
+
+  const cfg = (id, defaults = {}) => editorMode
+    ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
+    : defaults;
 
   useEffect(() => {
+    if (editorMode || pageLayout) return;
+    fetch(getPath("/api/admin/page-layout"))
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.candidates) setApiLayout(data.candidates);
+      })
+      .catch(e => console.error(e));
+  }, [editorMode, pageLayout]);
+
+  useEffect(() => {
+    if (editorMode) {
+      if (editorCandidates) setParties(editorCandidates);
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const res = await fetch(getPath('/api/party'));
@@ -37,7 +86,20 @@ export default function CandidatesPage() {
       }
     };
     fetchData();
-  }, [router]);
+  }, [router, editorMode, editorCandidates]);
+
+  const defaultLayout = [
+    { type: 'header', visible: true, order: 1 },
+    { type: 'partyCardGrid', visible: true, order: 2 }
+  ];
+
+  let activeLayout = pageLayout?.candidates || apiLayout || defaultLayout;
+  activeLayout = [...activeLayout].sort((a, b) => a.order - b.order);
+
+  const isVisible = (index) => {
+    if (!activeLayout || !activeLayout[index]) return true;
+    return activeLayout[index].visible !== false;
+  };
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-[#F8F9FD]">
@@ -48,7 +110,6 @@ export default function CandidatesPage() {
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 relative overflow-x-hidden">
 
-      {/* --- ✨ Background Decor (Optimized for performance) --- */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
         <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
@@ -59,66 +120,98 @@ export default function CandidatesPage() {
         <Navbar />
       </div>
 
-      {/* ✅ RESPONSIVE CONTAINER: 
-          ปรับ Padding ตามขนาดหน้าจอ (มือถือ p-4, iPad p-8, Desktop p-12) 
-      */}
       <main className="flex-grow relative z-10 container mx-auto max-w-7xl px-4 sm:px-6 md:px-10 lg:px-16 py-8 md:py-16">
 
-        {/* Header Section */}
-        <div className="text-center mb-10 md:mb-20 space-y-4 md:space-y-6 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-purple-100 shadow-sm transition-transform hover:scale-105">
-            <Sparkles className="w-4 h-4 text-[#8A2680]" />
-            <span className="text-[10px] md:text-xs font-black tracking-[0.15em] uppercase text-[#8A2680]">
-              Candidates 2026
-            </span>
-          </div>
+        {isVisible(0) && (
+          <div className="text-center mb-10 md:mb-20 space-y-4 md:space-y-6 animate-fade-in-up">
 
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-[1.1]">
-              ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-purple-500">ผู้สมัคร</span>
-            </h1>
-
-            {/* ✅ PARTY COUNTER: 
-                ระบุจำนวนพรรคให้ชัดเจน เพื่อให้คนใช้มือถือทราบข้อมูลทันที
-            */}
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <p className="text-slate-500 text-sm md:text-xl font-medium">
-                ร่วมเป็นส่วนหนึ่งในการกำหนดอนาคต เลือกคนที่ใช่ พรรคที่ชอบ
-              </p>
-              <div className="flex items-center gap-2 bg-[#8A2680]/10 px-4 py-1.5 rounded-full border border-[#8A2680]/20">
-                <Megaphone className="w-4 h-4 text-[#8A2680]" />
-                <span className="text-[#8A2680] text-sm md:text-base font-bold">
-                  ในปีนี้มีทั้งหมด {parties.length} พรรค
+            <Wrap id="candidates-tagline">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md shadow-sm transition-transform hover:scale-105"
+                style={{
+                  backgroundColor: cfg('candidates-tagline').backgroundColor || 'rgba(255,255,255,0.8)',
+                  border: `1px solid ${cfg('candidates-tagline').borderColor || '#f3e8ff'}`
+                }}>
+                <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || '#8A2680' }} />
+                <span className="text-[10px] md:text-xs font-black tracking-[0.15em] uppercase"
+                  style={{ color: cfg('candidates-tagline').textColor || '#8A2680' }}>
+                  {cfg('candidates-tagline').text || ('Candidates ' + globalConfig.electionCalendarYear)}
                 </span>
+              </div>
+            </Wrap>
+
+            <div className="max-w-4xl mx-auto">
+              <Wrap id="candidates-title">
+                <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.1]"
+                  style={{
+                    color: cfg('candidates-title').color || '#0f172a',
+                    fontSize: SIZE_MAP[cfg('candidates-title').fontSize] || undefined,
+                  }}>
+                  {cfg('candidates-title').text ? (
+                    cfg('candidates-title').text
+                  ) : (
+                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-purple-500">ผู้สมัคร</span></>
+                  )}
+                </h1>
+              </Wrap>
+
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Wrap id="candidates-subtitle">
+                  <p className="text-sm md:text-xl font-medium"
+                    style={{
+                      color: cfg('candidates-subtitle').color || '#64748b',
+                      fontSize: SIZE_MAP[cfg('candidates-subtitle').fontSize] || undefined,
+                    }}>
+                    {cfg('candidates-subtitle').text || 'ร่วมเป็นส่วนหนึ่งในการกำหนดอนาคต เลือกคนที่ใช่ พรรคที่ชอบ'}
+                  </p>
+                </Wrap>
+
+                <Wrap id="candidates-counter">
+                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+                    style={{
+                      backgroundColor: cfg('candidates-counter').backgroundColor || 'rgba(138, 38, 128, 0.1)',
+                      border: `1px solid ${cfg('candidates-counter').borderColor || 'rgba(138, 38, 128, 0.2)'}`
+                    }}>
+                    <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || '#8A2680' }} />
+                    <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || '#8A2680' }}>
+                      {cfg('candidates-counter').text || `ในปีนี้มีทั้งหมด ${parties.length} พรรค`}
+                    </span>
+                  </div>
+                </Wrap>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* ✅ RESPONSIVE GRID: 
-            - 1 คอลัมน์สำหรับมือถือ
-            - 2 คอลัมน์สำหรับ iPad และ Notebook/Desktop
-            - ปรับ Gap ให้กว้างขึ้นในจอใหญ่เพื่อให้ไม่ดูอึดอัด
-        */}
-        {parties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 pb-24">
-            {parties.map((party) => (
-              <PartyCard key={party.id} party={party} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 md:py-32 bg-white/50 backdrop-blur-xl rounded-[2.5rem] border-2 border-dashed border-slate-200">
-            <Users className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-700">ยังไม่มีข้อมูลผู้สมัคร</h3>
-          </div>
+        {isVisible(1) && (
+          <>
+            {parties.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 pb-24">
+                {parties.map((party, index) => {
+                  const cardInner = <PartyCard party={party} cfg={cfg} />;
+                  return (
+                    <div
+                      key={party.id || index}
+                      className="animate-fade-in-up"
+                      style={{ animationDelay: `${index * 80}ms`, animationFillMode: 'both' }}
+                    >
+                      {index === 0 && editorMode ? (
+                        <Wrap id="candidates-party-card">{cardInner}</Wrap>
+                      ) : cardInner}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-20 md:py-32 bg-white/50 backdrop-blur-xl rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                <Users className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-700">ยังไม่มีข้อมูลผู้สมัคร</h3>
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
-        <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
-      </footer>
-
+      <SiteFooter className="relative z-50 shrink-0 w-full mt-auto" />
 
       <style jsx global>{`
         @keyframes fade-in-up { 
@@ -131,7 +224,7 @@ export default function CandidatesPage() {
   );
 }
 
-function PartyCard({ party }) {
+function PartyCard({ party, cfg }) {
   const [coverImage, setCoverImage] = useState(null);
   const theme = PARTY_THEMES[party.number] || DEFAULT_THEME;
 
@@ -147,16 +240,22 @@ function PartyCard({ party }) {
         }
       } catch (error) { console.error(error); }
     };
-    fetchPartyGallery();
+    if (party.id) {
+      fetchPartyGallery();
+    }
   }, [party.id]);
+
+  const borderRadius = cfg ? RADIUS_MAP[cfg('candidates-party-card').borderRadius] || '2.5rem' : '2.5rem';
 
   return (
     <Link href={`/party?id=${party.number}`} className="group block h-full">
       <div
-        className="relative flex flex-col h-full bg-white rounded-[1.8rem] md:rounded-[2.5rem] overflow-hidden transition-all duration-500 border border-slate-100 shadow-sm hover:-translate-y-2 hover:shadow-2xl"
-        style={{ '--hover-glow': `${theme.main}15` }}
+        className="relative flex flex-col h-full bg-white overflow-hidden transition-all duration-500 border border-slate-100 shadow-sm hover:-translate-y-2 hover:shadow-2xl"
+        style={{
+          '--hover-glow': `${theme.main}15`,
+          borderRadius: borderRadius
+        }}
       >
-        {/* Banner Area - Edge-to-edge with Responsive Aspect Ratio */}
         <div className="relative aspect-[16/9] sm:aspect-video overflow-hidden">
           {coverImage ? (
             <img
@@ -171,21 +270,22 @@ function PartyCard({ party }) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-40 group-hover:opacity-60 transition-opacity"></div>
 
-          {/* Number Badge - Adaptive size */}
           <div
-            className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-3xl font-black text-white shadow-lg backdrop-blur-sm border border-white/20 transition-all group-hover:rotate-6"
-            style={{ backgroundColor: theme.main }}
+            className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-16 md:h-16 flex items-center justify-center text-xl md:text-3xl font-black text-white shadow-lg backdrop-blur-sm border border-white/20 transition-all group-hover:rotate-6"
+            style={{
+              backgroundColor: theme.main,
+              borderRadius: cfg ? RADIUS_MAP[cfg('candidates-party-card').borderRadius] || '1rem' : '1rem'
+            }}
           >
             {party.number}
           </div>
         </div>
 
-        {/* Content Area - Responsive Spacing & Typography */}
         <div className="p-5 md:p-8 lg:p-10 relative flex flex-col flex-1">
           <div className="flex items-start gap-4 md:gap-8">
-            {/* Logo - Floating & Responsive */}
             <div className="relative -mt-16 md:-mt-24 shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-2xl md:rounded-[2rem] border-4 border-white bg-white shadow-xl overflow-hidden">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 border-4 border-white bg-white shadow-xl overflow-hidden"
+                style={{ borderRadius: cfg ? RADIUS_MAP[cfg('candidates-party-card').borderRadius] || '2rem' : '2rem' }}>
                 <img src={getPath(party.logoUrl)} alt={party.name} className="w-full h-full object-cover" />
               </div>
             </div>
@@ -216,7 +316,6 @@ function PartyCard({ party }) {
           )}
         </div>
 
-        {/* Party Accent Line */}
         <div className="h-1.5 md:h-2.5 w-full mt-auto" style={{ backgroundColor: theme.main }}></div>
       </div>
 
