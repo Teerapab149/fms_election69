@@ -277,7 +277,7 @@ export default function HomeContent({
           </Wrap>
 
           {/* Year badge */}
-          {isVisible('hero-status-badge') && (
+          {isVisible('hero-year-badge') && (
             <Wrap id="hero-year-badge">
               <div className="flex justify-center lg:justify-start pt-1">
                 <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
@@ -326,8 +326,17 @@ export default function HomeContent({
           const Component = BLOCK_COMPONENTS[block.type];
           if (!Component) return null;
           const extraProps = block.type === 'voteCTA' ? { resolvedConfig: voteCTAResolvedConfig } : {};
+          const editorPassthrough = editorMode ? {
+            editorMode,
+            selectedElement,
+            hoveredElement,
+            onSelectElement,
+            onHoverElement,
+            onHoverEnd,
+            elementConfigs,
+          } : {};
           const blockJSX = (
-            <Component config={block.config || {}} data={activeBlockData} {...extraProps} />
+            <Component config={block.config || {}} data={activeBlockData} {...extraProps} {...editorPassthrough} />
           );
           if (editorMode && WRAP_ID_MAP[block.type]) {
             content = <Wrap id={WRAP_ID_MAP[block.type]}>{blockJSX}</Wrap>;

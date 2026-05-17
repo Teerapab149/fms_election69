@@ -86,16 +86,15 @@ export default function ResultsEditorPreview({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl border sm:border-0 border-slate-100 mb-8 lg:mb-12">
           {candidates.map((candidate, index) => (
-            <Wrap key={candidate.id} id={`result-card-${index}`}>
-              <ResultCard
-                candidate={candidate}
-                rank={index + 1}
-                totalVotes={totalVotes}
-                status={status}
-                isRevealed={isRevealed}
-                onClick={() => {}}
-              />
-            </Wrap>
+            <ResultCard
+              key={candidate.id}
+              candidate={candidate}
+              rank={index + 1}
+              totalVotes={totalVotes}
+              status={status}
+              isRevealed={isRevealed}
+              onClick={() => {}}
+            />
           ))}
         </div>
 

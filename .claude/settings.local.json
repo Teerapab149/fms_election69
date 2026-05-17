@@ -18,7 +18,11 @@
       "Bash(dir src\\\\components\\\\admin\\\\editor /b)",
       "Bash(grep -nE \"from ['\\\\\"]\\\\\\\\./statefulRegistry['\\\\\"]|from ['\\\\\"]\\\\\\\\./elementRegistry['\\\\\"]\" src/components/admin/editor/PropertyPanel.js)",
       "Bash(grep -nE \"from ['\\\\\"]\\\\\\\\./statefulRegistry['\\\\\"]|from ['\\\\\"]\\\\\\\\./elementCatalog['\\\\\"]\" src/components/admin/editor/StatefulGallery.js)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(powershell -NoProfile -Command \"\\(Get-Content src/components/admin/editor/elementInstances.js | Measure-Object -Line\\).Lines\")",
+      "Read(//c/Users/MARU/AppData/Local/Temp/claude/E--fms-election-fms-election69/6dc25f8e-9d01-465a-8d65-b871f2ff1731/tasks/**)",
+      "Skill(self-reflection)",
+      "Skill(self-reflection:*)"
     ]
   }
 }

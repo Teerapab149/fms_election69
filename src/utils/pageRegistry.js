@@ -53,18 +53,7 @@ export const EDITABLE_PAGES = [
     },
     description: "แสดงรายชื่อพรรคทั้งหมดที่ลงสมัคร",
   },
-  {
-    id: "party",
-    name: "หน้าพรรค",
-    nameEn: "Party Detail",
-    icon: "PartyPopper",
-    path: "/party",
-    gridLayout: "cinematic",
-    columns: {
-      main: ["hero", "vision", "policies", "gallery", "team", "voteSection"],
-    },
-    description: "หน้ารายละเอียดของแต่ละพรรค (Cinematic layout)",
-  },
+  // 'party' editor entry deferred to Phase 4. Public /party page remains accessible.
   {
     id: "success",
     name: "โหวตสำเร็จ",

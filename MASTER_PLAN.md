@@ -149,6 +149,32 @@ src/
 - Click-lock + success page redirect bypass fix
 - 4 P-LOG entries from lessons learned
 
+### ✅ Phase 2.6: H-EDITOR-TRUE-COMPLETION (TECHNICAL COMPLETE 2026-05-17 — pending P10 manual test)
+
+**Goal:** Truly complete Phase 2 editor coverage. Phase 2 + Phase 2.5 declared complete
+but DIAGNOSE_EDITOR_COVERAGE_GAPS.md revealed multiple unreachable catalog entries
+and missing regions on success/closed pages.
+
+**Result:** All 47 catalog entries reachable via Wraps in the actually-rendered components.
+- Wrapped block components: StatsBlock (3 Wraps), MeetCandidatesCard (2 Wraps)
+- Added vote-header-badge Wrap in MultiPartyView
+- Applied section normalizations (voteHeader→header, voteBody→partyGrid+abstainButton, googleForm→googleFormLink)
+- Stripped result-card-N dynamic orphan Wrap
+- Added 7 success entries (icon, megaphone card + 5 inner Wraps) + 7 Wraps in SuccessEditorPreview
+- Added closed-lock-icon entry + Wrap
+- Removed party from EDITABLE_PAGES (Phase 4 will implement)
+- Deleted dead editor/previews/HomeEditorPreview.js
+- Replaced hero-status-badge toggle entry with hero-year-badge.visible (catalog 40→47 net of +7)
+- Added P-LOG-010, P-LOG-011, P-LOG-012 to DECISIONS.md
+
+Phase 2 NOW truly complete pending user's manual region-by-region browser test (P10).
+
+**Specs executed:**
+- `DIAGNOSE_EDITOR_COVERAGE_GAPS.md` — diagnosis
+- `LIVE_STEP_H_EDITOR_TRUE_COMPLETION.md` — execution spec
+
+---
+
 ### ✅ Phase 2: Type-Instance Catalog Refactor (COMPLETE 2026-05-16)
 
 **Goal:** Unify elementRegistry + statefulRegistry + EXTRA_ELEMENTS_SCHEMA 
@@ -376,11 +402,12 @@ known Phase 2 deferred bugs in the process.
 ```
 Phase 1   [████████████████] 100% COMPLETE
 Phase 1.5 [████████████████] 100% COMPLETE  
-Phase 2   [████████████████] 100% COMPLETE ✨
+Phase 2   [████████████████] 100% COMPLETE
+Phase 2.6 [████████████████] 100% TECHNICAL — manual test pending ✨
 Phase 3   [██░░░░░░░░░░░░░░]  10% DESIGNED (vision documented)
 Phase 4   [░░░░░░░░░░░░░░░░]   0% NOT STARTED
 
-Overall: ~40-45% complete (factoring all phases)
+Overall: ~42-48% complete (factoring all phases)
 ```
 
 ## Vision Beyond Phase 3 (For Context)

@@ -327,12 +327,23 @@ function LivePreview({
       );
     }
     if (selectedPage === 'closed') {
-      return <ClosedEditorPreview simMode={closedSimMode} />;
+      return (
+        <ClosedEditorPreview
+          simMode={closedSimMode}
+          elementConfigs={editorProps?.elementConfigs}
+          selectedElement={editorProps?.selectedElement}
+          hoveredElement={editorProps?.hoveredElement}
+          onSelectElement={editorProps?.onSelectElement}
+          onHoverElement={editorProps?.onHoverElement}
+          onHoverEnd={editorProps?.onHoverEnd}
+        />
+      );
     }
     if (selectedPage === 'success') {
       return (
         <SuccessEditorPreview
           simMode={successSimMode}
+          elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
           hoveredElement={editorProps?.hoveredElement}
           onSelectElement={editorProps?.onSelectElement}

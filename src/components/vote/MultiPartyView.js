@@ -68,6 +68,16 @@ export default function MultiPartyView({
     <div className="w-full">
       
       <div className="text-center mb-8 space-y-2">
+        <Wrap id="vote-header-badge">
+          <span style={{
+            color: cfg('vote-header-badge').color || '#8A2680',
+            fontSize: SIZE_MAP[cfg('vote-header-badge').fontSize] || '0.75rem',
+            fontWeight: WEIGHT_MAP[cfg('vote-header-badge').fontWeight] || cfg('vote-header-badge').fontWeight || 700,
+          }} className="inline-block uppercase tracking-widest">
+            {cfg('vote-header-badge').text || 'ลงคะแนนเสียง'}
+          </span>
+        </Wrap>
+
         <Wrap id="vote-header-title">
           <h1 style={{
             color: cfg('vote-header-title').color || '#1e293b',

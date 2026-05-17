@@ -3,22 +3,43 @@
 
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Users, Vote, Star } from "lucide-react";
+import EditorElement from "./admin/editor/EditorElement";
 
-export default function MeetCandidatesCard() {
+export default function MeetCandidatesCard({
+  editorMode = false,
+  selectedElement = null,
+  hoveredElement = null,
+  onSelectElement = null,
+  onHoverElement = null,
+  onHoverEnd = null,
+  elementConfigs = null,
+}) {
+  const Wrap = ({ id, children }) => editorMode ? (
+    <EditorElement
+      id={id}
+      config={elementConfigs?.[id]}
+      isSelected={selectedElement === id}
+      isHovered={hoveredElement === id}
+      onSelect={onSelectElement}
+      onHover={onHoverElement}
+      onHoverEnd={onHoverEnd}
+    >{children}</EditorElement>
+  ) : children;
+
   return (
     <Link href="/candidates" className="group relative block w-full h-full">
-      
+
       {/* ✨ 1. BACKGROUND GLOW (ลดความฟุ้งลงนิดนึงเพื่อให้ดูกระชับ) */}
       <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 opacity-60 blur-sm transition-all duration-500 group-hover:opacity-100 group-hover:blur-md animate-gradient-xy"></div>
-      
+
       {/* ✨ 2. MAIN CARD BODY */}
       {/* ปรับ p-4 (จากเดิม p-6) เพื่อลดความสูง */}
       <div className="relative h-full w-full rounded-[22px] bg-white overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-[0.995]">
-         
+
          {/* Backgrounds */}
          <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/50 to-pink-50/30"></div>
          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#6d28d9 1px, transparent 1px)', backgroundSize: '14px 14px' }}></div>
-         
+
          {/* Blobs (ปรับขนาดเล็กลง) */}
          <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-200/50 rounded-full blur-2xl animate-pulse"></div>
          <div className="absolute -bottom-10 -left-5 w-32 h-32 bg-pink-200/50 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
@@ -30,10 +51,10 @@ export default function MeetCandidatesCard() {
          {/* ================= CONTENT CONTAINER ================= */}
          {/* ✅ Key Change: บังคับ flex-row (แนวนอน) ตลอดเวลา เพื่อลดความสูง */}
          <div className="relative z-10 flex flex-row items-center justify-between p-4 sm:p-5 h-full gap-2 sm:gap-4">
-            
+
             {/* --- LEFT: Typography (ย่อขนาดลง) --- */}
             <div className="flex flex-col items-start justify-center z-10 flex-1 min-w-0">
-               
+
                {/* Badge */}
                <div className="inline-flex items-center gap-1.5 mb-1.5 px-2 py-1 rounded-full bg-white/80 border border-purple-100 shadow-sm backdrop-blur-sm">
                   <span className="relative flex h-2 w-2">
@@ -46,27 +67,31 @@ export default function MeetCandidatesCard() {
                </div>
 
                {/* Heading (ปรับ text-xl / text-2xl ให้ไม่ใหญ่คับกล่อง) */}
-               <h3 className="text-xl sm:text-3xl font-black text-slate-900 leading-[1.1] tracking-tight drop-shadow-sm mb-2">
-                  รู้จักผู้สมัคร<br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
-                     ของคุณหรือยัง?
-                  </span>
-               </h3>
+               <Wrap id="meet-title">
+                 <h3 className="text-xl sm:text-3xl font-black text-slate-900 leading-[1.1] tracking-tight drop-shadow-sm mb-2">
+                    รู้จักผู้สมัคร<br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
+                       ของคุณหรือยัง?
+                    </span>
+                 </h3>
+               </Wrap>
 
                {/* Button / CTA (Compact Version) */}
-               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-200 transition-all duration-300 group-hover:bg-purple-600 group-hover:shadow-purple-400/50 group-hover:translate-x-1">
-                  <span className="whitespace-nowrap">ดูรายชื่อพรรค</span>
-                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-               </div>
+               <Wrap id="meet-cta">
+                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-200 transition-all duration-300 group-hover:bg-purple-600 group-hover:shadow-purple-400/50 group-hover:translate-x-1">
+                     <span className="whitespace-nowrap">ดูรายชื่อพรรค</span>
+                     <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                 </div>
+               </Wrap>
             </div>
 
 
             {/* --- RIGHT: Compact Floating Scene (ลดขนาดลงครึ่งนึง) --- */}
             <div className="relative w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] shrink-0 flex items-center justify-center pointer-events-none">
-               
+
                {/* Card Stack Background */}
                <div className="absolute rotate-6 w-16 h-20 sm:w-20 sm:h-24 bg-white border border-purple-100 rounded-lg shadow-sm z-0 scale-90 translate-x-2 opacity-60"></div>
-               
+
                {/* Main Icon Container (เล็กลง) */}
                <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg shadow-purple-300/50 flex items-center justify-center rotate-[-6deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500">
                   <Users className="text-white w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2.5} />

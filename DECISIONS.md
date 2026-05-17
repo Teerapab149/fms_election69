@@ -298,6 +298,87 @@ Tags: `#verification` `#regex` `#falseNegative` `#caseSensitivity`
 
 ---
 
+### P-LOG-009: [2026-05-16] Phase-2-Closure — Verify User-Facing Completeness Before Phase Sign-off
+
+**Trigger:** About to mark a phase "COMPLETE" after technical verification passes.
+
+**Anti-pattern:**
+Build passes + validation passes + grep clean → declare done. User later finds 2 of 6 pages have broken UX (closed + success pages had no clickable elements in admin editor; discovered post-sign-off).
+
+**Correct pattern:**
+Maintain "user smoke test" checklist per phase. Execute manually before sign-off. List each user-facing feature/page/interaction promised by the phase. Verify each works in actual browser, not just in test/build output.
+
+**Detection:**
+For any "Phase X COMPLETE" announcement, ensure preceded by: "All N user-facing scenarios verified: [checklist]". For an editor phase touching N pages, the checklist must cover all N pages — not "spot-checked home and vote".
+
+**Why:** Phase 2 declared complete 2026-05-16. Same day, user reported closed + success pages have elements that cannot be clicked. Root cause: ClosedEditorPreview has zero Wraps + zero catalog entries + no editor props threaded; SuccessEditorPreview has zero Wraps despite props plumbed and catalog populated. Both gaps pre-dated Phase 2 but Phase 2 was the unifying refactor that should have surfaced them via per-page checklist.
+
+Tags: `#phaseSignoff` `#smokeTest` `#userFacing` `#completenessGap`
+
+---
+
+### P-LOG-010: [2026-05-17] Phase 2.6 — Verify Actual Renderer, Not Assumed One
+
+**Trigger:** Adding editor coverage (Wraps + catalog) for any page.
+
+**Anti-pattern:**
+Trust file name ("HomeEditorPreview.js exists, must be used") and add Wraps there. Phase 2 wrapped a dead-code file (`editor/previews/HomeEditorPreview.js`) because no one verified PageDesignTab routing. Result: home page had 15 Wraps in unused file and the real renderer (HomeContent.js) had no Wraps for half its visible elements.
+
+**Correct pattern:**
+Before adding/auditing Wraps on any page:
+1. Read PageDesignTab.renderPreview to find which component actually renders for `pageId === 'X'`.
+2. Grep for that component's Wrap definitions.
+3. Confirm chain end-to-end (preview file → actual renderer).
+4. Verify in dev mode that catalog validation shows entries from the real renderer.
+
+**Detection:**
+Catalog entries that have NO Wrap anywhere in the actually-rendered component = unreachable. Cross-reference via: for each catalog ID, grep `<Wrap id="$id"` in production + preview files.
+
+Tags: `#renderer` `#routingVerification` `#deadCodeRisk`
+
+---
+
+### P-LOG-011: [2026-05-17] Phase 2.6 — Verify Spec Compliance Field-by-Field, Not Just Count
+
+**Trigger:** Auditing post-execution reports for refactor steps.
+
+**Anti-pattern:**
+Step 2 spec said "apply section normalizations (voteHeader → header)". Step 2 report said "section normalizations applied". Audit accepted at face value. Reality: normalizations were NOT applied — section fields kept old names. Phase 2.6 had to redo them.
+
+**Correct pattern:**
+For any "apply transformation X" task, verify by checking actual values post-execution, not just by reading the report. Example greps for section normalizations:
+- `grep "section: \"voteHeader\"" elementInstances.js` → should be 0
+- `grep "section: \"header\"" elementInstances.js` → should be 3+
+
+Always include such verification commands in the spec's REPORT FORMAT section so they're forced.
+
+Tags: `#specCompliance` `#auditing` `#verification`
+
+---
+
+### P-LOG-012: [2026-05-17] Phase 2.6 — Scan Block/Component Recursively, Not Just Direct Files
+
+**Trigger:** Coverage audits for editor Wraps.
+
+**Anti-pattern:**
+Grep `<Wrap` in EditorPreview files only. Miss the fact that HomeContent.js renders block components (StatsBlock, MeetCandidatesBlock → MeetCandidatesCard) which contain UI elements but ZERO Wraps. Result: 6 unreachable catalog entries hidden inside block components (stats-header, stats-progress-card, stats-eligible-card, meet-title, meet-cta, plus the dead-file confusion above).
+
+**Correct pattern:**
+For coverage audits, scan ALL files that could render Wraps:
+1. Direct EditorPreview files
+2. Production components those previews render
+3. Block / sub-components those production files render
+4. Continue recursively until reaching leaf components
+
+For wrapped elements deep in a render tree, editor props (`selectedElement`, `onSelectElement`, `elementConfigs`, etc.) must be passed down via prop drilling or context. A missing prop chain silently produces "Wrap present but never triggers".
+
+**Detection:**
+Map every catalog ID to a specific file:line where its Wrap exists. Catalog IDs without an entry in that map = unreachable.
+
+Tags: `#coverage` `#recursiveScan` `#blockComponents`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

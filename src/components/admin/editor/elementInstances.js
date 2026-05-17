@@ -149,13 +149,13 @@ export const ELEMENT_INSTANCES = {
     isStateful: false,
     stateResolverKey: null,
     states: null,
-    propertyFields: FIELDS_TEXT,
-    defaultConfig: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#6b7280" },
+    propertyFields: [...FIELDS_TEXT, { key: "visible", control: "toggle", label: "แสดง" }],
+    defaultConfig: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#6b7280", visible: true },
     presets: {
-      classic: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#6b7280" },
-      dark:    { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#64748b" },
-      playful: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#be185d" },
-      minimal: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#94a3b8" }
+      classic: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#6b7280", visible: true },
+      dark:    { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#64748b", visible: true },
+      playful: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#be185d", visible: true },
+      minimal: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#94a3b8", visible: false }
     },
     schemaVersion: "v1"
   },
@@ -216,27 +216,6 @@ export const ELEMENT_INSTANCES = {
       }
     },
     presets: null,
-    schemaVersion: "v1"
-  },
-
-  "hero-status-badge": {
-    id: "hero-status-badge",
-    typeId: "toggle-visibility",
-    name: "Status Badge",
-    pages: ["home"],
-    section: "hero",
-    boundTo: null,
-    isStateful: false,
-    stateResolverKey: null,
-    states: null,
-    propertyFields: FIELDS_TOGGLE,
-    defaultConfig: { visible: true },
-    presets: {
-      classic: { visible: true },
-      dark:    { visible: true },
-      playful: { visible: true },
-      minimal: { visible: false }
-    },
     schemaVersion: "v1"
   },
 
@@ -448,7 +427,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "text-label",
     name: "ป้าย 'ลงคะแนนเสียง'",
     pages: ["vote"],
-    section: "voteHeader",
+    section: "header",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -469,7 +448,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "text-title",
     name: "หัวข้อหน้าโหวต",
     pages: ["vote"],
-    section: "voteHeader",
+    section: "header",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -490,7 +469,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "text-subtitle",
     name: "ข้อความทักทาย",
     pages: ["vote"],
-    section: "voteHeader",
+    section: "header",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -514,7 +493,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "card-party",
     name: "การ์ดพรรค",
     pages: ["vote"],
-    section: "voteBody",
+    section: "partyGrid",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -535,7 +514,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "button-secondary",
     name: "ปุ่มงดออกเสียง",
     pages: ["vote"],
-    section: "voteBody",
+    section: "abstainButton",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -556,7 +535,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "button-secondary",
     name: "ปุ่มไม่รับรอง (single-party)",
     pages: ["vote"],
-    section: "voteBody",
+    section: "abstainButton",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -578,7 +557,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "text-divider",
     name: "ข้อความคั่น",
     pages: ["vote"],
-    section: "voteBody",
+    section: "partyGrid",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -645,7 +624,7 @@ export const ELEMENT_INSTANCES = {
     typeId: "button-primary",
     name: "ปุ่มตอบแบบสอบถาม",
     pages: ["success"],
-    section: "googleForm",
+    section: "googleFormLink",
     boundTo: null,
     isStateful: false,
     stateResolverKey: null,
@@ -668,6 +647,121 @@ export const ELEMENT_INSTANCES = {
     states: null,
     propertyFields: FIELDS_TEXT,
     defaultConfig: {},
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  // ----------------------------------------------------------
+  // success page — extended regions (Phase 2.6)
+  // ----------------------------------------------------------
+  "success-check-icon": {
+    id: "success-check-icon",
+    typeId: "toggle-visibility",
+    name: "ไอคอนเครื่องหมายถูก",
+    pages: ["success"],
+    section: "successMessage",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TOGGLE,
+    defaultConfig: { visible: true },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "success-megaphone-card": {
+    id: "success-megaphone-card",
+    typeId: "card-secondary",
+    name: "การ์ดเตือนทำแบบประเมิน",
+    pages: ["success"],
+    section: "googleFormLink",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_CARD,
+    defaultConfig: { backgroundColor: "#faf5ff", borderColor: "#e9d5ff", borderRadius: "2xl", visible: true },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "success-megaphone-title": {
+    id: "success-megaphone-title",
+    typeId: "text-label",
+    name: "หัวข้อใน Megaphone Card",
+    pages: ["success"],
+    section: "googleFormLink",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TEXT,
+    defaultConfig: { text: "รับทรานสคริปต์กิจกรรม", fontSize: "base", color: "#8A2680", fontWeight: "bold", align: "left" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "success-megaphone-desc": {
+    id: "success-megaphone-desc",
+    typeId: "text-body",
+    name: "คำอธิบายใน Megaphone Card",
+    pages: ["success"],
+    section: "googleFormLink",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TEXT,
+    defaultConfig: { text: "กรุณาทำแบบประเมินให้ครบถ้วน", fontSize: "xs", color: "#64748b", fontWeight: "normal", align: "left" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "success-chip-1": {
+    id: "success-chip-1",
+    typeId: "button-badge",
+    name: "ป้ายชั่วโมงกิจกรรม",
+    pages: ["success"],
+    section: "googleFormLink",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_BUTTON,
+    defaultConfig: { text: "ชั่วโมงกิจกรรม 2 ชม.", backgroundColor: "#f3e8ff", textColor: "#8A2680", borderRadius: "lg" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "success-chip-2": {
+    id: "success-chip-2",
+    typeId: "button-badge",
+    name: "ป้ายประเภทกิจกรรม",
+    pages: ["success"],
+    section: "googleFormLink",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_BUTTON,
+    defaultConfig: { text: "ประเภทเลือกเข้าร่วม", backgroundColor: "#fff1f2", textColor: "#e11d48", borderRadius: "lg" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "success-lock-indicator": {
+    id: "success-lock-indicator",
+    typeId: "text-body",
+    name: "ข้อความปลดล็อกหน้าผล",
+    pages: ["success"],
+    section: "googleFormLink",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TEXT,
+    defaultConfig: { text: "และ ปลดล็อคหน้าสรุปผลคะแนนเสียง", fontSize: "xs", color: "#475569", fontWeight: "normal", align: "center" },
     presets: null,
     schemaVersion: "v1"
   },
@@ -818,6 +912,91 @@ export const ELEMENT_INSTANCES = {
     states: null,
     propertyFields: FIELDS_TOGGLE,
     defaultConfig: { visible: true },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  // ----------------------------------------------------------
+  // closed page (Phase 2.5 — H-EDITOR-COMPLETION; Phase 2.6 adds lock-icon)
+  // Default text values mirror STATE_MESSAGES.waiting in ClosedEditorPreview.js;
+  // dynamic per-simMode text continues to render from STATE_MESSAGES at runtime.
+  // ----------------------------------------------------------
+  "closed-lock-icon": {
+    id: "closed-lock-icon",
+    typeId: "toggle-visibility",
+    name: "ไอคอนล็อก",
+    pages: ["closed"],
+    section: "closedMessage",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TOGGLE,
+    defaultConfig: { visible: true },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "closed-title": {
+    id: "closed-title",
+    typeId: "text-title",
+    name: "หัวข้อหน้าปิดระบบ",
+    pages: ["closed"],
+    section: "closedMessage",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TEXT,
+    defaultConfig: { text: "ยังไม่เปิดรับลงคะแนน", fontSize: "2xl", color: "#1e293b", fontWeight: "900", align: "center" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "closed-description": {
+    id: "closed-description",
+    typeId: "text-subtitle",
+    name: "คำอธิบาย",
+    pages: ["closed"],
+    section: "closedMessage",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TEXT,
+    defaultConfig: { text: "การลงคะแนนเสียงจะเริ่มในเร็วๆ นี้", fontSize: "sm", color: "#475569", fontWeight: "normal", align: "center" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "closed-detail": {
+    id: "closed-detail",
+    typeId: "text-body",
+    name: "รายละเอียดเพิ่มเติม",
+    pages: ["closed"],
+    section: "closedMessage",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_TEXT,
+    defaultConfig: { text: "วันที่ 6 กุมภาพันธ์ 2569 เวลา 08.30 น. - 17.00 น.", fontSize: "xs", color: "#64748b", fontWeight: "normal", align: "center" },
+    presets: null,
+    schemaVersion: "v1"
+  },
+
+  "closed-back-btn": {
+    id: "closed-back-btn",
+    typeId: "button-secondary",
+    name: "ปุ่มกลับหน้าหลัก",
+    pages: ["closed"],
+    section: "closedMessage",
+    boundTo: null,
+    isStateful: false,
+    stateResolverKey: null,
+    states: null,
+    propertyFields: FIELDS_BUTTON,
+    defaultConfig: { text: "กลับสู่หน้าหลัก", backgroundColor: "#f1f5f9", textColor: "#334155", borderRadius: "md" },
     presets: null,
     schemaVersion: "v1"
   }
