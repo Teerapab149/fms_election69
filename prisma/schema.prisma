@@ -10,67 +10,69 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  studentId     String   @unique
-  name          String?
-  email         String?
-  facultyId     String?
-  departmentId  String?
-  role          String   @default("student")
-  passwordHash  String?
-  gender        String?
-  major         String?
-  titleName     String?
-  subKeyId      String?
-  subMajorId    String?
-  subMajorNameThai    String?
-  year          String?
-  yearStatus    String?
+  id               Int     @id @default(autoincrement())
+  studentId        String  @unique
+  name             String?
+  email            String?
+  facultyId        String?
+  departmentId     String?
+  role             String  @default("student")
+  passwordHash     String?
+  gender           String?
+  major            String?
+  titleName        String?
+  subKeyId         String?
+  subMajorId       String?
+  subMajorNameThai String?
+  year             String?
+  yearStatus       String?
 
-  isVoted       Boolean  @default(false)
-  isFormCompleted  Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  isAdmin       Boolean @default(false)
+  isVoted         Boolean  @default(false)
+  isFormCompleted Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  isAdmin         Boolean  @default(false)
 
-  candidateId   Int?
-  candidate     Candidate? @relation(fields: [candidateId], references: [id])
+  candidateId Int?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id])
+
+  authoredTemplates Template[] @relation("AuthoredTemplates")
 }
 
 model Member {
-  id            Int      @id @default(autoincrement())
-  studentId     String   @unique
-  name          String
-  number        Int      @default(0)
+  id        Int    @id @default(autoincrement())
+  studentId String @unique
+  name      String
+  number    Int    @default(0)
 
   imageUrl      String
   modalImageUrl String?
 
-  major         String?
-  position      String?
+  major    String?
+  position String?
 
-  candidateId   Int
-  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  candidateId Int
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
 }
 
 model Candidate {
-  id            Int      @id @default(autoincrement())
-  name          String   @unique
-  number        Int      @unique
-  slogan        String?
-  logoUrl       String?
+  id      Int     @id @default(autoincrement())
+  name    String  @unique
+  number  Int     @unique
+  slogan  String?
+  logoUrl String?
 
-  groupImageUrls Json? 
+  groupImageUrls   Json?
   officialImageUrl String?
-  mobileHeroImage Json?
+  mobileHeroImage  Json?
 
-  logoMeaning   String?
-  missions      Json?    
-  policies      Json?    
-  
-  members       Member[]
-  voters        User[]
-  
-  score         Int      @default(0)
+  logoMeaning String?
+  missions    Json?
+  policies    Json?
+
+  members Member[]
+  voters  User[]
+
+  score Int @default(0)
 }
 
 model SystemConfig {
@@ -83,4 +85,41 @@ model SystemConfig {
   themeConfig   Json?
   globalConfig  Json?
   updatedAt     DateTime @updatedAt
+
+  activeTemplateId String? @default("classic")
+}
+
+// ============================================================
+// Template System (Phase 3) — added 2026-05-19
+// ============================================================
+
+model Template {
+  id String @id @default(cuid())
+
+  slug        String  @unique
+  name        String
+  description String?
+
+  authorId Int?
+  author   User? @relation("AuthoredTemplates", fields: [authorId], references: [id])
+
+  isBuiltIn  Boolean @default(false)
+  isLocked   Boolean @default(false)
+  forkedFrom String?
+  visibility String  @default("private")
+
+  pages    Json
+  elements Json
+  theme    Json
+
+  schemaVersion String  @default("v1")
+  archivedYear  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([isBuiltIn])
+  @@index([isLocked])
+  @@index([forkedFrom])
 }

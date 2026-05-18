@@ -7,7 +7,7 @@ node_modules
 
 .next
 
-.md
+*.md
 
 # Debug & Scripts
 check_users.js

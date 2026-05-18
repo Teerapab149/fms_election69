@@ -1,0 +1,261 @@
+/**
+ * Classic Template — Default design (purple/white)
+ *
+ * Built-in template. Single source of truth in code.
+ * Mirror of historical Phase 2 presets.classic data (per P-LOG-004 extracted
+ * verbatim from src/components/admin/editor/elementInstances.js).
+ *
+ * For stateful elements (hero-countdown, voteCTA-button) where presets:null,
+ * defaultConfig is used as the canonical "classic" state per spec section 4.2.
+ *
+ * Schema version: v1
+ */
+
+export const classicTemplate = {
+  id: "classic",
+  slug: "classic",
+  name: "คลาสสิก",
+  description: "แบบทางการ สีม่วง/ขาว เหมาะกับการเลือกตั้งทั่วไป",
+
+  authorId: null,
+  isBuiltIn: true,
+  isLocked: false,
+  forkedFrom: null,
+  visibility: "public",
+
+  colorSwatch: {
+    primary: "#8A2680",
+    secondary: "#9333EA",
+    background: "#F8F9FD"
+  },
+
+  pages: {
+    home:       { visible: true, backgroundColor: "#F8F9FD" },
+    vote:       { visible: true, backgroundColor: "#F8F9FD" },
+    candidates: { visible: true, backgroundColor: "#F8F9FD" },
+    results:    { visible: true, backgroundColor: "#F8F9FD" },
+    closed:     { visible: true, backgroundColor: "#F8F9FD" },
+    success:    { visible: true, backgroundColor: "#F8F9FD" }
+  },
+
+  // Per-element overrides — extracted verbatim from elementInstances.js (P-LOG-004).
+  // 47 entries matching the catalog.
+  elements: {
+    // === Home / hero ===
+    "hero-title": {
+      config: { text: "SAMO 49", fontSize: "5xl", color: "#1a1a2e", fontWeight: "900", align: "left" }
+    },
+    "hero-subtitle": {
+      config: { text: "โครงการเลือกตั้งคณะกรรมการบริหาร", fontSize: "base", color: "#374151" }
+    },
+    "hero-subtitle2": {
+      config: { text: "สโมสรนักศึกษาคณะวิทยาการจัดการ", fontSize: "sm", color: "#6b7280" }
+    },
+    "hero-year-badge": {
+      config: { text: "ประจำปีการศึกษา 2569", fontSize: "xs", color: "#6b7280", visible: true }
+    },
+    "hero-countdown": {
+      // Stateful — defaultConfig used as classic state (presets:null in instance)
+      config: {
+        before: {
+          label: "STARTS IN", pillBackground: "#ffffff",
+          badgeBackgroundColor: "#9D3292", badgeTextColor: "#ffffff",
+          textMain: "#9D3292", textSub: "#a78bfa",
+          borderColor: "#e9d5ff", shadow: "md", shadowColor: "#9D3292",
+          iconName: "Flag", iconAnimation: "none"
+        },
+        running: {
+          label: "CLOSES IN", pillBackground: "#ffffff",
+          badgeBackgroundColor: "#ef4444", badgeTextColor: "#ffffff",
+          textMain: "#dc2626", textSub: "#f87171",
+          borderColor: "#fecaca", shadow: "md", shadowColor: "#ef4444",
+          iconName: "Zap", iconAnimation: "pulse"
+        },
+        paused: {
+          label: "SYSTEM PAUSED", pillBackground: "#ffffff",
+          badgeBackgroundColor: "#fed7aa", badgeTextColor: "#c2410c",
+          textMain: "#ea580c", textSub: "#fb923c",
+          borderColor: "#fed7aa", shadow: "sm", shadowColor: "#ea580c",
+          iconName: "Hourglass", iconAnimation: "spin"
+        },
+        manualEnded: {
+          label: "ELECTION ENDED", pillBackground: "#ffffff",
+          badgeBackgroundColor: "#e2e8f0", badgeTextColor: "#334155",
+          textMain: "#475569", textSub: "#94a3b8",
+          borderColor: "#cbd5e1", shadow: "none", shadowColor: "#000000",
+          iconName: "CalendarDays", iconAnimation: "none"
+        },
+        nextYear: {
+          label: "SEE YOU {YEAR}", pillBackground: "#ffffff",
+          badgeBackgroundColor: "#1e293b", badgeTextColor: "#ffffff",
+          textMain: "#334155", textSub: "#94a3b8",
+          borderColor: "#e2e8f0", shadow: "sm", shadowColor: "#000000",
+          iconName: "CalendarDays", iconAnimation: "none"
+        }
+      }
+    },
+
+    // === Home / stats ===
+    "stats-header": {
+      config: { text: "สถิติผู้เข้าร่วมลงคะแนนโหวต", fontSize: "xs", color: "#374151" }
+    },
+    "stats-voted-card": {
+      config: { backgroundColor: "#8A2680", textColor: "#ffffff", borderRadius: "2xl" }
+    },
+    "stats-progress-card": {
+      config: { backgroundColor: "#ffffff", borderRadius: "xl", borderColor: "#e2e8f0" }
+    },
+    "stats-eligible-card": {
+      config: { backgroundColor: "#ffffff", borderRadius: "xl", borderColor: "#e2e8f0" }
+    },
+
+    // === Home / voteCTA (stateful, presets:null → defaultConfig) ===
+    "voteCTA-button": {
+      config: {
+        login:    { text: "เข้าสู่ระบบ / Sign in",            backgroundColor: "#8A2680", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
+        notVoted: { text: "ลงคะแนน / Vote Now",               backgroundColor: "#10B981", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
+        voted:    { text: "ดูผลคะแนน / Results",              backgroundColor: "#0369a1", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
+        ended:    { text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended", backgroundColor: "#1e293b", textColor: "#94a3b8", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
+        closed:   { text: "ระบบปิดรับลงคะแนน / Closed",       backgroundColor: "#1e293b", textColor: "#94a3b8", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
+        paused:   { text: "ระบบปิดปรับปรุง / Maintenance",    backgroundColor: "#ea580c", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" }
+      }
+    },
+
+    // === Home / meetCandidates ===
+    "meet-section": {
+      config: { backgroundColor: "#ffffff", borderRadius: "2xl", borderColor: "#fecdd3", visible: true }
+    },
+    "meet-title": {
+      config: { text: "รู้จักผู้สมัครของคุณหรือยัง?", fontSize: "sm", color: "#1a1a2e", fontWeight: "700" }
+    },
+    "meet-cta": {
+      config: { text: "ดูรายชื่อพรรค →", backgroundColor: "#1a1a2e", textColor: "#ffffff", borderRadius: "full" }
+    },
+
+    // === Home / electionBanner ===
+    "banner-section": {
+      config: { visible: true, borderRadius: "2xl" }
+    },
+
+    // === Vote / header ===
+    "vote-header-badge": {
+      config: { text: "ลงคะแนนเสียง", fontSize: "xs", color: "#8A2680" }
+    },
+    "vote-header-title": {
+      config: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", color: "#1a1a2e", fontWeight: "black" }
+    },
+    "vote-header-subtitle": {
+      config: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm", color: "#64748b" }
+    },
+
+    // === Vote / partyGrid + abstain ===
+    "vote-party-card": {
+      config: { backgroundColor: "#ffffff", borderRadius: "2xl", borderColor: "#e2e8f0" }
+    },
+    "vote-divider-text": {
+      // presets:null in instance → defaultConfig used
+      config: { text: "หรือ", color: "#64748b", fontSize: "xs" }
+    },
+    "vote-abstain-button": {
+      config: { text: "งดออกเสียง", backgroundColor: "#ffffff", textColor: "#f97316", borderRadius: "xl", borderColor: "#fed7aa" }
+    },
+    "vote-disapprove-button": {
+      config: { text: "ไม่รับรอง", backgroundColor: "#ffffff", textColor: "#dc2626", borderRadius: "xl", borderColor: "#fecaca" }
+    },
+
+    // === Results page (presets:null → defaultConfig) ===
+    "results-header": {
+      config: { text: "ผลการเลือกตั้ง", fontSize: "5xl", color: "#1e293b", fontWeight: "900", align: "center" }
+    },
+    "results-stats-bar": {
+      config: { visible: true }
+    },
+    "results-candidates-heading": {
+      config: { text: "🏆 สรุปผลการเลือกตั้ง (Official Results)", fontSize: "sm", color: "#475569", fontWeight: "700" }
+    },
+    "results-demographics": {
+      config: { visible: true }
+    },
+
+    // === Candidates page (presets:null → defaultConfig {}) ===
+    "candidates-tagline":    { config: {} },
+    "candidates-title":      { config: {} },
+    "candidates-subtitle":   { config: {} },
+    "candidates-counter":    { config: {} },
+    "candidates-party-card": { config: {} },
+
+    // === Success page ===
+    "success-check-icon": {
+      config: { visible: true }
+    },
+    "success-title":     { config: {} },
+    "success-subtitle1": { config: {} },
+    "success-subtitle2": { config: {} },
+    "success-megaphone-card": {
+      config: { backgroundColor: "#faf5ff", borderColor: "#e9d5ff", borderRadius: "2xl", visible: true }
+    },
+    "success-megaphone-title": {
+      config: { text: "รับทรานสคริปต์กิจกรรม", fontSize: "base", color: "#8A2680", fontWeight: "bold", align: "left" }
+    },
+    "success-megaphone-desc": {
+      config: { text: "กรุณาทำแบบประเมินให้ครบถ้วน", fontSize: "xs", color: "#64748b", fontWeight: "normal", align: "left" }
+    },
+    "success-chip-1": {
+      config: { text: "ชั่วโมงกิจกรรม 2 ชม.", backgroundColor: "#f3e8ff", textColor: "#8A2680", borderRadius: "lg" }
+    },
+    "success-chip-2": {
+      config: { text: "ประเภทเลือกเข้าร่วม", backgroundColor: "#fff1f2", textColor: "#e11d48", borderRadius: "lg" }
+    },
+    "success-lock-indicator": {
+      config: { text: "และ ปลดล็อคหน้าสรุปผลคะแนนเสียง", fontSize: "xs", color: "#475569", fontWeight: "normal", align: "center" }
+    },
+    "success-form-btn": { config: {} },
+    "success-footer":   { config: {} },
+
+    // === Closed page ===
+    "closed-lock-icon": {
+      config: { visible: true }
+    },
+    "closed-title": {
+      config: { text: "ยังไม่เปิดรับลงคะแนน", fontSize: "2xl", color: "#1e293b", fontWeight: "900", align: "center" }
+    },
+    "closed-description": {
+      config: { text: "การลงคะแนนเสียงจะเริ่มในเร็วๆ นี้", fontSize: "sm", color: "#475569", fontWeight: "normal", align: "center" }
+    },
+    "closed-detail": {
+      config: { text: "วันที่ 6 กุมภาพันธ์ 2569 เวลา 08.30 น. - 17.00 น.", fontSize: "xs", color: "#64748b", fontWeight: "normal", align: "center" }
+    },
+    "closed-back-btn": {
+      config: { text: "กลับสู่หน้าหลัก", backgroundColor: "#f1f5f9", textColor: "#334155", borderRadius: "md" }
+    }
+  },
+
+  theme: {
+    colors: {
+      primary:    "#8A2680",
+      accent:     "#9333EA",
+      background: "#F8F9FD",
+      surface:    "#ffffff",
+      text:       "#1a1a2e",
+      textMuted:  "#64748b",
+      border:     "#e2e8f0"
+    },
+    typography: {
+      fontFamily:   "Inter, system-ui, sans-serif",
+      baseFontSize: "16px"
+    },
+    spacing: {
+      sectionGap: "4rem",
+      elementGap: "1.5rem"
+    },
+    effects: {
+      borderRadius: "0.75rem",
+      shadow:       "0 4px 6px -1px rgba(0,0,0,0.1)"
+    }
+  },
+
+  schemaVersion: "v1",
+  archivedYear: null
+};
+
+export default classicTemplate;

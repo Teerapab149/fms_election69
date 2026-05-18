@@ -22,7 +22,11 @@
       "Bash(powershell -NoProfile -Command \"\\(Get-Content src/components/admin/editor/elementInstances.js | Measure-Object -Line\\).Lines\")",
       "Read(//c/Users/MARU/AppData/Local/Temp/claude/E--fms-election-fms-election69/6dc25f8e-9d01-465a-8d65-b871f2ff1731/tasks/**)",
       "Skill(self-reflection)",
-      "Skill(self-reflection:*)"
+      "Skill(self-reflection:*)",
+      "PowerShell($env:DATABASE_URL = \\(Get-Content .env | Where-Object {$_ -match '^DATABASE_URL'} | ForEach-Object {$_.Split\\('=',2\\)[1].Trim\\('\"'\\)}\\); node -e \"const {PrismaClient} = require\\('@prisma/client'\\); const p = new PrismaClient\\(\\); p.systemConfig.findFirst\\(\\).then\\(c => { console.log\\('SystemConfig:', JSON.stringify\\({id: c?.id, activeTemplateId: c?.activeTemplateId}\\)\\); return p.$disconnect\\(\\); }\\).catch\\(e => { console.error\\(e.message\\); process.exit\\(1\\); }\\);\")",
+      "Bash(node scripts/_verify_template_phase3.js)",
+      "Bash(node scripts/_check_admin_users.js)",
+      "Bash(node scripts/_test_templates_api.js)"
     ]
   }
 }
