@@ -454,23 +454,43 @@ export function listBackgrounds() {
  * Resolve final config for an element state by merging template defaults
  * with admin overrides.
  *
- * @param {string} templateId - Active template ID
+ * Phase 3 Day 2A — bridge mode: accepts either
+ *   1. A resolved Phase-3 template object (shape: { elements: { [id]: { config: { [stateId]: {...} } } } })
+ *   2. A legacy templateId string (shape: TEMPLATES[id].elements[id][stateId])
+ * The string path is preserved for backward compatibility until Day 2B cleanup.
+ *
+ * @param {string|object} templateOrId - Resolved template object OR legacy template id
  * @param {string} elementId - Element ID
  * @param {string} stateId - State ID
  * @param {object} overrides - Admin overrides for this element+state
  * @returns {object} Merged config ready to render
  */
-export function resolveStatefulConfig(templateId, elementId, stateId, overrides = {}) {
-  const template = getTemplate(templateId);
+export function resolveStatefulConfig(templateOrId, elementId, stateId, overrides = {}) {
+  let template = null;
+
+  if (typeof templateOrId === "string") {
+    // Legacy: lookup from hardcoded TEMPLATES (Day 2B will remove).
+    template = getTemplate(templateOrId);
+  } else if (templateOrId && typeof templateOrId === "object") {
+    // New: resolved Phase 3 template object passed in.
+    template = templateOrId;
+  }
+
   if (!template) {
-    // No template at all — fall back to catalog defaults.
     return { ...getDefaultStateConfig(elementId, stateId), ...overrides };
   }
 
-  // Template exists — use its element+state config if present and non-empty,
-  // otherwise fall back to catalog defaults (covers elements registered in
-  // catalog but not yet covered by this template's TEMPLATES.elements).
-  const templateConfig = template.elements?.[elementId]?.[stateId];
+  // Pick template config for this element+state. Two shapes supported:
+  //   - Phase 3:  template.elements[id].config[stateId]  (Day 1 classic.js etc.)
+  //   - Legacy:   template.elements[id][stateId]         (templateEngine TEMPLATES const)
+  let templateConfig;
+  const entry = template.elements?.[elementId];
+  if (entry?.config && typeof entry.config === "object" && entry.config[stateId]) {
+    templateConfig = entry.config[stateId];
+  } else if (entry?.[stateId] && typeof entry[stateId] === "object") {
+    templateConfig = entry[stateId];
+  }
+
   if (templateConfig && Object.keys(templateConfig).length > 0) {
     return { ...templateConfig, ...overrides };
   }

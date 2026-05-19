@@ -156,28 +156,49 @@ function clone(obj) {
  * Resolve final config for an element.
  *
  * Routing is `isStateful`-driven:
- *   - Stateful: defaultConfig[stateId] → userOverride[stateId].
- *     `presets` is IGNORED on the stateful path (it carries legacy
- *     static-shape data — visibility/base styling — that StatefulGallery
- *     does not consume). Template-level per-state overrides still live in
- *     templateEngine.TEMPLATES until Step 4 extends them.
- *   - Static: defaultConfig → presets[templateId] → userOverride.
+ *   - Stateful: defaultConfig[stateId] → resolvedTemplate.elements[id].config[stateId] →
+ *               userOverride[stateId].
+ *   - Static:   defaultConfig → resolvedTemplate.elements[id].config (Phase 3)
+ *               OR presets[templateId] (legacy) → userOverride.
+ *
+ * Phase 3 Day 2A: accepts `resolvedTemplate` in context (Phase 3 object shape).
+ * Legacy `templateId` string still supported via instance.presets[templateId].
+ * Currently has no callers outside this file — added for forward-compat.
  */
 export function resolveConfig(instanceId, context = {}) {
   const inst = ELEMENT_INSTANCES[instanceId];
   if (!inst) return {};
-  const { templateId = "classic", stateId = null, userOverride = {} } = context;
+  const {
+    templateId = "classic",
+    resolvedTemplate = null,
+    stateId = null,
+    userOverride = {}
+  } = context;
 
   if (inst.isStateful) {
     if (!stateId) return {};
     const base = inst.defaultConfig?.[stateId] || {};
+    const entry = resolvedTemplate?.elements?.[instanceId];
+    const templateOver =
+      (entry?.config && typeof entry.config === "object" && entry.config[stateId]) ||
+      entry?.[stateId] ||
+      {};
     const over = userOverride?.[stateId] || {};
-    return { ...base, ...over };
+    return { ...base, ...templateOver, ...over };
   }
 
   const baseDefault = inst.defaultConfig || {};
-  const presetOver  = inst.presets?.[templateId] || inst.presets?.classic || {};
-  return { ...baseDefault, ...presetOver, ...userOverride };
+
+  // Phase 3: prefer resolvedTemplate.elements[id].config when provided.
+  let templateOver;
+  const entry = resolvedTemplate?.elements?.[instanceId];
+  if (entry?.config && typeof entry.config === "object") {
+    templateOver = entry.config;
+  } else {
+    templateOver = inst.presets?.[templateId] || inst.presets?.classic || {};
+  }
+
+  return { ...baseDefault, ...templateOver, ...userOverride };
 }
 
 // ============================================================

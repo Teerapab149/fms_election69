@@ -185,7 +185,7 @@ export default function VoteCTABlock({ config = {}, data = {}, resolvedConfig = 
 
   // Style overrides from editor config — null in legacy mode
   const styleOverride = resolvedConfig;
-  const hasOverride = !!styleOverride;
+  const hasOverride = !!styleOverride && Object.keys(styleOverride).length > 0;
   const buttonInlineStyle = hasOverride ? buildButtonStyle(styleOverride) : undefined;
   const textOverride = hasOverride ? styleOverride.text : null;
 

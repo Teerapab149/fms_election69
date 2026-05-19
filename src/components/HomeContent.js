@@ -40,6 +40,7 @@ export default function HomeContent({
   onHoverEnd = null,
   pageLayout = null,
   theme = null,
+  resolvedTemplate = null,
 }) {
   const { data: session, status } = useSession();
   const { isEditorMode, highlightedSection } = useEditorPreview();
@@ -187,11 +188,12 @@ export default function HomeContent({
   });
 
   // Resolve voteCTA-button state + config (template defaults + admin overrides)
+  // Phase 3 Day 2A: pass resolvedTemplate object; fall back to legacy string id.
   const voteCTAState = resolveElementState('voteCTA-button', runtimeCtx);
-  const voteCTASourceTemplate = pageLayout?.sourceTemplate || 'classic';
+  const voteCTATemplateArg = resolvedTemplate || pageLayout?.sourceTemplate || 'classic';
   const voteCTAOverrides = pageLayout?.elementOverrides?.['voteCTA-button']?.[voteCTAState] || {};
   const voteCTAResolvedConfig = resolveStatefulConfig(
-    voteCTASourceTemplate,
+    voteCTATemplateArg,
     'voteCTA-button',
     voteCTAState,
     voteCTAOverrides
@@ -199,10 +201,10 @@ export default function HomeContent({
 
   // Resolve countdown state + config
   const countdownState = resolveElementState('hero-countdown', runtimeCtx);
-  const countdownSourceTemplate = pageLayout?.sourceTemplate || 'classic';
+  const countdownTemplateArg = resolvedTemplate || pageLayout?.sourceTemplate || 'classic';
   const countdownOverrides = pageLayout?.elementOverrides?.['hero-countdown']?.[countdownState] || {};
   const countdownResolvedConfig = resolveStatefulConfig(
-    countdownSourceTemplate,
+    countdownTemplateArg,
     'hero-countdown',
     countdownState,
     countdownOverrides
@@ -336,7 +338,13 @@ export default function HomeContent({
             elementConfigs,
           } : {};
           const blockJSX = (
-            <Component config={block.config || {}} data={activeBlockData} {...extraProps} {...editorPassthrough} />
+            <Component
+              config={block.config || {}}
+              data={activeBlockData}
+              resolvedTemplate={resolvedTemplate}
+              {...extraProps}
+              {...editorPassthrough}
+            />
           );
           if (editorMode && WRAP_ID_MAP[block.type]) {
             content = <Wrap id={WRAP_ID_MAP[block.type]}>{blockJSX}</Wrap>;
