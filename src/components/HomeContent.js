@@ -190,7 +190,7 @@ export default function HomeContent({
   // Resolve voteCTA-button state + config (template defaults + admin overrides)
   // Phase 3 Day 2A: pass resolvedTemplate object; fall back to legacy string id.
   const voteCTAState = resolveElementState('voteCTA-button', runtimeCtx);
-  const voteCTATemplateArg = resolvedTemplate || pageLayout?.sourceTemplate || 'classic';
+  const voteCTATemplateArg = resolvedTemplate;
   const voteCTAOverrides = pageLayout?.elementOverrides?.['voteCTA-button']?.[voteCTAState] || {};
   const voteCTAResolvedConfig = resolveStatefulConfig(
     voteCTATemplateArg,
@@ -201,7 +201,7 @@ export default function HomeContent({
 
   // Resolve countdown state + config
   const countdownState = resolveElementState('hero-countdown', runtimeCtx);
-  const countdownTemplateArg = resolvedTemplate || pageLayout?.sourceTemplate || 'classic';
+  const countdownTemplateArg = resolvedTemplate;
   const countdownOverrides = pageLayout?.elementOverrides?.['hero-countdown']?.[countdownState] || {};
   const countdownResolvedConfig = resolveStatefulConfig(
     countdownTemplateArg,

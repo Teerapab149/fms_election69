@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { getEncryptedToken } from '../../utils/auth';
-import { TEMPLATE_PRESETS, getPresetById, detectActivePreset } from '../../utils/templatePresets';
 import { EDITABLE_PAGES, getPageById, DEFAULT_PAGE, SECTION_LABELS } from '../../utils/pageRegistry';
 import CompletedActionModal from '../CompletedActionModal';
 import ErrorActionModal from '../ErrorActionModal';
@@ -145,8 +145,9 @@ function BlockConfigForm({ block, onConfigChange }) {
   );
 }
 
-function TemplateCard({ preset, isActive, onClick }) {
-  const { primaryColor, accentColor } = preset.theme;
+function TemplateCard({ tpl, isActive, onClick }) {
+  const primaryColor = tpl.colorSwatch?.primary || '#8A2680';
+  const secondaryColor = tpl.colorSwatch?.secondary || '#9333EA';
   return (
     <button
       type="button"
@@ -165,15 +166,20 @@ function TemplateCard({ preset, isActive, onClick }) {
           <Check className="w-3.5 h-3.5" strokeWidth={3} />
         </div>
       )}
+      {tpl.isLocked && (
+        <div className="absolute top-2 right-2">
+          <Lock className="w-3 h-3 text-slate-400" />
+        </div>
+      )}
       <div className="flex items-center gap-1.5 mb-2">
         <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: primaryColor }} />
-        <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: accentColor }} />
+        <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: secondaryColor }} />
       </div>
-      <div className="font-bold text-sm text-slate-700 leading-tight">{preset.nameTh}</div>
+      <div className="font-bold text-sm text-slate-700 leading-tight">{tpl.name}</div>
       <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wide mt-0.5">
-        {preset.name}
+        {tpl.slug}
       </div>
-      <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{preset.description}</p>
+      <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{tpl.description}</p>
     </button>
   );
 }
@@ -418,6 +424,7 @@ function LivePreview({
 }
 
 export default function PageDesignTab() {
+  const router = useRouter();
   const [selectedPage, setSelectedPage] = useState(DEFAULT_PAGE);
   const [homeBlocks, setHomeBlocks] = useState(DEFAULT_HOME_BLOCKS);
   const [voteConfig, setVoteConfig] = useState(DEFAULT_VOTE_CONFIG);
@@ -430,6 +437,10 @@ export default function PageDesignTab() {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [pendingPresetId, setPendingPresetId] = useState(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [availableTemplates, setAvailableTemplates] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState(-1);
   const [hoveredSection, setHoveredSection] = useState(null);
@@ -538,8 +549,9 @@ export default function PageDesignTab() {
       setOtherPages(loadedOther);
 
       const savedElementConfigs = data?.elementConfigs?.home;
-      const detected = detectActivePreset(loadedTheme);
-      const initialElementConfigs = savedElementConfigs || getPresetDefaults(detected?.id || 'classic');
+      const loadedTemplateId = data?.activeTemplateId || 'classic';
+      setActiveTemplateId(loadedTemplateId);
+      const initialElementConfigs = savedElementConfigs || getPresetDefaults(loadedTemplateId);
       editorReplaceAllConfigs(initialElementConfigs, true);
 
       const snapshot = JSON.stringify({ home, vote: normalizedVote, theme: loadedTheme, other: loadedOther });
@@ -555,12 +567,23 @@ export default function PageDesignTab() {
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
 
   useEffect(() => {
+    fetch(getPath('/api/admin/templates'))
+      .then(r => r.json())
+      .then(data => { setAvailableTemplates(data.templates || []); })
+      .catch(err => console.error('[load templates]', err))
+      .finally(() => setLoadingTemplates(false));
+  }, []);
+
+  useEffect(() => {
     if (!originalJSON) return;
     const currentJSON = JSON.stringify({ home: homeBlocks, vote: voteConfig, theme, other: otherPages });
     setHasChanges(currentJSON !== originalJSON);
   }, [homeBlocks, voteConfig, theme, otherPages, originalJSON]);
 
-  const activePreset = useMemo(() => detectActivePreset(theme), [theme]);
+  const activeTemplate = useMemo(
+    () => availableTemplates.find(t => t.slug === activeTemplateId) || null,
+    [availableTemplates, activeTemplateId]
+  );
 
   const livePageLayout = useMemo(
     () => ({
@@ -572,21 +595,48 @@ export default function PageDesignTab() {
     [homeBlocks, voteConfig, theme, otherPages]
   );
 
-  const requestApplyTemplate = (presetId) => setPendingPresetId(presetId);
+  const requestApplyTemplate = (slug) => setPendingPresetId(slug);
 
-  const confirmApplyTemplate = () => {
-    const preset = getPresetById(pendingPresetId);
-    if (!preset) {
+  const confirmApplyTemplate = async () => {
+    if (!pendingPresetId || isApplying) return;
+    setIsApplying(true);
+    try {
+      const applyResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}/apply`), {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!applyResp.ok) {
+        const err = await applyResp.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${applyResp.status}`);
+      }
+
+      const tplResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}`), {
+        credentials: 'include',
+      });
+      if (!tplResp.ok) throw new Error(`Template fetch failed: ${tplResp.status}`);
+      const { template } = await tplResp.json();
+
+      const elementConfigs = {};
+      for (const [id, entry] of Object.entries(template.elements || {})) {
+        elementConfigs[id] = { config: entry.config || {} };
+      }
+      editorReplaceAllConfigs(elementConfigs);
+
+      if (template.theme) {
+        setTheme({ ...DEFAULT_THEME, ...template.theme });
+      }
+
+      setActiveTemplateId(pendingPresetId);
+      editorClearSelection();
+      setExpandedIndex(-1);
+      router.refresh();
+    } catch (err) {
+      console.error('[apply template]', err);
+      alert(`Apply failed: ${err.message}`);
+    } finally {
+      setIsApplying(false);
       setPendingPresetId(null);
-      return;
     }
-    setHomeBlocks(preset.home.map((b) => ({ ...b, config: { ...(b.config || {}) } })));
-    setVoteConfig({ ...DEFAULT_VOTE_CONFIG, ...preset.vote.multiParty });
-    setTheme({ ...DEFAULT_THEME, ...preset.theme });
-    editorReplaceAllConfigs(getPresetDefaults(pendingPresetId));
-    editorClearSelection();
-    setPendingPresetId(null);
-    setExpandedIndex(-1);
   };
 
   const handleMove = (index, direction) => {
@@ -766,14 +816,25 @@ export default function PageDesignTab() {
               <p className="text-xs text-slate-400 mt-0.5">เลือกธีมสำเร็จรูป แล้วปรับแต่งเพิ่มเติมได้</p>
             </div>
           </div>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${activePreset ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-            {activePreset ? `● ${activePreset.nameTh}` : '● Custom'}
+          <span className="text-xs font-bold px-3 py-1.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
+            ● {activeTemplate?.name || activeTemplateId}
           </span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {TEMPLATE_PRESETS.map((preset) => (
-            <TemplateCard key={preset.id} preset={preset} isActive={activePreset?.id === preset.id} onClick={() => requestApplyTemplate(preset.id)} />
+          {loadingTemplates && (
+            <div className="col-span-4 flex items-center gap-2 text-sm text-slate-400 py-4">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              กำลังโหลด templates...
+            </div>
+          )}
+          {!loadingTemplates && availableTemplates.map((tpl) => (
+            <TemplateCard
+              key={tpl.slug}
+              tpl={tpl}
+              isActive={activeTemplateId === tpl.slug}
+              onClick={() => requestApplyTemplate(tpl.slug)}
+            />
           ))}
         </div>
       </div>
@@ -1248,11 +1309,12 @@ export default function PageDesignTab() {
 
       <ConfirmModal
         isOpen={pendingPresetId !== null}
-        onClose={() => setPendingPresetId(null)}
+        onClose={() => { if (!isApplying) setPendingPresetId(null); }}
         onConfirm={confirmApplyTemplate}
         title="ใช้ Template นี้หรือไม่?"
         message="การตั้งค่าปัจจุบันจะถูกแทนที่ด้วย Template ที่เลือก อย่าลืมกดเผยแพร่หลังจากปรับแต่งเสร็จ"
         variant="primary"
+        isLoading={isApplying}
       />
 
       <ConfirmModal

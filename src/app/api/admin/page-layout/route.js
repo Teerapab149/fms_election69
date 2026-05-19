@@ -65,10 +65,13 @@ export async function GET() {
   try {
     const config = await db.systemConfig.findFirst({ where: { id: 1 } });
     const pageLayout = config?.pageLayout ?? DEFAULT_PAGE_LAYOUT;
-    return NextResponse.json(pageLayout);
+    return NextResponse.json({
+      ...pageLayout,
+      activeTemplateId: config?.activeTemplateId || "classic"
+    });
   } catch (error) {
     console.error("page-layout GET error:", error);
-    return NextResponse.json(DEFAULT_PAGE_LAYOUT);
+    return NextResponse.json({ ...DEFAULT_PAGE_LAYOUT, activeTemplateId: "classic" });
   }
 }
 
