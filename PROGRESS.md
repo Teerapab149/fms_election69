@@ -324,3 +324,37 @@ an unplanned auth bridge fix discovered during browser verification.
 - Remove HomeContent voteCTA override gate (now data-driven)
 - Visual test: each template = distinctly different look
 - Time estimate: 2-3 hours
+
+---
+
+## Day 2 Reflection — May 19-20, 2026
+
+### What went well
+- Caught the voteCTA visual regression early — didn't dismiss it as "good enough"
+- Bridge mode (Day 2A) preserved backward compat without breaking production
+- Auth bridge fix in Day 2B prevented a real 401 bug shipping
+- Followed P-LOG-009 strictly: real browser visual verify, not curl + grep
+- Diagnose-first approach before each surgical fix
+- Transparent documentation of deferred items (no hand-waving "done")
+
+### What was hard
+- Day 2A blew past 1.5-2h estimate (turned into 4+ hours)
+- Multiple compounding unknowns: state shape, buildButtonStyle fallback, auth drift
+- Stash incident lost Day 2A code temporarily — recovery cost ~30 min
+- Pre-execution diagnose for 2B was code-only, missed the runtime auth gap
+
+### Surprises
+- ~80% of Day 2B was already implemented in `248912e` (Day 2A's late commit)
+- Auth bridge gap (NextAuth session vs RSA x-admin-token) was structural, not config
+- voteCTA design lived in hardcoded JSX, not data — architectural finding, not just a bug
+
+### For Day 3
+- Day 3 = data work (47 elements × 3 stub templates = 141 entries + classic.js enrichment)
+- Fresh brain matters more than process — data quality > velocity
+- Plan: enrich `classic.js` voteCTA first → verify visual parity → then 3 stubs
+- After Day 3: remove HomeContent voteCTA gate (truly template-driven)
+
+### Compounding lessons
+P-LOG count: 12 → 16 (+4 today — see DECISIONS.md P-LOG-013..016)
+Foundation: rock-solid through visual verify (browser, not curl)
+Pattern: diagnose → understand → surgical fix → verify → commit → document

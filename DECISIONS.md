@@ -379,6 +379,104 @@ Tags: `#coverage` `#recursiveScan` `#blockComponents`
 
 ---
 
+### P-LOG-013: [2026-05-20] Phase 3 Day 2 — Commit Before Diagnostic Git Operations
+
+**Trigger:** About to use `git stash` / `restore` / file revert during investigation of a possible regression.
+
+**Anti-pattern:**
+- Visual issue appears
+- `git stash` to test "is this caused by my changes?"
+- Confirm working without changes
+- Forget to `git stash pop`
+- Continue without restoring work
+- Next session starts with work missing — no signal that something was stashed
+
+**Correct pattern:**
+- BEFORE diagnostic git operations: commit current work (cheap WIP commit on a branch is fine)
+- Or use a disposable branch for testing (`git checkout -b probe`)
+- Or explicitly note "stash applied, must pop before next session" in the running summary
+- After diagnosis: verify state matches expectation (`git status` + `git stash list`)
+- Always `git stash list` after a stash to confirm pop happened
+
+**Today's evidence:**
+Day 2A code stashed to test whether voteCTA regression was caused by Day 2A changes. Stash pop never happened. Next session started with Day 2A code missing → required recovery sequence (`.next` cleanup + `git stash pop`) before Day 2B could begin.
+
+Tags: `#git` `#workflow` `#stateVerification`
+
+---
+
+### P-LOG-014: [2026-05-20] Phase 3 Day 2 — Verify Canonical Source Before Extracting "Classic"
+
+**Trigger:** Extracting "classic" / "default" state from existing data structures during template/preset migration.
+
+**Anti-pattern:**
+- Use first source found (e.g., `defaultConfig`)
+- Assume it equals "the classic design"
+- Extract verbatim without comparing against richer sources
+- Ship with silent visual loss
+
+**Correct pattern:**
+- Multiple sources often coexist for the same concept:
+  - `instance.defaultConfig` (basic shape — minimum to render)
+  - `TEMPLATES.classic` (full design — gradient/shadow/padding/etc.)
+  - JSX hardcoded Tailwind classes (legacyClassName)
+- Identify CANONICAL source for VISUAL DESIGN before extraction
+- Diff sources side-by-side to detect missing fields
+- Document which source was chosen and why in the extracted file's header comment
+
+**Today's evidence:**
+Day 1 extracted `classic.js` voteCTA-button from `elementInstances.defaultConfig` (6 fields). Actual original design lived in `templateEngine.TEMPLATES.classic` (18 fields) + hardcoded JSX Tailwind classes. Day 2A wired the template into render → voteCTA visually regressed (flat button). Required Option C workaround (gate on user override → fall back to legacy JSX path) to restore production visual.
+
+Tags: `#dataExtraction` `#refactoring` `#verification`
+
+---
+
+### P-LOG-015: [2026-05-20] Phase 3 Day 2 — Hardcoded vs Data-Driven Design Tension
+
+**Trigger:** Component has both hardcoded Tailwind in JSX AND data-driven props (config object) for the same visual concern.
+
+**Anti-pattern:**
+- Switch fully to data-driven (e.g., `hasOverride = true` unconditionally)
+- Inadvertently bypass the hardcoded path
+- Production visual regression
+
+**Correct pattern:**
+- Default to legacy hardcoded path when no user customization exists
+- Use data-driven ONLY when user explicitly overrides (or template carries the full field set)
+- Document the tension explicitly in component header comments
+- Plan the migration in order: (1) enrich data fields, (2) verify parity, (3) flip the gate, (4) remove hardcoded fallback
+
+**Today's evidence:**
+`VoteCTABlock` has rich `legacyClassName` (gradient/shadow/glow Tailwind) AND `buildButtonStyle()` for inline styles from config. Day 2A set `hasOverride = true` unconditionally → bypassed legacy → flat button. Option C gate: pass `null` when no user override → legacy renders → design preserved. Migration step #4 (remove fallback) deferred to Day 3 after `classic.js` voteCTA fields are enriched.
+
+Tags: `#componentDesign` `#migration` `#visualRegression`
+
+---
+
+### P-LOG-016: [2026-05-20] Phase 3 Day 2B — Audit All Auth Mechanisms Before Adding A New One
+
+**Trigger:** Multiple admin auth mechanisms coexist in the same codebase (e.g., NextAuth session + custom RSA token).
+
+**Anti-pattern:**
+- Add a new auth helper assuming all consumers use one mechanism
+- Don't audit existing admin entry points
+- Get 401 errors only after wiring a real consumer
+- Pre-execution diagnose passes because it only inspects code, not runtime auth
+
+**Correct pattern:**
+- Before adding a helper, enumerate every existing admin auth path and the cookie/header each one sets
+- New helper should ACCEPT both during the transition period (bridge mode)
+- Update consumers to send auth in the format the new helper expects
+- Don't deprecate the old mechanism until full migration is verified in browser
+- Pre-execution diagnose for any auth-touching change MUST include a runtime probe (real fetch, not just grep)
+
+**Today's evidence (Day 2B):**
+Day 1's `requireAdmin()` only checked `getServerSession()` (NextAuth). The dedicated `/admin/login` page (used in dev + by non-SSO admins in prod) sets only the RSA `x-admin-token` cookie. Every `/api/admin/templates/*` returned 401 for legacy admins → gallery silently empty. Day 2B pre-execution diagnose missed this because it only read code; the bug surfaced on first real browser fetch. Fix: `requireAdmin(request)` tries session first, then falls back to verifying `x-admin-token`. 6 routes updated to pass `request`; PageDesignTab fetches updated to send the header.
+
+Tags: `#auth` `#migration` `#bridging` `#runtimeVerify`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
