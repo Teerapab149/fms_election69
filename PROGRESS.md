@@ -248,3 +248,79 @@ Action for Day 3:
 - ✅ No console errors
 - ✅ Cleanup verification grep: zero matches for `TEMPLATES[`, legacy
   `getTemplate`, `TEMPLATE_PRESETS`
+
+---
+
+## Phase 3 Day 2B — Complete (2026-05-20)
+
+Most of Day 2B's apply flow + gallery work was already implemented in commit
+`248912e` (Day 2A session). This session completes remaining items and adds
+an unplanned auth bridge fix discovered during browser verification.
+
+### What was verified (P-LOG-009 — real browser, not curl)
+- Gallery loads 4 cards: classic, modern-dark, playful, minimal
+- Color swatches render from `tpl.colorSwatch.primary/secondary`
+- Active template indicator updates per apply
+- All 4 templates apply via `POST /api/admin/templates/:id/apply`:
+  - `classic` → DB.activeTemplateId = "classic" ✅
+  - `modern-dark` → DB.activeTemplateId = "modern-dark" ✅
+  - `playful` → DB.activeTemplateId = "playful" ✅
+  - `minimal` → DB.activeTemplateId = "minimal" ✅
+- `router.refresh()` triggers SSR re-fetch (no full reload needed)
+- Home page renders cleanly per active template
+- Console: zero errors across apply cycle
+
+### Fixes shipped
+
+1. **GAP-A — gallery fetch auth** (`PageDesignTab.js:570`)
+   - Added `credentials: 'include'` and `r.ok` check
+   - Also sends `x-admin-token` header for legacy admin login compatibility
+
+2. **GAP-A2 — confirmApplyTemplate auth** (`PageDesignTab.js:600`)
+   - Both `POST /apply` and `GET /:id` now include `x-admin-token` header
+   - Matches the auth bridge contract in `requireAdmin()`
+
+3. **Auth bridge — requireAdmin** (`src/lib/auth/adminCheck.js`)
+   - **Discovered during browser test:** Phase 3 template APIs use
+     NextAuth `getServerSession()` but the dedicated `/admin/login` page
+     (used in dev and by non-SSO admins) only sets an RSA `x-admin-token`
+     cookie — no NextAuth session exists.
+   - Result: `GET /api/admin/templates → 401 Unauthorized`, gallery empty.
+   - Fix: `requireAdmin(request)` now tries NextAuth session first, then
+     falls back to verifying `x-admin-token` (RSA + timestamp + secret,
+     mirroring legacy `verifyAdminToken` from `page-layout/route.js`).
+   - All 6 template routes updated to pass `request` to `requireAdmin`.
+
+### Known limitations (DEFERRED to Day 3)
+
+1. **voteCTA template apply still uses HomeContent fallback gate**
+   - Template change updates DB and resolvedTemplate, but voteCTA design
+     remains visually identical because `classic.js` lacks 13 design fields
+     (backgroundType, gradientFrom/To/Via, shadow, padding, etc.).
+   - Day 3 will enrich `classic.js` + 3 stubs with full design fields,
+     then remove the HomeContent override gate.
+
+2. **Modern-dark / Playful / Minimal visual changes are subtle**
+   - Stub templates inherit most fields from classic.
+   - Only `theme.colors` and `pages[*].backgroundColor` differ.
+   - Day 3 "DEFAULTS" will expand each stub to full 47-element overrides.
+
+3. **StatefulGallery preview voteCTA** (carried from Day 2A)
+   - Documented above.
+
+### Files changed (Day 2B)
+- `src/components/admin/PageDesignTab.js` — auth headers added (2 fetches)
+- `src/lib/auth/adminCheck.js` — x-admin-token fallback in `requireAdmin`
+- `src/app/api/admin/templates/route.js` — pass `request` to requireAdmin
+- `src/app/api/admin/templates/[id]/route.js` — pass `request` (3 handlers)
+- `src/app/api/admin/templates/[id]/apply/route.js` — pass `request`
+- `src/app/api/admin/templates/[id]/fork/route.js` — pass `request`
+- `src/app/api/admin/templates/[id]/lock/route.js` — pass `request`
+- `PROGRESS.md` — this section
+
+### Next: Day 3 — DEFAULTS
+- Expand `modern-dark.js` / `playful.js` / `minimal.js` to full 47-element overrides
+- Enrich `classic.js` voteCTA-button with 13 missing design fields
+- Remove HomeContent voteCTA override gate (now data-driven)
+- Visual test: each template = distinctly different look
+- Time estimate: 2-3 hours

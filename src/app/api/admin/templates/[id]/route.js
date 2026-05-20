@@ -5,7 +5,7 @@ import { getTemplate, isTemplateEditable, isBuiltInSlug } from "../../../../../c
 
 // GET /api/admin/templates/:id — fetch single template (full data)
 export async function GET(request, { params }) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
 
 // PUT /api/admin/templates/:id — update editable template
 export async function PUT(request, { params }) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -70,7 +70,7 @@ export async function PUT(request, { params }) {
 
 // DELETE /api/admin/templates/:id
 export async function DELETE(request, { params }) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

@@ -567,8 +567,17 @@ export default function PageDesignTab() {
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
 
   useEffect(() => {
-    fetch(getPath('/api/admin/templates'))
-      .then(r => r.json())
+    const encryptedToken = getEncryptedToken();
+    fetch(getPath('/api/admin/templates'), {
+      credentials: 'include',
+      headers: { 'x-admin-token': encryptedToken || '' },
+    })
+      .then(r => {
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}`);
+        }
+        return r.json();
+      })
       .then(data => { setAvailableTemplates(data.templates || []); })
       .catch(err => console.error('[load templates]', err))
       .finally(() => setLoadingTemplates(false));
@@ -601,9 +610,12 @@ export default function PageDesignTab() {
     if (!pendingPresetId || isApplying) return;
     setIsApplying(true);
     try {
+      const encryptedToken = getEncryptedToken();
+      const authHeaders = { 'x-admin-token': encryptedToken || '' };
       const applyResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}/apply`), {
         method: 'POST',
         credentials: 'include',
+        headers: authHeaders,
       });
       if (!applyResp.ok) {
         const err = await applyResp.json().catch(() => ({}));
@@ -612,6 +624,7 @@ export default function PageDesignTab() {
 
       const tplResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}`), {
         credentials: 'include',
+        headers: authHeaders,
       });
       if (!tplResp.ok) throw new Error(`Template fetch failed: ${tplResp.status}`);
       const { template } = await tplResp.json();

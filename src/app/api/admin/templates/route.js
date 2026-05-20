@@ -5,7 +5,7 @@ import { listTemplates, isBuiltInSlug } from "../../../../components/admin/edito
 
 // GET /api/admin/templates — list (built-ins + DB)
 export async function GET(request) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -33,7 +33,7 @@ export async function GET(request) {
 
 // POST /api/admin/templates — create new (DB-stored, user template)
 export async function POST(request) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
