@@ -188,16 +188,17 @@ export default function HomeContent({
   });
 
   // Resolve voteCTA-button state + config (template defaults + admin overrides)
-  // Phase 3 Day 2A: pass resolvedTemplate object; fall back to legacy string id.
+  // Preserve VoteCTABlock's hardcoded legacy design (gradient/shadow/glow/icon)
+  // when admin hasn't customized this element. Phase 3 templates currently
+  // lack the rich Tailwind-class design data; enrichment deferred to Day 3+.
+  // Once classic.js voteCTA-button has full gradient/shadow/padding fields,
+  // remove this gate to enable template-driven design.
   const voteCTAState = resolveElementState('voteCTA-button', runtimeCtx);
-  const voteCTATemplateArg = resolvedTemplate;
   const voteCTAOverrides = pageLayout?.elementOverrides?.['voteCTA-button']?.[voteCTAState] || {};
-  const voteCTAResolvedConfig = resolveStatefulConfig(
-    voteCTATemplateArg,
-    'voteCTA-button',
-    voteCTAState,
-    voteCTAOverrides
-  );
+  const hasUserVoteCTAOverrides = Object.keys(voteCTAOverrides).length > 0;
+  const voteCTAResolvedConfig = hasUserVoteCTAOverrides
+    ? resolveStatefulConfig(resolvedTemplate, 'voteCTA-button', voteCTAState, voteCTAOverrides)
+    : null;
 
   // Resolve countdown state + config
   const countdownState = resolveElementState('hero-countdown', runtimeCtx);

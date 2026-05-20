@@ -155,3 +155,96 @@ After user signs off on P10 manual test:
 - `DECISIONS.md` — P-LOG-010, P-LOG-011, P-LOG-012 appended
 - `LIVE_STEP_H_EDITOR_TRUE_COMPLETION.md` — spec executed
 - `DIAGNOSE_EDITOR_COVERAGE_GAPS.md` — diagnosis that drove this phase
+
+---
+
+## Phase 3 Day 2A/2B — Template Resolution + Apply Flow (2026-05-20)
+
+### Day 2A: SSR Template Resolution Wire (commit `0e1ea8a`)
+- page.js fetches `activeTemplateId` from SystemConfig, resolves via Day 1 loader
+- `resolvedTemplate` prop flows to HomeContent → StatefulGallery
+- `resolveStatefulConfig` accepts Phase 3 object shape: `elements[id].config[stateId]`
+- `resolveConfig` accepts `resolvedTemplate` in context
+- VoteCTABlock `hasOverride` guard fixed: empty `{}` was truthy → broken style switch
+
+### Day 2B: Apply Flow + Cleanup (commit `f0a29ca`)
+- PageDesignTab `confirmApplyTemplate` async → POST `/api/admin/templates/:id/apply`
+- Gallery loads from `GET /api/admin/templates` (built-ins + DB)
+- TemplateCard uses new `colorSwatch` shape; active badge from `activeTemplateId`
+- `page-layout` GET returns `activeTemplateId`
+- Deleted `templateEngine.TEMPLATES` (364 lines), legacy `getTemplate()`, `utils/templatePresets.js`
+- `resolveStatefulConfig` simplified to object-only (string bridge removed)
+- HomeContent: `voteCTATemplateArg`/`countdownTemplateArg = resolvedTemplate` (no string fallback)
+
+### voteCTA Design Preservation (post-Day 2B)
+Issue: Original voteCTA design lives as hardcoded Tailwind classes in
+`VoteCTABlock.legacyClassName` (gradient + shadow + glow + shine + animated icon).
+Day 2A wiring made `hasOverride=true` → legacy design bypassed → "flat pink button"
+because classic.js voteCTA-button config has only 6 fields (missing backgroundType,
+gradient*, shadow*, padding*, icon* — 13 fields short of the old `templateEngine.TEMPLATES`
+config).
+
+Fix (Option C — Hybrid): Gate template resolution on user override existence.
+When `Object.keys(voteCTAOverrides).length === 0` → pass `null` to VoteCTABlock →
+`hasOverride=false` → `legacyClassName` renders → original gradient/shadow/glow intact.
+
+Files: `src/components/HomeContent.js` (1 logic change)
+Also kept: `VoteCTABlock.buildButtonStyle` fallback for `backgroundColor` without
+explicit `backgroundType` (defensive — handles future templates that omit the field).
+
+Deferred (Day 3+): Enrich `classic.js` voteCTA-button with 13 missing fields
+(`backgroundType: "gradient"`, `gradientFrom/Via/To/Direction`, `shadow/shadowColor`,
+`paddingX/Y`, `borderColor/Width`, `iconName/Position`, `hoverEffect`) sourced from
+`git show HEAD~6:src/components/admin/editor/templateEngine.js`. Once enriched for all
+4 templates, remove the override gate to enable full template-driven design.
+
+Other elements: Day 2A/2B wiring active for non-voteCTA elements (countdown,
+hero-title, etc. — these don't have rich hardcoded JSX so template-driven works).
+
+### Known limitation — StatefulGallery preview voteCTA (DEFERRED to Day 3)
+
+Admin editor's StatefulGallery preview for `voteCTA-button` renders 6 flat
+colored buttons (no gradient/shadow/glow) — does not match the home page's
+restored design.
+
+Cause: StatefulGallery (line 188-193) always calls `resolveStatefulConfig(...)`
+with a non-empty result (defaultConfig fallback when no template object) →
+passes the 6-field object to `<VoteCTABlock resolvedConfig={...} />` →
+`hasOverride=true` → `legacyClassName` bypassed → only `buildButtonStyle`
+inline styles applied. The hardcoded Tailwind gradient/shadow/glow/shine in
+`VoteCTABlock.legacyClassName` (only used when `!hasOverride`) is never rendered.
+
+Additional sub-issue: VoteCTABlock function signature doesn't accept `forceState`
+prop. StatefulGallery passes it (line 267) but it's silently ignored → all 6
+preview cards render VoteCTABlock's internal `btnConfig` default branch
+(login state with LogIn icon) regardless of which state card it is.
+
+Why deferred:
+- Production-facing home page works correctly (Option C gate)
+- Admin functionality (clicking, editing, saving) intact
+- Day 3 "DEFAULTS" plan enriches `classic.js` voteCTA-button with 13 missing
+  fields → resolvedConfig will have 18 fields → `buildButtonStyle` renders
+  gradient/shadow/padding properly → preview matches home automatically
+- Touching `VoteCTABlock` for a cosmetic admin issue would cross the
+  production/editor boundary unnecessarily (P-LOG-002 principle)
+
+Action for Day 3:
+1. Enrich `classic.js` voteCTA-button states with full 18 fields (per state)
+2. Enrich `modern-dark.js`, `playful.js`, `minimal.js` voteCTA-button states
+3. Once data complete, optionally remove HomeContent override gate (let
+   template fully drive design)
+4. (Optional) Add `forceState` support to VoteCTABlock so per-state previews
+   render their own internal `btnConfig` branch
+5. Verify StatefulGallery preview matches home
+
+### Verification (post Day 2A/2B + Option C)
+- ✅ Build pass 37/37 routes
+- ✅ Home voteCTA: gradient/shadow/glow visible
+- ✅ Home countdown: renders correctly with template config
+- ✅ Admin editor Phase 2.6 baseline intact: clicks work, gallery opens
+- ⚠️  Admin StatefulGallery voteCTA preview: flat (documented limitation)
+- ✅ Apply Flow (Day 2B): POST `/api/admin/templates/:id/apply` works
+- ✅ Gallery shows 4 templates from API
+- ✅ No console errors
+- ✅ Cleanup verification grep: zero matches for `TEMPLATES[`, legacy
+  `getTemplate`, `TEMPLATE_PRESETS`

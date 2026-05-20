@@ -26,6 +26,11 @@ function buildButtonStyle(cfg) {
   } else if (cfg.backgroundType === "solid") {
     style.backgroundColor = cfg.backgroundColor;
     style.backgroundImage = "none";
+  } else if (cfg.backgroundColor) {
+    // Fallback: config has backgroundColor but no explicit backgroundType.
+    // Treats as solid. Handles templates that omit backgroundType field.
+    style.backgroundColor = cfg.backgroundColor;
+    style.backgroundImage = "none";
   }
 
   // Text
