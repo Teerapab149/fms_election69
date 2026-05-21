@@ -157,6 +157,15 @@ export const modernDarkTemplate = {
       }
     },
 
+    // === Banner ===
+    "banner-section": {
+      config: {
+        ...classicTemplate.elements["banner-section"].config,
+        backgroundColor: "#1e293b",
+        borderColor:     "#334155"
+      }
+    },
+
     // === Vote page ===
     "vote-header-title": {
       config: {

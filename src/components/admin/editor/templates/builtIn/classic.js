@@ -261,8 +261,11 @@ export const classicTemplate = {
     },
 
     // === Home / electionBanner ===
+    // Day 4 Step 2: enriched with borderColor/backgroundColor so the frame is
+    // template-distinct. borderRadius set to "3xl" to faithfully preserve the
+    // current rounded-3xl frame (field was previously dead/ignored by JSX).
     "banner-section": {
-      config: { visible: true, borderRadius: "2xl" }
+      config: { visible: true, borderRadius: "3xl", borderColor: "#ffffff", backgroundColor: "#ffffff" }
     },
 
     // === Vote / header ===

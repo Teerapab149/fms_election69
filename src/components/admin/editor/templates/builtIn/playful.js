@@ -166,6 +166,15 @@ export const playfulTemplate = {
       }
     },
 
+    // === Banner ===
+    "banner-section": {
+      config: {
+        ...classicTemplate.elements["banner-section"].config,
+        borderColor:  "#fbcfe8",
+        borderRadius: "3xl"
+      }
+    },
+
     // === Vote page ===
     "vote-header-title": {
       config: {

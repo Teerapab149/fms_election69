@@ -176,6 +176,15 @@ export const minimalTemplate = {
       }
     },
 
+    // === Banner ===
+    "banner-section": {
+      config: {
+        ...classicTemplate.elements["banner-section"].config,
+        borderColor:  "#e5e7eb",
+        borderRadius: "lg"
+      }
+    },
+
     // === Vote page ===
     "vote-header-title": {
       config: {
