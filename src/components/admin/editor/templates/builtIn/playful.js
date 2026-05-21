@@ -121,9 +121,14 @@ export const playfulTemplate = {
     "stats-voted-card": {
       config: {
         ...classicTemplate.elements["stats-voted-card"].config,
-        backgroundColor: "#ffffff",
-        textColor:       "#ec4899",
-        borderRadius:    "2xl"
+        backgroundType: "gradient",
+        backgroundColor: "#ec4899",
+        gradientFrom: "#f97316",
+        gradientVia:  "#ec4899",
+        gradientTo:   "#d946ef",
+        gradientDirection: "to-br",
+        textColor:    "#ffffff",
+        borderRadius: "3xl"
       }
     },
     "stats-progress-card": {

@@ -99,8 +99,20 @@ export const classicTemplate = {
     "stats-header": {
       config: { text: "สถิติผู้เข้าร่วมลงคะแนนโหวต", fontSize: "xs", color: "#374151" }
     },
+    // Day 4 Step 4: enriched with gradient fields so the hero card can express
+    // its 3-stop gradient (#691E61 -> #8A2680 -> #C026D3). borderRadius "3xl"
+    // matches the current rounded-[24px]. backgroundColor kept as solid fallback.
     "stats-voted-card": {
-      config: { backgroundColor: "#8A2680", textColor: "#ffffff", borderRadius: "2xl" }
+      config: {
+        backgroundType: "gradient",
+        backgroundColor: "#8A2680",
+        gradientFrom: "#691E61",
+        gradientVia: "#8A2680",
+        gradientTo: "#C026D3",
+        gradientDirection: "to-br",
+        textColor: "#ffffff",
+        borderRadius: "3xl"
+      }
     },
     // Day 4 Step 3: enriched with number/label/accent colors so sub-cards are
     // template-distinct. borderRadius xl->3xl + borderColor -> #f1f5f9 to

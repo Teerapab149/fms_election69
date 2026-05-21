@@ -15,6 +15,29 @@ function buildCardStyle(cfg) {
   return Object.keys(s).length ? s : undefined;
 }
 
+const GRADIENT_DIR = {
+  "to-r": "to right", "to-l": "to left", "to-t": "to top", "to-b": "to bottom",
+  "to-tr": "to top right", "to-tl": "to top left", "to-br": "to bottom right", "to-bl": "to bottom left"
+};
+
+// Hero card supports gradient (preserves classic 3-stop) or solid + text color.
+function buildHeroCardStyle(cfg) {
+  if (!cfg) return undefined;
+  const s = {};
+  if (cfg.backgroundType === "gradient") {
+    const parts = [cfg.gradientFrom, cfg.gradientVia, cfg.gradientTo].filter(Boolean);
+    const dir = GRADIENT_DIR[cfg.gradientDirection] || "to bottom right";
+    s.backgroundImage = `linear-gradient(${dir}, ${parts.join(", ")})`;
+    s.backgroundColor = cfg.gradientFrom;
+  } else if (cfg.backgroundColor) {
+    s.backgroundColor = cfg.backgroundColor;
+    s.backgroundImage = "none";
+  }
+  if (cfg.textColor) s.color = cfg.textColor;
+  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  return Object.keys(s).length ? s : undefined;
+}
+
 // StatsBlock — Bento grid สถิติผู้เข้าร่วมลงคะแนน
 // config props: showPercentage (bool), showTotalEligible (bool)
 // data props:   stats ({ totalVoted, totalEligible, percentage })
@@ -40,8 +63,10 @@ export default function StatsBlock({
     elementConfigs?.[id]?.config ?? resolvedTemplate?.elements?.[id]?.config ?? null;
   const progressCfg = getCardConfig("stats-progress-card");
   const eligibleCfg = getCardConfig("stats-eligible-card");
+  const votedCfg = getCardConfig("stats-voted-card");
   const hasProgress = !!progressCfg && Object.keys(progressCfg).length > 0;
   const hasEligible = !!eligibleCfg && Object.keys(eligibleCfg).length > 0;
+  const hasVoted = !!votedCfg && Object.keys(votedCfg).length > 0;
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -83,7 +108,10 @@ export default function StatsBlock({
       <div className="grid grid-cols-2 gap-3">
 
         {/* Hero Card — ผู้ใช้สิทธิ์แล้ว (stats-voted-card wrapped at HomeContent level) */}
-        <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] p-5 pb-7 text-white shadow-xl shadow-purple-900/20 group hover:-translate-y-1 transition-transform duration-500">
+        <div
+          className={`col-span-2 relative overflow-hidden p-5 pb-7 shadow-xl group hover:-translate-y-1 transition-transform duration-500 ${hasVoted ? "" : "rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] text-white shadow-purple-900/20"}`}
+          style={buildHeroCardStyle(votedCfg)}
+        >
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors" />
           <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl" />
           <div className="relative z-10 flex flex-col items-center text-center">

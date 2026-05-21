@@ -130,8 +130,9 @@ export const minimalTemplate = {
     "stats-voted-card": {
       config: {
         ...classicTemplate.elements["stats-voted-card"].config,
-        backgroundColor: "#f9fafb",
-        textColor:       "#000000",
+        backgroundType:  "solid",
+        backgroundColor: "#1f2937",
+        textColor:       "#ffffff",
         borderRadius:    "md"
       }
     },

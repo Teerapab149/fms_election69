@@ -116,8 +116,13 @@ export const modernDarkTemplate = {
     "stats-voted-card": {
       config: {
         ...classicTemplate.elements["stats-voted-card"].config,
-        backgroundColor: "#1e293b",
-        textColor:       "#ffffff"
+        backgroundType: "gradient",
+        backgroundColor: "#06b6d4",
+        gradientFrom: "#0891b2",
+        gradientVia:  "#06b6d4",
+        gradientTo:   "#2563eb",
+        gradientDirection: "to-br",
+        textColor:    "#ffffff"
       }
     },
     "stats-progress-card": {
