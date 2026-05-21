@@ -131,7 +131,10 @@ export const playfulTemplate = {
         ...classicTemplate.elements["stats-progress-card"].config,
         backgroundColor: "#ffffff",
         borderColor:     "#fde68a",
-        borderRadius:    "2xl"
+        borderRadius:    "2xl",
+        numberColor:     "#1f2937",
+        labelColor:      "#f59e0b",
+        accentColor:     "#ec4899"
       }
     },
     "stats-eligible-card": {
@@ -139,7 +142,10 @@ export const playfulTemplate = {
         ...classicTemplate.elements["stats-eligible-card"].config,
         backgroundColor: "#ffffff",
         borderColor:     "#fde68a",
-        borderRadius:    "2xl"
+        borderRadius:    "2xl",
+        numberColor:     "#1f2937",
+        labelColor:      "#f59e0b",
+        iconColor:       "#f59e0b"
       }
     },
 

@@ -140,7 +140,10 @@ export const minimalTemplate = {
         ...classicTemplate.elements["stats-progress-card"].config,
         backgroundColor: "#f9fafb",
         borderColor:     "#e5e7eb",
-        borderRadius:    "md"
+        borderRadius:    "md",
+        numberColor:     "#000000",
+        labelColor:      "#9ca3af",
+        accentColor:     "#6b7280"
       }
     },
     "stats-eligible-card": {
@@ -148,7 +151,10 @@ export const minimalTemplate = {
         ...classicTemplate.elements["stats-eligible-card"].config,
         backgroundColor: "#f9fafb",
         borderColor:     "#e5e7eb",
-        borderRadius:    "md"
+        borderRadius:    "md",
+        numberColor:     "#000000",
+        labelColor:      "#9ca3af",
+        iconColor:       "#9ca3af"
       }
     },
 

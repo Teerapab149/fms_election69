@@ -102,11 +102,15 @@ export const classicTemplate = {
     "stats-voted-card": {
       config: { backgroundColor: "#8A2680", textColor: "#ffffff", borderRadius: "2xl" }
     },
+    // Day 4 Step 3: enriched with number/label/accent colors so sub-cards are
+    // template-distinct. borderRadius xl->3xl + borderColor -> #f1f5f9 to
+    // faithfully preserve the current rounded-[24px] / border-slate-100 look
+    // (those fields were previously dead/ignored by StatsBlock JSX).
     "stats-progress-card": {
-      config: { backgroundColor: "#ffffff", borderRadius: "xl", borderColor: "#e2e8f0" }
+      config: { backgroundColor: "#ffffff", borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#1e293b", labelColor: "#94a3b8", accentColor: "#10b981" }
     },
     "stats-eligible-card": {
-      config: { backgroundColor: "#ffffff", borderRadius: "xl", borderColor: "#e2e8f0" }
+      config: { backgroundColor: "#ffffff", borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#334155", labelColor: "#94a3b8", iconColor: "#cbd5e1" }
     },
 
     // === Home / voteCTA (stateful, presets:null → defaultConfig) ===

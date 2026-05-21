@@ -124,14 +124,20 @@ export const modernDarkTemplate = {
       config: {
         ...classicTemplate.elements["stats-progress-card"].config,
         backgroundColor: "#1e293b",
-        borderColor:     "#334155"
+        borderColor:     "#334155",
+        numberColor:     "#f1f5f9",
+        labelColor:      "#94a3b8",
+        accentColor:     "#06b6d4"
       }
     },
     "stats-eligible-card": {
       config: {
         ...classicTemplate.elements["stats-eligible-card"].config,
         backgroundColor: "#1e293b",
-        borderColor:     "#334155"
+        borderColor:     "#334155",
+        numberColor:     "#f1f5f9",
+        labelColor:      "#94a3b8",
+        iconColor:       "#475569"
       }
     },
 

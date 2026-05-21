@@ -2,14 +2,28 @@
 
 import { TrendingUp, CheckCircle2, PieChart, Users } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
+import { RADIUS_MAP } from "../../utils/styleMaps";
+
+// Build inline wrapper style from a (flat, non-stateful) sub-card config.
+// Returns undefined when no fields → legacy Tailwind card wins (P-LOG-015).
+function buildCardStyle(cfg) {
+  if (!cfg) return undefined;
+  const s = {};
+  if (cfg.backgroundColor) s.backgroundColor = cfg.backgroundColor;
+  if (cfg.borderColor) s.borderColor = cfg.borderColor;
+  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  return Object.keys(s).length ? s : undefined;
+}
 
 // StatsBlock — Bento grid สถิติผู้เข้าร่วมลงคะแนน
 // config props: showPercentage (bool), showTotalEligible (bool)
 // data props:   stats ({ totalVoted, totalEligible, percentage })
+// resolvedTemplate: live channel (SSR). elementConfigs: editor channel.
 // editor props: editorMode, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd, elementConfigs
 export default function StatsBlock({
   config = {},
   data = {},
+  resolvedTemplate = null,
   editorMode = false,
   selectedElement = null,
   hoveredElement = null,
@@ -20,6 +34,14 @@ export default function StatsBlock({
 }) {
   const { showPercentage = true, showTotalEligible = true } = config;
   const { stats = { totalVoted: 0, totalEligible: 0, percentage: "0.00" } } = data;
+
+  // Dual-channel flat config read for the non-stateful sub-cards.
+  const getCardConfig = (id) =>
+    elementConfigs?.[id]?.config ?? resolvedTemplate?.elements?.[id]?.config ?? null;
+  const progressCfg = getCardConfig("stats-progress-card");
+  const eligibleCfg = getCardConfig("stats-eligible-card");
+  const hasProgress = !!progressCfg && Object.keys(progressCfg).length > 0;
+  const hasEligible = !!eligibleCfg && Object.keys(eligibleCfg).length > 0;
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -81,20 +103,32 @@ export default function StatsBlock({
         {/* Sub Card — ความคืบหน้า */}
         {showPercentage && (
           <Wrap id="stats-progress-card">
-            <div className="col-span-1 rounded-[24px] bg-white border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
+            <div
+              className={`col-span-1 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group border ${hasProgress ? "" : "rounded-[24px] bg-white border-slate-100"}`}
+              style={buildCardStyle(progressCfg)}
+            >
               <div className="flex justify-between items-start mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ความคืบหน้า</span>
-                <PieChart className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wide ${hasProgress ? "" : "text-slate-400"}`}
+                  style={hasProgress ? { color: progressCfg.labelColor } : undefined}
+                >ความคืบหน้า</span>
+                <PieChart
+                  className={`w-4 h-4 group-hover:scale-110 transition-transform ${hasProgress ? "" : "text-emerald-500"}`}
+                  style={hasProgress ? { color: progressCfg.accentColor } : undefined}
+                />
               </div>
               <div>
-                <div className="text-2xl font-black text-slate-800 tabular-nums leading-none">
+                <div
+                  className={`text-2xl font-black tabular-nums leading-none ${hasProgress ? "" : "text-slate-800"}`}
+                  style={hasProgress ? { color: progressCfg.numberColor } : undefined}
+                >
                   {stats.percentage}
                   <span className="text-sm text-slate-400 ml-0.5">%</span>
                 </div>
                 <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
-                    style={{ width: `${Math.min(parseFloat(stats.percentage) || 0, 100)}%` }}
+                    className={`h-full rounded-full transition-all duration-1000 ${hasProgress ? "" : "bg-emerald-500"}`}
+                    style={{ width: `${Math.min(parseFloat(stats.percentage) || 0, 100)}%`, ...(hasProgress ? { backgroundColor: progressCfg.accentColor } : {}) }}
                   />
                 </div>
               </div>
@@ -105,13 +139,25 @@ export default function StatsBlock({
         {/* Sub Card — ผู้มีสิทธิ์รวม */}
         {showTotalEligible && (
           <Wrap id="stats-eligible-card">
-            <div className={`rounded-[24px] bg-white border-2 border-slate-100 p-4 shadow-sm flex flex-col justify-between group hover:border-purple-200 hover:shadow-md transition-all ${!showPercentage ? 'col-span-2' : 'col-span-1'}`}>
+            <div
+              className={`border-2 p-4 shadow-sm flex flex-col justify-between group transition-all ${!showPercentage ? 'col-span-2' : 'col-span-1'} ${hasEligible ? "hover:shadow-md" : "rounded-[24px] bg-white border-slate-100 hover:border-purple-200 hover:shadow-md"}`}
+              style={buildCardStyle(eligibleCfg)}
+            >
               <div className="flex justify-between items-start mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-purple-400">ผู้มีสิทธิรวม</span>
-                <Users className="w-4 h-4 text-slate-300 group-hover:text-purple-400 transition-colors" />
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wide ${hasEligible ? "" : "text-slate-400 group-hover:text-purple-400"}`}
+                  style={hasEligible ? { color: eligibleCfg.labelColor } : undefined}
+                >ผู้มีสิทธิรวม</span>
+                <Users
+                  className={`w-4 h-4 transition-colors ${hasEligible ? "" : "text-slate-300 group-hover:text-purple-400"}`}
+                  style={hasEligible ? { color: eligibleCfg.iconColor } : undefined}
+                />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-slate-700 group-hover:text-purple-700 transition-colors tabular-nums leading-none">
+                <span
+                  className={`text-2xl font-black transition-colors tabular-nums leading-none ${hasEligible ? "" : "text-slate-700 group-hover:text-purple-700"}`}
+                  style={hasEligible ? { color: eligibleCfg.numberColor } : undefined}
+                >
                   {stats.totalEligible.toLocaleString()}
                 </span>
                 <span className="text-xs font-bold text-slate-400">คน</span>
