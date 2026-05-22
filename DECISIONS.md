@@ -477,6 +477,64 @@ Tags: `#auth` `#migration` `#bridging` `#runtimeVerify`
 
 ---
 
+### P-LOG-017: [2026-05-22] Phase 3 Day 4 — Concurrent `next build` corrupts a running `next dev`
+
+**Trigger:** Running `npm run build` as a per-step gate while the `next dev` preview server is still running for visual verification.
+
+**Symptom:** Dev-served page goes blank — `document.body.innerText.length === 0`, zero rendered sections — even though the server returns HTTP 200 with full HTML. Looks like a hydration/render bug.
+
+**Root cause:** `next build` and `next dev` write the same `.next/` directory; the production build clobbers the dev server's chunk state.
+
+**Correct pattern:** Stop the dev server → run `npm run build` → restart dev → reload → visual verify. Never run them concurrently.
+
+Tags: `#build` `#devserver` `#nextjs` `#verification`
+
+---
+
+### P-LOG-018: [2026-05-22] Phase 3 Day 4 — Dead config drifts from JSX; live-migration causes silent regression
+
+**Trigger:** Migrating hardcoded block JSX to read a config field that was previously *unread* ("dead data").
+
+**Symptom:** No error — but the migrated block silently changes from its hardcoded look (e.g. classic `stats-progress-card` config said `borderRadius:"xl"`/12px while the JSX rendered `rounded-[24px]`). Flipping the dead field to authoritative would shrink the radius unnoticed.
+
+**Root cause:** When a config field is never read, nothing keeps it in sync with the hardcoded JSX, so the two drift apart over time.
+
+**Correct pattern:** Before wiring a dead field, read the ACTUAL rendered Tailwind/value and reconcile the config TO the JSX (not the config's stale claimed value). Confirm each migrated block resolves to the original computed style in the browser. (Day 4: corrected several classic radii `xl`/`2xl` → `3xl` to preserve the real look.)
+
+Tags: `#migration` `#deadcode` `#regression`
+
+---
+
+### P-LOG-019: [2026-05-22] Phase 3 Day 4 — New `.md` files are gitignored (`*.md`); plain `git add` silently no-ops
+
+**Trigger:** Committing a NEW markdown file (e.g. VISION.md) in this repo.
+
+**Symptom:** File absent from `git status`; `git add <file>.md` stages nothing and exits 0 (no error). A literal follow of an instruction commits nothing yet appears to succeed.
+
+**Root cause:** `.gitignore` contains `*.md`. Already-tracked docs (CLAUDE.md, DECISIONS.md…) are unaffected (ignore rules don't apply to tracked files), but any NEW `.md` is ignored.
+
+**Correct pattern:** `git add -f <file>.md` to stage without modifying `.gitignore`; verify with `git status --porcelain` showing `A <file>` before committing. When any file mysteriously won't stage, run `git check-ignore -v <path>`.
+
+Tags: `#git` `#gitignore` `#docs` `#projectSpecific`
+
+---
+
+### P-LOG-020: [2026-05-22] Phase 3 Day 4 Step 5 — Decorative gating must key on a config FLAG, not `hasOverride`
+
+**Trigger:** Migrating a block with heavy decorative layers (glow, blobs, animated `<style jsx>` gradient) where the ACTIVE template (classic) always supplies a config.
+
+**Anti-pattern:** Gate decorative effects on `!hasOverride` (the voteCTA pattern). Because classic always resolves a config on the live page, `hasOverride` is always true → the decorative layers are stripped → classic loses its OWN signature look (regression).
+
+**Correct pattern:**
+- Gate decorative layers on an explicit per-template config flag (Day 4 used `meet-section.surfaceLight`), defaulting to render in legacy mode (`!hasSection || cfg.surfaceLight !== false`). Classic sets the flag `true` to keep its look; dark/minimal set `false`.
+- Enrich the active template's config to REPRODUCE its current decorative look (glow color stops, etc.), so "data-driven" ≠ "stripped".
+
+**Animated `<style jsx>` handling:** swap only the COLOR (inline `backgroundImage` from config) and keep the animation class (`.animate-gradient-xy`, which animates `background-position` via `background-size:200%`) untouched. Motion stays declarative; color becomes data. Worked cleanly with zero animation regressions.
+
+Tags: `#migration` `#decorative` `#stylejsx` `#P-LOG-015-adjacent`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

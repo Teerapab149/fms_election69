@@ -1,3 +1,42 @@
+# PROGRESS.md
+
+**Last saved:** 2026-05-22
+**Branch:** `new-version`
+
+---
+
+## Phase 3 Day 4 — Home Block JSX Migration ✅ COMPLETE
+
+**Phase 3 Step 5 (Block JSX Migration): ✅ DONE.** All 5 home blocks migrated to
+per-element inline style (voteCTA pattern), home page only.
+
+| Step | Block | Commit |
+|------|-------|--------|
+| 1 | Page background | `16166a8` |
+| 2 | banner-section | `f72c174` |
+| 3 | Stats sub-cards | `e199a8e` |
+| 4 | Stats hero card | `b630298` |
+| 5 | MeetCandidatesCard | `39bcc7a` |
+
+- Build PASS each step; visual-verified in real browser across all 4 templates
+  (final sweep = 20 checkpoints, 5 blocks × 4 templates, all distinct & cohesive).
+- Classic preserved byte-faithfully on every block. Legacy fallbacks intact (P-LOG-015).
+- Verification technique: flip `SystemConfig.activeTemplateId` via prisma, reload, read
+  computed styles (admin UI is auth-gated). DB restored to `classic` after.
+- New lessons: DECISIONS.md P-LOG-017 (build/dev `.next` clash), 018 (dead-config drift),
+  019 (`*.md` gitignored), 020 (decorative gating via flag + `<style jsx>` color-swap).
+
+**Deferred (NOT done):**
+- SSR plumbing of `resolvedTemplate` into vote/results/closed/success/candidates pages
+  (only the home page resolves a template today) → Phase 3.5.
+- Navbar (no catalog entry) → out of scope.
+- Out-of-scope observation: modern-dark hero "SAMO" base word renders faint on dark bg
+  (pre-existing hero-title element from earlier phases, not a Day 4 block).
+
+**Next:** Phase 3 Step 6 = Editor Tiers (Simple/Advanced PropertyPanel) — Day 5.
+
+---
+
 # PROGRESS.md — Phase 2.6 Complete (pending manual browser test)
 
 **Last saved:** 2026-05-17
