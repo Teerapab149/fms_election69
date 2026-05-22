@@ -7,7 +7,7 @@ node_modules
 
 .next
 
-*.md
+
 
 # Debug & Scripts
 check_users.js
@@ -34,3 +34,7 @@ yarn-error.log*
 
 .reference/
 
+
+# Workflow artifacts archive (specs, diagnoses, prompts)
+# See .specs/README.md for context
+.specs/
