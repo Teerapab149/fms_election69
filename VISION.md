@@ -1,9 +1,9 @@
 # VISION.md — FMS Election System
 
 **Project:** PSU FMS Election Editor (SAMO 50)
-**Document version:** 1.1
+**Document version:** 1.2
 **Created:** May 21, 2026 (Day 4)
-**Last updated:** May 21, 2026 (timeline added)
+**Last updated:** May 22, 2026 (D1 superseded by D1-v2, ADR-001 added)
 **Status:** Living document — update as vision evolves
 
 > **คำเตือนสำหรับ Claude session ใหม่ / Claude Code / Future readers:**
@@ -120,11 +120,44 @@ User เรียก / Industry term / ความหมาย
 
 ## 5. Key Design Decisions (Confirmed)
 
-### D1: Architecture — per-element inline style (พื้นฐาน)
-- ✅ Confirmed Day 4 diagnose phase
-- voteCTA pattern เป็น blueprint
-- ✅ Not introducing CSS variable architecture (mixed = forbidden)
-- หมายเหตุ: เป็นพื้นฐาน — vision 10 ปีอาจต้องขยาย (slot system, etc.)
+### D1-v2: Architecture — 3-Layer CSS Variables + Inline Override (UPDATED 2026-05-22)
+- ✅ Supersedes original D1 (per-element inline only)
+- **Layer 1**: Theme tokens (template-wide) — `--color-*`, `--radius-*`, `--shadow-*`, `--font-*`
+- **Layer 2**: Element-scope vars (component-specific) — `--btn-*`, `--card-*`, etc.
+- **Layer 3**: Inline style overrides (admin per-instance customization)
+- ✅ Resolves VISION I1 contradiction (3 layers separation)
+- ✅ Variant components live in `src/components/elements/<element-id>/<variant>.jsx`
+- 📄 See ADR-001-architecture.md for full architecture
+- Day 4 inline-style work to be refactored to Layer 1+2 (~5-8 days)
+- Original D1 preserved as "Layer 3 only" — still valid for admin overrides
+
+### D9: Token Naming Convention (NEW 2026-05-22)
+- **Layer 1**: category prefix + system role
+  - `--color-primary`, `--color-accent`, `--color-surface`, `--color-bg`, `--color-text`
+  - `--radius-button`, `--radius-card`
+  - `--shadow-card`, `--shadow-button`
+  - `--font-display`, `--font-body`
+- **Layer 2**: component prefix + role
+  - `--btn-bg`, `--btn-text`, `--btn-radius`
+  - `--card-bg`, `--card-border`
+- **Rule**: Layer 1 = system roles only (no component names)
+- **Rule**: No double prefix (avoid `--theme-color-primary`)
+
+### D10: Element-Scope Mechanism — data-element Attribute (NEW 2026-05-22)
+- Scoping selector: `[data-element="<element-id>"]`
+- Each variant component renders `<X data-element="<element-id>">` on root
+- **Critical rule**: Every element MUST declare Layer 2 var defaults at element root
+  to prevent CSS variable inheritance bugs when elements are nested
+- Pattern: `background: var(--btn-bg, var(--color-primary))` (fallback chain)
+- Layer 3 (inline style) wins via standard CSS specificity
+
+### D11: Unified Render Pipeline (NEW 2026-05-22)
+- Live page AND editor preview share single render pipeline
+- Root component receives config from either source:
+  - Live: API → resolved template → root
+  - Editor: editor state → root
+- Same `<style>` block emitted in both contexts
+- Guarantees WYSIWYG: editor preview === production render
 
 ### D2: Element granularity — Atomic UI components
 - ✅ "1 button = 1 element", "1 timer = 1 element", "1 hero text = 1 element"
@@ -284,6 +317,7 @@ Template = Layout (slots) + Theme (tokens) + Elements (compositions)
 |------|---------|--------|
 | 2026-05-21 | 1.0 | Initial vision document created from Day 4 conversation. 4 pillars + 8 design decisions + 6 open questions captured. |
 | 2026-05-21 | 1.1 | Added realistic timeline to Appendix B. Confirmed hard deadline = election Feb 2027, soft milestone = mid-June 2026 (semester start). 9-month development arc, 5-phase plan. |
+| 2026-05-22 | 1.2 | Architecture decision: D1 superseded by D1-v2 (3-layer CSS variables + inline override). Added D9 (token naming), D10 (data-element scoping + fallback chain), D11 (unified render pipeline). See ADR-001-architecture.md. |
 
 ---
 
