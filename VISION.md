@@ -1,9 +1,9 @@
 # VISION.md — FMS Election System
 
 **Project:** PSU FMS Election Editor (SAMO 50)
-**Document version:** 1.0
+**Document version:** 1.1
 **Created:** May 21, 2026 (Day 4)
-**Last updated:** May 21, 2026
+**Last updated:** May 21, 2026 (timeline added)
 **Status:** Living document — update as vision evolves
 
 > **คำเตือนสำหรับ Claude session ใหม่ / Claude Code / Future readers:**
@@ -283,6 +283,7 @@ Template = Layout (slots) + Theme (tokens) + Elements (compositions)
 | Date | Version | Change |
 |------|---------|--------|
 | 2026-05-21 | 1.0 | Initial vision document created from Day 4 conversation. 4 pillars + 8 design decisions + 6 open questions captured. |
+| 2026-05-21 | 1.1 | Added realistic timeline to Appendix B. Confirmed hard deadline = election Feb 2027, soft milestone = mid-June 2026 (semester start). 9-month development arc, 5-phase plan. |
 
 ---
 
@@ -303,14 +304,51 @@ User ส่งมา 6 templates เป็น research/inspiration (ไม่ใ
 
 ---
 
-## Appendix B: Current State (as of doc creation)
+## Appendix B: Current State + Timeline
 
+### Current State (as of doc creation)
 - **Phase:** Phase 3 Day 4 (paused at Step 4 for vision capture)
 - **Latest commit:** 4 commits past `0d1c09f` (page bg + banner + stats sub-cards + stats hero)
 - **Working:** voteCTA + CountdownTimer + Day 4 Steps 1-4 done
 - **Pending:** MeetCandidatesCard migration, then re-evaluate vs new vision
 - **Architecture:** per-element inline style (D1)
 - **Element catalog:** 47 instances, 16 types
+
+### Realistic Timeline (confirmed May 21, 2026)
+
+**Hard deadline:** Election day = February 2027 (~9 months out)
+**Soft milestone:** v1 production-ready by mid-June 2026 (before user's semester starts)
+
+```
+Phase 1 — Before 15 June 2026 (~3 weeks intense):
+  Week 1: Day 4 finish + Architecture design
+  Week 2: 1 template production-ready + Editor Tier 1
+  Week 3: Save/load + polish + buffer
+
+Phase 2 — June-October 2026 (5 months, steady pace):
+  Layout slot system, smart contrast, 2-tier editor,
+  Template #2, save as new template, variant gallery basic
+
+Phase 3 — November 2026 - January 2027 (3 months):
+  Templates #3 + #4, mix & match, heritage gallery,
+  multi-admin, documentation, dry runs
+
+Phase 4 — February 2027:
+  ELECTION DAY — system in production use
+
+Phase 5 — March-April 2027:
+  Post-election polish, final deploy, junior handoff
+```
+
+**Total active development:** ~9 months
+**Vision completion target:** ~90% by election day, 100% by post-election polish
+
+### Plan Rationale
+- User has semester break NOW (mid-June 2026 = start of classes)
+- Wants v1 stable before classes (less stress while studying)
+- Election is the hard deadline — system must work then
+- "ทำเรื่อยๆ" during semester = sustainable, no burnout
+- Post-election = handoff-quality polish for juniors
 
 ---
 
