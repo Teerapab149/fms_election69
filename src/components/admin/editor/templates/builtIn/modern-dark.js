@@ -151,7 +151,11 @@ export const modernDarkTemplate = {
       config: {
         ...classicTemplate.elements["meet-section"].config,
         backgroundColor: "#1e293b",
-        borderColor:     "#06b6d4"
+        borderColor:     "#06b6d4",
+        glowFrom:        "#06b6d4",
+        glowVia:         "#3b82f6",
+        glowTo:          "#8b5cf6",
+        surfaceLight:    false
       }
     },
     "meet-title": {

@@ -7,6 +7,7 @@ import MeetCandidatesCard from "../MeetCandidatesCard";
 // editor props: passed through to MeetCandidatesCard so meet-title / meet-cta Wraps work
 export default function MeetCandidatesBlock({
   config = {},
+  resolvedTemplate = null,
   editorMode = false,
   selectedElement = null,
   hoveredElement = null,
@@ -18,6 +19,7 @@ export default function MeetCandidatesBlock({
   return (
     <div className="w-full max-w-md mx-auto lg:mx-0 pt-0 pb-4 animate-fade-in-up" style={{ animationDelay: "0.05s" }}>
       <MeetCandidatesCard
+        resolvedTemplate={resolvedTemplate}
         editorMode={editorMode}
         selectedElement={selectedElement}
         hoveredElement={hoveredElement}

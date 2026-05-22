@@ -165,7 +165,11 @@ export const minimalTemplate = {
         ...classicTemplate.elements["meet-section"].config,
         backgroundColor: "#f9fafb",
         borderColor:     "#e5e7eb",
-        borderRadius:    "md"
+        borderRadius:    "lg",
+        glowFrom:        "#9ca3af",
+        glowVia:         "#6b7280",
+        glowTo:          "#4b5563",
+        surfaceLight:    false
       }
     },
     "meet-title": {

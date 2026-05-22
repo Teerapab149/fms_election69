@@ -266,8 +266,22 @@ export const classicTemplate = {
     },
 
     // === Home / meetCandidates ===
+    // Day 4 Step 5: enriched so the card body + animated glow are template-driven.
+    // Classic reproduces the current look exactly (purple/pink/orange glow,
+    // white body, light surface overlay). borderRadius "3xl" ~ the rounded-[24px]
+    // glow / rounded-[22px] body (2px diff, imperceptible). surfaceLight gates the
+    // light overlay + radial dots + blobs (off for dark/mono templates).
     "meet-section": {
-      config: { backgroundColor: "#ffffff", borderRadius: "2xl", borderColor: "#fecdd3", visible: true }
+      config: {
+        backgroundColor: "#ffffff",
+        borderRadius: "3xl",
+        borderColor: "#fecdd3",
+        glowFrom: "#9333ea",
+        glowVia: "#ec4899",
+        glowTo: "#fb923c",
+        surfaceLight: true,
+        visible: true
+      }
     },
     "meet-title": {
       config: { text: "รู้จักผู้สมัครของคุณหรือยัง?", fontSize: "sm", color: "#1a1a2e", fontWeight: "700" }

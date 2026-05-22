@@ -160,7 +160,11 @@ export const playfulTemplate = {
         ...classicTemplate.elements["meet-section"].config,
         backgroundColor: "#ffffff",
         borderColor:     "#fde68a",
-        borderRadius:    "2xl"
+        borderRadius:    "3xl",
+        glowFrom:        "#f97316",
+        glowVia:         "#ec4899",
+        glowTo:          "#d946ef",
+        surfaceLight:    true
       }
     },
     "meet-title": {

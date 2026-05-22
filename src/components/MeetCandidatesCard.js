@@ -4,8 +4,38 @@
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Users, Vote, Star } from "lucide-react";
 import EditorElement from "./admin/editor/EditorElement";
+import { RADIUS_MAP } from "../utils/styleMaps";
+
+// Animated glow gradient (kept "to right", animated via .animate-gradient-xy).
+function buildGlowStyle(cfg) {
+  if (!cfg || !cfg.glowFrom) return undefined;
+  const parts = [cfg.glowFrom, cfg.glowVia, cfg.glowTo].filter(Boolean);
+  const s = { backgroundImage: `linear-gradient(to right, ${parts.join(", ")})` };
+  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  return s;
+}
+
+// Card body surface (background + radius).
+function buildBodyStyle(cfg) {
+  if (!cfg) return undefined;
+  const s = {};
+  if (cfg.backgroundColor) s.backgroundColor = cfg.backgroundColor;
+  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  return Object.keys(s).length ? s : undefined;
+}
+
+// CTA pill (background + text + radius).
+function buildCtaStyle(cfg) {
+  if (!cfg) return undefined;
+  const s = {};
+  if (cfg.backgroundColor) s.backgroundColor = cfg.backgroundColor;
+  if (cfg.textColor) s.color = cfg.textColor;
+  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  return Object.keys(s).length ? s : undefined;
+}
 
 export default function MeetCandidatesCard({
+  resolvedTemplate = null,
   editorMode = false,
   selectedElement = null,
   hoveredElement = null,
@@ -14,6 +44,19 @@ export default function MeetCandidatesCard({
   onHoverEnd = null,
   elementConfigs = null,
 }) {
+  // Dual-channel flat config read (editor elementConfigs / live resolvedTemplate).
+  const getCardConfig = (id) =>
+    elementConfigs?.[id]?.config ?? resolvedTemplate?.elements?.[id]?.config ?? null;
+  const sectionCfg = getCardConfig("meet-section");
+  const titleCfg = getCardConfig("meet-title");
+  const ctaCfg = getCardConfig("meet-cta");
+  const hasSection = !!sectionCfg && Object.keys(sectionCfg).length > 0;
+  const hasTitle = !!titleCfg && !!titleCfg.color;
+  const hasCta = !!ctaCfg && Object.keys(ctaCfg).length > 0;
+  // Light surface layers (overlay + dots + blobs) render in legacy mode and
+  // whenever the active template keeps surfaceLight !== false (P-LOG-015).
+  const showSurfaceLight = !hasSection || sectionCfg.surfaceLight !== false;
+
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
       id={id}
@@ -30,19 +73,30 @@ export default function MeetCandidatesCard({
     <Link href="/candidates" className="group relative block w-full h-full">
 
       {/* ✨ 1. BACKGROUND GLOW (ลดความฟุ้งลงนิดนึงเพื่อให้ดูกระชับ) */}
-      <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 opacity-60 blur-sm transition-all duration-500 group-hover:opacity-100 group-hover:blur-md animate-gradient-xy"></div>
+      {/* Animated glow — colors data-driven, motion (animate-gradient-xy) preserved. */}
+      <div
+        className={`absolute -inset-[1px] rounded-[24px] opacity-60 blur-sm transition-all duration-500 group-hover:opacity-100 group-hover:blur-md animate-gradient-xy ${hasSection ? "" : "bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400"}`}
+        style={buildGlowStyle(sectionCfg)}
+      ></div>
 
       {/* ✨ 2. MAIN CARD BODY */}
       {/* ปรับ p-4 (จากเดิม p-6) เพื่อลดความสูง */}
-      <div className="relative h-full w-full rounded-[22px] bg-white overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-[0.995]">
+      <div
+        className={`relative h-full w-full overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-[0.995] ${hasSection ? "" : "rounded-[22px] bg-white"}`}
+        style={buildBodyStyle(sectionCfg)}
+      >
 
-         {/* Backgrounds */}
-         <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/50 to-pink-50/30"></div>
-         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#6d28d9 1px, transparent 1px)', backgroundSize: '14px 14px' }}></div>
+         {/* Light surface layers — only in light templates / legacy mode */}
+         {showSurfaceLight && (
+           <>
+             <div className="absolute inset-0 bg-gradient-to-br from-white via-purple-50/50 to-pink-50/30"></div>
+             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#6d28d9 1px, transparent 1px)', backgroundSize: '14px 14px' }}></div>
 
-         {/* Blobs (ปรับขนาดเล็กลง) */}
-         <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-200/50 rounded-full blur-2xl animate-pulse"></div>
-         <div className="absolute -bottom-10 -left-5 w-32 h-32 bg-pink-200/50 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+             {/* Blobs (ปรับขนาดเล็กลง) */}
+             <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-200/50 rounded-full blur-2xl animate-pulse"></div>
+             <div className="absolute -bottom-10 -left-5 w-32 h-32 bg-pink-200/50 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+           </>
+         )}
 
          {/* Shine Effect */}
          <div className="absolute inset-0 z-20 -translate-x-[150%] skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-1000 group-hover:animate-shine pointer-events-none" />
@@ -68,7 +122,10 @@ export default function MeetCandidatesCard({
 
                {/* Heading (ปรับ text-xl / text-2xl ให้ไม่ใหญ่คับกล่อง) */}
                <Wrap id="meet-title">
-                 <h3 className="text-xl sm:text-3xl font-black text-slate-900 leading-[1.1] tracking-tight drop-shadow-sm mb-2">
+                 <h3
+                   className={`text-xl sm:text-3xl font-black leading-[1.1] tracking-tight drop-shadow-sm mb-2 ${hasTitle ? "" : "text-slate-900"}`}
+                   style={hasTitle ? { color: titleCfg.color } : undefined}
+                 >
                     รู้จักผู้สมัคร<br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
                        ของคุณหรือยัง?
@@ -78,7 +135,10 @@ export default function MeetCandidatesCard({
 
                {/* Button / CTA (Compact Version) */}
                <Wrap id="meet-cta">
-                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-200 transition-all duration-300 group-hover:bg-purple-600 group-hover:shadow-purple-400/50 group-hover:translate-x-1">
+                 <div
+                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold text-xs sm:text-sm shadow-md shadow-purple-200 transition-all duration-300 group-hover:bg-purple-600 group-hover:shadow-purple-400/50 group-hover:translate-x-1 ${hasCta ? "" : "rounded-full bg-slate-900 text-white"}`}
+                   style={buildCtaStyle(ctaCfg)}
+                 >
                      <span className="whitespace-nowrap">ดูรายชื่อพรรค</span>
                      <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                  </div>
