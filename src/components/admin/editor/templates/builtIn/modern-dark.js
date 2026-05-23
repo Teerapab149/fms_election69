@@ -24,7 +24,8 @@ export const modernDarkTemplate = {
   },
 
   pages: {
-    home:       { visible: true, backgroundColor: "#0f172a" },
+    // Day 6: home.backgroundColor removed — --color-bg drives.
+    home:       { visible: true },
     vote:       { visible: true, backgroundColor: "#0f172a" },
     candidates: { visible: true, backgroundColor: "#0f172a" },
     results:    { visible: true, backgroundColor: "#0f172a" },
@@ -144,32 +145,31 @@ export const modernDarkTemplate = {
         textColor:    "#ffffff"
       }
     },
+    // Day 6: bg+border removed — --color-surface + --color-border drive.
+    // NOT spreading classic — classic sets borderColor #f1f5f9 (lighter custom),
+    // which would override modern-dark's token fallback to slate #334155.
     "stats-progress-card": {
       config: {
-        ...classicTemplate.elements["stats-progress-card"].config,
-        backgroundColor: "#1e293b",
-        borderColor:     "#334155",
-        numberColor:     "#f1f5f9",
-        labelColor:      "#94a3b8",
-        accentColor:     "#06b6d4"
+        borderRadius: "3xl",
+        numberColor:  "#f1f5f9",
+        labelColor:   "#94a3b8",
+        accentColor:  "#06b6d4"
       }
     },
     "stats-eligible-card": {
       config: {
-        ...classicTemplate.elements["stats-eligible-card"].config,
-        backgroundColor: "#1e293b",
-        borderColor:     "#334155",
-        numberColor:     "#f1f5f9",
-        labelColor:      "#94a3b8",
-        iconColor:       "#475569"
+        borderRadius: "3xl",
+        numberColor:  "#f1f5f9",
+        labelColor:   "#94a3b8",
+        iconColor:    "#475569"
       }
     },
 
     // === Meet section ===
+    // Day 6: backgroundColor removed — --color-surface drives.
     "meet-section": {
       config: {
         ...classicTemplate.elements["meet-section"].config,
-        backgroundColor: "#1e293b",
         borderColor:     "#06b6d4",
         glowFrom:        "#06b6d4",
         glowVia:         "#3b82f6",
@@ -192,12 +192,11 @@ export const modernDarkTemplate = {
     },
 
     // === Banner ===
+    // Day 6: bg+border removed — --color-surface + --color-border drive.
+    // NOT spreading classic.banner — classic intentionally sets borderColor #ffffff
+    // (white-on-white), which would override dark theme's token fallback.
     "banner-section": {
-      config: {
-        ...classicTemplate.elements["banner-section"].config,
-        backgroundColor: "#1e293b",
-        borderColor:     "#334155"
-      }
+      config: { visible: true, borderRadius: "3xl" }
     },
 
     // === Vote page ===
