@@ -585,6 +585,82 @@ Tags: `#preview` `#nextjs` `#basePath` `#tooling`
 
 ---
 
+### P-LOG-024: [2026-05-24] Phase 1 Week 2 Day 6 — Token activation pattern: remove the redundant cfg field, JSX `||` fallback hits the token
+
+**Trigger:** Day 6 making Layer 1 tokens *active* (not fallback-only) after Day 5 laid the foundation.
+
+**Pattern:** when an element config field VALUE equals the template's token value AND the JSX consumes the field via `cfg.X || 'var(--token)'`, **REMOVE the cfg field**. The JSX falls through to the token, so the rendered value is identical to before — but now editing the token in `template.theme.tokens` *propagates* to the rendered DOM. The same edit was a no-op before because the cfg's explicit hex won the cascade.
+
+**Verification:** edit `--color-bg` in `classic.js` from `#F8F9FD` to `#ffe4e1` → home page bg turns pink. Revert → back to gray-blue. This is the "tokens are active" sanity check; if the page DOESN'T change, an upstream override is still winning — find the leak before proceeding.
+
+**Out of pattern:** fields with NO `||` fallback in JSX (e.g. `borderRadius` — JSX only applies `style.borderRadius` *if* `cfg.borderRadius` is set; no token branch). Removing those silently drops the style entirely. Day 6 KEEPs all `borderRadius` fields. Day 7 extends JSX to add `|| var(--radius-card)` so radii become token-active too.
+
+Tags: `#tokens` `#layer-1` `#activation` `#ADR-001`
+
+---
+
+### P-LOG-025: [2026-05-24] Phase 1 Week 2 Day 6 — Spread-inheritance leaks parent override into child template
+
+**Trigger:** Removing `borderColor` from modern-dark's stats-progress-card config (expecting fallback to `--color-border #334155`), but the rendered border came out as `#f1f5f9` — classic's lighter custom border bled in through `...classicTemplate.elements["X"].config` spread.
+
+**Root cause:** stub templates compose via `{ ...classicTemplate.elements["X"].config, ...overrides }`. When `overrides` removes a field that classic explicitly sets (e.g. classic's `#f1f5f9` sub-card border, classic's `#ffffff` banner border), the spread keeps classic's value alive. The token fallback never fires because `cfg.borderColor` is still truthy (just inherited rather than overridden).
+
+**Correct pattern:** when a stub wants the **token** to drive a field (not classic's explicit value), **drop the spread for that element** and write an explicit field subset:
+
+```js
+"stats-progress-card": {
+  config: {
+    borderRadius: "3xl",
+    numberColor:  "#f1f5f9",
+    labelColor:   "#94a3b8",
+    accentColor:  "#06b6d4"
+  }
+}
+```
+
+Verbose but unambiguous: only fields actually wanted are present, the rest fall through to JSX `|| var()` token fallbacks.
+
+**Alternative (rejected):** `borderColor: undefined` after spread. Works functionally (JSX `||` treats undefined as falsy → token wins), but JSON.stringify drops undefined keys → snapshots stay clean. Readers, though, see a redundant `undefined` line that looks like a bug. Explicit subset is clearer.
+
+**Rule:** every cross-template spread is a hidden coupling. Whenever a stub wants different (or token-driven) behaviour for a field its parent sets, break the spread for that element, not just override the field.
+
+Tags: `#templates` `#spread` `#inheritance` `#tokens` `#layer-1`
+
+---
+
+### P-LOG-026: [2026-05-24] Phase 1 Week 2 Day 6 — Surface-alignment side effect: removing inherited override pulls a value toward the template's surface token
+
+**Trigger:** Day 6 stripped minimal.banner-section's inherited `backgroundColor: #ffffff` (via classic spread). The new render computes from `--color-surface = #f9fafb`. Minimal's banner shifted `#ffffff → #f9fafb`.
+
+**Why it happened:** minimal's other surfaces (sub-cards, meet) were already `#f9fafb` explicitly — only the banner was at `#ffffff` because classic's spread happened to set it. The Day 5 baseline was internally inconsistent; Day 6 token propagation reveals and resolves the inconsistency.
+
+**Impact:** RGB diff (255,255,255) vs (249,250,251) — 6 bits, imperceptible side-by-side. No regression report risk.
+
+**Decision:** accept the alignment. The architectural goal (one template = one surface token across all surfaces) outweighs perfect byte-for-byte parity on a vestigial inconsistency. Documented in the commit message + here so future readers don't try to "fix" it back to `#ffffff`.
+
+**Process lesson:** when migrating templates, audit each stub's surface fields for *internal* consistency, not just parity with the previous render. The token activation pass is a natural moment to clean up these accidental drifts — flag, don't hide.
+
+Tags: `#templates` `#tokens` `#minor-drift` `#minimal`
+
+---
+
+### P-LOG-027: [2026-05-24] Phase 1 Week 2 Day 6 — `.next` manifest race kills HMR mid-session after multiple template switches
+
+**Trigger:** After 3+ template switches via DB writes + `window.location.assign` + HMR cycle, dev server starts throwing `UNKNOWN: open .next/server/app-paths-manifest.json` on every request → page renders empty `<main></main>`.
+
+**Root cause:** Windows filesystem race between Next.js dev server's own manifest rewrites and HMR triggering reloads on every saved file change. (Related to but distinct from P-LOG-017 — that was build/dev clash; this is dev-only thrashing after sustained activity.) The first compile works; ~20–30 minutes in, the manifest write/read races corrupt the in-memory build graph.
+
+**Correct pattern:**
+- `preview_stop` → `rm -rf .next` → `preview_start` → wait 12 s before first navigation. Resets cleanly.
+- For multi-template visual verify in one session, plan to restart the dev server at least once per template switch if the session has already done significant HMR work.
+- Build output (`npm run build`) is unaffected — production path works fine. Only dev HMR is fragile here.
+
+**Don't:** retry `window.location.reload()` repeatedly on a stuck page. The reload triggers further compile attempts, deepening the manifest corruption. Stop the server first.
+
+Tags: `#nextjs` `#dev-server` `#hmr` `#windows` `#tooling` `#P-LOG-017-adjacent`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

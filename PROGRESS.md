@@ -5,6 +5,52 @@
 
 ---
 
+## Phase 1 Week 2 Day 6 — Token Propagation (Layer 1 active) ✅ COMPLETE
+
+**Day 6 (3-layer refactor, Layer 1 activation): ✅ DONE.** Removed redundant
+explicit hex from element configs where the value matched the template's own
+token. JSX `cfg.X || 'var(--token)'` fallbacks now actively pull from tokens;
+editing a token in `template.theme.tokens` propagates to rendering.
+
+| Step | Template | Removals | Commit |
+|------|----------|----------|--------|
+| A | classic.js | 7 (pages.home, banner bg, 2× sub-card bg, meet bg, 2× meet-cta) | `f152d1c` |
+| B | modern-dark.js | 8 (+ 2 spread-drop fixes per P-LOG-025) | `ef4c632` |
+| C | playful.js | 6 (preemptive spread-drop on sub-cards) | `9edaa08` |
+| D | minimal.js | 6 (+ minimal banner surface alignment, P-LOG-026) | `4dce143` |
+
+**Token activation test (Task 6):** edited `--color-bg` in classic.js from
+`#F8F9FD` → `#ffe4e1` → page bg turned **pink** (`rgb(255,228,225)`). Reverted
+→ back to `rgb(248,249,253)`. Layer 1 is **active**, not fallback-only.
+
+**4×5 visual verify table (live browser, byte-faithful vs Day 5):**
+
+| Block | classic | modern-dark | playful | minimal |
+|---|---|---|---|---|
+| Page bg | `#F8F9FD` ✓ | `#0f172a` ✓ | `#fffbeb` ✓ | `#ffffff` ✓ |
+| Banner bg/border | `#fff`/`#fff` ✓ | `#1e293b`/`#334155` ✓ | `#fff`/`#fbcfe8` ✓ | `#f9fafb`/`#e5e7eb` * |
+| Sub-cards | `#fff` `#f1f5f9` 24px ✓ | `#1e293b` `#334155` ✓ | `#fff` `#fde68a` 16px ✓ | `#f9fafb` `#e5e7eb` 6px ✓ |
+| Hero card | purple 3-stop ✓ | cyan 3-stop ✓ | orange→pink→fuchsia ✓ | solid `#1f2937` ✓ |
+| Meet card | `#fff` ✓ | `#1e293b` ✓ | `#fff` ✓ | `#f9fafb` ✓ |
+
+*minimal banner bg shifted `#fff` → `#f9fafb` (P-LOG-026; surface alignment).
+
+**New lessons (DECISIONS.md):**
+- P-LOG-024 — Token activation pattern (remove duplicate cfg → JSX `||` hits token).
+- P-LOG-025 — Spread-inheritance leak; drop the spread, write explicit subset.
+- P-LOG-026 — Minimal banner surface alignment (intentional, imperceptible).
+- P-LOG-027 — `.next` manifest race during sustained HMR; clean restart fixes.
+
+**Activation NOT fully reached for `borderRadius` tokens** (JSX has no `||
+var(--radius-*)` fallback — radius values still hardcoded as `"3xl"`/`"lg"`/
+etc. and resolve via RADIUS_MAP only). Day 7 will extend JSX patterns so
+`--radius-card` / `--radius-button` become active too.
+
+**Next (Day 7):** Layer 2 element-scope vars + variant component scaffolding;
+voteCTA + CountdownTimer migrate to variant pattern.
+
+---
+
 ## Phase 1 Week 2 Day 5 — Token Extraction (Layer 1) ✅ COMPLETE
 
 **Day 5 (3-layer refactor, Layer 1 only): ✅ DONE.** 15 Layer 1 tokens emitted
