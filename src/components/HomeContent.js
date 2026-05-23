@@ -15,6 +15,7 @@ import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
 import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
 import { resolveStatefulConfig } from './admin/editor/templateEngine';
 import { getBinding, isBoundElement } from './admin/editor/elementCatalog';
+import { buildTokenStyles } from '../lib/templateTokens';
 import CountdownTimer from "../components/CountdownTimer";
 import { Calendar } from "lucide-react";
 import SiteFooter from './SiteFooter';
@@ -41,6 +42,7 @@ export default function HomeContent({
   pageLayout = null,
   theme = null,
   resolvedTemplate = null,
+  tokens = null,
 }) {
   const { data: session, status } = useSession();
   const { isEditorMode, highlightedSection } = useEditorPreview();
@@ -212,13 +214,20 @@ export default function HomeContent({
     countdownOverrides
   );
 
-  // Page background — data-driven (Day 4 Step 1).
+  // Page background — data-driven (Day 4 Step 1; Day 5 token fallback).
   // Live channel: resolvedTemplate.pages.home.backgroundColor (SSR-resolved).
   // Editor channel: theme.colors.background (mirrored on template apply).
-  // Legacy fallback (#F8F9FD) preserved when no template/theme present.
+  // Day 5: fallback to var(--color-bg) so the Layer 1 token wins when no
+  // explicit page-bg override is set (P-LOG-015 byte-faithful: classic still
+  // sets pages.home.backgroundColor=#F8F9FD so this path is unchanged for it).
   const pageBg = (editorMode
     ? theme?.colors?.background
-    : resolvedTemplate?.pages?.home?.backgroundColor) ?? '#F8F9FD';
+    : resolvedTemplate?.pages?.home?.backgroundColor) ?? 'var(--color-bg)';
+
+  // Layer 1 token map — emitted as <style> on the .fms-app scope below
+  // (ADR-001 D11 unified pipeline: same for live + editor preview).
+  const effectiveTokens = tokens || resolvedTemplate?.theme?.tokens || null;
+  const tokenStylesCss = buildTokenStyles(effectiveTokens, '.fms-app');
 
   const ed = editorData || {};
 
@@ -380,7 +389,10 @@ export default function HomeContent({
   // 🛠️ Editor mode rendering — uses real block components via renderColumn
   if (editorMode) {
     return (
-      <div className="min-h-screen w-full flex flex-col text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative" style={{ backgroundColor: pageBg }}>
+      <div className="fms-app min-h-screen w-full flex flex-col text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative" style={{ backgroundColor: pageBg }}>
+        {tokenStylesCss && (
+          <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />
+        )}
         <div className="relative z-50 shrink-0">
           <Navbar />
         </div>
@@ -405,7 +417,10 @@ export default function HomeContent({
 
   // --- Normal Rendering (Non-editor) ---
   return (
-    <div className="min-h-screen w-full flex flex-col text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative" style={{ backgroundColor: pageBg }}>
+    <div className="fms-app min-h-screen w-full flex flex-col text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative" style={{ backgroundColor: pageBg }}>
+      {tokenStylesCss && (
+        <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />
+      )}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[100px]" />

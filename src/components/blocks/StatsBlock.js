@@ -5,14 +5,16 @@ import EditorElement from "../admin/editor/EditorElement";
 import { RADIUS_MAP } from "../../utils/styleMaps";
 
 // Build inline wrapper style from a (flat, non-stateful) sub-card config.
-// Returns undefined when no fields → legacy Tailwind card wins (P-LOG-015).
+// Returns undefined when cfg is missing → legacy Tailwind card wins (P-LOG-015).
+// Day 5: explicit cfg values stay (Layer 3); unset slots fall back to Layer 1
+// tokens via var(). Classic still sets all values → byte-faithful.
 function buildCardStyle(cfg) {
   if (!cfg) return undefined;
   const s = {};
-  if (cfg.backgroundColor) s.backgroundColor = cfg.backgroundColor;
-  if (cfg.borderColor) s.borderColor = cfg.borderColor;
+  s.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
+  s.borderColor = cfg.borderColor || 'var(--color-border)';
   if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
-  return Object.keys(s).length ? s : undefined;
+  return s;
 }
 
 const GRADIENT_DIR = {
@@ -21,6 +23,8 @@ const GRADIENT_DIR = {
 };
 
 // Hero card supports gradient (preserves classic 3-stop) or solid + text color.
+// Day 5: gradient stays inline (Layer 3, per spec — Day 6 may add Layer 2 vars
+// for gradient stops). Solid-bg fallback uses Layer 1 --color-surface token.
 function buildHeroCardStyle(cfg) {
   if (!cfg) return undefined;
   const s = {};
@@ -28,14 +32,14 @@ function buildHeroCardStyle(cfg) {
     const parts = [cfg.gradientFrom, cfg.gradientVia, cfg.gradientTo].filter(Boolean);
     const dir = GRADIENT_DIR[cfg.gradientDirection] || "to bottom right";
     s.backgroundImage = `linear-gradient(${dir}, ${parts.join(", ")})`;
-    s.backgroundColor = cfg.gradientFrom;
-  } else if (cfg.backgroundColor) {
-    s.backgroundColor = cfg.backgroundColor;
+    s.backgroundColor = cfg.gradientFrom || 'var(--color-primary)';
+  } else {
+    s.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
     s.backgroundImage = "none";
   }
-  if (cfg.textColor) s.color = cfg.textColor;
+  s.color = cfg.textColor || 'var(--color-text)';
   if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
-  return Object.keys(s).length ? s : undefined;
+  return s;
 }
 
 // StatsBlock — Bento grid สถิติผู้เข้าร่วมลงคะแนน

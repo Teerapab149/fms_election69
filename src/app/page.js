@@ -122,6 +122,7 @@ export default async function Home() {
         initialData={homeData}
         pageLayout={homeData.pageLayout}
         resolvedTemplate={homeData.resolvedTemplate}
+        tokens={homeData.resolvedTemplate?.theme?.tokens || null}
       />
     </main>
   );

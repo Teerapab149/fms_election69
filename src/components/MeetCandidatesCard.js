@@ -16,22 +16,24 @@ function buildGlowStyle(cfg) {
 }
 
 // Card body surface (background + radius).
+// Day 5: explicit cfg values stay (Layer 3); unset bg falls back to
+// var(--color-surface). Classic still sets bg=#ffffff → byte-faithful.
 function buildBodyStyle(cfg) {
   if (!cfg) return undefined;
   const s = {};
-  if (cfg.backgroundColor) s.backgroundColor = cfg.backgroundColor;
+  s.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
   if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
-  return Object.keys(s).length ? s : undefined;
+  return s;
 }
 
-// CTA pill (background + text + radius).
+// CTA pill (background + text + radius). Day 5: token fallback for bg/text.
 function buildCtaStyle(cfg) {
   if (!cfg) return undefined;
   const s = {};
-  if (cfg.backgroundColor) s.backgroundColor = cfg.backgroundColor;
-  if (cfg.textColor) s.color = cfg.textColor;
+  s.backgroundColor = cfg.backgroundColor || 'var(--color-text)';
+  s.color = cfg.textColor || 'var(--color-surface)';
   if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
-  return Object.keys(s).length ? s : undefined;
+  return s;
 }
 
 export default function MeetCandidatesCard({

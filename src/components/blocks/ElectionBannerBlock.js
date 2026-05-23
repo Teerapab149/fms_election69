@@ -7,13 +7,15 @@ import { RADIUS_MAP } from "../../utils/styleMaps";
 
 // Build inline frame style from a (flat, non-stateful) banner-section config.
 // Returns undefined when no fields → legacy Tailwind frame wins (P-LOG-015).
+// Day 5: explicit cfg values stay (Layer 3); when a slot is unset, fall back to
+// Layer 1 tokens via var(). Classic still sets all values → byte-faithful.
 function buildBannerStyle(cfg) {
   if (!cfg) return undefined;
   const style = {};
   if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) style.borderRadius = RADIUS_MAP[cfg.borderRadius];
-  if (cfg.backgroundColor) style.backgroundColor = cfg.backgroundColor;
-  if (cfg.borderColor) style.borderColor = cfg.borderColor;
-  return Object.keys(style).length ? style : undefined;
+  style.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
+  style.borderColor = cfg.borderColor || 'var(--color-border)';
+  return style;
 }
 
 // ElectionBannerBlock — ภาพโปรโมท "เลือกตั้ง" + slideshow (state ภายในตัวเอง)
