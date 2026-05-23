@@ -46,6 +46,25 @@ export const minimalTemplate = {
     effects: {
       borderRadius: "0.25rem",
       shadow:       "none"
+    },
+    // Layer 1 tokens — full set per D5 (no inheritance, snapshot-friendly).
+    // Mono theme: white bg, slate text, sharp radii, no shadows.
+    tokens: {
+      "--color-primary":     "#1f2937",
+      "--color-accent":      "#6b7280",
+      "--color-bg":          "#ffffff",
+      "--color-surface":     "#f9fafb",
+      "--color-text":        "#000000",
+      "--color-text-muted":  "#9ca3af",
+      "--color-border":      "#e5e7eb",
+      "--radius-sm":         "2px",
+      "--radius-md":         "4px",
+      "--radius-card":       "8px",
+      "--radius-button":     "6px",
+      "--shadow-card":       "none",
+      "--shadow-button":     "none",
+      "--font-display":      "Inter, system-ui, sans-serif",
+      "--font-body":         "Inter, system-ui, sans-serif"
     }
   },
 

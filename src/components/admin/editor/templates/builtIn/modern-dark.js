@@ -47,6 +47,25 @@ export const modernDarkTemplate = {
     effects: {
       borderRadius: "0.5rem",
       shadow:       "0 10px 40px rgba(6,182,212,0.25)"
+    },
+    // Layer 1 tokens — full set per D5 (no inheritance, snapshot-friendly).
+    // Dark theme: slate base, cyan primary, violet accent, slightly tighter radii.
+    tokens: {
+      "--color-primary":     "#06b6d4",
+      "--color-accent":      "#8b5cf6",
+      "--color-bg":          "#0f172a",
+      "--color-surface":     "#1e293b",
+      "--color-text":        "#f1f5f9",
+      "--color-text-muted":  "#94a3b8",
+      "--color-border":      "#334155",
+      "--radius-sm":         "6px",
+      "--radius-md":         "12px",
+      "--radius-card":       "20px",
+      "--radius-button":     "12px",
+      "--shadow-card":       "0 10px 40px rgba(6,182,212,0.18)",
+      "--shadow-button":     "0 6px 20px rgba(6,182,212,0.35)",
+      "--font-display":      "Inter, system-ui, sans-serif",
+      "--font-body":         "Inter, system-ui, sans-serif"
     }
   },
 

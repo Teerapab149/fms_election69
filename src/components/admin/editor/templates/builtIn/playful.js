@@ -46,6 +46,25 @@ export const playfulTemplate = {
     effects: {
       borderRadius: "1.5rem",
       shadow:       "0 8px 16px -4px rgba(236,72,153,0.15)"
+    },
+    // Layer 1 tokens — full set per D5 (no inheritance, snapshot-friendly).
+    // Warm theme: amber bg, pink primary, orange accent, generous radii.
+    tokens: {
+      "--color-primary":     "#ec4899",
+      "--color-accent":      "#f59e0b",
+      "--color-bg":          "#fffbeb",
+      "--color-surface":     "#ffffff",
+      "--color-text":        "#1f2937",
+      "--color-text-muted":  "#6b7280",
+      "--color-border":      "#fde68a",
+      "--radius-sm":         "12px",
+      "--radius-md":         "20px",
+      "--radius-card":       "32px",
+      "--radius-button":     "9999px",
+      "--shadow-card":       "0 12px 32px rgba(236,72,153,0.18)",
+      "--shadow-button":     "0 8px 20px rgba(245,158,11,0.30)",
+      "--font-display":      "Inter, system-ui, sans-serif",
+      "--font-body":         "Inter, system-ui, sans-serif"
     }
   },
 
