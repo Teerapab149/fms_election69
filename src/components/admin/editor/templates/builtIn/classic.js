@@ -30,7 +30,8 @@ export const classicTemplate = {
   },
 
   pages: {
-    home:       { visible: true, backgroundColor: "#F8F9FD" },
+    // Day 6: home.backgroundColor removed — Layer 1 token --color-bg drives.
+    home:       { visible: true },
     vote:       { visible: true, backgroundColor: "#F8F9FD" },
     candidates: { visible: true, backgroundColor: "#F8F9FD" },
     results:    { visible: true, backgroundColor: "#F8F9FD" },
@@ -118,11 +119,12 @@ export const classicTemplate = {
     // template-distinct. borderRadius xl->3xl + borderColor -> #f1f5f9 to
     // faithfully preserve the current rounded-[24px] / border-slate-100 look
     // (those fields were previously dead/ignored by StatsBlock JSX).
+    // Day 6: backgroundColor removed — Layer 1 --color-surface drives it.
     "stats-progress-card": {
-      config: { backgroundColor: "#ffffff", borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#1e293b", labelColor: "#94a3b8", accentColor: "#10b981" }
+      config: { borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#1e293b", labelColor: "#94a3b8", accentColor: "#10b981" }
     },
     "stats-eligible-card": {
-      config: { backgroundColor: "#ffffff", borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#334155", labelColor: "#94a3b8", iconColor: "#cbd5e1" }
+      config: { borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#334155", labelColor: "#94a3b8", iconColor: "#cbd5e1" }
     },
 
     // === Home / voteCTA (stateful, presets:null → defaultConfig) ===
@@ -271,9 +273,9 @@ export const classicTemplate = {
     // white body, light surface overlay). borderRadius "3xl" ~ the rounded-[24px]
     // glow / rounded-[22px] body (2px diff, imperceptible). surfaceLight gates the
     // light overlay + radial dots + blobs (off for dark/mono templates).
+    // Day 6: backgroundColor removed — Layer 1 --color-surface drives it.
     "meet-section": {
       config: {
-        backgroundColor: "#ffffff",
         borderRadius: "3xl",
         borderColor: "#fecdd3",
         glowFrom: "#9333ea",
@@ -286,16 +288,19 @@ export const classicTemplate = {
     "meet-title": {
       config: { text: "รู้จักผู้สมัครของคุณหรือยัง?", fontSize: "sm", color: "#1a1a2e", fontWeight: "700" }
     },
+    // Day 6: bg+textColor removed — --color-text + --color-surface drive.
     "meet-cta": {
-      config: { text: "ดูรายชื่อพรรค →", backgroundColor: "#1a1a2e", textColor: "#ffffff", borderRadius: "full" }
+      config: { text: "ดูรายชื่อพรรค →", borderRadius: "full" }
     },
 
     // === Home / electionBanner ===
     // Day 4 Step 2: enriched with borderColor/backgroundColor so the frame is
     // template-distinct. borderRadius set to "3xl" to faithfully preserve the
     // current rounded-3xl frame (field was previously dead/ignored by JSX).
+    // Day 6: backgroundColor removed — --color-surface drives it. borderColor
+    // KEPT as #ffffff (white-on-white intentional, ≠ --color-border #e2e8f0).
     "banner-section": {
-      config: { visible: true, borderRadius: "3xl", borderColor: "#ffffff", backgroundColor: "#ffffff" }
+      config: { visible: true, borderRadius: "3xl", borderColor: "#ffffff" }
     },
 
     // === Vote / header ===
