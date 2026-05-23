@@ -412,6 +412,27 @@ export const classicTemplate = {
     effects: {
       borderRadius: "0.75rem",
       shadow:       "0 4px 6px -1px rgba(0,0,0,0.1)"
+    },
+    // Layer 1 tokens — emitted as CSS vars on .fms-app scope (ADR-001 D9/D11).
+    // Values mirror theme.colors / element configs of classic so the live page
+    // renders byte-faithfully with Day 4. Each template defines ALL 15 tokens
+    // (no inheritance) per D5 (snapshot-friendly).
+    tokens: {
+      "--color-primary":     "#8A2680",
+      "--color-accent":      "#9333EA",
+      "--color-bg":          "#F8F9FD",
+      "--color-surface":     "#ffffff",
+      "--color-text":        "#1a1a2e",
+      "--color-text-muted":  "#64748b",
+      "--color-border":      "#e2e8f0",
+      "--radius-sm":         "8px",
+      "--radius-md":         "16px",
+      "--radius-card":       "24px",
+      "--radius-button":     "9999px",
+      "--shadow-card":       "0 8px 24px rgba(0,0,0,0.06)",
+      "--shadow-button":     "0 4px 12px rgba(138,38,128,0.25)",
+      "--font-display":      "Inter, system-ui, sans-serif",
+      "--font-body":         "Inter, system-ui, sans-serif"
     }
   },
 
