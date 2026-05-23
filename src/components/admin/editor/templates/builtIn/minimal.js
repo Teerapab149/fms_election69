@@ -23,7 +23,8 @@ export const minimalTemplate = {
   },
 
   pages: {
-    home:       { visible: true, backgroundColor: "#ffffff" },
+    // Day 6: home.backgroundColor removed — --color-bg drives.
+    home:       { visible: true },
     vote:       { visible: true, backgroundColor: "#ffffff" },
     candidates: { visible: true, backgroundColor: "#ffffff" },
     results:    { visible: true, backgroundColor: "#ffffff" },
@@ -155,34 +156,31 @@ export const minimalTemplate = {
         borderRadius:    "md"
       }
     },
+    // Day 6: bg+border removed — --color-surface + --color-border drive.
+    // NOT spreading classic — classic's borderColor #f1f5f9 would override
+    // minimal's slate token border #e5e7eb via spread inheritance.
     "stats-progress-card": {
       config: {
-        ...classicTemplate.elements["stats-progress-card"].config,
-        backgroundColor: "#f9fafb",
-        borderColor:     "#e5e7eb",
-        borderRadius:    "md",
-        numberColor:     "#000000",
-        labelColor:      "#9ca3af",
-        accentColor:     "#6b7280"
+        borderRadius: "md",
+        numberColor:  "#000000",
+        labelColor:   "#9ca3af",
+        accentColor:  "#6b7280"
       }
     },
     "stats-eligible-card": {
       config: {
-        ...classicTemplate.elements["stats-eligible-card"].config,
-        backgroundColor: "#f9fafb",
-        borderColor:     "#e5e7eb",
-        borderRadius:    "md",
-        numberColor:     "#000000",
-        labelColor:      "#9ca3af",
-        iconColor:       "#9ca3af"
+        borderRadius: "md",
+        numberColor:  "#000000",
+        labelColor:   "#9ca3af",
+        iconColor:    "#9ca3af"
       }
     },
 
     // === Meet section ===
+    // Day 6: backgroundColor removed — --color-surface drives.
     "meet-section": {
       config: {
         ...classicTemplate.elements["meet-section"].config,
-        backgroundColor: "#f9fafb",
         borderColor:     "#e5e7eb",
         borderRadius:    "lg",
         glowFrom:        "#9ca3af",
@@ -207,12 +205,11 @@ export const minimalTemplate = {
     },
 
     // === Banner ===
+    // Day 6: borderColor removed — --color-border drives.
+    // NOT spreading classic — classic sets borderColor #ffffff which would
+    // override minimal's token border #e5e7eb via spread inheritance.
     "banner-section": {
-      config: {
-        ...classicTemplate.elements["banner-section"].config,
-        borderColor:  "#e5e7eb",
-        borderRadius: "lg"
-      }
+      config: { visible: true, borderRadius: "lg" }
     },
 
     // === Vote page ===
