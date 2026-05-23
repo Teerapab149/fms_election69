@@ -23,7 +23,8 @@ export const playfulTemplate = {
   },
 
   pages: {
-    home:       { visible: true, backgroundColor: "#fffbeb" },
+    // Day 6: home.backgroundColor removed — --color-bg drives.
+    home:       { visible: true },
     vote:       { visible: true, backgroundColor: "#fffbeb" },
     candidates: { visible: true, backgroundColor: "#fffbeb" },
     results:    { visible: true, backgroundColor: "#fffbeb" },
@@ -150,34 +151,31 @@ export const playfulTemplate = {
         borderRadius: "3xl"
       }
     },
+    // Day 6: bg+border removed — --color-surface + --color-border drive.
+    // NOT spreading classic — classic's borderColor #f1f5f9 would override
+    // playful's amber token border #fde68a via spread inheritance.
     "stats-progress-card": {
       config: {
-        ...classicTemplate.elements["stats-progress-card"].config,
-        backgroundColor: "#ffffff",
-        borderColor:     "#fde68a",
-        borderRadius:    "2xl",
-        numberColor:     "#1f2937",
-        labelColor:      "#f59e0b",
-        accentColor:     "#ec4899"
+        borderRadius: "2xl",
+        numberColor:  "#1f2937",
+        labelColor:   "#f59e0b",
+        accentColor:  "#ec4899"
       }
     },
     "stats-eligible-card": {
       config: {
-        ...classicTemplate.elements["stats-eligible-card"].config,
-        backgroundColor: "#ffffff",
-        borderColor:     "#fde68a",
-        borderRadius:    "2xl",
-        numberColor:     "#1f2937",
-        labelColor:      "#f59e0b",
-        iconColor:       "#f59e0b"
+        borderRadius: "2xl",
+        numberColor:  "#1f2937",
+        labelColor:   "#f59e0b",
+        iconColor:    "#f59e0b"
       }
     },
 
     // === Meet section ===
+    // Day 6: backgroundColor removed — --color-surface drives.
     "meet-section": {
       config: {
         ...classicTemplate.elements["meet-section"].config,
-        backgroundColor: "#ffffff",
         borderColor:     "#fde68a",
         borderRadius:    "3xl",
         glowFrom:        "#f97316",
@@ -192,11 +190,11 @@ export const playfulTemplate = {
         color: "#ec4899"
       }
     },
+    // Day 6: textColor removed — --color-surface (#ffffff) drives.
     "meet-cta": {
       config: {
         ...classicTemplate.elements["meet-cta"].config,
-        backgroundColor: "#ec4899",
-        textColor:       "#ffffff"
+        backgroundColor: "#ec4899"
       }
     },
 
