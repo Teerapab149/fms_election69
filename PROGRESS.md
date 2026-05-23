@@ -1,7 +1,51 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-22
+**Last saved:** 2026-05-24
 **Branch:** `new-version`
+
+---
+
+## Phase 1 Week 2 Day 5 — Token Extraction (Layer 1) ✅ COMPLETE
+
+**Day 5 (3-layer refactor, Layer 1 only): ✅ DONE.** 15 Layer 1 tokens emitted
+per template via unified pipeline (ADR-001 D11); 5 home blocks consume them via
+`var(--color-*)`. Classic byte-faithful with Day 4; 3 stubs visually distinct.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| A | Add tokens to classic.js (15 tokens) | `2d7f209` |
+| B | `src/lib/templateTokens.js` (`buildTokenStyles`) | `62dd015` |
+| C | 5 home blocks consume tokens via `var()` + `.fms-app` scope | `cb7e99a` |
+| D | Token overrides on modern-dark, playful, minimal | `fa15988` |
+
+- Build PASS each step (`npm run build` clean).
+- Live verify in real browser across all 4 templates (preview_inspect on
+  `.fms-app` + each block — 20 checkpoints, all match spec values).
+- Tokens emitted via `<style dangerouslySetInnerHTML>` scoped to `.fms-app`
+  (NOT `:root`) so the editor preview can run its own scope later.
+- Inline override (Layer 3) preserved as `cfg.X || 'var(--token)'` — element
+  config wins, tokens are the safety net.
+- Gradients (hero card 3-stop, meet-section glow) stay inline this iteration —
+  Day 6 may add Layer 2 vars for gradient stops.
+
+**4×5 visual verify table (block × template):**
+
+| Block          | classic              | modern-dark          | playful              | minimal              |
+|----------------|----------------------|----------------------|----------------------|----------------------|
+| Page bg        | `#F8F9FD` ✓          | `#0f172a` ✓          | `#fffbeb` ✓          | `#ffffff` ✓          |
+| Banner         | `#fff` / `#fff`      | `#1e293b` / `#334155`| `#fff` / `#fbcfe8`   | `#fff` / `#e5e7eb`   |
+| Sub-cards (2)  | `#fff` `#f1f5f9` 24px| `#1e293b` `#334155`  | `#fff` `#fde68a` 16px| `#f9fafb` `#e5e7eb` 6px |
+| Hero card      | purple 3-stop ✓      | cyan 3-stop ✓        | orange→pink→fuchsia ✓| solid `#1f2937` ✓    |
+| Meet card      | `#fff` 24px (purple glow)|`#1e293b` 24px (cyan glow)|`#fff` 24px (orange glow)|`#f9fafb` 8px (gray glow)|
+
+**New lessons (DECISIONS.md):**
+- P-LOG-021 — P-LOG-019 stale: `.gitignore *.md` rule no longer applies.
+- P-LOG-022 — Layer 1 token emission via `.fms-app` scope (unified pipeline).
+- P-LOG-023 — `window.location.href` + `fetch` in same preview_eval breaks
+  Next.js basePath rewrite; use `window.location.assign(...)` solo instead.
+
+**Next (Day 6):** Layer 2 element-scope vars + variant component scaffolding;
+voteCTA + CountdownTimer migrate to the variant pattern.
 
 ---
 

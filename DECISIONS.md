@@ -515,6 +515,8 @@ Tags: `#migration` `#deadcode` `#regression`
 
 **Correct pattern:** `git add -f <file>.md` to stage without modifying `.gitignore`; verify with `git status --porcelain` showing `A <file>` before committing. When any file mysteriously won't stage, run `git check-ignore -v <path>`.
 
+**UPDATE 2026-05-22 (later session):** `.gitignore` no longer ignores `*.md` (ADR-001-architecture.md staged via plain `git add` — `git check-ignore` returned no match). The `-f` workaround is NO LONGER NEEDED. Rule now reduces to: when any file won't stage, run `git check-ignore -v <path>` to confirm the cause before assuming gitignore. Do not pre-frame a commit around `-f` based on this stale pitfall.
+
 Tags: `#git` `#gitignore` `#docs` `#projectSpecific`
 
 ---
@@ -532,6 +534,54 @@ Tags: `#git` `#gitignore` `#docs` `#projectSpecific`
 **Animated `<style jsx>` handling:** swap only the COLOR (inline `backgroundImage` from config) and keep the animation class (`.animate-gradient-xy`, which animates `background-position` via `background-size:200%`) untouched. Motion stays declarative; color becomes data. Worked cleanly with zero animation regressions.
 
 Tags: `#migration` `#decorative` `#stylejsx` `#P-LOG-015-adjacent`
+
+---
+
+### P-LOG-021: [2026-05-24] Phase 1 Week 2 Day 5 — P-LOG-019 stale: `.gitignore *.md` rule no longer applies; rule reduces to root-cause check
+
+**Trigger:** Looking up the P-LOG-019 workaround for a new `.md` commit (Day 5 docs updates).
+
+**Root cause:** P-LOG-019 itself was already amended on 2026-05-22 to note `.gitignore` no longer ignores `*.md`. The `-f` workaround is dead. Future sessions should not preemptively reach for `git add -f` based on the original P-LOG-019 framing.
+
+**Correct pattern:** Trust plain `git add <file>.md`. When something won't stage, run `git check-ignore -v <path>` to confirm the cause before assuming gitignore. Treat P-LOG-019 as historical; this entry is the canonical pointer.
+
+Tags: `#git` `#gitignore` `#stale-pitfall` `#projectSpecific`
+
+---
+
+### P-LOG-022: [2026-05-24] Phase 1 Week 2 Day 5 — Layer 1 token emission via .fms-app scope (unified pipeline)
+
+**Trigger:** Implementing ADR-001 D11 — both live home page (SSR) and editor preview must emit CSS variables identically.
+
+**Correct pattern:**
+- Define `theme.tokens` as a flat `{ "--name": "value" }` map in each template (no nesting, no inheritance — every template defines all 15 tokens for snapshot stability per D5).
+- A pure utility `buildTokenStyles(tokens, scope)` turns the map into CSS text, filtering out non-`--` keys defensively.
+- HomeContent emits `<style dangerouslySetInnerHTML={{__html: …}} />` *inside* the `.fms-app` wrapper element, scoping vars to that subtree. Children read tokens via `var(--color-*)` in inline styles.
+- Inline override (Layer 3) wins via `cfg.X || 'var(--token)'` — explicit element config takes precedence, token is the fallback.
+
+**Why `.fms-app` not `:root`:** the admin editor preview can mount an independent `.fms-app` scope without bleeding its tokens to the surrounding chrome (which lives at `:root`).
+
+**Byte-faithful check:** classic's tokens mirror the values its element configs already set, so JSX that falls back to a token resolves to the same hex. Verified in browser DevTools — page bg #F8F9FD, hero gradient unchanged, sub-card border #f1f5f9 all preserved.
+
+Tags: `#tokens` `#css-vars` `#ADR-001` `#unified-pipeline`
+
+---
+
+### P-LOG-023: [2026-05-24] Phase 1 Week 2 Day 5 — Next.js basePath swallows direct `window.location.href` assignments in preview eval
+
+**Trigger:** Verifying token changes across templates by switching `systemConfig.activeTemplateId` in DB and reloading the home page via `window.location.href = 'http://localhost:3000/fms-ovs/'` in `preview_eval`.
+
+**Symptom:** After `await fetch(...)` + `window.location.href = ...`, the URL becomes `/?nocache=…` (basePath stripped), static chunks 404 (`/_next/static/...` instead of `/fms-ovs/_next/static/...`), and `main` renders empty. `document.querySelector('.fms-app')` returns null.
+
+**Root cause:** Mixing `fetch()` of the basePath URL with `window.location.href` assignment in the same eval interferes with Next.js's basePath rewrite in dev mode — the browser tab ends up navigating to the bare `/` path on the wrong host context.
+
+**Correct pattern:**
+- Use `window.location.assign('http://localhost:3000/fms-ovs/')` (NOT `href = …`).
+- Do NOT also `fetch()` the same URL in the same eval — assign-only.
+- If the preview gets stuck on `<main></main>`, `preview_stop` + `preview_start` resets it.
+- Verify `location.href` ends with `/fms-ovs/` (or `/fms-ovs`) before inspecting DOM.
+
+Tags: `#preview` `#nextjs` `#basePath` `#tooling`
 
 ---
 
