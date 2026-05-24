@@ -204,7 +204,9 @@ export const playfulTemplate = {
     // would inherit if playful's override were ever removed). P-LOG-025 pattern.
     // Day 7a Part 4: Layer 2 pilot — vars at element root; borderColor stays
     // Layer 3 (#fbcfe8 pink, intentional ≠ playful's --color-border #fde68a amber).
+    // Day 7b: explicit variant field.
     "banner-section": {
+      variant: "default",
       config: {
         visible: true,
         borderColor: "#fbcfe8",

@@ -211,7 +211,9 @@ export const minimalTemplate = {
     // override minimal's token border #e5e7eb via spread inheritance.
     // Day 7a: borderRadius "lg" (=8px) removed — matches minimal's --radius-card.
     // Day 7a Part 4: Layer 2 pilot — vars declared at element root.
+    // Day 7b: explicit variant field.
     "banner-section": {
+      variant: "default",
       config: { visible: true },
       vars: {
         "--banner-bg":     "var(--color-surface)",

@@ -197,7 +197,9 @@ export const modernDarkTemplate = {
     // NOT spreading classic.banner — classic intentionally sets borderColor #ffffff
     // (white-on-white), which would override dark theme's token fallback.
     // Day 7a Part 4: Layer 2 pilot — each template declares its own --banner-*.
+    // Day 7b: explicit variant field.
     "banner-section": {
+      variant: "default",
       config: { visible: true, borderRadius: "3xl" },
       vars: {
         "--banner-bg":     "var(--color-surface)",
