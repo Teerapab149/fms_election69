@@ -849,6 +849,83 @@ Tags: `#nextjs` `#dev-server` `#windows` `#hmr` `#procedure` `#tooling` `#P-LOG-
 
 ---
 
+### P-LOG-036: [2026-05-25] Phase 1 Week 3 Day 8 — Registry / component decoupling: metadata file does NOT import implementations
+
+**Trigger:** Implementing the Element Type Registry per ADR-001 v1.2. Tempting design: have `registry.js` import every element's variant components so it can also serve as the resolver. Rejected.
+
+**Rule:** `src/components/elements/registry.js` is **metadata only** — categories, names, variant ID lists, schema versions, `stateful` flags. It does NOT `import DefaultBanner from './banner-section/default.jsx'`. Implementations live in each element folder's `index.js`.
+
+**Why decoupled:**
+- **Build size.** If registry imports all 47 elements' components transitively, every page that imports registry (Library sidebar, variant picker, validation) drags in the entire component tree. Decoupled: registry is a plain data module, tree-shakeable, ~5KB. Components only loaded by the pages that render them.
+- **Circular dep avoidance.** `banner-section/index.js` imports `registry.js` (for validation). If registry imported `banner-section/default.jsx`, we'd have a cycle. Cleanest separation: registry → no imports of element folders; element folders → may import registry.
+- **Future schema migration.** Registry says `schemaVersion: "v1"` per type. When v2 ships, the migration tool reads `registry.js` standalone — it doesn't need React or JSX to know what types exist.
+
+**Synchronization:** the resolver in each element folder cross-checks registry at runtime — if `registry.variants.includes(variantId)` but `COMPONENTS[variantId]` is missing, log a drift warning. This catches "I added the variant to registry but forgot to import it" within seconds of mounting the page in dev.
+
+Tags: `#registry` `#decoupling` `#circular-dep` `#ADR-001-v1.2` `#element-library`
+
+---
+
+### P-LOG-037: [2026-05-25] Phase 1 Week 3 Day 8 — Defensive resolver: warn + fallback, never throw
+
+**Trigger:** Designing `getBannerVariant(variantId)` failure modes. Templates are admin-edited data; a typo or removed-variant ID must not crash the rendered page.
+
+**Pattern (3 branches):**
+1. **`variantId` is missing/undefined** → silent fallback to `"default"`. No warning. Templates that pre-date the `variant` field (or admins who don't set it) hit this path constantly; warnings would be noise.
+2. **`variantId` is registered but no matching component** in the local `COMPONENTS` map → drift warning: `[banner-section] variant "X" registered but no component imported`. Likely dev forgot to add the import after registering the variant. Should be caught immediately in dev.
+3. **`variantId` is not registered** (and ≠ `"default"`) → unknown warning: `[banner-section] unknown variant "X", falling back to "default"`. Typo, deleted variant, or schema drift.
+
+In all 3 failure paths the function still **returns `COMPONENTS.default`** — the UI stays alive. Throwing would crash the SSR tree; throwing on a stub typo would brick a production deploy.
+
+**Production behaviour:** Next.js client bundles ship `console.warn` as-is in dev but typically strip them in optimized builds (depends on terser config). Server-side warnings surface in deploy logs without affecting the user. Acceptable noise profile.
+
+**Verified:** registered variants (`default`, `minimal-line` on all 4 templates) produced **zero** `[banner-section]` warnings in the 4×2 swap matrix. The defensive paths exist for correctness but stay silent under normal use.
+
+Tags: `#resolver` `#defensive` `#warn-not-throw` `#fail-soft` `#ADR-001-v1.2`
+
+---
+
+### P-LOG-038: [2026-05-25] Phase 1 Week 3 Day 8 — Day 7b debt cleared: cross-template variant swap proven on all 4 templates
+
+**Trigger:** Day 7b only verified the variant swap on `classic`; stubs (modern-dark / playful / minimal) were assumed-correct by the scope-independence argument (P-LOG-030 + P-LOG-034) but not actually tested live.
+
+**Verification (Day 8 Part 1):** for each stub, edited its `banner-section.variant` from `"default"` to `"minimal-line"`, switched DB `activeTemplateId`, reloaded, inspected, reverted.
+
+Results:
+
+| Template     | `variant: "minimal-line"` applied | DOM root | Computed `border-color`              | Rule visual           |
+|--------------|----------------------------------:|----------|--------------------------------------|-----------------------|
+| classic      | ✓                                  | ✓ exists | `rgb(255,255,255)` (#fff Layer-3 cfg) | invisible white-on-white (Day 7b) |
+| modern-dark  | ✓                                  | ✓ exists | `rgb(51,65,85)` (#334155 from L2 → L1)   | slate                 |
+| playful      | ✓                                  | ✓ exists | `rgb(251,207,232)` (#fbcfe8 L3)         | pink                  |
+| minimal      | ✓                                  | ✓ exists | `rgb(229,231,235)` (#e5e7eb from L2 → L1) | gray                  |
+
+**Conclusion:** the variant swap is template-agnostic in practice as well as in theory. Layer 2 vars resolve per template at the `[data-element="banner-section"]` scope; Layer 3 cfg overrides win where set. No template-specific failure modes. Day 7b debt closed; Day 8 foundation is structurally sound.
+
+**Process note:** scope-independence arguments are useful but not a substitute for actual verification when the cost is small. ~15 min spent on Part 1 confirmed what 10 minutes of speculation could not.
+
+Tags: `#variants` `#cross-template` `#swap-matrix` `#debt-cleared` `#P-LOG-030-followup`
+
+---
+
+### P-LOG-039: [2026-05-25] Phase 1 Week 3 Day 8 — Node ESM cannot import `.jsx` files; offline resolver sanity-test moves to browser
+
+**Trigger:** Day 8 Part 4 spec called for a `node -e ...` script importing `getBannerVariant` and unit-testing the warning + fallback paths offline.
+
+**Root cause:** Node 24 ESM resolver rejects unknown extensions (`Unknown file extension ".jsx"`). The project has no Babel/SWC at the Node layer; only Next.js's webpack pipeline transforms JSX. `node --experimental-loader` workarounds exist but require extra deps not in this project.
+
+**Recovery:** split the sanity test into two layers:
+1. **Pure JS registry layer** → testable in `node --input-type=module` because `registry.js` is plain JS, no JSX. Used this to verify `hasVariant`, `getElementType`, `listElementTypes`, category counts.
+2. **Resolver behaviour** → verified in the browser via the live 4×2 swap matrix + console-warning inspection. `[banner-section]` warning count was zero for registered variants — the defensive code is correctly silent under normal use. The drift/unknown branches are unit-style claims; production verification would require either a deliberate typo test in dev (next session) or moving the resolver to plain `.js` (which it can be — no JSX inside the function).
+
+**Convertibility note:** the resolver function itself has no JSX in its body — it just imports JSX-component files and returns one. Renaming `index.js` to keep JSX out of the file (already the case) and the imports stay on the webpack side. The blocker is the `import DefaultBanner from './default.jsx'` lines themselves, which Node won't parse. Acceptable: we keep JSX-component imports + verify the resolver in the browser.
+
+**Rule going forward:** offline `node -e` sanity tests are fine for plain-JS modules (registry, utilities, helpers without React). For any module that imports JSX, verify in the browser or write a tiny stub test that mocks the imports. Don't fight Node's loader for one-off checks.
+
+Tags: `#nodejs` `#esm` `#jsx` `#testing` `#tooling`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

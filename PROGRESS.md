@@ -1,7 +1,71 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-24
+**Last saved:** 2026-05-25
 **Branch:** `new-version`
+
+---
+
+## Phase 1 Week 3 Day 8 — Element Type Registry + Categorization ✅ COMPLETE
+
+**Day 8 (central registry + 7 categories + 47 elements categorized + banner
+resolver wired): ✅ DONE.** Day 7b debt cleared (cross-template variant swap
+verified on all 4 templates). Foundation ready for Day 10-11 editor + Day
+12-13 library UI.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| (Part 1) | Day 7b debt: 4×1 minimal-line swap verified (modern-dark / playful / minimal) | (verify only, no commit) |
+| A | `src/components/elements/registry.js` — 7 categories + banner-section entry + 6 helpers | `f0e437c` |
+| B | All 47 current element types categorized (6 action / 3 section-header / 8 data-display / 26 content / 4 media) | `a1a89e3` |
+| C | `banner-section/index.js` cross-references registry; 3-branch defensive resolver (missing/drift/unknown); 4×2 swap matrix verified | `9066ade` |
+| Final | DECISIONS (P-LOG-036/037/038/039) + PROGRESS | (this commit) |
+
+### Part 1 — Day 7b debt: 4×1 minimal-line matrix
+| Template | DOM root present | computed `border-color` | Rule visual |
+|---|---|---|---|
+| classic | ✓ | `rgb(255,255,255)` (L3 cfg) | white-on-white invisible (Day 7b state) |
+| modern-dark | ✓ | `rgb(51,65,85)` (L2 token #334155) | slate |
+| playful | ✓ | `rgb(251,207,232)` (L3 cfg #fbcfe8) | pink |
+| minimal | ✓ | `rgb(229,231,235)` (L2 token #e5e7eb) | gray |
+
+All 4 templates resolve `variant: "minimal-line"` correctly. Layer 2 vars flow
+per template; Layer 3 cfg overrides win where set. **Debt cleared.**
+
+### Categorization breakdown (Part 3)
+- **action** (6): voteCTA-button, meet-cta, vote-abstain-button, vote-disapprove-button, success-form-btn, closed-back-btn
+- **section-header** (3): banner-section, meet-section, success-megaphone-card
+- **data-display** (8): hero-countdown, stats-header, stats-voted-card, stats-progress-card, stats-eligible-card, results-stats-bar, results-demographics, candidates-counter
+- **content** (26): all titles / subtitles / badges / chips / footnotes
+- **media** (4): vote-party-card, candidates-party-card, success-check-icon, closed-lock-icon
+- **navigation** (0): reserved for Phase 2+
+- **layout** (0): reserved for Phase 2+
+- **Total:** 47 ✓
+- **Stateful:** voteCTA-button (6 election states), hero-countdown (5 phases)
+
+### Part 4 — 4×2 full swap matrix (registry-wired resolver, live)
+| Template | default | minimal-line |
+|---|---|---|
+| classic | bg #fff, border #fff, r 24px, card | bg transparent, rule 1px #fff, r 0, no shadow |
+| modern-dark | bg #1e293b, border #334155, r 24px, card | bg transparent, rule 1px #334155, r 0, no shadow |
+| playful | bg #fff, border #fbcfe8, r 24px, card | bg transparent, rule 1px #fbcfe8, r 0, no shadow |
+| minimal | bg #f9fafb, border #e5e7eb, r 8px, card | bg transparent, rule 1px #e5e7eb, r 0, no shadow |
+
+**Console:** zero `[banner-section]` warnings across all 8 cells — registered
+variants silent per design (P-LOG-037). Only pre-existing Next.js Image
+`sizes` warnings unrelated to the registry work.
+
+### New lessons (DECISIONS.md)
+- P-LOG-036 — Registry / component decoupling (metadata ≠ implementation).
+- P-LOG-037 — Defensive resolver: warn + fallback, never throw.
+- P-LOG-038 — Day 7b debt cleared (cross-template swap verified).
+- P-LOG-039 — Node ESM can't import `.jsx`; sanity tests split registry/JS vs browser/JSX.
+
+### Next (Day 9): voteCTA-button variant pattern
+- Apply variant pattern to voteCTA-button (stress-test stateful element)
+- 6 states must survive variant migration unchanged
+- Author 2-3 voteCTA variants (default + alternative styles)
+- Update registry voteCTA-button.variants array
+- Verify across 4 templates × every state
 
 ---
 
