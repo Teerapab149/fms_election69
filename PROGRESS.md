@@ -5,6 +5,63 @@
 
 ---
 
+## Phase 1 Week 2 Day 7a — Infrastructure Cleanup + Layer 2 pilot ✅ COMPLETE
+
+**Day 7a (3-layer refactor, pre-variant cleanup): ✅ DONE.** Radius tokens
+active across 5 JSX helpers; remaining spread inheritance leaks eliminated in
+stubs; Layer 2 element-scope vars infrastructure scaffolded; banner-section
+pilots the full 3-layer cascade.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| A | Wire `\|\| var(--radius-*)` in 5 JSX helpers + strip redundant cfg.borderRadius (classic ×6, minimal ×2) | `d884044` |
+| B | Spread cleanup: 4 stub elements (playful banner/meet, modern-dark meet, minimal meet) → explicit subset | `aa7dde7` |
+| C | `buildTemplateStyles` extends `buildTokenStyles`; HomeContent passes full template | `ba3c6c0` |
+| D | banner-section: data-element attr + `vars` in all 4 templates + JSX uses `--banner-*` | `9cb9435` |
+
+**Radius activation test (Step A):** `--radius-card` 24px → 4px on classic →
+banner, sub-cards, hero, meet all rendered with 4px corners; revert 4px → 24px
+restored baseline. Radius tokens are now active in parallel to color tokens.
+
+**Layer 2 activation test (Step D):** classic `--banner-bg` directly set to
+`#ff0000` → banner turned red (`rgb(255,0,0)`); revert to
+`var(--color-surface)` → back to `rgb(255,255,255)`. Layer 2 override works
+independently of Layer 1 tokens.
+
+**4-template Layer 2 verify (DevTools on `[data-element="banner-section"]`):**
+
+| Template | --banner-bg | --banner-border | --banner-radius | Rendered bg | Visual |
+|---|---|---|---|---|---|
+| classic | `#ffffff` (←surface) | `#e2e8f0` (←border) | `24px` (←card) | `rgb(255,255,255)` | byte-faithful Day 6 ✓ |
+| modern-dark | `#1e293b` | `#334155` | `20px` | `rgb(30,41,59)` | (radius cfg "3xl" L3 wins → 24px rendered) |
+| playful | `#ffffff` | `#fde68a` | `32px` | `rgb(255,255,255)` | byte-faithful Day 6 ✓ |
+| minimal | `#f9fafb` | `#e5e7eb` | `8px` | `rgb(249,250,251)` | byte-faithful Day 6 ✓ |
+
+**4×5 visual verify table (byte-faithful with Day 6 final):**
+
+| Block | classic | modern-dark | playful | minimal |
+|---|---|---|---|---|
+| Page bg | `#F8F9FD` ✓ | `#0f172a` ✓ | `#fffbeb` ✓ | `#ffffff` ✓ |
+| Banner bg/border/r | `#fff` / `#fff` / 24px ✓ | `#1e293b` / `#334155` / 24px ✓ | `#fff` / `#fbcfe8` / 24px ✓ | `#f9fafb` / `#e5e7eb` / 8px ✓ |
+| Sub-cards | 24px ✓ | 24px ✓ | 16px ✓ | 6px ✓ |
+| Hero card | purple 3-stop ✓ | cyan 3-stop ✓ | orange→pink→fuchsia ✓ | solid `#1f2937` ✓ |
+| Meet card | `#fff` 24px ✓ | `#1e293b` **20px** * | `#fff` 24px ✓ | `#f9fafb` 8px ✓ |
+
+*modern-dark meet radius shifted 24px → 20px after spread removal (P-LOG-031,
+surface alignment with modern-dark's own --radius-card token). Architecturally
+desired; documented.
+
+**New lessons (DECISIONS.md):**
+- P-LOG-028 — Radius activation parallels color (wiring + cfg cleanup needed).
+- P-LOG-029 — Spread is hidden coupling; prefer explicit subset by default.
+- P-LOG-030 — Layer 2 vars must be declared at element root, full key set, chain to Layer 1.
+- P-LOG-031 — modern-dark meet radius alignment side-effect from spread removal.
+
+**Next (Day 7b):** Variant component file structure (`src/components/elements/banner-section/`),
+variant resolver, banner-section default + alternative variant, variant swap test.
+
+---
+
 ## Phase 1 Week 2 Day 6 — Token Propagation (Layer 1 active) ✅ COMPLETE
 
 **Day 6 (3-layer refactor, Layer 1 activation): ✅ DONE.** Removed redundant

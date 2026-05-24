@@ -661,6 +661,90 @@ Tags: `#nextjs` `#dev-server` `#hmr` `#windows` `#tooling` `#P-LOG-017-adjacent`
 
 ---
 
+### P-LOG-028: [2026-05-24] Phase 1 Week 2 Day 7a — Radius token activation needs JSX `|| var()` AND cfg cleanup, just like color
+
+**Trigger:** Day 7a Step 1 wired `s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)'` in 5 helpers. First activation test (`--radius-card` 24px→4px) showed token value updated to 4px but rendered banner/sub-card radii stayed 24px.
+
+**Root cause:** element configs still set explicit `borderRadius: "3xl"` (=24px in RADIUS_MAP) → Layer 3 cfg won over Layer 1 token, same trap as Day 6's color cleanup. Token wiring is necessary but NOT sufficient — must also strip redundant cfg fields whose value matches the template's token.
+
+**Correct pattern (matches P-LOG-024):** for every JSX field with a `|| var(--X)` fallback, audit element configs and REMOVE the cfg field where `cfg.X` value equals the template's token-value for `--X`. Day 7a removed 6 classic radius configs (banner, stats-voted, stats-progress, stats-eligible, meet-section, meet-cta) + 2 minimal ones (banner, meet-section). After removal, re-running the token tweak (24px→4px) propagated to all 4 card elements.
+
+**Subtlety for stubs:** modern-dark / playful keep explicit radii (`"3xl"`=24px on banner) because their `--radius-card` ≠ 24px. Their cfg ≠ token → cfg correctly wins; visually byte-faithful with Day 6. Only remove cfg when value matches the relevant token.
+
+Tags: `#tokens` `#radius` `#activation` `#layer-1` `#sibling-of-P-LOG-024`
+
+---
+
+### P-LOG-029: [2026-05-24] Phase 1 Week 2 Day 7a — Spread inheritance is a hidden coupling; explicit subset is the safer default in stubs
+
+**Trigger:** Day 7a Part 2 audit of `...classicTemplate.elements["X"].config` spread sites in stubs. Several were "harmless today" (e.g. classic.meet-section only had `visible: true` after Day 6's stripping) but reactive in nature — if classic later adds a hex field, every stub auto-inherits it and silently breaks.
+
+**Decision:** Replace such spreads with explicit field subsets (Option α per the Day 6 P-LOG-025 wording), even when there's no current visual leak. Verbose but unambiguous: each stub's intent is locally readable, no cross-file coupling, no surprise drift when classic evolves.
+
+**Discovered side-effect during cleanup:** modern-dark.meet-section was inheriting classic's old `borderRadius: "3xl"` via spread → masking modern-dark's own `--radius-card=20px`. With spread removed AND Day 7a Step 1's radius wiring, modern-dark.meet radius shifted 24px → 20px (token-aligned, intentional). Parallels P-LOG-026's minimal banner surface alignment. Documented as P-LOG-031.
+
+**Preserved spreads (intentional shared identity):**
+- hero-title/subtitle/year-badge text + fontSize + fontWeight — shared content/typography, OK to inherit
+- voteCTA-button states — complex multi-field structure, variant work (Day 7b) will restructure
+- stats-voted-card — gradient + textColor are always overridden by stubs
+- meet-cta `{text}` — text content is canonical in classic, shared by design
+
+**Rule:** "every cross-template spread is a hidden coupling" (P-LOG-025) generalizes: prefer explicit subset by default, spread only when the inherited fields are deliberately shared and stable. When in doubt, write the fields out.
+
+Tags: `#templates` `#spread` `#inheritance` `#layer-3` `#P-LOG-025-followup`
+
+---
+
+### P-LOG-030: [2026-05-24] Phase 1 Week 2 Day 7a — Layer 2 vars must be declared at element root with full key set (fallback chain defense)
+
+**Trigger:** Implementing the banner-section Layer 2 pilot per ADR-001 D10. The chain pattern is `Layer 3 cfg > Layer 2 --banner-* > Layer 1 --color-*` — but **only if** the Layer 2 vars are declared at the right scope.
+
+**Rule (D10):** every element entry's `vars: {...}` block MUST declare ALL Layer 2 vars the element consumes — not just the ones it overrides. The emitter creates one CSS rule per element scope (e.g. `.fms-app [data-element="banner-section"] { --banner-bg: ...; --banner-border: ...; --banner-radius: ...; }`). Each var defaults to `var(--color-surface)` etc., chaining to Layer 1. Partial declarations would mean an unset var resolves up the cascade, potentially picking up a parent element's `--banner-bg` if there were nesting — undefined behaviour.
+
+**Verified pattern:**
+```js
+"banner-section": {
+  config: { visible: true, borderColor: "#ffffff" },
+  vars: {
+    "--banner-bg":     "var(--color-surface)",  // L1 chain
+    "--banner-border": "var(--color-border)",   // L1 chain
+    "--banner-radius": "var(--radius-card)"     // L1 chain
+  }
+}
+```
+
+JSX consumes:
+```js
+style.backgroundColor = cfg.backgroundColor || 'var(--banner-bg)';
+style.borderColor     = cfg.borderColor     || 'var(--banner-border)';
+style.borderRadius    = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius])
+                        || 'var(--banner-radius)';
+```
+
+JSX root carries `data-element="banner-section"` so the CSS rule scope matches.
+
+**Activation evidence:** setting classic's `--banner-bg` to `#ff0000` (bypassing the L1 chain) turned the banner red without touching `--color-surface`. Revert to `var(--color-surface)` restored #ffffff. This is the editor's future override surface — admin can re-skin one element without touching theme tokens.
+
+**Inheritance defense check:** grep confirmed `data-element="banner-section"` appears only in `ElectionBannerBlock.js` — no nested duplicate scopes, no shadow inheritance risk.
+
+Tags: `#layer-2` `#data-element` `#fallback-chain` `#ADR-001-D10` `#banner-pilot`
+
+---
+
+### P-LOG-031: [2026-05-24] Phase 1 Week 2 Day 7a — modern-dark meet radius surface-aligned 24px→20px after spread removal
+
+**Trigger:** Day 7a Step 2 dropped the `...classic.meet-section.config` spread in modern-dark (preventive spread cleanup). After the change, modern-dark.meet rendered radius shifted from 24px to 20px.
+
+**Root cause:** Day 5-6 modern-dark.meet inherited classic's `borderRadius: "3xl"` (=24px) via spread, even though modern-dark's own `--radius-card=20px`. The inherited explicit cfg silently masked the token. After Day 7a Step 1 removed classic's redundant `borderRadius: "3xl"` AND Step 2 dropped the spread, modern-dark.meet falls through to `var(--banner-radius)` → `var(--radius-card)` → 20px.
+
+**Decision:** accept the alignment. 4-bit perceptible diff (24→20px = ~15% smaller corners), but architecturally correct — modern-dark's token now drives its own rendering, no longer masked by spread inheritance. Parallels P-LOG-026 (minimal banner surface alignment). Day 5/6 had this latent inconsistency; Day 7a's cleanup pass reveals and resolves it.
+
+**Process lesson:** removing a hidden coupling (spread) sometimes uncovers latent drift. Treat the post-cleanup state as the *correct* one — don't reach back to restore the inconsistency to chase "byte-faithful with Day 6." Faithful to architectural intent > faithful to historical accident.
+
+Tags: `#templates` `#spread-cleanup` `#side-effect` `#alignment` `#P-LOG-026-sibling`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
