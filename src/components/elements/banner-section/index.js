@@ -11,9 +11,11 @@
 // No silent errors — fallback is intentional and logged once if mismatch.
 
 import DefaultBanner from './default.jsx';
+import MinimalLineBanner from './minimal-line.jsx';
 
 const VARIANTS = {
   default: DefaultBanner,
+  'minimal-line': MinimalLineBanner,
 };
 
 /**
@@ -31,5 +33,5 @@ export function getBannerVariant(variantId) {
 
 export const BANNER_VARIANT_IDS = Object.keys(VARIANTS);
 
-export { DefaultBanner };
+export { DefaultBanner, MinimalLineBanner };
 export default getBannerVariant;

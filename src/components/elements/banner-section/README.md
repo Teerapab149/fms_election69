@@ -7,6 +7,7 @@ All variants of the `banner-section` element type live here. This is the **pilot
 | Variant ID | Description |
 |-----------|-------------|
 | `default` | Original FMS banner: white-by-default card with shadow, large radius, slideshow + dots. |
+| `minimal-line` | Editorial / clean: transparent frame, hairline rule top + bottom, no radius, no shadow. Same slideshow content as default. |
 
 ## Variant contract
 
