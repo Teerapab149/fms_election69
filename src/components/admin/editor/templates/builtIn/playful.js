@@ -173,9 +173,10 @@ export const playfulTemplate = {
 
     // === Meet section ===
     // Day 6: backgroundColor removed — --color-surface drives.
+    // Day 7a: dropped classic spread (preventive — only inherited `visible`).
     "meet-section": {
       config: {
-        ...classicTemplate.elements["meet-section"].config,
+        visible:         true,
         borderColor:     "#fde68a",
         borderRadius:    "3xl",
         glowFrom:        "#f97316",
@@ -199,10 +200,12 @@ export const playfulTemplate = {
     },
 
     // === Banner ===
+    // Day 7a: dropped classic spread (preventive — classic's borderColor #ffffff
+    // would inherit if playful's override were ever removed). P-LOG-025 pattern.
     "banner-section": {
       config: {
-        ...classicTemplate.elements["banner-section"].config,
-        borderColor:  "#fbcfe8",
+        visible: true,
+        borderColor: "#fbcfe8",
         borderRadius: "3xl"
       }
     },

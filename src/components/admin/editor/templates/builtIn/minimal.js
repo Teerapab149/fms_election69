@@ -179,9 +179,10 @@ export const minimalTemplate = {
     // === Meet section ===
     // Day 6: backgroundColor removed — --color-surface drives.
     // Day 7a: borderRadius "lg" (=8px) removed — matches minimal's --radius-card.
+    // Day 7a: dropped classic spread (preventive — only inherited `visible`).
     "meet-section": {
       config: {
-        ...classicTemplate.elements["meet-section"].config,
+        visible:         true,
         borderColor:     "#e5e7eb",
         glowFrom:        "#9ca3af",
         glowVia:         "#6b7280",

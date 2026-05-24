@@ -167,9 +167,10 @@ export const modernDarkTemplate = {
 
     // === Meet section ===
     // Day 6: backgroundColor removed — --color-surface drives.
+    // Day 7a: dropped classic spread (preventive — only inherited `visible`).
     "meet-section": {
       config: {
-        ...classicTemplate.elements["meet-section"].config,
+        visible:         true,
         borderColor:     "#06b6d4",
         glowFrom:        "#06b6d4",
         glowVia:         "#3b82f6",
