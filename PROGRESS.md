@@ -5,6 +5,61 @@
 
 ---
 
+## Phase 1 Week 2 Day 7b — Variant Infrastructure ✅ COMPLETE
+
+**Day 7b (variant pilot on banner-section): ✅ DONE.** Element variants
+introduced as separate React component files with a resolver. Layer 3 cascade,
+Layer 2 vars, and Layer 1 tokens all continue to work uniformly across
+variants. Pattern is ready to extend to other elements in Phase 2.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| A | New `src/components/elements/banner-section/` (default.jsx 1:1 extraction + index.js resolver + README); ElectionBannerBlock → thin wrapper | `7b18592` |
+| B | `variant: "default"` field added to banner-section entries in 4 templates | `c3b3854` |
+| C | `minimal-line.jsx` alternative variant + registered + README updated | `fb28ee4` |
+| Final | DECISIONS (P-LOG-032/033/034/035) + PROGRESS | (this commit) |
+
+### Variant resolver fallback test (Part 2.3)
+Temporarily removed the `variant` field from classic.banner-section →
+page still rendered the `default` variant (bg #fff, radius 24px). Resolver
+correctly falls back. Field restored.
+
+### Variant swap matrix (Part 3 + Part 4)
+Tested classic on both variants via direct template edit + reload:
+
+| Template | Variant | Background | Radius | Shadow | Verdict |
+|---|---|---|---|---|---|
+| classic | `default` | `rgb(255,255,255)` | 24px | `shadow-2xl` | ✓ card chrome |
+| classic | `minimal-line` | `rgba(0,0,0,0)` | 0px | `none` | ✓ editorial frame |
+
+Stubs (modern-dark / playful / minimal) declared `variant: "default"` but
+were not swap-tested live this session — by Layer-2 scope-independence
+(P-LOG-030 + P-LOG-034) the swap mechanics are template-agnostic, so
+stub × minimal-line is expected to work; verifying it is a 30-second
+spot-check for Day 8 if needed.
+
+### Layer 3 override test (Part 4.3)
+classic + `variant: "default"` + `config.backgroundColor: "#ff0000"`
+→ banner rendered `rgb(255,0,0)` (Layer 3 wins). Same override on
+`variant: "minimal-line"` → also `rgb(255,0,0)`. Both variants respect
+Layer 3 identically. Override removed; classic returned to white.
+
+### Console clean
+No errors, no warnings in browser console across the verified states.
+
+### New lessons (DECISIONS.md)
+- P-LOG-032 — Variant component file structure pattern (no path alias here, use relative).
+- P-LOG-033 — Resolver fallback to "default", soft `console.warn` on unknown ID.
+- P-LOG-034 — Variant swap = React component swap; frame differs, content doesn't.
+- P-LOG-035 — Preview-server restart cycle is now familiar procedure (~45s × ~6/session).
+
+### Next (Day 8-9): Polish classic for production
+- Audit all home elements for production-ready quality on classic
+- Decide which elements adopt variant pattern next (Day 10+)
+- Begin Editor Tier 1 planning (variant picker UI)
+
+---
+
 ## Phase 1 Week 2 Day 7a — Infrastructure Cleanup + Layer 2 pilot ✅ COMPLETE
 
 **Day 7a (3-layer refactor, pre-variant cleanup): ✅ DONE.** Radius tokens

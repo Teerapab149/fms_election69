@@ -745,6 +745,110 @@ Tags: `#templates` `#spread-cleanup` `#side-effect` `#alignment` `#P-LOG-026-sib
 
 ---
 
+### P-LOG-032: [2026-05-24] Phase 1 Week 2 Day 7b — Variant component file structure: `src/components/elements/<id>/`
+
+**Trigger:** First implementation of the variant-as-component pattern per ADR-001 v1.2 (Element Library + Registry) and VISION D12.
+
+**Pattern:**
+```
+src/components/elements/banner-section/
+├── index.js          ← resolver: getBannerVariant(id) → component
+├── default.jsx       ← variant components, one per file
+├── minimal-line.jsx  ← (alternative variants added here over time)
+└── README.md         ← element + variant contract
+```
+
+**Wrapper layer:** the existing block file (`src/components/blocks/ElectionBannerBlock.js`) becomes a 5-line thin wrapper that reads `resolvedTemplate.elements['banner-section'].variant`, calls the resolver, and forwards all props. No caller refactor needed — every site that already imported `ElectionBannerBlock` keeps working unchanged. This is the **non-breaking** way to introduce variants to an existing element.
+
+**Variant contract (5 rules, enforced in README):**
+1. Root carries `data-element="<element-id>"` — Layer 2 vars resolve at this scope.
+2. Same prop signature as the wrapper — `{ config, resolvedTemplate, elementConfigs }` for banner.
+3. Layer 2 vars consumed via fallback chain (cfg → `var(--banner-bg)` → `var(--color-surface)`).
+4. Self-contained — no globals, no shared mutable state.
+5. Layer 3 inline (cfg explicit) wins — verified on both variants with bg=#ff0000 test.
+
+**Project alias note:** this repo has no `jsconfig.json` / `tsconfig.json` path alias. Use relative imports (`../elements/banner-section`), NOT `@/components/elements/...`. The spec used the alias for illustration; the actual code uses relative.
+
+Tags: `#variants` `#file-structure` `#elements-folder` `#ADR-001-v1.2` `#VISION-D12`
+
+---
+
+### P-LOG-033: [2026-05-24] Phase 1 Week 2 Day 7b — Variant resolver: explicit fallback to "default", soft warn on unknown ID
+
+**Trigger:** Designing `getBannerVariant(variantId)` — what should it do when the template's `variant` field is missing, undefined, or a typo?
+
+**Decision (per ADR-001):**
+- Missing/undefined → return `VARIANTS.default` silently. Templates predate the variant field; many will never set it. No noise.
+- Known ID → return the registered component.
+- Unknown ID (typo, removed variant) → return `VARIANTS.default` **and** `console.warn` once with the offending ID. Dev sees the typo in their console; prod is unaffected because production builds strip `console.warn` by default in Next.js client bundles (and server logs surface in CI/deploy logs).
+
+**Pattern:**
+```js
+export function getBannerVariant(variantId) {
+  if (variantId && !VARIANTS[variantId] && typeof console !== 'undefined') {
+    console.warn(`[banner-section] unknown variant "${variantId}", falling back to "default"`);
+  }
+  return VARIANTS[variantId] || VARIANTS.default;
+}
+```
+
+**Verification:** temporarily removed `variant` field from classic.js → page rendered default banner unchanged, no warning. Set variant to `"minimal-line"` → swapped correctly. Setting to `"nonexistent"` would warn and fall back (not tested live but path is straightforward).
+
+**Rejected:** throwing an error on unknown. Templates are admin-edited data — a typo should not crash the page. Silent fallback + dev warning is the right shape for end-user-facing template data.
+
+Tags: `#variants` `#resolver` `#fallback` `#dev-ergonomics` `#variant-contract`
+
+---
+
+### P-LOG-034: [2026-05-24] Phase 1 Week 2 Day 7b — Variant swap mechanics: same data, different component, same scope
+
+**Trigger:** Day 7b Part 3 swap test — classic with `variant: "minimal-line"` vs `variant: "default"`. Did the swap actually change the rendered tree, or just toggle some CSS?
+
+**Verified behaviour (real browser, DevTools):**
+
+| Property | variant: "default" | variant: "minimal-line" |
+|---|---|---|
+| Root element | `<div data-element="banner-section">` | `<div data-element="banner-section">` |
+| `className` | `... rounded-3xl border-white bg-white shadow-2xl` | `... aspect-[16/9] py-2` (no card chrome) |
+| `background-color` | `rgb(255,255,255)` | `rgba(0,0,0,0)` (transparent) |
+| `border-top` | `1px solid #fff` (from cfg.borderColor) | `1px solid #fff` (rule) |
+| `border-bottom` | (none — single border, all sides) | `1px solid #fff` (rule) |
+| `border-left/right` | (single border) | `0px` |
+| `border-radius` | `24px` | `0px` |
+| `box-shadow` | `shadow-2xl` (computed) | `none` |
+| Layer 3 override test | `cfg.backgroundColor=#ff0000` → `rgb(255,0,0)` ✓ | `cfg.backgroundColor=#ff0000` → `rgb(255,0,0)` ✓ |
+
+**Key insight:** the swap is a React component swap, not a CSS class toggle. React unmounts `DefaultBanner` and mounts `MinimalLineBanner` (different file, different JSX tree). Both render the *same* `data-element="banner-section"` root → Layer 2 vars (`--banner-bg`, `--banner-border`) resolve identically for both, so the cascade is unbroken. Layer 3 cfg fields (`backgroundColor`, `borderColor`) flow into both via the same prop path.
+
+**Why this matters for the editor (Day 10+):** admins will swap variants from a dropdown without losing their Layer 3 overrides or Layer 1 theme settings. Content (the slideshow images) is shared too — only the frame differs.
+
+**Architectural rule (added to README):** "frame differs, content does not" — variants change wrappers/borders/radii/shadows, NOT what's *inside* the banner. If content needs to differ between variants, factor the content into a shared `<BannerContent />` component and let variants compose it. For Day 7b pilot, both variants inlined the slideshow because it's compact (~25 lines).
+
+Tags: `#variants` `#swap-mechanics` `#layer-3` `#three-layer-cascade` `#editor-foundation`
+
+---
+
+### P-LOG-035: [2026-05-24] Phase 1 Week 2 Day 7b — Preview server died mid-test; restart cycle is now familiar enough to be procedure
+
+**Trigger:** Mid Part 4 verify, after multiple navigations (default → L3 red → minimal-line + L3 red → revert), `preview_eval` returned `"Server not found. No running servers for this workspace."` — the dev process had exited silently.
+
+**Root cause (likely):** Windows file-watcher race on `.next/` cache files during rapid sequential edits combined with route compilation. P-LOG-027's "manifest race" generalizes — sometimes the race corrupts the running process to the point Next.js cleanly shuts down rather than throwing manifest errors. The symptom shifted (process gone vs manifest 404s) but the cause family is the same.
+
+**Recovery procedure (proven 5+ times across Day 6/7a/7b):**
+1. `preview_stop` (if still listed) → just-in-case cleanup.
+2. `rm -rf .next` (always, no exceptions).
+3. `preview_start fms-dev`.
+4. `sleep 15` before first navigation — gives Next.js time to do the cold compile.
+5. `preview_eval window.location.assign(...)` to the full URL with basePath.
+6. `sleep 18` for the SSR first-paint compile.
+7. Inspect.
+
+**For Day 8+:** this is now expected friction on this Windows dev box, not a per-session surprise. The total recovery time is ~45s per cycle, ~6× during a typical 3h session = ~5min lost. Acceptable; documented; not a blocker. Linux dev would likely eliminate it, but the project ships from Windows so we live with the workaround.
+
+Tags: `#nextjs` `#dev-server` `#windows` `#hmr` `#procedure` `#tooling` `#P-LOG-027-followup`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
