@@ -15,7 +15,7 @@ import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
 import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
 import { resolveStatefulConfig } from './admin/editor/templateEngine';
 import { getBinding, isBoundElement } from './admin/editor/elementCatalog';
-import { buildTokenStyles } from '../lib/templateTokens';
+import { buildTemplateStyles } from '../lib/templateTokens';
 import CountdownTimer from "../components/CountdownTimer";
 import { Calendar } from "lucide-react";
 import SiteFooter from './SiteFooter';
@@ -224,10 +224,13 @@ export default function HomeContent({
     ? theme?.colors?.background
     : resolvedTemplate?.pages?.home?.backgroundColor) ?? 'var(--color-bg)';
 
-  // Layer 1 token map — emitted as <style> on the .fms-app scope below
-  // (ADR-001 D11 unified pipeline: same for live + editor preview).
-  const effectiveTokens = tokens || resolvedTemplate?.theme?.tokens || null;
-  const tokenStylesCss = buildTokenStyles(effectiveTokens, '.fms-app');
+  // Layers 1 + 2 emitted as <style> on .fms-app scope below
+  // (ADR-001 D10 + D11 unified pipeline: same for live + editor preview).
+  // Day 7a: switched from buildTokenStyles (Layer 1 only) to buildTemplateStyles
+  // which also emits per-element [data-element=X] rules for any element entry
+  // with a `vars: {...}` object (Layer 2). Elements without `vars` contribute
+  // nothing — backwards-compatible with Day 5/6 templates.
+  const tokenStylesCss = buildTemplateStyles(resolvedTemplate, '.fms-app');
 
   const ed = editorData || {};
 
