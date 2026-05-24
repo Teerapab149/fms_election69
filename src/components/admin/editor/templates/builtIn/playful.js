@@ -202,11 +202,18 @@ export const playfulTemplate = {
     // === Banner ===
     // Day 7a: dropped classic spread (preventive — classic's borderColor #ffffff
     // would inherit if playful's override were ever removed). P-LOG-025 pattern.
+    // Day 7a Part 4: Layer 2 pilot — vars at element root; borderColor stays
+    // Layer 3 (#fbcfe8 pink, intentional ≠ playful's --color-border #fde68a amber).
     "banner-section": {
       config: {
         visible: true,
         borderColor: "#fbcfe8",
         borderRadius: "3xl"
+      },
+      vars: {
+        "--banner-bg":     "var(--color-surface)",
+        "--banner-border": "var(--color-border)",
+        "--banner-radius": "var(--radius-card)"
       }
     },
 

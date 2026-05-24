@@ -12,10 +12,14 @@ import { RADIUS_MAP } from "../../utils/styleMaps";
 function buildBannerStyle(cfg) {
   if (!cfg) return undefined;
   const style = {};
-  // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
-  style.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
-  style.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
-  style.borderColor = cfg.borderColor || 'var(--color-border)';
+  // Day 7a Part 4 (Layer 2 pilot): banner now reads element-scope vars.
+  // Cascade per ADR-001 D10:
+  //   cfg explicit (Layer 3) > --banner-* (Layer 2) > --color-*/--radius-* (Layer 1)
+  // The Layer 2 vars themselves are declared in each template's element entry
+  // (vars: { ... }) and emitted as [data-element="banner-section"] CSS rules.
+  style.borderRadius    = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--banner-radius)';
+  style.backgroundColor = cfg.backgroundColor || 'var(--banner-bg)';
+  style.borderColor     = cfg.borderColor || 'var(--banner-border)';
   return style;
 }
 
@@ -59,6 +63,7 @@ export default function ElectionBannerBlock({ config = {}, resolvedTemplate = nu
   return (
     <div className="w-full max-w-2xl mx-auto lg:max-w-none lg:mx-0 pt-0 pb-4 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
       <div
+        data-element="banner-section"
         className={`w-full relative group overflow-hidden shadow-2xl border aspect-[16/9] transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] ${hasOverride ? "" : "rounded-3xl border-white bg-white"}`}
         style={frameStyle}
       >

@@ -300,8 +300,15 @@ export const classicTemplate = {
     // Day 6: backgroundColor removed — --color-surface drives it. borderColor
     // KEPT as #ffffff (white-on-white intentional, ≠ --color-border #e2e8f0).
     // Day 7a: borderRadius "3xl" (=24px) removed — matches --radius-card.
+    // Day 7a Part 4: Layer 2 pilot — vars declared at element root per D10.
+    // borderColor #ffffff kept as Layer 3 (white-on-white intentional ≠ token).
     "banner-section": {
-      config: { visible: true, borderColor: "#ffffff" }
+      config: { visible: true, borderColor: "#ffffff" },
+      vars: {
+        "--banner-bg":     "var(--color-surface)",
+        "--banner-border": "var(--color-border)",
+        "--banner-radius": "var(--radius-card)"
+      }
     },
 
     // === Vote / header ===

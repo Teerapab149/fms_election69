@@ -210,8 +210,14 @@ export const minimalTemplate = {
     // NOT spreading classic — classic sets borderColor #ffffff which would
     // override minimal's token border #e5e7eb via spread inheritance.
     // Day 7a: borderRadius "lg" (=8px) removed — matches minimal's --radius-card.
+    // Day 7a Part 4: Layer 2 pilot — vars declared at element root.
     "banner-section": {
-      config: { visible: true }
+      config: { visible: true },
+      vars: {
+        "--banner-bg":     "var(--color-surface)",
+        "--banner-border": "var(--color-border)",
+        "--banner-radius": "var(--radius-card)"
+      }
     },
 
     // === Vote page ===

@@ -196,8 +196,14 @@ export const modernDarkTemplate = {
     // Day 6: bg+border removed — --color-surface + --color-border drive.
     // NOT spreading classic.banner — classic intentionally sets borderColor #ffffff
     // (white-on-white), which would override dark theme's token fallback.
+    // Day 7a Part 4: Layer 2 pilot — each template declares its own --banner-*.
     "banner-section": {
-      config: { visible: true, borderRadius: "3xl" }
+      config: { visible: true, borderRadius: "3xl" },
+      vars: {
+        "--banner-bg":     "var(--color-surface)",
+        "--banner-border": "var(--color-border)",
+        "--banner-radius": "var(--radius-card)"
+      }
     },
 
     // === Vote page ===
