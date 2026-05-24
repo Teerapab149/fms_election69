@@ -11,7 +11,8 @@ function buildGlowStyle(cfg) {
   if (!cfg || !cfg.glowFrom) return undefined;
   const parts = [cfg.glowFrom, cfg.glowVia, cfg.glowTo].filter(Boolean);
   const s = { backgroundImage: `linear-gradient(to right, ${parts.join(", ")})` };
-  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
+  s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
   return s;
 }
 
@@ -22,7 +23,8 @@ function buildBodyStyle(cfg) {
   if (!cfg) return undefined;
   const s = {};
   s.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
-  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
+  s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
   return s;
 }
 
@@ -32,7 +34,8 @@ function buildCtaStyle(cfg) {
   const s = {};
   s.backgroundColor = cfg.backgroundColor || 'var(--color-text)';
   s.color = cfg.textColor || 'var(--color-surface)';
-  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  // Day 7a: borderRadius falls back to --radius-button (pill) when cfg unset.
+  s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-button)';
   return s;
 }
 

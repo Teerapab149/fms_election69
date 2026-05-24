@@ -44,10 +44,10 @@ function buildButtonStyle(cfg) {
     style.fontWeight = weightMap[cfg.fontWeight] || "700";
   }
 
-  // Radius
-  if (cfg.borderRadius) {
+  // Radius — Day 7a: fall back to Layer 1 --radius-button token when cfg unset.
+  {
     const radiusMap = { none: "0", sm: "0.125rem", md: "0.375rem", lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", "3xl": "1.5rem", full: "9999px" };
-    style.borderRadius = radiusMap[cfg.borderRadius] || "0.75rem";
+    style.borderRadius = (cfg.borderRadius && radiusMap[cfg.borderRadius]) || 'var(--radius-button)';
   }
 
   // Border

@@ -103,6 +103,7 @@ export const classicTemplate = {
     // Day 4 Step 4: enriched with gradient fields so the hero card can express
     // its 3-stop gradient (#691E61 -> #8A2680 -> #C026D3). borderRadius "3xl"
     // matches the current rounded-[24px]. backgroundColor kept as solid fallback.
+    // Day 7a: borderRadius "3xl" (=24px) removed — matches --radius-card.
     "stats-voted-card": {
       config: {
         backgroundType: "gradient",
@@ -111,8 +112,7 @@ export const classicTemplate = {
         gradientVia: "#8A2680",
         gradientTo: "#C026D3",
         gradientDirection: "to-br",
-        textColor: "#ffffff",
-        borderRadius: "3xl"
+        textColor: "#ffffff"
       }
     },
     // Day 4 Step 3: enriched with number/label/accent colors so sub-cards are
@@ -121,10 +121,10 @@ export const classicTemplate = {
     // (those fields were previously dead/ignored by StatsBlock JSX).
     // Day 6: backgroundColor removed — Layer 1 --color-surface drives it.
     "stats-progress-card": {
-      config: { borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#1e293b", labelColor: "#94a3b8", accentColor: "#10b981" }
+      config: { borderColor: "#f1f5f9", numberColor: "#1e293b", labelColor: "#94a3b8", accentColor: "#10b981" }
     },
     "stats-eligible-card": {
-      config: { borderRadius: "3xl", borderColor: "#f1f5f9", numberColor: "#334155", labelColor: "#94a3b8", iconColor: "#cbd5e1" }
+      config: { borderColor: "#f1f5f9", numberColor: "#334155", labelColor: "#94a3b8", iconColor: "#cbd5e1" }
     },
 
     // === Home / voteCTA (stateful, presets:null → defaultConfig) ===
@@ -276,7 +276,6 @@ export const classicTemplate = {
     // Day 6: backgroundColor removed — Layer 1 --color-surface drives it.
     "meet-section": {
       config: {
-        borderRadius: "3xl",
         borderColor: "#fecdd3",
         glowFrom: "#9333ea",
         glowVia: "#ec4899",
@@ -289,8 +288,9 @@ export const classicTemplate = {
       config: { text: "รู้จักผู้สมัครของคุณหรือยัง?", fontSize: "sm", color: "#1a1a2e", fontWeight: "700" }
     },
     // Day 6: bg+textColor removed — --color-text + --color-surface drive.
+    // Day 7a: borderRadius "full" (=9999px) removed — matches --radius-button.
     "meet-cta": {
-      config: { text: "ดูรายชื่อพรรค →", borderRadius: "full" }
+      config: { text: "ดูรายชื่อพรรค →" }
     },
 
     // === Home / electionBanner ===
@@ -299,8 +299,9 @@ export const classicTemplate = {
     // current rounded-3xl frame (field was previously dead/ignored by JSX).
     // Day 6: backgroundColor removed — --color-surface drives it. borderColor
     // KEPT as #ffffff (white-on-white intentional, ≠ --color-border #e2e8f0).
+    // Day 7a: borderRadius "3xl" (=24px) removed — matches --radius-card.
     "banner-section": {
-      config: { visible: true, borderRadius: "3xl", borderColor: "#ffffff" }
+      config: { visible: true, borderColor: "#ffffff" }
     },
 
     // === Vote / header ===

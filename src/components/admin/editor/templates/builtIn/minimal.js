@@ -178,11 +178,11 @@ export const minimalTemplate = {
 
     // === Meet section ===
     // Day 6: backgroundColor removed — --color-surface drives.
+    // Day 7a: borderRadius "lg" (=8px) removed — matches minimal's --radius-card.
     "meet-section": {
       config: {
         ...classicTemplate.elements["meet-section"].config,
         borderColor:     "#e5e7eb",
-        borderRadius:    "lg",
         glowFrom:        "#9ca3af",
         glowVia:         "#6b7280",
         glowTo:          "#4b5563",
@@ -208,8 +208,9 @@ export const minimalTemplate = {
     // Day 6: borderColor removed — --color-border drives.
     // NOT spreading classic — classic sets borderColor #ffffff which would
     // override minimal's token border #e5e7eb via spread inheritance.
+    // Day 7a: borderRadius "lg" (=8px) removed — matches minimal's --radius-card.
     "banner-section": {
-      config: { visible: true, borderRadius: "lg" }
+      config: { visible: true }
     },
 
     // === Vote page ===

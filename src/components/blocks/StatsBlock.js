@@ -13,7 +13,8 @@ function buildCardStyle(cfg) {
   const s = {};
   s.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
   s.borderColor = cfg.borderColor || 'var(--color-border)';
-  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
+  s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
   return s;
 }
 
@@ -38,7 +39,8 @@ function buildHeroCardStyle(cfg) {
     s.backgroundImage = "none";
   }
   s.color = cfg.textColor || 'var(--color-text)';
-  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) s.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
+  s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
   return s;
 }
 

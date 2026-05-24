@@ -12,7 +12,8 @@ import { RADIUS_MAP } from "../../utils/styleMaps";
 function buildBannerStyle(cfg) {
   if (!cfg) return undefined;
   const style = {};
-  if (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) style.borderRadius = RADIUS_MAP[cfg.borderRadius];
+  // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
+  style.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
   style.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
   style.borderColor = cfg.borderColor || 'var(--color-border)';
   return style;
