@@ -1,9 +1,9 @@
 # VISION.md — FMS Election System
 
 **Project:** PSU FMS Election Editor (SAMO 50)
-**Document version:** 1.2
+**Document version:** 1.3
 **Created:** May 21, 2026 (Day 4)
-**Last updated:** May 22, 2026 (D1 superseded by D1-v2, ADR-001 added)
+**Last updated:** May 23, 2026 (Library mental model + 95% scoping + slot positioning)
 **Status:** Living document — update as vision evolves
 
 > **คำเตือนสำหรับ Claude session ใหม่ / Claude Code / Future readers:**
@@ -60,14 +60,29 @@ Template gallery               →   Template gallery (in admin panel)
 
 ระบบประกอบด้วย 4 ส่วนที่ทำงานร่วมกัน:
 
-### Pillar 1: Element Catalog
-ห้องสมุดของ "element" ทั้งหมดในระบบ จัดหมวดตาม template + แยกตามหน้า
+### Pillar 1: Element Library (Canva-style)
+ห้องสมุดของ "element" ทั้งหมดในระบบ — เหมือน Canva element sidebar
 
-- ทุก element มี identity (e.g., `voteCTA-button`, `countdown-timer`, `hero-text`)
-- ทุก element มี **multiple variants** ข้าม templates
-  (e.g., `voteCTA-button` มีแบบ Classic / Modern Dark / Atelier / Editorial / ...)
+**Mental model:**
+- เปิด editor → sidebar ซ้ายแสดง library
+- จัดเป็น **grouped folders**: element type → variants ข้างใน
+  - `voteCTA-button` folder: default, atelier, editorial, funny-chunky, ...
+  - `banner-section` folder: default, minimal-line, atelier-card, ...
+  - `countdown-timer` folder: default, glitch, editorial-roman, ...
+- หยิบ variant จาก library → ใส่ลง template → ปรับละเอียด
+- Admin บันทึกของตัวเอง → เพิ่มเข้า library → รุ่นต่อไปใช้ได้
+
+**Element properties:**
+- ทุก element มี identity (e.g., `voteCTA-button`, `countdown-timer`)
+- ทุก element มี **multiple variants** (structure-level differences)
 - Element เป็น **self-contained Lego brick** — เอาไปติดที่ไหนก็ทำงานได้
 - Element ต้อง **container-aware** + **responsive by default**
+
+**Library growth (สำคัญสำหรับ 5+5 ปี):**
+- ปีแรก (dev): ~25-30 variants ทำไว้ใน library
+- ปีต่อๆ ไป (admin): mix & match + save variants → library โต
+- Dev เพิ่ม element types ใหม่ตามต้องการ (นานๆ ครั้ง)
+- ปี 5: library ครอบคลุม use cases ส่วนใหญ่ → admin ทำเองได้ 95%+
 
 ### Pillar 2: Template Gallery
 ห้องสมุดของ template ทั้งหมด ทั้ง built-in และที่ admin สร้าง
@@ -77,17 +92,54 @@ Template gallery               →   Template gallery (in admin panel)
 - คลิก element ในนั้น → ดู settings ของ element นั้น
 - มี metadata: ปีที่สร้าง, ผู้สร้าง, list ของ elements ที่ใช้, preview ของทุกหน้า
 
-### Pillar 3: Mix & Match Editor
-Editor ที่ใช้ template เป็นจุดเริ่ม แล้วปรับได้ทุกระดับ
+### Pillar 3: Mix & Match Editor (Canva-grade)
+Editor ที่ใช้ template เป็นจุดเริ่ม แล้วปรับได้ทุกระดับ — ทั้งโครงสร้างและรายละเอียด
 
+**Element interaction:**
 - เลือก template เป็นจุดเริ่ม (built-in หรือจาก gallery ก็ได้)
-- แต่ละ element ในหน้า → คลิก → ปุ่ม "เปลี่ยน variant"
-- โชว์ variants ทั้งหมดของ element นี้จาก templates อื่น → swap ในจุดนั้น
-- ปรับ properties ของ element ได้ 2 tier:
-  - **User-friendly settings** (สี / ขนาด / spacing) = default visible
-  - **CSS raw** (advanced) = expand only + warning "ห้ามแตะถ้าไม่ใช่ dev"
-- Live preview ทันที
-- Responsive preview (mobile / tablet / desktop)
+- คลิก element → property panel เปิดด้าน properties
+- **Swap variant:** เลือก variant อื่นของ element นี้ → JSX structure เปลี่ยน
+- **Mix & match:** หยิบ variant จาก template อื่น (e.g., button Atelier + card Editorial)
+- **Edit properties** ละเอียด (3 tiers)
+
+**Positioning model:**
+- Slot-based + free positioning within slot
+- หน้ามี slots ที่ template กำหนด (top-bar, hero, columns, footer, edges)
+- Admin **drag element** ระหว่าง slots ได้
+- ภายใน slot — element สามารถ free-position ได้บางส่วน (alignment, offset)
+- Responsive: ระบบ adjust ตาม viewport (mobile/tablet/desktop) อัตโนมัติ
+
+**3 tiers of editing (per Layer 1/2/3 architecture):**
+- **Tier 1 (Simple)** — สี, ขนาด, spacing, font, gradient picker, shadow controls
+  - ปรับ Layer 1 (theme tokens) — ทั้ง template เปลี่ยนพร้อมกัน
+- **Tier 2 (Element-specific)** — ปรับ vars ของ element นั้นโดยเฉพาะ
+  - ปรับ Layer 2 — แค่ element นี้เปลี่ยน, element อื่นยังเหมือนเดิม
+- **Tier 3 (Advanced CSS)** — custom CSS textarea
+  - ปรับ Layer 3 — สำหรับ admin ที่อยากเข้าลึก
+  - มี warning "เก็บเฉพาะ dev"
+
+**What admin can edit (95% no-code):**
+- ✅ Visual properties ทั้งหมด: color, gradient, shadow, border, radius, size, spacing
+- ✅ Typography: font family, size, weight, letter-spacing, line-height
+- ✅ Animation presets: fade/slide/scale/glow/pulse + duration/easing
+- ✅ Hover/click effects (presets)
+- ✅ Icons: swap icon (Lucide library 1000+), upload SVG (Phase 2)
+- ✅ Custom CSS (Tier 3, advanced)
+- ✅ Drag positioning ระหว่าง slots
+- ✅ Variant swap + mix & match
+
+**What requires developer (5%):**
+- ❌ Create new element TYPE from scratch (visual programming = beyond scope)
+- ❌ Add new HTML structure to existing variant (= new variant, dev codes once)
+- ❌ JavaScript-driven complex animations (mouse-tracking, scroll-linked)
+- ❌ New state machines / behavior logic
+
+When admin needs something not in library → request to dev → dev codes new element/variant **once** → returns to library → all future admins use it.
+
+**Live + Responsive preview:**
+- Real-time preview ในขณะแก้
+- Toggle viewport: mobile / tablet / desktop
+- WYSIWYG: editor preview === production render
 
 ### Pillar 4: Save as New Template (Heritage System)
 เมื่อ admin ปรับจน "ลงตัว" → กดบันทึก → ระบบเก็บเข้า gallery
@@ -106,13 +158,17 @@ User เรียก / Industry term / ความหมาย
 | User term (ไทย) | Industry term (EN) | ความหมาย |
 |---|---|---|
 | **Element** | Element / Component (atomic) | หน่วยเล็กสุดที่ user มอง: 1 ปุ่ม / 1 card / 1 ข้อความใหญ่ |
+| **Element Type** | Element type | "kind" ของ element (`voteCTA-button`, `banner-section`, ...) — registry รู้จัก |
+| **Variant** | Variant | Element type เดียวกัน คนละ structure/design (e.g., `voteCTA-button:atelier` vs `voteCTA-button:funny-chunky`) |
+| **Library** | Element Library / Asset library | คลังของทุก element type + ทุก variants (เหมือน Canva sidebar) |
 | **Section** | Section / Region | กลุ่ม elements ที่อยู่ด้วยกัน (e.g., hero section = SAMO 50 text + subtitle + countdown) |
 | **Page / Screen** | Page / Screen | ทั้งหน้า (home / vote / results / closed / etc.) |
 | **Layout** | Layout / Structure | โครงสร้าง slots ของหน้า (grid system, navigation position) |
-| **Theme** | Theme / Design tokens | สี / font / spacing scale ทั้งระบบ |
+| **Slot** | Slot | ตำแหน่งใน layout ที่รับ element ได้ (top-bar, hero, columns, ...) |
+| **Theme** | Theme / Design tokens | สี / font / spacing scale ทั้งระบบ (Layer 1) |
 | **Template** | Template / Design preset | Layout + Theme + Element compositions รวมกัน |
-| **Variant** | Variant | Element เดียวกัน คนละ design (e.g., button แบบ funny vs editorial) |
-| **Gallery** | Asset library / Gallery | ที่เก็บ templates และ element variants ทั้งหมด |
+| **Gallery** | Template gallery | ที่เก็บ templates ทั้งหมด (built-in + admin-created) |
+| **Snapshot** | Snapshot | Template ที่บันทึก (copy ค่าทั้งหมด ไม่ใช่ reference) |
 
 **คำที่ผม (Claude) จะใช้ในการสื่อสาร:** เลือกตามที่ user ใช้ — ถ้า user เรียก "element" ผมก็เรียก "element"
 
@@ -158,6 +214,43 @@ User เรียก / Industry term / ความหมาย
   - Editor: editor state → root
 - Same `<style>` block emitted in both contexts
 - Guarantees WYSIWYG: editor preview === production render
+
+### D12: Element Library Mental Model (NEW 2026-05-23)
+- Library = Canva-style sidebar with **grouped folders** (element type → variants inside)
+- Element types are **registered centrally** (Element Type Registry)
+- Variants are **React component files** in `src/components/elements/<type>/<variant>.jsx`
+- Library shows: dev-coded variants + admin-saved variants (merged)
+- Admin browses → drags variant from library → drops into template → edits
+- See ADR-001 v1.2 "Element Library + Registry" section
+
+### D13: 95% No-Code Scoping (NEW 2026-05-23)
+**Hybrid model — what admin can vs can't do:**
+
+✅ Admin can (no-code, 95% of vision):
+- Edit ALL visual properties (color, gradient, shadow, border, radius, typography)
+- Animation presets + duration/easing
+- Swap variants + mix & match across templates
+- Drag elements between slots (slot-based positioning)
+- Custom CSS textarea (Tier 3 advanced)
+- Save as new template → enters heritage gallery
+- Save new variants → enters element library
+
+❌ Admin can't (requires developer):
+- Create new element TYPE from scratch (= visual programming, hard limit)
+- Add new HTML structure to variant (= becomes new variant, dev codes once)
+- Complex JS-driven animations (scroll-linked, mouse-tracking)
+- New behavior/state machine logic
+
+When admin needs structure that doesn't exist:
+→ Request to dev → dev codes new variant **once** → added to library → all future admins use it.
+→ Library grows over years, dev requests decrease.
+
+### D14: Positioning Model — Slot + Free Within Slot (NEW 2026-05-23)
+- Layout = template defines **slots** (top-bar, hero, left-col, right-col, footer, edges)
+- Admin drags element **between slots** to reorder
+- Within a slot, element can free-position (alignment, offset)
+- Slot boundaries are responsive (mobile/tablet/desktop adjust automatically)
+- Free positioning is bounded by slot — no pure Figma-style infinite canvas (would break responsive)
 
 ### D2: Element granularity — Atomic UI components
 - ✅ "1 button = 1 element", "1 timer = 1 element", "1 hero text = 1 element"
@@ -318,6 +411,7 @@ Template = Layout (slots) + Theme (tokens) + Elements (compositions)
 | 2026-05-21 | 1.0 | Initial vision document created from Day 4 conversation. 4 pillars + 8 design decisions + 6 open questions captured. |
 | 2026-05-21 | 1.1 | Added realistic timeline to Appendix B. Confirmed hard deadline = election Feb 2027, soft milestone = mid-June 2026 (semester start). 9-month development arc, 5-phase plan. |
 | 2026-05-22 | 1.2 | Architecture decision: D1 superseded by D1-v2 (3-layer CSS variables + inline override). Added D9 (token naming), D10 (data-element scoping + fallback chain), D11 (unified render pipeline). See ADR-001-architecture.md. |
+| 2026-05-23 | 1.3 | Pillar 1 expanded (Canva library mental model). Pillar 3 expanded (3-tier editor, slot+free positioning, what admin can/can't). Added D12 (Element Library), D13 (95% no-code scoping with hard limit on creating new element types), D14 (slot + free within slot positioning). Terminology expanded (Element Type, Library, Slot, Snapshot). Vision-fidelity skill created in parallel. |
 
 ---
 

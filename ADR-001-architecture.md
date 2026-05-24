@@ -1,9 +1,9 @@
 # ADR-001: Template / Element / Variant Architecture
 
 **Status:** Accepted (May 22, 2026) — all blocking OQs resolved
-**Version:** 1.1
+**Version:** 1.2
 **Supersedes:** Original D1 (per-element inline style only)
-**Related:** VISION.md v1.2, DECISIONS.md (P-LOG-001 to 020)
+**Related:** VISION.md v1.3, DECISIONS.md (P-LOG-001 to 027+)
 
 ---
 
@@ -216,6 +216,167 @@ Each variant:
 
 ---
 
+## Element Library + Registry (NEW v1.2, May 23, 2026)
+
+### Why this section exists
+
+ADR v1.1 covered variants of EXISTING element types but didn't address:
+- How element TYPES register in the system
+- How admin browses available elements (the "library")
+- What happens when admin saves a new variant (does it persist? where?)
+- How to handle new element types added over time (10-year horizon)
+
+This section fills those gaps per VISION.md D12, D13.
+
+### Element Type Registry
+
+Central catalog of all element types the system knows about:
+
+```js
+// src/components/elements/registry.js
+
+export const ELEMENT_TYPES = {
+  "voteCTA-button": {
+    name: "Vote CTA Button",
+    description: "Primary call-to-action button on the home page",
+    category: "action",
+    variants: ["default", "atelier", "editorial", "funny-chunky"],
+    defaultVariant: "default",
+    schemaVersion: "v1",
+  },
+  "banner-section": {
+    name: "Banner Section",
+    description: "Election announcement banner",
+    category: "section-header",
+    variants: ["default", "minimal-line"],
+    defaultVariant: "default",
+    schemaVersion: "v1",
+  },
+  "countdown-timer": {
+    name: "Countdown Timer",
+    description: "Countdown to election close",
+    category: "data-display",
+    variants: ["default"],
+    defaultVariant: "default",
+    schemaVersion: "v1",
+  },
+  // ... grows over time
+};
+
+export function getElementType(typeId) {
+  return ELEMENT_TYPES[typeId];
+}
+
+export function listElementTypes(category) {
+  if (!category) return Object.entries(ELEMENT_TYPES);
+  return Object.entries(ELEMENT_TYPES).filter(
+    ([_, t]) => t.category === category
+  );
+}
+```
+
+### Categories
+
+Element types organized by purpose:
+
+- **action** — buttons, CTAs, primary interactions
+- **section-header** — banners, page headers, masthead
+- **data-display** — counters, stats, charts, timers
+- **navigation** — menus, breadcrumbs, timeline navs
+- **content** — hero text, headlines, paragraphs
+- **media** — image cards, galleries
+- **layout** — dividers, spacers, separators
+
+Categories drive library sidebar grouping.
+
+### Library Mental Model
+
+```
+Editor opens
+    ↓
+Left sidebar: Element Library (Canva-style)
+    ├── 📁 Action
+    │   └── voteCTA-button (4 variants)
+    │       ├── default      [preview]
+    │       ├── atelier      [preview]
+    │       ├── editorial    [preview]
+    │       └── funny-chunky [preview]
+    │
+    ├── 📁 Section Header
+    │   └── banner-section (2 variants)
+    │       ├── default      [preview]
+    │       └── minimal-line [preview]
+    │
+    ├── 📁 Data Display
+    │   ├── countdown-timer (1 variant)
+    │   └── stats-card (3 variants)
+    │
+    └── ... (more categories grow over time)
+    
+Admin drags variant → drop into template slot → edit properties
+```
+
+### Admin-Saved Variants
+
+When admin customizes a variant heavily and saves:
+
+```js
+// Saved variants table (database)
+{
+  id: "saved-variant-2570-aurora-button",
+  elementTypeId: "voteCTA-button",
+  baseVariantId: "atelier",          // started from this dev-coded variant
+  name: "Aurora Pulse Button",       // admin-given name
+  vars: { /* full Layer 2 snapshot */ },
+  overrides: { /* full Layer 3 snapshot */ },
+  createdBy: "...",
+  createdAt: "...",
+  parentTemplateId: "template-2570-aurora",
+}
+```
+
+**Registered as runtime variant:**
+- Library sidebar shows it alongside dev-coded variants
+- Tagged: "Created by [name], 2570"
+- Other admins can use it
+- Visual differentiation in UI (admin-created vs dev-coded)
+
+**Important constraint:** admin-saved variants reuse the **HTML structure** of their base variant — they only differ in vars (Layer 2) and overrides (Layer 3). True new structures still require developer code.
+
+### Adding New Element Types (developer workflow)
+
+When admin needs an element that doesn't exist (e.g., Atelier timeline-nav):
+
+1. **Request to developer** with description + reference designs
+2. **Developer creates:**
+   - `src/components/elements/<type-id>/default.jsx` (initial variant)
+   - Register in `registry.js`
+   - Wire into slot system if needed
+3. **Element appears in library** for all admins immediately
+4. **Future variants** can be admin-saved on top
+
+This is the 5% case in D13. The hard limit:
+- ❌ Admin **cannot** create new element types from scratch (no-code)
+- ✅ Admin **can** customize existing variants down to CSS-level
+- ✅ Library grows from both developer additions and admin variant saves
+
+### Long-term sustainability (10-year horizon)
+
+Library growth pattern:
+
+```
+Year 1 (current): dev codes ~25-30 variants across ~8 element types
+Year 2-3: admin saves ~5-10 variants/year from real usage
+         dev adds ~2-3 new element types based on requests
+Year 5: library has ~50-80 variants, ~12-15 element types
+        admin requests new types <1/year (library covers most cases)
+Year 10: library mature, dev requests rare
+```
+
+Each year's elections contribute variants → heritage system grows naturally.
+
+---
+
 ## Snapshot Strategy (D5 made concrete)
 
 When admin saves as new template:
@@ -423,6 +584,7 @@ Before declaring this architecture done:
 |------|---------|--------|
 | 2026-05-22 | 1.0 | Initial ADR. Decision: B2 (Tokens + element-scope vars + inline overrides as 3 layers). Supersedes original D1. |
 | 2026-05-22 | 1.1 | OQ2, OQ3, OQ5 resolved. Token naming locked, data-element scoping + fallback chain pattern locked, unified render pipeline locked. All 3 blocking OQs cleared — Day 5 can begin. |
+| 2026-05-23 | 1.2 | Added "Element Library + Registry" section (after Variant Concept). Defines Element Type Registry, library mental model (Canva-style sidebar with grouped folders), admin-saved variants persistence, developer workflow for new types, and 10-year library growth pattern. Resolves scalability question raised by user about template-specific elements. |
 
 ---
 
