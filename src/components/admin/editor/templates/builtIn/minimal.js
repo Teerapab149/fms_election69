@@ -100,6 +100,7 @@ export const minimalTemplate = {
 
     // === voteCTA — monochrome solid, no gradients, no shadows ===
     "voteCTA-button": {
+      variant: "default",
       config: {
         login: {
           ...classicTemplate.elements["voteCTA-button"].config.login,
@@ -143,6 +144,25 @@ export const minimalTemplate = {
           shadow:          "none",
           borderRadius:    "md"
         }
+      },
+      vars: {
+        "--btn-bg":              "var(--color-primary)",
+        "--btn-bg-gradient":     "none",
+        "--btn-text":            "var(--color-surface)",
+        "--btn-border-color":    "transparent",
+        "--btn-border-width":    "0px",
+        "--btn-radius":          "var(--radius-button)",
+        "--btn-shadow":          "var(--shadow-button)",
+        "--btn-padding-x":       "32px",
+        "--btn-padding-y":       "16px",
+        "--btn-font-size":       "16px",
+        "--btn-font-weight":     "600",
+        "--btn-hover-bg":        "var(--btn-bg)",
+        "--btn-hover-shadow":    "var(--btn-shadow)",
+        "--btn-hover-transform": "none",
+        "--btn-icon-color":      "var(--btn-text)",
+        "--btn-letter-spacing":  "normal",
+        "--btn-text-transform":  "none"
       }
     },
 

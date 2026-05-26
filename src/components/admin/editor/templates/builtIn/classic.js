@@ -131,6 +131,7 @@ export const classicTemplate = {
     // Day 3a: enriched to full 18-field shape per state (source: HEAD~7
     // TEMPLATES.classic). Existing text strings preserved per spec P-LOG-005.
     "voteCTA-button": {
+      variant: "default",
       config: {
         login: {
           text: "เข้าสู่ระบบ / Sign in",
@@ -264,6 +265,25 @@ export const classicTemplate = {
           iconPosition: "right",
           hoverEffect: "none"
         }
+      },
+      vars: {
+        "--btn-bg":              "var(--color-primary)",
+        "--btn-bg-gradient":     "none",
+        "--btn-text":            "var(--color-surface)",
+        "--btn-border-color":    "transparent",
+        "--btn-border-width":    "0px",
+        "--btn-radius":          "var(--radius-button)",
+        "--btn-shadow":          "var(--shadow-button)",
+        "--btn-padding-x":       "32px",
+        "--btn-padding-y":       "16px",
+        "--btn-font-size":       "16px",
+        "--btn-font-weight":     "600",
+        "--btn-hover-bg":        "var(--btn-bg)",
+        "--btn-hover-shadow":    "var(--btn-shadow)",
+        "--btn-hover-transform": "none",
+        "--btn-icon-color":      "var(--btn-text)",
+        "--btn-letter-spacing":  "normal",
+        "--btn-text-transform":  "none"
       }
     },
 
