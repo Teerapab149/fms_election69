@@ -17,9 +17,20 @@ component carries its own Tailwind-class branches for the fallback path).
 
 ## Variants
 
-- **default** — Original FMS chunky button (gradient + glow + shine, all 6 states)
+- **default** — Original FMS chunky button (gradient + glow + shine, all 6 states explicit).
+- **minimal-pill** — Thin 1.5px outline, transparent bg, pill radius. Hover fills with `--color-primary`, text inverts to surface. Editorial/restrained. 3 primary states + 3 derived via `stateMap.js`.
+- **chunky-stamp** — Gumroad-style. 3px hard border, 5px 5px 0 hard shadow (no blur), bold uppercase text. Hover lifts up-left + shadow grows to 7px 7px; active presses back + shadow disappears. 3 primary states + 3 derived.
 
-Day 9b will add: **minimal-pill** and **chunky-stamp** (3-state focus + fallback).
+### State coverage per variant
+
+| Variant       | login    | notVoted | voted | ended | closed | paused |
+|---------------|----------|----------|-------|-------|--------|--------|
+| default       | explicit | explicit | explicit | explicit | explicit | explicit |
+| minimal-pill  | →notVoted | explicit | explicit | explicit | →ended  | →voted  |
+| chunky-stamp  | →notVoted | explicit | explicit | explicit | →ended  | →voted  |
+
+Derived states use `mapToPrimaryState()` (see `stateMap.js`) for STYLE
+selection only; text/icon/href stay on the ORIGINAL state.
 
 ## Variant contract
 

@@ -16,6 +16,7 @@
 
 import DefaultVoteCTA from './default.jsx';
 import MinimalPillVoteCTA from './minimal-pill.jsx';
+import ChunkyStampVoteCTA from './chunky-stamp.jsx';
 import { getElementType } from '../registry.js';
 
 // Component map — the implementation source of truth for voteCTA-button.
@@ -23,6 +24,7 @@ import { getElementType } from '../registry.js';
 const COMPONENTS = {
   default: DefaultVoteCTA,
   'minimal-pill': MinimalPillVoteCTA,
+  'chunky-stamp': ChunkyStampVoteCTA,
 };
 
 /**
@@ -57,5 +59,5 @@ export function getVoteCTAVariant(variantId) {
 
 export const VOTECTA_VARIANT_IDS = Object.keys(COMPONENTS);
 
-export { DefaultVoteCTA, MinimalPillVoteCTA };
+export { DefaultVoteCTA, MinimalPillVoteCTA, ChunkyStampVoteCTA };
 export default getVoteCTAVariant;
