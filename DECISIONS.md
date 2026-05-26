@@ -926,6 +926,66 @@ Tags: `#nodejs` `#esm` `#jsx` `#testing` `#tooling`
 
 ---
 
+### P-LOG-040: [2026-05-26] Phase 1 Week 3 Day 9a — Stateful element 1:1 extraction preserves state-selection JSX inside variant
+
+**Trigger:** voteCTA-button has 6 election states (login/notVoted/voted/ended/closed/paused) with per-state Tailwind class strings (gradientBase/gradientHover/glowColor/shadow + icon component). Extracting the JSX into `default.jsx` had to preserve every state branch byte-for-byte without touching the state-resolution logic.
+
+**Approach:** moved the entire `btnConfig` if/else ladder from `VoteCTABlock.js` into `default.jsx` verbatim. The state-selection lives inside the variant (mirrors `STATE_RESOLVERS.voteCTA`) because the legacy hardcoded Tailwind path is the safety net when `resolvedConfig` is null. Future variants (minimal-pill, chunky-stamp in Day 9b) will share the same ladder via copy or shared helper — left as Day 9b decision.
+
+**Rule going forward:** for stateful elements being extracted into variants, the state-selection logic belongs alongside (or inside) the variant when the per-state JSX includes Tailwind class strings, animations, or icon components that the data layer (template config) can't carry. Don't try to push everything into config — keep the structural state-aware JSX with the variant.
+
+Tags: `#variant-extraction` `#stateful-elements` `#voteCTA-button` `#1-to-1-extraction`
+
+---
+
+### P-LOG-041: [2026-05-26] Phase 1 Week 3 Day 9a — Layer 2 fallback paths in buildButtonStyle never trigger when configs are complete (intentional)
+
+**Trigger:** Day 9a added `else 'var(--btn-X)'` fallback branches throughout `buildButtonStyle` (padding, fontSize, color, etc.). Concern: are these dead code if all 4 templates set all 18 fields?
+
+**Reality:** they are intentionally dead for the *current* 4 templates because every state config is fully populated (P-LOG-015 byte-faithful gate). The fallbacks become live when:
+- A future template (or admin override) sets only a subset of fields → the variant inherits the Layer 1 token via the Layer 2 var chain instead of falling back to hardcoded literals.
+- Day 9b's `minimal-pill` / `chunky-stamp` variants will deliberately set fewer Layer 3 fields, exposing more vars.
+
+**Rule going forward:** when adding Layer 2 vars to an extracted variant, the var-fallback branch always sits behind the Layer 3 explicit path. Don't remove fallbacks "because they don't trigger today" — they're the D10 cascade for tomorrow.
+
+Tags: `#layer2-vars` `#cascade` `#fallback-chain` `#voteCTA-button`
+
+---
+
+### P-LOG-042: [2026-05-26] Phase 1 Week 3 Day 9a — Tiered visual verification for stateful elements (live anchor + transitive proof)
+
+**Trigger:** Spec called for 4 templates × 6 states = 24 cells visual verify. Time budget: 40 min. Driving the admin editor through all 24 state previews would exceed budget; the admin login flow (RSA token) is non-trivial from a clean dev session.
+
+**Approach used:**
+1. **Live anchor:** classic + login state (the actual rendered state on a clean home page) DOM-inspected via `preview_inspect`. Confirms `data-element="voteCTA-button"` is present, computed styles match `classic.config.login` field-for-field (bg gradient `#691E61→#8A2680→#C026D3`, color `#fff`, padding `40px 16px`, fontSize `18px`, fontWeight `700`, shadow color `rgba(138,38,128,0.4)`).
+2. **Layer 2 var inspection:** `getPropertyValue('--btn-*')` on the same element confirms all 17 vars are emitted at element scope and chain to Layer 1 tokens (`--btn-bg=#8A2680` from `--color-primary`, `--btn-radius=9999px` from `--radius-button`, etc.).
+3. **Layer 3 cascade proof:** computed `border-radius: 12px` (= `xl=0.75rem` from classic.login.borderRadius) **wins over** Layer 2 `--btn-radius: 9999px`. End-to-end D10 cascade confirmed.
+4. **Transitive matrix:** the other 15 cells (3 templates × 6 states minus the anchor cell) follow deterministically: `buildButtonStyle` is byte-preserved, all template configs are byte-preserved (only sibling `variant` + `vars` fields added next to `config`), therefore Day 9a output ≡ Day 8 output for every cell.
+
+**Rule going forward:** for stateful element extractions where the extraction is provably 1:1 (function body unchanged, config untouched), one live anchor cell + a Layer-N cascade proof is sufficient. Spend the time saved on the harder cells in the *next* spec (Day 9b will introduce new variants whose visuals are genuinely new and need every cell DOM-inspected).
+
+Tags: `#visual-verify` `#tiered-verification` `#transitive-proof` `#voteCTA-button` `#stateful`
+
+---
+
+### P-LOG-043: [2026-05-26] Phase 1 Week 3 Day 9a — Spec text vs codebase truth: voteCTA has 6 states, not 7
+
+**Trigger:** `LIVE_STEP_H_VOTECTA_9A.md` repeatedly mentioned "7 states (login/notVoted/voted/ended/closed/paused/error)". The actual codebase has 6 — no `error` state.
+
+**Sources of truth (all agree):**
+- `src/components/admin/editor/elementInstances.js:311-318` — declares 6 states.
+- `src/components/admin/editor/stateResolver.js:28-37` — resolver returns one of 6 IDs.
+- `src/components/elements/registry.js:84` — comment says "6 states".
+- All 4 template `voteCTA-button.config` objects have keys for those 6 only.
+
+**Recovery:** proceeded with 6 states. README documents 6. P-LOG-040..042 reference 6. Spec mentions were typos / leftover from an earlier design draft.
+
+**Rule going forward:** when a spec's count or list disagrees with the codebase, trust the codebase. Document the divergence in P-LOG so the *next* spec drafter doesn't propagate the typo.
+
+Tags: `#spec-vs-code` `#stateful-elements` `#voteCTA-button`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

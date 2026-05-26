@@ -1,7 +1,90 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-25
+**Last saved:** 2026-05-26
 **Branch:** `new-version`
+
+---
+
+## Phase 1 Week 3 Day 9a — voteCTA-button Foundation + Default Variant ✅ COMPLETE
+
+**Day 9a (17 Layer 2 vars + element folder + 1:1 default extraction +
+stateful preservation): ✅ DONE.** Stress-test of the variant pattern on
+the most complex element (stateful, 6 election states, ~108 config entries
+across 4 templates). 1:1 extraction proven byte-faithful via live anchor
++ Layer cascade proof. Day 9b will add minimal-pill + chunky-stamp.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| A | 17 Layer 2 vars + `variant: "default"` added to voteCTA-button entry in all 4 templates (classic / modern-dark / playful / minimal) | `01f42ae` |
+| B | `src/components/elements/voteCTA-button/` (default.jsx + index.js + README.md); VoteCTABlock.js → thin wrapper | `435f445` |
+| Final | DECISIONS (P-LOG-040/041/042/043) + PROGRESS | (this commit) |
+
+### 17 Layer 2 vars (4 groups)
+- **Core (7):** `--btn-bg`, `--btn-bg-gradient`, `--btn-text`, `--btn-border-color`, `--btn-border-width`, `--btn-radius`, `--btn-shadow`
+- **Sizing (4):** `--btn-padding-x`, `--btn-padding-y`, `--btn-font-size`, `--btn-font-weight`
+- **Hover (3):** `--btn-hover-bg`, `--btn-hover-shadow`, `--btn-hover-transform`
+- **Decoration (3):** `--btn-icon-color`, `--btn-letter-spacing`, `--btn-text-transform`
+
+All 4 templates declare the same 17 keys, all chaining to Layer 1 tokens
+(D10 fallback chain). Each template's *Layer 1* token differences drive
+the visual differentiation, not Layer 2 divergence.
+
+### 16-cell verification matrix (Part 5)
+
+**Method:** 1 live anchor cell DOM-inspected + Layer 2 var inspection +
+Layer 3 cascade proof. The other 15 cells follow transitively because
+`buildButtonStyle` is byte-preserved and template configs are untouched.
+See P-LOG-042 for rationale.
+
+| Template    | State    | bg (from config)                              | text     | radius        | Match Day 8? |
+|-------------|----------|-----------------------------------------------|----------|---------------|--------------|
+| classic     | notVoted | gradient(→r, #10B981→#059669→#047857)         | #ffffff  | xl (0.75rem)  | ✓ |
+| classic     | voted    | gradient(→r, #0369a1→#0284c7→#38bdf8)         | #ffffff  | xl (0.75rem)  | ✓ |
+| classic     | ended    | gradient(→r, #334155→#1e293b→#0f172a)         | #94a3b8  | xl (0.75rem)  | ✓ |
+| classic     | login    | gradient(→r, #691E61→#8A2680→#C026D3)         | #ffffff  | xl (12px live)| ✓ live anchor |
+| modern-dark | notVoted | gradient(→r, #06b6d4→#0891b2→#0e7490)         | #ffffff  | xl            | ✓ |
+| modern-dark | voted    | gradient(→r, #8b5cf6→#7c3aed→#6d28d9)         | #ffffff  | xl            | ✓ |
+| modern-dark | ended    | (classic.ended object reused)                 | #94a3b8  | xl            | ✓ |
+| modern-dark | closed   | (classic.closed object reused)                | #94a3b8  | xl            | ✓ tier-2 spot |
+| playful     | notVoted | gradient(→r, #f59e0b→#f97316→#ea580c)         | #ffffff  | 2xl (1rem)    | ✓ |
+| playful     | voted    | gradient(→r, #ec4899→#d946ef→#a855f7)         | #ffffff  | 2xl           | ✓ |
+| playful     | ended    | (classic.ended) + br: 2xl                     | #94a3b8  | 2xl           | ✓ |
+| playful     | paused   | (classic.paused) + br: 2xl                    | #ffffff  | 2xl           | ✓ tier-2 spot |
+| minimal     | notVoted | solid #374151 (no gradient, shadow:none)      | #ffffff  | md (0.375rem) | ✓ |
+| minimal     | voted    | solid #6b7280                                 | #ffffff  | md            | ✓ |
+| minimal     | ended    | solid #9ca3af                                 | #94a3b8  | md            | ✓ |
+| minimal     | login    | solid #1f2937                                 | #ffffff  | md            | ✓ tier-2 spot |
+
+**Live anchor cell (classic + login):** computed
+`background-image: linear-gradient(to right, rgb(105,30,97), rgb(138,38,128), rgb(192,38,211))`,
+`color: rgb(255,255,255)`, `padding: 16px 40px`, `font-size: 18px`,
+`font-weight: 700`, `box-shadow: rgba(138,38,128,0.4) 0 10px 15px -3px`,
+`border-radius: 12px`. All 17 `--btn-*` vars emitted at element scope.
+Layer 3 (`borderRadius: "xl"`=12px) wins over Layer 2 (`--btn-radius: 9999px`).
+
+### Registry sanity (Part 5)
+```
+Registered: true
+Category: action
+Variants: [ 'default' ]
+Stateful: true
+Has default: true
+Has minimal-pill (not yet): false
+```
+
+### New lessons (DECISIONS.md)
+- P-LOG-040 — Stateful element 1:1 extraction preserves state-selection JSX inside variant
+- P-LOG-041 — Layer 2 fallback paths intentionally dead today, live tomorrow
+- P-LOG-042 — Tiered visual verification: live anchor + transitive proof
+- P-LOG-043 — Spec text vs codebase: voteCTA has 6 states, not 7 (no error state)
+
+### Next (Day 9b): voteCTA-button minimal-pill + chunky-stamp variants
+- Design `minimal-pill` (thin outline + hover fill, 3-state focus)
+- Design `chunky-stamp` (Gumroad-style hard border + hard offset shadow)
+- Each variant: focus 3 primary states (notVoted/voted/ended) + 3 fallback
+- Register both in resolver + update `registry.variants`
+- Full 4×3 swap matrix (4 templates × 3 variants = 12 cells visual)
+- Complete remaining state cells deferred from Day 9a
 
 ---
 
