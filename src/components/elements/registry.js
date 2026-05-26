@@ -78,7 +78,7 @@ export const ELEMENT_TYPES = {
     name: "Vote CTA Button",
     description: "Primary call-to-action button on home page (state-aware)",
     category: "action",
-    variants: ONLY_DEFAULT,
+    variants: ["default", "minimal-pill"],   // chunky-stamp added in Day 9b Step C
     defaultVariant: "default",
     schemaVersion: "v1",
     stateful: true,  // 6 states: login/notVoted/voted/ended/closed/paused

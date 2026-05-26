@@ -15,12 +15,14 @@
 // Day 9b will add: minimal-pill, chunky-stamp.
 
 import DefaultVoteCTA from './default.jsx';
+import MinimalPillVoteCTA from './minimal-pill.jsx';
 import { getElementType } from '../registry.js';
 
 // Component map — the implementation source of truth for voteCTA-button.
 // Keys MUST stay in sync with registry.js ELEMENT_TYPES["voteCTA-button"].variants.
 const COMPONENTS = {
   default: DefaultVoteCTA,
+  'minimal-pill': MinimalPillVoteCTA,
 };
 
 /**
@@ -55,5 +57,5 @@ export function getVoteCTAVariant(variantId) {
 
 export const VOTECTA_VARIANT_IDS = Object.keys(COMPONENTS);
 
-export { DefaultVoteCTA };
+export { DefaultVoteCTA, MinimalPillVoteCTA };
 export default getVoteCTAVariant;
