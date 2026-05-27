@@ -1,7 +1,112 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-26
+**Last saved:** 2026-05-27
 **Branch:** `new-version`
+
+---
+
+## Phase 1 Week 3 Day 9b — voteCTA Variants (minimal-pill + chunky-stamp) ✅ COMPLETE
+
+**Day 9b (3-variant family on stateful element + state fallback helper +
+4×3 matrix verification): ✅ DONE.** voteCTA-button library content
+expanded from 1 → 3 variants. Pattern proven on stateful element with
+6 states. Variant infrastructure ready for Day 10+ (Editor + Library UI).
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| A | `stateMap.js` — semantic state-fallback helper (login→notVoted, closed→ended, paused→voted) | `988146d` |
+| B | `minimal-pill.jsx` — thin 1.5px outline + transparent bg + hover fill + index.js wire + registry update | `7638211` |
+| C | `chunky-stamp.jsx` — 3px hard border + 5px hard offset shadow + bold uppercase + README update | `6ecff3d` |
+| Final | DECISIONS (P-LOG-044..047) + PROGRESS | (this commit) |
+
+### Variants (3)
+- **default** (Day 9a) — gradient + glow + shine; 6 states explicit
+- **minimal-pill** — transparent bg, primary-color outline + text, pill radius, hover fills with primary (text inverts to surface)
+- **chunky-stamp** — Gumroad-style; 3px black border, hardcoded `5px 5px 0 #000` shadow (NO blur), bold uppercase + 0.05em tracking, hover lifts(-2,-2) + shadow grows to 7px 7px, active(0,0) shadow gone
+
+### State coverage
+| Variant       | login    | notVoted | voted | ended | closed | paused |
+|---------------|----------|----------|-------|-------|--------|--------|
+| default       | explicit | explicit | explicit | explicit | explicit | explicit |
+| minimal-pill  | →notVoted | explicit | explicit | explicit | →ended | →voted |
+| chunky-stamp  | →notVoted | explicit | explicit | explicit | →ended | →voted |
+
+Derived states (→) inherit STYLE from the mapped primary; TEXT/icon/href
+stay on the ORIGINAL state (P-LOG-044). E.g. paused borrows voted's
+outline/shadow but still says "ระบบปิดปรับปรุง / Maintenance".
+
+### 21-cell verification matrix
+
+**Tier 1 (12 cells, 4 templates × 3 variants × notVoted)**
+
+| Template    | default       | minimal-pill        | chunky-stamp        |
+|-------------|---------------|---------------------|---------------------|
+| classic     | ✓ live anchor | ✓ live (login=notVoted via stateMap) | ✓ live (login=notVoted) |
+| modern-dark | ✓ transitive (Day 9a) | ✓ transitive | ✓ transitive |
+| playful     | ✓ transitive (Day 9a) | ✓ transitive | ✓ transitive |
+| minimal     | ✓ transitive (Day 9a) | ✓ transitive | ✓ transitive |
+
+Live cells (3): each variant's PRIMARY_STYLES.notVoted block produced
+correct DOM (data-element="voteCTA-button" + computed styles match
+declared values + Layer 1 tokens chain through). Other 9 cells follow
+transitively because variants are template-agnostic — same `var(--color-X)`
+references resolve to each template's Layer 1 differences. See
+P-LOG-046 for rationale.
+
+**Live data captured:**
+- classic + default + login: `linear-gradient(to right, rgb(105,30,97), rgb(138,38,128), rgb(192,38,211))`, color rgb(255,255,255), padding 16px 40px, font-size 18px, font-weight 700, box-shadow `rgba(138,38,128,0.4) 0 10px 15px -3px`, border-radius 12px
+- classic + minimal-pill + login(→notVoted): bg transparent (rgba(0,0,0,0)), color rgb(138,38,128) (=#8A2680 primary), border 1.5px solid #8A2680 (Chrome snaps to 1px @ DPR 1), box-shadow none, radius 12px (Layer 3 xl), padding 16px 40px
+- classic + chunky-stamp + login(→notVoted): bg rgb(138,38,128), color white, border 3px solid rgb(0,0,0), **box-shadow `rgb(0,0,0) 5px 5px 0px 0px`** (HARD, no blur ✓), text "เข้าสู่ระบบ / SIGN IN" (uppercase applied), font-weight 800, letter-spacing 0.9px (= 0.05em × 18px)
+
+**Tier 2 (6 cells, classic × 3 variants × {voted, ended})**
+
+Deterministic from PRIMARY_STYLES blocks (no runtime branching):
+
+| Variant       | voted                                                 | ended                                                  |
+|---------------|-------------------------------------------------------|--------------------------------------------------------|
+| default       | gradient #0369a1→#0284c7→#38bdf8, text white          | gradient #334155→#1e293b→#0f172a, text #94a3b8         |
+| minimal-pill  | transparent bg, muted text+border (#64748b), 1.5px, opacity 0.75, cursor not-allowed | transparent bg, accent text+border, 1.5px |
+| chunky-stamp  | surface bg, text-color border, 3px, 3px 3px 0 shadow, opacity 0.85, cursor not-allowed | accent bg, surface text, 3px black border, 5px 5px 0 #000 shadow |
+
+**Tier 3 (3 cells, fallback semantic mapping)**
+
+`stateMap.js` unit test (Step A sanity output, paste from Part 1):
+```
+login   -> notVoted (primary: false)
+closed  -> ended    (primary: false)
+paused  -> voted    (primary: false)
+```
+
+Variant render path is `PRIMARY_STYLES[mapToPrimaryState(currentState)]`
+— deterministic lookup, no branching to leak. P-LOG-046 documents why
+this is sufficient for the time-pressured tier.
+
+**Console clean:** no `[voteCTA-button]` warnings across live cells.
+Only pre-existing Next.js Image `sizes` warnings (unrelated).
+
+### Two bugs caught + fixed (live verify)
+
+Both same pattern — see P-LOG-045 for the rule:
+1. **minimal-pill (Step B)**: initial `color: var(--btn-text, var(--color-primary))` resolved to white (templates always set `--btn-text` to `--color-surface`). White-on-transparent = invisible. Fix: hardcode `var(--color-primary)`, stop spreading Layer 3 color fields (they're designed for filled defaults).
+2. **chunky-stamp (Step C)**: initial `boxShadow: var(--btn-shadow, 5px 5px 0 #000)` resolved to default's soft `0 4px 12px rgba(138,38,128,0.25)` — no stamp. Same for `borderColor: var(--btn-border-color, #000)` → transparent. Fix: hardcode both. Layer 2 vars are *the default variant's* tokens; cross-variant fallback breaks identity.
+
+### Operational notes
+
+- Hit `.next` manifest race twice on Windows during Step C (P-LOG-027/035). Stop + nuke `.next` + cold restart + sleep 20s resolved both times.
+- Final preview server stopped at the end of Step C.
+
+### New lessons (DECISIONS.md)
+- P-LOG-044 — State derivation via semantic mapping: STYLE follows mapped state, TEXT/icon/href stay on ORIGINAL state
+- P-LOG-045 — Layer 2 vars are variant-scoped: cross-variant fallback breaks identity (chunky-stamp shadow + minimal-pill text)
+- P-LOG-046 — Tiered verification extended for multi-variant matrix (live anchor + transitive)
+- P-LOG-047 — Spec example for variant data flow was wrong; default.jsx is the source of truth
+
+### Next (Day 10-11): Editor Tier 1
+- Variant picker UI in PropertyPanel (reads registry — already decoupled per Day 8)
+- Token editor UI (color pickers for Layer 1 — drives all variants uniformly)
+- Per-element vars panel (Layer 2 editing — currently template-locked)
+- Unified pipeline in place (D11: live + preview share the same `<style>` block)
+- voteCTA-button now has 3 variants ready to be presented as Library cards
 
 ---
 

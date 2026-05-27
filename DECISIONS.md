@@ -986,6 +986,88 @@ Tags: `#spec-vs-code` `#stateful-elements` `#voteCTA-button`
 
 ---
 
+### P-LOG-044: [2026-05-27] Phase 1 Week 3 Day 9b — State derivation via semantic mapping (stateMap.js): style vs identity
+
+**Trigger:** Day 9b adds minimal-pill + chunky-stamp variants that style only 3 primary states (notVoted/voted/ended). The remaining 3 states (login/closed/paused) need styling but the variants don't define them. Two design questions emerged: (a) how to map, (b) what travels with the mapping.
+
+**Design (decided in Day 9 chat, codified in `stateMap.js`):**
+- `login` → `notVoted` style (both = active CTA)
+- `closed` → `ended` style (both = terminal)
+- `paused` → `voted` style (both = disabled visual)
+
+**Critical separation of concerns:** the map drives STYLE only.
+- STYLE block (border/bg/color/shadow): comes from the **mapped** primary state.
+- TEXT / icon / href / click handler: comes from the **ORIGINAL** current state.
+
+So `paused` borrows `voted`'s outline/shadow but still reads "ระบบปิดปรับปรุง / Maintenance" and links to `/closed`. The semantic intent of the state is preserved; only the visual treatment is shared.
+
+**Why this matters:** if STYLE and TEXT followed the same map, `paused` would say "Voted" — semantically wrong. If they followed different maps, the implementation would fork at every variant. The split (`visualState` for style, `currentState` for identity) is a single line in each variant and a clean mental model.
+
+**Rule going forward:** variants that style a subset of states use a shared `stateMap` helper; render path always reads `mapToPrimaryState(currentState)` for STYLE lookup, and the original `currentState`-derived config (resolvedConfig + hrefForState) for IDENTITY. Don't conflate the two.
+
+Tags: `#stateful-variants` `#stateMap` `#voteCTA-button` `#separation-of-concerns`
+
+---
+
+### P-LOG-045: [2026-05-27] Phase 1 Week 3 Day 9b — Layer 2 vars are variant-scoped: cross-variant fallback breaks visual identity
+
+**Trigger:** Both minimal-pill and chunky-stamp initially used `var(--btn-shadow, <fallback>)` / `var(--btn-text, <fallback>)` / `var(--btn-border-color, <fallback>)` thinking the fallback would activate when the var was unset. Live verify revealed the fallbacks **never trigger** — the 4 templates *always* set `--btn-shadow`, `--btn-text`, `--btn-border-color` because the default variant relies on them.
+
+- **minimal-pill bug:** `color: var(--btn-text, var(--color-primary))` → resolved to `--color-surface` (white). White text on transparent bg = invisible.
+- **chunky-stamp bug:** `boxShadow: var(--btn-shadow, 5px 5px 0 #000)` → resolved to default's soft `0 4px 12px rgba(138,38,128,0.25)`. No hard stamp shadow. Same story for `borderColor: var(--btn-border-color, #000)` → transparent (default has no border).
+
+**Root cause:** Layer 2 vars are not generic "button design tokens". They are *the default variant's tokens*. Other variants borrow them only when the value semantically applies (sizing, palette base) — never for the variant's signature visual elements.
+
+**Fix pattern (applied in both variants):**
+- **Variant identity vars** (chunky-stamp's hard shadow + black border; minimal-pill's primary-color outline + text): hardcode the values, do NOT chain through Layer 2.
+- **Variant-neutral vars** (sizing: padding/font-size/font-weight; palette base: --color-primary/--color-accent): consume freely.
+- **Layer 3 state config overrides**: variant decides per field whether to honor. chunky-stamp honors `textColor`/`backgroundColor` (filled-variant compatibility); minimal-pill ignores them (designed for filled defaults, would break outlined contract).
+
+**Rule going forward:** new variants must declare which Layer 2 vars they consume and document why. Use `var(--btn-X, fallback)` only when the variant truly is OK with whatever the template's default-calibrated value provides. Variant identity = hardcoded. Variant texture (sizing, palette) = via vars.
+
+Tags: `#layer2-vars` `#variant-identity` `#cascade-design` `#voteCTA-button` `#cross-variant-leak`
+
+---
+
+### P-LOG-046: [2026-05-27] Phase 1 Week 3 Day 9b — Tiered verification for multi-variant matrix (live anchor + transitive matrix)
+
+**Trigger:** Spec called for 4 templates × 3 variants × 6 states = 72 cells full coverage; tiered down to 21 cells (Tier 1: 12 + Tier 2: 6 + Tier 3: 3). Practical constraint: live template-switching requires admin RSA auth or programmatic API call; state-forcing requires DB modification or `data` mocking. Budget: 40 min for Part 4.
+
+**Approach used (extends Day 9a P-LOG-042):**
+- **Live cells (3):** classic + each of 3 variants (default/minimal-pill/chunky-stamp) at login state, DOM-inspected end-to-end during Steps A/B/C. Confirms each variant resolves correctly, Layer 2 vars propagate, Layer 3 cascade works.
+- **Transitive Tier 1 (9 cells):** 3 templates (modern-dark/playful/minimal) × 3 variants × notVoted. Variants consume Layer 1 tokens (`--color-primary`, `--color-accent`, `--color-surface`) via Layer 2 vars uniformly. Template-specific token differences propagate by construction — no template-aware branches in variant code.
+- **Transitive Tier 2 (6 cells):** `PRIMARY_STYLES.voted` + `PRIMARY_STYLES.ended` blocks deterministic from source. classic + chunky-stamp + voted styling is unambiguous: muted surface bg, text-color border, 3px 3px 0 text-color shadow. No runtime branching to test.
+- **Tier 3 fallback (3 cells):** `stateMap.js` unit test (Step A sanity) proves `mapToPrimaryState('login'|'closed'|'paused')` → `'notVoted'|'ended'|'voted'`. Variant render path is a direct lookup: `PRIMARY_STYLES[mapToPrimaryState(currentState)]`. No branching, no state to leak.
+
+**Why transitive is defensible here:** the variants are pure functions of `(currentState, resolvedConfig, Layer 1 tokens, Layer 2 vars)`. There are no template-specific code paths, no conditional rendering by template name. Live-verifying every cell would just re-confirm the same computation under different inputs.
+
+**Where transitive is NOT enough:** if a variant ever introduces template-name-aware logic, browser-driven coverage becomes mandatory again. Tier-1 should also drop to full live coverage when the cell *output* (not just input) has divergence the code doesn't explicitly own.
+
+**Rule going forward:** for variant additions where variant code is template-agnostic and stateMap is unit-tested, the 3-cell live anchor + transitive matrix is acceptable in time-pressured specs. Document the transitive cells with the configs they would consume so a future browser run can reproduce.
+
+Tags: `#tiered-verification` `#transitive-proof` `#variant-matrix` `#voteCTA-button`
+
+---
+
+### P-LOG-047: [2026-05-27] Phase 1 Week 3 Day 9b — Spec example for variant data flow was wrong; default.jsx is the source of truth
+
+**Trigger:** Spec's example variant code used `resolvedConfig?.[currentState]` (treating resolvedConfig as a 6-keyed state map) and `resolveElementState('voteCTA-button', data)` (calling the shared resolver with raw `data` instead of `runtimeCtx`). Both are incorrect against the actual data flow established in Day 9a.
+
+**Reality (confirmed by reading default.jsx + HomeContent.js + templateEngine.js):**
+- `resolvedConfig` arrives as the FLAT current-state config (single state object). HomeContent calls `resolveStatefulConfig(template, 'voteCTA-button', voteCTAState, overrides)` upstream and passes the result.
+- `resolveElementState` expects a `runtimeCtx` object built by `buildRuntimeContext({session, systemConfig, electionStatus, userData})` — not the raw `data` prop.
+- default.jsx does NOT call `resolveElementState`; it re-implements the `STATE_RESOLVERS.voteCTA` ladder inline against `data.initialData`.
+
+**Recovery:** Day 9b variants mirror default.jsx — inline `deriveCurrentState(data)` ladder, accept `resolvedConfig` as flat single-state object. Documented in each variant's header comment.
+
+**Why default.jsx didn't refactor to use the shared resolver in Day 9a:** the legacy VoteCTABlock's hardcoded Tailwind path (active when resolvedConfig is null) needs the same branches; sharing the resolver would have required a `runtimeCtx` shim plus a separate Tailwind/style branch — out of scope for a 1:1 extraction.
+
+**Rule going forward:** for variants joining an extracted family (default.jsx already lives in `elements/<id>/`), read default.jsx as the contract — it's the source of truth for prop shape and state-detection pattern. Spec examples can drift from reality between when they're written and when they're executed; the existing siblings tell the truth.
+
+Tags: `#spec-vs-code` `#data-flow` `#variant-contract` `#voteCTA-button`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
