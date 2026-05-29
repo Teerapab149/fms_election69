@@ -1015,6 +1015,9 @@ export default function PageDesignTab() {
               selectedElement={editor.selectedElement}
               elementConfigs={editor.elementConfigs}
               pageLayout={livePageLayout}
+              elementVariants={editor.elementVariants}
+              onSetVariant={editor.setElementVariant}
+              onResetVariant={editor.resetElementVariant}
               onUpdateConfig={editor.updateElementConfig}
               onApplyPreset={handleApplyPresetToElement}
               onDeselect={editorClearSelection}
@@ -1113,6 +1116,9 @@ export default function PageDesignTab() {
                   selectedElement={editor.selectedElement}
                   elementConfigs={editor.elementConfigs}
                   pageLayout={livePageLayout}
+                  elementVariants={editor.elementVariants}
+                  onSetVariant={editor.setElementVariant}
+                  onResetVariant={editor.resetElementVariant}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
@@ -1134,6 +1140,9 @@ export default function PageDesignTab() {
                   selectedElement={editor.selectedElement}
                   elementConfigs={editor.elementConfigs}
                   pageLayout={livePageLayout}
+                  elementVariants={editor.elementVariants}
+                  onSetVariant={editor.setElementVariant}
+                  onResetVariant={editor.resetElementVariant}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
@@ -1235,6 +1244,9 @@ export default function PageDesignTab() {
                   selectedElement={editor.selectedElement}
                   elementConfigs={editor.elementConfigs}
                   pageLayout={livePageLayout}
+                  elementVariants={editor.elementVariants}
+                  onSetVariant={editor.setElementVariant}
+                  onResetVariant={editor.resetElementVariant}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}

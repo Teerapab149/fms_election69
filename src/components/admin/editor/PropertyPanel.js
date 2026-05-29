@@ -11,6 +11,7 @@ import {
   WeightToggle,
 } from "./controls/SharedInputs";
 import QuickStyleBar from "./QuickStyleBar";
+import VariantPicker from "./VariantPicker.jsx";
 import { isStatefulElement, getBinding, getElement } from "./elementCatalog";
 import StatefulGallery from "./StatefulGallery";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../../contexts/GlobalConfigContext";
@@ -92,9 +93,27 @@ export default function PropertyPanel({
   onUpdateStatefulOverride,
   onResetStatefulState,
   onApplyTemplateToElement,
+  // Day 10 — variant picker
+  elementVariants,
+  onSetVariant,
+  onResetVariant,
 }) {
   const globalConfig = useGlobalConfig();
   const { updateField, isUpdating } = useGlobalConfigUpdate();
+
+  // Day 10: variant picker — renders ABOVE the stateful-vs-flat branch so it
+  // works for both voteCTA-button (stateful) and banner-section (flat).
+  // VariantPicker self-hides for single-variant/unwired elements, so it is
+  // safe to drop into either panel unconditionally.
+  const variantPickerEl = selectedElement ? (
+    <VariantPicker
+      elementId={selectedElement}
+      currentVariant={elementVariants?.[selectedElement]}
+      isOverridden={!!elementVariants && selectedElement in elementVariants}
+      onSelect={(variantId) => onSetVariant?.(selectedElement, variantId)}
+      onReset={() => onResetVariant?.(selectedElement)}
+    />
+  ) : null;
 
   if (!selectedElement) {
     // On mobile nothing shows — no need for an empty placeholder in the bottom sheet.
@@ -134,6 +153,8 @@ export default function PropertyPanel({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {variantPickerEl}
 
         <div className="px-4 py-4 overflow-y-auto lg:max-h-[calc(100vh-200px)]">
           <StatefulGallery
@@ -247,6 +268,9 @@ export default function PropertyPanel({
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Variant picker (Day 10) — above QuickStyleBar per audit Q5 */}
+      {variantPickerEl}
 
       {/* QuickStyleBar */}
       <div className="px-4 py-3 border-b border-slate-100 shrink-0">
