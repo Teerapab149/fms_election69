@@ -1014,6 +1014,7 @@ export default function PageDesignTab() {
             <PropertyPanel
               selectedElement={editor.selectedElement}
               elementConfigs={editor.elementConfigs}
+              pageLayout={livePageLayout}
               onUpdateConfig={editor.updateElementConfig}
               onApplyPreset={handleApplyPresetToElement}
               onDeselect={editorClearSelection}
@@ -1111,6 +1112,7 @@ export default function PageDesignTab() {
                 <PropertyPanel
                   selectedElement={editor.selectedElement}
                   elementConfigs={editor.elementConfigs}
+                  pageLayout={livePageLayout}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
@@ -1131,6 +1133,7 @@ export default function PageDesignTab() {
                 <PropertyPanel
                   selectedElement={editor.selectedElement}
                   elementConfigs={editor.elementConfigs}
+                  pageLayout={livePageLayout}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
@@ -1231,6 +1234,7 @@ export default function PageDesignTab() {
                 <PropertyPanel
                   selectedElement={editor.selectedElement}
                   elementConfigs={editor.elementConfigs}
+                  pageLayout={livePageLayout}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
