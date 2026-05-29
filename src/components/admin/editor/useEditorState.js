@@ -17,6 +17,12 @@ export default function useEditorState(initialConfigs = {}) {
   const [backgroundId, setBackgroundId] = useState('gradient-purple-light');
   const [statefulDirty, setStatefulDirty] = useState(false);
 
+  // Day 10: per-element variant overrides — { [elementId]: variantId }.
+  // Cascade at render time: elementVariants[id] > template default > 'default'.
+  // Reset deletes the key so the element re-inherits the template default.
+  const [elementVariants, setElementVariants] = useState({});
+  const [baselineVariants, setBaselineVariants] = useState({});
+
   const updateElementConfig = useCallback((elementId, key, value) => {
     setElementConfigs((prev) => {
       const current = prev[elementId] || {};
@@ -40,8 +46,9 @@ export default function useEditorState(initialConfigs = {}) {
 
   const resetToDefaults = useCallback(() => {
     setElementConfigs(baseline);
+    setElementVariants(baselineVariants);
     setSelectedElement(null);
-  }, [baseline]);
+  }, [baseline, baselineVariants]);
 
   const resetElement = useCallback(
     (elementId) => {
@@ -52,6 +59,32 @@ export default function useEditorState(initialConfigs = {}) {
     },
     [baseline]
   );
+
+  // Day 10: variant slice setters --------------------------------------
+  // Set one element's variant. No-op when unchanged (avoids spurious dirty).
+  const setElementVariant = useCallback((elementId, variantId) => {
+    setElementVariants((prev) => {
+      if (prev[elementId] === variantId) return prev;
+      return { ...prev, [elementId]: variantId };
+    });
+  }, []);
+
+  // Reset = delete the key so the element falls back to the template default.
+  const resetElementVariant = useCallback((elementId) => {
+    setElementVariants((prev) => {
+      if (!(elementId in prev)) return prev;
+      const next = { ...prev };
+      delete next[elementId];
+      return next;
+    });
+  }, []);
+
+  // Load variants from DB (mirror of replaceAllConfigs). markAsBaseline keeps
+  // the freshly-loaded map as the "saved" snapshot so the editor isn't dirty.
+  const replaceAllVariants = useCallback((next, markAsBaseline = false) => {
+    setElementVariants(next || {});
+    if (markAsBaseline) setBaselineVariants(next || {});
+  }, []);
 
   const getElementConfig = useCallback(
     (elementId) => elementConfigs?.[elementId]?.config || {},
@@ -79,12 +112,21 @@ export default function useEditorState(initialConfigs = {}) {
       return false;
     }
   }, [elementConfigs, baseline]);
-  const hasUnsavedChanges = elementConfigsDirty || statefulDirty;
+  // Day 10: variant changes also mark the editor dirty.
+  const elementVariantsDirty = useMemo(() => {
+    try {
+      return JSON.stringify(elementVariants) !== JSON.stringify(baselineVariants);
+    } catch {
+      return false;
+    }
+  }, [elementVariants, baselineVariants]);
+  const hasUnsavedChanges = elementConfigsDirty || statefulDirty || elementVariantsDirty;
 
   const commitBaseline = useCallback(() => {
     setBaseline(elementConfigs);
+    setBaselineVariants(elementVariants);
     setStatefulDirty(false);
-  }, [elementConfigs]);
+  }, [elementConfigs, elementVariants]);
 
   // H-4 handlers — stateful element overrides
   const updateStatefulOverride = useCallback((elementId, stateId, key, value) => {
@@ -155,6 +197,11 @@ export default function useEditorState(initialConfigs = {}) {
     getElementConfig,
     getElementMeta,
     commitBaseline,
+    // Day 10 — variant slice
+    elementVariants,
+    setElementVariant,
+    resetElementVariant,
+    replaceAllVariants,
     // H-4 new
     sourceTemplate,
     elementOverrides,
