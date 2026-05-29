@@ -23,6 +23,19 @@ export default function useEditorState(initialConfigs = {}) {
   const [elementVariants, setElementVariants] = useState({});
   const [baselineVariants, setBaselineVariants] = useState({});
 
+  // Day 11 Tier 1: theme token overrides (Layer 1) — sparse map of only the
+  // tokens the admin changed, e.g. { "--color-primary": "#123456" }.
+  // Cascade at render time: themeTokens[k] > template.theme.tokens[k].
+  // Reset (single key) deletes it so it re-inherits the template token.
+  const [themeTokens, setThemeTokens] = useState({});
+  const [baselineThemeTokens, setBaselineThemeTokens] = useState({});
+
+  // Day 11 Tier 2: per-element Layer 2 var overrides — nested sparse map,
+  // e.g. { "voteCTA-button": { "--btn-bg": "#123456" } }.
+  // Cascade: elementVars[id][k] > template.elements[id].vars[k] > Layer 1 token.
+  const [elementVars, setElementVars] = useState({});
+  const [baselineElementVars, setBaselineElementVars] = useState({});
+
   const updateElementConfig = useCallback((elementId, key, value) => {
     setElementConfigs((prev) => {
       const current = prev[elementId] || {};
@@ -47,8 +60,10 @@ export default function useEditorState(initialConfigs = {}) {
   const resetToDefaults = useCallback(() => {
     setElementConfigs(baseline);
     setElementVariants(baselineVariants);
+    setThemeTokens(baselineThemeTokens);
+    setElementVars(baselineElementVars);
     setSelectedElement(null);
-  }, [baseline, baselineVariants]);
+  }, [baseline, baselineVariants, baselineThemeTokens, baselineElementVars]);
 
   const resetElement = useCallback(
     (elementId) => {
@@ -86,6 +101,77 @@ export default function useEditorState(initialConfigs = {}) {
     if (markAsBaseline) setBaselineVariants(next || {});
   }, []);
 
+  // Day 11 Tier 1: theme token slice setters -------------------------------
+  // Set one Layer 1 token override. No-op when unchanged.
+  const setThemeToken = useCallback((tokenKey, value) => {
+    setThemeTokens((prev) => {
+      if (prev[tokenKey] === value) return prev;
+      return { ...prev, [tokenKey]: value };
+    });
+  }, []);
+
+  // Reset one token → delete key so it re-inherits the template default.
+  const resetThemeToken = useCallback((tokenKey) => {
+    setThemeTokens((prev) => {
+      if (!(tokenKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[tokenKey];
+      return next;
+    });
+  }, []);
+
+  // Reset ALL token overrides → whole map back to template defaults.
+  const resetAllThemeTokens = useCallback(() => {
+    setThemeTokens((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+  }, []);
+
+  // Load token overrides from DB (mirror of replaceAllConfigs).
+  const replaceAllThemeTokens = useCallback((next, markAsBaseline = false) => {
+    setThemeTokens(next || {});
+    if (markAsBaseline) setBaselineThemeTokens(next || {});
+  }, []);
+
+  // Day 11 Tier 2: per-element Layer 2 var slice setters -------------------
+  // Set one var on one element. No-op when unchanged.
+  const setElementVar = useCallback((elementId, varKey, value) => {
+    setElementVars((prev) => {
+      if (prev[elementId]?.[varKey] === value) return prev;
+      return {
+        ...prev,
+        [elementId]: { ...(prev[elementId] || {}), [varKey]: value },
+      };
+    });
+  }, []);
+
+  // Reset one var → delete key; drop the element entry when it becomes empty.
+  const resetElementVar = useCallback((elementId, varKey) => {
+    setElementVars((prev) => {
+      if (!(varKey in (prev[elementId] || {}))) return prev;
+      const nextEl = { ...prev[elementId] };
+      delete nextEl[varKey];
+      const next = { ...prev };
+      if (Object.keys(nextEl).length === 0) delete next[elementId];
+      else next[elementId] = nextEl;
+      return next;
+    });
+  }, []);
+
+  // Reset all vars for one element → delete the element entry.
+  const resetElementVars = useCallback((elementId) => {
+    setElementVars((prev) => {
+      if (!(elementId in prev)) return prev;
+      const next = { ...prev };
+      delete next[elementId];
+      return next;
+    });
+  }, []);
+
+  // Load Layer 2 var overrides from DB (mirror of replaceAllConfigs).
+  const replaceAllElementVars = useCallback((next, markAsBaseline = false) => {
+    setElementVars(next || {});
+    if (markAsBaseline) setBaselineElementVars(next || {});
+  }, []);
+
   const getElementConfig = useCallback(
     (elementId) => elementConfigs?.[elementId]?.config || {},
     [elementConfigs]
@@ -120,13 +206,35 @@ export default function useEditorState(initialConfigs = {}) {
       return false;
     }
   }, [elementVariants, baselineVariants]);
-  const hasUnsavedChanges = elementConfigsDirty || statefulDirty || elementVariantsDirty;
+  // Day 11: theme token + Layer 2 var changes also mark the editor dirty.
+  const themeTokensDirty = useMemo(() => {
+    try {
+      return JSON.stringify(themeTokens) !== JSON.stringify(baselineThemeTokens);
+    } catch {
+      return false;
+    }
+  }, [themeTokens, baselineThemeTokens]);
+  const elementVarsDirty = useMemo(() => {
+    try {
+      return JSON.stringify(elementVars) !== JSON.stringify(baselineElementVars);
+    } catch {
+      return false;
+    }
+  }, [elementVars, baselineElementVars]);
+  const hasUnsavedChanges =
+    elementConfigsDirty ||
+    statefulDirty ||
+    elementVariantsDirty ||
+    themeTokensDirty ||
+    elementVarsDirty;
 
   const commitBaseline = useCallback(() => {
     setBaseline(elementConfigs);
     setBaselineVariants(elementVariants);
+    setBaselineThemeTokens(themeTokens);
+    setBaselineElementVars(elementVars);
     setStatefulDirty(false);
-  }, [elementConfigs, elementVariants]);
+  }, [elementConfigs, elementVariants, themeTokens, elementVars]);
 
   // H-4 handlers — stateful element overrides
   const updateStatefulOverride = useCallback((elementId, stateId, key, value) => {
@@ -202,6 +310,18 @@ export default function useEditorState(initialConfigs = {}) {
     setElementVariant,
     resetElementVariant,
     replaceAllVariants,
+    // Day 11 — Tier 1 theme tokens (Layer 1)
+    themeTokens,
+    setThemeToken,
+    resetThemeToken,
+    resetAllThemeTokens,
+    replaceAllThemeTokens,
+    // Day 11 — Tier 2 per-element vars (Layer 2)
+    elementVars,
+    setElementVar,
+    resetElementVar,
+    resetElementVars,
+    replaceAllElementVars,
     // H-4 new
     sourceTemplate,
     elementOverrides,
