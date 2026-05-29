@@ -17,6 +17,8 @@ import SuccessEditorPreview from './SuccessEditorPreview';
 import useEditorState from './editor/useEditorState';
 import PropertyPanel from './editor/PropertyPanel';
 import HomeContent from '../HomeContent';
+import { buildTemplateStyles } from '../../lib/templateTokens';
+import { BUILT_IN_TEMPLATES } from './editor/templates';
 import {
   DUMMY_ELECTION,
 } from '../../utils/editorDummyData';
@@ -256,6 +258,7 @@ function LivePreview({
   voteSimMode,
   closedSimMode,
   successSimMode,
+  editorTokenStyles,
 }) {
   const isMobile = deviceMode === 'mobile';
   const currentPage = getPageById(selectedPage);
@@ -284,6 +287,7 @@ function LivePreview({
           editorData={DUMMY_ELECTION}
           pageLayout={pageLayout}    // ✅ ส่ง pageLayout ไป (เพื่อให้ซ่อนโชว์ได้)
           theme={pageLayout?.theme}  // ✅ ส่ง theme ไป
+          editorTokenStyles={editorTokenStyles}  // Day 11: Layer 1/2 token scope
           elementConfigs={editorProps.elementConfigs}
           selectedElement={editorProps.selectedElement}
           hoveredElement={editorProps.hoveredElement}
@@ -609,6 +613,23 @@ export default function PageDesignTab() {
     }),
     [homeBlocks, voteConfig, theme, otherPages, editor.elementVariants]
   );
+
+  // Day 11: compile the editor-preview token scope. Active template's base
+  // Layer 1 tokens + Layer 2 element vars, overlaid with the admin's live
+  // token edits (themeTokens). HomeContent injects this string as the
+  // .fms-app <style> in editor mode — closes P-LOG-051 (editor had no scope).
+  // Layer 2 var overrides (editor.elementVars) merge in here in Step F.
+  const editorTokenStyles = useMemo(() => {
+    const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
+    const merged = {
+      ...base,
+      theme: {
+        ...base.theme,
+        tokens: { ...(base.theme?.tokens || {}), ...editor.themeTokens },
+      },
+    };
+    return buildTemplateStyles(merged, '.fms-app');
+  }, [activeTemplateId, editor.themeTokens]);
 
   const requestApplyTemplate = (slug) => setPendingPresetId(slug);
 
@@ -1324,6 +1345,7 @@ export default function PageDesignTab() {
           <LivePreview
             selectedPage={selectedPage}
             pageLayout={livePageLayout}
+            editorTokenStyles={editorTokenStyles}
             deviceMode={deviceMode}
             onDeviceChange={setDeviceMode}
             hoveredSection={hoveredSection}

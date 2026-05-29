@@ -43,6 +43,7 @@ export default function HomeContent({
   theme = null,
   resolvedTemplate = null,
   tokens = null,
+  editorTokenStyles = null,
 }) {
   const { data: session, status } = useSession();
   const { isEditorMode, highlightedSection } = useEditorPreview();
@@ -230,7 +231,13 @@ export default function HomeContent({
   // which also emits per-element [data-element=X] rules for any element entry
   // with a `vars: {...}` object (Layer 2). Elements without `vars` contribute
   // nothing — backwards-compatible with Day 5/6 templates.
-  const tokenStylesCss = buildTemplateStyles(resolvedTemplate, '.fms-app');
+  // Day 11: editor channel injects a token scope built upstream in
+  // PageDesignTab (active template tokens + Layer 1 edits + Layer 2 vars),
+  // so token/var edits are visible in the editor preview — closes P-LOG-051.
+  // Live channel builds from the resolved template (token overlay = Step D).
+  const tokenStylesCss = editorMode
+    ? (editorTokenStyles || '')
+    : buildTemplateStyles(resolvedTemplate, '.fms-app');
 
   // Day 10: overlay admin per-element variant choices onto the template.
   // Cascade: pageLayout.elementVariants.home[id] > template variant > 'default'.
