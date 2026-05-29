@@ -452,6 +452,7 @@ export default function PageDesignTab() {
   const editor = useEditorState();
   const {
     replaceAllConfigs: editorReplaceAllConfigs,
+    replaceAllVariants: editorReplaceAllVariants,
     commitBaseline: editorMarkSaved,
     clearSelection: editorClearSelection,
     updateElementConfig: editorUpdateElementConfig,
@@ -553,6 +554,8 @@ export default function PageDesignTab() {
       setActiveTemplateId(loadedTemplateId);
       const initialElementConfigs = savedElementConfigs || getPresetDefaults(loadedTemplateId);
       editorReplaceAllConfigs(initialElementConfigs, true);
+      // Day 10: load saved per-element variant overrides as the baseline.
+      editorReplaceAllVariants(data?.elementVariants?.home || {}, true);
 
       const snapshot = JSON.stringify({ home, vote: normalizedVote, theme: loadedTheme, other: loadedOther });
       setOriginalJSON(snapshot);
@@ -562,7 +565,7 @@ export default function PageDesignTab() {
     } finally {
       setLoading(false);
     }
-  }, [editorReplaceAllConfigs]);
+  }, [editorReplaceAllConfigs, editorReplaceAllVariants]);
 
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
 
@@ -599,9 +602,12 @@ export default function PageDesignTab() {
       home: homeBlocks,
       vote: { multiParty: voteConfig },
       theme,
+      // Day 10: thread variant choices so the live HomeContent preview reflects
+      // them immediately (HomeContent reads pageLayout.elementVariants.home).
+      elementVariants: { home: editor.elementVariants },
       ...otherPages,
     }),
-    [homeBlocks, voteConfig, theme, otherPages]
+    [homeBlocks, voteConfig, theme, otherPages, editor.elementVariants]
   );
 
   const requestApplyTemplate = (slug) => setPendingPresetId(slug);
@@ -634,6 +640,10 @@ export default function PageDesignTab() {
         elementConfigs[id] = { config: entry.config || {} };
       }
       editorReplaceAllConfigs(elementConfigs);
+      // Day 10: applying a template discards per-element variant overrides —
+      // the new template's own variant fields become the source of truth
+      // (audit Q2). Cleared (not baselined) so the switch is a pending change.
+      editorReplaceAllVariants({});
 
       if (template.theme) {
         setTheme({ ...DEFAULT_THEME, ...template.theme });
@@ -738,6 +748,7 @@ export default function PageDesignTab() {
       vote: { multiParty: voteConfig },
       theme,
       elementConfigs: { home: editor.elementConfigs },
+      elementVariants: { home: editor.elementVariants },
       ...otherPages,
     };
     localStorage.setItem('preview_draft', JSON.stringify(previewData));
@@ -769,6 +780,7 @@ export default function PageDesignTab() {
         vote: { multiParty: voteConfig },
         theme,
         elementConfigs: { home: editor.elementConfigs },
+        elementVariants: { home: editor.elementVariants },
         ...normalizedOther,
       };
 

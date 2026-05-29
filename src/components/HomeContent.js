@@ -232,6 +232,28 @@ export default function HomeContent({
   // nothing — backwards-compatible with Day 5/6 templates.
   const tokenStylesCss = buildTemplateStyles(resolvedTemplate, '.fms-app');
 
+  // Day 10: overlay admin per-element variant choices onto the template.
+  // Cascade: pageLayout.elementVariants.home[id] > template variant > 'default'.
+  // pageLayout carries elementVariants from the DB (live page) or from the
+  // editor's in-memory state (preview, threaded via livePageLayout), so this
+  // single overlay serves both channels (D11 unified pipeline). Wrapper blocks
+  // (VoteCTABlock/ElectionBannerBlock) still read template.elements[id].variant
+  // unchanged — the cascade is resolved here, upstream of them.
+  const elementVariantOverrides = pageLayout?.elementVariants?.home || {};
+  const effectiveTemplate = (() => {
+    const overrideIds = Object.keys(elementVariantOverrides);
+    if (overrideIds.length === 0) return resolvedTemplate;
+    const baseElements = resolvedTemplate?.elements || {};
+    const mergedElements = { ...baseElements };
+    for (const id of overrideIds) {
+      mergedElements[id] = {
+        ...(baseElements[id] || {}),
+        variant: elementVariantOverrides[id],
+      };
+    }
+    return { ...(resolvedTemplate || {}), elements: mergedElements };
+  })();
+
   const ed = editorData || {};
 
   // Hero — unified path for both editor and normal mode, matches HeroBlock styling 1:1
@@ -363,7 +385,7 @@ export default function HomeContent({
             <Component
               config={block.config || {}}
               data={activeBlockData}
-              resolvedTemplate={resolvedTemplate}
+              resolvedTemplate={effectiveTemplate}
               {...extraProps}
               {...editorPassthrough}
             />
