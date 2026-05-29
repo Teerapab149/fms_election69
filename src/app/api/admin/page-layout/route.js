@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from "../../../../lib/db";
+import { hasVariant } from "../../../../components/elements/registry.js";
 import crypto from "crypto";
 
 const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
@@ -82,6 +83,30 @@ export async function PUT(request) {
 
   try {
     const body = await request.json();
+
+    // Day 10: validate per-element variant overrides against the registry.
+    // Shape: { elementVariants: { [pageId]: { [elementId]: variantId } } }.
+    // Reject unknown element/variant so a typo never ships to production
+    // (where the resolver would silently fall back to 'default').
+    const { elementVariants } = body;
+    if (elementVariants && typeof elementVariants === "object") {
+      for (const [pageId, elementMap] of Object.entries(elementVariants)) {
+        if (!elementMap || typeof elementMap !== "object") {
+          return NextResponse.json(
+            { error: `Invalid elementVariants for page "${pageId}"` },
+            { status: 400 }
+          );
+        }
+        for (const [elementId, variantId] of Object.entries(elementMap)) {
+          if (!hasVariant(elementId, variantId)) {
+            return NextResponse.json(
+              { error: `Invalid variant "${variantId}" for element "${elementId}"` },
+              { status: 400 }
+            );
+          }
+        }
+      }
+    }
 
     // Shallow-merge: ป้องกัน body ว่าง หรือ missing fields
     const updated = await db.systemConfig.update({
