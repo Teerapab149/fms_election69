@@ -1068,6 +1068,56 @@ Tags: `#spec-vs-code` `#data-flow` `#variant-contract` `#voteCTA-button`
 
 ---
 
+### P-LOG-048: [2026-05-30] Phase 1 Week 3 Day 10 — Variant picker live-preview needs a self-contained token scope (editor lives outside .fms-app)
+
+**Trigger:** Spec KEY DESIGN said each picker card renders the real variant component and "Layer 2 vars resolve from page-level `.fms-app` scope". But the admin editor panel (PropertyPanel) is NOT inside a template's `.fms-app` scope — so `var(--btn-bg)`, `var(--color-primary)`, etc. would resolve to nothing and the previews would render with collapsed/initial styling.
+
+**Approach used:** VariantPicker declares a self-contained `PREVIEW_VARS` object (classic Layer 1 tokens + Layer 2 `--btn-*`/`--banner-*`, mirroring `builtIn/classic.js`) as inline style on each card's preview scope. Custom-property self-reference (`--btn-bg: var(--color-primary)`) works because both are declared on the same element. Previews therefore render "this variant on classic's tokens" — exactly the documented behavior. Variant identity (hard border, pill outline, gradient fill) is hardcoded in each component (P-LOG-045), so cards visually differ regardless of the shared token scope.
+
+**Also:** picker cards must be `role="button"` divs, NOT `<button>` — the live previews render real `<button data-element>` elements and nested buttons are invalid HTML. Preview wrapper gets `pointer-events:none` so the inner button never intercepts the card click.
+
+**Verified:** browser DOM showed all 3 voteCTA cards + 2 banner cards rendering distinct real components (default "ลงคะแนน / Vote Now" gradient, minimal-pill "Vote Now" outline, chunky-stamp "VOTE NOW" 3px black border).
+
+Tags: `#variant-picker` `#css-vars` `#layer2` `#editor-preview` `#html-validity`
+
+---
+
+### P-LOG-049: [2026-05-30] Phase 1 Week 3 Day 10 — Variant picker must mount BEFORE the stateful-vs-flat branch (spec snippet would have failed for voteCTA)
+
+**Trigger:** Spec Task 3.2 showed the VariantPicker mounted in PropertyPanel's non-stateful render path (above QuickStyleBar). But `voteCTA-button` is `stateful: true` (registry.js:84) and hits PropertyPanel's **early return** for stateful elements (PropertyPanel.js:112) — it never reaches the flat path. The spec's literal placement would have shown the picker for `banner-section` (flat) but NEVER for `voteCTA-button` (stateful), directly contradicting e2e steps 1–5.
+
+**Resolution:** Followed the readiness audit (primary source, Q5: "Place the variant picker BEFORE the stateful-vs-flat branch") over the spec's illustrative snippet. Computed a single `variantPickerEl` after the `!selectedElement` guard and rendered it in BOTH the stateful panel (after header, before StatefulGallery) and the flat panel (above QuickStyleBar). VariantPicker self-hides for single-variant/unwired elements, so dropping it into either panel is safe.
+
+**Rule going forward:** when a spec snippet places UI relative to a branch, verify which branch the *target element* actually takes. Stateful vs flat is decided by `isStatefulElement(id)` → `ELEMENT_INSTANCES[id].isStateful`, independent of whether the element has variants.
+
+Tags: `#spec-vs-code` `#stateful` `#PropertyPanel` `#variant-picker` `#audit-over-spec`
+
+---
+
+### P-LOG-050: [2026-05-30] Phase 1 Week 3 Day 10 — elementVariants cascade + registry-driven API validation (reject before persist)
+
+**Cascade (single source, applied in HomeContent):** `pageLayout.elementVariants.home[id]` > `template.elements[id].variant` > `'default'`. HomeContent builds an `effectiveTemplate` overlaying admin choices onto `resolvedTemplate` and threads THAT to wrapper blocks, which still read `template.elements[id].variant` unchanged. One overlay serves both channels (D11 unified pipeline): live page reads elementVariants from the DB pageLayout; editor preview reads them from `PageDesignTab.livePageLayout` (now carries `elementVariants: { home }`).
+
+**Validation:** PUT `/api/admin/page-layout` validates every `elementVariants[page][id]` via `hasVariant(id, variantId)` and returns 400 BEFORE the DB write. Verified in-browser: `fake-variant`, unknown element, and non-object page-map all 400 with descriptive errors and leave the DB untouched. Defensive resolver fallback still covers hand-tampered DB rows (invalid `ghost-variant` → `default` + console warn).
+
+**Template apply discards variant overrides** (audit Q2): switching templates clears `elementVariants` so the new template's own variant fields become the truth.
+
+Tags: `#cascade` `#api-validation` `#registry` `#elementVariants` `#unified-pipeline`
+
+---
+
+### P-LOG-051: [2026-05-30] Phase 1 Week 3 Day 10 — Editor home preview lacks a token scope; var()-based variant identity can collapse there (not a bug)
+
+**Trigger:** After picking banner `minimal-line` in the editor, the main editor preview's banner frame computed `border-top-width: 0px` even though minimal-line sets `borderTop: 1px solid var(--banner-border)`. On the LIVE page the same element correctly showed `1px solid`.
+
+**Root cause:** the editor's `HomeContent` (rendered inside PagePreviewRenderer/LivePreview) is not wrapped in a `.fms-app` token scope in `editorMode`, and in editor mode `resolvedTemplate` is null — so `buildTemplateStyles` emits nothing and `var(--banner-border)` resolves to empty, making the `1px solid <empty>` border shorthand invalid → collapses to 0. Literal values survive (minimal-line's `borderRadius: 0` rendered correctly, which is what confirmed the variant swap in-editor).
+
+**Why it's acceptable for Day 10:** the variant SWAP is proven by the literal `border-radius` change + active-card state, and the live page (which has the `.fms-app` scope from `buildTemplateStyles(resolvedTemplate)`) renders the hairline rule faithfully. Giving the editor preview a full Layer 1/2 token scope (so var()-based properties resolve in-editor too) is a D11 unified-pipeline follow-up, not Day 10 scope.
+
+Tags: `#editor-preview` `#css-vars` `#fms-app` `#fidelity` `#deferred`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

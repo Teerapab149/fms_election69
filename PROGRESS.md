@@ -1,7 +1,56 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-27
+**Last saved:** 2026-05-30
 **Branch:** `new-version`
+
+---
+
+## Phase 1 Week 3 Day 10 — Variant Picker UI (Editor Tier 1 Part 1) ✅ COMPLETE
+
+**Day 10 (variant picker with live mini-previews + persistence): ✅ DONE.**
+Admin can now swap an element's variant from the editor UI — no template
+file edits. The library mental model (VISION D12) is now interactive.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| chore | Fix pageLayout prop drop into PropertyPanel (audit Bug 1) — all 4 mounts | `d8ee876` |
+| A | `useEditorState` elementVariants slice (state/setters/reset/dirty/baseline/loader) | `253fcb8` |
+| B | `VariantPicker.jsx` (live previews) + PropertyPanel mount (both branches) + PageDesignTab wiring | `883b460` |
+| C | PUT `/api/admin/page-layout` validates elementVariants via registry `hasVariant` (400 reject) | `d4f6346` |
+| D | HomeContent `effectiveTemplate` overlay + livePageLayout/payload/fetchLayout wiring + e2e | `6055411` |
+| Final | DECISIONS (P-LOG-048..051) + PROGRESS | (this commit) |
+
+### What ships
+- **VariantPicker** — one card per registered variant, each a LIVE mini-render
+  of the real variant component with MOCK_DATA (notVoted state). Self-contained
+  PREVIEW_VARS token scope (classic flavor) so previews render outside `.fms-app`.
+  "คืนค่า Template" reset link shows only when an override exists. Hidden for
+  single-variant elements.
+- **Cascade:** `elementVariants[id]` > template default > `'default'`, resolved
+  once in HomeContent (`effectiveTemplate`) for both live + editor channels.
+- **API:** rejects unknown element/variant with 400 before persist.
+- **Persistence:** stored additively in `SystemConfig.pageLayout.elementVariants`
+  (no migration). Loaded as baseline on editor open; cleared on template apply.
+
+### E2E (browser, 10 steps + edge cases) — all pass
+voteCTA picker (stateful element) → pick chunky-stamp → editor preview + live
+home both render it → save → DB carries it → reload persists → banner minimal-line
+picked + saved together → reset voteCTA → falls back to default while banner
+override survives → invalid DB variant falls back to default + console warn →
+API 400 on fake-variant/unknown-element/bad-shape.
+
+### Key lessons (P-LOG-048..051)
+- Editor lives outside `.fms-app` → picker needs its own token scope (P-LOG-048)
+- voteCTA is stateful → picker must mount before the stateful-vs-flat branch;
+  spec's literal snippet would have failed (P-LOG-049)
+- Registry-driven API validation rejects before persist (P-LOG-050)
+- Editor home preview lacks token scope → var()-based identity can collapse
+  there (live page is faithful); D11 follow-up (P-LOG-051)
+
+### Deferred to Day 11
+- Theme token editor (Layer 1 color pickers)
+- Per-element Layer 2 vars panel
+- Editor-preview token scope unification (P-LOG-051)
 
 ---
 
