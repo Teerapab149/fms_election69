@@ -19,6 +19,7 @@ import PropertyPanel from './editor/PropertyPanel';
 import HomeContent from '../HomeContent';
 import { buildTemplateStyles } from '../../lib/templateTokens';
 import { BUILT_IN_TEMPLATES } from './editor/templates';
+import TokenEditor from './editor/TokenEditor';
 import {
   DUMMY_ELECTION,
 } from '../../utils/editorDummyData';
@@ -619,6 +620,12 @@ export default function PageDesignTab() {
   // token edits (themeTokens). HomeContent injects this string as the
   // .fms-app <style> in editor mode — closes P-LOG-051 (editor had no scope).
   // Layer 2 var overrides (editor.elementVars) merge in here in Step F.
+  // Active template's base Layer 1 tokens (the 15 defaults) for the TokenEditor.
+  const activeBaseTokens = useMemo(
+    () => (BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic).theme?.tokens || {},
+    [activeTemplateId]
+  );
+
   const editorTokenStyles = useMemo(() => {
     const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
     const merged = {
@@ -884,6 +891,18 @@ export default function PageDesignTab() {
           ))}
         </div>
       </div>
+
+      {/* Day 11: Theme Token Editor (Tier 1) — global Layer 1 tokens.
+          Shown on home where the live preview reflects token edits. */}
+      {selectedPage === 'home' && (
+        <TokenEditor
+          tokens={activeBaseTokens}
+          overrides={editor.themeTokens}
+          onSetToken={editor.setThemeToken}
+          onResetToken={editor.resetThemeToken}
+          onResetAll={editor.resetAllThemeTokens}
+        />
+      )}
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
         <div className="flex items-center gap-3 mb-4">
