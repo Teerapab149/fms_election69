@@ -311,7 +311,7 @@ export default function HomeContent({
                   {titlePart}
                 </span>
                 {numberPart && (
-                  <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
+                  <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[var(--color-primary)] to-[#D946EF] drop-shadow-md relative">
                     {numberPart}
                     <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping" />
                   </span>
@@ -324,7 +324,7 @@ export default function HomeContent({
           <Wrap id="hero-subtitle">
             <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
               {getText('hero-subtitle', globalConfig.campaignTitle).replace(globalConfig.committeeName, '')}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-[#D946EF]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[#D946EF]">
                 {globalConfig.committeeName}
               </span>
             </h2>
@@ -341,7 +341,7 @@ export default function HomeContent({
           {isVisible('hero-year-badge') && (
             <Wrap id="hero-year-badge">
               <div className="flex justify-center lg:justify-start pt-1">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[var(--color-primary)] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
                   <Calendar className="w-3.5 h-3.5" />
                   {yearBadgeText}
                 </span>

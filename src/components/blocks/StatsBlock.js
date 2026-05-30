@@ -92,7 +92,7 @@ export default function StatsBlock({
       {/* Header */}
       <Wrap id="stats-header">
         <div className="flex items-center gap-3 mb-4 px-1">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-purple-100 shadow-sm text-[#8A2680]">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-purple-100 shadow-sm text-[var(--color-primary)]">
             <TrendingUp className="w-5 h-5" />
             <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
