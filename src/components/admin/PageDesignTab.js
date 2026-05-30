@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { getEncryptedToken } from '../../utils/auth';
@@ -264,7 +264,32 @@ function LivePreview({
   const isMobile = deviceMode === 'mobile';
   const currentPage = getPageById(selectedPage);
 
-  const desktopScale = 0.42;
+  // P2.1: fit-to-container canvas. Render the page at a fixed desktop design
+  // width, then scale it down to fill the (variable) preview column — readable,
+  // responsive, and no horizontal bleed (replaces the fixed scale(0.42)+238% hack).
+  const DESIGN_W = 1280;
+  const boxRef = useRef(null);
+  const contentRef = useRef(null);
+  const [fit, setFit] = useState({ scale: 0.42, height: 650 });
+
+  useEffect(() => {
+    if (isMobile) return;
+    const box = boxRef.current;
+    const content = contentRef.current;
+    if (!box || !content) return;
+    const measure = () => {
+      const bw = box.clientWidth;
+      if (!bw) return;
+      const scale = Math.min(bw / DESIGN_W, 1);
+      const naturalH = content.scrollHeight || content.offsetHeight || 0;
+      setFit({ scale, height: Math.max(naturalH * scale, 200) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [isMobile, selectedPage, deviceMode, pageLayout, editorProps, editorTokenStyles]);
 
   const handleOpenNewTab = () => {
     if (typeof window !== 'undefined') {
@@ -401,6 +426,7 @@ function LivePreview({
       </div>
 
       <div
+        ref={boxRef}
         className="relative bg-slate-100/50 overflow-y-auto overflow-x-hidden"
         style={{ height: '650px' }}
         onClickCapture={(e) => {
@@ -419,8 +445,14 @@ function LivePreview({
             </div>
           </div>
         ) : (
-          <div className="origin-top-left" style={{ transform: `scale(${desktopScale})`, transformOrigin: 'top left', width: `${100 / desktopScale}%` }}>
-            {renderPreview(deviceMode)}
+          <div style={{ height: `${fit.height}px` }}>
+            <div
+              ref={contentRef}
+              className="origin-top-left"
+              style={{ transform: `scale(${fit.scale})`, transformOrigin: 'top left', width: `${DESIGN_W}px` }}
+            >
+              {renderPreview(deviceMode)}
+            </div>
           </div>
         )}
       </div>
