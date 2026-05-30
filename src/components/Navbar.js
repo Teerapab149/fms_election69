@@ -114,12 +114,12 @@ export default function Navbar() {
             className={`
               group relative flex items-center gap-2 px-5 py-2 rounded-full ml-2 transition-all duration-300
               ${pathname.startsWith('/candidates') || pathname.startsWith('/party')
-                ? 'bg-gradient-to-r from-purple-100 to-pink-50 text-[#8A2680] shadow-inner font-bold'
-                : 'bg-white hover:bg-purple-50 text-slate-600 hover:text-[#8A2680] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5'
+                ? 'bg-gradient-to-r from-purple-100 to-pink-50 text-[var(--color-primary,#8A2680)] shadow-inner font-bold'
+                : 'bg-white hover:bg-purple-50 text-slate-600 hover:text-[var(--color-primary,#8A2680)] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5'
               }
             `}
           >
-            <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[#8A2680] via-purple-400 to-pink-400 opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
+            <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[var(--color-primary,#8A2680)] via-purple-400 to-pink-400 opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
               <div className="w-full h-full rounded-full bg-white group-hover:bg-purple-50 transition-colors"></div>
             </div>
 
@@ -127,7 +127,7 @@ export default function Navbar() {
               size={18}
               className={`
                 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12 
-                ${pathname.startsWith('/candidates') ? 'text-[#8A2680] fill-purple-200' : 'text-slate-400 group-hover:text-[#8A2680]'}
+                ${pathname.startsWith('/candidates') ? 'text-[var(--color-primary,#8A2680)] fill-purple-200' : 'text-slate-400 group-hover:text-[var(--color-primary,#8A2680)]'}
               `}
             />
 
@@ -143,10 +143,10 @@ export default function Navbar() {
                 className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100/80 transition-all duration-200 border border-transparent hover:border-gray-200 group"
               >
                 <div className="hidden xl:block text-right mr-1">
-                  <p className="text-sm font-bold text-gray-700 group-hover:text-[#8A2680] leading-none transition-colors">{user.name}</p>
+                  <p className="text-sm font-bold text-gray-700 group-hover:text-[var(--color-primary,#8A2680)] leading-none transition-colors">{user.name}</p>
                   <p className="text-[10px] text-gray-400 font-medium">{user.studentId || user.email}</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#8A2680] to-purple-400 flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary,#8A2680)] to-purple-400 flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105">
                   <User size={20} />
                 </div>
                 <ChevronDown size={16} className={`text-gray-400 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
@@ -181,7 +181,7 @@ export default function Navbar() {
 
         {/* ================= Hamburger Button ================= */}
         <button
-          className="lg:hidden p-2 text-[#8A2680] rounded-xl hover:bg-purple-50 transition-colors focus:outline-none"
+          className="lg:hidden p-2 text-[var(--color-primary,#8A2680)] rounded-xl hover:bg-purple-50 transition-colors focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? (
@@ -203,7 +203,7 @@ export default function Navbar() {
 
           {isLoggedIn && (
             <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-2xl mb-4 border border-purple-100 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#8A2680] flex items-center justify-center text-white shadow-sm border border-grey-200">
+              <div className="w-12 h-12 rounded-full bg-[var(--color-primary,#8A2680)] flex items-center justify-center text-white shadow-sm border border-grey-200">
                 <User size={24} />
               </div>
               <div>
@@ -253,14 +253,14 @@ function NavButton({ href, label, isActive }) {
       className="relative px-4 py-2 group"
     >
       <span className={`relative z-10 text-sm font-bold transition-colors duration-300 
-        ${isActive ? 'text-[#8A2680]' : 'text-gray-500 group-hover:text-[#8A2680]'}`}
+        ${isActive ? 'text-[var(--color-primary,#8A2680)]' : 'text-gray-500 group-hover:text-[var(--color-primary,#8A2680)]'}`}
       >
         {label}
       </span>
-      <span className={`absolute inset-0 bg-[#8A2680]/5 rounded-lg transform transition-all duration-300 ease-out origin-center
+      <span className={`absolute inset-0 bg-[var(--color-primary,#8A2680)]/5 rounded-lg transform transition-all duration-300 ease-out origin-center
         ${isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100'}`}>
       </span>
-      <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-[#8A2680] transition-all duration-300 ease-in-out
+      <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-[var(--color-primary,#8A2680)] transition-all duration-300 ease-in-out
         ${isActive ? 'w-1/2 opacity-100' : 'w-0 opacity-0 group-hover:w-1/2 group-hover:opacity-50'}`}>
       </span>
     </Link>
@@ -275,12 +275,12 @@ function MobileNavLink({ href, label, onClick, isActive }) {
       className={`
         relative flex items-center w-full px-5 py-3 text-sm font-bold transition-all duration-200 rounded-xl overflow-hidden
         ${isActive
-          ? 'bg-purple-50 text-[#8A2680]'
+          ? 'bg-purple-50 text-[var(--color-primary,#8A2680)]'
           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         }
       `}
     >
-      <span className={`absolute left-0 top-0 h-full w-1.5 bg-[#8A2680] rounded-r-full transition-all duration-300 ease-out origin-left
+      <span className={`absolute left-0 top-0 h-full w-1.5 bg-[var(--color-primary,#8A2680)] rounded-r-full transition-all duration-300 ease-out origin-left
          ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`}>
       </span>
 
