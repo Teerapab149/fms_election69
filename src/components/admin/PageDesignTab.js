@@ -473,6 +473,10 @@ export default function PageDesignTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  // Pillar 4 — Save as Template (heritage)
+  const [saveTplOpen, setSaveTplOpen] = useState(false);
+  const [newTplName, setNewTplName] = useState('');
+  const [savingTpl, setSavingTpl] = useState(false);
   const [pendingPresetId, setPendingPresetId] = useState(null);
   const [isApplying, setIsApplying] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
@@ -611,9 +615,9 @@ export default function PageDesignTab() {
 
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
 
-  useEffect(() => {
+  const fetchTemplates = useCallback(() => {
     const encryptedToken = getEncryptedToken();
-    fetch(getPath('/api/admin/templates'), {
+    return fetch(getPath('/api/admin/templates'), {
       credentials: 'include',
       headers: { 'x-admin-token': encryptedToken || '' },
     })
@@ -627,6 +631,8 @@ export default function PageDesignTab() {
       .catch(err => console.error('[load templates]', err))
       .finally(() => setLoadingTemplates(false));
   }, []);
+
+  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
   useEffect(() => {
     if (!originalJSON) return;
@@ -894,6 +900,75 @@ export default function PageDesignTab() {
     }
   };
 
+  // Pillar 4: assemble a frozen snapshot of the current design (deep copy, D5).
+  // base built-in template + admin edits (tokens, variants, configs, vars).
+  const buildTemplateSnapshot = () => {
+    const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
+    const theme = {
+      ...JSON.parse(JSON.stringify(base.theme || {})),
+      tokens: { ...(base.theme?.tokens || {}), ...editor.themeTokens },
+    };
+    const baseEls = base.elements || {};
+    const ids = new Set([
+      ...Object.keys(baseEls),
+      ...Object.keys(editor.elementConfigs || {}),
+      ...Object.keys(editor.elementVariants || {}),
+      ...Object.keys(editor.elementVars || {}),
+    ]);
+    const elements = {};
+    for (const id of ids) {
+      const b = baseEls[id] || {};
+      const entry = {};
+      const variant = editor.elementVariants?.[id] ?? b.variant;
+      if (variant !== undefined) entry.variant = variant;
+      const config = editor.elementConfigs?.[id]?.config ?? b.config;
+      if (config !== undefined) entry.config = JSON.parse(JSON.stringify(config));
+      const mergedVars = { ...(b.vars || {}), ...(editor.elementVars?.[id] || {}) };
+      if (Object.keys(mergedVars).length > 0) entry.vars = mergedVars;
+      elements[id] = entry;
+    }
+    const pages = JSON.parse(JSON.stringify(base.pages || {}));
+    return { pages, elements, theme };
+  };
+
+  const handleSaveAsTemplate = async () => {
+    const name = newTplName.trim();
+    if (!name || savingTpl) return;
+    setSavingTpl(true);
+    try {
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) throw new Error('Auth token generation failed');
+      const snapshot = buildTemplateSnapshot();
+      const slug = `tpl-${Date.now().toString(36)}`;
+      const res = await fetch(getPath('/api/admin/templates'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
+        body: JSON.stringify({
+          slug,
+          name,
+          description: `บันทึกจาก ${activeTemplate?.name || activeTemplateId}`,
+          forkedFrom: activeTemplateId,
+          visibility: 'public',
+          ...snapshot,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || `HTTP ${res.status}`);
+      }
+      await fetchTemplates();
+      setSaveTplOpen(false);
+      setNewTplName('');
+      setDraftMsg({ title: 'บันทึก Template สำเร็จ', msg: `"${name}" ถูกเพิ่มเข้าคลัง Template แล้ว — รุ่นต่อไปหยิบไปใช้ได้` });
+    } catch (err) {
+      console.error('Save as template failed:', err);
+      setErrorMsg({ title: 'บันทึก Template ล้มเหลว', msg: err.message || 'เกิดข้อผิดพลาด' });
+      setErrorOpen(true);
+    } finally {
+      setSavingTpl(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -989,6 +1064,16 @@ export default function PageDesignTab() {
             />
           ))}
         </div>
+
+        {/* Pillar 4 — Save as new template (heritage) */}
+        <button
+          type="button"
+          onClick={() => { setNewTplName(''); setSaveTplOpen(true); }}
+          className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#8A2680]/40 text-[#8A2680] text-xs font-bold hover:bg-purple-50 transition-colors active:scale-95"
+        >
+          <Save className="w-3.5 h-3.5" />
+          บันทึกดีไซน์นี้เป็น Template ใหม่
+        </button>
       </div>
 
       {/* Day 11: Theme Token Editor (Tier 1) — global Layer 1 tokens. */}
@@ -1435,6 +1520,58 @@ export default function PageDesignTab() {
         title={errorMsg.title}
         message={errorMsg.msg}
       />
+
+      {/* Pillar 4 — Save as Template name modal */}
+      {saveTplOpen && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          onClick={() => !savingTpl && setSaveTplOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-1">
+              <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
+                <Save className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-slate-800">บันทึกเป็น Template ใหม่</h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-4 ml-[52px] -mt-1">
+              เก็บดีไซน์ปัจจุบันเข้าคลัง — รุ่นต่อไปหยิบไปใช้ได้
+            </p>
+            <label className="text-xs font-semibold text-slate-600">ชื่อ Template</label>
+            <input
+              type="text"
+              autoFocus
+              value={newTplName}
+              onChange={(e) => setNewTplName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveAsTemplate(); }}
+              placeholder="เช่น Aurora 2569"
+              className="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/15"
+            />
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                type="button"
+                onClick={() => setSaveTplOpen(false)}
+                disabled={savingTpl}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAsTemplate}
+                disabled={!newTplName.trim() || savingTpl}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#8A2680] text-white shadow-sm hover:bg-[#751f6c] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {savingTpl ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {savingTpl ? 'กำลังบันทึก...' : 'บันทึก'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
