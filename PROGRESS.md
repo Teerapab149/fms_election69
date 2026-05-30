@@ -5,6 +5,28 @@
 
 ---
 
+## Same-day follow-on (after Day 11) — Admin UX + Tokenization
+
+**Admin editor UX (PageDesignTab) — Phase 1 ✅ + Phase 2 partial.**
+See `.specs/ADMIN_UX_NOTES.md` for full analysis + remaining plan.
+- P1.1 `33a977f` — fix horizontal overflow (admin shell `min-w-0` + grid fr units)
+- P1.2 `4f09840` — sticky action topbar (pinned Save/Publish)
+- P1.3 `9bd2eac` — PropertyPanel pinned to right column (instant feedback on select)
+- P2.1 `1f079db` — canvas fit-to-container (ResizeObserver, design 1280px) replaces scale hack
+- P2.3 `6e1f8bb` — visual polish (unify accent icons to brand; Theme Tokens collapsed default)
+- 🔜 **P2.2 LEFT RAIL (deferred)** — true 3-pane restructure; big, touches all 6 pages. Do fresh.
+
+**Tokenization (make the Day 11 token editor recolor live pages).**
+See `.specs/TOKENIZATION_NOTES.md` for backlog + patterns.
+- Pass 1 `66889f0` — HomeContent hero gradients + year badge + StatsBlock icon → var(--color-primary)
+- Pass 2 `cc8b5fa` — Navbar (13) → var(--color-primary,#8A2680) with fallback
+- `cd6616c` — **token scope moved to layout level → every page inherits theme** (the unblock)
+- 🔜 remaining (mechanical): voteCTA + stats-card (config-driven), meet card, results/vote/closed/success components
+
+All verified in-browser + pushed (`486efad..cd6616c`). Key lessons → DECISIONS P-LOG (this session).
+
+---
+
 ## Phase 1 Week 3 Day 11 — Theme Token Editor + Tier 2 Vars (Editor Tier 1+2) ✅ COMPLETE
 
 **Day 11 (Tier 1 theme token editor + Tier 2 per-element vars panel): ✅ DONE.**
