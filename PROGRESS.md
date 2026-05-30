@@ -14,16 +14,23 @@ See `.specs/ADMIN_UX_NOTES.md` for full analysis + remaining plan.
 - P1.3 `9bd2eac` — PropertyPanel pinned to right column (instant feedback on select)
 - P2.1 `1f079db` — canvas fit-to-container (ResizeObserver, design 1280px) replaces scale hack
 - P2.3 `6e1f8bb` — visual polish (unify accent icons to brand; Theme Tokens collapsed default)
-- 🔜 **P2.2 LEFT RAIL (deferred)** — true 3-pane restructure; big, touches all 6 pages. Do fresh.
+- P2.2 `0c06658` — **LEFT RAIL done** — 3-zone [sidebar | rail: Template+Theme+Pages+Sections | work: canvas+properties]. Not a literal 3rd column (sidebar 256px would squeeze canvas); rail holds setup. **Admin UX Phase 1+2 COMPLETE.**
 
 **Tokenization (make the Day 11 token editor recolor live pages).**
 See `.specs/TOKENIZATION_NOTES.md` for backlog + patterns.
 - Pass 1 `66889f0` — HomeContent hero gradients + year badge + StatsBlock icon → var(--color-primary)
 - Pass 2 `cc8b5fa` — Navbar (13) → var(--color-primary,#8A2680) with fallback
 - `cd6616c` — **token scope moved to layout level → every page inherits theme** (the unblock)
-- 🔜 remaining (mechanical): voteCTA + stats-card (config-driven), meet card, results/vote/closed/success components
+- Pass 3 `93d4472` — /results page (ResultsStatsBar 5 + ResultCard 5 + demographics icon)
+- 🔜 remaining = type-B config (classic.js voteCTA/stats-card/vote-badge/success) — has color-math landmines (e.g. `${shadowColor}66`); modest payoff. Deferred.
 
-All verified in-browser + pushed (`486efad..cd6616c`). Key lessons → DECISIONS P-LOG (this session).
+**Pillar 4 — Save as New Template (heritage) ✅ `53705aa`.** Snapshot the
+current design (theme tokens + element variant/config/vars + pages, deep copy)
+→ POST existing /api/admin/templates → appears in picker → applyable. The
+10-year heritage feature. E2E verified (save → picker → apply).
+
+All verified in-browser + pushed (`486efad..53705aa`). New lessons (P-LOG-052..057
++ patterns) noted in reflections; pending append to DECISIONS.md.
 
 ---
 
