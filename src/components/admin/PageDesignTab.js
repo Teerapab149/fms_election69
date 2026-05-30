@@ -876,6 +876,40 @@ export default function PageDesignTab() {
   return (
     <div className="space-y-6 animate-fade-in">
 
+      {/* Sticky action topbar (Phase 1) — pinned Save/Publish + current page */}
+      <div className="sticky top-0 z-30 -mx-6 md:-mx-8 px-6 md:px-8 py-3 bg-gray-50/85 backdrop-blur-md border-b border-slate-200/70 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-bold text-slate-800 shrink-0">ออกแบบหน้าเว็บ</span>
+          <span className="text-slate-300 shrink-0">·</span>
+          <span className="text-xs text-slate-500 truncate">
+            กำลังแก้ไข <span className="font-semibold text-slate-700">{getPageById(selectedPage)?.name}</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {(hasChanges || editor.hasUnsavedChanges) && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              ยังไม่เผยแพร่
+            </span>
+          )}
+          <button
+            onClick={handleSaveDraft}
+            className="flex items-center gap-2 px-3.5 py-2 bg-white text-slate-700 rounded-lg text-sm font-semibold border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+          >
+            <Save className="w-4 h-4" />
+            <span className="hidden sm:inline">บันทึกร่าง</span>
+          </button>
+          <button
+            onClick={() => setConfirmOpen(true)}
+            disabled={(!hasChanges && !editor.hasUnsavedChanges) || saving}
+            className="flex items-center gap-2 px-4 py-2 bg-[#8A2680] text-white rounded-lg text-sm font-semibold shadow-sm transition-all hover:bg-[#751f6c] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#8A2680]"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+            {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -958,46 +992,6 @@ export default function PageDesignTab() {
               </button>
             );
           })}
-        </div>
-      </div>
-
-      {/* ✅ แถบ Action Bar (เปลี่ยนเป็น 2 ปุ่ม: บันทึกร่าง vs เผยแพร่) */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white px-5 py-3 rounded-2xl border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-2 text-sm text-slate-500 w-full md:w-auto">
-          <Info className="w-4 h-4 text-slate-400 shrink-0" />
-          <span className="truncate">กำลังแก้ไข: <span className="font-bold text-slate-700">{getPageById(selectedPage)?.name}</span></span>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-          {hasChanges && (
-            <span className="hidden md:inline-flex text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 animate-pulse">
-              ● ยังไม่ได้เผยแพร่
-            </span>
-          )}
-
-          {/* ปุ่มบันทึกฉบับร่าง */}
-          <button
-            onClick={handleSaveDraft}
-            className="flex flex-1 md:flex-none justify-center items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold transition-all hover:bg-slate-200 active:scale-95 border border-slate-200"
-          >
-            <Save className="w-4 h-4" />
-            บันทึกร่าง
-          </button>
-
-          {/* ปุ่มเผยแพร่ขึ้นเว็บจริง */}
-          <div className="relative flex-1 md:flex-none">
-            {editor.hasUnsavedChanges && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-orange-500 animate-pulse ring-2 ring-white z-10" />
-            )}
-            <button
-              onClick={() => setConfirmOpen(true)}
-              disabled={(!hasChanges && !editor.hasUnsavedChanges) || saving}
-              className="w-full flex justify-center items-center gap-2 px-5 py-2.5 bg-[#8A2680] text-white rounded-xl text-sm font-bold transition-all shadow-md hover:bg-purple-800 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-              {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่จริง'}
-            </button>
-          </div>
         </div>
       </div>
 
