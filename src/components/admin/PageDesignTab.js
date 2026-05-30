@@ -1077,23 +1077,6 @@ export default function PageDesignTab() {
             </div>
           )}
 
-          {selectedPage === 'home' && (
-            <PropertyPanel
-              selectedElement={editor.selectedElement}
-              elementConfigs={editor.elementConfigs}
-              pageLayout={livePageLayout}
-              elementVariants={editor.elementVariants}
-              onSetVariant={editor.setElementVariant}
-              onResetVariant={editor.resetElementVariant}
-              elementVars={editor.elementVars}
-              onSetVar={editor.setElementVar}
-              onResetVar={editor.resetElementVar}
-              onUpdateConfig={editor.updateElementConfig}
-              onApplyPreset={handleApplyPresetToElement}
-              onDeselect={editorClearSelection}
-            />
-          )}
-
           {selectedPage === 'vote' && (
             <div className="space-y-4">
               <div className="bg-white rounded-2xl border border-slate-200 p-4">
@@ -1181,22 +1164,6 @@ export default function PageDesignTab() {
               </div>
             </div>
 
-              {editor.selectedElement && (
-                <PropertyPanel
-                  selectedElement={editor.selectedElement}
-                  elementConfigs={editor.elementConfigs}
-                  pageLayout={livePageLayout}
-                  elementVariants={editor.elementVariants}
-                  onSetVariant={editor.setElementVariant}
-                  onResetVariant={editor.resetElementVariant}
-                  elementVars={editor.elementVars}
-                  onSetVar={editor.setElementVar}
-                  onResetVar={editor.resetElementVar}
-                  onUpdateConfig={editor.updateElementConfig}
-                  onApplyPreset={handleApplyPresetToElement}
-                  onDeselect={editorClearSelection}
-                />
-              )}
             </div>
           )}
 
@@ -1208,22 +1175,6 @@ export default function PageDesignTab() {
                 onMove={(index, dir) => handleOtherMove('candidates', index, dir)}
                 onToggleVisible={(index) => handleOtherToggleVisible('candidates', index)}
               />
-              {editor.selectedElement && (
-                <PropertyPanel
-                  selectedElement={editor.selectedElement}
-                  elementConfigs={editor.elementConfigs}
-                  pageLayout={livePageLayout}
-                  elementVariants={editor.elementVariants}
-                  onSetVariant={editor.setElementVariant}
-                  onResetVariant={editor.resetElementVariant}
-                  elementVars={editor.elementVars}
-                  onSetVar={editor.setElementVar}
-                  onResetVar={editor.resetElementVar}
-                  onUpdateConfig={editor.updateElementConfig}
-                  onApplyPreset={handleApplyPresetToElement}
-                  onDeselect={editorClearSelection}
-                />
-              )}
             </div>
           )}
 
@@ -1315,22 +1266,6 @@ export default function PageDesignTab() {
                 onMove={(index, dir) => handleOtherMove('results', index, dir)}
                 onToggleVisible={(index) => handleOtherToggleVisible('results', index)}
               />
-              {editor.selectedElement && (
-                <PropertyPanel
-                  selectedElement={editor.selectedElement}
-                  elementConfigs={editor.elementConfigs}
-                  pageLayout={livePageLayout}
-                  elementVariants={editor.elementVariants}
-                  onSetVariant={editor.setElementVariant}
-                  onResetVariant={editor.resetElementVariant}
-                  elementVars={editor.elementVars}
-                  onSetVar={editor.setElementVar}
-                  onResetVar={editor.resetElementVar}
-                  onUpdateConfig={editor.updateElementConfig}
-                  onApplyPreset={handleApplyPresetToElement}
-                  onDeselect={editorClearSelection}
-                />
-              )}
             </div>
           )}
 
@@ -1387,7 +1322,9 @@ export default function PageDesignTab() {
 
         </div>
 
-        <div className="hidden lg:block lg:sticky lg:top-6">
+        <div className="lg:sticky lg:top-[72px] lg:self-start space-y-4">
+          {/* Canvas — desktop only */}
+          <div className="hidden lg:block">
           <LivePreview
             selectedPage={selectedPage}
             pageLayout={livePageLayout}
@@ -1412,6 +1349,25 @@ export default function PageDesignTab() {
                 }
                 : null
             }
+          />
+          </div>
+
+          {/* Property panel — pinned beside the canvas (Phase 1 P1.3).
+              Desktop: inline in this sticky column → instant feedback on select.
+              Mobile: PropertyPanel renders its own fixed bottom-sheet. */}
+          <PropertyPanel
+            selectedElement={editor.selectedElement}
+            elementConfigs={editor.elementConfigs}
+            pageLayout={livePageLayout}
+            elementVariants={editor.elementVariants}
+            onSetVariant={editor.setElementVariant}
+            onResetVariant={editor.resetElementVariant}
+            elementVars={editor.elementVars}
+            onSetVar={editor.setElementVar}
+            onResetVar={editor.resetElementVar}
+            onUpdateConfig={editor.updateElementConfig}
+            onApplyPreset={handleApplyPresetToElement}
+            onDeselect={editorClearSelection}
           />
         </div>
       </div>
