@@ -1118,6 +1118,98 @@ Tags: `#editor-preview` `#css-vars` `#fms-app` `#fidelity` `#deferred`
 
 ---
 
+### P-LOG-052: [2026-05-30] Day 11 — Never run `npm run build` while the dev preview server is running
+
+**Symptom:** After running `npm run build` (build gate) while `next dev`
+(the preview server) was live, the editor route started returning 500
+"Internal Server Error", the browser preview went blank (bodyLen 21), and
+the console showed an endless `[Fast Refresh] rebuilding` churn. Cost two
+full server restarts to diagnose (looked like a code bug; it wasn't — the
+same code compiled clean once the server was stopped first).
+
+**Root cause:** `next build` and `next dev` share the `.next/` directory.
+Building while dev runs overwrites/half-writes dev artifacts → corrupt
+manifests → SSR 500s. This is the Windows `.next` manifest race
+(P-LOG-027/035) triggered deliberately by overlapping build + dev.
+
+**Mitigation rule:** The dev preview server is the runtime verification
+channel. Do NOT build while it runs. When a build gate is needed:
+`preview_stop` → `rm -rf .next` → `npm run build` → `preview_start` →
+re-warm (home first, then admin). Rely on the dev server's own compile +
+console for intermediate steps; build-gate only at step boundaries with the
+server stopped.
+
+**Tags:** `#dev-server` `#next-build` `#.next-race` `#windows` `#verification`
+
+---
+
+### P-LOG-053: [2026-05-30] Day 11 — Editor preview token scope: build the <style> upstream, leave config-resolution untouched
+
+**Context:** Closing P-LOG-051 (editor preview had no Layer 1/2 token scope
+because `resolvedTemplate` is null in `editorMode`). The tempting fix —
+pass a real `resolvedTemplate` into the editor `HomeContent` — would also
+change `resolveStatefulConfig(resolvedTemplate, ...)` and `pageBg`, i.e.
+alter the editor's config-resolution path (risk of silent behaviour change
+in voteCTA/countdown editor preview).
+
+**Decision:** Keep `resolvedTemplate` null in the editor. Instead,
+PageDesignTab compiles `editorTokenStyles` via
+`buildTemplateStyles(BUILT_IN_TEMPLATES[activeTemplateId] + overrides)`
+(sync built-in map — no fetch) and threads it as a string prop;
+`HomeContent` injects it as the `.fms-app <style>` in editor mode only.
+Only the `<style>` source changed — config resolution untouched, zero
+side-effects. Bonus: fixed the Day-10 banner-border-0px-in-editor symptom.
+
+**Lesson:** When a channel needs new derived output (a token scope), prefer
+threading the prebuilt artifact over re-routing an existing data source that
+has other consumers. Smaller blast radius, easier to reason about.
+
+**Tags:** `#editor-preview` `#unified-pipeline` `#blast-radius` `#BUILT_IN_TEMPLATES`
+
+---
+
+### P-LOG-054: [2026-05-30] Day 11 — Layer 2 template vars are var() references, not concrete values (Tier 2 UX)
+
+**Context:** Tier 2 panel edits Layer 2 vars like `--btn-bg`. But templates
+declare them as references — classic's `--btn-bg: "var(--color-primary)"` —
+not hex. A color picker can't render "var(--color-primary)" as a swatch.
+
+**Decision (Day 11):** For color-type Layer 2 controls, display the override
+if present, else EMPTY (ColorPickerInput shows its neutral default and the
+admin picks a concrete value that overrides the reference). For text-type
+vars (radius/shadow/padding) show override-or-empty too. The reference base
+keeps driving the element until an override is set.
+
+**Related reality:** a token/var edit only visibly recolors elements that
+actually consume the var. Many home elements still hardcode `#8A2680` in
+Tailwind (ADR success-criterion "all blocks consume vars" is not fully met).
+So the editor working (var resolves in scope, persists, overlays live) is
+distinct from full visual propagation — the latter is a tokenization-
+completeness task, tracked separately, not a Day 11 bug.
+
+**Tags:** `#tier2` `#css-vars` `#layer2` `#tokenization` `#ux`
+
+---
+
+### P-LOG-055: [2026-05-30] Day 11 — One effectiveTemplate overlay now merges variant + tokens + vars
+
+**Context:** Day 10 introduced `effectiveTemplate` in HomeContent to overlay
+variant choices. Day 11 extended the SAME merge point to also overlay
+`pageLayout.themeTokens` (Layer 1) onto `theme.tokens` and
+`pageLayout.elementVars.home[id]` (Layer 2) onto `elements[id].vars`, then
+builds the live `.fms-app <style>` from `effectiveTemplate`.
+
+**Why it matters:** all three admin override surfaces (variant, tokens,
+vars) resolve in one place, upstream of the wrapper blocks and
+`buildTemplateStyles`. Wrapper components stay unchanged. No-override case
+returns `resolvedTemplate` unchanged (byte-faithful). This is the D11
+unified-pipeline paying off — adding a new override surface = one more merge
+clause + one editor-preview wiring, not a new pipeline.
+
+**Tags:** `#unified-pipeline` `#cascade` `#effectiveTemplate` `#additive`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

@@ -5,6 +5,57 @@
 
 ---
 
+## Phase 1 Week 3 Day 11 — Theme Token Editor + Tier 2 Vars (Editor Tier 1+2) ✅ COMPLETE
+
+**Day 11 (Tier 1 theme token editor + Tier 2 per-element vars panel): ✅ DONE.**
+Admin can now recolor the whole template (Layer 1 tokens) and override a
+single element's style (Layer 2 vars) from the editor — both live, persisted,
+validated. ADR-001 "Day 10-11 Editor Tier 1" block is complete.
+
+| Step | Scope | Commit |
+|------|-------|--------|
+| A | useEditorState themeTokens + elementVars slices | `c7c227d` |
+| Pre-step | Editor preview emits `.fms-app` token scope (close P-LOG-051) | `8ef4508` |
+| B | TokenEditor (Tier 1) — 15 tokens, grouped, live | `e88076f` |
+| C | API persist + validate themeTokens/elementVars (400 on bad) | `72a4ab5` |
+| D | HomeContent live overlay (effectiveTemplate) — **Layer 1 checkpoint** | `d77c9dd` |
+| E+F | ElementVarsPanel (Tier 2) + editor/live overlay | `d496674` |
+| Final | DECISIONS (P-LOG-052..055) + PROGRESS | (this commit) |
+
+### What ships
+- **TokenEditor (Tier 1, Layer 1):** collapsible card in PageDesignTab, 7 colors
+  + 4 radii + 2 shadows + 2 fonts. Edit → whole page recolors live. Per-token
+  + reset-all. Stored sparse in `pageLayout.themeTokens`.
+- **ElementVarsPanel (Tier 2, Layer 2):** in PropertyPanel next to the variant
+  picker; curated vars for voteCTA-button (6) + banner-section (3). Edit →
+  only that element changes. Stored in `pageLayout.elementVars.home[id]`.
+- **Cascade (one overlay, both channels):** `effectiveTemplate` in HomeContent
+  merges variant > tokens > vars onto the resolved template; editor preview
+  builds its `.fms-app` scope from `editorTokenStyles` (BUILT_IN_TEMPLATES +
+  live edits). P-LOG-051 closed.
+- **API:** 400 on unknown token key / empty value / non-`--` var name, before persist.
+
+### E2E (browser) — all pass
+Tier 1: edit Primary → editor + live `--color-primary` #8A2680→#1188ff → save
+→ DB → reload persists → reset-all restores. Tier 2: edit voteCTA `--btn-bg`
+→ editor + live element scope #00aa55 → save → DB. API 400s verified.
+
+### Key lessons (P-LOG-052..055)
+- Never `npm run build` while the dev preview server runs — shared `.next`
+  corrupts → 500s (P-LOG-052). Stop → rm .next → build → restart.
+- Editor token scope: build `<style>` upstream, leave config-resolution
+  untouched (P-LOG-053).
+- Layer 2 template vars are var() refs, not hex → Tier 2 shows override-or-empty
+  for colors; visible recolor bounded by element tokenization (P-LOG-054).
+- One effectiveTemplate overlay now merges variant+tokens+vars (P-LOG-055).
+
+### Deferred
+- Element tokenization completeness (replace hardcoded `#8A2680` in home blocks
+  with var(--color-*)) so token edits fully propagate visually
+- Tier 3 (Layer 3 custom CSS), save-as-new-template (heritage), layout slots
+
+---
+
 ## Phase 1 Week 3 Day 10 — Variant Picker UI (Editor Tier 1 Part 1) ✅ COMPLETE
 
 **Day 10 (variant picker with live mini-previews + persistence): ✅ DONE.**
