@@ -12,6 +12,7 @@ import {
 } from "./controls/SharedInputs";
 import QuickStyleBar from "./QuickStyleBar";
 import VariantPicker from "./VariantPicker.jsx";
+import ElementVarsPanel from "./ElementVarsPanel.jsx";
 import { isStatefulElement, getBinding, getElement } from "./elementCatalog";
 import StatefulGallery from "./StatefulGallery";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../../contexts/GlobalConfigContext";
@@ -97,6 +98,10 @@ export default function PropertyPanel({
   elementVariants,
   onSetVariant,
   onResetVariant,
+  // Day 11 — Tier 2 per-element vars
+  elementVars,
+  onSetVar,
+  onResetVar,
 }) {
   const globalConfig = useGlobalConfig();
   const { updateField, isUpdating } = useGlobalConfigUpdate();
@@ -112,6 +117,17 @@ export default function PropertyPanel({
       isOverridden={!!elementVariants && selectedElement in elementVariants}
       onSelect={(variantId) => onSetVariant?.(selectedElement, variantId)}
       onReset={() => onResetVariant?.(selectedElement)}
+    />
+  ) : null;
+
+  // Day 11 Tier 2: per-element Layer 2 var panel (self-hides when the element
+  // type has no curated vars). Rendered next to the variant picker.
+  const elementVarsPanelEl = selectedElement ? (
+    <ElementVarsPanel
+      elementId={selectedElement}
+      overrides={elementVars?.[selectedElement] || {}}
+      onSetVar={(varKey, value) => onSetVar?.(selectedElement, varKey, value)}
+      onResetVar={(varKey) => onResetVar?.(selectedElement, varKey)}
     />
   ) : null;
 
@@ -155,6 +171,7 @@ export default function PropertyPanel({
         </div>
 
         {variantPickerEl}
+        {elementVarsPanelEl}
 
         <div className="px-4 py-4 overflow-y-auto lg:max-h-[calc(100vh-200px)]">
           <StatefulGallery
@@ -269,8 +286,9 @@ export default function PropertyPanel({
         </button>
       </div>
 
-      {/* Variant picker (Day 10) — above QuickStyleBar per audit Q5 */}
+      {/* Variant picker (Day 10) + Tier 2 vars (Day 11) — above QuickStyleBar */}
       {variantPickerEl}
+      {elementVarsPanelEl}
 
       {/* QuickStyleBar */}
       <div className="px-4 py-3 border-b border-slate-100 shrink-0">

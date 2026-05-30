@@ -633,15 +633,23 @@ export default function PageDesignTab() {
 
   const editorTokenStyles = useMemo(() => {
     const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
+    // Day 11: overlay Layer 2 var edits onto the template's element vars so the
+    // editor preview reflects per-element style edits live.
+    const mergedElements = { ...(base.elements || {}) };
+    for (const id of Object.keys(editor.elementVars || {})) {
+      const e = mergedElements[id] || {};
+      mergedElements[id] = { ...e, vars: { ...(e.vars || {}), ...editor.elementVars[id] } };
+    }
     const merged = {
       ...base,
       theme: {
         ...base.theme,
         tokens: { ...(base.theme?.tokens || {}), ...editor.themeTokens },
       },
+      elements: mergedElements,
     };
     return buildTemplateStyles(merged, '.fms-app');
-  }, [activeTemplateId, editor.themeTokens]);
+  }, [activeTemplateId, editor.themeTokens, editor.elementVars]);
 
   const requestApplyTemplate = (slug) => setPendingPresetId(slug);
 
@@ -1083,6 +1091,9 @@ export default function PageDesignTab() {
               elementVariants={editor.elementVariants}
               onSetVariant={editor.setElementVariant}
               onResetVariant={editor.resetElementVariant}
+              elementVars={editor.elementVars}
+              onSetVar={editor.setElementVar}
+              onResetVar={editor.resetElementVar}
               onUpdateConfig={editor.updateElementConfig}
               onApplyPreset={handleApplyPresetToElement}
               onDeselect={editorClearSelection}
@@ -1184,6 +1195,9 @@ export default function PageDesignTab() {
                   elementVariants={editor.elementVariants}
                   onSetVariant={editor.setElementVariant}
                   onResetVariant={editor.resetElementVariant}
+                  elementVars={editor.elementVars}
+                  onSetVar={editor.setElementVar}
+                  onResetVar={editor.resetElementVar}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
@@ -1208,6 +1222,9 @@ export default function PageDesignTab() {
                   elementVariants={editor.elementVariants}
                   onSetVariant={editor.setElementVariant}
                   onResetVariant={editor.resetElementVariant}
+                  elementVars={editor.elementVars}
+                  onSetVar={editor.setElementVar}
+                  onResetVar={editor.resetElementVar}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
@@ -1312,6 +1329,9 @@ export default function PageDesignTab() {
                   elementVariants={editor.elementVariants}
                   onSetVariant={editor.setElementVariant}
                   onResetVariant={editor.resetElementVariant}
+                  elementVars={editor.elementVars}
+                  onSetVar={editor.setElementVar}
+                  onResetVar={editor.resetElementVar}
                   onUpdateConfig={editor.updateElementConfig}
                   onApplyPreset={handleApplyPresetToElement}
                   onDeselect={editorClearSelection}
