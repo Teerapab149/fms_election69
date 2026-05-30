@@ -32,7 +32,7 @@ export default function ResultsDemographics({
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8 animate-fade-in-up">
           <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
             <div className="flex items-center gap-3 mb-4 lg:mb-8">
-              <div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[#8A2680]" /></div>
+              <div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[var(--color-primary,#8A2680)]" /></div>
               <h3 className="text-base lg:text-xl font-bold text-slate-700">แยกตามสาขา</h3>
             </div>
             <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">

@@ -104,7 +104,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
         {!isWaiting && (
           <div className={`
               absolute top-0 left-0 flex items-center justify-center font-bold text-white shadow-sm
-              ${isWinner ? 'w-8 h-8 lg:w-10 lg:h-10 text-sm lg:text-lg rounded-br-xl bg-yellow-500' : 'hidden lg:flex w-10 h-10 text-lg rounded-br-xl bg-[#8A2680]'}
+              ${isWinner ? 'w-8 h-8 lg:w-10 lg:h-10 text-sm lg:text-lg rounded-br-xl bg-yellow-500' : 'hidden lg:flex w-10 h-10 text-lg rounded-br-xl bg-[var(--color-primary,#8A2680)]'}
               ${showHidden ? 'bg-slate-400' : ''} 
           `}>
             {showScore ? `#${rank}` : "?"}
@@ -119,7 +119,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
       `}>
         <div className="flex justify-between items-start mb-1 lg:mb-3 gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className={`font-bold text-slate-800 truncate leading-tight group-hover:text-[#8A2680] transition-colors ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
+            <h3 className={`font-bold text-slate-800 truncate leading-tight group-hover:text-[var(--color-primary,#8A2680)] transition-colors ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
               {candidate.name || "ไม่ระบุชื่อพรรค"}
             </h3>
             <div className="flex items-center gap-2 mt-0.5 text-slate-500">
@@ -141,7 +141,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
           {showScore && (
             <>
               <div className="flex items-end justify-between mb-1">
-                <span className={`font-black leading-none ${isWinner ? 'text-2xl text-yellow-600' : 'text-xl text-[#8A2680]'} lg:text-2xl`}>
+                <span className={`font-black leading-none ${isWinner ? 'text-2xl text-yellow-600' : 'text-xl text-[var(--color-primary,#8A2680)]'} lg:text-2xl`}>
                   {candidate.score.toLocaleString()}
                 </span>
                 <span className="text-[10px] lg:text-xs text-slate-400 font-medium">
@@ -153,7 +153,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
                   className={`h-full rounded-full transition-all duration-1000 ease-out 
                         ${isWinner
                       ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
-                      : (isVoteNo ? 'bg-orange-400' : isDisapprove ? 'bg-red-500' : 'bg-gradient-to-r from-purple-400 to-[#8A2680]')
+                      : (isVoteNo ? 'bg-orange-400' : isDisapprove ? 'bg-red-500' : 'bg-gradient-to-r from-purple-400 to-[var(--color-primary,#8A2680)]')
                     }`}
                   style={{ width: `${percentage}%` }}
                 />
@@ -166,7 +166,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
-                  <Activity size={14} className="animate-pulse text-[#8A2680]" />
+                  <Activity size={14} className="animate-pulse text-[var(--color-primary,#8A2680)]" />
                   {isEnded ? "Counting Votes..." : "Voting in progress..."}
                 </span>
                 <Lock size={14} className="text-slate-300" />
