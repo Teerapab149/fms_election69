@@ -1012,7 +1012,7 @@ export default function PageDesignTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[45%,55%] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)] gap-6 items-start">
         <div className="space-y-6">
 
           {selectedPage === 'home' && (
