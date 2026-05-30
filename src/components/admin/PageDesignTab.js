@@ -945,7 +945,7 @@ export default function PageDesignTab() {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-pink-50 to-purple-50 text-purple-600 p-2.5 rounded-xl">
+            <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
               <Palette className="h-6 w-6" />
             </div>
             <div>
@@ -993,7 +993,7 @@ export default function PageDesignTab() {
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
         <div className="flex items-center gap-3 mb-4">
-          <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl">
+          <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
             <FileText className="h-6 w-6" />
           </div>
           <div>
@@ -1044,7 +1044,7 @@ export default function PageDesignTab() {
           {selectedPage === 'home' && (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-6">
-                <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
+                <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
                   <LayoutGrid className="h-6 w-6" />
                 </div>
                 <div>
@@ -1143,7 +1143,7 @@ export default function PageDesignTab() {
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-6">
-                <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl"><Vote className="h-6 w-6" /></div>
+                <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl"><Vote className="h-6 w-6" /></div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-700">ตั้งค่าหน้าลงคะแนน (Multi-Party)</h3>
                   <p className="text-xs text-slate-400 mt-0.5">ปรับแต่ง layout ของหน้าเลือกพรรค</p>

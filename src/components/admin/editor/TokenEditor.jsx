@@ -92,7 +92,7 @@ export default function TokenEditor({
   onResetToken,         // (key) => void
   onResetAll,           // () => void
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const overrideCount = Object.keys(overrides).length;
 
   const valueOf = (key) => (key in overrides ? overrides[key] : tokens[key]) || "";
@@ -107,7 +107,7 @@ export default function TokenEditor({
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-3 text-left min-w-0 flex-1 group"
         >
-          <div className="bg-gradient-to-br from-pink-50 to-purple-50 text-purple-600 p-2.5 rounded-xl shrink-0">
+          <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl shrink-0">
             <Palette className="h-5 w-5" />
           </div>
           <div className="min-w-0">
