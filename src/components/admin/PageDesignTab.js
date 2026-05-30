@@ -942,28 +942,40 @@ export default function PageDesignTab() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
-              <Palette className="h-6 w-6" />
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobilePreviewOpen(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <Sparkles className="w-4 h-4 text-purple-500" />
+          ดู Preview
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] gap-6 items-start">
+        {/* LEFT RAIL — setup + page structure (Phase 2 P2.2) */}
+        <div className="space-y-4 lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto lg:pr-1 lg:sticky lg:top-[68px]">
+
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-purple-50 text-[#8A2680] p-2 rounded-lg">
+              <Palette className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                เลือก Template
-                <Sparkles className="w-4 h-4 text-amber-400" />
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">เลือกธีมสำเร็จรูป แล้วปรับแต่งเพิ่มเติมได้</p>
+              <h3 className="text-sm font-bold text-slate-700">เลือก Template</h3>
+              <p className="text-[11px] text-slate-400">ธีมสำเร็จรูป ปรับแต่งต่อได้</p>
             </div>
           </div>
-          <span className="text-xs font-bold px-3 py-1.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full border bg-purple-50 text-purple-700 border-purple-200 shrink-0">
             ● {activeTemplate?.name || activeTemplateId}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           {loadingTemplates && (
-            <div className="col-span-4 flex items-center gap-2 text-sm text-slate-400 py-4">
+            <div className="col-span-2 flex items-center gap-2 text-sm text-slate-400 py-4">
               <Loader2 className="w-4 h-4 animate-spin" />
               กำลังโหลด templates...
             </div>
@@ -979,8 +991,7 @@ export default function PageDesignTab() {
         </div>
       </div>
 
-      {/* Day 11: Theme Token Editor (Tier 1) — global Layer 1 tokens.
-          Shown on home where the live preview reflects token edits. */}
+      {/* Day 11: Theme Token Editor (Tier 1) — global Layer 1 tokens. */}
       {selectedPage === 'home' && (
         <TokenEditor
           tokens={activeBaseTokens}
@@ -991,18 +1002,15 @@ export default function PageDesignTab() {
         />
       )}
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
-            <FileText className="h-6 w-6" />
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="bg-purple-50 text-[#8A2680] p-2 rounded-lg">
+            <FileText className="h-5 w-5" />
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-700">เลือกหน้าที่ต้องการแก้ไข</h3>
-            <p className="text-xs text-slate-400 mt-0.5">คลิกหน้าเพื่อแก้ไข section และ layout ของหน้านั้น</p>
-          </div>
+          <h3 className="text-sm font-bold text-slate-700">เลือกหน้าที่ต้องการแก้ไข</h3>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-wrap lg:overflow-visible lg:pb-0 -mx-1 px-1">
+        <div className="flex flex-wrap gap-2">
           {EDITABLE_PAGES.map((page) => {
             const IconComp = PAGE_ICON_MAP[page.icon] || LayoutGrid;
             const isActive = selectedPage === page.id;
@@ -1011,35 +1019,17 @@ export default function PageDesignTab() {
                 key={page.id}
                 type="button"
                 onClick={() => setSelectedPage(page.id)}
-                className={`flex items-center gap-2 shrink-0 px-4 py-2 rounded-full text-sm font-bold border-2 transition-all duration-300 ease-out ${isActive ? 'bg-[#8A2680] text-white border-[#8A2680] shadow-lg shadow-purple-500/30 scale-[1.02]' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-200 hover:text-purple-700 hover:shadow-sm'
+                className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all duration-200 ${isActive ? 'bg-[#8A2680] text-white border-[#8A2680] shadow-md shadow-purple-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-200 hover:text-purple-700'
                   }`}
               >
-                <IconComp className="w-4 h-4" />
-                <span className="flex flex-col items-start leading-tight">
-                  <span>{page.name}</span>
-                  <span className={`text-[9px] font-mono tracking-wide ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
-                    {page.path}
-                  </span>
-                </span>
+                <IconComp className="w-3.5 h-3.5" />
+                {page.name}
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="lg:hidden">
-        <button
-          type="button"
-          onClick={() => setMobilePreviewOpen(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm hover:shadow-md transition-shadow"
-        >
-          <Sparkles className="w-4 h-4 text-purple-500" />
-          ดู Preview
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)] gap-6 items-start">
-        <div className="space-y-6">
 
           {selectedPage === 'home' && (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
