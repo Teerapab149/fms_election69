@@ -231,35 +231,43 @@ export default function HomeContent({
   // which also emits per-element [data-element=X] rules for any element entry
   // with a `vars: {...}` object (Layer 2). Elements without `vars` contribute
   // nothing — backwards-compatible with Day 5/6 templates.
-  // Day 11: editor channel injects a token scope built upstream in
-  // PageDesignTab (active template tokens + Layer 1 edits + Layer 2 vars),
-  // so token/var edits are visible in the editor preview — closes P-LOG-051.
-  // Live channel builds from the resolved template (token overlay = Step D).
-  const tokenStylesCss = editorMode
-    ? (editorTokenStyles || '')
-    : buildTemplateStyles(resolvedTemplate, '.fms-app');
-
-  // Day 10: overlay admin per-element variant choices onto the template.
-  // Cascade: pageLayout.elementVariants.home[id] > template variant > 'default'.
-  // pageLayout carries elementVariants from the DB (live page) or from the
-  // editor's in-memory state (preview, threaded via livePageLayout), so this
-  // single overlay serves both channels (D11 unified pipeline). Wrapper blocks
-  // (VoteCTABlock/ElectionBannerBlock) still read template.elements[id].variant
-  // unchanged — the cascade is resolved here, upstream of them.
+  // Day 10 + 11: overlay admin choices onto the resolved template (live channel).
+  // Cascades, all sourced from pageLayout (DB on live page):
+  //   variant (Day 10): elementVariants.home[id] > template variant > 'default'
+  //   tokens  (Day 11): themeTokens[k]            > template.theme.tokens[k]
+  //   vars    (Day 11): elementVars.home[id][k]   > template.elements[id].vars[k]
+  // Wrapper blocks still read template.elements[id].variant; buildTemplateStyles
+  // reads theme.tokens + elements[].vars — all resolved here, upstream of them.
   const elementVariantOverrides = pageLayout?.elementVariants?.home || {};
+  const themeTokenOverrides = pageLayout?.themeTokens || {};
+  const elementVarOverrides = pageLayout?.elementVars?.home || {};
   const effectiveTemplate = (() => {
-    const overrideIds = Object.keys(elementVariantOverrides);
-    if (overrideIds.length === 0) return resolvedTemplate;
+    const hasVariant = Object.keys(elementVariantOverrides).length > 0;
+    const hasTokens = Object.keys(themeTokenOverrides).length > 0;
+    const hasVars = Object.keys(elementVarOverrides).length > 0;
+    if (!hasVariant && !hasTokens && !hasVars) return resolvedTemplate;
     const baseElements = resolvedTemplate?.elements || {};
     const mergedElements = { ...baseElements };
-    for (const id of overrideIds) {
-      mergedElements[id] = {
-        ...(baseElements[id] || {}),
-        variant: elementVariantOverrides[id],
-      };
+    for (const id of Object.keys(elementVariantOverrides)) {
+      mergedElements[id] = { ...(baseElements[id] || {}), variant: elementVariantOverrides[id] };
     }
-    return { ...(resolvedTemplate || {}), elements: mergedElements };
+    for (const id of Object.keys(elementVarOverrides)) {
+      const base = mergedElements[id] || {};
+      mergedElements[id] = { ...base, vars: { ...(base.vars || {}), ...elementVarOverrides[id] } };
+    }
+    const baseTheme = resolvedTemplate?.theme || {};
+    const mergedTheme = hasTokens
+      ? { ...baseTheme, tokens: { ...(baseTheme.tokens || {}), ...themeTokenOverrides } }
+      : baseTheme;
+    return { ...(resolvedTemplate || {}), theme: mergedTheme, elements: mergedElements };
   })();
+
+  // Editor channel injects a token scope built upstream in PageDesignTab
+  // (closes P-LOG-051). Live channel builds from effectiveTemplate so saved
+  // Layer 1 token + Layer 2 var overrides apply on the real page.
+  const tokenStylesCss = editorMode
+    ? (editorTokenStyles || '')
+    : buildTemplateStyles(effectiveTemplate, '.fms-app');
 
   const ed = editorData || {};
 
