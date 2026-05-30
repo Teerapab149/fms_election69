@@ -3,6 +3,16 @@ import { db } from "../../../../lib/db";
 import { hasVariant } from "../../../../components/elements/registry.js";
 import crypto from "crypto";
 
+// Day 11: allow-list of the 15 Layer 1 theme tokens (ADR-001 / VISION D9).
+// Unknown keys are rejected so a typo can't poison the live token scope.
+const VALID_TOKEN_KEYS = new Set([
+  "--color-primary", "--color-accent", "--color-bg", "--color-surface",
+  "--color-text", "--color-text-muted", "--color-border",
+  "--radius-sm", "--radius-md", "--radius-card", "--radius-button",
+  "--shadow-card", "--shadow-button",
+  "--font-display", "--font-body",
+]);
+
 const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
   ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
   : null;
@@ -103,6 +113,43 @@ export async function PUT(request) {
               { error: `Invalid variant "${variantId}" for element "${elementId}"` },
               { status: 400 }
             );
+          }
+        }
+      }
+    }
+
+    // Day 11: validate Layer 1 theme token overrides — strict key allow-list,
+    // non-empty string values. Rejects typos before they hit the live scope.
+    const { themeTokens, elementVars } = body;
+    if (themeTokens && typeof themeTokens === "object") {
+      for (const [key, value] of Object.entries(themeTokens)) {
+        if (!VALID_TOKEN_KEYS.has(key)) {
+          return NextResponse.json({ error: `Unknown theme token "${key}"` }, { status: 400 });
+        }
+        if (typeof value !== "string" || value.trim() === "") {
+          return NextResponse.json({ error: `Invalid value for theme token "${key}"` }, { status: 400 });
+        }
+      }
+    }
+
+    // Day 11: validate Layer 2 per-element var overrides — var name must be a
+    // CSS custom property (-- prefix), value a non-empty string.
+    if (elementVars && typeof elementVars === "object") {
+      for (const [pageId, elementMap] of Object.entries(elementVars)) {
+        if (!elementMap || typeof elementMap !== "object") {
+          return NextResponse.json({ error: `Invalid elementVars for page "${pageId}"` }, { status: 400 });
+        }
+        for (const [elementId, varMap] of Object.entries(elementMap)) {
+          if (!varMap || typeof varMap !== "object") {
+            return NextResponse.json({ error: `Invalid elementVars for element "${elementId}"` }, { status: 400 });
+          }
+          for (const [varKey, val] of Object.entries(varMap)) {
+            if (!varKey.startsWith("--") || typeof val !== "string" || val.trim() === "") {
+              return NextResponse.json(
+                { error: `Invalid var "${varKey}" for element "${elementId}"` },
+                { status: 400 }
+              );
+            }
           }
         }
       }

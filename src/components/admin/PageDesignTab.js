@@ -458,6 +458,8 @@ export default function PageDesignTab() {
   const {
     replaceAllConfigs: editorReplaceAllConfigs,
     replaceAllVariants: editorReplaceAllVariants,
+    replaceAllThemeTokens: editorReplaceAllThemeTokens,
+    replaceAllElementVars: editorReplaceAllElementVars,
     commitBaseline: editorMarkSaved,
     clearSelection: editorClearSelection,
     updateElementConfig: editorUpdateElementConfig,
@@ -561,6 +563,9 @@ export default function PageDesignTab() {
       editorReplaceAllConfigs(initialElementConfigs, true);
       // Day 10: load saved per-element variant overrides as the baseline.
       editorReplaceAllVariants(data?.elementVariants?.home || {}, true);
+      // Day 11: load saved Layer 1 token + Layer 2 var overrides as baseline.
+      editorReplaceAllThemeTokens(data?.themeTokens || {}, true);
+      editorReplaceAllElementVars(data?.elementVars?.home || {}, true);
 
       const snapshot = JSON.stringify({ home, vote: normalizedVote, theme: loadedTheme, other: loadedOther });
       setOriginalJSON(snapshot);
@@ -570,7 +575,7 @@ export default function PageDesignTab() {
     } finally {
       setLoading(false);
     }
-  }, [editorReplaceAllConfigs, editorReplaceAllVariants]);
+  }, [editorReplaceAllConfigs, editorReplaceAllVariants, editorReplaceAllThemeTokens, editorReplaceAllElementVars]);
 
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
 
@@ -672,6 +677,10 @@ export default function PageDesignTab() {
       // the new template's own variant fields become the source of truth
       // (audit Q2). Cleared (not baselined) so the switch is a pending change.
       editorReplaceAllVariants({});
+      // Day 11: applying a template also discards token + var overrides — the
+      // new template's own tokens/vars become the truth.
+      editorReplaceAllThemeTokens({});
+      editorReplaceAllElementVars({});
 
       if (template.theme) {
         setTheme({ ...DEFAULT_THEME, ...template.theme });
@@ -777,6 +786,8 @@ export default function PageDesignTab() {
       theme,
       elementConfigs: { home: editor.elementConfigs },
       elementVariants: { home: editor.elementVariants },
+      themeTokens: editor.themeTokens,
+      elementVars: { home: editor.elementVars },
       ...otherPages,
     };
     localStorage.setItem('preview_draft', JSON.stringify(previewData));
@@ -809,6 +820,8 @@ export default function PageDesignTab() {
         theme,
         elementConfigs: { home: editor.elementConfigs },
         elementVariants: { home: editor.elementVariants },
+        themeTokens: editor.themeTokens,
+        elementVars: { home: editor.elementVars },
         ...normalizedOther,
       };
 
