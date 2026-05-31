@@ -20,6 +20,7 @@ import HomeContent from '../HomeContent';
 import { buildTemplateStyles } from '../../lib/templateTokens';
 import { BUILT_IN_TEMPLATES } from './editor/templates';
 import TokenEditor from './editor/TokenEditor';
+import ElementLibraryPanel from './editor/ElementLibraryPanel';
 import {
   DUMMY_ELECTION,
 } from '../../utils/editorDummyData';
@@ -1163,6 +1164,13 @@ export default function PageDesignTab() {
           onResetAll={editor.resetAllThemeTokens}
         />
       )}
+
+      {/* Pillar 1 — Element Library (catalog browser + variant swap) */}
+      <ElementLibraryPanel
+        elementVariants={editor.elementVariants}
+        onSelectVariant={editor.setElementVariant}
+        onResetVariant={editor.resetElementVariant}
+      />
 
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <div className="flex items-center gap-2.5 mb-3">

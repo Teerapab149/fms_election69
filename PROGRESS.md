@@ -5,6 +5,33 @@
 
 ---
 
+## Pillar 1 — Element Library, slice 1 (catalog browser + variant swap) ✅ (P-LOG-060)
+
+The "คลังสมบัติ" — an organized, browsable catalog of every element type.
+
+**Files:** `src/components/admin/editor/ElementLibraryPanel.jsx` (new) +
+`PageDesignTab.js` (import + mount in left rail, ungated/global).
+
+**What ships:**
+- Collapsible panel: 47 element types grouped by registry category, relabeled to
+  Thai (ปุ่ม / แบนเนอร์ / ข้อมูล / ข้อความ / รูปภาพ); empty navigation/layout hidden.
+- Search filter (name/description/id).
+- Per type: variant-count + "ตามสถานะ" (stateful) badges.
+- Multi-variant types (voteCTA-button:3, banner-section:2) expand inline to the
+  existing `VariantPicker` — real live mini-previews; click applies via
+  `editor.setElementVariant` → editor preview + live page reflect the swap.
+- Honest: 45 single-variant types are read-only rows; library grows as devs add
+  variants (heritage). NO fake previews.
+
+**Verified (browser):** 5 Thai categories (6/3/8/26/4 = 47); search "countdown"→1;
+expand voteCTA → 3 live previews; apply Chunky Stamp → editor preview voteCTA
+renders border 3px + hard `5px 5px 0 #000` shadow + uppercase + fw 800.
+
+**Deferred (slice 2+):** per-page inventory; live previews for more types;
+drag-new-element onto slot (needs slot architecture).
+
+---
+
 ## Editor Live Preview — hover flicker fix ✅ (P-LOG-059)
 
 **User report:** hovering an element in the admin "ออกแบบหน้าเว็บ" Live Preview

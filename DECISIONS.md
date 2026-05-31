@@ -1320,6 +1320,41 @@ detached (remount). After: 6/6 home wraps + all 4 other pages survive.
 
 ---
 
+### P-LOG-060: [2026-05-31] Pillar 1 Element Library slice 1 — catalog browser that reuses VariantPicker (no fake previews)
+
+**Context:** Build the "คลังสมบัติ" Element Library. Honest constraint: only 2 of
+47 element types have live-renderable variants (voteCTA-button:3, banner-section:2);
+the other 45 are single "default" with no standalone component → cannot show a
+live preview without faking it (violates the no-placeholder standard).
+
+**Approach used:** `ElementLibraryPanel.jsx` — a collapsible catalog grouped by
+the registry's categories (relabeled to Thai), with search. Each type shows
+name + variant-count + stateful badges. Multi-variant types expand inline to the
+EXISTING `VariantPicker` (real live mini-previews of the variant components),
+clicking applies via `editor.setElementVariant(typeId, variant)`. Single-variant
+types are honest read-only rows. Mounted in the left rail (ungated — global), the
+catalog drives the variant-swap that already worked per-element in PropertyPanel.
+
+**Why this shape:** reuse over rebuild — VariantPicker already solves live preview
++ apply for the wired types; the Library is the organized index on top. Element
+TYPE id === element INSTANCE id for these singletons, so the Library can apply
+overrides directly without canvas selection.
+
+**Verification (browser):** 47 types in 5 Thai categories (6/3/8/26/4; empty
+navigation/layout hidden); search "countdown" → 1 match; expand voteCTA → 3 live
+previews; click Chunky Stamp → editor preview voteCTA = border 3px + boxShadow
+`rgb(0,0,0) 5px 5px 0` + uppercase + fw 800 (chunky-stamp rendered live). NOTE: a
+mistimed read during an interleaved search test showed border 0 — re-ran isolated
+and it was correct; don't trust a single read taken mid-interaction.
+
+**Deferred (slice 2+):** per-page inventory view; live previews for more types as
+devs author variant components; dragging a NEW element onto a slot (needs slot
+architecture). Editor-preview fidelity for some elements still bounded by P-LOG-051.
+
+**Tags:** `#pillar-1` `#library` `#reuse` `#registry` `#no-placeholder` `#variant`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
