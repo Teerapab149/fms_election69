@@ -15,7 +15,7 @@ import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
 import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
 import { resolveStatefulConfig } from './admin/editor/templateEngine';
 import { getBinding, isBoundElement } from './admin/editor/elementCatalog';
-import { buildTemplateStyles } from '../lib/templateTokens';
+import { buildTemplateStyles, buildElementCss } from '../lib/templateTokens';
 import CountdownTimer from "../components/CountdownTimer";
 import { Calendar } from "lucide-react";
 import SiteFooter from './SiteFooter';
@@ -283,11 +283,15 @@ export default function HomeContent({
   })();
 
   // Editor channel injects a token scope built upstream in PageDesignTab
-  // (closes P-LOG-051). Live channel builds from effectiveTemplate so saved
-  // Layer 1 token + Layer 2 var overrides apply on the real page.
+  // (closes P-LOG-051; already includes Tier 3 custom CSS). Live channel builds
+  // from effectiveTemplate so saved Layer 1 token + Layer 2 var overrides apply
+  // on the real page, then appends Tier 3 per-element custom CSS (Layer 3).
   const tokenStylesCss = editorMode
     ? (editorTokenStyles || '')
-    : buildTemplateStyles(effectiveTemplate, '.fms-app');
+    : [
+        buildTemplateStyles(effectiveTemplate, '.fms-app'),
+        buildElementCss(pageLayout?.elementCss?.home, '.fms-app'),
+      ].filter(Boolean).join('\n\n');
 
   const ed = editorData || {};
 

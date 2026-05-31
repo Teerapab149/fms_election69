@@ -58,3 +58,29 @@ export function buildTemplateStyles(template, scope = ".fms-app") {
 
   return blocks.join("\n\n");
 }
+
+/**
+ * Pillar 3 Tier 3 — per-element custom CSS (Layer 3).
+ *
+ * Wraps each element's raw declaration string as a scoped rule
+ * `{scope} [data-element="X"]{ ... }`. The textarea holds DECLARATIONS only
+ * (e.g. `transform: rotate(-2deg);`), so the wrapper owns the braces and the
+ * admin can't accidentally (or maliciously) escape the element scope. We also
+ * strip `<`/`>` to block `</style>` injection. Dev-only feature (RSA-gated
+ * admin), but cheap defense is still worth it.
+ *
+ * @param {Object} cssMap - { [elementId]: "css declarations" }
+ * @param {string} scope  - CSS selector for the root (default ".fms-app")
+ * @returns {string} CSS text; empty when cssMap is missing or empty.
+ */
+export function buildElementCss(cssMap, scope = ".fms-app") {
+  if (!cssMap || typeof cssMap !== "object") return "";
+  const blocks = [];
+  for (const [elementId, raw] of Object.entries(cssMap)) {
+    if (typeof raw !== "string") continue;
+    const decls = raw.replace(/[<>]/g, "").trim();
+    if (!decls) continue;
+    blocks.push(`${scope} [data-element="${elementId}"] {\n${decls}\n}`);
+  }
+  return blocks.join("\n\n");
+}

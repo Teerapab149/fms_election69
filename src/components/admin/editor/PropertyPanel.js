@@ -13,6 +13,7 @@ import {
 import QuickStyleBar from "./QuickStyleBar";
 import VariantPicker from "./VariantPicker.jsx";
 import ElementVarsPanel from "./ElementVarsPanel.jsx";
+import CustomCssEditor from "./CustomCssEditor.jsx";
 import { isStatefulElement, getBinding, getElement } from "./elementCatalog";
 import StatefulGallery from "./StatefulGallery";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../../contexts/GlobalConfigContext";
@@ -102,6 +103,9 @@ export default function PropertyPanel({
   elementVars,
   onSetVar,
   onResetVar,
+  // Pillar 3 — Tier 3 per-element custom CSS
+  elementCss,
+  onSetCss,
 }) {
   const globalConfig = useGlobalConfig();
   const { updateField, isUpdating } = useGlobalConfigUpdate();
@@ -128,6 +132,16 @@ export default function PropertyPanel({
       overrides={elementVars?.[selectedElement] || {}}
       onSetVar={(varKey, value) => onSetVar?.(selectedElement, varKey, value)}
       onResetVar={(varKey) => onResetVar?.(selectedElement, varKey)}
+    />
+  ) : null;
+
+  // Pillar 3 Tier 3: per-element custom CSS (collapsed by default, self-hides
+  // when nothing selected). Rendered after the Tier 2 var panel in both branches.
+  const customCssEditorEl = selectedElement ? (
+    <CustomCssEditor
+      elementId={selectedElement}
+      value={elementCss?.[selectedElement] || ""}
+      onChange={(css) => onSetCss?.(selectedElement, css)}
     />
   ) : null;
 
@@ -172,6 +186,7 @@ export default function PropertyPanel({
 
         {variantPickerEl}
         {elementVarsPanelEl}
+        {customCssEditorEl}
 
         <div className="px-4 py-4 overflow-y-auto lg:max-h-[calc(100vh-200px)]">
           <StatefulGallery
@@ -286,9 +301,10 @@ export default function PropertyPanel({
         </button>
       </div>
 
-      {/* Variant picker (Day 10) + Tier 2 vars (Day 11) — above QuickStyleBar */}
+      {/* Variant picker (Day 10) + Tier 2 vars (Day 11) + Tier 3 CSS (Pillar 3) — above QuickStyleBar */}
       {variantPickerEl}
       {elementVarsPanelEl}
+      {customCssEditorEl}
 
       {/* QuickStyleBar */}
       <div className="px-4 py-3 border-b border-slate-100 shrink-0">

@@ -17,7 +17,7 @@ import SuccessEditorPreview from './SuccessEditorPreview';
 import useEditorState from './editor/useEditorState';
 import PropertyPanel from './editor/PropertyPanel';
 import HomeContent from '../HomeContent';
-import { buildTemplateStyles } from '../../lib/templateTokens';
+import { buildTemplateStyles, buildElementCss } from '../../lib/templateTokens';
 import { BUILT_IN_TEMPLATES } from './editor/templates';
 import TokenEditor from './editor/TokenEditor';
 import ElementLibraryPanel from './editor/ElementLibraryPanel';
@@ -547,6 +547,7 @@ export default function PageDesignTab() {
     replaceAllVariants: editorReplaceAllVariants,
     replaceAllThemeTokens: editorReplaceAllThemeTokens,
     replaceAllElementVars: editorReplaceAllElementVars,
+    replaceAllElementCss: editorReplaceAllElementCss,
     commitBaseline: editorMarkSaved,
     clearSelection: editorClearSelection,
     updateElementConfig: editorUpdateElementConfig,
@@ -653,6 +654,8 @@ export default function PageDesignTab() {
       // Day 11: load saved Layer 1 token + Layer 2 var overrides as baseline.
       editorReplaceAllThemeTokens(data?.themeTokens || {}, true);
       editorReplaceAllElementVars(data?.elementVars?.home || {}, true);
+      // Pillar 3: load saved per-element custom CSS (Layer 3) as baseline.
+      editorReplaceAllElementCss(data?.elementCss?.home || {}, true);
 
       const snapshot = JSON.stringify({ home, vote: normalizedVote, theme: loadedTheme, other: loadedOther });
       setOriginalJSON(snapshot);
@@ -743,10 +746,13 @@ export default function PageDesignTab() {
     };
   }, [activeTemplateId, editor.themeTokens, editor.elementVars]);
 
-  const editorTokenStyles = useMemo(
-    () => buildTemplateStyles(editorEffectiveTemplate, '.fms-app'),
-    [editorEffectiveTemplate]
-  );
+  const editorTokenStyles = useMemo(() => {
+    const base = buildTemplateStyles(editorEffectiveTemplate, '.fms-app');
+    // Pillar 3 Tier 3: append per-element custom CSS (Layer 3) so the editor
+    // preview reflects it live, same scope the live page uses (HomeContent).
+    const css = buildElementCss(editor.elementCss, '.fms-app');
+    return css ? `${base}\n\n${css}` : base;
+  }, [editorEffectiveTemplate, editor.elementCss]);
 
   const requestApplyTemplate = (slug) => setPendingPresetId(slug);
 
@@ -921,6 +927,7 @@ export default function PageDesignTab() {
       elementVariants: { home: editor.elementVariants },
       themeTokens: editor.themeTokens,
       elementVars: { home: editor.elementVars },
+      elementCss: { home: editor.elementCss },
       ...otherPages,
     };
     localStorage.setItem('preview_draft', JSON.stringify(previewData));
@@ -955,6 +962,7 @@ export default function PageDesignTab() {
         elementVariants: { home: editor.elementVariants },
         themeTokens: editor.themeTokens,
         elementVars: { home: editor.elementVars },
+        elementCss: { home: editor.elementCss },
         ...normalizedOther,
       };
 
@@ -1568,6 +1576,8 @@ export default function PageDesignTab() {
             elementVars={editor.elementVars}
             onSetVar={editor.setElementVar}
             onResetVar={editor.resetElementVar}
+            elementCss={editor.elementCss}
+            onSetCss={editor.setElementCss}
             onUpdateConfig={editor.updateElementConfig}
             onApplyPreset={handleApplyPresetToElement}
             onDeselect={editorClearSelection}

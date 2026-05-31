@@ -36,6 +36,12 @@ export default function useEditorState(initialConfigs = {}) {
   const [elementVars, setElementVars] = useState({});
   const [baselineElementVars, setBaselineElementVars] = useState({});
 
+  // Pillar 3 Tier 3: per-element custom CSS (Layer 3) — { [elementId]: cssString }.
+  // Raw declarations, wrapped as `.fms-app [data-element=id]{...}` at render time
+  // in both channels. Sparse: an empty string drops the element entry.
+  const [elementCss, setElementCssRaw] = useState({});
+  const [baselineElementCss, setBaselineElementCss] = useState({});
+
   const updateElementConfig = useCallback((elementId, key, value) => {
     setElementConfigs((prev) => {
       const current = prev[elementId] || {};
@@ -62,8 +68,9 @@ export default function useEditorState(initialConfigs = {}) {
     setElementVariants(baselineVariants);
     setThemeTokens(baselineThemeTokens);
     setElementVars(baselineElementVars);
+    setElementCssRaw(baselineElementCss);
     setSelectedElement(null);
-  }, [baseline, baselineVariants, baselineThemeTokens, baselineElementVars]);
+  }, [baseline, baselineVariants, baselineThemeTokens, baselineElementVars, baselineElementCss]);
 
   const resetElement = useCallback(
     (elementId) => {
@@ -172,6 +179,34 @@ export default function useEditorState(initialConfigs = {}) {
     if (markAsBaseline) setBaselineElementVars(next || {});
   }, []);
 
+  // Pillar 3 Tier 3: per-element custom CSS slice setters ------------------
+  // Set one element's custom CSS. Empty string drops the entry. No-op when unchanged.
+  const setElementCss = useCallback((elementId, css) => {
+    setElementCssRaw((prev) => {
+      if (prev[elementId] === css) return prev;
+      const next = { ...prev };
+      if (!css) delete next[elementId];
+      else next[elementId] = css;
+      return next;
+    });
+  }, []);
+
+  // Reset = delete the element's custom CSS entry.
+  const resetElementCss = useCallback((elementId) => {
+    setElementCssRaw((prev) => {
+      if (!(elementId in prev)) return prev;
+      const next = { ...prev };
+      delete next[elementId];
+      return next;
+    });
+  }, []);
+
+  // Load custom CSS overrides from DB (mirror of replaceAllConfigs).
+  const replaceAllElementCss = useCallback((next, markAsBaseline = false) => {
+    setElementCssRaw(next || {});
+    if (markAsBaseline) setBaselineElementCss(next || {});
+  }, []);
+
   const getElementConfig = useCallback(
     (elementId) => elementConfigs?.[elementId]?.config || {},
     [elementConfigs]
@@ -221,20 +256,29 @@ export default function useEditorState(initialConfigs = {}) {
       return false;
     }
   }, [elementVars, baselineElementVars]);
+  const elementCssDirty = useMemo(() => {
+    try {
+      return JSON.stringify(elementCss) !== JSON.stringify(baselineElementCss);
+    } catch {
+      return false;
+    }
+  }, [elementCss, baselineElementCss]);
   const hasUnsavedChanges =
     elementConfigsDirty ||
     statefulDirty ||
     elementVariantsDirty ||
     themeTokensDirty ||
-    elementVarsDirty;
+    elementVarsDirty ||
+    elementCssDirty;
 
   const commitBaseline = useCallback(() => {
     setBaseline(elementConfigs);
     setBaselineVariants(elementVariants);
     setBaselineThemeTokens(themeTokens);
     setBaselineElementVars(elementVars);
+    setBaselineElementCss(elementCss);
     setStatefulDirty(false);
-  }, [elementConfigs, elementVariants, themeTokens, elementVars]);
+  }, [elementConfigs, elementVariants, themeTokens, elementVars, elementCss]);
 
   // H-4 handlers — stateful element overrides
   const updateStatefulOverride = useCallback((elementId, stateId, key, value) => {
@@ -322,6 +366,11 @@ export default function useEditorState(initialConfigs = {}) {
     resetElementVar,
     resetElementVars,
     replaceAllElementVars,
+    // Pillar 3 — Tier 3 per-element custom CSS (Layer 3)
+    elementCss,
+    setElementCss,
+    resetElementCss,
+    replaceAllElementCss,
     // H-4 new
     sourceTemplate,
     elementOverrides,

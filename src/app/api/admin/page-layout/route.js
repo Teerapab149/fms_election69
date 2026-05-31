@@ -120,7 +120,7 @@ export async function PUT(request) {
 
     // Day 11: validate Layer 1 theme token overrides — strict key allow-list,
     // non-empty string values. Rejects typos before they hit the live scope.
-    const { themeTokens, elementVars } = body;
+    const { themeTokens, elementVars, elementCss } = body;
     if (themeTokens && typeof themeTokens === "object") {
       for (const [key, value] of Object.entries(themeTokens)) {
         if (!VALID_TOKEN_KEYS.has(key)) {
@@ -150,6 +150,25 @@ export async function PUT(request) {
                 { status: 400 }
               );
             }
+          }
+        }
+      }
+    }
+
+    // Pillar 3: validate Layer 3 per-element custom CSS — each value must be a
+    // string (raw declarations). Scoping + `<>` stripping happen at render time
+    // (buildElementCss); this is the shape gate before persist.
+    if (elementCss && typeof elementCss === "object") {
+      for (const [pageId, elementMap] of Object.entries(elementCss)) {
+        if (!elementMap || typeof elementMap !== "object") {
+          return NextResponse.json({ error: `Invalid elementCss for page "${pageId}"` }, { status: 400 });
+        }
+        for (const [elementId, css] of Object.entries(elementMap)) {
+          if (typeof css !== "string") {
+            return NextResponse.json(
+              { error: `Invalid custom CSS for element "${elementId}"` },
+              { status: 400 }
+            );
           }
         }
       }

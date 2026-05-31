@@ -1,11 +1,56 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-31
+**Last saved:** 2026-06-01
 **Branch:** `new-version`
 
 ---
 
-## 🌅 SESSION HANDOFF — read this first (for 2026-06-01 session)
+## 🌅 SESSION HANDOFF — read this first (for 2026-06-02 session)
+
+**Pillar 3 (Editor depth) shipped — Tier 2 full + Tier 3 custom CSS.** 3 atomic commits
+on `new-version` (on top of `4a8945f`, which was pushed). Build PASS, browser-verified
+with the user logged in, live page restored clean, dev server stopped.
+
+### ✅ Done today (Pillar 3)
+1. **Tier 2 depth (no-code).** `ElementVarsPanel` regrouped into 4 collapsible sections
+   exposing ALL 17 `voteCTA-button` Layer 2 vars (was 6). New visual builders in
+   `controls/SharedInputs.js`: `GradientPicker` (dir + 2–3 stops + on/off),
+   `ShadowControl` (presets + X/Y/blur/opacity), `PxSlider` (emits `"<n>px"`),
+   `SelectInput`. banner-section unchanged (3 vars). Pure-additive — reused the whole
+   existing `elementVars` cascade.
+2. **Tier 3 custom CSS (expert).** New `elementCss` slice in `useEditorState` (mirrors
+   `elementVars`); `buildElementCss(map, scope)` helper; `CustomCssEditor.jsx`
+   (collapsed, dev warning, declarations-only textarea); wired through PropertyPanel,
+   PageDesignTab (editor inject + payload + load), HomeContent (live inject), and API
+   validation. Stored at `pageLayout.elementCss.home[id]`.
+3. Verified live: text-transform var + `transform: rotate(-2deg)` custom CSS apply in
+   editor AND on the real `/` page, persist through Publish→reload, reset clean.
+   P-LOG-062 (Tier 3 scoping) + P-LOG-063 (don't harvest admin token) written.
+
+### ⚠️ Known debts / gotchas (carry forward)
+- **API 400 for `elementCss` NOT exercised live** — auth-gating needs a token; verified
+  by code-mirror vs the shipped `elementVars` gate (P-LOG-063). Low risk.
+- **Tier 2 visible effect is bounded by element tokenization** (P-LOG-054): on voteCTA,
+  `--btn-bg`/`--btn-bg-gradient`/`--btn-shadow`/padding are masked by Layer 3 config, so
+  they were verified via the emitted CSS rule, not the rendered button. `--btn-text-transform`
+  / `--btn-letter-spacing` ARE consumed unconditionally (default.jsx:109-110) → fully visible.
+- Only voteCTA-button (17) + banner-section (3) have Layer 2 vars. Other elements need
+  vars declared in templates before they get a Tier 2 panel (no fake knobs).
+- shadow color round-trip is lossy (rgba→hex for the picker) — acceptable for a builder.
+- DB-active (non-built-in) template still falls back to classic in editor preview (old debt).
+
+### 🧭 Tomorrow — pick ONE
+1. **Tier 2 for more elements** — declare Layer 2 vars on more element types in templates,
+   then add schema entries (grows the no-code surface honestly).
+2. **Element tokenization completeness** — replace hardcoded config values on voteCTA with
+   `var(--btn-*)` so the gradient/shadow/padding Tier 2 controls become *visibly* live
+   (closes the P-LOG-054 gap). Highest payoff for "it actually changes the button".
+3. **Library slice 2** — per-page inventory ("หน้านี้ใช้ component อะไรบ้าง").
+4. **Pillar 2 slice 2** — page thumbnails (needs scaled render pipeline; bigger).
+
+---
+
+## (previous) SESSION HANDOFF (for 2026-06-01 session)
 
 **Branch `new-version`. 4 commits today, ALL LOCAL (not pushed yet):**
 ```
