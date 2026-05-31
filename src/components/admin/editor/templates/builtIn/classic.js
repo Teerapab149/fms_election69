@@ -327,9 +327,11 @@ export const classicTemplate = {
       variant: "default",
       config: { visible: true, borderColor: "#ffffff" },
       vars: {
-        "--banner-bg":     "var(--color-surface)",
-        "--banner-border": "var(--color-border)",
-        "--banner-radius": "var(--radius-card)"
+        "--banner-bg":           "var(--color-surface)",
+        "--banner-border":       "var(--color-border)",
+        "--banner-border-width": "1px",
+        "--banner-radius":       "var(--radius-card)",
+        "--banner-shadow":       "0 25px 50px -12px rgba(0,0,0,0.25)"
       }
     },
 

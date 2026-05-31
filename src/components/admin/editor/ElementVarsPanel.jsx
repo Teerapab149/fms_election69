@@ -80,11 +80,13 @@ const ELEMENT_VAR_SCHEMA = {
   ],
   "banner-section": [
     {
-      group: "หลัก · Core",
+      group: "กรอบ · Frame",
       vars: [
-        { key: "--banner-bg", label: "พื้นหลัง", type: "color" },
-        { key: "--banner-border", label: "สีเส้น", type: "color" },
+        { key: "--banner-border", label: "สีเส้นขอบ", type: "color" },
+        { key: "--banner-border-width", label: "ความหนาขอบ", type: "px", max: 8 },
         { key: "--banner-radius", label: "มุมโค้ง (Radius)", type: "text" },
+        { key: "--banner-shadow", label: "เงา", type: "shadow" },
+        { key: "--banner-bg", label: "พื้นหลัง (หลังรูป)", type: "color" },
       ],
     },
   ],

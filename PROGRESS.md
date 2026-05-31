@@ -26,6 +26,21 @@ with the user logged in, live page restored clean, dev server stopped.
 3. Verified live: text-transform var + `transform: rotate(-2deg)` custom CSS apply in
    editor AND on the real `/` page, persist through Publish→reload, reset clean.
    P-LOG-062 (Tier 3 scoping) + P-LOG-063 (don't harvest admin token) written.
+4. **Tier 2 honesty + functional fix (P-LOG-064).** Found 2 controls I'd just shipped
+   were dead on voteCTA: `buildButtonStyle` never read `--btn-bg-gradient` and had no
+   `--btn-shadow` fallback. Wired both as real Layer 2 fallbacks (Layer 3 config still
+   wins; `"none"` stays explicit). Added an honest info note in ElementVarsPanel for
+   stateful elements → per-state colour/gradient/shadow is edited in the Stateful
+   Gallery; these vars are fallbacks + text controls. KEY INSIGHT: for a stateful
+   element, single-value Tier 2 vars are the wrong layer — per-state config is the
+   real editing surface.
+5. **banner-section Tier 2 depth (the VISIBLE win).** Added `--banner-shadow` +
+   `--banner-border-width` (variant reads them; defaults byte-faithful = shadow-2xl /
+   1px), declared in all 4 templates, expanded the schema (border colour/width slider
+   + radius + shadow builder + bg). Verified VISIBLY: on the Default variant, the
+   shadow builder ("คม" → hard 5px 5px 0) and border-width slider (1px→6px) actually
+   change the banner frame. This is the honest Canva payoff — non-stateful elements,
+   where single-value vars truly drive the look. (Not published; editor state only.)
 
 ### ⚠️ Known debts / gotchas (carry forward)
 - **API 400 for `elementCss` NOT exercised live** — auth-gating needs a token; verified
@@ -40,11 +55,15 @@ with the user logged in, live page restored clean, dev server stopped.
 - DB-active (non-built-in) template still falls back to classic in editor preview (old debt).
 
 ### 🧭 Tomorrow — pick ONE
-1. **Tier 2 for more elements** — declare Layer 2 vars on more element types in templates,
-   then add schema entries (grows the no-code surface honestly).
-2. **Element tokenization completeness** — replace hardcoded config values on voteCTA with
-   `var(--btn-*)` so the gradient/shadow/padding Tier 2 controls become *visibly* live
-   (closes the P-LOG-054 gap). Highest payoff for "it actually changes the button".
+The proven pattern now (banner-section is the worked example): pick a NON-stateful element →
+confirm its variant component CONSUMES `var(--x)` (P-LOG-064) and the prop is VISIBLE (not
+hidden behind an image / not masked by Layer 3) → add the var to all 4 templates byte-faithful
+→ expand ELEMENT_VAR_SCHEMA. Repeat to grow the no-code surface honestly.
+1. **Tier 2 for more non-stateful elements** — e.g. stats cards (visible bg/gradient),
+   meet-section, headings. Each needs vars declared + variant wired + schema entry.
+2. ~~Element tokenization completeness for voteCTA~~ — EXPLORED + rejected: voteCTA's
+   per-state gradient/shadow ARE the design (Layer 3), edited via the Stateful Gallery,
+   not single Tier 2 vars. Flattening them = regression. Don't.
 3. **Library slice 2** — per-page inventory ("หน้านี้ใช้ component อะไรบ้าง").
 4. **Pillar 2 slice 2** — page thumbnails (needs scaled render pipeline; bigger).
 

@@ -26,6 +26,12 @@ function buildBannerStyle(cfg) {
   style.borderRadius    = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--banner-radius)';
   style.backgroundColor = cfg.backgroundColor || 'var(--banner-bg)';
   style.borderColor     = cfg.borderColor || 'var(--banner-border)';
+  // Layer 2 frame controls (Tier 2). On the override path these inline values
+  // replace the Tailwind frame classes (shadow-2xl / border) so the admin can
+  // tune them; the var defaults match those classes 1:1 (byte-faithful).
+  style.borderWidth     = (cfg.borderWidth ? `${cfg.borderWidth}px` : 'var(--banner-border-width)');
+  style.borderStyle     = 'solid';
+  style.boxShadow       = 'var(--banner-shadow)';
   return style;
 }
 
@@ -67,7 +73,7 @@ export default function DefaultBanner({ config = {}, resolvedTemplate = null, el
     <div className="w-full max-w-2xl mx-auto lg:max-w-none lg:mx-0 pt-0 pb-4 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
       <div
         data-element="banner-section"
-        className={`w-full relative group overflow-hidden shadow-2xl border aspect-[16/9] transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] ${hasOverride ? "" : "rounded-3xl border-white bg-white"}`}
+        className={`w-full relative group overflow-hidden aspect-[16/9] transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 ${hasOverride ? "" : "shadow-2xl border hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] rounded-3xl border-white bg-white"}`}
         style={frameStyle}
       >
         <div className="relative w-full h-full">
