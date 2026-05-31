@@ -5,6 +5,66 @@
 
 ---
 
+## 🌅 SESSION HANDOFF — read this first (for 2026-06-01 session)
+
+**Branch `new-version`. 4 commits today, ALL LOCAL (not pushed yet):**
+```
+86e110b  fix(editor): close P-LOG-051 — thread resolvedTemplate into live preview
+282e48b  feat(editor): Element Library (Pillar 1, slice 1) — catalog + variant swap
+e20fd5f  fix(editor): stop Live Preview hover flicker (component-in-render remount)
+91947a9  Pillar 2 (gallery slice 1): template metadata + detail modal
+```
+(prior HEAD was `a0bf300`.) → **First action tomorrow: decide whether to `git push`.**
+
+### ✅ Done today
+1. **Pillar 2 gallery slice 1** — template cards show metadata (element/page count,
+   creator, year, derived swatch) + a lazy-loaded detail modal (pages + element
+   list + apply). Page THUMBNAILS deferred.
+2. **Hover flicker fixed (root cause)** — `Wrap` was defined inside render in 9
+   files → remount on every hover → animation replay. Fixed with stable
+   `useCallback`+`useRef`. User confirmed gone. (P-LOG-059)
+3. **Element Library (Pillar 1) slice 1** — `ElementLibraryPanel.jsx` in the left
+   rail: 47 types by Thai category + search; multi-variant types (voteCTA, banner)
+   expand to live VariantPicker + apply. (P-LOG-060)
+4. **P-LOG-051 closed** — editor preview now threads `resolvedTemplate` →
+   config-driven designs (voteCTA gradient, stats gradients) render byte-identical
+   to production. (P-LOG-061)
+
+### 🧭 Tomorrow — pick ONE (recommended order)
+The agreed north star is the Canva-grade "คลังสมบัติ" editor (VISION Pillars 1–4).
+Vision verified with user this session — A/B/C confirmed: no-code + expert Tier 3
+expand; gallery both per-page AND per-category; drag wanted but swap-first.
+
+1. **(Recommended) Editor depth — Pillar 3 Tier expansion (the "A" answer).**
+   More no-code controls per element (gradient/shadow/padding/font/icon pickers)
+   + an "ขั้นสูง" expand = Tier 3 custom CSS for experts. This is what makes "แก้
+   design ทั้งหมดของปุ่มแบบ Canva" real. Biggest payoff for the daily editing UX.
+2. **Library slice 2 — per-page inventory.** "หน้านี้ใช้ component อะไรบ้าง" view
+   (the per-page axis of B). Smaller; complements slice 1.
+3. **Pillar 2 slice 2 — page thumbnails** (Canva horizontal scroll). Needs an
+   off-screen/scaled template-render pipeline — bigger lift.
+4. **Templates honesty** — modern-dark/playful/minimal are THIN STUBS (color
+   overrides of classic, not 47 bespoke designs). Making them genuinely distinct
+   = many sessions, one at a time. The user knows; do for real, not fake.
+
+### ⚠️ Known debts / gotchas for next session
+- voteCTA **glow/shine** animation (extra Tailwind layers in `VoteCTABlock.legacyClassName`)
+  may not be 100% in editor preview — config gradient/shadow now correct, animation TBD.
+- **DB-active templates** fall back to classic in the editor preview
+  (`editorEffectiveTemplate` only knows `BUILT_IN_TEMPLATES`). Built-ins (4) fine;
+  a DB template active → needs to fetch its full object. Slice for later.
+- Tokenization type-B (config-driven recolor) still deferred (TOKENIZATION_NOTES.md).
+- `.next` corrupts under sustained HMR on Windows (~hit 2× today). Recovery:
+  `preview_stop` → `rm -rf .next` → `npm run build` → `preview_start` → warm home.
+- Admin login = `admin_token` cookie, expires ~2h. If verification needs the
+  editor and it's expired → just ASK the user to log in (don't mint tokens — feedback.md).
+
+### Where to read context (in order)
+VISION.md → ADR-001 → DECISIONS.md (now through P-LOG-061) → this handoff →
+`.specs/ADMIN_UX_NOTES.md` + `.specs/TOKENIZATION_NOTES.md`.
+
+---
+
 ## Editor preview fidelity — P-LOG-051 fully closed ✅ (P-LOG-061)
 
 **User complaint:** voteCTA is a rich gradient button on the live page but flat in
