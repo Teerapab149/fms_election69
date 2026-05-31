@@ -49,7 +49,11 @@ function buildButtonStyle(cfg) {
     style.backgroundColor = cfg.backgroundColor;
     style.backgroundImage = "none";
   } else {
+    // No Layer 3 background → fall back to Layer 2 vars. --btn-bg-gradient
+    // defaults to "none" so this is inert until the admin sets a gradient
+    // (Tier 2 GradientPicker); --btn-bg covers the solid case.
     style.backgroundColor = 'var(--btn-bg)';
+    style.backgroundImage = 'var(--btn-bg-gradient)';
   }
 
   // Text
@@ -80,7 +84,9 @@ function buildButtonStyle(cfg) {
     style.borderColor = cfg.borderColor || 'var(--btn-border-color)';
   }
 
-  // Shadow
+  // Shadow — Layer 3 (cfg.shadow) wins; "none" = explicit no-shadow (leave
+  // unset); absent → fall back to Layer 2 var(--btn-shadow) so the Tier 2
+  // ShadowControl is live whenever a state doesn't hardcode its own shadow.
   if (cfg.shadow && cfg.shadow !== "none") {
     const shadowMap = {
       sm: "0 1px 2px 0",
@@ -91,6 +97,8 @@ function buildButtonStyle(cfg) {
     };
     const shadowColor = cfg.shadowColor ? `${cfg.shadowColor}66` : "rgba(0,0,0,0.25)";
     style.boxShadow = `${shadowMap[cfg.shadow] || shadowMap.lg} ${shadowColor}`;
+  } else if (cfg.shadow == null) {
+    style.boxShadow = 'var(--btn-shadow)';
   }
 
   // Padding

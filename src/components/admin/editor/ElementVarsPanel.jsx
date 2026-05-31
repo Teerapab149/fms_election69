@@ -14,6 +14,8 @@
 // without a schema entry. Mounted in PropertyPanel alongside the VariantPicker.
 
 import { useState } from "react";
+import { Info } from "lucide-react";
+import { isStatefulElement } from "./elementCatalog";
 import {
   ColorPickerInput,
   TextInput,
@@ -169,11 +171,26 @@ export default function ElementVarsPanel({
   const schema = ELEMENT_VAR_SCHEMA[elementId];
   if (!schema) return null; // element has no curated Layer 2 vars
 
+  // Stateful elements (voteCTA-button) hardcode bg/gradient/shadow/etc per state
+  // in their Layer 3 config, which WINS over these Layer 2 vars (P-LOG-054). So
+  // for them most knobs here act only as fallbacks — per-state look is edited in
+  // the Stateful Gallery below. Be honest about it rather than ship dead knobs.
+  const stateful = isStatefulElement(elementId);
+
   return (
     <div className="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
       <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2.5">
         สไตล์เฉพาะ Element นี้ · Element Style (Layer 2)
       </p>
+      {stateful && (
+        <div className="flex items-start gap-1.5 rounded-lg bg-sky-50 border border-sky-200 px-2.5 py-2 mb-2.5">
+          <Info className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
+          <p className="text-[10px] leading-relaxed text-sky-700">
+            Element นี้มีหลายสถานะ — <b>สี/ไล่สี/เงา</b> ของแต่ละสถานะแก้ที่ <b>แกลเลอรีสถานะ</b> ด้านล่าง
+            ค่าตรงนี้ใช้เป็น fallback และคุมพวกตัวอักษร (letter-spacing / ตัวพิมพ์) ที่มีผลทุกสถานะ
+          </p>
+        </div>
+      )}
       <div className="space-y-2">
         {schema.map((group, i) => (
           <VarGroup

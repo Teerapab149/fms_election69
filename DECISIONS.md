@@ -1427,6 +1427,24 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-064: [2026-06-01] Pillar 3 — exposed no-code knobs that the variant never reads (dead/masked knobs)
+
+**Context:** Tier 2 depth surfaced all 17 `voteCTA-button` Layer 2 vars as controls. I assumed "declared in the template ⇒ functional".
+
+**Symptom:** Two controls (GradientPicker → `--btn-bg-gradient`, ShadowControl → `--btn-shadow`) had ZERO effect: `buildButtonStyle` (default.jsx) never read `--btn-bg-gradient`, and `--btn-shadow` had no fallback branch. Worse, voteCTA's 6 states each hardcode a FULL Layer 3 config (gradient/shadow/padding/…), so ~15 of the 17 vars are masked anyway (Layer 3 > Layer 2, P-LOG-054). Only `--btn-text-transform` / `--btn-letter-spacing` (no cfg field) actually moved the button.
+
+**Root cause:** A var being *declared* in a template ≠ the variant *consuming* it, and for a stateful element per-state Layer 3 config legitimately wins. I traced the cascade only after shipping the panel.
+
+**Fix:** (1) Wired `--btn-shadow` + `--btn-bg-gradient` as real Layer 2 fallbacks in `buildButtonStyle` (apply only when the state has no config shadow/background — Layer 3 still wins; `"none"` stays explicit). (2) Added an honest info note in `ElementVarsPanel` for stateful elements: per-state colour/gradient/shadow is edited in the Stateful Gallery; these vars are fallbacks + text controls. No knob pretends to do more than it does.
+
+**Lesson:** Before exposing a no-code control, grep the variant for the var and confirm it reaches render AND isn't masked by Layer 3 — especially for stateful elements where per-state config is the real editing surface. Don't ship a knob you haven't traced to a pixel.
+
+**Mitigation rule:** New Tier 2 var control ⇒ verify `var(--x)` is consumed in the variant component (not just declared in the template) and not unconditionally overridden by Layer 3 config; if stateful, point per-state styling at the Stateful Gallery instead.
+
+**Tags:** `#tier2` `#no-code` `#cascade` `#stateful` `#reinforces-P-LOG-054` `#pillar3`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
