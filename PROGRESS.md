@@ -1,7 +1,44 @@
 # PROGRESS.md
 
-**Last saved:** 2026-05-30
+**Last saved:** 2026-05-31
 **Branch:** `new-version`
+
+---
+
+## Pillar 2 — Template Gallery, slice 1 (metadata + detail modal) ✅
+
+**Goal (VISION Pillar 2):** turn the bare template *picker* into a *gallery* —
+metadata on cards + a detail view. This slice = metadata + detail modal.
+**Page-thumbnail rendering deferred** (needs an off-screen/scaled render pipeline).
+
+**Files (2, additive — no new dep / route / DB table):**
+- `src/components/admin/editor/templates/index.js` — `listTemplates` enriched:
+  `elementCount` / `pageCount` / `authorName` for all rows; DB rows pull the
+  JSON blobs + `author{name}`, compute counts + `deriveColorSwatch(theme)`
+  (tokens → legacy colors → brand fallback), then **strip the blobs** from the
+  list payload (lean). Built-ins compute from their in-memory object.
+- `src/components/admin/PageDesignTab.js` — `TemplateCard` → keyboard-accessible
+  `<div role="button">` with metadata chips (`47 element · 6 หน้า · ต้นฉบับ`)
+  + "ดูรายละเอียด" trigger; new `TemplateDetailModal` lazy-fetches the full
+  record via `GET /api/admin/templates/:slug` (swatch, description, metadata grid,
+  badges, Thai page chips, scrollable 47-element list with `:variant` tags,
+  apply button reusing the confirm flow — hidden when template already active).
+
+**Verification:**
+- Build: `✓ Compiled successfully`, exit 0, zero errors/warnings.
+- Logic unit test: classic → 47 el / 6 pg; `deriveColorSwatch` fallback chain OK.
+- In-browser (real admin, user logged in): chips render on all 4 cards · detail
+  modal opens + lazy-loads · per-template swatch correct (modern-dark header
+  `#06b6d4`/`#8b5cf6`, not default) · apply hidden on active / shown on non-active
+  · apply→confirm wiring works · console clean (only pre-existing Image `sizes`).
+
+**Lessons:** P-LOG-056 (list payload hygiene: derive-then-strip + lazy detail
+fetch; `<div role=button>` so nested detail button is valid HTML),
+P-LOG-057 (don't mint tokens to bypass admin login — ask the user).
+
+> Note: the same-day-after-Day-11 reflections referenced "P-LOG-052..057"
+> pending append, but only 052–055 had been written. This session claims
+> 056–057; any Pillar 4 / Admin-UX lessons still to be written should use 058+.
 
 ---
 

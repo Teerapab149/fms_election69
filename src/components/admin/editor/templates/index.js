@@ -69,8 +69,11 @@ export async function listTemplates(prisma, filters = {}) {
         isLocked: tpl.isLocked || false,
         colorSwatch: tpl.colorSwatch,
         authorId: null,
+        authorName: null,
         forkedFrom: null,
-        createdAt: null
+        createdAt: null,
+        elementCount: Object.keys(tpl.elements || {}).length,
+        pageCount: Object.keys(tpl.pages || {}).length
       });
     }
   }
@@ -81,6 +84,8 @@ export async function listTemplates(prisma, filters = {}) {
       if (filters.isLocked !== undefined) where.isLocked = filters.isLocked;
       if (filters.authorId !== undefined) where.authorId = filters.authorId;
 
+      // Pillar 2 (gallery slice 1): pull the blobs to derive metadata, but
+      // strip them from the list payload — only counts + swatch ship.
       const dbTemplates = await prisma.template.findMany({
         where,
         select: {
@@ -89,17 +94,46 @@ export async function listTemplates(prisma, filters = {}) {
           description: true,
           isLocked: true,
           authorId: true,
+          author: { select: { name: true } },
           forkedFrom: true,
-          createdAt: true
+          createdAt: true,
+          pages: true,
+          elements: true,
+          theme: true
         }
       });
-      results.push(...dbTemplates.map((t) => ({ ...t, isBuiltIn: false })));
+      results.push(...dbTemplates.map((t) => {
+        const { pages, elements, theme, author, ...rest } = t;
+        return {
+          ...rest,
+          isBuiltIn: false,
+          authorName: author?.name || null,
+          colorSwatch: deriveColorSwatch(theme),
+          elementCount: elements ? Object.keys(elements).length : 0,
+          pageCount: pages ? Object.keys(pages).length : 0
+        };
+      }));
     } catch (err) {
       console.error("[listTemplates] DB query failed:", err.message);
     }
   }
 
   return results;
+}
+
+/**
+ * Derive a 2-color swatch from a DB template's theme (no colorSwatch column).
+ * Prefers Layer 1 tokens, falls back to a legacy colors map, then brand purple.
+ */
+function deriveColorSwatch(theme) {
+  const tokens = theme?.tokens || {};
+  const colors = theme?.colors || {};
+  return {
+    primary:
+      tokens["--color-primary"] || colors.primary || "#8A2680",
+    secondary:
+      tokens["--color-secondary"] || colors.secondary || "#9333EA"
+  };
 }
 
 /**

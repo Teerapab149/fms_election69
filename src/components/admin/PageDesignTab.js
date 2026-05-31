@@ -29,7 +29,8 @@ import {
   ChevronDown, Info, LayoutGrid, Timer, Users, BarChart3,
   Image as ImageIcon, Vote, Ban, Palette, Check, Sparkles,
   Monitor, Smartphone, X, Home, PartyPopper, CheckCircle, Lock,
-  ExternalLink, FileText, GripVertical, UploadCloud
+  ExternalLink, FileText, GripVertical, UploadCloud,
+  Calendar, Layers, User
 } from 'lucide-react';
 
 const BLOCK_COLOR_BAR = {
@@ -148,14 +149,16 @@ function BlockConfigForm({ block, onConfigChange }) {
   );
 }
 
-function TemplateCard({ tpl, isActive, onClick }) {
+function TemplateCard({ tpl, isActive, onClick, onShowDetail }) {
   const primaryColor = tpl.colorSwatch?.primary || '#8A2680';
   const secondaryColor = tpl.colorSwatch?.secondary || '#9333EA';
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className={`relative text-left p-3 rounded-xl border-2 bg-white transition-all duration-200 hover:shadow-md active:scale-[0.98] ${isActive
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className={`relative text-left p-3 rounded-xl border-2 bg-white transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${isActive
           ? 'shadow-md ring-2 ring-offset-2'
           : 'border-slate-200 hover:border-slate-300'
         }`}
@@ -183,7 +186,32 @@ function TemplateCard({ tpl, isActive, onClick }) {
         {tpl.slug}
       </div>
       <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{tpl.description}</p>
-    </button>
+
+      {/* Pillar 2 — metadata chips */}
+      <div className="flex items-center flex-wrap gap-1.5 mt-2">
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
+          <Layers className="w-2.5 h-2.5" />{tpl.elementCount ?? '—'} element
+        </span>
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
+          <FileText className="w-2.5 h-2.5" />{tpl.pageCount ?? '—'} หน้า
+        </span>
+        {tpl.isBuiltIn && (
+          <span className="inline-flex items-center text-[10px] font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-md">
+            ต้นฉบับ
+          </span>
+        )}
+      </div>
+
+      {onShowDetail && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onShowDetail(tpl.slug); }}
+          className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-[#8A2680] transition-colors"
+        >
+          <Info className="w-3 h-3" /> ดูรายละเอียด
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -482,6 +510,10 @@ export default function PageDesignTab() {
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+  // Pillar 2 (gallery slice 1) — template detail modal (lazy-loaded full data)
+  const [detailSlug, setDetailSlug] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState(-1);
   const [hoveredSection, setHoveredSection] = useState(null);
@@ -690,6 +722,34 @@ export default function PageDesignTab() {
   }, [activeTemplateId, editor.themeTokens, editor.elementVars]);
 
   const requestApplyTemplate = (slug) => setPendingPresetId(slug);
+
+  // Pillar 2 — open the detail modal and lazy-fetch the full template record.
+  const openTemplateDetail = async (slug) => {
+    setDetailSlug(slug);
+    setDetailData(null);
+    setDetailLoading(true);
+    try {
+      const token = getEncryptedToken();
+      const res = await fetch(getPath(`/api/admin/templates/${slug}`), {
+        credentials: 'include',
+        headers: token ? { 'x-admin-token': token } : {},
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setDetailData(data.template || null);
+    } catch (err) {
+      console.error('Load template detail failed:', err);
+      setDetailData(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeTemplateDetail = () => {
+    setDetailSlug(null);
+    setDetailData(null);
+    setDetailLoading(false);
+  };
 
   const confirmApplyTemplate = async () => {
     if (!pendingPresetId || isApplying) return;
@@ -1061,6 +1121,7 @@ export default function PageDesignTab() {
               tpl={tpl}
               isActive={activeTemplateId === tpl.slug}
               onClick={() => requestApplyTemplate(tpl.slug)}
+              onShowDetail={openTemplateDetail}
             />
           ))}
         </div>
@@ -1520,6 +1581,148 @@ export default function PageDesignTab() {
         title={errorMsg.title}
         message={errorMsg.msg}
       />
+
+      {/* Pillar 2 — Template detail modal (gallery slice 1) */}
+      {detailSlug && (() => {
+        const meta = availableTemplates.find((t) => t.slug === detailSlug) || {};
+        const swatch = meta.colorSwatch || detailData?.colorSwatch || {};
+        const primaryColor = swatch.primary || '#8A2680';
+        const secondaryColor = swatch.secondary || '#9333EA';
+        const pages = detailData?.pages ? Object.keys(detailData.pages) : [];
+        const elements = detailData?.elements ? Object.entries(detailData.elements) : [];
+        const creator = meta.isBuiltIn ? 'ทีมพัฒนาระบบ' : (meta.authorName || 'แอดมิน');
+        const createdYear = meta.createdAt
+          ? new Date(meta.createdAt).getFullYear() + 543
+          : null;
+        return (
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+            onClick={closeTemplateDetail}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* header */}
+              <div className="p-5 border-b border-slate-100 flex items-start gap-3">
+                <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                  <span className="w-7 h-7 rounded-full border border-white shadow-sm" style={{ backgroundColor: primaryColor }} />
+                  <span className="w-7 h-7 rounded-full border border-white shadow-sm -ml-3" style={{ backgroundColor: secondaryColor }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-bold text-slate-800 leading-tight">{meta.name || detailData?.name || detailSlug}</h3>
+                  <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wide">{detailSlug}</p>
+                </div>
+                <button type="button" onClick={closeTemplateDetail} className="text-slate-300 hover:text-slate-500 transition-colors shrink-0">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* body */}
+              <div className="p-5 overflow-y-auto space-y-4">
+                {detailLoading && (
+                  <div className="flex items-center gap-2 text-sm text-slate-400 py-8 justify-center">
+                    <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลดรายละเอียด...
+                  </div>
+                )}
+
+                {!detailLoading && (
+                  <>
+                    {(meta.description || detailData?.description) && (
+                      <p className="text-sm text-slate-600">{meta.description || detailData?.description}</p>
+                    )}
+
+                    {/* metadata grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">ผู้สร้าง</span>
+                        <span className="font-semibold text-slate-700 ml-auto truncate">{creator}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">ปีที่สร้าง</span>
+                        <span className="font-semibold text-slate-700 ml-auto">{createdYear ? `พ.ศ. ${createdYear}` : '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">Element</span>
+                        <span className="font-semibold text-slate-700 ml-auto">{meta.elementCount ?? elements.length}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">หน้า</span>
+                        <span className="font-semibold text-slate-700 ml-auto">{meta.pageCount ?? pages.length}</span>
+                      </div>
+                    </div>
+
+                    {/* badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {meta.isBuiltIn && (
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">ต้นฉบับระบบ</span>
+                      )}
+                      {meta.isLocked && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full"><Lock className="w-2.5 h-2.5" /> ล็อก</span>
+                      )}
+                      {(meta.forkedFrom || detailData?.forkedFrom) && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">แตกจาก: {meta.forkedFrom || detailData?.forkedFrom}</span>
+                      )}
+                    </div>
+
+                    {/* pages */}
+                    {pages.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-600 mb-1.5">หน้าที่มี ({pages.length})</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {pages.map((pid) => (
+                            <span key={pid} className="text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded-lg">
+                              {getPageById(pid)?.name || pid}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* elements */}
+                    {elements.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-600 mb-1.5">Element ทั้งหมด ({elements.length})</h4>
+                        <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto pr-1">
+                          {elements.map(([id, entry]) => (
+                            <span key={id} className="text-[10px] font-mono text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded">
+                              {id}{entry?.variant && entry.variant !== 'default' ? <span className="text-[#8A2680] font-bold">:{entry.variant}</span> : null}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* footer */}
+              <div className="p-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={closeTemplateDetail}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  ปิด
+                </button>
+                {activeTemplateId !== detailSlug && (
+                  <button
+                    type="button"
+                    onClick={() => { const s = detailSlug; closeTemplateDetail(); requestApplyTemplate(s); }}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#8A2680] text-white shadow-sm hover:bg-[#751f6c] transition-colors flex items-center gap-2"
+                  >
+                    <Check className="w-4 h-4" /> ใช้ Template นี้
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Pillar 4 — Save as Template name modal */}
       {saveTplOpen && (
