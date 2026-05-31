@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from 'react';
 import { Check, Megaphone, CheckCircle2, Tag, Lock, BarChart3, ArrowRight } from 'lucide-react';
 import EditorElement from './editor/EditorElement';
 
@@ -14,19 +15,29 @@ export default function SuccessEditorPreview({
 }) {
   const isUnlocked = simMode === "unlocked";
 
-  const Wrap = ({ id, children }) => (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >
-      {children}
-    </EditorElement>
-  );
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >
+        {children}
+      </EditorElement>
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden flex items-center justify-center p-4">

@@ -1259,6 +1259,67 @@ guardrail anyway.
 
 ---
 
+### P-LOG-058: [2026-05-31] Live Preview fit churn — idempotent setFit + scrollbar-gutter:stable
+
+**Context:** `LivePreview` (PageDesignTab) fits the 1280px design canvas to its
+column via a ResizeObserver that sets `{scale, height}`. It made a **new object
+every callback** (no equality guard) and its effect deps included unstable
+objects (`pageLayout`/`editorProps`/`editorTokenStyles`) → the observer was
+recreated each parent render and `setFit` re-rendered the whole preview on every
+fire (the home preview animates → fires continuously). A second loop: the box is
+fixed-height `overflow-y-auto`, so crossing the height boundary toggled the
+scrollbar → `clientWidth` ±15px → scale wobble → re-measure → toggle.
+
+**Fix:** `setFit` is idempotent (bail when `|Δscale|<0.005` && `|Δheight|<2`),
+deps trimmed to stable primitives `[isMobile, selectedPage, deviceMode]`, and
+`scrollbar-gutter: stable` on the box so `clientWidth` is constant regardless of
+the scrollbar (verified: forced scrollbar → width delta 0).
+
+**Important caveat:** this was NOT the cause of the user-reported hover flicker
+(that was P-LOG-059). It IS a real churn/perf hardening. Don't conflate the two
+— I initially mis-attributed the flicker here and had to re-diagnose.
+
+**Tags:** `#resize-observer` `#editor` `#perf` `#re-render`
+
+---
+
+### P-LOG-059: [2026-05-31] Editor hover flicker = component defined INSIDE render → remount → animation replay
+
+**Symptom (user):** hovering an element in the admin Live Preview flickers
+"รัวๆ". Editor-only — the public page hover is smooth. User correctly guessed
+it was animation-related.
+
+**Root cause:** `const Wrap = ({id,children}) => …` was defined **inside** the
+component body (HomeContent + 8 other preview files). Every render created a new
+`Wrap` function identity → React saw `<Wrap>` as a different component TYPE →
+**unmounted + remounted the entire wrapped subtree** → every entrance/hover
+animation replayed. Hovering fires `setState(hoveredElement)` → re-render → new
+`Wrap` → remount → flicker. (Public page never re-renders on hover, so no flicker.)
+
+**Fix:** pin `Wrap`'s identity with `useCallback([])`; read live editor state
+(selectedElement/hoveredElement/handlers/configs) from a `useRef` updated each
+render. Hover is now a re-render (props change on the stable EditorElement), not
+a remount. Call sites unchanged. Applied to all 9 files: HomeContent, StatsBlock,
+MeetCandidatesCard, Vote/Results/Closed/SuccessEditorPreview, MultiPartyView,
+SinglePartyView.
+
+**Verification:** "remount detector" — mark a real DOM node inside a wrapped
+element, fire repeated hovers, assert `node.isConnected` stays true. Before: node
+detached (remount). After: 6/6 home wraps + all 4 other pages survive.
+
+**Lessons:**
+1. NEVER define a component inside another component's render. New identity every
+   render = remount of its whole subtree. Hoist it, or `useCallback` + `useRef`
+   for live state.
+2. "Flicker on hover" + "editor-only" + "animations" → suspect remount, not CSS.
+3. Reproduce the REAL trigger: my first synthetic test fired one `mouseover` (one
+   remount, invisible) and I wrongly cleared it. A single event can't surface a
+   churn/loop bug — exercise it repeatedly.
+
+**Tags:** `#react` `#remount` `#component-in-render` `#animation` `#editor` `#systemic`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

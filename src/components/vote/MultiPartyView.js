@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import PartyCard from "../PartyCard";
 import { Ban, Check } from "lucide-react";
 import EditorElement from '../admin/editor/EditorElement';
@@ -20,17 +21,28 @@ export default function MultiPartyView({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  const Wrap = ({ id, children }) => editorMode ? (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >{children}</EditorElement>
-  ) : children;
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    editorMode, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    if (!s.editorMode) return children;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >{children}</EditorElement>
+    );
+  }, []);
 
   const cfg = (id, defaults = {}) => editorMode
     ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }

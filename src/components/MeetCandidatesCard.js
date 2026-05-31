@@ -2,6 +2,7 @@
 "use client";
 
 import Link from 'next/link';
+import { useRef, useCallback } from "react";
 import { ArrowRight, Sparkles, Users, Vote, Star } from "lucide-react";
 import EditorElement from "./admin/editor/EditorElement";
 import { RADIUS_MAP } from "../utils/styleMaps";
@@ -62,17 +63,28 @@ export default function MeetCandidatesCard({
   // whenever the active template keeps surfaceLight !== false (P-LOG-015).
   const showSurfaceLight = !hasSection || sectionCfg.surfaceLight !== false;
 
-  const Wrap = ({ id, children }) => editorMode ? (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >{children}</EditorElement>
-  ) : children;
+  // Stable Wrap identity (see HomeContent for rationale): inline definition
+  // remounts the subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    editorMode, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    if (!s.editorMode) return children;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >{children}</EditorElement>
+    );
+  }, []);
 
   return (
     <Link href="/candidates" className="group relative block w-full h-full">

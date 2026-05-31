@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from 'react';
 import { Lock } from 'lucide-react';
 import Navbar from '../Navbar';
 import SiteFooter from '../SiteFooter';
@@ -34,19 +35,29 @@ export default function ClosedEditorPreview({
 }) {
   const message = STATE_MESSAGES[simMode] || STATE_MESSAGES.waiting;
 
-  const Wrap = ({ id, children }) => (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >
-      {children}
-    </EditorElement>
-  );
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >
+        {children}
+      </EditorElement>
+    );
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">

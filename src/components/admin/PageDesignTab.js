@@ -310,14 +310,30 @@ function LivePreview({
       if (!bw) return;
       const scale = Math.min(bw / DESIGN_W, 1);
       const naturalH = content.scrollHeight || content.offsetHeight || 0;
-      setFit({ scale, height: Math.max(naturalH * scale, 200) });
+      const height = Math.max(Math.round(naturalH * scale), 200);
+      // Idempotent: bail when nothing meaningfully changed. The home preview
+      // animates (countdown tick, Framer Motion) so the ResizeObserver fires
+      // continuously — without this guard every fire makes a fresh object and
+      // re-renders the whole preview tree => visible flicker. Tolerances absorb
+      // sub-pixel reflow (height) and the ~0.012 scale wobble a scrollbar
+      // toggle would cause; scrollbar-gutter:stable on the box prevents that
+      // toggle in the first place.
+      setFit((prev) =>
+        Math.abs(prev.scale - scale) < 0.005 && Math.abs(prev.height - height) < 2
+          ? prev
+          : { scale, height }
+      );
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(box);
     ro.observe(content);
     return () => ro.disconnect();
-  }, [isMobile, selectedPage, deviceMode, pageLayout, editorProps, editorTokenStyles]);
+    // Deps are stable primitives only. Content/size changes are caught by the
+    // ResizeObserver itself — putting unstable objects (pageLayout/editorProps/
+    // editorTokenStyles) here tore down + recreated the observer every parent
+    // render, compounding the churn.
+  }, [isMobile, selectedPage, deviceMode]);
 
   const handleOpenNewTab = () => {
     if (typeof window !== 'undefined') {
@@ -456,7 +472,7 @@ function LivePreview({
       <div
         ref={boxRef}
         className="relative bg-slate-100/50 overflow-y-auto overflow-x-hidden"
-        style={{ height: '650px' }}
+        style={{ height: '650px', scrollbarGutter: 'stable' }}
         onClickCapture={(e) => {
           const insideEditorElement = e.target.closest('.group\\/editor');
           if (!insideEditorElement) {

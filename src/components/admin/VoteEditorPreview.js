@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from 'react';
 import Navbar from '../Navbar';
 import VoteFooter from '../vote/VoteFooter';
 import MultiPartyView from '../vote/MultiPartyView';
@@ -22,19 +23,30 @@ export default function VoteEditorPreview({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  const Wrap = ({ id, children }) => (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >
-      {children}
-    </EditorElement>
-  );
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker. useCallback
+  // pins identity; live state via ref keeps hover a re-render, not a remount.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >
+        {children}
+      </EditorElement>
+    );
+  }, []);
 
   if (simMode === "single") {
     return (

@@ -5,6 +5,36 @@
 
 ---
 
+## Editor Live Preview — hover flicker fix ✅ (P-LOG-059)
+
+**User report:** hovering an element in the admin "ออกแบบหน้าเว็บ" Live Preview
+flickers รัวๆ; editor-only (public page smooth); user guessed it was animation.
+
+**Root cause:** `const Wrap = (...) => …` was defined **inside** the component
+render in 9 files → new function identity each render → React remounted the whole
+wrapped subtree on every re-render → animations replayed. Hover fires
+`setState(hoveredElement)` → re-render → remount → flicker.
+
+**Fix (9 files):** stable `Wrap` via `useCallback([])` + live state from `useRef`.
+Hover = re-render, not remount. Call sites unchanged.
+- HomeContent.js, blocks/StatsBlock.js, MeetCandidatesCard.js (home chain — user-confirmed fixed)
+- admin/{Vote,Results,Closed,Success}EditorPreview.js, vote/MultiPartyView.js, vote/SinglePartyView.js (sweep — same latent bug on other pages)
+
+**Also (P-LOG-058, PageDesignTab.js):** hardened `LivePreview` fit against
+ResizeObserver churn — idempotent `setFit` (tolerances) + stable effect deps +
+`scrollbar-gutter: stable`. NOTE: this was NOT the flicker cause (I mis-diagnosed
+first, then re-traced to the Wrap remount) — kept as a real perf hardening.
+
+**Verification:** build PASS (clean rebuild after `.next` HMR corruption ×2);
+"remount detector" (mark DOM node → repeated hover → assert `isConnected`) → all
+wraps survive on home + vote + results + closed + success; user confirmed home
+flicker gone with real cursor.
+
+**Lesson burned in:** never define a component inside render (remount trap);
+reproduce the REAL trigger repeatedly (a single synthetic event hid it once).
+
+---
+
 ## Pillar 2 — Template Gallery, slice 1 (metadata + detail modal) ✅
 
 **Goal (VISION Pillar 2):** turn the bare template *picker* into a *gallery* —

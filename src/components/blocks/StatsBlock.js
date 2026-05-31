@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import { TrendingUp, CheckCircle2, PieChart, Users } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
 import { RADIUS_MAP } from "../../utils/styleMaps";
@@ -74,17 +75,30 @@ export default function StatsBlock({
   const hasEligible = !!eligibleCfg && Object.keys(eligibleCfg).length > 0;
   const hasVoted = !!votedCfg && Object.keys(votedCfg).length > 0;
 
-  const Wrap = ({ id, children }) => editorMode ? (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >{children}</EditorElement>
-  ) : children;
+  // Stable Wrap identity (see HomeContent for the full rationale): an inline
+  // `const Wrap = () => …` changes identity every render → React remounts the
+  // wrapped subtree on hover → animations replay → flicker. useCallback pins
+  // the identity; live state is read from a ref so hover = re-render, not remount.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    editorMode, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    if (!s.editorMode) return children;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >{children}</EditorElement>
+    );
+  }, []);
 
   return (
     <div className="w-full max-w-2xl mx-auto lg:max-w-none lg:mx-0 pt-4 md:pt-6 pb-2 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>

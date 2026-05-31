@@ -1,7 +1,7 @@
 // src/components/HomeContent.js
 "use client";
 import { getPath } from "../utils/basePath";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "../components/Navbar";
 import BlockRenderer from "../components/blocks/BlockRenderer";
@@ -108,22 +108,42 @@ export default function HomeContent({
       });
   }, [editorMode, pageLayout]);
 
+  // Live editor state read by the STABLE Wrap below. Updated every render so
+  // the highlight reflects the current hover/selection without Wrap needing
+  // those values in its closure (which would change its identity).
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    editorMode, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+
+  // CRITICAL: Wrap must keep a STABLE identity across renders. When it was
+  // defined inline (`const Wrap = () => ...`) it got a new function identity
+  // every render, so React treated <Wrap> as a new component TYPE and
+  // remounted the whole wrapped subtree — replaying every entrance/hover
+  // animation. Hovering an element fires setState (hoveredElement) → re-render
+  // → remount → flicker. useCallback([editorMode]) pins the identity; live
+  // state comes from the ref, so hover updates are a re-render, not a remount.
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    if (!s.editorMode) return children;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >{children}</EditorElement>
+    );
+  }, []);
+
   if (!mounted) return null;
 
   // ✅ การแก้บั๊ก: อ่านค่าโดยตรงจาก Props เสมอ เพื่อให้การตั้งค่า ซ่อน/โชว์ และลำดับ Sync กันทันที
   const activeBlocks = pageLayout?.home || apiBlocks;
-
-  const Wrap = ({ id, children }) => editorMode ? (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >{children}</EditorElement>
-  ) : children;
 
   const cfg = (id, defaults = {}) => editorMode
     ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
