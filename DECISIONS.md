@@ -1355,6 +1355,40 @@ architecture). Editor-preview fidelity for some elements still bounded by P-LOG-
 
 ---
 
+### P-LOG-061: [2026-05-31] P-LOG-051 fully closed — editor preview was missing `resolvedTemplate`, not just a token scope
+
+**Context:** User flagged voteCTA renders as a rich gradient button on the live
+page but looks flat in the admin "ออกแบบหน้าเว็บ" preview. P-LOG-051 (Day 10) +
+the Day 11 `8ef4508` "close" only added the `.fms-app` token SCOPE — necessary
+but not sufficient.
+
+**Real root cause:** the editor mounted `<HomeContent editorMode>` WITHOUT a
+`resolvedTemplate` prop (it stayed `null`). `voteCTAResolvedConfig`,
+`effectiveTemplate`, stats gradients, etc. all resolve their design from
+`resolvedTemplate.elements[id].config` — with null that collapses to legacy/empty,
+so only variants with HARDCODED identity (chunky-stamp's border/shadow) rendered;
+config-driven designs (default's gradient/shadow/padding) went flat. This is why
+applying chunky-stamp via the Library looked right but the default looked plain.
+
+**Fix:** extracted `editorEffectiveTemplate` in PageDesignTab (active built-in base
++ Layer 1 token edits + Layer 2 var edits — the same object that already produced
+`editorTokenStyles`) and threaded it as `resolvedTemplate` through LivePreview →
+HomeContent. HomeContent's existing `effectiveTemplate` then overlays variant
+choices on top (idempotent for tokens/vars already baked in).
+
+**Verification:** editor preview voteCTA computed style went from `bg transparent,
+border 0` → `background-image: linear-gradient(to right, #691E61,#8A2680,#C026D3)`,
+`box-shadow rgba(138,38,128,0.4) 0 10px 15px -3px`, padding 16px 40px, white text
+— byte-identical to the live page. Console clean.
+
+**Lesson:** "preview looks wrong" can have TWO independent causes stacked (token
+scope AND missing template data). Closing one and declaring victory (Day 11) left
+the bigger one live. Verify the actual rendered output against production, per element.
+
+**Tags:** `#editor` `#preview-fidelity` `#resolved-template` `#wysiwyg` `#closes-P-LOG-051`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

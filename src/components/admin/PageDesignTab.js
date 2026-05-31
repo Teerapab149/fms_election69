@@ -289,6 +289,7 @@ function LivePreview({
   closedSimMode,
   successSimMode,
   editorTokenStyles,
+  resolvedTemplate,
 }) {
   const isMobile = deviceMode === 'mobile';
   const currentPage = getPageById(selectedPage);
@@ -358,6 +359,7 @@ function LivePreview({
           editorData={DUMMY_ELECTION}
           pageLayout={pageLayout}    // ✅ ส่ง pageLayout ไป (เพื่อให้ซ่อนโชว์ได้)
           theme={pageLayout?.theme}  // ✅ ส่ง theme ไป
+          resolvedTemplate={resolvedTemplate}  // P-LOG-051: config-driven designs resolve in editor
           editorTokenStyles={editorTokenStyles}  // Day 11: Layer 1/2 token scope
           elementConfigs={editorProps.elementConfigs}
           selectedElement={editorProps.selectedElement}
@@ -718,16 +720,20 @@ export default function PageDesignTab() {
     [activeTemplateId]
   );
 
-  const editorTokenStyles = useMemo(() => {
+  // The full effective template the editor preview should render against:
+  // active built-in base + Layer 1 token edits + Layer 2 var edits. Used both
+  // to emit the `.fms-app` token CSS AND as `resolvedTemplate` for the preview
+  // so config-driven designs (voteCTA gradient, stats gradient, etc.) resolve
+  // faithfully — closing P-LOG-051 (previously resolvedTemplate was null in the
+  // editor, so only hardcoded-identity variants rendered; configs collapsed).
+  const editorEffectiveTemplate = useMemo(() => {
     const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
-    // Day 11: overlay Layer 2 var edits onto the template's element vars so the
-    // editor preview reflects per-element style edits live.
     const mergedElements = { ...(base.elements || {}) };
     for (const id of Object.keys(editor.elementVars || {})) {
       const e = mergedElements[id] || {};
       mergedElements[id] = { ...e, vars: { ...(e.vars || {}), ...editor.elementVars[id] } };
     }
-    const merged = {
+    return {
       ...base,
       theme: {
         ...base.theme,
@@ -735,8 +741,12 @@ export default function PageDesignTab() {
       },
       elements: mergedElements,
     };
-    return buildTemplateStyles(merged, '.fms-app');
   }, [activeTemplateId, editor.themeTokens, editor.elementVars]);
+
+  const editorTokenStyles = useMemo(
+    () => buildTemplateStyles(editorEffectiveTemplate, '.fms-app'),
+    [editorEffectiveTemplate]
+  );
 
   const requestApplyTemplate = (slug) => setPendingPresetId(slug);
 
@@ -1521,6 +1531,7 @@ export default function PageDesignTab() {
             selectedPage={selectedPage}
             pageLayout={livePageLayout}
             editorTokenStyles={editorTokenStyles}
+            resolvedTemplate={editorEffectiveTemplate}
             deviceMode={deviceMode}
             onDeviceChange={setDeviceMode}
             hoveredSection={hoveredSection}

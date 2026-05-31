@@ -5,6 +5,26 @@
 
 ---
 
+## Editor preview fidelity — P-LOG-051 fully closed ✅ (P-LOG-061)
+
+**User complaint:** voteCTA is a rich gradient button on the live page but flat in
+the admin preview. (Day 11's "close" only added the token scope — not enough.)
+
+**Root cause:** the editor mounted `<HomeContent editorMode>` with
+`resolvedTemplate = null` → config-driven designs (voteCTA gradient/shadow, stats
+gradients) had no template config to resolve → flat. Hardcoded-identity variants
+(chunky-stamp) still showed, masking the gap.
+
+**Fix (PageDesignTab.js):** extracted `editorEffectiveTemplate` (active base +
+token + var edits — the object already feeding `editorTokenStyles`) and threaded
+it as `resolvedTemplate` through LivePreview → HomeContent.
+
+**Verified:** editor voteCTA computed style now = `linear-gradient(to right,
+#691E61,#8A2680,#C026D3)` + `rgba(138,38,128,0.4) 0 10px 15px -3px` shadow + 16x40
+padding — byte-identical to production. Console clean.
+
+---
+
 ## Pillar 1 — Element Library, slice 1 (catalog browser + variant swap) ✅ (P-LOG-060)
 
 The "คลังสมบัติ" — an organized, browsable catalog of every element type.
