@@ -541,6 +541,19 @@ export default function PageDesignTab() {
   const [closedSimMode, setClosedSimMode] = useState('waiting');
   const [successSimMode, setSuccessSimMode] = useState('locked');
 
+  // Slice 1b: per-page Layer 2/3 overrides. The editor hook holds the ACTIVE
+  // page's flat maps (editor.elementVars / editor.elementCss); these records
+  // hold every OTHER page's maps. They are merged back over the active page via
+  // getElementVarsAllPages/getElementCssAllPages on save/publish/dirty so each
+  // page's Tier 2/3 edits persist independently under pageLayout.elementVars[page]
+  // (the API already validates that per-page shape). configs/variants stay
+  // home-scoped for now — they have no non-home editing surface yet.
+  const [elementVarsByPage, setElementVarsByPage] = useState({});
+  const [elementCssByPage, setElementCssByPage] = useState({});
+  const [originalVarsByPage, setOriginalVarsByPage] = useState('{}');
+  const [originalCssByPage, setOriginalCssByPage] = useState('{}');
+  const prevPageRef = useRef(DEFAULT_PAGE);
+
   const editor = useEditorState();
   const {
     replaceAllConfigs: editorReplaceAllConfigs,
@@ -552,6 +565,68 @@ export default function PageDesignTab() {
     clearSelection: editorClearSelection,
     updateElementConfig: editorUpdateElementConfig,
   } = editor;
+
+  // Slice 1b: live mirrors so the page-switch effect can read the latest active
+  // maps + per-page records without putting them in its dep array (which would
+  // re-run on every keystroke). Assigned each render.
+  const editorVarsRef = useRef(editor.elementVars);
+  const editorCssRef = useRef(editor.elementCss);
+  const varsByPageRef = useRef(elementVarsByPage);
+  const cssByPageRef = useRef(elementCssByPage);
+  editorVarsRef.current = editor.elementVars;
+  editorCssRef.current = editor.elementCss;
+  varsByPageRef.current = elementVarsByPage;
+  cssByPageRef.current = elementCssByPage;
+
+  // The active page's live editor map merged over the stashed per-page records.
+  // An empty active map drops the page key so we never persist `{ page: {} }`.
+  const getElementVarsAllPages = useCallback(() => {
+    const all = { ...elementVarsByPage };
+    if (Object.keys(editor.elementVars || {}).length > 0) all[selectedPage] = editor.elementVars;
+    else delete all[selectedPage];
+    return all;
+  }, [elementVarsByPage, editor.elementVars, selectedPage]);
+
+  const getElementCssAllPages = useCallback(() => {
+    const all = { ...elementCssByPage };
+    if (Object.keys(editor.elementCss || {}).length > 0) all[selectedPage] = editor.elementCss;
+    else delete all[selectedPage];
+    return all;
+  }, [elementCssByPage, editor.elementCss, selectedPage]);
+
+  // Slice 1b: when the admin switches pages, stash the outgoing page's Layer 2/3
+  // edits into the per-page record, then load the incoming page's edits into the
+  // editor hook (re-baselined so a plain switch isn't counted dirty — overall
+  // cross-page dirtiness is tracked via originalVarsByPage/originalCssByPage).
+  useEffect(() => {
+    const prev = prevPageRef.current;
+    if (prev === selectedPage) return;
+    const outVars = editorVarsRef.current || {};
+    const outCss = editorCssRef.current || {};
+    setElementVarsByPage((m) => {
+      const next = { ...m };
+      if (Object.keys(outVars).length > 0) next[prev] = outVars; else delete next[prev];
+      return next;
+    });
+    setElementCssByPage((m) => {
+      const next = { ...m };
+      if (Object.keys(outCss).length > 0) next[prev] = outCss; else delete next[prev];
+      return next;
+    });
+    // Incoming page ≠ outgoing, so the pre-stash record still holds it correctly.
+    editorReplaceAllElementVars(varsByPageRef.current[selectedPage] || {}, true);
+    editorReplaceAllElementCss(cssByPageRef.current[selectedPage] || {}, true);
+    prevPageRef.current = selectedPage;
+  }, [selectedPage, editorReplaceAllElementVars, editorReplaceAllElementCss]);
+
+  // Cross-page dirtiness for Layer 2/3 overrides (the hook only tracks the
+  // active page). Folded into the Save gate + the unsaved indicator below.
+  const multiPageOverridesDirty = useMemo(
+    () =>
+      JSON.stringify(getElementVarsAllPages()) !== originalVarsByPage ||
+      JSON.stringify(getElementCssAllPages()) !== originalCssByPage,
+    [getElementVarsAllPages, getElementCssAllPages, originalVarsByPage, originalCssByPage]
+  );
 
   const handleApplyPresetToElement = useCallback(
     (elementId, presetId) => {
@@ -653,9 +728,19 @@ export default function PageDesignTab() {
       editorReplaceAllVariants(data?.elementVariants?.home || {}, true);
       // Day 11: load saved Layer 1 token + Layer 2 var overrides as baseline.
       editorReplaceAllThemeTokens(data?.themeTokens || {}, true);
-      editorReplaceAllElementVars(data?.elementVars?.home || {}, true);
+      // Slice 1b: load EVERY page's Layer 2/3 overrides (the API already stores
+      // them keyed by page). The records hold all pages; seed the editor hook
+      // from the current page's slice. originals snapshot the cross-page dirty.
+      const varsByPage = (data?.elementVars && typeof data.elementVars === 'object') ? data.elementVars : {};
+      const cssByPage = (data?.elementCss && typeof data.elementCss === 'object') ? data.elementCss : {};
+      setElementVarsByPage(varsByPage);
+      setElementCssByPage(cssByPage);
+      setOriginalVarsByPage(JSON.stringify(varsByPage));
+      setOriginalCssByPage(JSON.stringify(cssByPage));
+      prevPageRef.current = selectedPage;
+      editorReplaceAllElementVars(varsByPage[selectedPage] || {}, true);
       // Pillar 3: load saved per-element custom CSS (Layer 3) as baseline.
-      editorReplaceAllElementCss(data?.elementCss?.home || {}, true);
+      editorReplaceAllElementCss(cssByPage[selectedPage] || {}, true);
 
       const snapshot = JSON.stringify({ home, vote: normalizedVote, theme: loadedTheme, other: loadedOther });
       setOriginalJSON(snapshot);
@@ -926,8 +1011,8 @@ export default function PageDesignTab() {
       elementConfigs: { home: editor.elementConfigs },
       elementVariants: { home: editor.elementVariants },
       themeTokens: editor.themeTokens,
-      elementVars: { home: editor.elementVars },
-      elementCss: { home: editor.elementCss },
+      elementVars: getElementVarsAllPages(),
+      elementCss: getElementCssAllPages(),
       ...otherPages,
     };
     localStorage.setItem('preview_draft', JSON.stringify(previewData));
@@ -954,6 +1039,9 @@ export default function PageDesignTab() {
           .map((s, i) => ({ ...s, order: i + 1 }));
       }
 
+      const publishedVars = getElementVarsAllPages();
+      const publishedCss = getElementCssAllPages();
+
       const payload = {
         home: normalizedBlocks,
         vote: { multiParty: voteConfig },
@@ -961,8 +1049,8 @@ export default function PageDesignTab() {
         elementConfigs: { home: editor.elementConfigs },
         elementVariants: { home: editor.elementVariants },
         themeTokens: editor.themeTokens,
-        elementVars: { home: editor.elementVars },
-        elementCss: { home: editor.elementCss },
+        elementVars: publishedVars,
+        elementCss: publishedCss,
         ...normalizedOther,
       };
 
@@ -983,6 +1071,12 @@ export default function PageDesignTab() {
       setHomeBlocks(normalizedBlocks);
       setOtherPages(normalizedOther);
       setOriginalJSON(JSON.stringify({ home: normalizedBlocks, vote: voteConfig, theme, other: normalizedOther }));
+      // Slice 1b: the published per-page records are now the clean baseline so
+      // the Save gate clears for every page, not just the active one.
+      setElementVarsByPage(publishedVars);
+      setElementCssByPage(publishedCss);
+      setOriginalVarsByPage(JSON.stringify(publishedVars));
+      setOriginalCssByPage(JSON.stringify(publishedCss));
       setHasChanges(false);
       editorMarkSaved();
       setSuccessOpen(true);
@@ -1088,7 +1182,7 @@ export default function PageDesignTab() {
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {(hasChanges || editor.hasUnsavedChanges) && (
+          {(hasChanges || editor.hasUnsavedChanges || multiPageOverridesDirty) && (
             <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               ยังไม่เผยแพร่
@@ -1103,7 +1197,7 @@ export default function PageDesignTab() {
           </button>
           <button
             onClick={() => setConfirmOpen(true)}
-            disabled={(!hasChanges && !editor.hasUnsavedChanges) || saving}
+            disabled={(!hasChanges && !editor.hasUnsavedChanges && !multiPageOverridesDirty) || saving}
             className="flex items-center gap-2 px-4 py-2 bg-[#8A2680] text-white rounded-lg text-sm font-semibold shadow-sm transition-all hover:bg-[#751f6c] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#8A2680]"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
