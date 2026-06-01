@@ -343,10 +343,12 @@ export const classicTemplate = {
       }
     },
     "vote-header-title": {
-      config: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", color: "#1a1a2e", fontWeight: "black" }
+      config: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", fontWeight: "black" },
+      vars: { "--vh-title-color": "var(--color-text)" }
     },
     "vote-header-subtitle": {
-      config: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm", color: "#64748b" }
+      config: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm" },
+      vars: { "--vh-subtitle-color": "var(--color-text-muted)" }
     },
 
     // === Vote / partyGrid + abstain ===

@@ -94,8 +94,8 @@ export default function MultiPartyView({
         </Wrap>
 
         <Wrap id="vote-header-title">
-          <h1 style={{
-            color: cfg('vote-header-title').color || '#1e293b',
+          <h1 data-element="vote-header-title" style={{
+            color: 'var(--vh-title-color, var(--color-text, #1e293b))',
             fontSize: SIZE_MAP[cfg('vote-header-title').fontSize] || '1.875rem',
             fontWeight: WEIGHT_MAP[cfg('vote-header-title').fontWeight] || cfg('vote-header-title').fontWeight || 800,
             textAlign: cfg('vote-header-title').align || 'center',
@@ -105,8 +105,8 @@ export default function MultiPartyView({
         </Wrap>
 
         <Wrap id="vote-header-subtitle">
-          <p style={{
-            color: cfg('vote-header-subtitle').color || '#64748b',
+          <p data-element="vote-header-subtitle" style={{
+            color: 'var(--vh-subtitle-color, var(--color-text-muted, #64748b))',
             fontSize: SIZE_MAP[cfg('vote-header-subtitle').fontSize] || '0.875rem',
             fontWeight: WEIGHT_MAP[cfg('vote-header-subtitle').fontWeight] || cfg('vote-header-subtitle').fontWeight || 400,
             textAlign: cfg('vote-header-subtitle').align || 'center',

@@ -150,6 +150,22 @@ const ELEMENT_VAR_SCHEMA = {
       ],
     },
   ],
+  "vote-header-title": [
+    {
+      group: "หัวข้อหน้าโหวต · Title",
+      vars: [
+        { key: "--vh-title-color", label: "สีตัวอักษร", type: "color", owns: "color" },
+      ],
+    },
+  ],
+  "vote-header-subtitle": [
+    {
+      group: "คำโปรยหน้าโหวต · Subtitle",
+      vars: [
+        { key: "--vh-subtitle-color", label: "สีตัวอักษร", type: "color", owns: "color" },
+      ],
+    },
+  ],
 };
 
 // Deconfliction helper: the set of Layer-3 `cfg` keys that a Tier-2 schema

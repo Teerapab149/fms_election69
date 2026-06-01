@@ -457,12 +457,14 @@ export const ELEMENT_INSTANCES = {
     stateResolverKey: null,
     states: null,
     propertyFields: FIELDS_TEXT,
-    defaultConfig: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", color: "#1a1a2e", fontWeight: "black" },
+    // color removed — Tier-2 var --vh-title-color owns it (deconfliction);
+    // defaults to var(--color-text) so it follows each template's text token.
+    defaultConfig: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", fontWeight: "black" },
     presets: {
-      classic: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", color: "#1a1a2e", fontWeight: "black" },
-      dark:    { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", color: "#ffffff", fontWeight: "black" },
-      playful: { text: "เลือกพรรคที่ใช่!",        fontSize: "3xl", color: "#EC4899", fontWeight: "black" },
-      minimal: { text: "เลือกตั้ง",                fontSize: "2xl", color: "#1E293B", fontWeight: "bold" }
+      classic: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", fontWeight: "black" },
+      dark:    { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", fontWeight: "black" },
+      playful: { text: "เลือกพรรคที่ใช่!",        fontSize: "3xl", fontWeight: "black" },
+      minimal: { text: "เลือกตั้ง",                fontSize: "2xl", fontWeight: "bold" }
     },
     schemaVersion: "v1"
   },
@@ -478,12 +480,14 @@ export const ELEMENT_INSTANCES = {
     stateResolverKey: null,
     states: null,
     propertyFields: FIELDS_TEXT,
-    defaultConfig: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm", color: "#64748b" },
+    // color removed — Tier-2 var --vh-subtitle-color owns it (deconfliction);
+    // defaults to var(--color-text-muted) so it follows the template token.
+    defaultConfig: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm" },
     presets: {
-      classic: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm",   color: "#64748b" },
-      dark:    { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm",   color: "#94a3b8" },
-      playful: { text: "เลือกพรรคในใจของคุณ!",     fontSize: "base", color: "#be185d" },
-      minimal: { text: "โปรดเลือก",                  fontSize: "xs",   color: "#94a3b8" }
+      classic: { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm"   },
+      dark:    { text: "โปรดเลือกพรรคที่ต้องการ", fontSize: "sm"   },
+      playful: { text: "เลือกพรรคในใจของคุณ!",     fontSize: "base" },
+      minimal: { text: "โปรดเลือก",                  fontSize: "xs"   }
     },
     schemaVersion: "v1"
   },
