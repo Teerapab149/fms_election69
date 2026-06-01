@@ -218,8 +218,10 @@ export const modernDarkTemplate = {
     // (white-on-white), which would override dark theme's token fallback.
     // Day 7a Part 4: Layer 2 pilot — each template declares its own --banner-*.
     // Day 7b: explicit variant field.
+    // Structural distinction (not just colour): modern-dark uses the editorial
+    // minimal-line banner (thin rule, no card chrome) for a sleeker tech identity.
     "banner-section": {
-      variant: "default",
+      variant: "minimal-line",
       config: { visible: true, borderRadius: "3xl" },
       vars: {
         "--banner-bg":           "var(--color-surface)",
@@ -231,18 +233,11 @@ export const modernDarkTemplate = {
     },
 
     // === Vote page ===
-    "vote-header-title": {
-      config: {
-        ...classicTemplate.elements["vote-header-title"].config,
-        color: "#ffffff"
-      }
-    },
-    "vote-header-subtitle": {
-      config: {
-        ...classicTemplate.elements["vote-header-subtitle"].config,
-        color: "#94a3b8"
-      }
-    },
+    // vote-header-title / vote-header-subtitle entries removed — they only
+    // overrode config.color, which is now dead (MultiPartyView reads
+    // --vh-title-color / --vh-subtitle-color directly, P-LOG-071). They inherit
+    // classic's vars (var(--color-text) / var(--color-text-muted)), which resolve
+    // to modern-dark's light text tokens automatically.
     "vote-party-card": {
       config: {
         ...classicTemplate.elements["vote-party-card"].config,
