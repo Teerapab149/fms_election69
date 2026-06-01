@@ -3,6 +3,10 @@ node_modules
 .env
 .env.local
 
+# Dev-only admin session token written by scripts/dev-admin-login.js (never commit)
+.dev-admin-token.local
+*.local
+
 /src/generated/prisma
 
 .next
