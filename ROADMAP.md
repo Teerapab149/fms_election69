@@ -67,8 +67,14 @@ work is making each page CONSUME tokens + (later) thread template data.
       auth (verification wall, P-LOG-066)
 
 ### 2. Pillar 3 — complete the 95% no-code surface (VISION D13)
-- [ ] Tier 2 depth on more elements (5 of ~47: voteCTA, banner, stats sub-cards, **results-stats-bar**,
-      **candidates-counter** — 2 non-home pages now proven E2E incl. per-page persistence; loop the pattern)
+- [ ] Tier 2 depth on more elements (6 of ~47: voteCTA, banner, stats sub-cards, results-stats-bar,
+      candidates-counter, candidates-tagline). **Clean-target limit reached for the simple loop** — the
+      remaining non-home elements are blocked: vote/* + success megaphone/chips carry Layer-3 `cfg`
+      colors (QuickStyleBar-owned → Tier-2 masked, P-LOG-067); results-demographics is Recharts SVG
+      `fill` (P-LOG-064); success text is hardcoded in its divergent static preview (P-LOG-002);
+      candidates-party-card uses per-party `theme.main` by design; closed is intentionally neutral.
+      **Next genuine expansion needs QuickStyleBar↔Tier-2 deconfliction** (let one surface own each
+      property) OR card-element work — not more pills.
 - [ ] Animation presets (fade/slide/scale/glow/pulse + duration/easing)
 - [ ] Hover / click effect presets
 - [ ] Icon picker (swap Lucide 1000+)

@@ -87,11 +87,27 @@ DIFFERENT key than results):
 - Recharts note: `results-demographics` was SKIPPED as a Tier 2 target — its bar colours are SVG
   `fill` props (CSS `var()` doesn't apply reliably there) → would be a half-working knob (P-LOG-064).
 
-### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
-- **Keep looping Tier 2** to more clean (non-chart, non-Layer-3-masked) elements: vote header
-  badge/title, candidates-tagline/title, success megaphone card. Skip Recharts elements.
-- Or ROADMAP #5 (make one stub template genuinely distinct) / #2 (animation + icon presets).
-- Quick win still open: stats-bg editor mask (QuickStyleBar↔Tier2, P-LOG-067).
+### ✅ Done (loop #2) — `candidates-tagline` + clean-target limit reached
+Added Tier 2 to the candidates tagline pill (`--ctl-accent`/`--ctl-bg`/`--ctl-border`, same A/B/C
+pattern; pairs with the counter → candidates header fully themeable). Verified default byte-faithful
++ transient override on `/preview?page=candidates` (text/bg/border all recolour); build 30/30; console clean.
+
+**Tier 2 now covers 6 elements across home + 2 non-home pages (results, candidates).** I then audited
+EVERY remaining non-home element (config scan + component reads) — the simple "loop the pattern"
+approach has hit its CLEAN limit:
+- **vote/*** (header badge/title/subtitle, abstain/disapprove buttons) — all carry Layer-3 `cfg`
+  colours in classic → Tier-2 var would be MASKED in the editor (P-LOG-067). QuickStyleBar owns them.
+- **success** megaphone card/title/chips — Layer-3 colours; AND the success editor preview is a
+  separate STATIC component that hardcodes colours + diverges from the live page (P-LOG-002).
+- **results-demographics** — Recharts; bar colours are SVG `fill` props, CSS vars don't apply (P-LOG-064).
+- **candidates-party-card** — accent is per-party `theme.main` by design (not a global token).
+- **closed** — intentionally neutral; real page doesn't use the element system.
+
+### 🧭 Next session — `ROADMAP.md` is the master list. Suggested (NOT more pills):
+- **QuickStyleBar ↔ Tier-2 deconfliction** (the real unblock): decide one owner per property so
+  vote/header + success text elements become genuine Tier-2 targets instead of masked knobs
+  (resolves the recurring P-LOG-067 collision, incl. the open stats-bg editor mask).
+- Or pivot to **ROADMAP #5** (make a stub template genuinely distinct) / **#2** (animation + icon presets).
 
 ---
 
