@@ -73,9 +73,23 @@ disk) and ran the round-trip on the **results** page:
   held the old `transform`, it would have survived; it's `{}`, so it was empty). Empty page maps
   normalize away by design (P-LOG-070), not data loss.
 
+### ✅ Done (loop #1) — 2nd non-home element: `candidates-counter`
+Same A/B/C pattern on the candidates page (proves multi-page independence — saved under a
+DIFFERENT key than results):
+- `candidates/page.js`: the counter pill got `data-element="candidates-counter"` (needed in LIVE
+  mode — the EditorElement wrap only adds it in editor mode) + consumes `--cc-accent` (icon/text,
+  fallback `var(--color-primary)`), `--cc-bg`, `--cc-border` (Layer-3 `cfg()` still wins if set).
+- `classic.js`: declared the 3 vars; `ElementVarsPanel`: "ป้ายจำนวนพรรค" schema.
+- FULL editor E2E (self-serve login via `scripts/dev-admin-login.js`): selected counter → panel
+  shows → edit `--cc-accent` → editor preview recoloured `rgb(10,125,44)` → Publish → persisted
+  under **`elementVars.candidates`** (≠ results) → reset+publish → DB clean. `/preview?page=candidates`
+  transient-override recoloured text/bg/border end-to-end. Build 30/30; console clean.
+- Recharts note: `results-demographics` was SKIPPED as a Tier 2 target — its bar colours are SVG
+  `fill` props (CSS `var()` doesn't apply reliably there) → would be a half-working knob (P-LOG-064).
+
 ### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
-- **Loop the Tier 2 pattern to more non-home elements** (results-demographics, vote/candidates
-  headers) now that the surface + E2E are proven end-to-end.
+- **Keep looping Tier 2** to more clean (non-chart, non-Layer-3-masked) elements: vote header
+  badge/title, candidates-tagline/title, success megaphone card. Skip Recharts elements.
 - Or ROADMAP #5 (make one stub template genuinely distinct) / #2 (animation + icon presets).
 - Quick win still open: stats-bg editor mask (QuickStyleBar↔Tier2, P-LOG-067).
 

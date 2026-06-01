@@ -67,8 +67,8 @@ work is making each page CONSUME tokens + (later) thread template data.
       auth (verification wall, P-LOG-066)
 
 ### 2. Pillar 3 — complete the 95% no-code surface (VISION D13)
-- [ ] Tier 2 depth on more elements (4 of ~47: voteCTA, banner, stats sub-cards, **results-stats-bar**
-      — the first NON-home element, proves the multi-page Tier 2 surface end-to-end; loop the pattern)
+- [ ] Tier 2 depth on more elements (5 of ~47: voteCTA, banner, stats sub-cards, **results-stats-bar**,
+      **candidates-counter** — 2 non-home pages now proven E2E incl. per-page persistence; loop the pattern)
 - [ ] Animation presets (fade/slide/scale/glow/pulse + duration/easing)
 - [ ] Hover / click effect presets
 - [ ] Icon picker (swap Lucide 1000+)
