@@ -1527,6 +1527,26 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-069: [2026-06-02] First non-home Tier 2 element — needs editorTokenStyles in the non-home preview too (extends P-LOG-051)
+
+**Context:** Turning slice 1b's per-page plumbing into a real surface by giving `results-stats-bar` Layer 2 vars (`--rsb-accent`, `--rsb-card-bg`) — the first non-home element with Tier 2 controls.
+
+**Symptom (anticipated + fixed):** The home editor preview reflects live Tier 2 edits because `HomeContent` injects `editorTokenStyles` into its own nested `.fms-app`. The five non-home previews (`ResultsEditorPreview`, …) receive NO such scope — only the published DB tokens via the layout-level `.fms-app`. So a live (unpublished) `--rsb-accent` edit would persist + apply on the real page (via `PageThemeOverrides`) yet show nothing in the editor preview — the same WYSIWYG gap P-LOG-051 fixed for home.
+
+**Root cause:** `editorTokenStyles` was threaded only into the home branch of `LivePreview.renderPreview` (PageDesignTab). Non-home previews had no editor token/var scope.
+
+**Fix:** (1) `ResultsStatsBar` gets `data-element="results-stats-bar"` + consumes `var(--rsb-accent, var(--color-primary,#8A2680))` / `var(--rsb-card-bg, rgba(255,255,255,0.9))` on its primary card (border/icon tints via `color-mix`). (2) Declared the two vars in `classic.js` only — results-page elements live solely in classic; the 3 stubs inherit correctly through the fallback chain. (3) Schema entry in `ElementVarsPanel`. (4) `LivePreview` now injects `editorTokenStyles` as a `.fms-app`-scoped `<style>` for non-home pages (`selectedPage !== 'home'`); the scoped `[data-element]` rules only match preview elements, and the admin chrome doesn't consume these vars so there's no leak. Enabler: the non-home `*EditorPreview` components render the REAL component (ResultsEditorPreview → ResultsStatsBar) wrapped in `<Wrap id="results-stats-bar">`, so selection + var consumption + the editor token scope all line up.
+
+**Verification:** build PASS (30/30); on `/preview?page=results` (no auth) the primary card default number color = `rgb(138,38,128)`=#8A2680 (fallback byte-faithful); transient `--rsb-accent:#1188ff` + `--rsb-card-bg:#fff0f5` → number/label `rgb(17,136,255)`, border #1188ff@20% (color-mix), card bg `rgb(255,240,245)` — var consumed end-to-end; console clean.
+
+**Lesson:** When adding Tier 2 to a non-home element, the live page is handled by `PageThemeOverrides`, but the EDITOR preview needs the editor token scope injected for that page too — otherwise you ship an invisible knob (the P-LOG-051 trap, off-home). Declare vars only in templates that actually define the element; rely on the `var(--x, var(--color-*, hex))` fallback chain for templates that don't.
+
+**Mitigation rule:** A non-home element gaining Layer 2 vars ⇒ confirm `editorTokenStyles` reaches that page's preview (it does now via `LivePreview`), and that the `*EditorPreview` renders the real component with a `data-element` wrap, before claiming the control works in the editor.
+
+**Tags:** `#tier2` `#editor-preview` `#wysiwyg` `#multipage` `#color-mix` `#extends-P-LOG-051` `#results`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

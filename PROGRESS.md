@@ -44,10 +44,26 @@ Build PASS (30/30); dev server stopped; tree clean except `.next`/`.claude`.
   elements tokenized with Layer-2 vars (only home elements have `vars` today) + student NextAuth for
   vote/success. The *mechanism* is proven; the *pixel* is the next-surface work.
 
+### ✅ Done today (follow-on) — first NON-home Tier 2 element (proves 1b end-to-end)
+`results-stats-bar` now has Layer 2 vars → the multi-page Tier 2 surface is REAL (P-LOG-069):
+- `ResultsStatsBar.js`: `data-element="results-stats-bar"` + primary card consumes
+  `--rsb-accent` (number/label/icon/left-bar + border&icon tints via `color-mix`) and
+  `--rsb-card-bg`. Fallback chain `var(--rsb-accent, var(--color-primary, #8A2680))` keeps the
+  3 stub templates byte-faithful.
+- `classic.js`: declared the 2 vars (results elements live only in classic; stubs inherit).
+- `ElementVarsPanel.jsx`: schema entry "การ์ดคะแนนรวม".
+- `PageDesignTab` `LivePreview`: inject `editorTokenStyles` for non-home previews so live
+  Tier 2 edits show in the editor preview too (was home-only) — the P-LOG-051 fix, off-home.
+- VERIFIED no-auth on `/preview?page=results`: default #8A2680; transient `--rsb-accent:#1188ff`
+  + `--rsb-card-bg:#fff0f5` recolours number/label/border/bg end-to-end; console clean; build 30/30.
+
 ### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
-- **Declare Layer-2 `vars` on non-home elements** (results-stats-bar, etc.) so the per-page Tier 2
-  panel + `PageThemeOverrides` produce a VISIBLE change — turns slice 1b's plumbing into a real
-  surface. Pair with an admin-login E2E to close the verification gap above.
+- **Admin-login E2E** to close the only remaining gap: select results-stats-bar in the editor →
+  edit `--rsb-accent` → publish → reload → confirm it persists under `elementVars.results` and
+  applies on the real `/results` page (needs a voted+form student session, or just confirm the
+  editor preview + DB round-trip with admin).
+- **Loop the Tier 2 pattern to more non-home elements** (results-demographics, vote/candidates
+  headers) now that the surface is proven.
 - Or ROADMAP #5 (make one stub template genuinely distinct) / #2 (animation + icon presets).
 - Quick win still open: stats-bg editor mask (QuickStyleBar↔Tier2, P-LOG-067).
 
