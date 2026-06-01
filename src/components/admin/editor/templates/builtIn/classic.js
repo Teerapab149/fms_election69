@@ -383,7 +383,14 @@ export const classicTemplate = {
     "candidates-tagline":    { config: {} },
     "candidates-title":      { config: {} },
     "candidates-subtitle":   { config: {} },
-    "candidates-counter":    { config: {} },
+    "candidates-counter":    {
+      config: {},
+      vars: {
+        "--cc-accent": "var(--color-primary)",
+        "--cc-bg":     "rgba(138, 38, 128, 0.1)",
+        "--cc-border": "rgba(138, 38, 128, 0.2)"
+      }
+    },
     "candidates-party-card": { config: {} },
 
     // === Success page ===

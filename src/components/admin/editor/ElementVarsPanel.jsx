@@ -116,6 +116,17 @@ const ELEMENT_VAR_SCHEMA = {
       ],
     },
   ],
+  // Candidates page — counter pill (icon + text + bg + border).
+  "candidates-counter": [
+    {
+      group: "ป้ายจำนวนพรรค · Counter Pill",
+      vars: [
+        { key: "--cc-accent", label: "สีไอคอน/ตัวอักษร", type: "color" },
+        { key: "--cc-bg", label: "สีพื้นหลัง", type: "color" },
+        { key: "--cc-border", label: "สีขอบ", type: "color" },
+      ],
+    },
+  ],
 };
 
 function VarControl({ field, value, onChange }) {

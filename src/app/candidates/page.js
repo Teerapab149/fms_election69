@@ -168,13 +168,13 @@ export default function CandidatesPage({
                 </Wrap>
 
                 <Wrap id="candidates-counter">
-                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+                  <div data-element="candidates-counter" className="flex items-center gap-2 px-4 py-1.5 rounded-full"
                     style={{
-                      backgroundColor: cfg('candidates-counter').backgroundColor || 'rgba(138, 38, 128, 0.1)',
-                      border: `1px solid ${cfg('candidates-counter').borderColor || 'rgba(138, 38, 128, 0.2)'}`
+                      backgroundColor: cfg('candidates-counter').backgroundColor || 'var(--cc-bg, rgba(138, 38, 128, 0.1))',
+                      border: `1px solid ${cfg('candidates-counter').borderColor || 'var(--cc-border, rgba(138, 38, 128, 0.2))'}`
                     }}>
-                    <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || 'var(--color-primary)' }} />
-                    <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || 'var(--color-primary)' }}>
+                    <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || 'var(--cc-accent, var(--color-primary))' }} />
+                    <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || 'var(--cc-accent, var(--color-primary))' }}>
                       {cfg('candidates-counter').text || `ในปีนี้มีทั้งหมด ${parties.length} พรรค`}
                     </span>
                   </div>
