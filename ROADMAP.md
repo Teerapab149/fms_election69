@@ -27,8 +27,12 @@ Progress estimate (per MASTER_PLAN reconciliation): **~50–55%** of full vision
 ## 🔴 Remaining — critical path
 
 ### 0. Immediate
-- [ ] Verify in-browser: the 3 stats cards each select independently in the editor
-      (commit `827e2d0`; pending admin login)
+- [x] Verified: the 3 stats cards each select independently in the editor (`827e2d0`) ✅
+- [ ] **stats sub-card Tier 2 bg masked in EDITOR preview** — `--stats-card-bg` emits +
+      resolves, and works on the LIVE page (inline uses `var(--stats-card-bg, …)`), but the
+      editor preview applies a runtime `cfg.backgroundColor` (white) that masks it (likely a
+      QuickStyleBar Layer-3 collision). Decide: drop the redundant Tier 2 bg, or stop
+      QuickStyleBar seeding `backgroundColor`. (P-LOG-064 pattern, editor-only)
 
 ### 1. ⭐ Multi-page tokenization (Phase 3.5) — BIGGEST UNBLOCK · **IN PROGRESS**
 Layout already emits the Layer-1 `.fms-app` token scope site-wide (`cd6616c`), so the
