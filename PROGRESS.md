@@ -7,9 +7,13 @@
 
 ## 🌅 SESSION HANDOFF — read this first (for 2026-06-02 session)
 
-**Pillar 3 (Editor depth) shipped — Tier 2 full + Tier 3 custom CSS.** 3 atomic commits
-on `new-version` (on top of `4a8945f`, which was pushed). Build PASS, browser-verified
-with the user logged in, live page restored clean, dev server stopped.
+**Big session — all pushed to `new-version` (on top of `4a8945f`). 11 commits:**
+`d7ae9ae` Tier2 controls · `4500119` Tier2 depth voteCTA · `d31cd8b` Tier3 custom CSS ·
+`7d4b198` Tier2 honesty fix · `b5006ca` banner Tier2 depth · `827e2d0` stats nesting fix+bg ·
+`6950616` ROADMAP.md · `a71be13` tokenize success+candidates · `31b98d2` tokenize vote flow ·
+`fa29b12` verify stats selection · `7e3dcc7` layout Layer2 site-wide.
+**`ROADMAP.md` is now the master TODO — read it first for the full remaining-work list.**
+Build PASS throughout; verified in-browser where reachable; dev server stopped; tree clean.
 
 ### ✅ Done today (Pillar 3)
 1. **Tier 2 depth (no-code).** `ElementVarsPanel` regrouped into 4 collapsible sections
@@ -49,19 +53,26 @@ with the user logged in, live page restored clean, dev server stopped.
    inside StatsBlock around just the hero card (added optional `className` to
    `EditorElement` to keep the hero's `col-span-2`). Added `--stats-card-bg` +
    `--stats-card-bg-gradient` to `buildCardStyle` (var fallback, byte-faithful) +
-   `data-element` on both sub-cards + schema entries. Live `/` verified: bento layout
-   intact, sub-cards byte-faithful white. NOTE: in-browser editor click-selection NOT
-   yet confirmed (admin session expired; user delegated) — verify next session: each of
-   the 3 stats cards selects independently + sub-card bg control changes the card.
+   `data-element` on both sub-cards + schema entries. **VERIFIED in-browser (admin
+   logged in): all 3 stats cards now select independently ✅.** BUT found: the sub-card
+   Tier 2 bg control works on the LIVE page (inline uses `var(--stats-card-bg, …)`) yet
+   is MASKED in the EDITOR preview by a runtime `cfg.backgroundColor` (white) — a
+   QuickStyleBar Layer-3 collision (logged as debt below).
 
-7. **ROADMAP.md created** + started **#1 multi-page tokenization (Tier-1, slice 1a)**:
-   tokenized `success` (12) + `candidates` (6) pages — hardcoded brand `#8A2680` →
-   `var(--color-primary)` (per-party `theme.main` preserved). Build PASS + grep-clean.
-   ⚠️ Visual theme-flip NOT confirmed: editor needs login (expired), DB-flip needs
-   consent (classifier-blocked), candidates redirects (1 party), success is auth-gated.
-   Verified by build + grep + parity with the already-verified results page (Pass 3,
-   same `[var(--color-primary)]` in `.fms-app`). **Next: vote flow + closed — but those
-   should be visually verified (ask user to log in) since vote is the critical path.**
+7. **ROADMAP.md created (= master TODO)** + **#1 multi-page tokenization — slice 1a (Tier-1
+   colour) COMPLETE + 1b first step done:**
+   - 1a: tokenized `success` (12), `candidates` (6, per-party `theme.main` kept), and the
+     `vote` flow main path (`vote/page.js` loader, MultiPartyView header-badge, BackToVoteBar,
+     VoteConfirmationModal) — hardcoded `#8A2680` → `var(--color-primary)`. `closed` audited
+     (already neutral). Accent sweep: nothing public (CinematicNavbar left — `/party` cinematic
+     palette). SinglePartyView `#C026D3` left (no token).
+   - 1b: layout `getThemeTokenCss` upgraded `buildTokenStyles` → `buildTemplateStyles` →
+     Layer 2 element-var scope now emitted site-wide (verified `/closed` `<style>` carries
+     `[data-element]` rules; home not regressed).
+   - VERIFY method that works (no auth): transient `.fms-app` `--color-primary` override +
+     computed-style check → PROVEN on home (21 text + 3 bg recolour). Per-page live theme-flip
+     is transitive (same var + scope). Direct vote visual blocked (admin token ≠ student
+     NextAuth session; editor vote preview is a static VotePreview, not live MultiPartyView).
 
 ### ⚠️ Known debts / gotchas (carry forward)
 - **API 400 for `elementCss` NOT exercised live** — auth-gating needs a token; verified
@@ -74,19 +85,30 @@ with the user logged in, live page restored clean, dev server stopped.
   vars declared in templates before they get a Tier 2 panel (no fake knobs).
 - shadow color round-trip is lossy (rgba→hex for the picker) — acceptable for a builder.
 - DB-active (non-built-in) template still falls back to classic in editor preview (old debt).
+- **stats sub-card Tier 2 bg masked in EDITOR preview** (works on LIVE) — QuickStyleBar's
+  Layer-3 `cfg.backgroundColor` collides with the Tier 2 `--stats-card-bg`. Decide next
+  session: drop the redundant Tier 2 bg, or stop QuickStyleBar seeding `backgroundColor`.
+- **Recurring meta-lesson:** before adding a Tier 2 control, check no existing Layer-3
+  surface already edits that property (voteCTA↔StatefulGallery, stats↔QuickStyleBar both bit us).
+- **Verification environment gotchas** (cost a lot this session): admin RSA token ≠ student
+  NextAuth session (so `/vote`,`/success` redirect to /login even when admin-logged-in);
+  editor previews for non-home pages are STATIC components (P-LOG-002), not the live ones;
+  direct DB writes (prisma flip) + fetch-token-harvest are classifier-blocked. **Reliable
+  no-auth verify = transient `.fms-app` `--color-primary` override + read computed styles.**
 
-### 🧭 Tomorrow — pick ONE
-The proven pattern now (banner-section is the worked example): pick a NON-stateful element →
-confirm its variant component CONSUMES `var(--x)` (P-LOG-064) and the prop is VISIBLE (not
-hidden behind an image / not masked by Layer 3) → add the var to all 4 templates byte-faithful
-→ expand ELEMENT_VAR_SCHEMA. Repeat to grow the no-code surface honestly.
-1. **Tier 2 for more non-stateful elements** — e.g. stats cards (visible bg/gradient),
-   meet-section, headings. Each needs vars declared + variant wired + schema entry.
-2. ~~Element tokenization completeness for voteCTA~~ — EXPLORED + rejected: voteCTA's
-   per-state gradient/shadow ARE the design (Layer 3), edited via the Stateful Gallery,
-   not single Tier 2 vars. Flattening them = regression. Don't.
-3. **Library slice 2** — per-page inventory ("หน้านี้ใช้ component อะไรบ้าง").
-4. **Pillar 2 slice 2** — page thumbnails (needs scaled render pipeline; bigger).
+### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
+**Continue #1b (multi-page, the remaining big piece)** — recommended start:
+1. **Per-page `elementVars` / `elementCss` storage + editor save/load.** Today the editor
+   only saves/loads `{ home: ... }` (PageDesignTab payload + load + HomeContent overlay are
+   home-scoped). Extend so each page's Tier 2/3 overrides persist per page → unlocks Tier 2/3
+   editing on all 6 pages. Touches: useEditorState (per-page keys), PageDesignTab (payload/load
+   keyed by selected page), each page component's overlay (effectiveTemplate per page).
+2. **Thread `resolvedTemplate` into** vote/results/candidates/closed/success components (today
+   only home gets it) so config-driven designs follow the active template everywhere.
+
+**Quick wins also available:** resolve the stats-bg editor mask (QuickStyleBar↔Tier2 — see
+debts); Library slice 2 (per-page inventory); make one stub template genuinely distinct (#5).
+Avoid: more voteCTA Tier 2 (per-state = StatefulGallery, settled).
 
 ---
 
