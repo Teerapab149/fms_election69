@@ -73,8 +73,13 @@ work is making each page CONSUME tokens + (later) thread template data.
       colors (QuickStyleBar-owned → Tier-2 masked, P-LOG-067); results-demographics is Recharts SVG
       `fill` (P-LOG-064); success text is hardcoded in its divergent static preview (P-LOG-002);
       candidates-party-card uses per-party `theme.main` by design; closed is intentionally neutral.
-      **Next genuine expansion needs QuickStyleBar↔Tier-2 deconfliction** (let one surface own each
-      property) OR card-element work — not more pills.
+      Further expansion needs the QuickStyleBar↔Tier-2 deconfliction (below) OR card-element work.
+- [x] **QuickStyleBar↔Tier-2 deconfliction mechanism** (P-LOG-071) — Tier-2 vars declare `owns:"<cfgKey>"`;
+      `getOwnedConfigKeys` + PropertyPanel hide the duplicate Layer-3 picker; component reads `var()` directly
+      (no `cfg||` prefix); seeded colour stripped from classic.js + elementInstances. **Pilot: vote-header-badge**
+      is now a genuine Tier-2 target (was Layer-3-masked). `owns` also added to candidates-counter/tagline +
+      stats-card-bg (fixes their latent pickers). Roll the same 3-step migration to remaining color-owned
+      vote/success text elements next.
 - [ ] Animation presets (fade/slide/scale/glow/pulse + duration/easing)
 - [ ] Hover / click effect presets
 - [ ] Icon picker (swap Lucide 1000+)

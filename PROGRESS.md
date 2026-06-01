@@ -103,10 +103,26 @@ approach has hit its CLEAN limit:
 - **candidates-party-card** — accent is per-party `theme.main` by design (not a global token).
 - **closed** — intentionally neutral; real page doesn't use the element system.
 
-### 🧭 Next session — `ROADMAP.md` is the master list. Suggested (NOT more pills):
-- **QuickStyleBar ↔ Tier-2 deconfliction** (the real unblock): decide one owner per property so
-  vote/header + success text elements become genuine Tier-2 targets instead of masked knobs
-  (resolves the recurring P-LOG-067 collision, incl. the open stats-bg editor mask).
+### ✅ Done (deconfliction) — QuickStyleBar↔Tier-2, pilot on vote-header-badge (P-LOG-071)
+Built the "one owner per property" mechanism so Layer-3-masked elements become real Tier-2 targets:
+- `ElementVarsPanel`: Tier-2 vars now carry `owns:"<cfgKey>"`; new `getOwnedConfigKeys(id)`.
+- `PropertyPanel`: control components (`TextControls`/`ButtonControls`/`CardControls` + bound-text path)
+  hide ONLY the owned colour pickers → single picker per property.
+- `classic.js` + `elementInstances.js`: stripped `color` from vote-header-badge (defaultConfig + all
+  4 presets) so nothing seeds `cfg.color`.
+- `MultiPartyView`: badge reads `var(--vh-badge-color, var(--color-primary))` DIRECTLY (dropped the
+  `cfg().color ||` prefix — the key fix; the editor loads a STALE `elementConfigs.home` from DB that
+  baked in the old color, so `cfg||` would keep masking. var-direct = immune).
+- `owns` also added to candidates-counter/tagline + stats-card-bg (fixes their latent dup pickers).
+- VERIFIED: editor shows exactly 1 colour input (dup hidden); `/preview?page=vote` default #8A2680 →
+  `--vh-badge-color:#0a7d2c` → rgb(10,125,44). build 30/30; console clean; DB clean.
+- ENV: killed an orphan `next dev` on :3000 that was racing the shared `.next` (repeated 500s) —
+  `Get-NetTCPConnection -LocalPort 3000` → Stop-Process → rm .next → rebuild (noted in P-LOG-071).
+
+### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
+- **Roll the 3-step deconfliction migration** (owns + strip seeded default in classic.js & elementInstances
+  + drop `cfg||` in the component) to the remaining colour-owned text elements: vote-header-title/subtitle,
+  success-megaphone-title, results-header. Each is now a quick, repeatable pattern.
 - Or pivot to **ROADMAP #5** (make a stub template genuinely distinct) / **#2** (animation + icon presets).
 
 ---

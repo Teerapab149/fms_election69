@@ -1567,6 +1567,29 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-071: [2026-06-02] QuickStyleBar ↔ Tier-2 deconfliction — `owns` + drop the `cfg ||` prefix for owned props
+
+**Context:** Most non-home elements couldn't get a useful Tier-2 var because their colour was already a Layer-3 `cfg` value (seeded by templates/`elementInstances` defaults and editable via PropertyPanel/QuickStyleBar). `cfg().x || var(--x)` means Layer-3 always wins → the Tier-2 knob is masked (the recurring P-LOG-067 collision). Goal: make one surface own each property.
+
+**The deconfliction (3 coordinated parts):**
+1. **`owns` field** on Tier-2 schema vars (`ElementVarsPanel.ELEMENT_VAR_SCHEMA`): a var declares which `cfg` key it supersedes (e.g. `--vh-badge-color` owns `"color"`). New `getOwnedConfigKeys(id)` exports the set. `PropertyPanel` passes it to the type-control components, which **hide only those specific colour pickers** (not all — stats cards keep border/radius). One picker per property.
+2. **Strip the colour from the defaults**: removed `color` from `vote-header-badge` in `classic.js` *and* `elementInstances.js` (`defaultConfig` + all 4 presets) so nothing seeds `cfg.color`. The var defaults to `var(--color-primary)` and adapts per template.
+3. **Component reads the var DIRECTLY** for owned props — drop the `cfg().color ||` prefix (`MultiPartyView` badge → `color: 'var(--vh-badge-color, var(--color-primary))'`). This is the part I missed first: even after (1)+(2), the editor still masked the var because it loads `elementConfigs.home` from the **DB** (a stale snapshot that baked in the old `cfg.color` from a prior publish). Reading the var directly makes Tier-2 the sole source, immune to stale cfg.
+
+**Symptom that taught part 3:** after (1)+(2) the var resolved to `#0a7d2c` on the element yet `color` stayed `#8A2680` — `cfg().color` was still truthy in the editor (stale DB `elementConfigs.home.vote-header-badge.color`). Live page was fine (`cfg()` empty there); only the editor preview masked.
+
+**Verification:** build PASS (30/30); editor PropertyPanel shows exactly 1 colour input (Tier-2's; duplicate "ปรับเอง" picker hidden, no bare "สี" label); `/preview?page=vote` default `rgb(138,38,128)` → transient `--vh-badge-color:#0a7d2c` → `rgb(10,125,44)`. Also added `owns` to candidates-counter/tagline + stats-card-bg (fixes their latent pickers). Console clean; DB left clean.
+
+**Lesson:** "one owner per property" needs all three: hide the duplicate control (`owns`), strip the seeded default (template + `elementInstances`), AND have the component read the var directly (drop `cfg ||`). A stale DB `elementConfigs` snapshot will re-introduce a removed default in the editor — the var-direct read is what makes it robust.
+
+**Mitigation rule:** When migrating a property from Layer-3 `cfg` to a Tier-2 var: (1) add `owns` so PropertyPanel hides the picker, (2) remove it from BOTH `classic.js` and `elementInstances.js` defaults/presets, (3) change the component to `var(--x, fallback)` with no `cfg ||` prefix. Verify in the editor (not just live) since the DB config snapshot can be stale.
+
+**Also (env):** an orphaned `next dev` on port 3000 (untracked leftover preview server) kept racing the shared `.next` → repeated "Internal Server Error" (P-LOG-052/027 in a new form). Fix: kill the orphan (`Get-NetTCPConnection -LocalPort 3000` → `Stop-Process`), `rm -rf .next`, rebuild, restart.
+
+**Tags:** `#tier2` `#layer3` `#deconfliction` `#quickstylebar` `#owns` `#stale-config` `#resolves-P-LOG-067` `#dev-server-orphan`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
