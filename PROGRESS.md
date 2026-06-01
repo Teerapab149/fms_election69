@@ -7,9 +7,21 @@
 
 ## 🌅 SESSION HANDOFF — read this first (for 2026-06-03 session)
 
-**#1b multi-page COMPLETE (both steps). 3 atomic commits on `new-version`:**
-storage (`PageDesignTab`) · threading (`PageThemeOverrides` + 5 page mounts) · docs.
-Build PASS (30/30); dev server stopped; tree clean except `.next`/`.claude`.
+### ⭐ TOP OF QUEUE — build the **Gumroad / Active Pulse** template (user-confirmed)
+The user reviewed 7 Claude-Design prototypes (full 6-page redesigns made for THIS site) and locked a
+**final 6-template lineup**: classic + Quorum 50 + Editorial Narrative + Studio Dark v2 + Gumroad + Atelier 50.
+All prototype source (HTML+CSS) + the intent transcript + the curation plan are in **`docs/design-refs/`**
+— read `docs/design-refs/TEMPLATE-LINEUP.md` + `CHAT-INTENT.md` first.
+**Next build = the Gumroad/Active Pulse template** (`docs/design-refs/index.html` + `styles.css`):
+chunky 2.5px black borders, hard offset shadows (no blur), cream/peach base + pink/lime/yellow/sky pops,
+Archivo Black + Kanit. The voteCTA `chunky-stamp` variant is already shipped — extend the identity to the
+rest (tokens → Layer-1, element configs/vars, a "sticker/chunky" banner+card variant). Build it like
+modern-dark: tokens first, then per-element treatments, verify in editor + /preview.
+
+---
+
+**(prev) #1b multi-page COMPLETE + 6 Tier-2 elements + deconfliction + modern-dark polish.**
+Many atomic commits on `new-version` (all pushed, through `de3dfae`). Build PASS (30/30).
 
 ### ✅ Done today (ROADMAP #1b)
 1. **Per-page `elementVars`/`elementCss` storage + editor save/load** (`PageDesignTab.js` only —

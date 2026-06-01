@@ -1,5 +1,16 @@
 # Final Template Lineup — curation (2026-06-02)
 
+## ✅ CONFIRMED by user (2026-06-02): **6 templates**, build **Gumroad first**
+Classic + Quorum 50 + Editorial Narrative + Studio Dark v2 + Active Pulse/Gumroad + **Atelier 50**
+(Atelier kept as the 6th = cobalt option, in case a non-civic blue is wanted alongside Quorum).
+Dropped from active lineup (source archived in this folder): **Verdure 50** (user: unsuitable for
+election) + **Studio Dark v1** (superseded by v2).
+**Next session build target: the Gumroad / Active Pulse template** (`index.html` + `styles.css`),
+continuing from the voteCTA `chunky-stamp` variant already shipped this session.
+
+---
+
+
 Source: 7 full redesigns of all 6 election pages (home/vote/success/candidates/party/results),
 made for THIS site (FMS SAMO 50) in a Claude Design session. Raw HTML+CSS here in `docs/design-refs/`.
 Intent + the user's reactions are in `CHAT-INTENT.md` (read it — it's where the intent lives).
