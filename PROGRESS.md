@@ -131,12 +131,27 @@ Applied the 3-step migration to vote-header-title + vote-header-subtitle (same p
 - VERIFIED `/preview?page=vote`: title default rgb(26,26,46) → #0a7d2c; subtitle rgb(100,116,139) → #b45309.
   build 30/30; console clean. The whole vote header (badge+title+subtitle) is now deconflicted + Tier-2-themeable.
 
+### ✅ Done (ROADMAP #5, pass 1) — modern-dark
+Audited modern-dark: it was already substantially distinct (dark slate bg, cyan #06b6d4 / violet #8b5cf6,
+per-state voteCTA gradients, glow shadows, stats gradients, light text via tokens) — NOT a thin stub.
+This pass made it cleaner + structurally distinct:
+- Removed deconfliction dead code: the `vote-header-title`/`subtitle` entries only overrode `config.color`,
+  now dead (MultiPartyView reads `--vh-*-color` directly, P-LOG-071). Removed → they inherit classic's
+  var(--color-text)/var(--color-text-muted), which resolve to modern-dark's light tokens automatically
+  (the token-migration synergy paying off).
+- Added a STRUCTURAL distinction beyond colour: banner-section → `minimal-line` variant (editorial thin
+  rule vs classic's card), via the variant system. Verified build + data + transitive (P-LOG-038 DOM-verified
+  modern-dark×minimal-line = transparent/1px #334155/r0/no-shadow; vote-header token inheritance verified
+  this session on /preview?page=vote). NOT freshly applied-in-browser (apply writes DB activeTemplateId;
+  avoided the risky apply/revert dance — transitive proof is solid).
+
 ### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
-- Remaining colour-owned text (results-header, success-megaphone-title) are **editor-preview-only/divergent**
-  (P-LOG-002) — defer until those `*EditorPreview` components render the real page components. Don't add knobs
-  whose live page lacks the element.
-- Pivot to **ROADMAP #5** (make a stub template genuinely distinct — would also give the stub text tokens real
-  values, completing the title-token migration's payoff) / **#2** (animation + icon presets).
+- **ROADMAP #5 pass 2: playful / minimal** — the genuinely thinner stubs. Give each a real identity
+  (complete tokens + a structural variant + element treatments), one at a time, same approach as modern-dark.
+- Optional live confirm: apply modern-dark in the editor → view home (minimal-line banner + dark cohesion) →
+  revert to classic. (Deferred this session to avoid DB activeTemplateId churn.)
+- Or **#2** (animation/hover presets + icon picker). Remaining text deconfliction targets are divergent
+  editor-previews (P-LOG-002) — skip until those previews use real components.
 
 ---
 

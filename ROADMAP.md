@@ -100,8 +100,14 @@ work is making each page CONSUME tokens + (later) thread template data.
 - [ ] Click an element inside a template to inspect its settings
 
 ### 5. Templates honesty
-- [ ] modern-dark / playful / minimal are thin colour-override stubs → make each genuinely
-      distinct, one at a time
+- [~] **modern-dark** — audited: was already substantially distinct (dark slate, cyan/violet,
+      gradients, glow, light text via tokens), NOT a thin stub. This pass: removed deconfliction
+      dead code (vote-header-title/subtitle config.color → inherit classic's `--vh-*-color` token
+      vars, auto-light on dark) + added a STRUCTURAL distinction beyond colour: `minimal-line`
+      banner variant (editorial rule vs classic's card). Verified by build + data + transitive
+      (P-LOG-038 banner render + this session's token inheritance).
+- [ ] **playful / minimal** — make genuinely distinct (these are the thinner stubs; give each a
+      real identity: tokens + a structural variant + element treatments). One at a time.
 
 ### 6. Slots / drag positioning (large structural)
 - [ ] Slot architecture + drag element between slots + free-position within slot
