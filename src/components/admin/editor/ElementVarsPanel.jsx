@@ -116,6 +116,17 @@ const ELEMENT_VAR_SCHEMA = {
       ],
     },
   ],
+  // Candidates page — tagline badge pill (pairs with the counter).
+  "candidates-tagline": [
+    {
+      group: "ป้ายหัวข้อ · Tagline Pill",
+      vars: [
+        { key: "--ctl-accent", label: "สีไอคอน/ตัวอักษร", type: "color" },
+        { key: "--ctl-bg", label: "สีพื้นหลัง", type: "color" },
+        { key: "--ctl-border", label: "สีขอบ", type: "color" },
+      ],
+    },
+  ],
   // Candidates page — counter pill (icon + text + bg + border).
   "candidates-counter": [
     {

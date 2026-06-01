@@ -128,14 +128,14 @@ export default function CandidatesPage({
           <div className="text-center mb-10 md:mb-20 space-y-4 md:space-y-6 animate-fade-in-up">
 
             <Wrap id="candidates-tagline">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md shadow-sm transition-transform hover:scale-105"
+              <div data-element="candidates-tagline" className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md shadow-sm transition-transform hover:scale-105"
                 style={{
-                  backgroundColor: cfg('candidates-tagline').backgroundColor || 'rgba(255,255,255,0.8)',
-                  border: `1px solid ${cfg('candidates-tagline').borderColor || '#f3e8ff'}`
+                  backgroundColor: cfg('candidates-tagline').backgroundColor || 'var(--ctl-bg, rgba(255,255,255,0.8))',
+                  border: `1px solid ${cfg('candidates-tagline').borderColor || 'var(--ctl-border, #f3e8ff)'}`
                 }}>
-                <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || 'var(--color-primary)' }} />
+                <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || 'var(--ctl-accent, var(--color-primary))' }} />
                 <span className="text-[10px] md:text-xs font-black tracking-[0.15em] uppercase"
-                  style={{ color: cfg('candidates-tagline').textColor || 'var(--color-primary)' }}>
+                  style={{ color: cfg('candidates-tagline').textColor || 'var(--ctl-accent, var(--color-primary))' }}>
                   {cfg('candidates-tagline').text || ('Candidates ' + globalConfig.electionCalendarYear)}
                 </span>
               </div>

@@ -380,7 +380,14 @@ export const classicTemplate = {
     },
 
     // === Candidates page (presets:null → defaultConfig {}) ===
-    "candidates-tagline":    { config: {} },
+    "candidates-tagline":    {
+      config: {},
+      vars: {
+        "--ctl-accent": "var(--color-primary)",
+        "--ctl-bg":     "rgba(255, 255, 255, 0.8)",
+        "--ctl-border": "#f3e8ff"
+      }
+    },
     "candidates-title":      { config: {} },
     "candidates-subtitle":   { config: {} },
     "candidates-counter":    {
