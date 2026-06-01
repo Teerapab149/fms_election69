@@ -46,13 +46,17 @@ work is making each page CONSUME tokens + (later) thread template data.
       BackToVoteBar (3), VoteConfirmationModal (2). SinglePartyView (`#C026D3`) +
       CinematicNavbar (`#9333EA`/`#2E1065`) deferred → accent sweep (no `--color-primary` map)
 - [x] closed — audited: no hardcoded brand colours (already neutral)
-- [ ] accent sweep: `#9333EA` → `var(--color-accent)` + `#C026D3`/`#2E1065`/`#601A59` (need tokens?)
+- [x] accent sweep — done: only public usage was CinematicNavbar (`#9333EA`); LEFT
+      intentionally (it's the `/party` cinematic component with its own palette
+      `#2E1065`/`#6A0DAD`/`#1A1A1A`, Phase-4 scope). 1a complete.
 > verify: token-override on `.fms-app` recolours var-driven elements (PROVEN on home:
 > 21 text + 3 bg elements recolour). Per-page live theme-flip transitive (same var+scope);
 > direct visual blocked (admin≠student auth, editor previews are static components).
 
 **1b. Layer 2/3 + template threading** (deeper — per-page element vars / custom CSS / configs):
-- [ ] upgrade layout scope `buildTokenStyles` → `buildTemplateStyles` (emit Layer 2 site-wide)
+- [x] upgrade layout scope `buildTokenStyles` → `buildTemplateStyles` (emit Layer 2
+      site-wide). Verified: `/closed` `<style>` now carries `[data-element="..."]` rules;
+      home not regressed (voteCTA gradient intact — HomeContent's later scope still wins).
 - [ ] per-page `elementVars` / `elementCss` storage + editor save/load (today home-only)
 - [ ] thread `resolvedTemplate` into vote/results/candidates/closed/success components
 

@@ -8,7 +8,7 @@ import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 
 import { db } from "../lib/db";
 import { getTemplate } from "../components/admin/editor/templates";
-import { buildTokenStyles } from "../lib/templateTokens";
+import { buildTemplateStyles } from "../lib/templateTokens";
 
 async function getGlobalConfig() {
   try {
@@ -23,11 +23,14 @@ async function getGlobalConfig() {
   }
 }
 
-// Day 11+ tokenization: emit the Layer 1 token scope at the LAYOUT level so
-// EVERY page (not just home) inherits the active template's tokens overlaid
-// with the admin's themeTokens. This lets var(--color-*) resolve site-wide
-// (navbar, shared chrome, future per-page tokenized elements). Home's own
-// .fms-app scope still nests harmlessly with identical values.
+// Day 11+ tokenization: emit the token scope at the LAYOUT level so EVERY page
+// (not just home) inherits the active template's design, overlaid with the
+// admin's themeTokens. buildTemplateStyles emits BOTH Layer 1 tokens (--color-*)
+// AND Layer 2 element-scope vars (`.fms-app [data-element=X]{...}`), so any page
+// that renders a tokenized element picks up the template defaults site-wide.
+// Home's own .fms-app scope still nests harmlessly — HomeContent's <style> comes
+// later in the DOM, so its effectiveTemplate (with admin element-var overrides)
+// wins on home; other pages fall back to these template defaults.
 async function getThemeTokenCss() {
   try {
     const config = await db.systemConfig.findFirst({
@@ -36,10 +39,12 @@ async function getThemeTokenCss() {
     });
     const activeId = config?.activeTemplateId || "classic";
     const tpl = (await getTemplate(activeId, db)) || (await getTemplate("classic", db));
-    const baseTokens = tpl?.theme?.tokens || {};
     const overrides = config?.pageLayout?.themeTokens || {};
-    const effective = { ...baseTokens, ...overrides };
-    return buildTokenStyles(effective, ".fms-app");
+    const effectiveTpl = {
+      ...tpl,
+      theme: { ...(tpl?.theme || {}), tokens: { ...(tpl?.theme?.tokens || {}), ...overrides } },
+    };
+    return buildTemplateStyles(effectiveTpl, ".fms-app");
   } catch (error) {
     console.error("Failed to build theme token CSS:", error);
     return "";
