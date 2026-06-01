@@ -1,11 +1,59 @@
 # PROGRESS.md
 
-**Last saved:** 2026-06-01
+**Last saved:** 2026-06-02
 **Branch:** `new-version`
 
 ---
 
-## 🌅 SESSION HANDOFF — read this first (for 2026-06-02 session)
+## 🌅 SESSION HANDOFF — read this first (for 2026-06-03 session)
+
+**#1b multi-page COMPLETE (both steps). 3 atomic commits on `new-version`:**
+storage (`PageDesignTab`) · threading (`PageThemeOverrides` + 5 page mounts) · docs.
+Build PASS (30/30); dev server stopped; tree clean except `.next`/`.claude`.
+
+### ✅ Done today (ROADMAP #1b)
+1. **Per-page `elementVars`/`elementCss` storage + editor save/load** (`PageDesignTab.js` only —
+   no API change: the route already stored/validated keyed by `pageId`; no hook change). Added
+   per-page records (`elementVarsByPage`/`elementCssByPage`) + **stash-on-leave / restore-on-arrive**
+   when switching pages (`prevPageRef`); `fetchLayout` loads every page's overrides; save/publish/draft
+   emit the full `{ home, vote, … }` shape via `getElementVarsAllPages`/`getElementCssAllPages`;
+   `multiPageOverridesDirty` folded into the Save gate + unsaved dot. The editor hook stays **flat**
+   = "the active page"; preview (`editorEffectiveTemplate`/`editorTokenStyles`) reflects the active
+   page automatically since the hook is swapped on page switch. Scope = vars+css only (variants/configs
+   have no non-home editing surface yet).
+2. **Per-page overrides delivered to the 5 live pages** — NOT SSR threading. Audit found all 5
+   (vote/results/candidates/closed/success) are `"use client"` → P-LOG-068. New client component
+   `src/components/PageThemeOverrides.js` fetches the public layout + injects a `.fms-app`-scoped
+   `<style>` carrying only that page's `elementVars`/`elementCss` DELTA (defaults already come from
+   `layout.js` site-wide; delta wins by DOM order). Mounted in results/closed/vote, guarded
+   `!editorMode` in candidates/success.
+
+### 🔬 Verification (within the P-LOG-066 wall)
+- `npm run build` → `✓ Compiled successfully` · `✓ 30/30`.
+- Emission logic test (mirror): scoped to `[data-element]`, delta-only (no Layer-1), **no cross-page
+  leak**, null when a page has no overrides.
+- `/results` browser smoke: renders, **no console warns/errors**, public GET returns multi-page shape,
+  `PageThemeOverrides` renders null (DB has only `home` overrides) — correct.
+- DOM-order cascade probe: `laterWins: true` (later `.fms-app [data-element]` rule beats the layout
+  default at equal specificity — the mechanism this whole approach relies on).
+
+### ⚠️ NOT verified live (carry forward — same wall as P-LOG-066)
+- **Editor storage E2E** (switch page → edit a var → publish → reload persists per-page) needs
+  **admin login** — verified by build + round-trip logic only this session.
+- **A published per-page override applying to a real non-home pixel** additionally needs non-home
+  elements tokenized with Layer-2 vars (only home elements have `vars` today) + student NextAuth for
+  vote/success. The *mechanism* is proven; the *pixel* is the next-surface work.
+
+### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
+- **Declare Layer-2 `vars` on non-home elements** (results-stats-bar, etc.) so the per-page Tier 2
+  panel + `PageThemeOverrides` produce a VISIBLE change — turns slice 1b's plumbing into a real
+  surface. Pair with an admin-login E2E to close the verification gap above.
+- Or ROADMAP #5 (make one stub template genuinely distinct) / #2 (animation + icon presets).
+- Quick win still open: stats-bg editor mask (QuickStyleBar↔Tier2, P-LOG-067).
+
+---
+
+## (previous) SESSION HANDOFF — read this first (for 2026-06-02 session)
 
 **Big session — all pushed to `new-version` (on top of `4a8945f`). 11 commits:**
 `d7ae9ae` Tier2 controls · `4500119` Tier2 depth voteCTA · `d31cd8b` Tier3 custom CSS ·

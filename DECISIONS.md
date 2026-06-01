@@ -1507,6 +1507,26 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-068: [2026-06-02] Multi-page slice 1b — the 5 non-home pages are client components, so per-page overrides ship via client injection, not SSR threading
+
+**Context:** Slice 1b step 2 was scoped as "thread `resolvedTemplate` into vote/results/candidates/closed/success" — mirroring how home (SSR `app/page.js` → `HomeContent`) receives the resolved template + pageLayout and emits a nested `.fms-app <style>`.
+
+**Symptom:** The "SSR threading" framing assumed an SSR boundary like home. Audit of all five page entry points showed every one is `"use client"` with heavy client logic (auth gates, `router.replace` redirects, polling intervals, `useSession`). None receives an SSR `resolvedTemplate`. Vote/candidates already client-fetch `/api/admin/page-layout` but read only their own slice (`.vote.multiParty` / `.candidates`).
+
+**Root cause:** Home is the only SSR-rendered page; the rest are client-rendered. A literal SSR threading would require splitting each of 5 pages into a server wrapper + client child — a large, risky refactor of auth-sensitive code for zero extra benefit, since `layout.js` already emits the active template's Layer 1 tokens + Layer 2 element-var DEFAULTS + admin `themeTokens` site-wide on `.fms-app`.
+
+**Fix:** New client component `PageThemeOverrides` (src/components/PageThemeOverrides.js). It fetches the public layout and injects a `.fms-app`-scoped `<style>` carrying ONLY that page's override DELTA: `elementVars[page]` (via a `{elements:{id:{vars}}}` pseudo-template → `buildTemplateStyles`) + `elementCss[page]` (→ `buildElementCss`). Because it mounts inside the layout's `.fms-app` wrapper, its rules come after layout's `<style>` and win at equal specificity by DOM source order — the same cascade trick HomeContent uses. Mounted in results/closed/vote unconditionally and guarded `!editorMode` in candidates/success.
+
+**Verification:** build PASS (30/30); logic-mirror test (scoped, delta-only/no Layer-1, no cross-page leak, null when empty); `/results` smoke (renders, no console errors, public GET returns the multi-page shape, renders null since DB has only `home` overrides); DOM-order cascade probe `laterWins: true`. NOT verified live: a published per-page override applying to a real non-home pixel (needs non-home elements tokenized with Layer-2 vars + auth — the P-LOG-066 wall).
+
+**Lesson:** Before mirroring an SSR pattern across pages, check each target's render model — "thread the SSR prop" only applies to SSR pages. For client pages, deliver the override delta with a small client `<style>` injector and lean on DOM-order cascade + the site-wide layout defaults. Don't refactor auth-gated client pages to SSR just to match one page's pattern.
+
+**Mitigation rule:** Per-page design overrides on client-rendered pages = inject the delta (`elementVars[page]`/`elementCss[page]`) via a `.fms-app`-scoped client `<style>` that mounts after the layout scope; never convert client pages to SSR solely to thread a template prop.
+
+**Tags:** `#multipage` `#tokenization` `#client-vs-ssr` `#cascade` `#layer2` `#layer3` `#extends-P-LOG-066`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

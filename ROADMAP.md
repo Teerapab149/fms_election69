@@ -57,8 +57,14 @@ work is making each page CONSUME tokens + (later) thread template data.
 - [x] upgrade layout scope `buildTokenStyles` → `buildTemplateStyles` (emit Layer 2
       site-wide). Verified: `/closed` `<style>` now carries `[data-element="..."]` rules;
       home not regressed (voteCTA gradient intact — HomeContent's later scope still wins).
-- [ ] per-page `elementVars` / `elementCss` storage + editor save/load (today home-only)
-- [ ] thread `resolvedTemplate` into vote/results/candidates/closed/success components
+- [x] per-page `elementVars` / `elementCss` storage + editor save/load (PageDesignTab:
+      per-page records + stash/restore on page switch; API already stored by pageId)
+- [x] deliver per-page overrides to the 5 live pages — via `PageThemeOverrides` (client
+      injection) NOT SSR threading: all 5 pages are `"use client"` (P-LOG-068). Layout
+      already emits template defaults site-wide; component injects only the page's
+      `elementVars`/`elementCss` delta, winning by DOM order. Mechanism proven (cascade +
+      emission); a live per-page pixel change still needs non-home elements tokenized +
+      auth (verification wall, P-LOG-066)
 
 ### 2. Pillar 3 — complete the 95% no-code surface (VISION D13)
 - [ ] Tier 2 depth on more elements (only 3 of ~47 done; loop the banner/stats pattern)
