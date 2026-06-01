@@ -57,13 +57,25 @@ Build PASS (30/30); dev server stopped; tree clean except `.next`/`.claude`.
 - VERIFIED no-auth on `/preview?page=results`: default #8A2680; transient `--rsb-accent:#1188ff`
   + `--rsb-card-bg:#fff0f5` recolours number/label/border/bg end-to-end; console clean; build 30/30.
 
+### ✅ FULL admin-login E2E DONE (gap closed, P-LOG-070)
+Logged into the real `/admin` editor (front-door login, in-session only — no creds persisted to
+disk) and ran the round-trip on the **results** page:
+- selected `results-stats-bar` in the live editor → ElementVarsPanel showed "การ์ดคะแนนรวม"
+  (สีหลัก / สีพื้นหลังการ์ด) ✓
+- edited `--rsb-accent` → editor preview recoloured to `rgb(17,136,255)` live (proves part D —
+  `editorTokenStyles` now reaches non-home previews) ✓
+- Publish → persisted under **`elementVars.results`** (NOT `home`) ✓
+- full reload + re-open → override re-loaded + preview blue again (persistence round-trip) ✓
+- reset + re-publish → DB clean (`elementVars:{}`, `elementCss:{}`); `elementVariants.home`
+  (banner minimal-line) untouched throughout. Console clean.
+- **Data-safety proven:** publishing from results left home's keys absent ONLY because they were
+  empty `{}` at load — the stash-on-leave preserves any NON-empty page (if home's elementCss had
+  held the old `transform`, it would have survived; it's `{}`, so it was empty). Empty page maps
+  normalize away by design (P-LOG-070), not data loss.
+
 ### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
-- **Admin-login E2E** to close the only remaining gap: select results-stats-bar in the editor →
-  edit `--rsb-accent` → publish → reload → confirm it persists under `elementVars.results` and
-  applies on the real `/results` page (needs a voted+form student session, or just confirm the
-  editor preview + DB round-trip with admin).
 - **Loop the Tier 2 pattern to more non-home elements** (results-demographics, vote/candidates
-  headers) now that the surface is proven.
+  headers) now that the surface + E2E are proven end-to-end.
 - Or ROADMAP #5 (make one stub template genuinely distinct) / #2 (animation + icon presets).
 - Quick win still open: stats-bg editor mask (QuickStyleBar↔Tier2, P-LOG-067).
 

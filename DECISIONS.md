@@ -1547,6 +1547,26 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-070: [2026-06-02] Per-page publish normalizes empty page maps away — that's not data loss
+
+**Context:** Admin-login E2E of slice 1b. Edited `--rsb-accent` on the results page and published; the GET afterwards showed `elementVars` had ONLY `results` — the previously-present `home` key (and `elementCss.home`) were gone. Looked like the per-page storage had dropped another page's overrides.
+
+**Symptom:** `elementVars` went from `{home:…}` (pre-edit) to `{results:{…}}` (post-publish); `elementCss` went from `{home:…}` to `{}`. Momentary "did I just wipe home's overrides?" panic.
+
+**Root cause:** `getElementVarsAllPages()`/`getElementCssAllPages()` (PageDesignTab) drop a page key when its map is empty (`Object.keys(map).length === 0 → delete`), and the stash-on-leave does the same. So a page whose overrides are `{}` is normalized out of the persisted blob rather than stored as `{page:{}}`. The home maps were empty `{}` at load (leftover keys from earlier resets), so they normalized away. Proof it's NOT data loss: the stash captures `editor.elementCss` when leaving a page, so a NON-empty home would have been preserved in the payload — `elementCss` is `{}`, which can only happen if home's css was already empty. `elementVariants.home` (banner minimal-line, a real override on a separate home-scoped path) survived untouched throughout.
+
+**Fix:** None needed — behaviour is correct + desirable (don't persist `{page:{}}` noise). Documented so a future session doesn't mistake empty-key normalization for a regression.
+
+**Verification:** E2E round-trip — publish → `elementVars.results` persisted; full reload re-loaded it (editor preview blue again); reset + re-publish → `elementVars:{}` `elementCss:{}` clean; variants.home intact; console clean.
+
+**Lesson:** Sparse per-page storage that drops empty maps will make untouched-but-empty page keys disappear on the next publish. That's normalization, not loss — confirm by checking whether a NON-empty page would survive the stash (it does) before assuming a bug.
+
+**Mitigation rule:** When auditing per-page persistence, distinguish "empty map normalized away" from "non-empty map dropped". Only the latter is a bug. The stash-on-leave + merge getters preserve every non-empty page.
+
+**Tags:** `#multipage` `#storage` `#persistence` `#false-alarm` `#slice1b` `#extends-P-LOG-068`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
