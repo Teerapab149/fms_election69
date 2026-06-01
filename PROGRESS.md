@@ -119,11 +119,24 @@ Built the "one owner per property" mechanism so Layer-3-masked elements become r
 - ENV: killed an orphan `next dev` on :3000 that was racing the shared `.next` (repeated 500s) —
   `Get-NetTCPConnection -LocalPort 3000` → Stop-Process → rm .next → rebuild (noted in P-LOG-071).
 
+### ✅ Done (deconfliction rollout) — full vote header
+Applied the 3-step migration to vote-header-title + vote-header-subtitle (same pattern as the badge):
+- `--vh-title-color` → `var(--color-text)`, `--vh-subtitle-color` → `var(--color-text-muted)` (declared
+  in classic.js; colour stripped from classic + elementInstances defaultConfig/presets).
+- MultiPartyView reads the vars DIRECTLY (`var(--vh-title-color, var(--color-text,#1e293b))`, etc.) +
+  `data-element` on h1/p. ElementVarsPanel schema entries with `owns:"color"` → PropertyPanel hides the dup picker.
+- KEY CHOICE: text titles tie to the template's TEXT TOKEN (not per-preset hardcodes like the old playful-pink /
+  dark-white), so they adapt per template automatically. classic byte-faithful (subtitle exact #64748b; title
+  #1e293b→#1a1a2e = `--color-text`, imperceptible). Stub templates shift to their text token (acceptable, #5).
+- VERIFIED `/preview?page=vote`: title default rgb(26,26,46) → #0a7d2c; subtitle rgb(100,116,139) → #b45309.
+  build 30/30; console clean. The whole vote header (badge+title+subtitle) is now deconflicted + Tier-2-themeable.
+
 ### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
-- **Roll the 3-step deconfliction migration** (owns + strip seeded default in classic.js & elementInstances
-  + drop `cfg||` in the component) to the remaining colour-owned text elements: vote-header-title/subtitle,
-  success-megaphone-title, results-header. Each is now a quick, repeatable pattern.
-- Or pivot to **ROADMAP #5** (make a stub template genuinely distinct) / **#2** (animation + icon presets).
+- Remaining colour-owned text (results-header, success-megaphone-title) are **editor-preview-only/divergent**
+  (P-LOG-002) — defer until those `*EditorPreview` components render the real page components. Don't add knobs
+  whose live page lacks the element.
+- Pivot to **ROADMAP #5** (make a stub template genuinely distinct — would also give the stub text tokens real
+  values, completing the title-token migration's payoff) / **#2** (animation + icon presets).
 
 ---
 

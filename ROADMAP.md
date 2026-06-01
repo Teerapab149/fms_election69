@@ -78,8 +78,13 @@ work is making each page CONSUME tokens + (later) thread template data.
       `getOwnedConfigKeys` + PropertyPanel hide the duplicate Layer-3 picker; component reads `var()` directly
       (no `cfg||` prefix); seeded colour stripped from classic.js + elementInstances. **Pilot: vote-header-badge**
       is now a genuine Tier-2 target (was Layer-3-masked). `owns` also added to candidates-counter/tagline +
-      stats-card-bg (fixes their latent pickers). Roll the same 3-step migration to remaining color-owned
-      vote/success text elements next.
+      stats-card-bg (fixes their latent pickers).
+- [x] **Rolled deconfliction to the full vote header** — vote-header-title (`--vh-title-color` →
+      `var(--color-text)`) + vote-header-subtitle (`--vh-subtitle-color` → `var(--color-text-muted)`).
+      Text titles tie to the template TEXT token (not per-preset hardcodes) so they adapt per template
+      (dark → light text). Verified on `/preview?page=vote`. Remaining color-owned text (results-header,
+      success-megaphone-title) are editor-preview-only/divergent (P-LOG-002) — defer until those previews
+      use the real components.
 - [ ] Animation presets (fade/slide/scale/glow/pulse + duration/easing)
 - [ ] Hover / click effect presets
 - [ ] Icon picker (swap Lucide 1000+)
