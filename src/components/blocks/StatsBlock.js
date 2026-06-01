@@ -12,7 +12,11 @@ import { RADIUS_MAP } from "../../utils/styleMaps";
 function buildCardStyle(cfg) {
   if (!cfg) return undefined;
   const s = {};
-  s.backgroundColor = cfg.backgroundColor || 'var(--color-surface)';
+  // Layer 2 per-element bg (Tier 2): cfg.backgroundColor (Layer 3) wins; else the
+  // element-scope var, defaulting to the Layer 1 surface token (byte-faithful).
+  // --stats-card-bg-gradient defaults to "none" → inert until the admin sets one.
+  s.backgroundColor = cfg.backgroundColor || 'var(--stats-card-bg, var(--color-surface))';
+  s.backgroundImage = 'var(--stats-card-bg-gradient, none)';
   s.borderColor = cfg.borderColor || 'var(--color-border)';
   // Day 7a: borderRadius now falls back to Layer 1 token when cfg unset.
   s.borderRadius = (cfg.borderRadius && RADIUS_MAP[cfg.borderRadius]) || 'var(--radius-card)';
@@ -84,12 +88,13 @@ export default function StatsBlock({
     editorMode, elementConfigs, selectedElement, hoveredElement,
     onSelectElement, onHoverElement, onHoverEnd,
   };
-  const Wrap = useCallback(({ id, children }) => {
+  const Wrap = useCallback(({ id, className, children }) => {
     const s = editorStateRef.current;
     if (!s.editorMode) return children;
     return (
       <EditorElement
         id={id}
+        className={className}
         config={s.elementConfigs?.[id]}
         isSelected={s.selectedElement === id}
         isHovered={s.hoveredElement === id}
@@ -127,31 +132,39 @@ export default function StatsBlock({
       {/* Bento Grid */}
       <div className="grid grid-cols-2 gap-3">
 
-        {/* Hero Card — ผู้ใช้สิทธิ์แล้ว (stats-voted-card wrapped at HomeContent level) */}
-        <div
-          className={`col-span-2 relative overflow-hidden p-5 pb-7 shadow-xl group hover:-translate-y-1 transition-transform duration-500 ${hasVoted ? "" : "rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] text-white shadow-purple-900/20"}`}
-          style={buildHeroCardStyle(votedCfg)}
-        >
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors" />
-          <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl" />
-          <div className="relative z-10 flex flex-col items-center text-center">
-            <div className="flex items-center gap-2 mb-2 opacity-90">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">ใช้สิทธิแล้ว (Voted)</span>
-            </div>
-            <div className="flex items-baseline justify-center gap-2">
-              <span className="text-6xl lg:text-7xl font-black tracking-tighter drop-shadow-sm tabular-nums leading-none">
-                {stats.totalVoted.toLocaleString()}
-              </span>
-              <span className="text-lg lg:text-xl font-bold opacity-80">คน</span>
+        {/* Hero Card — ผู้ใช้สิทธิ์แล้ว. Wrapped HERE (not at HomeContent level) so
+            the stats-voted-card selection is scoped to the hero card only — this
+            frees the sub-cards below to be selectable (the outer block wrap used
+            to swallow their clicks via onClickCapture). className keeps col-span-2
+            on the editor wrapper so the grid layout is preserved. */}
+        <Wrap id="stats-voted-card" className="col-span-2">
+          <div
+            data-element="stats-voted-card"
+            className={`col-span-2 relative overflow-hidden p-5 pb-7 shadow-xl group hover:-translate-y-1 transition-transform duration-500 ${hasVoted ? "" : "rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] text-white shadow-purple-900/20"}`}
+            style={buildHeroCardStyle(votedCfg)}
+          >
+            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors" />
+            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl" />
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="flex items-center gap-2 mb-2 opacity-90">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">ใช้สิทธิแล้ว (Voted)</span>
+              </div>
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="text-6xl lg:text-7xl font-black tracking-tighter drop-shadow-sm tabular-nums leading-none">
+                  {stats.totalVoted.toLocaleString()}
+                </span>
+                <span className="text-lg lg:text-xl font-bold opacity-80">คน</span>
+              </div>
             </div>
           </div>
-        </div>
+        </Wrap>
 
         {/* Sub Card — ความคืบหน้า */}
         {showPercentage && (
           <Wrap id="stats-progress-card">
             <div
+              data-element="stats-progress-card"
               className={`col-span-1 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group border ${hasProgress ? "" : "rounded-[24px] bg-white border-slate-100"}`}
               style={buildCardStyle(progressCfg)}
             >
@@ -186,8 +199,9 @@ export default function StatsBlock({
 
         {/* Sub Card — ผู้มีสิทธิ์รวม */}
         {showTotalEligible && (
-          <Wrap id="stats-eligible-card">
+          <Wrap id="stats-eligible-card" className={!showPercentage ? 'col-span-2' : ''}>
             <div
+              data-element="stats-eligible-card"
               className={`border-2 p-4 shadow-sm flex flex-col justify-between group transition-all ${!showPercentage ? 'col-span-2' : 'col-span-1'} ${hasEligible ? "hover:shadow-md" : "rounded-[24px] bg-white border-slate-100 hover:border-purple-200 hover:shadow-md"}`}
               style={buildCardStyle(eligibleCfg)}
             >

@@ -26,6 +26,19 @@ import {
   WeightToggle,
 } from "./controls/SharedInputs";
 
+// Shared bg schema for the two stats sub-cards (same var keys; each resolves in
+// its own [data-element] scope, so edits stay per-card). cfg.backgroundColor is
+// unset on every template (Day 6) so these are live immediately — no masking.
+const STATS_CARD_BG_SCHEMA = [
+  {
+    group: "พื้นหลัง · Background",
+    vars: [
+      { key: "--stats-card-bg", label: "สีพื้นหลัง", type: "color" },
+      { key: "--stats-card-bg-gradient", label: "ไล่สีพื้นหลัง", type: "gradient" },
+    ],
+  },
+];
+
 // Grouped schema. Each var's `type` selects the control. All keys below are
 // real Layer 2 vars declared in the built-in templates.
 const ELEMENT_VAR_SCHEMA = {
@@ -90,6 +103,8 @@ const ELEMENT_VAR_SCHEMA = {
       ],
     },
   ],
+  "stats-progress-card": STATS_CARD_BG_SCHEMA,
+  "stats-eligible-card": STATS_CARD_BG_SCHEMA,
 };
 
 function VarControl({ field, value, onChange }) {

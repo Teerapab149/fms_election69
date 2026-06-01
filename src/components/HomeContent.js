@@ -384,10 +384,13 @@ export default function HomeContent({
     electionBanner: ElectionBannerBlock,
   };
 
-  // Editor-mode wrap IDs — block type → primary editable element ID
+  // Editor-mode wrap IDs — block type → primary editable element ID.
+  // NOTE: `stats` is intentionally NOT here. StatsBlock wraps its OWN cards
+  // (hero + 2 sub-cards) internally; a block-level wrap would sit ABOVE them and
+  // its onClickCapture would swallow every sub-card click (they'd all select the
+  // hero). Letting StatsBlock own the wraps makes all three cards selectable.
   const WRAP_ID_MAP = {
     voteCTA: 'voteCTA-button',
-    stats: 'stats-voted-card',
     meetCandidates: 'meet-section',
     electionBanner: 'banner-section',
   };

@@ -41,6 +41,18 @@ with the user logged in, live page restored clean, dev server stopped.
    shadow builder ("คม" → hard 5px 5px 0) and border-width slider (1px→6px) actually
    change the banner frame. This is the honest Canva payoff — non-stateful elements,
    where single-value vars truly drive the look. (Not published; editor state only.)
+6. **Stats sub-card bg controls + editor nesting fix (P-LOG-065).** Wanted bg controls
+   on the stats sub-cards (bg unmasked — cfg.backgroundColor unset since Day 6). Found
+   they were UNSELECTABLE: HomeContent wrapped the whole StatsBlock as `stats-voted-card`,
+   and `EditorElement`'s `onClickCapture` (outermost-first) swallowed every sub-card
+   click. Fix: removed `stats` from `WRAP_ID_MAP`, moved the `stats-voted-card` wrap
+   inside StatsBlock around just the hero card (added optional `className` to
+   `EditorElement` to keep the hero's `col-span-2`). Added `--stats-card-bg` +
+   `--stats-card-bg-gradient` to `buildCardStyle` (var fallback, byte-faithful) +
+   `data-element` on both sub-cards + schema entries. Live `/` verified: bento layout
+   intact, sub-cards byte-faithful white. NOTE: in-browser editor click-selection NOT
+   yet confirmed (admin session expired; user delegated) — verify next session: each of
+   the 3 stats cards selects independently + sub-card bg control changes the card.
 
 ### ⚠️ Known debts / gotchas (carry forward)
 - **API 400 for `elementCss` NOT exercised live** — auth-gating needs a token; verified

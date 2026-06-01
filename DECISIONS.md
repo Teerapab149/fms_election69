@@ -1445,6 +1445,26 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-065: [2026-06-01] Nested EditorElement + onClickCapture → outermost wins → inner elements unselectable
+
+**Context:** Adding Tier 2 bg controls to the stats sub-cards (stats-progress-card / stats-eligible-card). The controls were correct but the cards couldn't be selected in the editor to reach them.
+
+**Symptom:** Clicking ANY stats sub-card selected `stats-voted-card` (the hero). The sub-cards' own `EditorElement` wraps never fired.
+
+**Root cause:** `HomeContent.WRAP_ID_MAP` wrapped the WHOLE StatsBlock in one `EditorElement` (id `stats-voted-card`), and `EditorElement` selects via `onClickCapture` + `stopPropagation`. Capture runs OUTERMOST-first, so the block-level wrap always intercepts and stops the event before it reaches the nested per-card wraps. Any block that has its own inner element wraps + a block-level wrap = inner elements are dead (unselectable).
+
+**Fix:** Removed `stats` from `WRAP_ID_MAP` (no block-level wrap) and moved the `stats-voted-card` wrap INSIDE StatsBlock around just the hero card. The hero is a `col-span-2` grid item, so `EditorElement` gained an optional `className` prop to carry the grid span onto the editor wrapper (else wrapping would collapse the hero to one column). Now all three cards select independently; live page unaffected (editor wraps don't render in non-editor mode).
+
+**Verification:** build PASS (after a `.next` clean — P-LOG-027 race); live `/` bento layout intact (hero 480px full-width, sub-cards 234px L/R) + sub-card bg byte-faithful white. Editor click-selection verified by code reasoning (capture nesting removed) — in-browser confirm pending admin login (session expired; user delegated the call).
+
+**Lesson:** A block-level editor wrap and per-child wraps inside that block are mutually exclusive under capture-phase selection. Wrap at the granularity you want to select; never nest selectable wraps. When moving a wrap onto a grid/flex child, the wrapper must inherit the layout class.
+
+**Mitigation rule:** Before adding a block to `WRAP_ID_MAP`, check the block doesn't already render inner `EditorElement`/`Wrap`s — if it does, let the block own all wraps instead. Wrapping a grid child ⇒ pass its `col-span`/layout class to `EditorElement className`.
+
+**Tags:** `#editor` `#selection` `#onClickCapture` `#nesting` `#stats` `#grid`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
