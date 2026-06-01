@@ -366,7 +366,11 @@ export const classicTemplate = {
       config: { text: "ผลการเลือกตั้ง", fontSize: "5xl", color: "#1e293b", fontWeight: "900", align: "center" }
     },
     "results-stats-bar": {
-      config: { visible: true }
+      config: { visible: true },
+      vars: {
+        "--rsb-accent":  "var(--color-primary)",
+        "--rsb-card-bg": "rgba(255,255,255,0.9)"
+      }
     },
     "results-candidates-heading": {
       config: { text: "🏆 สรุปผลการเลือกตั้ง (Official Results)", fontSize: "sm", color: "#475569", fontWeight: "700" }

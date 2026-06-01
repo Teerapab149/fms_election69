@@ -105,6 +105,17 @@ const ELEMENT_VAR_SCHEMA = {
   ],
   "stats-progress-card": STATS_CARD_BG_SCHEMA,
   "stats-eligible-card": STATS_CARD_BG_SCHEMA,
+  // Results page (first non-home element with Tier 2 vars). Both keys are
+  // declared in classic.js and consumed by ResultsStatsBar's primary card.
+  "results-stats-bar": [
+    {
+      group: "การ์ดคะแนนรวม · Total Card",
+      vars: [
+        { key: "--rsb-accent", label: "สีหลัก (เน้น)", type: "color" },
+        { key: "--rsb-card-bg", label: "สีพื้นหลังการ์ด", type: "color" },
+      ],
+    },
+  ],
 };
 
 function VarControl({ field, value, onChange }) {

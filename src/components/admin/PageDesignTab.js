@@ -484,6 +484,14 @@ function LivePreview({
           }
         }}
       >
+        {/* Non-home previews don't build their own .fms-app scope (home does via
+            HomeContent). Inject the editor's effective token + element-var scope
+            here so live (unpublished) Tier 2 edits show in the preview, e.g.
+            results-stats-bar --rsb-accent. Scoped `.fms-app [data-element]` rules
+            only match preview elements; the admin chrome doesn't consume them. */}
+        {selectedPage !== 'home' && editorTokenStyles && (
+          <style dangerouslySetInnerHTML={{ __html: editorTokenStyles }} />
+        )}
         {isMobile ? (
           <div className="mx-auto py-4" style={{ transform: 'scale(0.55)', transformOrigin: 'top center', width: '375px', marginLeft: 'auto', marginRight: 'auto' }}>
             <div className="rounded-[2.5rem] border-[6px] border-slate-800 overflow-hidden shadow-2xl bg-white relative mx-auto">
