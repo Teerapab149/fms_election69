@@ -38,11 +38,14 @@ work is making each page CONSUME tokens + (later) thread template data.
 - [x] home / navbar / results (Pass 1–3, prior sessions)
 - [x] **success** page (12 swaps)
 - [x] **candidates** page (6 swaps; per-party `theme.main` preserved)
-- [ ] vote (`vote/page.js`, MultiPartyView, SinglePartyView, CinematicNavbar, BackToVoteBar, VoteConfirmationModal)
-- [ ] closed (audit — no brand colours found; likely already neutral)
-- [ ] sweep remaining `#601A59` / `#9333EA` / radius / shadow tokens
-> verify: theme-flip recolours each page (needs admin login OR DB-flip consent — both
-> currently blocked; tokenized pages verified by build + grep + results-page parity)
+- [x] **vote flow** main path — `vote/page.js` (loader), MultiPartyView (header badge),
+      BackToVoteBar (3), VoteConfirmationModal (2). SinglePartyView (`#C026D3`) +
+      CinematicNavbar (`#9333EA`/`#2E1065`) deferred → accent sweep (no `--color-primary` map)
+- [x] closed — audited: no hardcoded brand colours (already neutral)
+- [ ] accent sweep: `#9333EA` → `var(--color-accent)` + `#C026D3`/`#2E1065`/`#601A59` (need tokens?)
+> verify: token-override on `.fms-app` recolours var-driven elements (PROVEN on home:
+> 21 text + 3 bg elements recolour). Per-page live theme-flip transitive (same var+scope);
+> direct visual blocked (admin≠student auth, editor previews are static components).
 
 **1b. Layer 2/3 + template threading** (deeper — per-page element vars / custom CSS / configs):
 - [ ] upgrade layout scope `buildTokenStyles` → `buildTemplateStyles` (emit Layer 2 site-wide)

@@ -95,7 +95,7 @@ export default function VotePage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FD]">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-br from-[#8A2680]/20 to-purple-500/20 rounded-full blur-xl animate-pulse" />
-          <Loader2 className="relative w-12 h-12 text-[#8A2680] animate-spin mb-4" />
+          <Loader2 className="relative w-12 h-12 text-[var(--color-primary)] animate-spin mb-4" />
         </div>
         <p className="text-slate-500 font-semibold animate-pulse mt-4">กำลังตรวจสอบสิทธิ์...</p>
       </div>

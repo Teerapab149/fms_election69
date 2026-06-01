@@ -17,13 +17,13 @@ export default function VoteConfirmationModal({
 
   // 🎨 ตั้งค่า Default Theme (สำหรับกรณีเลือกพรรค - Approve)
   let modalTheme = {
-    color: 'text-[#8A2680]',           // สีข้อความหลัก
+    color: 'text-[var(--color-primary)]',           // สีข้อความหลัก
     bg: 'bg-purple-50',                // สีพื้นหลังการ์ด
     border: 'border-purple-200',       // สีขอบการ์ด
     titleColor: 'text-slate-800',      // สีชื่อพรรค
     subTitleColor: 'text-purple-600',  // สีข้อความ "ท่านเลือก"
     iconBg: 'bg-purple-100',           // สีพื้นหลังไอคอนด้านบน
-    confirmBtn: 'bg-gradient-to-r from-[#8A2680] to-[#701e68] shadow-purple-200', // ปุ่มยืนยัน
+    confirmBtn: 'bg-gradient-to-r from-[var(--color-primary)] to-[#701e68] shadow-purple-200', // ปุ่มยืนยัน
     label: party?.name,                // ชื่อที่แสดง
     subLabel: `เบอร์ ${party?.number}`, // ข้อความรอง
     // ไอคอนในการ์ด
