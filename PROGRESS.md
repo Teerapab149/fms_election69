@@ -54,6 +54,15 @@ with the user logged in, live page restored clean, dev server stopped.
    yet confirmed (admin session expired; user delegated) — verify next session: each of
    the 3 stats cards selects independently + sub-card bg control changes the card.
 
+7. **ROADMAP.md created** + started **#1 multi-page tokenization (Tier-1, slice 1a)**:
+   tokenized `success` (12) + `candidates` (6) pages — hardcoded brand `#8A2680` →
+   `var(--color-primary)` (per-party `theme.main` preserved). Build PASS + grep-clean.
+   ⚠️ Visual theme-flip NOT confirmed: editor needs login (expired), DB-flip needs
+   consent (classifier-blocked), candidates redirects (1 party), success is auth-gated.
+   Verified by build + grep + parity with the already-verified results page (Pass 3,
+   same `[var(--color-primary)]` in `.fms-app`). **Next: vote flow + closed — but those
+   should be visually verified (ask user to log in) since vote is the critical path.**
+
 ### ⚠️ Known debts / gotchas (carry forward)
 - **API 400 for `elementCss` NOT exercised live** — auth-gating needs a token; verified
   by code-mirror vs the shipped `elementVars` gate (P-LOG-063). Low risk.

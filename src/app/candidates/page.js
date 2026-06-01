@@ -103,7 +103,7 @@ export default function CandidatesPage({
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-[#F8F9FD]">
-      <Loader2 className="animate-spin w-10 h-10 text-[#8A2680]" />
+      <Loader2 className="animate-spin w-10 h-10 text-[var(--color-primary)]" />
     </div>
   );
 
@@ -131,9 +131,9 @@ export default function CandidatesPage({
                   backgroundColor: cfg('candidates-tagline').backgroundColor || 'rgba(255,255,255,0.8)',
                   border: `1px solid ${cfg('candidates-tagline').borderColor || '#f3e8ff'}`
                 }}>
-                <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || '#8A2680' }} />
+                <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || 'var(--color-primary)' }} />
                 <span className="text-[10px] md:text-xs font-black tracking-[0.15em] uppercase"
-                  style={{ color: cfg('candidates-tagline').textColor || '#8A2680' }}>
+                  style={{ color: cfg('candidates-tagline').textColor || 'var(--color-primary)' }}>
                   {cfg('candidates-tagline').text || ('Candidates ' + globalConfig.electionCalendarYear)}
                 </span>
               </div>
@@ -149,7 +149,7 @@ export default function CandidatesPage({
                   {cfg('candidates-title').text ? (
                     cfg('candidates-title').text
                   ) : (
-                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-purple-500">ผู้สมัคร</span></>
+                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-purple-500">ผู้สมัคร</span></>
                   )}
                 </h1>
               </Wrap>
@@ -171,8 +171,8 @@ export default function CandidatesPage({
                       backgroundColor: cfg('candidates-counter').backgroundColor || 'rgba(138, 38, 128, 0.1)',
                       border: `1px solid ${cfg('candidates-counter').borderColor || 'rgba(138, 38, 128, 0.2)'}`
                     }}>
-                    <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || '#8A2680' }} />
-                    <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || '#8A2680' }}>
+                    <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || 'var(--color-primary)' }} />
+                    <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || 'var(--color-primary)' }}>
                       {cfg('candidates-counter').text || `ในปีนี้มีทั้งหมด ${parties.length} พรรค`}
                     </span>
                   </div>

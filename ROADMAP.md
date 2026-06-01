@@ -31,14 +31,23 @@ Progress estimate (per MASTER_PLAN reconciliation): **~50–55%** of full vision
       (commit `827e2d0`; pending admin login)
 
 ### 1. ⭐ Multi-page tokenization (Phase 3.5) — BIGGEST UNBLOCK · **IN PROGRESS**
-Only `home` resolves a template today; Tier 1/2/3 only affect home.
-- [ ] Thread `resolvedTemplate` into `vote`
-- [ ] Thread `resolvedTemplate` into `results`
-- [ ] Thread `resolvedTemplate` into `candidates`
-- [ ] Thread `resolvedTemplate` into `closed`
-- [ ] Thread `resolvedTemplate` into `success`
-- [ ] token / element-var / custom-CSS scope (`.fms-app`) emitted on every page
-- [ ] verify Tier 1/2/3 edits show on each page (live + editor preview)
+Layout already emits the Layer-1 `.fms-app` token scope site-wide (`cd6616c`), so the
+work is making each page CONSUME tokens + (later) thread template data.
+
+**1a. Tier-1 colour tokenization** (swap hardcoded brand `#8A2680` → `var(--color-primary)`):
+- [x] home / navbar / results (Pass 1–3, prior sessions)
+- [x] **success** page (12 swaps)
+- [x] **candidates** page (6 swaps; per-party `theme.main` preserved)
+- [ ] vote (`vote/page.js`, MultiPartyView, SinglePartyView, CinematicNavbar, BackToVoteBar, VoteConfirmationModal)
+- [ ] closed (audit — no brand colours found; likely already neutral)
+- [ ] sweep remaining `#601A59` / `#9333EA` / radius / shadow tokens
+> verify: theme-flip recolours each page (needs admin login OR DB-flip consent — both
+> currently blocked; tokenized pages verified by build + grep + results-page parity)
+
+**1b. Layer 2/3 + template threading** (deeper — per-page element vars / custom CSS / configs):
+- [ ] upgrade layout scope `buildTokenStyles` → `buildTemplateStyles` (emit Layer 2 site-wide)
+- [ ] per-page `elementVars` / `elementCss` storage + editor save/load (today home-only)
+- [ ] thread `resolvedTemplate` into vote/results/candidates/closed/success components
 
 ### 2. Pillar 3 — complete the 95% no-code surface (VISION D13)
 - [ ] Tier 2 depth on more elements (only 3 of ~47 done; loop the banner/stats pattern)
