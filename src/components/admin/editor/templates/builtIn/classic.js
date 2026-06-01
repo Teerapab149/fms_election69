@@ -337,7 +337,10 @@ export const classicTemplate = {
 
     // === Vote / header ===
     "vote-header-badge": {
-      config: { text: "ลงคะแนนเสียง", fontSize: "xs", color: "#8A2680" }
+      config: { text: "ลงคะแนนเสียง", fontSize: "xs" },
+      vars: {
+        "--vh-badge-color": "var(--color-primary)"
+      }
     },
     "vote-header-title": {
       config: { text: "เลือกตั้งสโมสรนักศึกษา", fontSize: "3xl", color: "#1a1a2e", fontWeight: "black" }

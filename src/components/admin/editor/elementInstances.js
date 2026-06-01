@@ -433,12 +433,15 @@ export const ELEMENT_INSTANCES = {
     stateResolverKey: null,
     states: null,
     propertyFields: FIELDS_TEXT,
-    defaultConfig: { text: "ลงคะแนนเสียง", fontSize: "xs", color: "#8A2680" },
+    // color removed — Tier-2 var --vh-badge-color owns it (deconfliction,
+    // P-LOG-067). The var defaults to var(--color-primary) so it adapts per
+    // template automatically; presets keep content/size only.
+    defaultConfig: { text: "ลงคะแนนเสียง", fontSize: "xs" },
     presets: {
-      classic: { text: "ลงคะแนนเสียง", fontSize: "xs", color: "#8A2680" },
-      dark:    { text: "VOTE NOW",      fontSize: "xs", color: "#06b6d4" },
-      playful: { text: "โหวตเลย!",     fontSize: "sm", color: "#EC4899" },
-      minimal: { text: "ลงคะแนน",      fontSize: "xs", color: "#64748b" }
+      classic: { text: "ลงคะแนนเสียง", fontSize: "xs" },
+      dark:    { text: "VOTE NOW",      fontSize: "xs" },
+      playful: { text: "โหวตเลย!",     fontSize: "sm" },
+      minimal: { text: "ลงคะแนน",      fontSize: "xs" }
     },
     schemaVersion: "v1"
   },

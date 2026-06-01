@@ -12,7 +12,7 @@ import {
 } from "./controls/SharedInputs";
 import QuickStyleBar from "./QuickStyleBar";
 import VariantPicker from "./VariantPicker.jsx";
-import ElementVarsPanel from "./ElementVarsPanel.jsx";
+import ElementVarsPanel, { getOwnedConfigKeys } from "./ElementVarsPanel.jsx";
 import CustomCssEditor from "./CustomCssEditor.jsx";
 import { isStatefulElement, getBinding, getElement } from "./elementCatalog";
 import StatefulGallery from "./StatefulGallery";
@@ -34,34 +34,47 @@ function Stack({ children }) {
   return <div className="space-y-4">{children}</div>;
 }
 
-function TextControls({ config, onChange }) {
+// `omit` = Set of cfg keys owned by the element's Tier-2 vars (ElementVarsPanel).
+// Those colour pickers are hidden here so a single surface owns each property
+// (deconfliction — see getOwnedConfigKeys / P-LOG-067).
+function TextControls({ config, onChange, omit = new Set() }) {
   return (
     <Stack>
       <TextInput label="ข้อความ" value={config.text} onChange={(v) => onChange("text", v)} />
       <SizeSelect label="ขนาด" value={config.fontSize} onChange={(v) => onChange("fontSize", v)} />
-      <ColorPickerInput label="สี" value={config.color} onChange={(v) => onChange("color", v)} />
+      {!omit.has("color") && (
+        <ColorPickerInput label="สี" value={config.color} onChange={(v) => onChange("color", v)} />
+      )}
       <WeightToggle label="น้ำหนัก" value={config.fontWeight} onChange={(v) => onChange("fontWeight", v)} />
       <AlignSelect label="จัดแนว" value={config.align} onChange={(v) => onChange("align", v)} />
     </Stack>
   );
 }
 
-function ButtonControls({ config, onChange }) {
+function ButtonControls({ config, onChange, omit = new Set() }) {
   return (
     <Stack>
       <TextInput label="ข้อความ" value={config.text} onChange={(v) => onChange("text", v)} />
-      <ColorPickerInput label="สีพื้นหลัง" value={config.backgroundColor} onChange={(v) => onChange("backgroundColor", v)} />
-      <ColorPickerInput label="สีตัวอักษร" value={config.textColor} onChange={(v) => onChange("textColor", v)} />
+      {!omit.has("backgroundColor") && (
+        <ColorPickerInput label="สีพื้นหลัง" value={config.backgroundColor} onChange={(v) => onChange("backgroundColor", v)} />
+      )}
+      {!omit.has("textColor") && (
+        <ColorPickerInput label="สีตัวอักษร" value={config.textColor} onChange={(v) => onChange("textColor", v)} />
+      )}
       <RadiusSelect label="มุมโค้ง" value={config.borderRadius} onChange={(v) => onChange("borderRadius", v)} />
     </Stack>
   );
 }
 
-function CardControls({ config, onChange }) {
+function CardControls({ config, onChange, omit = new Set() }) {
   return (
     <Stack>
-      <ColorPickerInput label="สีพื้นหลัง" value={config.backgroundColor} onChange={(v) => onChange("backgroundColor", v)} />
-      <ColorPickerInput label="สีขอบ" value={config.borderColor} onChange={(v) => onChange("borderColor", v)} />
+      {!omit.has("backgroundColor") && (
+        <ColorPickerInput label="สีพื้นหลัง" value={config.backgroundColor} onChange={(v) => onChange("backgroundColor", v)} />
+      )}
+      {!omit.has("borderColor") && (
+        <ColorPickerInput label="สีขอบ" value={config.borderColor} onChange={(v) => onChange("borderColor", v)} />
+      )}
       <RadiusSelect label="มุมโค้ง" value={config.borderRadius} onChange={(v) => onChange("borderRadius", v)} />
       <ToggleSwitch label="แสดง" value={config.visible} onChange={(v) => onChange("visible", v)} />
     </Stack>
@@ -231,6 +244,8 @@ export default function PropertyPanel({
 
   const { type, label, section, config = {} } = element;
   const handleChange = (key, value) => onUpdateConfig?.(selectedElement, key, value);
+  // cfg keys whose styling Tier-2 owns → hide the duplicate "ปรับเอง" picker.
+  const omit = getOwnedConfigKeys(selectedElement);
 
   const renderControls = () => {
     switch (type) {
@@ -260,16 +275,18 @@ export default function PropertyPanel({
                 </div>
               </div>
               <SizeSelect label="ขนาด" value={config.fontSize} onChange={(v) => handleChange("fontSize", v)} />
-              <ColorPickerInput label="สี" value={config.color} onChange={(v) => handleChange("color", v)} />
+              {!omit.has("color") && (
+                <ColorPickerInput label="สี" value={config.color} onChange={(v) => handleChange("color", v)} />
+              )}
               <WeightToggle label="น้ำหนัก" value={config.fontWeight} onChange={(v) => handleChange("fontWeight", v)} />
               <AlignSelect label="จัดแนว" value={config.align} onChange={(v) => handleChange("align", v)} />
             </Stack>
           );
         }
-        return <TextControls config={config} onChange={handleChange} />;
+        return <TextControls config={config} onChange={handleChange} omit={omit} />;
       }
-      case "button": return <ButtonControls config={config} onChange={handleChange} />;
-      case "card":   return <CardControls   config={config} onChange={handleChange} />;
+      case "button": return <ButtonControls config={config} onChange={handleChange} omit={omit} />;
+      case "card":   return <CardControls   config={config} onChange={handleChange} omit={omit} />;
       case "image":  return <ImageControls  config={config} onChange={handleChange} />;
       case "toggle": return <ToggleControls config={config} onChange={handleChange} />;
       default:       return <p className="text-xs text-slate-400">ไม่รองรับประเภท: {type}</p>;

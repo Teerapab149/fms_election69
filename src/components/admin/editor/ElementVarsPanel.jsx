@@ -33,7 +33,7 @@ const STATS_CARD_BG_SCHEMA = [
   {
     group: "พื้นหลัง · Background",
     vars: [
-      { key: "--stats-card-bg", label: "สีพื้นหลัง", type: "color" },
+      { key: "--stats-card-bg", label: "สีพื้นหลัง", type: "color", owns: "backgroundColor" },
       { key: "--stats-card-bg-gradient", label: "ไล่สีพื้นหลัง", type: "gradient" },
     ],
   },
@@ -117,12 +117,14 @@ const ELEMENT_VAR_SCHEMA = {
     },
   ],
   // Candidates page — tagline badge pill (pairs with the counter).
+  // `owns` links a var to the Layer-3 cfg key it supersedes so PropertyPanel
+  // hides the duplicate "ปรับเอง" picker (deconfliction — Tier-2 owns styling).
   "candidates-tagline": [
     {
       group: "ป้ายหัวข้อ · Tagline Pill",
       vars: [
-        { key: "--ctl-accent", label: "สีไอคอน/ตัวอักษร", type: "color" },
-        { key: "--ctl-bg", label: "สีพื้นหลัง", type: "color" },
+        { key: "--ctl-accent", label: "สีไอคอน/ตัวอักษร", type: "color", owns: "textColor" },
+        { key: "--ctl-bg", label: "สีพื้นหลัง", type: "color", owns: "backgroundColor" },
         { key: "--ctl-border", label: "สีขอบ", type: "color" },
       ],
     },
@@ -132,13 +134,39 @@ const ELEMENT_VAR_SCHEMA = {
     {
       group: "ป้ายจำนวนพรรค · Counter Pill",
       vars: [
-        { key: "--cc-accent", label: "สีไอคอน/ตัวอักษร", type: "color" },
-        { key: "--cc-bg", label: "สีพื้นหลัง", type: "color" },
+        { key: "--cc-accent", label: "สีไอคอน/ตัวอักษร", type: "color", owns: "textColor" },
+        { key: "--cc-bg", label: "สีพื้นหลัง", type: "color", owns: "backgroundColor" },
         { key: "--cc-border", label: "สีขอบ", type: "color" },
       ],
     },
   ],
+  // Vote page — header badge (accent text). Tier-2 owns its colour; the
+  // Layer-3 cfg.color default was removed from classic.js (deconfliction pilot).
+  "vote-header-badge": [
+    {
+      group: "ป้ายหัวข้อหน้าโหวต · Header Badge",
+      vars: [
+        { key: "--vh-badge-color", label: "สีตัวอักษร", type: "color", owns: "color" },
+      ],
+    },
+  ],
 };
+
+// Deconfliction helper: the set of Layer-3 `cfg` keys that a Tier-2 schema
+// supersedes for an element. PropertyPanel uses this to hide the duplicate
+// "ปรับเอง" colour pickers so a single surface (Tier-2) owns each property
+// (resolves P-LOG-067 — Layer-3 cfg would otherwise mask the Tier-2 var).
+export function getOwnedConfigKeys(elementId) {
+  const schema = ELEMENT_VAR_SCHEMA[elementId];
+  const owned = new Set();
+  if (!schema) return owned;
+  for (const group of schema) {
+    for (const v of group.vars) {
+      if (v.owns) owned.add(v.owns);
+    }
+  }
+  return owned;
+}
 
 function VarControl({ field, value, onChange }) {
   switch (field.type) {

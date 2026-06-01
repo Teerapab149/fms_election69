@@ -81,8 +81,11 @@ export default function MultiPartyView({
       
       <div className="text-center mb-8 space-y-2">
         <Wrap id="vote-header-badge">
-          <span style={{
-            color: cfg('vote-header-badge').color || 'var(--color-primary)',
+          <span data-element="vote-header-badge" style={{
+            // Tier-2 owns the colour (deconfliction): read the var directly, no
+            // `cfg().color ||` prefix — that prefix created the dual source and a
+            // stale DB elementConfigs.color would mask the var in the editor.
+            color: 'var(--vh-badge-color, var(--color-primary))',
             fontSize: SIZE_MAP[cfg('vote-header-badge').fontSize] || '0.75rem',
             fontWeight: WEIGHT_MAP[cfg('vote-header-badge').fontWeight] || cfg('vote-header-badge').fontWeight || 700,
           }} className="inline-block uppercase tracking-widest">
