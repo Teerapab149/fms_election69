@@ -11,6 +11,7 @@ import { PARTY_THEMES, DEFAULT_THEME } from '../../utils/PartyTheme';
 import EditorElement from '../../components/admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import SiteFooter from '../../components/SiteFooter';
+import PageThemeOverrides from '../../components/PageThemeOverrides';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -109,6 +110,7 @@ export default function CandidatesPage({
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 relative overflow-x-hidden">
+      {!editorMode && <PageThemeOverrides page="candidates" />}
 
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>

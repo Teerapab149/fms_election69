@@ -8,6 +8,7 @@ import VoteConfirmationModal from '../../components/VoteConfirmationModal';
 import { Loader2, Sparkles } from 'lucide-react';
 // Components
 import Navbar from '../../components/Navbar';
+import PageThemeOverrides from '../../components/PageThemeOverrides';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
 import VoteFooter from '../../components/vote/VoteFooter';
@@ -104,6 +105,7 @@ export default function VotePage() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]">
+      <PageThemeOverrides page="vote" />
 
       {!isSingleParty && (
         <>

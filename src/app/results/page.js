@@ -9,6 +9,7 @@ import PartyDetailModal from "../../components/PartyDetailModal";
 import ResultsStatsBar from "../../components/ResultsStatsBar";
 import ResultsDemographics from "../../components/ResultsDemographics";
 import SiteFooter from "../../components/SiteFooter";
+import PageThemeOverrides from "../../components/PageThemeOverrides";
 import { ELECTION_CONFIG } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
 
@@ -345,6 +346,7 @@ export default function ResultsPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-purple-100 overflow-x-hidden relative">
+      <PageThemeOverrides page="results" />
       <Navbar />
 
       <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"

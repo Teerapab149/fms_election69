@@ -24,6 +24,7 @@ import { useState, useEffect } from 'react';
 
 // ✅ นำเข้าระบบแก้ไขจาก Editor
 import EditorElement from '../../components/admin/editor/EditorElement';
+import PageThemeOverrides from '../../components/PageThemeOverrides';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 
 export default function SuccessPage({ 
@@ -230,6 +231,7 @@ export default function SuccessPage({
   // =========================================================
   return (
     <div className="min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-slate-50">
+      {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* Background Grid */}
       <div className="absolute inset-0 z-0 pointer-events-none">
