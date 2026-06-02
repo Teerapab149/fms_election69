@@ -59,6 +59,17 @@ First real "Layout" half of a template shipped (P-LOG-073). Files:
   transient ENOENT PageNotFoundError during page-data collection (different module each run) — retry passes
   (filesystem flakiness, P-LOG-027/052/071 family, NOT a code error).
 
+### 🧭 VISION clarified (2026-06-03) — per-page layout override (deferred)
+User wants: pick 1 template site-wide, BUT any single page can borrow a DIFFERENT template's LAYOUT
+without changing the rest (e.g. gumroad everywhere, but /vote uses modern-dark's layout, recoloured to
+match). Today one global `activeTemplateId` drives layout+theme for ALL pages (→ changing it changes the
+whole site). Fix fits the dispatcher: per-page layout choice `layoutByPage = { vote:'modern-dark' }`
+(absent = global), each page Renderer keys by it; theme tokens stay GLOBAL so borrowed layouts auto-adopt
+the palette + per-page element overrides fine-tune. CAVEAT: hardcoded-identity layouts (gumroad chunky)
+don't fully recolour via tokens → **author future page layouts as token-driven as the design allows.**
+DECISION: build gumroad's pages first, add the `layoutByPage` mechanism + editor dropdown later. See
+`memory/template-vision.md`.
+
 ### 🔜 NEXT — finish gumroad's OTHER pages (then other templates)
 gumroad home layout done. Remaining gumroad pages each need: (a) a per-template layout component from its
 section in `docs/design-refs/index.html` (vote/success/candidates/party/results screens are all there),
