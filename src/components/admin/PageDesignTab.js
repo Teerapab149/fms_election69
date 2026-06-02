@@ -542,6 +542,7 @@ export default function PageDesignTab() {
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [templateMenuOpen, setTemplateMenuOpen] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState(-1);
   const [hoveredSection, setHoveredSection] = useState(null);
   const [resultsSimMode, setResultsSimMode] = useState('multi');
@@ -1180,37 +1181,105 @@ export default function PageDesignTab() {
   return (
     <div className="space-y-6 animate-fade-in">
 
-      {/* Sticky action topbar (Phase 1) — pinned Save/Publish + current page */}
-      <div className="sticky top-0 z-30 -mx-6 md:-mx-8 px-6 md:px-8 py-3 bg-gray-50/85 backdrop-blur-md border-b border-slate-200/70 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-bold text-slate-800 shrink-0">ออกแบบหน้าเว็บ</span>
-          <span className="text-slate-300 shrink-0">·</span>
-          <span className="text-xs text-slate-500 truncate">
-            กำลังแก้ไข <span className="font-semibold text-slate-700">{getPageById(selectedPage)?.name}</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {(hasChanges || editor.hasUnsavedChanges || multiPageOverridesDirty) && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              ยังไม่เผยแพร่
+      {/* Sticky toolbar — page tabs + template dropdown + Save/Publish (top, per UX restructure) */}
+      <div className="sticky top-0 z-30 -mx-6 md:-mx-8 px-6 md:px-8 py-2.5 bg-gray-50/90 backdrop-blur-md border-b border-slate-200/70 space-y-2.5">
+        {/* row 1 — title + actions */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-bold text-slate-800 shrink-0">ออกแบบหน้าเว็บ</span>
+            <span className="text-slate-300 shrink-0 hidden sm:inline">·</span>
+            <span className="text-xs text-slate-500 truncate hidden sm:inline">
+              กำลังแก้ไข <span className="font-semibold text-slate-700">{getPageById(selectedPage)?.name}</span>
             </span>
-          )}
-          <button
-            onClick={handleSaveDraft}
-            className="flex items-center gap-2 px-3.5 py-2 bg-white text-slate-700 rounded-lg text-sm font-semibold border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
-          >
-            <Save className="w-4 h-4" />
-            <span className="hidden sm:inline">บันทึกร่าง</span>
-          </button>
-          <button
-            onClick={() => setConfirmOpen(true)}
-            disabled={(!hasChanges && !editor.hasUnsavedChanges && !multiPageOverridesDirty) || saving}
-            className="flex items-center gap-2 px-4 py-2 bg-[#8A2680] text-white rounded-lg text-sm font-semibold shadow-sm transition-all hover:bg-[#751f6c] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#8A2680]"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-            {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
-          </button>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {(hasChanges || editor.hasUnsavedChanges || multiPageOverridesDirty) && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                ยังไม่เผยแพร่
+              </span>
+            )}
+            <button
+              onClick={handleSaveDraft}
+              className="flex items-center gap-2 px-3.5 py-2 bg-white text-slate-700 rounded-lg text-sm font-semibold border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+            >
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline">บันทึกร่าง</span>
+            </button>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              disabled={(!hasChanges && !editor.hasUnsavedChanges && !multiPageOverridesDirty) || saving}
+              className="flex items-center gap-2 px-4 py-2 bg-[#8A2680] text-white rounded-lg text-sm font-semibold shadow-sm transition-all hover:bg-[#751f6c] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#8A2680]"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+              {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
+            </button>
+          </div>
+        </div>
+
+        {/* row 2 — page tabs + template dropdown */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 pb-0.5">
+            {EDITABLE_PAGES.map((page) => {
+              const IconComp = PAGE_ICON_MAP[page.icon] || LayoutGrid;
+              const isActive = selectedPage === page.id;
+              return (
+                <button
+                  key={page.id}
+                  type="button"
+                  onClick={() => setSelectedPage(page.id)}
+                  className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 ${isActive ? 'bg-[#8A2680] text-white border-[#8A2680] shadow-sm shadow-purple-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-200 hover:text-purple-700'}`}
+                >
+                  <IconComp className="w-3.5 h-3.5" />
+                  {page.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative ml-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setTemplateMenuOpen((v) => !v)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 bg-purple-50 text-[#8A2680] hover:bg-purple-100 transition-colors"
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span className="max-w-[120px] truncate">{activeTemplate?.name || activeTemplateId}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${templateMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {templateMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setTemplateMenuOpen(false)} aria-hidden />
+                <div className="absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] max-h-[72vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-40 p-3">
+                  <p className="text-[11px] font-bold text-slate-500 px-1 pb-2">เลือก Template — ธีมสำเร็จรูป ปรับต่อได้</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {loadingTemplates && (
+                      <div className="col-span-2 flex items-center gap-2 text-sm text-slate-400 py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...
+                      </div>
+                    )}
+                    {!loadingTemplates && availableTemplates.map((tpl) => (
+                      <TemplateCard
+                        key={tpl.slug}
+                        tpl={tpl}
+                        isActive={activeTemplateId === tpl.slug}
+                        onClick={() => requestApplyTemplate(tpl.slug)}
+                        onShowDetail={openTemplateDetail}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setNewTplName(''); setSaveTplOpen(true); setTemplateMenuOpen(false); }}
+                    className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#8A2680]/40 text-[#8A2680] text-xs font-bold hover:bg-purple-50 transition-colors active:scale-95"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    บันทึกดีไซน์นี้เป็น Template ใหม่
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1250,51 +1319,6 @@ export default function PageDesignTab() {
       ) : (
        <>
 
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-purple-50 text-[#8A2680] p-2 rounded-lg">
-              <Palette className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-700">เลือก Template</h3>
-              <p className="text-[11px] text-slate-400">ธีมสำเร็จรูป ปรับแต่งต่อได้</p>
-            </div>
-          </div>
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full border bg-purple-50 text-purple-700 border-purple-200 shrink-0">
-            ● {activeTemplate?.name || activeTemplateId}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          {loadingTemplates && (
-            <div className="col-span-2 flex items-center gap-2 text-sm text-slate-400 py-4">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              กำลังโหลด templates...
-            </div>
-          )}
-          {!loadingTemplates && availableTemplates.map((tpl) => (
-            <TemplateCard
-              key={tpl.slug}
-              tpl={tpl}
-              isActive={activeTemplateId === tpl.slug}
-              onClick={() => requestApplyTemplate(tpl.slug)}
-              onShowDetail={openTemplateDetail}
-            />
-          ))}
-        </div>
-
-        {/* Pillar 4 — Save as new template (heritage) */}
-        <button
-          type="button"
-          onClick={() => { setNewTplName(''); setSaveTplOpen(true); }}
-          className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#8A2680]/40 text-[#8A2680] text-xs font-bold hover:bg-purple-50 transition-colors active:scale-95"
-        >
-          <Save className="w-3.5 h-3.5" />
-          บันทึกดีไซน์นี้เป็น Template ใหม่
-        </button>
-      </div>
-
       {/* Day 11: Theme Token Editor (Tier 1) — global Layer 1 tokens. */}
       {selectedPage === 'home' && (
         <TokenEditor
@@ -1313,33 +1337,6 @@ export default function PageDesignTab() {
         onResetVariant={editor.resetElementVariant}
       />
 
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="bg-purple-50 text-[#8A2680] p-2 rounded-lg">
-            <FileText className="h-5 w-5" />
-          </div>
-          <h3 className="text-sm font-bold text-slate-700">เลือกหน้าที่ต้องการแก้ไข</h3>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {EDITABLE_PAGES.map((page) => {
-            const IconComp = PAGE_ICON_MAP[page.icon] || LayoutGrid;
-            const isActive = selectedPage === page.id;
-            return (
-              <button
-                key={page.id}
-                type="button"
-                onClick={() => setSelectedPage(page.id)}
-                className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all duration-200 ${isActive ? 'bg-[#8A2680] text-white border-[#8A2680] shadow-md shadow-purple-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-200 hover:text-purple-700'
-                  }`}
-              >
-                <IconComp className="w-3.5 h-3.5" />
-                {page.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
 
           {selectedPage === 'home' && (

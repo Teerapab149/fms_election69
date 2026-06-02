@@ -14,13 +14,18 @@ because the property panel sits under the preview). Decisions locked via AskUser
 - **PART A ✅ DONE (commit ffcef8c):** admin sidebar (`src/app/admin/page.js`) is now a collapsible
   icon-rail (76px ↔ 256px) with toggle, auto-collapses on the editor tab, mobile = hamburger drawer;
   header uses the standard FMS PSU logo (NOT 50th) + "Admin" pill. Verified (build 30/30, console clean).
-- **PART B 🔜 NEXT — restructure `PageDesignTab.js` (~1600 lines) into:** top toolbar (page selector +
-  template selector + device toggle + บันทึก/เผยแพร่) · LEFT inspector panel (Sections list → switches to
-  the element PropertyPanel when an element is selected) · BIG live-preview canvas filling the rest. Today
-  it's `grid lg:grid-cols-[minmax(320px,380px)_1fr]` (left rail w/ template gallery+TokenEditor+ElementLibrary
-  +page-selector+sections | LivePreview). The PropertyPanel currently appears separately (bottom). Goal:
-  edit + view simultaneously, element click → left inspector shows its props. ⚠️ big surgical change — do it
-  as its own careful pass with full editor E2E verify. BACKLOG: each template card should show a preview image.
+- **PART B ✅ DONE — restructured `PageDesignTab.js`** into the pro-editor layout (2 staged commits):
+  - **Stage 1 (9c0e175):** LEFT column is now a 2-mode inspector — element selected → `<PropertyPanel>` at
+    top (edit while watching the big canvas); else → setup + page structure. Removed the duplicate
+    PropertyPanel from the right column (canvas = preview-only). VERIFIED: click stats-voted-card/hero-title
+    → props show on the LEFT.
+  - **Stage 2:** moved **page selector + template selector to the TOP toolbar** (page tabs row + a template
+    dropdown popover reusing TemplateCard + save-as-new; new `templateMenuOpen` state). Removed the now-
+    redundant template-gallery card + page-selector card from the left inspector (decluttered). Device
+    toggle stays in the LivePreview header. VERIFIED: toolbar tabs + dropdown work, left inspector clean,
+    canvas big, element click → props left; build 30/30; console clean. NOT published.
+  - BACKLOG: template cards should show preview images (user noted, deferred). Device toggle could also
+    move into the toolbar later.
 - ENV reminder: `npm run build` + dev server both touch `.next` on Windows → frequent ENOENT/manifest race
   (P-LOG-071). Recover: stop dev → `rm -rf .next` → build/restart. Hit it ~3× this session.
 
