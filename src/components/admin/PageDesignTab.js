@@ -1226,8 +1226,29 @@ export default function PageDesignTab() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] gap-6 items-start">
-        {/* LEFT RAIL — setup + page structure (Phase 2 P2.2) */}
-        <div className="space-y-4 lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto lg:pr-1 lg:sticky lg:top-[68px]">
+        {/* LEFT INSPECTOR — 2 modes: element selected → PropertyPanel (edit while
+            watching the big canvas); else → setup + page structure. */}
+        <div className="space-y-4 lg:max-h-[calc(100vh-90px)] lg:overflow-y-auto lg:pr-1 lg:sticky lg:top-[72px]">
+
+      {editor.selectedElement ? (
+        <PropertyPanel
+          selectedElement={editor.selectedElement}
+          elementConfigs={editor.elementConfigs}
+          pageLayout={livePageLayout}
+          elementVariants={editor.elementVariants}
+          onSetVariant={editor.setElementVariant}
+          onResetVariant={editor.resetElementVariant}
+          elementVars={editor.elementVars}
+          onSetVar={editor.setElementVar}
+          onResetVar={editor.resetElementVar}
+          elementCss={editor.elementCss}
+          onSetCss={editor.setElementCss}
+          onUpdateConfig={editor.updateElementConfig}
+          onApplyPreset={handleApplyPresetToElement}
+          onDeselect={editorClearSelection}
+        />
+      ) : (
+       <>
 
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <div className="flex items-center justify-between mb-3">
@@ -1632,6 +1653,8 @@ export default function PageDesignTab() {
             />
           )}
 
+       </>
+       )}
         </div>
 
         <div className="lg:sticky lg:top-[72px] lg:self-start space-y-4">
@@ -1664,26 +1687,6 @@ export default function PageDesignTab() {
             }
           />
           </div>
-
-          {/* Property panel — pinned beside the canvas (Phase 1 P1.3).
-              Desktop: inline in this sticky column → instant feedback on select.
-              Mobile: PropertyPanel renders its own fixed bottom-sheet. */}
-          <PropertyPanel
-            selectedElement={editor.selectedElement}
-            elementConfigs={editor.elementConfigs}
-            pageLayout={livePageLayout}
-            elementVariants={editor.elementVariants}
-            onSetVariant={editor.setElementVariant}
-            onResetVariant={editor.resetElementVariant}
-            elementVars={editor.elementVars}
-            onSetVar={editor.setElementVar}
-            onResetVar={editor.resetElementVar}
-            elementCss={editor.elementCss}
-            onSetCss={editor.setElementCss}
-            onUpdateConfig={editor.updateElementConfig}
-            onApplyPreset={handleApplyPresetToElement}
-            onDeselect={editorClearSelection}
-          />
         </div>
       </div>
 
