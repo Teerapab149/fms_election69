@@ -7,6 +7,23 @@
 
 ## 🌅 SESSION HANDOFF — read this first (for 2026-06-04 session)
 
+### 🔧 Admin editor UX restructure (user-requested) — PART A done, PART B next
+User wants the editor to be a pro-editor layout (the current 2-side split makes element-edit slow
+because the property panel sits under the preview). Decisions locked via AskUserQuestion:
+- **Sidebar = icon-rail + toggle** · **Editor = top toolbar + left inspector + big canvas**.
+- **PART A ✅ DONE (commit ffcef8c):** admin sidebar (`src/app/admin/page.js`) is now a collapsible
+  icon-rail (76px ↔ 256px) with toggle, auto-collapses on the editor tab, mobile = hamburger drawer;
+  header uses the standard FMS PSU logo (NOT 50th) + "Admin" pill. Verified (build 30/30, console clean).
+- **PART B 🔜 NEXT — restructure `PageDesignTab.js` (~1600 lines) into:** top toolbar (page selector +
+  template selector + device toggle + บันทึก/เผยแพร่) · LEFT inspector panel (Sections list → switches to
+  the element PropertyPanel when an element is selected) · BIG live-preview canvas filling the rest. Today
+  it's `grid lg:grid-cols-[minmax(320px,380px)_1fr]` (left rail w/ template gallery+TokenEditor+ElementLibrary
+  +page-selector+sections | LivePreview). The PropertyPanel currently appears separately (bottom). Goal:
+  edit + view simultaneously, element click → left inspector shows its props. ⚠️ big surgical change — do it
+  as its own careful pass with full editor E2E verify. BACKLOG: each template card should show a preview image.
+- ENV reminder: `npm run build` + dev server both touch `.next` on Windows → frequent ENOENT/manifest race
+  (P-LOG-071). Recover: stop dev → `rm -rf .next` → build/restart. Hit it ~3× this session.
+
 ### ✅ Done (2026-06-03 cont.) — PHASE 1: gumroad gets a REAL distinct LAYOUT (home)
 First real "Layout" half of a template shipped (P-LOG-073). Files:
 - NEW `src/components/home/HomeRenderer.js` — slug-keyed layout dispatcher (`{gumroad: GumroadHome}`,
