@@ -16,7 +16,7 @@ import ClosedEditorPreview from './ClosedEditorPreview';
 import SuccessEditorPreview from './SuccessEditorPreview';
 import useEditorState from './editor/useEditorState';
 import PropertyPanel from './editor/PropertyPanel';
-import HomeContent from '../HomeContent';
+import HomeRenderer from '../home/HomeRenderer';
 import { buildTemplateStyles, buildElementCss } from '../../lib/templateTokens';
 import { BUILT_IN_TEMPLATES } from './editor/templates';
 import TokenEditor from './editor/TokenEditor';
@@ -354,7 +354,7 @@ function LivePreview({
   const renderPreview = (dm) => {
     if (selectedPage === 'home' && editorProps) {
       return (
-        <HomeContent
+        <HomeRenderer
           editorMode={true}
           editorData={DUMMY_ELECTION}
           pageLayout={pageLayout}    // ✅ ส่ง pageLayout ไป (เพื่อให้ซ่อนโชว์ได้)

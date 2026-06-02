@@ -7,6 +7,27 @@
 
 ## 🌅 SESSION HANDOFF — read this first (for 2026-06-04 session)
 
+### ✅ Done (2026-06-03 cont.) — PHASE 1: gumroad gets a REAL distinct LAYOUT (home)
+First real "Layout" half of a template shipped (P-LOG-073). Files:
+- NEW `src/components/home/HomeRenderer.js` — slug-keyed layout dispatcher (`{gumroad: GumroadHome}`,
+  default → HomeContent). Takes HomeContent's exact props; classic path byte-identical (zero risk).
+- NEW `src/components/home/GumroadHome.js` — recreates `docs/design-refs/index.html` (topbar + scrolling
+  ticker + 2-col bento [SAMO title w/ pink box, dual CTA | countdown card + pop stat tiles + meet card] +
+  ink footer). Real data + globalConfig text + chunky-stamp voteCTA element + editorMode selectable
+  (reuses HomeContent's Wrap/resolve/token-style helpers). Inline bento countdown reuses ELECTION_CONFIG.
+- Swapped both call sites HomeContent → HomeRenderer: `app/page.js` (live) + `PageDesignTab.js` LivePreview
+  (editor). Same dispatcher works in editor (editorEffectiveTemplate.slug = activeTemplateId).
+- VERIFIED: build 30/30; editor E2E renders the full distinct layout (nothing left of HomeContent);
+  7 data-elements selectable (hero-title click → PropertyPanel opened); computed chunky (voteCTA 3px #000
+  + 5px5px0, stat tiles pink/ink, countdown ink); console clean; NOT published (DB stays classic).
+
+### 🔜 NEXT — finish gumroad's OTHER pages (then other templates)
+gumroad home layout done. Remaining gumroad pages each need: (a) a per-template layout component from its
+section in `docs/design-refs/index.html` (vote/success/candidates/party/results screens are all there),
+(b) a dispatch seam on that page's renderer (vote→VoteEditorPreview + app/vote, results→ResultsEditorPreview,
+candidates, success, closed) — mirror the HomeRenderer pattern. Reuse element variants + tokens. Verify
+each in editor. ONLY gumroad until done; other templates (Quorum…) after. Read `memory/template-vision.md`.
+
 ### 🚨 DIRECTION CORRECTION (2026-06-03, end of session) — "template" ≠ "theme"
 The user clarified (and pointed at VISION.md:169 + PHASE3_TEMPLATE_VISION.md): **a template =
 Layout + Theme + Element compositions**, NOT a colour theme. What I (and prior sessions) built —

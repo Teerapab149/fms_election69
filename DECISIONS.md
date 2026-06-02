@@ -1614,6 +1614,56 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-073: [2026-06-03] Per-template LAYOUT via a dispatcher — the "Layout" half of a template (not just theme)
+
+**Context:** User corrected a long-running drift (P-LOG-072 included): a template = **Layout + Theme +
+Element compositions** (VISION.md:169), NOT a colour theme. Everything built so far recolored classic's
+ONE `HomeContent` DOM via tokens. The thing that makes templates actually different — the per-template
+page LAYOUT (gumroad's bento+ticker, Quorum's stepper, …) — did not exist. Goal: give gumroad its real
+home layout without risking the production classic home.
+
+**Approach — a slug-keyed layout DISPATCHER (lowest risk):**
+- `src/components/home/HomeRenderer.js` — takes the exact props `HomeContent` receives; picks the layout
+  by `resolvedTemplate.slug` (`{ gumroad: GumroadHome }`, default → `HomeContent`). Classic path is
+  byte-identical (it still renders HomeContent unchanged) → zero regression risk. NOT a refactor of
+  HomeContent — a wrapper above it.
+- Both call sites swap `HomeContent` → `HomeRenderer`: `app/page.js` (live, line ~120) AND
+  `PageDesignTab.js` `LivePreview` (editor preview, line ~357). The editor's `editorEffectiveTemplate`
+  already carries `.slug = activeTemplateId`, so the SAME dispatcher works in the editor preview — the
+  distinct layout shows the moment you select the template (no publish needed).
+- `src/components/home/GumroadHome.js` — recreates `docs/design-refs/index.html` (sticky topbar +
+  scrolling ticker + 2-col bento + ink footer) wired to REAL data + globalConfig text + the shipped
+  chunky-stamp voteCTA element. Reuses HomeContent's resolution helpers verbatim (stable `Wrap`,
+  `resolveElementState`/`resolveStatefulConfig`, `getText`/`getTextStyle`, `effectiveTemplate` merge,
+  `buildTemplateStyles`/`buildElementCss` token-style injection) so it behaves identically in live +
+  editorMode. Elements carry `data-element` + the `Wrap` → selectable + base-editable like classic.
+
+**Key insight:** "different template" = different LAYOUT COMPONENT (owns the page arrangement), composing
+the SAME shared element library (variant components). Chunky identity (2.5px ink borders, 5px 5px 0 hard
+shadows) is hardcoded in GumroadHome per Rule 9 (template/variant identity, not Layer-2 vars). The bento
+countdown is a small inline component reusing `ELECTION_CONFIG` timing (CountdownTimer renders the classic
+pill — wrong look for bento — so a per-layout countdown is the right call).
+
+**Verification:** build PASS (30/30); editor E2E (self-serve login → select gumroad → Live Preview)
+renders the FULL distinct layout — topbar/ticker/SAMO-title-with-pink-box/dual-CTA/bento-stat-tiles/
+meet-card/ACTIVE-PULSE-footer, nothing left of HomeContent's structure. 7 `data-element`s present +
+selectable (clicked hero-title → PropertyPanel "ชื่อหลัก" opened). Computed styles: voteCTA bg pink +
+3px #000 + `5px 5px 0` shadow; stats-voted bg pink + ink border + hard shadow; countdown bg ink. Console
+clean (no variant warns, no React errors). NOT published (DB activeTemplateId stays classic).
+
+**Scope:** gumroad HOME only this pass (phase 1 = prove the pattern). Remaining gumroad pages (vote/
+candidates/results/party/closed/success) need the same dispatch seam on their renderers + a per-template
+layout each — that's the rest of "finish gumroad fully" before moving to other templates.
+
+**Lesson:** to make templates genuinely distinct (not themed), dispatch a per-template LAYOUT component
+by slug at the page-render seam, keep it a wrapper (don't refactor the production default layout), and
+have it reuse the existing element/variant/token machinery so editor + live behave the same. The variant
+system is for per-ELEMENT reuse across templates; the layout dispatcher is for per-PAGE structure.
+
+**Tags:** `#template` `#layout` `#dispatcher` `#gumroad` `#vision-aligned` `#low-risk-seam` `#editor-parity` `#resolves-P-LOG-072-drift`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

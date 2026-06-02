@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth"; // ✅ Import authOptions
-import HomeContent from "../components/HomeContent"; // ✅ เรียกใช้ Component ที่แยกไป
+import HomeRenderer from "../components/home/HomeRenderer"; // per-template home layout dispatcher
 
 import { db } from "../lib/db";
 import { ELECTION_CONFIG } from "../utils/electionConfig";
@@ -117,7 +117,7 @@ export default async function Home() {
   return (
     <main>
       {/* 3. ส่งข้อมูลทั้งหมดไปให้ Client Component */}
-      <HomeContent
+      <HomeRenderer
         session={session}
         initialData={homeData}
         pageLayout={homeData.pageLayout}
