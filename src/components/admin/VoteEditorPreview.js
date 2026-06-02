@@ -5,6 +5,7 @@ import Navbar from '../Navbar';
 import VoteFooter from '../vote/VoteFooter';
 import MultiPartyView from '../vote/MultiPartyView';
 import SinglePartyView from '../vote/SinglePartyView';
+import GumroadVote from '../vote/GumroadVote';
 import EditorElement from './editor/EditorElement';
 import {
   DUMMY_PARTIES_MULTI,
@@ -15,6 +16,7 @@ import {
 
 export default function VoteEditorPreview({
   simMode = "multi",
+  templateSlug = null,
   pageLayout = null,
   elementConfigs = {},
   selectedElement = null,
@@ -23,6 +25,28 @@ export default function VoteEditorPreview({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
+  // Per-template layout: gumroad has its own distinct vote layout.
+  if (templateSlug === 'gumroad') {
+    const single = simMode === 'single';
+    return (
+      <GumroadVote
+        editorMode
+        regularParties={single ? DUMMY_PARTIES_SINGLE : DUMMY_PARTIES_MULTI}
+        specialOptions={DUMMY_SPECIAL_OPTIONS}
+        isSingleParty={single}
+        selectedPartyId={null}
+        onSelect={() => {}}
+        onViewDetails={() => {}}
+        user={DUMMY_USER}
+        elementConfigs={elementConfigs}
+        selectedElement={selectedElement}
+        hoveredElement={hoveredElement}
+        onSelectElement={onSelectElement}
+        onHoverElement={onHoverElement}
+        onHoverEnd={onHoverEnd}
+      />
+    );
+  }
   // Stable Wrap identity (see HomeContent): inline definition remounts the
   // wrapped subtree on every hover re-render → animation flicker. useCallback
   // pins identity; live state via ref keeps hover a re-render, not a remount.

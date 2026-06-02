@@ -386,6 +386,7 @@ function LivePreview({
       return (
         <VoteEditorPreview
           simMode={voteSimMode}
+          templateSlug={resolvedTemplate?.slug || resolvedTemplate?.id}
           pageLayout={pageLayout}
           elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}

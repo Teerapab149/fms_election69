@@ -70,7 +70,21 @@ don't fully recolour via tokens → **author future page layouts as token-driven
 DECISION: build gumroad's pages first, add the `layoutByPage` mechanism + editor dropdown later. See
 `memory/template-vision.md`.
 
-### 🔜 NEXT — finish gumroad's OTHER pages (then other templates)
+### ✅ Done (2026-06-03 cont.) — gumroad VOTE page layout
+`src/components/vote/GumroadVote.js` — distinct vote layout from index.html (gumroad topbar + LIVE BALLOT
+sticker + chunky title + greeting + party-card grid [NO badge, lime check on select, logo media, name/
+slogan, ดูรายละเอียด] + งดออกเสียง/ไม่รับรอง card + sticky chunky vote-footer). MultiPartyView-compatible
+contract (regularParties/specialOptions/selectedPartyId/onSelect/onViewDetails); handles single-party
+(1 party + ไม่รับรอง disapprove -1) AND multi (+ งดออกเสียง abstain 0) for election correctness. Confirm
+calls onConfirm (parent keeps VoteConfirmationModal + submit). Container-query responsive. Dispatch wired
+in BOTH: editor (`VoteEditorPreview` gets `templateSlug` from PageDesignTab → renders GumroadVote when
+gumroad) + live (`app/vote/page.js` reads `activeTemplateId` from page-layout API → GumroadVote vs
+Navbar+MultiParty/Single+VoteFooter). VERIFIED in editor: full vote layout renders w/ real dummy parties,
+5 data-elements selectable (badge/title/subtitle/party-card/abstain → PropertyPanel left), build 30/30,
+console clean, NOT published. Live = mechanism wired + parity (same component) — not pixel-verified (needs
+gumroad published + student auth, P-LOG-066 wall).
+
+### 🔜 NEXT — gumroad's remaining pages (success/candidates/results/closed), then other templates
 gumroad home layout done. Remaining gumroad pages each need: (a) a per-template layout component from its
 section in `docs/design-refs/index.html` (vote/success/candidates/party/results screens are all there),
 (b) a dispatch seam on that page's renderer (vote→VoteEditorPreview + app/vote, results→ResultsEditorPreview,

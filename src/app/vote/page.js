@@ -11,6 +11,7 @@ import Navbar from '../../components/Navbar';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
+import GumroadVote from '../../components/vote/GumroadVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -46,6 +47,8 @@ export default function VotePage() {
 
   // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
   const [voteConfig, setVoteConfig] = useState({});
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -56,6 +59,9 @@ export default function VotePage() {
           if (data?.vote?.multiParty) {
             setVoteConfig(data.vote.multiParty);
           }
+          if (data?.activeTemplateId) {
+            setActiveTemplateId(data.activeTemplateId);
+          }
         }
       } catch (e) {
         console.warn('Failed to fetch page layout, using defaults');
@@ -63,6 +69,8 @@ export default function VotePage() {
     };
     fetchConfig();
   }, []);
+
+  const isGumroad = activeTemplateId === 'gumroad';
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -107,6 +115,20 @@ export default function VotePage() {
     <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]">
       <PageThemeOverrides page="vote" />
 
+      {isGumroad ? (
+        <GumroadVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : (
+       <>
       {!isSingleParty && (
         <>
           {/* Background decoration — fixed, behind everything */}
@@ -157,6 +179,8 @@ export default function VotePage() {
             : () => setIsConfirmModalOpen(true) // ✅ multi: เปิด VoteConfirmationModal เดิม
         }
       />
+       </>
+      )}
 
       {/* Modals */}
       <PartyDetailModal
