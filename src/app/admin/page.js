@@ -14,7 +14,8 @@ import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
 import { getEncryptedToken } from "../../utils/auth";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut } from "lucide-react";
+import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -727,6 +728,12 @@ const SettingsTab = () => {
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  // Collapsible sidebar: icon-rail (collapsed) ↔ full labels (expanded).
+  // Auto-collapse on the editor tab to give the canvas room; user can toggle.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign'); }, [activeTab]);
+  useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
   const handleLogout = async () => {
     try {
@@ -748,52 +755,98 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex">
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full z-20">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#8A2680] to-[#3B82F6] rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
-            A
-          </div>
-          <div>
-            <h1 className="font-bold text-gray-800 leading-tight">Admin Console</h1>
-            <p className="text-[10px] text-gray-500">FMS Election 2026</p>
-          </div>
+      {/* Mobile drawer backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* Sidebar — collapsible icon-rail (desktop) / slide-in drawer (mobile) */}
+      <aside
+        className={`fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 flex flex-col
+          transition-[width,transform] duration-300 ease-out
+          ${sidebarCollapsed ? 'w-64 md:w-[76px]' : 'w-64'}
+          ${mobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} md:translate-x-0`}
+      >
+        {/* Brand + toggle */}
+        <div className={`h-[68px] shrink-0 border-b border-gray-100 flex items-center gap-2.5 ${sidebarCollapsed ? 'md:justify-center px-3' : 'px-5'}`}>
+          <Image
+            src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")}
+            alt="FMS PSU"
+            width={1200}
+            height={384}
+            className={`w-auto h-7 object-contain ${sidebarCollapsed ? 'md:hidden' : ''}`}
+            priority
+          />
+          <span className={`text-[11px] font-bold tracking-wide text-[#8A2680] bg-purple-50 border border-purple-100 rounded-md px-2 py-0.5 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+            Admin
+          </span>
+          {/* desktop collapse toggle */}
+          <button
+            onClick={() => setSidebarCollapsed((v) => !v)}
+            title={sidebarCollapsed ? 'ขยายเมนู' : 'ยุบเมนู'}
+            className="hidden md:flex ml-auto items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#8A2680] hover:bg-purple-50 transition-colors shrink-0"
+          >
+            {sidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          </button>
+          {/* mobile close */}
+          <button
+            onClick={() => setMobileNavOpen(false)}
+            className="md:hidden ml-auto flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all ${activeTab === item.id
-                ? 'bg-purple-50 text-[#8A2680] shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+              title={sidebarCollapsed ? item.label : undefined}
+              className={`w-full flex items-center gap-3 px-3.5 py-3 text-sm font-medium rounded-xl transition-all
+                ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}
+                ${activeTab === item.id
+                  ? 'bg-purple-50 text-[#8A2680] shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
             >
-              {item.icon}
-              {item.label}
+              <span className="shrink-0">{item.icon}</span>
+              <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-3 border-t border-gray-100">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+            title={sidebarCollapsed ? 'Logout' : undefined}
+            className={`w-full flex items-center gap-3 px-3.5 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            Logout
+            <LogOut className="h-5 w-5 shrink-0" />
+            <span className={sidebarCollapsed ? 'md:hidden' : ''}>Logout</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen min-w-0">
+      <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-[margin] duration-300 ease-out ${sidebarCollapsed ? 'md:ml-[76px]' : 'md:ml-64'}`}>
 
         {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10 md:static">
-          <div className="md:hidden font-bold text-gray-800">Admin Console</div> {/* Mobile Title */}
-          <div className="ml-auto flex items-center gap-4">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-center sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            {/* mobile hamburger */}
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 hover:bg-slate-100"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="font-bold text-gray-800 md:hidden">Admin</span>
+          </div>
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-bold text-gray-700">Administrator</p>
               <p className="text-xs text-green-600 flex items-center justify-end gap-1">
@@ -801,10 +854,6 @@ export default function AdminDashboard() {
                 Online
               </p>
             </div>
-            {/* Mobile Logout */}
-            <button onClick={handleLogout} className="md:hidden p-2 text-gray-500 hover:text-red-600 bg-gray-100 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            </button>
           </div>
         </header>
 
