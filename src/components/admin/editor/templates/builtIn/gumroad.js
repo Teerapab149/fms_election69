@@ -180,7 +180,7 @@ export const gumroadTemplate = {
       config: {
         login: {
           ...classicTemplate.elements["voteCTA-button"].config.login,
-          backgroundColor: PINK, textColor: INK
+          backgroundColor: INK, textColor: CREAM
         },
         notVoted: {
           ...classicTemplate.elements["voteCTA-button"].config.notVoted,

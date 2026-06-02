@@ -2,19 +2,22 @@
 
 // GumroadHome — the "Active Pulse" HOME LAYOUT (template: gumroad).
 //
-// This is the LAYOUT half of the gumroad template (the token/theme half lives in
-// templates/builtIn/gumroad.js). Recreated from docs/design-refs/index.html:
-// sticky topbar + scrolling ticker + 2-column bento home (left: eyebrow stickers
-// + huge "SAMO N" title + subtitle + dual CTA; right aside: bento countdown card
-// + pop stat tiles + meet card) + ink footer. Chunky identity = 2.5px ink borders
-// + hard offset shadows (no blur), hardcoded here per Rule 9 (variant identity).
+// The LAYOUT half of the gumroad template (token/theme half = templates/builtIn/
+// gumroad.js). Pixel-faithful recreation of docs/design-refs/index.html: sticky
+// topbar (real FMS+PSU logos, nav, paper + ink buttons) + scrolling ticker +
+// 2-col bento home (left: eyebrow stickers + huge SAMO title w/ pink box + dual
+// CTA; right aside: ink bento countdown + pop stat tiles w/ ekg + meet card) +
+// ink footer. Chunky identity (2.5px ink borders + 5px 5px 0 hard shadows) is
+// hardcoded here per Rule 9. FULLY responsive (mobile/tablet/laptop/desktop) via
+// scoped CSS classes + media queries (inline styles can't do breakpoints).
 //
 // Wired to real data + globalConfig text + the chunky-stamp voteCTA element, and
-// fully editorMode-aware: key elements carry data-element + the stable Wrap so
-// they are selectable + base-editable in the admin editor, exactly like classic.
+// editorMode-aware: key elements carry data-element + the stable Wrap so they are
+// selectable + base-editable in the admin editor, like classic.
 
 import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { useSession, signIn } from "next-auth/react";
 import { ArrowRight, Calendar, CheckCircle2 } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
@@ -27,35 +30,10 @@ import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { ELECTION_CONFIG } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
-// ── Gumroad palette (mirror gumroad.js / styles.css :root) ──
-const INK = "#1A1A1A";
-const INK_2 = "#4A4A4A";
-const CREAM = "#FFF1E5";
-const CREAM_2 = "#FFE4CE";
-const PAPER = "#FFFFFF";
-const PINK = "#FF90E8";
-const LIME = "#B6FF6E";
-const SKY = "#A8E1FF";
-const CORAL = "#FF6E6E";
-const BORDER_W = "2.5px";
-const SHADOW_HARD = "5px 5px 0 " + INK;
-const SHADOW_HARD_SM = "3px 3px 0 " + INK;
-const SHADOW_HARD_LG = "8px 8px 0 " + INK;
-const FONT_DISPLAY = "'Archivo Black', 'Kanit', system-ui, sans-serif";
-
-const card = (extra = {}) => ({
-  background: PAPER,
-  border: `${BORDER_W} solid ${INK}`,
-  borderRadius: "22px",
-  boxShadow: SHADOW_HARD,
-  ...extra,
-});
-
 // ── Bento countdown (gumroad-styled; reuses ELECTION_CONFIG timing) ──
 function GumroadCountdown({ systemMode = "AUTO" }) {
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, label: "STARTS IN" });
-
   useEffect(() => {
     const calc = () => {
       const now = Date.now();
@@ -66,39 +44,23 @@ function GumroadCountdown({ systemMode = "AUTO" }) {
       else if (now < ELECTION_START) { label = "STARTS IN"; diff = ELECTION_START - now; }
       else if (now < ELECTION_END) { label = "CLOSES IN"; diff = ELECTION_END - now; }
       else { label = "ENDED"; diff = 0; }
-      if (diff > 0) {
-        setT({
-          d: Math.floor(diff / 86400000),
-          h: Math.floor((diff / 3600000) % 24),
-          m: Math.floor((diff / 60000) % 60),
-          s: Math.floor((diff / 1000) % 60),
-          label,
-        });
-      } else {
-        setT({ d: 0, h: 0, m: 0, s: 0, label });
-      }
+      setT(diff > 0
+        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label }
+        : { d: 0, h: 0, m: 0, s: 0, label });
     };
     calc();
     const id = setInterval(calc, 1000);
     return () => clearInterval(id);
   }, [ELECTION_START, ELECTION_END, systemMode]);
-
-  const cells = [
-    { n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" },
-  ];
+  const cells = [{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }];
   return (
-    <div data-element="hero-countdown" style={{ background: INK, color: CREAM, border: `${BORDER_W} solid ${INK}`, borderRadius: "22px", boxShadow: SHADOW_HARD_LG, padding: "22px 26px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".15em", color: PINK }}>
-        <span style={{ width: 10, height: 10, borderRadius: 999, background: CORAL, display: "inline-block" }} />
-        {t.label} · ปิดรับลงคะแนนใน
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", marginTop: "14px" }}>
+    <div className="gh-cd" data-element="hero-countdown">
+      <div className="gh-cd__lbl"><span className="gh-livedot" />{t.label} · ปิดรับลงคะแนนใน</div>
+      <div className="gh-cd__grid">
         {cells.map((c, i) => (
-          <div key={i} style={{ background: CREAM, color: INK, borderRadius: "12px", padding: "10px 8px", textAlign: "center" }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "40px", lineHeight: 1, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>
-              {String(c.n).padStart(2, "0")}
-            </div>
-            <div style={{ fontSize: "10px", color: INK_2, marginTop: "4px", textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 700 }}>{c.u}</div>
+          <div key={i} className="gh-cd__cell">
+            <div className="gh-cd__num">{String(c.n).padStart(2, "0")}</div>
+            <div className="gh-cd__unit">{c.u}</div>
           </div>
         ))}
       </div>
@@ -117,17 +79,14 @@ export default function GumroadHome({
   onHoverElement = null,
   onHoverEnd = null,
   pageLayout = null,
-  theme = null,
   resolvedTemplate = null,
   editorTokenStyles = null,
 }) {
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
-
   const [mounted, setMounted] = useState(false);
   const [isVotedReal, setIsVotedReal] = useState(false);
   useEffect(() => { setMounted(true); }, []);
-
   useEffect(() => {
     if (editorMode) return;
     if (status === "authenticated" && session?.user?.studentId) {
@@ -138,36 +97,24 @@ export default function GumroadHome({
     }
   }, [session?.user?.studentId, status, editorMode]);
 
-  // Stable Wrap (identity pinned — see HomeContent for the full rationale).
   const editorStateRef = useRef(null);
   editorStateRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
   const Wrap = useCallback(({ id, children, className }) => {
     const s = editorStateRef.current;
     if (!s.editorMode) return children;
     return (
-      <EditorElement
-        id={id}
-        className={className}
-        config={s.elementConfigs?.[id]}
-        isSelected={s.selectedElement === id}
-        isHovered={s.hoveredElement === id}
-        onSelect={s.onSelectElement}
-        onHover={s.onHoverElement}
-        onHoverEnd={s.onHoverEnd}
-      >{children}</EditorElement>
+      <EditorElement id={id} className={className} config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id} isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement} onHover={s.onHoverElement} onHoverEnd={s.onHoverEnd}>{children}</EditorElement>
     );
   }, []);
 
   if (!mounted) return null;
 
-  // ── config / text resolution (mirror of HomeContent) ──
-  const effectiveConfigs = editorMode
-    ? elementConfigs
-    : (pageLayout?.elementConfigs?.home || {});
-
+  const effectiveConfigs = editorMode ? elementConfigs : (pageLayout?.elementConfigs?.home || {});
   const getText = (id, def) => {
-    const binding = getBinding(id);
-    if (binding) return globalConfig[binding] ?? def;
+    const b = getBinding(id);
+    if (b) return globalConfig[b] ?? def;
     return effectiveConfigs?.[id]?.config?.text ?? def;
   };
   const getTextStyle = (id) => {
@@ -181,19 +128,16 @@ export default function GumroadHome({
   };
   const isVisible = (id) => effectiveConfigs?.[id]?.config?.visible !== false;
 
-  // ── stats ──
   const rawStats = editorMode
     ? { totalVoted: editorData?.totalVoted ?? 342, totalEligible: editorData?.totalEligible ?? 1200 }
     : { totalVoted: initialData?.stats?.totalVoted ?? 0, totalEligible: initialData?.stats?.totalEligible ?? 0 };
-  const pct = rawStats.totalEligible > 0
-    ? ((rawStats.totalVoted / rawStats.totalEligible) * 100).toFixed(2)
-    : "0.00";
+  const pct = rawStats.totalEligible > 0 ? ((rawStats.totalVoted / rawStats.totalEligible) * 100).toFixed(2) : "0.00";
 
   const blockData = { session, isVotedReal, isCheckingVoted: false, initialData, stats: { ...rawStats, percentage: pct } };
   const editorBlockData = { session: null, isVotedReal: false, isCheckingVoted: false, initialData: { systemMode: "AUTO", electionStatus: "ACTIVE", isSystemOpen: true }, stats: { ...rawStats, percentage: pct } };
   const activeBlockData = editorMode ? editorBlockData : blockData;
 
-  // ── effective template (overlay admin overrides) + token style ──
+  // effective template (overlay admin overrides) + token style
   const elementVariantOverrides = pageLayout?.elementVariants?.home || {};
   const themeTokenOverrides = pageLayout?.themeTokens || {};
   const elementVarOverrides = pageLayout?.elementVars?.home || {};
@@ -210,28 +154,18 @@ export default function GumroadHome({
     const mergedTheme = hasT ? { ...baseTheme, tokens: { ...(baseTheme.tokens || {}), ...themeTokenOverrides } } : baseTheme;
     return { ...(resolvedTemplate || {}), theme: mergedTheme, elements: mergedEl };
   })();
-
   const tokenStylesCss = editorMode
     ? (editorTokenStyles || "")
-    : [
-        buildTemplateStyles(effectiveTemplate, ".fms-app"),
-        buildElementCss(pageLayout?.elementCss?.home, ".fms-app"),
-      ].filter(Boolean).join("\n\n");
+    : [buildTemplateStyles(effectiveTemplate, ".fms-app"), buildElementCss(pageLayout?.elementCss?.home, ".fms-app")].filter(Boolean).join("\n\n");
 
-  // ── voteCTA (chunky-stamp element) ──
-  const runtimeCtx = buildRuntimeContext({
-    session,
-    systemConfig: initialData?.systemConfig,
-    electionStatus: initialData?.electionStatus,
-    userData: initialData?.userData,
-  });
+  // voteCTA (chunky-stamp element)
+  const runtimeCtx = buildRuntimeContext({ session, systemConfig: initialData?.systemConfig, electionStatus: initialData?.electionStatus, userData: initialData?.userData });
   const voteCTAState = resolveElementState("voteCTA-button", runtimeCtx);
   const voteCTAOverrides = pageLayout?.elementOverrides?.["voteCTA-button"]?.[voteCTAState] || {};
   const voteCTAConfig = resolveStatefulConfig(effectiveTemplate, "voteCTA-button", voteCTAState, voteCTAOverrides);
-  const voteCTAVariant = effectiveTemplate?.elements?.["voteCTA-button"]?.variant || "chunky-stamp";
-  const VoteCTA = getVoteCTAVariant(voteCTAVariant);
+  const VoteCTA = getVoteCTAVariant(effectiveTemplate?.elements?.["voteCTA-button"]?.variant || "chunky-stamp");
 
-  // ── text values ──
+  // text values
   const titleText = String(getText("hero-title", globalConfig.electionName) ?? "");
   const titleMatch = titleText.match(/^(.+?)\s*(\d+)$/);
   const titlePart = titleMatch ? titleMatch[1].trim() : titleText;
@@ -239,160 +173,259 @@ export default function GumroadHome({
   const yearText = isBoundElement("hero-year-badge")
     ? `ประจำปีการศึกษา ${globalConfig.academicYearTh}`
     : getText("hero-year-badge", `ประจำปีการศึกษา ${globalConfig.academicYearTh}`);
-
   const sysMode = initialData?.systemMode || "AUTO";
 
   return (
-    <div className="fms-app" style={{ minHeight: "100vh", background: CREAM, color: INK, display: "flex", flexDirection: "column", fontFamily: "'Kanit', system-ui, sans-serif" }}>
+    <div className="fms-app gh-root">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
 
       {/* ── TOPBAR ── */}
-      <div style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 32px", background: CREAM, borderBottom: `${BORDER_W} solid ${INK}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", fontFamily: FONT_DISPLAY, fontWeight: 900, fontSize: "20px", textTransform: "uppercase", letterSpacing: "-.02em" }}>
-          FMS <span style={{ width: 2, height: 28, background: INK, display: "inline-block" }} /> PSU
-        </div>
-        <nav style={{ display: "flex", alignItems: "center", gap: "4px" }} className="hidden md:flex">
-          {[["หน้าแรก", "/"], ["Meet Candidates", "/candidates"], ["ผลการลงคะแนนเสียง", "/results"]].map(([label, href]) => (
-            <a key={label} href={getPath(href)} style={{ padding: "8px 16px", borderRadius: 999, fontWeight: 600, fontSize: 14, color: INK, border: "2px solid transparent" }}>{label}</a>
-          ))}
+      <header className="gh-topbar">
+        <a href={getPath("/")} className="gh-brand">
+          <Image src={getPath("/images/logo/fms_logo50_color.png")} alt="FMS 50th" width={480} height={480} className="gh-brand__badge" priority />
+          <span className="gh-brand__div" />
+          <Image src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")} alt="FMS PSU" width={1200} height={384} className="gh-brand__word" priority />
+        </a>
+        <nav className="gh-nav">
+          <a href={getPath("/")} className="gh-navlink is-active">หน้าแรก</a>
+          <a href={getPath("/candidates")} className="gh-navlink">Meet Candidates</a>
+          <a href={getPath("/results")} className="gh-navlink">ผลการลงคะแนนเสียง</a>
         </nav>
-        <button
-          onClick={() => !editorMode && signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}
-          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", border: `${BORDER_W} solid ${INK}`, borderRadius: 14, background: PINK, color: INK, fontWeight: 700, fontSize: 14, boxShadow: SHADOW_HARD_SM, cursor: "pointer" }}
-        >
-          เข้าสู่ระบบ <ArrowRight size={16} />
-        </button>
-      </div>
+        <div className="gh-topbar__right">
+          <a href={getPath("/candidates")} className="gh-btn gh-btn--paper gh-hide-sm">Meet Candidates</a>
+          <button className="gh-btn gh-btn--ink" onClick={() => !editorMode && signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}>
+            <ArrowRight size={16} /> เข้าสู่ระบบ
+          </button>
+        </div>
+      </header>
 
       {/* ── TICKER ── */}
-      <div style={{ borderBottom: `${BORDER_W} solid ${INK}`, background: INK, color: CREAM, overflow: "hidden", whiteSpace: "nowrap", fontFamily: FONT_DISPLAY, fontSize: "20px", letterSpacing: ".02em" }}>
-        <div className="gumroad-ticker" style={{ display: "inline-flex", alignItems: "center", gap: 32, padding: "12px 0" }}>
+      <div className="gh-ticker">
+        <div className="gh-ticker__track">
           {[0, 1].map((k) => (
-            <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 32 }}>
-              ★ FMS ELECTION 2026 <Dot /> SAMO {numberPart || "50"} <Dot /> CAST YOUR VOTE <Dot /> สโมสรนักศึกษาคณะวิทยาการจัดการ <Dot /> POWERED BY PSU PASSPORT <Dot />
+            <span key={k} className="gh-ticker__item">
+              ★ FMS ELECTION 2026 <Dot /> SAMO {numberPart || "50"} <Dot /> CAST YOUR VOTE <Dot /> สโมสรนักศึกษาคณะวิทยาการจัดการ <Dot /> 2 PARTIES RUNNING <Dot /> POWERED BY PSU PASSPORT <Dot />
             </span>
           ))}
         </div>
       </div>
 
       {/* ── HOME GRID ── */}
-      <main style={{ flex: 1, width: "100%", maxWidth: 1500, margin: "0 auto", padding: "48px 56px 80px" }}>
-        <div className="gumroad-home-grid" style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: 56, alignItems: "center" }}>
-
-          {/* LEFT */}
-          <div>
-            <div style={{ display: "flex", gap: 10, marginBottom: 24, flexWrap: "wrap" }}>
-              <Sticker bg={LIME}>⚡ FMS ELECTION 2026</Sticker>
-              <Sticker bg={PAPER} rotate><span style={{ width: 10, height: 10, borderRadius: 999, background: CORAL, display: "inline-block", marginRight: 6 }} /> LIVE BALLOT</Sticker>
-            </div>
-
-            <Wrap id="hero-title">
-              <h1 data-element="hero-title" style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(72px,11vw,150px)", lineHeight: .85, letterSpacing: "-.04em", margin: 0, textTransform: "uppercase", color: INK, ...getTextStyle("hero-title") }}>
-                {titlePart}
-                {numberPart && (
-                  <><br /><em style={{ fontStyle: "normal", background: PINK, display: "inline-block", padding: "0 10px", marginTop: 8, border: `${BORDER_W} solid ${INK}`, boxShadow: SHADOW_HARD, transform: "rotate(-2deg)" }}>{numberPart}</em></>
-                )}
-              </h1>
-            </Wrap>
-
-            <Wrap id="hero-subtitle">
-              <p data-element="hero-subtitle" style={{ marginTop: 28, fontSize: 22, fontWeight: 500, lineHeight: 1.3, color: INK, maxWidth: 540, ...getTextStyle("hero-subtitle") }}>
-                <span style={{ background: LIME, padding: "0 6px", borderRadius: 4, border: `1.5px solid ${INK}` }}>{getText("hero-subtitle", globalConfig.campaignTitle)}</span>{" "}
-                {getText("hero-subtitle2", globalConfig.organizationName)}
-              </p>
-            </Wrap>
-
-            {isVisible("hero-year-badge") && (
-              <Wrap id="hero-year-badge">
-                <div style={{ marginTop: 20 }}>
-                  <Sticker bg={PAPER}><Calendar size={14} style={{ marginRight: 6 }} /> {yearText}</Sticker>
-                </div>
-              </Wrap>
-            )}
-
-            <div style={{ marginTop: 36, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-              <Wrap id="voteCTA-button">
-                <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} />
-              </Wrap>
-              <a href={getPath("/candidates")} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "16px 26px", border: `${BORDER_W} solid ${INK}`, borderRadius: 16, background: LIME, color: INK, fontWeight: 700, fontSize: 16, boxShadow: SHADOW_HARD }}>
-                รู้จักผู้สมัคร <ArrowRight size={18} />
-              </a>
-            </div>
+      <main className="gh-home">
+        {/* LEFT */}
+        <div className="gh-home__left">
+          <div className="gh-eyebrow">
+            <span className="gh-sticker gh-sticker--lime">⚡ FMS ELECTION 2026</span>
+            <span className="gh-sticker gh-sticker--rotate"><span className="gh-livedot" /> LIVE BALLOT</span>
           </div>
 
-          {/* RIGHT — bento aside */}
-          <aside style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            <Wrap id="hero-countdown">
-              <div style={{ gridColumn: "1 / -1" }}>
-                <GumroadCountdown systemMode={sysMode} />
+          <Wrap id="hero-title">
+            <h1 className="gh-title" data-element="hero-title" style={getTextStyle("hero-title")}>
+              {titlePart}
+              {numberPart && <><br /><em>{numberPart}</em></>}
+            </h1>
+          </Wrap>
+
+          <Wrap id="hero-subtitle">
+            <p className="gh-subtitle" data-element="hero-subtitle" style={getTextStyle("hero-subtitle")}>
+              <span className="gh-hl">{getText("hero-subtitle", globalConfig.campaignTitle)}</span>{" "}
+              {getText("hero-subtitle2", globalConfig.organizationName)} <strong>{yearText}</strong>
+            </p>
+          </Wrap>
+
+          {isVisible("hero-year-badge") && (
+            <Wrap id="hero-year-badge">
+              <div className="gh-yearrow">
+                <span className="gh-sticker gh-sticker--paper"><Calendar size={14} /> {yearText}</span>
               </div>
             </Wrap>
+          )}
 
-            {/* Stat tile — VOTED (pink) */}
-            <Wrap id="stats-voted-card">
-              <div data-element="stats-voted-card" style={{ background: PINK, border: `${BORDER_W} solid ${INK}`, borderRadius: 22, padding: 22, boxShadow: SHADOW_HARD }}>
-                <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".15em", display: "flex", alignItems: "center", gap: 6 }}>
-                  <CheckCircle2 size={14} /> ใช้สิทธิ์แล้ว · VOTED
-                </div>
-                <div style={{ fontFamily: FONT_DISPLAY, fontSize: 52, lineHeight: 1, marginTop: 8, fontVariantNumeric: "tabular-nums" }}>
-                  {rawStats.totalVoted.toLocaleString()}<span style={{ fontSize: 20, fontFamily: "'Kanit',sans-serif", fontWeight: 600, marginLeft: 8 }}>คน</span>
-                </div>
-                <div style={{ fontSize: 13, marginTop: 8, fontWeight: 500 }}>นักศึกษาที่ลงคะแนนแล้ว</div>
-              </div>
+          <div className="gh-cta">
+            <Wrap id="voteCTA-button">
+              <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} />
             </Wrap>
-
-            {/* Stat tile — ELIGIBLE (lime) */}
-            <Wrap id="stats-eligible-card">
-              <div data-element="stats-eligible-card" style={{ background: LIME, border: `${BORDER_W} solid ${INK}`, borderRadius: 22, padding: 22, boxShadow: SHADOW_HARD }}>
-                <div style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".15em" }}>ผู้มีสิทธิ์รวม · ELIGIBLE</div>
-                <div style={{ fontFamily: FONT_DISPLAY, fontSize: 52, lineHeight: 1, marginTop: 8, fontVariantNumeric: "tabular-nums" }}>
-                  {rawStats.totalEligible.toLocaleString()}<span style={{ fontSize: 20, fontFamily: "'Kanit',sans-serif", fontWeight: 600, marginLeft: 8 }}>คน</span>
-                </div>
-                <div style={{ fontSize: 13, marginTop: 8, fontWeight: 500 }}>ความคืบหน้า · {pct}%</div>
-              </div>
-            </Wrap>
-
-            {/* Meet card */}
-            <Wrap id="meet-section">
-              <a href={editorMode ? undefined : getPath("/candidates")} data-element="meet-section" style={{ gridColumn: "1 / -1", background: PAPER, border: `${BORDER_W} solid ${INK}`, borderRadius: 22, boxShadow: SHADOW_HARD, padding: "22px 26px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, textDecoration: "none", color: INK }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>{getText("meet-title", "รู้จักผู้สมัครของคุณหรือยัง?")}</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 14, color: INK_2 }}>ดูวิสัยทัศน์ก่อนลงคะแนน</p>
-                </div>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 18px", border: `${BORDER_W} solid ${INK}`, borderRadius: 14, background: PINK, fontWeight: 700, fontSize: 14, boxShadow: SHADOW_HARD_SM, whiteSpace: "nowrap" }}>
-                  ดูรายชื่อพรรค <ArrowRight size={16} />
-                </span>
-              </a>
-            </Wrap>
-          </aside>
+            <a href={getPath("/candidates")} className="gh-btn gh-btn--lime gh-btn--lg">รู้จักผู้สมัคร <ArrowRight size={18} /></a>
+          </div>
         </div>
+
+        {/* RIGHT — bento aside */}
+        <aside className="gh-aside">
+          <Wrap id="hero-countdown" className="gh-span2">
+            <div className="gh-span2"><GumroadCountdown systemMode={sysMode} /></div>
+          </Wrap>
+
+          <Wrap id="stats-voted-card">
+            <div className="gh-stat gh-stat--pink" data-element="stats-voted-card">
+              <div className="gh-stat__lbl"><CheckCircle2 size={14} /> ใช้สิทธิ์แล้ว · VOTED</div>
+              <div className="gh-stat__val">{rawStats.totalVoted.toLocaleString()}<span className="gh-stat__unit">คน</span></div>
+              <div className="gh-stat__sub">นักศึกษาที่ลงคะแนนแล้ว</div>
+              <svg className="gh-ekg" viewBox="0 0 200 60" stroke="#1A1A1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M0 30 L40 30 L48 30 L54 10 L62 50 L70 30 L100 30 L108 30 L116 18 L124 42 L132 30 L200 30" /></svg>
+            </div>
+          </Wrap>
+
+          <Wrap id="stats-eligible-card">
+            <div className="gh-stat gh-stat--lime" data-element="stats-eligible-card">
+              <div className="gh-stat__lbl">ผู้มีสิทธิ์รวม · ELIGIBLE</div>
+              <div className="gh-stat__val">{rawStats.totalEligible.toLocaleString()}<span className="gh-stat__unit">คน</span></div>
+              <div className="gh-stat__sub">ความคืบหน้า · {pct}%</div>
+            </div>
+          </Wrap>
+
+          <Wrap id="meet-section" className="gh-span2">
+            <a href={editorMode ? undefined : getPath("/candidates")} className="gh-meet gh-span2" data-element="meet-section">
+              <div>
+                <h3 className="gh-meet__title">{getText("meet-title", "รู้จักผู้สมัครของคุณหรือยัง?")}</h3>
+                <p className="gh-meet__sub">2 พรรคในปีนี้ · ดูวิสัยทัศน์ก่อนลงคะแนน</p>
+              </div>
+              <span className="gh-btn gh-btn--pink">ดูรายชื่อพรรค <ArrowRight size={16} /></span>
+            </a>
+          </Wrap>
+        </aside>
       </main>
 
       {/* ── FOOTER ── */}
-      <footer style={{ marginTop: "auto", borderTop: `${BORDER_W} solid ${INK}`, padding: "22px 32px", background: INK, color: CREAM, display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "'Space Grotesk', monospace", fontSize: 13 }}>
+      <footer className="gh-footer">
         <div>© FMS@PSU {globalConfig.academicYearTh || "2570"} · ALL RIGHTS RESERVED</div>
-        <div style={{ display: "flex", gap: 18, alignItems: "center" }}><span style={{ color: PINK, fontSize: 18 }}>★</span> ACTIVE PULSE EDITION <span style={{ color: PINK, fontSize: 18 }}>★</span></div>
+        <div className="gh-footer__edition"><span className="gh-star">★</span> ACTIVE PULSE EDITION <span className="gh-star">★</span></div>
       </footer>
 
       <style jsx global>{`
-        .gumroad-ticker { animation: gumroadTicker 35s linear infinite; }
-        @keyframes gumroadTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        @media (max-width: 980px) {
-          .gumroad-home-grid { grid-template-columns: 1fr !important; }
+        .gh-root {
+          --ink:#1A1A1A; --ink2:#4A4A4A; --cream:#FFF1E5; --cream2:#FFE4CE; --paper:#FFF;
+          --pink:#FF90E8; --lime:#B6FF6E; --yellow:#FFC900; --sky:#A8E1FF; --coral:#FF6E6E;
+          --bw:2.5px; --sh:5px 5px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink); --sh-lg:8px 8px 0 var(--ink);
+          --fd:'Archivo Black','Kanit',system-ui,sans-serif;
+          min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
+          font-family:'Kanit',system-ui,sans-serif;
+          background:var(--cream);
+          background-image:
+            radial-gradient(circle at 12% 18%, #FFD1F2 0, transparent 38%),
+            radial-gradient(circle at 88% 8%, #DFFFC2 0, transparent 32%),
+            radial-gradient(circle at 92% 92%, #DCF2FF 0, transparent 38%);
+          background-attachment:fixed;
+        }
+        .gh-root *{ box-sizing:border-box; }
+        .gh-root a{ text-decoration:none; color:inherit; }
+
+        /* topbar */
+        .gh-topbar{ position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between;
+          gap:16px; padding:14px 32px; background:var(--cream); border-bottom:var(--bw) solid var(--ink); }
+        .gh-brand{ display:flex; align-items:center; gap:14px; flex-shrink:0; }
+        .gh-brand__badge{ width:auto; height:48px; object-fit:contain; }
+        .gh-brand__div{ width:2px; height:36px; background:var(--ink); display:inline-block; }
+        .gh-brand__word{ width:auto; height:34px; object-fit:contain; }
+        .gh-nav{ display:flex; align-items:center; gap:4px; }
+        .gh-navlink{ padding:8px 16px; border-radius:999px; font-weight:600; font-size:15px; border:2px solid transparent; transition:all .15s ease-out; white-space:nowrap; }
+        .gh-navlink:hover{ background:var(--paper); border-color:var(--ink); }
+        .gh-navlink.is-active{ background:var(--pink); border-color:var(--ink); box-shadow:var(--sh-sm); }
+        .gh-topbar__right{ display:flex; align-items:center; gap:12px; flex-shrink:0; }
+
+        /* buttons */
+        .gh-btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 20px; border:var(--bw) solid var(--ink);
+          border-radius:14px; background:var(--paper); color:var(--ink); font-weight:700; font-size:15px;
+          font-family:'Kanit',sans-serif; box-shadow:var(--sh-sm); cursor:pointer; white-space:nowrap;
+          transition:transform .12s ease-out, box-shadow .12s ease-out; }
+        .gh-btn:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
+        .gh-btn:active{ transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
+        .gh-btn--ink{ background:var(--ink); color:var(--cream); }
+        .gh-btn--pink{ background:var(--pink); }
+        .gh-btn--lime{ background:var(--lime); }
+        .gh-btn--lg{ padding:16px 26px; font-size:16px; border-radius:16px; box-shadow:var(--sh); }
+        .gh-btn--lg:hover{ transform:translate(-3px,-3px); box-shadow:var(--sh-lg); }
+
+        /* ticker */
+        .gh-ticker{ border-bottom:var(--bw) solid var(--ink); background:var(--ink); color:var(--cream);
+          overflow:hidden; white-space:nowrap; font-family:var(--fd); font-size:22px; letter-spacing:.02em; }
+        .gh-ticker__track{ display:inline-flex; align-items:center; gap:32px; padding:12px 0; animation:ghTicker 35s linear infinite; }
+        .gh-ticker__item{ display:inline-flex; align-items:center; gap:32px; }
+        @keyframes ghTicker{ 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        .gh-dot{ width:12px; height:12px; background:var(--pink); border-radius:999px; display:inline-block; }
+
+        .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral); display:inline-block; box-shadow:0 0 0 0 rgba(255,110,110,.8); animation:ghPulse 1.6s ease-out infinite; }
+        @keyframes ghPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+
+        /* home grid */
+        .gh-home{ flex:1; width:100%; max-width:1500px; margin:0 auto; display:grid;
+          grid-template-columns:1.15fr 1fr; gap:56px; padding:48px 56px 80px; align-items:center; }
+        .gh-home__left{ position:relative; min-width:0; }
+
+        .gh-eyebrow{ display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
+        .gh-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 14px; background:var(--paper);
+          border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
+        .gh-sticker--lime{ background:var(--lime); }
+        .gh-sticker--paper{ background:var(--paper); }
+        .gh-sticker--rotate{ transform:rotate(-3deg); }
+
+        .gh-title{ font-family:var(--fd); font-size:clamp(64px,13vw,180px); line-height:.85; letter-spacing:-.04em;
+          color:var(--ink); margin:0; text-transform:uppercase; }
+        .gh-title em{ font-style:normal; background:var(--pink); display:inline-block; padding:0 12px; margin:10px 0 0;
+          border:var(--bw) solid var(--ink); box-shadow:var(--sh); transform:rotate(-2deg); }
+        .gh-subtitle{ margin:28px 0 0; font-size:clamp(17px,2vw,23px); font-weight:500; line-height:1.35; color:var(--ink); max-width:560px; }
+        .gh-hl{ background:var(--lime); padding:0 6px; border-radius:4px; border:1.5px solid var(--ink); box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+        .gh-yearrow{ margin-top:20px; }
+        .gh-cta{ margin-top:36px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+
+        /* bento aside */
+        .gh-aside{ display:grid; grid-template-columns:1fr 1fr; gap:20px; min-width:0; }
+        .gh-span2{ grid-column:1 / -1; }
+        .gh-cd{ background:var(--ink); color:var(--cream); border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh-lg); padding:22px 26px; }
+        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',monospace; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.15em; color:var(--pink); }
+        .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px; }
+        .gh-cd__cell{ background:var(--cream); color:var(--ink); border-radius:12px; padding:10px 8px; text-align:center; }
+        .gh-cd__num{ font-family:var(--fd); font-size:clamp(28px,3vw,42px); line-height:1; font-variant-numeric:tabular-nums; }
+        .gh-cd__unit{ font-family:'Space Grotesk',monospace; font-size:11px; color:var(--ink2); margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
+
+        .gh-stat{ position:relative; overflow:hidden; border:var(--bw) solid var(--ink); border-radius:22px; padding:22px; box-shadow:var(--sh); }
+        .gh-stat--pink{ background:var(--pink); }
+        .gh-stat--lime{ background:var(--lime); }
+        .gh-stat__lbl{ display:flex; align-items:center; gap:6px; font-family:'Space Grotesk',monospace; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
+        .gh-stat__val{ font-family:var(--fd); font-size:clamp(40px,5vw,56px); line-height:1; margin-top:8px; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
+        .gh-stat__unit{ font-size:20px; font-family:'Kanit',sans-serif; font-weight:600; margin-left:8px; }
+        .gh-stat__sub{ font-size:13px; margin-top:8px; font-weight:500; position:relative; z-index:1; }
+        .gh-ekg{ position:absolute; right:-12px; bottom:-10px; width:140px; opacity:.85; z-index:0; }
+
+        .gh-meet{ display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--paper);
+          border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh); padding:22px 26px;
+          transition:transform .12s ease-out, box-shadow .12s ease-out; }
+        .gh-meet:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh-lg); }
+        .gh-meet__title{ margin:0; font-size:20px; font-weight:700; }
+        .gh-meet__sub{ margin:4px 0 0; font-size:14px; color:var(--ink2); }
+
+        /* footer */
+        .gh-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream);
+          display:flex; align-items:center; justify-content:space-between; gap:16px; font-family:'Space Grotesk',monospace; font-size:13px; flex-wrap:wrap; }
+        .gh-footer__edition{ display:flex; gap:14px; align-items:center; }
+        .gh-star{ color:var(--pink); font-size:18px; }
+
+        /* ── RESPONSIVE ── */
+        /* laptop / small desktop */
+        @media (max-width:1200px){
+          .gh-home{ gap:40px; padding:40px 40px 64px; }
+        }
+        /* tablet — single column, hide nav */
+        @media (max-width:980px){
+          .gh-home{ grid-template-columns:1fr; gap:36px; padding:32px 28px 60px; align-items:stretch; }
+          .gh-nav{ display:none; }
+          .gh-topbar{ padding:12px 20px; }
+          .gh-ticker{ font-size:18px; }
+        }
+        /* phone */
+        @media (max-width:560px){
+          .gh-hide-sm{ display:none; }
+          .gh-aside{ grid-template-columns:1fr; }
+          .gh-home{ padding:24px 16px 48px; }
+          .gh-topbar{ padding:10px 14px; }
+          .gh-brand__div, .gh-brand__word{ display:none; }
+          .gh-brand__badge{ height:40px; }
+          .gh-cta{ flex-direction:column; align-items:stretch; }
+          .gh-cta > *{ width:100%; justify-content:center; }
+          .gh-cd__num{ font-size:30px; }
+          .gh-footer{ flex-direction:column; gap:10px; text-align:center; }
         }
       `}</style>
     </div>
   );
 }
 
-function Dot() {
-  return <span style={{ width: 12, height: 12, background: PINK, borderRadius: 999, display: "inline-block" }} />;
-}
-
-function Sticker({ children, bg = PAPER, rotate = false }) {
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", background: bg, border: `${BORDER_W} solid ${INK}`, borderRadius: 999, fontWeight: 700, fontSize: 13, boxShadow: SHADOW_HARD_SM, transform: rotate ? "rotate(-3deg)" : undefined }}>
-      {children}
-    </span>
-  );
-}
+function Dot() { return <span className="gh-dot" />; }

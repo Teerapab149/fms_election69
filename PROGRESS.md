@@ -20,6 +20,11 @@ First real "Layout" half of a template shipped (P-LOG-073). Files:
 - VERIFIED: build 30/30; editor E2E renders the full distinct layout (nothing left of HomeContent);
   7 data-elements selectable (hero-title click → PropertyPanel opened); computed chunky (voteCTA 3px #000
   + 5px5px0, stat tiles pink/ink, countdown ink); console clean; NOT published (DB stays classic).
+- POLISH pass (user: first cut "too plain"): rewrote GumroadHome with real FMS+PSU logos, topbar 2 buttons
+  (paper "Meet Candidates" + ink "เข้าสู่ระบบ"), nav active pink pill, ekg svg in the VOTED tile, bigger
+  fluid title (clamp 64→180px), and FULL responsive via scoped CSS classes + media queries (1200/980/560px:
+  laptop tighten → tablet 1-col+hide nav → phone 1-col aside + stacked CTA + badge-only). voteCTA login set
+  to ink/cream in gumroad.js (design's primary is dark, not pink). Verified desktop + Mobile toggle in editor.
 
 ### 🔜 NEXT — finish gumroad's OTHER pages (then other templates)
 gumroad home layout done. Remaining gumroad pages each need: (a) a per-template layout component from its
