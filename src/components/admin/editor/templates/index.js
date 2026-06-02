@@ -13,12 +13,14 @@ import { classicTemplate }    from "./builtIn/classic";
 import { modernDarkTemplate } from "./builtIn/modern-dark";
 import { playfulTemplate }    from "./builtIn/playful";
 import { minimalTemplate }    from "./builtIn/minimal";
+import { gumroadTemplate }    from "./builtIn/gumroad";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
   "modern-dark":  modernDarkTemplate,
   playful:        playfulTemplate,
-  minimal:        minimalTemplate
+  minimal:        minimalTemplate,
+  gumroad:        gumroadTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).

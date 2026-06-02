@@ -1590,6 +1590,30 @@ the bigger one live. Verify the actual rendered output against production, per e
 
 ---
 
+### P-LOG-072: [2026-06-03] New built-in template (gumroad) — what renders via tokens/vars vs. what's blocked by fixed Tailwind classes
+
+**Context:** Built the 5th built-in, `gumroad` ("แอ็กทีฟ พัลส์", Active Pulse — Gumroad-style: cream base, pink/lime/sky pops, ink near-black chunky borders, hard offset shadows). Source: `docs/design-refs/index.html` + `styles.css`. Built the modern-dark way (P-LOG-005): spread `classicTemplate`, override (1) Layer-1 tokens, (2) per-element configs/vars. Reused the already-shipped voteCTA `chunky-stamp` variant (variant: "chunky-stamp").
+
+**Registration is TWO places (not one):** `templates/index.js` `BUILT_IN_TEMPLATES` (the loader — listTemplates/getTemplate) AND `templateEngine.js` `TEMPLATE_INFOS` (the editor gallery/switcher metadata, hardcoded `[{id,name,previewColor}]`). Adding only to `index.js` would make the template loadable but invisible in the editor picker. Both updated.
+
+**Identity → mechanism map (verified live with computed styles):**
+- Palette/borders/radii → Layer-1 `--color-*`/`--radius-*` (consumed site-wide): primary `#FF90E8`, bg `#FFF1E5`, border `#1A1A1A` ✓
+- Hard offset shadow → `--shadow-card/-button` + per-element `--banner-shadow: 5px 5px 0 #1A1A1A`; banner computed `rgb(26,26,26) 5px 5px 0 0` ✓
+- voteCTA → `chunky-stamp` variant: border `3px solid #000`, shadow `5px 5px 0`, per-state fill flows from `config.backgroundColor` (login=pink, notVoted=lime, ended/closed=yellow, paused=sky) ✓
+- Stats tiles → per-element `config.backgroundColor`: voted pink, progress lime, eligible sky, all with ink borders/numbers ✓
+
+**Two honest GAPS (documented in the template file header, NOT silently shipped):**
+1. **Display font does not render.** `--font-display: 'Archivo Black'` is set in tokens but NOTHING consumes `var(--font-display)` — the body uses Tailwind `font-sans` → Prompt/Kanit (loaded via `next/font` in `layout.js`). Wiring Archivo Black is a separate cross-template task (load font + make title components read the token). modern-dark has the same dormant Inter token. Set correctly for the future; titles stay site-sans for now.
+2. **Stats cards' hard shadow can't be config-driven.** `StatsBlock.js` fixes `shadow-xl`/`shadow-sm` + `border`/`border-2` as Tailwind classes; only bg/borderColor/radius/textColor flow from config. So gumroad stats get pop bg + ink borders but a soft (not hard-offset) shadow. A truly chunky stats card needs a var-driven StatsBlock or a "sticker card" variant — follow-up.
+
+**Verification:** build PASS (30/30); FULL editor E2E (self-serve `scripts/dev-admin-login.js` → browser login → /admin → ออกแบบหน้าเว็บ → selected gumroad card → Live Preview rendered home with cream bg + pink/lime/sky stat tiles + ink text + chunky-stamp pink voteCTA). Computed styles confirmed all of the above. Console clean (no variant warnings — chunky-stamp registered in registry.js; only pre-existing Next Image `sizes` warns). **NOT published** — selecting a template in the editor is editor-local working state; DB `activeTemplateId` stays classic until เผยแพร่ (the real election config untouched).
+
+**Lesson:** When a design's identity depends on a property that the current component pins as a fixed Tailwind class (stats shadow/border-width) or an un-consumed token (display font), the template can't express it via config/vars alone. Deliver the parts the system CAN drive (palette, ink borders, hard shadow on var-driven elements, the chunky-stamp button), and document the gaps explicitly in the template file + here — don't fake it or quietly ship a half-identity (Rule 3 / Rule 9).
+
+**Tags:** `#template` `#gumroad` `#builtin` `#chunky-stamp` `#tokens` `#two-place-registration` `#font-not-consumed` `#tailwind-fixed-class` `#extends-P-LOG-005`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

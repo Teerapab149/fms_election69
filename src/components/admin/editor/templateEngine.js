@@ -22,6 +22,7 @@ const TEMPLATE_INFOS = [
   { id: "modern-dark",  name: "โมเดิร์นดาร์ก",  previewColor: "#06b6d4" },
   { id: "playful",      name: "สนุกสนาน",      previewColor: "#EC4899" },
   { id: "minimal",      name: "มินิมอล",       previewColor: "#1E293B" },
+  { id: "gumroad",      name: "แอ็กทีฟ พัลส์",  previewColor: "#FF90E8" },
 ];
 
 // ============================================================

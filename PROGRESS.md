@@ -5,18 +5,34 @@
 
 ---
 
-## 🌅 SESSION HANDOFF — read this first (for 2026-06-03 session)
+## 🌅 SESSION HANDOFF — read this first (for 2026-06-04 session)
 
-### ⭐ TOP OF QUEUE — build the **Gumroad / Active Pulse** template (user-confirmed)
-The user reviewed 7 Claude-Design prototypes (full 6-page redesigns made for THIS site) and locked a
-**final 6-template lineup**: classic + Quorum 50 + Editorial Narrative + Studio Dark v2 + Gumroad + Atelier 50.
-All prototype source (HTML+CSS) + the intent transcript + the curation plan are in **`docs/design-refs/`**
-— read `docs/design-refs/TEMPLATE-LINEUP.md` + `CHAT-INTENT.md` first.
-**Next build = the Gumroad/Active Pulse template** (`docs/design-refs/index.html` + `styles.css`):
-chunky 2.5px black borders, hard offset shadows (no blur), cream/peach base + pink/lime/yellow/sky pops,
-Archivo Black + Kanit. The voteCTA `chunky-stamp` variant is already shipped — extend the identity to the
-rest (tokens → Layer-1, element configs/vars, a "sticker/chunky" banner+card variant). Build it like
-modern-dark: tokens first, then per-element treatments, verify in editor + /preview.
+### ✅ Done (2026-06-03) — built the **Gumroad / Active Pulse** template (5th built-in)
+`gumroad` ("แอ็กทีฟ พัลส์") shipped + verified live (P-LOG-072). Built the modern-dark way: spread
+classic, override (1) Layer-1 tokens, (2) per-element configs/vars. Files:
+- NEW `src/components/admin/editor/templates/builtIn/gumroad.js`
+- registered in TWO places: `templates/index.js` `BUILT_IN_TEMPLATES` (loader) + `templateEngine.js`
+  `TEMPLATE_INFOS` (editor gallery/switcher metadata — hardcoded, easy to miss).
+- Identity (verified by computed styles in the editor Live Preview): cream `#FFF1E5` bg, pink `#FF90E8`
+  primary, ink `#1A1A1A` chunky borders, hard offset shadows `5px 5px 0` (banner + voteCTA), pop stat
+  tiles (pink/lime/sky + ink), voteCTA `chunky-stamp` (3px #000 + hard shadow + per-state pop fills).
+- Verified: build 30/30; FULL editor E2E (self-serve login → /admin → ออกแบบหน้าเว็บ → select gumroad →
+  Live Preview home renders the identity); console clean; **NOT published** (DB activeTemplateId stays
+  classic — selection is editor-local working state).
+- TWO honest GAPS (in the template file header + P-LOG-072): (1) display font Archivo Black is in the
+  token but NOT consumed (`var(--font-display)` unused; body = Tailwind font-sans → Prompt/Kanit) — same
+  dormant-token state as modern-dark's Inter; wiring it is a separate cross-template task. (2) Stats
+  cards' hard-offset shadow can't be config-driven (StatsBlock fixes shadow-xl/border as Tailwind
+  classes) — they get pop bg + ink borders + ink numbers but a soft shadow. Both = follow-up.
+
+### 🧭 Next session — `ROADMAP.md` is the master list. Suggested:
+- **Per-page polish for gumroad** ("ค่อยๆ ทีละ page"): this pass covered home + voteCTA + vote-party-card
+  + the cross-page palette via tokens. Detail elements with hardcoded purple configs in classic
+  (success-megaphone/chips, etc.) still show purple on gumroad — recolour per page next.
+- OR **wire `--font-display` consumption** (would give gumroad its Archivo Black AND benefit every
+  template) — load Archivo Black via next/font + make title components read `var(--font-display)`.
+- OR continue the lineup (TEMPLATE-LINEUP.md build order): **Quorum 50** (flagship usability) is the
+  highest-value remaining template.
 
 ---
 
