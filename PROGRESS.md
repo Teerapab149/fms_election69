@@ -25,6 +25,17 @@ First real "Layout" half of a template shipped (P-LOG-073). Files:
   fluid title (clamp 64→180px), and FULL responsive via scoped CSS classes + media queries (1200/980/560px:
   laptop tighten → tablet 1-col+hide nav → phone 1-col aside + stacked CTA + badge-only). voteCTA login set
   to ink/cream in gumroad.js (design's primary is dark, not pink). Verified desktop + Mobile toggle in editor.
+- MOBILE FIX (user: editor Mobile preview was distorted/overflowing): the cause was VIEWPORT `@media`
+  queries — the editor renders the mobile preview in a real 375px-wide box (PageDesignTab LivePreview
+  `isMobile`), but @media reads the wide browser viewport, so mobile rules never fired → desktop 2-col
+  grid crammed into 375px. FIX = CSS **container queries**: `.gh-root { container-type:inline-size }` +
+  `@container gh (max-width:…)` + fluid `cqw` units (title/subtitle/countdown/stat). Now responds to the
+  CONTAINER width → works in the editor Mobile frame AND on real devices. Also de-duped the topbar (removed
+  the redundant "Meet Candidates" paper button; nav keeps it + hero keeps รู้จักผู้สมัคร). VERIFIED: editor
+  Mobile now stacks cleanly (1-col, countdown 4 cells fit, no overflow); desktop intact; container-type
+  inline-size confirmed; console clean; build 30/30. NOTE: `next build` on this Windows box throws
+  transient ENOENT PageNotFoundError during page-data collection (different module each run) — retry passes
+  (filesystem flakiness, P-LOG-027/052/071 family, NOT a code error).
 
 ### 🔜 NEXT — finish gumroad's OTHER pages (then other templates)
 gumroad home layout done. Remaining gumroad pages each need: (a) a per-template layout component from its

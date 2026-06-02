@@ -192,7 +192,6 @@ export default function GumroadHome({
           <a href={getPath("/results")} className="gh-navlink">ผลการลงคะแนนเสียง</a>
         </nav>
         <div className="gh-topbar__right">
-          <a href={getPath("/candidates")} className="gh-btn gh-btn--paper gh-hide-sm">Meet Candidates</a>
           <button className="gh-btn gh-btn--ink" onClick={() => !editorMode && signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}>
             <ArrowRight size={16} /> เข้าสู่ระบบ
           </button>
@@ -298,6 +297,7 @@ export default function GumroadHome({
           --fd:'Archivo Black','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:'Kanit',system-ui,sans-serif;
+          container-type:inline-size; container-name:gh;
           background:var(--cream);
           background-image:
             radial-gradient(circle at 12% 18%, #FFD1F2 0, transparent 38%),
@@ -357,11 +357,11 @@ export default function GumroadHome({
         .gh-sticker--paper{ background:var(--paper); }
         .gh-sticker--rotate{ transform:rotate(-3deg); }
 
-        .gh-title{ font-family:var(--fd); font-size:clamp(64px,13vw,180px); line-height:.85; letter-spacing:-.04em;
+        .gh-title{ font-family:var(--fd); font-size:clamp(52px,15cqw,170px); line-height:.85; letter-spacing:-.04em;
           color:var(--ink); margin:0; text-transform:uppercase; }
         .gh-title em{ font-style:normal; background:var(--pink); display:inline-block; padding:0 12px; margin:10px 0 0;
           border:var(--bw) solid var(--ink); box-shadow:var(--sh); transform:rotate(-2deg); }
-        .gh-subtitle{ margin:28px 0 0; font-size:clamp(17px,2vw,23px); font-weight:500; line-height:1.35; color:var(--ink); max-width:560px; }
+        .gh-subtitle{ margin:28px 0 0; font-size:clamp(16px,2.4cqw,23px); font-weight:500; line-height:1.35; color:var(--ink); max-width:560px; }
         .gh-hl{ background:var(--lime); padding:0 6px; border-radius:4px; border:1.5px solid var(--ink); box-decoration-break:clone; -webkit-box-decoration-break:clone; }
         .gh-yearrow{ margin-top:20px; }
         .gh-cta{ margin-top:36px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
@@ -373,14 +373,14 @@ export default function GumroadHome({
         .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',monospace; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.15em; color:var(--pink); }
         .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px; }
         .gh-cd__cell{ background:var(--cream); color:var(--ink); border-radius:12px; padding:10px 8px; text-align:center; }
-        .gh-cd__num{ font-family:var(--fd); font-size:clamp(28px,3vw,42px); line-height:1; font-variant-numeric:tabular-nums; }
+        .gh-cd__num{ font-family:var(--fd); font-size:clamp(24px,4cqw,42px); line-height:1; font-variant-numeric:tabular-nums; }
         .gh-cd__unit{ font-family:'Space Grotesk',monospace; font-size:11px; color:var(--ink2); margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
 
         .gh-stat{ position:relative; overflow:hidden; border:var(--bw) solid var(--ink); border-radius:22px; padding:22px; box-shadow:var(--sh); }
         .gh-stat--pink{ background:var(--pink); }
         .gh-stat--lime{ background:var(--lime); }
         .gh-stat__lbl{ display:flex; align-items:center; gap:6px; font-family:'Space Grotesk',monospace; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
-        .gh-stat__val{ font-family:var(--fd); font-size:clamp(40px,5vw,56px); line-height:1; margin-top:8px; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
+        .gh-stat__val{ font-family:var(--fd); font-size:clamp(34px,6cqw,56px); line-height:1; margin-top:8px; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
         .gh-stat__unit{ font-size:20px; font-family:'Kanit',sans-serif; font-weight:600; margin-left:8px; }
         .gh-stat__sub{ font-size:13px; margin-top:8px; font-weight:500; position:relative; z-index:1; }
         .gh-ekg{ position:absolute; right:-12px; bottom:-10px; width:140px; opacity:.85; z-index:0; }
@@ -400,18 +400,18 @@ export default function GumroadHome({
 
         /* ── RESPONSIVE ── */
         /* laptop / small desktop */
-        @media (max-width:1200px){
+        @container gh (max-width:1200px){
           .gh-home{ gap:40px; padding:40px 40px 64px; }
         }
         /* tablet — single column, hide nav */
-        @media (max-width:980px){
+        @container gh (max-width:980px){
           .gh-home{ grid-template-columns:1fr; gap:36px; padding:32px 28px 60px; align-items:stretch; }
           .gh-nav{ display:none; }
           .gh-topbar{ padding:12px 20px; }
           .gh-ticker{ font-size:18px; }
         }
         /* phone */
-        @media (max-width:560px){
+        @container gh (max-width:560px){
           .gh-hide-sm{ display:none; }
           .gh-aside{ grid-template-columns:1fr; }
           .gh-home{ padding:24px 16px 48px; }
