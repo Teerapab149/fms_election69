@@ -7,7 +7,30 @@
 
 ## 🌅 SESSION HANDOFF — read this first (for 2026-06-04 session)
 
-### ✅ Done (2026-06-03) — built the **Gumroad / Active Pulse** template (5th built-in)
+### 🚨 DIRECTION CORRECTION (2026-06-03, end of session) — "template" ≠ "theme"
+The user clarified (and pointed at VISION.md:169 + PHASE3_TEMPLATE_VISION.md): **a template =
+Layout + Theme + Element compositions**, NOT a colour theme. What I (and prior sessions) built —
+incl. today's gumroad — is only the THEME layer (Layer-1 tokens + a few element variants on classic's
+SAME `HomeContent`/`MultiPartyView` DOM). The half that makes templates actually different (the
+**Layout** — gumroad bento+ticker, Quorum stepper, Studio left-rail) does not exist yet.
+**Read `memory/template-vision.md` + `memory/feedback-terminology-variant.md` first.**
+
+Key points to NOT forget:
+- **Terminology:** NEVER say "steal UI". It's the **Element Library + Variant system** — devs write
+  variant components (default/minimal-pill/chunky-stamp), admin composes/customizes from variants
+  that exist in OUR repo (mix & match / reuse from our own library). All our own code.
+- **Scope:** finish **gumroad FULLY first** (all 6 pages, own layout + its element variants, every
+  element editable like classic + base props no-code: colour/size/border/radius). Other templates
+  (Quorum…) come AFTER — user collects them later.
+- **Deep structural change = swap variant/layout (no-code), NOT raw CSS.** Tier-3 custom CSS is too
+  hard even for devs; don't treat it as the structural answer.
+- Today's `gumroad.js` token theme is KEPT — it's gumroad's palette layer the real layout consumes.
+- **Phase 1 NOT started** (token budget). Proposed: (1) home layout-dispatch seam, (2)
+  `templates/gumroad/Home.jsx` pixel-perfect from `docs/design-refs/index.html`, (3) its elements
+  selectable + base-editable, (4) verify. ⚠️ refactoring production HomeContent into the layout system
+  is risky — phase it. Align with user before coding (I mis-built once already this direction).
+
+### ✅ Done (2026-06-03) — built the **Gumroad / Active Pulse** template (5th built-in) — THEME LAYER ONLY
 `gumroad` ("แอ็กทีฟ พัลส์") shipped + verified live (P-LOG-072). Built the modern-dark way: spread
 classic, override (1) Layer-1 tokens, (2) per-element configs/vars. Files:
 - NEW `src/components/admin/editor/templates/builtIn/gumroad.js`
