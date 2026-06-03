@@ -17,6 +17,31 @@ export default function useEditorState(initialConfigs = {}) {
   const [backgroundId, setBackgroundId] = useState('gradient-purple-light');
   const [statefulDirty, setStatefulDirty] = useState(false);
 
+  // Day 10: per-element variant overrides — { [elementId]: variantId }.
+  // Cascade at render time: elementVariants[id] > template default > 'default'.
+  // Reset deletes the key so the element re-inherits the template default.
+  const [elementVariants, setElementVariants] = useState({});
+  const [baselineVariants, setBaselineVariants] = useState({});
+
+  // Day 11 Tier 1: theme token overrides (Layer 1) — sparse map of only the
+  // tokens the admin changed, e.g. { "--color-primary": "#123456" }.
+  // Cascade at render time: themeTokens[k] > template.theme.tokens[k].
+  // Reset (single key) deletes it so it re-inherits the template token.
+  const [themeTokens, setThemeTokens] = useState({});
+  const [baselineThemeTokens, setBaselineThemeTokens] = useState({});
+
+  // Day 11 Tier 2: per-element Layer 2 var overrides — nested sparse map,
+  // e.g. { "voteCTA-button": { "--btn-bg": "#123456" } }.
+  // Cascade: elementVars[id][k] > template.elements[id].vars[k] > Layer 1 token.
+  const [elementVars, setElementVars] = useState({});
+  const [baselineElementVars, setBaselineElementVars] = useState({});
+
+  // Pillar 3 Tier 3: per-element custom CSS (Layer 3) — { [elementId]: cssString }.
+  // Raw declarations, wrapped as `.fms-app [data-element=id]{...}` at render time
+  // in both channels. Sparse: an empty string drops the element entry.
+  const [elementCss, setElementCssRaw] = useState({});
+  const [baselineElementCss, setBaselineElementCss] = useState({});
+
   const updateElementConfig = useCallback((elementId, key, value) => {
     setElementConfigs((prev) => {
       const current = prev[elementId] || {};
@@ -40,8 +65,12 @@ export default function useEditorState(initialConfigs = {}) {
 
   const resetToDefaults = useCallback(() => {
     setElementConfigs(baseline);
+    setElementVariants(baselineVariants);
+    setThemeTokens(baselineThemeTokens);
+    setElementVars(baselineElementVars);
+    setElementCssRaw(baselineElementCss);
     setSelectedElement(null);
-  }, [baseline]);
+  }, [baseline, baselineVariants, baselineThemeTokens, baselineElementVars, baselineElementCss]);
 
   const resetElement = useCallback(
     (elementId) => {
@@ -52,6 +81,131 @@ export default function useEditorState(initialConfigs = {}) {
     },
     [baseline]
   );
+
+  // Day 10: variant slice setters --------------------------------------
+  // Set one element's variant. No-op when unchanged (avoids spurious dirty).
+  const setElementVariant = useCallback((elementId, variantId) => {
+    setElementVariants((prev) => {
+      if (prev[elementId] === variantId) return prev;
+      return { ...prev, [elementId]: variantId };
+    });
+  }, []);
+
+  // Reset = delete the key so the element falls back to the template default.
+  const resetElementVariant = useCallback((elementId) => {
+    setElementVariants((prev) => {
+      if (!(elementId in prev)) return prev;
+      const next = { ...prev };
+      delete next[elementId];
+      return next;
+    });
+  }, []);
+
+  // Load variants from DB (mirror of replaceAllConfigs). markAsBaseline keeps
+  // the freshly-loaded map as the "saved" snapshot so the editor isn't dirty.
+  const replaceAllVariants = useCallback((next, markAsBaseline = false) => {
+    setElementVariants(next || {});
+    if (markAsBaseline) setBaselineVariants(next || {});
+  }, []);
+
+  // Day 11 Tier 1: theme token slice setters -------------------------------
+  // Set one Layer 1 token override. No-op when unchanged.
+  const setThemeToken = useCallback((tokenKey, value) => {
+    setThemeTokens((prev) => {
+      if (prev[tokenKey] === value) return prev;
+      return { ...prev, [tokenKey]: value };
+    });
+  }, []);
+
+  // Reset one token → delete key so it re-inherits the template default.
+  const resetThemeToken = useCallback((tokenKey) => {
+    setThemeTokens((prev) => {
+      if (!(tokenKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[tokenKey];
+      return next;
+    });
+  }, []);
+
+  // Reset ALL token overrides → whole map back to template defaults.
+  const resetAllThemeTokens = useCallback(() => {
+    setThemeTokens((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+  }, []);
+
+  // Load token overrides from DB (mirror of replaceAllConfigs).
+  const replaceAllThemeTokens = useCallback((next, markAsBaseline = false) => {
+    setThemeTokens(next || {});
+    if (markAsBaseline) setBaselineThemeTokens(next || {});
+  }, []);
+
+  // Day 11 Tier 2: per-element Layer 2 var slice setters -------------------
+  // Set one var on one element. No-op when unchanged.
+  const setElementVar = useCallback((elementId, varKey, value) => {
+    setElementVars((prev) => {
+      if (prev[elementId]?.[varKey] === value) return prev;
+      return {
+        ...prev,
+        [elementId]: { ...(prev[elementId] || {}), [varKey]: value },
+      };
+    });
+  }, []);
+
+  // Reset one var → delete key; drop the element entry when it becomes empty.
+  const resetElementVar = useCallback((elementId, varKey) => {
+    setElementVars((prev) => {
+      if (!(varKey in (prev[elementId] || {}))) return prev;
+      const nextEl = { ...prev[elementId] };
+      delete nextEl[varKey];
+      const next = { ...prev };
+      if (Object.keys(nextEl).length === 0) delete next[elementId];
+      else next[elementId] = nextEl;
+      return next;
+    });
+  }, []);
+
+  // Reset all vars for one element → delete the element entry.
+  const resetElementVars = useCallback((elementId) => {
+    setElementVars((prev) => {
+      if (!(elementId in prev)) return prev;
+      const next = { ...prev };
+      delete next[elementId];
+      return next;
+    });
+  }, []);
+
+  // Load Layer 2 var overrides from DB (mirror of replaceAllConfigs).
+  const replaceAllElementVars = useCallback((next, markAsBaseline = false) => {
+    setElementVars(next || {});
+    if (markAsBaseline) setBaselineElementVars(next || {});
+  }, []);
+
+  // Pillar 3 Tier 3: per-element custom CSS slice setters ------------------
+  // Set one element's custom CSS. Empty string drops the entry. No-op when unchanged.
+  const setElementCss = useCallback((elementId, css) => {
+    setElementCssRaw((prev) => {
+      if (prev[elementId] === css) return prev;
+      const next = { ...prev };
+      if (!css) delete next[elementId];
+      else next[elementId] = css;
+      return next;
+    });
+  }, []);
+
+  // Reset = delete the element's custom CSS entry.
+  const resetElementCss = useCallback((elementId) => {
+    setElementCssRaw((prev) => {
+      if (!(elementId in prev)) return prev;
+      const next = { ...prev };
+      delete next[elementId];
+      return next;
+    });
+  }, []);
+
+  // Load custom CSS overrides from DB (mirror of replaceAllConfigs).
+  const replaceAllElementCss = useCallback((next, markAsBaseline = false) => {
+    setElementCssRaw(next || {});
+    if (markAsBaseline) setBaselineElementCss(next || {});
+  }, []);
 
   const getElementConfig = useCallback(
     (elementId) => elementConfigs?.[elementId]?.config || {},
@@ -79,12 +233,52 @@ export default function useEditorState(initialConfigs = {}) {
       return false;
     }
   }, [elementConfigs, baseline]);
-  const hasUnsavedChanges = elementConfigsDirty || statefulDirty;
+  // Day 10: variant changes also mark the editor dirty.
+  const elementVariantsDirty = useMemo(() => {
+    try {
+      return JSON.stringify(elementVariants) !== JSON.stringify(baselineVariants);
+    } catch {
+      return false;
+    }
+  }, [elementVariants, baselineVariants]);
+  // Day 11: theme token + Layer 2 var changes also mark the editor dirty.
+  const themeTokensDirty = useMemo(() => {
+    try {
+      return JSON.stringify(themeTokens) !== JSON.stringify(baselineThemeTokens);
+    } catch {
+      return false;
+    }
+  }, [themeTokens, baselineThemeTokens]);
+  const elementVarsDirty = useMemo(() => {
+    try {
+      return JSON.stringify(elementVars) !== JSON.stringify(baselineElementVars);
+    } catch {
+      return false;
+    }
+  }, [elementVars, baselineElementVars]);
+  const elementCssDirty = useMemo(() => {
+    try {
+      return JSON.stringify(elementCss) !== JSON.stringify(baselineElementCss);
+    } catch {
+      return false;
+    }
+  }, [elementCss, baselineElementCss]);
+  const hasUnsavedChanges =
+    elementConfigsDirty ||
+    statefulDirty ||
+    elementVariantsDirty ||
+    themeTokensDirty ||
+    elementVarsDirty ||
+    elementCssDirty;
 
   const commitBaseline = useCallback(() => {
     setBaseline(elementConfigs);
+    setBaselineVariants(elementVariants);
+    setBaselineThemeTokens(themeTokens);
+    setBaselineElementVars(elementVars);
+    setBaselineElementCss(elementCss);
     setStatefulDirty(false);
-  }, [elementConfigs]);
+  }, [elementConfigs, elementVariants, themeTokens, elementVars, elementCss]);
 
   // H-4 handlers — stateful element overrides
   const updateStatefulOverride = useCallback((elementId, stateId, key, value) => {
@@ -155,6 +349,28 @@ export default function useEditorState(initialConfigs = {}) {
     getElementConfig,
     getElementMeta,
     commitBaseline,
+    // Day 10 — variant slice
+    elementVariants,
+    setElementVariant,
+    resetElementVariant,
+    replaceAllVariants,
+    // Day 11 — Tier 1 theme tokens (Layer 1)
+    themeTokens,
+    setThemeToken,
+    resetThemeToken,
+    resetAllThemeTokens,
+    replaceAllThemeTokens,
+    // Day 11 — Tier 2 per-element vars (Layer 2)
+    elementVars,
+    setElementVar,
+    resetElementVar,
+    resetElementVars,
+    replaceAllElementVars,
+    // Pillar 3 — Tier 3 per-element custom CSS (Layer 3)
+    elementCss,
+    setElementCss,
+    resetElementCss,
+    replaceAllElementCss,
     // H-4 new
     sourceTemplate,
     elementOverrides,

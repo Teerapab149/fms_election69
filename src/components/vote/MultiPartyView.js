@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import PartyCard from "../PartyCard";
 import { Ban, Check } from "lucide-react";
 import EditorElement from '../admin/editor/EditorElement';
@@ -20,17 +21,28 @@ export default function MultiPartyView({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  const Wrap = ({ id, children }) => editorMode ? (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >{children}</EditorElement>
-  ) : children;
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    editorMode, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    if (!s.editorMode) return children;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >{children}</EditorElement>
+    );
+  }, []);
 
   const cfg = (id, defaults = {}) => editorMode
     ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
@@ -68,9 +80,22 @@ export default function MultiPartyView({
     <div className="w-full">
       
       <div className="text-center mb-8 space-y-2">
+        <Wrap id="vote-header-badge">
+          <span data-element="vote-header-badge" style={{
+            // Tier-2 owns the colour (deconfliction): read the var directly, no
+            // `cfg().color ||` prefix — that prefix created the dual source and a
+            // stale DB elementConfigs.color would mask the var in the editor.
+            color: 'var(--vh-badge-color, var(--color-primary))',
+            fontSize: SIZE_MAP[cfg('vote-header-badge').fontSize] || '0.75rem',
+            fontWeight: WEIGHT_MAP[cfg('vote-header-badge').fontWeight] || cfg('vote-header-badge').fontWeight || 700,
+          }} className="inline-block uppercase tracking-widest">
+            {cfg('vote-header-badge').text || 'ลงคะแนนเสียง'}
+          </span>
+        </Wrap>
+
         <Wrap id="vote-header-title">
-          <h1 style={{
-            color: cfg('vote-header-title').color || '#1e293b',
+          <h1 data-element="vote-header-title" style={{
+            color: 'var(--vh-title-color, var(--color-text, #1e293b))',
             fontSize: SIZE_MAP[cfg('vote-header-title').fontSize] || '1.875rem',
             fontWeight: WEIGHT_MAP[cfg('vote-header-title').fontWeight] || cfg('vote-header-title').fontWeight || 800,
             textAlign: cfg('vote-header-title').align || 'center',
@@ -80,8 +105,8 @@ export default function MultiPartyView({
         </Wrap>
 
         <Wrap id="vote-header-subtitle">
-          <p style={{
-            color: cfg('vote-header-subtitle').color || '#64748b',
+          <p data-element="vote-header-subtitle" style={{
+            color: 'var(--vh-subtitle-color, var(--color-text-muted, #64748b))',
             fontSize: SIZE_MAP[cfg('vote-header-subtitle').fontSize] || '0.875rem',
             fontWeight: WEIGHT_MAP[cfg('vote-header-subtitle').fontWeight] || cfg('vote-header-subtitle').fontWeight || 400,
             textAlign: cfg('vote-header-subtitle').align || 'center',

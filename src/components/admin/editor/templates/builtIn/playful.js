@@ -1,0 +1,262 @@
+/**
+ * Playful Template — Warm fun/energetic identity
+ *
+ * Day 3b expansion: 13 element overrides + full theme over classic.
+ * Identity: pink/orange gradients, rounded 2xl corners, warm shadows.
+ *
+ * Per P-LOG-005: do NOT add new templates, do NOT modify classic.js here.
+ */
+
+import { classicTemplate } from "./classic";
+
+export const playfulTemplate = {
+  ...classicTemplate,
+  id: "playful",
+  slug: "playful",
+  name: "สนุกสนาน",
+  description: "ดีไซน์สดใส โทนชมพู-ส้ม กลม-นุ่ม เหมาะกับงานที่อยากให้รู้สึกผ่อนคลาย",
+
+  colorSwatch: {
+    primary: "#ec4899",
+    secondary: "#f59e0b",
+    background: "#fef3c7"
+  },
+
+  pages: {
+    // Day 6: home.backgroundColor removed — --color-bg drives.
+    home:       { visible: true },
+    vote:       { visible: true, backgroundColor: "#fffbeb" },
+    candidates: { visible: true, backgroundColor: "#fffbeb" },
+    results:    { visible: true, backgroundColor: "#fffbeb" },
+    closed:     { visible: true, backgroundColor: "#fffbeb" },
+    success:    { visible: true, backgroundColor: "#fffbeb" }
+  },
+
+  theme: {
+    colors: {
+      primary:    "#ec4899",
+      accent:     "#f59e0b",
+      background: "#fffbeb",
+      surface:    "#ffffff",
+      text:       "#1f2937",
+      textMuted:  "#6b7280",
+      border:     "#fde68a"
+    },
+    typography: classicTemplate.theme?.typography,
+    spacing:    classicTemplate.theme?.spacing,
+    effects: {
+      borderRadius: "1.5rem",
+      shadow:       "0 8px 16px -4px rgba(236,72,153,0.15)"
+    },
+    // Layer 1 tokens — full set per D5 (no inheritance, snapshot-friendly).
+    // Warm theme: amber bg, pink primary, orange accent, generous radii.
+    tokens: {
+      "--color-primary":     "#ec4899",
+      "--color-accent":      "#f59e0b",
+      "--color-bg":          "#fffbeb",
+      "--color-surface":     "#ffffff",
+      "--color-text":        "#1f2937",
+      "--color-text-muted":  "#6b7280",
+      "--color-border":      "#fde68a",
+      "--radius-sm":         "12px",
+      "--radius-md":         "20px",
+      "--radius-card":       "32px",
+      "--radius-button":     "9999px",
+      "--shadow-card":       "0 12px 32px rgba(236,72,153,0.18)",
+      "--shadow-button":     "0 8px 20px rgba(245,158,11,0.30)",
+      "--font-display":      "Inter, system-ui, sans-serif",
+      "--font-body":         "Inter, system-ui, sans-serif"
+    }
+  },
+
+  elements: {
+    ...classicTemplate.elements,
+
+    // === Hero ===
+    "hero-title": {
+      config: {
+        ...classicTemplate.elements["hero-title"].config,
+        color: "#1f2937"
+      }
+    },
+    "hero-subtitle": {
+      config: {
+        ...classicTemplate.elements["hero-subtitle"].config,
+        color: "#ec4899"
+      }
+    },
+    "hero-year-badge": {
+      config: {
+        ...classicTemplate.elements["hero-year-badge"].config,
+        color: "#f59e0b"
+      }
+    },
+
+    // === voteCTA — pink/orange palette, larger radius ===
+    "voteCTA-button": {
+      variant: "default",
+      config: {
+        login: {
+          ...classicTemplate.elements["voteCTA-button"].config.login,
+          gradientFrom: "#f97316",
+          gradientVia:  "#ec4899",
+          gradientTo:   "#d946ef",
+          backgroundColor: "#ec4899",
+          shadowColor:  "#ec4899",
+          borderRadius: "2xl"
+        },
+        notVoted: {
+          ...classicTemplate.elements["voteCTA-button"].config.notVoted,
+          gradientFrom: "#f59e0b",
+          gradientVia:  "#f97316",
+          gradientTo:   "#ea580c",
+          backgroundColor: "#f97316",
+          shadowColor:  "#f97316",
+          borderRadius: "2xl"
+        },
+        voted: {
+          ...classicTemplate.elements["voteCTA-button"].config.voted,
+          gradientFrom: "#ec4899",
+          gradientVia:  "#d946ef",
+          gradientTo:   "#a855f7",
+          backgroundColor: "#d946ef",
+          shadowColor:  "#d946ef",
+          borderRadius: "2xl"
+        },
+        ended: {
+          ...classicTemplate.elements["voteCTA-button"].config.ended,
+          borderRadius: "2xl"
+        },
+        closed: {
+          ...classicTemplate.elements["voteCTA-button"].config.closed,
+          borderRadius: "2xl"
+        },
+        paused: {
+          ...classicTemplate.elements["voteCTA-button"].config.paused,
+          borderRadius: "2xl"
+        }
+      },
+      vars: {
+        "--btn-bg":              "var(--color-primary)",
+        "--btn-bg-gradient":     "none",
+        "--btn-text":            "var(--color-surface)",
+        "--btn-border-color":    "transparent",
+        "--btn-border-width":    "0px",
+        "--btn-radius":          "var(--radius-button)",
+        "--btn-shadow":          "var(--shadow-button)",
+        "--btn-padding-x":       "32px",
+        "--btn-padding-y":       "16px",
+        "--btn-font-size":       "16px",
+        "--btn-font-weight":     "600",
+        "--btn-hover-bg":        "var(--btn-bg)",
+        "--btn-hover-shadow":    "var(--btn-shadow)",
+        "--btn-hover-transform": "none",
+        "--btn-icon-color":      "var(--btn-text)",
+        "--btn-letter-spacing":  "normal",
+        "--btn-text-transform":  "none"
+      }
+    },
+
+    // === Stats cards ===
+    "stats-voted-card": {
+      config: {
+        ...classicTemplate.elements["stats-voted-card"].config,
+        backgroundType: "gradient",
+        backgroundColor: "#ec4899",
+        gradientFrom: "#f97316",
+        gradientVia:  "#ec4899",
+        gradientTo:   "#d946ef",
+        gradientDirection: "to-br",
+        textColor:    "#ffffff",
+        borderRadius: "3xl"
+      }
+    },
+    // Day 6: bg+border removed — --color-surface + --color-border drive.
+    // NOT spreading classic — classic's borderColor #f1f5f9 would override
+    // playful's amber token border #fde68a via spread inheritance.
+    "stats-progress-card": {
+      config: {
+        borderRadius: "2xl",
+        numberColor:  "#1f2937",
+        labelColor:   "#f59e0b",
+        accentColor:  "#ec4899"
+      }
+    },
+    "stats-eligible-card": {
+      config: {
+        borderRadius: "2xl",
+        numberColor:  "#1f2937",
+        labelColor:   "#f59e0b",
+        iconColor:    "#f59e0b"
+      }
+    },
+
+    // === Meet section ===
+    // Day 6: backgroundColor removed — --color-surface drives.
+    // Day 7a: dropped classic spread (preventive — only inherited `visible`).
+    "meet-section": {
+      config: {
+        visible:         true,
+        borderColor:     "#fde68a",
+        borderRadius:    "3xl",
+        glowFrom:        "#f97316",
+        glowVia:         "#ec4899",
+        glowTo:          "#d946ef",
+        surfaceLight:    true
+      }
+    },
+    "meet-title": {
+      config: {
+        ...classicTemplate.elements["meet-title"].config,
+        color: "#ec4899"
+      }
+    },
+    // Day 6: textColor removed — --color-surface (#ffffff) drives.
+    "meet-cta": {
+      config: {
+        ...classicTemplate.elements["meet-cta"].config,
+        backgroundColor: "#ec4899"
+      }
+    },
+
+    // === Banner ===
+    // Day 7a: dropped classic spread (preventive — classic's borderColor #ffffff
+    // would inherit if playful's override were ever removed). P-LOG-025 pattern.
+    // Day 7a Part 4: Layer 2 pilot — vars at element root; borderColor stays
+    // Layer 3 (#fbcfe8 pink, intentional ≠ playful's --color-border #fde68a amber).
+    // Day 7b: explicit variant field.
+    "banner-section": {
+      variant: "default",
+      config: {
+        visible: true,
+        borderColor: "#fbcfe8",
+        borderRadius: "3xl"
+      },
+      vars: {
+        "--banner-bg":           "var(--color-surface)",
+        "--banner-border":       "var(--color-border)",
+        "--banner-border-width": "1px",
+        "--banner-radius":       "var(--radius-card)",
+        "--banner-shadow":       "0 25px 50px -12px rgba(0,0,0,0.25)"
+      }
+    },
+
+    // === Vote page ===
+    "vote-header-title": {
+      config: {
+        ...classicTemplate.elements["vote-header-title"].config,
+        color: "#1f2937"
+      }
+    },
+    "vote-party-card": {
+      config: {
+        ...classicTemplate.elements["vote-party-card"].config,
+        backgroundColor: "#ffffff",
+        borderColor:     "#fde68a",
+        borderRadius:    "2xl"
+      }
+    }
+  }
+};
+
+export default playfulTemplate;

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SAMO 50 — Studio Dark · v2</title>
+<link rel="stylesheet" href="studio-v2.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============== LEFT RAIL ============== -->
+  <aside class="rail">
+    <div class="rail__brand">
+      <div class="rail__brand-mark">S</div>
+      <div class="rail__brand-txt">
+        <strong>SAMO / 50</strong>
+        Election 2026
+      </div>
+    </div>
+
+    <div class="rail__section">Sections</div>
+    <nav class="rail__nav" id="railNav">
+      <a href="#home" class="rail__link" data-route="home">
+        <span class="rail__link-num">01</span>
+        <span class="rail__link-label">Index<small>หน้าหลัก</small></span>
+        <span class="rail__link-status on"></span>
+      </a>
+      <a href="#candidates" class="rail__link" data-route="candidates">
+        <span class="rail__link-num">02</span>
+        <span class="rail__link-label">Candidates<small>ผู้สมัคร</small></span>
+        <span class="rail__link-status"></span>
+      </a>
+      <a href="#party" class="rail__link" data-route="party">
+        <span class="rail__link-num">03</span>
+        <span class="rail__link-label">Profile<small>ข้อมูลพรรค</small></span>
+        <span class="rail__link-status"></span>
+      </a>
+      <a href="#vote" class="rail__link" data-route="vote">
+        <span class="rail__link-num">04</span>
+        <span class="rail__link-label">Ballot<small>ลงคะแนน</small></span>
+        <span class="rail__link-status"></span>
+      </a>
+      <a href="#results" class="rail__link" data-route="results">
+        <span class="rail__link-num">05</span>
+        <span class="rail__link-label">Returns<small>ผลคะแนน</small></span>
+        <span class="rail__link-status"></span>
+      </a>
+    </nav>
+
+    <div class="rail__spacer"></div>
+
+    <div class="rail__countdown">
+      <div class="rail__countdown-lbl"><span class="rail__countdown-dot"></span> Polls close</div>
+      <div class="rail__countdown-val tabular">02<span style="color:var(--ink-4);margin:0 4px">:</span>14<span style="color:var(--ink-4);margin:0 4px">:</span>33<span style="color:var(--ink-4);margin:0 4px">:</span><span id="cd-sec">08</span></div>
+      <div class="rail__countdown-sub">D &nbsp;/&nbsp; H &nbsp;/&nbsp; M &nbsp;/&nbsp; S</div>
+    </div>
+
+    <div id="railFooter">
+      <!-- swapped between user pill and sign in -->
+    </div>
+  </aside>
+
+  <!-- ============== MAIN ============== -->
+  <main class="main">
+
+    <!-- ============== 01 HOME ============== -->
+    <section class="screen" id="screen-home" data-screen-label="01 Home">
+      <div class="scene-bar">
+        <div class="scene-bar__crumbs">
+          <span class="num">01</span>
+          <span class="sep">/</span>
+          <span class="here">Index</span>
+          <span class="sep">·</span>
+          <span>หน้าหลัก</span>
+        </div>
+        <div class="scene-bar__right">
+          <span class="live"><span class="rail__countdown-dot"></span> POLLS OPEN</span>
+          <span id="clock">00:00 ICT</span>
+        </div>
+      </div>
+
+      <div class="home">
+        <div class="home__scene">
+
+          <div class="home__left">
+            <div>
+              <div class="home__chapter">
+                <span class="accent">CHAPTER 01</span> &nbsp;·&nbsp; THE 50<sup>TH</sup> EDITION
+              </div>
+            </div>
+            <h1 class="home__giant">
+              SAMO
+              <em>50.</em>
+            </h1>
+            <div>
+              <p class="home__deck">
+                การเลือกตั้งคณะกรรมการบริหาร สโมสรนักศึกษา คณะวิทยาการจัดการ ประจำปีการศึกษา ๒๕๗๐.
+              </p>
+              <div class="home__cta">
+                <a href="#vote" class="btn btn--accent btn--xl" data-route="vote">
+                  เข้าสู่ระบบ · Sign in
+                  <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+                </a>
+                <a href="#candidates" class="btn btn--ghost btn--lg" data-route="candidates">
+                  ดูรายชื่อพรรค
+                  <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="home__right">
+            <div class="home__rotor">
+              A vote that decides<br/>
+              <em>who leads</em> your faculty<br/>
+              for the next year.
+            </div>
+
+            <div class="home__numbers">
+              <div class="home__num-row">
+                <div>
+                  <div class="home__num-lbl">VOTED · ใช้สิทธิ์แล้ว</div>
+                  <div class="home__num-val tabular"><em>1</em><small>/ 2,001</small></div>
+                </div>
+                <div class="home__num-bar"><div class="home__num-bar-fill" style="width: 0.5%"></div></div>
+              </div>
+              <div class="home__num-row">
+                <div>
+                  <div class="home__num-lbl">PARTIES · พรรคที่ลงสมัคร</div>
+                  <div class="home__num-val tabular">2<small>+ 1 abstain</small></div>
+                </div>
+              </div>
+              <div class="home__num-row">
+                <div>
+                  <div class="home__num-lbl">TURNOUT · ความคืบหน้า</div>
+                  <div class="home__num-val tabular">0.05<small>%</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="home__marquee">
+          <div class="home__marquee-track">
+            <span class="home__marquee-item">
+              SAMO 50 <span class="star">★</span>
+              <em>Fifty years</em> of FMS <span class="star">★</span>
+              Two parties <span class="star">★</span>
+              One future <span class="star">★</span>
+              <em>Vote 2027</em> <span class="star">★</span>
+            </span>
+            <span class="home__marquee-item">
+              SAMO 50 <span class="star">★</span>
+              <em>Fifty years</em> of FMS <span class="star">★</span>
+              Two parties <span class="star">★</span>
+              One future <span class="star">★</span>
+              <em>Vote 2027</em> <span class="star">★</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============== 02 CANDIDATES ============== -->
+    <section class="screen" id="screen-candidates" data-screen-label="02 Candidates">
+      <div class="scene-bar">
+        <div class="scene-bar__crumbs">
+          <span class="num">02</span><span class="sep">/</span>
+          <span class="here">Candidates</span><span class="sep">·</span>
+          <span>ผู้สมัคร 2027</span>
+        </div>
+        <div class="scene-bar__right">
+          <span>2 PARTIES &nbsp;·&nbsp; 18 CANDIDATES</span>
+        </div>
+      </div>
+
+      <div class="scene-h">
+        <div>
+          <span class="scene-h__num"><span class="accent">№ 02</span> &nbsp;/&nbsp; THE CANDIDATES</span>
+          <h1 class="scene-h__title">Meet the parties<br/>running this year.</h1>
+        </div>
+        <p class="scene-h__deck">เลือกพรรคหนึ่งเพื่อดูวิสัยทัศน์, นโยบาย, และรายชื่อสมาชิกทีมทั้งหมด.</p>
+      </div>
+
+      <div class="cand-split">
+        <div class="cand-panel" onclick="go('party')">
+          <div class="cand-panel__head">
+            <h2 class="cand-panel__no">0<em>1</em></h2>
+            <span class="cand-panel__kicker">PARTY · <span class="accent">№ 01</span></span>
+          </div>
+          <div class="cand-panel__media"><span>★ TEAM PHOTO · 17 MEMBERS ★</span></div>
+          <h3 class="cand-panel__name">The Unity <em>Concord</em><br/>of FMS 2</h3>
+          <p class="cand-panel__slogan">หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน.</p>
+          <div class="cand-panel__quick">
+            <div class="cand-panel__quick-cell"><div class="lbl">CANDIDATES</div><div class="val tabular">17</div></div>
+            <div class="cand-panel__quick-cell"><div class="lbl">POLICIES</div><div class="val tabular">4</div></div>
+            <div class="cand-panel__quick-cell"><div class="lbl">VIEW</div><div class="val"><em>Profile →</em></div></div>
+          </div>
+        </div>
+
+        <div class="cand-panel" onclick="go('party')">
+          <div class="cand-panel__head">
+            <h2 class="cand-panel__no">0<em>2</em></h2>
+            <span class="cand-panel__kicker">PARTY · <span class="accent">№ 02</span></span>
+          </div>
+          <div class="cand-panel__media"><span>★ FACULTY CREST · PLACEHOLDER ★</span></div>
+          <h3 class="cand-panel__name">อะไรไม่รู้ครับ</h3>
+          <p class="cand-panel__slogan">หกด.</p>
+          <div class="cand-panel__quick">
+            <div class="cand-panel__quick-cell"><div class="lbl">CANDIDATES</div><div class="val tabular">—</div></div>
+            <div class="cand-panel__quick-cell"><div class="lbl">POLICIES</div><div class="val tabular">1</div></div>
+            <div class="cand-panel__quick-cell"><div class="lbl">VIEW</div><div class="val"><em>Profile →</em></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============== 03 PARTY DETAIL ============== -->
+    <section class="screen" id="screen-party" data-screen-label="03 Party Detail">
+      <div class="scene-bar">
+        <div class="scene-bar__crumbs">
+          <a href="#candidates" data-route="candidates" style="color: var(--ink-2)">← Candidates</a>
+          <span class="sep">/</span>
+          <span class="here">Profile</span>
+          <span class="sep">·</span>
+          <span>Party <span style="color:var(--accent)">№ 01</span></span>
+        </div>
+        <div class="scene-bar__right">
+          <span>17 CANDIDATES &nbsp;·&nbsp; 4 POLICIES</span>
+        </div>
+      </div>
+
+      <div class="profile-h">
+        <div class="profile-h__no">0<em>1</em></div>
+        <div>
+          <h1 class="profile-h__title">The Unity <em>Concord</em><br/>of FMS 2.</h1>
+          <p class="profile-h__slogan">หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน.</p>
+        </div>
+        <div class="profile-h__quick">
+          <div class="profile-h__quick-row">CANDIDATES <strong class="tabular">17</strong></div>
+          <div class="profile-h__quick-row">POLICIES <strong class="tabular">4</strong></div>
+          <div class="profile-h__quick-row">STATUS <strong><em>Active</em></strong></div>
+        </div>
+      </div>
+
+      <nav class="tabs" id="tabs">
+        <a class="tab is-active" data-tab="vision"><span class="tab__num">i.</span> Vision</a>
+        <a class="tab" data-tab="policies"><span class="tab__num">ii.</span> Policies</a>
+        <a class="tab" data-tab="team"><span class="tab__num">iii.</span> The Team</a>
+        <div class="tabs__spacer"></div>
+        <a href="#vote" class="tabs__action" data-route="vote">ลงคะแนน · Vote →</a>
+      </nav>
+
+      <div class="tab-section" id="tab-vision">
+        <h2><span class="num">i.</span>Vision &amp; <em>future.</em></h2>
+        <div class="story">
+          <div>
+            <p>The Unity Concord of FMS 2 สะท้อนถึงความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ.</p>
+            <p>ภายใต้แนวคิด Unity คือ ความเข้มแข็ง ร่วมมือ และสร้างความเปลี่ยนแปลงที่ยั่งยืนให้แก่ FMS รุ่นที่ ๕๐.</p>
+          </div>
+          <div class="story__media"></div>
+        </div>
+      </div>
+
+      <div class="tab-section" id="tab-policies" style="display:none">
+        <h2><span class="num">ii.</span>Four <em>policies.</em></h2>
+        <div class="policies">
+          <div class="policy">
+            <div class="policy__no">01</div>
+            <div class="policy__body"><p>ยกระดับโครงการรับน้องและกิจกรรมเปิดใหม่ เพื่อปรับเปลี่ยนรูปแบบให้สะท้อนความหลากหลายของนักศึกษาในศตวรรษที่ ๒๑.</p></div>
+            <span class="policy__tag">EDUCATION</span>
+          </div>
+          <div class="policy">
+            <div class="policy__no">02</div>
+            <div class="policy__body"><p>ส่งเสริมกิจกรรมความหลากหลาย เปิดโอกาสให้นักศึกษามีส่วนร่วม และเสริมสร้างศักยภาพของแต่ละบุคคลผ่านชมรม.</p></div>
+            <span class="policy__tag">CULTURE</span>
+          </div>
+          <div class="policy">
+            <div class="policy__no">03</div>
+            <div class="policy__body"><p>เปิดโอกาสในการพบปะกับความหลากหลาย เพื่อนำพาเยาวชนสู่อนาคตที่สดใส และมีความเข้าใจซึ่งกันและกัน.</p></div>
+            <span class="policy__tag">COMMUNITY</span>
+          </div>
+          <div class="policy">
+            <div class="policy__no">04</div>
+            <div class="policy__body"><p>สร้างเวทีสำหรับเยาวชนและคนรุ่นใหม่ เพื่อความหลากหลายทางความคิด ให้เกิดการพัฒนาในทุกๆ วงจรของกิจกรรม.</p></div>
+            <span class="policy__tag">PLATFORM</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-section" id="tab-team" style="display:none">
+        <h2><span class="num">iii.</span>The <em>team.</em></h2>
+        <div class="roster">
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">สมิดานันท์ ธรรมสุนทร</div><div class="roster-tile__role">President</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">สุภัทรกานต์ สุขชัยฉันท์</div><div class="roster-tile__role">Core Exec</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">ปัณฑารีย์ พัฒนัย</div><div class="roster-tile__role">Core Exec</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">พิชญาณ์ โกศัยสวัสดิ์</div><div class="roster-tile__role">Core Exec</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">ธนกร แก้วมณี</div><div class="roster-tile__role">Core Exec</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">บุญชัย วันสีรย์</div><div class="roster-tile__role">Dept Head</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">วรินวีจน์ โรจนรวมศุภ</div><div class="roster-tile__role">Dept Head</div></div>
+          <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">ภัทรวดี ดิ่นแก้ว</div><div class="roster-tile__role">Dept Head</div></div>
+        </div>
+      </div>
+
+      <div class="profile-cta">
+        <p class="profile-cta__line">Pick <em>Concord.</em> &nbsp;Pick the future.</p>
+        <a href="#vote" class="btn btn--accent btn--lg" data-route="vote">
+          ลงคะแนนให้พรรคนี้
+          <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+
+    <!-- ============== 04 BALLOT ============== -->
+    <section class="screen" id="screen-vote" data-screen-label="04 Vote">
+      <div class="scene-bar">
+        <div class="scene-bar__crumbs">
+          <span class="num">04</span><span class="sep">/</span>
+          <span class="here">Ballot</span><span class="sep">·</span>
+          <span>ลงคะแนนเสียง</span>
+        </div>
+        <div class="scene-bar__right">
+          <span>SECURED BY PSU PASSPORT</span>
+        </div>
+      </div>
+
+      <div class="scene-h">
+        <div>
+          <span class="scene-h__num"><span class="accent">№ 04</span> &nbsp;/&nbsp; THE BALLOT</span>
+          <h1 class="scene-h__title">Choose <em>one,</em><br/>then confirm.</h1>
+        </div>
+        <p class="scene-h__deck">สวัสดี Teerapab — กรุณาเลือกหนึ่งตัวเลือกจากด้านล่าง. การลงคะแนนสามารถทำได้เพียงครั้งเดียวเท่านั้น.</p>
+      </div>
+
+      <div class="ballot">
+        <div class="ballot__intro">
+          <span><span class="accent">●</span> BALLOT OPEN</span>
+          <span style="text-align: center">VOTE NUMBER &nbsp;·&nbsp; <span class="accent">FMS-2027-0001</span></span>
+          <span>SESSION 09:42 ICT</span>
+        </div>
+
+        <article class="strip" data-party="1">
+          <div class="strip__no">0<em>1</em></div>
+          <div class="strip__main">
+            <div class="strip__kicker">PARTY № 01 · THE CONCORD</div>
+            <h3 class="strip__name">The Unity Concord of FMS 2</h3>
+            <p class="strip__slogan">"หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"</p>
+          </div>
+          <div class="strip__meta">
+            <div class="strip__meta-row"><span>Candidates</span><strong>17</strong></div>
+            <div class="strip__meta-row"><span>Policies</span><strong>4</strong></div>
+            <a href="#party" data-route="party" class="strip__meta-link" onclick="event.stopPropagation()">View profile →</a>
+          </div>
+          <div class="strip__check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </article>
+
+        <article class="strip" data-party="2">
+          <div class="strip__no">0<em>2</em></div>
+          <div class="strip__main">
+            <div class="strip__kicker">PARTY № 02 · FMS CREST</div>
+            <h3 class="strip__name">อะไรไม่รู้ครับ</h3>
+            <p class="strip__slogan">"หกด"</p>
+          </div>
+          <div class="strip__meta">
+            <div class="strip__meta-row"><span>Candidates</span><strong>—</strong></div>
+            <div class="strip__meta-row"><span>Policies</span><strong>1</strong></div>
+            <a href="#party" data-route="party" class="strip__meta-link" onclick="event.stopPropagation()">View profile →</a>
+          </div>
+          <div class="strip__check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </article>
+
+        <article class="strip strip--abstain" data-party="0">
+          <div class="strip__no">×</div>
+          <div class="strip__main">
+            <div class="strip__kicker">ABSTAIN</div>
+            <h3 class="strip__name">งดออกเสียง</h3>
+            <p class="strip__slogan">ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้.</p>
+          </div>
+          <div class="strip__meta"></div>
+          <div class="strip__check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </article>
+
+        <div class="ballot__footer">
+          <div>
+            <div class="ballot__footer-lbl">YOUR SELECTION</div>
+            <div class="ballot__footer-val" id="voteSelLabel">ยังไม่ได้เลือก · None</div>
+          </div>
+          <a href="#success" class="btn btn--accent btn--lg" id="confirmBtn" data-route="success" disabled>
+            ยืนยันการลงคะแนน
+            <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============== 03 SUCCESS ============== -->
+    <section class="screen" id="screen-success" data-screen-label="04b Success">
+      <div class="scene-bar">
+        <div class="scene-bar__crumbs">
+          <span class="num">04b</span><span class="sep">/</span>
+          <span class="here">Receipt</span><span class="sep">·</span>
+          <span>ลงคะแนนสำเร็จ</span>
+        </div>
+        <div class="scene-bar__right">
+          <span><span class="rail__countdown-dot"></span> RECORDED</span>
+        </div>
+      </div>
+
+      <div class="success">
+        <div class="success__left">
+          <div class="success__mark"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="success__chapter">
+            <span class="rail__countdown-dot"></span> BALLOT RECORDED · บันทึกแล้ว
+          </div>
+          <h1 class="success__title">Thank<br/>you for<br/><em>voting.</em></h1>
+          <p class="success__deck">บันทึกคะแนนเรียบร้อยแล้ว. ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา คณะวิทยาการจัดการ.</p>
+        </div>
+
+        <div class="success__right">
+          <div class="success__receipt">
+            <div class="success__receipt-h">
+              <span>RECEIPT</span>
+              <span><span class="accent">●</span> CONFIRMED</span>
+            </div>
+            <div class="success__row">
+              <div class="success__row-lbl">BALLOT №</div>
+              <div class="success__row-val">FMS-2027-0001</div>
+            </div>
+            <div class="success__row">
+              <div class="success__row-lbl">RECORDED AT</div>
+              <div class="success__row-val">9 พ.ค. 2570 · 09:42 ICT</div>
+            </div>
+            <div class="success__row">
+              <div class="success__row-lbl">VOTER ID</div>
+              <div class="success__row-val">№ 6610510149</div>
+            </div>
+            <div class="success__row">
+              <div class="success__row-lbl">SECURED BY</div>
+              <div class="success__row-val">PSU Passport · OAuth</div>
+            </div>
+          </div>
+
+          <div class="success__callout">
+            <h4>รับทรานสคริปต์กิจกรรม</h4>
+            <p>ทำแบบประเมินให้ครบเพื่อรับชั่วโมงกิจกรรม (2 ชม., เลือกเข้าร่วม) และปลดล็อกหน้าสรุปผลคะแนน.</p>
+          </div>
+
+          <div class="success__actions">
+            <a href="#" class="btn btn--accent btn--lg btn--block">
+              เปิดแบบประเมิน
+              <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+            </a>
+            <a href="#home" class="btn btn--ghost btn--block" data-route="home">
+              ← กลับหน้าหลัก
+              <span style="opacity:.5">Index</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============== 05 RESULTS ============== -->
+    <section class="screen" id="screen-results" data-screen-label="05 Results">
+      <div class="scene-bar">
+        <div class="scene-bar__crumbs">
+          <span class="num">05</span><span class="sep">/</span>
+          <span class="here">Returns</span><span class="sep">·</span>
+          <span>ผลคะแนน</span>
+        </div>
+        <div class="scene-bar__right">
+          <span class="live"><span class="rail__countdown-dot"></span> COUNTING IN PROGRESS</span>
+        </div>
+      </div>
+
+      <div class="ledger">
+        <div class="ledger__h">
+          <h1 class="ledger__title">The <em>Returns,</em><br/>SAMO 50.</h1>
+          <div class="ledger__live"><span class="rail__countdown-dot"></span> LIVE TALLY · กำลังนับ</div>
+        </div>
+
+        <div class="ledger__board">
+          <div class="ledger__hero">
+            <div class="ledger__hero-kicker"><span class="dot"></span> COUNTING IN PROGRESS · กำลังนับคะแนน</div>
+            <h2 class="ledger__hero-title">Who will<br/><em>win?</em></h2>
+            <p class="ledger__hero-deck">เพื่อรักษาความเป็นกลาง ผลคะแนนรายพรรคยังถูกปิดไว้. การประกาศจะเกิดขึ้นเมื่อหมดเวลาลงคะแนนแล้วเท่านั้น.</p>
+          </div>
+
+          <div class="ledger__aside">
+            <div class="ledger__aside-kicker">§ EDITOR'S NOTE</div>
+            <h3>การประกาศจะเกิด<br/>เมื่อ <em>ปิดหีบ.</em></h3>
+            <p>ระหว่างการลงคะแนน เราเลือกที่จะไม่แสดงพรรคที่กำลังนำ — เพื่อไม่ให้ตัวเลขมีอิทธิพลต่อการตัดสินใจของผู้ที่ยังไม่ได้ลงคะแนน.</p>
+            <div class="ledger__aside-cd">
+              <div class="ledger__aside-cell"><div class="ledger__aside-num tabular">00</div><div class="ledger__aside-unit">DAYS</div></div>
+              <div class="ledger__aside-cell"><div class="ledger__aside-num tabular">06</div><div class="ledger__aside-unit">HRS</div></div>
+              <div class="ledger__aside-cell"><div class="ledger__aside-num tabular">54</div><div class="ledger__aside-unit">MIN</div></div>
+              <div class="ledger__aside-cell"><div class="ledger__aside-num tabular" id="rcd-sec">12</div><div class="ledger__aside-unit">SEC</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ledger__stats">
+          <div class="ledger__stat">
+            <div class="ledger__stat-lbl">TOTAL VOTES <em>i.</em></div>
+            <div class="ledger__stat-val tabular"><em>1</em></div>
+            <div class="ledger__stat-sub">นับสะสมตั้งแต่เปิดหีบเลือกตั้ง</div>
+          </div>
+          <div class="ledger__stat">
+            <div class="ledger__stat-lbl">ELIGIBLE <em>ii.</em></div>
+            <div class="ledger__stat-val tabular">2,001</div>
+            <div class="ledger__stat-sub">นักศึกษาที่ลงทะเบียน</div>
+          </div>
+          <div class="ledger__stat">
+            <div class="ledger__stat-lbl">TURNOUT <em>iii.</em></div>
+            <div class="ledger__stat-val tabular">0.05<small>%</small></div>
+            <div class="ledger__stat-sub">↑ อัปเดตแบบเรียลไทม์</div>
+          </div>
+        </div>
+
+        <div class="race">
+          <div class="race__head">
+            <h3>Vote distribution <em>by party.</em></h3>
+            <span class="smallcaps">§ EMBARGOED</span>
+          </div>
+          <div class="race__bars">
+            <div class="race__row">
+              <div class="race__name">The Unity Concord<small>PARTY № 01</small></div>
+              <div class="race__track"><div class="race__fill" style="width: 56%"></div></div>
+              <div class="race__pct">??.?%</div>
+            </div>
+            <div class="race__row">
+              <div class="race__name">อะไรไม่รู้ครับ<small>PARTY № 02</small></div>
+              <div class="race__track"><div class="race__fill" style="width: 44%"></div></div>
+              <div class="race__pct">??.?%</div>
+            </div>
+            <div class="race__row">
+              <div class="race__name">งดออกเสียง<small>ABSTAIN</small></div>
+              <div class="race__track"><div class="race__fill" style="width: 22%"></div></div>
+              <div class="race__pct">??.?%</div>
+            </div>
+          </div>
+          <div class="race__veil">
+            <div>
+              <h4>Embargoed until <em>polls close.</em></h4>
+              <p>ผลคะแนนรายพรรคจะปรากฏที่นี่ทันทีเมื่อปิดหีบเลือกตั้ง.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+
+<script>
+const screens = ['home','candidates','party','vote','success','results'];
+function go(route) {
+  if (!screens.includes(route)) route = 'home';
+  screens.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('active', s === route);
+  });
+  // Rail nav active state (success borrows vote's state)
+  let railRoute = (route === 'success') ? 'vote' : route;
+  document.querySelectorAll('.rail__link').forEach(a => {
+    a.classList.toggle('is-active', a.dataset.route === railRoute);
+  });
+  // status dots: filled once you've reached that step
+  const order = ['home','candidates','party','vote','results'];
+  const idx = order.indexOf(railRoute);
+  document.querySelectorAll('.rail__link').forEach(a => {
+    const i = order.indexOf(a.dataset.route);
+    const dot = a.querySelector('.rail__link-status');
+    if (dot) dot.classList.toggle('on', i <= idx);
+  });
+  renderRailFooter(route);
+  history.replaceState(null, '', '#' + route);
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function renderRailFooter(route) {
+  const el = document.getElementById('railFooter');
+  if (route === 'home') {
+    el.innerHTML = `
+      <div class="rail__signin">
+        <a href="#vote" data-route="vote">
+          เข้าสู่ระบบ
+          <span>→</span>
+        </a>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="rail__user">
+        <div class="rail__avatar">T</div>
+        <div class="rail__user-info">
+          <div class="rail__user-name">Teerapab Boonsri</div>
+          <div class="rail__user-id">№ 6610510149</div>
+        </div>
+      </div>`;
+  }
+  attachHandlers();
+}
+
+function attachHandlers() {
+  document.querySelectorAll('[data-route]').forEach(el => {
+    if (el._wired) return;
+    el._wired = true;
+    el.addEventListener('click', e => { e.preventDefault(); go(el.dataset.route); });
+  });
+}
+
+// Tab swap on Party Detail
+function bindTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => {
+    t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('is-active'));
+      t.classList.add('is-active');
+      ['vision','policies','team'].forEach(k => {
+        const el = document.getElementById('tab-' + k);
+        if (el) el.style.display = (k === t.dataset.tab) ? 'block' : 'none';
+      });
+    });
+  });
+}
+
+// Vote selection
+const partyData = {
+  '0': 'งดออกเสียง · Abstain',
+  '1': 'No. 01 — The Unity Concord of FMS 2',
+  '2': 'No. 02 — อะไรไม่รู้ครับ'
+};
+function bindVote() {
+  document.querySelectorAll('[data-party]').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('[data-party]').forEach(x => x.classList.remove('is-selected'));
+      el.classList.add('is-selected');
+      const lbl = document.getElementById('voteSelLabel');
+      if (lbl) lbl.textContent = partyData[el.dataset.party];
+      document.getElementById('confirmBtn').removeAttribute('disabled');
+    });
+  });
+}
+
+// Clock
+function tickClock() {
+  const d = new Date();
+  const h = String(d.getHours()).padStart(2,'0');
+  const m = String(d.getMinutes()).padStart(2,'0');
+  const c = document.getElementById('clock');
+  if (c) c.textContent = `${h}:${m} ICT`;
+}
+
+window.addEventListener('hashchange', () => go(location.hash.replace('#','')));
+document.addEventListener('DOMContentLoaded', () => {
+  bindVote();
+  bindTabs();
+  attachHandlers();
+  tickClock();
+  setInterval(tickClock, 30000);
+  go(location.hash.replace('#','') || 'home');
+});
+
+let s = 8;
+setInterval(() => {
+  s = (s - 1 + 60) % 60;
+  const v = String(s).padStart(2,'0');
+  ['cd-sec','rcd-sec'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  });
+}, 1000);
+</script>
+</body>
+</html>

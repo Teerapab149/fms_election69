@@ -1,7 +1,7 @@
 // src/components/HomeContent.js
 "use client";
 import { getPath } from "../utils/basePath";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "../components/Navbar";
 import BlockRenderer from "../components/blocks/BlockRenderer";
@@ -15,6 +15,7 @@ import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
 import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
 import { resolveStatefulConfig } from './admin/editor/templateEngine';
 import { getBinding, isBoundElement } from './admin/editor/elementCatalog';
+import { buildTemplateStyles, buildElementCss } from '../lib/templateTokens';
 import CountdownTimer from "../components/CountdownTimer";
 import { Calendar } from "lucide-react";
 import SiteFooter from './SiteFooter';
@@ -40,6 +41,9 @@ export default function HomeContent({
   onHoverEnd = null,
   pageLayout = null,
   theme = null,
+  resolvedTemplate = null,
+  tokens = null,
+  editorTokenStyles = null,
 }) {
   const { data: session, status } = useSession();
   const { isEditorMode, highlightedSection } = useEditorPreview();
@@ -104,22 +108,42 @@ export default function HomeContent({
       });
   }, [editorMode, pageLayout]);
 
+  // Live editor state read by the STABLE Wrap below. Updated every render so
+  // the highlight reflects the current hover/selection without Wrap needing
+  // those values in its closure (which would change its identity).
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    editorMode, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+
+  // CRITICAL: Wrap must keep a STABLE identity across renders. When it was
+  // defined inline (`const Wrap = () => ...`) it got a new function identity
+  // every render, so React treated <Wrap> as a new component TYPE and
+  // remounted the whole wrapped subtree — replaying every entrance/hover
+  // animation. Hovering an element fires setState (hoveredElement) → re-render
+  // → remount → flicker. useCallback([editorMode]) pins the identity; live
+  // state comes from the ref, so hover updates are a re-render, not a remount.
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    if (!s.editorMode) return children;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >{children}</EditorElement>
+    );
+  }, []);
+
   if (!mounted) return null;
 
   // ✅ การแก้บั๊ก: อ่านค่าโดยตรงจาก Props เสมอ เพื่อให้การตั้งค่า ซ่อน/โชว์ และลำดับ Sync กันทันที
   const activeBlocks = pageLayout?.home || apiBlocks;
-
-  const Wrap = ({ id, children }) => editorMode ? (
-    <EditorElement
-      id={id}
-      config={elementConfigs?.[id]}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >{children}</EditorElement>
-  ) : children;
 
   const cfg = (id, defaults = {}) => editorMode
     ? { ...defaults, ...(elementConfigs?.[id]?.config || {}) }
@@ -187,11 +211,14 @@ export default function HomeContent({
   });
 
   // Resolve voteCTA-button state + config (template defaults + admin overrides)
+  // Day 3a: Day 2A Option C gate removed — classic.js voteCTA-button now carries
+  // full 18-field shape (gradient/shadow/icon/padding/hover), so the template
+  // can drive the design directly. VoteCTABlock's legacy hardcoded path remains
+  // as a safety fallback when buildButtonStyle receives no fields.
   const voteCTAState = resolveElementState('voteCTA-button', runtimeCtx);
-  const voteCTASourceTemplate = pageLayout?.sourceTemplate || 'classic';
   const voteCTAOverrides = pageLayout?.elementOverrides?.['voteCTA-button']?.[voteCTAState] || {};
   const voteCTAResolvedConfig = resolveStatefulConfig(
-    voteCTASourceTemplate,
+    resolvedTemplate,
     'voteCTA-button',
     voteCTAState,
     voteCTAOverrides
@@ -199,14 +226,72 @@ export default function HomeContent({
 
   // Resolve countdown state + config
   const countdownState = resolveElementState('hero-countdown', runtimeCtx);
-  const countdownSourceTemplate = pageLayout?.sourceTemplate || 'classic';
+  const countdownTemplateArg = resolvedTemplate;
   const countdownOverrides = pageLayout?.elementOverrides?.['hero-countdown']?.[countdownState] || {};
   const countdownResolvedConfig = resolveStatefulConfig(
-    countdownSourceTemplate,
+    countdownTemplateArg,
     'hero-countdown',
     countdownState,
     countdownOverrides
   );
+
+  // Page background — data-driven (Day 4 Step 1; Day 5 token fallback).
+  // Live channel: resolvedTemplate.pages.home.backgroundColor (SSR-resolved).
+  // Editor channel: theme.colors.background (mirrored on template apply).
+  // Day 5: fallback to var(--color-bg) so the Layer 1 token wins when no
+  // explicit page-bg override is set (P-LOG-015 byte-faithful: classic still
+  // sets pages.home.backgroundColor=#F8F9FD so this path is unchanged for it).
+  const pageBg = (editorMode
+    ? theme?.colors?.background
+    : resolvedTemplate?.pages?.home?.backgroundColor) ?? 'var(--color-bg)';
+
+  // Layers 1 + 2 emitted as <style> on .fms-app scope below
+  // (ADR-001 D10 + D11 unified pipeline: same for live + editor preview).
+  // Day 7a: switched from buildTokenStyles (Layer 1 only) to buildTemplateStyles
+  // which also emits per-element [data-element=X] rules for any element entry
+  // with a `vars: {...}` object (Layer 2). Elements without `vars` contribute
+  // nothing — backwards-compatible with Day 5/6 templates.
+  // Day 10 + 11: overlay admin choices onto the resolved template (live channel).
+  // Cascades, all sourced from pageLayout (DB on live page):
+  //   variant (Day 10): elementVariants.home[id] > template variant > 'default'
+  //   tokens  (Day 11): themeTokens[k]            > template.theme.tokens[k]
+  //   vars    (Day 11): elementVars.home[id][k]   > template.elements[id].vars[k]
+  // Wrapper blocks still read template.elements[id].variant; buildTemplateStyles
+  // reads theme.tokens + elements[].vars — all resolved here, upstream of them.
+  const elementVariantOverrides = pageLayout?.elementVariants?.home || {};
+  const themeTokenOverrides = pageLayout?.themeTokens || {};
+  const elementVarOverrides = pageLayout?.elementVars?.home || {};
+  const effectiveTemplate = (() => {
+    const hasVariant = Object.keys(elementVariantOverrides).length > 0;
+    const hasTokens = Object.keys(themeTokenOverrides).length > 0;
+    const hasVars = Object.keys(elementVarOverrides).length > 0;
+    if (!hasVariant && !hasTokens && !hasVars) return resolvedTemplate;
+    const baseElements = resolvedTemplate?.elements || {};
+    const mergedElements = { ...baseElements };
+    for (const id of Object.keys(elementVariantOverrides)) {
+      mergedElements[id] = { ...(baseElements[id] || {}), variant: elementVariantOverrides[id] };
+    }
+    for (const id of Object.keys(elementVarOverrides)) {
+      const base = mergedElements[id] || {};
+      mergedElements[id] = { ...base, vars: { ...(base.vars || {}), ...elementVarOverrides[id] } };
+    }
+    const baseTheme = resolvedTemplate?.theme || {};
+    const mergedTheme = hasTokens
+      ? { ...baseTheme, tokens: { ...(baseTheme.tokens || {}), ...themeTokenOverrides } }
+      : baseTheme;
+    return { ...(resolvedTemplate || {}), theme: mergedTheme, elements: mergedElements };
+  })();
+
+  // Editor channel injects a token scope built upstream in PageDesignTab
+  // (closes P-LOG-051; already includes Tier 3 custom CSS). Live channel builds
+  // from effectiveTemplate so saved Layer 1 token + Layer 2 var overrides apply
+  // on the real page, then appends Tier 3 per-element custom CSS (Layer 3).
+  const tokenStylesCss = editorMode
+    ? (editorTokenStyles || '')
+    : [
+        buildTemplateStyles(effectiveTemplate, '.fms-app'),
+        buildElementCss(pageLayout?.elementCss?.home, '.fms-app'),
+      ].filter(Boolean).join('\n\n');
 
   const ed = editorData || {};
 
@@ -250,7 +335,7 @@ export default function HomeContent({
                   {titlePart}
                 </span>
                 {numberPart && (
-                  <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
+                  <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[var(--color-primary)] to-[#D946EF] drop-shadow-md relative">
                     {numberPart}
                     <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping" />
                   </span>
@@ -263,7 +348,7 @@ export default function HomeContent({
           <Wrap id="hero-subtitle">
             <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
               {getText('hero-subtitle', globalConfig.campaignTitle).replace(globalConfig.committeeName, '')}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-[#D946EF]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[#D946EF]">
                 {globalConfig.committeeName}
               </span>
             </h2>
@@ -277,10 +362,10 @@ export default function HomeContent({
           </Wrap>
 
           {/* Year badge */}
-          {isVisible('hero-status-badge') && (
+          {isVisible('hero-year-badge') && (
             <Wrap id="hero-year-badge">
               <div className="flex justify-center lg:justify-start pt-1">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[var(--color-primary)] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
                   <Calendar className="w-3.5 h-3.5" />
                   {yearBadgeText}
                 </span>
@@ -299,10 +384,13 @@ export default function HomeContent({
     electionBanner: ElectionBannerBlock,
   };
 
-  // Editor-mode wrap IDs — block type → primary editable element ID
+  // Editor-mode wrap IDs — block type → primary editable element ID.
+  // NOTE: `stats` is intentionally NOT here. StatsBlock wraps its OWN cards
+  // (hero + 2 sub-cards) internally; a block-level wrap would sit ABOVE them and
+  // its onClickCapture would swallow every sub-card click (they'd all select the
+  // hero). Letting StatsBlock own the wraps makes all three cards selectable.
   const WRAP_ID_MAP = {
     voteCTA: 'voteCTA-button',
-    stats: 'stats-voted-card',
     meetCandidates: 'meet-section',
     electionBanner: 'banner-section',
   };
@@ -326,8 +414,23 @@ export default function HomeContent({
           const Component = BLOCK_COMPONENTS[block.type];
           if (!Component) return null;
           const extraProps = block.type === 'voteCTA' ? { resolvedConfig: voteCTAResolvedConfig } : {};
+          const editorPassthrough = editorMode ? {
+            editorMode,
+            selectedElement,
+            hoveredElement,
+            onSelectElement,
+            onHoverElement,
+            onHoverEnd,
+            elementConfigs,
+          } : {};
           const blockJSX = (
-            <Component config={block.config || {}} data={activeBlockData} {...extraProps} />
+            <Component
+              config={block.config || {}}
+              data={activeBlockData}
+              resolvedTemplate={effectiveTemplate}
+              {...extraProps}
+              {...editorPassthrough}
+            />
           );
           if (editorMode && WRAP_ID_MAP[block.type]) {
             content = <Wrap id={WRAP_ID_MAP[block.type]}>{blockJSX}</Wrap>;
@@ -353,7 +456,10 @@ export default function HomeContent({
   // 🛠️ Editor mode rendering — uses real block components via renderColumn
   if (editorMode) {
     return (
-      <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
+      <div className="fms-app min-h-screen w-full flex flex-col text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative" style={{ backgroundColor: pageBg }}>
+        {tokenStylesCss && (
+          <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />
+        )}
         <div className="relative z-50 shrink-0">
           <Navbar />
         </div>
@@ -378,7 +484,10 @@ export default function HomeContent({
 
   // --- Normal Rendering (Non-editor) ---
   return (
-    <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
+    <div className="fms-app min-h-screen w-full flex flex-col text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative" style={{ backgroundColor: pageBg }}>
+      {tokenStylesCss && (
+        <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />
+      )}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[100px]" />

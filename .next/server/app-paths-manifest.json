@@ -1,8 +1,0 @@
-{
-  "/success/page": "app/success/page.js",
-  "/page": "app/page.js",
-  "/admin/login/page": "app/admin/login/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/api/admin/page-layout/route": "app/api/admin/page-layout/route.js",
-  "/api/gallery/route": "app/api/gallery/route.js"
-}

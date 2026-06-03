@@ -1,9 +1,12 @@
 "use client";
 
+import { useRef, useCallback } from 'react';
 import { Check, Megaphone, CheckCircle2, Tag, Lock, BarChart3, ArrowRight } from 'lucide-react';
+import EditorElement from './editor/EditorElement';
 
 export default function SuccessEditorPreview({
   simMode = "locked", // 'locked' | 'unlocked'
+  elementConfigs = {},
   selectedElement = null,
   hoveredElement = null,
   onSelectElement = null,
@@ -11,6 +14,30 @@ export default function SuccessEditorPreview({
   onHoverEnd = null,
 }) {
   const isUnlocked = simMode === "unlocked";
+
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >
+        {children}
+      </EditorElement>
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden flex items-center justify-center p-4">
@@ -34,96 +61,126 @@ export default function SuccessEditorPreview({
 
         <div className="px-6 md:px-8 py-8 md:py-10 text-center">
           {/* Check icon circle */}
-          <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-emerald-200/40 rounded-full blur-2xl" />
-            <div className="relative w-20 h-20 bg-white border-4 border-emerald-100 rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(16,185,129,0.15)]">
-              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center">
-                <Check className="w-7 h-7 text-white" strokeWidth={3} />
+          {elementConfigs?.['success-check-icon']?.config?.visible !== false && (
+            <Wrap id="success-check-icon">
+              <div className="relative inline-block mb-6">
+                <div className="absolute inset-0 bg-emerald-200/40 rounded-full blur-2xl" />
+                <div className="relative w-20 h-20 bg-white border-4 border-emerald-100 rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(16,185,129,0.15)]">
+                  <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <Check className="w-7 h-7 text-white" strokeWidth={3} />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </Wrap>
+          )}
 
           {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
-            บันทึกคะแนนสำเร็จ!
-          </h1>
+          <Wrap id="success-title">
+            <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
+              บันทึกคะแนนสำเร็จ!
+            </h1>
+          </Wrap>
 
-          {/* Subtitle */}
-          <p className="text-sm text-slate-500 mb-6 leading-relaxed px-2">
-            ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการขับเคลื่อน<br />
-            กิจกรรมนักศึกษาคณะวิทยาการจัดการ
-          </p>
+          {/* Subtitle line 1 */}
+          <Wrap id="success-subtitle1">
+            <p className="text-sm text-slate-500 leading-relaxed px-2">
+              ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการขับเคลื่อน
+            </p>
+          </Wrap>
+
+          {/* Subtitle line 2 */}
+          <Wrap id="success-subtitle2">
+            <p className="text-sm text-slate-500 mb-6 leading-relaxed px-2">
+              กิจกรรมนักศึกษาคณะวิทยาการจัดการ
+            </p>
+          </Wrap>
 
           {/* Activity card */}
-          <div className="w-full bg-gradient-to-br from-purple-50/80 to-white border border-purple-100/80 rounded-2xl p-5 shadow-[0_2px_15px_rgba(138,38,128,0.05)] relative overflow-hidden text-left pb-6 mb-4">
-            {/* Decorative bg icon */}
-            <div className="absolute top-0 right-0 -mr-4 -mt-4 text-purple-100/50 opacity-20 pointer-events-none">
-              <Megaphone size={100} />
-            </div>
-
-            <div className="flex gap-4 items-start relative z-10">
-              {/* Left icon box */}
-              <div className="bg-white p-3 rounded-2xl text-[#8A2680] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
-                <Megaphone size={24} strokeWidth={2.5} />
-              </div>
-
-              <div className="space-y-3 flex-1 min-w-0">
-                {/* Title + subtitle */}
-                <div>
-                  <h3 className="font-bold text-[#8A2680] text-base md:text-lg leading-tight">
-                    รับทรานสคริปต์กิจกรรม
-                  </h3>
-                  <p className="text-slate-500 text-xs md:text-sm mt-1">
-                    กรุณาทำแบบประเมินให้ครบถ้วน
-                  </p>
+          {elementConfigs?.['success-megaphone-card']?.config?.visible !== false && (
+            <Wrap id="success-megaphone-card">
+              <div className="w-full bg-gradient-to-br from-purple-50/80 to-white border border-purple-100/80 rounded-2xl p-5 shadow-[0_2px_15px_rgba(138,38,128,0.05)] relative overflow-hidden text-left pb-6 mb-4">
+                {/* Decorative bg icon */}
+                <div className="absolute top-0 right-0 -mr-4 -mt-4 text-purple-100/50 opacity-20 pointer-events-none">
+                  <Megaphone size={100} />
                 </div>
 
-                {/* Badges */}
-                <div className="flex flex-wrap gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[#8A2680] text-xs font-bold border border-purple-200 whitespace-nowrap">
-                    <CheckCircle2 size={12} />
-                    <span>ชั่วโมงกิจกรรม 2 ชม.</span>
+                <div className="flex gap-4 items-start relative z-10">
+                  {/* Left icon box */}
+                  <div className="bg-white p-3 rounded-2xl text-[#8A2680] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
+                    <Megaphone size={24} strokeWidth={2.5} />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
-                    <Tag size={12} />
-                    <span>ประเภทเลือกเข้าร่วม</span>
+
+                  <div className="space-y-3 flex-1 min-w-0">
+                    {/* Title + subtitle */}
+                    <div>
+                      <Wrap id="success-megaphone-title">
+                        <h3 className="font-bold text-[#8A2680] text-base md:text-lg leading-tight">
+                          {elementConfigs?.['success-megaphone-title']?.config?.text ?? 'รับทรานสคริปต์กิจกรรม'}
+                        </h3>
+                      </Wrap>
+                      <Wrap id="success-megaphone-desc">
+                        <p className="text-slate-500 text-xs md:text-sm mt-1">
+                          {elementConfigs?.['success-megaphone-desc']?.config?.text ?? 'กรุณาทำแบบประเมินให้ครบถ้วน'}
+                        </p>
+                      </Wrap>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      <Wrap id="success-chip-1">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[#8A2680] text-xs font-bold border border-purple-200 whitespace-nowrap">
+                          <CheckCircle2 size={12} />
+                          <span>{elementConfigs?.['success-chip-1']?.config?.text ?? 'ชั่วโมงกิจกรรม 2 ชม.'}</span>
+                        </div>
+                      </Wrap>
+                      <Wrap id="success-chip-2">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
+                          <Tag size={12} />
+                          <span>{elementConfigs?.['success-chip-2']?.config?.text ?? 'ประเภทเลือกเข้าร่วม'}</span>
+                        </div>
+                      </Wrap>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Lock unlock footer */}
-            <div className="relative z-10 mt-4 pt-3 border-t border-purple-100/60">
-              <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
-                <span className="shrink-0">🔓</span>
-                <span className="truncate">
-                  และ <span className="font-semibold text-[#8A2680] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span>
-                </span>
-              </p>
-            </div>
-          </div>
+                {/* Lock unlock footer */}
+                <Wrap id="success-lock-indicator">
+                  <div className="relative z-10 mt-4 pt-3 border-t border-purple-100/60">
+                    <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
+                      <span className="shrink-0">🔓</span>
+                      <span className="truncate">
+                        และ <span className="font-semibold text-[#8A2680] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span>
+                      </span>
+                    </p>
+                  </div>
+                </Wrap>
+              </div>
+            </Wrap>
+          )}
 
           {/* Button 1 — primary (form open) */}
-          {!isUnlocked ? (
-            <button
-              type="button"
-              className="w-full px-6 py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 mb-2"
-              onClick={(e) => e.preventDefault()}
-            >
-              <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-              <span>เปิดแบบประเมิน (คลิกที่นี่)</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="w-full px-6 py-3.5 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm border border-emerald-200 flex items-center justify-center gap-2 mb-2 cursor-not-allowed"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>ส่งแบบประเมินเรียบร้อยแล้ว ✓</span>
-            </button>
-          )}
+          <Wrap id="success-form-btn">
+            {!isUnlocked ? (
+              <button
+                type="button"
+                className="w-full px-6 py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 mb-2"
+                onClick={(e) => e.preventDefault()}
+              >
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span>เปิดแบบประเมิน (คลิกที่นี่)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="w-full px-6 py-3.5 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm border border-emerald-200 flex items-center justify-center gap-2 mb-2 cursor-not-allowed"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>ส่งแบบประเมินเรียบร้อยแล้ว ✓</span>
+              </button>
+            )}
+          </Wrap>
 
           {/* Button 2 — secondary (results) */}
           {!isUnlocked ? (
@@ -148,13 +205,15 @@ export default function SuccessEditorPreview({
 
           {/* Back link */}
           <div className="mt-6">
-            <button
-              type="button"
-              className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
-              onClick={(e) => e.preventDefault()}
-            >
-              กลับหน้าหลัก
-            </button>
+            <Wrap id="success-footer">
+              <button
+                type="button"
+                className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                onClick={(e) => e.preventDefault()}
+              >
+                กลับหน้าหลัก
+              </button>
+            </Wrap>
           </div>
         </div>
       </div>

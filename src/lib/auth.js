@@ -178,15 +178,20 @@ export const authOptions = {
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
           const group = String(user.groups?.[0] || "").toLowerCase();
+          // Phase 3+ STAFF role:
+          // - "faculty" group → STAFF (full edit + audit access)
+          // - Set via env: STAFF_STUDENT_IDS="ID1,ID2,..." (Day 8 seed script)
+          // - STAFF counts as admin for setAdmin flag below
           const roleMap = {
             staff: "ADMIN",
             student: "student",
+            faculty: "STAFF",
           };
           let newRole = roleMap[group] || "student";
           if (user.studentId === "6610510149" || user.studentId === "6610510129") {
             // newRole = "ADMIN"; // ไม่เปลี่ยน Role เป็น ADMIN เพื่อให้ยังคงสถานะนักศึกษาในการโหวต
           }
-          let setAdmin = (user.studentId === "6610510149" || user.studentId === "6610510129") ? true : (newRole == "ADMIN" ? true : false);
+          let setAdmin = (user.studentId === "6610510149" || user.studentId === "6610510129") ? true : (newRole === "ADMIN" || newRole === "STAFF" ? true : false);
 
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },

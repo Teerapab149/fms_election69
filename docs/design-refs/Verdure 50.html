@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SAMO 50 — Verdure</title>
+<link rel="stylesheet" href="verdure.css" />
+</head>
+<body>
+
+<!-- ============== 01 HOME ============== -->
+<section class="screen" id="screen-home" data-screen-label="01 Home">
+  <div class="edge"><span class="big">01</span> &nbsp;·&nbsp; Index &nbsp;·&nbsp; หน้าหลัก &nbsp;·&nbsp; SAMO 50 &nbsp;·&nbsp; 2027</div>
+
+  <div class="cornermark">
+    <div class="cornermark__disc">S</div>
+    <div class="cornermark__txt">
+      <strong>SAMO 50</strong>
+      FMS Election · 2570
+    </div>
+  </div>
+  <div class="cornerstatus">
+    <div class="live-chip"><span class="dot"></span> Polls close · <strong>02D 14H 33M</strong></div>
+    <div id="topbarRight"></div>
+  </div>
+
+  <div class="home">
+    <div class="home__above">
+      <span class="home__above-side">EST. ๑๙๗๐</span>
+      <span class="home__above-mid">— Fiftieth Anniversary Edition —</span>
+      <span class="home__above-side">VOL. 50 / 2027</span>
+    </div>
+
+    <div class="home__center">
+      <div class="home__samo">S &nbsp; A &nbsp; M &nbsp; O</div>
+      <div class="home__disc">
+        <div class="home__disc-50">50</div>
+        <div class="home__disc-ord">TH ED.</div>
+        <div class="home__disc-arch">★ &nbsp; FMS &nbsp; ELECTION &nbsp; 2027 &nbsp; ★</div>
+      </div>
+    </div>
+
+    <p class="home__deck">
+      การเลือกตั้งคณะกรรมการบริหารสโมสรนักศึกษา <em>คณะวิทยาการจัดการ</em> ประจำปีการศึกษา ๒๕๗๐.
+    </p>
+
+    <div class="home__chips">
+      <span class="chip"><span class="dot"></span> Open ballot</span>
+      <span class="chip">2 parties + abstain</span>
+      <span class="chip">Secured by PSU Passport</span>
+    </div>
+
+    <div class="home__bottom">
+      <div class="home__stats">
+        <div class="home__stat">
+          <div class="lbl">VOTED · ใช้สิทธิ์</div>
+          <div class="val tabular"><em>1</em><small>/ 2,001</small></div>
+        </div>
+        <div class="home__stat">
+          <div class="lbl">TURNOUT</div>
+          <div class="val tabular">0.05<small>%</small></div>
+        </div>
+        <div class="home__stat">
+          <div class="lbl">CLOSES IN</div>
+          <div class="val tabular"><span id="cd-cs">02:14:33</span><small>:<span id="cd-s">08</span></small></div>
+        </div>
+      </div>
+      <a href="#vote" class="circle-btn" data-route="vote">
+        <div>
+          <span class="lbl">→ STEP IN</span>
+          <span class="big">เข้าสู่ระบบ</span>
+          <span class="lbl" style="margin-top:6px">SIGN IN</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============== 02 CANDIDATES ============== -->
+<section class="screen screen--moss" id="screen-candidates" data-screen-label="02 Candidates">
+  <div class="edge edge--right"><span class="big">02</span> &nbsp;·&nbsp; Candidates &nbsp;·&nbsp; ผู้สมัคร 2570</div>
+
+  <div class="cornermark">
+    <div class="cornermark__disc">S</div>
+    <div class="cornermark__txt">
+      <strong>SAMO 50</strong>
+      FMS Election · 2570
+    </div>
+  </div>
+  <div class="cornerstatus">
+    <div class="live-chip"><span class="dot"></span> 2 PARTIES &nbsp;·&nbsp; <strong>18 CANDIDATES</strong></div>
+    <div id="topbarRight2"></div>
+  </div>
+
+  <div class="cand-page">
+    <div class="cand-h">
+      <div class="cand-h__kicker"><span class="rule"></span> NO. 02 · CANDIDATES <span class="rule"></span></div>
+      <h1 class="cand-h__title">Meet the parties<br/><em>running this year.</em></h1>
+      <p class="cand-h__deck">เลือกพรรคใดพรรคหนึ่งเพื่อดูวิสัยทัศน์, นโยบาย, และรายชื่อสมาชิกทีมทั้งหมด ก่อนตัดสินใจลงคะแนน.</p>
+    </div>
+
+    <article class="party-panel" onclick="go('party')">
+      <div class="party-panel__media">
+        <div class="party-panel__media-tag">★ Team photo<br/>17 members ★</div>
+      </div>
+      <div class="party-panel__main">
+        <div class="party-panel__kicker">PARTY · <span class="ac">№ 01</span> &nbsp;·&nbsp; THE CONCORD</div>
+        <h2 class="party-panel__name">The Unity Concord<br/>of FMS 2</h2>
+        <p class="party-panel__slogan">หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน.</p>
+        <div class="party-panel__quick">
+          <div><div class="lbl">CANDIDATES</div><div class="val tabular">17</div></div>
+          <div><div class="lbl">POLICIES</div><div class="val tabular">04</div></div>
+          <div><div class="lbl">STATUS</div><div class="val">Active</div></div>
+        </div>
+      </div>
+      <div class="party-panel__no">1</div>
+    </article>
+
+    <article class="party-panel party-panel--alt" onclick="go('party')">
+      <div class="party-panel__media">
+        <div class="party-panel__media-tag">★ Faculty crest<br/>placeholder ★</div>
+      </div>
+      <div class="party-panel__main">
+        <div class="party-panel__kicker">PARTY · <span class="ac">№ 02</span> &nbsp;·&nbsp; FMS CREST</div>
+        <h2 class="party-panel__name">อะไรไม่รู้ครับ</h2>
+        <p class="party-panel__slogan">หกด.</p>
+        <div class="party-panel__quick">
+          <div><div class="lbl">CANDIDATES</div><div class="val tabular">—</div></div>
+          <div><div class="lbl">POLICIES</div><div class="val tabular">01</div></div>
+          <div><div class="lbl">STATUS</div><div class="val">Active</div></div>
+        </div>
+      </div>
+      <div class="party-panel__no">2</div>
+    </article>
+  </div>
+</section>
+
+
+<!-- ============== 03 PARTY PROFILE ============== -->
+<section class="screen" id="screen-party" data-screen-label="03 Party Profile">
+  <div class="edge"><span class="big">03</span> &nbsp;·&nbsp; Profile &nbsp;·&nbsp; พรรคที่ 01</div>
+
+  <div class="cornermark">
+    <div class="cornermark__disc">S</div>
+    <div class="cornermark__txt">
+      <strong>SAMO 50</strong>
+      Profile · No. 01
+    </div>
+  </div>
+  <div class="cornerstatus">
+    <a href="#candidates" class="live-chip" data-route="candidates" style="cursor:pointer">← BACK TO CANDIDATES</a>
+    <div id="topbarRight3"></div>
+  </div>
+
+  <div class="profile-page">
+    <div class="profile-ribbon">
+      <div class="profile-ribbon__no">1</div>
+      <div class="profile-ribbon__main">
+        <div class="profile-ribbon__kicker">PARTY № 01 · THE CONCORD</div>
+        <h1 class="profile-ribbon__name">The Unity Concord<br/>of FMS 2</h1>
+        <p class="profile-ribbon__slogan">หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน.</p>
+      </div>
+      <div class="profile-ribbon__quick">
+        CANDIDATES <strong class="tabular">17</strong><br/>
+        POLICIES <strong class="tabular">04</strong><br/>
+        STATUS <strong>Active</strong>
+      </div>
+    </div>
+
+    <section class="chapter">
+      <div class="chapter__watermark">I.</div>
+      <div class="chapter__head">
+        <h2>Chapter <em>I</em> &nbsp; — &nbsp; Vision.</h2>
+        <span class="smallcaps" style="color:var(--moss); opacity:.55">วิสัยทัศน์</span>
+      </div>
+      <p>The Unity Concord of FMS 2 สะท้อนถึงความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่งเดียวกัน เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ ในวาระครบรอบ ๕๐ ปี — ภายใต้แนวคิด Unity คือ ความเข้มแข็ง, ร่วมมือ, และสร้างความเปลี่ยนแปลงที่ยั่งยืน.</p>
+    </section>
+
+    <section class="chapter">
+      <div class="chapter__watermark">II.</div>
+      <div class="chapter__head">
+        <h2>Chapter <em>II</em> &nbsp; — &nbsp; Policies.</h2>
+        <span class="smallcaps" style="color:var(--moss); opacity:.55">4 นโยบาย</span>
+      </div>
+      <div class="policies">
+        <div class="policy">
+          <div class="policy__no">1</div>
+          <div class="policy__tag">EDUCATION</div>
+          <p>ยกระดับโครงการรับน้องและกิจกรรมเปิดใหม่ เพื่อปรับเปลี่ยนรูปแบบให้สะท้อนความหลากหลายของนักศึกษาในศตวรรษที่ ๒๑.</p>
+        </div>
+        <div class="policy">
+          <div class="policy__no">2</div>
+          <div class="policy__tag">CULTURE</div>
+          <p>ส่งเสริมกิจกรรมความหลากหลาย เปิดโอกาสให้นักศึกษามีส่วนร่วม และเสริมสร้างศักยภาพของแต่ละบุคคลผ่านชมรม.</p>
+        </div>
+        <div class="policy">
+          <div class="policy__no">3</div>
+          <div class="policy__tag">COMMUNITY</div>
+          <p>เปิดโอกาสในการพบปะกับความหลากหลาย เพื่อนำพาเยาวชนสู่อนาคตที่สดใส และมีความเข้าใจซึ่งกันและกัน.</p>
+        </div>
+        <div class="policy">
+          <div class="policy__no">4</div>
+          <div class="policy__tag">PLATFORM</div>
+          <p>สร้างเวทีสำหรับเยาวชนและคนรุ่นใหม่ เพื่อความหลากหลายทางความคิด ให้เกิดการพัฒนาในทุกๆ วงจรของกิจกรรม.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter">
+      <div class="chapter__watermark">III.</div>
+      <div class="chapter__head">
+        <h2>Chapter <em>III</em> &nbsp; — &nbsp; The team.</h2>
+        <span class="smallcaps" style="color:var(--moss); opacity:.55">17 candidates</span>
+      </div>
+      <div class="roster">
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">สมิดานันท์ ธรรมสุนทร</div><div class="roster-tile__role">President</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">สุภัทรกานต์ สุขชัยฉันท์</div><div class="roster-tile__role">Core Exec</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">ปัณฑารีย์ พัฒนัย</div><div class="roster-tile__role">Core Exec</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">พิชญาณ์ โกศัยสวัสดิ์</div><div class="roster-tile__role">Core Exec</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">ธนกร แก้วมณี</div><div class="roster-tile__role">Core Exec</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">บุญชัย วันสีรย์</div><div class="roster-tile__role">Dept Head</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">วรินวีจน์ โรจนรวมศุภ</div><div class="roster-tile__role">Dept Head</div></div>
+        <div class="roster-tile"><div class="roster-tile__photo"><span>portrait</span></div><div class="roster-tile__name">ภัทรวดี ดิ่นแก้ว</div><div class="roster-tile__role">Dept Head</div></div>
+      </div>
+    </section>
+
+    <div class="profile-cta">
+      <p class="profile-cta__line">Pick <em>Concord.</em> &nbsp;Pick the future.</p>
+      <a href="#vote" class="btn btn--terra btn--lg" data-route="vote">
+        ลงคะแนนให้พรรคนี้
+        <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============== 04 BALLOT ============== -->
+<section class="screen" id="screen-vote" data-screen-label="04 Vote">
+  <div class="edge"><span class="big">04</span> &nbsp;·&nbsp; Ballot &nbsp;·&nbsp; ลงคะแนนเสียง</div>
+
+  <div class="cornermark">
+    <div class="cornermark__disc">S</div>
+    <div class="cornermark__txt">
+      <strong>Ballot</strong>
+      FMS-2027-0001
+    </div>
+  </div>
+  <div class="cornerstatus">
+    <div class="live-chip"><span class="dot"></span> SESSION 09:42 · <strong>SECURE</strong></div>
+    <div id="topbarRight4"></div>
+  </div>
+
+  <div class="ballot-page">
+    <div class="ballot-h">
+      <div class="ballot-h__kicker"><span class="rule"></span> NO. 04 · BALLOT <span class="rule"></span></div>
+      <h1 class="ballot-h__title">Choose <em>one.</em></h1>
+      <p class="ballot-h__deck">สวัสดี Teerapab — กรุณาเลือกหนึ่งตัวเลือกด้านล่าง. การลงคะแนนสามารถทำได้เพียงครั้งเดียว.</p>
+    </div>
+
+    <div class="ballot-meta">
+      <span><span class="ac">●</span> BALLOT OPEN</span>
+      <span>VOTE № <span class="ac">FMS-2027-0001</span></span>
+      <span>09:42 ICT</span>
+    </div>
+
+    <article class="opt" data-party="1">
+      <div class="opt__disc">1</div>
+      <div class="opt__main">
+        <div class="opt__kicker">PARTY № 01 · THE CONCORD</div>
+        <h3 class="opt__name">The Unity Concord of FMS 2</h3>
+        <p class="opt__slogan">"หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"</p>
+        <a href="#party" class="opt__more" data-route="party" onclick="event.stopPropagation()">VIEW PROFILE →</a>
+      </div>
+      <div class="opt__check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </article>
+
+    <article class="opt" data-party="2">
+      <div class="opt__disc">2</div>
+      <div class="opt__main">
+        <div class="opt__kicker">PARTY № 02 · FMS CREST</div>
+        <h3 class="opt__name">อะไรไม่รู้ครับ</h3>
+        <p class="opt__slogan">"หกด"</p>
+        <a href="#party" class="opt__more" data-route="party" onclick="event.stopPropagation()">VIEW PROFILE →</a>
+      </div>
+      <div class="opt__check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </article>
+
+    <article class="opt opt--abstain" data-party="0">
+      <div class="opt__disc">×</div>
+      <div class="opt__main">
+        <div class="opt__kicker">ABSTAIN</div>
+        <h3 class="opt__name">งดออกเสียง</h3>
+        <p class="opt__slogan">ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้.</p>
+      </div>
+      <div class="opt__check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </article>
+
+    <div class="confirm-row">
+      <div>
+        <div class="confirm-row__lbl">YOUR SELECTION</div>
+        <div class="confirm-row__val" id="voteSelLabel">ยังไม่ได้เลือก · No selection</div>
+      </div>
+      <a href="#success" class="btn btn--terra btn--lg is-disabled" id="confirmBtn" data-route="success">
+        ยืนยันการลงคะแนน
+        <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============== 05 SUCCESS ============== -->
+<section class="screen screen--moss" id="screen-success" data-screen-label="04b Success">
+  <div class="edge edge--right"><span class="big">★</span> &nbsp;·&nbsp; Receipt &nbsp;·&nbsp; บันทึกสำเร็จ</div>
+
+  <div class="cornermark">
+    <div class="cornermark__disc">S</div>
+    <div class="cornermark__txt">
+      <strong>Receipt</strong>
+      Ballot recorded
+    </div>
+  </div>
+  <div class="cornerstatus">
+    <div class="live-chip"><span class="dot"></span> <strong>CONFIRMED</strong></div>
+    <div id="topbarRight5"></div>
+  </div>
+
+  <div class="success-wrap">
+    <div class="success-ornament">
+      <div class="success-ornament__ring"></div>
+      <div class="success-ornament__ring success-ornament__ring--2"></div>
+      <svg class="arch-text" viewBox="0 0 360 360">
+        <defs>
+          <path id="archpath" d="M 30 180 A 150 150 0 0 1 330 180" />
+          <path id="archpathBottom" d="M 30 180 A 150 150 0 0 0 330 180" />
+        </defs>
+        <text>
+          <textPath href="#archpath" startOffset="50%" text-anchor="middle">★ &nbsp; BALLOT &nbsp; RECORDED &nbsp; · &nbsp; บันทึกแล้ว &nbsp; ★</textPath>
+        </text>
+        <text>
+          <textPath href="#archpathBottom" startOffset="50%" text-anchor="middle">FMS &nbsp;·&nbsp; SAMO &nbsp;·&nbsp; 50 &nbsp;·&nbsp; 2027 &nbsp;·&nbsp; CONFIRMED</textPath>
+        </text>
+      </svg>
+      <div class="success-ornament__disc">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+
+    <div class="success-headline">
+      <div class="kicker">★ THANK YOU FOR VOTING ★</div>
+      <h1>ขอบคุณที่<br/><em>ลงคะแนน.</em></h1>
+      <p>บันทึกคะแนนของคุณเรียบร้อยแล้ว — ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา คณะวิทยาการจัดการ.</p>
+    </div>
+
+    <div class="receipt">
+      <div class="receipt__h">
+        <span>RECEIPT · ใบรับรอง</span>
+        <span><span class="ac">●</span> CONFIRMED</span>
+      </div>
+      <div class="receipt__row"><span class="receipt__lbl">BALLOT №</span><span class="receipt__val"><span class="ac">FMS-2027-0001</span></span></div>
+      <div class="receipt__row"><span class="receipt__lbl">RECORDED AT</span><span class="receipt__val">9 พ.ค. 2570 · 09:42 ICT</span></div>
+      <div class="receipt__row"><span class="receipt__lbl">VOTER ID</span><span class="receipt__val">№ 6610510149</span></div>
+      <div class="receipt__row"><span class="receipt__lbl">SECURED BY</span><span class="receipt__val">PSU Passport</span></div>
+      <div class="receipt__cta">
+        <a href="#" class="btn btn--terra btn--block">
+          เปิดแบบประเมิน (รับชั่วโมงกิจกรรม)
+          <span class="arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></span>
+        </a>
+        <a href="#home" class="btn btn--ghost btn--block" data-route="home">← กลับหน้าหลัก</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============== 06 RETURNS ============== -->
+<section class="screen" id="screen-results" data-screen-label="05 Returns">
+  <div class="edge edge--right"><span class="big">05</span> &nbsp;·&nbsp; Returns &nbsp;·&nbsp; ผลคะแนน</div>
+
+  <div class="cornermark">
+    <div class="cornermark__disc">S</div>
+    <div class="cornermark__txt">
+      <strong>Returns</strong>
+      Live tally · embargoed
+    </div>
+  </div>
+  <div class="cornerstatus">
+    <div class="live-chip"><span class="dot"></span> COUNTING · <strong>LIVE</strong></div>
+    <div id="topbarRight6"></div>
+  </div>
+
+  <div class="returns-page">
+    <div class="returns-h">
+      <div class="returns-h__kicker">NO. 05 · LIVE RETURNS</div>
+      <h1 class="returns-h__title">The <em>Returns.</em></h1>
+    </div>
+
+    <div class="returns-stage">
+      <div class="returns-orbit-stat returns-orbit-stat--tl">
+        <div class="lbl">TOTAL VOTES</div>
+        <div class="val tabular"><em>1</em></div>
+      </div>
+      <div class="returns-orbit-stat returns-orbit-stat--tr">
+        <div class="lbl">TURNOUT</div>
+        <div class="val tabular">0.05<small>%</small></div>
+      </div>
+      <div class="returns-orbit-stat returns-orbit-stat--b">
+        <div class="lbl">ELIGIBLE VOTERS</div>
+        <div class="val tabular">2,001<small>คน</small></div>
+      </div>
+
+      <div class="returns-disc">
+        <div class="returns-disc__lock">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <div class="returns-disc__title">Who will<br/><em>win?</em></div>
+          <p class="returns-disc__deck">ผลคะแนนรายพรรคจะถูกปลดล็อกเมื่อปิดหีบเลือกตั้งเท่านั้น.</p>
+        </div>
+        <div class="returns-disc__cd">
+          <span>CLOSES IN<strong class="tabular">06:54:<span id="rcd-s">12</span></strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="race">
+      <div class="race__head">
+        <h3>Vote distribution <em>by party.</em></h3>
+        <span class="smallcaps" style="color:var(--terra)">§ EMBARGOED</span>
+      </div>
+      <div class="race__bars">
+        <div class="race__row">
+          <div class="race__name">The Unity Concord<small>PARTY № 01</small></div>
+          <div class="race__track"><div class="race__fill" style="width:56%"></div></div>
+          <div class="race__pct">??.?%</div>
+        </div>
+        <div class="race__row">
+          <div class="race__name">อะไรไม่รู้ครับ<small>PARTY № 02</small></div>
+          <div class="race__track"><div class="race__fill" style="width:44%"></div></div>
+          <div class="race__pct">??.?%</div>
+        </div>
+        <div class="race__row">
+          <div class="race__name">งดออกเสียง<small>ABSTAIN</small></div>
+          <div class="race__track"><div class="race__fill" style="width:22%"></div></div>
+          <div class="race__pct">??.?%</div>
+        </div>
+      </div>
+      <div class="race__veil">
+        <div>
+          <h4>Embargoed until <em>polls close.</em></h4>
+          <p>ผลคะแนนรายพรรคจะปรากฏที่นี่ทันทีเมื่อปิดหีบเลือกตั้ง.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============== BOTTOM DOCK ============== -->
+<nav class="dock" id="dock">
+  <a href="#home" class="dock__link" data-route="home"><span class="dock__num">1</span><span>Index</span></a>
+  <a href="#candidates" class="dock__link" data-route="candidates"><span class="dock__num">2</span><span>Candidates</span></a>
+  <a href="#party" class="dock__link" data-route="party"><span class="dock__num">3</span><span>Profile</span></a>
+  <span class="dock__sep"></span>
+  <a href="#vote" class="dock__link" data-route="vote"><span class="dock__num">4</span><span>Ballot</span></a>
+  <a href="#results" class="dock__link" data-route="results"><span class="dock__num">5</span><span>Returns</span></a>
+</nav>
+
+
+<script>
+const screens = ['home','candidates','party','vote','success','results'];
+function go(route) {
+  if (!screens.includes(route)) route = 'home';
+  screens.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('active', s === route);
+  });
+  const dockRoute = (route === 'success') ? 'vote' : route;
+  document.querySelectorAll('.dock__link').forEach(a => a.classList.toggle('is-active', a.dataset.route === dockRoute));
+  renderUser();
+  history.replaceState(null, '', '#' + route);
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function renderUser() {
+  const ids = ['topbarRight','topbarRight2','topbarRight3','topbarRight4','topbarRight5','topbarRight6'];
+  // On home: show nothing (sign-in is the big circle button). Elsewhere: show user pill.
+  const route = (location.hash.replace('#','') || 'home');
+  const html = (route === 'home') ? '' : `
+    <div class="user-disc">
+      <div class="user-disc__av">T</div>
+      <div>
+        <div class="user-disc__name">Teerapab</div>
+        <div class="user-disc__id">№ 6610510149</div>
+      </div>
+    </div>`;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+  attachHandlers();
+}
+
+function attachHandlers() {
+  document.querySelectorAll('[data-route]').forEach(el => {
+    if (el._wired) return;
+    el._wired = true;
+    el.addEventListener('click', e => { e.preventDefault(); go(el.dataset.route); });
+  });
+}
+
+// Vote selection
+const partyData = {
+  '0': 'งดออกเสียง · Abstain',
+  '1': 'No. 01 — The Unity Concord of FMS 2',
+  '2': 'No. 02 — อะไรไม่รู้ครับ'
+};
+function bindVote() {
+  document.querySelectorAll('[data-party]').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('[data-party]').forEach(x => x.classList.remove('is-selected'));
+      el.classList.add('is-selected');
+      const lbl = document.getElementById('voteSelLabel');
+      if (lbl) lbl.textContent = partyData[el.dataset.party];
+      document.getElementById('confirmBtn').classList.remove('is-disabled');
+    });
+  });
+}
+
+window.addEventListener('hashchange', () => go(location.hash.replace('#','')));
+document.addEventListener('DOMContentLoaded', () => {
+  bindVote();
+  attachHandlers();
+  go(location.hash.replace('#','') || 'home');
+});
+
+let s = 8;
+setInterval(() => {
+  s = (s - 1 + 60) % 60;
+  const v = String(s).padStart(2,'0');
+  ['cd-s','rcd-s'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  });
+}, 1000);
+</script>
+</body>
+</html>

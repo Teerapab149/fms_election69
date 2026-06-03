@@ -10,11 +10,12 @@ export default function EditorElement({
   onSelect,
   onHover,
   onHoverEnd,
+  className = "",
   children,
 }) {
   return (
     <div
-      className="relative group/editor cursor-pointer"
+      className={`relative group/editor cursor-pointer ${className}`}
       data-editor-wrap="true"
       onClickCapture={(e) => {
         e.preventDefault();

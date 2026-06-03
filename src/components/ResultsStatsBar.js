@@ -7,17 +7,26 @@ export default function ResultsStatsBar({
   totalEligible = 0,
   isNotStarted = false
 }) {
+  // Layer 2 vars (Tier 2). Declared in classic.js elements["results-stats-bar"].vars
+  // and overridable per-page via PageThemeOverrides / ElementVarsPanel. Fallback
+  // chain keeps the other templates (which don't declare these) byte-faithful:
+  // --rsb-accent → --color-primary → #8A2680.
+  const ACCENT = "var(--rsb-accent, var(--color-primary, #8A2680))";
+  const CARD_BG = "var(--rsb-card-bg, rgba(255,255,255,0.9))";
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 mb-8 lg:mb-12">
-      <div className="col-span-2 lg:col-span-1 bg-white/90 backdrop-blur-sm p-4 lg:p-8 rounded-2xl lg:rounded-3xl border border-[#8A2680]/20 shadow-sm flex items-center justify-between relative overflow-hidden">
-        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#8A2680]"></div>
+    <div data-element="results-stats-bar" className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 mb-8 lg:mb-12">
+      <div
+        className="col-span-2 lg:col-span-1 backdrop-blur-sm p-4 lg:p-8 rounded-2xl lg:rounded-3xl border shadow-sm flex items-center justify-between relative overflow-hidden"
+        style={{ backgroundColor: CARD_BG, borderColor: `color-mix(in srgb, ${ACCENT} 20%, transparent)` }}
+      >
+        <div className="absolute left-0 top-0 h-full w-1.5" style={{ backgroundColor: ACCENT }}></div>
         <div>
-          <p className="text-xs font-bold text-[#8A2680] uppercase tracking-wider mb-1">คะแนนเสียงรวม</p>
-          <p className="text-3xl lg:text-5xl font-black text-[#8A2680]">
+          <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: ACCENT }}>คะแนนเสียงรวม</p>
+          <p className="text-3xl lg:text-5xl font-black" style={{ color: ACCENT }}>
             {isNotStarted ? "-" : totalVotes.toLocaleString()}
           </p>
         </div>
-        <div className="bg-[#8A2680]/10 p-2 lg:p-4 rounded-xl text-[#8A2680]">
+        <div className="p-2 lg:p-4 rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${ACCENT} 10%, transparent)`, color: ACCENT }}>
           <Activity className="w-6 h-6 lg:w-8 lg:h-8" />
         </div>
       </div>

@@ -119,6 +119,7 @@ function CollapsibleSection({ title, defaultOpen = false, children }) {
 export default function StatefulGallery({
   elementId,
   sourceTemplate = 'classic',
+  resolvedTemplate = null,
   elementOverrides = {},
   onUpdateOverride,
   onResetState,
@@ -182,8 +183,10 @@ export default function StatefulGallery({
 
         {element.states.map(state => {
           const overrides = elementOverrides[state.id] || {};
+          // Phase 3 Day 2A: prefer resolvedTemplate object; bridge mode in
+          // resolveStatefulConfig still accepts legacy string templateId.
           const resolvedConfig = resolveStatefulConfig(
-            sourceTemplate,
+            resolvedTemplate || sourceTemplate,
             elementId,
             state.id,
             overrides

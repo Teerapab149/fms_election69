@@ -2,10 +2,11 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth"; // ✅ Import authOptions
-import HomeContent from "../components/HomeContent"; // ✅ เรียกใช้ Component ที่แยกไป
+import HomeRenderer from "../components/home/HomeRenderer"; // per-template home layout dispatcher
 
 import { db } from "../lib/db";
 import { ELECTION_CONFIG } from "../utils/electionConfig";
+import { getTemplate } from "../components/admin/editor/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,14 @@ async function getHomeData(session) {
       config = { systemMode: "AUTO" };
     }
     const pageLayout = config?.pageLayout || null;
+
+    // Phase 3 Day 2A — SSR pre-resolve active template at boundary
+    const activeTemplateId = config?.activeTemplateId || "classic";
+    let resolvedTemplate = await getTemplate(activeTemplateId, db);
+    if (!resolvedTemplate) {
+      // Fall back to classic if active slug missing in DB+code
+      resolvedTemplate = await getTemplate("classic", db);
+    }
 
     const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
     const now = Date.now();
@@ -71,6 +80,7 @@ async function getHomeData(session) {
       systemMode: sysMode,
       electionStatus,
       pageLayout,
+      resolvedTemplate,
       systemConfig: {
         systemMode: sysMode,
         isSystemOpen,
@@ -85,12 +95,14 @@ async function getHomeData(session) {
   } catch (error) {
     console.error("Direct DB Fetch Error:", error);
     // Return mock data ONLY if DB fails completely, to prevent UI crash
+    const fallbackTemplate = await getTemplate("classic", null);
     return {
       candidates: [],
       stats: { totalEligible: 0, totalVoted: 0 },
       isSystemOpen: false,
       systemMode: "AUTO",
-      electionStatus: "WAITING"
+      electionStatus: "WAITING",
+      resolvedTemplate: fallbackTemplate
     };
   }
 }
@@ -105,7 +117,13 @@ export default async function Home() {
   return (
     <main>
       {/* 3. ส่งข้อมูลทั้งหมดไปให้ Client Component */}
-      <HomeContent session={session} initialData={homeData} pageLayout={homeData.pageLayout} />
+      <HomeRenderer
+        session={session}
+        initialData={homeData}
+        pageLayout={homeData.pageLayout}
+        resolvedTemplate={homeData.resolvedTemplate}
+        tokens={homeData.resolvedTemplate?.theme?.tokens || null}
+      />
     </main>
   );
 }

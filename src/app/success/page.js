@@ -24,6 +24,7 @@ import { useState, useEffect } from 'react';
 
 // ✅ นำเข้าระบบแก้ไขจาก Editor
 import EditorElement from '../../components/admin/editor/EditorElement';
+import PageThemeOverrides from '../../components/PageThemeOverrides';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 
 export default function SuccessPage({ 
@@ -219,7 +220,7 @@ export default function SuccessPage({
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-        <Loader2 className="w-12 h-12 text-[#8A2680] animate-spin mb-4 relative z-10" />
+        <Loader2 className="w-12 h-12 text-[var(--color-primary)] animate-spin mb-4 relative z-10" />
         <p className="text-slate-500 text-sm font-medium relative z-10">กำลังตรวจสอบข้อมูล...</p>
       </div>
     );
@@ -230,6 +231,7 @@ export default function SuccessPage({
   // =========================================================
   return (
     <div className="min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-slate-50">
+      {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* Background Grid */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -241,7 +243,7 @@ export default function SuccessPage({
       {(isAuthorized || editorMode) && (
         <div className="w-full max-w-lg animate-fade-in-up relative z-10">
           <div className="bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#8A2680] via-purple-500 to-pink-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-primary)] via-purple-500 to-pink-500"></div>
 
             <div className="flex flex-col items-center text-center">
               {isSuccessMessageVisible && (
@@ -283,16 +285,16 @@ export default function SuccessPage({
                       <Megaphone size={100} />
                     </div>
                     <div className="flex gap-4 items-start relative z-10">
-                      <div className="bg-white p-3 rounded-2xl text-[#8A2680] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
+                      <div className="bg-white p-3 rounded-2xl text-[var(--color-primary)] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
                         <Megaphone size={24} strokeWidth={2.5} />
                       </div>
                       <div className="space-y-3 flex-1 min-w-0">
                         <div>
-                          <h3 className="font-bold text-[#8A2680] text-base md:text-lg leading-tight">รับทรานสคริปต์กิจกรรม</h3>
+                          <h3 className="font-bold text-[var(--color-primary)] text-base md:text-lg leading-tight">รับทรานสคริปต์กิจกรรม</h3>
                           <p className="text-slate-500 text-xs md:text-sm mt-1">กรุณาทำแบบประเมินให้ครบถ้วน</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[#8A2680] text-xs font-bold border border-purple-200 whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[var(--color-primary)] text-xs font-bold border border-purple-200 whitespace-nowrap">
                             <CheckCircle2 size={12} /><span>ชั่วโมงกิจกรรม 2 ชม.</span>
                           </div>
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
@@ -304,7 +306,7 @@ export default function SuccessPage({
                     <div className="relative z-10 mt-4 pt-3 border-t border-purple-100/60">
                       <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
                         <span className="shrink-0">🔓</span>
-                        <span className="truncate">และ <span className="font-semibold text-[#8A2680] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span></span>
+                        <span className="truncate">และ <span className="font-semibold text-[var(--color-primary)] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span></span>
                       </p>
                     </div>
                   </div>
@@ -345,7 +347,7 @@ export default function SuccessPage({
                         onClick={() => { if (isUnlocked && !editorMode) router.push('/results'); }}
                         disabled={!isUnlocked && !editorMode}
                         className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base border transition-all duration-500 flex items-center justify-center gap-2
-                          ${(isUnlocked || editorMode) ? 'bg-[#8A2680] border-[#8A2680] text-white shadow-lg shadow-purple-200 hover:bg-[#701e68] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
+                          ${(isUnlocked || editorMode) ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-purple-200 hover:bg-[#701e68] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
                       >
                         {(isUnlocked || editorMode) ? (
                           <>ไปดูผลคะแนน (Results) <BarChart3 size={18} /></>
@@ -400,7 +402,7 @@ export default function SuccessPage({
             <div className="flex-1 bg-slate-50 relative">
               {!isFormLoaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50">
-                  <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-3" />
+                  <Loader2 className="w-10 h-10 text-[var(--color-primary)] animate-spin mb-3" />
                   <span className="text-slate-400 text-sm font-medium">กำลังโหลด...</span>
                 </div>
               )}
@@ -420,19 +422,19 @@ export default function SuccessPage({
             <div className="p-4 border-t border-gray-100 bg-white">
               <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
                 <div className="w-full">
-                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[#8A2680] hover:bg-purple-50'}`}>
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[var(--color-primary)] hover:bg-purple-50'}`}>
                     <div className="relative flex items-center justify-center mt-0.5">
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={(e) => setIsChecked(e.target.checked)}
                         disabled={timeLeft > 0}
-                        className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded focus:ring-2 focus:ring-[#8A2680] checked:bg-[#8A2680] checked:border-[#8A2680] transition-all"
+                        className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded focus:ring-2 focus:ring-[var(--color-primary)] checked:bg-[var(--color-primary)] checked:border-[var(--color-primary)] transition-all"
                       />
                       <Check size={14} className="absolute text-white scale-0 peer-checked:scale-100 transition-transform pointer-events-none" />
                     </div>
                     <div className="flex flex-col">
-                      <span className={`text-sm font-bold ${isChecked ? 'text-[#8A2680]' : 'text-slate-600'}`}>
+                      <span className={`text-sm font-bold ${isChecked ? 'text-[var(--color-primary)]' : 'text-slate-600'}`}>
                         ข้าพเจ้าได้ทำแบบประเมินเรียบร้อยแล้ว
                       </span>
                       <span className="text-xs text-slate-400">
@@ -448,7 +450,7 @@ export default function SuccessPage({
                   className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg
                     ${(!canConfirm || !isChecked)
                       ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                      : 'bg-[#8A2680] text-white hover:bg-[#701e68] hover:shadow-purple-200 hover:-translate-y-0.5'
+                      : 'bg-[var(--color-primary)] text-white hover:bg-[#701e68] hover:shadow-purple-200 hover:-translate-y-0.5'
                     }`}
                 >
                   {timeLeft > 0 ? (

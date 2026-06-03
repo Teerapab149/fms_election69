@@ -201,3 +201,273 @@ Rules enforced from past pitfalls:
 4. (P-LOG-004) Before writing any EditorPreview component, read the full production page source and list every visual element. No generic placeholders.
 
 After completing any meaningful work, invoke the self-reflection skill to consolidate lessons.
+
+---
+
+## Engineering Discipline — Patterns That Have Broken Specs
+
+This section accumulates lessons across sessions so that future Claude
+Code instances can catch issues before they cause cost. Every entry
+came from a real session failure documented in DECISIONS.md (P-LOG-NNN).
+
+The spec writer (Claude.ai in a separate session) cannot see live code.
+Specs are written from memory + project snapshots which may be stale.
+Your job is to verify before acting, not to silently work around
+discrepancies.
+
+---
+
+### Rule 1 — Pre-flight audit is mandatory, not ceremony
+
+Every spec must have Task 0 that verifies:
+- Branch + HEAD commit hash match spec expectation
+- Working tree clean (or only `.next/` + `.claude/` dirty)
+- Files referenced in spec actually exist with structure spec assumes
+- State variables (states, configs, etc.) match spec's count and names
+
+**If anything diverges:** STOP, paste evidence, ask. Do not proceed
+on spec assumption that's already been falsified.
+
+**Real example (Day 9a):** spec said "7 states", reality has 6
+(registry.js:84, elementInstances.js:311-318, stateResolver.js:28-37
+all agreed). Caught in Task 0. The right move was to flag it, not
+silently rename the seventh state.
+
+---
+
+### Rule 2 — Spec writer's memory is unreliable
+
+The Claude.ai writing specs is working from:
+- Project knowledge that may be stale
+- Patterns inferred from prior sessions
+- VISION.md, ADR-001, DECISIONS.md (these are authoritative)
+
+The spec writer **cannot** verify:
+- Exact prop shapes of components they reference
+- Whether `@/` alias works (it doesn't here — P-LOG-032)
+- Whether helpers exist at the path they imagine
+- The current count or names of states/variants/fields
+- Whether `node -e require(...)` works for the file type
+  (Node ESM rejects .jsx — P-LOG-039)
+
+**Treat every "the spec says X, this file should have Y" as a
+hypothesis, not fact.** Verify in Task 0 + Part 1 audit.
+
+---
+
+### Rule 3 — No silent workarounds
+
+When the spec says X but reality is Y:
+
+- ❌ Do NOT silently write Y instead
+- ❌ Do NOT silently write "modified X"
+- ❌ Do NOT try increasingly creative fixes around the assumption
+- ✅ Pause, paste evidence of the discrepancy, ask user
+
+**Exception:** typos/path-fix that are obviously the spec writer's
+intent (e.g., `.js` extension when file is `.jsx`). Note inline in
+report and continue.
+
+**Real example (Day 9b):** spec said use
+`var(--btn-shadow, '5px 5px 0 #000')` for chunky-stamp.
+Reality: `--btn-shadow` resolves to default variant's soft purple
+drop-shadow, breaking the stamp identity. Right call: hardcode the
+stamp shadow in variant component, document as P-LOG-045
+"Layer 2 vars are the default variant's tokens". Wrong call would
+have been to silently ship a non-stamp chunky-stamp.
+
+---
+
+### Rule 4 — Byte-faithful gates are hard
+
+When spec says "byte-faithful with Day N":
+- Visual must match precisely (computed CSS values identical to baseline)
+- Any drift → STOP, do not commit, iterate
+- "Close enough" or "imperceptible" is not acceptable for these gates
+- Document any deviation explicitly in report (e.g., Day 6 minimal
+  banner #fff → #f9fafb alignment was documented + accepted)
+
+This applies especially to:
+- Baseline extractions (1:1 moves like Day 9a default.jsx)
+- Refactors that should be invisible (Day 6 token propagation)
+- "Day N+1 must match Day N" assertions
+
+---
+
+### Rule 5 — Atomic commits, explicit staging
+
+- Never `git add -A` or `git add .` — too broad
+- Never `git commit -a` — same reason
+- Always `git add <explicit paths>` then `git status` to verify
+- Each commit = one logical change
+- Failed step → revert that step, don't accumulate WIP into next commit
+
+**Real example (Day 4):** the `*.md` rule confusion came from
+mixing `git add -f` with unstaged `.gitignore` change. Cleanup
+required 3 commits over a session because the cross-contamination
+made bisection painful.
+
+---
+
+### Rule 6 — Time exceeds 2× budget → STOP
+
+Specs come with time budgets. If a single part exceeds 2× its
+estimated budget:
+- STOP
+- Commit WIP (with explicit `[WIP]` prefix in message)
+- Report what's blocking + current state
+- Ask, don't push past
+
+**Why:** the spec writer estimates from optimistic assumptions.
+Hitting 2× means an assumption broke. Continuing without flagging
+silently accumulates risk and the user can't help if they don't know.
+
+---
+
+### Rule 7 — Known environment quirks (this repo)
+
+These were learned the hard way. Always assume they apply:
+
+| Quirk | Recovery |
+|---|---|
+| No `@/` path alias (no jsconfig) | Use relative imports `../foo` |
+| Node ESM cannot parse `.jsx` | Test pure-JS portions separately, verify JSX behavior in browser |
+| `.next` manifest race on Windows | `preview_stop` + `rm -rf .next` + `preview_start` + sleep 15-20s. Happens ~6×/session under sustained HMR + DB switches |
+| `.specs/` is gitignored | Save spec files there; they don't need to commit |
+| `*.md` rule removed from .gitignore | Plain `git add` works for new .md files — no `-f` needed (P-LOG-021) |
+| `STATE_RESOLVERS.voteCTA` for state mapping | Single source of truth at `src/utils/stateResolver.js` (or similar — verify in Task 0) |
+
+---
+
+### Rule 8 — Verification reports must paste actual outputs
+
+Per P-LOG-003:
+- ❌ "Build passes" — not enough
+- ✅ Paste the actual `npm run build` summary
+- ❌ "Visual looks correct" — not enough
+- ✅ Paste DOM root + computed CSS (or screenshot evidence)
+- ❌ "All tests pass" — not enough
+- ✅ Paste sanity check output verbatim
+
+The user audits these reports. Summaries don't allow audit; raw
+outputs do.
+
+---
+
+### Rule 9 — Variant identity ≠ Layer 2 vars
+
+Architectural insight from Day 9b. This is subtle but important.
+
+The Layer 2 vars declared on `[data-element="X"]` in a template are
+the **default variant's identity** — they describe what default
+looks like in that template.
+
+When implementing a NEW variant (minimal-pill, chunky-stamp, etc.):
+- Variant-specific identity (color, shadow, border style that
+  defines the variant) should be **hardcoded in the variant
+  component's PRIMARY_STYLES** (or equivalent)
+- Layer 2 vars are still used for **shared properties** that work
+  across variants: sizing, padding, font size, font weight, radius
+- Do NOT use `var(--btn-shadow)` if the variant needs a specific
+  shadow that differs from default — hardcode instead
+
+**Example pattern (chunky-stamp):**
+```js
+const PRIMARY_STYLES = {
+  notVoted: {
+    // Variant identity — hardcoded
+    borderColor: '#000000',
+    borderWidth: '3px',
+    boxShadow: '5px 5px 0 #000000',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+
+    // Shared properties — Layer 2 vars
+    paddingLeft: 'var(--btn-padding-x)',
+    fontSize: 'var(--btn-font-size)',
+    backgroundColor: 'var(--btn-bg, var(--color-primary))',  // OK to inherit
+    color: 'var(--btn-text, var(--color-surface))',          // OK to inherit
+    borderRadius: stateConfig.borderRadius || 'var(--btn-radius)',
+  }
+}
+```
+
+This rule may evolve in Day 10+ if variant-namespaced vars are
+introduced (Option C from Day 9b discussion). Until then: hardcode
+identity, share infrastructure.
+
+---
+
+### Rule 10 — When to push back on the spec
+
+The spec writer is not infallible. You should push back when:
+- Spec contradicts source code reality (audit revealed mismatch)
+- Spec's verification commands are wrong (e.g., grep regex too broad)
+- Spec's time budget is unrealistic given audit findings
+- Spec's architectural rule contradicts ADR-001 or VISION.md
+- Spec asks for behavior change in something marked "preserve"
+
+Push back format:
+1. Quote the spec sentence
+2. Show evidence of the conflict
+3. Propose 2-3 alternative approaches
+4. Wait for user decision
+
+Do NOT push back as "I disagree" alone — show the receipt.
+
+---
+
+### Rule 11 — Document P-LOG entries inline when you find them
+
+If during a session you discover something worth a P-LOG entry:
+- Note it in your part report ("Surprises" section)
+- Propose the P-LOG number + 1-line description
+- The closeout commit appends to DECISIONS.md
+
+This prevents lessons from being lost between sessions. Every P-LOG
+is a future spec's failure prevented.
+
+---
+
+### Self-audit prompt — run this at session end
+
+Before final push, audit your own session:
+
+```
+Reading my own commits:
+1. Did I follow Rule 1 (Task 0 audit)?
+2. Did I follow Rule 3 (no silent workarounds)?
+3. Did I follow Rule 5 (atomic commits)?
+4. Are my reports per Rule 8 (raw outputs, not summaries)?
+5. What surprised me? Did I document as P-LOG?
+6. Did I rush any byte-faithful gate (Rule 4)?
+
+If any "no" answer → flag in final report, don't hide.
+```
+
+---
+
+### Where to find context for next session
+
+| Need | File |
+|---|---|
+| Project vision / north star | VISION.md |
+| Architecture decisions | ADR-001-architecture.md |
+| Accumulated lessons | DECISIONS.md (P-LOG-001..NNN) |
+| Current state | PROGRESS.md |
+| Engineering discipline (this) | CLAUDE.md |
+| Past session specs | .specs/LIVE_STEP_*.md (gitignored, may not exist on fresh clone) |
+
+Always read in this order at session start. The spec is downstream
+of these.
+
+---
+
+### Closing note
+
+This section grows over time. Every entry is paid for by a real
+session cost (token, time, frustration). Treat the rules as cheap
+defense against expensive failures — running a 30-second audit
+beats 30 minutes of post-hoc debugging.
+
+When in doubt: pause, ask, don't guess.

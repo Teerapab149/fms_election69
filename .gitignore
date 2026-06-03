@@ -3,11 +3,15 @@ node_modules
 .env
 .env.local
 
+# Dev-only admin session token written by scripts/dev-admin-login.js (never commit)
+.dev-admin-token.local
+*.local
+
 /src/generated/prisma
 
 .next
 
-.md
+
 
 # Debug & Scripts
 check_users.js
@@ -31,3 +35,21 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+.reference/
+
+
+# Workflow artifacts archive (specs, diagnoses, prompts)
+# See .specs/README.md for context
+.specs/
+
+# Installed agent skills + impeccable tooling — local, never commit
+.claude/skills/
+.impeccable/
+
+# Claude Code local settings (*.local glob misses the .json suffix)
+.claude/settings.local.json
+
+# Playwright test artifacts (regenerated every run)
+test-results/
+playwright-report/

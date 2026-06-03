@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from 'react';
 import Navbar from '../Navbar';
 import ResultCard from '../ResultCard';
 import ResultsStatsBar from '../ResultsStatsBar';
@@ -34,18 +35,27 @@ export default function ResultsEditorPreview({
   const isEnded = true;
   const isNotStarted = false;
 
-  const Wrap = ({ id, children }) => (
-    <EditorElement
-      id={id}
-      isSelected={selectedElement === id}
-      isHovered={hoveredElement === id}
-      onSelect={onSelectElement}
-      onHover={onHoverElement}
-      onHoverEnd={onHoverEnd}
-    >
-      {children}
-    </EditorElement>
-  );
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    return (
+      <EditorElement
+        id={id}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >
+        {children}
+      </EditorElement>
+    );
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">
@@ -86,16 +96,15 @@ export default function ResultsEditorPreview({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl border sm:border-0 border-slate-100 mb-8 lg:mb-12">
           {candidates.map((candidate, index) => (
-            <Wrap key={candidate.id} id={`result-card-${index}`}>
-              <ResultCard
-                candidate={candidate}
-                rank={index + 1}
-                totalVotes={totalVotes}
-                status={status}
-                isRevealed={isRevealed}
-                onClick={() => {}}
-              />
-            </Wrap>
+            <ResultCard
+              key={candidate.id}
+              candidate={candidate}
+              rank={index + 1}
+              totalVotes={totalVotes}
+              status={status}
+              isRevealed={isRevealed}
+              onClick={() => {}}
+            />
           ))}
         </div>
 

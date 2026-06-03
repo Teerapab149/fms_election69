@@ -58,12 +58,12 @@ export default function BackToVoteBar() {
               onClick={() => router.push('/vote')}
               className="group flex items-center gap-3 pl-2 pr-6 py-1.5 h-14 hover:bg-slate-50 transition-colors"
             >
-              <div className="bg-[#8A2680] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform shrink-0 ml-1">
+              <div className="bg-[var(--color-primary)] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform shrink-0 ml-1">
                  <ArrowLeft size={20} />
               </div>
               <div className="flex flex-col text-left">
                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-tight">Review Completed?</span>
-                 <span className="text-sm font-black text-slate-800 leading-none group-hover:text-[#8A2680] transition-colors">กลับไปเลือกตั้ง</span>
+                 <span className="text-sm font-black text-slate-800 leading-none group-hover:text-[var(--color-primary)] transition-colors">กลับไปเลือกตั้ง</span>
               </div>
               {/* เส้นคั่นแนวตั้ง */}
               <div className="w-px h-6 bg-slate-200 ml-4 mr-1"></div>
@@ -80,7 +80,7 @@ export default function BackToVoteBar() {
             transition-colors duration-300
             ${isExpanded 
               ? 'bg-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100' 
-              : 'bg-[#8A2680] text-white hover:bg-[#701e68] shadow-md'
+              : 'bg-[var(--color-primary)] text-white hover:bg-[#701e68] shadow-md'
             }
           `}
         >

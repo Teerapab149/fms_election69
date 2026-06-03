@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { getEncryptedToken } from '../../utils/auth';
-import { TEMPLATE_PRESETS, getPresetById, detectActivePreset } from '../../utils/templatePresets';
 import { EDITABLE_PAGES, getPageById, DEFAULT_PAGE, SECTION_LABELS } from '../../utils/pageRegistry';
 import CompletedActionModal from '../CompletedActionModal';
 import ErrorActionModal from '../ErrorActionModal';
@@ -16,7 +16,11 @@ import ClosedEditorPreview from './ClosedEditorPreview';
 import SuccessEditorPreview from './SuccessEditorPreview';
 import useEditorState from './editor/useEditorState';
 import PropertyPanel from './editor/PropertyPanel';
-import HomeContent from '../HomeContent';
+import HomeRenderer from '../home/HomeRenderer';
+import { buildTemplateStyles, buildElementCss } from '../../lib/templateTokens';
+import { BUILT_IN_TEMPLATES } from './editor/templates';
+import TokenEditor from './editor/TokenEditor';
+import ElementLibraryPanel from './editor/ElementLibraryPanel';
 import {
   DUMMY_ELECTION,
 } from '../../utils/editorDummyData';
@@ -26,7 +30,8 @@ import {
   ChevronDown, Info, LayoutGrid, Timer, Users, BarChart3,
   Image as ImageIcon, Vote, Ban, Palette, Check, Sparkles,
   Monitor, Smartphone, X, Home, PartyPopper, CheckCircle, Lock,
-  ExternalLink, FileText, GripVertical, UploadCloud
+  ExternalLink, FileText, GripVertical, UploadCloud,
+  Calendar, Layers, User
 } from 'lucide-react';
 
 const BLOCK_COLOR_BAR = {
@@ -145,13 +150,16 @@ function BlockConfigForm({ block, onConfigChange }) {
   );
 }
 
-function TemplateCard({ preset, isActive, onClick }) {
-  const { primaryColor, accentColor } = preset.theme;
+function TemplateCard({ tpl, isActive, onClick, onShowDetail }) {
+  const primaryColor = tpl.colorSwatch?.primary || '#8A2680';
+  const secondaryColor = tpl.colorSwatch?.secondary || '#9333EA';
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className={`relative text-left p-3 rounded-xl border-2 bg-white transition-all duration-200 hover:shadow-md active:scale-[0.98] ${isActive
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className={`relative text-left p-3 rounded-xl border-2 bg-white transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${isActive
           ? 'shadow-md ring-2 ring-offset-2'
           : 'border-slate-200 hover:border-slate-300'
         }`}
@@ -165,16 +173,46 @@ function TemplateCard({ preset, isActive, onClick }) {
           <Check className="w-3.5 h-3.5" strokeWidth={3} />
         </div>
       )}
+      {tpl.isLocked && (
+        <div className="absolute top-2 right-2">
+          <Lock className="w-3 h-3 text-slate-400" />
+        </div>
+      )}
       <div className="flex items-center gap-1.5 mb-2">
         <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: primaryColor }} />
-        <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: accentColor }} />
+        <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: secondaryColor }} />
       </div>
-      <div className="font-bold text-sm text-slate-700 leading-tight">{preset.nameTh}</div>
+      <div className="font-bold text-sm text-slate-700 leading-tight">{tpl.name}</div>
       <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wide mt-0.5">
-        {preset.name}
+        {tpl.slug}
       </div>
-      <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{preset.description}</p>
-    </button>
+      <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{tpl.description}</p>
+
+      {/* Pillar 2 — metadata chips */}
+      <div className="flex items-center flex-wrap gap-1.5 mt-2">
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
+          <Layers className="w-2.5 h-2.5" />{tpl.elementCount ?? '—'} element
+        </span>
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
+          <FileText className="w-2.5 h-2.5" />{tpl.pageCount ?? '—'} หน้า
+        </span>
+        {tpl.isBuiltIn && (
+          <span className="inline-flex items-center text-[10px] font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-md">
+            ต้นฉบับ
+          </span>
+        )}
+      </div>
+
+      {onShowDetail && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onShowDetail(tpl.slug); }}
+          className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-[#8A2680] transition-colors"
+        >
+          <Info className="w-3 h-3" /> ดูรายละเอียด
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -250,11 +288,54 @@ function LivePreview({
   voteSimMode,
   closedSimMode,
   successSimMode,
+  editorTokenStyles,
+  resolvedTemplate,
 }) {
   const isMobile = deviceMode === 'mobile';
   const currentPage = getPageById(selectedPage);
 
-  const desktopScale = 0.42;
+  // P2.1: fit-to-container canvas. Render the page at a fixed desktop design
+  // width, then scale it down to fill the (variable) preview column — readable,
+  // responsive, and no horizontal bleed (replaces the fixed scale(0.42)+238% hack).
+  const DESIGN_W = 1280;
+  const boxRef = useRef(null);
+  const contentRef = useRef(null);
+  const [fit, setFit] = useState({ scale: 0.42, height: 650 });
+
+  useEffect(() => {
+    if (isMobile) return;
+    const box = boxRef.current;
+    const content = contentRef.current;
+    if (!box || !content) return;
+    const measure = () => {
+      const bw = box.clientWidth;
+      if (!bw) return;
+      const scale = Math.min(bw / DESIGN_W, 1);
+      const naturalH = content.scrollHeight || content.offsetHeight || 0;
+      const height = Math.max(Math.round(naturalH * scale), 200);
+      // Idempotent: bail when nothing meaningfully changed. The home preview
+      // animates (countdown tick, Framer Motion) so the ResizeObserver fires
+      // continuously — without this guard every fire makes a fresh object and
+      // re-renders the whole preview tree => visible flicker. Tolerances absorb
+      // sub-pixel reflow (height) and the ~0.012 scale wobble a scrollbar
+      // toggle would cause; scrollbar-gutter:stable on the box prevents that
+      // toggle in the first place.
+      setFit((prev) =>
+        Math.abs(prev.scale - scale) < 0.005 && Math.abs(prev.height - height) < 2
+          ? prev
+          : { scale, height }
+      );
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    ro.observe(content);
+    return () => ro.disconnect();
+    // Deps are stable primitives only. Content/size changes are caught by the
+    // ResizeObserver itself — putting unstable objects (pageLayout/editorProps/
+    // editorTokenStyles) here tore down + recreated the observer every parent
+    // render, compounding the churn.
+  }, [isMobile, selectedPage, deviceMode]);
 
   const handleOpenNewTab = () => {
     if (typeof window !== 'undefined') {
@@ -273,11 +354,13 @@ function LivePreview({
   const renderPreview = (dm) => {
     if (selectedPage === 'home' && editorProps) {
       return (
-        <HomeContent
+        <HomeRenderer
           editorMode={true}
           editorData={DUMMY_ELECTION}
           pageLayout={pageLayout}    // ✅ ส่ง pageLayout ไป (เพื่อให้ซ่อนโชว์ได้)
           theme={pageLayout?.theme}  // ✅ ส่ง theme ไป
+          resolvedTemplate={resolvedTemplate}  // P-LOG-051: config-driven designs resolve in editor
+          editorTokenStyles={editorTokenStyles}  // Day 11: Layer 1/2 token scope
           elementConfigs={editorProps.elementConfigs}
           selectedElement={editorProps.selectedElement}
           hoveredElement={editorProps.hoveredElement}
@@ -303,6 +386,7 @@ function LivePreview({
       return (
         <VoteEditorPreview
           simMode={voteSimMode}
+          templateSlug={resolvedTemplate?.slug || resolvedTemplate?.id}
           pageLayout={pageLayout}
           elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
@@ -327,12 +411,23 @@ function LivePreview({
       );
     }
     if (selectedPage === 'closed') {
-      return <ClosedEditorPreview simMode={closedSimMode} />;
+      return (
+        <ClosedEditorPreview
+          simMode={closedSimMode}
+          elementConfigs={editorProps?.elementConfigs}
+          selectedElement={editorProps?.selectedElement}
+          hoveredElement={editorProps?.hoveredElement}
+          onSelectElement={editorProps?.onSelectElement}
+          onHoverElement={editorProps?.onHoverElement}
+          onHoverEnd={editorProps?.onHoverEnd}
+        />
+      );
     }
     if (selectedPage === 'success') {
       return (
         <SuccessEditorPreview
           simMode={successSimMode}
+          elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
           hoveredElement={editorProps?.hoveredElement}
           onSelectElement={editorProps?.onSelectElement}
@@ -379,8 +474,9 @@ function LivePreview({
       </div>
 
       <div
+        ref={boxRef}
         className="relative bg-slate-100/50 overflow-y-auto overflow-x-hidden"
-        style={{ height: '650px' }}
+        style={{ height: '650px', scrollbarGutter: 'stable' }}
         onClickCapture={(e) => {
           const insideEditorElement = e.target.closest('.group\\/editor');
           if (!insideEditorElement) {
@@ -389,6 +485,14 @@ function LivePreview({
           }
         }}
       >
+        {/* Non-home previews don't build their own .fms-app scope (home does via
+            HomeContent). Inject the editor's effective token + element-var scope
+            here so live (unpublished) Tier 2 edits show in the preview, e.g.
+            results-stats-bar --rsb-accent. Scoped `.fms-app [data-element]` rules
+            only match preview elements; the admin chrome doesn't consume them. */}
+        {selectedPage !== 'home' && editorTokenStyles && (
+          <style dangerouslySetInnerHTML={{ __html: editorTokenStyles }} />
+        )}
         {isMobile ? (
           <div className="mx-auto py-4" style={{ transform: 'scale(0.55)', transformOrigin: 'top center', width: '375px', marginLeft: 'auto', marginRight: 'auto' }}>
             <div className="rounded-[2.5rem] border-[6px] border-slate-800 overflow-hidden shadow-2xl bg-white relative mx-auto">
@@ -397,8 +501,14 @@ function LivePreview({
             </div>
           </div>
         ) : (
-          <div className="origin-top-left" style={{ transform: `scale(${desktopScale})`, transformOrigin: 'top left', width: `${100 / desktopScale}%` }}>
-            {renderPreview(deviceMode)}
+          <div style={{ height: `${fit.height}px` }}>
+            <div
+              ref={contentRef}
+              className="origin-top-left"
+              style={{ transform: `scale(${fit.scale})`, transformOrigin: 'top left', width: `${DESIGN_W}px` }}
+            >
+              {renderPreview(deviceMode)}
+            </div>
           </div>
         )}
       </div>
@@ -407,6 +517,7 @@ function LivePreview({
 }
 
 export default function PageDesignTab() {
+  const router = useRouter();
   const [selectedPage, setSelectedPage] = useState(DEFAULT_PAGE);
   const [homeBlocks, setHomeBlocks] = useState(DEFAULT_HOME_BLOCKS);
   const [voteConfig, setVoteConfig] = useState(DEFAULT_VOTE_CONFIG);
@@ -418,8 +529,21 @@ export default function PageDesignTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  // Pillar 4 — Save as Template (heritage)
+  const [saveTplOpen, setSaveTplOpen] = useState(false);
+  const [newTplName, setNewTplName] = useState('');
+  const [savingTpl, setSavingTpl] = useState(false);
   const [pendingPresetId, setPendingPresetId] = useState(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [availableTemplates, setAvailableTemplates] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  // Pillar 2 (gallery slice 1) — template detail modal (lazy-loaded full data)
+  const [detailSlug, setDetailSlug] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [templateMenuOpen, setTemplateMenuOpen] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState(-1);
   const [hoveredSection, setHoveredSection] = useState(null);
   const [resultsSimMode, setResultsSimMode] = useState('multi');
@@ -427,13 +551,92 @@ export default function PageDesignTab() {
   const [closedSimMode, setClosedSimMode] = useState('waiting');
   const [successSimMode, setSuccessSimMode] = useState('locked');
 
+  // Slice 1b: per-page Layer 2/3 overrides. The editor hook holds the ACTIVE
+  // page's flat maps (editor.elementVars / editor.elementCss); these records
+  // hold every OTHER page's maps. They are merged back over the active page via
+  // getElementVarsAllPages/getElementCssAllPages on save/publish/dirty so each
+  // page's Tier 2/3 edits persist independently under pageLayout.elementVars[page]
+  // (the API already validates that per-page shape). configs/variants stay
+  // home-scoped for now — they have no non-home editing surface yet.
+  const [elementVarsByPage, setElementVarsByPage] = useState({});
+  const [elementCssByPage, setElementCssByPage] = useState({});
+  const [originalVarsByPage, setOriginalVarsByPage] = useState('{}');
+  const [originalCssByPage, setOriginalCssByPage] = useState('{}');
+  const prevPageRef = useRef(DEFAULT_PAGE);
+
   const editor = useEditorState();
   const {
     replaceAllConfigs: editorReplaceAllConfigs,
+    replaceAllVariants: editorReplaceAllVariants,
+    replaceAllThemeTokens: editorReplaceAllThemeTokens,
+    replaceAllElementVars: editorReplaceAllElementVars,
+    replaceAllElementCss: editorReplaceAllElementCss,
     commitBaseline: editorMarkSaved,
     clearSelection: editorClearSelection,
     updateElementConfig: editorUpdateElementConfig,
   } = editor;
+
+  // Slice 1b: live mirrors so the page-switch effect can read the latest active
+  // maps + per-page records without putting them in its dep array (which would
+  // re-run on every keystroke). Assigned each render.
+  const editorVarsRef = useRef(editor.elementVars);
+  const editorCssRef = useRef(editor.elementCss);
+  const varsByPageRef = useRef(elementVarsByPage);
+  const cssByPageRef = useRef(elementCssByPage);
+  editorVarsRef.current = editor.elementVars;
+  editorCssRef.current = editor.elementCss;
+  varsByPageRef.current = elementVarsByPage;
+  cssByPageRef.current = elementCssByPage;
+
+  // The active page's live editor map merged over the stashed per-page records.
+  // An empty active map drops the page key so we never persist `{ page: {} }`.
+  const getElementVarsAllPages = useCallback(() => {
+    const all = { ...elementVarsByPage };
+    if (Object.keys(editor.elementVars || {}).length > 0) all[selectedPage] = editor.elementVars;
+    else delete all[selectedPage];
+    return all;
+  }, [elementVarsByPage, editor.elementVars, selectedPage]);
+
+  const getElementCssAllPages = useCallback(() => {
+    const all = { ...elementCssByPage };
+    if (Object.keys(editor.elementCss || {}).length > 0) all[selectedPage] = editor.elementCss;
+    else delete all[selectedPage];
+    return all;
+  }, [elementCssByPage, editor.elementCss, selectedPage]);
+
+  // Slice 1b: when the admin switches pages, stash the outgoing page's Layer 2/3
+  // edits into the per-page record, then load the incoming page's edits into the
+  // editor hook (re-baselined so a plain switch isn't counted dirty — overall
+  // cross-page dirtiness is tracked via originalVarsByPage/originalCssByPage).
+  useEffect(() => {
+    const prev = prevPageRef.current;
+    if (prev === selectedPage) return;
+    const outVars = editorVarsRef.current || {};
+    const outCss = editorCssRef.current || {};
+    setElementVarsByPage((m) => {
+      const next = { ...m };
+      if (Object.keys(outVars).length > 0) next[prev] = outVars; else delete next[prev];
+      return next;
+    });
+    setElementCssByPage((m) => {
+      const next = { ...m };
+      if (Object.keys(outCss).length > 0) next[prev] = outCss; else delete next[prev];
+      return next;
+    });
+    // Incoming page ≠ outgoing, so the pre-stash record still holds it correctly.
+    editorReplaceAllElementVars(varsByPageRef.current[selectedPage] || {}, true);
+    editorReplaceAllElementCss(cssByPageRef.current[selectedPage] || {}, true);
+    prevPageRef.current = selectedPage;
+  }, [selectedPage, editorReplaceAllElementVars, editorReplaceAllElementCss]);
+
+  // Cross-page dirtiness for Layer 2/3 overrides (the hook only tracks the
+  // active page). Folded into the Save gate + the unsaved indicator below.
+  const multiPageOverridesDirty = useMemo(
+    () =>
+      JSON.stringify(getElementVarsAllPages()) !== originalVarsByPage ||
+      JSON.stringify(getElementCssAllPages()) !== originalCssByPage,
+    [getElementVarsAllPages, getElementCssAllPages, originalVarsByPage, originalCssByPage]
+  );
 
   const handleApplyPresetToElement = useCallback(
     (elementId, presetId) => {
@@ -527,9 +730,27 @@ export default function PageDesignTab() {
       setOtherPages(loadedOther);
 
       const savedElementConfigs = data?.elementConfigs?.home;
-      const detected = detectActivePreset(loadedTheme);
-      const initialElementConfigs = savedElementConfigs || getPresetDefaults(detected?.id || 'classic');
+      const loadedTemplateId = data?.activeTemplateId || 'classic';
+      setActiveTemplateId(loadedTemplateId);
+      const initialElementConfigs = savedElementConfigs || getPresetDefaults(loadedTemplateId);
       editorReplaceAllConfigs(initialElementConfigs, true);
+      // Day 10: load saved per-element variant overrides as the baseline.
+      editorReplaceAllVariants(data?.elementVariants?.home || {}, true);
+      // Day 11: load saved Layer 1 token + Layer 2 var overrides as baseline.
+      editorReplaceAllThemeTokens(data?.themeTokens || {}, true);
+      // Slice 1b: load EVERY page's Layer 2/3 overrides (the API already stores
+      // them keyed by page). The records hold all pages; seed the editor hook
+      // from the current page's slice. originals snapshot the cross-page dirty.
+      const varsByPage = (data?.elementVars && typeof data.elementVars === 'object') ? data.elementVars : {};
+      const cssByPage = (data?.elementCss && typeof data.elementCss === 'object') ? data.elementCss : {};
+      setElementVarsByPage(varsByPage);
+      setElementCssByPage(cssByPage);
+      setOriginalVarsByPage(JSON.stringify(varsByPage));
+      setOriginalCssByPage(JSON.stringify(cssByPage));
+      prevPageRef.current = selectedPage;
+      editorReplaceAllElementVars(varsByPage[selectedPage] || {}, true);
+      // Pillar 3: load saved per-element custom CSS (Layer 3) as baseline.
+      editorReplaceAllElementCss(cssByPage[selectedPage] || {}, true);
 
       const snapshot = JSON.stringify({ home, vote: normalizedVote, theme: loadedTheme, other: loadedOther });
       setOriginalJSON(snapshot);
@@ -539,9 +760,28 @@ export default function PageDesignTab() {
     } finally {
       setLoading(false);
     }
-  }, [editorReplaceAllConfigs]);
+  }, [editorReplaceAllConfigs, editorReplaceAllVariants, editorReplaceAllThemeTokens, editorReplaceAllElementVars]);
 
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
+
+  const fetchTemplates = useCallback(() => {
+    const encryptedToken = getEncryptedToken();
+    return fetch(getPath('/api/admin/templates'), {
+      credentials: 'include',
+      headers: { 'x-admin-token': encryptedToken || '' },
+    })
+      .then(r => {
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}`);
+        }
+        return r.json();
+      })
+      .then(data => { setAvailableTemplates(data.templates || []); })
+      .catch(err => console.error('[load templates]', err))
+      .finally(() => setLoadingTemplates(false));
+  }, []);
+
+  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
   useEffect(() => {
     if (!originalJSON) return;
@@ -549,33 +789,148 @@ export default function PageDesignTab() {
     setHasChanges(currentJSON !== originalJSON);
   }, [homeBlocks, voteConfig, theme, otherPages, originalJSON]);
 
-  const activePreset = useMemo(() => detectActivePreset(theme), [theme]);
+  const activeTemplate = useMemo(
+    () => availableTemplates.find(t => t.slug === activeTemplateId) || null,
+    [availableTemplates, activeTemplateId]
+  );
 
   const livePageLayout = useMemo(
     () => ({
       home: homeBlocks,
       vote: { multiParty: voteConfig },
       theme,
+      // Day 10: thread variant choices so the live HomeContent preview reflects
+      // them immediately (HomeContent reads pageLayout.elementVariants.home).
+      elementVariants: { home: editor.elementVariants },
       ...otherPages,
     }),
-    [homeBlocks, voteConfig, theme, otherPages]
+    [homeBlocks, voteConfig, theme, otherPages, editor.elementVariants]
   );
 
-  const requestApplyTemplate = (presetId) => setPendingPresetId(presetId);
+  // Day 11: compile the editor-preview token scope. Active template's base
+  // Layer 1 tokens + Layer 2 element vars, overlaid with the admin's live
+  // token edits (themeTokens). HomeContent injects this string as the
+  // .fms-app <style> in editor mode — closes P-LOG-051 (editor had no scope).
+  // Layer 2 var overrides (editor.elementVars) merge in here in Step F.
+  // Active template's base Layer 1 tokens (the 15 defaults) for the TokenEditor.
+  const activeBaseTokens = useMemo(
+    () => (BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic).theme?.tokens || {},
+    [activeTemplateId]
+  );
 
-  const confirmApplyTemplate = () => {
-    const preset = getPresetById(pendingPresetId);
-    if (!preset) {
-      setPendingPresetId(null);
-      return;
+  // The full effective template the editor preview should render against:
+  // active built-in base + Layer 1 token edits + Layer 2 var edits. Used both
+  // to emit the `.fms-app` token CSS AND as `resolvedTemplate` for the preview
+  // so config-driven designs (voteCTA gradient, stats gradient, etc.) resolve
+  // faithfully — closing P-LOG-051 (previously resolvedTemplate was null in the
+  // editor, so only hardcoded-identity variants rendered; configs collapsed).
+  const editorEffectiveTemplate = useMemo(() => {
+    const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
+    const mergedElements = { ...(base.elements || {}) };
+    for (const id of Object.keys(editor.elementVars || {})) {
+      const e = mergedElements[id] || {};
+      mergedElements[id] = { ...e, vars: { ...(e.vars || {}), ...editor.elementVars[id] } };
     }
-    setHomeBlocks(preset.home.map((b) => ({ ...b, config: { ...(b.config || {}) } })));
-    setVoteConfig({ ...DEFAULT_VOTE_CONFIG, ...preset.vote.multiParty });
-    setTheme({ ...DEFAULT_THEME, ...preset.theme });
-    editorReplaceAllConfigs(getPresetDefaults(pendingPresetId));
-    editorClearSelection();
-    setPendingPresetId(null);
-    setExpandedIndex(-1);
+    return {
+      ...base,
+      theme: {
+        ...base.theme,
+        tokens: { ...(base.theme?.tokens || {}), ...editor.themeTokens },
+      },
+      elements: mergedElements,
+    };
+  }, [activeTemplateId, editor.themeTokens, editor.elementVars]);
+
+  const editorTokenStyles = useMemo(() => {
+    const base = buildTemplateStyles(editorEffectiveTemplate, '.fms-app');
+    // Pillar 3 Tier 3: append per-element custom CSS (Layer 3) so the editor
+    // preview reflects it live, same scope the live page uses (HomeContent).
+    const css = buildElementCss(editor.elementCss, '.fms-app');
+    return css ? `${base}\n\n${css}` : base;
+  }, [editorEffectiveTemplate, editor.elementCss]);
+
+  const requestApplyTemplate = (slug) => setPendingPresetId(slug);
+
+  // Pillar 2 — open the detail modal and lazy-fetch the full template record.
+  const openTemplateDetail = async (slug) => {
+    setDetailSlug(slug);
+    setDetailData(null);
+    setDetailLoading(true);
+    try {
+      const token = getEncryptedToken();
+      const res = await fetch(getPath(`/api/admin/templates/${slug}`), {
+        credentials: 'include',
+        headers: token ? { 'x-admin-token': token } : {},
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setDetailData(data.template || null);
+    } catch (err) {
+      console.error('Load template detail failed:', err);
+      setDetailData(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeTemplateDetail = () => {
+    setDetailSlug(null);
+    setDetailData(null);
+    setDetailLoading(false);
+  };
+
+  const confirmApplyTemplate = async () => {
+    if (!pendingPresetId || isApplying) return;
+    setIsApplying(true);
+    try {
+      const encryptedToken = getEncryptedToken();
+      const authHeaders = { 'x-admin-token': encryptedToken || '' };
+      const applyResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}/apply`), {
+        method: 'POST',
+        credentials: 'include',
+        headers: authHeaders,
+      });
+      if (!applyResp.ok) {
+        const err = await applyResp.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${applyResp.status}`);
+      }
+
+      const tplResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}`), {
+        credentials: 'include',
+        headers: authHeaders,
+      });
+      if (!tplResp.ok) throw new Error(`Template fetch failed: ${tplResp.status}`);
+      const { template } = await tplResp.json();
+
+      const elementConfigs = {};
+      for (const [id, entry] of Object.entries(template.elements || {})) {
+        elementConfigs[id] = { config: entry.config || {} };
+      }
+      editorReplaceAllConfigs(elementConfigs);
+      // Day 10: applying a template discards per-element variant overrides —
+      // the new template's own variant fields become the source of truth
+      // (audit Q2). Cleared (not baselined) so the switch is a pending change.
+      editorReplaceAllVariants({});
+      // Day 11: applying a template also discards token + var overrides — the
+      // new template's own tokens/vars become the truth.
+      editorReplaceAllThemeTokens({});
+      editorReplaceAllElementVars({});
+
+      if (template.theme) {
+        setTheme({ ...DEFAULT_THEME, ...template.theme });
+      }
+
+      setActiveTemplateId(pendingPresetId);
+      editorClearSelection();
+      setExpandedIndex(-1);
+      router.refresh();
+    } catch (err) {
+      console.error('[apply template]', err);
+      alert(`Apply failed: ${err.message}`);
+    } finally {
+      setIsApplying(false);
+      setPendingPresetId(null);
+    }
   };
 
   const handleMove = (index, direction) => {
@@ -664,6 +1019,10 @@ export default function PageDesignTab() {
       vote: { multiParty: voteConfig },
       theme,
       elementConfigs: { home: editor.elementConfigs },
+      elementVariants: { home: editor.elementVariants },
+      themeTokens: editor.themeTokens,
+      elementVars: getElementVarsAllPages(),
+      elementCss: getElementCssAllPages(),
       ...otherPages,
     };
     localStorage.setItem('preview_draft', JSON.stringify(previewData));
@@ -690,11 +1049,18 @@ export default function PageDesignTab() {
           .map((s, i) => ({ ...s, order: i + 1 }));
       }
 
+      const publishedVars = getElementVarsAllPages();
+      const publishedCss = getElementCssAllPages();
+
       const payload = {
         home: normalizedBlocks,
         vote: { multiParty: voteConfig },
         theme,
         elementConfigs: { home: editor.elementConfigs },
+        elementVariants: { home: editor.elementVariants },
+        themeTokens: editor.themeTokens,
+        elementVars: publishedVars,
+        elementCss: publishedCss,
         ...normalizedOther,
       };
 
@@ -715,6 +1081,12 @@ export default function PageDesignTab() {
       setHomeBlocks(normalizedBlocks);
       setOtherPages(normalizedOther);
       setOriginalJSON(JSON.stringify({ home: normalizedBlocks, vote: voteConfig, theme, other: normalizedOther }));
+      // Slice 1b: the published per-page records are now the clean baseline so
+      // the Save gate clears for every page, not just the active one.
+      setElementVarsByPage(publishedVars);
+      setElementCssByPage(publishedCss);
+      setOriginalVarsByPage(JSON.stringify(publishedVars));
+      setOriginalCssByPage(JSON.stringify(publishedCss));
       setHasChanges(false);
       editorMarkSaved();
       setSuccessOpen(true);
@@ -724,6 +1096,75 @@ export default function PageDesignTab() {
       setErrorOpen(true);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Pillar 4: assemble a frozen snapshot of the current design (deep copy, D5).
+  // base built-in template + admin edits (tokens, variants, configs, vars).
+  const buildTemplateSnapshot = () => {
+    const base = BUILT_IN_TEMPLATES[activeTemplateId] || BUILT_IN_TEMPLATES.classic;
+    const theme = {
+      ...JSON.parse(JSON.stringify(base.theme || {})),
+      tokens: { ...(base.theme?.tokens || {}), ...editor.themeTokens },
+    };
+    const baseEls = base.elements || {};
+    const ids = new Set([
+      ...Object.keys(baseEls),
+      ...Object.keys(editor.elementConfigs || {}),
+      ...Object.keys(editor.elementVariants || {}),
+      ...Object.keys(editor.elementVars || {}),
+    ]);
+    const elements = {};
+    for (const id of ids) {
+      const b = baseEls[id] || {};
+      const entry = {};
+      const variant = editor.elementVariants?.[id] ?? b.variant;
+      if (variant !== undefined) entry.variant = variant;
+      const config = editor.elementConfigs?.[id]?.config ?? b.config;
+      if (config !== undefined) entry.config = JSON.parse(JSON.stringify(config));
+      const mergedVars = { ...(b.vars || {}), ...(editor.elementVars?.[id] || {}) };
+      if (Object.keys(mergedVars).length > 0) entry.vars = mergedVars;
+      elements[id] = entry;
+    }
+    const pages = JSON.parse(JSON.stringify(base.pages || {}));
+    return { pages, elements, theme };
+  };
+
+  const handleSaveAsTemplate = async () => {
+    const name = newTplName.trim();
+    if (!name || savingTpl) return;
+    setSavingTpl(true);
+    try {
+      const encryptedToken = getEncryptedToken();
+      if (!encryptedToken) throw new Error('Auth token generation failed');
+      const snapshot = buildTemplateSnapshot();
+      const slug = `tpl-${Date.now().toString(36)}`;
+      const res = await fetch(getPath('/api/admin/templates'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
+        body: JSON.stringify({
+          slug,
+          name,
+          description: `บันทึกจาก ${activeTemplate?.name || activeTemplateId}`,
+          forkedFrom: activeTemplateId,
+          visibility: 'public',
+          ...snapshot,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || `HTTP ${res.status}`);
+      }
+      await fetchTemplates();
+      setSaveTplOpen(false);
+      setNewTplName('');
+      setDraftMsg({ title: 'บันทึก Template สำเร็จ', msg: `"${name}" ถูกเพิ่มเข้าคลัง Template แล้ว — รุ่นต่อไปหยิบไปใช้ได้` });
+    } catch (err) {
+      console.error('Save as template failed:', err);
+      setErrorMsg({ title: 'บันทึก Template ล้มเหลว', msg: err.message || 'เกิดข้อผิดพลาด' });
+      setErrorOpen(true);
+    } finally {
+      setSavingTpl(false);
     }
   };
 
@@ -741,104 +1182,104 @@ export default function PageDesignTab() {
   return (
     <div className="space-y-6 animate-fade-in">
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-pink-50 to-purple-50 text-purple-600 p-2.5 rounded-xl">
-              <Palette className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-700 flex items-center gap-2">
-                เลือก Template
-                <Sparkles className="w-4 h-4 text-amber-400" />
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">เลือกธีมสำเร็จรูป แล้วปรับแต่งเพิ่มเติมได้</p>
-            </div>
-          </div>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${activePreset ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-            {activePreset ? `● ${activePreset.nameTh}` : '● Custom'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {TEMPLATE_PRESETS.map((preset) => (
-            <TemplateCard key={preset.id} preset={preset} isActive={activePreset?.id === preset.id} onClick={() => requestApplyTemplate(preset.id)} />
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl">
-            <FileText className="h-6 w-6" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-700">เลือกหน้าที่ต้องการแก้ไข</h3>
-            <p className="text-xs text-slate-400 mt-0.5">คลิกหน้าเพื่อแก้ไข section และ layout ของหน้านั้น</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-wrap lg:overflow-visible lg:pb-0 -mx-1 px-1">
-          {EDITABLE_PAGES.map((page) => {
-            const IconComp = PAGE_ICON_MAP[page.icon] || LayoutGrid;
-            const isActive = selectedPage === page.id;
-            return (
-              <button
-                key={page.id}
-                type="button"
-                onClick={() => setSelectedPage(page.id)}
-                className={`flex items-center gap-2 shrink-0 px-4 py-2 rounded-full text-sm font-bold border-2 transition-all duration-300 ease-out ${isActive ? 'bg-[#8A2680] text-white border-[#8A2680] shadow-lg shadow-purple-500/30 scale-[1.02]' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-200 hover:text-purple-700 hover:shadow-sm'
-                  }`}
-              >
-                <IconComp className="w-4 h-4" />
-                <span className="flex flex-col items-start leading-tight">
-                  <span>{page.name}</span>
-                  <span className={`text-[9px] font-mono tracking-wide ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
-                    {page.path}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ✅ แถบ Action Bar (เปลี่ยนเป็น 2 ปุ่ม: บันทึกร่าง vs เผยแพร่) */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white px-5 py-3 rounded-2xl border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-2 text-sm text-slate-500 w-full md:w-auto">
-          <Info className="w-4 h-4 text-slate-400 shrink-0" />
-          <span className="truncate">กำลังแก้ไข: <span className="font-bold text-slate-700">{getPageById(selectedPage)?.name}</span></span>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-          {hasChanges && (
-            <span className="hidden md:inline-flex text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 animate-pulse">
-              ● ยังไม่ได้เผยแพร่
+      {/* Sticky toolbar — page tabs + template dropdown + Save/Publish (top, per UX restructure) */}
+      <div className="sticky top-0 z-30 -mx-6 md:-mx-8 px-6 md:px-8 py-2.5 bg-gray-50/90 backdrop-blur-md border-b border-slate-200/70 space-y-2.5">
+        {/* row 1 — title + actions */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-bold text-slate-800 shrink-0">ออกแบบหน้าเว็บ</span>
+            <span className="text-slate-300 shrink-0 hidden sm:inline">·</span>
+            <span className="text-xs text-slate-500 truncate hidden sm:inline">
+              กำลังแก้ไข <span className="font-semibold text-slate-700">{getPageById(selectedPage)?.name}</span>
             </span>
-          )}
-
-          {/* ปุ่มบันทึกฉบับร่าง */}
-          <button
-            onClick={handleSaveDraft}
-            className="flex flex-1 md:flex-none justify-center items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold transition-all hover:bg-slate-200 active:scale-95 border border-slate-200"
-          >
-            <Save className="w-4 h-4" />
-            บันทึกร่าง
-          </button>
-
-          {/* ปุ่มเผยแพร่ขึ้นเว็บจริง */}
-          <div className="relative flex-1 md:flex-none">
-            {editor.hasUnsavedChanges && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-orange-500 animate-pulse ring-2 ring-white z-10" />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {(hasChanges || editor.hasUnsavedChanges || multiPageOverridesDirty) && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                ยังไม่เผยแพร่
+              </span>
             )}
             <button
+              onClick={handleSaveDraft}
+              className="flex items-center gap-2 px-3.5 py-2 bg-white text-slate-700 rounded-lg text-sm font-semibold border border-slate-200 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+            >
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline">บันทึกร่าง</span>
+            </button>
+            <button
               onClick={() => setConfirmOpen(true)}
-              disabled={(!hasChanges && !editor.hasUnsavedChanges) || saving}
-              className="w-full flex justify-center items-center gap-2 px-5 py-2.5 bg-[#8A2680] text-white rounded-xl text-sm font-bold transition-all shadow-md hover:bg-purple-800 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={(!hasChanges && !editor.hasUnsavedChanges && !multiPageOverridesDirty) || saving}
+              className="flex items-center gap-2 px-4 py-2 bg-[#8A2680] text-white rounded-lg text-sm font-semibold shadow-sm transition-all hover:bg-[#751f6c] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#8A2680]"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-              {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่จริง'}
+              {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
             </button>
+          </div>
+        </div>
+
+        {/* row 2 — page tabs + template dropdown */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 pb-0.5">
+            {EDITABLE_PAGES.map((page) => {
+              const IconComp = PAGE_ICON_MAP[page.icon] || LayoutGrid;
+              const isActive = selectedPage === page.id;
+              return (
+                <button
+                  key={page.id}
+                  type="button"
+                  onClick={() => setSelectedPage(page.id)}
+                  className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 ${isActive ? 'bg-[#8A2680] text-white border-[#8A2680] shadow-sm shadow-purple-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-purple-200 hover:text-purple-700'}`}
+                >
+                  <IconComp className="w-3.5 h-3.5" />
+                  {page.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative ml-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setTemplateMenuOpen((v) => !v)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 bg-purple-50 text-[#8A2680] hover:bg-purple-100 transition-colors"
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span className="max-w-[120px] truncate">{activeTemplate?.name || activeTemplateId}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${templateMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {templateMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setTemplateMenuOpen(false)} aria-hidden />
+                <div className="absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] max-h-[72vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-40 p-3">
+                  <p className="text-[11px] font-bold text-slate-500 px-1 pb-2">เลือก Template — ธีมสำเร็จรูป ปรับต่อได้</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {loadingTemplates && (
+                      <div className="col-span-2 flex items-center gap-2 text-sm text-slate-400 py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...
+                      </div>
+                    )}
+                    {!loadingTemplates && availableTemplates.map((tpl) => (
+                      <TemplateCard
+                        key={tpl.slug}
+                        tpl={tpl}
+                        isActive={activeTemplateId === tpl.slug}
+                        onClick={() => requestApplyTemplate(tpl.slug)}
+                        onShowDetail={openTemplateDetail}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setNewTplName(''); setSaveTplOpen(true); setTemplateMenuOpen(false); }}
+                    className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-[#8A2680]/40 text-[#8A2680] text-xs font-bold hover:bg-purple-50 transition-colors active:scale-95"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    บันทึกดีไซน์นี้เป็น Template ใหม่
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -854,13 +1295,55 @@ export default function PageDesignTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[45%,55%] gap-6 items-start">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] gap-6 items-start">
+        {/* LEFT INSPECTOR — 2 modes: element selected → PropertyPanel (edit while
+            watching the big canvas); else → setup + page structure. */}
+        <div className="space-y-4 lg:max-h-[calc(100vh-90px)] lg:overflow-y-auto lg:pr-1 lg:sticky lg:top-[72px]">
+
+      {editor.selectedElement ? (
+        <PropertyPanel
+          selectedElement={editor.selectedElement}
+          elementConfigs={editor.elementConfigs}
+          pageLayout={livePageLayout}
+          elementVariants={editor.elementVariants}
+          onSetVariant={editor.setElementVariant}
+          onResetVariant={editor.resetElementVariant}
+          elementVars={editor.elementVars}
+          onSetVar={editor.setElementVar}
+          onResetVar={editor.resetElementVar}
+          elementCss={editor.elementCss}
+          onSetCss={editor.setElementCss}
+          onUpdateConfig={editor.updateElementConfig}
+          onApplyPreset={handleApplyPresetToElement}
+          onDeselect={editorClearSelection}
+        />
+      ) : (
+       <>
+
+      {/* Day 11: Theme Token Editor (Tier 1) — global Layer 1 tokens. */}
+      {selectedPage === 'home' && (
+        <TokenEditor
+          tokens={activeBaseTokens}
+          overrides={editor.themeTokens}
+          onSetToken={editor.setThemeToken}
+          onResetToken={editor.resetThemeToken}
+          onResetAll={editor.resetAllThemeTokens}
+        />
+      )}
+
+      {/* Pillar 1 — Element Library (catalog browser + variant swap) */}
+      <ElementLibraryPanel
+        elementVariants={editor.elementVariants}
+        onSelectVariant={editor.setElementVariant}
+        onResetVariant={editor.resetElementVariant}
+      />
+
+
 
           {selectedPage === 'home' && (
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-6">
-                <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
+                <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
                   <LayoutGrid className="h-6 w-6" />
                 </div>
                 <div>
@@ -925,16 +1408,6 @@ export default function PageDesignTab() {
             </div>
           )}
 
-          {selectedPage === 'home' && (
-            <PropertyPanel
-              selectedElement={editor.selectedElement}
-              elementConfigs={editor.elementConfigs}
-              onUpdateConfig={editor.updateElementConfig}
-              onApplyPreset={handleApplyPresetToElement}
-              onDeselect={editorClearSelection}
-            />
-          )}
-
           {selectedPage === 'vote' && (
             <div className="space-y-4">
               <div className="bg-white rounded-2xl border border-slate-200 p-4">
@@ -969,7 +1442,7 @@ export default function PageDesignTab() {
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-6">
-                <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl"><Vote className="h-6 w-6" /></div>
+                <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl"><Vote className="h-6 w-6" /></div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-700">ตั้งค่าหน้าลงคะแนน (Multi-Party)</h3>
                   <p className="text-xs text-slate-400 mt-0.5">ปรับแต่ง layout ของหน้าเลือกพรรค</p>
@@ -1022,15 +1495,6 @@ export default function PageDesignTab() {
               </div>
             </div>
 
-              {editor.selectedElement && (
-                <PropertyPanel
-                  selectedElement={editor.selectedElement}
-                  elementConfigs={editor.elementConfigs}
-                  onUpdateConfig={editor.updateElementConfig}
-                  onApplyPreset={handleApplyPresetToElement}
-                  onDeselect={editorClearSelection}
-                />
-              )}
             </div>
           )}
 
@@ -1042,15 +1506,6 @@ export default function PageDesignTab() {
                 onMove={(index, dir) => handleOtherMove('candidates', index, dir)}
                 onToggleVisible={(index) => handleOtherToggleVisible('candidates', index)}
               />
-              {editor.selectedElement && (
-                <PropertyPanel
-                  selectedElement={editor.selectedElement}
-                  elementConfigs={editor.elementConfigs}
-                  onUpdateConfig={editor.updateElementConfig}
-                  onApplyPreset={handleApplyPresetToElement}
-                  onDeselect={editorClearSelection}
-                />
-              )}
             </div>
           )}
 
@@ -1142,15 +1597,6 @@ export default function PageDesignTab() {
                 onMove={(index, dir) => handleOtherMove('results', index, dir)}
                 onToggleVisible={(index) => handleOtherToggleVisible('results', index)}
               />
-              {editor.selectedElement && (
-                <PropertyPanel
-                  selectedElement={editor.selectedElement}
-                  elementConfigs={editor.elementConfigs}
-                  onUpdateConfig={editor.updateElementConfig}
-                  onApplyPreset={handleApplyPresetToElement}
-                  onDeselect={editorClearSelection}
-                />
-              )}
             </div>
           )}
 
@@ -1205,12 +1651,18 @@ export default function PageDesignTab() {
             />
           )}
 
+       </>
+       )}
         </div>
 
-        <div className="hidden lg:block lg:sticky lg:top-6">
+        <div className="lg:sticky lg:top-[72px] lg:self-start space-y-4">
+          {/* Canvas — desktop only */}
+          <div className="hidden lg:block">
           <LivePreview
             selectedPage={selectedPage}
             pageLayout={livePageLayout}
+            editorTokenStyles={editorTokenStyles}
+            resolvedTemplate={editorEffectiveTemplate}
             deviceMode={deviceMode}
             onDeviceChange={setDeviceMode}
             hoveredSection={hoveredSection}
@@ -1232,16 +1684,18 @@ export default function PageDesignTab() {
                 : null
             }
           />
+          </div>
         </div>
       </div>
 
       <ConfirmModal
         isOpen={pendingPresetId !== null}
-        onClose={() => setPendingPresetId(null)}
+        onClose={() => { if (!isApplying) setPendingPresetId(null); }}
         onConfirm={confirmApplyTemplate}
         title="ใช้ Template นี้หรือไม่?"
         message="การตั้งค่าปัจจุบันจะถูกแทนที่ด้วย Template ที่เลือก อย่าลืมกดเผยแพร่หลังจากปรับแต่งเสร็จ"
         variant="primary"
+        isLoading={isApplying}
       />
 
       <ConfirmModal
@@ -1275,6 +1729,200 @@ export default function PageDesignTab() {
         title={errorMsg.title}
         message={errorMsg.msg}
       />
+
+      {/* Pillar 2 — Template detail modal (gallery slice 1) */}
+      {detailSlug && (() => {
+        const meta = availableTemplates.find((t) => t.slug === detailSlug) || {};
+        const swatch = meta.colorSwatch || detailData?.colorSwatch || {};
+        const primaryColor = swatch.primary || '#8A2680';
+        const secondaryColor = swatch.secondary || '#9333EA';
+        const pages = detailData?.pages ? Object.keys(detailData.pages) : [];
+        const elements = detailData?.elements ? Object.entries(detailData.elements) : [];
+        const creator = meta.isBuiltIn ? 'ทีมพัฒนาระบบ' : (meta.authorName || 'แอดมิน');
+        const createdYear = meta.createdAt
+          ? new Date(meta.createdAt).getFullYear() + 543
+          : null;
+        return (
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+            onClick={closeTemplateDetail}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* header */}
+              <div className="p-5 border-b border-slate-100 flex items-start gap-3">
+                <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                  <span className="w-7 h-7 rounded-full border border-white shadow-sm" style={{ backgroundColor: primaryColor }} />
+                  <span className="w-7 h-7 rounded-full border border-white shadow-sm -ml-3" style={{ backgroundColor: secondaryColor }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-bold text-slate-800 leading-tight">{meta.name || detailData?.name || detailSlug}</h3>
+                  <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wide">{detailSlug}</p>
+                </div>
+                <button type="button" onClick={closeTemplateDetail} className="text-slate-300 hover:text-slate-500 transition-colors shrink-0">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* body */}
+              <div className="p-5 overflow-y-auto space-y-4">
+                {detailLoading && (
+                  <div className="flex items-center gap-2 text-sm text-slate-400 py-8 justify-center">
+                    <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลดรายละเอียด...
+                  </div>
+                )}
+
+                {!detailLoading && (
+                  <>
+                    {(meta.description || detailData?.description) && (
+                      <p className="text-sm text-slate-600">{meta.description || detailData?.description}</p>
+                    )}
+
+                    {/* metadata grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">ผู้สร้าง</span>
+                        <span className="font-semibold text-slate-700 ml-auto truncate">{creator}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">ปีที่สร้าง</span>
+                        <span className="font-semibold text-slate-700 ml-auto">{createdYear ? `พ.ศ. ${createdYear}` : '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">Element</span>
+                        <span className="font-semibold text-slate-700 ml-auto">{meta.elementCount ?? elements.length}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                        <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-500">หน้า</span>
+                        <span className="font-semibold text-slate-700 ml-auto">{meta.pageCount ?? pages.length}</span>
+                      </div>
+                    </div>
+
+                    {/* badges */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {meta.isBuiltIn && (
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">ต้นฉบับระบบ</span>
+                      )}
+                      {meta.isLocked && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full"><Lock className="w-2.5 h-2.5" /> ล็อก</span>
+                      )}
+                      {(meta.forkedFrom || detailData?.forkedFrom) && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">แตกจาก: {meta.forkedFrom || detailData?.forkedFrom}</span>
+                      )}
+                    </div>
+
+                    {/* pages */}
+                    {pages.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-600 mb-1.5">หน้าที่มี ({pages.length})</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {pages.map((pid) => (
+                            <span key={pid} className="text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded-lg">
+                              {getPageById(pid)?.name || pid}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* elements */}
+                    {elements.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-600 mb-1.5">Element ทั้งหมด ({elements.length})</h4>
+                        <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto pr-1">
+                          {elements.map(([id, entry]) => (
+                            <span key={id} className="text-[10px] font-mono text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded">
+                              {id}{entry?.variant && entry.variant !== 'default' ? <span className="text-[#8A2680] font-bold">:{entry.variant}</span> : null}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* footer */}
+              <div className="p-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={closeTemplateDetail}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  ปิด
+                </button>
+                {activeTemplateId !== detailSlug && (
+                  <button
+                    type="button"
+                    onClick={() => { const s = detailSlug; closeTemplateDetail(); requestApplyTemplate(s); }}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#8A2680] text-white shadow-sm hover:bg-[#751f6c] transition-colors flex items-center gap-2"
+                  >
+                    <Check className="w-4 h-4" /> ใช้ Template นี้
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Pillar 4 — Save as Template name modal */}
+      {saveTplOpen && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          onClick={() => !savingTpl && setSaveTplOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-1">
+              <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl">
+                <Save className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-slate-800">บันทึกเป็น Template ใหม่</h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-4 ml-[52px] -mt-1">
+              เก็บดีไซน์ปัจจุบันเข้าคลัง — รุ่นต่อไปหยิบไปใช้ได้
+            </p>
+            <label className="text-xs font-semibold text-slate-600">ชื่อ Template</label>
+            <input
+              type="text"
+              autoFocus
+              value={newTplName}
+              onChange={(e) => setNewTplName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveAsTemplate(); }}
+              placeholder="เช่น Aurora 2569"
+              className="mt-1 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/15"
+            />
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                type="button"
+                onClick={() => setSaveTplOpen(false)}
+                disabled={savingTpl}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAsTemplate}
+                disabled={!newTplName.trim() || savingTpl}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#8A2680] text-white shadow-sm hover:bg-[#751f6c] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {savingTpl ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {savingTpl ? 'กำลังบันทึก...' : 'บันทึก'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

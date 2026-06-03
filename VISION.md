@@ -1,0 +1,504 @@
+# VISION.md — FMS Election System
+
+**Project:** PSU FMS Election Editor (SAMO 50)
+**Document version:** 1.3
+**Created:** May 21, 2026 (Day 4)
+**Last updated:** May 23, 2026 (Library mental model + 95% scoping + slot positioning)
+**Status:** Living document — update as vision evolves
+
+> **คำเตือนสำหรับ Claude session ใหม่ / Claude Code / Future readers:**
+> เอกสารนี้คือ **source of truth** สำหรับ vision ของระบบ
+> ถ้าตัดสินใจอะไรขัดกับเอกสารนี้ — ต้อง update เอกสารก่อน หรือยืนยันกับ user ก่อน
+> User มีอำนาจสูงสุดในการตีความ vision
+
+---
+
+## 1. Vision Statement (TL;DR)
+
+ระบบเลือกตั้ง SAMO ของคณะวิทยาการจัดการ ม.อ. ที่มาพร้อม **visual editor ระดับ Canva** ที่ทำให้ admin (นักศึกษารุ่นต่อรุ่น) ออกแบบหน้าตาเว็บได้อย่างอิสระและละเอียด โดยไม่ต้องมีความรู้ coding
+
+ระบบจะสะสม design ของแต่ละปีเข้า **template gallery** เป็น **"สมบัติของสโมสรนักศึกษา"** ที่ส่งต่อจากรุ่นสู่รุ่น **อายุการใช้งานเป้าหมาย 10 ปี** โดยไม่ต้อง refactor core
+
+**Primary identity:** Election system (เน้นเลือกตั้งเป็นหลัก)
+**Secondary identity:** Visual CMS (editor + gallery + heritage system)
+**Future ambition:** Plugin/framework ที่ใช้ได้กับเว็บอื่นๆ (post-graduation, ไม่ใช่ scope ตอนนี้)
+
+---
+
+## 2. Mental Model — Canva for Election Websites
+
+```
+Canva (analogy)                →   ระบบนี้ (reality)
+─────────────────────────────       ──────────────────────────────
+Template gallery               →   Template gallery (in admin panel)
+หยิบ template ของคนอื่นมาใช้   →   หยิบ template ปีก่อนๆ มาใช้
+ปรับ element ในนั้นได้         →   ปรับ element ในนั้นได้ละเอียด
+เซฟเป็น template ใหม่ได้       →   Admin save → ระบบเก็บเป็น template ปีนี้
+                                   → รุ่นถัดไปได้ใช้ต่อ
+ลาก element ข้าม template      →   Swap element variants ข้าม templates
+```
+
+**Generational flow:**
+
+```
+ปี 2570:  Admin A สร้าง "Aurora" template → ระบบเก็บเข้า gallery
+ปี 2571:  Admin B เห็น Aurora ใน gallery
+          → ชอบ button design ของ Aurora → หยิบไปใช้
+          → ทำของใหม่ → "Horizon" template → ระบบเก็บ
+ปี 2572:  Admin C เห็นทั้ง Aurora + Horizon + built-ins
+          → mix elements จาก 3 templates
+          → ทำของตัวเอง → "Pulse" template → ระบบเก็บ
+...
+ปี 2580:  Gallery มี 10+ templates สะสม
+          ทุกตัวคือ "ผลงานของรุ่นพี่"
+          ระบบยังใช้งานได้ — ไม่ต้อง rewrite
+```
+
+---
+
+## 3. 4 Pillars
+
+ระบบประกอบด้วย 4 ส่วนที่ทำงานร่วมกัน:
+
+### Pillar 1: Element Library (Canva-style)
+ห้องสมุดของ "element" ทั้งหมดในระบบ — เหมือน Canva element sidebar
+
+**Mental model:**
+- เปิด editor → sidebar ซ้ายแสดง library
+- จัดเป็น **grouped folders**: element type → variants ข้างใน
+  - `voteCTA-button` folder: default, atelier, editorial, funny-chunky, ...
+  - `banner-section` folder: default, minimal-line, atelier-card, ...
+  - `countdown-timer` folder: default, glitch, editorial-roman, ...
+- หยิบ variant จาก library → ใส่ลง template → ปรับละเอียด
+- Admin บันทึกของตัวเอง → เพิ่มเข้า library → รุ่นต่อไปใช้ได้
+
+**Element properties:**
+- ทุก element มี identity (e.g., `voteCTA-button`, `countdown-timer`)
+- ทุก element มี **multiple variants** (structure-level differences)
+- Element เป็น **self-contained Lego brick** — เอาไปติดที่ไหนก็ทำงานได้
+- Element ต้อง **container-aware** + **responsive by default**
+
+**Library growth (สำคัญสำหรับ 5+5 ปี):**
+- ปีแรก (dev): ~25-30 variants ทำไว้ใน library
+- ปีต่อๆ ไป (admin): mix & match + save variants → library โต
+- Dev เพิ่ม element types ใหม่ตามต้องการ (นานๆ ครั้ง)
+- ปี 5: library ครอบคลุม use cases ส่วนใหญ่ → admin ทำเองได้ 95%+
+
+### Pillar 2: Template Gallery
+ห้องสมุดของ template ทั้งหมด ทั้ง built-in และที่ admin สร้าง
+
+- Browse แบบ Canva: thumbnails แต่ละหน้าของ template (horizontal scroll)
+- คลิก template → ดูแต่ละหน้าละเอียด
+- คลิก element ในนั้น → ดู settings ของ element นั้น
+- มี metadata: ปีที่สร้าง, ผู้สร้าง, list ของ elements ที่ใช้, preview ของทุกหน้า
+
+### Pillar 3: Mix & Match Editor (Canva-grade)
+Editor ที่ใช้ template เป็นจุดเริ่ม แล้วปรับได้ทุกระดับ — ทั้งโครงสร้างและรายละเอียด
+
+**Element interaction:**
+- เลือก template เป็นจุดเริ่ม (built-in หรือจาก gallery ก็ได้)
+- คลิก element → property panel เปิดด้าน properties
+- **Swap variant:** เลือก variant อื่นของ element นี้ → JSX structure เปลี่ยน
+- **Mix & match:** หยิบ variant จาก template อื่น (e.g., button Atelier + card Editorial)
+- **Edit properties** ละเอียด (3 tiers)
+
+**Positioning model:**
+- Slot-based + free positioning within slot
+- หน้ามี slots ที่ template กำหนด (top-bar, hero, columns, footer, edges)
+- Admin **drag element** ระหว่าง slots ได้
+- ภายใน slot — element สามารถ free-position ได้บางส่วน (alignment, offset)
+- Responsive: ระบบ adjust ตาม viewport (mobile/tablet/desktop) อัตโนมัติ
+
+**3 tiers of editing (per Layer 1/2/3 architecture):**
+- **Tier 1 (Simple)** — สี, ขนาด, spacing, font, gradient picker, shadow controls
+  - ปรับ Layer 1 (theme tokens) — ทั้ง template เปลี่ยนพร้อมกัน
+- **Tier 2 (Element-specific)** — ปรับ vars ของ element นั้นโดยเฉพาะ
+  - ปรับ Layer 2 — แค่ element นี้เปลี่ยน, element อื่นยังเหมือนเดิม
+- **Tier 3 (Advanced CSS)** — custom CSS textarea
+  - ปรับ Layer 3 — สำหรับ admin ที่อยากเข้าลึก
+  - มี warning "เก็บเฉพาะ dev"
+
+**What admin can edit (95% no-code):**
+- ✅ Visual properties ทั้งหมด: color, gradient, shadow, border, radius, size, spacing
+- ✅ Typography: font family, size, weight, letter-spacing, line-height
+- ✅ Animation presets: fade/slide/scale/glow/pulse + duration/easing
+- ✅ Hover/click effects (presets)
+- ✅ Icons: swap icon (Lucide library 1000+), upload SVG (Phase 2)
+- ✅ Custom CSS (Tier 3, advanced)
+- ✅ Drag positioning ระหว่าง slots
+- ✅ Variant swap + mix & match
+
+**What requires developer (5%):**
+- ❌ Create new element TYPE from scratch (visual programming = beyond scope)
+- ❌ Add new HTML structure to existing variant (= new variant, dev codes once)
+- ❌ JavaScript-driven complex animations (mouse-tracking, scroll-linked)
+- ❌ New state machines / behavior logic
+
+When admin needs something not in library → request to dev → dev codes new element/variant **once** → returns to library → all future admins use it.
+
+**Live + Responsive preview:**
+- Real-time preview ในขณะแก้
+- Toggle viewport: mobile / tablet / desktop
+- WYSIWYG: editor preview === production render
+
+### Pillar 4: Save as New Template (Heritage System)
+เมื่อ admin ปรับจน "ลงตัว" → กดบันทึก → ระบบเก็บเข้า gallery
+
+- เก็บเป็น **snapshot** (copy ค่าทั้งหมดในเวลานั้น) — ไม่ใช่ reference
+- เหตุผล snapshot: ระบบกันการแตกหักย้อนหลัง — ถ้า source template ถูกลบ/แก้ ปีต่อๆ มาที่หยิบไปยังใช้ได้
+- Auto-extract: element variants ที่ admin สร้างใหม่ → เพิ่มเข้า Element Catalog ด้วย
+- Template ใหม่นี้ = "ผลงานปี" ของ admin คนนั้น เข้า heritage
+
+---
+
+## 4. Terminology Dictionary
+
+User เรียก / Industry term / ความหมาย
+
+| User term (ไทย) | Industry term (EN) | ความหมาย |
+|---|---|---|
+| **Element** | Element / Component (atomic) | หน่วยเล็กสุดที่ user มอง: 1 ปุ่ม / 1 card / 1 ข้อความใหญ่ |
+| **Element Type** | Element type | "kind" ของ element (`voteCTA-button`, `banner-section`, ...) — registry รู้จัก |
+| **Variant** | Variant | Element type เดียวกัน คนละ structure/design (e.g., `voteCTA-button:atelier` vs `voteCTA-button:funny-chunky`) |
+| **Library** | Element Library / Asset library | คลังของทุก element type + ทุก variants (เหมือน Canva sidebar) |
+| **Section** | Section / Region | กลุ่ม elements ที่อยู่ด้วยกัน (e.g., hero section = SAMO 50 text + subtitle + countdown) |
+| **Page / Screen** | Page / Screen | ทั้งหน้า (home / vote / results / closed / etc.) |
+| **Layout** | Layout / Structure | โครงสร้าง slots ของหน้า (grid system, navigation position) |
+| **Slot** | Slot | ตำแหน่งใน layout ที่รับ element ได้ (top-bar, hero, columns, ...) |
+| **Theme** | Theme / Design tokens | สี / font / spacing scale ทั้งระบบ (Layer 1) |
+| **Template** | Template / Design preset | Layout + Theme + Element compositions รวมกัน |
+| **Gallery** | Template gallery | ที่เก็บ templates ทั้งหมด (built-in + admin-created) |
+| **Snapshot** | Snapshot | Template ที่บันทึก (copy ค่าทั้งหมด ไม่ใช่ reference) |
+
+**คำที่ผม (Claude) จะใช้ในการสื่อสาร:** เลือกตามที่ user ใช้ — ถ้า user เรียก "element" ผมก็เรียก "element"
+
+---
+
+## 5. Key Design Decisions (Confirmed)
+
+### D1-v2: Architecture — 3-Layer CSS Variables + Inline Override (UPDATED 2026-05-22)
+- ✅ Supersedes original D1 (per-element inline only)
+- **Layer 1**: Theme tokens (template-wide) — `--color-*`, `--radius-*`, `--shadow-*`, `--font-*`
+- **Layer 2**: Element-scope vars (component-specific) — `--btn-*`, `--card-*`, etc.
+- **Layer 3**: Inline style overrides (admin per-instance customization)
+- ✅ Resolves VISION I1 contradiction (3 layers separation)
+- ✅ Variant components live in `src/components/elements/<element-id>/<variant>.jsx`
+- 📄 See ADR-001-architecture.md for full architecture
+- Day 4 inline-style work to be refactored to Layer 1+2 (~5-8 days)
+- Original D1 preserved as "Layer 3 only" — still valid for admin overrides
+
+### D9: Token Naming Convention (NEW 2026-05-22)
+- **Layer 1**: category prefix + system role
+  - `--color-primary`, `--color-accent`, `--color-surface`, `--color-bg`, `--color-text`
+  - `--radius-button`, `--radius-card`
+  - `--shadow-card`, `--shadow-button`
+  - `--font-display`, `--font-body`
+- **Layer 2**: component prefix + role
+  - `--btn-bg`, `--btn-text`, `--btn-radius`
+  - `--card-bg`, `--card-border`
+- **Rule**: Layer 1 = system roles only (no component names)
+- **Rule**: No double prefix (avoid `--theme-color-primary`)
+
+### D10: Element-Scope Mechanism — data-element Attribute (NEW 2026-05-22)
+- Scoping selector: `[data-element="<element-id>"]`
+- Each variant component renders `<X data-element="<element-id>">` on root
+- **Critical rule**: Every element MUST declare Layer 2 var defaults at element root
+  to prevent CSS variable inheritance bugs when elements are nested
+- Pattern: `background: var(--btn-bg, var(--color-primary))` (fallback chain)
+- Layer 3 (inline style) wins via standard CSS specificity
+
+### D11: Unified Render Pipeline (NEW 2026-05-22)
+- Live page AND editor preview share single render pipeline
+- Root component receives config from either source:
+  - Live: API → resolved template → root
+  - Editor: editor state → root
+- Same `<style>` block emitted in both contexts
+- Guarantees WYSIWYG: editor preview === production render
+
+### D12: Element Library Mental Model (NEW 2026-05-23)
+- Library = Canva-style sidebar with **grouped folders** (element type → variants inside)
+- Element types are **registered centrally** (Element Type Registry)
+- Variants are **React component files** in `src/components/elements/<type>/<variant>.jsx`
+- Library shows: dev-coded variants + admin-saved variants (merged)
+- Admin browses → drags variant from library → drops into template → edits
+- See ADR-001 v1.2 "Element Library + Registry" section
+
+### D13: 95% No-Code Scoping (NEW 2026-05-23)
+**Hybrid model — what admin can vs can't do:**
+
+✅ Admin can (no-code, 95% of vision):
+- Edit ALL visual properties (color, gradient, shadow, border, radius, typography)
+- Animation presets + duration/easing
+- Swap variants + mix & match across templates
+- Drag elements between slots (slot-based positioning)
+- Custom CSS textarea (Tier 3 advanced)
+- Save as new template → enters heritage gallery
+- Save new variants → enters element library
+
+❌ Admin can't (requires developer):
+- Create new element TYPE from scratch (= visual programming, hard limit)
+- Add new HTML structure to variant (= becomes new variant, dev codes once)
+- Complex JS-driven animations (scroll-linked, mouse-tracking)
+- New behavior/state machine logic
+
+When admin needs structure that doesn't exist:
+→ Request to dev → dev codes new variant **once** → added to library → all future admins use it.
+→ Library grows over years, dev requests decrease.
+
+### D14: Positioning Model — Slot + Free Within Slot (NEW 2026-05-23)
+- Layout = template defines **slots** (top-bar, hero, left-col, right-col, footer, edges)
+- Admin drags element **between slots** to reorder
+- Within a slot, element can free-position (alignment, offset)
+- Slot boundaries are responsive (mobile/tablet/desktop adjust automatically)
+- Free positioning is bounded by slot — no pure Figma-style infinite canvas (would break responsive)
+
+### D2: Element granularity — Atomic UI components
+- ✅ "1 button = 1 element", "1 timer = 1 element", "1 hero text = 1 element"
+- ✅ MeetCandidatesCard = 1 element (ทั้งการ์ด — ไม่แตกย่อย)
+- ✅ ไม่แยก sub-elements เช่น "button-bg" + "button-text"
+
+### D3: Layout system — Grid-based responsive (compromise)
+- ✅ Ideal: Figma/Canva free positioning (acknowledged แต่ยอม compromise)
+- ✅ Realistic: Grid-based responsive system
+- ✅ Grid ต้อง work ทุก viewport: mobile / tablet / notebook / desktop
+- ✅ Admin วาง element ใน slot → ระบบ handle responsive
+
+### D4: Element behavior — Self-contained "Lego brick"
+- ✅ Container-aware (ปรับตาม width slot)
+- ✅ Snapshot-friendly (config ทั้งหมดใน element เอง)
+- ⚠️ **Smart contrast hint** (เพิ่มจาก user clarification):
+  - ระบบควรช่วยแนะนำสี text ตาม background (ทึบ ↔ สว่าง)
+  - แต่ admin มีอำนาจตัดสินใจสุดท้าย (override ได้)
+  - ไม่บังคับ — เป็น hint/suggestion เท่านั้น
+
+### D5: Save model — Snapshot (deep copy)
+- ✅ Snapshot at save time, not reference
+- ✅ Auto-extract new element variants → Element Catalog
+- ✅ ภาคใช้: ระบบ resilient ต่อการลบ/แก้ source template
+
+### D6: Editor UX — Two-tier properties
+- ✅ Tier 1 (Simple): สี, ขนาด, spacing — default visible
+- ✅ Tier 2 (Advanced): CSS raw — expand + warning
+- ✅ ไม่บังคับ admin เลือก tier — แสดง Tier 1 ก่อน, ขยายเข้า Tier 2 ได้
+
+### D7: Compatibility/validation — Grid enforces, admin decides
+- ✅ Element ใหม่ที่ swap เข้ามาต้อง fit slot เดิม (ระบบบังคับ)
+- ✅ "ทุก element ต้อง adjust กับ space ที่มี" = container query / flex / responsive
+- ⚠️ ถ้า element ใหม่ design ไม่เข้ากันกับ theme อื่น (e.g., chunky border ใน editorial) — ปล่อยให้ admin ตัดสิน, อาจมี hint ว่า "design นี้อาจไม่เข้ากับ theme ปัจจุบัน"
+
+### D8: Gallery UX — Horizontal scroll thumbnails + drill-down
+- ✅ Template gallery: thumbnails แต่ละหน้า horizontal scroll
+- ✅ คลิก template → ดูแต่ละหน้าละเอียด
+- ✅ คลิก element → ดู settings + CSS (expand)
+- ✅ Element gallery: หมวดหมู่ตาม template + ตามหน้า
+- ✅ In-place swap ใน editor (popup แสดง variants)
+
+---
+
+## 6. Implications & Constraints (ที่ vision นี้บังคับ)
+
+### I1: Architecture ต้องแยก 3 layers ชัดเจน
+```
+Template = Layout (slots) + Theme (tokens) + Elements (compositions)
+```
+- Layout = where things live (grid)
+- Theme = visual tokens (color/font/spacing)
+- Elements = filled slots with theme applied
+
+แยกออกจากกัน → swap element ข้าม template ไม่พังกัน
+
+### I2: ทุก element ต้องเป็น "Lego brick"
+- Container-aware (responsive ในตัว)
+- Theme-independent หรือ theme-aware (รับ theme tokens เข้ามา)
+- Self-contained config (snapshot ได้)
+
+### I3: Element ต้อง versionable + portable
+- Element variant ของปี 2570 ต้องใช้ได้ในปี 2580
+- ห้าม breaking changes ใน element schema (additive only)
+- = schema versioning + migration system
+
+### I4: Editor ต้องเป็น 1st-class citizen
+- ของเดิม: election system + admin tool
+- ของใหม่: election system + **Canva-grade editor**
+- = editor UX มีน้ำหนักเท่ากับ election functionality
+
+### I5: Long-term thinking
+- ระบบต้องอยู่ 10 ปีโดยไม่ refactor core
+- = invest ใน architecture ดี > ship features ไว
+- = ทุก design decision ต้อง ask "อันนี้ใช้ได้อีก 10 ปีไหม"
+
+---
+
+## 7. Generational Continuity Goal (10-Year)
+
+### หลักการ
+ระบบนี้ไม่ใช่ของ admin คนใดคนหนึ่ง — เป็น **สมบัติของสโมสรนักศึกษาคณะวิทยาการจัดการ**
+
+ทุก template ที่ admin สร้างจะถูกเก็บไว้:
+- ปีถัดไปเอามาใช้ต่อได้
+- ปีถัดๆ ไปดูเป็น inspiration ได้
+- 10 ปีผ่าน — gallery จะเต็มไปด้วยผลงานของรุ่นพี่
+
+### Implications สำหรับ design
+- **Database schema** ต้อง forward-compatible (เก่าอ่านได้, ใหม่อ่านได้)
+- **Element schema** ต้อง additive (เพิ่มได้, ไม่ลบ)
+- **Migration tools** เผื่อ schema เปลี่ยนใหญ่
+- **Documentation** สำหรับ admin รุ่นต่อไป (วิธีใช้, วิธีสร้าง template)
+- **Self-hosted** (faculty IT มี DB access) — ไม่พึ่ง cloud service ภายนอก
+
+### สิ่งที่ระบบ "ส่งต่อ" จริงๆ
+1. Template snapshots (สำเร็จรูป — โหลดมาใช้เลย)
+2. Element variants library (ผสมข้าม templates ได้)
+3. Design language ของแต่ละปี (สะสม)
+4. Code base ที่ใช้งานได้ (ไม่ต้อง rewrite)
+
+---
+
+## 8. Open Questions / Pending Decisions
+
+ส่วนนี้ track สิ่งที่ยังไม่ตัดสินใจ — update เมื่อมีคำตอบ
+
+### OQ1: Layout system technical foundation
+- Grid framework: CSS Grid? Tailwind grid? Custom?
+- Slot definition: explicit (named slots like Vue) หรือ flexible (drag-to-position)?
+- **Status:** Pending — ต้องคิดใน architecture design session
+
+### OQ2: Element variant storage
+- เก็บแยกไฟล์ต่อ variant หรือ in-database?
+- Built-in variants vs admin-created variants — แยก path?
+- **Status:** Pending — ต้องดู scale (กี่ variants ใน 10 ปี?)
+
+### OQ3: Editor performance with deep customization
+- เปลี่ยน element → re-render ทั้งหน้า? ใช้ Suspense?
+- CSS-in-JS vs inline style vs CSS variables — มี performance trade-off
+- **Status:** Pending — ต้อง prototype
+
+### OQ4: Smart contrast hint algorithm
+- WCAG contrast ratio check?
+- เตือนเฉยๆ หรือเสนอสีแทน?
+- **Status:** Pending — D4 acknowledged แต่ implementation ยังไม่ตัดสิน
+
+### OQ5: Heritage versioning — backward compat
+- ปี 2580 admin โหลด template ปี 2570 → ระบบทำยังไง?
+- Auto-migrate? Show as-is? Locked version?
+- **Status:** Pending — สำคัญสำหรับ 10-year goal
+
+### OQ6: Plugin/framework future
+- User mention "อยากทำ plugin ใช้กับเว็บอื่น"
+- ตอนนี้ scope = election system
+- แต่ architecture ควรเตรียมไว้สำหรับ extraction ไหม?
+- **Status:** Not active scope — keep in mind for architecture decisions
+
+---
+
+## 9. Out of Scope (ที่ระบบนี้จะ NOT เป็น)
+
+ชัดเจนว่าระบบนี้ **ไม่ใช่**:
+
+- ❌ Generic CMS (Wordpress, Webflow) — แม้จะคล้าย แต่ scope = election
+- ❌ Code editor (VS Code-style) — admin ไม่ควรเห็น code (ยกเว้น advanced tier)
+- ❌ Multi-tenant SaaS — 1 deployment = 1 faculty
+- ❌ Real-time collaborative (Figma-style multi-cursor) — single admin per session
+- ❌ Full freeform canvas (Figma-grade) — grid-based slot system แทน
+- ❌ AI-generated designs (current scope) — admin design manually
+
+---
+
+## 10. Change Log
+
+| Date | Version | Change |
+|------|---------|--------|
+| 2026-05-21 | 1.0 | Initial vision document created from Day 4 conversation. 4 pillars + 8 design decisions + 6 open questions captured. |
+| 2026-05-21 | 1.1 | Added realistic timeline to Appendix B. Confirmed hard deadline = election Feb 2027, soft milestone = mid-June 2026 (semester start). 9-month development arc, 5-phase plan. |
+| 2026-05-22 | 1.2 | Architecture decision: D1 superseded by D1-v2 (3-layer CSS variables + inline override). Added D9 (token naming), D10 (data-element scoping + fallback chain), D11 (unified render pipeline). See ADR-001-architecture.md. |
+| 2026-05-23 | 1.3 | Pillar 1 expanded (Canva library mental model). Pillar 3 expanded (3-tier editor, slot+free positioning, what admin can/can't). Added D12 (Element Library), D13 (95% no-code scoping with hard limit on creating new element types), D14 (slot + free within slot positioning). Terminology expanded (Element Type, Library, Slot, Snapshot). Vision-fidelity skill created in parallel. |
+
+---
+
+## Appendix A: Confirmed Templates Pool (Research)
+
+User ส่งมา 6 templates เป็น research/inspiration (ไม่ใช่ ship ทั้งหมด):
+
+| Template | Identity | Status |
+|---|---|---|
+| Atelier 50 | Bone paper + cobalt, gallery/museum coded | Research |
+| Editorial Narrative | Cream + oxblood serif, magazine-coded | Research |
+| Studio Dark | Warm dark + lime, Awwwards-coded | Research |
+| Verdure | Moss + cream + terracotta, earth | Research |
+| funny (Active Pulse) | Cream + pink/lime, Gumroad-coded | Research |
+| dark_design | Purple + magenta + amber, editorial dark | Research |
+
+**Note:** Templates เหล่านี้ช่วย derive ว่า engine ต้องรองรับอะไรบ้าง (layouts, fonts, treatments) — ไม่ใช่ deliverable list
+
+---
+
+## Appendix B: Current State + Timeline
+
+### Current State (as of doc creation)
+- **Phase:** Phase 3 Day 4 (paused at Step 4 for vision capture)
+- **Latest commit:** 4 commits past `0d1c09f` (page bg + banner + stats sub-cards + stats hero)
+- **Working:** voteCTA + CountdownTimer + Day 4 Steps 1-4 done
+- **Pending:** MeetCandidatesCard migration, then re-evaluate vs new vision
+- **Architecture:** per-element inline style (D1)
+- **Element catalog:** 47 instances, 16 types
+
+### Realistic Timeline (confirmed May 21, 2026)
+
+**Hard deadline:** Election day = February 2027 (~9 months out)
+**Soft milestone:** v1 production-ready by mid-June 2026 (before user's semester starts)
+
+```
+Phase 1 — Before 15 June 2026 (~3 weeks intense):
+  Week 1: Day 4 finish + Architecture design
+  Week 2: 1 template production-ready + Editor Tier 1
+  Week 3: Save/load + polish + buffer
+
+Phase 2 — June-October 2026 (5 months, steady pace):
+  Layout slot system, smart contrast, 2-tier editor,
+  Template #2, save as new template, variant gallery basic
+
+Phase 3 — November 2026 - January 2027 (3 months):
+  Templates #3 + #4, mix & match, heritage gallery,
+  multi-admin, documentation, dry runs
+
+Phase 4 — February 2027:
+  ELECTION DAY — system in production use
+
+Phase 5 — March-April 2027:
+  Post-election polish, final deploy, junior handoff
+```
+
+**Total active development:** ~9 months
+**Vision completion target:** ~90% by election day, 100% by post-election polish
+
+### Plan Rationale
+- User has semester break NOW (mid-June 2026 = start of classes)
+- Wants v1 stable before classes (less stress while studying)
+- Election is the hard deadline — system must work then
+- "ทำเรื่อยๆ" during semester = sustainable, no burnout
+- Post-election = handoff-quality polish for juniors
+
+---
+
+## Appendix C: For Future Claude Sessions
+
+ถ้าคุณคือ Claude ที่เพิ่งเริ่ม session ใหม่กับ user คนนี้:
+
+1. **อ่านเอกสารนี้ทั้งหมดก่อน**
+2. **อย่าตีความ vision ใหม่** — ถามถ้าไม่แน่ใจ
+3. **เคารพ Open Questions** — ห้ามสมมุติคำตอบ
+4. **เคารพ Out of Scope** — ห้ามเสนอ feature นอก scope
+5. **User เรียก "คุณ"** ไม่ใช่ "พี่" (user request)
+6. **User เน้น honest > encouraging** — บอกตรงๆ ถ้ามีกังวล
+7. **Workflow:** spec.md + English Claude Code prompt (text inline ใน chat) เสมอ
+8. **ทุก step → ใช้ memory จาก DECISIONS.md (P-LOG-001 through P-LOG-016)**
+
+User trusts deeply but expects quality. Earn it through honest, careful work.
+
+---
+
+## END OF VISION DOCUMENT
+
+This is the heart of the project. Treat it with care.
+
+🎯

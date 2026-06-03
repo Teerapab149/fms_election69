@@ -7,6 +7,7 @@ import { Lock, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Navbar from "../../components/Navbar";
 import SiteFooter from "../../components/SiteFooter";
+import PageThemeOverrides from "../../components/PageThemeOverrides";
 
 export default function ClosedPage() {
     const { data: session } = useSession();
@@ -81,6 +82,7 @@ export default function ClosedPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+            <PageThemeOverrides page="closed" />
             <Navbar />
 
             <main className="flex-grow flex flex-col items-center justify-center p-4">
