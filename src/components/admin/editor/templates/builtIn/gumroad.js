@@ -18,11 +18,13 @@
  *   - voteCTA hand-stamped button ......... variant: "chunky-stamp" (already shipped)
  *   - Pop-colour cards .................... per-element configs (stats / meet / countdown)
  *
+ * RESOLVED (impeccable typeset pass): Archivo Black + Space Grotesk now load via
+ * next/font (layout.js → --font-archivo / --font-space-grotesk). GumroadHome's --fd
+ * (display) + --fm (mono) reference those vars; the --font-display token resolves
+ * through them too. Headings now render in real Archivo Black; Thai still falls
+ * through to Kanit by design (Archivo Black is latin-only).
+ *
  * KNOWN GAPS (honest, carry-forward — same class modern-dark accepted):
- *   - Display font (Archivo Black) does NOT render yet: --font-display is declared
- *     but no component consumes var(--font-display) (body uses Tailwind font-sans →
- *     Prompt/Kanit). Token is set correctly for when font-consumption is wired
- *     (a separate cross-template task). Until then titles stay in the site sans.
  *   - Stats cards' hard-offset shadow can't be config-driven: StatsBlock's shadow
  *     (shadow-xl / shadow-sm) + border-width are fixed Tailwind classes. We DO
  *     drive their pop bg + ink borders + ink numbers; the hard shadow would need a
@@ -105,8 +107,10 @@ export const gumroadTemplate = {
       "--radius-button":     "14px",
       "--shadow-card":       SHADOW_HARD,
       "--shadow-button":     SHADOW_HARD,
-      // Display font set for future consumption (see KNOWN GAPS — not rendered yet).
-      "--font-display":      "'Archivo Black', 'Kanit', system-ui, sans-serif",
+      // Display font now LOADED via next/font (layout.js → --font-archivo). The
+      // next/font var resolves first; the literal name is the fallback for any
+      // context where layout's body vars aren't in scope.
+      "--font-display":      "var(--font-archivo), 'Archivo Black', 'Kanit', system-ui, sans-serif",
       "--font-body":         "'Kanit', system-ui, sans-serif"
     }
   },

@@ -1,6 +1,6 @@
 import './globals.css';
 import Providers from "../components/Providers";
-import { Prompt, Kanit } from 'next/font/google';
+import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -65,6 +65,33 @@ const kanit = Kanit({
   display: 'swap',
 });
 
+// Display + mono families for the committed templates (gumroad "Active Pulse" et al).
+// Archivo Black = chunky blocky headings; Space Grotesk = mono labels / data.
+// Latin-only: Thai script always falls through to Kanit (see GumroadHome --fd/--fm).
+const archivoBlack = Archivo_Black({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-archivo',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+// Site-wide body font: Anuphan — a loopless (ไม่มีหัว) modern humanist Thai sans.
+// Replaces Kanit as the default `font-sans` (tailwind.config.js). Kanit stays
+// loaded as the fallback + for long-form text on future pages (user's exception).
+const anuphan = Anuphan({
+  subsets: ['thai', 'latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-anuphan',
+  display: 'swap',
+});
+
 export const metadata = {
   title: 'SAMO 49 - FMS Election 2026',
   description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
@@ -94,7 +121,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} font-sans antialiased`}>
+      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}

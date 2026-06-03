@@ -33,20 +33,22 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 // ── Bento countdown (gumroad-styled; reuses ELECTION_CONFIG timing) ──
 function GumroadCountdown({ systemMode = "AUTO" }) {
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
-  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, label: "STARTS IN" });
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, label: "STARTS IN", sub: "เปิดรับลงคะแนนใน", live: false });
   useEffect(() => {
     const calc = () => {
       const now = Date.now();
-      let diff, label;
-      if (systemMode === "PAUSE") { label = "PAUSED"; diff = 0; }
-      else if (systemMode === "ENDED") { label = "ENDED"; diff = 0; }
-      else if (systemMode === "MANUAL_OPEN") { label = "CLOSES IN"; diff = ELECTION_END - now; }
-      else if (now < ELECTION_START) { label = "STARTS IN"; diff = ELECTION_START - now; }
-      else if (now < ELECTION_END) { label = "CLOSES IN"; diff = ELECTION_END - now; }
-      else { label = "ENDED"; diff = 0; }
+      // Phase + Thai sub-label mirror CountdownTimer.js conditions:
+      //  before→opens, running→closes, paused/ended→already-closed.
+      let diff, label, sub, live = false;
+      if (systemMode === "PAUSE") { label = "PAUSED"; sub = "พักลงคะแนนชั่วคราว"; diff = 0; }
+      else if (systemMode === "ENDED") { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
+      else if (systemMode === "MANUAL_OPEN") { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
+      else if (now < ELECTION_START) { label = "STARTS IN"; sub = "เปิดรับลงคะแนนใน"; diff = ELECTION_START - now; }
+      else if (now < ELECTION_END) { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
+      else { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
       setT(diff > 0
-        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label }
-        : { d: 0, h: 0, m: 0, s: 0, label });
+        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label, sub, live }
+        : { d: 0, h: 0, m: 0, s: 0, label, sub, live });
     };
     calc();
     const id = setInterval(calc, 1000);
@@ -55,7 +57,7 @@ function GumroadCountdown({ systemMode = "AUTO" }) {
   const cells = [{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }];
   return (
     <div className="gh-cd" data-element="hero-countdown">
-      <div className="gh-cd__lbl"><span className="gh-livedot" />{t.label} · ปิดรับลงคะแนนใน</div>
+      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · {t.sub}</div>
       <div className="gh-cd__grid">
         {cells.map((c, i) => (
           <div key={i} className="gh-cd__cell">
@@ -117,11 +119,15 @@ export default function GumroadHome({
     if (b) return globalConfig[b] ?? def;
     return effectiveConfigs?.[id]?.config?.text ?? def;
   };
-  const getTextStyle = (id) => {
+  const getTextStyle = (id, opts = {}) => {
     const c = effectiveConfigs?.[id]?.config || {};
     const st = {};
-    if (c.fontSize) st.fontSize = SIZE_MAP[c.fontSize];
-    if (c.color) st.color = c.color;
+    // skipSize / skipColor: the gumroad layout owns display sizing + ink colour
+    // (part of the layout identity, Rule 9). A stale/inherited value in saved
+    // config must NOT override it — that's what pinned the hero title to 3rem and
+    // tinted the subtitle navy (#374151) instead of the design's ink black.
+    if (c.fontSize && !opts.skipSize) st.fontSize = SIZE_MAP[c.fontSize];
+    if (c.color && !opts.skipColor) st.color = c.color;
     if (c.fontWeight) st.fontWeight = WEIGHT_MAP[c.fontWeight];
     if (c.align) st.textAlign = c.align;
     return Object.keys(st).length ? st : undefined;
@@ -175,6 +181,34 @@ export default function GumroadHome({
     : getText("hero-year-badge", `ประจำปีการศึกษา ${globalConfig.academicYearTh}`);
   const sysMode = initialData?.systemMode || "AUTO";
 
+  // Real party count from DB (number > 0 = real party; 0 = งดออกเสียง, -1 = ไม่รับรอง).
+  // Drives the ticker + meet-card copy so they never hardcode a stale "2".
+  const realParties = (initialData?.candidates || []).filter((c) => c.number > 0);
+  const partyCount = realParties.length || (editorMode ? 2 : 0);
+
+  // Central config (globalConfig) — every year / name on the page reads from here,
+  // never hardcoded. electionCalendarYear is the ค.ศ. year ("FMS ELECTION 2027"),
+  // NOT academicYearTh (พ.ศ.).
+  const facultyEn = globalConfig.facultyShortEn || "FMS";
+  const calendarYear = globalConfig.electionCalendarYear || "";
+  const uni = globalConfig.university || "PSU";
+  const samoPrefix = globalConfig.electionNamePrefix || titlePart || "SAMO";
+  const samoNumber = numberPart || String(globalConfig.electionNumber ?? "");
+  const orgName = globalConfig.organizationName || "";
+  const copyrightYear = globalConfig.copyrightYear || calendarYear;
+
+  // Eyebrow status sticker — replaces the old decorative "LIVE BALLOT" (the
+  // original design's clock, now redundant with the bento countdown). Reflects
+  // real election state so the slot earns its place.
+  const statusInfo = (() => {
+    switch (initialData?.electionStatus) {
+      case "ONGOING": return { label: "เปิดลงคะแนนแล้ว", live: true, cls: "gh-sticker--paper" };
+      case "ENDED":   return { label: "ปิดลงคะแนนแล้ว", live: false, cls: "gh-sticker--paper" };
+      case "CLOSED":  return { label: "พักลงคะแนนชั่วคราว", live: false, cls: "gh-sticker--paper" };
+      default:        return { label: "ใกล้เปิดลงคะแนน", live: false, cls: "gh-sticker--paper" };
+    }
+  })();
+
   return (
     <div className="fms-app gh-root">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
@@ -203,7 +237,7 @@ export default function GumroadHome({
         <div className="gh-ticker__track">
           {[0, 1].map((k) => (
             <span key={k} className="gh-ticker__item">
-              ★ FMS ELECTION 2026 <Dot /> SAMO {numberPart || "50"} <Dot /> CAST YOUR VOTE <Dot /> สโมสรนักศึกษาคณะวิทยาการจัดการ <Dot /> 2 PARTIES RUNNING <Dot /> POWERED BY PSU PASSPORT <Dot />
+              ★ {facultyEn} ELECTION {calendarYear} <Dot /> {samoPrefix} {samoNumber} <Dot /> CAST YOUR VOTE <Dot /> {orgName} <Dot /> {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"} RUNNING <Dot /> POWERED BY {uni} PASSPORT <Dot />
             </span>
           ))}
         </div>
@@ -214,28 +248,32 @@ export default function GumroadHome({
         {/* LEFT */}
         <div className="gh-home__left">
           <div className="gh-eyebrow">
-            <span className="gh-sticker gh-sticker--lime">⚡ FMS ELECTION 2026</span>
-            <span className="gh-sticker gh-sticker--rotate"><span className="gh-livedot" /> LIVE BALLOT</span>
+            <span className="gh-sticker gh-sticker--lime">⚡ {facultyEn} ELECTION {calendarYear}</span>
+            <span className={`gh-sticker ${statusInfo.cls} gh-sticker--rotate`}>
+              {statusInfo.live && <span className="gh-livedot" />} {statusInfo.label}
+            </span>
           </div>
 
           <Wrap id="hero-title">
-            <h1 className="gh-title" data-element="hero-title" style={getTextStyle("hero-title")}>
+            <h1 className="gh-title" data-element="hero-title" style={getTextStyle("hero-title", { skipSize: true })}>
               {titlePart}
               {numberPart && <><br /><em>{numberPart}</em></>}
             </h1>
           </Wrap>
 
           <Wrap id="hero-subtitle">
-            <p className="gh-subtitle" data-element="hero-subtitle" style={getTextStyle("hero-subtitle")}>
-              <span className="gh-hl">{getText("hero-subtitle", globalConfig.campaignTitle)}</span>{" "}
-              {getText("hero-subtitle2", globalConfig.organizationName)} <strong>{yearText}</strong>
+            <p className="gh-subtitle" data-element="hero-subtitle" style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true })}>
+              {/* line 1 — project name: the punchy lead (lime marker box) */}
+              <span className="gh-subtitle__lead"><span className="gh-hl">{getText("hero-subtitle", globalConfig.campaignTitle)}</span></span>
+              {/* line 2 — organization: quieter supporting line (smaller, lime chip, no box) */}
+              <span className="gh-subtitle__org">{getText("hero-subtitle2", globalConfig.organizationName)}</span>
             </p>
           </Wrap>
 
           {isVisible("hero-year-badge") && (
             <Wrap id="hero-year-badge">
               <div className="gh-yearrow">
-                <span className="gh-sticker gh-sticker--paper"><Calendar size={14} /> {yearText}</span>
+                <span className="gh-sticker gh-sticker--paper gh-sticker--year"><Calendar size={18} /> {yearText}</span>
               </div>
             </Wrap>
           )}
@@ -244,7 +282,6 @@ export default function GumroadHome({
             <Wrap id="voteCTA-button">
               <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} />
             </Wrap>
-            <a href={getPath("/candidates")} className="gh-btn gh-btn--lime gh-btn--lg">รู้จักผู้สมัคร <ArrowRight size={18} /></a>
           </div>
         </div>
 
@@ -275,7 +312,7 @@ export default function GumroadHome({
             <a href={editorMode ? undefined : getPath("/candidates")} className="gh-meet gh-span2" data-element="meet-section">
               <div>
                 <h3 className="gh-meet__title">{getText("meet-title", "รู้จักผู้สมัครของคุณหรือยัง?")}</h3>
-                <p className="gh-meet__sub">2 พรรคในปีนี้ · ดูวิสัยทัศน์ก่อนลงคะแนน</p>
+                <p className="gh-meet__sub">{partyCount} พรรคในปีนี้ · ดูวิสัยทัศน์ก่อนลงคะแนน</p>
               </div>
               <span className="gh-btn gh-btn--pink">ดูรายชื่อพรรค <ArrowRight size={16} /></span>
             </a>
@@ -285,7 +322,7 @@ export default function GumroadHome({
 
       {/* ── FOOTER ── */}
       <footer className="gh-footer">
-        <div>© FMS@PSU {globalConfig.academicYearTh || "2570"} · ALL RIGHTS RESERVED</div>
+        <div>© {facultyEn}@{uni} {copyrightYear} · ALL RIGHTS RESERVED</div>
         <div className="gh-footer__edition"><span className="gh-star">★</span> ACTIVE PULSE EDITION <span className="gh-star">★</span></div>
       </footer>
 
@@ -294,9 +331,11 @@ export default function GumroadHome({
           --ink:#1A1A1A; --ink2:#4A4A4A; --cream:#FFF1E5; --cream2:#FFE4CE; --paper:#FFF;
           --pink:#FF90E8; --lime:#B6FF6E; --yellow:#FFC900; --sky:#A8E1FF; --coral:#FF6E6E;
           --bw:2.5px; --sh:5px 5px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink); --sh-lg:8px 8px 0 var(--ink);
-          --fd:'Archivo Black','Kanit',system-ui,sans-serif;
+          --fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
+          --fm:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
+          --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
-          font-family:'Kanit',system-ui,sans-serif;
+          font-family:var(--fb);
           container-type:inline-size; container-name:gh;
           background:var(--cream);
           background-image:
@@ -324,14 +363,14 @@ export default function GumroadHome({
         /* buttons */
         .gh-btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 20px; border:var(--bw) solid var(--ink);
           border-radius:14px; background:var(--paper); color:var(--ink); font-weight:700; font-size:15px;
-          font-family:'Kanit',sans-serif; box-shadow:var(--sh-sm); cursor:pointer; white-space:nowrap;
+          font-family:var(--fb); box-shadow:var(--sh-sm); cursor:pointer; white-space:nowrap;
           transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gh-btn:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gh-btn:active{ transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
         .gh-btn--ink{ background:var(--ink); color:var(--cream); }
         .gh-btn--pink{ background:var(--pink); }
         .gh-btn--lime{ background:var(--lime); }
-        .gh-btn--lg{ padding:16px 26px; font-size:16px; border-radius:16px; box-shadow:var(--sh); }
+        .gh-btn--lg{ padding:18px 28px; font-size:17px; border-radius:16px; box-shadow:var(--sh); }
         .gh-btn--lg:hover{ transform:translate(-3px,-3px); box-shadow:var(--sh-lg); }
 
         /* ticker */
@@ -356,13 +395,23 @@ export default function GumroadHome({
         .gh-sticker--lime{ background:var(--lime); }
         .gh-sticker--paper{ background:var(--paper); }
         .gh-sticker--rotate{ transform:rotate(-3deg); }
+        /* year badge — deliberately larger than the eyebrow stickers */
+        .gh-sticker--year{ font-size:17px; padding:10px 20px; border-radius:14px; box-shadow:var(--sh-sm); }
 
-        .gh-title{ font-family:var(--fd); font-size:clamp(52px,15cqw,170px); line-height:.85; letter-spacing:-.04em;
+        .gh-title{ font-family:var(--fd); font-size:clamp(64px,14cqw,200px); line-height:.85; letter-spacing:-.04em;
           color:var(--ink); margin:0; text-transform:uppercase; }
         .gh-title em{ font-style:normal; background:var(--pink); display:inline-block; padding:0 12px; margin:10px 0 0;
           border:var(--bw) solid var(--ink); box-shadow:var(--sh); transform:rotate(-2deg); }
-        .gh-subtitle{ margin:28px 0 0; font-size:clamp(16px,2.4cqw,23px); font-weight:500; line-height:1.35; color:var(--ink); max-width:560px; }
-        .gh-hl{ background:var(--lime); padding:0 6px; border-radius:4px; border:1.5px solid var(--ink); box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+        .gh-subtitle{ margin:28px 0 0; font-size:clamp(19px,2.6cqw,26px); font-weight:600; line-height:1.5; color:var(--ink); max-width:580px; }
+        .gh-hl{ background:var(--lime); padding:2px 8px; border-radius:4px; border:1.5px solid var(--ink); font-weight:700;
+          box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+        /* line 1 — the punchy lead: big, heavy, in the bordered lime marker box */
+        .gh-subtitle__lead{ display:block; }
+        .gh-subtitle__lead .gh-hl{ font-size:clamp(20px,2.7cqw,27px); font-weight:800; letter-spacing:-.01em; }
+        /* line 2 — organisation: distinctly quieter — smaller, lighter, no box,
+           just a lime underline accent so the two lines read as different roles */
+        .gh-subtitle__org{ display:inline-block; margin-top:14px; font-size:clamp(14px,1.8cqw,18px);
+          font-weight:500; color:var(--ink); letter-spacing:.02em; border-bottom:3px solid var(--lime); padding-bottom:2px; }
         .gh-yearrow{ margin-top:20px; }
         .gh-cta{ margin-top:36px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
 
@@ -370,18 +419,18 @@ export default function GumroadHome({
         .gh-aside{ display:grid; grid-template-columns:1fr 1fr; gap:20px; min-width:0; }
         .gh-span2{ grid-column:1 / -1; }
         .gh-cd{ background:var(--ink); color:var(--cream); border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh-lg); padding:22px 26px; }
-        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',monospace; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.15em; color:var(--pink); }
+        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--fm); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.15em; color:var(--pink); }
         .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px; }
         .gh-cd__cell{ background:var(--cream); color:var(--ink); border-radius:12px; padding:10px 8px; text-align:center; }
-        .gh-cd__num{ font-family:var(--fd); font-size:clamp(24px,4cqw,42px); line-height:1; font-variant-numeric:tabular-nums; }
-        .gh-cd__unit{ font-family:'Space Grotesk',monospace; font-size:11px; color:var(--ink2); margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
+        .gh-cd__num{ font-family:var(--fd); font-size:clamp(26px,4.4cqw,44px); line-height:1; font-variant-numeric:tabular-nums; }
+        .gh-cd__unit{ font-family:var(--fm); font-size:11px; color:var(--ink2); margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
 
         .gh-stat{ position:relative; overflow:hidden; border:var(--bw) solid var(--ink); border-radius:22px; padding:22px; box-shadow:var(--sh); }
         .gh-stat--pink{ background:var(--pink); }
         .gh-stat--lime{ background:var(--lime); }
-        .gh-stat__lbl{ display:flex; align-items:center; gap:6px; font-family:'Space Grotesk',monospace; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
+        .gh-stat__lbl{ display:flex; align-items:center; gap:6px; font-family:var(--fm); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
         .gh-stat__val{ font-family:var(--fd); font-size:clamp(34px,6cqw,56px); line-height:1; margin-top:8px; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
-        .gh-stat__unit{ font-size:20px; font-family:'Kanit',sans-serif; font-weight:600; margin-left:8px; }
+        .gh-stat__unit{ font-size:20px; font-family:var(--fb); font-weight:600; margin-left:8px; }
         .gh-stat__sub{ font-size:13px; margin-top:8px; font-weight:500; position:relative; z-index:1; }
         .gh-ekg{ position:absolute; right:-12px; bottom:-10px; width:140px; opacity:.85; z-index:0; }
 
@@ -389,12 +438,12 @@ export default function GumroadHome({
           border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh); padding:22px 26px;
           transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gh-meet:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh-lg); }
-        .gh-meet__title{ margin:0; font-size:20px; font-weight:700; }
+        .gh-meet__title{ margin:0; font-size:22px; font-weight:700; }
         .gh-meet__sub{ margin:4px 0 0; font-size:14px; color:var(--ink2); }
 
         /* footer */
         .gh-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream);
-          display:flex; align-items:center; justify-content:space-between; gap:16px; font-family:'Space Grotesk',monospace; font-size:13px; flex-wrap:wrap; }
+          display:flex; align-items:center; justify-content:space-between; gap:16px; font-family:var(--fm); font-size:13px; flex-wrap:wrap; }
         .gh-footer__edition{ display:flex; gap:14px; align-items:center; }
         .gh-star{ color:var(--pink); font-size:18px; }
 

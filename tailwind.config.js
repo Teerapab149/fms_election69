@@ -9,7 +9,10 @@ module.exports = {
     extend: {
       // 1. ส่วน Font เดิมของคุณ (เก็บไว้)
       fontFamily: {
-        sans: ['var(--font-kanit)', 'sans-serif'],
+        // Site-wide default: Anuphan (loopless), Kanit as fallback.
+        sans: ['var(--font-anuphan)', 'var(--font-kanit)', 'sans-serif'],
+        // Explicit Kanit for long-form / dense text on future pages.
+        kanit: ['var(--font-kanit)', 'sans-serif'],
         prompt: ['var(--font-prompt)', 'sans-serif'],
       },
       // 2. ส่วน Animation ใหม่ (เพิ่มเข้าไป)
