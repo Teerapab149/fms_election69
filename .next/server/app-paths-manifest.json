@@ -1,7 +1,0 @@
-{
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/admin/templates/route": "app/api/admin/templates/route.js",
-  "/api/admin/templates/[id]/apply/route": "app/api/admin/templates/[id]/apply/route.js",
-  "/api/admin/templates/[id]/route": "app/api/admin/templates/[id]/route.js",
-  "/api/admin/templates/[id]/lock/route": "app/api/admin/templates/[id]/lock/route.js"
-}

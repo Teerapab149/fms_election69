@@ -42,3 +42,10 @@ yarn-error.log*
 # Workflow artifacts archive (specs, diagnoses, prompts)
 # See .specs/README.md for context
 .specs/
+
+# Installed agent skills + impeccable tooling — local, never commit
+.claude/skills/
+.impeccable/
+
+# Claude Code local settings (*.local glob misses the .json suffix)
+.claude/settings.local.json
