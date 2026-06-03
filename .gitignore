@@ -49,3 +49,7 @@ yarn-error.log*
 
 # Claude Code local settings (*.local glob misses the .json suffix)
 .claude/settings.local.json
+
+# Playwright test artifacts (regenerated every run)
+test-results/
+playwright-report/
