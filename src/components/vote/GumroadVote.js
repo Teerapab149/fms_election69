@@ -21,6 +21,7 @@ import React, { useRef, useCallback } from "react";
 import Image from "next/image";
 import { ArrowRight, Check, Ban } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const INK = "#1A1A1A", CREAM = "#FFF1E5", PAPER = "#FFFFFF", PINK = "#FF90E8",
   LIME = "#B6FF6E", YELLOW = "#FFC900", CREAM_2 = "#FFE4CE", INK_2 = "#4A4A4A";
@@ -73,6 +74,9 @@ export default function GumroadVote({
     return null;
   })();
 
+  const globalConfig = useGlobalConfig();
+  const orgShort = globalConfig?.organizationShort || "สโมสรนักศึกษา";
+
   const userName = user?.name || (editorMode ? "Teerapab Boonsri" : "");
 
   const POPS = [PINK, LIME, YELLOW, "#A8E1FF"];
@@ -100,7 +104,7 @@ export default function GumroadVote({
             <span className="gv-sticker gv-sticker--pink" data-element="vote-header-badge"><span className="gv-livedot" /> ลงคะแนนเสียง · LIVE BALLOT</span>
           </Wrap>
           <Wrap id="vote-header-title">
-            <h1 className="gv-title" data-element="vote-header-title">เลือกตั้ง<em>สโมสรนักศึกษา</em></h1>
+            <h1 className="gv-title" data-element="vote-header-title">เลือกตั้ง<em>{orgShort}</em></h1>
           </Wrap>
           <Wrap id="vote-header-subtitle">
             <p className="gv-subtitle" data-element="vote-header-subtitle">
@@ -189,9 +193,12 @@ export default function GumroadVote({
         .gv-root{
           --ink:#1A1A1A; --cream:#FFF1E5; --paper:#FFF; --pink:#FF90E8; --lime:#B6FF6E;
           --yellow:#FFC900; --cream2:#FFE4CE; --bw:2.5px; --sh:5px 5px 0 var(--ink);
-          --sh-sm:3px 3px 0 var(--ink); --fd:'Archivo Black','Kanit',system-ui,sans-serif;
+          --sh-sm:3px 3px 0 var(--ink);
+          --fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
+          --fm:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
+          --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink); background:var(--cream);
-          font-family:'Kanit',system-ui,sans-serif; container-type:inline-size; container-name:gv;
+          font-family:var(--fb); container-type:inline-size; container-name:gv;
           background-image:radial-gradient(circle at 12% 12%, #FFD1F2 0,transparent 36%),radial-gradient(circle at 90% 90%, #DCF2FF 0,transparent 38%);
           background-attachment:fixed; padding-bottom:96px;
         }
@@ -205,7 +212,7 @@ export default function GumroadVote({
         .gv-sticker--pink{ background:var(--pink); }
         .gv-livedot{ width:9px; height:9px; border-radius:999px; background:#FF6E6E; box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gvPulse 1.6s ease-out infinite; }
         @keyframes gvPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
-        .gv-title{ font-family:var(--fd); font-size:clamp(34px,8cqw,72px); letter-spacing:-.03em; line-height:.95; margin:0; text-transform:uppercase; }
+        .gv-title{ font-family:var(--fd); font-size:clamp(40px,8cqw,82px); letter-spacing:-.03em; line-height:.95; margin:0; text-transform:uppercase; }
         .gv-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:0 12px; display:inline-block; box-shadow:var(--sh); transform:rotate(-1.5deg); }
         .gv-subtitle{ font-size:clamp(14px,2cqw,18px); color:#4A4A4A; font-weight:500; max-width:620px; margin:0; }
         .gv-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
@@ -220,9 +227,9 @@ export default function GumroadVote({
         .gv-card__media img{ max-height:78%; max-width:78%; object-fit:contain; }
         .gv-card__ph{ font-family:var(--fd); font-size:18px; text-transform:uppercase; padding:6px 14px; border:2px solid var(--ink); border-radius:999px; }
         .gv-card__body{ padding:20px 22px; }
-        .gv-card__name{ font-family:var(--fd); font-size:22px; letter-spacing:-.02em; margin:0 0 6px; text-transform:uppercase; }
+        .gv-card__name{ font-family:var(--fd); font-size:24px; letter-spacing:-.02em; margin:0 0 6px; text-transform:uppercase; }
         .gv-card__slogan{ font-size:14px; color:#4A4A4A; margin:0 0 16px; font-style:italic; }
-        .gv-card__cta{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:2px solid var(--ink); border-radius:999px; background:var(--paper); font-weight:700; font-size:13px; cursor:pointer; font-family:'Kanit',sans-serif; }
+        .gv-card__cta{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:2px solid var(--ink); border-radius:999px; background:var(--paper); font-weight:700; font-size:13px; cursor:pointer; font-family:var(--fb); }
         .gv-card.is-selected .gv-card__cta{ background:var(--ink); color:var(--cream); }
         .gv-or{ display:flex; align-items:center; gap:16px; margin:32px auto; }
         .gv-or hr{ flex:1; border:0; border-top:2px dashed var(--ink); }
@@ -233,9 +240,9 @@ export default function GumroadVote({
         .gv-special__icon{ width:48px; height:48px; border-radius:999px; background:var(--paper); border:2px solid var(--ink); display:grid; place-items:center; flex-shrink:0; }
         .gv-special h3{ margin:0; font-size:18px; font-weight:700; } .gv-special p{ margin:2px 0 0; font-size:13px; color:#4A4A4A; }
         .gv-footer{ position:fixed; bottom:0; left:0; right:0; z-index:45; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:16px 28px; background:var(--ink); color:var(--cream); border-top:var(--bw) solid var(--ink); }
-        .gv-footer__lbl{ font-family:'Space Grotesk',monospace; font-size:11px; color:var(--lime); text-transform:uppercase; letter-spacing:.15em; }
+        .gv-footer__lbl{ font-family:var(--fm); font-size:11px; color:var(--lime); text-transform:uppercase; letter-spacing:.15em; }
         .gv-footer__sel{ font-size:17px; font-weight:700; }
-        .gv-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:'Kanit',sans-serif; font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
+        .gv-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:var(--fb); font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
         .gv-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); }
         .gv-confirm:disabled{ opacity:.45; cursor:not-allowed; }
 
