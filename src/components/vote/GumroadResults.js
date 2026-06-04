@@ -38,6 +38,11 @@ export default function GumroadResults({
 
   const parties = candidates.filter((c) => parseInt(c.number) > 0);
   const topScore = revealed ? Math.max(0, ...parties.map((p) => p.score || 0)) : -1;
+  const winner = revealed && topScore > 0 ? parties.find((p) => (p.score || 0) === topScore) : null;
+  const restCards = winner ? candidates.filter((c) => c !== winner) : candidates;
+  const pctOf = (c) => (totalVotes > 0 ? ((c.score || 0) / totalVotes * 100) : 0);
+  const logoSrc = (c) => (c?.logoUrl ? (String(c.logoUrl).startsWith("http") ? c.logoUrl : getPath(c.logoUrl)) : null);
+  const labelOf = (c) => (parseInt(c.number) > 0 ? `NO. ${c.number}` : (parseInt(c.number) === 0 ? "งดออกเสียง" : "ไม่รับรอง"));
 
   const statusLabel = ended ? (revealed ? "FINAL RESULT" : "COUNTING IN PROGRESS")
     : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : "UPCOMING";
@@ -134,27 +139,60 @@ export default function GumroadResults({
                 </div>
                 <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● LIVE" : "🔒 LOCKED"}</span>
               </div>
-              <div className="gr-race__bars">
-                {candidates.map((c, i) => {
-                  const pct = revealed && totalVotes > 0 ? ((c.score || 0) / totalVotes * 100) : 0;
-                  const isParty = parseInt(c.number) > 0;
-                  const isWinner = revealed && isParty && (c.score || 0) === topScore && topScore > 0;
-                  const color = isParty ? POPS[i % POPS.length] : "#C9C4BE";
-                  const numLabel = parseInt(c.number) > 0 ? `NO. ${c.number}` : (parseInt(c.number) === 0 ? "ABSTAIN" : "DISAPPROVE");
-                  return (
-                    <button type="button" className="gr-rrow" key={c.id} onClick={() => onSelectParty(c)}>
-                      <div className="gr-rrow__name">{isWinner ? "👑 " : ""}{c.name}<small>{numLabel}</small></div>
-                      <div className="gr-rrow__track"><div className="gr-rrow__fill" style={{ width: revealed ? `${Math.max(pct, 2)}%` : "50%", background: color }} /></div>
-                      <div className="gr-rrow__pct">{revealed ? `${pct.toFixed(1)}%` : "??.?%"}</div>
-                    </button>
-                  );
-                })}
-              </div>
-              {!revealed && (
-                <div className="gr-race__hidden">
-                  <div>🔒 HIDDEN UNTIL CLOSE</div>
-                  <span>ผลคะแนนจะแสดงเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น</span>
+              {revealed ? (
+                <div className="gr-reveal">
+                  {winner && (
+                    <div className="gr-winner">
+                      <span className="gr-winner__badge">👑 ผู้ชนะ · WINNER</span>
+                      <div className="gr-winner__main">
+                        {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
+                        <div className="gr-winner__id">
+                          <div className="gr-winner__no">NO. {winner.number}</div>
+                          <h3 className="gr-winner__name">{winner.name}</h3>
+                          {winner.slogan ? <p className="gr-winner__slogan">&ldquo;{winner.slogan}&rdquo;</p> : null}
+                        </div>
+                        <div className="gr-winner__score">
+                          <div className="gr-winner__pct">{pctOf(winner).toFixed(1)}<span>%</span></div>
+                          <div className="gr-winner__votes">{(winner.score || 0).toLocaleString()} คะแนน</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {restCards.length > 0 && (
+                    <div className="gr-ranks">
+                      {restCards.map((c, i) => {
+                        const isParty = parseInt(c.number) > 0;
+                        const color = isParty ? POPS[(i + 1) % POPS.length] : "#C9C4BE";
+                        return (
+                          <button type="button" className="gr-rank" key={c.id} onClick={() => onSelectParty(c)}>
+                            <div className="gr-rank__name">{c.name}<small>{labelOf(c)}</small></div>
+                            <div className="gr-rank__track"><div className="gr-rank__fill" style={{ width: `${Math.max(pctOf(c), 2)}%`, background: color }} /></div>
+                            <div className="gr-rank__pct">{pctOf(c).toFixed(1)}%</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <>
+                  <div className="gr-race__bars">
+                    {candidates.map((c, i) => {
+                      const color = parseInt(c.number) > 0 ? POPS[i % POPS.length] : "#C9C4BE";
+                      return (
+                        <div className="gr-rrow" key={c.id}>
+                          <div className="gr-rrow__name">{c.name}<small>{labelOf(c)}</small></div>
+                          <div className="gr-rrow__track"><div className="gr-rrow__fill" style={{ width: "50%", background: color }} /></div>
+                          <div className="gr-rrow__pct">??.?%</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="gr-race__hidden">
+                    <div>🔒 HIDDEN UNTIL CLOSE</div>
+                    <span>ผลคะแนนจะแสดงเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น</span>
+                  </div>
+                </>
               )}
             </section>
 
@@ -260,6 +298,29 @@ export default function GumroadResults({
         .gr-race__hidden div{ font-family:var(--fd); font-size:clamp(22px,4cqw,30px); text-transform:uppercase; letter-spacing:.04em; }
         .gr-race__hidden span{ font-size:14px; font-weight:500; color:var(--ink2); }
 
+        /* revealed: winner spotlight + ranked cards */
+        .gr-reveal{ display:flex; flex-direction:column; gap:18px; }
+        .gr-winner{ position:relative; background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; transform:rotate(-.6deg); }
+        .gr-winner__badge{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--cream); font-family:var(--fm); font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 14px; border-radius:999px; }
+        .gr-winner__main{ display:flex; align-items:center; gap:22px; margin-top:16px; flex-wrap:wrap; }
+        .gr-winner__logo{ width:88px; height:88px; flex-shrink:0; border:var(--bw) solid var(--ink); border-radius:20px; background:var(--paper); overflow:hidden; box-shadow:var(--sh-sm); }
+        .gr-winner__logo img{ width:100%; height:100%; object-fit:contain; }
+        .gr-winner__id{ min-width:0; flex:1; }
+        .gr-winner__no{ font-family:var(--fm); font-size:12px; font-weight:600; letter-spacing:.14em; color:var(--ink2); }
+        .gr-winner__name{ font-family:var(--fd); font-size:clamp(26px,4.5cqw,46px); line-height:.98; letter-spacing:-.02em; margin:4px 0 0; text-transform:uppercase; text-wrap:balance; }
+        .gr-winner__slogan{ font-style:italic; font-size:14px; color:var(--ink2); margin:8px 0 0; }
+        .gr-winner__score{ margin-left:auto; text-align:right; }
+        .gr-winner__pct{ font-family:var(--fd); font-size:clamp(48px,9cqw,84px); line-height:.9; } .gr-winner__pct span{ font-size:.5em; }
+        .gr-winner__votes{ font-family:var(--fm); font-size:13px; font-weight:600; color:var(--ink2); margin-top:2px; }
+
+        .gr-ranks{ display:flex; flex-direction:column; gap:12px; }
+        .gr-rank{ display:grid; grid-template-columns:200px 1fr 64px; gap:16px; align-items:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 18px; cursor:pointer; font-family:inherit; color:inherit; text-align:left; transition:transform .12s ease-out, box-shadow .12s ease-out; }
+        .gr-rank:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
+        .gr-rank__name{ font-weight:700; font-size:15px; } .gr-rank__name small{ display:block; font-family:var(--fm); font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; font-weight:600; }
+        .gr-rank__track{ height:24px; background:var(--cream2); border:2px solid var(--ink); border-radius:999px; overflow:hidden; }
+        .gr-rank__fill{ height:100%; border-right:2px solid var(--ink); background-image:repeating-linear-gradient(45deg,transparent 0 8px,rgba(255,255,255,.4) 8px 10px); }
+        .gr-rank__pct{ font-family:var(--fd); font-size:16px; text-align:right; }
+
         /* demographics */
         .gr-demo__head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
         .gr-demo__grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
@@ -282,10 +343,15 @@ export default function GumroadResults({
           .gr-nav{ display:none; } .gr-word,.gr-div{ display:none; } .gr-topbar{ padding:12px 18px; }
           .gr-locked{ grid-template-columns:1fr; } .gr-stats{ grid-template-columns:1fr; } .gr-demo__grid{ grid-template-columns:1fr; }
           .gr-rrow{ grid-template-columns:120px 1fr 52px; gap:10px; }
+          .gr-rank{ grid-template-columns:130px 1fr 52px; gap:10px; }
+          .gr-winner__main{ gap:14px; } .gr-winner__score{ margin-left:0; text-align:left; }
         }
         @container gr (max-width:520px){
           .gr-page{ padding:28px 16px 52px; } .gr-bar{ grid-template-columns:84px 1fr 46px; }
           .gr-rrow{ grid-template-columns:90px 1fr 46px; } .gr-rrow__name{ font-size:13px; }
+          .gr-rank{ grid-template-columns:1fr auto; gap:8px 12px; }
+          .gr-rank__track{ grid-column:1 / -1; order:3; }
+          .gr-winner{ transform:none; } .gr-winner__logo{ width:64px; height:64px; }
         }
       `}</style>
     </div>
