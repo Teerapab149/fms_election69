@@ -253,7 +253,6 @@ export default function GumroadSingleParty({
                     <div><dt>สาขาวิชา</dt><dd>{modalMember.major || "—"}</dd></div>
                   </dl>
                 </div>
-                {modalMember.number != null && <div className="gsp-modal__no">{String(modalMember.number).padStart(3, "0")}</div>}
               </motion.div>
             </motion.div>
           );
@@ -362,19 +361,18 @@ export default function GumroadSingleParty({
 
         /* MEMBER PROFILE MODAL */
         .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:rgba(26,26,26,.62); backdrop-filter:blur(4px); }
-        .gsp-modal__card{ position:relative; width:100%; max-width:820px; max-height:90vh; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:10px 10px 0 var(--ink); display:grid; grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr); }
+        .gsp-modal__card{ position:relative; width:100%; max-width:860px; max-height:92vh; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:10px 10px 0 var(--ink); display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); }
         .gsp-modal__x{ position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
         .gsp-modal__x:hover{ background:var(--coral); }
-        .gsp-modal__photo{ position:relative; background:var(--cream2); border-right:var(--bw) solid var(--ink); min-height:360px; display:grid; place-items:center; overflow:hidden; background-image:repeating-linear-gradient(45deg,transparent 0 14px,rgba(0,0,0,.04) 14px 16px); }
-        .gsp-modal__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; }
+        .gsp-modal__photo{ position:relative; background:var(--cream2); border-right:var(--bw) solid var(--ink); min-height:460px; display:grid; place-items:center; overflow:hidden; background-image:repeating-linear-gradient(45deg,transparent 0 14px,rgba(0,0,0,.04) 14px 16px); }
+        .gsp-modal__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 16%; }
         .gsp-modal__photo span{ font-family:var(--fd); font-size:72px; }
         .gsp-modal__info{ position:relative; padding:36px 34px 40px; display:flex; flex-direction:column; justify-content:center; min-width:0; }
         .gsp-modal__eyebrow{ font-family:var(--fm); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink2); }
-        .gsp-modal__name{ font-family:var(--fd); font-size:clamp(26px,4cqw,38px); line-height:1.05; margin:10px 0 20px; text-transform:uppercase; letter-spacing:-.01em; text-wrap:balance; }
-        .gsp-modal__rows{ margin:0; display:flex; flex-direction:column; gap:15px; }
+        .gsp-modal__name{ font-family:var(--fd); font-size:clamp(28px,4cqw,40px); line-height:1.05; margin:10px 0 22px; text-transform:uppercase; letter-spacing:-.01em; text-wrap:balance; }
+        .gsp-modal__rows{ margin:0; display:flex; flex-direction:column; gap:16px; }
         .gsp-modal__rows dt{ font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); margin-bottom:3px; }
-        .gsp-modal__rows dd{ margin:0; font-size:17px; font-weight:700; word-break:break-word; }
-        .gsp-modal__no{ position:absolute; right:20px; bottom:6px; font-family:var(--fd); font-size:clamp(64px,9cqw,108px); line-height:1; color:rgba(26,26,26,.07); pointer-events:none; }
+        .gsp-modal__rows dd{ margin:0; font-size:18px; font-weight:700; word-break:break-word; }
 
         /* RESPONSIVE */
         @container gsp (max-width:880px){
