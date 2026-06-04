@@ -22,6 +22,7 @@ import Image from "next/image";
 import { ArrowRight, Check, Ban } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import GumroadSingleParty from "./GumroadSingleParty";
 
 const INK = "#1A1A1A", CREAM = "#FFF1E5", PAPER = "#FFFFFF", PINK = "#FF90E8",
   LIME = "#B6FF6E", YELLOW = "#FFC900", CREAM_2 = "#FFE4CE", INK_2 = "#4A4A4A";
@@ -80,6 +81,23 @@ export default function GumroadVote({
   const userName = user?.name || (editorMode ? "Teerapab Boonsri" : "");
 
   const POPS = [PINK, LIME, YELLOW, "#A8E1FF"];
+
+  // Single party → full party-presentation view (cinematic intro + 3-choice vote).
+  // Multi party → the card grid below.
+  if (isSingleParty) {
+    return (
+      <GumroadSingleParty
+        party={regularParties[0] || {}}
+        specialOptions={specialOptions}
+        selectedPartyId={selectedPartyId}
+        onSelect={onSelect}
+        onConfirm={onConfirm}
+        isSubmitting={isSubmitting}
+        user={user}
+        editorMode={editorMode}
+      />
+    );
+  }
 
   return (
     <div className="fms-app gv-root">
