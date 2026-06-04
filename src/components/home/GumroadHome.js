@@ -168,7 +168,15 @@ export default function GumroadHome({
     : [buildTemplateStyles(effectiveTemplate, ".fms-app"), buildElementCss(pageLayout?.elementCss?.home, ".fms-app")].filter(Boolean).join("\n\n");
 
   // voteCTA (chunky-stamp element)
-  const runtimeCtx = buildRuntimeContext({ session, systemConfig: initialData?.systemConfig, electionStatus: initialData?.electionStatus, userData: initialData?.userData });
+  // Resolve the voteCTA state from the FRESH client-side vote status (isVotedReal),
+  // not the SSR session flag — otherwise the config (text) stays "notVoted" while the
+  // chunky-stamp visual flips to "voted", producing a "✓ VOTE NOW" disabled mismatch.
+  const runtimeCtx = buildRuntimeContext({
+    session,
+    systemConfig: initialData?.systemConfig,
+    electionStatus: initialData?.electionStatus,
+    userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
+  });
   const voteCTAState = resolveElementState("voteCTA-button", runtimeCtx);
   const voteCTAOverrides = pageLayout?.elementOverrides?.["voteCTA-button"]?.[voteCTAState] || {};
   const voteCTAConfig = resolveStatefulConfig(effectiveTemplate, "voteCTA-button", voteCTAState, voteCTAOverrides);

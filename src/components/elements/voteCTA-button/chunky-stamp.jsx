@@ -43,17 +43,16 @@ const PRIMARY_STYLES = {
     letterSpacing: "0.05em",
   },
   voted: {
+    // "voted" is a clickable "view results" CTA (not a dead confirmation).
     backgroundColor: "var(--color-surface, #ffffff)",
     color: "var(--color-text, #1e293b)",
     borderColor: "var(--color-text, #1e293b)",
     borderWidth: "3px",
     borderStyle: "solid",
-    boxShadow: "3px 3px 0 var(--color-text, #1e293b)",
+    boxShadow: "5px 5px 0 var(--color-text, #1e293b)",
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    cursor: "not-allowed",
-    opacity: 0.85,
   },
   ended: {
     backgroundColor: "var(--color-accent, #9333EA)",
@@ -112,7 +111,7 @@ export default function ChunkyStampVoteCTA({ config = {}, data = {}, resolvedCon
   };
 
   const text = stateConfig.text || "VOTE NOW";
-  const isDisabled = visualState === "voted";
+  const isDisabled = false; // every state is actionable (vote / results / closed / sign-in)
   const isLoginAction = currentState === "login";
   const href = hrefForState(currentState);
 
