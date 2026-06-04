@@ -49,6 +49,7 @@ export default function GumroadSingleParty({
   const globalConfig = useGlobalConfig();
   const [introDone, setIntroDone] = useState(editorMode); // editor skips the intro
   const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
+  const [confirmOpen, setConfirmOpen] = useState(false);  // double-check before submitting the vote
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
@@ -225,7 +226,7 @@ export default function GumroadSingleParty({
           <div className="gsp-footer__sel">{selectionLabel || "ยังไม่ได้เลือก · No selection yet"}</div>
         </div>
         <button type="button" className="gsp-confirm" disabled={kind == null || isSubmitting || editorMode}
-          onClick={() => !editorMode && onConfirm()}>
+          onClick={() => !editorMode && kind != null && setConfirmOpen(true)}>
           <Check size={20} strokeWidth={3} /> {isSubmitting ? "กำลังบันทึก..." : "ยืนยันการลงคะแนน"}
         </button>
       </div>
@@ -257,6 +258,32 @@ export default function GumroadSingleParty({
             </motion.div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* CONFIRM VOTE — double-check (selection can't be changed after) */}
+      <AnimatePresence>
+        {confirmOpen && (
+          <motion.div className="gsp-confirm-modal" onClick={() => !isSubmitting && setConfirmOpen(false)}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <motion.div className="gsp-cm__card" onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
+              <div className="gsp-cm__icon">!</div>
+              <h3 className="gsp-cm__title">ยืนยันการลงคะแนน?</h3>
+              <p className="gsp-cm__sub">เลือกแล้ว <strong>เปลี่ยนไม่ได้</strong> — ตรวจสอบให้แน่ใจก่อนนะ</p>
+              <div className="gsp-cm__pick">
+                <span className="gsp-cm__pick-lbl">ตัวเลือกของคุณ</span>
+                <span className="gsp-cm__pick-val">{selectionLabel || "—"}</span>
+              </div>
+              <div className="gsp-cm__actions">
+                <button type="button" className="gsp-cm__cancel" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>
+                <button type="button" className="gsp-cm__go" onClick={() => onConfirm()} disabled={isSubmitting}>
+                  <Check size={18} strokeWidth={3} /> {isSubmitting ? "กำลังบันทึก..." : "ยืนยัน, ลงคะแนนเลย"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <style jsx global>{`
@@ -373,6 +400,22 @@ export default function GumroadSingleParty({
         .gsp-modal__rows{ margin:0; display:flex; flex-direction:column; gap:16px; }
         .gsp-modal__rows dt{ font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); margin-bottom:3px; }
         .gsp-modal__rows dd{ margin:0; font-size:18px; font-weight:700; word-break:break-word; }
+
+        /* CONFIRM VOTE modal */
+        .gsp-confirm-modal{ position:fixed; inset:0; z-index:9600; display:grid; place-items:center; padding:20px; background:rgba(26,26,26,.62); backdrop-filter:blur(4px); }
+        .gsp-cm__card{ width:100%; max-width:440px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:10px 10px 0 var(--ink); padding:30px 28px; text-align:center; }
+        .gsp-cm__icon{ width:64px; height:64px; margin:0 auto 16px; display:grid; place-items:center; background:var(--yellow); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh); transform:rotate(-4deg); font-family:var(--fd); font-size:36px; line-height:1; }
+        .gsp-cm__title{ font-family:var(--fd); font-size:26px; text-transform:uppercase; margin:0 0 8px; }
+        .gsp-cm__sub{ font-size:15px; color:var(--ink2); margin:0 0 18px; line-height:1.5; }
+        .gsp-cm__pick{ display:flex; flex-direction:column; gap:3px; background:var(--lime); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 16px; margin-bottom:22px; }
+        .gsp-cm__pick-lbl{ font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); }
+        .gsp-cm__pick-val{ font-family:var(--fd); font-size:18px; }
+        .gsp-cm__actions{ display:flex; gap:12px; }
+        .gsp-cm__cancel,.gsp-cm__go{ flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:15px 18px; border:var(--bw) solid var(--ink); border-radius:14px; font-family:var(--fb); font-weight:800; font-size:15px; cursor:pointer; box-shadow:var(--sh-sm); transition:transform .12s ease-out; }
+        .gsp-cm__cancel{ background:var(--paper); color:var(--ink); flex:0 0 38%; }
+        .gsp-cm__go{ background:var(--lime); color:var(--ink); }
+        .gsp-cm__cancel:not(:disabled):hover,.gsp-cm__go:not(:disabled):hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
+        .gsp-cm__go:disabled,.gsp-cm__cancel:disabled{ opacity:.5; cursor:not-allowed; }
 
         /* RESPONSIVE */
         @container gsp (max-width:880px){
