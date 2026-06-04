@@ -330,7 +330,7 @@ export default function GumroadSingleParty({
         .gsp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gsp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }
         .gsp-members{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px; }
-        .gsp-tile{ display:block; width:100%; padding:0; font-family:inherit; color:inherit; cursor:pointer; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh-sm); overflow:hidden; text-align:center; transition:transform .15s ease-out, box-shadow .15s ease-out; }
+        .gsp-tile{ display:flex; flex-direction:column; width:100%; padding:0; font-family:inherit; color:inherit; cursor:pointer; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh-sm); overflow:hidden; text-align:center; transition:transform .15s ease-out, box-shadow .15s ease-out; }
         .gsp-tile:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gsp-tile__photo{ position:relative; aspect-ratio:1; background:var(--cream2); display:grid; place-items:center; border-bottom:2px solid var(--ink); overflow:hidden;
           background-image:repeating-linear-gradient(45deg,transparent 0 12px,rgba(0,0,0,.04) 12px 14px); }
