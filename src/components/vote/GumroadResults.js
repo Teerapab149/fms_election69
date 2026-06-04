@@ -15,9 +15,30 @@ import { getPath } from "../../utils/basePath";
 import React from "react";
 import Image from "next/image";
 import { Lock } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const POPS = ["#FF90E8", "#A8E1FF", "#B6FF6E", "#FFC900", "#FF6E6E"];
+const CHART_FONT = "'Anuphan','Kanit',system-ui,sans-serif";
+const genderColor = (n) => {
+  const s = String(n).toLowerCase();
+  if (s.includes("female") || s.includes("หญิง")) return "#FF90E8";
+  if (s.includes("male") || s.includes("ชาย")) return "#A8E1FF";
+  return "#B6FF6E";
+};
+
+// Gumroad-styled chart tooltip (paper card, ink border, hard shadow).
+function GrTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0];
+  const name = label || p?.name || p?.payload?.name;
+  return (
+    <div className="gr-tip">
+      <span className="gr-tip__name">{name}</span>
+      <span className="gr-tip__val">{(p?.value || 0).toLocaleString()} คน</span>
+    </div>
+  );
+}
 
 export default function GumroadResults({
   candidates = [],
@@ -37,6 +58,14 @@ export default function GumroadResults({
   const turnout = totalEligible > 0 ? ((totalVotes / totalEligible) * 100) : 0;
 
   const parties = candidates.filter((c) => parseInt(c.number) > 0);
+  const singleParty = parties.length === 1; // single-party ballot → รับรอง/ไม่รับรอง, not a race
+  // drop blank-named groups (e.g. a null-gender bucket the groupBy emits) so they
+  // don't render as an empty "0" legend chip / ghost bar.
+  const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
+  const byYear = clean(demographics?.byYear);
+  const byGender = clean(demographics?.byGender);
+  const byMajor = clean(demographics?.byMajor);
+  const genderTotal = byGender.reduce((a, b) => a + (b.value || 0), 0);
   const topScore = revealed ? Math.max(0, ...parties.map((p) => p.score || 0)) : -1;
   const winner = revealed && topScore > 0 ? parties.find((p) => (p.score || 0) === topScore) : null;
   const restCards = winner ? candidates.filter((c) => c !== winner) : candidates;
@@ -46,21 +75,6 @@ export default function GumroadResults({
 
   const statusLabel = ended ? (revealed ? "FINAL RESULT" : "COUNTING IN PROGRESS")
     : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : "UPCOMING";
-
-  const Bars = ({ items, colorFor }) => {
-    const max = Math.max(1, ...items.map((i) => i.value || 0));
-    return (
-      <div className="gr-bars">
-        {items.map((it, i) => (
-          <div className="gr-bar" key={i}>
-            <div className="gr-bar__name">{it.name}</div>
-            <div className="gr-bar__track"><div className="gr-bar__fill" style={{ width: `${Math.round((it.value || 0) / max * 100)}%`, background: colorFor(i, it) }} /></div>
-            <div className="gr-bar__val">{(it.value || 0).toLocaleString()}</div>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <div className="fms-app gr-root">
@@ -99,13 +113,25 @@ export default function GumroadResults({
               <div className="gr-locked">
                 <div className="gr-headline">
                   <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING · กำลังนับคะแนน</span>
-                  <h2 className="gr-headline__title">WHO<br />WILL<br />WIN<em>?</em></h2>
-                  <p className="gr-headline__sub">ผลการนับคะแนนยังเป็นความลับจนกว่าจะปิดหีบเลือกตั้ง</p>
+                  {/* single party = approve/disapprove, not a multi-party race */}
+                  <h2 className="gr-headline__title">
+                    {singleParty ? <>YES<br />OR<br />NO<em>?</em></> : <>WHO<br />WILL<br />WIN<em>?</em></>}
+                  </h2>
+                  {/* left = the suspense teaser (emotion); right card = the factual reason */}
+                  <p className="gr-headline__sub">
+                    {singleParty
+                      ? "ลุ้นกันว่าพรรคนี้จะได้รับการรับรองจากชาว FMS หรือไม่"
+                      : "ลุ้นกันว่าพรรคไหนจะครองใจชาว FMS ได้มากที่สุด"}
+                  </p>
                 </div>
                 <div className="gr-lock">
                   <div className="gr-lock__icon"><Lock size={32} strokeWidth={2.5} /></div>
                   <h3>ผลการนับ<br />ยังถูกล็อก</h3>
-                  <p>เพื่อความเป็นธรรม คะแนนรายพรรคจะแสดงเฉพาะหลังหมดเวลาลงคะแนน — ขณะนี้ระบบกำลังนับคะแนนเสียงของชาว FMS</p>
+                  <p>
+                    {singleParty
+                      ? "เพื่อความโปร่งใส ผลการรับรองจะถูกเปิดเผยเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น"
+                      : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะถูกเปิดเผยพร้อมกันเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น"}
+                  </p>
                   {countdownText ? <div className="gr-lock__cd">{ended ? "ปิดหีบแล้ว · รอประกาศผล" : `ปิดใน ${countdownText}`}</div> : null}
                 </div>
               </div>
@@ -134,8 +160,8 @@ export default function GumroadResults({
             <section className="gr-race">
               <div className="gr-race__head">
                 <div>
-                  <h3>📊 การกระจายคะแนนรายพรรค</h3>
-                  <p>{revealed ? "สรุปผลคะแนนแต่ละพรรค" : "ข้อมูลจะปรากฏหลังปิดหีบเลือกตั้งแล้วเท่านั้น"}</p>
+                  <h3>📊 {singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h3>
+                  <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏหลังปิดหีบเลือกตั้งแล้วเท่านั้น"}</p>
                 </div>
                 <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● LIVE" : "🔒 LOCKED"}</span>
               </div>
@@ -204,14 +230,63 @@ export default function GumroadResults({
               </div>
               {revealed ? (
                 <div className="gr-demo__grid">
-                  {(demographics?.byYear?.length > 0) && (
-                    <div className="gr-card"><h4>แยกตามชั้นปี</h4><Bars items={demographics.byYear} colorFor={(i) => POPS[i % POPS.length]} /></div>
+                  {byGender.length > 0 && (
+                    <div className="gr-card">
+                      <h4>แยกตามเพศ</h4>
+                      <div className="gr-donut">
+                        <ResponsiveContainer width="100%" height={230}>
+                          <PieChart>
+                            <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
+                              innerRadius={58} outerRadius={88} paddingAngle={3} stroke="#1A1A1A" strokeWidth={2.5}
+                              startAngle={90} endAngle={-270} isAnimationActive={false}>
+                              {byGender.map((g, i) => <Cell key={i} fill={genderColor(g.name)} />)}
+                            </Pie>
+                            <Tooltip content={<GrTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="gr-donut__center"><strong>{genderTotal.toLocaleString()}</strong><span>คน</span></div>
+                      </div>
+                      <div className="gr-legend">
+                        {byGender.map((g, i) => (
+                          <span className="gr-legend__item" key={i}>
+                            <i style={{ background: genderColor(g.name) }} />{g.name}<b>{(g.value || 0).toLocaleString()}</b>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  {(demographics?.byGender?.length > 0) && (
-                    <div className="gr-card"><h4>แยกตามเพศ</h4><Bars items={demographics.byGender} colorFor={(i, it) => (/female|หญิง/i.test(it.name) ? "#FF90E8" : "#A8E1FF")} /></div>
+                  {byYear.length > 0 && (
+                    <div className="gr-card">
+                      <h4>แยกตามชั้นปี</h4>
+                      <ResponsiveContainer width="100%" height={230}>
+                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+                          <CartesianGrid vertical={false} stroke="rgba(26,26,26,.08)" />
+                          <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
+                          <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: "#4A4A4A" }} tickLine={false} axisLine={false} />
+                          <Tooltip content={<GrTooltip />} cursor={{ fill: "rgba(26,26,26,.05)" }} />
+                          <Bar dataKey="value" stroke="#1A1A1A" strokeWidth={2.5} radius={[8, 8, 0, 0]} maxBarSize={66} isAnimationActive={false}>
+                            {byYear.map((_, i) => <Cell key={i} fill={POPS[i % POPS.length]} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   )}
-                  {(demographics?.byMajor?.length > 0) && (
-                    <div className="gr-card gr-card--wide"><h4>แยกตามสาขา</h4><Bars items={demographics.byMajor} colorFor={(i) => POPS[i % POPS.length]} /></div>
+                  {byMajor.length > 0 && (
+                    <div className="gr-card gr-card--wide">
+                      <h4>แยกตามสาขา</h4>
+                      <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
+                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                          <CartesianGrid horizontal={false} stroke="rgba(26,26,26,.08)" />
+                          <XAxis type="number" hide allowDecimals={false} />
+                          <YAxis type="category" dataKey="name" width={210} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
+                          <Tooltip content={<GrTooltip />} cursor={{ fill: "rgba(26,26,26,.05)" }} />
+                          <Bar dataKey="value" stroke="#1A1A1A" strokeWidth={2.5} radius={[0, 8, 8, 0]} maxBarSize={28} isAnimationActive={false}
+                            label={{ position: "right", fontFamily: CHART_FONT, fontSize: 12, fontWeight: 700, fill: "#1A1A1A", formatter: (v) => (v || 0).toLocaleString() }}>
+                            {byMajor.map((_, i) => <Cell key={i} fill={POPS[i % POPS.length]} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -248,14 +323,16 @@ export default function GumroadResults({
         .gr-nav{ display:flex; gap:4px; } .gr-navlink{ padding:8px 16px; border-radius:999px; font-weight:600; font-size:14px; border:2px solid transparent; } .gr-navlink:hover{ background:var(--paper); border-color:var(--ink); } .gr-navlink.is-active{ background:var(--pink); border-color:var(--ink); box-shadow:var(--sh-sm); }
 
         .gr-page{ flex:1; width:100%; max-width:1100px; margin:0 auto; padding:36px 28px 64px; }
-        .gr-head{ text-align:center; margin-bottom:30px; }
+        .gr-head{ text-align:center; margin-bottom:42px; }
         .gr-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); white-space:nowrap; }
         .gr-sticker--ink{ background:var(--ink); color:var(--cream); } .gr-sticker--pink{ background:var(--pink); } .gr-sticker--lime{ background:var(--lime); }
+        /* page header sticker — slightly bolder so the head reads as a real masthead */
+        .gr-head .gr-sticker{ font-size:14px; padding:9px 20px; box-shadow:var(--sh); }
         .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:grPulse 1.6s ease-out infinite; }
         @keyframes grPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
-        .gr-title{ font-family:var(--fd); font-size:clamp(34px,7cqw,72px); line-height:.95; letter-spacing:-.03em; margin:14px 0 6px; text-transform:uppercase; }
-        .gr-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:0 12px; display:inline-block; box-shadow:var(--sh); transform:rotate(-1.5deg); margin-left:6px; }
-        .gr-subtitle{ font-size:clamp(14px,2cqw,17px); color:var(--ink2); font-weight:500; max-width:640px; margin:0 auto; }
+        .gr-title{ font-family:var(--fd); font-size:clamp(42px,9cqw,92px); line-height:.9; letter-spacing:-.035em; margin:20px 0 12px; text-transform:uppercase; }
+        .gr-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:2px 14px; display:inline-block; box-shadow:var(--sh-lg); transform:rotate(-1.5deg); margin-left:10px; }
+        .gr-subtitle{ font-size:clamp(15px,2cqw,18px); color:var(--ink2); font-weight:600; max-width:660px; margin:0 auto; }
 
         .gr-waiting{ text-align:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); padding:56px 28px; }
         .gr-waiting__icon{ font-size:48px; } .gr-waiting h2{ font-family:var(--fd); font-size:28px; text-transform:uppercase; margin:12px 0 6px; } .gr-waiting p{ color:var(--ink2); margin:0; }
@@ -327,12 +404,20 @@ export default function GumroadResults({
         .gr-card{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh); padding:22px 24px; }
         .gr-card--wide{ grid-column:1 / -1; }
         .gr-card h4{ font-family:var(--fd); font-size:16px; margin:0 0 16px; text-transform:uppercase; }
-        .gr-bars{ display:flex; flex-direction:column; gap:12px; }
-        .gr-bar{ display:grid; grid-template-columns:120px 1fr 56px; gap:12px; align-items:center; }
-        .gr-bar__name{ font-size:13px; font-weight:600; }
-        .gr-bar__track{ height:20px; background:var(--cream2); border:2px solid var(--ink); border-radius:999px; overflow:hidden; }
-        .gr-bar__fill{ height:100%; border-right:2px solid var(--ink); }
-        .gr-bar__val{ font-family:var(--fm); font-size:13px; font-weight:600; text-align:right; }
+        /* recharts surfaces inherit the gumroad ink/flat look via per-element props */
+        .gr-card .recharts-cartesian-axis-tick text{ font-family:var(--fb); }
+        /* donut (gender) — ink-stroked slices + chunky centre total */
+        .gr-donut{ position:relative; }
+        .gr-donut__center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
+        .gr-donut__center strong{ font-family:var(--fd); font-size:34px; line-height:1; }
+        .gr-donut__center span{ font-family:var(--fm); font-size:12px; color:var(--ink2); margin-top:2px; }
+        .gr-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:14px; }
+        .gr-legend__item{ display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; background:var(--cream); border:2px solid var(--ink); border-radius:999px; padding:5px 12px; box-shadow:var(--sh-sm); }
+        .gr-legend__item i{ width:13px; height:13px; border-radius:4px; border:2px solid var(--ink); display:inline-block; }
+        .gr-legend__item b{ font-family:var(--fm); }
+        /* chart tooltip */
+        .gr-tip{ display:flex; flex-direction:column; gap:2px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:12px; box-shadow:var(--sh-sm); padding:8px 12px; }
+        .gr-tip__name{ font-weight:700; font-size:13px; } .gr-tip__val{ font-family:var(--fm); font-size:13px; color:var(--ink2); }
         .gr-demo__locked{ background:var(--cream2); border:2px dashed var(--ink); border-radius:18px; padding:26px; text-align:center; color:var(--ink2); font-weight:500; }
 
         .gr-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream); display:flex; align-items:center; justify-content:space-between; gap:16px; font-family:var(--fm); font-size:13px; flex-wrap:wrap; }
@@ -347,7 +432,7 @@ export default function GumroadResults({
           .gr-winner__main{ gap:14px; } .gr-winner__score{ margin-left:0; text-align:left; }
         }
         @container gr (max-width:520px){
-          .gr-page{ padding:28px 16px 52px; } .gr-bar{ grid-template-columns:84px 1fr 46px; }
+          .gr-page{ padding:28px 16px 52px; }
           .gr-rrow{ grid-template-columns:90px 1fr 46px; } .gr-rrow__name{ font-size:13px; }
           .gr-rank{ grid-template-columns:1fr auto; gap:8px 12px; }
           .gr-rank__track{ grid-column:1 / -1; order:3; }
