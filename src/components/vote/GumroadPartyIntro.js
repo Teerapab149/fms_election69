@@ -28,8 +28,8 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
     if (calledRef.current) return;
     calledRef.current = true;
     setLeaving(true);
-    // let the exit transition play, then hand control back
-    setTimeout(onDone, reduce ? 0 : 420);
+    // let the wipe-up transition play, then hand control back
+    setTimeout(onDone, reduce ? 0 : 560);
   };
 
   useEffect(() => {
@@ -63,8 +63,9 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
       className="gsi-intro"
       role="presentation"
       onClick={finish}
-      initial={{ opacity: 1 }}
-      animate={{ opacity: leaving ? 0 : 1, transition: { duration: 0.4, ease: "easeInOut" } }}
+      initial={{ y: 0 }}
+      animate={{ y: leaving ? "-101%" : 0 }}
+      transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
     >
       <motion.div className="gsi-intro__stage" variants={container} initial="hidden" animate="show">
         <motion.span className="gsi-intro__eyebrow" variants={rise}>

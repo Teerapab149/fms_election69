@@ -49,6 +49,10 @@ export default function VotePage() {
   const [voteConfig, setVoteConfig] = useState({});
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // Gate render until the template is known — otherwise the classic layout (with
+  // its own cinematic AutoIntro) flashes for a frame before the real template
+  // resolves, looking like a stray "old intro".
+  const [templateReady, setTemplateReady] = useState(false);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -65,6 +69,8 @@ export default function VotePage() {
         }
       } catch (e) {
         console.warn('Failed to fetch page layout, using defaults');
+      } finally {
+        setTemplateReady(true);
       }
     };
     fetchConfig();
@@ -99,7 +105,7 @@ export default function VotePage() {
 
 
   // --- Render ---
-  if (isLoading) {
+  if (isLoading || !templateReady) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FD]">
         <div className="relative">

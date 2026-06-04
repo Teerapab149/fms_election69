@@ -13,9 +13,9 @@
 
 import { getPath } from "../../utils/basePath";
 import React, { useMemo, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { Check, X, Ban, ArrowRight } from "lucide-react";
+import { Check, X, Ban } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import GumroadPartyIntro from "./GumroadPartyIntro";
@@ -48,13 +48,16 @@ export default function GumroadSingleParty({
 }) {
   const globalConfig = useGlobalConfig();
   const [introDone, setIntroDone] = useState(editorMode); // editor skips the intro
+  const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim(); // optional — not every year has one
 
-  const heroImg = resolveSrc(firstImage(party?.officialImageUrl) || firstImage(party?.groupImageUrls) || firstImage(party?.mobileHeroImage));
+  // Hero wants a LANDSCAPE banner — groupImageUrls is the wide team photo;
+  // officialImageUrl is usually a portrait poster (would crop badly here).
+  const heroImg = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
   const logoImg = resolveSrc(party?.logoUrl);
 
   const disapproveId = specialOptions?.disapprove?.id;
@@ -124,13 +127,24 @@ export default function GumroadSingleParty({
               <article className="gsp-card">
                 <span className="gsp-sticker gsp-sticker--pink">💡 เรื่องราวของพรรค</span>
                 <h2 className="gsp-card__h">แนวคิด & ที่มา</h2>
-                <p className="gsp-card__p">{story}</p>
+                <div className="gsp-story">
+                  <p className="gsp-card__p">{story}</p>
+                </div>
+                <span className="gsp-story__hint">เลื่อนเพื่ออ่านต่อ ↓</span>
               </article>
             ) : null}
             {missions.length > 0 && (
               <article className="gsp-card gsp-card--ink">
                 <span className="gsp-sticker gsp-sticker--pink">🚩 พันธกิจ</span>
-                <ol className="gsp-missions">{missions.map((m, i) => <li key={i}>{m}</li>)}</ol>
+                <h2 className="gsp-card__h">เป้าหมายของเรา</h2>
+                <div className="gsp-mlist">
+                  {missions.map((m, i) => (
+                    <div className="gsp-m" key={i}>
+                      <span className="gsp-m__no">{String(i + 1).padStart(2, "0")}</span>
+                      <p className="gsp-m__tx">{m}</p>
+                    </div>
+                  ))}
+                </div>
               </article>
             )}
           </section>
@@ -162,13 +176,13 @@ export default function GumroadSingleParty({
               {members.map((m, i) => {
                 const ph = resolveSrc(m?.imageUrl);
                 return (
-                  <div className="gsp-tile" key={m?.id ?? i}>
+                  <button type="button" className="gsp-tile" key={m?.id ?? i} onClick={() => setModalMember(m)}>
                     <div className="gsp-tile__photo">
                       {ph ? <img src={ph} alt={m?.name || ""} /> : <span>#{String(i + 1).padStart(2, "0")}</span>}
                     </div>
                     <div className="gsp-tile__name">{m?.name}</div>
                     {m?.position ? <div className="gsp-tile__role">{m.position}</div> : null}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -216,6 +230,36 @@ export default function GumroadSingleParty({
         </button>
       </div>
 
+      {/* MEMBER PROFILE MODAL */}
+      <AnimatePresence>
+        {modalMember && (() => {
+          const src = resolveSrc(modalMember.modalImageUrl || modalMember.imageUrl);
+          return (
+            <motion.div className="gsp-modal" onClick={() => setModalMember(null)}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+              <motion.div className="gsp-modal__card" onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}>
+                <button type="button" className="gsp-modal__x" onClick={() => setModalMember(null)} aria-label="ปิด"><X size={20} strokeWidth={2.5} /></button>
+                <div className="gsp-modal__photo">
+                  {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
+                </div>
+                <div className="gsp-modal__info">
+                  <span className="gsp-modal__eyebrow">★ ผู้สมัคร · CANDIDATE</span>
+                  <h3 className="gsp-modal__name">{modalMember.name}</h3>
+                  <dl className="gsp-modal__rows">
+                    <div><dt>รหัสนักศึกษา</dt><dd>{modalMember.studentId || "—"}</dd></div>
+                    <div><dt>ตำแหน่ง</dt><dd>{modalMember.position || "—"}</dd></div>
+                    <div><dt>สาขาวิชา</dt><dd>{modalMember.major || "—"}</dd></div>
+                  </dl>
+                </div>
+                {modalMember.number != null && <div className="gsp-modal__no">{String(modalMember.number).padStart(3, "0")}</div>}
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
       <style jsx global>{`
         .gsp-root{
           --ink:#1A1A1A; --ink2:#4A4A4A; --cream:#FFF1E5; --cream2:#FFE4CE; --paper:#FFF;
@@ -258,7 +302,7 @@ export default function GumroadSingleParty({
         .gsp-hero__no{ margin-left:auto; font-family:var(--fd); font-size:clamp(48px,8cqw,84px); line-height:1; background:var(--pink); border:var(--bw) solid var(--ink); border-radius:22px; padding:10px 24px; box-shadow:var(--sh); transform:rotate(-3deg); }
 
         /* SECTION cards */
-        .gsp-section{ display:grid; grid-template-columns:1fr; gap:22px; margin-bottom:24px; }
+        .gsp-section{ display:grid; grid-template-columns:1fr; gap:22px; margin-bottom:24px; align-items:start; }
         .gsp-section[data-cols="2"]{ grid-template-columns:1.4fr 1fr; }
         .gsp-card{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:22px; padding:24px 26px; box-shadow:var(--sh); }
         .gsp-card--ink{ background:var(--ink); color:var(--cream); }
@@ -266,8 +310,17 @@ export default function GumroadSingleParty({
         .gsp-block{ margin-bottom:24px; }
         .gsp-card__h{ font-family:var(--fd); font-size:22px; margin:12px 0 12px; letter-spacing:-.01em; text-transform:uppercase; }
         .gsp-card__p{ font-size:15px; line-height:1.65; color:var(--ink2); margin:0; }
-        .gsp-missions{ padding-left:22px; margin:14px 0 0; font-size:15px; line-height:1.7; }
-        .gsp-missions li{ margin-bottom:6px; }
+        /* story — capped + scrollable so a long write-up never bloats the row */
+        .gsp-story{ max-height:190px; overflow-y:auto; margin-top:2px; padding-right:10px;
+          -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent); mask-image:linear-gradient(180deg,#000 80%,transparent); }
+        .gsp-story::-webkit-scrollbar{ width:8px; } .gsp-story::-webkit-scrollbar-thumb{ background:var(--ink); border-radius:999px; } .gsp-story::-webkit-scrollbar-track{ background:transparent; }
+        .gsp-story__hint{ display:block; margin-top:10px; font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); }
+        /* missions — numbered, clearly divided */
+        .gsp-mlist{ margin-top:14px; display:flex; flex-direction:column; }
+        .gsp-m{ display:flex; gap:14px; align-items:flex-start; padding:13px 0; border-top:1.5px solid rgba(255,241,229,.16); }
+        .gsp-m:first-child{ border-top:0; padding-top:4px; }
+        .gsp-m__no{ flex-shrink:0; width:30px; height:30px; border-radius:999px; background:var(--lime); color:var(--ink); font-family:var(--fd); font-size:13px; display:grid; place-items:center; box-shadow:2px 2px 0 rgba(0,0,0,.45); }
+        .gsp-m__tx{ margin:0; font-size:14.5px; line-height:1.55; padding-top:3px; }
 
         .gsp-policies{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px; }
         .gsp-policy{ position:relative; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:18px; padding:18px; box-shadow:var(--sh-sm); }
@@ -277,7 +330,7 @@ export default function GumroadSingleParty({
         .gsp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gsp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }
         .gsp-members{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px; }
-        .gsp-tile{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh-sm); overflow:hidden; text-align:center; transition:transform .15s ease-out, box-shadow .15s ease-out; }
+        .gsp-tile{ display:block; width:100%; padding:0; font-family:inherit; color:inherit; cursor:pointer; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh-sm); overflow:hidden; text-align:center; transition:transform .15s ease-out, box-shadow .15s ease-out; }
         .gsp-tile:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gsp-tile__photo{ aspect-ratio:1; background:var(--cream2); display:grid; place-items:center; border-bottom:2px solid var(--ink); overflow:hidden;
           background-image:repeating-linear-gradient(45deg,transparent 0 12px,rgba(0,0,0,.04) 12px 14px); }
@@ -307,17 +360,43 @@ export default function GumroadSingleParty({
         .gsp-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:var(--fb); font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
         .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); } .gsp-confirm:disabled{ opacity:.45; cursor:not-allowed; }
 
+        /* MEMBER PROFILE MODAL */
+        .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:rgba(26,26,26,.62); backdrop-filter:blur(4px); }
+        .gsp-modal__card{ position:relative; width:100%; max-width:820px; max-height:90vh; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:10px 10px 0 var(--ink); display:grid; grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr); }
+        .gsp-modal__x{ position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
+        .gsp-modal__x:hover{ background:var(--coral); }
+        .gsp-modal__photo{ position:relative; background:var(--cream2); border-right:var(--bw) solid var(--ink); min-height:360px; display:grid; place-items:center; overflow:hidden; background-image:repeating-linear-gradient(45deg,transparent 0 14px,rgba(0,0,0,.04) 14px 16px); }
+        .gsp-modal__photo img{ width:100%; height:100%; object-fit:cover; object-position:top center; }
+        .gsp-modal__photo span{ font-family:var(--fd); font-size:72px; }
+        .gsp-modal__info{ position:relative; padding:36px 34px 40px; display:flex; flex-direction:column; justify-content:center; min-width:0; }
+        .gsp-modal__eyebrow{ font-family:var(--fm); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink2); }
+        .gsp-modal__name{ font-family:var(--fd); font-size:clamp(26px,4cqw,38px); line-height:1.05; margin:10px 0 20px; text-transform:uppercase; letter-spacing:-.01em; text-wrap:balance; }
+        .gsp-modal__rows{ margin:0; display:flex; flex-direction:column; gap:15px; }
+        .gsp-modal__rows dt{ font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); margin-bottom:3px; }
+        .gsp-modal__rows dd{ margin:0; font-size:17px; font-weight:700; word-break:break-word; }
+        .gsp-modal__no{ position:absolute; right:20px; bottom:6px; font-family:var(--fd); font-size:clamp(64px,9cqw,108px); line-height:1; color:rgba(26,26,26,.07); pointer-events:none; }
+
         /* RESPONSIVE */
         @container gsp (max-width:880px){
           .gsp-nav{ display:none; } .gsp-topbar{ padding:12px 18px; } .gsp-word,.gsp-div{ display:none; }
           .gsp-section[data-cols="2"]{ grid-template-columns:1fr; }
           .gsp-policies{ grid-template-columns:1fr; } .gsp-members{ grid-template-columns:repeat(3,1fr); }
           .gsp-choices{ grid-template-columns:1fr; }
-          .gsp-hero__no{ margin-left:0; }
+        }
+        /* tablet / phone — stack the hero so the long title isn't cramped beside the number */
+        @container gsp (max-width:640px){
+          .gsp-hero__media{ height:clamp(160px,46cqw,230px); }
+          .gsp-hero__body{ flex-direction:column; align-items:flex-start; gap:14px; padding:22px; }
+          .gsp-hero__no{ order:-1; align-self:flex-end; margin:0; font-size:clamp(40px,12cqw,56px); padding:6px 18px; }
+          .gsp-hero__logo{ width:84px; height:84px; }
+          .gsp-hero__title{ font-size:clamp(24px,7cqw,40px); line-height:1.06; }
+          .gsp-modal__card{ grid-template-columns:1fr; max-height:88vh; overflow-y:auto; }
+          .gsp-modal__photo{ border-right:0; border-bottom:var(--bw) solid var(--ink); min-height:300px; }
+          .gsp-modal__info{ padding:26px 24px 30px; }
         }
         @container gsp (max-width:520px){
           .gsp-page{ padding:24px 14px; } .gsp-members{ grid-template-columns:repeat(2,1fr); }
-          .gsp-hero__body{ padding:22px; } .gsp-footer{ flex-direction:column; align-items:stretch; gap:10px; padding:12px 16px; } .gsp-confirm{ justify-content:center; }
+          .gsp-footer{ flex-direction:column; align-items:stretch; gap:10px; padding:12px 16px; } .gsp-confirm{ justify-content:center; }
         }
       `}</style>
     </div>
