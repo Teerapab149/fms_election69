@@ -10,16 +10,22 @@
 // Contract:
 //   <GumroadPartyIntro party={party} onDone={fn} durationMs? variant? />
 //   - Always an OVERLAY on already-rendered content (never gates page visibility):
-//     if motion/JS is unavailable the page underneath still shows; this just fades.
-//   - Auto-dismisses after durationMs (default 2800), or on click/Esc, or instantly
-//     under prefers-reduced-motion. Calls onDone exactly once.
+//     if motion/JS is unavailable the page underneath still shows; this just wipes away.
+//   - Auto-dismisses after durationMs, or on click/Esc, or instantly under
+//     prefers-reduced-motion. Calls onDone exactly once.
+//
+// Choreography (gumroad "Active Pulse"): ink ticker bars slam in top + bottom →
+// stickers stamp → big party number slams down (spring) → party name reveals under
+// a lime marker swipe → slogan rises → hold → the whole panel wipes UP to reveal the
+// party page beneath (a cinematic page transition).
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-const EASE = [0.16, 1, 0.3, 1]; // ease-out-expo-ish
+const EASE = [0.16, 1, 0.3, 1];       // ease-out-expo
+const EASE_IO = [0.76, 0, 0.24, 1];   // ease-in-out for wipes
 
-export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durationMs = 2800, variant = "stamp" }) {
+export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durationMs = 3400, variant = "stamp" }) {
   const reduce = useReducedMotion();
   const calledRef = useRef(false);
   const [leaving, setLeaving] = useState(false);
@@ -28,8 +34,7 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
     if (calledRef.current) return;
     calledRef.current = true;
     setLeaving(true);
-    // let the wipe-up transition play, then hand control back
-    setTimeout(onDone, reduce ? 0 : 560);
+    setTimeout(onDone, reduce ? 0 : 620); // let the wipe-up play
   };
 
   useEffect(() => {
@@ -44,19 +49,9 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
   const name = party?.name || "พรรคของคุณ";
   const number = party?.number;
   const slogan = party?.slogan;
+  const hasNo = number != null && number > 0;
 
-  const container = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
-  };
-  const rise = {
-    hidden: { opacity: 0, y: 28 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
-  };
-  const stamp = {
-    hidden: { opacity: 0, scale: 0.6, rotate: -12 },
-    show: { opacity: 1, scale: 1, rotate: -4, transition: { duration: 0.5, ease: EASE } },
-  };
+  const TICK = ["★ FMS ELECTION", "SAMO", "OFFICIAL PARTY", "CAST YOUR VOTE", "พรรคเดียวที่ลงสมัคร"];
 
   return (
     <motion.div
@@ -65,49 +60,112 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
       onClick={finish}
       initial={{ y: 0 }}
       animate={{ y: leaving ? "-101%" : 0 }}
-      transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
+      transition={{ duration: 0.6, ease: EASE_IO }}
     >
-      <motion.div className="gsi-intro__stage" variants={container} initial="hidden" animate="show">
-        <motion.span className="gsi-intro__eyebrow" variants={rise}>
-          <span className="gsi-intro__dot" /> พรรคเดียวที่ลงสมัคร · SINGLE PARTY
-        </motion.span>
+      {/* ink ticker bars slam in from the edges */}
+      <motion.div className="gsi-bar gsi-bar--top" initial={{ y: "-100%" }} animate={{ y: 0 }} transition={{ duration: 0.45, ease: EASE }}>
+        <div className="gsi-tick"><span>{TICK.concat(TICK, TICK).map((t, i) => <em key={i}>{t}<i /></em>)}</span></div>
+      </motion.div>
+      <motion.div className="gsi-bar gsi-bar--bottom" initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ duration: 0.45, ease: EASE }}>
+        <div className="gsi-tick gsi-tick--rev"><span>{TICK.concat(TICK, TICK).map((t, i) => <em key={i}>{t}<i /></em>)}</span></div>
+      </motion.div>
 
-        {number != null && number > 0 && (
-          <motion.div className="gsi-intro__no" variants={stamp}>{number}</motion.div>
+      {/* floating chunky shapes (decor) */}
+      <motion.span className="gsi-shape gsi-shape--lime" animate={{ y: [0, -16, 0], rotate: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }} />
+      <motion.span className="gsi-shape gsi-shape--pink" animate={{ y: [0, 14, 0], rotate: [-6, 6, -6] }} transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }} />
+      <motion.span className="gsi-shape gsi-shape--sky" animate={{ y: [0, -12, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+
+      <div className="gsi-stage">
+        {/* stickers stamp in */}
+        <div className="gsi-stickers">
+          <motion.span className="gsi-sticker gsi-sticker--lime"
+            initial={{ opacity: 0, scale: 0.5, rotate: -10 }} animate={{ opacity: 1, scale: 1, rotate: -3 }} transition={{ duration: 0.4, ease: EASE, delay: 0.35 }}>
+            ★ OFFICIAL PARTY
+          </motion.span>
+          <motion.span className="gsi-sticker"
+            initial={{ opacity: 0, scale: 0.5, rotate: 8 }} animate={{ opacity: 1, scale: 1, rotate: 2 }} transition={{ duration: 0.4, ease: EASE, delay: 0.48 }}>
+            <span className="gsi-dot" /> พรรคเดียวที่ลงสมัคร
+          </motion.span>
+        </div>
+
+        {/* number slams down */}
+        {hasNo && (
+          <motion.div className="gsi-no"
+            initial={{ opacity: 0, scale: 1.9, rotate: 10 }}
+            animate={{ opacity: 1, scale: 1, rotate: -4 }}
+            transition={{ type: "spring", stiffness: 240, damping: 15, delay: 0.55 }}>
+            {number}
+          </motion.div>
         )}
 
-        <motion.h1 className="gsi-intro__name" variants={rise}>{name}</motion.h1>
+        {/* party name revealed under a lime marker swipe */}
+        <div className="gsi-name">
+          <motion.div className="gsi-name__clip"
+            initial={{ clipPath: "inset(0 100% 0 0)" }} animate={{ clipPath: "inset(0 0% 0 0)" }}
+            transition={{ duration: 0.62, ease: EASE_IO, delay: 1.0 }}>
+            {name}
+          </motion.div>
+          <motion.span className="gsi-name__swipe"
+            initial={{ x: "-115%" }} animate={{ x: "115%" }} transition={{ duration: 0.72, ease: EASE_IO, delay: 0.98 }} />
+        </div>
 
-        {slogan ? <motion.p className="gsi-intro__slogan" variants={rise}>&ldquo;{slogan}&rdquo;</motion.p> : null}
+        {slogan ? (
+          <motion.p className="gsi-slogan" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 1.55 }}>
+            &ldquo;{slogan}&rdquo;
+          </motion.p>
+        ) : null}
 
-        <motion.span className="gsi-intro__hint" variants={rise}>แตะเพื่อข้าม · TAP TO ENTER</motion.span>
-      </motion.div>
+        <motion.span className="gsi-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.95 }}>
+          แตะเพื่อเข้าสู่หน้าพรรค · TAP TO ENTER
+        </motion.span>
+      </div>
 
       <style jsx global>{`
         .gsi-intro{
-          position:fixed; inset:0; z-index:9000; display:grid; place-items:center;
-          padding:24px; cursor:pointer; color:#1A1A1A; text-align:center;
-          background:#FFF1E5;
+          position:fixed; inset:0; z-index:9000; overflow:hidden; cursor:pointer; color:#1A1A1A; text-align:center;
+          display:grid; place-items:center; background:#FFF1E5;
           background-image:
-            radial-gradient(circle at 14% 16%, #FFD1F2 0, transparent 40%),
-            radial-gradient(circle at 86% 84%, #DCF2FF 0, transparent 42%),
-            radial-gradient(circle at 84% 12%, #DFFFC2 0, transparent 36%);
+            radial-gradient(circle at 14% 16%, #FFD1F2 0, transparent 42%),
+            radial-gradient(circle at 86% 84%, #DCF2FF 0, transparent 44%),
+            radial-gradient(circle at 84% 14%, #DFFFC2 0, transparent 38%);
         }
-        .gsi-intro__stage{ display:flex; flex-direction:column; align-items:center; gap:14px; max-width:920px; }
-        .gsi-intro__eyebrow{ display:inline-flex; align-items:center; gap:8px; padding:7px 16px; background:#FFF;
-          border:2.5px solid #1A1A1A; border-radius:999px; font-family:var(--fb,var(--font-anuphan)); font-weight:700;
-          font-size:13px; box-shadow:3px 3px 0 #1A1A1A; }
-        .gsi-intro__dot{ width:9px; height:9px; border-radius:999px; background:#FF6E6E;
-          box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gsiPulse 1.6s ease-out infinite; }
+        /* ticker bars */
+        .gsi-bar{ position:absolute; left:0; right:0; height:46px; background:#1A1A1A; color:#FFF1E5; overflow:hidden; display:flex; align-items:center;
+          font-family:var(--fd,var(--font-archivo)); font-size:20px; letter-spacing:.02em; }
+        .gsi-bar--top{ top:0; border-bottom:2.5px solid #1A1A1A; }
+        .gsi-bar--bottom{ bottom:0; border-top:2.5px solid #1A1A1A; }
+        .gsi-tick > span{ display:inline-flex; white-space:nowrap; animation:gsiTick 18s linear infinite; }
+        .gsi-tick--rev > span{ animation-direction:reverse; }
+        .gsi-tick em{ display:inline-flex; align-items:center; font-style:normal; }
+        .gsi-tick i{ width:8px; height:8px; border-radius:999px; background:#FF90E8; margin:0 22px; }
+        @keyframes gsiTick{ 0%{transform:translateX(0)} 100%{transform:translateX(-33.33%)} }
+
+        /* decor shapes */
+        .gsi-shape{ position:absolute; border:3px solid #1A1A1A; box-shadow:6px 6px 0 #1A1A1A; }
+        .gsi-shape--lime{ top:18%; left:10%; width:64px; height:64px; background:#B6FF6E; border-radius:18px; }
+        .gsi-shape--pink{ bottom:20%; right:12%; width:54px; height:54px; background:#FF90E8; border-radius:999px; }
+        .gsi-shape--sky{ top:24%; right:16%; width:46px; height:46px; background:#A8E1FF; border-radius:14px; }
+
+        .gsi-stage{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:18px; padding:24px; max-width:960px; }
+        .gsi-stickers{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+        .gsi-sticker{ display:inline-flex; align-items:center; gap:8px; padding:8px 18px; background:#FFF; border:2.5px solid #1A1A1A;
+          border-radius:999px; font-family:var(--fb,var(--font-anuphan)); font-weight:700; font-size:14px; box-shadow:3px 3px 0 #1A1A1A; }
+        .gsi-sticker--lime{ background:#B6FF6E; }
+        .gsi-dot{ width:9px; height:9px; border-radius:999px; background:#FF6E6E; box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gsiPulse 1.6s ease-out infinite; }
         @keyframes gsiPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
-        .gsi-intro__no{ font-family:var(--fd,var(--font-archivo)); font-size:clamp(56px,12vw,120px); line-height:1;
-          background:#FF90E8; border:3px solid #1A1A1A; border-radius:24px; padding:8px 26px; box-shadow:6px 6px 0 #1A1A1A; }
-        .gsi-intro__name{ font-family:var(--fd,var(--font-archivo),var(--font-anuphan)); font-size:clamp(40px,9vw,108px);
-          line-height:.92; letter-spacing:-.03em; margin:6px 0 0; text-transform:uppercase; text-wrap:balance; }
-        .gsi-intro__slogan{ font-family:var(--fb,var(--font-anuphan)); font-style:italic; font-size:clamp(15px,2.4vw,21px);
-          color:#4A4A4A; margin:4px 0 0; max-width:620px; }
-        .gsi-intro__hint{ margin-top:18px; font-family:var(--fm,var(--font-space-grotesk),monospace); font-size:12px;
-          letter-spacing:.18em; text-transform:uppercase; color:#4A4A4A; }
+
+        .gsi-no{ font-family:var(--fd,var(--font-archivo)); font-size:clamp(64px,15vw,150px); line-height:.9;
+          background:#FF90E8; border:3px solid #1A1A1A; border-radius:26px; padding:6px 30px; box-shadow:8px 8px 0 #1A1A1A; }
+
+        .gsi-name{ position:relative; display:inline-block; max-width:90vw; }
+        .gsi-name__clip{ font-family:var(--fd,var(--font-archivo),var(--font-anuphan)); font-size:clamp(34px,8vw,96px);
+          line-height:.94; letter-spacing:-.03em; text-transform:uppercase; text-wrap:balance; }
+        .gsi-name__swipe{ position:absolute; top:-4%; bottom:-4%; left:0; width:60%; background:#B6FF6E; mix-blend-mode:multiply; pointer-events:none; }
+
+        .gsi-slogan{ font-family:var(--fb,var(--font-anuphan)); font-style:italic; font-size:clamp(15px,2.6vw,22px); color:#4A4A4A; margin:2px 0 0; max-width:640px; }
+        .gsi-hint{ margin-top:14px; font-family:var(--fm,var(--font-space-grotesk),monospace); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#4A4A4A; }
+
+        @media (max-width:560px){ .gsi-shape{ display:none; } .gsi-bar{ height:38px; font-size:16px; } }
         @media (prefers-reduced-motion: reduce){ .gsi-intro{ display:none; } }
       `}</style>
     </motion.div>
