@@ -11,13 +11,14 @@
 //   <GumroadPartyIntro party={party} onDone={fn} durationMs? variant? />
 //   - Always an OVERLAY on already-rendered content (never gates page visibility):
 //     if motion/JS is unavailable the page underneath still shows; this just wipes away.
-//   - Auto-dismisses after durationMs, or on click/Esc, or instantly under
-//     prefers-reduced-motion. Calls onDone exactly once.
+//   - Auto-dismisses after durationMs, or on click/Esc. Calls onDone exactly once.
+//   - prefers-reduced-motion: renders the SAME composition but STATIC (no entrance
+//     motion, no loops, no wipe), held briefly then removed — so reduced-motion users
+//     still see the intro instead of nothing (accessible alternative, not a skip).
 //
-// Choreography (gumroad "Active Pulse"): ink ticker bars slam in top + bottom →
-// stickers stamp → big party number slams down (spring) → party name reveals under
-// a lime marker swipe → slogan rises → hold → the whole panel wipes UP to reveal the
-// party page beneath (a cinematic page transition).
+// Choreography (full-motion): ink ticker bars slam in top + bottom → stickers stamp →
+// big party number slams down (spring) → party name reveals under a lime marker swipe →
+// slogan + hint rise → hold → the whole panel wipes UP to reveal the party page.
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -34,12 +35,11 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
     if (calledRef.current) return;
     calledRef.current = true;
     setLeaving(true);
-    setTimeout(onDone, reduce ? 0 : 620); // let the wipe-up play
+    setTimeout(onDone, reduce ? 0 : 620); // let the wipe-up play (instant for reduced-motion)
   };
 
   useEffect(() => {
-    if (reduce) { finish(); return; }
-    const t = setTimeout(finish, durationMs);
+    const t = setTimeout(finish, reduce ? 1700 : durationMs); // reduce: hold the static frame, then go
     const onKey = (e) => { if (e.key === "Escape") finish(); };
     window.addEventListener("keydown", onKey);
     return () => { clearTimeout(t); window.removeEventListener("keydown", onKey); };
@@ -52,6 +52,11 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
   const hasNo = number != null && number > 0;
 
   const TICK = ["★ FMS ELECTION", "SAMO", "OFFICIAL PARTY", "CAST YOUR VOTE", "พรรคเดียวที่ลงสมัคร"];
+  const ticks = TICK.concat(TICK, TICK);
+
+  // reduced-motion: skip entrance animation (render at rest) + zero-duration transitions
+  const rm = (initial) => (reduce ? false : initial);
+  const rt = (t) => (reduce ? { duration: 0 } : t);
 
   return (
     <motion.div
@@ -60,40 +65,42 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
       onClick={finish}
       initial={{ y: 0 }}
       animate={{ y: leaving ? "-101%" : 0 }}
-      transition={{ duration: 0.6, ease: EASE_IO }}
+      transition={{ duration: reduce ? 0 : 0.6, ease: EASE_IO }}
     >
       {/* ink ticker bars slam in from the edges */}
-      <motion.div className="gsi-bar gsi-bar--top" initial={{ y: "-100%" }} animate={{ y: 0 }} transition={{ duration: 0.45, ease: EASE }}>
-        <div className="gsi-tick"><span>{TICK.concat(TICK, TICK).map((t, i) => <em key={i}>{t}<i /></em>)}</span></div>
+      <motion.div className="gsi-bar gsi-bar--top" initial={rm({ y: "-100%" })} animate={{ y: 0 }} transition={rt({ duration: 0.45, ease: EASE })}>
+        <div className="gsi-tick"><span>{ticks.map((t, i) => <em key={i}>{t}<i /></em>)}</span></div>
       </motion.div>
-      <motion.div className="gsi-bar gsi-bar--bottom" initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ duration: 0.45, ease: EASE }}>
-        <div className="gsi-tick gsi-tick--rev"><span>{TICK.concat(TICK, TICK).map((t, i) => <em key={i}>{t}<i /></em>)}</span></div>
+      <motion.div className="gsi-bar gsi-bar--bottom" initial={rm({ y: "100%" })} animate={{ y: 0 }} transition={rt({ duration: 0.45, ease: EASE })}>
+        <div className="gsi-tick gsi-tick--rev"><span>{ticks.map((t, i) => <em key={i}>{t}<i /></em>)}</span></div>
       </motion.div>
 
-      {/* floating chunky shapes (decor) */}
-      <motion.span className="gsi-shape gsi-shape--lime" animate={{ y: [0, -16, 0], rotate: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }} />
-      <motion.span className="gsi-shape gsi-shape--pink" animate={{ y: [0, 14, 0], rotate: [-6, 6, -6] }} transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }} />
-      <motion.span className="gsi-shape gsi-shape--sky" animate={{ y: [0, -12, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+      {/* floating chunky shapes (decor) — motion only */}
+      {!reduce && (
+        <>
+          <motion.span className="gsi-shape gsi-shape--lime" animate={{ y: [0, -16, 0], rotate: [0, 8, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }} />
+          <motion.span className="gsi-shape gsi-shape--pink" animate={{ y: [0, 14, 0], rotate: [-6, 6, -6] }} transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }} />
+          <motion.span className="gsi-shape gsi-shape--sky" animate={{ y: [0, -12, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+        </>
+      )}
 
       <div className="gsi-stage">
-        {/* stickers stamp in */}
         <div className="gsi-stickers">
           <motion.span className="gsi-sticker gsi-sticker--lime"
-            initial={{ opacity: 0, scale: 0.5, rotate: -10 }} animate={{ opacity: 1, scale: 1, rotate: -3 }} transition={{ duration: 0.4, ease: EASE, delay: 0.35 }}>
+            initial={rm({ opacity: 0, scale: 0.5, rotate: -10 })} animate={{ opacity: 1, scale: 1, rotate: -3 }} transition={rt({ duration: 0.4, ease: EASE, delay: 0.35 })}>
             ★ OFFICIAL PARTY
           </motion.span>
           <motion.span className="gsi-sticker"
-            initial={{ opacity: 0, scale: 0.5, rotate: 8 }} animate={{ opacity: 1, scale: 1, rotate: 2 }} transition={{ duration: 0.4, ease: EASE, delay: 0.48 }}>
+            initial={rm({ opacity: 0, scale: 0.5, rotate: 8 })} animate={{ opacity: 1, scale: 1, rotate: 2 }} transition={rt({ duration: 0.4, ease: EASE, delay: 0.48 })}>
             <span className="gsi-dot" /> พรรคเดียวที่ลงสมัคร
           </motion.span>
         </div>
 
-        {/* number slams down */}
         {hasNo && (
           <motion.div className="gsi-no"
-            initial={{ opacity: 0, scale: 1.9, rotate: 10 }}
+            initial={rm({ opacity: 0, scale: 1.9, rotate: 10 })}
             animate={{ opacity: 1, scale: 1, rotate: -4 }}
-            transition={{ type: "spring", stiffness: 240, damping: 15, delay: 0.55 }}>
+            transition={rt({ type: "spring", stiffness: 240, damping: 15, delay: 0.55 })}>
             {number}
           </motion.div>
         )}
@@ -101,21 +108,23 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
         {/* party name revealed under a lime marker swipe */}
         <div className="gsi-name">
           <motion.div className="gsi-name__clip"
-            initial={{ clipPath: "inset(0 100% 0 0)" }} animate={{ clipPath: "inset(0 0% 0 0)" }}
-            transition={{ duration: 0.62, ease: EASE_IO, delay: 1.0 }}>
+            initial={rm({ clipPath: "inset(0 100% 0 0)" })} animate={{ clipPath: "inset(0 0% 0 0)" }}
+            transition={rt({ duration: 0.62, ease: EASE_IO, delay: 1.0 })}>
             {name}
           </motion.div>
-          <motion.span className="gsi-name__swipe"
-            initial={{ x: "-115%" }} animate={{ x: "115%" }} transition={{ duration: 0.72, ease: EASE_IO, delay: 0.98 }} />
+          {!reduce && (
+            <motion.span className="gsi-name__swipe"
+              initial={{ x: "-115%" }} animate={{ x: "115%" }} transition={{ duration: 0.72, ease: EASE_IO, delay: 0.98 }} />
+          )}
         </div>
 
         {slogan ? (
-          <motion.p className="gsi-slogan" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE, delay: 1.55 }}>
+          <motion.p className="gsi-slogan" initial={rm({ opacity: 0, y: 18 })} animate={{ opacity: 1, y: 0 }} transition={rt({ duration: 0.5, ease: EASE, delay: 1.55 })}>
             &ldquo;{slogan}&rdquo;
           </motion.p>
         ) : null}
 
-        <motion.span className="gsi-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.95 }}>
+        <motion.span className="gsi-hint" initial={rm({ opacity: 0 })} animate={{ opacity: 1 }} transition={rt({ duration: 0.5, delay: 1.95 })}>
           แตะเพื่อเข้าสู่หน้าพรรค · TAP TO ENTER
         </motion.span>
       </div>
@@ -129,7 +138,6 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
             radial-gradient(circle at 86% 84%, #DCF2FF 0, transparent 44%),
             radial-gradient(circle at 84% 14%, #DFFFC2 0, transparent 38%);
         }
-        /* ticker bars */
         .gsi-bar{ position:absolute; left:0; right:0; height:46px; background:#1A1A1A; color:#FFF1E5; overflow:hidden; display:flex; align-items:center;
           font-family:var(--fd,var(--font-archivo)); font-size:20px; letter-spacing:.02em; }
         .gsi-bar--top{ top:0; border-bottom:2.5px solid #1A1A1A; }
@@ -140,7 +148,6 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
         .gsi-tick i{ width:8px; height:8px; border-radius:999px; background:#FF90E8; margin:0 22px; }
         @keyframes gsiTick{ 0%{transform:translateX(0)} 100%{transform:translateX(-33.33%)} }
 
-        /* decor shapes */
         .gsi-shape{ position:absolute; border:3px solid #1A1A1A; box-shadow:6px 6px 0 #1A1A1A; }
         .gsi-shape--lime{ top:18%; left:10%; width:64px; height:64px; background:#B6FF6E; border-radius:18px; }
         .gsi-shape--pink{ bottom:20%; right:12%; width:54px; height:54px; background:#FF90E8; border-radius:999px; }
@@ -166,7 +173,11 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
         .gsi-hint{ margin-top:14px; font-family:var(--fm,var(--font-space-grotesk),monospace); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#4A4A4A; }
 
         @media (max-width:560px){ .gsi-shape{ display:none; } .gsi-bar{ height:38px; font-size:16px; } }
-        @media (prefers-reduced-motion: reduce){ .gsi-intro{ display:none; } }
+        /* reduced-motion: keep the composition, drop the motion (marquee + decor) */
+        @media (prefers-reduced-motion: reduce){
+          .gsi-tick > span{ animation:none; }
+          .gsi-dot{ animation:none; }
+        }
       `}</style>
     </motion.div>
   );
