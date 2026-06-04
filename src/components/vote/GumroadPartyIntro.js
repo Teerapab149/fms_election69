@@ -12,22 +12,25 @@
 //   - Always an OVERLAY on already-rendered content (never gates page visibility):
 //     if motion/JS is unavailable the page underneath still shows; this just wipes away.
 //   - Auto-dismisses after durationMs, or on click/Esc. Calls onDone exactly once.
-//   - prefers-reduced-motion: renders the SAME composition but STATIC (no entrance
-//     motion, no loops, no wipe), held briefly then removed — so reduced-motion users
-//     still see the intro instead of nothing (accessible alternative, not a skip).
+//   - Always plays the full animation (product decision). A static reduced-motion
+//     fallback path is still wired (rm/rt helpers + the `reduce` flag) — flip
+//     `reduce` back to `useReducedMotion()` to honour the OS "reduce motion" setting.
 //
 // Choreography (full-motion): ink ticker bars slam in top + bottom → stickers stamp →
 // big party number slams down (spring) → party name reveals under a lime marker swipe →
 // slogan + hint rise → hold → the whole panel wipes UP to reveal the party page.
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 
 const EASE = [0.16, 1, 0.3, 1];       // ease-out-expo
 const EASE_IO = [0.76, 0, 0.24, 1];   // ease-in-out for wipes
 
 export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durationMs = 3400, variant = "stamp" }) {
-  const reduce = useReducedMotion();
+  // Product decision: always play the full intro animation for everyone (the user
+  // wants the cinematic show). Flip this back to `useReducedMotion()` if the OS
+  // "reduce motion" setting should be honoured (static fallback path stays wired).
+  const reduce = false;
   const calledRef = useRef(false);
   const [leaving, setLeaving] = useState(false);
 
@@ -173,11 +176,6 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
         .gsi-hint{ margin-top:14px; font-family:var(--fm,var(--font-space-grotesk),monospace); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#4A4A4A; }
 
         @media (max-width:560px){ .gsi-shape{ display:none; } .gsi-bar{ height:38px; font-size:16px; } }
-        /* reduced-motion: keep the composition, drop the motion (marquee + decor) */
-        @media (prefers-reduced-motion: reduce){
-          .gsi-tick > span{ animation:none; }
-          .gsi-dot{ animation:none; }
-        }
       `}</style>
     </motion.div>
   );
