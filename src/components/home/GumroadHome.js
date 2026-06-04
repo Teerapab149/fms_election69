@@ -535,6 +535,12 @@ export default function GumroadHome({
           .gh-burger{ display:grid; }
           .gh-topbar{ padding:12px 20px; }
           .gh-ticker{ font-size:18px; }
+          /* stacked layout — centre the hero so it doesn't look lopsided */
+          .gh-home__left{ text-align:center; }
+          .gh-eyebrow{ justify-content:center; }
+          .gh-subtitle{ margin-left:auto; margin-right:auto; }
+          .gh-yearrow{ display:flex; justify-content:center; }
+          .gh-cta{ justify-content:center; }
         }
         /* phone */
         @container gh (max-width:560px){
