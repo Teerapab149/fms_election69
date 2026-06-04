@@ -391,7 +391,9 @@ export default function GumroadSingleParty({
           .gsp-hero__logo{ width:84px; height:84px; }
           .gsp-hero__title{ font-size:clamp(24px,7cqw,40px); line-height:1.06; }
           .gsp-modal__card{ grid-template-columns:1fr; max-height:88vh; overflow-y:auto; }
-          .gsp-modal__photo{ border-right:0; border-bottom:var(--bw) solid var(--ink); min-height:300px; }
+          /* portrait box so the (portrait) member photo shows head-to-body, not just the head */
+          .gsp-modal__photo{ border-right:0; border-bottom:var(--bw) solid var(--ink); min-height:0; aspect-ratio:3/4; }
+          .gsp-modal__photo img{ object-position:center 12%; }
           .gsp-modal__info{ padding:26px 24px 30px; }
         }
         @container gsp (max-width:520px){
