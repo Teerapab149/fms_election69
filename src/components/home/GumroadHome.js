@@ -471,7 +471,7 @@ export default function GumroadHome({
 
         /* home grid */
         .gh-home{ flex:1; width:100%; max-width:1500px; margin:0 auto; display:grid;
-          grid-template-columns:1.15fr 1fr; gap:56px; padding:48px 56px 80px; align-items:center; }
+          grid-template-columns:1.3fr 1fr; gap:56px; padding:48px 56px 80px; align-items:center; }
         .gh-home__left{ position:relative; min-width:0; }
 
         .gh-eyebrow{ display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
@@ -483,10 +483,11 @@ export default function GumroadHome({
         /* year badge — deliberately larger than the eyebrow stickers */
         .gh-sticker--year{ font-size:17px; padding:10px 20px; border-radius:14px; box-shadow:var(--sh-sm); }
 
-        .gh-title{ font-family:var(--fd); font-size:clamp(64px,14cqw,200px); line-height:.85; letter-spacing:-.04em;
+        .gh-title{ font-family:var(--fd); font-size:clamp(72px,15.5cqw,196px); line-height:.82; letter-spacing:-.045em;
           color:var(--ink); margin:0; text-transform:uppercase; }
-        .gh-title em{ font-style:normal; background:var(--pink); display:inline-block; padding:0 12px; margin:10px 0 0;
-          border:var(--bw) solid var(--ink); box-shadow:var(--sh); transform:rotate(-2deg); }
+        /* the number ("50") is the focal stamp — render it oversized vs the word */
+        .gh-title em{ font-style:normal; font-size:1.2em; background:var(--pink); display:inline-block; padding:0 16px; margin:14px 0 0;
+          border:var(--bw) solid var(--ink); box-shadow:var(--sh-lg); transform:rotate(-2deg); }
         .gh-subtitle{ margin:28px 0 0; font-size:clamp(19px,2.6cqw,26px); font-weight:600; line-height:1.5; color:var(--ink); max-width:580px; }
         .gh-hl{ background:var(--lime); padding:2px 8px; border-radius:4px; border:1.5px solid var(--ink); font-weight:700;
           box-decoration-break:clone; -webkit-box-decoration-break:clone; }

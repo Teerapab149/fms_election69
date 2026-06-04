@@ -179,30 +179,44 @@ export const gumroadTemplate = {
     // per-state FILL flows through from config.backgroundColor (filled-variant
     // compatibility, see chunky-stamp.jsx). So we paint each state a pop colour.
     // login maps→notVoted visual; both styled independently via their own config.
+    // CTA_SIZE: chunky-stamp reads fontSize/paddingX/paddingY from per-state
+    // config (Layer 3), which OVERRIDES the --btn-* vars below. Classic ships
+    // lg/10/4 (≈18px font, 40px/16px pad) — too dainty for the gumroad hero.
+    // Bump every state to a bolder stamp: xl font + 12/5 padding. Spread AFTER
+    // the classic spread so it wins.
     "voteCTA-button": {
       variant: "chunky-stamp",
       config: {
         login: {
           ...classicTemplate.elements["voteCTA-button"].config.login,
-          backgroundColor: INK, textColor: CREAM
+          backgroundColor: INK, textColor: CREAM,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
         notVoted: {
           ...classicTemplate.elements["voteCTA-button"].config.notVoted,
-          backgroundColor: LIME, textColor: INK
+          backgroundColor: LIME, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
-        // voted = chunky-stamp's surface "card" look (bg ignored when voted) — keep.
-        voted: classicTemplate.elements["voteCTA-button"].config.voted,
+        // voted = chunky-stamp's surface "card" look (bg ignored when voted) — keep,
+        // but match the bolder sizing so the post-vote CTA isn't smaller.
+        voted: {
+          ...classicTemplate.elements["voteCTA-button"].config.voted,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
+        },
         ended: {
           ...classicTemplate.elements["voteCTA-button"].config.ended,
-          backgroundColor: YELLOW, textColor: INK
+          backgroundColor: YELLOW, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
         closed: {
           ...classicTemplate.elements["voteCTA-button"].config.closed,
-          backgroundColor: YELLOW, textColor: INK
+          backgroundColor: YELLOW, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
         paused: {
           ...classicTemplate.elements["voteCTA-button"].config.paused,
-          backgroundColor: SKY, textColor: INK
+          backgroundColor: SKY, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         }
       },
       vars: {
