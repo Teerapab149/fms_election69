@@ -10,6 +10,7 @@ import ResultsStatsBar from "../../components/ResultsStatsBar";
 import ResultsDemographics from "../../components/ResultsDemographics";
 import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
+import GumroadResults from "../../components/vote/GumroadResults";
 import { ELECTION_CONFIG } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
 
@@ -44,6 +45,18 @@ export default function ResultsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedParty, setSelectedParty] = useState(null);
   const [isRevealed, setIsRevealed] = useState(false); // ✅ สถานะบังคับเปิดเผยข้อมูล
+
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [templateReady, setTemplateReady] = useState(false);
+  useEffect(() => {
+    fetch(getPath('/api/admin/page-layout'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .catch(() => {})
+      .finally(() => setTemplateReady(true));
+  }, []);
+  const isGumroad = activeTemplateId === 'gumroad';
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
@@ -334,11 +347,19 @@ export default function ResultsPage() {
   const isNotStarted = finalStatus === "WAITING" || finalStatus === "PRE_CAMPAIGN";
 
   // ✅ 4. Loading UI (คงความ Responsive เดิม)
-  if (loading && finalStatus !== "ENDED") {
+  if ((loading || !templateReady) && finalStatus !== "ENDED") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-4" />
         <p className="text-slate-500 font-medium">กำลังตรวจสอบสิทธิ์เข้าถึง...</p>
+      </div>
+    );
+  }
+  // Hard-gate on template so the classic layout never flashes before gumroad resolves.
+  if (!templateReady) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-4" />
       </div>
     );
   }
@@ -347,11 +368,28 @@ export default function ResultsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-purple-100 overflow-x-hidden relative">
       <PageThemeOverrides page="results" />
-      <Navbar />
 
-      <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-      </div>
+      {/* GUMROAD layout (own topbar/footer); access modals below stay shared */}
+      {isGumroad && isAuthorized && (
+        <GumroadResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
+
+      {!isGumroad && <Navbar />}
+
+      {!isGumroad && (
+        <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
+          style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+        </div>
+      )}
 
       {selectedParty && (
         <PartyDetailModal
@@ -360,7 +398,8 @@ export default function ResultsPage() {
         />
       )}
 
-      {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) */}
+      {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
+      {!isGumroad && (
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
 
         {isAuthorized && (
@@ -470,6 +509,7 @@ export default function ResultsPage() {
           </>
         )}
       </main>
+      )}
 
       {/* ✅ 6. ACCESS DENIED MODAL (Logic ตัวดักหน้าช่วงเลือกตั้ง) */}
       {showAccessModal && (
@@ -528,7 +568,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      <SiteFooter className="mt-8 lg:mt-16" />
+      {!isGumroad && <SiteFooter className="mt-8 lg:mt-16" />}
     </div>
   );
 }
