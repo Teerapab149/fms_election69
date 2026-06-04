@@ -130,7 +130,9 @@ export default function GumroadHome({
     if (c.fontSize && !opts.skipSize) st.fontSize = SIZE_MAP[c.fontSize];
     if (c.color && !opts.skipColor) st.color = c.color;
     if (c.fontWeight) st.fontWeight = WEIGHT_MAP[c.fontWeight];
-    if (c.align) st.textAlign = c.align;
+    // skipAlign: let the layout/CSS own alignment (a stale `align:left` in saved
+    // config was pinning the hero title left, overriding the mobile centre).
+    if (c.align && !opts.skipAlign) st.textAlign = c.align;
     return Object.keys(st).length ? st : undefined;
   };
   const isVisible = (id) => effectiveConfigs?.[id]?.config?.visible !== false;
@@ -307,14 +309,14 @@ export default function GumroadHome({
           </div>
 
           <Wrap id="hero-title">
-            <h1 className="gh-title" data-element="hero-title" style={getTextStyle("hero-title", { skipSize: true })}>
+            <h1 className="gh-title" data-element="hero-title" style={getTextStyle("hero-title", { skipSize: true, skipAlign: true })}>
               {titlePart}
               {numberPart && <><br /><em>{numberPart}</em></>}
             </h1>
           </Wrap>
 
           <Wrap id="hero-subtitle">
-            <p className="gh-subtitle" data-element="hero-subtitle" style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true })}>
+            <p className="gh-subtitle" data-element="hero-subtitle" style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true, skipAlign: true })}>
               {/* line 1 — project name: the punchy lead (lime marker box) */}
               <span className="gh-subtitle__lead"><span className="gh-hl">{getText("hero-subtitle", globalConfig.campaignTitle)}</span></span>
               {/* line 2 — organization: quieter supporting line (smaller, lime chip, no box) */}
