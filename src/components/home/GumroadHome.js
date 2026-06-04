@@ -18,8 +18,8 @@
 import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { useSession, signIn } from "next-auth/react";
-import { ArrowRight, Calendar, CheckCircle2 } from "lucide-react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { ArrowRight, Calendar, CheckCircle2, Menu, X, LogOut } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
 import { SIZE_MAP, WEIGHT_MAP } from "../../utils/styleMaps";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
@@ -88,6 +88,7 @@ export default function GumroadHome({
   const globalConfig = useGlobalConfig();
   const [mounted, setMounted] = useState(false);
   const [isVotedReal, setIsVotedReal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // mobile hamburger drawer
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     if (editorMode) return;
@@ -209,6 +210,14 @@ export default function GumroadHome({
     }
   })();
 
+  // Auth state for the topbar / hamburger
+  const loggedIn = status === "authenticated" && !!session?.user;
+  const navName = session?.user?.name || "";
+  const navId = session?.user?.studentId || "";
+  const BP = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+  const doLogin = () => { if (!editorMode) signIn("authentik", { callbackUrl: BP + "/vote" }); };
+  const doLogout = () => { if (!editorMode) signOut({ callbackUrl: BP + "/" }); };
+
   return (
     <div className="fms-app gh-root">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
@@ -226,11 +235,54 @@ export default function GumroadHome({
           <a href={getPath("/results")} className="gh-navlink">ผลการลงคะแนนเสียง</a>
         </nav>
         <div className="gh-topbar__right">
-          <button className="gh-btn gh-btn--ink" onClick={() => !editorMode && signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}>
-            <ArrowRight size={16} /> เข้าสู่ระบบ
+          <div className="gh-auth-desktop">
+            {loggedIn ? (
+              <div className="gh-user">
+                <span className="gh-user__name">{navName || "ผู้ใช้"}</span>
+                <button className="gh-btn" onClick={doLogout}><LogOut size={15} /> ออกจากระบบ</button>
+              </div>
+            ) : (
+              <button className="gh-btn gh-btn--ink" onClick={doLogin}><ArrowRight size={16} /> เข้าสู่ระบบ</button>
+            )}
+          </div>
+          <button className="gh-burger" onClick={() => setMenuOpen((o) => !o)} aria-label="เมนู" aria-expanded={menuOpen}>
+            {menuOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
           </button>
         </div>
       </header>
+
+      {/* ── MOBILE DRAWER ── */}
+      {menuOpen && (
+        <>
+          <div className="gh-drawer__scrim" onClick={() => setMenuOpen(false)} />
+          <aside className="gh-drawer" role="dialog" aria-label="เมนู">
+            <div className={`gh-drawer__status ${loggedIn ? "is-in" : ""}`}>
+              {loggedIn ? (
+                <>
+                  <span className="gh-drawer__hi"><span className="gh-livedot" /> เข้าสู่ระบบแล้ว</span>
+                  <strong>{navName || "ผู้ใช้"}</strong>
+                  {navId ? <small>{navId}</small> : null}
+                </>
+              ) : (
+                <>
+                  <span className="gh-drawer__hi">ยังไม่ได้เข้าสู่ระบบ</span>
+                  <small>เข้าสู่ระบบด้วย PSU Passport เพื่อลงคะแนน</small>
+                </>
+              )}
+            </div>
+            <nav className="gh-drawer__nav">
+              <a href={getPath("/")} className="gh-drawer__link">หน้าแรก</a>
+              <a href={getPath("/candidates")} className="gh-drawer__link">Meet Candidates</a>
+              <a href={getPath("/results")} className="gh-drawer__link">ผลการลงคะแนนเสียง</a>
+            </nav>
+            {loggedIn ? (
+              <button className="gh-btn gh-btn--lg gh-btn--coral gh-drawer__auth" onClick={doLogout}><LogOut size={18} /> ออกจากระบบ</button>
+            ) : (
+              <button className="gh-btn gh-btn--lg gh-btn--ink gh-drawer__auth" onClick={doLogin}><ArrowRight size={18} /> เข้าสู่ระบบ</button>
+            )}
+          </aside>
+        </>
+      )}
 
       {/* ── TICKER ── */}
       <div className="gh-ticker">
@@ -372,6 +424,29 @@ export default function GumroadHome({
         .gh-btn--lime{ background:var(--lime); }
         .gh-btn--lg{ padding:18px 28px; font-size:17px; border-radius:16px; box-shadow:var(--sh); }
         .gh-btn--lg:hover{ transform:translate(-3px,-3px); box-shadow:var(--sh-lg); }
+        .gh-btn--coral{ background:var(--coral); }
+
+        /* topbar auth + hamburger */
+        .gh-auth-desktop{ display:flex; align-items:center; }
+        .gh-user{ display:flex; align-items:center; gap:12px; }
+        .gh-user__name{ font-weight:700; font-size:14px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .gh-burger{ display:none; width:46px; height:46px; flex-shrink:0; border:var(--bw) solid var(--ink); border-radius:14px; background:var(--paper); place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
+        .gh-burger:hover{ background:var(--lime); }
+
+        /* mobile drawer */
+        .gh-drawer__scrim{ position:fixed; inset:0; z-index:55; background:rgba(26,26,26,.42); backdrop-filter:blur(2px); }
+        .gh-drawer{ position:fixed; top:0; right:0; bottom:0; z-index:60; width:min(84vw,330px); display:flex; flex-direction:column; gap:14px;
+          padding:24px 20px; overflow-y:auto; background:var(--cream); border-left:var(--bw) solid var(--ink); box-shadow:-10px 0 0 rgba(26,26,26,.12);
+          background-image:radial-gradient(circle at 90% 6%, #FFD1F2 0,transparent 40%),radial-gradient(circle at 10% 96%, #DCF2FF 0,transparent 42%); }
+        .gh-drawer__status{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:16px 18px; display:flex; flex-direction:column; gap:3px; }
+        .gh-drawer__status.is-in{ background:var(--lime); }
+        .gh-drawer__hi{ display:inline-flex; align-items:center; gap:8px; font-family:var(--fm); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); }
+        .gh-drawer__status strong{ font-size:18px; line-height:1.2; }
+        .gh-drawer__status small{ font-family:var(--fm); font-size:12px; color:var(--ink2); }
+        .gh-drawer__nav{ display:flex; flex-direction:column; gap:9px; }
+        .gh-drawer__link{ padding:13px 16px; border:2px solid var(--ink); border-radius:12px; background:var(--paper); font-weight:700; font-size:15px; box-shadow:var(--sh-sm); }
+        .gh-drawer__link:hover{ background:var(--pink); }
+        .gh-drawer__auth{ margin-top:auto; justify-content:center; }
 
         /* ticker */
         .gh-ticker{ border-bottom:var(--bw) solid var(--ink); background:var(--ink); color:var(--cream);
@@ -456,6 +531,8 @@ export default function GumroadHome({
         @container gh (max-width:980px){
           .gh-home{ grid-template-columns:1fr; gap:36px; padding:32px 28px 60px; align-items:stretch; }
           .gh-nav{ display:none; }
+          .gh-auth-desktop{ display:none; }
+          .gh-burger{ display:grid; }
           .gh-topbar{ padding:12px 20px; }
           .gh-ticker{ font-size:18px; }
         }
