@@ -332,9 +332,9 @@ export default function GumroadSingleParty({
         .gsp-members{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px; }
         .gsp-tile{ display:block; width:100%; padding:0; font-family:inherit; color:inherit; cursor:pointer; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh-sm); overflow:hidden; text-align:center; transition:transform .15s ease-out, box-shadow .15s ease-out; }
         .gsp-tile:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
-        .gsp-tile__photo{ aspect-ratio:1; background:var(--cream2); display:grid; place-items:center; border-bottom:2px solid var(--ink); overflow:hidden;
+        .gsp-tile__photo{ position:relative; aspect-ratio:1; background:var(--cream2); display:grid; place-items:center; border-bottom:2px solid var(--ink); overflow:hidden;
           background-image:repeating-linear-gradient(45deg,transparent 0 12px,rgba(0,0,0,.04) 12px 14px); }
-        .gsp-tile__photo img{ width:100%; height:100%; object-fit:cover; }
+        .gsp-tile__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
         .gsp-tile__photo span{ font-family:var(--fd); font-size:20px; background:var(--paper); padding:4px 10px; border:2px solid var(--ink); border-radius:999px; }
         .gsp-tile__name{ padding:10px 8px 4px; font-weight:700; font-size:13px; line-height:1.25; }
         .gsp-tile__role{ padding:0 8px 12px; font-size:11px; color:var(--ink2); font-family:var(--fm); text-transform:uppercase; letter-spacing:.08em; }
@@ -366,7 +366,7 @@ export default function GumroadSingleParty({
         .gsp-modal__x{ position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
         .gsp-modal__x:hover{ background:var(--coral); }
         .gsp-modal__photo{ position:relative; background:var(--cream2); border-right:var(--bw) solid var(--ink); min-height:360px; display:grid; place-items:center; overflow:hidden; background-image:repeating-linear-gradient(45deg,transparent 0 14px,rgba(0,0,0,.04) 14px 16px); }
-        .gsp-modal__photo img{ width:100%; height:100%; object-fit:cover; object-position:top center; }
+        .gsp-modal__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; }
         .gsp-modal__photo span{ font-family:var(--fd); font-size:72px; }
         .gsp-modal__info{ position:relative; padding:36px 34px 40px; display:flex; flex-direction:column; justify-content:center; min-width:0; }
         .gsp-modal__eyebrow{ font-family:var(--fm); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink2); }
