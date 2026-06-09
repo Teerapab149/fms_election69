@@ -136,17 +136,26 @@ export default function GlobalConfigTab() {
                       ↺ ค่าเริ่มต้น
                     </button>
                   </div>
-                  <input
-                    type={field.type}
-                    value={config[field.key] ?? ""}
-                    onChange={(e) =>
-                      handleChange(
-                        field.key,
-                        field.type === "number" ? Number(e.target.value) : e.target.value
-                      )
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:outline-none text-sm"
-                  />
+                  {field.multiline ? (
+                    <textarea
+                      rows={2}
+                      value={config[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:outline-none text-sm resize-y leading-relaxed"
+                    />
+                  ) : (
+                    <input
+                      type={field.type}
+                      value={config[field.key] ?? ""}
+                      onChange={(e) =>
+                        handleChange(
+                          field.key,
+                          field.type === "number" ? Number(e.target.value) : e.target.value
+                        )
+                      }
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:outline-none text-sm"
+                    />
+                  )}
                   {field.hint && (
                     <p className="text-[10px] text-slate-400 mt-1">{field.hint}</p>
                   )}

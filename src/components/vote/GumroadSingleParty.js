@@ -14,11 +14,12 @@
 import { getPath } from "../../utils/basePath";
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
 import { Check, X, Ban } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import GumroadPartyIntro from "./GumroadPartyIntro";
+import SiteNavbar from "../elements/site-navbar/gumroad";
+import MemberTile from "../composites/member-tile/gumroad";
 
 // --- data helpers (party fields are loose JSON from the admin) ---
 const asText = (it) =>
@@ -82,19 +83,8 @@ export default function GumroadSingleParty({
         {!introDone && <GumroadPartyIntro key="intro" party={party} onDone={() => setIntroDone(true)} />}
       </AnimatePresence>
 
-      {/* TOPBAR (navbar handles navigation — no back button) */}
-      <header className="gsp-topbar">
-        <a href={getPath("/")} className="gsp-brand">
-          <Image src={getPath("/images/logo/fms_logo50_color.png")} alt="FMS 50th" width={480} height={480} className="gsp-badge" />
-          <span className="gsp-div" />
-          <Image src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")} alt="FMS PSU" width={1200} height={384} className="gsp-word" />
-        </a>
-        <nav className="gsp-nav">
-          <a href={getPath("/")} className="gsp-navlink">หน้าแรก</a>
-          <a href={getPath("/candidates")} className="gsp-navlink">Meet Candidates</a>
-          <a href={getPath("/results")} className="gsp-navlink">ผลการลงคะแนนเสียง</a>
-        </nav>
-      </header>
+      {/* TOPBAR — shared gumroad navbar element */}
+      <SiteNavbar />
 
       <main className="gsp-page">
         {/* eyebrow */}
@@ -174,18 +164,9 @@ export default function GumroadSingleParty({
               <span className="gsp-members__count">{members.length} CANDIDATES</span>
             </div>
             <div className="gsp-members">
-              {members.map((m, i) => {
-                const ph = resolveSrc(m?.imageUrl);
-                return (
-                  <button type="button" className="gsp-tile" key={m?.id ?? i} onClick={() => setModalMember(m)}>
-                    <div className="gsp-tile__photo">
-                      {ph ? <img src={ph} alt={m?.name || ""} /> : <span>#{String(i + 1).padStart(2, "0")}</span>}
-                    </div>
-                    <div className="gsp-tile__name">{m?.name}</div>
-                    {m?.position ? <div className="gsp-tile__role">{m.position}</div> : null}
-                  </button>
-                );
-              })}
+              {members.map((m, i) => (
+                <MemberTile key={m?.id ?? i} member={m} photo={resolveSrc(m?.imageUrl)} index={i} onClick={() => setModalMember(m)} />
+              ))}
             </div>
           </section>
         )}
@@ -288,22 +269,19 @@ export default function GumroadSingleParty({
 
       <style jsx global>{`
         .gsp-root{
-          --ink:#1A1A1A; --ink2:#4A4A4A; --cream:#FFF1E5; --cream2:#FFE4CE; --paper:#FFF;
-          --pink:#FF90E8; --lime:#B6FF6E; --yellow:#FFC900; --sky:#A8E1FF; --coral:#FF6E6E;
+          --ink:#26271c; --ink2:#5c5a4b; --cream:#FFF6EC; --cream2:#FFE9D6; --paper:#FFFDFA;
+          --pink:#FF9CE9; --lime:#C2F47E; --yellow:#FFD24D; --sky:#B6E6FF; --coral:#FF8A8A;
           --bw:2.5px; --sh:5px 5px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink); --sh-lg:8px 8px 0 var(--ink);
           --fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --fm:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
-          min-height:100vh; display:flex; flex-direction:column; color:var(--ink); background:var(--cream);
+          min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb); container-type:inline-size; container-name:gsp; padding-bottom:96px;
-          background-image:radial-gradient(circle at 10% 8%, #FFD1F2 0,transparent 34%),radial-gradient(circle at 92% 96%, #DCF2FF 0,transparent 38%);
-          background-attachment:fixed;
+          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
         }
         .gsp-root *{ box-sizing:border-box; } .gsp-root a{ text-decoration:none; color:inherit; } .gsp-root img{ display:block; max-width:100%; }
 
-        .gsp-topbar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 32px; background:var(--cream); border-bottom:var(--bw) solid var(--ink); }
-        .gsp-brand{ display:flex; align-items:center; gap:14px; } .gsp-badge{ width:auto; height:46px; object-fit:contain; } .gsp-div{ width:2px; height:34px; background:var(--ink); } .gsp-word{ width:auto; height:32px; object-fit:contain; }
-        .gsp-nav{ display:flex; gap:4px; } .gsp-navlink{ padding:8px 16px; border-radius:999px; font-weight:600; font-size:14px; border:2px solid transparent; } .gsp-navlink:hover{ background:var(--paper); border-color:var(--ink); }
+        /* topbar = shared <SiteNavbar> element */
 
         .gsp-page{ flex:1; width:100%; max-width:1040px; margin:0 auto; padding:32px 28px 40px; }
         .gsp-eyebrow{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
@@ -325,7 +303,7 @@ export default function GumroadSingleParty({
         .gsp-hero__txt{ min-width:0; flex:1; }
         .gsp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gsp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }
-        .gsp-hero__no{ margin-left:auto; font-family:var(--fd); font-size:clamp(48px,8cqw,84px); line-height:1; background:var(--pink); border:var(--bw) solid var(--ink); border-radius:22px; padding:10px 24px; box-shadow:var(--sh); transform:rotate(-3deg); }
+        .gsp-hero__no{ margin-left:auto; font-family:var(--fd); font-size:clamp(48px,8cqw,84px); line-height:1; background:var(--pink); border:var(--bw) solid var(--ink); border-radius:22px; padding:10px 24px; box-shadow:var(--sh); }
 
         /* SECTION cards */
         .gsp-section{ display:grid; grid-template-columns:1fr; gap:22px; margin-bottom:24px; align-items:start; }
@@ -356,14 +334,7 @@ export default function GumroadSingleParty({
         .gsp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gsp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }
         .gsp-members{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px; }
-        .gsp-tile{ display:flex; flex-direction:column; width:100%; padding:0; font-family:inherit; color:inherit; cursor:pointer; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh-sm); overflow:hidden; text-align:center; transition:transform .15s ease-out, box-shadow .15s ease-out; }
-        .gsp-tile:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
-        .gsp-tile__photo{ position:relative; aspect-ratio:1; background:var(--cream2); display:grid; place-items:center; border-bottom:2px solid var(--ink); overflow:hidden;
-          background-image:repeating-linear-gradient(45deg,transparent 0 12px,rgba(0,0,0,.04) 12px 14px); }
-        .gsp-tile__photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-        .gsp-tile__photo span{ font-family:var(--fd); font-size:20px; background:var(--paper); padding:4px 10px; border:2px solid var(--ink); border-radius:999px; }
-        .gsp-tile__name{ padding:10px 8px 4px; font-weight:700; font-size:13px; line-height:1.25; }
-        .gsp-tile__role{ padding:0 8px 12px; font-size:11px; color:var(--ink2); font-family:var(--fm); text-transform:uppercase; letter-spacing:.08em; }
+        /* member tiles = <MemberTile> composites (own scoped styles) */
 
         /* VOTE */
         .gsp-vote{ margin-top:8px; }
@@ -419,7 +390,6 @@ export default function GumroadSingleParty({
 
         /* RESPONSIVE */
         @container gsp (max-width:880px){
-          .gsp-nav{ display:none; } .gsp-topbar{ padding:12px 18px; } .gsp-word,.gsp-div{ display:none; }
           .gsp-section[data-cols="2"]{ grid-template-columns:1fr; }
           .gsp-policies{ grid-template-columns:1fr; } .gsp-members{ grid-template-columns:repeat(3,1fr); }
           .gsp-choices{ grid-template-columns:1fr; }

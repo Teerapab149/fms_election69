@@ -45,7 +45,7 @@ export const GLOBAL_CONFIG_FIELDS = [
   {
     group: "ข้อมูลโครงการ",
     fields: [
-      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร" },
+      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", multiline: true, hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร · กด Enter เพื่อขึ้นบรรทัดใหม่เอง" },
       { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", hint: "เช่น คณะกรรมการบริหาร" },
     ],
   },

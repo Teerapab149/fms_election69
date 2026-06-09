@@ -60,6 +60,7 @@ model Candidate {
   number  Int     @unique
   slogan  String?
   logoUrl String?
+  color   String? // party identity colour (hex, e.g. "#7FC8FF"); admin-set, optional
 
   groupImageUrls   Json?
   officialImageUrl String?

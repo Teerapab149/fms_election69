@@ -1,0 +1,117 @@
+# MAINTENANCE & PANIC RUNBOOK — FMS Online Voting (SAMO 49)
+
+คู่มือสำหรับ **staff ที่ดูแลระบบ + dev คนถัดไป** ให้ระบบอยู่ได้ยาว โดยคนที่ไม่ได้สร้างมันก็ดูแลต่อได้.
+อ่านคู่กับ `CLAUDE.md` (ภาพรวม + conventions) และ `docs/HANDOFF-*.md` (สถานะงาน editor).
+
+> หลักคิดที่ตกลงกันไว้ (memory `editor-strategy-decision`): สิ่งที่ทำให้ระบบ **อยู่ครบหลายปี = ความทนทานเชิง
+> operation + เอกสารนี้** ไม่ใช่ความหลากหลายของดีไซน์. การเปลี่ยนหน้าตาแต่ละปีทำได้ด้วย **เลือก template +
+> เปลี่ยนสี (theme tokens) + แก้เนื้อหา** ผ่านหน้า admin — ไม่ต้อง design ใหม่จากศูนย์.
+
+---
+
+## 0. ระบบนี้คืออะไร (1 ย่อหน้า)
+Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy เป็น Docker ที่ subpath
+`/fms-ovs`. หน้า admin ใช้ RSA-encrypted token. ข้อมูลเลือกตั้ง (พรรค/สมาชิก/คะแนน) อยู่ใน DB; วันเวลาเลือกตั้ง
+อยู่ในโค้ด (`src/utils/electionConfig.js`) ไม่ใช่ DB.
+
+---
+
+## 1. งานประจำปี — เปลี่ยนปีการเลือกตั้งใหม่ (checklist)
+> ✅ **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/fms-ovs/admin`, 5 แท็บ) ครอบคลุมงานรายปี **เกือบทั้งหมด** —
+> staff ทำเองได้โดยไม่ต้องมี dev **ยกเว้นข้อ 6 (วันเวลาเลือกตั้ง)** จุดเดียวที่ต้องแก้โค้ด.
+
+ทำผ่านหน้า admin (ไม่ต้องแตะโค้ด) ตามแท็บ:
+
+1. **ชื่อ/ปี/เลขครั้ง/เนื้อหา** — แท็บ **"ตั้งค่าทั่วไป"**: ชื่อการเลือกตั้ง (SAMO 50→51), เลขครั้งที่,
+   ปีการศึกษา พ.ศ. (2570→2571), ปี ค.ศ., ชื่อโครงการ/องค์กร/คณะ/มหาวิทยาลัย/ปีลิขสิทธิ์ (ทุกช่องมีปุ่ม ↺ คืนค่า).
+2. **พรรค + สมาชิก** — แท็บ **"จัดการผู้สมัคร"**: เพิ่ม/แก้/ลบพรรค + สมาชิก + รูป + สีพรรค (รูปถูก optimize อัตโนมัติ).
+3. **หน้าตา/สี (ธีม)** — แท็บ **"ออกแบบหน้าเว็บ"** → **"ธีมสี / Theme Tokens"**: ปรับสี/ฟอนต์/มุมโค้งทั้งเว็บพร้อมกัน
+   → **เปลี่ยนสีก็ทำให้ "รู้สึกใหม่" ได้ทั้งปีโดยไม่ต้องสร้าง template ใหม่** (กลไก variety หลัก). + เลือก template,
+   จัด Sections หน้า Home (เปิด/ปิด/ลำดับ), สลับ variant ของ element (คลัง 47 ชนิด).
+4. **โหมดระบบ + แสดงผล + Google Form** — แท็บ **"ตั้งค่าระบบ"**: `AUTO` (ใช้เวลาจาก electionConfig) /
+   `OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
+5. **รีเซ็ตเริ่มปีใหม่** — แท็บ **"ตั้งค่าระบบ"**: ปุ่ม **"ล้างคะแนนโหวตทั้งหมด"** + **"ล้างพรรคและสมาชิกทั้งหมด"**.
+   ⚠️ **สำรอง DB ก่อนเสมอ** (ดู §5). (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
+6. ⚠️ **วันเวลาเลือกตั้ง (เปิด/ปิดหีบ)** — **จุดเดียวที่ต้องแก้โค้ด**: `src/utils/electionConfig.js`
+   → rebuild + redeploy (§4). *(ถ้าอยากให้ staff ตั้งวันเองได้ = ต้องย้าย dates เข้า DB/admin — งาน dev ครั้งเดียว,
+   ดู §7-ish ข้อเสนอ. ตอนนี้ยังต้องแก้โค้ด.)*
+
+> เลขพรรคพิเศษ: `number = 0` → งดออกเสียง, `number = -1` → ไม่รับรอง (ใช้ตอนมีพรรคเดียว), `> 0` → พรรคจริง.
+> ปีผู้มีสิทธิ์ที่ valid: `ปี 1`–`ปี 4` เท่านั้น.
+
+---
+
+## 2. Environment variables ที่ต้องมี (ตั้งตอน deploy)
+```
+DATABASE_URL          # PostgreSQL connection string
+NEXTAUTH_SECRET       # คีย์เข้ารหัส NextAuth
+NEXT_PUBLIC_BASE_PATH # subpath ตอน deploy (ค่า: /fms-ovs)
+ADMIN_PRIVATE_KEY     # RSA private key สำหรับ admin auth
+ADMIN_AUTH_SECRET     # secret ตรวจ admin token
+```
++ ตัวแปร PSU SSO (client id/secret/issuer) — ดู `src/lib/auth.js`. **เก็บค่าพวกนี้ในที่ปลอดภัย + สำรองไว้**
+(ถ้าหาย = ตั้งใหม่ทั้งหมด). ห้าม commit ลง git.
+
+---
+
+## 3. รันในเครื่อง (dev)
+```
+npm install
+npx prisma generate         # ถ้าเพิ่งแก้ schema: npx prisma db push  (อย่า migrate — ดู §6)
+npm run dev                 # http://localhost:3000/fms-ovs
+```
+Windows quirk: ถ้า `.next` ล็อก/พัง → หยุด dev server, `rm -rf .next`, รันใหม่.
+
+---
+
+## 4. Build + Deploy
+```
+# (Windows) หยุด dev server ก่อน แล้วค่อยลบ .next กัน EPERM lock
+rm -rf .next
+npm run build               # ต้องผ่านครบทุก route ก่อน deploy
+```
+Deploy เป็น Docker ที่ subpath `/fms-ovs`. **ทุก URL ภายในต้องผ่าน `getPath()`** (utils/basePath.js) —
+ถ้าเห็นลิงก์/รูปพังหลัง deploy มักเพราะมี path ตรงๆ ที่ไม่ผ่าน `getPath()`.
+
+---
+
+## 5. สำรอง/กู้คืน DB (ทำก่อนงานเสี่ยงทุกครั้ง)
+```
+# backup
+pg_dump "$DATABASE_URL" > backup_$(date +%Y%m%d).sql
+# restore
+psql "$DATABASE_URL" < backup_YYYYMMDD.sql
+```
+**สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, แก้ schema, อัปเดต deps.**
+
+---
+
+## 6. PANIC — อาการพัง + วิธีแก้
+
+| อาการ | สาเหตุที่พบบ่อย | แก้ |
+|---|---|---|
+| **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
+| **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
+| **admin เข้าไม่ได้** | `ADMIN_PRIVATE_KEY`/`ADMIN_AUTH_SECRET` ไม่ตรง/หาย | ตรวจ env 2 ตัวนี้ตรงกับตอน gen token |
+| **ลิงก์/รูปพังหลัง deploy** | path ไม่ผ่าน `getPath()` หรือ `NEXT_PUBLIC_BASE_PATH` ผิด | ตั้ง base path = `/fms-ovs`; หา path ตรงๆ ในโค้ด |
+| **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
+| **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
+
+⚠️ **ใช้ `prisma db push` ไม่ใช่ `migrate`** สำหรับ schema นี้ (มี drift; ดู handoff). สำรอง DB ก่อนทุกครั้ง.
+
+---
+
+## 7. ถ้าต้องเพิ่ม template ใหม่ (ต้องใช้ dev)
+แนวทางที่ตกลงไว้: **มี 3-5 template ก็พอ**, เพิ่มแบบ lazy เมื่อต้องการจริง ไม่ตุนไว้ล่วงหน้า.
+มี skill ช่วย: `fms-add-template` / `fms-add-element`. เครื่องมือ author เร็วขึ้น = `/fms-ovs/compose-lab`
+(composition editor — เป็น lab สำหรับ dev/author เท่านั้น ไม่ใช่หน้าให้ผู้ใช้ทั่วไปลากเอง).
+
+---
+
+## 8. ใครดูแล / ติดต่อใคร
+- **ผู้สร้างเดิม:** (ระบุชื่อ/ติดต่อ — เติมเอง)
+- **Staff คณะที่ดูแล operation:** (เติมเอง)
+- เอกสารสถานะงานล่าสุด: `docs/HANDOFF-editor-ui-phase-2.md`, memory note ของโปรเจกต์.
+
+> 🔧 จุดที่ควรเติมเองให้ครบ: ชื่อ/เบอร์ผู้ดูแล, ที่อยู่ deploy/Docker host, ที่เก็บ backup env + DB,
+> และค่า PSU SSO ปัจจุบัน. กรอกแล้วคู่มือนี้จะใช้กู้ระบบได้จริงตอนฉุกเฉิน.

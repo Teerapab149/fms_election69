@@ -21,7 +21,7 @@ import { mapToPrimaryState } from "./stateMap.js";
 //   Border is hardcoded #000 — the "stamp" feel is the variant's identity
 //   and the Layer 2 --btn-border-color is set to `transparent` by templates
 //   for the default variant's borderless fill.
-//   Shadow is hardcoded '5px 5px 0 #000000' for the same reason: --btn-shadow
+//   Shadow is hardcoded '5px 5px 0 var(--ink, #000000)' for the same reason: --btn-shadow
 //   is calibrated as the default variant's soft drop-shadow and would
 //   destroy chunky-stamp's signature mark if used as a fallback.
 // - voted: muted surface card with text-color border and a smaller shadow.
@@ -34,22 +34,27 @@ const PRIMARY_STYLES = {
   notVoted: {
     backgroundColor: "var(--btn-bg, var(--color-primary))",
     color: "var(--btn-text, var(--color-surface))",
-    borderColor: "#000000",
+    borderColor: "var(--ink, #000000)",
     borderWidth: "3px",
     borderStyle: "solid",
-    boxShadow: "5px 5px 0 #000000",
+    boxShadow: "5px 5px 0 var(--ink, #000000)",
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
   },
   voted: {
-    // "voted" is a clickable "view results" CTA (not a dead confirmation).
-    backgroundColor: "var(--color-surface, #ffffff)",
-    color: "var(--color-text, #1e293b)",
-    borderColor: "var(--color-text, #1e293b)",
+    // "voted" is a clickable "view results" CTA (not a dead confirmation). It's a
+    // full chunky stamp in gumroad pink so it stays as bold as the other states —
+    // NOT a plain white card. Pink is hardcoded (not var(--color-primary)) because
+    // PageThemeOverrides resolves --color-primary to the FMS brand purple #8A2680
+    // here, which read as dark-on-dark. Ink text/border/shadow keep it on-identity.
+    // (A previous white-surface version read as washed-out.)
+    backgroundColor: "var(--pink, #FF90E8)",
+    color: "var(--ink, #1A1A1A)",
+    borderColor: "var(--ink, #000000)",
     borderWidth: "3px",
     borderStyle: "solid",
-    boxShadow: "5px 5px 0 var(--color-text, #1e293b)",
+    boxShadow: "5px 5px 0 var(--ink, #000000)",
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
@@ -57,10 +62,10 @@ const PRIMARY_STYLES = {
   ended: {
     backgroundColor: "var(--color-accent, #9333EA)",
     color: "var(--color-surface, #ffffff)",
-    borderColor: "#000000",
+    borderColor: "var(--ink, #000000)",
     borderWidth: "3px",
     borderStyle: "solid",
-    boxShadow: "5px 5px 0 #000000",
+    boxShadow: "5px 5px 0 var(--ink, #000000)",
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
@@ -105,8 +110,11 @@ export default function ChunkyStampVoteCTA({ config = {}, data = {}, resolvedCon
     paddingBottom: stateConfig.paddingY ? `${parseInt(stateConfig.paddingY) * 0.25}rem` : "var(--btn-padding-y)",
     fontSize:      stateConfig.fontSize ? mapFontSize(stateConfig.fontSize) : "var(--btn-font-size)",
     // Bold + uppercase + tracking locked by baseStyle for variant identity.
-    // Layer 3 color overrides DO flow through (filled-variant compatibility):
-    ...(stateConfig.textColor       && { color: stateConfig.textColor }),
+    // Layer 3 color overrides DO flow through (filled-variant compatibility) EXCEPT
+    // for "voted" — that state is a white surface "card", so a light per-state
+    // textColor/backgroundColor (inherited from the classic filled button) would
+    // paint white-on-white. Keep voted's own ink text + white surface.
+    ...(stateConfig.textColor       && visualState !== "voted" && { color: stateConfig.textColor }),
     ...(stateConfig.backgroundColor && visualState !== "voted" && { backgroundColor: stateConfig.backgroundColor }),
   };
 
@@ -133,7 +141,7 @@ export default function ChunkyStampVoteCTA({ config = {}, data = {}, resolvedCon
         }
         .chunky-stamp-btn:not(:disabled):hover {
           transform: translate(-2px, -2px);
-          box-shadow: 7px 7px 0 #000000;
+          box-shadow: 7px 7px 0 var(--ink, #000000);
         }
         .chunky-stamp-btn:not(:disabled):active {
           transform: translate(0, 0);

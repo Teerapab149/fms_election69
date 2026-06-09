@@ -1305,6 +1305,7 @@ export default function PageDesignTab() {
           selectedElement={editor.selectedElement}
           elementConfigs={editor.elementConfigs}
           pageLayout={livePageLayout}
+          resolvedTemplate={editorEffectiveTemplate}
           elementVariants={editor.elementVariants}
           onSetVariant={editor.setElementVariant}
           onResetVariant={editor.resetElementVariant}

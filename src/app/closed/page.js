@@ -8,21 +8,31 @@ import { signOut } from "next-auth/react";
 import Navbar from "../../components/Navbar";
 import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
+import GumroadClosed from "../../components/vote/GumroadClosed";
 
 export default function ClosedPage() {
     const { data: session } = useSession();
     const [statusData, setStatusData] = useState(null);
 
+    // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+    const [activeTemplateId, setActiveTemplateId] = useState('classic');
+    const isGumroad = activeTemplateId === 'gumroad';
+
     useEffect(() => {
         fetch(getPath('/api/check-status')).then(res => res.json()).then(setStatusData);
+        fetch(getPath('/api/admin/page-layout'))
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+            .catch(() => {});
     }, []);
 
     const getMessage = () => {
-        if (!statusData) return { title: "ระบบปิดรับลงคะแนน", desc: "กำลังตรวจสอบสถานะ..." };
+        if (!statusData) return { title: "ระบบปิดรับลงคะแนน", desc: "กำลังตรวจสอบสถานะ...", variant: "closed" };
         const { electionStatus, systemMode } = statusData;
 
         if (electionStatus === "WAITING") {
             return {
+                variant: "waiting",
                 title: "ยังไม่เปิดรับลงคะแนน",
                 desc: (
                     <>
@@ -34,6 +44,7 @@ export default function ClosedPage() {
         }
         if (electionStatus === "ENDED" || systemMode === "ENDED") {
             return {
+                variant: "ended",
                 title: "สิ้นสุดระยะเวลาลงคะแนน",
                 desc: (
                     <>
@@ -44,6 +55,7 @@ export default function ClosedPage() {
             };
         }
         return {
+            variant: "closed",
             title: "ระบบปิดรับลงคะแนน",
             desc: "ระบบเลือกตั้งถูกปิดชั่วคราว หรือหมดเวลาการลงคะแนนแล้ว กรุณาติดต่อเจ้าหน้าที่หากมีข้อสงสัย"
         };
@@ -78,7 +90,22 @@ export default function ClosedPage() {
         }
     };
 
-    const { title, desc } = getMessage();
+    const { title, desc, variant } = getMessage();
+
+    if (isGumroad) {
+        return (
+            <>
+                <PageThemeOverrides page="closed" />
+                <GumroadClosed
+                    title={title}
+                    desc={desc}
+                    variant={variant}
+                    session={session}
+                    onLogout={handleLogout}
+                />
+            </>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans">

@@ -12,6 +12,8 @@ import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 import BackToVoteBar from "../../components/BackToVoteBar";
 import CandidateModal from '../../components/CandidateModal';
+import GumroadParty from "../../components/vote/GumroadParty";
+import PageThemeOverrides from "../../components/PageThemeOverrides";
 
 // --- CONSTANTS ---
 const POSITION_ORDER = [
@@ -575,6 +577,11 @@ function PartyContent() {
   const [galleryImages, setGalleryImages] = useState([]);
   const [lightboxImage, setLightboxImage] = useState(null);
 
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [templateReady, setTemplateReady] = useState(false);
+  const isGumroad = activeTemplateId === 'gumroad';
+
   const listSectionRef = useRef(null);
 
   useEffect(() => {
@@ -630,10 +637,28 @@ function PartyContent() {
       .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
   }, [activeParty]);
 
+  useEffect(() => {
+    fetch(getPath('/api/admin/page-layout'))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .catch(() => {})
+      .finally(() => setTemplateReady(true));
+  }, []);
+
   const currentTheme = activeParty ? (PARTY_THEMES[activeParty.id] || PARTY_THEMES[activeParty.number] || DEFAULT_THEME) : DEFAULT_THEME;
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>;
+  if (loading || !templateReady) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>;
   if (!activeParty) return null;
+
+  // GUMROAD layout (own topbar/footer) — replaces the classic cinematic page entirely.
+  if (isGumroad) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <GumroadParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden relative">

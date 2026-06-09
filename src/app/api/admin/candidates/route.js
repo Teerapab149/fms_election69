@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
+import { optimizeImage } from "../../../../lib/imageOptimize";
 import crypto from "crypto";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
@@ -168,7 +169,7 @@ async function uploadLogo(file, candidateName) {
     const uploadDir = path.join(process.cwd(), "public/images/candidates/logo");
 
     if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 700, format: "keep" }));
 
     return `/images/candidates/logo/${fileName}`;
   }
@@ -186,7 +187,7 @@ async function uploadOfficialImage(file, candidateName) {
     const uploadDir = path.join(process.cwd(), "public/images/candidates/officialImageUrl");
 
     if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
 
     return `/images/candidates/officialImageUrl/${fileName}`;
   }
@@ -211,7 +212,7 @@ async function uploadMultipleMobileHeroImages(files, candidateName, candidateId)
 
       const fileName = `MOBILE_HERO_${safeName}_${Date.now()}_${i}.jpg`;
 
-      await writeFile(path.join(uploadDir, fileName), buffer);
+      await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1280, quality: 80 }));
       uploadedUrls.push(`/images/candidates/mobileheroimage/party${candidateId}/${fileName}`);
     }
   }
@@ -234,7 +235,7 @@ async function uploadMultipleGroupImages(files, candidateName, candidateId) {
 
       const fileName = `GROUP_${safeName}_${Date.now()}_${i}.jpg`;
 
-      await writeFile(path.join(uploadDir, fileName), buffer);
+      await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
       uploadedUrls.push(`/images/candidates/groupimage/party${candidateId}/${fileName}`);
     }
   }
@@ -257,7 +258,7 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
       await mkdir(uploadDir, { recursive: true });
     }
 
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 800, quality: 82 }));
     return `/images/members/${folderName}/${fileName}`;
   }
 
@@ -289,7 +290,7 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
       await mkdir(uploadDir, { recursive: true });
     }
 
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1000, quality: 82 }));
     return `/images/members/${folderName}/Modal/${fileName}`;
   }
 
@@ -320,6 +321,7 @@ export async function PUT(req) {
     if (formData.has("name")) dataToUpdate.name = formData.get("name");
     if (formData.has("number")) dataToUpdate.number = parseInt(formData.get("number"));
     if (formData.has("slogan")) dataToUpdate.slogan = formData.get("slogan");
+    if (formData.has("color")) dataToUpdate.color = formData.get("color") || null;
     if (formData.has("logoMeaning")) dataToUpdate.logoMeaning = formData.get("logoMeaning");
 
     if (formData.has("missions")) {
@@ -512,6 +514,7 @@ export async function POST(req) {
     const name = formData.get("name");
     const number = parseInt(formData.get("number"));
     const slogan = formData.get("slogan");
+    const color = formData.get("color") || null;
     const logoMeaning = formData.get("logoMeaning");
     const file = formData.get("file");
     const officialFile = formData.get("officialImage");
@@ -548,6 +551,7 @@ export async function POST(req) {
         name,
         number,
         slogan,
+        color,
         logoUrl,
         officialImageUrl,
         mobileHeroImage,

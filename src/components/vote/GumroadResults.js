@@ -13,18 +13,22 @@
 
 import { getPath } from "../../utils/basePath";
 import React from "react";
-import Image from "next/image";
 import { Lock } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import SiteNavbar from "../elements/site-navbar/gumroad";
+import SiteFooter from "../elements/site-footer/gumroad";
+import ResultsHead from "../elements/results-head/gumroad";
+import StatCard from "../composites/stat-card/gumroad";
+import { getPartyColor } from "../../utils/partyColors";
 
-const POPS = ["#FF90E8", "#A8E1FF", "#B6FF6E", "#FFC900", "#FF6E6E"];
+const POPS = ["#FF9CE9", "#B6E6FF", "#C2F47E", "#FFD24D", "#FF8A8A"];
 const CHART_FONT = "'Anuphan','Kanit',system-ui,sans-serif";
 const genderColor = (n) => {
   const s = String(n).toLowerCase();
-  if (s.includes("female") || s.includes("หญิง")) return "#FF90E8";
-  if (s.includes("male") || s.includes("ชาย")) return "#A8E1FF";
-  return "#B6FF6E";
+  if (s.includes("female") || s.includes("หญิง")) return "#FF9CE9";
+  if (s.includes("male") || s.includes("ชาย")) return "#B6E6FF";
+  return "#C2F47E";
 };
 
 // Gumroad-styled chart tooltip (paper card, ink border, hard shadow).
@@ -78,27 +82,16 @@ export default function GumroadResults({
 
   return (
     <div className="fms-app gr-root">
-      {/* TOPBAR */}
-      <header className="gr-topbar">
-        <a href={getPath("/")} className="gr-brand">
-          <Image src={getPath("/images/logo/fms_logo50_color.png")} alt="FMS 50th" width={480} height={480} className="gr-badge" />
-          <span className="gr-div" />
-          <Image src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")} alt="FMS PSU" width={1200} height={384} className="gr-word" />
-        </a>
-        <nav className="gr-nav">
-          <a href={getPath("/")} className="gr-navlink">หน้าแรก</a>
-          <a href={getPath("/candidates")} className="gr-navlink">Meet Candidates</a>
-          <a href={getPath("/results")} className="gr-navlink is-active">ผลการลงคะแนนเสียง</a>
-        </nav>
-      </header>
+      {/* TOPBAR — shared gumroad navbar element */}
+      <SiteNavbar active="results" />
 
       <main className="gr-page">
-        {/* HEAD */}
-        <div className="gr-head">
-          <span className="gr-sticker gr-sticker--ink"><span className="gr-dot" /> {statusLabel}</span>
-          <h1 className="gr-title">ผลการเลือกตั้ง<em>{globalConfig.electionName}</em></h1>
-          <p className="gr-subtitle">ระบบเลือกตั้ง{globalConfig.organizationShort} {globalConfig.facultyName} ประจำปีการศึกษา <strong>{globalConfig.academicYearTh}</strong></p>
-        </div>
+        {/* HEAD — results-head element */}
+        <ResultsHead
+          statusLabel={statusLabel}
+          title={globalConfig.electionName}
+          subtitle={<>ระบบเลือกตั้ง{globalConfig.organizationShort} {globalConfig.facultyName} ประจำปีการศึกษา <strong>{globalConfig.academicYearTh}</strong></>}
+        />
 
         {isNotStarted ? (
           <div className="gr-waiting">
@@ -137,23 +130,11 @@ export default function GumroadResults({
               </div>
             )}
 
-            {/* STAT CARDS */}
+            {/* STAT CARDS — stat-card composites (Layer 2) */}
             <div className="gr-stats">
-              <div className="gr-stat gr-stat--pink">
-                <div className="gr-stat__lbl">★ คะแนนเสียงรวม · TOTAL</div>
-                <div className="gr-stat__val tabular">{totalVotes.toLocaleString()}</div>
-                <div className="gr-stat__sub">นับสะสมตั้งแต่เปิดหีบ</div>
-              </div>
-              <div className="gr-stat">
-                <div className="gr-stat__lbl">ผู้มีสิทธิ์ · ELIGIBLE</div>
-                <div className="gr-stat__val tabular">{totalEligible.toLocaleString()}</div>
-                <div className="gr-stat__sub">นักศึกษาที่ลงทะเบียน</div>
-              </div>
-              <div className="gr-stat gr-stat--lime">
-                <div className="gr-stat__lbl">ความคืบหน้า · TURNOUT</div>
-                <div className="gr-stat__val tabular">{turnout.toFixed(2)}<span className="gr-stat__pct">%</span></div>
-                <div className="gr-stat__sub">{ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"}</div>
-              </div>
+              <StatCard tone="pink" lbl="★ คะแนนเสียงรวม · TOTAL" value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดหีบ" />
+              <StatCard lbl="ผู้มีสิทธิ์ · ELIGIBLE" value={totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
+              <StatCard tone="lime" lbl="ความคืบหน้า · TURNOUT" value={turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}
@@ -168,7 +149,7 @@ export default function GumroadResults({
               {revealed ? (
                 <div className="gr-reveal">
                   {winner && (
-                    <div className="gr-winner">
+                    <div className="gr-winner" style={{ background: getPartyColor(winner, winner.number - 1) }}>
                       <span className="gr-winner__badge">👑 ผู้ชนะ · WINNER</span>
                       <div className="gr-winner__main">
                         {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
@@ -188,7 +169,7 @@ export default function GumroadResults({
                     <div className="gr-ranks">
                       {restCards.map((c, i) => {
                         const isParty = parseInt(c.number) > 0;
-                        const color = isParty ? POPS[(i + 1) % POPS.length] : "#C9C4BE";
+                        const color = isParty ? getPartyColor(c, c.number - 1) : "#C9C4BE";
                         return (
                           <button type="button" className="gr-rank" key={c.id} onClick={() => onSelectParty(c)}>
                             <div className="gr-rank__name">{c.name}<small>{labelOf(c)}</small></div>
@@ -204,7 +185,7 @@ export default function GumroadResults({
                 <>
                   <div className="gr-race__bars">
                     {candidates.map((c, i) => {
-                      const color = parseInt(c.number) > 0 ? POPS[i % POPS.length] : "#C9C4BE";
+                      const color = parseInt(c.number) > 0 ? getPartyColor(c, c.number - 1) : "#C9C4BE";
                       return (
                         <div className="gr-rrow" key={c.id}>
                           <div className="gr-rrow__name">{c.name}<small>{labelOf(c)}</small></div>
@@ -297,42 +278,30 @@ export default function GumroadResults({
         )}
       </main>
 
-      <footer className="gr-footer">
-        <div>© {globalConfig.facultyShortEn || "FMS"}@{globalConfig.university || "PSU"} {globalConfig.copyrightYear || ""} · ALL RIGHTS RESERVED</div>
-        <div className="gr-footer__edition"><span className="gr-star">★</span> ACTIVE PULSE EDITION <span className="gr-star">★</span></div>
-      </footer>
+      <SiteFooter faculty={globalConfig.facultyShortEn || "FMS"} uni={globalConfig.university || "PSU"} year={globalConfig.copyrightYear || ""} />
 
       <style jsx global>{`
         .gr-root{
-          --ink:#1A1A1A; --ink2:#4A4A4A; --cream:#FFF1E5; --cream2:#FFE4CE; --paper:#FFF;
-          --pink:#FF90E8; --lime:#B6FF6E; --yellow:#FFC900; --sky:#A8E1FF; --coral:#FF6E6E;
+          --ink:#26271c; --ink2:#5c5a4b; --cream:#FFF6EC; --cream2:#FFE9D6; --paper:#FFFDFA;
+          --pink:#FF9CE9; --lime:#C2F47E; --yellow:#FFD24D; --sky:#B6E6FF; --coral:#FF8A8A;
           --bw:2.5px; --sh:5px 5px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink); --sh-lg:8px 8px 0 var(--ink); --sh-xl:12px 12px 0 var(--ink);
           --fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --fm:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
-          min-height:100vh; display:flex; flex-direction:column; color:var(--ink); background:var(--cream);
+          min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb); container-type:inline-size; container-name:gr;
-          background-image:radial-gradient(circle at 10% 8%, #FFD1F2 0,transparent 34%),radial-gradient(circle at 92% 96%, #DCF2FF 0,transparent 38%);
-          background-attachment:fixed;
+          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
         }
         .gr-root *{ box-sizing:border-box; } .gr-root a{ text-decoration:none; color:inherit; } .gr-root img{ display:block; max-width:100%; }
         .tabular{ font-variant-numeric:tabular-nums; }
 
-        .gr-topbar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 32px; background:var(--cream); border-bottom:var(--bw) solid var(--ink); }
-        .gr-brand{ display:flex; align-items:center; gap:14px; } .gr-badge{ width:auto; height:46px; object-fit:contain; } .gr-div{ width:2px; height:34px; background:var(--ink); } .gr-word{ width:auto; height:32px; object-fit:contain; }
-        .gr-nav{ display:flex; gap:4px; } .gr-navlink{ padding:8px 16px; border-radius:999px; font-weight:600; font-size:14px; border:2px solid transparent; } .gr-navlink:hover{ background:var(--paper); border-color:var(--ink); } .gr-navlink.is-active{ background:var(--pink); border-color:var(--ink); box-shadow:var(--sh-sm); }
-
         .gr-page{ flex:1; width:100%; max-width:1100px; margin:0 auto; padding:36px 28px 64px; }
-        .gr-head{ text-align:center; margin-bottom:42px; }
+        /* head = <ResultsHead> element (own scoped styles) */
+        /* shared stickers (used by race + demo heads) */
         .gr-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); white-space:nowrap; }
         .gr-sticker--ink{ background:var(--ink); color:var(--cream); } .gr-sticker--pink{ background:var(--pink); } .gr-sticker--lime{ background:var(--lime); }
-        /* page header sticker — slightly bolder so the head reads as a real masthead */
-        .gr-head .gr-sticker{ font-size:14px; padding:9px 20px; box-shadow:var(--sh); }
         .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:grPulse 1.6s ease-out infinite; }
         @keyframes grPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
-        .gr-title{ font-family:var(--fd); font-size:clamp(42px,9cqw,92px); line-height:.9; letter-spacing:-.035em; margin:20px 0 12px; text-transform:uppercase; }
-        .gr-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:2px 14px; display:inline-block; box-shadow:var(--sh-lg); transform:rotate(-1.5deg); margin-left:10px; }
-        .gr-subtitle{ font-size:clamp(15px,2cqw,18px); color:var(--ink2); font-weight:600; max-width:660px; margin:0 auto; }
 
         .gr-waiting{ text-align:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); padding:56px 28px; }
         .gr-waiting__icon{ font-size:48px; } .gr-waiting h2{ font-family:var(--fd); font-size:28px; text-transform:uppercase; margin:12px 0 6px; } .gr-waiting p{ color:var(--ink2); margin:0; }
@@ -353,13 +322,8 @@ export default function GumroadResults({
         .gr-lock p{ color:var(--ink2); margin:0; line-height:1.55; }
         .gr-lock__cd{ margin-top:20px; display:inline-block; font-family:var(--fm); font-weight:600; font-size:14px; background:var(--ink); color:var(--cream); padding:10px 18px; border-radius:12px; }
 
-        /* stat cards */
+        /* stat cards = <StatCard> composites (own scoped styles); .gr-stats = grid only */
         .gr-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:30px; }
-        .gr-stat{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh); padding:24px; }
-        .gr-stat--pink{ background:var(--pink); } .gr-stat--lime{ background:var(--lime); }
-        .gr-stat__lbl{ font-family:var(--fm); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
-        .gr-stat__val{ font-family:var(--fd); font-size:clamp(38px,6cqw,56px); line-height:1; margin-top:10px; }
-        .gr-stat__pct{ font-size:.55em; } .gr-stat__sub{ font-size:13px; margin-top:6px; color:var(--ink2); }
 
         /* race */
         .gr-race{ position:relative; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); padding:30px; margin-bottom:30px; }
@@ -377,7 +341,7 @@ export default function GumroadResults({
 
         /* revealed: winner spotlight + ranked cards */
         .gr-reveal{ display:flex; flex-direction:column; gap:18px; }
-        .gr-winner{ position:relative; background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; transform:rotate(-.6deg); }
+        .gr-winner{ position:relative; background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; }
         .gr-winner__badge{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--cream); font-family:var(--fm); font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 14px; border-radius:999px; }
         .gr-winner__main{ display:flex; align-items:center; gap:22px; margin-top:16px; flex-wrap:wrap; }
         .gr-winner__logo{ width:88px; height:88px; flex-shrink:0; border:var(--bw) solid var(--ink); border-radius:20px; background:var(--paper); overflow:hidden; box-shadow:var(--sh-sm); }
@@ -420,12 +384,10 @@ export default function GumroadResults({
         .gr-tip__name{ font-weight:700; font-size:13px; } .gr-tip__val{ font-family:var(--fm); font-size:13px; color:var(--ink2); }
         .gr-demo__locked{ background:var(--cream2); border:2px dashed var(--ink); border-radius:18px; padding:26px; text-align:center; color:var(--ink2); font-weight:500; }
 
-        .gr-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream); display:flex; align-items:center; justify-content:space-between; gap:16px; font-family:var(--fm); font-size:13px; flex-wrap:wrap; }
-        .gr-footer__edition{ display:flex; gap:14px; align-items:center; } .gr-star{ color:var(--pink); font-size:18px; }
+        /* footer = <SiteFooter> element (own scoped styles) */
 
         /* RESPONSIVE */
         @container gr (max-width:900px){
-          .gr-nav{ display:none; } .gr-word,.gr-div{ display:none; } .gr-topbar{ padding:12px 18px; }
           .gr-locked{ grid-template-columns:1fr; } .gr-stats{ grid-template-columns:1fr; } .gr-demo__grid{ grid-template-columns:1fr; }
           .gr-rrow{ grid-template-columns:120px 1fr 52px; gap:10px; }
           .gr-rank{ grid-template-columns:130px 1fr 52px; gap:10px; }

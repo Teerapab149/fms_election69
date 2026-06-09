@@ -12,6 +12,7 @@ import EditorElement from '../../components/admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import SiteFooter from '../../components/SiteFooter';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
+import GumroadCandidates from '../../components/vote/GumroadCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -31,6 +32,11 @@ export default function CandidatesPage({
   const [loading, setLoading] = useState(!editorMode);
   const [apiLayout, setApiLayout] = useState(null);
 
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [templateReady, setTemplateReady] = useState(false);
+  const isGumroad = activeTemplateId === 'gumroad';
+
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
       id={id}
@@ -48,13 +54,16 @@ export default function CandidatesPage({
     : defaults;
 
   useEffect(() => {
-    if (editorMode || pageLayout) return;
+    if (editorMode) { setTemplateReady(true); return; }
+    if (pageLayout) { setTemplateReady(true); return; }
     fetch(getPath("/api/admin/page-layout"))
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.candidates) setApiLayout(data.candidates);
+        if (data?.activeTemplateId) setActiveTemplateId(data.activeTemplateId);
       })
-      .catch(e => console.error(e));
+      .catch(e => console.error(e))
+      .finally(() => setTemplateReady(true));
   }, [editorMode, pageLayout]);
 
   useEffect(() => {
@@ -102,11 +111,21 @@ export default function CandidatesPage({
     return activeLayout[index].visible !== false;
   };
 
-  if (loading) return (
+  if (loading || (!editorMode && !templateReady)) return (
     <div className="h-screen flex items-center justify-center bg-[#F8F9FD]">
       <Loader2 className="animate-spin w-10 h-10 text-[var(--color-primary)]" />
     </div>
   );
+
+  // GUMROAD layout (own topbar/footer) — replaces the classic page entirely.
+  if (isGumroad) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <GumroadCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 relative overflow-x-hidden">
