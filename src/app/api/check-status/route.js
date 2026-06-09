@@ -12,7 +12,8 @@ export async function GET(request) {
       config = await db.systemConfig.create({ data: { id: 1, isVoteOpen: true, showResult: false } });
     }
 
-    const { ELECTION_START, ELECTION_END } = await import("../../../utils/electionConfig").then(m => m.ELECTION_CONFIG);
+    const { resolveElectionDates } = await import("../../../utils/electionConfig");
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(config.globalConfig);
     const now = Date.now();
     const sysMode = config.systemMode || "AUTO";
 

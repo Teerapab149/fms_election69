@@ -145,7 +145,7 @@ export default function GlobalConfigTab() {
                     />
                   ) : (
                     <input
-                      type={field.type}
+                      type={field.type === "datetime" ? "datetime-local" : field.type}
                       value={config[field.key] ?? ""}
                       onChange={(e) =>
                         handleChange(

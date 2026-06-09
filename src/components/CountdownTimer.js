@@ -2,7 +2,8 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { Zap, Clock, CalendarDays, Hourglass, Flag } from 'lucide-react';
-import { ELECTION_CONFIG, ELECTION_YEAR } from '../utils/electionConfig';
+import { resolveElectionDates, ELECTION_YEAR } from '../utils/electionConfig';
+import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 
 const ICON_MAP = { Flag, Zap, Hourglass, CalendarDays, Clock };
 
@@ -35,13 +36,14 @@ export default function CountdownTimer({
   resolvedConfig = null,
   forceState = null
 }) {
-  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+  const globalConfig = useGlobalConfig();
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
 
   const ELECTION_NEXT_YEAR = useMemo(() => {
     const d = new Date(ELECTION_START);
     d.setFullYear(d.getFullYear() + 1);
     return d;
-  }, []);
+  }, [ELECTION_START]);
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');

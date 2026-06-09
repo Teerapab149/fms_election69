@@ -60,6 +60,14 @@ export const GLOBAL_CONFIG_FIELDS = [
     ],
   },
   {
+    group: "ช่วงเวลาเลือกตั้ง (Election Schedule)",
+    fields: [
+      { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร (Campaign)", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
+      { key: "electionStartAt", label: "เปิดหีบ / เริ่มลงคะแนน", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
+      { key: "electionEndAt", label: "ปิดหีบ / สิ้นสุดลงคะแนน", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
+    ],
+  },
+  {
     group: "ลิขสิทธิ์",
     fields: [
       { key: "copyrightYear", label: "ปีลิขสิทธิ์ (ค.ศ.)", type: "number", hint: "เช่น 2026 (สำหรับ © FMS@PSU 2026)" },

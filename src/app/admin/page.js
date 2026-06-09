@@ -21,13 +21,15 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-import { ELECTION_CONFIG } from "../../utils/electionConfig";
+import { resolveElectionDates } from "../../utils/electionConfig";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
 
-  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+  const globalConfig = useGlobalConfig();
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
 
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);

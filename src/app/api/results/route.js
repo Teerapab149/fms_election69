@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../lib/db";
-import { ELECTION_CONFIG } from "../../../utils/electionConfig";
+import { resolveElectionDates } from "../../../utils/electionConfig";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +52,8 @@ export async function GET(request) {
     const authStatus = checkAdminAuth(request);
     const isAdmin = authStatus === "OK";
 
-    const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+    const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
+    const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(systemConfig?.globalConfig);
 
     let status = "WAITING";
     let isPreCampaign = false;
@@ -68,8 +69,7 @@ export async function GET(request) {
       isPreCampaign = true;
     }
 
-    // ⚡️ NEW SYSTEM MODES LOGIC:
-    const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
+    // ⚡️ NEW SYSTEM MODES LOGIC: (systemConfig already fetched above for dates)
     const mode = systemConfig?.systemMode || "AUTO";
     const isShowResult = systemConfig?.showResult;
 

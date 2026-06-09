@@ -5,10 +5,12 @@
 // own scoped styles. The host layout owns the grid-area; this owns the tile.
 
 import { useState, useEffect } from "react";
-import { ELECTION_CONFIG } from "../../../utils/electionConfig";
+import { resolveElectionDates } from "../../../utils/electionConfig";
+import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
 
 export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
-  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+  const globalConfig = useGlobalConfig();
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, label: "STARTS IN", sub: "เปิดรับลงคะแนนใน", live: false });
   useEffect(() => {
     const calc = () => {

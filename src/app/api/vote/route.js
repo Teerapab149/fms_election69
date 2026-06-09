@@ -65,7 +65,8 @@ export async function POST(request) {
     // 0. 🛑 SECURITY GATE:
     const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
     const mode = systemConfig?.systemMode || "AUTO";
-    const { ELECTION_END, ELECTION_START } = await import("../../../utils/electionConfig").then(m => m.ELECTION_CONFIG);
+    const { resolveElectionDates } = await import("../../../utils/electionConfig");
+    const { ELECTION_END, ELECTION_START } = resolveElectionDates(systemConfig?.globalConfig);
     const now = Date.now();
 
     // 0.1 Check Manual Modes First

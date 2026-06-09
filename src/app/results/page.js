@@ -11,7 +11,7 @@ import ResultsDemographics from "../../components/ResultsDemographics";
 import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadResults from "../../components/vote/GumroadResults";
-import { ELECTION_CONFIG } from "../../utils/electionConfig";
+import { resolveElectionDates } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
 
 import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
@@ -21,6 +21,9 @@ export default function ResultsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
+  // dates-to-admin: resolve effective election dates (admin-set in globalConfig, else
+  // electionConfig.js defaults). Shadows the old static import so existing refs work.
+  const ELECTION_CONFIG = resolveElectionDates(globalConfig);
 
   // ✅ 1. State สำหรับระบบความปลอดภัย (Logic ที่เพิ่มเข้ามา)
   const [isAuthorized, setIsAuthorized] = useState(false);
