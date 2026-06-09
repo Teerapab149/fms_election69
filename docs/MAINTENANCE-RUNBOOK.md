@@ -115,3 +115,28 @@ psql "$DATABASE_URL" < backup_YYYYMMDD.sql
 
 > 🔧 จุดที่ควรเติมเองให้ครบ: ชื่อ/เบอร์ผู้ดูแล, ที่อยู่ deploy/Docker host, ที่เก็บ backup env + DB,
 > และค่า PSU SSO ปัจจุบัน. กรอกแล้วคู่มือนี้จะใช้กู้ระบบได้จริงตอนฉุกเฉิน.
+
+---
+
+## 9. Robustness audit (เป้า "อยู่ได้หลายปี") — ตรวจ 2026-06-09
+
+**สิ่งที่ดีอยู่แล้ว (ไม่ต้องแตะ):**
+- ✅ **Docker reproducible** — `Dockerfile` ใช้ `npm ci` (อ่าน `package-lock.json` → install เหมือนเดิมทุกครั้ง),
+  multi-stage, `output:'standalone'`, รันด้วย non-root user (`nextjs:1001`), `npx prisma generate` ใน build.
+- ✅ **Node version pinned** ผ่าน base image (prod ใช้ Docker → ไม่ขึ้นกับ Node ในเครื่อง dev).
+- ✅ **DB ล่มไม่ทำหน้าเว็บ crash ทั้งหมด** — `layout.js` (`getGlobalConfig`/`getThemeTokenCss`) มี try/catch คืน null;
+  มี `src/app/global-error.js` รับ error ระดับ catastrophic.
+- ✅ deploy ยืดหยุ่น — `basePath`/`assetPrefix` มาจาก env.
+
+**ข้อควรแก้เพื่ออยู่ยาว (เรียงตามความสำคัญ):**
+1. ✅ **แก้แล้ว 2026-06-09: `node:18-alpine` → `node:20-alpine`** (Node 18 EOL เม.ย. 2025).
+   ⚠️ **ต้อง `docker build` + smoke test ก่อน deploy** เพราะ build ครั้งนี้ทดสอบได้แค่ `npm run build` (local) ไม่ได้ทดสอบใน Docker.
+   ถ้าอยากรันยาวกว่านี้พิจารณา `node:22-alpine` (active LTS) ภายหลัง.
+2. ⚠️ **ยังไม่มี backup อัตโนมัติ** — ตอนนี้เป็น manual `pg_dump` (§5). สำหรับ unattended หลายปีควรตั้ง **cron `pg_dump` รายวัน + เก็บนอกเครื่อง**
+   (ขึ้นกับ host — ตั้งที่ระดับ infra ไม่ใช่โค้ด).
+3. ◽ **error boundary ละเอียดขึ้น (optional)** — มีแต่ `global-error.js`; ถ้าอยาก graceful ต่อหน้า (เช่น results โชว์ "ข้อมูลไม่พร้อม"
+   แทนจอ error เต็ม) เพิ่ม `error.js`/`not-found.js` ราย route ได้ — งานเสริม ไม่ด่วน.
+4. ◽ **ปักหมุด Node สำหรับ dev นอก Docker** — เพิ่ม `.nvmrc` (เช่น `20`) หรือ `engines.node` ใน `package.json` เป็นเอกสารกำกับ (ไม่บังคับ).
+
+**dependency versions:** ทุกตัวเป็น `^` (caret) แต่ **`package-lock.json` ปักหมุดจริง** → `npm ci` install เป๊ะเสมอ
+(อย่ารัน `npm update` / อย่าลบ lockfile โดยไม่ตั้งใจ — นั่นคือสิ่งเดียวที่จะทำให้ version เลื่อน).

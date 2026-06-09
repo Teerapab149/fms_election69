@@ -1,4 +1,6 @@
-FROM node:18-alpine AS base
+# Node 20 LTS (Node 18 reached EOL Apr 2025). Next 14.2 supports Node 18.17+/20/22.
+# If you bump this, run `docker build` + a smoke test before deploying.
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
