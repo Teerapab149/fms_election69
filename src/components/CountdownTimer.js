@@ -37,7 +37,12 @@ export default function CountdownTimer({
   forceState = null
 }) {
   const globalConfig = useGlobalConfig();
-  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+  // memoize → stable Date objects across renders (effect deps below would otherwise
+  // re-run every render and thrash the interval / risk an update loop).
+  const { ELECTION_START, ELECTION_END } = useMemo(
+    () => resolveElectionDates(globalConfig),
+    [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
+  );
 
   const ELECTION_NEXT_YEAR = useMemo(() => {
     const d = new Date(ELECTION_START);

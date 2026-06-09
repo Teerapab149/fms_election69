@@ -4,13 +4,18 @@
 // mosaic. Library element (Lego brick): self-contained timing (ELECTION_CONFIG) +
 // own scoped styles. The host layout owns the grid-area; this owns the tile.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { resolveElectionDates } from "../../../utils/electionConfig";
 import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
 
 export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
   const globalConfig = useGlobalConfig();
-  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+  // memoize so the resolved Date objects are STABLE across renders — otherwise the
+  // effect below (deps on these dates) re-runs every render → setT loop → crash.
+  const { ELECTION_START, ELECTION_END } = useMemo(
+    () => resolveElectionDates(globalConfig),
+    [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
+  );
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, label: "STARTS IN", sub: "เปิดรับลงคะแนนใน", live: false });
   useEffect(() => {
     const calc = () => {

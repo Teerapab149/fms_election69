@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
@@ -23,7 +23,10 @@ export default function ResultsPage() {
   const globalConfig = useGlobalConfig();
   // dates-to-admin: resolve effective election dates (admin-set in globalConfig, else
   // electionConfig.js defaults). Shadows the old static import so existing refs work.
-  const ELECTION_CONFIG = resolveElectionDates(globalConfig);
+  const ELECTION_CONFIG = useMemo(
+    () => resolveElectionDates(globalConfig),
+    [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
+  );
 
   // ✅ 1. State สำหรับระบบความปลอดภัย (Logic ที่เพิ่มเข้ามา)
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -332,14 +335,17 @@ export default function ResultsPage() {
     targetDate = ELECTION_END;
   }
 
-  const timeDiff = targetDate - now;
+  // clamp to 0 — when MANUAL_OPEN forces ONGOING but ELECTION_END is in the past,
+  // targetDate - now would go negative and render "ปิดใน -25 น." (bug). Never show negatives.
+  const timeDiff = Math.max(0, targetDate - now);
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
   const seconds = Math.floor((timeDiff / 1000) % 60);
 
   let countdownText = "";
-  if (days > 0) countdownText = `${days} วัน ${hours} ชม. ${minutes} น.`;
+  if (timeDiff <= 0) countdownText = "เร็วๆ นี้";
+  else if (days > 0) countdownText = `${days} วัน ${hours} ชม. ${minutes} น.`;
   else if (hours > 0) countdownText = `${hours} ชม. ${minutes} น. ${seconds} วิ.`;
   else countdownText = `${minutes} น. ${seconds} วิ.`;
 
