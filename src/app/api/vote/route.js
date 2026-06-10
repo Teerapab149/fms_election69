@@ -48,11 +48,31 @@ export async function POST(request) {
     }
 
     // 1. ตรวจสอบข้อมูล
-    if (candidateId === undefined) {
+    const parsedId = parseInt(candidateId);
+    if (candidateId === undefined || Number.isNaN(parsedId)) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
 
-    // 2. เช็คว่า User นี้เคยโหวตไปหรือยัง
+    // 1.1 🛡️ Validate the choice against THIS ballot's rules (P0-3).
+    //   number > 0  → real party (always selectable)
+    //   number == 0 → งดออกเสียง / abstain (always selectable)
+    //   number == -1 → ไม่รับรอง / disapprove — ONLY valid when exactly one real
+    //                   party is running (single-party ballot)
+    const allCandidates = await db.candidate.findMany({ select: { id: true, number: true } });
+    const target = allCandidates.find((c) => c.id === parsedId);
+    if (!target) {
+      return NextResponse.json({ error: "ไม่พบตัวเลือกที่เลือก" }, { status: 400 });
+    }
+    const realPartyCount = allCandidates.filter((c) => c.number > 0).length;
+    const validChoice =
+      target.number > 0 ||
+      target.number === 0 ||
+      (target.number === -1 && realPartyCount === 1);
+    if (!validChoice) {
+      return NextResponse.json({ error: "ตัวเลือกไม่ถูกต้องสำหรับบัตรเลือกตั้งนี้" }, { status: 400 });
+    }
+
+    // 2. เช็คผู้ใช้ + สิทธิ์ (early checks ให้ข้อความที่เป็นมิตร; การกันโหวตซ้ำจริงอยู่ที่ atomic guard ด้านล่าง)
     const user = await db.user.findFirst({
       where: { studentId: studentId }
     });
@@ -71,22 +91,26 @@ export async function POST(request) {
       return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
     }
 
-    // 3. เริ่ม Transaction (ทำพร้อมกัน 2 อย่าง: บวกคะแนนพรรค + แปะป้ายว่าโหวตแล้ว)
-    await db.$transaction([
-      // 3.1 เพิ่มคะแนนให้พรรค
-      db.candidate.update({
-        where: { id: parseInt(candidateId) },
+    // 3. 🔒 Atomic vote (P0-2 — closes the TOCTOU race). updateMany with an
+    //    isVoted:false guard is a compare-and-set: only ONE concurrent request
+    //    flips the flag (count===1); the loser sees count===0 and is rejected,
+    //    so the score can never be double-incremented / changed mid-air.
+    const outcome = await db.$transaction(async (tx) => {
+      const claim = await tx.user.updateMany({
+        where: { id: user.id, isVoted: false },
+        data: { isVoted: true, candidateId: parsedId },
+      });
+      if (claim.count === 0) return "ALREADY_VOTED";
+      await tx.candidate.update({
+        where: { id: parsedId },
         data: { score: { increment: 1 } },
-      }),
-      // 3.2 อัปเดตสถานะ User ว่าโหวตแล้ว
-      db.user.update({
-        where: { id: user.id },
-        data: {
-          isVoted: true,
-          candidateId: parseInt(candidateId)
-        },
-      }),
-    ]);
+      });
+      return "OK";
+    });
+
+    if (outcome === "ALREADY_VOTED") {
+      return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
+    }
 
     return NextResponse.json({ success: true });
 

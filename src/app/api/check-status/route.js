@@ -1,11 +1,10 @@
 import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../lib/auth";
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get("studentId"); // Optional
-
     // Check System Config First
     let config = await db.systemConfig.findFirst({ where: { id: 1 } });
     if (!config) {
@@ -43,11 +42,13 @@ export async function GET(request) {
       }
     }
 
+    // 🔐 isVoted is personal — read it for the VERIFIED session user only, never
+    // from a query param (which let anyone probe any student's vote status).
     let isVoted = false;
-
-    if (studentId) {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.studentId) {
       const user = await db.user.findUnique({
-        where: { studentId: String(studentId) },
+        where: { studentId: String(session.user.studentId) },
         select: { isVoted: true },
       });
       if (user) isVoted = user.isVoted;
@@ -57,7 +58,6 @@ export async function GET(request) {
       isVoted: isVoted,
       isSystemOpen: isSystemOpen,
       showResult: config.showResult,
-      systemMode: sysMode,
       systemMode: sysMode,
       electionStatus: electionStatus,
       googleFormUrl: config.googleFormUrl || ""
