@@ -12,6 +12,7 @@ import PageThemeOverrides from '../../components/PageThemeOverrides';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
 import GumroadVote from '../../components/vote/GumroadVote';
+import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -77,6 +78,7 @@ export default function VotePage() {
   }, []);
 
   const isGumroad = activeTemplateId === 'gumroad';
+  const isStudio = activeTemplateId === 'studio-dark';
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -118,10 +120,24 @@ export default function VotePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]">
+    <div className={isStudio
+      ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
+      : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]"}>
       <PageThemeOverrides page="vote" />
 
-      {isGumroad ? (
+      {isStudio ? (
+        <StudioDarkVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : isGumroad ? (
         <GumroadVote
           regularParties={regularParties}
           specialOptions={specialOptions}

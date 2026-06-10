@@ -9,6 +9,7 @@ import Navbar from "../../components/Navbar";
 import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadClosed from "../../components/vote/GumroadClosed";
+import StudioDarkClosed from "../../components/vote/StudioDarkClosed";
 
 export default function ClosedPage() {
     const { data: session } = useSession();
@@ -16,14 +17,20 @@ export default function ClosedPage() {
 
     // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
     const [activeTemplateId, setActiveTemplateId] = useState('classic');
+    // Gate render until the template is known — without this the classic light
+    // page flashes for a frame before a dark template resolves (same gate the
+    // other 5 pages use).
+    const [templateReady, setTemplateReady] = useState(false);
     const isGumroad = activeTemplateId === 'gumroad';
+    const isStudio = activeTemplateId === 'studio-dark';
 
     useEffect(() => {
         fetch(getPath('/api/check-status')).then(res => res.json()).then(setStatusData);
         fetch(getPath('/api/admin/page-layout'))
             .then(r => r.ok ? r.json() : null)
             .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setTemplateReady(true));
     }, []);
 
     const getMessage = () => {
@@ -92,11 +99,29 @@ export default function ClosedPage() {
 
     const { title, desc, variant } = getMessage();
 
+    if (!templateReady) return null;
+
     if (isGumroad) {
         return (
             <>
                 <PageThemeOverrides page="closed" />
                 <GumroadClosed
+                    title={title}
+                    desc={desc}
+                    variant={variant}
+                    session={session}
+                    onLogout={handleLogout}
+                />
+            </>
+        );
+    }
+
+    // STUDIO DARK layout (own rail/scene chrome) — replaces the classic page entirely.
+    if (isStudio) {
+        return (
+            <>
+                <PageThemeOverrides page="closed" />
+                <StudioDarkClosed
                     title={title}
                     desc={desc}
                     variant={variant}

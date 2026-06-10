@@ -13,6 +13,7 @@ import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import SiteFooter from '../../components/SiteFooter';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadCandidates from '../../components/vote/GumroadCandidates';
+import StudioDarkCandidates from '../../components/vote/StudioDarkCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -36,6 +37,7 @@ export default function CandidatesPage({
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
+  const isStudio = activeTemplateId === 'studio-dark';
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -123,6 +125,16 @@ export default function CandidatesPage({
       <>
         {!editorMode && <PageThemeOverrides page="candidates" />}
         <GumroadCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // STUDIO DARK layout (own rail/scene chrome) — replaces the classic page entirely.
+  if (isStudio) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <StudioDarkCandidates candidates={parties} editorMode={editorMode} />
       </>
     );
   }

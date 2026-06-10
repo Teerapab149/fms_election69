@@ -14,13 +14,15 @@ import { modernDarkTemplate } from "./builtIn/modern-dark";
 import { playfulTemplate }    from "./builtIn/playful";
 import { minimalTemplate }    from "./builtIn/minimal";
 import { gumroadTemplate }    from "./builtIn/gumroad";
+import { studioDarkTemplate } from "./builtIn/studio-dark";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
   "modern-dark":  modernDarkTemplate,
   playful:        playfulTemplate,
   minimal:        minimalTemplate,
-  gumroad:        gumroadTemplate
+  gumroad:        gumroadTemplate,
+  "studio-dark":  studioDarkTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).
@@ -69,6 +71,9 @@ export async function listTemplates(prisma, filters = {}) {
         description: tpl.description,
         isBuiltIn: true,
         isLocked: tpl.isLocked || false,
+        // "classic" = theme-recolor of the original layout; "gumroad"/"studio-dark"
+        // = real templates with their own layouts (drives the gallery thumb + chip).
+        layoutFamily: tpl.layoutFamily || "classic",
         colorSwatch: tpl.colorSwatch,
         authorId: null,
         authorName: null,
@@ -109,6 +114,9 @@ export async function listTemplates(prisma, filters = {}) {
         return {
           ...rest,
           isBuiltIn: false,
+          // DB templates are token forks — HomeRenderer dispatches layouts by
+          // SLUG, and a fork's new slug falls back to the classic layout.
+          layoutFamily: "classic",
           authorName: author?.name || null,
           colorSwatch: deriveColorSwatch(theme),
           elementCount: elements ? Object.keys(elements).length : 0,

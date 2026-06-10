@@ -13,6 +13,7 @@ import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 import BackToVoteBar from "../../components/BackToVoteBar";
 import CandidateModal from '../../components/CandidateModal';
 import GumroadParty from "../../components/vote/GumroadParty";
+import StudioDarkParty from "../../components/vote/StudioDarkParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 
 // --- CONSTANTS ---
@@ -581,6 +582,7 @@ function PartyContent() {
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
+  const isStudio = activeTemplateId === 'studio-dark';
 
   const listSectionRef = useRef(null);
 
@@ -656,6 +658,16 @@ function PartyContent() {
       <>
         <PageThemeOverrides page="party" />
         <GumroadParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // STUDIO DARK layout (own rail/scene chrome) — replaces the classic cinematic page entirely.
+  if (isStudio) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <StudioDarkParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
       </>
     );
   }

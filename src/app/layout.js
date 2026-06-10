@@ -1,6 +1,6 @@
 import './globals.css';
 import Providers from "../components/Providers";
-import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan } from 'next/font/google';
+import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -92,6 +92,37 @@ const anuphan = Anuphan({
   display: 'swap',
 });
 
+// Studio Dark v2 template families. Geist (the prototype's sans) ships as a
+// separate Vercel npm package, not next/font/google — to avoid adding a runtime
+// dep we substitute Inter, a near-identical neutral grotesque available in
+// Google Fonts (exact-match upgrade later = `npm i geist`). JetBrains Mono =
+// small-caps data/labels (sub for Geist Mono); Instrument Serif (italic) = the
+// real lime-accent signature, available as-is. All latin-only → Thai falls
+// through to Anuphan (the dark minimal vibe pairs well with the loopless Anuphan).
+// Loading is mandatory — a declared font-family does nothing unless next/font
+// loads it (impeccable rule).
+const studioSans = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-studio-sans',
+  display: 'swap',
+});
+
+const studioMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-studio-mono',
+  display: 'swap',
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-instrument-serif',
+  display: 'swap',
+});
+
 export const metadata = {
   title: 'SAMO 49 - FMS Election 2026',
   description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
@@ -121,7 +152,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
+      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} font-sans antialiased`}>
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}

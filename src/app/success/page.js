@@ -26,6 +26,7 @@ import { useState, useEffect } from 'react';
 import EditorElement from '../../components/admin/editor/EditorElement';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
+import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 
 export default function SuccessPage({ 
@@ -58,6 +59,7 @@ export default function SuccessPage({
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
+  const isStudio = activeTemplateId === 'studio-dark';
 
   useEffect(() => {
     if (editorMode) { setTemplateReady(true); return; }
@@ -245,7 +247,7 @@ export default function SuccessPage({
   // Render 
   // =========================================================
   return (
-    <div className={isGumroad ? "relative" : "min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-slate-50"}>
+    <div className={(isGumroad || isStudio) ? "relative" : "min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-slate-50"}>
       {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* GUMROAD layout (own chrome); the form + alert modals below stay shared */}
@@ -258,8 +260,18 @@ export default function SuccessPage({
         />
       )}
 
+      {/* STUDIO DARK layout (own rail chrome); the form + alert modals below stay shared */}
+      {isStudio && (isAuthorized || editorMode) && (
+        <StudioDarkSuccess
+          user={user}
+          isUnlocked={isUnlocked}
+          onOpenForm={() => setShowModal(true)}
+          editorMode={editorMode}
+        />
+      )}
+
       {/* Background Grid */}
-      {!isGumroad && (
+      {!isGumroad && !isStudio && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808015_1px,transparent_1px),linear-gradient(to_bottom,#80808015_1px,transparent_1px)] bg-[size:40px_40px] md:bg-[size:60px_60px]"></div>
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-purple-400 opacity-20 blur-[80px] md:blur-[120px]"></div>
@@ -267,7 +279,7 @@ export default function SuccessPage({
       </div>
       )}
 
-      {!isGumroad && (isAuthorized || editorMode) && (
+      {!isGumroad && !isStudio && (isAuthorized || editorMode) && (
         <div className="w-full max-w-lg animate-fade-in-up relative z-10">
           <div className="bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-primary)] via-purple-500 to-pink-500"></div>
