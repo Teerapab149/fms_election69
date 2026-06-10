@@ -1,8 +1,36 @@
-# PLAN — next session: SECURITY HARDENING (P0) + cleanup
+# PLAN — SECURITY HARDENING (P0) + cleanup
 
 Written 2026-06-10 (end of the Studio Dark v2 session, model: Fable 5).
 **Read this top-to-bottom before touching anything.** This file is self-contained —
 the next session has no memory of the conversation that produced it.
+
+---
+
+## ✅ PROGRESS (updated 2026-06-10, later same day)
+
+Committed on `new-version`:
+- `859f4ab` studio-dark template · `07f5710` picker families + gallery (Step 0a done)
+- **`e92e4e1` P0-1 admin auth** — DONE + curl-verified (no-auth/forged-header/forged-cookie
+  → 401 or redirect; real login → cookie → all admin endpoints 200; public routes open).
+- **`51d512d` P0-2/3/4** — DONE + verified (atomic guard: 5 concurrent claims → 1 winner;
+  candidateId ballot validation; check-status reads session not query param).
+
+**⚠️ STILL REQUIRED for P0-1 to be safe in PRODUCTION (USER ACTION — not code):**
+ROTATE secrets — the old ones are burned. `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD_AUTH_EXTRA`,
+retire `ADMIN_AUTH_SECRET` + the RSA keypair (`ADMIN_PRIVATE_KEY` / `NEXT_PUBLIC_ADMIN_*`).
+After rotating `ADMIN_PASSWORD_AUTH_EXTRA`, set the admin user's `passwordHash=null` so the
+new bootstrap password applies. (Dev still uses the old `--show` creds until rotated.)
+
+**REMAINING P0:** P0-5 (uploads volume + backups — user owns) · P0-6 (ballot-secrecy
+policy — ASK USER). **Cosmetic follow-up:** ~40 dead `x-admin-token` headers + the
+`getEncryptedToken` stub + imports can be removed (zero security/functional impact now —
+the server ignores the header, cookie does the auth). Then P1 / P2 below.
+
+**Browser tab-by-tab admin test still recommended pre-deploy** (this session verified the
+API contract via curl, not the UI — MCP preview was down). Every admin tab uses the now-
+ignored header + the cookie, so they should work, but click through them once.
+
+---
 
 > Context chain: read with memory `studio-dark-progress` + `editor-strategy-decision`,
 > and repo docs `DECISIONS.md` (Pitfall Log) + `docs/MAINTENANCE-RUNBOOK.md` + `CLAUDE.md`
