@@ -150,15 +150,229 @@ function BlockConfigForm({ block, onConfigChange }) {
   );
 }
 
-function TemplateCard({ tpl, isActive, onClick, onShowDetail }) {
-  const primaryColor = tpl.colorSwatch?.primary || '#8A2680';
-  const secondaryColor = tpl.colorSwatch?.secondary || '#9333EA';
+// Mini HOME-PAGE thumbnail per layout family, painted with the template's own
+// swatch. Theme-recolor templates (family "classic") all draw the SAME layout
+// in different colours — making "same layout, new paint" visible at a glance;
+// gumroad / studio-dark draw their actual distinct structures.
+function TemplateHomeThumb({ tpl }) {
+  const family = tpl.layoutFamily || 'classic';
+  const p = tpl.colorSwatch?.primary || '#8A2680';
+  const s = tpl.colorSwatch?.secondary || '#9333EA';
+  const bg = tpl.colorSwatch?.background || '#F8F9FD';
+  // is the page background dark? → pick readable neutral bar colours
+  const dark = (() => {
+    const h = bg.replace('#', '');
+    if (h.length < 6) return false;
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+    return (r * 299 + g * 587 + b * 114) / 1000 < 128;
+  })();
+  const line = dark ? 'rgba(255,255,255,.28)' : 'rgba(15,23,42,.22)';
+  const lineSoft = dark ? 'rgba(255,255,255,.14)' : 'rgba(15,23,42,.10)';
+  const surface = dark ? 'rgba(255,255,255,.07)' : '#ffffff';
+
+  const frame = {
+    height: 76, borderRadius: 8, background: bg, overflow: 'hidden',
+    border: '1px solid rgba(15,23,42,.12)', position: 'relative', pointerEvents: 'none',
+  };
+
+  if (family === 'gumroad') {
+    const ink = '#26271c';
+    return (
+      <div style={frame} aria-hidden>
+        {/* chunky topbar */}
+        <div style={{ height: 11, borderBottom: `1.5px solid ${ink}`, display: 'flex', alignItems: 'center', gap: 3, padding: '0 5px' }}>
+          <span style={{ width: 10, height: 3.5, borderRadius: 2, background: ink }} />
+          <span style={{ flex: 1 }} />
+          <span style={{ width: 7, height: 3.5, borderRadius: 2, background: p }} />
+        </div>
+        {/* poster mosaic: hero tile left + stacked tiles right */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 3, padding: 4, height: 'calc(100% - 11px)' }}>
+          <div style={{ gridRow: 'span 2', background: '#fffdfa', border: `1.5px solid ${ink}`, borderRadius: 5, boxShadow: `2px 2px 0 ${ink}`, padding: 4, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center' }}>
+            <span style={{ width: '78%', height: 8, borderRadius: 2, background: ink }} />
+            <span style={{ width: '52%', height: 4, borderRadius: 2, background: 'rgba(38,39,28,.35)' }} />
+            <span style={{ width: 22, height: 7, borderRadius: 3, background: s, border: `1px solid ${ink}`, marginTop: 2 }} />
+          </div>
+          <div style={{ gridColumn: 'span 2', background: ink, border: `1.5px solid ${ink}`, borderRadius: 5, boxShadow: `2px 2px 0 ${ink}` }} />
+          <div style={{ background: p, border: `1.5px solid ${ink}`, borderRadius: 5, boxShadow: `2px 2px 0 ${ink}` }} />
+          <div style={{ background: s, border: `1.5px solid ${ink}`, borderRadius: 5, boxShadow: `2px 2px 0 ${ink}` }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (family === 'studio-dark') {
+    return (
+      <div style={{ ...frame, display: 'grid', gridTemplateColumns: '14px 1fr' }} aria-hidden>
+        {/* left rail */}
+        <div style={{ background: 'rgba(0,0,0,.45)', borderRight: `1px solid ${lineSoft}`, padding: '4px 3px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <span style={{ width: '100%', height: 4, borderRadius: 2, background: s, opacity: .85 }} />
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{ width: '100%', height: 2.5, borderRadius: 2, background: i === 0 ? p : lineSoft }} />
+          ))}
+          <span style={{ flex: 1 }} />
+          <span style={{ width: '100%', height: 6, borderRadius: 2, border: `1px solid ${lineSoft}` }} />
+        </div>
+        {/* chapter scene: giant text left + ledger right + marquee */}
+        <div style={{ display: 'grid', gridTemplateRows: '1fr 9px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 5, padding: 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center' }}>
+              <span style={{ width: '85%', height: 9, borderRadius: 2, background: s }} />
+              <span style={{ width: '46%', height: 9, borderRadius: 2, background: p }} />
+              <span style={{ width: 24, height: 6, borderRadius: 99, border: `1px solid ${p}`, marginTop: 3 }} />
+            </div>
+            <div style={{ border: `1px solid ${lineSoft}`, borderRadius: 4, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', padding: '2px 4px' }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{ width: i === 0 ? '88%' : '64%', height: 3, borderRadius: 2, background: i === 0 ? p : line, opacity: i === 0 ? .9 : 1 }} />
+              ))}
+            </div>
+          </div>
+          <div style={{ borderTop: `1px solid ${lineSoft}`, display: 'flex', alignItems: 'center', gap: 3, padding: '0 5px', overflow: 'hidden' }}>
+            {[0, 1, 2, 3].map(i => (
+              <span key={i} style={{ width: 12, height: 3, borderRadius: 2, background: i % 2 ? p : line, flexShrink: 0, opacity: .8 }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // classic family — the ORIGINAL layout (navbar / hero / stats / CTA), repainted
+  return (
+    <div style={frame} aria-hidden>
+      <div style={{ height: 11, background: surface, borderBottom: `1px solid ${lineSoft}`, display: 'flex', alignItems: 'center', gap: 3, padding: '0 5px' }}>
+        <span style={{ width: 5, height: 5, borderRadius: 99, background: p }} />
+        <span style={{ flex: 1 }} />
+        <span style={{ width: 9, height: 3, borderRadius: 2, background: line }} />
+        <span style={{ width: 9, height: 3, borderRadius: 2, background: line }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3.5, paddingTop: 8 }}>
+        <span style={{ width: '54%', height: 8, borderRadius: 2, background: p }} />
+        <span style={{ width: '38%', height: 4, borderRadius: 2, background: line }} />
+        <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
+          <span style={{ width: 26, height: 11, borderRadius: 3, background: surface, border: `1px solid ${lineSoft}`, boxShadow: dark ? 'none' : '0 1px 2px rgba(15,23,42,.08)' }} />
+          <span style={{ width: 26, height: 11, borderRadius: 3, background: surface, border: `1px solid ${lineSoft}`, boxShadow: dark ? 'none' : '0 1px 2px rgba(15,23,42,.08)' }} />
+        </div>
+        <span style={{ width: 34, height: 8, borderRadius: 99, background: `linear-gradient(90deg, ${p}, ${s})`, marginTop: 1 }} />
+      </div>
+    </div>
+  );
+}
+
+// Slides shown in the "ดูรายละเอียด" gallery — every page + the key state
+// variations (results locked/revealed · vote multi/single), per the user's ask.
+const GALLERY_SLIDES = [
+  { page: 'home', label: 'หน้าแรก' },
+  { page: 'candidates', label: 'ผู้สมัคร' },
+  { page: 'party', label: 'ข้อมูลพรรค' },
+  { page: 'vote', variant: 'multi', label: 'ลงคะแนน · หลายพรรค' },
+  { page: 'vote', variant: 'single', label: 'ลงคะแนน · พรรคเดียว' },
+  { page: 'results', variant: 'locked', label: 'ผลคะแนน · ปิดผล' },
+  { page: 'results', variant: 'revealed', label: 'ผลคะแนน · เปิดผล' },
+  { page: 'success', label: 'ลงคะแนนสำเร็จ' },
+  { page: 'closed', label: 'ระบบปิด' },
+];
+
+// Live preview gallery — iframes /template-preview (real layout + mock data) at a
+// fixed desktop width, scaled to fit, so the rail/mosaic identity reads true.
+// Slideshow: prev/next + dots + a thumbnail-page label.
+function TemplateGallery({ slug }) {
+  const FRAME_W = 1280;
+  const FRAME_H = 860;
+  const [idx, setIdx] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [scale, setScale] = useState(0.55);
+  const wrapRef = useRef(null);
+
+  useEffect(() => { setIdx(0); }, [slug]);
+  useEffect(() => { setLoading(true); }, [idx, slug]);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => setScale(el.clientWidth / FRAME_W);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    measure();
+    return () => ro.disconnect();
+  }, []);
+
+  const slide = GALLERY_SLIDES[idx];
+  const src = getPath(`/template-preview?slug=${slug}&page=${slide.page}${slide.variant ? `&variant=${slide.variant}` : ''}`);
+  const go = (d) => setIdx((i) => (i + d + GALLERY_SLIDES.length) % GALLERY_SLIDES.length);
+
+  return (
+    <div>
+      <div
+        ref={wrapRef}
+        className="relative w-full rounded-xl overflow-hidden border border-slate-200 bg-[#0b0b08]"
+        style={{ height: FRAME_H * scale }}
+      >
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/30">
+            <Loader2 className="w-6 h-6 text-white/80 animate-spin" />
+          </div>
+        )}
+        <iframe
+          key={src}
+          src={src}
+          title={slide.label}
+          onLoad={() => setLoading(false)}
+          scrolling="no"
+          style={{ width: FRAME_W, height: FRAME_H, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}
+        />
+
+        {/* page label */}
+        <div className="absolute top-2 left-2 z-20 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur text-white text-[11px] font-bold tracking-wide">
+          {idx + 1}/{GALLERY_SLIDES.length} · {slide.label}
+        </div>
+
+        {/* prev / next */}
+        <button type="button" onClick={() => go(-1)} aria-label="ก่อนหน้า"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center text-slate-700 transition-colors">
+          <ChevronDown className="w-4 h-4 rotate-90" />
+        </button>
+        <button type="button" onClick={() => go(1)} aria-label="ถัดไป"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center text-slate-700 transition-colors">
+          <ChevronDown className="w-4 h-4 -rotate-90" />
+        </button>
+      </div>
+
+      {/* dots */}
+      <div className="flex items-center justify-center flex-wrap gap-1.5 mt-2.5">
+        {GALLERY_SLIDES.map((s, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setIdx(i)}
+            aria-label={s.label}
+            title={s.label}
+            className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-5 bg-[#8A2680]' : 'w-1.5 bg-slate-300 hover:bg-slate-400'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One card PER LAYOUT FAMILY (real template). The classic family carries its
+// colour themes (modern-dark/playful/minimal + DB forks) as swatches INSIDE the
+// card — they're recolors of the same layout, not separate templates. gumroad /
+// studio-dark are single-theme families → no swatch row.
+//   rep     = the family's canonical template (drives name + the "apply card" slug)
+//   themes  = every template in the family (rep first); each swatch applies its slug
+//   activeSlug = currently active template slug (highlights the matching swatch/card)
+function TemplateFamilyCard({ rep, themes, activeSlug, onApply, onShowDetail }) {
+  const isActive = themes.some((t) => t.slug === activeSlug);
+  // render the thumb + accent with whichever theme is active in this family,
+  // else the rep — so the Classic card recolours to the chosen theme.
+  const shown = themes.find((t) => t.slug === activeSlug) || rep;
+  const primaryColor = shown.colorSwatch?.primary || '#8A2680';
+  const multiTheme = themes.length > 1;
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      onClick={() => onApply(rep.slug)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onApply(rep.slug); } }}
       className={`relative text-left p-3 rounded-xl border-2 bg-white transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 ${isActive
           ? 'shadow-md ring-2 ring-offset-2'
           : 'border-slate-200 hover:border-slate-300'
@@ -167,46 +381,64 @@ function TemplateCard({ tpl, isActive, onClick, onShowDetail }) {
     >
       {isActive && (
         <div
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-md text-white"
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-md text-white z-10"
           style={{ backgroundColor: primaryColor }}
         >
           <Check className="w-3.5 h-3.5" strokeWidth={3} />
         </div>
       )}
-      {tpl.isLocked && (
-        <div className="absolute top-2 right-2">
-          <Lock className="w-3 h-3 text-slate-400" />
+      <div className="mb-2">
+        <TemplateHomeThumb tpl={shown} />
+      </div>
+      <div className="font-bold text-sm text-slate-700 leading-tight">{rep.name}</div>
+      <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wide mt-0.5">
+        {rep.layoutFamily || rep.slug}
+      </div>
+      <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{rep.description}</p>
+
+      {/* colour themes — only when the family has more than one */}
+      {multiTheme && (
+        <div className="mt-2.5">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1">ธีมสี ({themes.length})</div>
+          <div className="flex flex-wrap gap-1.5">
+            {themes.map((t) => {
+              const on = t.slug === activeSlug;
+              const a = t.colorSwatch?.primary || '#8A2680';
+              const b = t.colorSwatch?.secondary || a;
+              return (
+                <button
+                  key={t.slug}
+                  type="button"
+                  title={t.name}
+                  aria-label={`ใช้ธีม ${t.name}`}
+                  onClick={(e) => { e.stopPropagation(); onApply(t.slug); }}
+                  className={`w-6 h-6 rounded-full border-2 transition-transform ${on ? 'scale-110' : 'hover:scale-105'}`}
+                  style={{
+                    background: `linear-gradient(135deg, ${a} 50%, ${b} 50%)`,
+                    borderColor: on ? primaryColor : '#ffffff',
+                    boxShadow: on ? `0 0 0 2px ${primaryColor}55` : '0 1px 2px rgba(15,23,42,.18)',
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
       )}
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: primaryColor }} />
-        <span className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: secondaryColor }} />
-      </div>
-      <div className="font-bold text-sm text-slate-700 leading-tight">{tpl.name}</div>
-      <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wide mt-0.5">
-        {tpl.slug}
-      </div>
-      <p className="text-[11px] text-slate-500 mt-1.5 line-clamp-1">{tpl.description}</p>
 
-      {/* Pillar 2 — metadata chips */}
-      <div className="flex items-center flex-wrap gap-1.5 mt-2">
+      {/* metadata chips */}
+      <div className="flex items-center flex-wrap gap-1.5 mt-2.5">
         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
-          <Layers className="w-2.5 h-2.5" />{tpl.elementCount ?? '—'} element
+          <Layers className="w-2.5 h-2.5" />{shown.elementCount ?? '—'} element
         </span>
         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
-          <FileText className="w-2.5 h-2.5" />{tpl.pageCount ?? '—'} หน้า
+          <FileText className="w-2.5 h-2.5" />{shown.pageCount ?? '—'} หน้า
         </span>
-        {tpl.isBuiltIn && (
-          <span className="inline-flex items-center text-[10px] font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-md">
-            ต้นฉบับ
-          </span>
-        )}
       </div>
 
       {onShowDetail && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onShowDetail(tpl.slug); }}
+          onClick={(e) => { e.stopPropagation(); onShowDetail(shown.slug); }}
           className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-[#8A2680] transition-colors"
         >
           <Info className="w-3 h-3" /> ดูรายละเอียด
@@ -794,6 +1026,29 @@ export default function PageDesignTab() {
     [availableTemplates, activeTemplateId]
   );
 
+  // Group templates by LAYOUT FAMILY → one picker card per real template. The
+  // classic family carries its colour themes (modern-dark/playful/minimal + DB
+  // forks) as swatches inside its card; gumroad / studio-dark stand alone.
+  const templateFamilies = useMemo(() => {
+    const FAMILY_ORDER = ['classic', 'gumroad', 'studio-dark'];
+    const REP_SLUG = { classic: 'classic', gumroad: 'gumroad', 'studio-dark': 'studio-dark' };
+    const groups = {};
+    for (const t of availableTemplates) {
+      const fam = t.layoutFamily || 'classic';
+      (groups[fam] || (groups[fam] = [])).push(t);
+    }
+    const fams = Object.entries(groups).map(([family, themes]) => {
+      const rep = themes.find((t) => t.slug === (REP_SLUG[family] || family)) || themes[0];
+      const ordered = [rep, ...themes.filter((t) => t !== rep)];
+      return { family, rep, themes: ordered };
+    });
+    fams.sort((a, b) => {
+      const ai = FAMILY_ORDER.indexOf(a.family); const bi = FAMILY_ORDER.indexOf(b.family);
+      return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+    });
+    return fams;
+  }, [availableTemplates]);
+
   const livePageLayout = useMemo(
     () => ({
       home: homeBlocks,
@@ -1252,19 +1507,20 @@ export default function PageDesignTab() {
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setTemplateMenuOpen(false)} aria-hidden />
                 <div className="absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)] max-h-[72vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-40 p-3">
-                  <p className="text-[11px] font-bold text-slate-500 px-1 pb-2">เลือก Template — ธีมสำเร็จรูป ปรับต่อได้</p>
+                  <p className="text-[11px] font-bold text-slate-500 px-1 pb-2">เลือก Template — เลือกเลย์เอาต์ แล้วเลือกธีมสี</p>
                   <div className="grid grid-cols-2 gap-2.5">
                     {loadingTemplates && (
                       <div className="col-span-2 flex items-center gap-2 text-sm text-slate-400 py-4">
                         <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลด...
                       </div>
                     )}
-                    {!loadingTemplates && availableTemplates.map((tpl) => (
-                      <TemplateCard
-                        key={tpl.slug}
-                        tpl={tpl}
-                        isActive={activeTemplateId === tpl.slug}
-                        onClick={() => requestApplyTemplate(tpl.slug)}
+                    {!loadingTemplates && templateFamilies.map((fam) => (
+                      <TemplateFamilyCard
+                        key={fam.family}
+                        rep={fam.rep}
+                        themes={fam.themes}
+                        activeSlug={activeTemplateId}
+                        onApply={requestApplyTemplate}
                         onShowDetail={openTemplateDetail}
                       />
                     ))}
@@ -1749,7 +2005,7 @@ export default function PageDesignTab() {
             onClick={closeTemplateDetail}
           >
             <div
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* header */}
@@ -1769,6 +2025,9 @@ export default function PageDesignTab() {
 
               {/* body */}
               <div className="p-5 overflow-y-auto space-y-4">
+                {/* live page gallery — every page + state variations of this template */}
+                <TemplateGallery slug={detailSlug} />
+
                 {detailLoading && (
                   <div className="flex items-center gap-2 text-sm text-slate-400 py-8 justify-center">
                     <Loader2 className="w-4 h-4 animate-spin" /> กำลังโหลดรายละเอียด...

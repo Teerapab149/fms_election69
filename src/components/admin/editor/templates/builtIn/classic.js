@@ -17,6 +17,13 @@ export const classicTemplate = {
   name: "คลาสสิก",
   description: "แบบทางการ สีม่วง/ขาว เหมาะกับการเลือกตั้งทั่วไป",
 
+  // Layout family — which HOME LAYOUT this template's slug dispatches to
+  // (HomeRenderer). "classic" = the original layout; theme-only templates
+  // (modern-dark/playful/minimal) inherit this via spread — they recolor the
+  // classic layout, they don't replace it. Real templates with their OWN
+  // layout override this: "gumroad", "studio-dark".
+  layoutFamily: "classic",
+
   authorId: null,
   isBuiltIn: true,
   isLocked: false,

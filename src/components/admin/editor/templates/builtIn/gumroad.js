@@ -57,6 +57,7 @@ export const gumroadTemplate = {
   slug: "gumroad",
   name: "แอ็กทีฟ พัลส์",
   description: "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส ชมพู/ไลม์/เหลือง พื้นครีม",
+  layoutFamily: "gumroad", // real template — own page layouts (poster-mosaic home ฯลฯ)
 
   colorSwatch: {
     primary: PINK,
