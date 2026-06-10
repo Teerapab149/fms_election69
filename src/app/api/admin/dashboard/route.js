@@ -1,60 +1,10 @@
 import { db } from "../../../../lib/db";
-import crypto from "crypto";
 import { NextResponse } from "next/server";
-
-const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
-  ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : null;
-
-function verifyAdminToken(request) {
-  const encryptedToken = request.headers.get('x-admin-token');
-  const now = Date.now();
-
-  if (!encryptedToken) { // Added Log
-    console.error("verifyAdminToken: Missing x-admin-token header");
-    return NextResponse.json({ error: "Missing x-admin-token header" }, { status: 401 });
-  }
-  if (!PRIVATE_KEY) { // Added Log
-    console.error("verifyAdminToken: Missing PRIVATE_KEY in env");
-    return NextResponse.json({ error: "Missing ADMIN_PRIVATE_KEY in Server Environment" }, { status: 401 });
-  }
-
-  try {
-    const buffer = Buffer.from(encryptedToken, "base64");
-    const decryptedData = crypto.privateDecrypt(
-      {
-        key: PRIVATE_KEY,
-        padding: crypto.constants.RSA_PKCS1_PADDING,
-      },
-      buffer
-    );
-
-    const decryptedString = decryptedData.toString("utf8");
-    const [secret, timestamp] = decryptedString.split('|');
-    const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
-
-    if (secret !== EXPECTED_SECRET) {
-      console.error(`verifyAdminToken: Secret Mismatch. Got: '${secret}', Expected: '${EXPECTED_SECRET}'`);
-      return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
-    }
-
-    if (now - parseInt(timestamp) > 3600000) {
-      console.error(`verifyAdminToken: Token Expired. Diff: ${now - parseInt(timestamp)}ms`);
-      return NextResponse.json({ error: "Token Expired" }, { status: 403 });
-    }
-
-    return null;
-
-  } catch (decryptionError) {
-    console.error("verifyAdminToken: Decryption failed:", decryptionError.message);
-    return NextResponse.json({ error: "Invalid Token Format" }, { status: 403 });
-  }
-}
-
+import { adminGuard } from "../../../../lib/auth/adminCheck";
 
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
 export async function GET(req) {
-  const authError = verifyAdminToken(req);
+  const authError = await adminGuard(req);
   if (authError) return authError;
   try {
     // ดึงจำนวนคนทั้งหมด / คนที่โหวตแล้ว
@@ -94,7 +44,7 @@ export async function GET(req) {
 
 // 2. POST: สั่งการระบบ (Action)
 export async function POST(req) {
-  const authError = verifyAdminToken(req);
+  const authError = await adminGuard(req);
   if (authError) return authError;
   try {
     const body = await req.json();

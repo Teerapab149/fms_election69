@@ -1,56 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../lib/db";
 import { resolveElectionDates } from "../../../utils/electionConfig";
-import crypto from "crypto";
+import { requireAdmin } from "../../../lib/auth/adminCheck";
 
 export const dynamic = "force-dynamic";
-
-const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
-  ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : null;
-
-function checkAdminAuth(request) {
-  try {
-    const encryptedToken = request.headers.get('x-admin-token');
-    if (!encryptedToken) {
-      console.log("CheckAdminAuth: Missing Header");
-      return "MISSING_HEADER";
-    }
-    if (!PRIVATE_KEY) {
-      console.log("CheckAdminAuth: Missing Private Key");
-      return "MISSING_KEY";
-    }
-
-    const buffer = Buffer.from(encryptedToken, "base64");
-    const decryptedData = crypto.privateDecrypt(
-      {
-        key: PRIVATE_KEY,
-        padding: crypto.constants.RSA_PKCS1_PADDING,
-      },
-      buffer
-    );
-
-    const decryptedString = decryptedData.toString("utf8");
-    const [secret, timestamp] = decryptedString.split('|');
-    const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
-
-    if (secret !== EXPECTED_SECRET) return "INVALID_SECRET";
-    if (Date.now() - parseInt(timestamp) > 3600000) return "EXPIRED";
-
-    return "OK";
-  } catch (error) {
-    console.error("CheckAdminAuth Error", error);
-    return "DECRYPT_ERROR";
-  }
-}
 
 export async function GET(request) {
   try {
     const now = Date.now();
 
-    // ✅ Check Admin Auth (To bypass isHideScore)
-    const authStatus = checkAdminAuth(request);
-    const isAdmin = authStatus === "OK";
+    // ✅ Admin sees live scores (bypasses isHideScore); everyone else gets masked
+    // data until showResult. Verified via NextAuth session OR admin_token JWT cookie.
+    const isAdmin = (await requireAdmin(request)).ok;
 
     const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
     const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(systemConfig?.globalConfig);

@@ -1,34 +1,45 @@
 // src/middleware.js
 import { NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request) {
-  // อ่าน Path ปัจจุบัน
-  const path = request.nextUrl.pathname;
-
-  // เช็คว่ากำลังเข้าหน้า /admin หรือไม่
-  const isAdminPage = path.startsWith('/admin');
-  // เช็คว่าเป็นหน้า Login หรือไม่
-  const isLoginPage = path === '/admin/login';
-
-  // ดึงบัตรผ่าน (Cookie) ออกมาดู
-  const token = request.cookies.get('admin_token')?.value;
-
-  // 🛡️ กฎข้อที่ 1: จะเข้า Admin แต่ "ไม่มี" บัตรผ่าน -> ดีดไป Login
-  // 🛡️ กฎข้อที่ 1: จะเข้า Admin แต่ "ไม่มี" บัตรผ่าน -> ดีดไป Login
-  if (isAdminPage && !isLoginPage && !token) {
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
-    return NextResponse.redirect(new URL(`${basePath}/admin/login`, request.url));
+// Edge-runtime JWT verification of the admin_token cookie (issued by
+// /api/admin/login via jsonwebtoken HS256 with ADMIN_JWT_SECRET). `jose` is used
+// because `jsonwebtoken` (node crypto) doesn't run on the edge.
+async function isValidAdminToken(token) {
+  if (!token) return false;
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret) return false;
+  try {
+    await jwtVerify(token, new TextEncoder().encode(secret)); // checks sig + exp
+    return true;
+  } catch {
+    return false;
   }
-
-  // 🛡️ กฎข้อที่ 2: มีบัตรผ่านแล้ว แต่อยากเข้าหน้า Login -> ดีดกลับไป Admin (ไม่ต้องล็อกอินซ้ำ)
-  if (isLoginPage && token) {
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
-    return NextResponse.redirect(new URL(`${basePath}/admin`, request.url));
-  }
-
 }
 
-// กำหนดขอบเขตงานของยาม (เฝ้าแค่เส้นทาง /admin)
+export async function middleware(request) {
+  const path = request.nextUrl.pathname;
+  const isAdminPage = path.startsWith('/admin');
+  const isLoginPage = path === '/admin/login';
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
+
+  const token = request.cookies.get('admin_token')?.value;
+  const valid = await isValidAdminToken(token);
+
+  // 🛡️ Rule 1: entering /admin without a VALID token → bounce to login
+  if (isAdminPage && !isLoginPage && !valid) {
+    const res = NextResponse.redirect(new URL(`${basePath}/admin/login`, request.url));
+    if (token) res.cookies.delete('admin_token'); // clear stale/forged cookie
+    return res;
+  }
+
+  // 🛡️ Rule 2: already validly logged in but hitting the login page → go to admin
+  if (isLoginPage && valid) {
+    return NextResponse.redirect(new URL(`${basePath}/admin`, request.url));
+  }
+}
+
+// เฝ้าแค่เส้นทาง /admin
 export const config = {
   matcher: '/admin/:path*',
 };

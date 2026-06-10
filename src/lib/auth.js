@@ -239,6 +239,7 @@ export const authOptions = {
           token.id = dbUser.id;
           token.studentId = dbUser.studentId;
           token.role = dbUser.role;
+          token.isAdmin = dbUser.isAdmin;
           token.isVoted = dbUser.isVoted;
           token.facultyId = dbUser.facultyId;
           token.departmentId = dbUser.departmentId;
@@ -257,6 +258,7 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.studentId = token.studentId;
         session.user.role = token.role;
+        session.user.isAdmin = token.isAdmin === true;
         session.user.isVoted = token.isVoted;
         session.user.facultyId = token.facultyId;
         session.user.departmentId = token.departmentId;
