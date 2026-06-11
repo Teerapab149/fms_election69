@@ -21,10 +21,23 @@ retire `ADMIN_AUTH_SECRET` + the RSA keypair (`ADMIN_PRIVATE_KEY` / `NEXT_PUBLIC
 After rotating `ADMIN_PASSWORD_AUTH_EXTRA`, set the admin user's `passwordHash=null` so the
 new bootstrap password applies. (Dev still uses the old `--show` creds until rotated.)
 
-**REMAINING P0:** P0-5 (uploads volume + backups — user owns) · P0-6 (ballot-secrecy
-policy — ASK USER). **Cosmetic follow-up:** ~40 dead `x-admin-token` headers + the
-`getEncryptedToken` stub + imports can be removed (zero security/functional impact now —
-the server ignores the header, cookie does the auth). Then P1 / P2 below.
+**MORE DONE (2026-06-10, later — commits f93dc72 / 80a59a0 / ff0a910 / aa6e5dc):**
+- Editor gap #3 CLOSED: inner-page editor previews dispatch to real gumroad/studio-dark layouts;
+  template cards show editable-scope chips. (f93dc72)
+- P0-1 cosmetic sweep DONE: deleted src/utils/auth.js, all client fetches use credentials:'include',
+  "Encryption failed" spam gone. (80a59a0)
+- **Admin live turnout dashboard + hide per-party tally** (ff0a910): per-party score now hidden from
+  EVERYONE incl. admin until showResult (removed isAdmin bypass + score-sort — bias/leak fix the
+  committee asked for). Turnout BY ปี/สาขา/เพศ (voted + eligible + %) visible to admin real-time for
+  chasing low-turnout groups. results API returns eligible-by-group; admin overview has the bars.
+- **P0-6 ballot anonymize DONE (option A)** (aa6e5dc): admin action ANONYMIZE_BALLOTS (post-reveal
+  only) freezes tally → Candidate.score, nulls User.candidateId, sets globalConfig.ballotsAnonymized;
+  results reads frozen score when anonymized. Settings UI button + confirm. Full cycle curl-verified.
+
+**REMAINING P0:** P0-5 (uploads volume + backups — user owns, deferred by user).
+**Still required (USER): ROTATE SECRETS** (see above — old ones burned).
+**P2 note:** the anonymize freeze recomputes score from _count (fixes drift) — good moment to make
+Candidate.score the single source of truth + drop the _count path (P2 item #3). Then P1 / P2 below.
 
 **Browser tab-by-tab admin test still recommended pre-deploy** (this session verified the
 API contract via curl, not the UI — MCP preview was down). Every admin tab uses the now-
