@@ -69,9 +69,13 @@ export async function GET(request) {
       }
     });
 
+    // Per-party score = live count of voters (candidateId). After the ballots are
+    // anonymized (P0-6 — candidateId wiped post-certification), _count is 0, so we
+    // read the frozen tally from the Candidate.score column instead.
+    const anonymized = systemConfig?.globalConfig?.ballotsAnonymized === true;
     const allCandidates = allCandidatesRaw.map(c => ({
       ...c,
-      score: c._count.voters
+      score: anonymized ? (c.score || 0) : c._count.voters
     }));
 
     const realCandidates = allCandidates.filter(c => c.number > 0);

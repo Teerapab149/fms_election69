@@ -536,10 +536,13 @@ const SettingsTab = () => {
           setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
         } else if (action === 'RESET_CANDIDATES') {
           setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
+        } else if (action === 'ANONYMIZE_BALLOTS') {
+          setSuccessMessage({ title: 'ลบข้อมูลรายบุคคลสำเร็จ!', msg: 'คะแนนรวมถูกบันทึกไว้ครบ และความเชื่อมโยงว่าใครเลือกพรรคใดถูกลบถาวรแล้ว' });
         }
         setIsSuccessOpen(true);
       } else {
-        setErrorMessage({ title: `Error ${res.status}`, msg: res.statusText });
+        const errData = await res.json().catch(() => ({}));
+        setErrorMessage({ title: `ดำเนินการไม่สำเร็จ (${res.status})`, msg: errData.error || res.statusText });
         setIsErrorOpen(true);
       }
     } catch (error) {
@@ -701,6 +704,31 @@ const SettingsTab = () => {
             Reset
           </button>
         </div>
+
+        <div className='p-3' />
+
+        {/* Ballot secrecy — anonymize after results are certified (irreversible) */}
+        <div className="flex items-center justify-between gap-4 p-6 bg-indigo-50 rounded-xl border border-indigo-100 transition-colors hover:border-indigo-300">
+          <div className="min-w-0">
+            <h4 className="text-lg font-bold text-indigo-800 flex items-center gap-2">
+              <Power className="w-5 h-5" />
+              ลบข้อมูลการลงคะแนนรายบุคคล
+            </h4>
+            <p className="text-xs text-indigo-500 mt-1">
+              ลบความเชื่อมโยง “ใครเลือกพรรคใด” อย่างถาวร (คะแนนรวมยังอยู่ครบ) — ทำได้หลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น
+            </p>
+          </div>
+
+          <button
+            onClick={() => setActiveModal('ANONYMIZE_BALLOTS')}
+            disabled={processing || !isShowResult}
+            title={!isShowResult ? 'ต้องเผยแพร่ผลก่อน' : ''}
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
+          >
+            <Power className="w-4 h-4" />
+            Anonymize
+          </button>
+        </div>
       </div>
 
       <CompletedActionModal
@@ -755,6 +783,16 @@ const SettingsTab = () => {
         onConfirm={handleConfirmAction}
         title="⚠️ ยืนยันการล้างระบบ?"
         message={`ข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมดจะถูกลบ`}
+        variant="danger"
+        isLoading={processing}
+      />
+
+      <ConfirmModal
+        isOpen={activeModal === 'ANONYMIZE_BALLOTS'}
+        onClose={() => setActiveModal(null)}
+        onConfirm={handleConfirmAction}
+        title="ลบข้อมูลการลงคะแนนรายบุคคล?"
+        message={`คะแนนรวมของแต่ละพรรคจะถูกบันทึกไว้ครบ แต่ความเชื่อมโยงว่า "ใครเลือกพรรคใด" จะถูกลบอย่างถาวร — กู้คืนไม่ได้ ควรทำหลังรับรองผลแล้วเท่านั้น`}
         variant="danger"
         isLoading={processing}
       />

@@ -99,7 +99,7 @@ export async function POST(req) {
       return NextResponse.json({ message: "Success" });
     }
 
-    // กรณี: ล้างคะแนนทั้งหมด (Reset) 
+    // กรณี: ล้างคะแนนทั้งหมด (Reset)
     if (action === 'RESET_VOTES') {
       const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
       // 1. รีเซ็ต User ให้กลับเป็นยังไม่โหวต (เฉพาะนักศึกษาปี 1-4)
@@ -111,7 +111,46 @@ export async function POST(req) {
       await db.candidate.updateMany({
         data: { score: 0 }
       });
+      // 3. ปลดธง anonymized (กลับไปนับคะแนนสดจาก candidateId อีกครั้ง)
+      const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
+      if (cfg?.globalConfig?.ballotsAnonymized) {
+        await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...cfg.globalConfig, ballotsAnonymized: false } } });
+      }
       return NextResponse.json({ success: true, message: "Reset votes successfully for eligible students (Year 1-4)" });
+    }
+
+    // กรณี: ลบข้อมูลการลงคะแนนรายบุคคล (Anonymize ballots — P0-6, ballot secrecy)
+    // เก็บ candidateId ไว้ระหว่างเลือกตั้งเพื่อความถูกต้อง แล้ว "freeze คะแนนรวมลง
+    // Candidate.score → ล้าง User.candidateId ทั้งหมด" หลังประกาศผล เพื่อไม่ให้เหลือ
+    // ร่องรอยว่าใครเลือกพรรคใด (isVoted ยังอยู่ เพื่อความถูกต้องของ turnout).
+    if (action === 'ANONYMIZE_BALLOTS') {
+      const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+      const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
+      const mode = cfg?.systemMode || "AUTO";
+      const { resolveElectionDates } = await import("../../../../utils/electionConfig");
+      const { ELECTION_END } = resolveElectionDates(cfg?.globalConfig);
+      const ended = mode === "ENDED" || (mode === "AUTO" && Date.now() >= new Date(ELECTION_END).getTime());
+
+      // ป้องกันทำกลางคัน: ต้องปิดหีบแล้ว + ประกาศผลแล้วเท่านั้น (irreversible)
+      if (!ended || !cfg?.showResult) {
+        return NextResponse.json({ error: "ทำได้เฉพาะหลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น" }, { status: 400 });
+      }
+      if (cfg?.globalConfig?.ballotsAnonymized) {
+        return NextResponse.json({ message: "ข้อมูลถูกลบไปก่อนหน้านี้แล้ว" });
+      }
+
+      // 1) freeze คะแนนสุดท้ายลงคอลัมน์ score (นับจาก candidateId ก่อนล้าง)
+      const cands = await db.candidate.findMany({ select: { id: true } });
+      for (const c of cands) {
+        const n = await db.user.count({ where: { candidateId: c.id, year: { in: validYears } } });
+        await db.candidate.update({ where: { id: c.id }, data: { score: n } });
+      }
+      // 2) ล้าง link ใครเลือกพรรคใด (คง isVoted ไว้)
+      await db.user.updateMany({ where: { year: { in: validYears } }, data: { candidateId: null } });
+      // 3) ตั้งธง → results จะอ่านคะแนนจากคอลัมน์ score ที่ freeze ไว้แทน _count
+      await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...(cfg.globalConfig || {}), ballotsAnonymized: true } } });
+
+      return NextResponse.json({ success: true, message: "ลบข้อมูลการลงคะแนนรายบุคคลแล้ว — คะแนนรวมถูกบันทึกไว้ครบ" });
     }
 
     // กรณี: ล้างข้อมูลพรรคทั้งหมด (Reset Candidates) 
