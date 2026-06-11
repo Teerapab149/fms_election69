@@ -89,12 +89,13 @@ export async function GET(request) {
       if (noVoteOption) finalCandidates.push(noVoteOption);
     }
 
-    // Sorting Logic
-    if (status === "ENDED" || isShowResult || isAdmin) { // ✅ Auto sort by score if Admin
+    // Sorting Logic — sort by score ONLY when results are officially revealed
+    // (or the election ended). Admin is NOT given a score-sorted list: the ORDER
+    // itself would leak who's leading during voting (ballot-secrecy policy 2026-06-10).
+    if (status === "ENDED" || isShowResult) {
       finalCandidates.sort((a, b) => {
         const scoreDiff = b.score - a.score;
         if (scoreDiff !== 0) return scoreDiff;
-        // If scores equal, put parties (number > 0) before 0 and -1
         const isPartyA = a.number > 0;
         const isPartyB = b.number > 0;
         if (isPartyA && !isPartyB) return -1;
@@ -103,7 +104,6 @@ export async function GET(request) {
       });
     } else {
       finalCandidates.sort((a, b) => {
-        // Always put parties first, then sorted by number
         const isPartyA = a.number > 0;
         const isPartyB = b.number > 0;
         if (isPartyA && !isPartyB) return -1;
@@ -115,34 +115,46 @@ export async function GET(request) {
     const totalEligible = await db.user.count({ where: { year: { in: validYears } } });
     let totalVotesReal = await db.user.count({ where: { isVoted: true, year: { in: validYears } } });
 
-    const majorStats = await db.user.groupBy({ by: ['major'], where: { isVoted: true, year: { in: validYears } }, _count: { major: true } });
-    const yearStats = await db.user.groupBy({ by: ['year'], where: { isVoted: true, year: { in: validYears } }, _count: { year: true } });
-    const genderStats = await db.user.groupBy({ by: ['gender'], where: { isVoted: true, year: { in: validYears } }, _count: { gender: true } });
+    // Participation by group (VOTED) + the denominator (ELIGIBLE) so the admin
+    // turnout view can show "ปี 3 บัญชี: 12/40 (30%)" and chase the low ones.
+    const cAll = { _count: { _all: true } };
+    const votedWhere = { isVoted: true, year: { in: validYears } };
+    const eligWhere = { year: { in: validYears } };
+    const [majorVoted, yearVoted, genderVoted, majorElig, yearElig, genderElig] = await Promise.all([
+      db.user.groupBy({ by: ['major'],  where: votedWhere, ...cAll }),
+      db.user.groupBy({ by: ['year'],   where: votedWhere, ...cAll }),
+      db.user.groupBy({ by: ['gender'], where: votedWhere, ...cAll }),
+      db.user.groupBy({ by: ['major'],  where: eligWhere,  ...cAll }),
+      db.user.groupBy({ by: ['year'],   where: eligWhere,  ...cAll }),
+      db.user.groupBy({ by: ['gender'], where: eligWhere,  ...cAll }),
+    ]);
 
-    // 🛡️ SECURITY: HIDE SCORES IF NOT REVEALED (User Request: Ended but not revealed = Hide)
-    // ✅ Exception: Admin always sees scores
-    const isHideScore = !isAdmin && !isShowResult;
+    // ── Visibility policy (ballot secrecy, 2026-06-10) ──────────────────────
+    // PER-PARTY TALLY: hidden for EVERYONE (incl. admin) until showResult — so
+    //   nobody sees who's leading mid-vote (bias / leak risk). No admin bypass.
+    // TURNOUT BY GROUP: admin sees it live (chase low-turnout years/majors);
+    //   the public sees it only once results are revealed. (Public behaviour
+    //   unchanged — it was already gated on isShowResult.)
+    const hideTally = !isShowResult;
+    const showBreakdown = isAdmin || isShowResult;
+    const started = !(status === "WAITING" || status === "PRE_CAMPAIGN");
 
-    if (isHideScore) {
-      // Mask Data: Candidates & granular stats
-      finalCandidates = finalCandidates.map(c => ({
-        ...c,
-        score: 0,
-        _count: { voters: 0 }
-      }));
-
-      // Hide granular stats
-      majorStats.forEach(s => s._count.major = 0);
-      yearStats.forEach(s => s._count.year = 0);
-      genderStats.forEach(s => s._count.gender = 0);
-
-      // Mask Totals ONLY if not started yet
-      if (status === "WAITING" || status === "PRE_CAMPAIGN") {
-        totalVotesReal = 0;
-      }
+    if (hideTally) {
+      finalCandidates = finalCandidates.map(c => ({ ...c, score: 0, _count: { voters: 0 } }));
+    }
+    if (!started) {
+      totalVotesReal = 0; // before polls open, even the running total is hidden
     }
 
-    const showBreakdown = !isHideScore;
+    // Build each breakdown from the ELIGIBLE groups so 0%-turnout groups still
+    // appear (those are exactly the ones the committee needs to chase).
+    const countBy = (rows, key) => Object.fromEntries(rows.map(r => [r[key] ?? '—', r._count._all]));
+    const mkGroup = (votedRows, eligRows, key) => {
+      const voted = countBy(votedRows, key);
+      return eligRows
+        .filter(r => r[key] != null && String(r[key]).trim() !== '')
+        .map(r => ({ name: r[key], value: voted[r[key]] ?? 0, eligible: r._count._all }));
+    };
 
     return NextResponse.json({
       status: status,
@@ -150,10 +162,10 @@ export async function GET(request) {
       candidates: finalCandidates,
       campaignDate: CAMPAIGN_START,
       stats: {
-        totalEligible: totalEligible, // Always show real eligible count
-        byMajor: showBreakdown ? majorStats.map(i => ({ name: i.major, value: i._count.major })) : [],
-        byYear: showBreakdown ? yearStats.map(i => ({ name: i.year, value: i._count.year })) : [],
-        byGender: showBreakdown ? genderStats.map(i => ({ name: i.gender, value: i._count.gender })) : [],
+        totalEligible: totalEligible,
+        byMajor:  (showBreakdown && started) ? mkGroup(majorVoted,  majorElig,  'major')  : [],
+        byYear:   (showBreakdown && started) ? mkGroup(yearVoted,   yearElig,   'year')   : [],
+        byGender: (showBreakdown && started) ? mkGroup(genderVoted, genderElig, 'gender') : [],
       },
       isRevealed: !!isShowResult
     });

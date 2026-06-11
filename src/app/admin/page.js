@@ -23,6 +23,73 @@ import {
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
+// Live turnout (participation) breakdown for the admin overview — by ปี/สาขา/เพศ.
+// PARTICIPATION ONLY: counts of who has voted vs eligible per group; it never
+// reveals which party a group chose. This is what the committee uses to chase
+// the groups that haven't turned out yet. Bars colour by turnout % (low = amber,
+// so low-turnout groups pop) and are sorted lowest-first within สาขา.
+function TurnoutGroup({ title, rows, sortByTurnout = false }) {
+  if (!rows || rows.length === 0) return null;
+  const data = [...rows];
+  if (sortByTurnout) {
+    data.sort((a, b) => {
+      const pa = a.eligible > 0 ? a.value / a.eligible : 0;
+      const pb = b.eligible > 0 ? b.value / b.eligible : 0;
+      return pa - pb;
+    });
+  }
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+      <h4 className="text-sm font-bold text-slate-700 mb-3">{title}</h4>
+      <div className="space-y-3">
+        {data.map((r, i) => {
+          const elig = r.eligible || 0;
+          const pct = elig > 0 ? (r.value / elig) * 100 : 0;
+          const color = pct >= 60 ? '#16a34a' : pct >= 30 ? '#f59e0b' : '#ef4444';
+          return (
+            <div key={r.name || i}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-semibold text-slate-600 truncate pr-2">{r.name || '—'}</span>
+                <span className="text-slate-400 font-mono shrink-0">
+                  {r.value.toLocaleString()}/{elig.toLocaleString()} · <span style={{ color }} className="font-bold">{pct.toFixed(0)}%</span>
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TurnoutBreakdown({ demographics }) {
+  const { byYear = [], byMajor = [], byGender = [] } = demographics || {};
+  const hasData = byYear.length || byMajor.length || byGender.length;
+  if (!hasData) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center text-sm text-slate-400">
+        ความคืบหน้าการใช้สิทธิ์แยกตามกลุ่มจะแสดงเมื่อเริ่มเปิดลงคะแนน
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-bold text-slate-700">ความคืบหน้าการใช้สิทธิ์ (Turnout)</h3>
+        <span className="text-[11px] text-slate-400">ใช้สำหรับติดตามกลุ่มที่ยังมาน้อย · ไม่แสดงว่าเลือกพรรคใด</span>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <TurnoutGroup title="แยกตามชั้นปี" rows={byYear} />
+        <TurnoutGroup title="แยกตามสาขา (เรียงจากน้อยสุด)" rows={byMajor} sortByTurnout />
+        <TurnoutGroup title="แยกตามเพศ" rows={byGender} />
+      </div>
+    </div>
+  );
+}
+
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
@@ -211,6 +278,9 @@ const OverviewTab = () => {
           </p>
         </div>
       </div>
+
+      {/* Live turnout breakdown — participation only, never per-party tally */}
+      <TurnoutBreakdown demographics={demographics} />
     </div>
   )
 };
