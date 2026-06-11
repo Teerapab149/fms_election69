@@ -1,345 +1,185 @@
-# PLAN — SECURITY HARDENING (P0) + cleanup
+# HANDOFF — FMS Election (SAMO 49/50), next session
 
-Written 2026-06-10 (end of the Studio Dark v2 session, model: Fable 5).
-**Read this top-to-bottom before touching anything.** This file is self-contained —
-the next session has no memory of the conversation that produced it.
+Last updated 2026-06-12 (end of a long multi-arc session). **Self-contained — the
+next session has zero memory of the work that produced this.** Read top to bottom.
 
----
-
-## ✅ PROGRESS (updated 2026-06-10, later same day)
-
-Committed on `new-version`:
-- `859f4ab` studio-dark template · `07f5710` picker families + gallery (Step 0a done)
-- **`e92e4e1` P0-1 admin auth** — DONE + curl-verified (no-auth/forged-header/forged-cookie
-  → 401 or redirect; real login → cookie → all admin endpoints 200; public routes open).
-- **`51d512d` P0-2/3/4** — DONE + verified (atomic guard: 5 concurrent claims → 1 winner;
-  candidateId ballot validation; check-status reads session not query param).
-
-**⚠️ STILL REQUIRED for P0-1 to be safe in PRODUCTION (USER ACTION — not code):**
-ROTATE secrets — the old ones are burned. `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD_AUTH_EXTRA`,
-retire `ADMIN_AUTH_SECRET` + the RSA keypair (`ADMIN_PRIVATE_KEY` / `NEXT_PUBLIC_ADMIN_*`).
-After rotating `ADMIN_PASSWORD_AUTH_EXTRA`, set the admin user's `passwordHash=null` so the
-new bootstrap password applies. (Dev still uses the old `--show` creds until rotated.)
-
-**MORE DONE (2026-06-10, later — commits f93dc72 / 80a59a0 / ff0a910 / aa6e5dc):**
-- Editor gap #3 CLOSED: inner-page editor previews dispatch to real gumroad/studio-dark layouts;
-  template cards show editable-scope chips. (f93dc72)
-- P0-1 cosmetic sweep DONE: deleted src/utils/auth.js, all client fetches use credentials:'include',
-  "Encryption failed" spam gone. (80a59a0)
-- **Admin live turnout dashboard + hide per-party tally** (ff0a910): per-party score now hidden from
-  EVERYONE incl. admin until showResult (removed isAdmin bypass + score-sort — bias/leak fix the
-  committee asked for). Turnout BY ปี/สาขา/เพศ (voted + eligible + %) visible to admin real-time for
-  chasing low-turnout groups. results API returns eligible-by-group; admin overview has the bars.
-- **P0-6 ballot anonymize DONE (option A)** (aa6e5dc): admin action ANONYMIZE_BALLOTS (post-reveal
-  only) freezes tally → Candidate.score, nulls User.candidateId, sets globalConfig.ballotsAnonymized;
-  results reads frozen score when anonymized. Settings UI button + confirm. Full cycle curl-verified.
-
-**P0-5 + P1 BATCH DONE (commits 8d13db3 + 17f1d99):**
-- P0-5: scripts/backup.sh + restore.sh (pg_dump + images tar); docker-compose.yml cleaned of dead
-  NEXT_PUBLIC_ADMIN_*; runbook §2/§5 updated. (images volume was already mounted.)
-- Rate limit (src/lib/rateLimit.js): login 10/5min/IP, vote 15/min/studentId → 429.
-- Audit log: AdminAuditLog model (db push done) + dashboard POST records action+actor+detail.
-- Admin IDs → env ADMIN_STUDENT_IDS (fallback to legacy pair if unset).
-- Smoke suite scripts/smoke/ (`npm run smoke`) — 8 critical-path invariants, all pass.
-
-**STILL ON USER (infra, not code):** apply compose + cron backup + REHEARSE restore on the server;
-ROTATE SECRETS (ADMIN_JWT_SECRET + ADMIN_PASSWORD_AUTH_EXTRA; set admin passwordHash=null); set
-ADMIN_STUDENT_IDS in prod .env. Go-live checklist (day-of): real dates, AUTO mode, seed real
-parties, delete TEMP party, RESET_VOTES, showResult=false, E2E.
-**Still required (USER): ROTATE SECRETS** (above — old ones burned).
-**P2 note:** the anonymize freeze recomputes score from _count (fixes drift) — good moment to make
-Candidate.score the single source of truth + drop the _count path (P2 item #3). Then P1 / P2 below.
-
-**Browser tab-by-tab admin test still recommended pre-deploy** (this session verified the
-API contract via curl, not the UI — MCP preview was down). Every admin tab uses the now-
-ignored header + the cookie, so they should work, but click through them once.
+Branch: `new-version` · working tree CLEAN · `npm run build` GREEN · `npm run smoke` 8/8.
 
 ---
 
-> Context chain: read with memory `studio-dark-progress` + `editor-strategy-decision`,
-> and repo docs `DECISIONS.md` (Pitfall Log) + `docs/MAINTENANCE-RUNBOOK.md` + `CLAUDE.md`
-> (Engineering Discipline — Task 0 audit is MANDATORY, Rule 8 = paste real outputs).
+## 0. ORIENTATION — read these first (in order)
 
----
+1. `CLAUDE.md` — conventions + Engineering Discipline. **Task 0 pre-flight audit is
+   MANDATORY** before any spec; **Rule 8 = paste REAL command output, not "verified".**
+2. This file (you're here).
+3. `docs/MAINTENANCE-RUNBOOK.md` — ops, env vars, backup/restore, panic steps.
+4. `DECISIONS.md` Pitfall Log (P-LOG-*) — accumulated failure lessons.
+5. Memory files (loaded as `[[name]]`): `security-audit-p0`, `studio-dark-progress`,
+   `gumroad-progress`, `editor-strategy-decision`, `template-vision`.
 
-## What the last session shipped (status: DONE, verified, **NOT COMMITTED**)
-
-1. **Template #2 "Studio Dark v2"** (slug `studio-dark`) — ALL 7 pages live
-   (home/candidates/party/vote multi+single/results locked+revealed/success/closed),
-   shared shell architecture, QA'd (console 0 errors, mobile 375px no overflow).
-2. **Template picker restructure** — 3 family cards (Classic / Gumroad / Studio Dark);
-   classic's recolors (modern-dark/playful/minimal) are now colour **swatches inside
-   the Classic card** via new `layoutFamily` field.
-3. **Live template gallery** — "ดูรายละเอียด" opens a 9-slide live-iframe gallery
-   (new auth-free route `/template-preview?slug=&page=&variant=` rendering real layout
-   components with mock data).
-4. **Full-system security/quality audit** (Fable 5, code-verified) → this plan.
-
-### ⚠️ Step 0a — COMMIT the uncommitted work FIRST
-
-`git status` should show ~20 files. Commit BEFORE starting security work so the
-template work is a clean checkpoint. Suggested split (explicit paths, never `-A`):
-
-```bash
-# commit 1 — template #2 (studio dark v2, all pages)
-git add src/components/admin/editor/templates/builtIn/studio-dark.js \
-        src/components/admin/editor/templates/index.js \
-        src/components/admin/editor/templateEngine.js \
-        src/app/layout.js \
-        src/components/home/HomeRenderer.js src/components/home/StudioDarkHome.js \
-        src/components/home/StudioDarkRail.js \
-        src/components/vote/StudioDarkShell.js src/components/vote/StudioDarkCandidates.js \
-        src/components/vote/StudioDarkParty.js src/components/vote/StudioDarkVote.js \
-        src/components/vote/StudioDarkResults.js src/components/vote/StudioDarkSuccess.js \
-        src/components/vote/StudioDarkClosed.js \
-        src/app/candidates/page.js src/app/party/page.js src/app/vote/page.js \
-        src/app/results/page.js src/app/success/page.js src/app/closed/page.js
-git commit  # feat(studio-dark): template #2 — full 7-page layout + shared rail/shell
-
-# commit 2 — picker families + live gallery
-git add src/components/admin/PageDesignTab.js \
-        src/components/admin/editor/templates/builtIn/classic.js \
-        src/components/admin/editor/templates/builtIn/gumroad.js \
-        src/app/template-preview/page.js docs/PLAN-NEXT-SESSION.md
-git commit  # feat(editor): template picker by layout family + live page gallery
-```
-
-(`studio-dark.js` carries `layoutFamily` already; classic/gumroad got 1-line field adds.)
-
-### Step 0b — Task 0 audit (per CLAUDE.md Rule 1)
-
-- Branch `new-version`, working tree clean after the commits above.
-- `npm run build` passes (it did at session end — paste output).
-- DB dev state: `activeTemplateId=studio-dark`, `systemMode=MANUAL_OPEN`,
-  `showResult=true`, user `6610510149` `isVoted=true`. Election dates in dev are in
-  the PAST (countdowns show 0 — expected, not a bug).
-
-### Step 0c — append pending P-LOG entries to DECISIONS.md
-
-The last session's self-reflection produced 2 new pitfall entries + 1 knowledge-base
-pattern that were output in-chat but NOT appended (user approval pending). Ask the
-user, then append:
-- P-LOG: Geist is NOT in next/font/google (it's Vercel's `geist` npm pkg) → substituted
-  Inter + JetBrains Mono, vars named `--font-studio-sans/-mono`.
-- P-LOG: HMR stale after >5-file batch writes = "spinner forever, console clean, curl
-  200" + preview serverId desync → recovery: kill port-3000 owner via
-  `Get-NetTCPConnection`, `rm -rf .next`, `preview_start`. NEVER `rm .next` while the
-  process lives. (Pattern occurred 3× that session — also fingered innocent components
-  in "Cannot update HotReload while rendering X" warnings.)
-- KB pattern: two-step eval for React interaction tests (click in one preview_eval,
-  read DOM in the next — same-eval reads see pre-render DOM).
-
----
-
-# 🔴 P0 — SECURITY (must be done BEFORE the real election)
-
-## P0-1 ⚠️⚠️⚠️ Admin auth is broken end-to-end (most critical item in this file)
-
-### The flaw, with evidence
-
-1. **`src/utils/auth.js`** — `getEncryptedToken()` runs **in the browser** and builds
-   the admin token from `process.env.NEXT_PUBLIC_ADMIN_AUTH_SECRET`. Anything
-   `NEXT_PUBLIC_*` is **compiled into the public JS bundle**. Any visitor can read the
-   secret + the RSA public key from the bundle, mint a valid `x-admin-token`, and call
-   every admin API. The RSA wrapping adds nothing — the secret itself is public.
-2. **Server verifiers that trust that scheme** (all use private-key decrypt + compare
-   to `ADMIN_AUTH_SECRET`):
-   - `src/app/api/admin/candidates/route.js` (CRUD parties/members/images)
-   - `src/app/api/admin/config/route.js`
-   - `src/app/api/admin/dashboard/route.js` (**includes RESET-ALL-VOTES actions**, ~line 158)
-   - `src/app/api/admin/global-config/route.js`
-   - `src/app/api/admin/page-layout/route.js` (PUT)
-   - `src/app/api/results/route.js` (`checkAdminAuth` → `isAdmin` **bypasses score
-     masking during voting**)
-   - plus the legacy fallback inside `src/lib/auth/adminCheck.js` (`verifyLegacyAdminToken`)
-3. **`src/middleware.js`** — gates `/admin` pages by **cookie existence only**
-   (`request.cookies.get('admin_token')?.value` truthy). Any forged cookie value passes.
-4. **The good mechanism already exists but is never verified**:
-   `src/app/api/admin/login/route.js` does bcrypt (+ bootstrap password) and issues a
-   **signed JWT** (`ADMIN_JWT_SECRET`, 2h) in an **httpOnly SameSite=strict cookie**
-   `admin_token`. **No code anywhere calls `jwt.verify` on it.**
-
-### Impact
-Anyone on the internet can: reset all votes, edit candidates, change system mode,
-read live scores during voting, deface every page. For an election this is fatal.
-
-### The fix (use what exists — do NOT invent a new auth system)
-
-**Phase 1 — make the JWT real:**
-- New helper `src/lib/auth/verifyAdminJwt.js` (node runtime): read cookie
-  `admin_token` → `jwt.verify(token, process.env.ADMIN_JWT_SECRET)` → return payload
-  or null. (`jsonwebtoken` is already a dependency.)
-- Extend `requireAdmin()` in `src/lib/auth/adminCheck.js`: accept **(a)** NextAuth
-  session admin (keep as-is — PSU SSO staff path), **(b)** valid `admin_token` JWT
-  cookie. **Delete the `verifyLegacyAdminToken` x-admin-token fallback.**
-
-**Phase 2 — port every admin route to `requireAdmin(request)`:**
-- Replace the local `verifyAdminToken`/`checkAdminAuth` copies in the 6 routes listed
-  above (results route: `isAdmin = (await requireAdmin(request)).ok`).
-- `src/app/api/admin/members/route.js` currently has **NO auth at all** and leaks
-  member `studentId`s — add `requireAdmin` (or strip studentId if it must stay public).
-
-**Phase 3 — middleware verifies, not just checks existence:**
-- `src/middleware.js` runs on edge runtime → `jsonwebtoken` won't work there. Use
-  `jose` (`npm i jose`, tiny, zero-dep): `jwtVerify(token, new TextEncoder().encode(secret))`.
-  Invalid/expired → redirect to `/admin/login` + clear cookie.
-
-**Phase 4 — client cleanup (the sweep):**
-- Find every call site: `grep -rn "getEncryptedToken\|x-admin-token" src/ --include=*.js`
-  (expect: PageDesignTab.js, admin/page.js tabs, results/page.js, possibly more).
-- The cookie is sent automatically; most fetches already use `credentials:'include'`.
-  Remove the header + the `getEncryptedToken()` import from each call site.
-- Delete `src/utils/auth.js` (client token minting) once no imports remain.
-- `grep -rn "NEXT_PUBLIC_ADMIN" src/ Dockerfile docker-compose*` → remove
-  `NEXT_PUBLIC_ADMIN_AUTH_SECRET` + `NEXT_PUBLIC_ADMIN_PUBLIC_KEY` ARG/ENV from the
-  Dockerfile (lines ~28-36) and any compose/env files.
-
-**Phase 5 — rotate, because the old secrets are burned:**
-- Rotate `ADMIN_AUTH_SECRET` (now unused — can delete), `ADMIN_JWT_SECRET`,
-  `ADMIN_PASSWORD_AUTH_EXTRA`, and the RSA key pair (delete if nothing uses it after
-  phase 4). Admin user's `passwordHash` was bootstrap-derived from the old extra
-  secret → reset `passwordHash=null` so the new bootstrap password applies.
-
-**Verify (Rule 8 — paste real outputs):**
-- `curl -H "x-admin-token: <old-style token>" /api/admin/dashboard` → **401/403**.
-- Forged cookie `admin_token=junk` on `/admin` → redirected to login.
-- Real login via UI → admin tabs work (candidates list loads, config saves).
-- `grep -rn "NEXT_PUBLIC_ADMIN" src/` → **zero hits**.
-- PSU-SSO admin session still passes templates API (`requireAdmin` path a).
-- `npm run build` passes.
-
-**Watch out:** admin UI does many fetches per tab — miss one header-removal and that
-tab 401s. Test EVERY admin tab in the browser after the sweep (ภาพรวม / ตั้งค่าทั่วไป /
-จัดการผู้สมัคร / ออกแบบหน้าเว็บ / ตั้งค่าระบบ + เผยแพร่ + dashboard actions).
-
-## P0-2 Vote race condition (TOCTOU) — `src/app/api/vote/route.js`
-
-Lines ~115-134: `isVoted` is checked, THEN a transaction increments. Two concurrent
-POSTs both pass the check → double `score` increment / mid-air vote change.
-(`/api/results` counts `_count.voters` so final results survive, but the `score`
-column + admin dashboard drift, and "1 คน 1 ครั้ง" isn't atomically enforced.)
-
-**Fix — make the guard atomic:**
-```js
-const res = await db.$transaction(async (tx) => {
-  const updated = await tx.user.updateMany({
-    where: { id: user.id, isVoted: false },        // ← atomic compare-and-set
-    data: { isVoted: true, candidateId: parsedId },
-  });
-  if (updated.count === 0) return "ALREADY_VOTED";
-  await tx.candidate.update({ where: { id: parsedId }, data: { score: { increment: 1 } } });
-  return "OK";
-});
-if (res === "ALREADY_VOTED") return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
-```
-**Verify:** fire 5 parallel POSTs (node script, same session cookie) → exactly 1
-succeeds, score +1, user.candidateId set once. Paste the script output.
-
-## P0-3 Validate `candidateId` against ballot rules — same file
-
-Currently any existing Candidate id is accepted (e.g. ไม่รับรอง №-1 while multiple
-parties are running — CLAUDE.md says -1 is single-party-only).
-
-**Fix:** before the transaction:
-```js
-const cands = await db.candidate.findMany({ select: { id: true, number: true } });
-const target = cands.find(c => c.id === parsedId);
-if (!target) return 400;
-const realCount = cands.filter(c => c.number > 0).length;
-const valid = target.number > 0 || target.number === 0 || (target.number === -1 && realCount === 1);
-if (!valid) return NextResponse.json({ error: "ตัวเลือกไม่ถูกต้องสำหรับบัตรเลือกตั้งนี้" }, { status: 400 });
-```
-
-## P0-4 `/api/check-status` — identity from session, not query param
-
-`src/app/api/check-status/route.js` is called as `?studentId=...` (see call sites in
-success/home pages). **Audit the route first** (Rule 1 — read it; the last session
-verified call sites but not the route body). If it trusts the param, anyone can query
-anyone's `isVoted`. Fix = `getServerSession(authOptions)` like vote/route.js does and
-ignore the param; update call sites (`grep -rn "check-status" src/`) to drop it.
-
-## P0-5 Ops: uploads volume + backups (user said they'll own this — verify it happened)
-
-- `api/admin/candidates/route.js` writes images to `public/images/...` **inside the
-  container**; `Dockerfile` has no VOLUME → every redeploy deletes all party/member
-  photos. Mount a volume for `public/images/candidates` + `public/images/members`.
-- Backup cron: `pg_dump` + the images volume. **Rehearse a restore once** before
-  election day. Record both in `docs/MAINTENANCE-RUNBOOK.md`.
-
-## P0-6 Ballot secrecy decision (policy — ASK THE USER, don't decide alone)
-
-`User.candidateId` (schema.prisma:35) stores **who voted for which party**, readable
-by any admin/DB access. Options: (a) keep for audit but never expose via API + wipe
-(`candidateId=null`) after results are certified; (b) move to a separate `Ballot`
-table without user linkage (loses per-user audit); (c) keep as-is, documented.
-Present options → user decides → implement.
-
----
-
-# 🟡 P1 — before go-live (strongly recommended)
-
-1. **Rate limiting** — at minimum on `/api/admin/login` (bcrypt brute force) and
-   `/api/vote`. Simplest: nginx `limit_req` in front; or a tiny in-memory limiter
-   (Map by IP, sliding window) since it's a single-container deploy.
-2. **Admin audit log** — new `AdminAuditLog` model (who/action/payload/timestamp);
-   write from every mutating admin route (especially dashboard reset actions).
-   Election credibility depends on this trail.
-3. **Hardcoded admin studentIds** — `src/lib/auth.js` ~lines 191-194 hardcodes
-   `6610510149`/`6610510129` → `setAdmin=true`. Move to env `ADMIN_STUDENT_IDS`
-   (comma-separated). These students graduate; the system shouldn't care.
-4. **SSO group mapping** — `groups[0]==="staff" → ADMIN` (lib/auth.js ~185). Confirm
-   with PSU who controls that group; document in runbook.
-5. **Single-party flow live-verify** (deferred gap #1) — now provable two ways:
-   `/template-preview?slug=studio-dark&page=vote&variant=single` (mock, already
-   verified) + real-DB pass when the TEMP party (`พรรคทดสอบ TEMP`) is deleted during
-   go-live prep (P2 checklist in the old plan: real dates, AUTO mode, seed real
-   parties, clear scores, showResult=false, full E2E login→vote→success→results).
-
----
-
-# 🟠 P2 — long-term quality (the 10-year axis)
-
-1. **Smoke tests (~10 cases) — currently ZERO test files.** Critical path only:
-   vote API (double-vote, out-of-window, invalid year, invalid candidate), results
-   masking when locked, requireAdmin rejects forged tokens. `node --test` +
-   `scripts/smoke/*.test.mjs` against dev server is enough; no framework needed.
-2. **Migration baseline** — repo uses `prisma db push` (migrations have drift, see
-   P-LOG; `migrate deploy` would reset). Generate a baseline
-   (`prisma migrate diff --from-empty --to-schema-datamodel … --script > init.sql`),
-   document the restore path in the runbook.
-3. **Drop or reconcile `Candidate.score`** — results already trust `_count.voters`;
-   the denormalized column is a second source of truth that drifts (esp. with P0-2
-   pre-fix data). Either remove usages or add a post-close reconcile script.
-4. **`useVoteStatus()` hook** — JWT caches `isVoted` at sign-in; every page
-   re-fetches `/api/check-status` as a workaround (GumroadHome, StudioDarkHome,
-   success…). Consolidate into one hook.
-5. **Dead code:** `MonitorTab.js` hardcoded 2024 dates (wire to `resolveElectionDates`
-   or delete); commented-out `verifyAdminToken` block at top of vote/route.js.
-6. **Per-page `/api/admin/page-layout` fetch** — every public page blocks a
-   round-trip on mount for template dispatch. Add `s-maxage=30` cache header or
-   resolve server-side in layout and pass via context.
-7. **Editor previews for studio-dark inner pages** (deferred gap #3) — PageDesignTab
-   previews for candidates/vote/results/party/success still render classic layout.
-   The `/template-preview` route from this session already solved the hard part
-   (mock-data rendering of real layouts) — the editor preview can likely reuse it.
-
----
-
-# Working notes for the next session (env quirks — they WILL bite)
-
-| Quirk | Recovery |
+### How to work in this repo (env quirks — they WILL bite)
+| Quirk | What to do |
 |---|---|
-| HMR stale after editing >5 files (spinner forever, console clean, curl 200) | Proactively restart dev server after batch writes: kill port-3000 owner (`Get-NetTCPConnection -LocalPort 3000` → Stop-Process), `rm -rf .next`, `preview_start`. NEVER `rm .next` while process lives (→ site-wide 404s) |
-| "Cannot update HotReload while rendering X" console errors after hot-editing X | Fast-Refresh residue, NOT a code bug (3 occurrences last session). Clean restart + single load = definitive test |
-| `preview_screenshot` timeout | Inject `*{animation:none!important}` + reload first; if it still hangs (e.g. /closed page), verify via DOM evals instead |
-| Admin login (never ask the user) | `node scripts/dev-admin-login.js --show` → in-page `fetch('/fms-ovs/api/admin/login', {method:'POST', …})`. NOTE: P0-1 phase 5 rotates the bootstrap secret — re-run `--show` after |
-| Student session | /login page → DEV ONLY mock form → fill studentId (e.g. 6610510149) → Mock Login |
-| React interaction tests via preview_eval | Click in one eval, read DOM in the NEXT eval (same-eval reads pre-render DOM) |
-| `npm run build` | Stop the dev server first (`.next` race, P-LOG-052) |
-| prisma generate EPERM (Windows) | preview_stop before `prisma generate` |
-| DB schema changes | `prisma db push` (NOT migrate — drift) |
+| Windows `.next` EPERM / lock | Stop dev server BEFORE `npm run build` or `prisma generate`. `rm -rf .next` if stuck. |
+| Dev server backgrounding | Use the **preview_start** MCP tool, not `npm run dev &` (the `&` detaches & exits; bad log paths like `/tmp/...`→`E:\tmp` fail). |
+| Kill a stuck server on :3000 | PowerShell `Get-NetTCPConnection -LocalPort 3000 -State Listen` → `Stop-Process -Force`. |
+| HMR stale after big batch edits | "spinner forever + console clean + curl 200" = restart dev. NEVER `rm .next` while the process lives (→ site-wide 404). |
+| `prisma db push` (NOT migrate) | Migrations have drift; `db push` is how this DB is managed. Stop dev first (EPERM). |
+| Bash `/tmp` | maps to `E:\tmp` (missing) — write temp files to the project dir (e.g. `_x.local`) and delete. |
+| preview forces `prefers-reduced-motion: reduce` | animations show static in preview — that's expected; verify motion logic via computed styles. |
+| preview_screenshot timeout | inject `*{animation:none!important}` + reload; fall back to DOM evals. |
+| React interaction test via preview_eval | click in one eval, READ in the NEXT eval (same-eval reads see pre-render DOM). |
 
-**Definition of done for P0-1 (the big one):** all 6 verify bullets pass with pasted
-output + every admin tab manually clicked through + secrets rotated + a commit per
-phase (atomic, explicit paths). If any phase exceeds 2× its expected effort, STOP and
-report (CLAUDE.md Rule 6).
+### How to log in (do it yourself — never ask the user)
+- **Admin:** `node scripts/dev-admin-login.js --show` prints user/pass; then in-page
+  `fetch('/fms-ovs/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})})`.
+  Admin auth = httpOnly `admin_token` JWT cookie (sent automatically; `credentials:'include'`).
+  ⚠️ If secrets were rotated (see §2A) the `--show` creds change — re-run it.
+- **Student session (for /vote etc.):** open `/fms-ovs/login` → DEV-ONLY mock form →
+  type a studentId (e.g. `6610510149`) → Mock Login. (A raw POST to the NextAuth
+  callback does NOT persist the session — use the form.)
+- **Auth-free page previews:** `/fms-ovs/template-preview?slug=<classic|gumroad|studio-dark>&page=<home|candidates|party|vote|results|success|closed>&variant=<multi|single|locked|revealed>` renders the REAL layout with mock data (no login).
+
+### Dev DB state (as of handoff)
+`activeTemplateId=studio-dark`, `systemMode=MANUAL_OPEN`, `showResult=true`, ballots
+NOT anonymized. Election dates are in the PAST → countdowns show 0, status reads
+"Ended"/voteCTA shows results — that's dev-data, not a bug. User `6610510149`:
+`isVoted=true, candidateId=1`; there's a real party (`The Unity Concord Of FMS 2`,
+№1) + a leftover `พรรคทดสอบ TEMP` (№2) + งดออกเสียง(0) + ไม่รับรอง(-1).
+**When you mutate dev DB for a test, snapshot + restore it** (this arc did so every time).
+
+---
+
+## 1. WHAT WAS DONE THIS ARC (all committed on `new-version`)
+
+**Template #2 "Studio Dark v2"** (premium dark + lime, persistent left-rail shell):
+- `859f4ab` 7-page layout + shared rail/shell · `07f5710` picker-by-family + live gallery
+- `f93dc72` per-template inner-page previews in editor + editable-scope hints
+- `7fc7ef7` a11y: site-wide `prefers-reduced-motion` + bumped sub-10px labels
+- Files: `src/components/home/StudioDark{Home,Rail}.js`, `src/components/vote/StudioDark{Shell,Candidates,Party,Vote,Results,Success,Closed}.js`, theme `src/components/admin/editor/templates/builtIn/studio-dark.js`, route `src/app/template-preview/page.js`.
+
+**Editor:** picker now shows 3 real templates (Classic w/ colour-theme swatches /
+Gumroad / Studio Dark) via a `layoutFamily` field; "ดูรายละเอียด" = live 9-slide
+gallery; inner-page previews dispatch to the real gumroad/studio layouts.
+
+**Security P0-1…P0-6 (all done + verified):**
+- `e92e4e1` P0-1: admin auth = verified `admin_token` JWT cookie (`requireAdmin`/
+  `adminGuard` in `src/lib/auth/adminCheck.js` + `verifyAdminJwt.js`); edge middleware
+  verifies via `jose`; killed the client-minted `x-admin-token` (secret was in the
+  public bundle). `80a59a0` swept all client call sites to `credentials:'include'`,
+  deleted `src/utils/auth.js`.
+- `51d512d` P0-2 atomic vote guard (updateMany compare-and-set), P0-3 ballot-rule
+  validation, P0-4 check-status reads session not `?studentId`.
+- `ff0a910` admin turnout dashboard + **per-party tally hidden from admin too** until
+  reveal (no `isAdmin` bypass). `aa6e5dc` P0-6 ballot anonymize (option A): freeze
+  tally → null `candidateId` after certification; results reads frozen `score` when
+  `globalConfig.ballotsAnonymized`.
+
+**Robustness P0-5 + P1:**
+- `8d13db3` P0-5: `scripts/backup.sh` + `restore.sh`, compose secret cleanup, runbook.
+- `17f1d99` P1: rate limit (`src/lib/rateLimit.js`), `AdminAuditLog` model + writes,
+  admin IDs → `ADMIN_STUDENT_IDS` env, smoke suite `scripts/smoke/` (`npm run smoke`).
+
+---
+
+## 2. WHAT REMAINS — grouped BY OWNER
+
+### A) 🔴 USER / INFRA — NOT code (next session can't do these; remind the user)
+1. **ROTATE SECRETS** (old ones are burned — were in the client bundle): new
+   `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD_AUTH_EXTRA` (then set the admin user's
+   `passwordHash=null` so the new bootstrap password applies). Delete the now-unused
+   `ADMIN_PRIVATE_KEY` / `ADMIN_AUTH_SECRET` / `NEXT_PUBLIC_ADMIN_*` from `.env`.
+2. **Set `ADMIN_STUDENT_IDS`** in prod `.env` (comma-separated; code falls back to the
+   legacy pair if unset, but prod should be explicit).
+3. **Apply ops:** `docker compose up`, cron `scripts/backup.sh` daily, and **rehearse
+   `scripts/restore.sh` once** against a throwaway target before election day.
+4. **Go-live checklist (day-of, destructive — do NOT run on dev now):** set real dates
+   in admin, `systemMode=AUTO`, seed real parties, **delete `พรรคทดสอบ TEMP`**,
+   `RESET_VOTES`, `showResult=false`, then full E2E (login→vote→success→results→
+   turnout dashboard). After certification: press **Anonymize** in admin settings.
+
+### B) 🟡 DESIGN-TASTE — needs the USER'S EYE (do NOT change unilaterally)
+Lesson (P-LOG / gumroad): don't macro-restructure what the owner approved. Propose,
+let them pick.
+1. **Gumroad vote-header still reuses the home pink-box** ("เลือกตั้ง สโมสรนักศึกษา")
+   — the last "each-page-distinct" gap. → Propose 2-3 directions, user picks.
+2. **Studio-dark ballot leads in English** ("Choose one, then confirm.") — Thai is
+   secondary. Product call: keep (Thai is in the deck/options) vs flip hierarchy on
+   /vote only. **Ask the user.**
+3. **Studio-dark inner pages (candidates/party/vote/results/success/closed) have only
+   had a glance from the owner** — home got 1 feedback round + polish; the rest is the
+   assistant's judgment. → Have the user open them (DB is studio-dark; visit
+   `/fms-ovs/candidates`, `/party?id=1`, etc.) and give per-page feedback like home got.
+4. **Studio-dark contrast tradeoff:** ~13 remaining 10px `--sd-mono` labels in
+   `--sd-ink-3` (#7F7A6E on #14140F ≈ 4:1, just under WCAG AA). Fixing = brighter/bigger
+   labels = louder than the intended "quiet dim" look. **User decides** a11y-strict vs
+   aesthetic (assistant's view: acceptable to keep — these are secondary labels).
+5. **Gumroad results-head redesign** (done an earlier session) still awaits the user's
+   reaction (keep / change).
+6. true-900 Thai heading weight still deferred (Anuphan tops out at 700 — needs a
+   900-capable Thai font = a design decision).
+
+### C) 🟢 CODE-READY — next session CAN do (no user decision needed)
+**P1 leftover:**
+- **SSO "staff" group → ADMIN mapping** (`src/lib/auth.js` ~line 180): confirm who
+  controls the PSU "staff" group; if loose, tighten. Document in runbook.
+
+**P2 (robustness, 10-year axis — pick highest value, none block go-live):**
+- **Migration baseline** — repo uses `db push` (drift; `migrate deploy` would reset).
+  Generate an init migration (`prisma migrate diff --from-empty …`) + document restore.
+  ⚠️ risky — do carefully, was intentionally skipped this arc.
+- **`Candidate.score` as single source of truth** — results currently reads
+  `_count.voters` live (and frozen `score` post-anonymize). The `score` column drifts
+  (P0-2 fixed the increment; anonymize now recomputes it). Consider making `score` the
+  one source + a reconcile script. (Linked to P0-6.)
+- **`useVoteStatus()` hook** — every page re-fetches `/api/check-status` because the
+  NextAuth JWT caches `isVoted` until re-login. Consolidate into one hook.
+- **Dead code:** `MonitorTab.js` hardcodes 2024 dates; commented-out blocks.
+
+**P3 (polish — DEFERRED, do NOT do pre-go-live; refactor risk on working code):**
+- Split `PageDesignTab.js` (~2,300 lines, the scariest file) into modules.
+- Undo/redo in PageDesignTab (compose-lab has it; the staff-facing editor doesn't).
+- Add editor Wraps to studio-dark/gumroad inner pages IF the user wants per-element
+  editing there (currently theme-token + central-text editing only — that's by design
+  per `editor-strategy-decision`).
+
+---
+
+## 3. DESIRED RESULT per remaining code item (so "done" is unambiguous)
+
+- **SSO staff-group:** a documented, intentional rule for who becomes ADMIN via SSO;
+  a non-staff PSU account must NOT get admin. Verify with a test account if possible.
+- **Migration baseline:** `prisma migrate status` clean on a fresh clone + DB; restore
+  path in runbook; no data loss on the existing DB (use `db push`-compatible baseline).
+- **score-as-SoT:** results identical before/after the change in all states (locked,
+  revealed, single-party, anonymized) — verify with the same save/restore DB cycle this
+  arc used; paste outputs.
+- **useVoteStatus:** one fetch per navigation instead of N; vote→success→results still
+  reflects fresh status without re-login.
+
+## 4. KEY FILE MAP
+```
+Auth:      src/lib/auth.js (NextAuth+SSO) · src/lib/auth/adminCheck.js (requireAdmin/
+           adminGuard) · src/lib/auth/verifyAdminJwt.js · src/middleware.js (jose)
+Vote:      src/app/api/vote/route.js (atomic guard + ballot validation + rate limit)
+Results:   src/app/api/results/route.js (tally-hide policy + turnout breakdown + frozen-
+           score-when-anonymized)
+Admin API: src/app/api/admin/{dashboard,config,global-config,page-layout,candidates,
+           members,login}/route.js  (all use requireAdmin/adminGuard)
+Admin UI:  src/app/admin/page.js (overview turnout dashboard + settings + Anonymize btn)
+           src/components/admin/PageDesignTab.js (editor — picker/gallery/preview)
+Templates: src/components/admin/editor/templates/builtIn/*.js (+ index.js + templateEngine.js)
+           src/components/home/HomeRenderer.js (slug→home layout)
+Studio DK: src/components/home/StudioDark{Home,Rail}.js · src/components/vote/StudioDark*.js
+Ops:       scripts/backup.sh · scripts/restore.sh · scripts/smoke/ · docker-compose.yml
+Rate/Audit: src/lib/rateLimit.js · prisma/schema.prisma (AdminAuditLog)
+```
+
+## 5. FIRST MOVES for the next session
+1. Task 0 audit: `git status` clean, on `new-version`, `npm run build` passes, `npm run
+   smoke` 8/8 (start dev first). Paste outputs.
+2. Ask the user which lane to take: **(B) design polish** (they drive — start by having
+   them review studio-dark inner pages or pick a gumroad vote-head direction), or
+   **(C) code robustness** (SSO check / a P2 item), or confirm **(A) go-live** timing.
+3. If unsure, the highest-leverage non-blocking code item is the **SSO staff-group
+   check** (security, no user taste needed). Everything in (A) is the user's to run.
