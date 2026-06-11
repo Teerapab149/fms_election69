@@ -34,8 +34,19 @@ new bootstrap password applies. (Dev still uses the old `--show` creds until rot
   only) freezes tally → Candidate.score, nulls User.candidateId, sets globalConfig.ballotsAnonymized;
   results reads frozen score when anonymized. Settings UI button + confirm. Full cycle curl-verified.
 
-**REMAINING P0:** P0-5 (uploads volume + backups — user owns, deferred by user).
-**Still required (USER): ROTATE SECRETS** (see above — old ones burned).
+**P0-5 + P1 BATCH DONE (commits 8d13db3 + 17f1d99):**
+- P0-5: scripts/backup.sh + restore.sh (pg_dump + images tar); docker-compose.yml cleaned of dead
+  NEXT_PUBLIC_ADMIN_*; runbook §2/§5 updated. (images volume was already mounted.)
+- Rate limit (src/lib/rateLimit.js): login 10/5min/IP, vote 15/min/studentId → 429.
+- Audit log: AdminAuditLog model (db push done) + dashboard POST records action+actor+detail.
+- Admin IDs → env ADMIN_STUDENT_IDS (fallback to legacy pair if unset).
+- Smoke suite scripts/smoke/ (`npm run smoke`) — 8 critical-path invariants, all pass.
+
+**STILL ON USER (infra, not code):** apply compose + cron backup + REHEARSE restore on the server;
+ROTATE SECRETS (ADMIN_JWT_SECRET + ADMIN_PASSWORD_AUTH_EXTRA; set admin passwordHash=null); set
+ADMIN_STUDENT_IDS in prod .env. Go-live checklist (day-of): real dates, AUTO mode, seed real
+parties, delete TEMP party, RESET_VOTES, showResult=false, E2E.
+**Still required (USER): ROTATE SECRETS** (above — old ones burned).
 **P2 note:** the anonymize freeze recomputes score from _count (fixes drift) — good moment to make
 Candidate.score the single source of truth + drop the _count path (P2 item #3). Then P1 / P2 below.
 
