@@ -6,6 +6,7 @@ import VoteFooter from '../vote/VoteFooter';
 import MultiPartyView from '../vote/MultiPartyView';
 import SinglePartyView from '../vote/SinglePartyView';
 import GumroadVote from '../vote/GumroadVote';
+import StudioDarkVote from '../vote/StudioDarkVote';
 import EditorElement from './editor/EditorElement';
 import {
   DUMMY_PARTIES_MULTI,
@@ -25,11 +26,12 @@ export default function VoteEditorPreview({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  // Per-template layout: gumroad has its own distinct vote layout.
-  if (templateSlug === 'gumroad') {
+  // Per-template layout: gumroad / studio-dark have their own distinct vote layouts.
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark') {
     const single = simMode === 'single';
+    const VoteLayout = templateSlug === 'studio-dark' ? StudioDarkVote : GumroadVote;
     return (
-      <GumroadVote
+      <VoteLayout
         editorMode
         regularParties={single ? DUMMY_PARTIES_SINGLE : DUMMY_PARTIES_MULTI}
         specialOptions={DUMMY_SPECIAL_OPTIONS}

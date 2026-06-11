@@ -5,6 +5,8 @@ import { Lock } from 'lucide-react';
 import Navbar from '../Navbar';
 import SiteFooter from '../SiteFooter';
 import EditorElement from './editor/EditorElement';
+import GumroadClosed from '../vote/GumroadClosed';
+import StudioDarkClosed from '../vote/StudioDarkClosed';
 
 const STATE_MESSAGES = {
   waiting: {
@@ -26,6 +28,7 @@ const STATE_MESSAGES = {
 
 export default function ClosedEditorPreview({
   simMode = "waiting",
+  templateSlug = null,
   elementConfigs = {},
   selectedElement = null,
   hoveredElement = null,
@@ -34,6 +37,23 @@ export default function ClosedEditorPreview({
   onHoverEnd = null,
 }) {
   const message = STATE_MESSAGES[simMode] || STATE_MESSAGES.waiting;
+
+  // Per-template layout: gumroad / studio-dark have their own closed layouts.
+  // simMode "paused" maps to the live page's "closed" variant.
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark') {
+    const ClosedLayout = templateSlug === 'studio-dark' ? StudioDarkClosed : GumroadClosed;
+    const variant = simMode === 'paused' ? 'closed' : simMode;
+    return (
+      <ClosedLayout
+        editorMode
+        title={message.title}
+        desc={message.description}
+        variant={variant}
+        session={null}
+        onLogout={() => {}}
+      />
+    );
+  }
 
   // Stable Wrap identity (see HomeContent): inline definition remounts the
   // wrapped subtree on every hover re-render → animation flicker.

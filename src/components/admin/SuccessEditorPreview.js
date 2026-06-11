@@ -3,9 +3,13 @@
 import { useRef, useCallback } from 'react';
 import { Check, Megaphone, CheckCircle2, Tag, Lock, BarChart3, ArrowRight } from 'lucide-react';
 import EditorElement from './editor/EditorElement';
+import GumroadSuccess from '../vote/GumroadSuccess';
+import StudioDarkSuccess from '../vote/StudioDarkSuccess';
+import { DUMMY_USER } from '../../utils/editorDummyData';
 
 export default function SuccessEditorPreview({
   simMode = "locked", // 'locked' | 'unlocked'
+  templateSlug = null,
   elementConfigs = {},
   selectedElement = null,
   hoveredElement = null,
@@ -14,6 +18,19 @@ export default function SuccessEditorPreview({
   onHoverEnd = null,
 }) {
   const isUnlocked = simMode === "unlocked";
+
+  // Per-template layout: gumroad / studio-dark have their own success layouts.
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark') {
+    const SuccessLayout = templateSlug === 'studio-dark' ? StudioDarkSuccess : GumroadSuccess;
+    return (
+      <SuccessLayout
+        editorMode
+        user={DUMMY_USER}
+        isUnlocked={isUnlocked}
+        onOpenForm={() => {}}
+      />
+    );
+  }
 
   // Stable Wrap identity (see HomeContent): inline definition remounts the
   // wrapped subtree on every hover re-render → animation flicker.

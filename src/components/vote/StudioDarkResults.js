@@ -37,6 +37,7 @@ export default function StudioDarkResults({
   isNotStarted = false,
   countdownText = "",
   onSelectParty = () => {},
+  editorMode = false,
 }) {
   const globalConfig = useGlobalConfig();
   const revealed = !!isRevealed;
@@ -86,6 +87,7 @@ export default function StudioDarkResults({
       num="05"
       label="Returns"
       labelTh="ผลคะแนน"
+      editorMode={editorMode}
       right={<span className={revealed ? "" : "live"}>{!revealed && <span className="sd-dot" />}{statusTxt}</span>}
     >
       <div className="sdr-ledger">

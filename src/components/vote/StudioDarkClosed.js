@@ -48,6 +48,7 @@ export default function StudioDarkClosed({
   variant = "closed",
   session = null,
   onLogout = () => {},
+  editorMode = false,
 }) {
   const v = VARIANTS[variant] || VARIANTS.closed;
   const { Icon } = v;
@@ -58,6 +59,7 @@ export default function StudioDarkClosed({
       num="04"
       label="Status"
       labelTh="สถานะการลงคะแนน"
+      editorMode={editorMode}
       right={<span>{v.kicker.split(" · ")[0]}</span>}
     >
       <div className="sdcl-scene">
@@ -70,11 +72,11 @@ export default function StudioDarkClosed({
 
           <div className="sdcl-actions">
             {session ? (
-              <button type="button" className="sd-btn sd-btn--accent sd-btn--lg" onClick={onLogout}>
+              <button type="button" className="sd-btn sd-btn--accent sd-btn--lg" onClick={() => !editorMode && onLogout()}>
                 <LogOut size={16} /> ออกจากระบบ
               </button>
             ) : (
-              <a href={getPath("/")} className="sd-btn sd-btn--accent sd-btn--lg">
+              <a href={editorMode ? undefined : getPath("/")} className="sd-btn sd-btn--accent sd-btn--lg">
                 ← กลับหน้าหลัก
               </a>
             )}

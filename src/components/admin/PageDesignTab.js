@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
-import { getEncryptedToken } from '../../utils/auth';
 import { EDITABLE_PAGES, getPageById, DEFAULT_PAGE, SECTION_LABELS } from '../../utils/pageRegistry';
 import CompletedActionModal from '../CompletedActionModal';
 import ErrorActionModal from '../ErrorActionModal';
@@ -425,8 +424,23 @@ function TemplateFamilyCard({ rep, themes, activeSlug, onApply, onShowDetail }) 
         </div>
       )}
 
+      {/* editable-scope — tell the staff what this template lets them edit,
+          BEFORE they pick it (classic = full per-element editing; the newer
+          full-layout templates are edited via theme tokens + central text). */}
+      <div className="mt-2.5">
+        {(rep.layoutFamily || 'classic') === 'classic' ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md">
+            <Check className="w-2.5 h-2.5" />แก้รายชิ้นได้ทุก element
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-sky-700 bg-sky-50 border border-sky-100 px-1.5 py-0.5 rounded-md">
+            <Palette className="w-2.5 h-2.5" />แก้ธีมสี + ข้อความกลาง (เลย์เอาต์คงที่)
+          </span>
+        )}
+      </div>
+
       {/* metadata chips */}
-      <div className="flex items-center flex-wrap gap-1.5 mt-2.5">
+      <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
           <Layers className="w-2.5 h-2.5" />{shown.elementCount ?? '—'} element
         </span>
@@ -526,6 +540,18 @@ function LivePreview({
   const isMobile = deviceMode === 'mobile';
   const currentPage = getPageById(selectedPage);
 
+  // Full-layout templates (gumroad / studio-dark) render their REAL page layouts
+  // in the preview, but their inner pages don't have per-element selection yet —
+  // staff edit them via theme tokens + ตั้งค่าทั่วไป. Say so instead of letting
+  // them click around confused.
+  const activeFamily = resolvedTemplate?.layoutFamily || resolvedTemplate?.slug || 'classic';
+  // gumroad's vote layout already carries selectable elements — don't show the
+  // "no per-element editing" note where it isn't true.
+  const isFullLayoutInnerPage =
+    activeFamily !== 'classic' &&
+    selectedPage !== 'home' &&
+    !(activeFamily === 'gumroad' && selectedPage === 'vote');
+
   // P2.1: fit-to-container canvas. Render the page at a fixed desktop design
   // width, then scale it down to fill the (variable) preview column — readable,
   // responsive, and no horizontal bleed (replaces the fixed scale(0.42)+238% hack).
@@ -606,6 +632,7 @@ function LivePreview({
       return (
         <ResultsEditorPreview
           simMode={resultsSimMode}
+          templateSlug={resolvedTemplate?.layoutFamily || resolvedTemplate?.slug || resolvedTemplate?.id}
           selectedElement={editorProps?.selectedElement}
           hoveredElement={editorProps?.hoveredElement}
           onSelectElement={editorProps?.onSelectElement}
@@ -618,7 +645,7 @@ function LivePreview({
       return (
         <VoteEditorPreview
           simMode={voteSimMode}
-          templateSlug={resolvedTemplate?.slug || resolvedTemplate?.id}
+          templateSlug={resolvedTemplate?.layoutFamily || resolvedTemplate?.slug || resolvedTemplate?.id}
           pageLayout={pageLayout}
           elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
@@ -632,6 +659,7 @@ function LivePreview({
     if (selectedPage === 'candidates') {
       return (
         <CandidatesEditorPreview
+          templateSlug={resolvedTemplate?.layoutFamily || resolvedTemplate?.slug || resolvedTemplate?.id}
           pageLayout={pageLayout}
           elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
@@ -646,6 +674,7 @@ function LivePreview({
       return (
         <ClosedEditorPreview
           simMode={closedSimMode}
+          templateSlug={resolvedTemplate?.layoutFamily || resolvedTemplate?.slug || resolvedTemplate?.id}
           elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
           hoveredElement={editorProps?.hoveredElement}
@@ -659,6 +688,7 @@ function LivePreview({
       return (
         <SuccessEditorPreview
           simMode={successSimMode}
+          templateSlug={resolvedTemplate?.layoutFamily || resolvedTemplate?.slug || resolvedTemplate?.id}
           elementConfigs={editorProps?.elementConfigs}
           selectedElement={editorProps?.selectedElement}
           hoveredElement={editorProps?.hoveredElement}
@@ -704,6 +734,15 @@ function LivePreview({
           </button>
         </div>
       </div>
+
+      {isFullLayoutInnerPage && (
+        <div className="px-4 py-2 bg-sky-50 border-b border-sky-100 flex items-center gap-2 text-[11px] text-sky-700">
+          <Info className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            หน้านี้ใช้เลย์เอาต์เฉพาะของ Template — ปรับได้ผ่าน <b>ธีมสี</b> และข้อความใน <b>ตั้งค่าทั่วไป</b> (ยังคลิกแก้รายชิ้นไม่ได้)
+          </span>
+        </div>
+      )}
 
       <div
         ref={boxRef}
@@ -902,9 +941,8 @@ export default function PageDesignTab() {
   const fetchLayout = useCallback(async () => {
     setLoading(true);
     try {
-      const encryptedToken = getEncryptedToken();
       const res = await fetch(getPath('/api/admin/page-layout'), {
-        headers: { 'x-admin-token': encryptedToken || '' }
+        credentials: 'include',
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -997,10 +1035,8 @@ export default function PageDesignTab() {
   useEffect(() => { fetchLayout(); }, [fetchLayout]);
 
   const fetchTemplates = useCallback(() => {
-    const encryptedToken = getEncryptedToken();
     return fetch(getPath('/api/admin/templates'), {
       credentials: 'include',
-      headers: { 'x-admin-token': encryptedToken || '' },
     })
       .then(r => {
         if (!r.ok) {
@@ -1112,10 +1148,8 @@ export default function PageDesignTab() {
     setDetailData(null);
     setDetailLoading(true);
     try {
-      const token = getEncryptedToken();
       const res = await fetch(getPath(`/api/admin/templates/${slug}`), {
         credentials: 'include',
-        headers: token ? { 'x-admin-token': token } : {},
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -1138,12 +1172,9 @@ export default function PageDesignTab() {
     if (!pendingPresetId || isApplying) return;
     setIsApplying(true);
     try {
-      const encryptedToken = getEncryptedToken();
-      const authHeaders = { 'x-admin-token': encryptedToken || '' };
       const applyResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}/apply`), {
         method: 'POST',
         credentials: 'include',
-        headers: authHeaders,
       });
       if (!applyResp.ok) {
         const err = await applyResp.json().catch(() => ({}));
@@ -1152,7 +1183,6 @@ export default function PageDesignTab() {
 
       const tplResp = await fetch(getPath(`/api/admin/templates/${pendingPresetId}`), {
         credentials: 'include',
-        headers: authHeaders,
       });
       if (!tplResp.ok) throw new Error(`Template fetch failed: ${tplResp.status}`);
       const { template } = await tplResp.json();
@@ -1290,9 +1320,6 @@ export default function PageDesignTab() {
     setConfirmOpen(false);
 
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) throw new Error('Auth token generation failed');
-
       const normalizedBlocks = [...homeBlocks]
         .sort((a, b) => a.order - b.order)
         .map((block, i) => ({ ...block, order: i + 1 }));
@@ -1321,10 +1348,8 @@ export default function PageDesignTab() {
 
       const res = await fetch(getPath('/api/admin/page-layout'), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': encryptedToken,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -1390,13 +1415,12 @@ export default function PageDesignTab() {
     if (!name || savingTpl) return;
     setSavingTpl(true);
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) throw new Error('Auth token generation failed');
       const snapshot = buildTemplateSnapshot();
       const slug = `tpl-${Date.now().toString(36)}`;
       const res = await fetch(getPath('/api/admin/templates'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug,
           name,
@@ -1497,9 +1521,10 @@ export default function PageDesignTab() {
             <button
               type="button"
               onClick={() => setTemplateMenuOpen((v) => !v)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 bg-purple-50 text-[#8A2680] hover:bg-purple-100 transition-colors"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#8A2680] text-white shadow-sm shadow-purple-500/20 hover:bg-[#751f6c] transition-colors"
             >
               <Palette className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-purple-200 font-semibold">Template:</span>
               <span className="max-w-[120px] truncate">{activeTemplate?.name || activeTemplateId}</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${templateMenuOpen ? 'rotate-180' : ''}`} />
             </button>
