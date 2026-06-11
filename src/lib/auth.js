@@ -188,10 +188,15 @@ export const authOptions = {
             faculty: "STAFF",
           };
           let newRole = roleMap[group] || "student";
-          if (user.studentId === "6610510149" || user.studentId === "6610510129") {
-            // newRole = "ADMIN"; // ไม่เปลี่ยน Role เป็น ADMIN เพื่อให้ยังคงสถานะนักศึกษาในการโหวต
-          }
-          let setAdmin = (user.studentId === "6610510149" || user.studentId === "6610510129") ? true : (newRole === "ADMIN" || newRole === "STAFF" ? true : false);
+          // Designated admin student IDs come from env ADMIN_STUDENT_IDS (comma-
+          // separated) so they aren't hardcoded (those students graduate). Falls
+          // back to the legacy pair if unset — set the env in prod to override.
+          const ADMIN_IDS = process.env.ADMIN_STUDENT_IDS
+            ? process.env.ADMIN_STUDENT_IDS.split(",").map((s) => s.trim()).filter(Boolean)
+            : ["6610510149", "6610510129"];
+          const isDesignatedAdmin = ADMIN_IDS.includes(user.studentId);
+          // Keep their voting role as "student"; only the isAdmin flag is granted.
+          let setAdmin = isDesignatedAdmin || newRole === "ADMIN" || newRole === "STAFF";
 
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },

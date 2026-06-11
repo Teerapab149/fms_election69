@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
 import { db } from "../../../lib/db";
+import { rateLimit } from "../../../lib/rateLimit";
 
 export async function POST(request) {
   try {
@@ -12,6 +13,16 @@ export async function POST(request) {
     }
 
     const studentId = session.user.studentId; // ✅ จาก session ที่ verify แล้ว
+
+    // Throttle vote spam per user (the atomic guard already enforces one-shot;
+    // this just stops a client hammering the endpoint): 15 / min / studentId.
+    const rl = rateLimit(`vote:${studentId}`, { limit: 15, windowMs: 60 * 1000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: `ดำเนินการบ่อยเกินไป ลองใหม่ใน ${rl.retryAfter} วินาที` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
 
     const body = await request.json();
     const { candidateId } = body;

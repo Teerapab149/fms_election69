@@ -1,6 +1,6 @@
 import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
-import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
 
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
 export async function GET(req) {
@@ -44,11 +44,26 @@ export async function GET(req) {
 
 // 2. POST: สั่งการระบบ (Action)
 export async function POST(req) {
-  const authError = await adminGuard(req);
-  if (authError) return authError;
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   try {
     const body = await req.json();
     const { action, mode } = body;
+
+    // 📋 Audit trail — record every mutating admin action (who/what/when) for
+    // election accountability. Best-effort: never block the action if logging fails.
+    try {
+      const { action: _a, ...rest } = body;
+      await db.adminAuditLog.create({
+        data: {
+          action: String(action || "UNKNOWN"),
+          actor: auth.user?.studentId || (auth.user?.id != null ? String(auth.user.id) : null),
+          detail: Object.keys(rest).length ? JSON.stringify(rest) : null,
+        },
+      });
+    } catch (e) {
+      console.error("[audit] failed to log admin action:", e.message);
+    }
 
     // กรณี: เปลี่ยนโหมดระบบ (AUTO, PAUSE, ENDED)
     if (action === 'SET_MODE') {
