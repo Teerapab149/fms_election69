@@ -303,7 +303,7 @@ export default function StudioDarkResults({
         .sdr-race__name { font-family:var(--sd-sans); font-size:16px; color:var(--sd-ink); font-weight:500; min-width:0; }
         .sdr-race__name small { display:block; font-family:var(--sd-mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-3); font-weight:400; margin-top:3px; }
         .sdr-win-tag {
-          margin-left:10px; font-family:var(--sd-mono); font-size:9px; letter-spacing:.18em;
+          margin-left:10px; font-family:var(--sd-mono); font-size:10px; letter-spacing:.16em;
           background:var(--sd-accent); color:var(--sd-bg); border-radius:999px; padding:3px 9px; vertical-align:middle;
         }
         .sdr-race__track { height:10px; background:var(--sd-bg); border:1px solid var(--sd-line); border-radius:999px; overflow:hidden; }

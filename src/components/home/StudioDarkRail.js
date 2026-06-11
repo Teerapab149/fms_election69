@@ -215,7 +215,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-rail__cd-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:13px; }
         .sd-rail__cd-cell { text-align:center; }
         .sd-rail__cd-num { font-family:var(--sd-sans); font-weight:500; font-size:23px; line-height:1; letter-spacing:-.02em; color:var(--sd-ink); font-variant-numeric:tabular-nums; }
-        .sd-rail__cd-unit { font-family:var(--sd-mono); font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--sd-ink-3); margin-top:6px; }
+        .sd-rail__cd-unit { font-family:var(--sd-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--sd-ink-2); margin-top:6px; }
         .sd-dot { width:6px; height:6px; border-radius:999px; background:var(--sd-accent); box-shadow:0 0 0 0 rgba(213,255,63,.6); animation:sdDotPulse 1.8s ease-out infinite; }
         @keyframes sdDotPulse { 0%{box-shadow:0 0 0 0 rgba(213,255,63,.6)} 70%{box-shadow:0 0 0 8px rgba(213,255,63,0)} 100%{box-shadow:0 0 0 0 rgba(213,255,63,0)} }
 
