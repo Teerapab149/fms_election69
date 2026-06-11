@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
-import { getEncryptedToken } from "../utils/auth";
 import { preloadPartyImages } from "../utils/imagePreloader";
 import { getPath } from "../utils/basePath";
 
@@ -99,21 +98,12 @@ export function useVoteSystem() {
     setIsSubmitting(true);
 
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) {
-        throw new Error("Security check failed");
-      }
-
+      // Voter identity = the NextAuth session cookie (server reads studentId from
+      // the verified session — the body field & old x-admin-token were never used).
       const res = await fetch(getPath('/api/vote'), {
         method: 'POST',
-        body: JSON.stringify({
-          studentId: session?.user?.studentId,
-          candidateId: selectedPartyId
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': encryptedToken
-        }
+        body: JSON.stringify({ candidateId: selectedPartyId }),
+        headers: { 'Content-Type': 'application/json' }
       });
 
       const result = await res.json();

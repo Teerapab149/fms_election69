@@ -106,15 +106,16 @@ import { getPath } from "../utils/basePath";
 // ❌ "/api/vote" (จะพังใน Docker deployment)
 ```
 
-### 2. Admin Authentication
-Admin API ใช้ RSA-encrypted token ส่งผ่าน header `x-admin-token`
+### 2. Admin Authentication (P0-1 security fix, 2026-06-10)
+Admin identity = httpOnly cookie `admin_token` (signed JWT จาก `/api/admin/login`)
+ส่งอัตโนมัติทุก same-origin request — ฝั่ง client แค่ใส่ `credentials: 'include'`:
 ```js
-import { getEncryptedToken } from "../utils/auth";
-const token = getEncryptedToken();
-fetch(getPath("/api/admin/..."), {
-  headers: { 'x-admin-token': token }
-});
+fetch(getPath("/api/admin/..."), { credentials: 'include' });
 ```
+ฝั่ง server ทุก admin route ต้องเรียก `adminGuard(request)` (หรือ `requireAdmin`)
+จาก `src/lib/auth/adminCheck.js` — รับ NextAuth session (ADMIN/STAFF) หรือ JWT cookie.
+⛔ ห้ามนำ pattern เก่ากลับมา: `getEncryptedToken()` / header `x-admin-token` /
+`NEXT_PUBLIC_ADMIN_*` ถูกลบแล้ว (P0-1) เพราะ secret ฝังใน client bundle → ใครก็ forge ได้.
 
 ### 3. Design System Colors
 - **Primary:** `#8A2680` (deep purple — FMS brand)

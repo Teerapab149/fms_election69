@@ -4,7 +4,6 @@ import { getPath } from "../utils/basePath";
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
-import { getEncryptedToken } from "../utils/auth";
 import { buildPartyTheme } from "../utils/partyColors";
 
 export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdate }) {
@@ -326,24 +325,19 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 }
             });
 
-            const encryptedToken = getEncryptedToken();
-            if (!encryptedToken) {
-                console.error("Encryption failed");
-                return;
-            }
-
+            // Admin identity = httpOnly admin_token cookie (sent automatically; P0-1)
             let res;
             if (candidate) {
                 res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                     method: 'PUT',
                     body: data,
-                    headers: { 'x-admin-token': encryptedToken, }
+                    credentials: 'include',
                 });
             } else {
                 res = await fetch(getPath(`/api/admin/candidates`), {
                     method: 'POST',
                     body: data,
-                    headers: { 'x-admin-token': encryptedToken, }
+                    credentials: 'include',
                 });
             }
 
@@ -370,15 +364,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     const handleConfirmDelete = async () => {
         setIsLoading(true);
         try {
-            const encryptedToken = getEncryptedToken();
-            if (!encryptedToken) {
-                console.error("Encryption failed");
-                return;
-            }
-
             const res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                 method: 'DELETE',
-                headers: { 'x-admin-token': encryptedToken, }
+                credentials: 'include',
             });
             if (!res.ok) {
                 throw console.log(res)

@@ -1,14 +1,10 @@
 /**
- * Admin auth check helper for Template-system API routes.
+ * Admin auth check helpers for ALL admin API routes (P0-1, 2026-06-10).
  *
- * Accepts ADMIN role, STAFF role, or legacy isAdmin=true.
- * Phase 5+ will add role hierarchy and granular permissions.
- *
- * Auth bridge (Phase 3 Day 2B):
- *   1. Try NextAuth session (PSU SSO admins)
- *   2. Fall back to legacy x-admin-token RSA header (admins logged in via
- *      /admin/login dedicated page)
- *   Either path grants admin access.
+ * Accepts ADMIN role, STAFF role, or isAdmin=true via either:
+ *   1. NextAuth session (PSU SSO admins/staff)
+ *   2. The signed `admin_token` JWT cookie from /api/admin/login
+ * Phase 5+ may add role hierarchy and granular permissions.
  */
 
 import { NextResponse } from "next/server";

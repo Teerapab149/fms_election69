@@ -3,7 +3,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { GLOBAL_CONFIG_DEFAULTS, mergeWithDefaults } from "../utils/globalConfigDefaults";
 import { getPath } from "../utils/basePath";
-import { getEncryptedToken } from "../utils/auth";
 
 const GlobalConfigContext = createContext({
   config: GLOBAL_CONFIG_DEFAULTS,
@@ -62,13 +61,11 @@ export function GlobalConfigProvider({ value: initialValue, children }) {
         return nextConfig;
       });
 
-      const token = getEncryptedToken();
+      // Admin identity = httpOnly admin_token cookie (sent automatically; P0-1)
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-token": token,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ globalConfig: nextConfig }),
       });
 

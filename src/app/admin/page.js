@@ -13,7 +13,6 @@ import ErrorActionModal from "../../components/ErrorActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
-import { getEncryptedToken } from "../../utils/auth";
 import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut } from "lucide-react";
 import Image from 'next/image';
 import {
@@ -42,16 +41,9 @@ const OverviewTab = () => {
 
   const fetchResults = async () => {
     try {
-
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) {
-        console.error("Encryption failed");
-        return;
-      }
-
-      const res = await fetch(getPath("/api/results"), {
-        headers: { 'x-admin-token': encryptedToken }
-      });
+      // Admin identity = httpOnly admin_token cookie (sent automatically) — the
+      // old client-minted x-admin-token header was removed (P0-1).
+      const res = await fetch(getPath("/api/results"), { credentials: 'include' });
 
       const data = await res.json();
 
@@ -241,17 +233,9 @@ const CandidatesTab = () => {
   const fetchResults = async () => {
     setCandidates([]);
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) {
-        console.error("Encryption failed");
-        return;
-      }
-
       const res = await fetch(getPath(`/api/results?t=${Date.now()}`), {
         cache: 'no-store',
-        headers: {
-          'x-admin-token': encryptedToken,
-        }
+        credentials: 'include',
       });
       const data = await res.json();
 
@@ -428,13 +412,7 @@ const SettingsTab = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const encryptedToken = getEncryptedToken();
-        if (!encryptedToken) {
-          console.error("Encryption failed");
-          return;
-        }
-
-        const res = await fetch(getPath('/api/admin/dashboard'), { headers: { 'x-admin-token': encryptedToken, } });
+        const res = await fetch(getPath('/api/admin/dashboard'), { credentials: 'include' });
         const data = await res.json();
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
@@ -455,9 +433,6 @@ const SettingsTab = () => {
 
     setProcessing(true);
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) return;
-
       let action = activeModal;
       let body = { action };
 
@@ -471,7 +446,8 @@ const SettingsTab = () => {
 
       const res = await fetch(getPath('/api/admin/dashboard'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
