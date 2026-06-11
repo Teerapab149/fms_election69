@@ -44,14 +44,20 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 
 ## 2. Environment variables ที่ต้องมี (ตั้งตอน deploy)
 ```
-DATABASE_URL          # PostgreSQL connection string
-NEXTAUTH_SECRET       # คีย์เข้ารหัส NextAuth
-NEXT_PUBLIC_BASE_PATH # subpath ตอน deploy (ค่า: /fms-ovs)
-ADMIN_PRIVATE_KEY     # RSA private key สำหรับ admin auth
-ADMIN_AUTH_SECRET     # secret ตรวจ admin token
+DATABASE_URL              # PostgreSQL connection string
+NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา)
+NEXT_PUBLIC_BASE_PATH     # subpath ตอน deploy (ค่า: /fms-ovs)
+ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (auth แอดมิน — P0-1)
+ADMIN_PASSWORD_AUTH_EXTRA # bootstrap password แอดมิน (ครั้งแรก) — ดู /api/admin/login
+ADMIN_STUDENT_IDS         # รหัส นศ. ที่เป็นแอดมิน (คั่นด้วย ,) — ดู §10
 ```
-+ ตัวแปร PSU SSO (client id/secret/issuer) — ดู `src/lib/auth.js`. **เก็บค่าพวกนี้ในที่ปลอดภัย + สำรองไว้**
-(ถ้าหาย = ตั้งใหม่ทั้งหมด). ห้าม commit ลง git.
++ ตัวแปร PSU SSO (client id/secret/issuer) — ดู `src/lib/auth.js`. **เก็บในที่ปลอดภัย + สำรองไว้** (ถ้าหาย = ตั้งใหม่). ห้าม commit ลง git.
+
+> ⚠️ **เลิกใช้แล้ว (P0-1, 2026-06-10):** `ADMIN_PRIVATE_KEY` / `ADMIN_AUTH_SECRET` /
+> `NEXT_PUBLIC_ADMIN_PUBLIC_KEY` / `NEXT_PUBLIC_ADMIN_AUTH_SECRET` — ระบบ admin auth เก่า
+> ฝัง secret ใน client bundle (ใครก็ปลอม token ได้) จึงถูกถอดออก. ลบตัวแปรพวกนี้ทิ้งได้.
+> **ต้อง ROTATE** `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA` ใหม่ (ของเก่าถือว่ารั่ว)
+> แล้วตั้ง admin user `passwordHash=null` เพื่อให้ bootstrap password ใหม่มีผล.
 
 ---
 
@@ -76,14 +82,20 @@ Deploy เป็น Docker ที่ subpath `/fms-ovs`. **ทุก URL ภา�
 
 ---
 
-## 5. สำรอง/กู้คืน DB (ทำก่อนงานเสี่ยงทุกครั้ง)
+## 5. สำรอง/กู้คืน DB + รูป (ทำก่อนงานเสี่ยงทุกครั้ง)
+ใช้สคริปต์สำเร็จ (รันบน server ที่มี docker compose):
 ```
-# backup
-pg_dump "$DATABASE_URL" > backup_$(date +%Y%m%d).sql
-# restore
-psql "$DATABASE_URL" < backup_YYYYMMDD.sql
+sh scripts/backup.sh
+# → backups/db-<ts>.sql.gz (pg_dump) + backups/images-<ts>.tar.gz (public/images)
+# ตั้ง cron รายวัน: 0 2 * * * cd /path/to/fms_election69 && sh scripts/backup.sh >> backups/backup.log 2>&1
+
+# กู้คืน (DESTRUCTIVE — ยืนยันก่อน):
+sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
+docker compose restart web
 ```
-**สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, แก้ schema, อัปเดต deps.**
+- รูปผู้สมัคร/สมาชิก mount เป็น volume `./public/images` ใน compose แล้ว → redeploy ไม่หาย.
+- **สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, Anonymize, แก้ schema, อัปเดต deps.**
+- ⚠️ **backup ที่ไม่เคยกู้ = ไม่มี backup** → ซ้อม `restore.sh` ใส่ DB ทิ้งๆ อย่างน้อย 1 ครั้งก่อนวันเลือกตั้ง.
 
 ---
 
