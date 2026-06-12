@@ -19,8 +19,9 @@
 
 import { getPath } from "../../utils/basePath";
 import Image from "next/image";
+import { LogOut } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
@@ -78,6 +79,21 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
     if (editorMode) return;
     signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" });
   };
+  // Match the canonical logout flow (Navbar.js): clear the local NextAuth
+  // session, then federated PSU SSO end-session so the IdP cookie is cleared too.
+  const doSignOut = async () => {
+    if (editorMode) return;
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+    const returnUrl = `${window.location.origin}${basePath}`;
+    let psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+    if (session?.id_token) psuLogoutUrl += `&id_token_hint=${session.id_token}`;
+    try {
+      await signOut({ redirect: false });
+    } catch (e) {
+      console.error("Logout failed:", e);
+    }
+    window.location.href = psuLogoutUrl;
+  };
 
   const NavLinks = ({ mini = false }) =>
     NAV.map((n, i) => {
@@ -100,15 +116,24 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
 
   const AuthBlock = ({ compact = false }) =>
     isAuthed ? (
-      <div className={compact ? "sd-auth-pill" : "sd-rail__user"}>
+      <button
+        type="button"
+        onClick={doSignOut}
+        className={compact ? "sd-auth-pill" : "sd-rail__user"}
+        title="ออกจากระบบ · Sign out"
+        aria-label="ออกจากระบบ"
+      >
         <span className="sd-rail__avatar">{avatarChar}</span>
         {!compact && (
-          <span className="sd-rail__user-info">
-            <span className="sd-rail__user-name">{userName}</span>
-            {userId && <span className="sd-rail__user-id">№ {userId}</span>}
-          </span>
+          <>
+            <span className="sd-rail__user-info">
+              <span className="sd-rail__user-name">{userName}</span>
+              {userId && <span className="sd-rail__user-id">{userId}</span>}
+            </span>
+            <LogOut size={15} strokeWidth={2} className="sd-rail__logout-ic" aria-hidden />
+          </>
         )}
-      </div>
+      </button>
     ) : (
       <button type="button" onClick={doSignIn} className={compact ? "sd-signin sd-signin--compact" : "sd-signin"}>
         เข้าสู่ระบบ <span aria-hidden>→</span>
@@ -220,11 +245,19 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         @keyframes sdDotPulse { 0%{box-shadow:0 0 0 0 rgba(213,255,63,.6)} 70%{box-shadow:0 0 0 8px rgba(213,255,63,0)} 100%{box-shadow:0 0 0 0 rgba(213,255,63,0)} }
 
         .sd-rail__footer { margin:0 16px; padding-top:12px; border-top:1px solid var(--sd-line); }
-        .sd-rail__user { display:flex; align-items:center; gap:12px; padding:6px 0; }
+        /* user pill = a logout button (owner feedback: couldn't sign out) */
+        .sd-rail__user {
+          display:flex; align-items:center; gap:12px; width:100%; padding:8px 10px;
+          background:none; border:1px solid transparent; border-radius:12px; cursor:pointer;
+          text-align:left; color:inherit; transition:background .2s, border-color .2s;
+        }
+        .sd-rail__user:hover, .sd-rail__user:focus-visible { background:var(--sd-bg-2); border-color:var(--sd-line); outline:none; }
         .sd-rail__avatar { width:32px; height:32px; border-radius:999px; background:var(--sd-ink); color:var(--sd-bg); display:grid; place-items:center; font-family:var(--sd-sans); font-weight:600; font-size:13px; flex-shrink:0; }
-        .sd-rail__user-info { min-width:0; line-height:1.2; }
+        .sd-rail__user-info { min-width:0; line-height:1.2; flex:1; }
         .sd-rail__user-name { font-family:var(--sd-sans); font-size:13px; color:var(--sd-ink); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
-        .sd-rail__user-id { font-family:var(--sd-mono); font-size:10px; color:var(--sd-ink-3); letter-spacing:.08em; margin-top:2px; display:block; }
+        .sd-rail__user-id { font-family:var(--sd-sans); font-size:11px; color:var(--sd-ink-3); letter-spacing:.01em; font-variant-numeric:tabular-nums; margin-top:2px; display:block; }
+        .sd-rail__logout-ic { color:var(--sd-ink-4); flex-shrink:0; transition:color .2s; }
+        .sd-rail__user:hover .sd-rail__logout-ic, .sd-rail__user:focus-visible .sd-rail__logout-ic { color:var(--sd-accent); }
         .sd-signin {
           width:100%; display:flex; justify-content:center; align-items:center; gap:10px;
           padding:12px 14px; background:var(--sd-accent); color:var(--sd-bg); border:0; border-radius:10px;
@@ -246,7 +279,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           .sd-topbar__brand { display:flex; align-items:center; gap:10px; }
           .sd-topbar__brand strong { font-family:var(--sd-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink); }
           .sd-signin--compact { width:auto; padding:9px 16px; }
-          .sd-auth-pill { display:flex; align-items:center; }
+          .sd-auth-pill { display:flex; align-items:center; background:none; border:0; padding:0; cursor:pointer; }
           .sd-mininav { display:flex; gap:6px; overflow-x:auto; padding:0 16px 12px; -webkit-overflow-scrolling:touch; }
           .sd-mininav::-webkit-scrollbar { display:none; }
           .sd-mininav__link {

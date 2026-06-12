@@ -257,7 +257,7 @@ export default function StudioDarkSingleParty({
         <motion.div
           className="sds-marquee__track"
           animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 36, ease: "linear", repeat: Infinity }}
+          transition={{ duration: 24, ease: "linear", repeat: Infinity }}
         >
           {Array.from({ length: 2 }, (_, k) => (
             <span key={k}>
@@ -365,8 +365,8 @@ export default function StudioDarkSingleParty({
 
         /* profile header — mirrors .sdp-h on the party page */
         .sds-h {
-          display:grid; grid-template-columns:auto 1fr auto; gap:48px; align-items:end;
-          padding:56px 48px 32px; border-bottom:1px solid var(--sd-line);
+          display:grid; grid-template-columns:auto 1fr auto; gap:44px; align-items:center;
+          padding:36px 48px 32px; border-bottom:1px solid var(--sd-line);
         }
         .sds-h__no { font-family:var(--sd-sans); font-weight:400; font-size:clamp(110px,13vw,200px); line-height:.78; letter-spacing:-.07em; color:var(--sd-ink); }
         .sds-h__no em { font-style:normal; color:var(--sd-accent); }
@@ -377,11 +377,14 @@ export default function StudioDarkSingleParty({
           margin:16px 0 0; line-height:1.45; font-weight:300; max-width:540px;
           padding-left:16px; border-left:1px solid var(--sd-accent);
         }
-        .sds-h__side { display:flex; flex-direction:column; align-items:flex-end; gap:20px; }
+        /* logo + stats laid as a compact row so the side column height ≈ the
+           numeral's — stops the tall stack from dumping empty space above "01"
+           under align-items:center (owner feedback: header gap too big). */
+        .sds-h__side { display:flex; flex-direction:row-reverse; align-items:center; gap:24px; }
         /* cream plate so dark/JPG logos read on the dark page */
         .sds-h__logo {
-          width:132px; height:132px; border-radius:20px; overflow:hidden;
-          border:1px solid var(--sd-line-strong); background:var(--sd-ink); padding:12px;
+          width:104px; height:104px; border-radius:18px; overflow:hidden; flex-shrink:0;
+          border:1px solid var(--sd-line-strong); background:var(--sd-ink); padding:11px;
         }
         .sds-h__logo img { width:100%; height:100%; object-fit:contain; display:block; border-radius:10px; }
         .sds-h__quick { display:grid; gap:16px; }
