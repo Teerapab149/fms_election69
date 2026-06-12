@@ -56,6 +56,11 @@ export default function StudioDarkShell({
       </main>
 
       <style jsx global>{`
+        /* Blend the page into the browser chrome while a studio page is
+           mounted: dark scrollbars/overscroll + no white edges (styled-jsx
+           removes this when the shell unmounts, so other templates are safe). */
+        html, body { background:#14140F; color-scheme:dark; }
+
         .sd-root {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
@@ -72,7 +77,15 @@ export default function StudioDarkShell({
         .sd-root em { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-weight:400; }
         .sd-root ::selection { background:var(--sd-accent); color:var(--sd-bg); }
 
-        .sd-main { margin-left:240px; min-height:100vh; display:flex; flex-direction:column; min-width:0; }
+        .sd-main {
+          margin-left:240px; min-height:100vh; display:flex; flex-direction:column; min-width:0;
+          /* quiet depth: faint dot-grid + a lime breath at the top edge —
+             keeps "text on black" from reading flat without shouting */
+          background:
+            radial-gradient(ellipse 60% 30% at 70% 0%, rgba(213,255,63,.04), transparent 65%),
+            radial-gradient(circle, rgba(242,237,223,.045) 1px, transparent 1px) 0 0 / 30px 30px,
+            var(--sd-bg);
+        }
 
         /* scene bar */
         .sd-scenebar {

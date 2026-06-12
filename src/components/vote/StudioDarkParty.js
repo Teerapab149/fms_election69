@@ -17,6 +17,7 @@ import { getPath } from "../../utils/basePath";
 import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StudioDarkShell from "./StudioDarkShell";
+import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -36,6 +37,8 @@ const ROMAN = ["i.", "ii.", "iii."];
 
 export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false }) {
   const [tab, setTab] = useState("vision");
+  const [modalMember, setModalMember] = useState(null); // click a member → profile modal
+  const [lightboxSrc, setLightboxSrc] = useState(null); // click the team photo → fullscreen
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
@@ -61,7 +64,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
     <StudioDarkShell
       active={showBackToVote ? "vote" : "candidates"}
       backHref={showBackToVote ? "/vote" : "/candidates"}
-      backLabel={showBackToVote ? "Ballot" : "Candidates"}
+      backLabel={showBackToVote ? "Vote" : "Candidates"}
       label="Profile"
       labelTh={`Party № ${no}`}
       right={<span>{members.length > 0 && <>{members.length} CANDIDATES&nbsp;·&nbsp;</>}{policies.length} POLICIES</span>}
@@ -110,9 +113,16 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
               ))}
             </div>
             {heroImg && (
-              <div className="sdp-story__media">
+              <figure
+                className="sdp-story__media"
+                onClick={() => setLightboxSrc(heroImg)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
+              >
                 <img src={heroImg} alt={party?.name} />
-              </div>
+                <figcaption className="sdp-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
+              </figure>
             )}
           </div>
         </section>
@@ -142,13 +152,19 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             {members.map((m, i) => {
               const img = resolveSrc(m?.imageUrl);
               return (
-                <div className="sdp-tile" key={m.id || i}>
+                <button
+                  type="button"
+                  className="sdp-tile"
+                  key={m.id || i}
+                  onClick={() => setModalMember(m)}
+                  aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}
+                >
                   <div className={`sdp-tile__photo ${img ? "" : "sd-media-ph"}`}>
                     {img ? <img src={img} alt={m.name} /> : <span>portrait</span>}
                   </div>
                   <div className="sdp-tile__name">{m.name}</div>
                   {(m.position || m.major) && <div className="sdp-tile__role">{m.position || m.major}</div>}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -160,6 +176,10 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         <p className="sdp-cta__line">Pick <em>№ {no}.</em>&nbsp; Pick the future.</p>
         <a href={getPath("/vote")} className="sd-btn sd-btn--accent sd-btn--lg">ลงคะแนนให้พรรคนี้ →</a>
       </div>
+
+      {/* shared studio overlays */}
+      <StudioDarkMemberModal member={modalMember} onClose={() => setModalMember(null)} />
+      <StudioDarkLightbox src={lightboxSrc} caption={`TEAM PHOTO · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
 
       <style jsx global>{`
         /* profile header */
@@ -214,8 +234,14 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-story p:last-child { margin-bottom:0; }
         .sdp-story__mission { display:flex; gap:14px; align-items:baseline; }
         .sdp-story__mno { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-size:15px; flex-shrink:0; }
-        .sdp-story__media { border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2); max-height:420px; }
-        .sdp-story__media img { width:100%; height:100%; object-fit:cover; display:block; }
+        .sdp-story__media { position:relative; border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2); max-height:420px; margin:0; cursor:zoom-in; }
+        .sdp-story__media img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s; }
+        .sdp-story__media:hover img { transform:scale(1.025); }
+        .sdp-story__cap {
+          position:absolute; left:12px; bottom:12px; font-family:var(--sd-mono); font-size:9px;
+          letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2);
+          background:rgba(20,20,15,.78); border:1px solid var(--sd-line); padding:5px 12px; border-radius:999px;
+        }
 
         .sdp-policies { border-top:1px solid var(--sd-line-strong); }
         .sdp-policy {
@@ -231,8 +257,12 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-policy:hover .sdp-policy__tag { opacity:1; }
 
         .sdp-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
-        .sdp-tile { background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:16px; padding:14px; transition:border-color .2s, transform .2s; }
-        .sdp-tile:hover { border-color:var(--sd-line-strong); transform:translateY(-3px); }
+        .sdp-tile {
+          background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:16px; padding:14px;
+          transition:border-color .2s, transform .2s; cursor:pointer; text-align:left;
+          font:inherit; color:inherit; display:block; width:100%;
+        }
+        .sdp-tile:hover, .sdp-tile:focus-visible { border-color:var(--sd-accent); transform:translateY(-3px); outline:none; }
         .sdp-tile__photo { aspect-ratio:4/5; border-radius:10px; margin-bottom:14px; overflow:hidden; position:relative; border:1px solid var(--sd-line); background:var(--sd-bg); }
         .sdp-tile__photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
         .sdp-tile__name { font-family:var(--sd-sans); font-weight:500; font-size:14px; line-height:1.25; margin-bottom:4px; color:var(--sd-ink); }

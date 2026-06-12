@@ -15,16 +15,15 @@
 // selectedPartyId + onSelect(id) + onViewDetails(party) + onConfirm (parent owns
 // submit + the confirmation modal).
 //
-// SINGLE-PARTY MODE (1 real party): the ballot becomes the official 3-choice
-// form — รับรอง (the party strip) / ไม่รับรอง (disapprove, № -1) / งดออกเสียง
-// (abstain, № 0) — with a compact party presentation block (logo + name +
-// slogan + view profile) above the strips. Multi shows N party strips + abstain.
+// SINGLE-PARTY MODE (1 real party): dispatches to StudioDarkSingleParty — the
+// full party presentation (intro overlay → vision/policies/team → official
+// 3-choice ballot รับรอง / ไม่รับรอง / งดออกเสียง), same dispatch pattern as
+// GumroadVote → GumroadSingleParty. This file renders the MULTI ballot only.
 
-import { getPath } from "../../utils/basePath";
 import { Check } from "lucide-react";
 import StudioDarkShell from "./StudioDarkShell";
+import StudioDarkSingleParty from "./StudioDarkSingleParty";
 
-const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
 function Strip({ no, noClass = "", kicker, name, slogan, meta = null, selected, onClick, dashedTop = false }) {
@@ -61,15 +60,30 @@ export default function StudioDarkVote({
   isSubmitting = false,
   editorMode = false,
 }) {
+  // Single party → full party-presentation view (intro + sections + 3-choice).
+  if (isSingleParty) {
+    return (
+      <StudioDarkSingleParty
+        party={regularParties[0] || {}}
+        specialOptions={specialOptions}
+        selectedPartyId={selectedPartyId}
+        onSelect={onSelect}
+        onConfirm={onConfirm}
+        isSubmitting={isSubmitting}
+        user={user}
+        editorMode={editorMode}
+      />
+    );
+  }
+
   const abstain = specialOptions?.abstain;
   const disapprove = specialOptions?.disapprove;
-  const single = isSingleParty ? regularParties[0] : null;
 
   // selection label for the footer
   const selectedName = (() => {
     if (selectedPartyId == null) return null;
     const p = regularParties.find((x) => x.id === selectedPartyId);
-    if (p) return isSingleParty ? `รับรอง — ${p.name}` : `№ ${pad2(p.number)} — ${p.name}`;
+    if (p) return `№ ${pad2(p.number)} — ${p.name}`;
     if (disapprove?.id === selectedPartyId) return "ไม่รับรอง · Disapprove";
     if (abstain?.id === selectedPartyId) return "งดออกเสียง · Abstain";
     return null;
@@ -94,91 +108,47 @@ export default function StudioDarkVote({
     <StudioDarkShell
       active="vote"
       num="04"
-      label="Ballot"
+      label="Vote"
       labelTh="ลงคะแนนเสียง"
       editorMode={editorMode}
       right={<span>SECURED BY PSU PASSPORT</span>}
     >
       <div className="sd-scene-h">
         <div>
-          <span className="sd-scene-h__num"><span className="accent">№ 04</span> &nbsp;/&nbsp; THE BALLOT</span>
-          <h1 className="sd-scene-h__title">{isSingleParty ? <>Approve <em>or not,</em><br />then confirm.</> : <>Choose <em>one,</em><br />then confirm.</>}</h1>
+          <span className="sd-scene-h__num"><span className="accent">№ 04</span> &nbsp;/&nbsp; THE VOTE</span>
+          <h1 className="sd-scene-h__title">Choose <em>one,</em><br />then confirm.</h1>
         </div>
         <p className="sd-scene-h__deck">
           {userName ? <>สวัสดีคุณ <strong className="sdv-uname">{userName}</strong> — </> : null}
-          {isSingleParty
-            ? "ปีนี้มีพรรคลงสมัครเพียงพรรคเดียว กรุณาเลือกรับรอง ไม่รับรอง หรืองดออกเสียง การลงคะแนนทำได้เพียงครั้งเดียวเท่านั้น"
-            : "กรุณาเลือกหนึ่งตัวเลือกจากด้านล่าง การลงคะแนนทำได้เพียงครั้งเดียวเท่านั้น"}
+          กรุณาเลือกหนึ่งตัวเลือกจากด้านล่าง การลงคะแนนทำได้เพียงครั้งเดียวเท่านั้น
         </p>
       </div>
 
       <div className="sdv-ballot">
         <div className="sdv-intro">
-          <span><span className="sdv-accent">●</span> BALLOT OPEN</span>
-          <span className="sdv-intro__mid">{isSingleParty ? "SINGLE-PARTY BALLOT · รับรอง / ไม่รับรอง / งดออกเสียง" : `${regularParties.length} PARTIES + ABSTAIN`}</span>
+          <span><span className="sdv-accent">●</span> VOTE OPEN</span>
+          <span className="sdv-intro__mid">{`${regularParties.length} PARTIES + ABSTAIN`}</span>
           <span>ONE VOTE ONLY</span>
         </div>
 
-        {/* SINGLE-PARTY: compact presentation of the lone party above the choices */}
-        {isSingleParty && single && (
-          <div className="sdv-present">
-            <div className={`sdv-present__logo ${resolveSrc(single.logoUrl) ? "" : "sd-media-ph"}`}>
-              {resolveSrc(single.logoUrl)
-                ? <img src={resolveSrc(single.logoUrl)} alt={single.name} />
-                : <span>logo</span>}
-            </div>
-            <div className="sdv-present__txt">
-              <div className="sdv-strip__kicker">THE ONLY PARTY · <span className="sdv-accent">№ {pad2(single.number)}</span></div>
-              <h2 className="sdv-present__name">{single.name}</h2>
-              {single.slogan && <p className="sdv-strip__slogan">{single.slogan}</p>}
-            </div>
-            <button type="button" className="sdv-strip__view sdv-present__view" onClick={() => onViewDetails(single)}>
-              View profile →
-            </button>
-          </div>
-        )}
-
         {/* PARTY STRIPS */}
-        {isSingleParty && single ? (
-          <Strip
-            no={<><span className="sdv-yes">✓</span></>}
-            kicker="APPROVE · เห็นชอบ"
-            name="รับรอง"
-            slogan={`เห็นชอบให้ ${single.name} ดำรงตำแหน่ง`}
-            selected={selectedPartyId === single.id}
-            onClick={() => onSelect(single.id)}
-          />
-        ) : (
-          regularParties.map((p) => {
-            const no = pad2(p.number);
-            return (
-              <Strip
-                key={p.id}
-                no={<>{no.slice(0, -1)}<em>{no.slice(-1)}</em></>}
-                kicker={<>PARTY <span className="sdv-accent">№ {no}</span></>}
-                name={p.name}
-                slogan={p.slogan ? `"${p.slogan}"` : null}
-                meta={viewMeta(p)}
-                selected={selectedPartyId === p.id}
-                onClick={() => onSelect(p.id)}
-              />
-            );
-          })
-        )}
+        {regularParties.map((p) => {
+          const no = pad2(p.number);
+          return (
+            <Strip
+              key={p.id}
+              no={<>{no.slice(0, -1)}<em>{no.slice(-1)}</em></>}
+              kicker={<>PARTY <span className="sdv-accent">№ {no}</span></>}
+              name={p.name}
+              slogan={p.slogan ? `"${p.slogan}"` : null}
+              meta={viewMeta(p)}
+              selected={selectedPartyId === p.id}
+              onClick={() => onSelect(p.id)}
+            />
+          );
+        })}
 
-        {/* SPECIAL OPTIONS */}
-        {isSingleParty && disapprove && (
-          <Strip
-            no="×"
-            noClass="sdv-strip__no--sm"
-            kicker="DISAPPROVE"
-            name="ไม่รับรอง"
-            slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
-            selected={selectedPartyId === disapprove.id}
-            onClick={() => onSelect(disapprove.id)}
-            dashedTop
-          />
-        )}
+        {/* SPECIAL OPTION */}
         {abstain && (
           <Strip
             no="×"
@@ -222,16 +192,6 @@ export default function StudioDarkVote({
         }
         .sdv-intro__mid { text-align:center; }
 
-        /* single-party presentation block */
-        .sdv-present {
-          display:grid; grid-template-columns:auto 1fr auto; gap:28px; align-items:center;
-          padding:28px 0; border-bottom:1px solid var(--sd-line);
-        }
-        .sdv-present__logo { width:96px; height:96px; border-radius:18px; overflow:hidden; border:1px solid var(--sd-line); background:var(--sd-bg-2); flex-shrink:0; }
-        .sdv-present__logo img { width:100%; height:100%; object-fit:contain; padding:10px; display:block; }
-        .sdv-present__name { font-family:var(--sd-sans); font-weight:400; font-size:clamp(26px,3vw,40px); letter-spacing:-.025em; line-height:1.05; margin:6px 0; color:var(--sd-ink); }
-        .sdv-present__view { align-self:center; }
-
         /* strips */
         .sdv-strip {
           display:grid; grid-template-columns:100px 1fr 1.2fr auto; gap:32px; align-items:center;
@@ -250,7 +210,6 @@ export default function StudioDarkVote({
         }
         .sdv-strip__no--sm { font-size:48px; }
         .sdv-strip:hover .sdv-strip__no, .sdv-strip.is-selected .sdv-strip__no { color:var(--sd-accent); }
-        .sdv-yes { font-size:.85em; }
 
         .sdv-strip__main { min-width:0; }
         .sdv-strip__kicker { font-family:var(--sd-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3); margin-bottom:6px; }
@@ -292,14 +251,11 @@ export default function StudioDarkVote({
           .sdv-strip__meta { display:none; }
           .sdv-strip__no { font-size:52px; }
           .sdv-strip__no--sm { font-size:38px; }
-          .sdv-present { grid-template-columns:auto 1fr; }
-          .sdv-present__view { grid-column:2; justify-self:start; }
         }
         @media (max-width:560px) {
           .sdv-intro { grid-template-columns:1fr; gap:6px; text-align:left; }
           .sdv-intro__mid { text-align:left; }
           .sdv-footer { flex-direction:column; align-items:stretch; gap:12px; border-radius:24px; padding:16px; text-align:center; bottom:8px; }
-          .sdv-present__logo { width:72px; height:72px; }
         }
       `}</style>
     </StudioDarkShell>

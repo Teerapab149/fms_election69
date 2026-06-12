@@ -28,7 +28,7 @@ const NAV = [
   { key: "home",       num: "01", label: "Index",      th: "หน้าหลัก",   href: "/" },
   { key: "candidates", num: "02", label: "Candidates", th: "ผู้สมัคร",    href: "/candidates" },
   { key: "party",      num: "03", label: "Profile",    th: "ข้อมูลพรรค",  href: "/party" },
-  { key: "vote",       num: "04", label: "Ballot",     th: "ลงคะแนน",     href: "/vote" },
+  { key: "vote",       num: "04", label: "Vote",       th: "ลงคะแนน",     href: "/vote" },
   { key: "results",    num: "05", label: "Returns",    th: "ผลคะแนน",     href: "/results" },
 ];
 
