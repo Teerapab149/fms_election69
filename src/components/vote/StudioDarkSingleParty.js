@@ -118,7 +118,6 @@ export default function StudioDarkSingleParty({
       label="Vote"
       labelTh="ลงคะแนนเสียง"
       editorMode={editorMode}
-      right={<span>SECURED BY PSU PASSPORT</span>}
     >
       {/* intro drives its own wipe-up via `animate` + delayed onDone, so no
           AnimatePresence/exit needed (exit callbacks hang under forced
@@ -166,13 +165,14 @@ export default function StudioDarkSingleParty({
             <div>
               {/* long manifestos live inside a fixed-height scroll card
                   (owner feedback: the raw column ran too tall) */}
-              <div className="sds-story__scroll">
-                {story && <p>{story}</p>}
-                {missions.map((m, i) => (
-                  <p key={i} className="sds-story__mission"><span className="sds-story__mno">{pad2(i + 1)}</span>{m}</p>
-                ))}
-              </div>
-              <span className="sds-story__hint">SCROLL · เลื่อนอ่านต่อในกรอบ ↓</span>
+              {story && (
+                <>
+                  <div className="sds-story__scroll">
+                    <p>{story}</p>
+                  </div>
+                  <span className="sds-story__hint">SCROLL · เลื่อนอ่านต่อในกรอบ ↓</span>
+                </>
+              )}
             </div>
             {heroImg && (
               <figure
@@ -187,6 +187,20 @@ export default function StudioDarkSingleParty({
               </figure>
             )}
           </div>
+
+          {/* MISSIONS — their own always-visible ledger (owner feedback: they
+              were buried at the bottom of the story scroll card) */}
+          {missions.length > 0 && (
+            <div className="sds-missions">
+              <div className="sds-missions__lbl"><span className="sds-accent">●</span> MISSIONS · พันธกิจ</div>
+              {missions.map((m, i) => (
+                <div className="sds-mission" key={i}>
+                  <span className="sds-mission__no">{pad2(i + 1)}</span>
+                  <p>{m}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -235,15 +249,22 @@ export default function StudioDarkSingleParty({
         </section>
       )}
 
-      {/* marquee divider — the breath before the decision */}
+      {/* marquee divider — the breath before the decision. framer-motion (JS)
+          on purpose: the globals.css reduced-motion rule kills CSS keyframes
+          site-wide, which froze this strip on machines with the OS setting on;
+          decorative motion here is a product call (same as the intros). */}
       <div className="sds-marquee" aria-hidden="true">
-        <div className="sds-marquee__track">
+        <motion.div
+          className="sds-marquee__track"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 36, ease: "linear", repeat: Infinity }}
+        >
           {Array.from({ length: 2 }, (_, k) => (
             <span key={k}>
               CAST YOUR VOTE — ลงคะแนนเสียงของคุณ — № {no} {party?.name} — ONE VOTE ONLY — รับรอง / ไม่รับรอง / งดออกเสียง —&nbsp;
             </span>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* BALLOT */}
@@ -357,11 +378,12 @@ export default function StudioDarkSingleParty({
           padding-left:16px; border-left:1px solid var(--sd-accent);
         }
         .sds-h__side { display:flex; flex-direction:column; align-items:flex-end; gap:20px; }
+        /* cream plate so dark/JPG logos read on the dark page */
         .sds-h__logo {
-          width:84px; height:84px; border-radius:18px; overflow:hidden;
-          border:1px solid var(--sd-line-strong); background:var(--sd-bg-2); padding:10px;
+          width:132px; height:132px; border-radius:20px; overflow:hidden;
+          border:1px solid var(--sd-line-strong); background:var(--sd-ink); padding:12px;
         }
-        .sds-h__logo img { width:100%; height:100%; object-fit:contain; display:block; }
+        .sds-h__logo img { width:100%; height:100%; object-fit:contain; display:block; border-radius:10px; }
         .sds-h__quick { display:grid; gap:16px; }
         .sds-h__row { font-family:var(--sd-mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); text-align:right; }
         .sds-h__row strong { display:block; font-family:var(--sd-sans); font-size:22px; color:var(--sd-ink); margin-top:4px; letter-spacing:-.02em; font-weight:400; }
@@ -393,8 +415,22 @@ export default function StudioDarkSingleParty({
         .sds-story[data-media="0"] { grid-template-columns:1fr; max-width:760px; }
         .sds-story p { font-size:16px; line-height:1.65; color:var(--sd-ink); font-weight:300; margin:0 0 18px; }
         .sds-story p:last-child { margin-bottom:0; }
-        .sds-story__mission { display:flex; gap:14px; align-items:baseline; }
-        .sds-story__mno { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-size:15px; flex-shrink:0; }
+
+        /* missions ledger — always visible under the story/photo grid */
+        .sds-missions { margin-top:36px; border-top:1px dashed var(--sd-line-strong); padding-top:8px; }
+        .sds-missions__lbl {
+          font-family:var(--sd-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+          color:var(--sd-ink-3); padding:14px 0 6px;
+        }
+        .sds-mission {
+          display:grid; grid-template-columns:64px 1fr; gap:28px; align-items:baseline;
+          padding:18px 8px; border-bottom:1px solid var(--sd-line);
+          transition:background .2s, padding-left .25s;
+        }
+        .sds-mission:last-child { border-bottom:0; }
+        .sds-mission:hover { background:var(--sd-bg-2); padding-left:20px; }
+        .sds-mission__no { font-family:var(--sd-serif); font-style:italic; font-size:30px; color:var(--sd-accent); line-height:1; }
+        .sds-mission p { font-size:16px; line-height:1.6; color:var(--sd-ink); margin:0; font-weight:300; max-width:820px; }
 
         /* fixed-height scroll card for long manifestos */
         .sds-story__scroll {
@@ -451,15 +487,12 @@ export default function StudioDarkSingleParty({
         .sds-tile__name { font-family:var(--sd-sans); font-weight:500; font-size:14px; line-height:1.25; margin-bottom:4px; color:var(--sd-ink); }
         .sds-tile__role { font-family:var(--sd-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-3); }
 
-        /* marquee divider (matches the home page's slow strip) */
+        /* marquee divider (motion driven by framer in JSX) */
         .sds-marquee { overflow:hidden; border-bottom:1px solid var(--sd-line); padding:16px 0; }
         .sds-marquee__track {
           display:flex; white-space:nowrap; width:max-content;
           font-family:var(--sd-mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3);
-          animation:sdsMarquee 36s linear infinite;
         }
-        @keyframes sdsMarquee { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
-        @media (prefers-reduced-motion: reduce) { .sds-marquee__track { animation:none; } }
 
         /* ballot — mirrors .sdv-strip on the multi vote page */
         .sds-section--ballot { border-bottom:0; padding-bottom:32px; }
@@ -528,7 +561,7 @@ export default function StudioDarkSingleParty({
         @media (max-width:1100px) {
           .sds-h { grid-template-columns:1fr; gap:20px; padding:36px 24px 24px; }
           .sds-h__side { flex-direction:row-reverse; align-items:center; justify-content:flex-end; gap:24px; }
-          .sds-h__logo { width:64px; height:64px; }
+          .sds-h__logo { width:96px; height:96px; }
           .sds-h__quick { display:flex; gap:24px; }
           .sds-h__row { text-align:left; }
           .sds-section[data-ghost]::before { font-size:120px; top:-12px; right:12px; }

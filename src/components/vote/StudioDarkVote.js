@@ -111,7 +111,6 @@ export default function StudioDarkVote({
       label="Vote"
       labelTh="ลงคะแนนเสียง"
       editorMode={editorMode}
-      right={<span>SECURED BY PSU PASSPORT</span>}
     >
       <div className="sd-scene-h">
         <div>
