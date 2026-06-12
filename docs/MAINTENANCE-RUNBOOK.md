@@ -101,11 +101,17 @@ docker compose restart web
 
 ## 6. PANIC — อาการพัง + วิธีแก้
 
+**เช็คก่อนทุกอย่าง:** `curl https://<host>/fms-ovs/api/health`
+- `200 {"ok":true,"db":true}` → app + DB ปกติ (ปัญหาอยู่ชั้นอื่น เช่น SSO/หน้าเว็บเฉพาะหน้า)
+- `503 {"ok":false,"db":false}` → app ขึ้นแต่ DB ล่ม → ตรวจ container Postgres / `DATABASE_URL`
+- ไม่ตอบเลย → app ล่ม → ตรวจ Docker/host
+แนะนำตั้ง uptime checker (เช่น cron + curl, UptimeRobot) ยิง endpoint นี้ทุก 1-5 นาทีช่วงวันเลือกตั้ง.
+
 | อาการ | สาเหตุที่พบบ่อย | แก้ |
 |---|---|---|
 | **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
-| **admin เข้าไม่ได้** | `ADMIN_PRIVATE_KEY`/`ADMIN_AUTH_SECRET` ไม่ตรง/หาย | ตรวจ env 2 ตัวนี้ตรงกับตอน gen token |
+| **admin เข้าไม่ได้** | `ADMIN_JWT_SECRET` เปลี่ยน/หาย หรือลืมรหัส bootstrap | ตรวจ `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA`; ถ้าจะรีเซ็ตรหัส ให้เซ็ต `passwordHash=null` ของ user admin ใน DB แล้ว login ด้วย bootstrap password ใหม่ (ดู §2) |
 | **ลิงก์/รูปพังหลัง deploy** | path ไม่ผ่าน `getPath()` หรือ `NEXT_PUBLIC_BASE_PATH` ผิด | ตั้ง base path = `/fms-ovs`; หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
