@@ -19,6 +19,8 @@
 // variant's. Faithful to docs/design-refs/studio-v2.css (.scene-bar/.btn/.scene-h).
 
 import { getPath } from "../../utils/basePath";
+import { useState, useEffect } from "react";
+import { ArrowUp } from "lucide-react";
 import StudioDarkRail from "../home/StudioDarkRail";
 
 export default function StudioDarkShell({
@@ -33,6 +35,18 @@ export default function StudioDarkShell({
   systemMode = "AUTO",
   children,
 }) {
+  // Back-to-top: appears once the page is scrolled past ~1 viewport. Lives in
+  // the shell so every studio inner page gets it. Skipped in editorMode (the
+  // small preview iframe scrolls too, and the FAB would overlap the canvas).
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    if (editorMode) return;
+    const onScroll = () => setShowTop((window.scrollY || document.documentElement.scrollTop || 0) > 500);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [editorMode]);
+
   return (
     <div className="fms-app sd-root">
       <StudioDarkRail active={active} editorMode={editorMode} systemMode={systemMode} />
@@ -54,6 +68,18 @@ export default function StudioDarkShell({
 
         {children}
       </main>
+
+      {!editorMode && showTop && (
+        <button
+          type="button"
+          className="sd-totop"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="กลับขึ้นบนสุด"
+          title="กลับขึ้นบนสุด · Back to top"
+        >
+          <ArrowUp size={18} strokeWidth={2.2} />
+        </button>
+      )}
 
       <style jsx global>{`
         /* Blend the page into the browser chrome while a studio page is
@@ -87,11 +113,24 @@ export default function StudioDarkShell({
             var(--sd-bg);
         }
 
+        /* back-to-top FAB (shell-level → every studio page) */
+        .sd-totop {
+          position:fixed; right:28px; bottom:28px; z-index:60;
+          width:46px; height:46px; border-radius:999px; display:grid; place-items:center;
+          background:var(--sd-accent); color:var(--sd-bg); border:1px solid var(--sd-accent);
+          cursor:pointer; box-shadow:0 10px 30px rgba(0,0,0,.5);
+          transition:transform .2s, background .2s, color .2s;
+          animation:sdTotopIn .25s ease-out;
+        }
+        .sd-totop:hover { background:var(--sd-ink); color:var(--sd-bg); border-color:var(--sd-ink); transform:translateY(-2px); }
+        @keyframes sdTotopIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @media (max-width:1100px) { .sd-totop { right:18px; bottom:18px; width:42px; height:42px; } }
+
         /* scene bar */
         .sd-scenebar {
           display:grid; grid-template-columns:1fr auto; align-items:center;
           padding:20px 48px; border-bottom:1px solid var(--sd-line);
-          background:rgba(20,20,15,.6); backdrop-filter:blur(10px);
+          background:rgba(20,20,15,.92); backdrop-filter:blur(12px);
           position:sticky; top:0; z-index:30;
         }
         .sd-scenebar__crumbs { display:flex; align-items:center; gap:14px; font-family:var(--sd-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); min-width:0; }

@@ -198,9 +198,12 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-h__row { font-family:var(--sd-mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); text-align:right; }
         .sdp-h__row strong { display:block; font-family:var(--sd-sans); font-size:22px; color:var(--sd-ink); margin-top:4px; letter-spacing:-.02em; font-weight:400; }
 
-        /* sticky tabs (below the 64px scene-bar) */
+        /* sticky tabs — top must equal the scene-bar height so they butt
+           flush (was 63 vs a 59px bar → a 4px band of scrolling content + the
+           translucent bar showed photos through; owner feedback). 58 = 1px
+           tuck under the bar (z-index 30 > 20) so no sub-pixel sliver. */
         .sdp-tabs {
-          position:sticky; top:63px; z-index:20; background:var(--sd-bg);
+          position:sticky; top:58px; z-index:20; background:var(--sd-bg);
           border-bottom:1px solid var(--sd-line); padding:0 48px;
           display:flex; align-items:center; overflow-x:auto;
         }
