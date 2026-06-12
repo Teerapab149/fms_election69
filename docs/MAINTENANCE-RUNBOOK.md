@@ -97,6 +97,16 @@ docker compose restart web
 - **สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, Anonymize, แก้ schema, อัปเดต deps.**
 - ⚠️ **backup ที่ไม่เคยกู้ = ไม่มี backup** → ซ้อม `restore.sh` ใส่ DB ทิ้งๆ อย่างน้อย 1 ครั้งก่อนวันเลือกตั้ง.
 
+### 5.1 ตรวจคะแนนก่อนประกาศผล (certification — ทำทุกครั้งก่อนเปิด showResult)
+หน้า results อ่านคะแนนจากคอลัมน์ `Candidate.score` (single source of truth, 2026-06-12).
+ก่อนเปิดเผยผล ให้ตรวจว่า score ตรงกับบัตรจริง (`User.candidateId`):
+```
+node scripts/reconcile-scores.js          # รายงานอย่างเดียว — ต้องขึ้น "no drift" ทุกพรรค
+node scripts/reconcile-scores.js --fix    # ถ้า drift: เขียนจำนวนบัตรจริงทับ score (สำรอง DB ก่อน)
+```
+ถ้าเจอ drift = มีโค้ด/การแก้ DB ที่เปลี่ยนบัตรโดยไม่อัปเดต score — หาสาเหตุก่อนประกาศ.
+สคริปต์จะไม่ยอมรันหลัง Anonymize (บัตรถูกลบแล้ว — score ที่ freeze ไว้คือบันทึกสุดท้าย).
+
 ---
 
 ## 6. PANIC — อาการพัง + วิธีแก้

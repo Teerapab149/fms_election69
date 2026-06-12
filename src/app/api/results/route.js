@@ -56,26 +56,21 @@ export async function GET(request) {
     }
 
     const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
+    // Per-party tally = Candidate.score, the single source of truth (P2,
+    // 2026-06-12). The vote API maintains it atomically with the ballot claim
+    // (P0-2), RESET_VOTES zeroes it, and ANONYMIZE_BALLOTS re-freezes it before
+    // wiping candidateId (P0-6) — so reads are identical before and after
+    // anonymize. scripts/reconcile-scores.js audits score against the ballots;
+    // run it before revealing results (runbook §5.1). Counting ballots live here
+    // (the old `_count.voters` with a year filter) silently DROPPED legitimate
+    // votes whenever a voter's `year` changed after casting (e.g. the yearly
+    // student import) — score counts what was cast.
     const allCandidatesRaw = await db.candidate.findMany({
-      include: {
-        _count: {
-          select: {
-            voters: {
-              where: { year: { in: validYears } }
-            }
-          }
-        },
-        members: true
-      }
+      include: { members: true }
     });
-
-    // Per-party score = live count of voters (candidateId). After the ballots are
-    // anonymized (P0-6 — candidateId wiped post-certification), _count is 0, so we
-    // read the frozen tally from the Candidate.score column instead.
-    const anonymized = systemConfig?.globalConfig?.ballotsAnonymized === true;
     const allCandidates = allCandidatesRaw.map(c => ({
       ...c,
-      score: anonymized ? (c.score || 0) : c._count.voters
+      score: c.score || 0
     }));
 
     const realCandidates = allCandidates.filter(c => c.number > 0);
@@ -124,13 +119,15 @@ export async function GET(request) {
     const cAll = { _count: { _all: true } };
     const votedWhere = { isVoted: true, year: { in: validYears } };
     const eligWhere = { year: { in: validYears } };
+    // orderBy pins the row order — Postgres groupBy without it is
+    // nondeterministic, which shuffled the demographics arrays between requests.
     const [majorVoted, yearVoted, genderVoted, majorElig, yearElig, genderElig] = await Promise.all([
-      db.user.groupBy({ by: ['major'],  where: votedWhere, ...cAll }),
-      db.user.groupBy({ by: ['year'],   where: votedWhere, ...cAll }),
-      db.user.groupBy({ by: ['gender'], where: votedWhere, ...cAll }),
-      db.user.groupBy({ by: ['major'],  where: eligWhere,  ...cAll }),
-      db.user.groupBy({ by: ['year'],   where: eligWhere,  ...cAll }),
-      db.user.groupBy({ by: ['gender'], where: eligWhere,  ...cAll }),
+      db.user.groupBy({ by: ['major'],  where: votedWhere, ...cAll, orderBy: { major: 'asc' } }),
+      db.user.groupBy({ by: ['year'],   where: votedWhere, ...cAll, orderBy: { year: 'asc' } }),
+      db.user.groupBy({ by: ['gender'], where: votedWhere, ...cAll, orderBy: { gender: 'asc' } }),
+      db.user.groupBy({ by: ['major'],  where: eligWhere,  ...cAll, orderBy: { major: 'asc' } }),
+      db.user.groupBy({ by: ['year'],   where: eligWhere,  ...cAll, orderBy: { year: 'asc' } }),
+      db.user.groupBy({ by: ['gender'], where: eligWhere,  ...cAll, orderBy: { gender: 'asc' } }),
     ]);
 
     // ── Visibility policy (ballot secrecy, 2026-06-10) ──────────────────────
@@ -144,7 +141,7 @@ export async function GET(request) {
     const started = !(status === "WAITING" || status === "PRE_CAMPAIGN");
 
     if (hideTally) {
-      finalCandidates = finalCandidates.map(c => ({ ...c, score: 0, _count: { voters: 0 } }));
+      finalCandidates = finalCandidates.map(c => ({ ...c, score: 0 }));
     }
     if (!started) {
       totalVotesReal = 0; // before polls open, even the running total is hidden
