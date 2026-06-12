@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma as db } from "../lib/prisma";
+import { resolveSsoPrivileges } from "./auth/roleFromSso.mjs";
 
 const AUTHENTIK_BASE_URL = "https://psusso.psu.ac.th";
 const CLIENT_ID = process.env.AUTHENTIK_CLIENT_ID;
@@ -177,32 +178,15 @@ export const authOptions = {
 
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
-          // SSO group → privilege. The PSU "staff"/"faculty" groups are
-          // faculty-controlled (membership is small + known), so we trust them to
-          // grant ADMIN/STAFF. Scan the WHOLE groups array (order-independent) and
-          // take the highest privilege present — the old `groups[0]` only looked at
-          // the first entry, so a real admin whose "staff" group wasn't first
-          // silently fell back to "student". A non-staff PSU account is in neither
-          // group → "student" (no admin). To grant admin WITHOUT an SSO group, add
-          // the studentId to ADMIN_STUDENT_IDS below.
-          // Privilege tiers: "staff" → ADMIN (full); "faculty" → STAFF (also counts
-          // as admin via adminCheck). STAFF could later be narrowed to an explicit
-          // STAFF_STUDENT_IDS allowlist if the faculty group widens (see runbook §10).
-          const groups = Array.isArray(user.groups)
-            ? user.groups.map((g) => String(g).toLowerCase())
-            : [];
-          let newRole = "student";
-          if (groups.includes("staff")) newRole = "ADMIN";
-          else if (groups.includes("faculty")) newRole = "STAFF";
-          // Designated admin student IDs come from env ADMIN_STUDENT_IDS (comma-
-          // separated) so they aren't hardcoded (those students graduate). Falls
-          // back to the legacy pair if unset — set the env in prod to override.
-          const ADMIN_IDS = process.env.ADMIN_STUDENT_IDS
-            ? process.env.ADMIN_STUDENT_IDS.split(",").map((s) => s.trim()).filter(Boolean)
-            : ["6610510149", "6610510129"];
-          const isDesignatedAdmin = ADMIN_IDS.includes(user.studentId);
-          // Keep their voting role as "student"; only the isAdmin flag is granted.
-          let setAdmin = isDesignatedAdmin || newRole === "ADMIN" || newRole === "STAFF";
+          // SSO group + ADMIN_STUDENT_IDS allowlist → privilege. The rule lives
+          // in roleFromSso.mjs (pure, covered by scripts/smoke/roleFromSso.test.mjs)
+          // and is documented in runbook §10. Invariant: a PSU account in neither
+          // "staff"/"faculty" group nor the allowlist gets role=student, no admin.
+          const { role: newRole, isAdmin: setAdmin } = resolveSsoPrivileges({
+            groups: user.groups,
+            studentId: user.studentId,
+            adminIdsEnv: process.env.ADMIN_STUDENT_IDS,
+          });
 
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },
