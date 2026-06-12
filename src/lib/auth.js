@@ -177,17 +177,23 @@ export const authOptions = {
 
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
-          const group = String(user.groups?.[0] || "").toLowerCase();
-          // Phase 3+ STAFF role:
-          // - "faculty" group → STAFF (full edit + audit access)
-          // - Set via env: STAFF_STUDENT_IDS="ID1,ID2,..." (Day 8 seed script)
-          // - STAFF counts as admin for setAdmin flag below
-          const roleMap = {
-            staff: "ADMIN",
-            student: "student",
-            faculty: "STAFF",
-          };
-          let newRole = roleMap[group] || "student";
+          // SSO group → privilege. The PSU "staff"/"faculty" groups are
+          // faculty-controlled (membership is small + known), so we trust them to
+          // grant ADMIN/STAFF. Scan the WHOLE groups array (order-independent) and
+          // take the highest privilege present — the old `groups[0]` only looked at
+          // the first entry, so a real admin whose "staff" group wasn't first
+          // silently fell back to "student". A non-staff PSU account is in neither
+          // group → "student" (no admin). To grant admin WITHOUT an SSO group, add
+          // the studentId to ADMIN_STUDENT_IDS below.
+          // Privilege tiers: "staff" → ADMIN (full); "faculty" → STAFF (also counts
+          // as admin via adminCheck). STAFF could later be narrowed to an explicit
+          // STAFF_STUDENT_IDS allowlist if the faculty group widens (see runbook §10).
+          const groups = Array.isArray(user.groups)
+            ? user.groups.map((g) => String(g).toLowerCase())
+            : [];
+          let newRole = "student";
+          if (groups.includes("staff")) newRole = "ADMIN";
+          else if (groups.includes("faculty")) newRole = "STAFF";
           // Designated admin student IDs come from env ADMIN_STUDENT_IDS (comma-
           // separated) so they aren't hardcoded (those students graduate). Falls
           // back to the legacy pair if unset — set the env in prod to override.

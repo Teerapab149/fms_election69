@@ -153,3 +153,27 @@ docker compose restart web
 
 **dependency versions:** ทุกตัวเป็น `^` (caret) แต่ **`package-lock.json` ปักหมุดจริง** → `npm ci` install เป๊ะเสมอ
 (อย่ารัน `npm update` / อย่าลบ lockfile โดยไม่ตั้งใจ — นั่นคือสิ่งเดียวที่จะทำให้ version เลื่อน).
+
+---
+
+## 10. ใครได้สิทธิ์ admin (กฎการให้สิทธิ์ — ตั้งใจไว้แบบนี้)
+
+โค้ดอยู่ที่ `src/lib/auth.js` (jwt callback) + ตรวจสิทธิ์ที่ `src/lib/auth/adminCheck.js`.
+**มี 3 ทางที่ทำให้ผู้ใช้ได้สิทธิ์ admin** (ทางใดทางหนึ่งก็พอ):
+
+| ทาง | เงื่อนไข | ได้ระดับ |
+|---|---|---|
+| **1. SSO group `staff`** | บัญชี PSU อยู่ในกลุ่ม `staff` (กลุ่มไหนก็ได้ใน `groups` ไม่จำเป็นต้องตัวแรก) | `role=ADMIN` → admin เต็ม |
+| **2. SSO group `faculty`** | บัญชี PSU อยู่ในกลุ่ม `faculty` | `role=STAFF` → นับเป็น admin (ผ่าน `adminCheck`) |
+| **3. รหัส นศ. ใน `ADMIN_STUDENT_IDS`** | studentId ตรงกับค่าใน env (คั่นด้วย `,`) | `isAdmin=true` → admin เต็ม (role ยังเป็น student) |
+
+**กฎที่ตั้งใจ:** บัญชี PSU ที่ **ไม่ได้** อยู่กลุ่ม `staff`/`faculty` และ **ไม่ได้** อยู่ใน
+`ADMIN_STUDENT_IDS` → ได้แค่ `role=student` (โหวตได้ ไม่มีสิทธิ์ admin).
+ดังนั้น **ความปลอดภัยของ admin ขึ้นกับว่าใครคุมสมาชิกกลุ่ม `staff`/`faculty` ใน PSU SSO** —
+กลุ่มนี้ต้องเป็นกลุ่มเล็ก/คณะคุมเอง. ถ้ากลุ่มกว้างขึ้น (เช่น PSU เปลี่ยนนิยาม `staff` =
+พนักงานทุกคน) ให้ย้ายไปใช้ allowlist แทน: เพิ่ม `STAFF_STUDENT_IDS` (โครงสร้างเดียวกับ
+`ADMIN_STUDENT_IDS`) แล้วตัด `groups.includes("faculty"/"staff")` ออกจาก `auth.js`.
+
+**หมายเหตุ (แก้ 2026-06-12):** เดิมโค้ดดูแค่ `groups[0]` (กลุ่มแรกเท่านั้น) → ถ้า IdP
+ส่งลำดับกลุ่มไม่ตรง admin จริงอาจตกเป็น student เงียบ ๆ. แก้ให้สแกนทั้ง array แล้ว.
+ถ้าจะตั้ง admin **โดยไม่ผ่านกลุ่ม SSO** ให้ใช้ทาง 3 (`ADMIN_STUDENT_IDS`) — ไม่ต้องแตะกลุ่ม.
