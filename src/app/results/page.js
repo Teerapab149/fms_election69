@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
+import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import ResultCard from "../../components/ResultCard";
 import PartyDetailModal from "../../components/PartyDetailModal";
 import ResultsStatsBar from "../../components/ResultsStatsBar";
@@ -357,20 +358,11 @@ export default function ResultsPage() {
 
   // ✅ 4. Loading UI (คงความ Responsive เดิม)
   if ((loading || !templateReady) && finalStatus !== "ENDED") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-4" />
-        <p className="text-slate-500 font-medium">กำลังตรวจสอบสิทธิ์เข้าถึง...</p>
-      </div>
-    );
+    return <ThemedLoadingScreen text="กำลังตรวจสอบสิทธิ์เข้าถึง..." />;
   }
   // Hard-gate on template so the classic layout never flashes before gumroad resolves.
   if (!templateReady) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-4" />
-      </div>
-    );
+    return <ThemedLoadingScreen text="กำลังโหลด..." />;
   }
 
 

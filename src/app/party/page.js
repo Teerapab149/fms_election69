@@ -15,6 +15,7 @@ import CandidateModal from '../../components/CandidateModal';
 import GumroadParty from "../../components/vote/GumroadParty";
 import StudioDarkParty from "../../components/vote/StudioDarkParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
+import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 
 // --- CONSTANTS ---
 const POSITION_ORDER = [
@@ -649,7 +650,7 @@ function PartyContent() {
 
   const currentTheme = activeParty ? (PARTY_THEMES[activeParty.id] || PARTY_THEMES[activeParty.number] || DEFAULT_THEME) : DEFAULT_THEME;
 
-  if (loading || !templateReady) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>;
+  if (loading || !templateReady) return <ThemedLoadingScreen text="กำลังโหลดข้อมูลพรรค..." />;
   if (!activeParty) return null;
 
   // GUMROAD layout (own topbar/footer) — replaces the classic cinematic page entirely.
@@ -728,7 +729,7 @@ function PartyContent() {
 
 export default function PartyPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>}>
+    <Suspense fallback={<ThemedLoadingScreen text="กำลังโหลดข้อมูลพรรค..." />}>
       <PartyContent />
     </Suspense>
   );

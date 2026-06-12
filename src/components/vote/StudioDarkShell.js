@@ -94,13 +94,13 @@ export default function StudioDarkShell({
           background:rgba(20,20,15,.6); backdrop-filter:blur(10px);
           position:sticky; top:0; z-index:30;
         }
-        .sd-scenebar__crumbs { display:flex; align-items:center; gap:14px; font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3); min-width:0; }
+        .sd-scenebar__crumbs { display:flex; align-items:center; gap:14px; font-family:var(--sd-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); min-width:0; }
         .sd-scenebar__crumbs .num { color:var(--sd-accent); }
         .sd-scenebar__crumbs .sep { color:var(--sd-line-strong); }
         .sd-scenebar__crumbs .here { color:var(--sd-ink); }
         .sd-scenebar__back { color:var(--sd-ink-2); transition:color .2s; white-space:nowrap; }
         .sd-scenebar__back:hover { color:var(--sd-ink); }
-        .sd-scenebar__right { display:flex; align-items:center; gap:18px; font-family:var(--sd-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-3); }
+        .sd-scenebar__right { display:flex; align-items:center; gap:18px; font-family:var(--sd-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--sd-ink-2); }
         .sd-scenebar__right .live { color:var(--sd-accent); display:flex; align-items:center; gap:8px; }
         .sd-dot { width:6px; height:6px; border-radius:999px; background:var(--sd-accent); box-shadow:0 0 0 0 rgba(213,255,63,.6); animation:sdDotPulse 1.8s ease-out infinite; display:inline-block; }
         @keyframes sdDotPulse { 0%{box-shadow:0 0 0 0 rgba(213,255,63,.6)} 70%{box-shadow:0 0 0 8px rgba(213,255,63,0)} 100%{box-shadow:0 0 0 0 rgba(213,255,63,0)} }
@@ -110,7 +110,7 @@ export default function StudioDarkShell({
           padding:48px 48px 32px; border-bottom:1px solid var(--sd-line);
           display:grid; grid-template-columns:1fr 1fr; align-items:end; gap:48px;
         }
-        .sd-scene-h__num { font-family:var(--sd-mono); font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3); margin-bottom:18px; display:block; }
+        .sd-scene-h__num { font-family:var(--sd-mono); font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--sd-ink-2); margin-bottom:18px; display:block; }
         .sd-scene-h__num .accent { color:var(--sd-accent); }
         .sd-scene-h__title { font-family:var(--sd-sans); font-weight:400; font-size:clamp(40px,5vw,76px); line-height:.95; letter-spacing:-.035em; margin:0; }
         .sd-scene-h__deck { font-size:15px; color:var(--sd-ink-2); line-height:1.6; font-weight:300; margin:0; max-width:540px; justify-self:end; }

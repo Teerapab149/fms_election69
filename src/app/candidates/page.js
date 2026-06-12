@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Users, ChevronRight, Loader2, Sparkles, Megaphone } from 'lucide-react';
 import Navbar from "../../components/Navbar";
+import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { PARTY_THEMES, DEFAULT_THEME } from '../../utils/PartyTheme';
 
 import EditorElement from '../../components/admin/editor/EditorElement';
@@ -113,11 +114,7 @@ export default function CandidatesPage({
     return activeLayout[index].visible !== false;
   };
 
-  if (loading || (!editorMode && !templateReady)) return (
-    <div className="h-screen flex items-center justify-center bg-[#F8F9FD]">
-      <Loader2 className="animate-spin w-10 h-10 text-[var(--color-primary)]" />
-    </div>
-  );
+  if (loading || (!editorMode && !templateReady)) return <ThemedLoadingScreen text="กำลังโหลดข้อมูลผู้สมัคร..." />;
 
   // GUMROAD layout (own topbar/footer) — replaces the classic page entirely.
   if (isGumroad) {

@@ -9,6 +9,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 // Components
 import Navbar from '../../components/Navbar';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
+import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
 import GumroadVote from '../../components/vote/GumroadVote';
@@ -108,15 +109,7 @@ export default function VotePage() {
 
   // --- Render ---
   if (isLoading || !templateReady) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FD]">
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#8A2680]/20 to-purple-500/20 rounded-full blur-xl animate-pulse" />
-          <Loader2 className="relative w-12 h-12 text-[var(--color-primary)] animate-spin mb-4" />
-        </div>
-        <p className="text-slate-500 font-semibold animate-pulse mt-4">กำลังตรวจสอบสิทธิ์...</p>
-      </div>
-    );
+    return <ThemedLoadingScreen text="กำลังตรวจสอบสิทธิ์..." />;
   }
 
   return (

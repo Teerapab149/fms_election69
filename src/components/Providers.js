@@ -3,8 +3,8 @@
 import { SessionProvider } from "next-auth/react";
 import { GlobalConfigProvider } from "../contexts/GlobalConfigContext";
 
-// ✅ รับ session + globalConfig เข้ามาเป็น props
-export default function Providers({ children, session, globalConfig }) {
+// ✅ รับ session + globalConfig + activeTemplateId (SSR) เข้ามาเป็น props
+export default function Providers({ children, session, globalConfig, activeTemplateId = "classic" }) {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   return (
@@ -16,7 +16,7 @@ export default function Providers({ children, session, globalConfig }) {
       refetchWhenOffline={false}
       refetchOnMount={false}
     >
-      <GlobalConfigProvider value={globalConfig}>
+      <GlobalConfigProvider value={globalConfig} activeTemplateId={activeTemplateId}>
         {children}
       </GlobalConfigProvider>
     </SessionProvider>

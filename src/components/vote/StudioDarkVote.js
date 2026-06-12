@@ -186,7 +186,7 @@ export default function StudioDarkVote({
         .sdv-intro {
           display:grid; grid-template-columns:auto 1fr auto; gap:24px; align-items:center;
           padding-bottom:18px; margin-bottom:8px;
-          font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3);
+          font-family:var(--sd-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2);
           border-bottom:1px dashed var(--sd-line-strong);
         }
         .sdv-intro__mid { text-align:center; }
@@ -211,17 +211,17 @@ export default function StudioDarkVote({
         .sdv-strip:hover .sdv-strip__no, .sdv-strip.is-selected .sdv-strip__no { color:var(--sd-accent); }
 
         .sdv-strip__main { min-width:0; }
-        .sdv-strip__kicker { font-family:var(--sd-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3); margin-bottom:6px; }
+        .sdv-strip__kicker { font-family:var(--sd-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); margin-bottom:6px; }
         .sdv-strip__name { font-family:var(--sd-sans); font-weight:400; font-size:clamp(20px,2.4vw,28px); letter-spacing:-.025em; line-height:1.05; margin:0 0 6px; color:var(--sd-ink); }
         .sdv-strip__slogan { font-family:var(--sd-serif); font-style:italic; color:var(--sd-ink-2); font-size:15px; margin:0; line-height:1.4; }
 
-        .sdv-strip__meta { font-family:var(--sd-mono); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); line-height:1.6; min-width:0; }
+        .sdv-strip__meta { font-family:var(--sd-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-2); line-height:1.6; min-width:0; }
         .sdv-strip__mrow { display:flex; justify-content:space-between; gap:24px; }
         .sdv-strip__mrow strong { color:var(--sd-ink); font-weight:400; font-family:var(--sd-sans); }
         .sdv-strip__view {
           display:inline-flex; align-items:center; gap:8px; margin-top:12px; padding:6px 14px;
           border:1px solid var(--sd-line-strong); border-radius:999px; background:none; cursor:pointer;
-          font-family:var(--sd-mono); font-size:10px; letter-spacing:.15em; color:var(--sd-ink-2); text-transform:uppercase;
+          font-family:var(--sd-mono); font-size:11px; letter-spacing:.12em; color:var(--sd-ink-2); text-transform:uppercase;
           transition:all .2s;
         }
         .sdv-strip__view:hover { background:var(--sd-accent); border-color:var(--sd-accent); color:var(--sd-bg); }
@@ -241,7 +241,7 @@ export default function StudioDarkVote({
           padding:12px 12px 12px 28px; display:flex; align-items:center; justify-content:space-between; gap:24px;
           box-shadow:0 16px 48px rgba(0,0,0,.4); z-index:10;
         }
-        .sdv-footer__lbl { font-family:var(--sd-mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-3); }
+        .sdv-footer__lbl { font-family:var(--sd-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); }
         .sdv-footer__val { font-family:var(--sd-sans); font-size:15px; color:var(--sd-ink); font-weight:500; margin-top:4px; }
 
         @media (max-width:1100px) {

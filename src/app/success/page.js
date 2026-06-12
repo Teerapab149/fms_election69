@@ -27,6 +27,7 @@ import EditorElement from '../../components/admin/editor/EditorElement';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
+import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import { fetchVoteStatus } from '../../hooks/useVoteStatus';
 
@@ -232,13 +233,7 @@ export default function SuccessPage({
   }
 
   if (!editorMode && (!templateReady || status === "loading" || (!isAuthorized && !showAlertModal))) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-        <Loader2 className="w-12 h-12 text-[var(--color-primary)] animate-spin mb-4 relative z-10" />
-        <p className="text-slate-500 text-sm font-medium relative z-10">กำลังตรวจสอบข้อมูล...</p>
-      </div>
-    );
+    return <ThemedLoadingScreen text="กำลังตรวจสอบข้อมูล..." />;
   }
 
   // =========================================================

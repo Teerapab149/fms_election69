@@ -44,10 +44,12 @@ async function getThemeTokenCss() {
       ...tpl,
       theme: { ...(tpl?.theme || {}), tokens: { ...(tpl?.theme?.tokens || {}), ...overrides } },
     };
-    return buildTemplateStyles(effectiveTpl, ".fms-app");
+    // activeTemplateId rides along so the client (loading screens etc.) knows
+    // the theme on FIRST paint — no fetch, no light-background flash.
+    return { tokenCss: buildTemplateStyles(effectiveTpl, ".fms-app"), activeTemplateId: activeId };
   } catch (error) {
     console.error("Failed to build theme token CSS:", error);
-    return "";
+    return { tokenCss: "", activeTemplateId: "classic" };
   }
 }
 
@@ -148,7 +150,7 @@ export default async function RootLayout({ children }) {
   // 3. ดึง Session
   const session = await getServerSession(authOptions);
   const globalConfig = await getGlobalConfig();
-  const tokenCss = await getThemeTokenCss();
+  const { tokenCss, activeTemplateId } = await getThemeTokenCss();
 
   return (
     <html lang="th">
@@ -158,7 +160,7 @@ export default async function RootLayout({ children }) {
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}
 
         {/* 4. ส่ง Session + globalConfig เข้าไป */}
-        <Providers session={session} globalConfig={globalConfig}>
+        <Providers session={session} globalConfig={globalConfig} activeTemplateId={activeTemplateId}>
           <div className="fms-app">{children}</div>
         </Providers>
 
