@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { preloadPartyImages } from "../utils/imagePreloader";
 import { getPath } from "../utils/basePath";
+import { fetchVoteStatus, invalidateVoteStatus } from "./useVoteStatus";
 
 /**
  * Hook สำหรับจัดการระบบโหวต (Production Mode Only)
@@ -46,11 +47,11 @@ export function useVoteSystem() {
     setIsLoading(true);
 
     try {
-      // A. Check User & System Status
-      const resStatus = await fetch(getPath(`/api/check-status?studentId=${studentId}`));
-      if (!resStatus.ok) throw new Error("Failed to check status");
-
-      const statusData = await resStatus.json();
+      // A. Check User & System Status — force:true because this is the vote-page
+      // GATE; a cached isVoted here could let a just-voted user see the ballot
+      // again (the server's atomic guard still blocks the double vote, but the
+      // redirect must be right).
+      const statusData = await fetchVoteStatus({ force: true });
       setIsVoted(statusData.isVoted);
 
       // 🛑 Strict Redirect if System Closed
@@ -109,6 +110,9 @@ export function useVoteSystem() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Vote Failed");
 
+      // The vote changed isVoted — drop the shared cache so the success page
+      // (and anything else) re-reads fresh status.
+      invalidateVoteStatus();
       return true;
 
     } catch (error) {

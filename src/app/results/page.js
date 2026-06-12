@@ -14,6 +14,7 @@ import GumroadResults from "../../components/vote/GumroadResults";
 import StudioDarkResults from "../../components/vote/StudioDarkResults";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
+import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 
 import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
@@ -76,10 +77,8 @@ export default function ResultsPage() {
         const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
         // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
-        const resStatus = await fetch(getPath(`/api/check-status?t=${Date.now()}`)); // Add timestamp to prevent caching
-        if (!resStatus.ok) throw new Error("Failed to fetch system status");
-
-        const statusData = await resStatus.json();
+        // Shared cached fetch (no-store under the hood — replaces the ?t= cache-bust).
+        const statusData = await fetchVoteStatus();
 
         const isSystemClosed = statusData.systemMode === "PAUSE";
         const isManualEnd = statusData.systemMode === "ENDED";
@@ -130,10 +129,9 @@ export default function ResultsPage() {
             return;
           }
 
-          // เช็คสถานะส่วนตัวอีกรอบ (พร้อม studentId)
-          const resUser = await fetch(getPath(`/api/check-status?studentId=${session?.user?.studentId}&t=${Date.now()}`));
-          if (!resUser.ok) throw new Error("Failed to fetch user status");
-          const userData = await resUser.json();
+          // เช็คสถานะส่วนตัว — same endpoint; the shared cache makes this free
+          // (the server reads isVoted from the verified session, not a param).
+          const userData = await fetchVoteStatus();
 
           // ถ้ายังไม่โหวต -> ห้ามเข้า (ต้องไปโหวตก่อน)
           if (!userData.isVoted) {

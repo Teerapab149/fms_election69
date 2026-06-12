@@ -10,6 +10,7 @@ import VoteCTABlock from "../components/blocks/VoteCTABlock";
 import StatsBlock from "../components/blocks/StatsBlock";
 import ElectionBannerBlock from "../components/blocks/ElectionBannerBlock";
 import { useEditorPreview } from "../hooks/useEditorPreview";
+import { useVoteStatus } from "../hooks/useVoteStatus";
 import EditorElement from './admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../utils/styleMaps';
 import { resolveElementState, buildRuntimeContext } from './admin/editor/stateResolver';
@@ -59,8 +60,12 @@ export default function HomeContent({
   });
 
   const [mounted, setMounted] = useState(false);
-  const [isVotedReal, setIsVotedReal] = useState(false);
-  const [isCheckingVoted, setIsCheckingVoted] = useState(true);
+  // Shared cached status (one request per navigation across all consumers).
+  const { isVoted: isVotedReal, isLoading: isFetchingStatus } = useVoteStatus({
+    enabled: !editorMode && status === "authenticated",
+  });
+  // Preserve the old semantics: "checking" covers session loading too.
+  const isCheckingVoted = !editorMode && (status === "loading" || isFetchingStatus);
 
   // 🧱 State สำหรับโหมดหน้าเว็บปกติ (ถ้าไม่มี Props pageLayout ส่งมา)
   const [apiBlocks, setApiBlocks] = useState(FALLBACK_BLOCKS);
@@ -69,30 +74,6 @@ export default function HomeContent({
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (editorMode) { setIsCheckingVoted(false); return; }
-    const checkVoteStatus = async () => {
-      if (session?.user?.studentId) {
-        try {
-          const res = await fetch(getPath(`/api/check-status?studentId=${session.user.studentId}`));
-          if (res.ok) {
-            const data = await res.json();
-            setIsVotedReal(data.isVoted === true);
-          }
-        } catch (error) {
-          console.error("Error checking vote status:", error);
-        }
-      }
-      setIsCheckingVoted(false);
-    };
-
-    if (status === "authenticated") {
-      checkVoteStatus();
-    } else if (status === "unauthenticated") {
-      setIsCheckingVoted(false);
-    }
-  }, [session?.user?.studentId, status, editorMode]);
 
   // 🧱 Fetch pageLayout จาก API เฉพาะกรณีที่เข้ามาดูเว็บจริงๆ เท่านั้น
   useEffect(() => {

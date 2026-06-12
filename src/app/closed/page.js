@@ -10,6 +10,7 @@ import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadClosed from "../../components/vote/GumroadClosed";
 import StudioDarkClosed from "../../components/vote/StudioDarkClosed";
+import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 
 export default function ClosedPage() {
     const { data: session } = useSession();
@@ -25,7 +26,7 @@ export default function ClosedPage() {
     const isStudio = activeTemplateId === 'studio-dark';
 
     useEffect(() => {
-        fetch(getPath('/api/check-status')).then(res => res.json()).then(setStatusData);
+        fetchVoteStatus().then(setStatusData).catch(() => {});
         fetch(getPath('/api/admin/page-layout'))
             .then(r => r.ok ? r.json() : null)
             .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })

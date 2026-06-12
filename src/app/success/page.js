@@ -28,6 +28,7 @@ import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
+import { fetchVoteStatus } from '../../hooks/useVoteStatus';
 
 export default function SuccessPage({ 
   editorMode = false,
@@ -123,16 +124,13 @@ export default function SuccessPage({
     if (status === "authenticated" && session) {
       (async () => {
         try {
-          let res = await fetch(
-            getPath(`/api/check-status?studentId=${session?.user?.studentId}`),
-            { method: "GET" }
-          );
-
-          let data = await res.json();
-          const voted = !!data?.isVoted;
+          // Shared cached status — fresh here because the vote flow invalidates
+          // the cache on success (and the vote→success redirect is a hard nav).
+          const statusData = await fetchVoteStatus();
+          const voted = !!statusData?.isVoted;
           setIsVoted(voted);
 
-          if (data.googleFormUrl) setGoogleFormUrl(data.googleFormUrl);
+          if (statusData.googleFormUrl) setGoogleFormUrl(statusData.googleFormUrl);
 
           if (!voted) {
             router.replace("/vote");
@@ -158,10 +156,10 @@ export default function SuccessPage({
 
           setIsAuthorized(true);
 
-          res = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}`));
-          data = await res.json();
+          const resForm = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}`));
+          const formData = await resForm.json();
 
-          if (data.isFormCompleted) setIsUnlocked(true);
+          if (formData.isFormCompleted) setIsUnlocked(true);
 
         } catch (err) {
           console.error(err);

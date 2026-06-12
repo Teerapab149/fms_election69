@@ -37,6 +37,7 @@ import { getBinding, isBoundElement } from "../admin/editor/elementCatalog";
 import { buildTemplateStyles, buildElementCss } from "../../lib/templateTokens";
 import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { useVoteStatus } from "../../hooks/useVoteStatus";
 
 export default function GumroadHome({
   initialData,
@@ -55,17 +56,11 @@ export default function GumroadHome({
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
   const [mounted, setMounted] = useState(false);
-  const [isVotedReal, setIsVotedReal] = useState(false);
+  // Shared cached status (one request per navigation across all consumers).
+  const { isVoted: isVotedReal } = useVoteStatus({
+    enabled: !editorMode && status === "authenticated",
+  });
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => {
-    if (editorMode) return;
-    if (status === "authenticated" && session?.user?.studentId) {
-      fetch(getPath(`/api/check-status?studentId=${session.user.studentId}`))
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d) setIsVotedReal(d.isVoted === true); })
-        .catch(() => {});
-    }
-  }, [session?.user?.studentId, status, editorMode]);
 
   const editorStateRef = useRef(null);
   editorStateRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
