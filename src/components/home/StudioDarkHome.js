@@ -154,10 +154,6 @@ export default function StudioDarkHome({
   const academicYear = globalConfig.academicYearTh || "";
   const orgName = globalConfig.organizationName || "";
   const deckText = String(getText("hero-subtitle", globalConfig.campaignTitle) ?? "");
-  // Full project name = campaign title + organisation (the two are stored as
-  // separate config fields and meant to read as one line); owner wanted the
-  // complete "…สโมสรนักศึกษาคณะวิทยาการจัดการ" + the academic year, not a truncation.
-  const fullProjectName = `${deckText}${orgName}`.trim();
 
   const statusLabel = (() => {
     switch (initialData?.electionStatus) {
@@ -205,7 +201,10 @@ export default function StudioDarkHome({
               <div className="sd-home__lower">
                 <Wrap id="hero-subtitle">
                   <p className="sd-home__deck" style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true, skipAlign: true })}>
-                    {fullProjectName}
+                    {/* break at the logical name boundaries (project / organisation
+                        / year) so the long Thai string never wraps mid-word */}
+                    <span className="sd-home__deck-line">{deckText}</span>
+                    {orgName && <span className="sd-home__deck-line">{orgName}</span>}
                     {academicYear && <span className="sd-home__deck-year">ประจำปีการศึกษา {academicYear}</span>}
                   </p>
                 </Wrap>
@@ -315,8 +314,10 @@ export default function StudioDarkHome({
         }
         .sd-home__giant em { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-weight:400; display:block; }
         .sd-home__lower { display:flex; flex-direction:column; gap:0; }
-        .sd-home__deck { font-size:17px; color:var(--sd-ink-2); line-height:1.55; max-width:460px; font-weight:300; margin:0 0 28px; }
-        .sd-home__deck-year { display:block; margin-top:8px; font-family:var(--sd-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--sd-ink-3); }
+        .sd-home__deck { font-size:16px; color:var(--sd-ink-2); line-height:1.5; max-width:520px; font-weight:300; margin:0 0 28px; }
+        .sd-home__deck-line { display:block; text-wrap:balance; }
+        .sd-home__deck-line:first-child { color:var(--sd-ink); }
+        .sd-home__deck-year { display:block; margin-top:12px; padding-top:12px; border-top:1px solid var(--sd-line); font-family:var(--sd-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-3); }
         .sd-home__cta { display:flex; gap:8px 28px; flex-wrap:wrap; align-items:center; }
         /* secondary action = quiet text link (NOT a pill) so it reads clearly below
            the primary voteCTA pill — distinct hierarchy, not the same design. */
