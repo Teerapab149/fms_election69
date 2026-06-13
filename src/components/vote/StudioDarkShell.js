@@ -82,11 +82,8 @@ export default function StudioDarkShell({
       )}
 
       <style jsx global>{`
-        /* Blend the page into the browser chrome while a studio page is
-           mounted: dark scrollbars/overscroll + no white edges (styled-jsx
-           removes this when the shell unmounts, so other templates are safe). */
-        html, body { background:#14140F; color-scheme:dark; }
-
+        /* (dark html/body + color-scheme now live in StudioDarkRail, which every
+           studio page — incl. home — mounts, so the white-canvas fix is uniform.) */
         .sd-root {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;

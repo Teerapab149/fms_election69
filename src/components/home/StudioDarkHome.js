@@ -59,7 +59,8 @@ export default function StudioDarkHome({
   useEffect(() => {
     const tick = () => {
       const d = new Date();
-      setClock(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ICT`);
+      // local Thailand time — "TH" reads clearer than "ICT" for the audience
+      setClock(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} TH`);
     };
     tick();
     const id = setInterval(tick, 30000);
@@ -150,8 +151,13 @@ export default function StudioDarkHome({
 
   const facultyEn = globalConfig.facultyShortEn || "FMS";
   const calendarYear = globalConfig.electionCalendarYear || "";
+  const academicYear = globalConfig.academicYearTh || "";
   const orgName = globalConfig.organizationName || "";
   const deckText = String(getText("hero-subtitle", globalConfig.campaignTitle) ?? "");
+  // Full project name = campaign title + organisation (the two are stored as
+  // separate config fields and meant to read as one line); owner wanted the
+  // complete "…สโมสรนักศึกษาคณะวิทยาการจัดการ" + the academic year, not a truncation.
+  const fullProjectName = `${deckText}${orgName}`.trim();
 
   const statusLabel = (() => {
     switch (initialData?.electionStatus) {
@@ -199,7 +205,8 @@ export default function StudioDarkHome({
               <div className="sd-home__lower">
                 <Wrap id="hero-subtitle">
                   <p className="sd-home__deck" style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true, skipAlign: true })}>
-                    {deckText}
+                    {fullProjectName}
+                    {academicYear && <span className="sd-home__deck-year">ประจำปีการศึกษา {academicYear}</span>}
                   </p>
                 </Wrap>
                 <div className="sd-home__cta">
@@ -309,6 +316,7 @@ export default function StudioDarkHome({
         .sd-home__giant em { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-weight:400; display:block; }
         .sd-home__lower { display:flex; flex-direction:column; gap:0; }
         .sd-home__deck { font-size:17px; color:var(--sd-ink-2); line-height:1.55; max-width:460px; font-weight:300; margin:0 0 28px; }
+        .sd-home__deck-year { display:block; margin-top:8px; font-family:var(--sd-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--sd-ink-3); }
         .sd-home__cta { display:flex; gap:8px 28px; flex-wrap:wrap; align-items:center; }
         /* secondary action = quiet text link (NOT a pill) so it reads clearly below
            the primary voteCTA pill — distinct hierarchy, not the same design. */

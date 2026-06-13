@@ -54,9 +54,12 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
       else if (now < ELECTION_START) { label = "POLLS OPEN IN"; diff = ELECTION_START - now; }
       else if (now < ELECTION_END) { label = "POLLS CLOSE"; diff = ELECTION_END - now; live = true; }
       else { label = "POLLS CLOSED"; diff = 0; }
+      // Force-open (MANUAL_OPEN) with no future close date → a zeroed countdown
+      // reads as "broken". Show a live "open" line instead of 00:00:00:00.
+      const noTimer = systemMode === "MANUAL_OPEN" && diff <= 0;
       setT(diff > 0
-        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label, live }
-        : { d: 0, h: 0, m: 0, s: 0, label, live });
+        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label, live, noTimer: false }
+        : { d: 0, h: 0, m: 0, s: 0, label: noTimer ? "POLLS OPEN" : label, live, noTimer });
     };
     calc();
     const id = setInterval(calc, 1000);
@@ -161,14 +164,18 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
 
         <div className="sd-rail__cd">
           <div className="sd-rail__cd-lbl">{t.live && <span className="sd-dot" />}{t.label}</div>
-          <div className="sd-rail__cd-grid">
-            {[{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }].map((c, i) => (
-              <div className="sd-rail__cd-cell" key={i}>
-                <div className="sd-rail__cd-num">{pad(c.n)}</div>
-                <div className="sd-rail__cd-unit">{c.u}</div>
-              </div>
-            ))}
-          </div>
+          {t.noTimer ? (
+            <div className="sd-rail__cd-live">เปิดรับลงคะแนนอยู่</div>
+          ) : (
+            <div className="sd-rail__cd-grid">
+              {[{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }].map((c, i) => (
+                <div className="sd-rail__cd-cell" key={i}>
+                  <div className="sd-rail__cd-num">{pad(c.n)}</div>
+                  <div className="sd-rail__cd-unit">{c.u}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="sd-rail__footer">
@@ -192,6 +199,13 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
       </header>
 
       <style jsx global>{`
+        /* Dark browser canvas for EVERY studio page (the rail mounts on all of
+           them, incl. home which doesn't use StudioDarkShell). Without this the
+           page's transparent html/body let the light default canvas show as a
+           white frame at the edges / on overscroll. color-scheme:dark also darkens
+           the scrollbar. Removed when the rail unmounts → other templates unaffected. */
+        html, body { background:#14140F; color-scheme:dark; }
+
         .sd-rail, .sd-topbar {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319; --sd-bg-rail:#111108;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
@@ -243,6 +257,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-rail__cd-cell { text-align:center; }
         .sd-rail__cd-num { font-family:var(--sd-sans); font-weight:500; font-size:23px; line-height:1; letter-spacing:-.02em; color:var(--sd-ink); font-variant-numeric:tabular-nums; }
         .sd-rail__cd-unit { font-family:var(--sd-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--sd-ink-2); margin-top:6px; }
+        .sd-rail__cd-live { margin-top:13px; font-family:var(--sd-sans); font-size:15px; font-weight:500; color:var(--sd-accent); letter-spacing:-.01em; }
         .sd-dot { width:6px; height:6px; border-radius:999px; background:var(--sd-accent); box-shadow:0 0 0 0 rgba(213,255,63,.6); animation:sdDotPulse 1.8s ease-out infinite; }
         @keyframes sdDotPulse { 0%{box-shadow:0 0 0 0 rgba(213,255,63,.6)} 70%{box-shadow:0 0 0 8px rgba(213,255,63,0)} 100%{box-shadow:0 0 0 0 rgba(213,255,63,0)} }
 
