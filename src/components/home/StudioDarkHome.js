@@ -20,6 +20,7 @@
 
 import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import StudioDarkRail from "./StudioDarkRail";
 import EditorElement from "../admin/editor/EditorElement";
@@ -249,9 +250,16 @@ export default function StudioDarkHome({
             </div>
           </div>
 
-          {/* marquee — real, meaningful election info (not decorative filler) */}
-          <div className="sd-marquee">
-            <div className="sd-marquee__track">
+          {/* marquee — real election info. framer-motion (JS) on purpose: the
+              globals.css reduced-motion rule kills CSS keyframes site-wide, which
+              froze this strip on machines with the OS setting on. Decorative ticker
+              motion is a product call (same as the intros / single-party marquee). */}
+          <div className="sd-marquee" aria-hidden="true">
+            <motion.div
+              className="sd-marquee__track"
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ duration: 30, ease: "linear", repeat: Infinity }}
+            >
               {[0, 1].map((k) => (
                 <span className="sd-marquee__item" key={k}>
                   <span>ระบบเลือกตั้งออนไลน์</span><span className="sd-marquee__dot" />
@@ -261,7 +269,7 @@ export default function StudioDarkHome({
                   <em>{titlePart} {numberPart}</em>{calendarYear && <span>&nbsp;· {calendarYear}</span>}<span className="sd-marquee__dot" />
                 </span>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
       </main>
@@ -349,15 +357,14 @@ export default function StudioDarkHome({
 
         /* marquee — refined status ticker carrying REAL election info */
         .sd-marquee { border-top:1px solid var(--sd-line); overflow:hidden; background:var(--sd-bg-2); }
+        /* motion driven by framer in JSX (not CSS — see the marquee comment) */
         .sd-marquee__track {
-          display:flex; align-items:center; gap:28px; padding:16px 0; white-space:nowrap;
-          animation:sdMarquee 48s linear infinite;
+          display:flex; align-items:center; gap:28px; padding:16px 0; white-space:nowrap; width:max-content;
           font-family:var(--sd-sans); font-size:clamp(15px,1.6vw,20px); font-weight:400; letter-spacing:.01em; color:var(--sd-ink-2);
         }
         .sd-marquee__item { display:inline-flex; align-items:center; gap:28px; }
         .sd-marquee em { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-weight:400; font-size:1.15em; }
         .sd-marquee__dot { width:5px; height:5px; border-radius:999px; background:var(--sd-accent); display:inline-block; flex-shrink:0; opacity:.8; }
-        @keyframes sdMarquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
         /* ── RESPONSIVE ── */
         @media (max-width:1100px) {
