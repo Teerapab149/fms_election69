@@ -10,22 +10,26 @@
  *
  * Built the gumroad/modern-dark way (P-LOG-005): spread classicTemplate first to
  * preserve text + element shape, then override (1) Layer-1 tokens, (2) per-element
- * configs/vars. The LAYOUT half (the left-rail app shell + chapter-scene home)
- * lives separately in components/home/StudioDarkRail.js + StudioDarkHome.js and is
- * dispatched by slug in components/home/HomeRenderer.js (same seam as gumroad).
+ * configs/vars. The LAYOUT half is its own set of components dispatched by slug:
+ * the shared shell (StudioDarkShell + StudioDarkRail) + per-page layouts
+ * (StudioDark{Home,Candidates,Party,Vote,SingleParty,Results,Success,Closed},
+ * plus the StudioDarkPartyIntro overlay + shared StudioDarkMemberModal/Lightbox).
+ * Home dispatches in components/home/HomeRenderer.js; the rest in each app/<page>.
  *
- * Identity → mechanism map (what renders this pass):
+ * Identity → mechanism map:
  *   - Warm-dark palette ........... Layer-1 --color-* (consumed site-wide via token scope)
  *   - Lime accent ................. --color-primary / --color-accent
  *   - Hairline rules .............. --color-border = --line (#2E2E22, subtle)
  *   - Pill buttons ................ --radius-button = 9999px
  *   - voteCTA outlined→fill pill .. variant: "minimal-pill" (lime outline, fills on hover)
- *   - Quiet display type .......... --font-display = Geist (loaded in layout.js)
+ *   - Quiet display type .......... --font-display = Inter (loaded in layout.js)
  *
- * SCOPE NOTE (carry-forward, same as gumroad's per-page rollout): only the HOME
- * layout ships studio-dark structure this pass. Other pages still render the
- * classic layout under these dark tokens (so they adapt in colour but keep the
- * classic structure) until their studio-dark layouts are built page-by-page.
+ * SCOPE (updated 2026-06-13): ALL pages now ship studio-dark layouts (home /
+ * candidates / party / vote multi+single / results / success / closed). The
+ * `elements` overrides below recolor the catalog elements the studio HOME still
+ * composes (voteCTA-button, stats, meet, banner, hero text); the other pages are
+ * self-contained StudioDark* layout components (not catalog elements — editing
+ * there is theme-token + central text only, per the editor-strategy decision).
  *
  * Per P-LOG-005: do NOT modify classic.js here. All overrides spread from
  * classicTemplate first.
