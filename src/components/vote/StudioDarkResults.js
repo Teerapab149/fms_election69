@@ -216,30 +216,42 @@ export default function StudioDarkResults({
           )}
         </div>
 
-        {/* turnout demographics (participation only — no per-party scores) */}
-        {demoGroups.length > 0 && (
+        {/* turnout demographics (participation only — no per-party scores).
+            EMBARGOED until results reveal, exactly like the per-party race above
+            and like gumroad/classic — the public must not see who's voting by
+            year/major/gender mid-election. Admins monitor turnout live via the
+            admin dashboard (TurnoutBreakdown in app/admin/page.js), which reads
+            the same API with the admin bypass — independent of this page. */}
+        {(!revealed || demoGroups.length > 0) && (
           <div className="sdr-demo">
             <div className="sdr-race__head">
               <h3>Turnout <em>demographics.</em></h3>
-              <span className="sd-smallcaps">§ PARTICIPATION</span>
+              <span className="sd-smallcaps">{revealed ? "§ PARTICIPATION" : "§ EMBARGOED"}</span>
             </div>
-            <div className="sdr-demo__grid">
-              {demoGroups.map((g) => {
-                const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
-                return (
-                  <div className="sdr-demo__col" key={g.title}>
-                    <div className="sdr-demo__title">{g.title}</div>
-                    {g.rows.map((r, i) => (
-                      <div className="sdr-demo__row" key={i}>
-                        <div className="sdr-demo__name">{r.name}</div>
-                        <div className="sdr-demo__track"><div className="sdr-demo__fill" style={{ width: `${((r.value || 0) / max) * 100}%` }} /></div>
-                        <div className="sdr-demo__val">{fmt(r.value || 0)}</div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
+            {revealed ? (
+              <div className="sdr-demo__grid">
+                {demoGroups.map((g) => {
+                  const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
+                  return (
+                    <div className="sdr-demo__col" key={g.title}>
+                      <div className="sdr-demo__title">{g.title}</div>
+                      {g.rows.map((r, i) => (
+                        <div className="sdr-demo__row" key={i}>
+                          <div className="sdr-demo__name">{r.name}</div>
+                          <div className="sdr-demo__track"><div className="sdr-demo__fill" style={{ width: `${((r.value || 0) / max) * 100}%` }} /></div>
+                          <div className="sdr-demo__val">{fmt(r.value || 0)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="sdr-demo__locked">
+                <div className="sdr-demo__locked-ic"><Lock size={18} strokeWidth={2} /></div>
+                <p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อปิดหีบเลือกตั้งแล้วเท่านั้น</p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -332,6 +344,9 @@ export default function StudioDarkResults({
         .sdr-demo__name { font-size:13px; color:var(--sd-ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .sdr-demo__track { height:6px; background:var(--sd-bg); border:1px solid var(--sd-line); border-radius:999px; overflow:hidden; }
         .sdr-demo__fill { height:100%; background:var(--sd-accent); opacity:.7; }
+        .sdr-demo__locked { display:flex; align-items:center; gap:16px; padding:6px 2px 2px; }
+        .sdr-demo__locked-ic { width:40px; height:40px; flex-shrink:0; border:1px solid var(--sd-line-strong); border-radius:999px; display:grid; place-items:center; color:var(--sd-accent); }
+        .sdr-demo__locked p { font-size:14px; color:var(--sd-ink-2); margin:0; font-weight:300; line-height:1.5; }
         .sdr-demo__val { font-family:var(--sd-mono); font-size:12px; color:var(--sd-ink-2); font-variant-numeric:tabular-nums; }
 
         @media (max-width:1100px) {
