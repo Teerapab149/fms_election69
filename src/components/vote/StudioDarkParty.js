@@ -105,26 +105,36 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
       {activeTab === "vision" && hasVision && (
         <section className="sdp-section">
           <h2><span className="num">i.</span>Vision &amp; <em>future.</em></h2>
-          <div className="sdp-story" data-media={heroImg ? "1" : "0"}>
-            <div>
-              {story && <p>{story}</p>}
+          {/* Stacked, not side-by-side: the team photo is a wide/panoramic group
+              shot that can't fill a tall column, so it reads as a full-width
+              banner on top; the story sits below at a comfortable reading width
+              (wider line = fewer lines = no tall narrow wall). Balanced + readable. */}
+          {heroImg && (
+            <figure
+              className="sdp-vision__photo"
+              onClick={() => setLightboxSrc(heroImg)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
+            >
+              <img src={heroImg} alt={party?.name} />
+              <figcaption className="sdp-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
+            </figure>
+          )}
+          {story && <div className="sdp-vision__story"><p>{story}</p></div>}
+
+          {/* missions — their own always-visible ledger below the story/photo */}
+          {missions.length > 0 && (
+            <div className="sdp-missions">
+              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> MISSIONS · พันธกิจ</div>
               {missions.map((m, i) => (
-                <p key={i} className="sdp-story__mission"><span className="sdp-story__mno">{pad2(i + 1)}</span>{m}</p>
+                <div className="sdp-mission" key={i}>
+                  <span className="sdp-mission__no">{pad2(i + 1)}</span>
+                  <p>{m}</p>
+                </div>
               ))}
             </div>
-            {heroImg && (
-              <figure
-                className="sdp-story__media"
-                onClick={() => setLightboxSrc(heroImg)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
-              >
-                <img src={heroImg} alt={party?.name} />
-                <figcaption className="sdp-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
-              </figure>
-            )}
-          </div>
+          )}
         </section>
       )}
 
@@ -231,20 +241,34 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-section h2 { font-family:var(--sd-sans); font-weight:400; font-size:clamp(32px,4vw,54px); letter-spacing:-.03em; line-height:1; margin:0 0 28px; }
         .sdp-section h2 .num { font-family:var(--sd-serif); font-style:italic; font-size:.4em; color:var(--sd-ink-4); vertical-align:super; margin-right:14px; }
 
-        .sdp-story { display:grid; grid-template-columns:5fr 7fr; gap:48px; align-items:start; }
-        .sdp-story[data-media="0"] { grid-template-columns:1fr; max-width:760px; }
-        .sdp-story p { font-size:16px; line-height:1.65; color:var(--sd-ink); font-weight:300; margin:0 0 18px; }
-        .sdp-story p:last-child { margin-bottom:0; }
-        .sdp-story__mission { display:flex; gap:14px; align-items:baseline; }
-        .sdp-story__mno { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-size:15px; flex-shrink:0; }
-        .sdp-story__media { position:relative; border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2); max-height:420px; margin:0; cursor:zoom-in; }
-        .sdp-story__media img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s; }
-        .sdp-story__media:hover img { transform:scale(1.025); }
+        /* Vision: full-width team-photo banner + readable story column below */
+        .sdp-vision__photo {
+          position:relative; display:block; width:100%; margin:0 0 36px; cursor:zoom-in;
+          border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2);
+        }
+        .sdp-vision__photo img { width:100%; max-height:400px; object-fit:cover; display:block; transition:transform .4s; }
+        .sdp-vision__photo:hover img { transform:scale(1.015); }
+        .sdp-vision__story { max-width:840px; }
+        .sdp-vision__story p { font-size:16px; line-height:1.75; color:var(--sd-ink); font-weight:300; margin:0; }
         .sdp-story__cap {
           position:absolute; left:12px; bottom:12px; font-family:var(--sd-mono); font-size:9px;
           letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2);
           background:rgba(20,20,15,.78); border:1px solid var(--sd-line); padding:5px 12px; border-radius:999px;
         }
+
+        /* missions ledger (below the story/photo grid) */
+        .sdp-accent { color:var(--sd-accent); }
+        .sdp-missions { margin-top:40px; border-top:1px dashed var(--sd-line-strong); padding-top:8px; }
+        .sdp-missions__lbl { font-family:var(--sd-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-2); padding:16px 0 6px; }
+        .sdp-mission {
+          display:grid; grid-template-columns:64px 1fr; gap:28px; align-items:baseline;
+          padding:18px 8px; border-bottom:1px solid var(--sd-line);
+          transition:background .2s, padding-left .25s;
+        }
+        .sdp-mission:last-child { border-bottom:0; }
+        .sdp-mission:hover { background:var(--sd-bg-2); padding-left:20px; }
+        .sdp-mission__no { font-family:var(--sd-serif); font-style:italic; font-size:30px; color:var(--sd-accent); line-height:1; }
+        .sdp-mission p { font-size:16px; line-height:1.6; color:var(--sd-ink); margin:0; font-weight:300; max-width:820px; }
 
         .sdp-policies { border-top:1px solid var(--sd-line-strong); }
         .sdp-policy {
