@@ -114,7 +114,7 @@ export default function StudioDarkSingleParty({
   return (
     <StudioDarkShell
       active="vote"
-      num="04"
+      num="03"
       label="Vote"
       labelTh="ลงคะแนนเสียง"
       editorMode={editorMode}

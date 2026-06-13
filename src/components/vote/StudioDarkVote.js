@@ -107,14 +107,14 @@ export default function StudioDarkVote({
   return (
     <StudioDarkShell
       active="vote"
-      num="04"
+      num="03"
       label="Vote"
       labelTh="ลงคะแนนเสียง"
       editorMode={editorMode}
     >
       <div className="sd-scene-h">
         <div>
-          <span className="sd-scene-h__num"><span className="accent">№ 04</span> &nbsp;/&nbsp; THE VOTE</span>
+          <span className="sd-scene-h__num"><span className="accent">№ 03</span> &nbsp;/&nbsp; THE VOTE</span>
           <h1 className="sd-scene-h__title">Choose <em>one,</em><br />then confirm.</h1>
         </div>
         <p className="sd-scene-h__deck">

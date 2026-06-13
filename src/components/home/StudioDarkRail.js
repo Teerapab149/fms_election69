@@ -26,11 +26,14 @@ import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const NAV = [
+  // NOTE: no "Profile / ข้อมูลพรรค" item — a party's detail page is reached
+  // THROUGH Candidates (pick a party → its profile; single-party → auto-redirect),
+  // so it's a sub-page, not a top-level section. StudioDarkParty highlights
+  // Candidates (or Vote) in the rail instead of being its own entry.
   { key: "home",       num: "01", label: "Index",      th: "หน้าหลัก",   href: "/" },
   { key: "candidates", num: "02", label: "Candidates", th: "ผู้สมัคร",    href: "/candidates" },
-  { key: "party",      num: "03", label: "Profile",    th: "ข้อมูลพรรค",  href: "/party" },
-  { key: "vote",       num: "04", label: "Vote",       th: "ลงคะแนน",     href: "/vote" },
-  { key: "results",    num: "05", label: "Returns",    th: "ผลคะแนน",     href: "/results" },
+  { key: "vote",       num: "03", label: "Vote",       th: "ลงคะแนน",     href: "/vote" },
+  { key: "results",    num: "04", label: "Returns",    th: "ผลคะแนน",     href: "/results" },
 ];
 
 export default function StudioDarkRail({ active = "home", editorMode = false, systemMode = "AUTO" }) {

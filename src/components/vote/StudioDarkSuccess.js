@@ -30,7 +30,7 @@ export default function StudioDarkSuccess({
   return (
     <StudioDarkShell
       active="vote"
-      num="04b"
+      num="03b"
       label="Receipt"
       labelTh="ลงคะแนนสำเร็จ"
       editorMode={editorMode}

@@ -9,7 +9,7 @@
 // their topbar + token block (8 near-identical headers — flagged as
 // fragmentation in the handoff). Studio-dark pages instead compose:
 //
-//   <StudioDarkShell active="vote" num="04" label="Ballot" labelTh="ลงคะแนน"
+//   <StudioDarkShell active="vote" num="03" label="Vote" labelTh="ลงคะแนน"
 //                    right={<span>SECURED BY PSU PASSPORT</span>}>
 //     ...page content (uses .sd-* base classes + its own scoped styles)
 //   </StudioDarkShell>

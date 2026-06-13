@@ -56,7 +56,7 @@ export default function StudioDarkClosed({
   return (
     <StudioDarkShell
       active="vote"
-      num="04"
+      num="03"
       label="Status"
       labelTh="สถานะการลงคะแนน"
       editorMode={editorMode}

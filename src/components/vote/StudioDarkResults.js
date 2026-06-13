@@ -84,7 +84,7 @@ export default function StudioDarkResults({
   return (
     <StudioDarkShell
       active="results"
-      num="05"
+      num="04"
       label="Returns"
       labelTh="ผลคะแนน"
       editorMode={editorMode}
