@@ -9,6 +9,7 @@ import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 import { db } from "../lib/db";
 import { getTemplate } from "../components/admin/editor/templates";
 import { buildTemplateStyles } from "../lib/templateTokens";
+import { GLOBAL_CONFIG_DEFAULTS } from "../utils/globalConfigDefaults";
 
 async function getGlobalConfig() {
   try {
@@ -125,25 +126,49 @@ const instrumentSerif = Instrument_Serif({
   display: 'swap',
 });
 
-export const metadata = {
-  title: 'SAMO 49 - FMS Election 2026',
-  description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
-  openGraph: {
-    title: 'SAMO 49 - FMS Election 2026',
-    description: 'ระบบเลือกตั้งสโมสรนักศึกษาคณะวิทยาการจัดการ',
-    siteName: 'FMS Election 2026',
-    images: [
-      {
-        url: '/images/prob/samo49_1.png', 
-        width: 1200,
-        height: 630,
-        alt: 'SAMO 49 Election Preview',
-      },
-    ],
-    locale: 'th_TH',
-    type: 'website',
-  },
-};
+// Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
+// so link previews resolve to the real host, not localhost. basePath rides along
+// so the image URL is the full /fms-ovs/... path the asset is actually served at.
+const SITE_ORIGIN = (() => {
+  try { return new URL(process.env.NEXTAUTH_URL || "http://localhost:3000").origin; }
+  catch { return "http://localhost:3000"; }
+})();
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+// The election promo banner (same image the home banner element shows).
+const OG_IMAGE = `${BASE_PATH}/images/prob/samo49_1.png`;
+
+// Dynamic title/description from the admin-editable election config — updates
+// every year when staff bump electionName / electionCalendarYear in การตั้งค่า,
+// no code change. Falls back to defaults if the DB is unreachable.
+export async function generateMetadata() {
+  const cfg = { ...GLOBAL_CONFIG_DEFAULTS, ...((await getGlobalConfig()) || {}) };
+  const name = cfg.electionName || "SAMO";
+  const fac = cfg.facultyShortEn || "FMS";
+  const year = cfg.electionCalendarYear || "";
+  const title = `${name} · ${fac} Election ${year}`.trim();
+  const description = `ระบบเลือกตั้งออนไลน์ ${cfg.organizationName || "สโมสรนักศึกษา"}`;
+
+  return {
+    metadataBase: new URL(SITE_ORIGIN),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      siteName: `${fac} Election`,
+      url: `${SITE_ORIGIN}${BASE_PATH}`,
+      images: [{ url: OG_IMAGE, width: 800, height: 588, alt: title }],
+      locale: "th_TH",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
+  };
+}
 
 export default async function RootLayout({ children }) {
 
