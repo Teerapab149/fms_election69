@@ -27,6 +27,9 @@ function StudioLoading({ text, subtext }) {
       minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", gap: 22, background: "#14140F", color: "#F2EDDF",
     }}>
+      {/* dark the browser canvas while loading — the rail (which normally owns
+          this) isn't mounted yet, so without it a white frame shows at the edges */}
+      <style>{"html,body{background:#14140F;color-scheme:dark}"}</style>
       <motion.span animate={spin} transition={spinT} style={{
         width: 44, height: 44, borderRadius: 999, display: "block",
         border: "1px solid #3E3E2D", borderTopColor: "#D5FF3F",
@@ -51,6 +54,7 @@ function GumroadLoading({ text, subtext }) {
       minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", gap: 20, background: "#FFF6EC", color: "#26271c",
     }}>
+      <style>{"html,body{background:#FFF6EC;color-scheme:light}"}</style>
       <motion.span animate={spin} transition={spinT} style={{
         width: 46, height: 46, borderRadius: 14, display: "block",
         border: "2.5px solid #26271c", borderTopColor: "#C2F47E",
