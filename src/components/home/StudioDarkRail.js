@@ -150,6 +150,13 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
 
   return (
     <>
+      {/* Dark browser canvas for real studio pages (no white frame at the edges /
+          on overscroll; color-scheme:dark darkens the scrollbar). Gated on
+          !editorMode so it does NOT leak into the admin editor when the studio
+          home is previewed inline there — that leak turned the admin's native
+          form controls (the colour-picker hex inputs) dark. */}
+      {!editorMode && <style>{"html,body{background:#14140F;color-scheme:dark}"}</style>}
+
       {/* ── DESKTOP LEFT RAIL ── */}
       <aside className="sd-rail">
         <a href={linkHref("/")} className="sd-rail__brand">
@@ -202,13 +209,6 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
       </header>
 
       <style jsx global>{`
-        /* Dark browser canvas for EVERY studio page (the rail mounts on all of
-           them, incl. home which doesn't use StudioDarkShell). Without this the
-           page's transparent html/body let the light default canvas show as a
-           white frame at the edges / on overscroll. color-scheme:dark also darkens
-           the scrollbar. Removed when the rail unmounts → other templates unaffected. */
-        html, body { background:#14140F; color-scheme:dark; }
-
         .sd-rail, .sd-topbar {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319; --sd-bg-rail:#111108;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
