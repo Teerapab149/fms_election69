@@ -14,11 +14,13 @@
 import HomeContent from "../HomeContent";
 import GumroadHome from "./GumroadHome";
 import StudioDarkHome from "./StudioDarkHome";
+import VerdureHome from "./VerdureHome";
 
 // slug → layout component. Absent slug = classic layout (HomeContent).
 const HOME_LAYOUTS = {
   gumroad: GumroadHome,
   "studio-dark": StudioDarkHome,
+  verdure: VerdureHome,
 };
 
 export default function HomeRenderer(props) {

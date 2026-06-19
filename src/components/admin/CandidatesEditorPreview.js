@@ -3,6 +3,7 @@
 import CandidatesPage from '../../app/candidates/page';
 import GumroadCandidates from '../vote/GumroadCandidates';
 import StudioDarkCandidates from '../vote/StudioDarkCandidates';
+import VerdureCandidates from '../vote/VerdureCandidates';
 import { DUMMY_PARTIES_MULTI } from '../../utils/editorDummyData';
 
 export default function CandidatesEditorPreview({
@@ -16,8 +17,9 @@ export default function CandidatesEditorPreview({
   onHoverEnd = null,
 }) {
   // Per-template layout: gumroad / studio-dark have their own candidates layouts.
-  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark') {
-    const CandidatesLayout = templateSlug === 'studio-dark' ? StudioDarkCandidates : GumroadCandidates;
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+    const CandidatesLayout = templateSlug === 'studio-dark' ? StudioDarkCandidates
+      : templateSlug === 'verdure' ? VerdureCandidates : GumroadCandidates;
     return <CandidatesLayout candidates={DUMMY_PARTIES_MULTI} editorMode />;
   }
 

@@ -87,6 +87,23 @@ const BUTTON_DESIGNS = [
       ...SIZING,
     },
   },
+  {
+    slug: "verdure",
+    template: "เวอร์เดอร์",
+    variant: "default",
+    variantLabel: "Terra Pill",
+    desc: "พิลล์สีดินเผาบนกระดาษครีม โค้งมนเต็มวง — เอดิทอเรียลอบอุ่น",
+    cardBg: "#F4ECDB",
+    onDark: false,
+    scope: {
+      "--color-primary": "#BC5E3E", "--color-accent": "#A24E32",
+      "--color-surface": "#F4ECDB", "--color-text": "#1F3A2C",
+      "--btn-bg": "var(--color-primary)", "--btn-text": "#F4ECDB",
+      "--btn-border-color": "var(--color-primary)", "--btn-radius": "9999px",
+      "--btn-shadow": "none", "--btn-hover-bg": "#1F3A2C",
+      ...SIZING,
+    },
+  },
 ];
 
 export default function DesignLibrary() {

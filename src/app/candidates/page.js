@@ -15,6 +15,7 @@ import SiteFooter from '../../components/SiteFooter';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadCandidates from '../../components/vote/GumroadCandidates';
 import StudioDarkCandidates from '../../components/vote/StudioDarkCandidates';
+import VerdureCandidates from '../../components/vote/VerdureCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -39,6 +40,7 @@ export default function CandidatesPage({
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
+  const isVerdure = activeTemplateId === 'verdure';
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -132,6 +134,16 @@ export default function CandidatesPage({
       <>
         {!editorMode && <PageThemeOverrides page="candidates" />}
         <StudioDarkCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // VERDURE layout (own glass-terrarium chrome) — replaces the classic page entirely.
+  if (isVerdure) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <VerdureCandidates candidates={parties} editorMode={editorMode} />
       </>
     );
   }

@@ -10,6 +10,7 @@ import SiteFooter from "../../components/SiteFooter";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import StudioDarkLogin from "../../components/login/StudioDarkLogin";
+import VerdureLogin from "../../components/login/VerdureLogin";
 import GumroadLogin from "../../components/login/GumroadLogin";
 
 export default function LoginPage() {
@@ -97,6 +98,7 @@ export default function LoginPage() {
   };
   if (activeTemplateId?.startsWith("studio-dark")) return <StudioDarkLogin {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("gumroad")) return <GumroadLogin {...templateLoginProps} />;
+  if (activeTemplateId?.startsWith("verdure")) return <VerdureLogin {...templateLoginProps} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">

@@ -235,6 +235,28 @@ function TemplateHomeThumb({ tpl }) {
     );
   }
 
+  if (family === 'verdure') {
+    const moss = '#1F3A2C', cream = '#F4ECDB', terra = '#BC5E3E', ruleC = '#D4C9AC';
+    return (
+      <div style={{ ...frame, background: cream, position: 'relative', display: 'grid', placeItems: 'center' }} aria-hidden>
+        {/* S cornermark */}
+        <span style={{ position: 'absolute', top: 5, left: 5, width: 9, height: 9, borderRadius: '50%', background: moss }} />
+        {/* central moss medallion w/ number */}
+        <div style={{ position: 'relative', width: 38, height: 38, borderRadius: '50%', background: moss, display: 'grid', placeItems: 'center' }}>
+          <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 18, color: cream, lineHeight: 1 }}>{(tpl.colorSwatch && '50') || '50'}</span>
+          <span style={{ position: 'absolute', inset: -3, borderRadius: '50%', border: `1px dashed ${terra}`, opacity: .5 }} />
+        </div>
+        {/* bottom dock pill */}
+        <div style={{ position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 2, padding: '2px 4px', borderRadius: 99, background: moss }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: terra }} />
+          {[0, 1, 2].map(i => <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(244,236,219,.4)' }} />)}
+        </div>
+        {/* edge tick */}
+        <span style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', width: 1, height: 22, background: ruleC }} />
+      </div>
+    );
+  }
+
   // classic family — the ORIGINAL layout (navbar / hero / stats / CTA), repainted
   return (
     <div style={frame} aria-hidden>
@@ -1066,8 +1088,8 @@ export default function PageDesignTab() {
   // classic family carries its colour themes (modern-dark/playful/minimal + DB
   // forks) as swatches inside its card; gumroad / studio-dark stand alone.
   const templateFamilies = useMemo(() => {
-    const FAMILY_ORDER = ['classic', 'gumroad', 'studio-dark'];
-    const REP_SLUG = { classic: 'classic', gumroad: 'gumroad', 'studio-dark': 'studio-dark' };
+    const FAMILY_ORDER = ['classic', 'gumroad', 'studio-dark', 'verdure'];
+    const REP_SLUG = { classic: 'classic', gumroad: 'gumroad', 'studio-dark': 'studio-dark', verdure: 'verdure' };
     const groups = {};
     for (const t of availableTemplates) {
       const fam = t.layoutFamily || 'classic';

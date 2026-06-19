@@ -9,6 +9,7 @@ import SiteFooter from '../SiteFooter';
 import EditorElement from './editor/EditorElement';
 import GumroadResults from '../vote/GumroadResults';
 import StudioDarkResults from '../vote/StudioDarkResults';
+import VerdureResults from '../vote/VerdureResults';
 import {
   DUMMY_RESULTS_MULTI,
   DUMMY_RESULTS_SINGLE,
@@ -39,8 +40,9 @@ export default function ResultsEditorPreview({
   const isNotStarted = false;
 
   // Per-template layout: gumroad / studio-dark have their own results layouts.
-  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark') {
-    const ResultsLayout = templateSlug === 'studio-dark' ? StudioDarkResults : GumroadResults;
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+    const ResultsLayout = templateSlug === 'studio-dark' ? StudioDarkResults
+      : templateSlug === 'verdure' ? VerdureResults : GumroadResults;
     return (
       <ResultsLayout
         editorMode

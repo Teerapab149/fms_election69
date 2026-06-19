@@ -14,6 +14,7 @@ import BackToVoteBar from "../../components/BackToVoteBar";
 import CandidateModal from '../../components/CandidateModal';
 import GumroadParty from "../../components/vote/GumroadParty";
 import StudioDarkParty from "../../components/vote/StudioDarkParty";
+import VerdureParty from "../../components/vote/VerdureParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 
@@ -584,6 +585,7 @@ function PartyContent() {
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
+  const isVerdure = activeTemplateId === 'verdure';
 
   const listSectionRef = useRef(null);
 
@@ -669,6 +671,16 @@ function PartyContent() {
       <>
         <PageThemeOverrides page="party" />
         <StudioDarkParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // VERDURE layout (own glass-terrarium chrome) — replaces the classic cinematic page entirely.
+  if (isVerdure) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <VerdureParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
       </>
     );
   }

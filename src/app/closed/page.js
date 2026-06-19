@@ -10,6 +10,7 @@ import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadClosed from "../../components/vote/GumroadClosed";
 import StudioDarkClosed from "../../components/vote/StudioDarkClosed";
+import VerdureClosed from "../../components/vote/VerdureClosed";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 
 export default function ClosedPage() {
@@ -24,6 +25,7 @@ export default function ClosedPage() {
     const [templateReady, setTemplateReady] = useState(false);
     const isGumroad = activeTemplateId === 'gumroad';
     const isStudio = activeTemplateId === 'studio-dark';
+    const isVerdure = activeTemplateId === 'verdure';
 
     useEffect(() => {
         fetchVoteStatus().then(setStatusData).catch(() => {});
@@ -123,6 +125,22 @@ export default function ClosedPage() {
             <>
                 <PageThemeOverrides page="closed" />
                 <StudioDarkClosed
+                    title={title}
+                    desc={desc}
+                    variant={variant}
+                    session={session}
+                    onLogout={handleLogout}
+                />
+            </>
+        );
+    }
+
+    // VERDURE layout (own glass-terrarium chrome) — replaces the classic page entirely.
+    if (isVerdure) {
+        return (
+            <>
+                <PageThemeOverrides page="closed" />
+                <VerdureClosed
                     title={title}
                     desc={desc}
                     variant={variant}

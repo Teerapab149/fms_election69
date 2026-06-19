@@ -13,6 +13,7 @@ import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadResults from "../../components/vote/GumroadResults";
 import StudioDarkResults from "../../components/vote/StudioDarkResults";
+import VerdureResults from "../../components/vote/VerdureResults";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
@@ -67,6 +68,7 @@ export default function ResultsPage() {
   }, []);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
+  const isVerdure = activeTemplateId === 'verdure';
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
@@ -369,8 +371,24 @@ export default function ResultsPage() {
   return (
     <div className={isStudio
       ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
+      : isVerdure
+      ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
       : "flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-purple-100 overflow-x-hidden relative"}>
       <PageThemeOverrides page="results" />
+
+      {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
+      {isVerdure && isAuthorized && (
+        <VerdureResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
 
       {/* GUMROAD layout (own topbar/footer); access modals below stay shared */}
       {isGumroad && isAuthorized && (
@@ -400,9 +418,9 @@ export default function ResultsPage() {
         />
       )}
 
-      {!isGumroad && !isStudio && <Navbar />}
+      {!isGumroad && !isStudio && !isVerdure && <Navbar />}
 
-      {!isGumroad && !isStudio && (
+      {!isGumroad && !isStudio && !isVerdure && (
         <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
@@ -416,7 +434,7 @@ export default function ResultsPage() {
       )}
 
       {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
-      {!isGumroad && !isStudio && (
+      {!isGumroad && !isStudio && !isVerdure && (
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
 
         {isAuthorized && (
@@ -585,7 +603,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      {!isGumroad && !isStudio && <SiteFooter className="mt-8 lg:mt-16" />}
+      {!isGumroad && !isStudio && !isVerdure && <SiteFooter className="mt-8 lg:mt-16" />}
     </div>
   );
 }

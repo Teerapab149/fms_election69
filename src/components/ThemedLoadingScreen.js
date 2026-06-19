@@ -16,6 +16,7 @@
 
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { getPath } from "../utils/basePath";
 import { useActiveTemplateId } from "../contexts/GlobalConfigContext";
 
 const spin = { rotate: 360 };
@@ -71,6 +72,35 @@ function GumroadLoading({ text, subtext }) {
   );
 }
 
+function VerdureLoading({ text, subtext }) {
+  return (
+    <div className="fms-app" style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", gap: 22, color: "#1F3A2C", background: "#F4ECDB",
+    }}>
+      {/* cream paper canvas while loading (no flash) */}
+      <style>{"html,body{background:#F4ECDB;color-scheme:light}"}</style>
+      {/* static vertical FMS logo with a dashed terracotta ring rotating around it */}
+      <div style={{ position: "relative", width: 70, height: 70, display: "grid", placeItems: "center" }}>
+        <motion.span animate={spin} transition={spinT} style={{
+          position: "absolute", inset: 0, borderRadius: 999, border: "1px dashed #BC5E3E",
+        }} />
+        <img src={getPath("/images/logo/09_FMS_Short_EN_V_PNG.png")} alt="FMS PSU" style={{ height: 38, width: "auto", objectFit: "contain", display: "block" }} />
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <div style={{
+          fontFamily: "var(--font-space-mono), ui-monospace, monospace", fontSize: 12,
+          letterSpacing: ".22em", textTransform: "uppercase", color: "#1F3A2C", opacity: .6,
+        }}>{text}</div>
+        {subtext && <div style={{
+          marginTop: 8, fontSize: 13, color: "#3A5B49",
+          fontFamily: "var(--font-plex-thai), var(--font-anuphan), sans-serif",
+        }}>{subtext}</div>}
+      </div>
+    </div>
+  );
+}
+
 function ClassicLoading({ text, subtext }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FD]">
@@ -85,5 +115,6 @@ export default function ThemedLoadingScreen({ text = "กำลังโหล�
   const slug = useActiveTemplateId();
   if (slug?.startsWith("studio-dark")) return <StudioLoading text={text} subtext={subtext} />;
   if (slug?.startsWith("gumroad")) return <GumroadLoading text={text} subtext={subtext} />;
+  if (slug?.startsWith("verdure")) return <VerdureLoading text={text} subtext={subtext} />;
   return <ClassicLoading text={text} subtext={subtext} />;
 }

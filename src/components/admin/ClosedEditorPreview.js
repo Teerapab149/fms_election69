@@ -7,6 +7,7 @@ import SiteFooter from '../SiteFooter';
 import EditorElement from './editor/EditorElement';
 import GumroadClosed from '../vote/GumroadClosed';
 import StudioDarkClosed from '../vote/StudioDarkClosed';
+import VerdureClosed from '../vote/VerdureClosed';
 
 const STATE_MESSAGES = {
   waiting: {
@@ -40,8 +41,9 @@ export default function ClosedEditorPreview({
 
   // Per-template layout: gumroad / studio-dark have their own closed layouts.
   // simMode "paused" maps to the live page's "closed" variant.
-  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark') {
-    const ClosedLayout = templateSlug === 'studio-dark' ? StudioDarkClosed : GumroadClosed;
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+    const ClosedLayout = templateSlug === 'studio-dark' ? StudioDarkClosed
+      : templateSlug === 'verdure' ? VerdureClosed : GumroadClosed;
     const variant = simMode === 'paused' ? 'closed' : simMode;
     return (
       <ClosedLayout

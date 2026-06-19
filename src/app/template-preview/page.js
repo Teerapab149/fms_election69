@@ -36,6 +36,13 @@ import StudioDarkResults from '../../components/vote/StudioDarkResults';
 import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
 import StudioDarkClosed from '../../components/vote/StudioDarkClosed';
 
+import VerdureCandidates from '../../components/vote/VerdureCandidates';
+import VerdureParty from '../../components/vote/VerdureParty';
+import VerdureVote from '../../components/vote/VerdureVote';
+import VerdureResults from '../../components/vote/VerdureResults';
+import VerdureSuccess from '../../components/vote/VerdureSuccess';
+import VerdureClosed from '../../components/vote/VerdureClosed';
+
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
@@ -115,23 +122,25 @@ function PreviewBody() {
     );
   }
 
-  // ── studio-dark / gumroad — render the real layout component w/ mock props ──
-  if (family === 'studio-dark' || family === 'gumroad') {
-    const isStudio = family === 'studio-dark';
+  // ── studio-dark / gumroad / verdure — render the real layout component w/ mock props ──
+  if (family === 'studio-dark' || family === 'gumroad' || family === 'verdure') {
     const single = variant === 'single';
     const revealed = variant === 'revealed';
     const voteParties = single ? [PARTIES[0]] : PARTIES;
+    // pick the layout component for this family per page
+    const byFamily = (studio, gumroad, verdure) =>
+      family === 'studio-dark' ? studio : family === 'verdure' ? verdure : gumroad;
 
     if (page === 'candidates') {
-      const C = isStudio ? StudioDarkCandidates : GumroadCandidates;
+      const C = byFamily(StudioDarkCandidates, GumroadCandidates, VerdureCandidates);
       return <C candidates={PARTIES} editorMode />;
     }
     if (page === 'party') {
-      const P = isStudio ? StudioDarkParty : GumroadParty;
+      const P = byFamily(StudioDarkParty, GumroadParty, VerdureParty);
       return <P party={PARTIES[0]} galleryImages={[]} showBackToVote={false} />;
     }
     if (page === 'vote') {
-      const V = isStudio ? StudioDarkVote : GumroadVote;
+      const V = byFamily(StudioDarkVote, GumroadVote, VerdureVote);
       return (
         <V
           regularParties={voteParties}
@@ -148,7 +157,7 @@ function PreviewBody() {
       );
     }
     if (page === 'results') {
-      const R = isStudio ? StudioDarkResults : GumroadResults;
+      const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
       return (
         <R
           candidates={resultsCandidates(revealed)}
@@ -163,11 +172,11 @@ function PreviewBody() {
       );
     }
     if (page === 'success') {
-      const S = isStudio ? StudioDarkSuccess : GumroadSuccess;
+      const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
       return <S user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
     }
     if (page === 'closed') {
-      const Cl = isStudio ? StudioDarkClosed : GumroadClosed;
+      const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
       return <Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} />;
     }
   }
