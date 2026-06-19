@@ -1,6 +1,6 @@
 import './globals.css';
 import Providers from "../components/Providers";
-import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif } from 'next/font/google';
+import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -126,6 +126,40 @@ const instrumentSerif = Instrument_Serif({
   display: 'swap',
 });
 
+// Verdure template families (moss/cream/terracotta editorial). DM Serif Display
+// (italic) = the big serif "50"/headlines; Manrope = the sans; IBM Plex Sans Thai
+// = the Thai body (loopless, pairs with the serif); Space Mono = the mono labels.
+// Loading is mandatory — a declared font-family does nothing unless next/font
+// loads it (impeccable rule; root cause of the gumroad font drift).
+const dmSerif = DM_Serif_Display({
+  subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-dm-serif',
+  display: 'swap',
+});
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-manrope',
+  display: 'swap',
+});
+
+const plexThai = IBM_Plex_Sans_Thai({
+  subsets: ['thai', 'latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-plex-thai',
+  display: 'swap',
+});
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-space-mono',
+  display: 'swap',
+});
+
 // Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
 // so link previews resolve to the real host, not localhost. basePath rides along
 // so the image URL is the full /fms-ovs/... path the asset is actually served at.
@@ -179,7 +213,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} font-sans antialiased`}>
+      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} font-sans antialiased`}>
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}
