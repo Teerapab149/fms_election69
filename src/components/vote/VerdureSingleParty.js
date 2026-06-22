@@ -1,58 +1,67 @@
 "use client";
 
-// VerdureSingleParty — SINGLE-PARTY VOTE for the Verdure template. Dispatched
-// from VerdureVote when one party runs. The full party presentation as one scroll
-// (ribbon → Vision / Policies / Team chapters) ending at a 3-choice ballot
-// (รับรอง / ไม่รับรอง / งดออกเสียง) + a moss confirm bar + an in-component double-
-// check dialog. Mirrors the design's profile + ballot language. Same contract as
-// the other SingleParty views (onConfirm IS the submit). All digits Arabic.
+// VerdureSingleParty — SINGLE-PARTY VOTE for the Verdure template. A warm, soft
+// ("ละมุน") ceremony — deliberately distinct from the cream MAGAZINE party page:
+// a golden-hour warm-cream wash, a soft logo medallion, a tight centred column,
+// then the candidates as a LARGE PORTRAIT GALLERY (the showpiece), key policies,
+// and the dominant 3-choice DECISION (รับรอง / ไม่รับรอง / งดออกเสียง) + confirm.
+// Opens with the cinematic wax-seal intro. Same vote contract (onConfirm IS the
+// submit). All digits Arabic.
 
-import { getPath } from "../../utils/basePath";
 import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import VerdureShell from "./VerdureShell";
 import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
 
-// ── unique single-party intro: a moss curtain over the page; the party's wax
-// seal stamps in (spring scale + a draw-on dashed ring), the name + slogan
-// reveal, then the curtain wipes up to hand the voter into the presentation.
-// editorMode skips it. ──
+// ── cinematic intro: a warm cream wax-seal curtain that wipes up to reveal the
+// party's wax seal stamps in, the name + slogan reveal. editorMode skips it; a 3s
+// setTimeout always releases the page (content is never trapped). ──
 function VerdureBallotIntro({ party, no, onDone }) {
   useEffect(() => {
-    const t = setTimeout(onDone, 3000); // safety: always release the page
+    const t = setTimeout(onDone, 4600); // safety: always release the page (matches the wipe)
     return () => clearTimeout(t);
   }, [onDone]);
   const words = String(party?.name || "").trim().split(/\s+/);
+  const logoSrc = resolveSrc(party?.logoUrl);
   return (
     <motion.div className="vd-bintro" initial={{ y: 0 }} animate={{ y: "-100%" }}
-      transition={{ delay: 2.15, duration: 0.85, ease: [0.76, 0, 0.24, 1] }}
+      transition={{ delay: 3.6, duration: 0.95, ease: [0.76, 0, 0.24, 1] }}
       onClick={onDone} aria-hidden>
       <motion.div className="vd-bintro__inner"
-        initial={{ opacity: 1 }} animate={{ opacity: [1, 1, 0] }} transition={{ delay: 1.9, duration: 0.5 }}>
-        <motion.div className="vd-bintro__eyebrow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5 }}>
-          THE ONLY PARTY · พรรคเดียวที่ลงสมัคร
+        initial={{ opacity: 1 }} animate={{ opacity: [1, 1, 0] }} transition={{ delay: 3.2, duration: 0.5 }}>
+        <motion.div className="vd-bintro__eyebrow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.5 }}>
+          ★ THE ONLY PARTY · พรรคเดียวที่ลงสมัคร ★
+        </motion.div>
+        <motion.div className="vd-bintro__no" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.26, duration: 0.5 }}>
+          PARTY No. {no}
         </motion.div>
         <motion.div className="vd-bintro__seal"
-          initial={{ scale: 0.5, opacity: 0, rotate: -14 }} animate={{ scale: 1, opacity: 1, rotate: 0 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 150, damping: 13 }}>
-          <motion.span className="ring" animate={{ rotate: 360 }} transition={{ duration: 9, ease: "linear", repeat: Infinity }} />
+          initial={{ scale: 0.45, opacity: 0, rotate: -16 }} animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ delay: 0.42, type: "spring", stiffness: 140, damping: 12 }}>
+          <motion.span className="flash" initial={{ scale: 0.6, opacity: 0.85 }} animate={{ scale: 1.8, opacity: 0 }} transition={{ delay: 0.62, duration: 0.95, ease: "easeOut" }} />
+          <motion.span className="ring" animate={{ rotate: 360 }} transition={{ duration: 11, ease: "linear", repeat: Infinity }} />
           <motion.span className="ring2"
-            initial={{ scale: 1.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.5, duration: 0.6 }} />
-          <span className="no">{party?.number}</span>
+            initial={{ scale: 1.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.6, duration: 0.6 }} />
+          {logoSrc ? <img className="logo" src={logoSrc} alt={party?.name || ""} /> : <span className="no">{party?.number}</span>}
         </motion.div>
         <h2 className="vd-bintro__name">
           {words.map((w, i) => (
-            <motion.span key={i} initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 + i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>{w}&nbsp;</motion.span>
+            <motion.span key={i} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.98 + i * 0.07, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}>{w}&nbsp;</motion.span>
           ))}
         </h2>
         {party?.slogan && (
-          <motion.p className="vd-bintro__slogan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.05, duration: 0.6 }}>
+          <motion.p className="vd-bintro__slogan" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.55, duration: 0.6 }}>
             “{party.slogan}”
           </motion.p>
         )}
-        <motion.div className="vd-bintro__hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.5 }}>
+        <motion.div className="vd-bintro__div" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.9, duration: 0.6, ease: [0.16, 1, 0.3, 1] }} />
+        <motion.div className="vd-bintro__tag" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1, duration: 0.6 }}>
+          การเลือกตั้งคณะกรรมการบริหารสโมสรนักศึกษา
+        </motion.div>
+        <motion.div className="vd-bintro__hint" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 1, 0.45, 1] }} transition={{ delay: 2.5, duration: 1.8, repeat: Infinity, repeatDelay: 0.2 }}>
           แตะเพื่อเริ่ม · ENTER
         </motion.div>
       </motion.div>
@@ -88,18 +97,19 @@ function Opt({ disc, discSm, kicker, name, slogan, selected, onClick, abstain })
 
 export default function VerdureSingleParty({
   party = {}, specialOptions = {}, selectedPartyId = null,
-  onSelect = () => {}, onConfirm = () => {}, isSubmitting = false, user = null, editorMode = false,
+  onSelect = () => {}, onConfirm = () => {}, isSubmitting = false, user = null, editorMode = false, forceIntro = false,
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modalMember, setModalMember] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
-  const [introDone, setIntroDone] = useState(editorMode); // editor/preview skip the cinematic intro
+  // editor/preview skip the cinematic intro — unless forceIntro (the dev-only intro demo)
+  const [introDone, setIntroDone] = useState(editorMode && !forceIntro);
 
-  const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
   const heroImg = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
+  const logoSrc = resolveSrc(party?.logoUrl);
   const no = pad2(party?.number);
   const abstain = specialOptions?.abstain;
   const disapprove = specialOptions?.disapprove;
@@ -113,63 +123,76 @@ export default function VerdureSingleParty({
     <VerdureShell active="vote" editorMode={editorMode}
       edge={{ num: "04", label: "Ballot", th: "ลงคะแนนเสียง" }}
       cornermarkTitle="Ballot" cornermarkSub={`Party No. ${no}`}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> SINGLE PARTY · <strong>SECURE</strong></div>}>
+      statusChip={<div className="vd-chip-live"><span className="dot" /> เปิดให้ลงคะแนน · <strong>ปลอดภัย</strong></div>}>
       {!introDone && <VerdureBallotIntro party={party} no={no} onDone={() => setIntroDone(true)} />}
-      <div className="vd-profile vd-sp">
-        <div className="vd-ribbon">
-          <div className="vd-ribbon__no">{party?.number}</div>
-          <div className="vd-ribbon__main">
-            <div className="vd-ribbon__kicker"><span className="ac">●</span> THE ONLY PARTY · พรรคเดียวที่ลงสมัคร</div>
-            <h1 className="vd-ribbon__name">{party?.name}</h1>
-            {party?.slogan && <p className="vd-ribbon__slogan">{party.slogan}</p>}
+
+      <div className="vd-booth-bg" aria-hidden />
+      <div className="vd-booth">
+        <div className="vd-booth__head">
+          <div className="vd-booth__eyebrow">★ THE ONLY PARTY · พรรคเดียวที่ลงสมัคร ★</div>
+          <div className="vd-seal">
+            <span className="vd-seal__glow" />
+            <span className="vd-seal__ring" />
+            <span className="vd-seal__ring2" />
+            <div className="vd-seal__disc">
+              {logoSrc ? <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} /> : <span className="no">{party?.number}</span>}
+            </div>
           </div>
-          <div className="vd-ribbon__quick">
-            CANDIDATES <strong className="vd-tabular">{members.length || "—"}</strong><br />
-            POLICIES <strong className="vd-tabular">{policies.length ? pad2(policies.length) : "—"}</strong><br />
-            VOTE <strong>3</strong>
-          </div>
+          <h1 className="vd-booth__name">{party?.name}</h1>
+          {party?.slogan && <p className="vd-booth__slogan">“{party.slogan}”</p>}
         </div>
 
-        <div className="vd-sp__deck">{userName ? <>สวัสดี {userName} — </> : null}อ่านข้อมูลพรรคด้านล่าง แล้วเลือก รับรอง ไม่รับรอง หรืองดออกเสียง ที่ท้ายหน้า. ลงคะแนนได้เพียงครั้งเดียว.</div>
+        {heroImg && (
+          <figure className="vd-booth__cover" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
+            <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
+            <figcaption>ภาพหมู่พรรค · คลิกเพื่อขยาย</figcaption>
+          </figure>
+        )}
 
-        {(story || heroImg || missions.length > 0) && (
-          <section className="vd-chapter">
-            <div className="vd-chapter__wm">I.</div>
-            <div className="vd-chapter__head"><h2>Chapter <em>I</em> &nbsp;—&nbsp; Vision.</h2><span className="vd-smallcaps vd-ch-sub">วิสัยทัศน์</span></div>
-            {heroImg && (
-              <figure className="vd-chapter__photo" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
-                <img src={heroImg} alt={party?.name} /><figcaption>TEAM PHOTO · คลิกเพื่อขยาย</figcaption>
-              </figure>
-            )}
-            {story && <p>{story}</p>}
-            {missions.length > 0 && <div className="vd-missions">{missions.map((m, i) => <div className="vd-mission" key={i}><span className="no">{pad2(i + 1)}</span><p>{m}</p></div>)}</div>}
-          </section>
+        {story && (
+          <div className="vd-booth__brief">
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">About the party</span><h2>เกี่ยวกับพรรค</h2></div>{userName && <span className="vd-booth__count">สวัสดี {userName}</span>}</div>
+            <div className="vd-booth__scroll"><p>{story}</p></div>
+          </div>
         )}
 
         {policies.length > 0 && (
-          <section className="vd-chapter">
-            <div className="vd-chapter__wm">II.</div>
-            <div className="vd-chapter__head"><h2>Chapter <em>II</em> &nbsp;—&nbsp; Policies.</h2><span className="vd-smallcaps vd-ch-sub">{policies.length} นโยบาย</span></div>
-            <div className="vd-policies">{policies.map((p, i) => <div className="vd-policy" key={i}><div className="vd-policy__no">{i + 1}</div><div className="vd-policy__tag">POLICY {pad2(i + 1)}</div><p>{p}</p></div>)}</div>
-          </section>
+          <div className="vd-booth__section">
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Key policies</span><h2>นโยบายเด่น</h2></div><span className="vd-booth__count">{policies.length} ข้อ</span></div>
+            <ol className="vd-plist">
+              {policies.map((p, i) => (
+                <li key={i}><span className="n">{pad2(i + 1)}</span><span className="t">{p}</span></li>
+              ))}
+            </ol>
+          </div>
         )}
 
         {members.length > 0 && (
-          <section className="vd-chapter">
-            <div className="vd-chapter__wm">III.</div>
-            <div className="vd-chapter__head"><h2>Chapter <em>III</em> &nbsp;—&nbsp; The team.</h2><span className="vd-smallcaps vd-ch-sub">{members.length} candidates</span></div>
-            <div className="vd-roster">{members.map((m, i) => { const img = resolveSrc(m?.imageUrl); return (
-              <button type="button" className="vd-rtile" key={m.id || i} onClick={() => setModalMember(m)} aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}>
-                <div className="vd-rtile__photo">{img ? <img src={img} alt={m.name} /> : <span>portrait</span>}</div>
-                <div className="vd-rtile__name">{m.name}</div>
-                {(m.position || m.major) && <div className="vd-rtile__role">{m.position || m.major}</div>}
-              </button>); })}</div>
-          </section>
+          <div className="vd-booth__section">
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">The team</span><h2>ทีมผู้สมัคร</h2></div><span className="vd-booth__count">{members.length} คน</span></div>
+            <div className="vd-cands">
+              {members.map((m, i) => {
+                const img = resolveSrc(m?.imageUrl);
+                return (
+                  <button type="button" key={m.id || i} className="vd-cand" onClick={() => setModalMember(m)} aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}>
+                    <div className="vd-cand__photo">{img ? <img src={img} alt={m.name} /> : <span className="ph">{(m.name || "?").trim().charAt(0)}</span>}</div>
+                    <div className="vd-cand__body">
+                      <div className="vd-cand__name">{m.name}</div>
+                      {(m.position || m.major) && <div className="vd-cand__role">{m.position || m.major}</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
 
-        <section className="vd-chapter vd-sp__ballot">
-          <div className="vd-chapter__wm">IV.</div>
-          <div className="vd-chapter__head"><h2>Chapter <em>IV</em> &nbsp;—&nbsp; Your decision.</h2><span className="vd-smallcaps vd-ch-sub">รับรอง / ไม่รับรอง / งดออกเสียง</span></div>
+        <section className="vd-decision">
+          <div className="vd-decision__head">
+            <span className="vd-decision__kicker">★ Cast your vote · ลงคะแนน ★</span>
+            <h2>การตัดสินใจของคุณ</h2>
+            <p>เลือกหนึ่งตัวเลือก แล้วกดยืนยัน · ลงคะแนนได้เพียงครั้งเดียว</p>
+          </div>
           <Opt disc="✓" kicker={<>APPROVE · เห็นชอบ · <span className="ac">No. {no}</span></>} name="รับรอง" slogan={`เห็นชอบให้ ${party?.name || ""} ดำรงตำแหน่ง`} selected={kind === "approve"} onClick={pick(party?.id)} />
           {disapprove && <Opt disc="×" discSm abstain kicker="DISAPPROVE · ไม่เห็นชอบ" name="ไม่รับรอง" slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง" selected={kind === "disapprove"} onClick={pick(disapprove.id)} />}
           {abstain && <Opt disc="×" discSm abstain kicker="ABSTAIN · งดออกเสียง" name="งดออกเสียง" slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้" selected={kind === "abstain"} onClick={pick(abstain.id)} />}
@@ -182,6 +205,8 @@ export default function VerdureSingleParty({
             </button>
           </div>
         </section>
+
+        <div className="vd-booth__foot"><span className="lock">●</span> การลงคะแนนของคุณปลอดภัยและเป็นความลับ · เข้ารหัสโดย PSU Passport</div>
       </div>
 
       {confirmOpen && (
@@ -200,98 +225,160 @@ export default function VerdureSingleParty({
       )}
 
       <VerdureMemberModal member={modalMember} onClose={() => setModalMember(null)} />
-      <VerdureLightbox src={lightboxSrc} caption={`TEAM PHOTO · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
+      <VerdureLightbox src={lightboxSrc} caption={`ภาพหมู่พรรค · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
 
       <style jsx global>{`
-        .vd-sp { position:relative; z-index:1; }
-        .vd-sp .vd-ribbon__kicker .ac { color:var(--terra); }
-
-        /* ── cinematic ballot intro (the wax-seal opener) ── */
-        .vd-bintro { position:fixed; inset:0; z-index:9000; display:grid; place-items:center; text-align:center; padding:24px; cursor:pointer;
-          background:radial-gradient(130% 120% at 50% 30%, #2A4A39 0%, #1F3A2C 60%); color:var(--cream); }
+        /* ── cinematic ballot intro — WARM cream wax-seal curtain that wipes up into
+           the warm page (seamless cream→cream, no dark flash) ── */
+        .vd-bintro { position:fixed; inset:0; z-index:9000; display:grid; place-items:center; text-align:center; padding:24px; cursor:pointer; color:var(--moss);
+          background:
+            radial-gradient(80% 50% at 50% 28%, rgba(210,162,72,.22) 0%, transparent 56%),
+            radial-gradient(70% 50% at 100% 92%, rgba(188,94,62,.10) 0%, transparent 52%),
+            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.26) 0%, transparent 56%),
+            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 48%, #EFE2CB 100%); }
         .vd-bintro__inner { display:flex; flex-direction:column; align-items:center; }
-        .vd-bintro__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:32px; }
-        .vd-bintro__seal { position:relative; width:clamp(180px,24vw,240px); height:clamp(180px,24vw,240px); border-radius:50%; display:grid; place-items:center; background:radial-gradient(125% 125% at 32% 24%, #305041 0%, #1B3325 60%); box-shadow:0 30px 60px -20px rgba(0,0,0,.5), inset 0 3px 12px rgba(244,236,219,.08); margin-bottom:34px; }
-        .vd-bintro__seal .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(96px,13vw,140px); line-height:1; color:var(--cream); }
-        .vd-bintro__seal .ring { position:absolute; inset:-18px; border-radius:50%; border:1px dashed rgba(188,94,62,.6); }
-        .vd-bintro__seal .ring2 { position:absolute; inset:12px; border-radius:50%; border:1px dashed rgba(244,236,219,.25); }
-        .vd-bintro__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,5vw,68px); line-height:1.02; letter-spacing:-.02em; margin:0; max-width:14ch; color:var(--cream); }
+        .vd-bintro__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--terra-2); margin-bottom:16px; }
+        .vd-bintro__no { font-family:var(--fm); font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:var(--moss); opacity:.5; margin-bottom:28px; }
+        .vd-bintro__seal { position:relative; width:clamp(180px,24vw,240px); height:clamp(180px,24vw,240px); border-radius:50%; display:grid; place-items:center; background:radial-gradient(125% 125% at 32% 24%, #FFFFFF 0%, #FAF4E4 62%); box-shadow:0 30px 60px -24px rgba(31,58,44,.35), 0 0 72px -6px rgba(210,162,72,.4), inset 0 2px 8px rgba(255,255,255,.6); margin-bottom:34px; }
+        .vd-bintro__seal .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(96px,13vw,140px); line-height:1; color:var(--moss); }
+        .vd-bintro__seal .logo { width:70%; height:70%; object-fit:contain; display:block; }
+        .vd-bintro__seal .flash { position:absolute; inset:-18px; border-radius:50%; border:2px solid var(--terra); pointer-events:none; }
+        .vd-bintro__seal .ring { position:absolute; inset:-18px; border-radius:50%; border:1px dashed var(--terra-soft); }
+        .vd-bintro__seal .ring2 { position:absolute; inset:12px; border-radius:50%; border:1px dashed rgba(210,162,72,.4); }
+        .vd-bintro__div { width:64px; height:1.5px; background:var(--terra); margin:26px 0 0; transform-origin:center; }
+        .vd-bintro__tag { font-family:var(--ft); font-size:13px; color:rgba(31,58,44,.6); margin-top:14px; letter-spacing:.01em; }
+        .vd-bintro__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,5vw,68px); line-height:1.02; letter-spacing:-.02em; margin:0; max-width:14ch; color:var(--moss); }
         .vd-bintro__name span { display:inline-block; }
-        .vd-bintro__slogan { font-family:var(--ft); font-size:clamp(15px,1.8vw,19px); color:rgba(244,236,219,.75); margin:18px auto 0; max-width:520px; line-height:1.5; }
-        .vd-bintro__hint { margin-top:32px; font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:rgba(244,236,219,.5); }
-        .vd-sp__deck { font-family:var(--ft); font-size:15px; color:var(--moss); opacity:.8; line-height:1.6; max-width:760px; margin:-24px 0 8px; padding:18px 22px; border:1px dashed var(--rule); border-radius:18px; background:var(--cream-2); }
+        .vd-bintro__slogan { font-family:var(--ft); font-size:clamp(15px,1.8vw,19px); color:rgba(31,58,44,.72); margin:18px auto 0; max-width:520px; line-height:1.5; }
+        .vd-bintro__hint { margin-top:32px; font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-2); }
 
-        .vd-chapter { position:relative; padding:60px 0 52px; border-top:1px solid var(--rule); overflow:hidden; }
-        .vd-chapter__wm { position:absolute; top:24px; right:-20px; font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(160px,20vw,260px); line-height:.8; letter-spacing:-.05em; color:var(--cream-3); opacity:.5; pointer-events:none; z-index:0; }
-        .vd-chapter > * { position:relative; z-index:1; }
-        .vd-chapter__head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:28px; }
-        .vd-chapter__head h2 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(40px,5vw,64px); line-height:1; letter-spacing:-.015em; margin:0; color:var(--moss); }
-        .vd-chapter__head h2 em { color:var(--terra); }
-        .vd-ch-sub { color:var(--moss); opacity:.55; }
-        .vd-chapter > p { font-family:var(--ft); font-size:18px; line-height:1.7; color:var(--moss); margin:0; max-width:760px; }
-        .vd-chapter__photo { margin:0 0 28px; cursor:zoom-in; position:relative; border-radius:22px; overflow:hidden; border:1px solid var(--rule); max-width:760px; }
-        .vd-chapter__photo img { width:100%; max-height:360px; object-fit:cover; display:block; }
-        .vd-chapter__photo figcaption { position:absolute; left:12px; bottom:12px; font-family:var(--fm); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(31,58,44,.8); padding:5px 12px; border-radius:999px; }
-        .vd-missions { margin-top:28px; max-width:820px; }
-        .vd-mission { display:grid; grid-template-columns:56px 1fr; gap:24px; align-items:baseline; padding:16px 0; border-top:1px dashed var(--rule); }
-        .vd-mission .no { font-family:var(--fd); font-style:italic; font-size:28px; color:var(--terra); line-height:1; }
-        .vd-mission p { font-family:var(--ft); font-size:16px; line-height:1.6; color:var(--moss); opacity:.9; margin:0; }
-        .vd-policies { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:8px; }
-        .vd-policy { padding:30px 28px 32px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; position:relative; transition:all .25s; }
-        .vd-policy:hover { background:var(--cream); transform:translateY(-3px); }
-        .vd-policy__no { position:absolute; top:-20px; left:24px; width:48px; height:48px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:24px; }
-        .vd-policy__tag { display:inline-block; font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra); margin:8px 0 14px; }
-        .vd-policy p { font-family:var(--ft); font-size:15px; line-height:1.55; color:var(--moss); opacity:.85; margin:0; }
-        .vd-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
-        .vd-rtile { background:var(--cream-2); border:1px solid var(--rule); border-radius:18px; padding:16px 14px 18px; text-align:center; transition:all .25s; cursor:pointer; font:inherit; color:inherit; display:block; width:100%; }
-        .vd-rtile:hover, .vd-rtile:focus-visible { background:var(--cream); transform:translateY(-4px); outline:none; border-color:var(--terra); }
-        .vd-rtile__photo { width:100%; aspect-ratio:1; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; margin-bottom:14px; position:relative; overflow:hidden; }
-        .vd-rtile__photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-        .vd-rtile__photo span { font-family:var(--fm); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); opacity:.55; }
-        .vd-rtile__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:16px; line-height:1.2; margin-bottom:4px; letter-spacing:-.01em; color:var(--moss); }
-        .vd-rtile__role { font-family:var(--fm); font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:var(--terra); }
+        /* ── warm "ละมุน" ballot — golden-hour cream, soft, candidate-forward ── */
+        .vd-booth-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
+          background:
+            radial-gradient(72% 46% at 50% 0%, rgba(210,162,72,.16) 0%, transparent 56%),
+            radial-gradient(60% 44% at 100% 8%, rgba(188,94,62,.09) 0%, transparent 50%),
+            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.30) 0%, transparent 56%),
+            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 46%, #EFE2CB 100%); }
+        .vd-booth { max-width:860px; margin:0 auto; padding:108px 24px 150px; position:relative; z-index:1; }
+        .vd-booth__head { text-align:center; }
+        .vd-booth__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:30px; }
 
-        .vd-sp__ballot .vd-opt { margin-top:16px; }
-        .vd-opt { display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:24px; padding:24px 28px 24px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; outline:none; }
-        .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--moss); }
-        .vd-opt.is-selected { background:var(--moss); color:var(--cream); border-color:var(--moss); }
-        .vd-opt__disc { width:80px; height:80px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:48px; line-height:1; color:var(--moss); transition:all .25s; }
-        .vd-opt__disc.sm { font-size:36px; }
+        .vd-seal { position:relative; width:clamp(168px,23vw,210px); aspect-ratio:1; margin:4px auto 30px; display:grid; place-items:center; }
+        .vd-seal__glow { position:absolute; inset:-46px; border-radius:50%; background:radial-gradient(circle, rgba(210,162,72,.26) 0%, rgba(227,191,169,.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
+        .vd-seal__ring { position:absolute; inset:-15px; border-radius:50%; border:1px dashed var(--terra-soft); }
+        .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(210,162,72,.3); }
+        .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(31,58,44,.4), 0 0 0 7px rgba(250,244,228,.6); }
+        /* fixed 70% box + contain → the logo always scales to fit (small logos
+           ENLARGE, big ones shrink), centred and clear of the circle's curve for
+           ANY aspect ratio / resolution of future party logos */
+        .vd-seal__disc img { width:70%; height:70%; object-fit:contain; display:block; }
+        .vd-seal__disc .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:84px; line-height:1; color:var(--moss); }
+        @keyframes vdGlow { 0%,100%{opacity:.55; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.05)} }
+
+        .vd-booth__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(36px,5.4vw,62px); line-height:1.04; letter-spacing:-.02em; margin:0 0 14px; color:var(--moss); }
+        .vd-booth__slogan { font-family:var(--ft); font-size:17px; color:rgba(31,58,44,.8); line-height:1.55; margin:0 auto; max-width:540px; }
+        .vd-booth__cover { display:block; margin:40px 0 0; cursor:zoom-in; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(31,58,44,.45); }
+        .vd-booth__cover img { width:100%; height:clamp(260px,38vw,440px); object-fit:cover; display:block; transition:transform .6s; }
+        .vd-booth__cover:hover img { transform:scale(1.03); }
+        .vd-booth__cover figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(31,58,44,.78); padding:6px 14px; border-radius:999px; }
+
+        .vd-booth__brief, .vd-booth__section { margin-top:48px; padding-top:36px; border-top:1px solid var(--rule); }
+        .vd-booth__shead { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:28px; padding-bottom:16px; border-bottom:1.5px solid rgba(31,58,44,.16); position:relative; }
+        .vd-booth__shead::after { content:""; position:absolute; left:0; bottom:-1.5px; width:58px; height:1.5px; background:var(--terra); }
+        .vd-booth__kicker { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--terra-2); margin-bottom:10px; }
+        .vd-booth__shead h2 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,4.2vw,46px); line-height:.98; letter-spacing:-.015em; color:var(--moss); margin:0; }
+        .vd-booth__count { font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra-2); white-space:nowrap; padding-bottom:5px; }
+        .vd-booth__scroll { max-height:230px; overflow-y:auto; padding:22px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:18px; box-shadow:inset 0 2px 12px rgba(31,58,44,.05); }
+        .vd-booth__scroll p { font-family:var(--ft); font-size:17px; line-height:1.85; color:rgba(31,58,44,.9); margin:0; }
+        .vd-booth__scroll::-webkit-scrollbar { width:6px; }
+        .vd-booth__scroll::-webkit-scrollbar-track { background:transparent; }
+        .vd-booth__scroll::-webkit-scrollbar-thumb { background:var(--rule); border-radius:99px; }
+
+        /* candidates — the showpiece: full-bleed portrait cards. NO light border
+           (it showed a white edge over the dark posters); a faint DARK hairline ring
+           + a moss photo backing means no light sliver ever shows at the top/corners. */
+        .vd-cands { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+        .vd-cand { background:var(--cream-2); border:0; border-radius:18px; overflow:hidden; padding:0; cursor:pointer; text-align:left; color:inherit; font:inherit; position:relative; transition:transform .25s, box-shadow .25s; box-shadow:0 16px 34px -22px rgba(31,58,44,.42), 0 0 0 1px rgba(31,58,44,.07); }
+        .vd-cand:hover, .vd-cand:focus-visible { transform:translateY(-7px); box-shadow:0 32px 56px -24px rgba(31,58,44,.5), 0 0 0 1.5px var(--terra); outline:none; }
+        .vd-cand__photo { width:100%; aspect-ratio:4/5; overflow:hidden; background:var(--moss); position:relative; }
+        .vd-cand__photo img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
+        .vd-cand:hover .vd-cand__photo img { transform:scale(1.05); }
+        .vd-cand__photo::after { content:""; position:absolute; inset:0; box-shadow:inset 0 -38px 38px -26px rgba(20,32,22,.5); pointer-events:none; }
+        .vd-cand__photo .ph { display:grid; place-items:center; width:100%; height:100%; font-family:var(--fd); font-style:italic; font-size:44px; color:var(--cream); opacity:.6; }
+        .vd-cand__body { padding:13px 15px 15px; position:relative; }
+        .vd-cand__body::before { content:""; position:absolute; left:15px; top:0; width:26px; height:2px; background:var(--terra); }
+        .vd-cand__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:16px; line-height:1.2; color:var(--moss); margin:7px 0 4px; }
+        .vd-cand__role { font-family:var(--fm); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--terra-2); }
+
+        .vd-plist { list-style:none; margin:0; padding:0; }
+        .vd-plist li { display:grid; grid-template-columns:46px 1fr; gap:20px; align-items:center; padding:18px 8px; border-top:1px solid var(--rule); border-radius:12px; transition:padding-left .22s, background .22s; }
+        .vd-plist li:first-child { border-top:0; }
+        .vd-plist li:hover { padding-left:16px; background:rgba(250,244,228,.7); }
+        .vd-plist .n { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; color:var(--terra); }
+        .vd-plist .t { font-family:var(--ft); font-size:16px; line-height:1.66; color:rgba(31,58,44,.9); }
+
+        /* THE DECISION — the ballot moment */
+        .vd-decision { margin-top:66px; padding-top:46px; border-top:2px solid rgba(31,58,44,.16); position:relative; }
+        .vd-decision::before { content:""; position:absolute; left:50%; top:-2px; transform:translateX(-50%); width:84px; height:2px; background:var(--terra); }
+        .vd-decision__head { text-align:center; margin-bottom:34px; }
+        .vd-decision__kicker { display:block; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:14px; }
+        .vd-decision__head h2 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,4.8vw,54px); line-height:1; letter-spacing:-.015em; color:var(--moss); margin:0 0 12px; }
+        .vd-decision__head p { font-family:var(--ft); font-size:15px; color:rgba(31,58,44,.72); margin:0; }
+
+        .vd-opt { display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:22px; padding:22px 26px 22px 22px; background:var(--cream-2); border:1px solid var(--rule); border-radius:26px; cursor:pointer; margin-bottom:12px; transition:all .25s; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
+        .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); }
+        .vd-opt.is-selected { background:var(--moss); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(31,58,44,.55); }
+        .vd-opt__disc { width:72px; height:72px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:42px; line-height:1; color:var(--moss); transition:all .25s; }
+        .vd-opt__disc.sm { font-size:32px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra-soft); }
         .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
+        /* primary choice (รับรอง) reads warmer/inviting vs the dashed abstain rows */
+        .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, #FCF5E6 0%, var(--cream-2) 100%); }
+        .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); color:var(--moss); }
         .vd-opt__main { min-width:0; }
-        .vd-opt__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:4px; }
-        .vd-opt__kicker .ac { color:var(--terra); opacity:1; }
-        .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.65); opacity:1; }
-        .vd-opt__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; line-height:1.15; margin:0 0 4px; }
-        .vd-opt__slogan { font-family:var(--ft); font-size:14px; opacity:.75; margin:0; line-height:1.4; }
-        .vd-opt__check { width:44px; height:44px; border-radius:50%; border:1px solid var(--rule); background:var(--cream); display:grid; place-items:center; color:var(--cream); font-size:18px; transition:all .25s; flex-shrink:0; }
+        .vd-opt__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(31,58,44,.55); margin-bottom:4px; }
+        .vd-opt__kicker .ac { color:var(--terra-2); }
+        .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.7); }
+        .vd-opt.is-selected .vd-opt__kicker .ac { color:var(--terra-soft); }
+        .vd-opt__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; line-height:1.15; margin:0 0 4px; color:var(--moss); }
+        .vd-opt.is-selected .vd-opt__name { color:var(--cream); }
+        .vd-opt__slogan { font-family:var(--ft); font-size:14px; color:rgba(31,58,44,.65); margin:0; line-height:1.4; }
+        .vd-opt.is-selected .vd-opt__slogan { color:rgba(244,236,219,.72); }
+        .vd-opt__check { width:42px; height:42px; border-radius:50%; border:1px solid var(--rule); background:transparent; display:grid; place-items:center; color:transparent; font-size:18px; transition:all .25s; flex-shrink:0; }
         .vd-opt.is-selected .vd-opt__check { background:var(--cream); border-color:var(--cream); color:var(--moss); }
         .vd-opt--abstain { background:transparent; border-style:dashed; }
-        .vd-opt--abstain .vd-opt__disc { background:var(--cream); }
-        .vd-opt--abstain .vd-opt__name { font-size:20px; }
+        .vd-opt--abstain .vd-opt__name { font-size:21px; }
 
-        .vd-confirm { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; margin-top:28px; padding:24px 24px 24px 32px; background:var(--moss); color:var(--cream); border-radius:28px; }
-        .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; opacity:.55; }
-        .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; }
+        .vd-confirm { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; margin-top:24px; padding:24px 24px 24px 30px; background:var(--cream-2); border:1px solid var(--rule); border-radius:26px; }
+        .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(31,58,44,.55); }
+        .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; color:var(--moss); }
 
-        .vd-cm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(31,58,44,.62); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:24px; }
-        .vd-cm__card { width:min(480px,100%); background:var(--cream); border:1px solid var(--rule); border-radius:28px; padding:36px; text-align:center; box-shadow:0 40px 80px -20px rgba(31,58,44,.5); }
-        .vd-cm__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:18px; }
+        .vd-booth__foot { margin-top:36px; text-align:center; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(31,58,44,.52); }
+        .vd-booth__foot .lock { color:var(--terra); margin-right:7px; font-size:8px; vertical-align:middle; }
+
+        /* confirm dialog — a warm cream card */
+        .vd-cm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(31,58,44,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:24px; }
+        .vd-cm__card { width:min(480px,100%); background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; text-align:center; box-shadow:0 40px 80px -24px rgba(31,58,44,.45); }
+        .vd-cm__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--terra-2); margin-bottom:18px; }
         .vd-cm__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:32px; letter-spacing:-.02em; margin:0 0 10px; color:var(--moss); }
-        .vd-cm__sub { font-family:var(--ft); font-size:14px; color:var(--moss); opacity:.75; margin:0 0 22px; }
-        .vd-cm__sub strong { color:var(--terra); }
+        .vd-cm__sub { font-family:var(--ft); font-size:14px; color:rgba(31,58,44,.78); margin:0 0 22px; }
+        .vd-cm__sub strong { color:var(--terra-2); }
         .vd-cm__pick { border:1px dashed var(--rule); border-radius:14px; padding:14px 18px; margin-bottom:24px; }
-        .vd-cm__pick .lbl { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:6px; }
+        .vd-cm__pick .lbl { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(31,58,44,.55); margin-bottom:6px; }
         .vd-cm__pick .val { font-family:var(--fd); font-style:italic; font-size:18px; color:var(--moss); }
         .vd-cm__actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
 
         @media (max-width:1100px) {
-          .vd-policies, .vd-roster { grid-template-columns:1fr; }
-          .vd-roster { grid-template-columns:repeat(2,1fr); }
+          .vd-booth { padding:96px 20px 130px; }
+          .vd-cands { grid-template-columns:repeat(3,1fr); }
           .vd-opt { grid-template-columns:56px 1fr auto; padding:18px; gap:16px; }
-          .vd-opt__disc { width:56px; height:56px; font-size:32px; }
+          .vd-opt__disc { width:56px; height:56px; font-size:30px; }
           .vd-confirm { grid-template-columns:1fr; text-align:center; }
+        }
+        @media (max-width:560px) {
+          .vd-booth { padding:84px 16px 128px; }
+          .vd-cands { grid-template-columns:repeat(2,1fr); gap:14px; }
+          .vd-plist li { gap:16px; }
         }
       `}</style>
     </VerdureShell>
