@@ -56,18 +56,22 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
     >
       <div className="vd-profile">
         <div className="vd-ribbon">
-          <div className="vd-ribbon__no">{party?.number}</div>
+          <div className={`vd-ribbon__no ${logoSrc ? "has-logo" : ""}`}>
+            {logoSrc ? <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} /> : party?.number}
+          </div>
           <div className="vd-ribbon__main">
             <div className="vd-ribbon__kicker">PARTY No. {no}</div>
             <h1 className="vd-ribbon__name">{party?.name}</h1>
             {party?.slogan && <p className="vd-ribbon__slogan">{party.slogan}</p>}
           </div>
-          <div className="vd-ribbon__quick">
-            <div className="row"><span className="k">CANDIDATES</span><span className="v vd-tabular">{members.length || "—"}</span></div>
-            <div className="row"><span className="k">POLICIES</span><span className="v vd-tabular">{policies.length ? pad2(policies.length) : "—"}</span></div>
-            <div className="row"><span className="k">STATUS</span><span className="v"><em>Active</em></span></div>
-          </div>
         </div>
+
+        {heroImg && (
+          <figure className="vd-groupphoto" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
+            <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
+            <figcaption>ภาพหมู่พรรค · คลิกเพื่อขยาย</figcaption>
+          </figure>
+        )}
 
         {chapterKeys.includes("vision") && (
           <section className="vd-chapter">
@@ -76,20 +80,9 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
               <span className="vd-chapter__eyebrow">CHAPTER {roman("vision")} · วิสัยทัศน์</span>
               <h2>Vision &amp; <em>identity.</em></h2>
             </div>
-            <div className="vd-vision">
-              {logoSrc && (
-                <div className="vd-crest"><img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} /></div>
-              )}
-              <div className="vd-vision__body">
-                {story ? <p>{story}</p> : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ.</p>}
-              </div>
+            <div className="vd-vision__body">
+              {story ? <p>{story}</p> : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ</p>}
             </div>
-            {heroImg && (
-              <figure className="vd-chapter__photo" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
-                <img src={heroImg} alt={party?.name} />
-                <figcaption>TEAM PHOTO · คลิกเพื่อขยาย</figcaption>
-              </figure>
-            )}
           </section>
         )}
 
@@ -161,24 +154,27 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
       <style jsx global>{`
         .vd-profile { flex:1; padding:96px 80px 150px; max-width:1280px; margin:0 auto; width:100%; position:relative; z-index:1; }
 
-        /* ribbon — symmetric: disc · main · a tidy right-aligned stat column */
-        .vd-ribbon { display:grid; grid-template-columns:auto 1fr auto; gap:48px; align-items:center; padding:48px 56px; background:var(--moss); color:var(--cream); border-radius:28px; margin-bottom:8px; }
-        .vd-ribbon__no { width:132px; height:132px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:96px; line-height:1; letter-spacing:-.04em; flex-shrink:0; }
+        /* ribbon — standalone identity card: logo disc · name/slogan */
+        .vd-ribbon { display:grid; grid-template-columns:auto 1fr; gap:48px; align-items:center; padding:48px 56px; background:var(--moss); color:var(--cream); border-radius:28px; box-shadow:0 40px 80px -54px rgba(31,58,44,.4); }
+
+        /* group photo — its own section below the identity card */
+        .vd-groupphoto { display:block; margin:18px 0 0; cursor:zoom-in; position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--rule); }
+        .vd-groupphoto img { width:100%; height:clamp(240px,34vw,420px); object-fit:cover; display:block; transition:transform .5s; }
+        .vd-groupphoto:hover img { transform:scale(1.02); }
+        .vd-groupphoto figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(31,58,44,.78); padding:6px 14px; border-radius:999px; }
+        .vd-ribbon__no { width:132px; height:132px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:96px; line-height:1; letter-spacing:-.04em; flex-shrink:0; overflow:hidden; }
+        .vd-ribbon__no.has-logo { background:var(--cream-2); border:1px solid var(--rule); padding:18px; box-shadow:inset 0 0 0 1px rgba(31,58,44,.04); }
+        .vd-ribbon__no img { width:100%; height:100%; object-fit:contain; display:block; }
         .vd-ribbon__main { min-width:0; }
         .vd-ribbon__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:12px; }
         .vd-ribbon__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(32px,4.2vw,54px); line-height:1.02; letter-spacing:-.015em; margin:0 0 14px; color:var(--cream); }
-        .vd-ribbon__slogan { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.75); line-height:1.5; margin:0; max-width:560px; }
-        .vd-ribbon__quick { display:flex; flex-direction:column; gap:12px; min-width:190px; border-left:1px solid var(--rule-moss); padding-left:36px; }
-        .vd-ribbon__quick .row { display:flex; align-items:baseline; justify-content:space-between; gap:20px; }
-        .vd-ribbon__quick .k { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(244,236,219,.55); }
-        .vd-ribbon__quick .v { font-family:var(--fd); font-style:italic; font-weight:400; font-size:32px; line-height:1; letter-spacing:-.02em; color:var(--cream); }
-        .vd-ribbon__quick .v em { color:var(--terra-soft); font-size:24px; }
+        .vd-ribbon__slogan { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.78); line-height:1.5; margin:0; max-width:560px; }
 
         /* chapters — generous spacing + a terra eyebrow above each head */
         .vd-chapter { position:relative; padding:88px 0 24px; overflow:hidden; }
         .vd-chapter + .vd-chapter, .vd-profile__cta { border-top:1px solid var(--rule); }
         .vd-chapter__wm { position:absolute; top:40px; right:-18px; font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(150px,18vw,240px); line-height:.8; letter-spacing:-.05em; color:var(--cream-3); opacity:.55; pointer-events:none; z-index:0; }
-        .vd-chapter > * { position:relative; z-index:1; }
+        .vd-chapter > *:not(.vd-chapter__wm) { position:relative; z-index:1; }
         .vd-chapter__head { margin-bottom:40px; }
         .vd-chapter__eyebrow { display:inline-block; font-family:var(--fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--terra); margin-bottom:16px; }
         .vd-chapter__head h2 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(42px,5.2vw,68px); line-height:1; letter-spacing:-.015em; margin:0; color:var(--moss); }
@@ -225,10 +221,10 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
 
         @media (max-width:1100px) {
           .vd-profile { padding:92px 24px 130px; }
-          .vd-ribbon { grid-template-columns:1fr; gap:24px; padding:34px; text-align:center; }
+          .vd-ribbon { grid-template-columns:1fr; gap:22px; padding:30px 24px; text-align:center; }
           .vd-ribbon__no { margin:0 auto; }
           .vd-ribbon__slogan { margin:0 auto; }
-          .vd-ribbon__quick { border-left:0; border-top:1px solid var(--rule-moss); padding-left:0; padding-top:22px; min-width:0; max-width:280px; margin:0 auto; width:100%; }
+          .vd-groupphoto img { height:clamp(180px,46vw,260px); }
           .vd-chapter { padding:64px 0 20px; }
           .vd-vision { grid-template-columns:1fr; gap:28px; justify-items:center; text-align:center; }
           .vd-vision__body p { text-align:left; }
