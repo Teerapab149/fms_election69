@@ -181,7 +181,7 @@ export default function VerdureHome({
         </div>
 
         <Wrap id="hero-subtitle">
-          <p className="vd-home__deck">{deckText} <em>{meta.org}</em> ประจำปีการศึกษา {meta.ay}.</p>
+          <p className="vd-home__deck">{deckText} <em>{meta.org}</em> ประจำปีการศึกษา {meta.ay}</p>
         </Wrap>
 
         <div className="vd-home__ledger">

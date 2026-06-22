@@ -67,7 +67,7 @@ export default function VerdureVote({
         <div className="vd-ballot__h">
           <div className="vd-ballot__kicker"><span className="rule" /> NO. 04 · BALLOT <span className="rule" /></div>
           <h1 className="vd-ballot__title">Choose <em>one.</em></h1>
-          <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว.</p>
+          <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
         </div>
 
         <div className="vd-ballot__meta">
@@ -90,7 +90,7 @@ export default function VerdureVote({
 
         {abstain && (
           <Opt disc="×" discSm abstain kicker="ABSTAIN" name="งดออกเสียง"
-            slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้."
+            slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
             selected={selectedPartyId === abstain.id} onClick={() => onSelect(abstain.id)} />
         )}
 

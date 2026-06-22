@@ -58,12 +58,11 @@ export default function VerdureLogin({
         .vdl-corner { position:absolute; font-family:var(--fm); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--moss); opacity:.5; }
         .vdl-corner--tl { top:24px; left:28px; }
         .vdl-corner--br { bottom:24px; right:28px; }
-        @media (max-width:560px) { .vdl-corner { display:none; } }
 
         .vdl-card { width:100%; max-width:440px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:44px 36px; text-align:center; box-shadow:0 40px 80px -30px rgba(31,58,44,.3); }
         .vdl-logo { display:inline-flex; align-items:center; justify-content:center; padding:14px 20px; border-radius:18px; background:var(--cream); box-shadow:inset 0 0 0 1px rgba(31,58,44,.08); margin:0 auto 20px; }
         .vdl-logo img { height:62px; width:auto; object-fit:contain; display:block; }
-        .vdl-eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); opacity:.6; display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:14px; }
+        .vdl-eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); opacity:.74; display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:14px; }
         .vdl-eyebrow .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); }
         .vdl-title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:40px; letter-spacing:-.02em; line-height:1; margin:0 0 12px; color:var(--moss); }
         .vdl-title em { color:var(--terra); }
@@ -77,19 +76,27 @@ export default function VerdureLogin({
         .vdl-btn--terra:not(:disabled):hover { background:var(--moss); border-color:var(--moss); transform:translateY(-1px); }
         .vdl-btn--ghost { background:transparent; color:var(--moss); border-color:var(--rule); }
         .vdl-btn--ghost:not(:disabled):hover { background:var(--moss); color:var(--cream); border-color:var(--moss); }
-        .vdl-hint { margin:14px 0 0; font-family:var(--fm); font-size:10px; letter-spacing:.06em; color:var(--moss); opacity:.55; }
+        .vdl-hint { margin:14px 0 0; font-family:var(--fm); font-size:10px; letter-spacing:.06em; color:var(--moss); opacity:.72; }
 
         .vdl-mock { margin-top:26px; padding-top:22px; border-top:1px dashed var(--rule); display:flex; flex-direction:column; gap:10px; }
-        .vdl-mock__lbl { display:flex; align-items:center; justify-content:center; gap:7px; font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra); margin-bottom:4px; }
+        .vdl-mock__lbl { display:flex; align-items:center; justify-content:center; gap:7px; font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra-2); margin-bottom:4px; }
         .vdl-input { width:100%; padding:13px 16px; border-radius:14px; border:1px solid var(--rule); background:var(--cream); color:var(--moss); font-family:var(--fs); font-size:14px; text-align:center; }
-        .vdl-input::placeholder { color:var(--moss); opacity:.4; }
+        .vdl-input::placeholder { color:var(--moss); opacity:.62; }
         .vdl-input:focus { outline:none; border-color:var(--terra); }
 
         .vdl-foot { margin-top:28px; padding-top:22px; border-top:1px solid var(--rule); display:flex; flex-direction:column; gap:14px; align-items:center; }
-        .vdl-admin { background:none; border:0; cursor:pointer; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--moss); opacity:.5; transition:color .2s, opacity .2s; }
+        .vdl-admin { background:none; border:0; cursor:pointer; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--moss); opacity:.74; transition:color .2s, opacity .2s; }
         .vdl-admin:hover { color:var(--terra); opacity:1; }
         .vdl-spin { animation:vdlSpin 1s linear infinite; }
         @keyframes vdlSpin { to { transform:rotate(360deg); } }
+
+        /* phones — placed AFTER base rules so equal-specificity overrides win */
+        @media (max-width:560px) {
+          .vdl-corner { display:none; }
+          .vdl-root { padding:24px 16px; }
+          .vdl-card { padding:34px 22px; border-radius:22px; }
+          .vdl-logo img { height:54px; }
+        }
       `}</style>
     </div>
   );

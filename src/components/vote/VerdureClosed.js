@@ -44,12 +44,16 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
         .vd-closed { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:120px 24px 150px; position:relative; z-index:1; }
         .vd-closed__disc { width:180px; height:180px; border-radius:50%; background:var(--moss); color:var(--cream); display:grid; place-items:center; position:relative; margin-bottom:36px; box-shadow:0 40px 60px -30px rgba(31,58,44,.4); }
         .vd-closed__disc .ring { position:absolute; inset:-14px; border-radius:50%; border:1px dashed var(--terra); opacity:.4; }
-        .vd-closed__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:22px; }
+        .vd-closed__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--moss); opacity:.72; margin-bottom:22px; }
         .vd-closed__head { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(56px,8vw,108px); line-height:.92; letter-spacing:-.02em; margin:0 0 26px; color:var(--moss); }
         .vd-closed__head em { color:var(--terra); }
         .vd-closed__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(20px,2.4vw,26px); margin:0 0 12px; color:var(--moss); }
-        .vd-closed__desc { font-family:var(--ft); font-size:16px; color:var(--moss); opacity:.7; line-height:1.6; max-width:460px; margin:0 0 36px; }
+        .vd-closed__desc { font-family:var(--ft); font-size:16px; color:var(--moss); opacity:.78; line-height:1.6; max-width:460px; margin:0 0 36px; }
         @media (max-width:1100px) { .vd-closed { padding:96px 20px 130px; } }
+        @media (max-width:560px) {
+          .vd-closed { padding:84px 18px 128px; }
+          .vd-closed__disc { width:150px; height:150px; margin-bottom:28px; }
+        }
       `}</style>
     </VerdureShell>
   );

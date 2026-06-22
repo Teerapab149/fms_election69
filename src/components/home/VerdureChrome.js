@@ -65,10 +65,13 @@ const NAV = [
 const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 
 // ── vertical edge label ──
-export function VerdureEdge({ num = "01", label = "Index", th = "", right = false }) {
+// `wordmark` (e.g. "SAMO 49") + `year` (calendar year) come from verdureMeta —
+// the tail must never be hardcoded (mirrors cornermark/cornerstatus). Each is
+// rendered only when present so the dots don't dangle on empty values.
+export function VerdureEdge({ num = "01", label = "Index", th = "", right = false, wordmark = "", year = "" }) {
   return (
     <div className={`vd-edge ${right ? "vd-edge--right" : ""}`}>
-      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; {th}</> : null} &nbsp;·&nbsp; SAMO 50 &nbsp;·&nbsp; 2027
+      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; {th}</> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
     </div>
   );
 }
@@ -241,7 +244,7 @@ export function VerdureBaseStyles() {
       .vd-dock__link { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; padding:8px 22px; border-radius:999px; transition:background .25s, color .25s; }
       .vd-dock__dot { width:5px; height:5px; border-radius:50%; background:transparent; margin-bottom:3px; transition:background .25s, transform .25s; }
       .vd-dock__th { font-family:var(--ft); font-size:14px; font-weight:600; color:rgba(244,236,219,.85); letter-spacing:.005em; line-height:1.1; transition:color .25s; white-space:nowrap; }
-      .vd-dock__en { font-family:var(--fm); font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:rgba(244,236,219,.45); margin-top:2px; transition:color .25s; }
+      .vd-dock__en { font-family:var(--fm); font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:rgba(244,236,219,.6); margin-top:2px; transition:color .25s; }
       .vd-dock__link:hover { background:var(--moss-2); }
       .vd-dock__link:hover .vd-dock__th { color:var(--cream); }
       .vd-dock__link:hover .vd-dock__dot { background:rgba(188,94,62,.6); }
@@ -278,10 +281,16 @@ export function VerdureBaseStyles() {
       }
       /* phones — 4 short Thai labels fit without scroll; just drop the EN sub */
       @media (max-width:560px) {
+        .vd-dock { gap:0; padding:5px; max-width:calc(100vw - 12px); }
         .vd-dock__en { display:none; }
-        .vd-dock__link { padding:8px 13px; }
+        .vd-dock__link { padding:8px 12px; }
         .vd-dock__th { font-size:13px; }
         .vd-dock__dot { display:none; }
+      }
+      /* very small phones (≤360px) — tighten further so the pill never overflows */
+      @media (max-width:380px) {
+        .vd-dock__link { padding:8px 9px; }
+        .vd-dock__th { font-size:12px; }
       }
     `}</style>
   );

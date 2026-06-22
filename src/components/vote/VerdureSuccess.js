@@ -46,8 +46,8 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
 
         <div className="vd-success__head">
           <div className="kicker">★ THANK YOU FOR VOTING ★</div>
-          <h1>ขอบคุณที่<br /><em>ลงคะแนน.</em></h1>
-          <p>บันทึกคะแนนของคุณเรียบร้อยแล้ว — ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา {meta.org}.</p>
+          <h1>ขอบคุณที่<br /><em>ลงคะแนน</em></h1>
+          <p>บันทึกคะแนนของคุณเรียบร้อยแล้ว — ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา {meta.org}</p>
         </div>
 
         <div className="vd-receipt">
@@ -86,16 +86,27 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
 
         .vd-receipt { max-width:480px; width:100%; margin:0 auto; background:var(--moss-2); border:1px solid var(--rule-moss); border-radius:24px; overflow:hidden; }
         .vd-receipt__h { padding:14px 26px; border-bottom:1px dashed var(--rule-moss); display:flex; justify-content:space-between; align-items:center; font-family:var(--fm); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(244,236,219,.65); }
-        .vd-receipt__h .ac { color:var(--terra); font-weight:700; }
+        .vd-receipt__h .ac { color:var(--terra-soft); font-weight:700; }
         .vd-receipt__row { display:grid; grid-template-columns:auto 1fr; gap:24px; padding:13px 26px; align-items:center; font-family:var(--fm); font-size:12px; }
         .vd-receipt__row + .vd-receipt__row { border-top:1px dashed var(--rule-moss); }
-        .vd-receipt__row .lbl { letter-spacing:.18em; text-transform:uppercase; color:rgba(244,236,219,.55); }
+        .vd-receipt__row .lbl { letter-spacing:.18em; text-transform:uppercase; color:rgba(244,236,219,.72); }
         .vd-receipt__row .val { color:var(--cream); text-align:right; letter-spacing:.02em; }
-        .vd-receipt__row .val .ac { color:var(--terra); }
+        .vd-receipt__row .val .ac { color:var(--terra-soft); }
         .vd-receipt__cta { padding:20px 24px; border-top:1px dashed var(--rule-moss); display:grid; gap:10px; }
         .vd-receipt__done { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px; border:1px solid rgba(188,94,62,.4); border-radius:999px; background:rgba(188,94,62,.12); color:var(--terra-soft); font-family:var(--fs); font-size:14px; font-weight:600; }
 
         @media (max-width:1100px) { .vd-success { padding:96px 20px 130px; } }
+        @media (max-width:560px) {
+          .vd-success { padding:84px 16px 128px; }
+          .vd-orn { width:min(300px,82vw); height:min(300px,82vw); margin-bottom:30px; }
+          .vd-orn__disc { width:64%; height:64%; }
+          .vd-orn__ring--2 { inset:22px; }
+          .vd-success__head { margin-bottom:30px; }
+          .vd-success__head p { font-size:15px; }
+          .vd-receipt__h { padding:13px 18px; }
+          .vd-receipt__row { gap:14px; padding:12px 18px; }
+          .vd-receipt__cta { padding:18px; }
+        }
       `}</style>
     </VerdureShell>
   );

@@ -84,7 +84,7 @@ export default function VerdureResults({
               <>
                 <div className="vd-rdisc__lock"><Lock size={22} strokeWidth={2} /></div>
                 <div className="vd-rdisc__title">{singleParty ? <>Yes or <em>no?</em></> : <>Who will <em>win?</em></>}</div>
-                <p className="vd-rdisc__deck">ผลคะแนน{singleParty ? "" : "รายพรรค"}จะถูกปลดล็อกเมื่อปิดหีบเลือกตั้งเท่านั้น.</p>
+                <p className="vd-rdisc__deck">ผลคะแนน{singleParty ? "" : "รายพรรค"}จะถูกปลดล็อกเมื่อปิดหีบเลือกตั้งเท่านั้น</p>
                 {countdownText && <div className="vd-rdisc__cd">CLOSES IN <strong className="vd-tabular">{countdownText}</strong></div>}
               </>
             )}
@@ -121,7 +121,7 @@ export default function VerdureResults({
             <div className="vd-race__veil">
               <div>
                 <h4>Embargoed until <em>polls close.</em></h4>
-                <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่ทันทีเมื่อปิดหีบเลือกตั้ง.</p>
+                <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่ทันทีเมื่อปิดหีบเลือกตั้ง</p>
               </div>
             </div>
           )}
@@ -152,7 +152,7 @@ export default function VerdureResults({
                 })}
               </div>
             ) : (
-              <div className="vd-demo__locked"><Lock size={18} strokeWidth={2} /><p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อปิดหีบเลือกตั้งแล้วเท่านั้น.</p></div>
+              <div className="vd-demo__locked"><Lock size={18} strokeWidth={2} /><p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อปิดหีบเลือกตั้งแล้วเท่านั้น</p></div>
             )}
           </div>
         )}

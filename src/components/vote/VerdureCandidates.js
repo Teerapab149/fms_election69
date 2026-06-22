@@ -32,7 +32,7 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
         <div className="vd-cand__h">
           <div className="vd-cand__kicker"><span className="rule" /> NO. 02 · CANDIDATES <span className="rule" /></div>
           <h1 className="vd-cand__title">Meet the parties<br /><em>running this year.</em></h1>
-          <p className="vd-cand__deck">เลือกพรรคใดพรรคหนึ่งเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด ก่อนตัดสินใจลงคะแนน.</p>
+          <p className="vd-cand__deck">เลือกพรรคใดพรรคหนึ่งเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด ก่อนตัดสินใจลงคะแนน</p>
         </div>
 
         {parties.length > 0 ? parties.map((p, i) => {
