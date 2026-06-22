@@ -39,6 +39,7 @@ import StudioDarkClosed from '../../components/vote/StudioDarkClosed';
 import VerdureCandidates from '../../components/vote/VerdureCandidates';
 import VerdureParty from '../../components/vote/VerdureParty';
 import VerdureVote from '../../components/vote/VerdureVote';
+import VerdureSingleParty from '../../components/vote/VerdureSingleParty';
 import VerdureResults from '../../components/vote/VerdureResults';
 import VerdureSuccess from '../../components/vote/VerdureSuccess';
 import VerdureClosed from '../../components/vote/VerdureClosed';
@@ -55,7 +56,8 @@ const LOGO = '/images/logo/fms_logo50_color.png';
 const mkMembers = (n) =>
   Array.from({ length: n }, (_, i) => ({
     id: i + 1, number: i + 1, name: `สมาชิกพรรค คนที่ ${i + 1}`,
-    position: i === 0 ? 'President' : i < 5 ? 'Core Exec' : 'Dept Head', imageUrl: null,
+    position: i === 0 ? 'President' : i < 5 ? 'Core Exec' : 'Dept Head',
+    imageUrl: `/images/members/party_1/${(i % 9) + 1}.jpg`,
   }));
 const POLICIES = [
   'ยกระดับโครงการรับน้องและกิจกรรมเปิดใหม่ ให้สะท้อนความหลากหลายของนักศึกษาในศตวรรษที่ 21',
@@ -69,7 +71,7 @@ const MISSIONS = [
 ];
 const mkParty = (i, name, slogan, color) => ({
   id: i, number: i, name, slogan, color,
-  logoUrl: LOGO, groupImageUrls: null, officialImageUrl: null, mobileHeroImage: null,
+  logoUrl: LOGO, groupImageUrls: ['/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg'], officialImageUrl: null, mobileHeroImage: null,
   logoMeaning:
     'The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ',
   missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
@@ -140,6 +142,14 @@ function PreviewBody() {
       return <P party={PARTIES[0]} galleryImages={[]} showBackToVote={false} />;
     }
     if (page === 'vote') {
+      // dev-only: preview the Verdure single-party cinematic wax-seal intro in
+      // isolation (no DB change, live election untouched). ?…&variant=single&intro=1
+      if (family === 'verdure' && single && sp.get('intro') === '1') {
+        return (
+          <VerdureSingleParty party={PARTIES[0]} specialOptions={SPECIAL} selectedPartyId={null}
+            onSelect={noop} onConfirm={noop} isSubmitting={false} user={DUMMY_USER} editorMode forceIntro />
+        );
+      }
       const V = byFamily(StudioDarkVote, GumroadVote, VerdureVote);
       return (
         <V
