@@ -184,6 +184,10 @@ export default function VerdureVote({
         .vd-confirm { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; margin-top:36px; padding:24px 24px 24px 32px; background:var(--moss); color:var(--cream); border-radius:28px; }
         .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; opacity:.55; }
         .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; letter-spacing:-.005em; }
+        /* the confirm bar itself is moss — the global terra->moss hover would make
+           the button vanish into the bar. Darken within the terracotta family so
+           hover stays clearly distinct from the green background. */
+        .vd-confirm .vd-btn--terra:hover { background:var(--terra-2); border-color:var(--terra-2); color:var(--cream); }
 
         @media (max-width:1100px) {
           .vd-ballot { padding:88px 22px 130px; }
