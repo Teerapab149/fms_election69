@@ -261,15 +261,16 @@ export default function VerdureSingleParty({
         .vd-booth__head { text-align:center; }
         .vd-booth__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:30px; }
 
-        .vd-seal { position:relative; width:clamp(168px,23vw,210px); aspect-ratio:1; margin:4px auto 30px; display:grid; place-items:center; }
+        .vd-seal { position:relative; width:clamp(188px,26vw,224px); aspect-ratio:1; margin:4px auto 30px; display:grid; place-items:center; }
         .vd-seal__glow { position:absolute; inset:-46px; border-radius:50%; background:radial-gradient(circle, rgba(210,162,72,.26) 0%, rgba(227,191,169,.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
         .vd-seal__ring { position:absolute; inset:-15px; border-radius:50%; border:1px dashed var(--terra-soft); }
         .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(210,162,72,.3); }
         .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(31,58,44,.4), 0 0 0 7px rgba(250,244,228,.6); }
-        /* fixed 70% box + contain → the logo always scales to fit (small logos
-           ENLARGE, big ones shrink), centred and clear of the circle's curve for
-           ANY aspect ratio / resolution of future party logos */
-        .vd-seal__disc img { width:70%; height:70%; object-fit:contain; display:block; }
+        /* contain → the logo always shows in FULL (small logos enlarge, big shrink)
+           for ANY aspect/resolution. 78% is the largest a portrait poster can be and
+           still sit inside the circle's curve; overflow:hidden gracefully circle-crops
+           the corners of an odd-shaped logo. (Bigger than the old 70% — owner: too small.) */
+        .vd-seal__disc img { width:78%; height:78%; object-fit:contain; display:block; }
         .vd-seal__disc .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:84px; line-height:1; color:var(--moss); }
         @keyframes vdGlow { 0%,100%{opacity:.55; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.05)} }
 
