@@ -141,13 +141,13 @@ export default function VerdureVote({
         .vd-ballot__meta { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; background:var(--cream-2); border:1px dashed var(--rule); border-radius:999px; margin-bottom:22px; font-family:var(--fm); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); opacity:.85; }
         .vd-ballot__meta .ac { color:var(--terra); font-weight:700; }
 
-        .vd-opt { display:grid; grid-template-columns:104px 1fr auto; align-items:center; gap:24px; padding:22px 28px 22px 22px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
+        .vd-opt { display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:24px; padding:20px 28px 20px 20px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
         .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); box-shadow:0 20px 40px -26px rgba(31,58,44,.4); }
         .vd-opt.is-selected { background:var(--moss); color:var(--cream); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(31,58,44,.55); }
         /* each party reads as a warm, inviting card (mirrors the booth's primary option) */
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, #FCF5E6 0%, var(--cream-2) 100%); }
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); }
-        .vd-opt__disc { width:96px; height:96px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:60px; line-height:1; letter-spacing:-.04em; color:var(--moss); transition:all .25s; }
+        .vd-opt__disc { width:78px; height:78px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:48px; line-height:1; letter-spacing:-.04em; color:var(--moss); transition:all .25s; }
         .vd-opt__disc.sm { font-size:36px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
         .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
@@ -155,13 +155,14 @@ export default function VerdureVote({
            number moves to a bold terra badge on the corner (still prominent). The
            disc keeps a clean cream face at every state so the logo never sits on
            terra/moss. */
-        .vd-opt__disc.has-logo { background:var(--cream-2); border:1px solid var(--rule); overflow:visible; position:relative; }
-        /* party logos here are tall artwork posters, not square marks — fill the
-           round disc (cover, clipped to the circle) so the artwork reads as a bold
-           medallion instead of a tiny letterboxed thumbnail. Inner clip wrapper so
-           the number badge can still sit outside on the corner. */
-        .vd-opt__logo { position:absolute; inset:0; border-radius:50%; overflow:hidden; background:var(--cream-3); }
-        .vd-opt__logo img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
+        /* party logos here are TALL artwork posters, not square marks — so the disc
+           becomes a portrait rounded-rect (poster thumbnail) and the logo is shown
+           in FULL via contain (never cropped/skewed). Aspect ~matches the posters
+           so it fills cleanly; odd-shaped logos just letterbox on the cream. Inner
+           clip wrapper keeps the number badge outside on the corner. */
+        .vd-opt__disc.has-logo { width:78px; height:98px; border-radius:18px; background:var(--cream-2); border:1px solid var(--rule); overflow:visible; position:relative; }
+        .vd-opt__logo { position:absolute; inset:0; border-radius:18px; overflow:hidden; background:var(--cream-2); display:grid; place-items:center; }
+        .vd-opt__logo img { width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
         .vd-opt:hover .vd-opt__disc.has-logo,
         .vd-opt.is-selected .vd-opt__disc.has-logo,
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc.has-logo { background:var(--cream-2); border-color:var(--rule); }
@@ -185,11 +186,28 @@ export default function VerdureVote({
         .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; letter-spacing:-.005em; }
 
         @media (max-width:1100px) {
-          .vd-ballot { padding:92px 24px 130px; }
-          .vd-opt { grid-template-columns:78px 1fr auto; padding:18px; gap:16px; }
-          .vd-opt__disc { width:72px; height:72px; font-size:44px; }
+          .vd-ballot { padding:88px 22px 130px; }
+          .vd-opt { grid-template-columns:74px 1fr auto; padding:18px; gap:18px; }
+          .vd-opt__disc { width:64px; height:64px; font-size:38px; }
+          .vd-opt__disc.has-logo { width:64px; height:80px; border-radius:15px; }
           .vd-opt__num { min-width:26px; height:26px; font-size:15px; right:-3px; bottom:-3px; }
           .vd-confirm { grid-template-columns:1fr; text-align:center; }
+        }
+        /* phones — open up the cramped ballot: wrap the meta pill, drop the
+           redundant check (the whole row turns moss when selected), and give the
+           rows + text more breathing room */
+        @media (max-width:600px) {
+          .vd-ballot { padding:80px 16px 128px; }
+          .vd-ballot__h { margin-bottom:30px; }
+          .vd-ballot__deck { font-size:15px; }
+          .vd-ballot__meta { flex-wrap:wrap; justify-content:center; gap:5px 14px; padding:12px 18px; font-size:10px; letter-spacing:.08em; margin-bottom:18px; }
+          .vd-opt { grid-template-columns:60px 1fr; gap:15px; padding:15px; margin-bottom:14px; }
+          .vd-opt__check { display:none; }
+          .vd-opt__disc { width:60px; height:60px; font-size:34px; }
+          .vd-opt__disc.has-logo { width:60px; height:76px; }
+          .vd-opt__name { font-size:20px; line-height:1.2; }
+          .vd-opt__slogan { font-size:13px; }
+          .vd-opt__num { min-width:23px; height:23px; font-size:13px; }
         }
       `}</style>
     </VerdureShell>
