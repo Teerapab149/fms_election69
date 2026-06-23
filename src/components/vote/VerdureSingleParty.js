@@ -140,6 +140,10 @@ export default function VerdureSingleParty({
           </div>
           <h1 className="vd-booth__name">{party?.name}</h1>
           {party?.slogan && <p className="vd-booth__slogan">“{party.slogan}”</p>}
+          <button type="button" className="vd-booth__cue"
+            onClick={() => document.getElementById("vd-decision")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+            เลื่อนลงเพื่อลงคะแนน <span className="cue-arr" aria-hidden>↓</span>
+          </button>
         </div>
 
         {heroImg && (
@@ -187,7 +191,7 @@ export default function VerdureSingleParty({
           </div>
         )}
 
-        <section className="vd-decision">
+        <section id="vd-decision" className="vd-decision">
           <div className="vd-decision__head">
             <span className="vd-decision__kicker">★ Cast your vote · ลงคะแนน ★</span>
             <h2>การตัดสินใจของคุณ</h2>
@@ -261,8 +265,8 @@ export default function VerdureSingleParty({
         .vd-booth__head { text-align:center; }
         .vd-booth__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:30px; }
 
-        .vd-seal { position:relative; width:clamp(190px,25vw,226px); aspect-ratio:1; margin:4px auto 30px; display:grid; place-items:center; }
-        .vd-seal__glow { position:absolute; inset:-46px; border-radius:50%; background:radial-gradient(circle, rgba(210,162,72,.26) 0%, rgba(227,191,169,.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
+        .vd-seal { position:relative; width:clamp(152px,21vw,190px); aspect-ratio:1; margin:4px auto 26px; display:grid; place-items:center; }
+        .vd-seal__glow { position:absolute; inset:-34px; border-radius:50%; background:radial-gradient(circle, rgba(210,162,72,.26) 0%, rgba(227,191,169,.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
         .vd-seal__ring { position:absolute; inset:-15px; border-radius:50%; border:1px dashed var(--terra-soft); }
         .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(210,162,72,.3); }
         .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(31,58,44,.4), 0 0 0 7px rgba(250,244,228,.6); }
@@ -277,6 +281,13 @@ export default function VerdureSingleParty({
 
         .vd-booth__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(36px,5.4vw,62px); line-height:1.04; letter-spacing:-.02em; margin:0 0 14px; color:var(--moss); }
         .vd-booth__slogan { font-family:var(--ft); font-size:17px; color:rgba(31,58,44,.8); line-height:1.55; margin:0 auto; max-width:540px; }
+        /* scroll cue — tells the voter the ballot is further down (single-vote is a
+           "read then decide" page; without this the vote action isn't discoverable
+           above the fold). Click jumps straight to the decision. */
+        .vd-booth__cue { display:inline-flex; align-items:center; gap:9px; margin-top:26px; padding:11px 22px; border:1px solid var(--terra-soft); border-radius:999px; background:linear-gradient(180deg,#FCF5E6,var(--cream-2)); color:var(--terra-2); font-family:var(--ft); font-size:13px; font-weight:600; cursor:pointer; transition:transform .2s, border-color .2s, background .2s; box-shadow:0 8px 22px -16px rgba(31,58,44,.45); }
+        .vd-booth__cue:hover { transform:translateY(-1px); border-color:var(--terra); background:var(--cream); }
+        .vd-booth__cue .cue-arr { font-size:15px; line-height:1; animation:vdCueBounce 1.6s ease-in-out infinite; }
+        @keyframes vdCueBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
         .vd-booth__cover { display:block; margin:40px 0 0; cursor:zoom-in; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(31,58,44,.45); }
         .vd-booth__cover img { width:100%; height:clamp(260px,38vw,440px); object-fit:cover; display:block; transition:transform .6s; }
         .vd-booth__cover:hover img { transform:scale(1.03); }
@@ -318,7 +329,7 @@ export default function VerdureSingleParty({
         .vd-plist .t { font-family:var(--ft); font-size:16px; line-height:1.66; color:rgba(31,58,44,.9); }
 
         /* THE DECISION — the ballot moment */
-        .vd-decision { margin-top:66px; padding-top:46px; border-top:2px solid rgba(31,58,44,.16); position:relative; }
+        .vd-decision { margin-top:66px; padding-top:46px; border-top:2px solid rgba(31,58,44,.16); position:relative; scroll-margin-top:96px; }
         .vd-decision::before { content:""; position:absolute; left:50%; top:-2px; transform:translateX(-50%); width:84px; height:2px; background:var(--terra); }
         .vd-decision__head { text-align:center; margin-bottom:34px; }
         .vd-decision__kicker { display:block; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:14px; }
