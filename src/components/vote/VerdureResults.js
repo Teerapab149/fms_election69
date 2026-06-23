@@ -60,10 +60,12 @@ export default function VerdureResults({
       edge={{ num: "05", label: "Returns", th: "ผลคะแนน", right: true }}
       cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : "Live tally · embargoed"}
       statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : "COUNTING"} · <strong>{statusTxt}</strong></div>}>
+      <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">
-          <div className="vd-returns__kicker">NO. 05 · {revealed ? "FINAL RESULT" : "LIVE RETURNS"}</div>
+          <div className="vd-returns__kicker">NO. 05 · {revealed ? "FINAL RESULT · ผลอย่างเป็นทางการ" : "LIVE RETURNS · กำลังนับคะแนน"}</div>
           <h1 className="vd-returns__title">The <em>Returns.</em></h1>
+          <div className="vd-returns__accent" aria-hidden />
         </div>
 
         <div className="vd-stage">
@@ -99,38 +101,46 @@ export default function VerdureResults({
 
         <div className="vd-race">
           <div className="vd-race__head">
-            <h3>Vote distribution <em>{singleParty ? "yes / no." : "by party."}</em></h3>
+            <div className="vd-race__lead">
+              <span className="vd-race__kicker">{revealed ? "Official tally" : "Embargoed"} · {singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span>
+              <h3>Vote distribution <em>{singleParty ? "yes / no." : "by party."}</em></h3>
+            </div>
             <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ OFFICIAL" : "§ EMBARGOED"}</span>
           </div>
-          <div className="vd-race__bars">
-            {raceRows.map((c, i) => {
-              const isWin = revealed && (winner ? c === winner : (singleParty && approveWins != null && (approveWins ? c === parties[0] : c === disapprove)));
-              const w = revealed ? Math.max(pctOf(c), c.score > 0 ? 2 : 0) : LOCK_WIDTHS[i % LOCK_WIDTHS.length];
-              return (
-                <div className={`vd-race__row ${isWin ? "is-win" : ""}`} key={c.id || i}
-                  onClick={() => { if (revealed && parseInt(c.number) > 0) onSelectParty(c); }}
-                  style={revealed && parseInt(c.number) > 0 ? { cursor: "pointer" } : undefined}>
-                  <div className="vd-race__name">{labelOf(c)}{isWin && <span className="vd-race__tag">WINNER</span>}<small>{subOf(c)}</small></div>
-                  <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={{ width: `${w}%` }} /></div>
-                  <div className="vd-race__pct">{revealed ? `${pctOf(c).toFixed(1)}%` : "??.?%"}</div>
-                </div>
-              );
-            })}
-          </div>
-          {!revealed && (
-            <div className="vd-race__veil">
-              <div>
-                <h4>Embargoed until <em>polls close.</em></h4>
-                <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่ทันทีเมื่อปิดหีบเลือกตั้ง</p>
-              </div>
+          <div className="vd-race__barswrap">
+            <div className="vd-race__bars">
+              {raceRows.map((c, i) => {
+                const isWin = revealed && (winner ? c === winner : (singleParty && approveWins != null && (approveWins ? c === parties[0] : c === disapprove)));
+                const w = revealed ? Math.max(pctOf(c), c.score > 0 ? 2 : 0) : LOCK_WIDTHS[i % LOCK_WIDTHS.length];
+                return (
+                  <div className={`vd-race__row ${isWin ? "is-win" : ""}`} key={c.id || i}
+                    onClick={() => { if (revealed && parseInt(c.number) > 0) onSelectParty(c); }}
+                    style={revealed && parseInt(c.number) > 0 ? { cursor: "pointer" } : undefined}>
+                    <div className="vd-race__name">{labelOf(c)}{isWin && <span className="vd-race__tag">WINNER</span>}<small>{subOf(c)}</small></div>
+                    <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={{ width: `${w}%` }} /></div>
+                    <div className="vd-race__pct">{revealed ? `${pctOf(c).toFixed(1)}%` : "??.?%"}</div>
+                  </div>
+                );
+              })}
             </div>
-          )}
+            {!revealed && (
+              <div className="vd-race__veil">
+                <div>
+                  <h4>Embargoed until <em>polls close.</em></h4>
+                  <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่ทันทีเมื่อปิดหีบเลือกตั้ง</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {(!revealed || demoGroups.length > 0) && (
           <div className="vd-demo">
             <div className="vd-race__head">
-              <h3>Turnout <em>demographics.</em></h3>
+              <div className="vd-race__lead">
+                <span className="vd-race__kicker">Turnout · สถิติผู้ใช้สิทธิ์</span>
+                <h3>Turnout <em>demographics.</em></h3>
+              </div>
               <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ PARTICIPATION" : "§ EMBARGOED"}</span>
             </div>
             {revealed ? (
@@ -159,11 +169,21 @@ export default function VerdureResults({
       </div>
 
       <style jsx global>{`
+        /* golden-hour warm wash — same recipe as the single-vote booth so the
+           returns page carries the template's warmth, not flat cream */
+        .vd-warm-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
+          background:
+            radial-gradient(72% 46% at 50% 0%, rgba(210,162,72,.16) 0%, transparent 56%),
+            radial-gradient(60% 44% at 100% 8%, rgba(188,94,62,.09) 0%, transparent 50%),
+            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.30) 0%, transparent 56%),
+            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 46%, #EFE2CB 100%); }
+
         .vd-returns { flex:1; padding:96px 80px 150px; max-width:1320px; margin:0 auto; width:100%; position:relative; z-index:1; }
         .vd-returns__h { text-align:center; margin-bottom:48px; }
-        .vd-returns__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--terra); margin-bottom:18px; }
+        .vd-returns__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--terra-2); margin-bottom:18px; }
         .vd-returns__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,96px); line-height:.96; letter-spacing:-.015em; margin:0; color:var(--moss); }
         .vd-returns__title em { color:var(--terra); }
+        .vd-returns__accent { width:84px; height:2px; background:var(--terra); margin:22px auto 0; }
 
         /* result seal — moderate size, content fits inside; clean centred stat row
            below it (no more scattered/tilted orbital cards) */
@@ -182,39 +202,47 @@ export default function VerdureResults({
         .vd-rdisc__cd strong { font-family:var(--fd); font-style:italic; font-size:20px; font-weight:400; color:var(--cream); letter-spacing:-.02em; margin-left:8px; text-transform:none; }
 
         .vd-rstats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:36px; }
-        .vd-rstat { padding:24px 28px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; text-align:center; }
-        .vd-rstat .lbl { font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:10px; }
+        .vd-rstat { padding:24px 28px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; text-align:center; box-shadow:0 16px 40px -30px rgba(31,58,44,.4); }
+        .vd-rstat .lbl { font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra-2); margin-bottom:10px; }
         .vd-rstat .val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,3.6vw,46px); line-height:1; letter-spacing:-.02em; color:var(--moss); }
         .vd-rstat .val em { color:var(--terra); }
         .vd-rstat .val small { font-family:var(--fs); font-style:normal; font-size:13px; opacity:.5; margin-left:5px; letter-spacing:0; }
 
-        .vd-race, .vd-demo { background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; position:relative; overflow:hidden; }
+        .vd-race, .vd-demo { background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; position:relative; overflow:hidden; box-shadow:0 24px 60px -42px rgba(31,58,44,.45); }
         .vd-race { margin-top:40px; }
         .vd-demo { margin-top:24px; }
-        .vd-race__head { display:flex; justify-content:space-between; align-items:baseline; padding-bottom:22px; border-bottom:1px solid var(--rule); margin-bottom:26px; }
+        /* bilingual two-tier section head (EN kicker + serif headline) + terra
+           accent bar — mirrors the single-vote booth's section headers */
+        .vd-race__head { display:flex; justify-content:space-between; align-items:flex-end; padding-bottom:22px; border-bottom:1px solid var(--rule); margin-bottom:26px; position:relative; }
+        .vd-race__head::after { content:""; position:absolute; left:0; bottom:-1px; width:58px; height:2px; background:var(--terra); }
+        .vd-race__lead { display:flex; flex-direction:column; min-width:0; }
+        .vd-race__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--terra-2); margin-bottom:10px; }
         .vd-race__head h3 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:30px; letter-spacing:-.015em; margin:0; color:var(--moss); }
         .vd-race__head h3 em { color:var(--terra); }
         .vd-race__bars { display:grid; gap:22px; padding-top:4px; }
         .vd-race__row { display:grid; grid-template-columns:260px 1fr 80px; gap:24px; align-items:center; }
         .vd-race__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:20px; letter-spacing:-.005em; color:var(--moss); }
-        .vd-race__name small { display:block; font-family:var(--fm); font-style:normal; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-top:2px; }
+        .vd-race__name small { display:block; font-family:var(--fm); font-style:normal; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.7; margin-top:2px; }
         .vd-race__tag { margin-left:10px; font-family:var(--fm); font-size:9px; letter-spacing:.14em; background:var(--terra); color:var(--cream); border-radius:999px; padding:3px 9px; vertical-align:middle; text-transform:uppercase; }
         .vd-race__track { height:10px; background:var(--cream-3); border:1px solid var(--rule); border-radius:999px; overflow:hidden; }
         .vd-race__fill { height:100%; background:var(--terra); opacity:.4; background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0) 0 6px, rgba(255,255,255,.18) 6px 7px); transition:width .6s ease-out; }
         .vd-race__fill.real { opacity:1; }
-        .vd-race__pct { font-family:var(--fm); font-size:14px; color:var(--moss); opacity:.55; text-align:right; }
-        .vd-race__veil { position:absolute; inset:92px 0 0 0; background:rgba(244,236,219,.95); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); display:grid; place-items:center; text-align:center; padding:0 24px; }
+        .vd-race__pct { font-family:var(--fm); font-size:14px; color:var(--moss); opacity:.72; text-align:right; }
+        /* veil covers exactly the bars wrapper (not a fixed offset) so it never
+           overlaps the taller two-tier head, at any breakpoint */
+        .vd-race__barswrap { position:relative; }
+        .vd-race__veil { position:absolute; inset:0; background:rgba(244,236,219,.95); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); display:grid; place-items:center; text-align:center; padding:0 24px; }
         .vd-race__veil h4 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:32px; letter-spacing:-.015em; margin:0 0 8px; color:var(--moss); }
         .vd-race__veil h4 em { color:var(--terra); }
-        .vd-race__veil p { font-family:var(--ft); font-size:15px; color:var(--moss); opacity:.75; max-width:380px; margin:0; }
+        .vd-race__veil p { font-family:var(--ft); font-size:15px; color:var(--moss); opacity:.82; max-width:380px; margin:0; }
 
         .vd-demo__grid { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; }
-        .vd-demo__title { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:16px; }
+        .vd-demo__title { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--terra-2); margin-bottom:16px; }
         .vd-demo__row { display:grid; grid-template-columns:minmax(60px,auto) 1fr auto; gap:12px; align-items:center; margin-bottom:12px; }
-        .vd-demo__name { font-family:var(--ft); font-size:13px; color:var(--moss); opacity:.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .vd-demo__name { font-family:var(--ft); font-size:13px; color:var(--moss); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .vd-demo__track { height:7px; background:var(--cream-3); border:1px solid var(--rule); border-radius:999px; overflow:hidden; }
         .vd-demo__fill { height:100%; background:var(--terra); opacity:.65; }
-        .vd-demo__val { font-family:var(--fm); font-size:12px; color:var(--moss); opacity:.6; }
+        .vd-demo__val { font-family:var(--fm); font-size:12px; color:var(--moss); opacity:.72; }
         .vd-demo__locked { display:flex; align-items:center; gap:16px; color:var(--moss); }
         .vd-demo__locked p { font-family:var(--ft); font-size:14px; opacity:.75; margin:0; line-height:1.5; }
 
@@ -223,7 +251,6 @@ export default function VerdureResults({
           .vd-race__row { grid-template-columns:130px 1fr 56px; gap:12px; }
           .vd-race__name { font-size:16px; }
           .vd-demo__grid { grid-template-columns:1fr; gap:24px; }
-          .vd-race__veil { inset:80px 0 0 0; }
         }
         @media (max-width:640px) {
           .vd-rstats { grid-template-columns:1fr; }
