@@ -119,6 +119,7 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
     [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
   );
   const [cd, setCd] = useState({ d: 0, h: 0, m: 0, label: "POLLS OPEN IN", live: false, noTimer: false });
+  const [userOpen, setUserOpen] = useState(false); // mobile: tap the avatar to reveal name/id
   useEffect(() => {
     const calc = () => {
       const now = Date.now();
@@ -157,9 +158,9 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
         <a href={editorMode ? undefined : getPath(backHref)} className="vd-chip-live vd-chip-live--back">← {backLabel}</a>
       ) : (statusChip || defaultChip)}
       {isAuthed && active !== "home" && (
-        <div className="vd-user">
-          <div className="vd-user__av">{avatarChar}</div>
-          <div>
+        <div className={`vd-user ${userOpen ? "is-open" : ""}`}>
+          <button type="button" className="vd-user__av" onClick={() => setUserOpen((o) => !o)} aria-label="ดูข้อมูลผู้ใช้" aria-expanded={userOpen}>{avatarChar}</button>
+          <div className="vd-user__meta">
             <div className="vd-user__name">{userName.split(" ")[0] || userName}</div>
             {userId && <div className="vd-user__id">No. {userId}</div>}
           </div>
@@ -210,30 +211,34 @@ export function VerdureBaseStyles() {
       .vd-moss .vd-edge { color:var(--cream); }
       .vd-moss .vd-edge .big { color:var(--gold); }
 
-      /* cornermark */
-      .vd-cornermark { position:fixed; top:28px; left:28px; z-index:35; display:flex; align-items:center; gap:12px; }
-      .vd-cornermark__logo { display:inline-flex; align-items:center; justify-content:center; height:46px; padding:8px 13px; border-radius:13px; background:var(--cream); box-shadow:inset 0 0 0 1px rgba(31,58,44,.08); flex-shrink:0; }
+      /* cornermark — sits on a translucent pill so its text stays readable over
+         whatever content scrolls beneath the fixed chrome */
+      .vd-cornermark { position:fixed; top:22px; left:22px; z-index:35; display:flex; align-items:center; gap:12px; padding:6px 16px 6px 6px; border-radius:16px; background:rgba(250,244,228,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(31,58,44,.4); }
+      .vd-moss .vd-cornermark { background:rgba(36,65,48,.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
+      .vd-cornermark__logo { display:inline-flex; align-items:center; justify-content:center; height:36px; padding:6px 11px; border-radius:10px; background:var(--cream); box-shadow:inset 0 0 0 1px rgba(31,58,44,.08); flex-shrink:0; }
       .vd-cornermark__logo-img { width:auto; height:28px; object-fit:contain; }
       .vd-cornermark__txt { font-family:var(--fm); font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:var(--moss); line-height:1.3; }
       .vd-cornermark__txt strong { display:block; font-family:var(--fd); font-size:14px; letter-spacing:0; font-weight:400; text-transform:none; color:var(--moss); }
       .vd-moss .vd-cornermark__txt, .vd-moss .vd-cornermark__txt strong { color:var(--cream); }
 
-      /* cornerstatus */
-      .vd-cornerstatus { position:fixed; top:32px; right:32px; z-index:35; display:flex; align-items:center; gap:14px; }
+      /* cornerstatus — matches the cornermark pill (same top, style) so the two
+         flank the page symmetrically */
+      .vd-cornerstatus { position:fixed; top:22px; right:22px; z-index:35; display:flex; align-items:center; gap:12px; }
       .vd-chip-live { display:inline-flex; align-items:center; gap:10px; padding:10px 18px; border-radius:999px; background:var(--cream-2); border:1px solid var(--rule); font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); }
       .vd-chip-live--back { cursor:pointer; }
       .vd-moss .vd-chip-live { background:var(--moss-2); border-color:var(--rule-moss); color:var(--cream); }
       .vd-chip-live .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 0 rgba(188,94,62,.55); animation:vdDot 1.8s ease-out infinite; }
       .vd-chip-live strong { color:var(--terra); font-weight:700; }
       @keyframes vdDot { 0%{box-shadow:0 0 0 0 rgba(188,94,62,.55)} 70%{box-shadow:0 0 0 10px rgba(188,94,62,0)} }
-      .vd-user { display:flex; align-items:center; gap:12px; padding:4px 12px 4px 4px; border-radius:999px; background:var(--cream-2); border:1px solid var(--rule); }
-      .vd-moss .vd-user { background:var(--moss-2); border-color:var(--rule-moss); }
-      .vd-user__av { width:32px; height:32px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-size:16px; }
+      .vd-user { position:relative; display:flex; align-items:center; gap:10px; padding:6px 12px 6px 6px; border-radius:16px; background:rgba(250,244,228,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(31,58,44,.4); border:0; }
+      .vd-moss .vd-user { background:rgba(36,65,48,.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
+      .vd-user__av { width:36px; height:36px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-size:17px; border:0; padding:0; cursor:pointer; line-height:1; transition:background .2s; flex-shrink:0; }
+      .vd-user__av:hover { background:var(--terra-2); }
       .vd-user__name { font-family:var(--fs); font-size:13px; font-weight:600; line-height:1.1; color:var(--moss); }
       .vd-moss .vd-user__name { color:var(--cream); }
       .vd-user__id { font-family:var(--fm); font-size:10px; letter-spacing:.08em; color:var(--moss); opacity:.55; }
       .vd-moss .vd-user__id { color:var(--cream); }
-      .vd-user__out { margin-left:2px; width:26px; height:26px; border-radius:50%; border:1px solid var(--rule); background:transparent; color:var(--moss); cursor:pointer; font-size:13px; line-height:1; display:grid; place-items:center; }
+      .vd-user__out { margin-left:0; width:32px; height:32px; border-radius:50%; border:1px solid var(--rule); background:transparent; color:var(--moss); cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; flex-shrink:0; }
       .vd-user__out:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
       .vd-moss .vd-user__out { color:var(--cream); border-color:var(--rule-moss); }
 
@@ -286,6 +291,14 @@ export function VerdureBaseStyles() {
         .vd-dock__link { padding:8px 12px; }
         .vd-dock__th { font-size:13px; }
         .vd-dock__dot { display:none; }
+        /* phones: cornermark collapses to just its logo chip, and the user pill to
+           avatar + sign-out — two even chips flanking the top (tap avatar for name/id) */
+        .vd-cornermark { padding:0; background:transparent; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+        .vd-cornermark__txt { display:none; }
+        .vd-user { padding:5px; gap:6px; }
+        .vd-user__meta { display:none; }
+        .vd-user.is-open .vd-user__meta { display:block; position:absolute; top:calc(100% + 8px); right:0; background:var(--cream-2); border:1px solid var(--rule); border-radius:14px; padding:10px 14px; box-shadow:0 18px 38px -18px rgba(31,58,44,.4); white-space:nowrap; text-align:right; z-index:40; }
+        .vd-moss .vd-user.is-open .vd-user__meta { background:var(--moss-2); border-color:var(--rule-moss); }
       }
       /* very small phones (≤360px) — tighten further so the pill never overflows */
       @media (max-width:380px) {
