@@ -123,7 +123,7 @@ export default function VerdureSingleParty({
     <VerdureShell active="vote" editorMode={editorMode}
       edge={{ num: "04", label: "Ballot", th: "ลงคะแนนเสียง" }}
       cornermarkTitle="Ballot" cornermarkSub={`Party No. ${no}`}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> เปิดให้ลงคะแนน · <strong>ปลอดภัย</strong></div>}>
+      statusChip={<></>}>
       {!introDone && <VerdureBallotIntro party={party} no={no} onDone={() => setIntroDone(true)} />}
 
       <div className="vd-booth-bg" aria-hidden />
@@ -193,9 +193,9 @@ export default function VerdureSingleParty({
             <h2>การตัดสินใจของคุณ</h2>
             <p>เลือกหนึ่งตัวเลือก แล้วกดยืนยัน · ลงคะแนนได้เพียงครั้งเดียว</p>
           </div>
-          <Opt disc="✓" kicker={<>APPROVE · เห็นชอบ · <span className="ac">No. {no}</span></>} name="รับรอง" slogan={`เห็นชอบให้ ${party?.name || ""} ดำรงตำแหน่ง`} selected={kind === "approve"} onClick={pick(party?.id)} />
-          {disapprove && <Opt disc="×" discSm abstain kicker="DISAPPROVE · ไม่เห็นชอบ" name="ไม่รับรอง" slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง" selected={kind === "disapprove"} onClick={pick(disapprove.id)} />}
-          {abstain && <Opt disc="×" discSm abstain kicker="ABSTAIN · งดออกเสียง" name="งดออกเสียง" slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้" selected={kind === "abstain"} onClick={pick(abstain.id)} />}
+          <Opt disc="✓" kicker={<>เห็นชอบ · <span className="en">Approve</span></>} name="รับรอง" slogan={`เห็นชอบให้ ${party?.name || ""} ดำรงตำแหน่ง`} selected={kind === "approve"} onClick={pick(party?.id)} />
+          {disapprove && <Opt disc="×" discSm abstain kicker={<>ไม่เห็นชอบ · <span className="en">Disapprove</span></>} name="ไม่รับรอง" slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง" selected={kind === "disapprove"} onClick={pick(disapprove.id)} />}
+          {abstain && <Opt disc="×" discSm abstain kicker={<>งดออกเสียง · <span className="en">Abstain</span></>} name="งดออกเสียง" slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้" selected={kind === "abstain"} onClick={pick(abstain.id)} />}
 
           <div className="vd-confirm">
             <div><div className="vd-confirm__lbl">YOUR SELECTION</div><div className="vd-confirm__val">{selectionLabel || "ยังไม่ได้เลือก · No selection"}</div></div>
@@ -205,8 +205,6 @@ export default function VerdureSingleParty({
             </button>
           </div>
         </section>
-
-        <div className="vd-booth__foot"><span className="lock">●</span> การลงคะแนนของคุณปลอดภัยและเป็นความลับ · เข้ารหัสโดย PSU Passport</div>
       </div>
 
       {confirmOpen && (
@@ -336,7 +334,8 @@ export default function VerdureSingleParty({
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, #FCF5E6 0%, var(--cream-2) 100%); }
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); color:var(--moss); }
         .vd-opt__main { min-width:0; }
-        .vd-opt__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(31,58,44,.55); margin-bottom:4px; }
+        .vd-opt__kicker { font-family:var(--ft); font-size:11px; letter-spacing:.04em; color:var(--terra-2); margin-bottom:5px; }
+        .vd-opt__kicker .en { font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase; opacity:.8; }
         .vd-opt__kicker .ac { color:var(--terra-2); }
         .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.7); }
         .vd-opt.is-selected .vd-opt__kicker .ac { color:var(--terra-soft); }
@@ -353,8 +352,6 @@ export default function VerdureSingleParty({
         .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(31,58,44,.55); }
         .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; color:var(--moss); }
 
-        .vd-booth__foot { margin-top:36px; text-align:center; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(31,58,44,.52); }
-        .vd-booth__foot .lock { color:var(--terra); margin-right:7px; font-size:8px; vertical-align:middle; }
 
         /* confirm dialog — a warm cream card */
         .vd-cm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(31,58,44,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:24px; }

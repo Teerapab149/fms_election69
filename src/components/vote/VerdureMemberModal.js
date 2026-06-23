@@ -83,6 +83,12 @@ export function VerdureLightbox({ src = null, caption = "", onClose = () => {} }
         .vd-lb__x { position:absolute; top:20px; right:20px; width:42px; height:42px; z-index:2; display:grid; place-items:center; border-radius:50%; cursor:pointer; background:rgba(244,236,219,.85); border:1px solid #D4C9AC; color:#1F3A2C; }
         .vd-lb__x:hover { background:#BC5E3E; border-color:#BC5E3E; color:#F4ECDB; }
         .vd-lb__cap { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--font-space-mono),monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:#F4ECDB; background:rgba(31,58,44,.7); border:1px solid rgba(244,236,219,.3); padding:6px 16px; border-radius:999px; white-space:nowrap; }
+        @media (max-width:640px) {
+          .vd-lb { padding:14px; }
+          .vd-lb__img { max-width:96vw; max-height:80vh; border-radius:14px; }
+          .vd-lb__x { top:14px; right:14px; width:38px; height:38px; }
+          .vd-lb__cap { bottom:14px; max-width:90vw; white-space:normal; text-align:center; line-height:1.5; border-radius:14px; }
+        }
       `}</style>
     </motion.div>
   );
