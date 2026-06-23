@@ -231,6 +231,16 @@ function PlaygroundBody() {
       </div>
 
       <style jsx global>{`
+        /* The playground is SESSION-LESS by intent: next-auth's SessionProvider is a
+           singleton (a nested session=null doesn't isolate), so instead of fighting it
+           we neutralise every auth ACTION in the chrome — the preview can never sign a
+           real user in or out. Pill avatar/name stay for realism; only the dangerous
+           buttons go. Covers all 3 families (signOut shares aria-label="ออกจากระบบ"). */
+        [aria-label="ออกจากระบบ"],
+        .vd-user__out,
+        .sd-signin, .sd-rail__logout-btn,
+        .gnav-auth, .gnav-auth-d, .gnav-dbtn { display:none !important; }
+
         .tpg { position:fixed; right:16px; bottom:16px; z-index:100000; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
         .tpg__toggle { display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:999px; border:0; cursor:pointer;
           background:#14140F; color:#F2EDDF; font-size:13px; font-weight:600; box-shadow:0 14px 36px -10px rgba(0,0,0,.55); }
