@@ -63,10 +63,12 @@ export default function VerdureVote({
       edge={{ num: "04", label: "Ballot", th: "ลงคะแนนเสียง" }}
       cornermarkTitle="Ballot" cornermarkSub="Secure session"
       statusChip={<div className="vd-chip-live"><span className="dot" /> BALLOT · <strong>SECURE</strong></div>}>
+      <div className="vd-warm-bg" aria-hidden />
       <div className="vd-ballot">
         <div className="vd-ballot__h">
-          <div className="vd-ballot__kicker"><span className="rule" /> NO. 04 · BALLOT <span className="rule" /></div>
+          <div className="vd-ballot__kicker"><span className="rule" /> NO. 04 · BALLOT · ลงคะแนน <span className="rule" /></div>
           <h1 className="vd-ballot__title">Choose <em>one.</em></h1>
+          <div className="vd-ballot__accent" aria-hidden />
           <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
         </div>
 
@@ -107,29 +109,42 @@ export default function VerdureVote({
       </div>
 
       <style jsx global>{`
+        /* golden-hour warm wash on the browser frame — matches the single-vote
+           "ballot booth" so the multi ballot feels just as warm, not flat cream */
+        .vd-warm-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
+          background:
+            radial-gradient(72% 46% at 50% 0%, rgba(210,162,72,.16) 0%, transparent 56%),
+            radial-gradient(60% 44% at 100% 8%, rgba(188,94,62,.09) 0%, transparent 50%),
+            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.30) 0%, transparent 56%),
+            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 46%, #EFE2CB 100%); }
+
         .vd-ballot { flex:1; padding:96px 80px 150px; max-width:980px; margin:0 auto; width:100%; position:relative; z-index:1; }
         .vd-ballot__h { text-align:center; margin-bottom:44px; }
-        .vd-ballot__kicker { display:inline-flex; align-items:center; gap:14px; font-family:var(--fm); font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--terra); margin-bottom:18px; }
+        .vd-ballot__kicker { display:inline-flex; align-items:center; gap:14px; font-family:var(--fm); font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--terra-2); margin-bottom:18px; }
         .vd-ballot__kicker .rule { width:36px; height:1px; background:var(--rule); }
         .vd-ballot__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(48px,6vw,80px); line-height:.96; letter-spacing:-.015em; margin:0; color:var(--moss); }
         .vd-ballot__title em { color:var(--terra); }
-        .vd-ballot__deck { font-family:var(--ft); font-size:16px; color:var(--moss); opacity:.75; line-height:1.55; margin:16px auto 0; max-width:540px; }
+        .vd-ballot__accent { width:84px; height:2px; background:var(--terra); margin:22px auto 0; }
+        .vd-ballot__deck { font-family:var(--ft); font-size:16px; color:rgba(31,58,44,.82); line-height:1.55; margin:18px auto 0; max-width:540px; }
 
         .vd-ballot__meta { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; background:var(--cream-2); border:1px dashed var(--rule); border-radius:999px; margin-bottom:22px; font-family:var(--fm); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); opacity:.85; }
         .vd-ballot__meta .ac { color:var(--terra); font-weight:700; }
 
-        .vd-opt { display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:24px; padding:24px 28px 24px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; }
-        .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--moss); }
-        .vd-opt.is-selected { background:var(--moss); color:var(--cream); border-color:var(--moss); transform:scale(1.005); }
+        .vd-opt { display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:24px; padding:24px 28px 24px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
+        .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); box-shadow:0 20px 40px -26px rgba(31,58,44,.4); }
+        .vd-opt.is-selected { background:var(--moss); color:var(--cream); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(31,58,44,.55); }
+        /* each party reads as a warm, inviting card (mirrors the booth's primary option) */
+        .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, #FCF5E6 0%, var(--cream-2) 100%); }
+        .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); }
         .vd-opt__disc { width:80px; height:80px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:56px; line-height:1; letter-spacing:-.04em; color:var(--moss); transition:all .25s; }
         .vd-opt__disc.sm { font-size:36px; }
-        .vd-opt:hover .vd-opt__disc { background:var(--terra-soft); }
+        .vd-opt:hover .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
         .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
         .vd-opt__main { min-width:0; }
-        .vd-opt__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:4px; }
-        .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.65); opacity:1; }
+        .vd-opt__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--terra-2); margin-bottom:4px; }
+        .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.7); opacity:1; }
         .vd-opt__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; line-height:1.15; letter-spacing:-.015em; margin:0 0 4px; }
-        .vd-opt__slogan { font-family:var(--ft); font-size:14px; opacity:.75; margin:0; line-height:1.4; }
+        .vd-opt__slogan { font-family:var(--ft); font-size:14px; opacity:.82; margin:0; line-height:1.4; }
         .vd-opt__more { display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-family:var(--fm); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--terra); border:0; border-bottom:1px solid currentColor; background:none; padding:0 0 1px; cursor:pointer; }
         .vd-opt.is-selected .vd-opt__more { color:var(--terra-soft); }
         .vd-opt__check { width:44px; height:44px; border-radius:50%; border:1px solid var(--rule); background:var(--cream); display:grid; place-items:center; color:var(--cream); font-size:18px; transition:all .25s; flex-shrink:0; }
