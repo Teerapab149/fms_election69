@@ -191,7 +191,10 @@ export default function VerdureVote({
           .vd-opt__disc { width:64px; height:64px; font-size:38px; }
           .vd-opt__disc.has-logo { width:64px; height:80px; border-radius:15px; }
           .vd-opt__num { min-width:26px; height:26px; font-size:15px; right:-3px; bottom:-3px; }
-          .vd-confirm { grid-template-columns:1fr; text-align:center; }
+          /* stacked + centred: full-width button so it balances the moss bar
+             instead of sitting content-width to one side */
+          .vd-confirm { grid-template-columns:1fr; text-align:center; gap:16px; padding:22px; justify-items:center; }
+          .vd-confirm .vd-btn { width:100%; justify-content:center; }
         }
         /* phones — open up the cramped ballot: wrap the meta pill, drop the
            redundant check (the whole row turns moss when selected), and give the
@@ -202,7 +205,11 @@ export default function VerdureVote({
           .vd-ballot__deck { font-size:15px; }
           .vd-ballot__meta { flex-wrap:wrap; justify-content:center; gap:5px 14px; padding:12px 18px; font-size:10px; letter-spacing:.08em; margin-bottom:18px; }
           .vd-opt { grid-template-columns:60px 1fr; gap:15px; padding:15px; margin-bottom:14px; }
+          /* declutter unselected rows, but make the SELECTED row unmistakable —
+             a cream ✓ badge in the top-right corner (the moss fill alone read as
+             "not selected" to the owner) */
           .vd-opt__check { display:none; }
+          .vd-opt.is-selected .vd-opt__check { display:grid; position:absolute; top:12px; right:12px; width:28px; height:28px; font-size:14px; }
           .vd-opt__disc { width:60px; height:60px; font-size:34px; }
           .vd-opt__disc.has-logo { width:60px; height:76px; }
           .vd-opt__name { font-size:20px; line-height:1.2; }
