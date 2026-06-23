@@ -370,6 +370,19 @@ function TemplateGallery({ slug }) {
           />
         ))}
       </div>
+
+      {/* interactive playground — clickable, DB-free; only for the distinct
+          (non-classic) layout families the playground supports */}
+      {['verdure', 'studio-dark', 'gumroad'].includes(BUILT_IN_TEMPLATES[slug]?.layoutFamily) && (
+        <a
+          href={getPath(`/template-playground?slug=${slug}`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#8A2680] hover:bg-[#9333EA] text-white text-sm font-bold transition-colors"
+        >
+          <ExternalLink className="w-4 h-4" /> เปิดแบบโต้ตอบ — กดเล่นได้จริง
+        </a>
+      )}
     </div>
   );
 }
