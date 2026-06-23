@@ -261,18 +261,17 @@ export default function VerdureSingleParty({
         .vd-booth__head { text-align:center; }
         .vd-booth__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:30px; }
 
-        .vd-seal { position:relative; width:clamp(180px,25vw,226px); aspect-ratio:1; margin:4px auto 30px; display:grid; place-items:center; }
+        .vd-seal { position:relative; width:clamp(190px,25vw,226px); aspect-ratio:1; margin:4px auto 30px; display:grid; place-items:center; }
         .vd-seal__glow { position:absolute; inset:-46px; border-radius:50%; background:radial-gradient(circle, rgba(210,162,72,.26) 0%, rgba(227,191,169,.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
         .vd-seal__ring { position:absolute; inset:-15px; border-radius:50%; border:1px dashed var(--terra-soft); }
         .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(210,162,72,.3); }
         .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(31,58,44,.4), 0 0 0 7px rgba(250,244,228,.6); }
-        /* cover → the logo FILLS the seal (no cream margins) so it reads big even in
-           a smaller circle. MUST be absolutely positioned: a percentage height in an
-           aspect-ratio/grid parent doesn't resolve, so width/height:100% alone left
-           the img at its natural portrait ratio (178x223) — overflowing + clipping in
-           a way that looked stretched. inset:0 pins it to the disc's real box so cover
-           crops cleanly with no distortion. */
-        .vd-seal__disc img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+        /* contain → the FULL logo always shows (never cropped/distorted) for ANY
+           party logo of any aspect/resolution — the robust choice for admin-uploaded
+           logos. Sized by width + aspect-ratio:1 (NOT height:%, which doesn't resolve
+           in this aspect-ratio/grid parent and caused the earlier stretch); contain
+           letterboxes the logo inside that square box, centred by the disc's grid. */
+        .vd-seal__disc img { width:74%; aspect-ratio:1; object-fit:contain; display:block; }
         .vd-seal__disc .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:84px; line-height:1; color:var(--moss); }
         @keyframes vdGlow { 0%,100%{opacity:.55; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.05)} }
 
