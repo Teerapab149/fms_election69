@@ -12,15 +12,20 @@
 
 import VerdureShell from "./VerdureShell";
 import VerdureSingleParty from "./VerdureSingleParty";
+import { getPath } from "../../utils/basePath";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
+const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 
-function Opt({ disc, discSm = false, kicker, name, slogan, more = null, selected, onClick, abstain = false }) {
+function Opt({ disc, discSm = false, logoUrl = null, num = null, kicker, name, slogan, more = null, selected, onClick, abstain = false }) {
+  const logo = resolveSrc(logoUrl);
   return (
     <article className={`vd-opt ${abstain ? "vd-opt--abstain" : ""} ${selected ? "is-selected" : ""}`}
       onClick={onClick} role="radio" aria-checked={selected} tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}>
-      <div className={`vd-opt__disc ${discSm ? "sm" : ""}`}>{disc}</div>
+      <div className={`vd-opt__disc ${discSm ? "sm" : ""} ${logo ? "has-logo" : ""}`}>
+        {logo ? (<><img src={logo} alt="" /><span className="vd-opt__num">{num}</span></>) : disc}
+      </div>
       <div className="vd-opt__main">
         <div className="vd-opt__kicker">{kicker}</div>
         <h3 className="vd-opt__name">{name}</h3>
@@ -81,10 +86,12 @@ export default function VerdureVote({
         {regularParties.map((p) => (
           <Opt key={p.id}
             disc={p.number}
+            logoUrl={p.logoUrl}
+            num={p.number}
             kicker={<>PARTY No. {pad2(p.number)}</>}
             name={p.name}
             slogan={p.slogan ? `"${p.slogan}"` : null}
-            more={<button type="button" className="vd-opt__more" onClick={(e) => { e.stopPropagation(); onViewDetails(p); }}>VIEW PROFILE →</button>}
+            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>ดูโปรไฟล์พรรค · VIEW PROFILE →</a>}
             selected={selectedPartyId === p.id}
             onClick={() => onSelect(p.id)}
           />
@@ -140,6 +147,17 @@ export default function VerdureVote({
         .vd-opt__disc.sm { font-size:36px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
         .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
+        /* party LOGO disc — the recognisable identity gets the face; the ballot
+           number moves to a bold terra badge on the corner (still prominent). The
+           disc keeps a clean cream face at every state so the logo never sits on
+           terra/moss. */
+        .vd-opt__disc.has-logo { background:var(--cream-2); border:1px solid var(--rule); overflow:visible; position:relative; }
+        .vd-opt__disc.has-logo img { width:64%; height:64%; object-fit:contain; display:block; }
+        .vd-opt:hover .vd-opt__disc.has-logo,
+        .vd-opt.is-selected .vd-opt__disc.has-logo,
+        .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc.has-logo { background:var(--cream-2); border-color:var(--rule); }
+        .vd-opt__num { position:absolute; right:-4px; bottom:-4px; min-width:30px; height:30px; padding:0 7px; border-radius:999px; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:18px; line-height:1; border:2px solid var(--cream-2); box-shadow:0 5px 12px -4px rgba(31,58,44,.55); }
+        .vd-opt.is-selected .vd-opt__num { border-color:var(--moss); }
         .vd-opt__main { min-width:0; }
         .vd-opt__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--terra-2); margin-bottom:4px; }
         .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.7); opacity:1; }
@@ -161,6 +179,7 @@ export default function VerdureVote({
           .vd-ballot { padding:92px 24px 130px; }
           .vd-opt { grid-template-columns:64px 1fr auto; padding:18px; gap:16px; }
           .vd-opt__disc { width:56px; height:56px; font-size:36px; }
+          .vd-opt__num { min-width:24px; height:24px; font-size:14px; right:-3px; bottom:-3px; }
           .vd-confirm { grid-template-columns:1fr; text-align:center; }
         }
       `}</style>
