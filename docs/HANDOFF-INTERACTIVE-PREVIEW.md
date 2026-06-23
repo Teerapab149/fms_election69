@@ -1,5 +1,53 @@
 # HANDOFF — Interactive (clickable, DB-free) template preview
 
+## ✅ STATUS: BUILT 2026-06-23 (`new-version`)
+
+Shipped + verified. Commits: `ce1618f` (playground core + shared mocks +
+template-preview refactor) · `f255419` (admin gallery launch button).
+
+**What shipped**
+- New route **`/template-playground?slug=<slug>&page=<page>`** — a fully clickable,
+  DB-free prototype of all 7 pages × 3 families (verdure / studio-dark / gumroad).
+- **Architecture decision changed from the original plan:** the `onNavigate` chrome
+  seam was NOT built — replaced by a single **click-interception** wrapper
+  (`onClickCapture` → `hrefToDest()` → local `setPage`). It catches the dock AND
+  every scattered in-page `<a href={getPath()}>` across all families with ZERO
+  component changes (the audit found nav is not centralized — Gumroad has no shared
+  shell at all, so per-chrome `onNavigate` would have missed ~15 in-page links).
+- Real components + mock data (`utils/templatePreviewMocks.js`, extracted + now
+  shared with `/template-preview`) + local-state handlers; `onConfirm` → mock
+  success page. **DB-safe by construction** — verified no `POST /api/vote` fires.
+- **Auth safety:** home renders view-only (`editorMode`) so its `signIn()` CTA can't
+  redirect; inner pages run interactive with NO session, so the chrome user pill +
+  its `signOut` (which would log the admin out for real) never render.
+- Floating **SANDBOX bar** (`.tpg`): template switch · page tabs · single/multi ·
+  results locked/revealed · clear-selection. Reliable nav independent of the chrome.
+- **Admin launch:** "เปิดแบบโต้ตอบ — กดเล่นได้จริง" button under the gallery
+  ("ดูรายละเอียด") opens the playground in a new tab; gated to the 3 distinct families.
+
+**Verified (preview, no DB):** Verdure select→confirm→success (no `/api/vote`),
+dock click intercepted (URL unchanged), single/multi booth; Studio Dark + Gumroad
+render + nav interception (clicked internal links, URL unchanged); console clean.
+
+**Known limitations / possible follow-ups**
+- Home is view-only (by design — avoids the `signIn()` redirect). Inner pages have
+  no user pill (by design — avoids `signOut` logging the admin out).
+- Single-vote cinematic intro plays each time you open Verdure vote in single mode
+  (`editorMode` off). A "replay/skip intro" control in the SANDBOX bar would be nice
+  (would need a small `skipIntro` prop on `VerdureSingleParty` — do NOT reuse
+  `editorMode`, that kills clicks).
+- The admin gallery button was NOT exercised in the authed admin UI (browser admin
+  auth wall, P-LOG-066 + screenshot tool wedges). It's an additive `<a>` using
+  already-imported symbols; the playground it opens is fully verified.
+- Classic family has no interactive playground (only the 3 distinct layouts).
+
+The plan below is the ORIGINAL pre-build design, kept for context. The build
+diverged on navigation (click-interception, not `onNavigate`) — see above.
+
+---
+
+_(original pre-build plan follows)_
+
 Written end of the 2026-06-23 session, **before building** (we hit the token
 budget). Self-contained — next session has zero memory of this. Read top to bottom.
 
