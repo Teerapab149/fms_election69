@@ -266,10 +266,13 @@ export default function VerdureSingleParty({
         .vd-seal__ring { position:absolute; inset:-15px; border-radius:50%; border:1px dashed var(--terra-soft); }
         .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(210,162,72,.3); }
         .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(31,58,44,.4), 0 0 0 7px rgba(250,244,228,.6); }
-        /* cover → the logo FILLS the seal (no cream margins) so it reads big even
-           in a smaller circle (owner: logo too small but circle too big when grown).
-           Portrait posters fill the width and crop a little top/bottom. */
-        .vd-seal__disc img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+        /* cover → the logo FILLS the seal (no cream margins) so it reads big even in
+           a smaller circle. MUST be absolutely positioned: a percentage height in an
+           aspect-ratio/grid parent doesn't resolve, so width/height:100% alone left
+           the img at its natural portrait ratio (178x223) — overflowing + clipping in
+           a way that looked stretched. inset:0 pins it to the disc's real box so cover
+           crops cleanly with no distortion. */
+        .vd-seal__disc img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
         .vd-seal__disc .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:84px; line-height:1; color:var(--moss); }
         @keyframes vdGlow { 0%,100%{opacity:.55; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.05)} }
 
