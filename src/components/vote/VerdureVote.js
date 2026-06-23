@@ -137,13 +137,13 @@ export default function VerdureVote({
         .vd-ballot__meta { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; background:var(--cream-2); border:1px dashed var(--rule); border-radius:999px; margin-bottom:22px; font-family:var(--fm); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); opacity:.85; }
         .vd-ballot__meta .ac { color:var(--terra); font-weight:700; }
 
-        .vd-opt { display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:24px; padding:24px 28px 24px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
+        .vd-opt { display:grid; grid-template-columns:104px 1fr auto; align-items:center; gap:24px; padding:22px 28px 22px 22px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
         .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); box-shadow:0 20px 40px -26px rgba(31,58,44,.4); }
         .vd-opt.is-selected { background:var(--moss); color:var(--cream); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(31,58,44,.55); }
         /* each party reads as a warm, inviting card (mirrors the booth's primary option) */
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, #FCF5E6 0%, var(--cream-2) 100%); }
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); }
-        .vd-opt__disc { width:80px; height:80px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:56px; line-height:1; letter-spacing:-.04em; color:var(--moss); transition:all .25s; }
+        .vd-opt__disc { width:96px; height:96px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:60px; line-height:1; letter-spacing:-.04em; color:var(--moss); transition:all .25s; }
         .vd-opt__disc.sm { font-size:36px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
         .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
@@ -152,7 +152,7 @@ export default function VerdureVote({
            disc keeps a clean cream face at every state so the logo never sits on
            terra/moss. */
         .vd-opt__disc.has-logo { background:var(--cream-2); border:1px solid var(--rule); overflow:visible; position:relative; }
-        .vd-opt__disc.has-logo img { width:64%; height:64%; object-fit:contain; display:block; }
+        .vd-opt__disc.has-logo img { width:70%; height:70%; object-fit:contain; display:block; }
         .vd-opt:hover .vd-opt__disc.has-logo,
         .vd-opt.is-selected .vd-opt__disc.has-logo,
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc.has-logo { background:var(--cream-2); border-color:var(--rule); }
@@ -177,9 +177,9 @@ export default function VerdureVote({
 
         @media (max-width:1100px) {
           .vd-ballot { padding:92px 24px 130px; }
-          .vd-opt { grid-template-columns:64px 1fr auto; padding:18px; gap:16px; }
-          .vd-opt__disc { width:56px; height:56px; font-size:36px; }
-          .vd-opt__num { min-width:24px; height:24px; font-size:14px; right:-3px; bottom:-3px; }
+          .vd-opt { grid-template-columns:78px 1fr auto; padding:18px; gap:16px; }
+          .vd-opt__disc { width:72px; height:72px; font-size:44px; }
+          .vd-opt__num { min-width:26px; height:26px; font-size:15px; right:-3px; bottom:-3px; }
           .vd-confirm { grid-template-columns:1fr; text-align:center; }
         }
       `}</style>
