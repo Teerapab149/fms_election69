@@ -47,6 +47,7 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         <div className="vd-success__head">
           <div className="kicker">★ THANK YOU FOR VOTING ★</div>
           <h1>ขอบคุณที่<br /><em>ลงคะแนน</em></h1>
+          <div className="vd-success__accent" aria-hidden />
           <p>บันทึกคะแนนของคุณเรียบร้อยแล้ว — ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา {meta.org}</p>
         </div>
 
@@ -80,9 +81,10 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         .vd-orn__arch { position:absolute; inset:0; pointer-events:none; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; fill:var(--cream); opacity:.65; }
         .vd-success__head { text-align:center; max-width:720px; margin:0 auto 44px; }
         .vd-success__head .kicker { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }
-        .vd-success__head h1 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,92px); line-height:.96; letter-spacing:-.02em; margin:0 0 18px; color:var(--cream); }
+        .vd-success__head h1 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,92px); line-height:.96; letter-spacing:-.02em; margin:0 0 6px; color:var(--cream); }
         .vd-success__head h1 em { color:var(--terra); }
-        .vd-success__head p { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.75); line-height:1.55; margin:0 auto; max-width:480px; }
+        .vd-success__accent { width:72px; height:2px; background:var(--terra); margin:6px auto 20px; }
+        .vd-success__head p { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.82); line-height:1.55; margin:0 auto; max-width:480px; }
 
         .vd-receipt { max-width:480px; width:100%; margin:0 auto; background:var(--moss-2); border:1px solid var(--rule-moss); border-radius:24px; overflow:hidden; }
         .vd-receipt__h { padding:14px 26px; border-bottom:1px dashed var(--rule-moss); display:flex; justify-content:space-between; align-items:center; font-family:var(--fm); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(244,236,219,.65); }
