@@ -6,7 +6,12 @@
 // members[]/policies[]/logoMeaning/groupImageUrls that the vote + party
 // pages consume). Pure presentation data; never touches the database.
 
-const LOGO = "/images/logo/fms_logo50_color.png";
+// real party-logo artwork (admin-uploaded style — opaque JPG, not the institutional
+// FMS mark) so the preview shows what an actual party logo looks like in the disc
+const PARTY_LOGOS = [
+  "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769963446319.jpg",
+  "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769902576579.jpg",
+];
 
 export const mkMembers = (n) =>
   Array.from({ length: n }, (_, i) => ({
@@ -29,7 +34,7 @@ export const MISSIONS = [
 
 export const mkParty = (i, name, slogan, color) => ({
   id: i, number: i, name, slogan, color,
-  logoUrl: LOGO, groupImageUrls: ["/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg"], officialImageUrl: null, mobileHeroImage: null,
+  logoUrl: PARTY_LOGOS[(i - 1) % PARTY_LOGOS.length], groupImageUrls: ["/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg"], officialImageUrl: null, mobileHeroImage: null,
   logoMeaning:
     "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ",
   missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),

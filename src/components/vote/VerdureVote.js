@@ -13,6 +13,8 @@
 import VerdureShell from "./VerdureShell";
 import VerdureSingleParty from "./VerdureSingleParty";
 import { getPath } from "../../utils/basePath";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { verdureMeta } from "../home/VerdureChrome";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -24,7 +26,7 @@ function Opt({ disc, discSm = false, logoUrl = null, num = null, kicker, name, s
       onClick={onClick} role="radio" aria-checked={selected} tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}>
       <div className={`vd-opt__disc ${discSm ? "sm" : ""} ${logo ? "has-logo" : ""}`}>
-        {logo ? (<><img src={logo} alt="" /><span className="vd-opt__num">{num}</span></>) : disc}
+        {logo ? (<><span className="vd-opt__logo"><img src={logo} alt="" /></span><span className="vd-opt__num">{num}</span></>) : disc}
       </div>
       <div className="vd-opt__main">
         <div className="vd-opt__kicker">{kicker}</div>
@@ -42,6 +44,8 @@ export default function VerdureVote({
   onSelect = () => {}, onViewDetails = () => {}, isSingleParty = false,
   user = null, onConfirm = () => {}, isSubmitting = false, editorMode = false,
 }) {
+  const gc = useGlobalConfig();
+  const meta = verdureMeta(gc);
   if (isSingleParty) {
     return (
       <VerdureSingleParty party={regularParties[0] || {}} specialOptions={specialOptions}
@@ -71,7 +75,7 @@ export default function VerdureVote({
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-ballot">
         <div className="vd-ballot__h">
-          <div className="vd-ballot__kicker"><span className="rule" /> NO. 04 · BALLOT · ลงคะแนน <span className="rule" /></div>
+          <div className="vd-ballot__kicker"><span className="rule" /> {meta.wordmark} · เลือกตั้งประจำปี {meta.ay} <span className="rule" /></div>
           <h1 className="vd-ballot__title">Choose <em>one.</em></h1>
           <div className="vd-ballot__accent" aria-hidden />
           <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
@@ -79,7 +83,7 @@ export default function VerdureVote({
 
         <div className="vd-ballot__meta">
           <span><span className="ac">●</span> BALLOT OPEN</span>
-          <span>{regularParties.length} PARTIES + ABSTAIN</span>
+          <span>{regularParties.length} {regularParties.length === 1 ? "PARTY" : "PARTIES"}</span>
           <span>ONE VOTE ONLY</span>
         </div>
 
@@ -152,7 +156,12 @@ export default function VerdureVote({
            disc keeps a clean cream face at every state so the logo never sits on
            terra/moss. */
         .vd-opt__disc.has-logo { background:var(--cream-2); border:1px solid var(--rule); overflow:visible; position:relative; }
-        .vd-opt__disc.has-logo img { width:70%; height:70%; object-fit:contain; display:block; }
+        /* party logos here are tall artwork posters, not square marks — fill the
+           round disc (cover, clipped to the circle) so the artwork reads as a bold
+           medallion instead of a tiny letterboxed thumbnail. Inner clip wrapper so
+           the number badge can still sit outside on the corner. */
+        .vd-opt__logo { position:absolute; inset:0; border-radius:50%; overflow:hidden; background:var(--cream-3); }
+        .vd-opt__logo img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
         .vd-opt:hover .vd-opt__disc.has-logo,
         .vd-opt.is-selected .vd-opt__disc.has-logo,
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc.has-logo { background:var(--cream-2); border-color:var(--rule); }
