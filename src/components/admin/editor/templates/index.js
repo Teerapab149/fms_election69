@@ -16,6 +16,7 @@ import { minimalTemplate }    from "./builtIn/minimal";
 import { gumroadTemplate }    from "./builtIn/gumroad";
 import { studioDarkTemplate } from "./builtIn/studio-dark";
 import { verdureTemplate }    from "./builtIn/verdure";
+import { originalTemplate }   from "./builtIn/original";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
@@ -24,7 +25,8 @@ const BUILT_IN_TEMPLATES = {
   minimal:        minimalTemplate,
   gumroad:        gumroadTemplate,
   "studio-dark":  studioDarkTemplate,
-  verdure:        verdureTemplate
+  verdure:        verdureTemplate,
+  original:       originalTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).
