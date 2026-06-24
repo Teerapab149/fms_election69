@@ -8,6 +8,25 @@ The **gold version is commit `ee059dc`** (2026-02-04). Owner decided (AskUserQue
    current classic-base (modern-dark/playful/minimal + the editor depend on it).
 2. **Purple-white only for now**; theme variants come later.
 
+## ⏸️ STATUS 2026-06-24 (paused — owner hit weekly limit, resume Fri)
+HOME is built as the `original` template (commits `507dde0`, `cf94f47`) — font fixed
+to **Kanit** (default `font-sans` had been changed Kanit→Anuphan; root now `font-kanit`)
+and ee059dc's own Navbar/MeetCard/Countdown extracted as `Original*` deps.
+**🔴 UNRESOLVED:** owner says the **hover is still not right** ("แข็งๆ", not the gradual
+color/gradient of ee059dc). Leads already checked: tailwind `shine` keyframe + the
+`animation`/`keyframes` block + `globals.css` are **IDENTICAL ee059dc↔HEAD** — so it is
+NOT a missing/changed keyframe.
+**Next session — investigate the hover (in order):**
+1. Force `:hover` on a specific button (login CTA, meet-card CTA) via CDP/devtools and
+   compare computed `transition`/`background`/`color` to what ee059dc produces. The
+   preview screenshot can't show hover — must inspect computed state or a video.
+2. Diff the SPECIFIC button JSX in `OriginalHome` vs `ee059dc:HomeContent` — it was
+   extracted verbatim so it *should* be identical; if so the cause is environmental.
+3. Check for a global `transition`/`* {}` rule or `prefers-reduced-motion` block in
+   `globals.css` / a layout-injected `<style>` / the `.fms-app` wrapper that could be
+   overriding or shortening transitions in the current app but not at ee059dc.
+4. Confirm Tailwind's transition timing-function default didn't change (config `theme`).
+
 ## ✅ DONE (commit `507dde0`) — HOME
 - `src/components/home/OriginalHome.js` = `git show ee059dc:src/components/HomeContent.js`
   verbatim, imports repointed for the new path (`../../utils`, `../Navbar`,
