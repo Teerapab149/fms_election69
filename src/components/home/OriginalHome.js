@@ -6,9 +6,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { signIn, useSession } from "next-auth/react";
-import Navbar from '../Navbar';
-import CountdownTimer from '../CountdownTimer';
-import MeetCandidatesCard from '../MeetCandidatesCard';
+import Navbar from './OriginalNavbar';
+import CountdownTimer from './OriginalCountdownTimer';
+import MeetCandidatesCard from './OriginalMeetCandidatesCard';
 import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
 
 export default function OriginalHome({ initialData }) {
@@ -87,7 +87,7 @@ export default function OriginalHome({ initialData }) {
     if (!mounted) return null;
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
+        <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-kanit selection:bg-[#8A2680] selection:text-white relative">
 
             {/* --- Background --- */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
