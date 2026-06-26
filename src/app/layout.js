@@ -218,6 +218,14 @@ export default async function RootLayout({ children }) {
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}
 
+        {/* "original" template = the ee059dc hand-crafted design (Kanit). The home
+            uses OriginalHome; the other pages render the classic components via each
+            page's else branch — force Kanit across the whole subtree so they match
+            (default font-sans is Anuphan now). Only when it is the active template. */}
+        {activeTemplateId === "original" && (
+          <style dangerouslySetInnerHTML={{ __html: ".fms-app,.fms-app .font-sans{font-family:var(--font-kanit),sans-serif !important}" }} />
+        )}
+
         {/* 4. ส่ง Session + globalConfig เข้าไป */}
         <Providers session={session} globalConfig={globalConfig} activeTemplateId={activeTemplateId}>
           <div className="fms-app">{children}</div>
