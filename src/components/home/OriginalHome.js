@@ -10,10 +10,17 @@ import Navbar from './OriginalNavbar';
 import CountdownTimer from './OriginalCountdownTimer';
 import MeetCandidatesCard from './OriginalMeetCandidatesCard';
 import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 export default function OriginalHome({ initialData }) {
 
     const { data: session, status } = useSession();
+    // election meta from admin globalConfig (ee059dc predated it — was hardcoded SAMO 49)
+    const gc = useGlobalConfig() || {};
+    const elPrefix = gc.electionNamePrefix || "SAMO";
+    const elNumber = gc.electionNumber ?? 50;
+    const elAcademicYear = gc.academicYearTh ?? 2570;
+    const elCopyrightYear = gc.copyrightYear ?? gc.electionCalendarYear ?? 2027;
     // ✅ ใช้ข้อมูลที่ Server ส่งมาเป็นค่าเริ่มต้นทันที (ไม่ต้องรอโหลด)
     const [stats, setStats] = useState({
         totalEligible: initialData?.stats?.totalEligible || 0,
@@ -118,10 +125,10 @@ export default function OriginalHome({ initialData }) {
                                 <div className="flex items-center justify-center lg:justify-start relative">
                                     <h1 className="flex items-baseline gap-2 md:gap-3 font-black tracking-tight leading-none whitespace-nowrap select-none">
                                         <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-slate-900 drop-shadow-sm">
-                                            SAMO
+                                            {elPrefix}
                                         </span>
                                         <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
-                                            49
+                                            {elNumber}
                                             <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping"></span>
                                         </span>
                                     </h1>
@@ -140,7 +147,7 @@ export default function OriginalHome({ initialData }) {
                                     <div className="flex justify-center lg:justify-start pt-2">
                                         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm hover:bg-purple-100 transition-colors cursor-default">
                                             <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                            ประจำปีการศึกษา 2569
+                                            ประจำปีการศึกษา {elAcademicYear}
                                         </span>
                                     </div>
                                 </div>
@@ -417,7 +424,7 @@ export default function OriginalHome({ initialData }) {
 
             {/* Footer */}
             <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
-                <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
+                <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU {elCopyrightYear}. All Rights Reserved.</p>
             </footer>
 
             {/* Styles */}
