@@ -9,7 +9,7 @@ export default function MeetCandidatesCard() {
     <Link href="/candidates" className="group relative block w-full h-full">
       
       {/* ✨ 1. BACKGROUND GLOW (ลดความฟุ้งลงนิดนึงเพื่อให้ดูกระชับ) */}
-      <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 opacity-60 blur-sm transition-all duration-500 group-hover:opacity-100 group-hover:blur-md animate-gradient-xy"></div>
+      <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 opacity-60 blur-sm transition-opacity duration-500 group-hover:opacity-100 animate-gradient-xy"></div>
       
       {/* ✨ 2. MAIN CARD BODY */}
       {/* ปรับ p-4 (จากเดิม p-6) เพื่อลดความสูง */}

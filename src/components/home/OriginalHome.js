@@ -295,7 +295,7 @@ export default function OriginalHome({ initialData }) {
                                                 onClick={() => signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}
                                                 className="group relative w-[90%] sm:w-auto inline-block cursor-pointer"
                                             >
-                                                <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}></div>
+                                                <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 transition-opacity duration-700 ${btnConfig.animation}`}></div>
                                                 <InnerButton />
                                             </div>
                                         );
@@ -304,7 +304,7 @@ export default function OriginalHome({ initialData }) {
                                     // ✅ กรณีปุ่มปกติ: ใช้ Link เหมือนเดิม
                                     return (
                                         <Link href={btnConfig.href} className="group relative w-[90%] sm:w-auto inline-block">
-                                            <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 group-hover:blur-xl transition-all duration-700 ${btnConfig.animation}`}></div>
+                                            <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 transition-opacity duration-700 ${btnConfig.animation}`}></div>
                                             <InnerButton />
                                         </Link>
                                     );
@@ -396,7 +396,7 @@ export default function OriginalHome({ initialData }) {
                                 </div>
 
                                 {/* Slideshow */}
-                                <div className="w-full relative group rounded-3xl overflow-hidden shadow-2xl border border-white bg-white aspect-[16/9] lg:aspect-[2/1] xl:aspect-[16/10] transform transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
+                                <div className="w-full relative group rounded-3xl overflow-hidden shadow-2xl border border-white bg-white aspect-[16/9] lg:aspect-[2/1] xl:aspect-[16/10] transform transition-transform duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
                                     <div className="relative w-full h-full">
                                         <div className="flex h-full will-change-transform" style={{ transform: `translateX(-${currentImageIndex * 100}%)`, transitionDuration: (isTransitioning && isMultiImage) ? '1500ms' : '0ms', transitionProperty: 'transform', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
                                             {extendedImages.map((src, index) => (
