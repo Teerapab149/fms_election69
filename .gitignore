@@ -53,3 +53,4 @@ yarn-error.log*
 # Playwright test artifacts (regenerated every run)
 test-results/
 playwright-report/
+e2e/test-results.json

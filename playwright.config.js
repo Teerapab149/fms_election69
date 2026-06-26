@@ -8,12 +8,16 @@ module.exports = defineConfig({
   fullyParallel: false,
   retries: 0,
   workers: 1,
+  // Sweep any e2e-* users/score drift a crashed run left behind.
+  globalTeardown: require.resolve('./e2e/global.teardown.js'),
   reporter: [
     ['list'],
     ['json', { outputFile: './e2e/test-results.json' }],
   ],
   use: {
-    baseURL: 'http://localhost:3001',
+    // Run against the live dev/preview server (owner watches :3000). Override
+    // with PW_BASE_URL when pointing at staging or a dedicated test server.
+    baseURL: process.env.PW_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',

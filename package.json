@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "import-students": "node scripts/import-students.js",
-    "smoke": "node --test \"scripts/smoke/**/*.test.mjs\""
+    "smoke": "node --test \"scripts/smoke/**/*.test.mjs\"",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
