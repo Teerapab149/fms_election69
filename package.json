@@ -11,7 +11,9 @@
     "smoke": "node --test \"scripts/smoke/**/*.test.mjs\"",
     "e2e": "playwright test",
     "e2e:gate": "playwright test vote-flow invariants",
-    "verify": "bash scripts/verify.sh"
+    "verify": "bash scripts/verify.sh",
+    "preflight": "node scripts/preflight-year.js",
+    "archive-year": "node scripts/archive-year.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

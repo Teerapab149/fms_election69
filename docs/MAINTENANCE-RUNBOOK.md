@@ -40,6 +40,30 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 > เลขพรรคพิเศษ: `number = 0` → งดออกเสียง, `number = -1` → ไม่รับรอง (ใช้ตอนมีพรรคเดียว), `> 0` → พรรคจริง.
 > ปีผู้มีสิทธิ์ที่ valid: `ปี 1`–`ปี 4` เท่านั้น.
 
+### 1.1 ลำดับงานรายปี (push-button) + ตัวช่วย script (อ่านอย่างเดียว ไม่ลบข้อมูล)
+ทำตามลำดับนี้ทุกปี — admin UI ทำส่วนที่ "แก้ข้อมูล", script 2 ตัวช่วย "เก็บของเก่า" + "ตรวจก่อนเปิด":
+
+**A. ปิดปีเก่า (หลังรับรองผล — `showResult=true`, คะแนนสุดท้ายแล้ว):**
+```
+npm run archive-year         # → archive/<SAMO-XX>/ (results.json + design.json + README)
+git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design"
+```
+เก็บ "ปีนั้น = ผลนี้ + หน้าตานี้" ลง git ถาวร **ก่อน** reset (ตอนคะแนนยังอยู่). ดู `archive/README.md`.
+
+**B. Anonymize (หลังรับรองผล — ลบร่องรอยว่าใครเลือกใคร, P0-6):** กดปุ่ม **"ลบข้อมูลการลงคะแนนรายบุคคล"**
+ในแท็บ "ตั้งค่าระบบ". ทำได้เฉพาะหลังปิดหีบ + เผยแพร่ผลแล้ว (irreversible — สำรอง DB ก่อน, §5).
+คะแนนรวมถูก freeze ลง `Candidate.score` → ผลไม่เปลี่ยน, `isVoted` ยังอยู่ (turnout ถูกต้อง).
+
+**C. ตั้งปีใหม่ (admin UI):** ตามข้อ 1–6 ด้านบน — ตั้งชื่อ/ปี/วันเวลา, `systemMode=AUTO`, seed พรรคจริง,
+ลบพรรคทดสอบ, **"ล้างคะแนนโหวตทั้งหมด"** (RESET_VOTES), `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่.
+
+**D. ตรวจก่อนเปิดหีบ (gate):**
+```
+npm run preflight            # ✓/⚠/✗ ครบทุกข้อ (mode/showResult/พรรคทดสอบ/คะแนน=0/ยังไม่โหวต/
+                             #   วันเวลา/รายชื่อ/secrets/mock-login) — exit 1 ถ้ามี ✗
+```
+ถ้ายังมี ✗ = **ยังไม่พร้อม** ห้ามเปิด. แก้ให้เขียวก่อน แล้วค่อยเปิดหีบ.
+
 ---
 
 ## 2. Environment variables ที่ต้องมี (ตั้งตอน deploy)
