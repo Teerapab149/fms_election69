@@ -1664,6 +1664,29 @@ system is for per-ELEMENT reuse across templates; the layout dispatcher is for p
 
 ---
 
+### P-LOG-074: [2026-06-26] Playwright `fill()` races a React controlled input → button stuck disabled
+**Context:** Standing up the Pillar-1 e2e net (`e2e/vote-flow`, `e2e/invariants`). The login
+helper used `input.fill(studentId)` then clicked "Mock Login". The button is
+`disabled={!mockStudentId.trim()}`; it stayed disabled through the whole timeout — the click
+never landed ("element is not enabled" on every retry).
+**Root cause:** `fill()` sets the value + dispatches one input event, but on a freshly-rendered
+controlled input it can land before/around React attaching its onChange, so `setMockStudentId`
+never fires and React's state stays `""`. Manually filling the same field via proper events
+DID enable the button — proving the page logic was fine, the test interaction was the bug.
+**Fix:** type with real keystrokes and gate the click on the enabled state:
+```js
+await input.click();
+await input.pressSequentially(studentId, { delay: 15 });
+await expect(submit).toBeEnabled();   // fails loudly here if a keystroke was missed
+await submit.click();
+```
+Also `goto(..., { waitUntil: 'networkidle' })` so hydration is settled first.
+**Rule:** For controlled inputs whose siblings react to their value (enable/disable, validation),
+prefer `pressSequentially` over `fill`, and assert the downstream state before acting on it.
+**Tags:** `#e2e` `#playwright` `#react-controlled-input` `#flaky-fix` `#test-net` `#pillar-1`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

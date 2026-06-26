@@ -82,6 +82,28 @@ Deploy เป็น Docker ที่ subpath `/fms-ovs`. **ทุก URL ภา�
 
 ---
 
+## 4.1 Pre-merge gate — test net (รันก่อน merge/ก่อน deploy ทุกครั้ง)
+"นโยบาย: ถ้า gate ไม่เขียว ห้าม merge" — กันการแก้โค้ดทำ flow เลือกตั้งพังเงียบๆ ตลอด 5 ปี.
+```
+# หยุด dev server ก่อน (มันจะ build → .next ล็อกบน Windows)
+bash scripts/verify.sh          # build GREEN → e2e vote-net → smoke (ครบ = ผ่าน)
+
+# โหมดเร็ว: ใช้ server ที่รันอยู่แล้ว ไม่ build ใหม่ (เช่น dev :3000 เปิดอยู่)
+VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
+```
+ครอบอะไรบ้าง:
+- **e2e** (`npm run e2e:gate` = Playwright `e2e/vote-flow` + `e2e/invariants`, รันที่ `PW_BASE_URL`,
+  default :3000): happy path (login→vote→success→results) + 5 invariants ที่ห้าม regress —
+  vote-once, race (1 ชนะ), ballot-secrecy (admin ไม่เห็น tally ก่อน reveal), eligibility (ปี 1-4),
+  admin-auth (forge admin_token ไม่ได้). ทุก test mint user `e2e-*` ใหม่แล้วลบ + คืน score/config เอง.
+- **smoke** (`npm run smoke`): invariants ระดับ HTTP + กฎสิทธิ์ admin (roleFromSso).
+- ลำดับ e2e ก่อน smoke ตั้งใจ — admin login ใน e2e ต้องมาก่อน burst ของ smoke (rate-limit 10/5นาที/IP).
+- การเลือกตั้งจริงรันอยู่: รัน gate บน staging/เครื่อง dev ไม่ใช่ prod (มันแก้ systemMode/showResult ชั่วคราวแล้วคืน).
+- ⚠️ `e2e/admin-console.spec.js` (ของเดิม คนละชุด) ยังมี 11 เคสแดงค้าง — ไม่อยู่ใน gate
+  (`e2e:gate` คัดเฉพาะ vote-net) รอแก้แยก.
+
+---
+
 ## 5. สำรอง/กู้คืน DB + รูป (ทำก่อนงานเสี่ยงทุกครั้ง)
 ใช้สคริปต์สำเร็จ (รันบน server ที่มี docker compose):
 ```
