@@ -8,7 +8,33 @@ The **gold version is commit `ee059dc`** (2026-02-04). Owner decided (AskUserQue
    current classic-base (modern-dark/playful/minimal + the editor depend on it).
 2. **Purple-white only for now**; theme variants come later.
 
-## ⏸️ STATUS 2026-06-24 (paused — owner hit weekly limit, resume Fri)
+## ✅ STATUS 2026-06-27 — Original template FUNCTIONALLY COMPLETE
+- **HOME**: `OriginalHome` (ee059dc verbatim) + ee059dc's own Navbar/MeetCard/Countdown
+  + **Kanit** font + **globalConfig** wired (SAMO 50 / 2570 / © 2027). commits
+  `507dde0`, `cf94f47`, `7c50f74`.
+- **HOVER (was "stiff/เด้ง")**: root cause = global `prefers-reduced-motion` block in
+  `globals.css` (added after ee059dc) forced `transition-duration:0.01ms !important` on
+  everything, and the owner's OS has reduce-motion ON → hovers snapped. Fixed: keep
+  collapsing looping `animation`, but NOT `transition` (commit `62e0c6a`). GLOBAL fix —
+  smooth hovers on every template. NOTE: the meet-card's color-CYCLING glow is an
+  `animation` (still calmed under reduce-motion by design) — toggle OS reduce-motion OFF
+  to see it (what most voters see).
+- **INNER PAGES** (vote/results/candidates/party/success/closed): owner chose to REUSE
+  the current classic components (they weren't degraded — diff showed they gained/kept
+  hover; only home was stripped) + force **Kanit**. They already render via each page's
+  `else` branch when active∉{verdure,studio-dark,gumroad}; Kanit is injected in
+  `layout.js` when `activeTemplateId === "original"` (commit `6fec9af`). Verified live
+  `/candidates` = Kanit 6/6 with active flipped to original (reverted after). NO per-page
+  extraction needed — the table below is moot under this approach.
+
+**To use it:** admin selects the "ออริจินัล" template (applies → `activeTemplateId="original"`).
+**Minor follow-ups (optional):** (a) `/template-preview` + the interactive playground don't
+inject Kanit for `slug=original` inner pages (only the LIVE active template does) — gallery
+inner thumbnails show Anuphan; (b) add `original` to the playground COMPONENTS map; (c) the
+countdown's hardcoded "SEE YOU 2027" could read electionCalendarYear (currently correct).
+
+---
+## ⏸️ (historical) STATUS 2026-06-24 (paused — owner hit weekly limit, resume Fri)
 HOME is built as the `original` template (commits `507dde0`, `cf94f47`) — font fixed
 to **Kanit** (default `font-sans` had been changed Kanit→Anuphan; root now `font-kanit`)
 and ee059dc's own Navbar/MeetCard/Countdown extracted as `Original*` deps.
