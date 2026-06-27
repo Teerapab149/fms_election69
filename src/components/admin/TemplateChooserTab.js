@@ -1,30 +1,28 @@
 "use client";
 
-// TemplateChooserTab — staff-facing "pick a theme" surface, showcase style.
+// TemplateChooserTab — premium Master-Detail template picker.
 //
-// Direction (2026-06-27, owner): the product is "choose 1 of N templates", NOT a
-// web editor. Each template is shown as its OWN ROW with a live slideshow of the
-// REAL pages (iframes /template-preview) — slide through home / candidates / vote
-// / results / … — then apply with one click (sets SystemConfig.activeTemplateId,
-// live immediately, no draft/publish).
+// Direction (2026-06-27, owner): the product is "choose 1 of N templates", not a
+// web editor. Layout: a left sidebar list of compact template cards + a right
+// "browser mockup" stage that previews the selected template's REAL pages as a
+// horizontal peek-carousel (you see the next page sliding in). Apply sets
+// SystemConfig.activeTemplateId (live immediately). Active status shows in ONE
+// place — the detail's apply button (disabled when already in use).
 //
-// Perf: one iframe per row, only the current slide loads, and each row's iframe
-// is lazy-mounted when it scrolls into view — so opening the tab doesn't fire N
-// previews at once. Self-contained (no import of the ~2,300-line editor module).
+// Perf: only the selected template renders previews, and only the current slide
+// + its immediate neighbours mount iframes (windowed) — so the peek shows a real
+// next page without firing every page at once.
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
-  Palette, Check, FileText, Loader2, ChevronLeft, ChevronRight,
-  ExternalLink, AlertTriangle,
+  Palette, Check, Loader2, ChevronLeft, ChevronRight, ExternalLink, AlertTriangle,
 } from "lucide-react";
 import { getPath } from "../../utils/basePath";
-import { BUILT_IN_TEMPLATES } from "./editor/templates";
 
 const FRAME_W = 1280;
 const FRAME_H = 860;
 
-// Real pages + key state variations shown in each template's slideshow.
-const GALLERY_SLIDES = [
+const PAGES = [
   { page: "home", label: "หน้าแรก" },
   { page: "candidates", label: "ผู้สมัคร" },
   { page: "party", label: "ข้อมูลพรรค" },
@@ -36,155 +34,160 @@ const GALLERY_SLIDES = [
   { page: "closed", label: "ระบบปิด" },
 ];
 
-// ── One ROW per template family: header + live real-page slideshow ─────────────
-function TemplateRow({ rep, themes, activeSlug, onApply }) {
-  const multiTheme = themes.length > 1;
-  const isClassic = (rep.layoutFamily || "classic") === "classic";
+const slideSrc = (slug, s) =>
+  getPath(`/template-preview?slug=${slug}&page=${s.page}${s.variant ? `&variant=${s.variant}` : ""}`);
 
-  // The theme being previewed/targeted in this family (classic carries colour
-  // themes as swatches). Defaults to whichever theme of this family is active.
-  const familyActive = themes.find((t) => t.slug === activeSlug);
-  const [selSlug, setSelSlug] = useState((familyActive || rep).slug);
-  useEffect(() => {
-    if (familyActive && familyActive.slug !== selSlug) setSelSlug(familyActive.slug);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSlug]);
-
-  const sel = themes.find((t) => t.slug === selSlug) || rep;
-  const primary = sel.colorSwatch?.primary || "#8A2680";
-  const isSelActive = selSlug === activeSlug;
-
-  // slideshow + lazy-mount + responsive scale
-  const [idx, setIdx] = useState(0);
+// ── One browser-window slide: chrome + a scaled live page (or a light poster
+//    placeholder when it's outside the mounted window). ─────────────────────────
+function BrowserSlide({ slug, slide, slideW, isCurrent, mounted, accent }) {
   const [loaded, setLoaded] = useState(false);
-  const [inView, setInView] = useState(false);
-  const [scale, setScale] = useState(0.5);
-  const sectionRef = useRef(null);
-  const wrapRef = useRef(null);
+  const scale = slideW / FRAME_W;
+  const src = slideSrc(slug, slide);
+  useEffect(() => { setLoaded(false); }, [src]);
 
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") { setInView(true); return; }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); io.disconnect(); } }, { rootMargin: "250px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  return (
+    <div
+      className="shrink-0 transition-all duration-500 ease-out"
+      style={{ width: slideW, transform: isCurrent ? "scale(1)" : "scale(0.93)", opacity: isCurrent ? 1 : 0.45 }}
+    >
+      <div className="rounded-2xl overflow-hidden bg-white border border-slate-200/80 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.45)]">
+        {/* browser chrome */}
+        <div className="h-9 flex items-center gap-2 px-3.5 bg-slate-50 border-b border-slate-100">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+          <div className="ml-2 flex-1 h-5 rounded-md bg-white border border-slate-200 flex items-center px-2 text-[10px] text-slate-400 font-mono truncate">
+            fms-ovs/{slide.page}{slide.variant ? `·${slide.variant}` : ""}
+          </div>
+        </div>
+        {/* viewport */}
+        <div className="relative overflow-hidden bg-[#0b0b08]" style={{ height: FRAME_H * scale }}>
+          {mounted ? (
+            <>
+              {!loaded && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40">
+                  <Loader2 className="w-5 h-5 text-white/80 animate-spin" />
+                </div>
+              )}
+              <iframe
+                key={src}
+                src={src}
+                title={slide.label}
+                onLoad={() => setLoaded(true)}
+                scrolling="no"
+                style={{ width: FRAME_W, height: FRAME_H, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}
+              />
+            </>
+          ) : (
+            <div className="absolute inset-0 grid place-items-center" style={{ background: accent ? `${accent}14` : "#0b0b08" }}>
+              <span className="text-[11px] font-semibold text-slate-400">{slide.label}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
+// ── The peek-carousel stage for the selected template ─────────────────────────
+function PreviewStage({ slug, accent }) {
+  const [idx, setIdx] = useState(0);
+  const [vw, setVw] = useState(720);
+  const vpRef = useRef(null);
+
+  useEffect(() => { setIdx(0); }, [slug]);
   useEffect(() => {
-    if (!inView) return;
-    const el = wrapRef.current;
+    const el = vpRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const measure = () => setScale(el.clientWidth / FRAME_W);
+    const measure = () => setVw(el.clientWidth);
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     measure();
     return () => ro.disconnect();
-  }, [inView]);
+  }, []);
 
-  useEffect(() => { setLoaded(false); }, [idx, selSlug]);
-
-  const slide = GALLERY_SLIDES[idx];
-  const src = getPath(`/template-preview?slug=${selSlug}&page=${slide.page}${slide.variant ? `&variant=${slide.variant}` : ""}`);
-  const go = (d) => setIdx((i) => (i + d + GALLERY_SLIDES.length) % GALLERY_SLIDES.length);
+  const gap = 20;
+  const slideW = Math.min(Math.round(vw * 0.84), 820);
+  const offset = (vw - slideW) / 2 - idx * (slideW + gap); // centre current, peek both sides
+  const go = (d) => setIdx((i) => Math.min(Math.max(i + d, 0), PAGES.length - 1));
+  const slide = PAGES[idx];
 
   return (
-    <section ref={sectionRef} className="py-7 border-b border-slate-100 last:border-0">
-      {/* header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h3 className="text-lg font-bold text-slate-800">{rep.name}</h3>
-            {isSelActive && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-[11px] font-bold" style={{ backgroundColor: primary }}>
-                <Check className="w-3 h-3" strokeWidth={3} /> กำลังใช้อยู่
-              </span>
-            )}
-            <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wide">{rep.layoutFamily || rep.slug}</span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 max-w-xl line-clamp-1">{rep.description}</p>
-
-          {multiTheme && (
-            <div className="flex items-center gap-1.5 mt-2.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mr-1">ธีมสี</span>
-              {themes.map((t) => {
-                const on = t.slug === selSlug;
-                const a = t.colorSwatch?.primary || "#8A2680";
-                const b = t.colorSwatch?.secondary || a;
-                return (
-                  <button key={t.slug} type="button" title={t.name} aria-label={`พรีวิวธีม ${t.name}`} onClick={() => setSelSlug(t.slug)}
-                    className={`w-6 h-6 rounded-full border-2 transition-transform ${on ? "scale-110" : "hover:scale-105"}`}
-                    style={{ background: `linear-gradient(135deg, ${a} 50%, ${b} 50%)`, borderColor: on ? primary : "#ffffff", boxShadow: on ? `0 0 0 2px ${primary}55` : "0 1px 2px rgba(15,23,42,.18)" }} />
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-1.5 py-1 rounded-md">
-            {isClassic ? <><Check className="w-2.5 h-2.5" /> แก้รายชิ้นได้</> : <><Palette className="w-2.5 h-2.5" /> ปรับสี + ข้อความ</>}
-          </span>
-          {isSelActive ? (
-            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 cursor-default">
-              <Check className="w-4 h-4" /> ใช้อยู่
-            </span>
-          ) : (
-            <button type="button" onClick={() => onApply(sel.slug, sel.name)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-sm transition-all active:scale-95 hover:brightness-110"
-              style={{ backgroundColor: primary }}>
-              ใช้ธีมนี้
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* slideshow of REAL pages */}
-      <div className="w-full max-w-3xl">
-        <div ref={wrapRef} className="relative w-full rounded-xl overflow-hidden border border-slate-200 bg-[#0b0b08]" style={{ height: FRAME_H * scale }}>
-          {!inView || !loaded ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40">
-              <Loader2 className="w-6 h-6 text-white/80 animate-spin" />
-            </div>
-          ) : null}
-          {inView && (
-            <iframe
-              key={src}
-              src={src}
-              title={`${rep.name} — ${slide.label}`}
-              onLoad={() => setLoaded(true)}
-              scrolling="no"
-              style={{ width: FRAME_W, height: FRAME_H, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}
+    <div>
+      <div ref={vpRef} className="relative overflow-hidden">
+        <div className="flex items-stretch" style={{ gap, transform: `translateX(${offset}px)`, transition: "transform 520ms cubic-bezier(0.22,1,0.36,1)" }}>
+          {PAGES.map((s, i) => (
+            <BrowserSlide
+              key={i}
+              slug={slug}
+              slide={s}
+              slideW={slideW}
+              isCurrent={i === idx}
+              mounted={Math.abs(i - idx) <= 1}
+              accent={accent}
             />
-          )}
+          ))}
+        </div>
 
-          <div className="absolute top-2 left-2 z-20 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur text-white text-[11px] font-bold tracking-wide">
-            {idx + 1}/{GALLERY_SLIDES.length} · {slide.label}
-          </div>
+        {/* edge arrows */}
+        {idx > 0 && (
           <button type="button" onClick={() => go(-1)} aria-label="หน้าก่อนหน้า"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center text-slate-700 transition-colors">
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg flex items-center justify-center text-slate-700 transition active:scale-90">
             <ChevronLeft className="w-5 h-5" />
           </button>
+        )}
+        {idx < PAGES.length - 1 && (
           <button type="button" onClick={() => go(1)} aria-label="หน้าถัดไป"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center text-slate-700 transition-colors">
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg flex items-center justify-center text-slate-700 transition active:scale-90">
             <ChevronRight className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* page dots + open-full link */}
-        <div className="flex items-center gap-2 mt-2.5">
-          <div className="flex items-center flex-wrap gap-1.5">
-            {GALLERY_SLIDES.map((s, i) => (
-              <button key={i} type="button" onClick={() => setIdx(i)} aria-label={s.label} title={s.label}
-                className={`h-1.5 rounded-full transition-all ${i === idx ? "w-5 bg-[#8A2680]" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`} />
-            ))}
-          </div>
-          <a href={getPath(`/template-preview?slug=${selSlug}&page=${slide.page}${slide.variant ? `&variant=${slide.variant}` : ""}`)} target="_blank" rel="noopener noreferrer"
-            className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-[#8A2680] transition-colors">
-            <ExternalLink className="w-3 h-3" /> เปิดเต็มจอ
-          </a>
-        </div>
+        )}
       </div>
-    </section>
+
+      {/* caption + dots */}
+      <div className="flex items-center justify-between gap-3 mt-4 px-1">
+        <span className="text-sm font-semibold text-slate-600">
+          <span className="text-slate-400 font-normal">{idx + 1}/{PAGES.length} · </span>{slide.label}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {PAGES.map((s, i) => (
+            <button key={i} type="button" onClick={() => setIdx(i)} aria-label={s.label} title={s.label}
+              className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`}
+              style={i === idx ? { background: accent || "#8A2680" } : undefined} />
+          ))}
+        </div>
+        <a href={slideSrc(slug, slide)} target="_blank" rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-700 transition">
+          <ExternalLink className="w-3 h-3" /> เปิดเต็มจอ
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ── Sidebar card (master) ─────────────────────────────────────────────────────
+function SidebarCard({ tpl, selected, active, onSelect }) {
+  const sw = tpl.colorSwatch || {};
+  const dots = [sw.primary, sw.secondary, sw.background].filter(Boolean);
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(tpl.slug)}
+      className={`w-full text-left rounded-2xl border p-4 transition-all duration-200 group ${selected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}
+    >
+      <div className="flex items-center gap-2">
+        {active && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
+        <span className={`font-bold text-[15px] leading-tight ${selected ? "text-slate-900" : "text-slate-700"}`}>{tpl.name}</span>
+        <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{tpl.layoutFamily || tpl.slug}</span>
+      </div>
+      <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{tpl.description}</p>
+      <div className="flex items-center gap-1.5 mt-2.5">
+        {dots.map((c, i) => (
+          <span key={i} className="w-4 h-4 rounded-full border border-black/5" style={{ background: c }} />
+        ))}
+        {active && <span className="ml-1 text-[10px] font-bold text-emerald-600">ใช้อยู่</span>}
+      </div>
+    </button>
   );
 }
 
@@ -192,7 +195,8 @@ export default function TemplateChooserTab() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSlug, setActiveSlug] = useState(null);
-  const [pending, setPending] = useState(null); // { slug, name }
+  const [selectedSlug, setSelectedSlug] = useState(null);
+  const [pending, setPending] = useState(null);
   const [applying, setApplying] = useState(false);
   const [toast, setToast] = useState(null);
   const [error, setError] = useState(null);
@@ -208,7 +212,7 @@ export default function TemplateChooserTab() {
       const tplData = await tplRes.json();
       setTemplates(tplData.templates || []);
       const layout = layoutRes.ok ? await layoutRes.json() : {};
-      setActiveSlug(layout.activeTemplateId || "classic");
+      setActiveSlug(layout.activeTemplateId || "original");
     } catch (e) {
       setError(e.message);
     } finally {
@@ -218,33 +222,35 @@ export default function TemplateChooserTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const families = useMemo(() => {
-    const FAMILY_ORDER = ["original", "gumroad", "studio-dark", "verdure"];
+  // One choosable card per layout family (classic family retired). rep = the
+  // family's canonical template.
+  const choices = useMemo(() => {
+    const ORDER = ["original", "gumroad", "studio-dark", "verdure"];
     const REP = { gumroad: "gumroad", "studio-dark": "studio-dark", verdure: "verdure", original: "original" };
     const groups = {};
     for (const t of templates) {
       const fam = t.layoutFamily || "classic";
-      // "classic" (+ its modern-dark/playful/minimal recolors) is retired from the
-      // chooser — "original" is the purple-white SAMO template now. The classic
-      // CODE stays: it's the system fallback and powers original's inner pages.
       if (fam === "classic") continue;
       (groups[fam] || (groups[fam] = [])).push(t);
     }
     return Object.entries(groups)
-      .map(([family, themes]) => {
-        const rep = themes.find((t) => t.slug === (REP[family] || family)) || themes[0];
-        return { family, rep, themes: [rep, ...themes.filter((t) => t !== rep)] };
-      })
+      .map(([fam, list]) => list.find((t) => t.slug === (REP[fam] || fam)) || list[0])
       .sort((a, b) => {
-        const ai = FAMILY_ORDER.indexOf(a.family), bi = FAMILY_ORDER.indexOf(b.family);
+        const ai = ORDER.indexOf(a.layoutFamily || a.slug), bi = ORDER.indexOf(b.layoutFamily || b.slug);
         return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
       });
   }, [templates]);
 
-  const activeName = useMemo(
-    () => templates.find((t) => t.slug === activeSlug)?.name || activeSlug,
-    [templates, activeSlug]
-  );
+  // Default the detail to the active template once loaded.
+  useEffect(() => {
+    if (selectedSlug || !choices.length) return;
+    const initial = choices.find((t) => t.slug === activeSlug) || choices[0];
+    setSelectedSlug(initial.slug);
+  }, [choices, activeSlug, selectedSlug]);
+
+  const selected = useMemo(() => choices.find((t) => t.slug === selectedSlug) || null, [choices, selectedSlug]);
+  const isSelectedActive = selected && selected.slug === activeSlug;
+  const accent = selected?.colorSwatch?.primary || "#8A2680";
 
   const confirmApply = async () => {
     if (!pending || applying) return;
@@ -268,58 +274,76 @@ export default function TemplateChooserTab() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto animate-fade-in">
+    <div className="max-w-6xl mx-auto animate-fade-in">
       {/* header */}
-      <div className="flex items-start gap-3 mb-1">
+      <div className="flex items-center gap-3 mb-6">
         <div className="bg-purple-50 text-[#8A2680] p-2.5 rounded-xl shrink-0">
           <Palette className="h-6 w-6" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-xl font-bold text-slate-800">เลือกธีมเว็บไซต์</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
-            เลื่อนดูหน้าจริงของแต่ละธีม แล้วกด “ใช้ธีมนี้” — <strong className="text-slate-600">หน้าเว็บสาธารณะเปลี่ยนทันที</strong>
-          </p>
+          <h2 className="text-xl font-bold tracking-tight text-slate-800">เลือกธีมเว็บไซต์</h2>
+          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที</p>
         </div>
       </div>
 
-      {!loading && (
-        <div className="flex items-center gap-2 mt-3 text-sm">
-          <span className="text-slate-400">กำลังใช้:</span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#8A2680] text-white font-bold text-xs">
-            <Check className="w-3.5 h-3.5" /> {activeName}
-          </span>
-        </div>
-      )}
-
       {error && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+        <div className="mb-4 flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
           <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-slate-400 py-16 justify-center">
+        <div className="flex items-center gap-2 text-slate-400 py-24 justify-center">
           <Loader2 className="w-5 h-5 animate-spin" /> กำลังโหลดธีม...
         </div>
       ) : (
-        <div className="mt-4 bg-white rounded-2xl border border-slate-200 px-5 lg:px-7 divide-y divide-slate-100">
-          {families.map((fam) => (
-            <TemplateRow
-              key={fam.family}
-              rep={fam.rep}
-              themes={fam.themes}
-              activeSlug={activeSlug}
-              onApply={(slug, name) => setPending({ slug, name })}
-            />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6 items-start">
+          {/* ── MASTER: sidebar ── */}
+          <div className="lg:sticky lg:top-[72px]">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">ธีมทั้งหมด ({choices.length})</p>
+            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
+              {choices.map((t) => (
+                <div key={t.slug} className="min-w-[220px] lg:min-w-0">
+                  <SidebarCard tpl={t} selected={t.slug === selectedSlug} active={t.slug === activeSlug} onSelect={setSelectedSlug} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── DETAIL: preview stage ── */}
+          <div className="bg-gradient-to-b from-slate-50 to-white rounded-3xl border border-slate-200/70 p-5 lg:p-7">
+            {selected && (
+              <>
+                <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
+                  <div className="min-w-0">
+                    <h3 className="text-2xl font-bold tracking-tight text-slate-900">{selected.name}</h3>
+                    <p className="text-sm text-slate-500 mt-1 max-w-xl">{selected.description}</p>
+                  </div>
+                  {isSelectedActive ? (
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 cursor-default select-none">
+                      <Check className="w-4 h-4" /> กำลังใช้งานอยู่
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => setPending({ slug: selected.slug, name: selected.name })}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow-sm transition-all active:scale-95 hover:brightness-110"
+                      style={{ backgroundColor: accent }}>
+                      ใช้ธีมนี้
+                    </button>
+                  )}
+                </div>
+
+                <PreviewStage slug={selected.slug} accent={accent} />
+              </>
+            )}
+          </div>
         </div>
       )}
 
-      <p className="text-[11px] text-slate-400 mt-6 pt-1">
+      <p className="text-[11px] text-slate-400 mt-6">
         แต่ละธีมรองรับครบทุกหน้า · เนื้อหา (ชื่อ/ปี/ผู้สมัคร) แก้ที่แท็บ “ตั้งค่าทั่วไป” และ “จัดการผู้สมัคร”
       </p>
 
-      {/* confirm apply */}
+      {/* confirm */}
       {pending && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !applying && setPending(null)} />
@@ -341,7 +365,6 @@ export default function TemplateChooserTab() {
         </div>
       )}
 
-      {/* toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold shadow-xl animate-fade-in">
           <Check className="w-4 h-4 text-emerald-400" /> {toast}
