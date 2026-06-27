@@ -753,3 +753,38 @@ function MemberImage({ url }) {
   if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-1/2 h-1/2" /></div>;
   return <img src={getPath(url)} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" loading="lazy" />;
 }
+
+// Read-only CLASSIC party detail for /template-preview (classic + original families).
+// Mirrors PartyContent's classic branch with mock props — no fetch, no auth — so the
+// chooser's party slide shows the real cinematic layout instead of a placeholder.
+export function ClassicPartyPreview({ party, galleryImages = [] }) {
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const listSectionRef = useRef(null);
+  if (!party) return null;
+  const theme = PARTY_THEMES[party.id] || PARTY_THEMES[party.number] || DEFAULT_THEME;
+
+  return (
+    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden relative">
+      <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
+      <main className="flex-1 flex flex-col pt-16 xl:pt-16">
+        <PartyBanner party={party} theme={theme} galleryImages={galleryImages} onOpenLightbox={(img) => setLightboxImage(img || galleryImages[0])} />
+        <PartyVisionSection party={party} theme={theme} />
+        <PartyChartSection party={party} theme={theme} onSelectMember={setSelectedMember} onScrollToList={() => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+        <div ref={listSectionRef}>
+          <CandidateList members={party.members} theme={theme} onSelectMember={setSelectedMember} />
+        </div>
+      </main>
+      {lightboxImage && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center" onClick={() => setLightboxImage(null)}>
+          <button onClick={() => setLightboxImage(null)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20"><X size={28} /></button>
+          <img src={getPath(lightboxImage)} className="max-w-full max-h-[85vh] object-contain shadow-2xl" alt="Lightbox" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+      <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} themeColor={theme.main} />
+      <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU 2026. All Rights Reserved.</p>
+      </footer>
+    </div>
+  );
+}

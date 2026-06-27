@@ -48,6 +48,8 @@ import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPrev
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
 import ClosedEditorPreview from '../../components/admin/ClosedEditorPreview';
+import SuccessPage from '../success/page';
+import { ClassicPartyPreview } from '../party/page';
 
 import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
 import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
@@ -140,19 +142,20 @@ function PreviewBody() {
     }
   }
 
-  // ── classic family — reuse the existing editor-preview components ──
+  // ── classic family (incl. original — its inner pages render the classic layout) ──
   if (page === 'candidates') return <CandidatesEditorPreview pageLayout={null} elementConfigs={{}} />;
   if (page === 'vote') return <VoteEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} pageLayout={null} elementConfigs={{}} />;
-  if (page === 'results') return <ResultsEditorPreview simMode="multi" />;
+  if (page === 'results') return <ResultsEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} revealed={variant !== 'locked'} />;
   if (page === 'closed') return <ClosedEditorPreview simMode="waiting" />;
+  if (page === 'party') return <ClassicPartyPreview party={PARTIES[0]} />;
+  if (page === 'success') return <SuccessPage editorMode pageLayout={null} elementConfigs={{}} />;
 
-  // classic party / success have no dedicated preview component yet
+  // unknown page
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#F8F9FD', color: '#64748b', fontFamily: 'system-ui', padding: 24, textAlign: 'center' }}>
       <div>
         <div style={{ fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94a3b8' }}>ตัวอย่างหน้านี้</div>
-        <div style={{ fontSize: 18, fontWeight: 700, marginTop: 6 }}>พรีวิวหน้า “{page}” สำหรับธีมคลาสสิกยังไม่พร้อม</div>
-        <div style={{ fontSize: 13, marginTop: 6 }}>เลือก Gumroad หรือ Studio Dark เพื่อดูหน้านี้แบบเต็ม</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginTop: 6 }}>ไม่รู้จักหน้า “{page}”</div>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function ResultsEditorPreview({
   simMode = "multi",
+  revealed = true, // false → "ปิดผล" locked state (scores hidden, polls ongoing)
   templateSlug = null,
   selectedElement = null,
   hoveredElement = null,
@@ -34,9 +35,9 @@ export default function ResultsEditorPreview({
     : DUMMY_RESULTS_TOTALS.multi;
   const totalEligible = DUMMY_RESULTS_DEMOGRAPHICS.totalEligible;
 
-  const status = "ENDED";
-  const isRevealed = true;
-  const isEnded = true;
+  const status = revealed ? "ENDED" : "ONGOING";
+  const isRevealed = revealed;
+  const isEnded = revealed;
   const isNotStarted = false;
 
   // Per-template layout: gumroad / studio-dark have their own results layouts.
