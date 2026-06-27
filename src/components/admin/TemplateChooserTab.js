@@ -219,11 +219,15 @@ export default function TemplateChooserTab() {
   useEffect(() => { load(); }, [load]);
 
   const families = useMemo(() => {
-    const FAMILY_ORDER = ["classic", "gumroad", "studio-dark", "verdure", "original"];
-    const REP = { classic: "classic", gumroad: "gumroad", "studio-dark": "studio-dark", verdure: "verdure", original: "original" };
+    const FAMILY_ORDER = ["original", "gumroad", "studio-dark", "verdure"];
+    const REP = { gumroad: "gumroad", "studio-dark": "studio-dark", verdure: "verdure", original: "original" };
     const groups = {};
     for (const t of templates) {
       const fam = t.layoutFamily || "classic";
+      // "classic" (+ its modern-dark/playful/minimal recolors) is retired from the
+      // chooser — "original" is the purple-white SAMO template now. The classic
+      // CODE stays: it's the system fallback and powers original's inner pages.
+      if (fam === "classic") continue;
       (groups[fam] || (groups[fam] = [])).push(t);
     }
     return Object.entries(groups)
