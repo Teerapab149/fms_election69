@@ -155,10 +155,10 @@ function PreviewStage({ slug, accent }) {
               className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#8A2680]" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`} />
           ))}
         </div>
-        <a href={slideSrc(slug, slide)} target="_blank" rel="noopener noreferrer"
+        <button type="button" onClick={() => window.open(slideSrc(slug, slide) + '&chrome=1', '_blank')}
           className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-700 transition">
           <ExternalLink className="w-3 h-3" /> เปิดเต็มจอ
-        </a>
+        </button>
       </div>
     </div>
   );

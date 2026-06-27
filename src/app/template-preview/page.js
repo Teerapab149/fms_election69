@@ -16,8 +16,10 @@
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
 // because the layout components are pure + we pass mock props.
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Eye, X, Minus } from 'lucide-react';
+import { getPath } from '../../utils/basePath';
 
 import HomeRenderer from '../../components/home/HomeRenderer';
 import { BUILT_IN_TEMPLATES } from '../../components/admin/editor/templates';
@@ -61,8 +63,18 @@ function PreviewBody() {
   const slug = sp.get('slug') || 'classic';
   const page = sp.get('page') || 'home';
   const variant = sp.get('variant') || '';
+  const chrome = sp.get('chrome') === '1';
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
 
+  return (
+    <>
+      {renderPage()}
+      {chrome && <PreviewToolbar slug={slug} page={page} variant={variant} />}
+    </>
+  );
+
+  // eslint-disable-next-line no-inner-declarations
+  function renderPage() {
   // ── HOME — HomeRenderer dispatches by template slug for every family ──
   if (page === 'home') {
     return (
@@ -157,6 +169,59 @@ function PreviewBody() {
         <div style={{ fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94a3b8' }}>ตัวอย่างหน้านี้</div>
         <div style={{ fontSize: 18, fontWeight: 700, marginTop: 6 }}>ไม่รู้จักหน้า “{page}”</div>
       </div>
+    </div>
+  );
+  }
+}
+
+// ── Floating preview toolbar (only when ?chrome=1 — i.e. opened "เปิดเต็มจอ", not
+//    inside the chooser carousel iframes). Shows you're in preview, switches page +
+//    variant (single/multi vote · ปิด/เปิดผล), and minimise/close. ──────────────
+const PAGE_OPTS = [
+  { v: 'home', l: 'หน้าแรก' }, { v: 'candidates', l: 'ผู้สมัคร' }, { v: 'party', l: 'ข้อมูลพรรค' },
+  { v: 'vote', l: 'ลงคะแนน' }, { v: 'results', l: 'ผลคะแนน' }, { v: 'success', l: 'สำเร็จ' }, { v: 'closed', l: 'ปิดระบบ' },
+];
+const DEFAULT_VARIANT = { vote: 'multi', results: 'revealed' };
+
+function PreviewToolbar({ slug, page, variant }) {
+  const [open, setOpen] = useState(true);
+  const name = BUILT_IN_TEMPLATES[slug]?.name || slug;
+  const goto = (p, vr) => {
+    window.location.href = getPath(`/template-preview?slug=${slug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
+  };
+  const close = () => { try { window.close(); } catch {} };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)}
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-900/95 text-white text-xs font-bold shadow-2xl backdrop-blur ring-1 ring-white/10">
+        <Eye className="w-4 h-4 text-amber-300" /> Preview
+      </button>
+    );
+  }
+  const seg = (cur, opts, p) => (
+    <div className="flex items-center rounded-lg bg-white/10 p-0.5">
+      {opts.map(([v, l]) => (
+        <button key={v} onClick={() => goto(p, v)}
+          className={`px-2.5 py-1 rounded-md transition-colors ${cur === v ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}>{l}</button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] flex items-center gap-2 px-2.5 py-2 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur ring-1 ring-white/10 text-xs font-semibold max-w-[95vw] flex-wrap justify-center">
+      <span className="inline-flex items-center gap-1.5 pl-1 text-amber-300"><Eye className="w-4 h-4" /> PREVIEW</span>
+      <span className="text-white/50 truncate max-w-[110px]">{name}</span>
+      <span className="w-px h-5 bg-white/15" />
+      <select value={page} onChange={(e) => goto(e.target.value, DEFAULT_VARIANT[e.target.value])}
+        className="bg-white/10 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer">
+        {PAGE_OPTS.map((o) => <option key={o.v} value={o.v} className="text-slate-900">{o.l}</option>)}
+      </select>
+      {page === 'vote' && seg(variant || 'multi', [['multi', 'หลายพรรค'], ['single', 'พรรคเดียว']], 'vote')}
+      {page === 'results' && seg(variant || 'revealed', [['locked', 'ปิดผล'], ['revealed', 'เปิดผล']], 'results')}
+      <span className="w-px h-5 bg-white/15" />
+      <button onClick={() => setOpen(false)} title="ย่อแถบ" className="p-1.5 rounded-lg hover:bg-white/10"><Minus className="w-4 h-4" /></button>
+      <button onClick={close} title="ปิดพรีวิว" className="p-1.5 rounded-lg hover:bg-white/10 text-rose-300"><X className="w-4 h-4" /></button>
     </div>
   );
 }
