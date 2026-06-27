@@ -152,8 +152,7 @@ function PreviewStage({ slug, accent }) {
         <div className="flex items-center gap-1.5">
           {PAGES.map((s, i) => (
             <button key={i} type="button" onClick={() => setIdx(i)} aria-label={s.label} title={s.label}
-              className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`}
-              style={i === idx ? { background: accent || "#8A2680" } : undefined} />
+              className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#8A2680]" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`} />
           ))}
         </div>
         <a href={slideSrc(slug, slide)} target="_blank" rel="noopener noreferrer"
@@ -325,8 +324,7 @@ export default function TemplateChooserTab() {
                     </span>
                   ) : (
                     <button type="button" onClick={() => setPending({ slug: selected.slug, name: selected.name })}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow-sm transition-all active:scale-95 hover:brightness-110"
-                      style={{ backgroundColor: accent }}>
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow-sm transition-all active:scale-95 bg-[#8A2680] hover:bg-[#751f6c]">
                       ใช้ธีมนี้
                     </button>
                   )}
