@@ -11,8 +11,8 @@
 // device-width preview (an iframe is the only faithful viewport), or `children`
 // for arbitrary content.
 
-import { useState } from "react";
-import { Monitor, Laptop, Tablet, Smartphone, Lock, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Monitor, Laptop, Tablet, Smartphone, Lock, X, Loader2 } from "lucide-react";
 
 /**
  * @typedef {"pc"|"laptop"|"tablet"|"mobile"} ViewportKey
@@ -49,6 +49,12 @@ export default function TemplatePreviewWrapper({
   /** @type {[ViewportKey, (v: ViewportKey) => void]} */
   const [currentView, setCurrentView] = useState(defaultView);
   const active = VIEWPORTS.find((v) => v.key === currentView) ?? VIEWPORTS[0];
+
+  // Fade the iframe in only once it's loaded + styled, to hide the dev FOUC
+  // (unstyled HTML flashing before CSS applies). Reset on src change only —
+  // switching device just resizes the same iframe, so it shouldn't reflash.
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => { setLoaded(false); }, [src]);
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col bg-zinc-100">
@@ -135,9 +141,22 @@ export default function TemplatePreviewWrapper({
           </div>
 
           {/* shell content */}
-          <div className="flex-1 min-h-0 bg-white">
+          <div className="relative flex-1 min-h-0 bg-white">
             {src ? (
-              <iframe src={src} title="Template preview" className="w-full h-full border-0" />
+              <>
+                {!loaded && (
+                  <div className="absolute inset-0 z-10 grid place-items-center bg-white">
+                    <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
+                  </div>
+                )}
+                <iframe
+                  src={src}
+                  title="Template preview"
+                  onLoad={() => setTimeout(() => setLoaded(true), 220)}
+                  className="w-full h-full border-0"
+                  style={{ opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
+                />
+              </>
             ) : (
               <div className="w-full h-full overflow-auto">{children}</div>
             )}

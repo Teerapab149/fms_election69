@@ -68,22 +68,24 @@ function BrowserSlide({ slug, slide, device, displayW, isCurrent, mounted, accen
             fms-ovs/{slide.page}{slide.variant ? `·${slide.variant}` : ""}
           </div>
         </div>
-        {/* viewport */}
-        <div className="relative overflow-hidden bg-[#0b0b08]" style={{ height: displayH }}>
+        {/* viewport — iframe fades in only once loaded + styled, to hide the
+            dev CSS-not-yet-applied flash (FOUC). The tinted panel + spinner cover
+            the load. */}
+        <div className="relative overflow-hidden" style={{ height: displayH, background: accent ? `${accent}1a` : "#0f172a" }}>
           {mounted ? (
             <>
               {!loaded && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/40">
-                  <Loader2 className="w-5 h-5 text-white/80 animate-spin" />
+                <div className="absolute inset-0 z-10 grid place-items-center">
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: accent || "#94a3b8" }} />
                 </div>
               )}
               <iframe
                 key={src}
                 src={src}
                 title={slide.label}
-                onLoad={() => setLoaded(true)}
+                onLoad={() => setTimeout(() => setLoaded(true), 220)}
                 scrolling="no"
-                style={{ width: device.w, height: device.h, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}
+                style={{ width: device.w, height: device.h, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none", opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
               />
             </>
           ) : (
