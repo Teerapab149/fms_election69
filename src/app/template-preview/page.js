@@ -112,25 +112,33 @@ function PreviewBody() {
     const byFamily = (studio, gumroad, verdure) =>
       family === 'studio-dark' ? studio : family === 'verdure' ? verdure : gumroad;
 
+    // The real pages (app/<page>.js) wrap each layout in a min-h-screen div with
+    // the template's page background. Replicate it here so short pages (e.g. single
+    // vote) don't leave a white gap below the content. bg = the template's declared
+    // page background, falling back to its base background token.
+    const tpl = BUILT_IN_TEMPLATES[slug] || {};
+    const pageBg = tpl.pages?.[page]?.backgroundColor || tpl.theme?.colors?.background || tpl.theme?.background || '#ffffff';
+    const frame = (el) => <div className="min-h-screen w-full" style={{ background: pageBg }}>{el}</div>;
+
     if (page === 'candidates') {
       const C = byFamily(StudioDarkCandidates, GumroadCandidates, VerdureCandidates);
-      return <C candidates={PARTIES} editorMode />;
+      return frame(<C candidates={PARTIES} editorMode />);
     }
     if (page === 'party') {
       const P = byFamily(StudioDarkParty, GumroadParty, VerdureParty);
-      return <P party={PARTIES[0]} galleryImages={[]} showBackToVote={false} />;
+      return frame(<P party={PARTIES[0]} galleryImages={[]} showBackToVote={false} />);
     }
     if (page === 'vote') {
       // dev-only: preview the Verdure single-party cinematic wax-seal intro in
       // isolation (no DB change, live election untouched). ?…&variant=single&intro=1
       if (family === 'verdure' && single && sp.get('intro') === '1') {
-        return (
+        return frame(
           <VerdureSingleParty party={PARTIES[0]} specialOptions={SPECIAL} selectedPartyId={null}
             onSelect={noop} onConfirm={noop} isSubmitting={false} user={DUMMY_USER} editorMode forceIntro />
         );
       }
       const V = byFamily(StudioDarkVote, GumroadVote, VerdureVote);
-      return (
+      return frame(
         <V
           regularParties={voteParties}
           specialOptions={SPECIAL}
@@ -147,7 +155,7 @@ function PreviewBody() {
     }
     if (page === 'results') {
       const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
-      return (
+      return frame(
         <R
           candidates={resultsCandidates(revealed)}
           totalVotes={revealed ? 625 : 0}
@@ -162,11 +170,11 @@ function PreviewBody() {
     }
     if (page === 'success') {
       const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
-      return <S user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
+      return frame(<S user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />);
     }
     if (page === 'closed') {
       const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
-      return <Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} />;
+      return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} />);
     }
   }
 
