@@ -16,11 +16,18 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Palette, Check, Loader2, ChevronLeft, ChevronRight, ExternalLink, AlertTriangle,
+  Monitor, Laptop, Tablet, Smartphone,
 } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 
-const FRAME_W = 1280;
-const FRAME_H = 860;
+// Device viewports — each previews the page at its TRUE width (the iframe is a real
+// viewport, so the page reflows) then scales the frame down to fit the column.
+const DEVICES = [
+  { key: "pc", label: "PC", Icon: Monitor, w: 1440, h: 860, disp: (vw) => Math.min(Math.round(vw * 0.84), 820) },
+  { key: "laptop", label: "Laptop", Icon: Laptop, w: 1024, h: 760, disp: (vw) => Math.min(Math.round(vw * 0.78), 720) },
+  { key: "tablet", label: "Tablet", Icon: Tablet, w: 768, h: 1024, disp: (vw) => Math.min(Math.round(vw * 0.46), 460) },
+  { key: "mobile", label: "Mobile", Icon: Smartphone, w: 412, h: 880, disp: (vw) => Math.min(Math.round(vw * 0.32), 300) },
+];
 
 const PAGES = [
   { page: "home", label: "หน้าแรก" },
@@ -37,18 +44,19 @@ const PAGES = [
 const slideSrc = (slug, s) =>
   getPath(`/template-preview?slug=${slug}&page=${s.page}${s.variant ? `&variant=${s.variant}` : ""}`);
 
-// ── One browser-window slide: chrome + a scaled live page (or a light poster
-//    placeholder when it's outside the mounted window). ─────────────────────────
-function BrowserSlide({ slug, slide, slideW, isCurrent, mounted, accent }) {
+// ── One device-framed slide: browser chrome + the page at its TRUE device width,
+//    scaled down to the display size (so the page reflows like the real device). ──
+function BrowserSlide({ slug, slide, device, displayW, isCurrent, mounted, accent }) {
   const [loaded, setLoaded] = useState(false);
-  const scale = slideW / FRAME_W;
+  const scale = displayW / device.w;
+  const displayH = device.h * scale;
   const src = slideSrc(slug, slide);
   useEffect(() => { setLoaded(false); }, [src]);
 
   return (
     <div
       className="shrink-0 transition-all duration-500 ease-out"
-      style={{ width: slideW, transform: isCurrent ? "scale(1)" : "scale(0.93)", opacity: isCurrent ? 1 : 0.45 }}
+      style={{ width: displayW, transform: isCurrent ? "scale(1)" : "scale(0.94)", opacity: isCurrent ? 1 : 0.45 }}
     >
       <div className="rounded-2xl overflow-hidden bg-white border border-slate-200/80 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.45)]">
         {/* browser chrome */}
@@ -61,7 +69,7 @@ function BrowserSlide({ slug, slide, slideW, isCurrent, mounted, accent }) {
           </div>
         </div>
         {/* viewport */}
-        <div className="relative overflow-hidden bg-[#0b0b08]" style={{ height: FRAME_H * scale }}>
+        <div className="relative overflow-hidden bg-[#0b0b08]" style={{ height: displayH }}>
           {mounted ? (
             <>
               {!loaded && (
@@ -75,7 +83,7 @@ function BrowserSlide({ slug, slide, slideW, isCurrent, mounted, accent }) {
                 title={slide.label}
                 onLoad={() => setLoaded(true)}
                 scrolling="no"
-                style={{ width: FRAME_W, height: FRAME_H, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}
+                style={{ width: device.w, height: device.h, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}
               />
             </>
           ) : (
@@ -89,9 +97,10 @@ function BrowserSlide({ slug, slide, slideW, isCurrent, mounted, accent }) {
   );
 }
 
-// ── The peek-carousel stage for the selected template ─────────────────────────
+// ── The device-aware peek-carousel stage for the selected template ────────────
 function PreviewStage({ slug, accent }) {
   const [idx, setIdx] = useState(0);
+  const [deviceKey, setDeviceKey] = useState("pc");
   const [vw, setVw] = useState(720);
   const vpRef = useRef(null);
 
@@ -106,22 +115,41 @@ function PreviewStage({ slug, accent }) {
     return () => ro.disconnect();
   }, []);
 
+  const device = DEVICES.find((d) => d.key === deviceKey) ?? DEVICES[0];
   const gap = 20;
-  const slideW = Math.min(Math.round(vw * 0.84), 820);
-  const offset = (vw - slideW) / 2 - idx * (slideW + gap); // centre current, peek both sides
+  const displayW = device.disp(vw);
+  const offset = (vw - displayW) / 2 - idx * (displayW + gap); // centre current, peek both sides
   const go = (d) => setIdx((i) => Math.min(Math.max(i + d, 0), PAGES.length - 1));
   const slide = PAGES[idx];
 
   return (
     <div>
+      {/* device viewport toolbar */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-1">
+          {DEVICES.map(({ key, label, Icon }) => {
+            const on = key === deviceKey;
+            return (
+              <button key={key} type="button" onClick={() => setDeviceKey(key)} aria-pressed={on} title={label}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${on ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
+                <Icon className="w-4 h-4" />
+                <span className="hidden md:inline">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <span className="text-[11px] font-mono text-slate-400 tabular-nums">{device.w}×{device.h}</span>
+      </div>
+
       <div ref={vpRef} className="relative overflow-hidden">
-        <div className="flex items-stretch" style={{ gap, transform: `translateX(${offset}px)`, transition: "transform 520ms cubic-bezier(0.22,1,0.36,1)" }}>
+        <div className="flex items-start" style={{ gap, transform: `translateX(${offset}px)`, transition: "transform 520ms cubic-bezier(0.22,1,0.36,1)" }}>
           {PAGES.map((s, i) => (
             <BrowserSlide
               key={i}
               slug={slug}
               slide={s}
-              slideW={slideW}
+              device={device}
+              displayW={displayW}
               isCurrent={i === idx}
               mounted={Math.abs(i - idx) <= 1}
               accent={accent}
