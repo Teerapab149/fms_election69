@@ -16,10 +16,10 @@
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
 // because the layout components are pure + we pass mock props.
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Eye, X, Minus } from 'lucide-react';
 import { getPath } from '../../utils/basePath';
+import TemplatePreviewWrapper from '../../components/admin/TemplatePreviewWrapper';
 
 import HomeRenderer from '../../components/home/HomeRenderer';
 import { BUILT_IN_TEMPLATES } from '../../components/admin/editor/templates';
@@ -66,12 +66,28 @@ function PreviewBody() {
   const chrome = sp.get('chrome') === '1';
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
 
-  return (
-    <>
-      {renderPage()}
-      {chrome && <PreviewToolbar slug={slug} page={page} variant={variant} />}
-    </>
-  );
+  if (chrome) {
+    const goto = (p, vr) => {
+      window.location.href = getPath(`/template-preview?slug=${slug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
+    };
+    const exit = () => {
+      // Opened in its own tab via window.open → closing returns to the chooser. If
+      // the browser blocks self-close, fall back to the admin chooser — never home.
+      window.close();
+      setTimeout(() => { if (!window.closed) window.location.href = getPath('/admin'); }, 250);
+    };
+    const raw = getPath(`/template-preview?slug=${slug}&page=${page}${variant ? `&variant=${variant}` : ''}`);
+    return (
+      <TemplatePreviewWrapper
+        src={raw}
+        url={`fms-ovs/${page}${variant ? `·${variant}` : ''}`}
+        onExit={exit}
+        actions={<PreviewPageControls slug={slug} page={page} variant={variant} goto={goto} />}
+      />
+    );
+  }
+
+  return renderPage();
 
   // eslint-disable-next-line no-inner-declarations
   function renderPage() {
@@ -174,65 +190,32 @@ function PreviewBody() {
   }
 }
 
-// ── Floating preview toolbar (only when ?chrome=1 — i.e. opened "เปิดเต็มจอ", not
-//    inside the chooser carousel iframes). Shows you're in preview, switches page +
-//    variant (single/multi vote · ปิด/เปิดผล), and minimise/close. ──────────────
+// ── Page + variant switcher shown in the TemplatePreviewWrapper top bar (only when
+//    ?chrome=1, the full-screen preview). Navigates the OUTER window, which
+//    re-points the wrapper's iframe at the chosen page/state. ────────────────────
 const PAGE_OPTS = [
   { v: 'home', l: 'หน้าแรก' }, { v: 'candidates', l: 'ผู้สมัคร' }, { v: 'party', l: 'ข้อมูลพรรค' },
   { v: 'vote', l: 'ลงคะแนน' }, { v: 'results', l: 'ผลคะแนน' }, { v: 'success', l: 'สำเร็จ' }, { v: 'closed', l: 'ปิดระบบ' },
 ];
 const DEFAULT_VARIANT = { vote: 'multi', results: 'revealed' };
 
-function PreviewToolbar({ slug, page, variant }) {
-  const [open, setOpen] = useState(true);
-  const name = BUILT_IN_TEMPLATES[slug]?.name || slug;
-  const goto = (p, vr) => {
-    window.location.href = getPath(`/template-preview?slug=${slug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
-  };
-  const exit = () => {
-    // Opened in its own tab via window.open → closing returns to the chooser tab.
-    // If the browser blocks self-close (tab wasn't script-opened), fall back to the
-    // admin chooser — NEVER the public home.
-    window.close();
-    setTimeout(() => { if (!window.closed) window.location.href = getPath('/admin'); }, 250);
-  };
+function PreviewPageControls({ page, variant, goto }) {
   const seg = (cur, opts, p) => (
-    <div className="flex items-center rounded-lg bg-white/10 p-0.5">
+    <div className="flex items-center rounded-lg bg-neutral-800 border border-neutral-700 p-0.5">
       {opts.map(([v, l]) => (
-        <button key={v} onClick={() => goto(p, v)}
-          className={`px-2.5 py-1 rounded-md transition-colors ${cur === v ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}>{l}</button>
+        <button key={v} type="button" onClick={() => goto(p, v)}
+          className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${cur === v ? 'bg-white text-neutral-900' : 'text-neutral-400 hover:text-white'}`}>{l}</button>
       ))}
     </div>
   );
-
   return (
     <>
-      {/* Prominent, always-visible exit (top-right, conventional spot). */}
-      <button onClick={exit} title="ออกจากพรีวิว"
-        className="fixed top-4 right-4 z-[99999] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold shadow-2xl ring-1 ring-black/10 transition-all active:scale-95">
-        <X className="w-4 h-4" /> ออกจากพรีวิว
-      </button>
-
-      {open ? (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] flex items-center gap-2 px-2.5 py-2 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur ring-1 ring-white/10 text-xs font-semibold max-w-[95vw] flex-wrap justify-center">
-          <span className="inline-flex items-center gap-1.5 pl-1 text-amber-300"><Eye className="w-4 h-4" /> PREVIEW</span>
-          <span className="text-white/50 truncate max-w-[110px]">{name}</span>
-          <span className="w-px h-5 bg-white/15" />
-          <select value={page} onChange={(e) => goto(e.target.value, DEFAULT_VARIANT[e.target.value])}
-            className="bg-white/10 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer">
-            {PAGE_OPTS.map((o) => <option key={o.v} value={o.v} className="text-slate-900">{o.l}</option>)}
-          </select>
-          {page === 'vote' && seg(variant || 'multi', [['multi', 'หลายพรรค'], ['single', 'พรรคเดียว']], 'vote')}
-          {page === 'results' && seg(variant || 'revealed', [['locked', 'ปิดผล'], ['revealed', 'เปิดผล']], 'results')}
-          <span className="w-px h-5 bg-white/15" />
-          <button onClick={() => setOpen(false)} title="ย่อแถบ" className="p-1.5 rounded-lg hover:bg-white/10"><Minus className="w-4 h-4" /></button>
-        </div>
-      ) : (
-        <button onClick={() => setOpen(true)}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-900/95 text-white text-xs font-bold shadow-2xl backdrop-blur ring-1 ring-white/10">
-          <Eye className="w-4 h-4 text-amber-300" /> Preview
-        </button>
-      )}
+      <select value={page} onChange={(e) => goto(e.target.value, DEFAULT_VARIANT[e.target.value])}
+        className="bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-white text-xs outline-none cursor-pointer">
+        {PAGE_OPTS.map((o) => <option key={o.v} value={o.v} className="text-slate-900">{o.l}</option>)}
+      </select>
+      {page === 'vote' && seg(variant || 'multi', [['multi', 'หลายพรรค'], ['single', 'พรรคเดียว']], 'vote')}
+      {page === 'results' && seg(variant || 'revealed', [['locked', 'ปิดผล'], ['revealed', 'เปิดผล']], 'results')}
     </>
   );
 }
