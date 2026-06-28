@@ -52,6 +52,7 @@ import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
 import ClosedEditorPreview from '../../components/admin/ClosedEditorPreview';
 import SuccessPage from '../success/page';
 import { ClassicPartyPreview } from '../party/page';
+import SinglePartyView from '../../components/vote/SinglePartyView';
 
 import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
 import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
@@ -180,7 +181,14 @@ function PreviewBody() {
 
   // ── classic family (incl. original — its inner pages render the classic layout) ──
   if (page === 'candidates') return <CandidatesEditorPreview pageLayout={null} elementConfigs={{}} />;
-  if (page === 'vote') return <VoteEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} pageLayout={null} elementConfigs={{}} />;
+  if (page === 'vote') {
+    // single → the REAL cinematic SinglePartyView (previewMode = full layout, intro
+    // skipped) instead of the stripped editor placeholder; multi → editor preview.
+    if (variant === 'single') {
+      return <SinglePartyView previewMode candidate={PARTIES[0]} specialOptions={SPECIAL} selectedPartyId={null} onSelect={noop} user={DUMMY_USER} />;
+    }
+    return <VoteEditorPreview simMode="multi" pageLayout={null} elementConfigs={{}} />;
+  }
   if (page === 'results') return <ResultsEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} revealed={variant !== 'locked'} />;
   if (page === 'closed') return <ClosedEditorPreview simMode="waiting" />;
   if (page === 'party') return <ClassicPartyPreview party={PARTIES[0]} />;

@@ -43,6 +43,7 @@ export default function SinglePartyView({
   specialOptions,
   user,
   editorMode = false,
+  previewMode = false, // template-preview: render the REAL cinematic layout, intro skipped
   elementConfigs = null,
   selectedElement = null,
   hoveredElement = null,
@@ -54,7 +55,7 @@ export default function SinglePartyView({
   const [bannerImages, setBannerImages] = useState([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [introFinished, setIntroFinished] = useState(false);
+  const [introFinished, setIntroFinished] = useState(previewMode);
   const [contentReady, setContentReady] = useState(false); // Lazy render heavy content
   const [selectedMember, setSelectedMember] = useState(null);
   const [isMobileDockOpen, setIsMobileDockOpen] = useState(true);
@@ -141,7 +142,6 @@ export default function SinglePartyView({
 
   // Old variable alias explicitly for existing references (if any)
   const heroImage = finalHeroImage;
-  console.log("DEBUG: heroImage path:", heroImage);
 
   useEffect(() => {
     const div = document.createElement('div');
