@@ -54,7 +54,13 @@ export default function TemplatePreviewWrapper({
   // (unstyled HTML flashing before CSS applies). Reset on src change only —
   // switching device just resizes the same iframe, so it shouldn't reflash.
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { setLoaded(false); }, [src]);
+  useEffect(() => {
+    setLoaded(false);
+    // Fallback: heavy pages (LiquidHero / the verdure vote intro) don't always
+    // fire a timely load event — never leave the preview stuck behind the spinner.
+    const t = setTimeout(() => setLoaded(true), 1400);
+    return () => clearTimeout(t);
+  }, [src]);
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col bg-zinc-100">
@@ -152,7 +158,7 @@ export default function TemplatePreviewWrapper({
                 <iframe
                   src={src}
                   title="Template preview"
-                  onLoad={() => setTimeout(() => setLoaded(true), 220)}
+                  onLoad={() => setLoaded(true)}
                   className="w-full h-full border-0"
                   style={{ opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
                 />
