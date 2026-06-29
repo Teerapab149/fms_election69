@@ -81,7 +81,7 @@ export default function VotePage() {
 
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
-  const isVerdure = activeTemplateId === 'verdure';
+  const isVerdure = activeTemplateId?.startsWith('verdure');
 
   // --- Handlers ---
   const handleViewDetails = (party) => {

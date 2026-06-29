@@ -27,6 +27,9 @@ const HOME_LAYOUTS = {
 
 export default function HomeRenderer(props) {
   const slug = props?.resolvedTemplate?.slug || props?.resolvedTemplate?.id;
-  const Layout = HOME_LAYOUTS[slug] || HomeContent;
+  // Colour-theme variants (e.g. verdure-honey) share their family's home layout —
+  // fall back to layoutFamily so verdure-* → VerdureHome, not the classic HomeContent.
+  const fam = props?.resolvedTemplate?.layoutFamily;
+  const Layout = HOME_LAYOUTS[slug] || HOME_LAYOUTS[fam] || HomeContent;
   return <Layout {...props} />;
 }

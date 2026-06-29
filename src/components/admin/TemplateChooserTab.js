@@ -194,29 +194,37 @@ function PreviewStage({ slug, accent }) {
   );
 }
 
-// ── Sidebar card (master) ─────────────────────────────────────────────────────
-function SidebarCard({ tpl, selected, active, onSelect }) {
-  const sw = tpl.colorSwatch || {};
-  const dots = [sw.primary, sw.secondary, sw.background].filter(Boolean);
+// ── Sidebar card (master) — one per family; colour themes = clickable swatches ──
+function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
+  const { rep, themes } = fam;
+  const multi = themes.length > 1;
+  const isSelected = themes.some((t) => t.slug === selectedSlug);
+  const isActive = themes.some((t) => t.slug === activeSlug);
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(tpl.slug)}
-      className={`w-full text-left rounded-2xl border p-4 transition-all duration-200 group ${selected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}
-    >
-      <div className="flex items-center gap-2">
-        {active && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
-        <span className={`font-bold text-[15px] leading-tight ${selected ? "text-slate-900" : "text-slate-700"}`}>{tpl.name}</span>
-        <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{tpl.layoutFamily || tpl.slug}</span>
-      </div>
-      <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{tpl.description}</p>
+    <div className={`rounded-2xl border p-4 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}>
+      <button type="button" onClick={() => onSelect(rep.slug)} className="w-full text-left">
+        <div className="flex items-center gap-2">
+          {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
+          <span className={`font-bold text-[15px] leading-tight ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
+          <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{rep.layoutFamily || rep.slug}</span>
+        </div>
+        <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{rep.description}</p>
+      </button>
       <div className="flex items-center gap-1.5 mt-2.5">
-        {dots.map((c, i) => (
-          <span key={i} className="w-4 h-4 rounded-full border border-black/5" style={{ background: c }} />
-        ))}
-        {active && <span className="ml-1 text-[10px] font-bold text-emerald-600">ใช้อยู่</span>}
+        {themes.map((t) => {
+          const on = t.slug === selectedSlug;
+          const c = t.colorSwatch?.primary || "#8A2680";
+          return (
+            <button key={t.slug} type="button" title={t.name} aria-label={`เลือก ${t.name}`} onClick={() => onSelect(t.slug)}
+              className={`w-5 h-5 rounded-full border-2 grid place-items-center transition-transform ${on ? "scale-110" : "hover:scale-105"}`}
+              style={{ background: c, borderColor: on ? "#0f172a" : "#fff", boxShadow: on ? "0 0 0 2px rgba(15,23,42,.18)" : "0 1px 2px rgba(15,23,42,.18)" }}>
+              {t.slug === activeSlug && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+            </button>
+          );
+        })}
+        {multi && <span className="ml-1 text-[10px] font-semibold text-slate-400">{themes.length} สี</span>}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -251,9 +259,9 @@ export default function TemplateChooserTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  // One choosable card per layout family (classic family retired). rep = the
-  // family's canonical template.
-  const choices = useMemo(() => {
+  // One card per layout family (classic family retired). Each family keeps its
+  // colour themes (e.g. verdure terracotta/honey/teal/berry) → clickable swatches.
+  const families = useMemo(() => {
     const ORDER = ["original", "gumroad", "studio-dark", "verdure"];
     const REP = { gumroad: "gumroad", "studio-dark": "studio-dark", verdure: "verdure", original: "original" };
     const groups = {};
@@ -263,21 +271,25 @@ export default function TemplateChooserTab() {
       (groups[fam] || (groups[fam] = [])).push(t);
     }
     return Object.entries(groups)
-      .map(([fam, list]) => list.find((t) => t.slug === (REP[fam] || fam)) || list[0])
+      .map(([fam, list]) => {
+        const rep = list.find((t) => t.slug === (REP[fam] || fam)) || list[0];
+        return { family: fam, rep, themes: [rep, ...list.filter((t) => t !== rep)] };
+      })
       .sort((a, b) => {
-        const ai = ORDER.indexOf(a.layoutFamily || a.slug), bi = ORDER.indexOf(b.layoutFamily || b.slug);
+        const ai = ORDER.indexOf(a.family), bi = ORDER.indexOf(b.family);
         return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
       });
   }, [templates]);
 
   // Default the detail to the active template once loaded.
   useEffect(() => {
-    if (selectedSlug || !choices.length) return;
-    const initial = choices.find((t) => t.slug === activeSlug) || choices[0];
+    if (selectedSlug || !families.length) return;
+    const all = families.flatMap((f) => f.themes);
+    const initial = all.find((t) => t.slug === activeSlug) || families[0].rep;
     setSelectedSlug(initial.slug);
-  }, [choices, activeSlug, selectedSlug]);
+  }, [families, activeSlug, selectedSlug]);
 
-  const selected = useMemo(() => choices.find((t) => t.slug === selectedSlug) || null, [choices, selectedSlug]);
+  const selected = useMemo(() => templates.find((t) => t.slug === selectedSlug) || null, [templates, selectedSlug]);
   const isSelectedActive = selected && selected.slug === activeSlug;
   const accent = selected?.colorSwatch?.primary || "#8A2680";
 
@@ -329,11 +341,11 @@ export default function TemplateChooserTab() {
         <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6 items-start">
           {/* ── MASTER: sidebar ── */}
           <div className="lg:sticky lg:top-[72px]">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">ธีมทั้งหมด ({choices.length})</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">ธีมทั้งหมด ({families.length})</p>
             <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
-              {choices.map((t) => (
-                <div key={t.slug} className="min-w-[220px] lg:min-w-0">
-                  <SidebarCard tpl={t} selected={t.slug === selectedSlug} active={t.slug === activeSlug} onSelect={setSelectedSlug} />
+              {families.map((fam) => (
+                <div key={fam.family} className="min-w-[220px] lg:min-w-0">
+                  <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
                 </div>
               ))}
             </div>

@@ -63,7 +63,7 @@ export default function SuccessPage({
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
-  const isVerdure = activeTemplateId === 'verdure';
+  const isVerdure = activeTemplateId?.startsWith('verdure');
 
   useEffect(() => {
     if (editorMode) { setTemplateReady(true); return; }

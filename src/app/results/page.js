@@ -68,7 +68,7 @@ export default function ResultsPage() {
   }, []);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
-  const isVerdure = activeTemplateId === 'verdure';
+  const isVerdure = activeTemplateId?.startsWith('verdure');
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)

@@ -143,4 +143,21 @@ export const verdureTemplate = {
   }
 };
 
+// ── Colour themes (accent-swap) ──────────────────────────────────────────────
+// Same verdure layout; only the accent changes (handled by --terra/--terra-2/
+// --terra-soft in VerdureChrome, keyed by slug). colorSwatch.primary = the accent
+// so the chooser shows the right swatch. layoutFamily stays "verdure" → the chooser
+// groups all four into one card with 4 swatches (like classic's colour themes).
+const mkVerdureTheme = (slug, name, primary, secondary) => ({
+  ...verdureTemplate,
+  id: slug,
+  slug,
+  name,
+  colorSwatch: { primary, secondary: MOSS, background: CREAM },
+});
+
+export const verdureHoneyTemplate = mkVerdureTheme("verdure-honey", "เวอร์เดอร์ · น้ำผึ้ง", "#C99A3F");
+export const verdureTealTemplate = mkVerdureTheme("verdure-teal", "เวอร์เดอร์ · ทะเล", "#2F8C8C");
+export const verdureBerryTemplate = mkVerdureTheme("verdure-berry", "เวอร์เดอร์ · เบอร์รี", "#9B3B6A");
+
 export default verdureTemplate;

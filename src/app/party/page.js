@@ -585,7 +585,7 @@ function PartyContent() {
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
-  const isVerdure = activeTemplateId === 'verdure';
+  const isVerdure = activeTemplateId?.startsWith('verdure');
 
   const listSectionRef = useRef(null);
 

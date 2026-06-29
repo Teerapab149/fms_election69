@@ -40,7 +40,7 @@ export default function CandidatesPage({
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId === 'gumroad';
   const isStudio = activeTemplateId === 'studio-dark';
-  const isVerdure = activeTemplateId === 'verdure';
+  const isVerdure = activeTemplateId?.startsWith('verdure');
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement

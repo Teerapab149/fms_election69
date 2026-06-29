@@ -21,7 +21,21 @@ import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { resolveElectionDates } from "../../utils/electionConfig";
-import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
+
+// ── Verdure colour themes ────────────────────────────────────────────────────
+// The cream/moss base IS the verdure identity (fixed). Only the ACCENT swaps —
+// every verdure surface reads var(--terra)/var(--terra-2)/var(--terra-soft), so
+// overriding those three on .vd-root recolours the whole template. One source.
+const VERDURE_ACCENTS = {
+  "verdure":       { terra: "#BC5E3E", terra2: "#A24E32", soft: "#E3BFA9" }, // ดินเผา (default)
+  "verdure-honey": { terra: "#C99A3F", terra2: "#A87F2E", soft: "#E8D3A0" }, // น้ำผึ้ง
+  "verdure-teal":  { terra: "#2F8C8C", terra2: "#246F6F", soft: "#A9D2D2" }, // ทะเล
+  "verdure-berry": { terra: "#9B3B6A", terra2: "#7E2E55", soft: "#D9A9C2" }, // เบอร์รี
+};
+export function verdureAccent(slug) {
+  return VERDURE_ACCENTS[slug] || VERDURE_ACCENTS.verdure;
+}
 
 // ── derived election meta — everything year/number-specific comes from
 // globalConfig (admin-editable), never hardcoded; Thai digits are normalised to
@@ -180,12 +194,23 @@ export function verdureSignIn() {
 }
 
 export function VerdureBaseStyles() {
+  // Resolve the active accent. Live = the active template (useActiveTemplateId,
+  // SSR-consistent). On /template-preview the previewed verdure-* slug wins — read
+  // from window in an effect (NOT useSearchParams, which would de-opt the build /
+  // mismatch hydration); initial render matches SSR, then the preview re-tints.
+  const activeSlug = useActiveTemplateId();
+  const [previewSlug, setPreviewSlug] = useState(null);
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("slug");
+    if (s && s.startsWith("verdure")) setPreviewSlug(s);
+  }, []);
+  const { terra, terra2, soft } = verdureAccent(previewSlug || activeSlug);
   return (
     <style jsx global>{`
       .vd-root {
         --moss:#1F3A2C; --moss-2:#2A4A39; --moss-3:#3A5B49;
         --cream:#F4ECDB; --cream-2:#FAF4E4; --cream-3:#E6DCC5;
-        --terra:#BC5E3E; --terra-2:#A24E32; --terra-soft:#E3BFA9; --gold:#D2A248;
+        --terra:${terra}; --terra-2:${terra2}; --terra-soft:${soft}; --gold:#D2A248;
         --rule:#D4C9AC; --rule-moss:rgba(244,236,219,.16);
         --fd:var(--font-dm-serif),'DM Serif Display',var(--font-plex-thai),Georgia,serif;
         --fs:var(--font-manrope),'Manrope',var(--font-plex-thai),system-ui,sans-serif;
