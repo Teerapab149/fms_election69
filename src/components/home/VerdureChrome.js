@@ -24,17 +24,42 @@ import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 
 // ── Verdure colour themes ────────────────────────────────────────────────────
-// The cream/moss base IS the verdure identity (fixed). Only the ACCENT swaps —
-// every verdure surface reads var(--terra)/var(--terra-2)/var(--terra-soft), so
-// overriding those three on .vd-root recolours the whole template. One source.
-const VERDURE_ACCENTS = {
-  "verdure":       { terra: "#BC5E3E", terra2: "#A24E32", soft: "#E3BFA9" }, // ดินเผา (default)
-  "verdure-honey": { terra: "#C99A3F", terra2: "#A87F2E", soft: "#E8D3A0" }, // น้ำผึ้ง
-  "verdure-teal":  { terra: "#2F8C8C", terra2: "#246F6F", soft: "#A9D2D2" }, // ทะเล
-  "verdure-berry": { terra: "#9B3B6A", terra2: "#7E2E55", soft: "#D9A9C2" }, // เบอร์รี
+// A theme recolours the WHOLE page, not just the accent: the paper (cream*), the
+// dark surfaces/medallion/dock/ink (moss*), the accent (terra*), and the hairline/
+// gold. Every verdure surface reads these var()s on .vd-root, so swapping them =
+// the entire template re-tones. One source; cohesive palettes (owner-facing).
+const VERDURE_THEMES = {
+  // ดินเผา — forest green + terracotta on warm cream (the original identity)
+  "verdure": {
+    cream: "#F4ECDB", cream2: "#FAF4E4", cream3: "#E6DCC5",
+    moss: "#1F3A2C", moss2: "#2A4A39", moss3: "#3A5B49",
+    terra: "#BC5E3E", terra2: "#A24E32", soft: "#E3BFA9",
+    rule: "#D4C9AC", gold: "#D2A248",
+  },
+  // น้ำผึ้ง — espresso + honey-gold on warm parchment
+  "verdure-honey": {
+    cream: "#F7EFDD", cream2: "#FDF7E8", cream3: "#ECDFC4",
+    moss: "#3A2E1C", moss2: "#4A3B26", moss3: "#5C4A30",
+    terra: "#C99A3F", terra2: "#A87F2E", soft: "#E8D3A0",
+    rule: "#DCCBA6", gold: "#E0B95A",
+  },
+  // ทะเล — deep teal + bright teal on cool mint cream
+  "verdure-teal": {
+    cream: "#E7F0EE", cream2: "#F2F8F6", cream3: "#D4E6E2",
+    moss: "#143A3C", moss2: "#1E4D4F", moss3: "#2C6365",
+    terra: "#2F8C8C", terra2: "#246F6F", soft: "#A9D2D2",
+    rule: "#BFD6D2", gold: "#5FB3A8",
+  },
+  // เบอร์รี — deep plum + berry on rosy cream
+  "verdure-berry": {
+    cream: "#F6ECEF", cream2: "#FCF3F6", cream3: "#EAD9DF",
+    moss: "#34233A", moss2: "#412C49", moss3: "#523A5B",
+    terra: "#9B3B6A", terra2: "#7E2E55", soft: "#D9A9C2",
+    rule: "#D9C4CE", gold: "#C98AAE",
+  },
 };
-export function verdureAccent(slug) {
-  return VERDURE_ACCENTS[slug] || VERDURE_ACCENTS.verdure;
+export function verdureTheme(slug) {
+  return VERDURE_THEMES[slug] || VERDURE_THEMES.verdure;
 }
 
 // ── derived election meta — everything year/number-specific comes from
@@ -204,14 +229,14 @@ export function VerdureBaseStyles() {
     const s = new URLSearchParams(window.location.search).get("slug");
     if (s && s.startsWith("verdure")) setPreviewSlug(s);
   }, []);
-  const { terra, terra2, soft } = verdureAccent(previewSlug || activeSlug);
+  const t = verdureTheme(previewSlug || activeSlug);
   return (
     <style jsx global>{`
       .vd-root {
-        --moss:#1F3A2C; --moss-2:#2A4A39; --moss-3:#3A5B49;
-        --cream:#F4ECDB; --cream-2:#FAF4E4; --cream-3:#E6DCC5;
-        --terra:${terra}; --terra-2:${terra2}; --terra-soft:${soft}; --gold:#D2A248;
-        --rule:#D4C9AC; --rule-moss:rgba(244,236,219,.16);
+        --moss:${t.moss}; --moss-2:${t.moss2}; --moss-3:${t.moss3};
+        --cream:${t.cream}; --cream-2:${t.cream2}; --cream-3:${t.cream3};
+        --terra:${t.terra}; --terra-2:${t.terra2}; --terra-soft:${t.soft}; --gold:${t.gold};
+        --rule:${t.rule}; --rule-moss:rgba(244,236,219,.16);
         --fd:var(--font-dm-serif),'DM Serif Display',var(--font-plex-thai),Georgia,serif;
         --fs:var(--font-manrope),'Manrope',var(--font-plex-thai),system-ui,sans-serif;
         --ft:var(--font-plex-thai),'IBM Plex Sans Thai',var(--font-manrope),system-ui,sans-serif;
@@ -219,6 +244,13 @@ export function VerdureBaseStyles() {
         min-height:100vh; position:relative; background:var(--cream); color:var(--moss); font-family:var(--ft);
       }
       .vd-root * { box-sizing:border-box; }
+      /* Colour-theme morph — only while .vd-theming is on (added for ~0.6s on a
+         theme switch, e.g. from the chooser), so every surface eases from the old
+         palette to the new one instead of snapping. Off otherwise → hover/intro
+         keep their own fast transitions. */
+      .vd-root.vd-theming, .vd-root.vd-theming *, .vd-root.vd-theming *::before, .vd-root.vd-theming *::after {
+        transition: background-color .6s ease, background .6s ease, color .6s ease, border-color .6s ease, box-shadow .6s ease, fill .6s ease, stroke .6s ease !important;
+      }
       .vd-root a { color:inherit; text-decoration:none; }
       .vd-root ::selection { background:var(--terra); color:var(--cream); }
       .vd-tabular { font-variant-numeric:tabular-nums lining-nums; }
