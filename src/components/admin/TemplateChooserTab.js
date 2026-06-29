@@ -19,6 +19,7 @@ import {
   Monitor, Laptop, Tablet, Smartphone,
 } from "lucide-react";
 import { getPath } from "../../utils/basePath";
+import { verdureTheme } from "../home/VerdureChrome";
 
 // Device viewports — each previews the page at its TRUE width (the iframe is a real
 // viewport, so the page reflows) then scales the frame down to fit the column.
@@ -44,14 +45,42 @@ const PAGES = [
 const slideSrc = (slug, s) =>
   getPath(`/template-preview?slug=${slug}&page=${s.page}${s.variant ? `&variant=${s.variant}` : ""}`);
 
+// In-place colour-theme morph: push the chosen verdure palette straight onto the
+// preview iframe's .vd-root (same-origin) + flag .vd-theming so every surface eases
+// from the old palette to the new — no reload, no jump back to the home slide.
+function injectVerdureTheme(doc, themeSlug) {
+  if (!doc || !themeSlug || !themeSlug.startsWith("verdure")) return;
+  const roots = doc.querySelectorAll(".vd-root");
+  if (!roots.length) return;
+  const v = verdureTheme(themeSlug);
+  const vars = {
+    "--cream": v.cream, "--cream-2": v.cream2, "--cream-3": v.cream3,
+    "--moss": v.moss, "--moss-2": v.moss2, "--moss-3": v.moss3,
+    "--terra": v.terra, "--terra-2": v.terra2, "--terra-soft": v.soft,
+    "--rule": v.rule, "--gold": v.gold,
+  };
+  roots.forEach((r) => {
+    r.classList.add("vd-theming");
+    for (const k in vars) r.style.setProperty(k, vars[k]);
+    setTimeout(() => r.classList.remove("vd-theming"), 700);
+  });
+}
+
 // ── One device-framed slide: browser chrome + the page at its TRUE device width,
 //    scaled down to the display size (so the page reflows like the real device). ──
-function BrowserSlide({ slug, slide, device, displayW, isCurrent, mounted, accent }) {
+function BrowserSlide({ familySlug, themeSlug, slide, device, displayW, isCurrent, mounted, accent }) {
   const [loaded, setLoaded] = useState(false);
+  const iframeRef = useRef(null);
   const scale = displayW / device.w;
   const displayH = device.h * scale;
-  const src = slideSrc(slug, slide);
+  // The iframe URL uses the FAMILY slug (stable) — switching colour theme doesn't
+  // change it, so no reload / no jump to the home slide. The theme is injected.
+  const src = slideSrc(familySlug, slide);
   useEffect(() => { setLoaded(false); }, [src]);
+  // Re-tint in place whenever the chosen theme changes (and once it's loaded).
+  useEffect(() => {
+    if (loaded) injectVerdureTheme(iframeRef.current?.contentDocument, themeSlug);
+  }, [themeSlug, loaded]);
 
   return (
     <div
@@ -80,10 +109,11 @@ function BrowserSlide({ slug, slide, device, displayW, isCurrent, mounted, accen
                 </div>
               )}
               <iframe
+                ref={iframeRef}
                 key={src}
                 src={src}
                 title={slide.label}
-                onLoad={() => setTimeout(() => setLoaded(true), 220)}
+                onLoad={() => { injectVerdureTheme(iframeRef.current?.contentDocument, themeSlug); setTimeout(() => setLoaded(true), 220); }}
                 scrolling="no"
                 style={{ width: device.w, height: device.h, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none", opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
               />
@@ -100,13 +130,15 @@ function BrowserSlide({ slug, slide, device, displayW, isCurrent, mounted, accen
 }
 
 // ── The device-aware peek-carousel stage for the selected template ────────────
-function PreviewStage({ slug, accent }) {
+function PreviewStage({ familySlug, themeSlug, accent }) {
   const [idx, setIdx] = useState(0);
   const [deviceKey, setDeviceKey] = useState("pc");
   const [vw, setVw] = useState(720);
   const vpRef = useRef(null);
 
-  useEffect(() => { setIdx(0); }, [slug]);
+  // Reset to the home slide only when the LAYOUT family changes — switching colour
+  // theme (themeSlug) keeps the current page (no bounce); it re-tints in place.
+  useEffect(() => { setIdx(0); }, [familySlug]);
   useEffect(() => {
     const el = vpRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
@@ -148,7 +180,8 @@ function PreviewStage({ slug, accent }) {
           {PAGES.map((s, i) => (
             <BrowserSlide
               key={i}
-              slug={slug}
+              familySlug={familySlug}
+              themeSlug={themeSlug}
               slide={s}
               device={device}
               displayW={displayW}
@@ -185,7 +218,7 @@ function PreviewStage({ slug, accent }) {
               className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#8A2680]" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`} />
           ))}
         </div>
-        <button type="button" onClick={() => window.open(slideSrc(slug, slide) + '&chrome=1', '_blank')}
+        <button type="button" onClick={() => window.open(slideSrc(themeSlug, slide) + '&chrome=1', '_blank')}
           className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-700 transition">
           <ExternalLink className="w-3 h-3" /> เปิดเต็มจอ
         </button>
@@ -290,6 +323,7 @@ export default function TemplateChooserTab() {
   }, [families, activeSlug, selectedSlug]);
 
   const selected = useMemo(() => templates.find((t) => t.slug === selectedSlug) || null, [templates, selectedSlug]);
+  const selectedFamily = useMemo(() => families.find((f) => f.themes.some((t) => t.slug === selectedSlug)) || null, [families, selectedSlug]);
   const isSelectedActive = selected && selected.slug === activeSlug;
   const accent = selected?.colorSwatch?.primary || "#8A2680";
 
@@ -372,7 +406,7 @@ export default function TemplateChooserTab() {
                   )}
                 </div>
 
-                <PreviewStage slug={selected.slug} accent={accent} />
+                <PreviewStage familySlug={selectedFamily?.rep?.slug || selected.slug} themeSlug={selected.slug} accent={accent} />
               </>
             )}
           </div>
