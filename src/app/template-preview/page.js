@@ -16,8 +16,10 @@
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
 // because the layout components are pure + we pass mock props.
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { MotionConfig } from 'framer-motion';
+import { Palette, Check } from 'lucide-react';
 import { getPath } from '../../utils/basePath';
 import TemplatePreviewWrapper from '../../components/admin/TemplatePreviewWrapper';
 
@@ -67,9 +69,21 @@ function PreviewBody() {
   const chrome = sp.get('chrome') === '1';
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
 
+  // Colour themes within this layout family (e.g. verdure terracotta/honey/teal/
+  // berry). The full-screen bar shows them as swatches; clicking one re-tints IN
+  // PLACE (no reload) — so the iframe src stays pinned to the family's BASE slug
+  // (repSlug, stable) and the chosen palette is injected onto it. Single-theme
+  // families (gumroad/studio-dark/original today) yield one entry → no swatches.
+  const familyThemes = Object.values(BUILT_IN_TEMPLATES)
+    .filter((t) => (t.layoutFamily || 'classic') === family)
+    .map((t) => ({ slug: t.slug, name: t.name, color: t.colorSwatch?.primary || '#8A2680' }));
+  const repSlug = familyThemes[0]?.slug || slug;
+  const [themeSlug, setThemeSlug] = useState(slug);
+
   if (chrome) {
+    // Carry the chosen colour theme across page navigation (deep-links keep it).
     const goto = (p, vr) => {
-      window.location.href = getPath(`/template-preview?slug=${slug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
+      window.location.href = getPath(`/template-preview?slug=${themeSlug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
     };
     const exit = () => {
       // Opened in its own tab via window.open → closing returns to the chooser. If
@@ -77,18 +91,29 @@ function PreviewBody() {
       window.close();
       setTimeout(() => { if (!window.closed) window.location.href = getPath('/admin'); }, 250);
     };
-    const raw = getPath(`/template-preview?slug=${slug}&page=${page}${variant ? `&variant=${variant}` : ''}`);
+    // src stays on the stable family slug so a swatch click never reloads the iframe
+    // (the theme morphs in place); the wrapper injects `themeSlug` onto it.
+    const raw = getPath(`/template-preview?slug=${repSlug}&page=${page}${variant ? `&variant=${variant}` : ''}`);
+    // NOTE: no PreviewMotionDamp here — this is the OUTER chrome doc; its loading
+    // spinner must keep spinning. The damping lives in the iframe content below.
     return (
       <TemplatePreviewWrapper
         src={raw}
         url={`fms-ovs/${page}${variant ? `·${variant}` : ''}`}
+        themeSlug={themeSlug}
         onExit={exit}
-        actions={<PreviewPageControls slug={slug} page={page} variant={variant} goto={goto} />}
+        actions={<PreviewPageControls page={page} variant={variant} goto={goto}
+          themes={familyThemes} themeSlug={themeSlug} onTheme={setThemeSlug} />}
       />
     );
   }
 
-  return renderPage();
+  return (
+    <MotionConfig reducedMotion="always">
+      <PreviewMotionDamp />
+      {renderPage()}
+    </MotionConfig>
+  );
 
   // eslint-disable-next-line no-inner-declarations
   function renderPage() {
@@ -215,7 +240,21 @@ const PAGE_OPTS = [
 ];
 const DEFAULT_VARIANT = { vote: 'multi', results: 'revealed' };
 
-function PreviewPageControls({ page, variant, goto }) {
+// Damps continuous motion on the preview surface so the renderer can idle: framer
+// transform loops are stilled by <MotionConfig reducedMotion="always"> (LiquidMesh
+// honours it, the verdure intro ring/etc. settle), and any infinite CSS @keyframes
+// (vdDot pulse, vdGlow, vdCueBounce) are allowed a single pass then stop. This kills
+// the spinner jank + lets preview_screenshot reach network-idle. Preview route only
+// — production pages never mount this, so live animations are untouched.
+function PreviewMotionDamp() {
+  return (
+    <style jsx global>{`
+      *, *::before, *::after { animation-iteration-count: 1 !important; }
+    `}</style>
+  );
+}
+
+function PreviewPageControls({ page, variant, goto, themes = [], themeSlug, onTheme }) {
   const seg = (cur, opts, p) => (
     <div className="flex items-center rounded-lg bg-neutral-800 border border-neutral-700 p-0.5">
       {opts.map(([v, l]) => (
@@ -226,12 +265,33 @@ function PreviewPageControls({ page, variant, goto }) {
   );
   return (
     <>
-      <select value={page} onChange={(e) => goto(e.target.value, DEFAULT_VARIANT[e.target.value])}
-        className="bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-white text-xs outline-none cursor-pointer">
-        {PAGE_OPTS.map((o) => <option key={o.v} value={o.v} className="text-slate-900">{o.l}</option>)}
-      </select>
+      {/* page selector — a clearly legible light control (was lost dark-on-dark) */}
+      <label className="flex items-center gap-1.5 rounded-lg bg-white border border-neutral-300 pl-2.5 pr-1 py-1 shadow-sm">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-neutral-400 select-none">หน้า</span>
+        <select value={page} onChange={(e) => goto(e.target.value, DEFAULT_VARIANT[e.target.value])}
+          className="bg-transparent text-xs font-semibold text-neutral-900 outline-none cursor-pointer pr-0.5">
+          {PAGE_OPTS.map((o) => <option key={o.v} value={o.v} className="text-slate-900">{o.l}</option>)}
+        </select>
+      </label>
       {page === 'vote' && seg(variant || 'multi', [['multi', 'หลายพรรค'], ['single', 'พรรคเดียว']], 'vote')}
       {page === 'results' && seg(variant || 'revealed', [['locked', 'ปิดผล'], ['revealed', 'เปิดผล']], 'results')}
+      {/* colour-theme switcher — re-tints the preview IN PLACE (same morph as the
+          chooser). Only shown when this family has more than one theme. */}
+      {themes.length > 1 && (
+        <div className="flex items-center gap-1.5 rounded-lg bg-neutral-800 border border-neutral-700 pl-2 pr-1.5 py-1">
+          <Palette className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+          {themes.map((t) => {
+            const on = t.slug === themeSlug;
+            return (
+              <button key={t.slug} type="button" title={t.name} aria-label={`เปลี่ยนสี ${t.name}`} onClick={() => onTheme?.(t.slug)}
+                className={`w-5 h-5 rounded-full grid place-items-center transition-transform ${on ? 'scale-110' : 'hover:scale-105'}`}
+                style={{ background: t.color, boxShadow: on ? '0 0 0 2px #18181b, 0 0 0 4px #fff' : '0 0 0 1px rgba(255,255,255,.35)' }}>
+                {on && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

@@ -11,8 +11,9 @@
 // device-width preview (an iframe is the only faithful viewport), or `children`
 // for arbitrary content.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Monitor, Laptop, Tablet, Smartphone, Lock, X, Loader2 } from "lucide-react";
+import { injectTemplateTheme } from "../../utils/injectTemplateTheme";
 
 /**
  * @typedef {"pc"|"laptop"|"tablet"|"mobile"} ViewportKey
@@ -34,6 +35,7 @@ const VIEWPORTS = [
  * @property {string} [url]                Text shown in the decorative address bar.
  * @property {React.ReactNode} [actions]   Optional extra controls in the top bar (e.g. page/state switchers).
  * @property {ViewportKey} [defaultView]   Initial device viewport (default "pc").
+ * @property {string} [themeSlug]          Colour-theme slug to tint the iframe IN PLACE (same-origin morph, no reload).
  * @property {() => void} [onExit]         Click handler for the "Exit Preview" button.
  */
 
@@ -44,6 +46,7 @@ export default function TemplatePreviewWrapper({
   url = "fms-ovs.psu.ac.th",
   actions,
   defaultView = "pc",
+  themeSlug,
   onExit,
 }) {
   /** @type {[ViewportKey, (v: ViewportKey) => void]} */
@@ -54,6 +57,7 @@ export default function TemplatePreviewWrapper({
   // (unstyled HTML flashing before CSS applies). Reset on src change only —
   // switching device just resizes the same iframe, so it shouldn't reflash.
   const [loaded, setLoaded] = useState(false);
+  const iframeRef = useRef(null);
   useEffect(() => {
     setLoaded(false);
     // Fallback: heavy pages (LiquidHero / the verdure vote intro) don't always
@@ -61,6 +65,12 @@ export default function TemplatePreviewWrapper({
     const t = setTimeout(() => setLoaded(true), 1400);
     return () => clearTimeout(t);
   }, [src]);
+
+  // Tint the loaded iframe IN PLACE whenever the chosen colour theme changes (the
+  // iframe src stays on the stable family slug, so this morphs with no reload).
+  useEffect(() => {
+    if (loaded) injectTemplateTheme(iframeRef.current?.contentDocument, themeSlug);
+  }, [themeSlug, loaded]);
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col bg-zinc-100">
@@ -156,9 +166,10 @@ export default function TemplatePreviewWrapper({
                   </div>
                 )}
                 <iframe
+                  ref={iframeRef}
                   src={src}
                   title="Template preview"
-                  onLoad={() => setLoaded(true)}
+                  onLoad={() => { injectTemplateTheme(iframeRef.current?.contentDocument, themeSlug); setLoaded(true); }}
                   className="w-full h-full border-0"
                   style={{ opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
                 />
