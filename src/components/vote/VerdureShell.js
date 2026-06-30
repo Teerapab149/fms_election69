@@ -6,7 +6,8 @@
 // children. Same idea as StudioDarkShell; props match the Verdure design's
 // per-screen specifics (edge number/label, status chip, back link).
 
-import VerdureChrome from "../home/VerdureChrome";
+import VerdureChrome, { verdureTheme } from "../home/VerdureChrome";
+import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 
 export default function VerdureShell({
   active = "home",
@@ -21,12 +22,16 @@ export default function VerdureShell({
   backLabel = "",
   children,
 }) {
+  // The html/body canvas sits OUTSIDE .vd-root, so it can't read the themed
+  // --cream/--moss vars — paint it with the ACTIVE theme's literal palette so even
+  // overscroll matches (the .vd-root itself is already themed via VerdureBaseStyles).
+  const t = verdureTheme(useActiveTemplateId());
   return (
     <div className={`fms-app vd-root ${moss ? "vd-moss" : ""}`}>
       {/* page canvas on the browser frame (no white/dark flash); gated on !editorMode
           so it doesn't leak into the admin inline preview */}
       {!editorMode && (
-        <style>{`html,body{background:${moss ? "#1F3A2C" : "#F4ECDB"};color-scheme:${moss ? "dark" : "light"}}`}</style>
+        <style>{`html,body{background:${moss ? t.moss : t.cream};color-scheme:${moss ? "dark" : "light"}}`}</style>
       )}
 
       <VerdureChrome

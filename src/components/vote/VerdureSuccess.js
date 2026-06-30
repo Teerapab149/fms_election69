@@ -76,7 +76,7 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         .vd-success { flex:1; display:grid; place-items:center; padding:110px 24px 150px; position:relative; z-index:1; }
         .vd-orn { position:relative; width:360px; height:360px; margin:0 auto 44px; display:grid; place-items:center; }
         .vd-orn__disc { width:220px; height:220px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; position:relative; z-index:2; box-shadow:0 0 0 1px var(--terra-soft); }
-        .vd-orn__ring { position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(244,236,219,.4); }
+        .vd-orn__ring { position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.4); }
         .vd-orn__ring--2 { inset:30px; border-style:solid; border-color:var(--rule-moss); }
         .vd-orn__arch { position:absolute; inset:0; pointer-events:none; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; fill:var(--cream); opacity:.65; }
         .vd-success__head { text-align:center; max-width:720px; margin:0 auto 44px; }
@@ -84,18 +84,18 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         .vd-success__head h1 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,92px); line-height:.96; letter-spacing:-.02em; margin:0 0 6px; color:var(--cream); }
         .vd-success__head h1 em { color:var(--terra); }
         .vd-success__accent { width:72px; height:2px; background:var(--terra); margin:6px auto 20px; }
-        .vd-success__head p { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.82); line-height:1.55; margin:0 auto; max-width:480px; }
+        .vd-success__head p { font-family:var(--ft); font-size:17px; color:rgba(var(--cream-rgb),.82); line-height:1.55; margin:0 auto; max-width:480px; }
 
         .vd-receipt { max-width:480px; width:100%; margin:0 auto; background:var(--moss-2); border:1px solid var(--rule-moss); border-radius:24px; overflow:hidden; }
-        .vd-receipt__h { padding:14px 26px; border-bottom:1px dashed var(--rule-moss); display:flex; justify-content:space-between; align-items:center; font-family:var(--fm); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(244,236,219,.65); }
+        .vd-receipt__h { padding:14px 26px; border-bottom:1px dashed var(--rule-moss); display:flex; justify-content:space-between; align-items:center; font-family:var(--fm); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:rgba(var(--cream-rgb),.65); }
         .vd-receipt__h .ac { color:var(--terra-soft); font-weight:700; }
         .vd-receipt__row { display:grid; grid-template-columns:auto 1fr; gap:24px; padding:13px 26px; align-items:center; font-family:var(--fm); font-size:12px; }
         .vd-receipt__row + .vd-receipt__row { border-top:1px dashed var(--rule-moss); }
-        .vd-receipt__row .lbl { letter-spacing:.18em; text-transform:uppercase; color:rgba(244,236,219,.72); }
+        .vd-receipt__row .lbl { letter-spacing:.18em; text-transform:uppercase; color:rgba(var(--cream-rgb),.72); }
         .vd-receipt__row .val { color:var(--cream); text-align:right; letter-spacing:.02em; }
         .vd-receipt__row .val .ac { color:var(--terra-soft); }
         .vd-receipt__cta { padding:20px 24px; border-top:1px dashed var(--rule-moss); display:grid; gap:10px; }
-        .vd-receipt__done { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px; border:1px solid rgba(188,94,62,.4); border-radius:999px; background:rgba(188,94,62,.12); color:var(--terra-soft); font-family:var(--fs); font-size:14px; font-weight:600; }
+        .vd-receipt__done { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px; border:1px solid rgba(var(--terra-rgb),.4); border-radius:999px; background:rgba(var(--terra-rgb),.12); color:var(--terra-soft); font-family:var(--fs); font-size:14px; font-weight:600; }
 
         @media (max-width:1100px) { .vd-success { padding:96px 20px 130px; } }
         @media (max-width:560px) {

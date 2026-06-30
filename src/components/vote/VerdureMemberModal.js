@@ -45,8 +45,11 @@ export function VerdureMemberModal({ member = null, onClose = () => {} }) {
         </div>
       </motion.div>
       <style jsx global>{`
-        .vd-mm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(31,58,44,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); padding:24px; cursor:pointer; --moss:#1F3A2C; --cream:#F4ECDB; --cream-2:#FAF4E4; --cream-3:#E6DCC5; --terra:#BC5E3E; --rule:#D4C9AC; --fd:var(--font-dm-serif),Georgia,serif; --fm:var(--font-space-mono),monospace; --ft:var(--font-plex-thai),sans-serif; }
-        .vd-mm__card { position:relative; cursor:auto; width:min(720px,100%); display:grid; grid-template-columns:300px 1fr; background:var(--cream); border:1px solid var(--rule); border-radius:28px; overflow:hidden; box-shadow:0 40px 80px -20px rgba(31,58,44,.5); }
+        /* always rendered inside .vd-root → inherit the ACTIVE theme's palette
+           (incl. -rgb triples); only keep font fallbacks. Re-declaring the colour
+           vars here would pin the modal to base verdure regardless of theme. */
+        .vd-mm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(var(--moss-rgb),.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); padding:24px; cursor:pointer; --fd:var(--font-dm-serif),Georgia,serif; --fm:var(--font-space-mono),monospace; --ft:var(--font-plex-thai),sans-serif; }
+        .vd-mm__card { position:relative; cursor:auto; width:min(720px,100%); display:grid; grid-template-columns:300px 1fr; background:var(--cream); border:1px solid var(--rule); border-radius:28px; overflow:hidden; box-shadow:0 40px 80px -20px rgba(var(--moss-rgb),.5); }
         .vd-mm__x { position:absolute; top:14px; right:14px; z-index:2; width:38px; height:38px; display:grid; place-items:center; border-radius:50%; cursor:pointer; background:var(--cream-2); border:1px solid var(--rule); color:var(--moss); }
         .vd-mm__x:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
         .vd-mm__photo { position:relative; aspect-ratio:4/5; background:var(--cream-3); display:grid; place-items:center; border-right:1px solid var(--rule); }
@@ -78,11 +81,11 @@ export function VerdureLightbox({ src = null, caption = "", onClose = () => {} }
         initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }} />
       {caption && <span className="vd-lb__cap">{caption}</span>}
       <style jsx global>{`
-        .vd-lb { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(31,58,44,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); padding:32px; cursor:zoom-out; }
-        .vd-lb__img { max-width:min(1200px,94vw); max-height:84vh; object-fit:contain; cursor:auto; border:1px solid rgba(212,201,172,.5); border-radius:18px; background:#FAF4E4; }
-        .vd-lb__x { position:absolute; top:20px; right:20px; width:42px; height:42px; z-index:2; display:grid; place-items:center; border-radius:50%; cursor:pointer; background:rgba(244,236,219,.85); border:1px solid #D4C9AC; color:#1F3A2C; }
-        .vd-lb__x:hover { background:#BC5E3E; border-color:#BC5E3E; color:#F4ECDB; }
-        .vd-lb__cap { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--font-space-mono),monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:#F4ECDB; background:rgba(31,58,44,.7); border:1px solid rgba(244,236,219,.3); padding:6px 16px; border-radius:999px; white-space:nowrap; }
+        .vd-lb { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(var(--moss-rgb),.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); padding:32px; cursor:zoom-out; }
+        .vd-lb__img { max-width:min(1200px,94vw); max-height:84vh; object-fit:contain; cursor:auto; border:1px solid var(--rule); border-radius:18px; background:var(--cream-2); }
+        .vd-lb__x { position:absolute; top:20px; right:20px; width:42px; height:42px; z-index:2; display:grid; place-items:center; border-radius:50%; cursor:pointer; background:rgba(var(--cream-rgb),.85); border:1px solid var(--rule); color:var(--moss); }
+        .vd-lb__x:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
+        .vd-lb__cap { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-family:var(--font-space-mono),monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--cream); background:rgba(var(--moss-rgb),.7); border:1px solid rgba(var(--cream-rgb),.3); padding:6px 16px; border-radius:999px; white-space:nowrap; }
         @media (max-width:640px) {
           .vd-lb { padding:14px; }
           .vd-lb__img { max-width:96vw; max-height:80vh; border-radius:14px; }

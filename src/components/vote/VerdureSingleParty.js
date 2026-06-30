@@ -234,42 +234,42 @@ export default function VerdureSingleParty({
            the warm page (seamless cream→cream, no dark flash) ── */
         .vd-bintro { position:fixed; inset:0; z-index:9000; display:grid; place-items:center; text-align:center; padding:24px; cursor:pointer; color:var(--moss);
           background:
-            radial-gradient(80% 50% at 50% 28%, rgba(210,162,72,.22) 0%, transparent 56%),
-            radial-gradient(70% 50% at 100% 92%, rgba(188,94,62,.10) 0%, transparent 52%),
-            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.26) 0%, transparent 56%),
-            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 48%, #EFE2CB 100%); }
+            radial-gradient(80% 50% at 50% 28%, rgba(var(--gold-rgb),.22) 0%, transparent 56%),
+            radial-gradient(70% 50% at 100% 92%, rgba(var(--terra-rgb),.10) 0%, transparent 52%),
+            radial-gradient(66% 52% at 0% 100%, rgba(var(--terra-soft-rgb),.26) 0%, transparent 56%),
+            linear-gradient(168deg, var(--cream-2) 0%, var(--cream) 48%, var(--cream-3) 100%); }
         .vd-bintro__inner { display:flex; flex-direction:column; align-items:center; }
         .vd-bintro__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--terra-2); margin-bottom:16px; }
         .vd-bintro__no { font-family:var(--fm); font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:var(--moss); opacity:.5; margin-bottom:28px; }
-        .vd-bintro__seal { position:relative; width:clamp(180px,24vw,240px); height:clamp(180px,24vw,240px); border-radius:50%; display:grid; place-items:center; background:radial-gradient(125% 125% at 32% 24%, #FFFFFF 0%, #FAF4E4 62%); box-shadow:0 30px 60px -24px rgba(31,58,44,.35), 0 0 72px -6px rgba(210,162,72,.4), inset 0 2px 8px rgba(255,255,255,.6); margin-bottom:34px; }
+        .vd-bintro__seal { position:relative; width:clamp(180px,24vw,240px); height:clamp(180px,24vw,240px); border-radius:50%; display:grid; place-items:center; background:radial-gradient(125% 125% at 32% 24%, #FFFFFF 0%, var(--cream-2) 62%); box-shadow:0 30px 60px -24px rgba(var(--moss-rgb),.35), 0 0 72px -6px rgba(var(--gold-rgb),.4), inset 0 2px 8px rgba(255,255,255,.6); margin-bottom:34px; }
         .vd-bintro__seal .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(96px,13vw,140px); line-height:1; color:var(--moss); }
         .vd-bintro__seal .logo { width:70%; height:70%; object-fit:contain; display:block; }
         .vd-bintro__seal .flash { position:absolute; inset:-18px; border-radius:50%; border:2px solid var(--terra); pointer-events:none; }
         .vd-bintro__seal .ring { position:absolute; inset:-18px; border-radius:50%; border:1px dashed var(--terra-soft); }
-        .vd-bintro__seal .ring2 { position:absolute; inset:12px; border-radius:50%; border:1px dashed rgba(210,162,72,.4); }
+        .vd-bintro__seal .ring2 { position:absolute; inset:12px; border-radius:50%; border:1px dashed rgba(var(--gold-rgb),.4); }
         .vd-bintro__div { width:64px; height:1.5px; background:var(--terra); margin:26px 0 0; transform-origin:center; }
-        .vd-bintro__tag { font-family:var(--ft); font-size:13px; color:rgba(31,58,44,.6); margin-top:14px; letter-spacing:.01em; }
+        .vd-bintro__tag { font-family:var(--ft); font-size:13px; color:rgba(var(--moss-rgb),.6); margin-top:14px; letter-spacing:.01em; }
         .vd-bintro__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,5vw,68px); line-height:1.02; letter-spacing:-.02em; margin:0; max-width:14ch; color:var(--moss); }
         .vd-bintro__name span { display:inline-block; }
-        .vd-bintro__slogan { font-family:var(--ft); font-size:clamp(15px,1.8vw,19px); color:rgba(31,58,44,.72); margin:18px auto 0; max-width:520px; line-height:1.5; }
+        .vd-bintro__slogan { font-family:var(--ft); font-size:clamp(15px,1.8vw,19px); color:rgba(var(--moss-rgb),.72); margin:18px auto 0; max-width:520px; line-height:1.5; }
         .vd-bintro__hint { margin-top:32px; font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-2); }
 
         /* ── warm "ละมุน" ballot — golden-hour cream, soft, candidate-forward ── */
         .vd-booth-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
           background:
-            radial-gradient(72% 46% at 50% 0%, rgba(210,162,72,.16) 0%, transparent 56%),
-            radial-gradient(60% 44% at 100% 8%, rgba(188,94,62,.09) 0%, transparent 50%),
-            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.30) 0%, transparent 56%),
-            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 46%, #EFE2CB 100%); }
+            radial-gradient(72% 46% at 50% 0%, rgba(var(--gold-rgb),.16) 0%, transparent 56%),
+            radial-gradient(60% 44% at 100% 8%, rgba(var(--terra-rgb),.09) 0%, transparent 50%),
+            radial-gradient(66% 52% at 0% 100%, rgba(var(--terra-soft-rgb),.30) 0%, transparent 56%),
+            linear-gradient(168deg, var(--cream-2) 0%, var(--cream) 46%, var(--cream-3) 100%); }
         .vd-booth { max-width:860px; margin:0 auto; padding:108px 24px 150px; position:relative; z-index:1; }
         .vd-booth__head { text-align:center; }
         .vd-booth__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:30px; }
 
         .vd-seal { position:relative; width:clamp(152px,21vw,190px); aspect-ratio:1; margin:4px auto 26px; display:grid; place-items:center; }
-        .vd-seal__glow { position:absolute; inset:-34px; border-radius:50%; background:radial-gradient(circle, rgba(210,162,72,.26) 0%, rgba(227,191,169,.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
+        .vd-seal__glow { position:absolute; inset:-34px; border-radius:50%; background:radial-gradient(circle, rgba(var(--gold-rgb),.26) 0%, rgba(var(--terra-soft-rgb),.12) 44%, transparent 70%); animation:vdGlow 5s ease-in-out infinite; }
         .vd-seal__ring { position:absolute; inset:-15px; border-radius:50%; border:1px dashed var(--terra-soft); }
-        .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(210,162,72,.3); }
-        .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(31,58,44,.4), 0 0 0 7px rgba(250,244,228,.6); }
+        .vd-seal__ring2 { position:absolute; inset:7px; border-radius:50%; border:1px solid rgba(var(--gold-rgb),.3); }
+        .vd-seal__disc { position:relative; width:100%; height:100%; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; overflow:hidden; box-shadow:0 30px 60px -28px rgba(var(--moss-rgb),.4), 0 0 0 7px rgba(var(--cream-2-rgb),.6); }
         /* contain → the FULL logo always shows (never cropped/distorted) for ANY
            party logo of any aspect/resolution — the robust choice for admin-uploaded
            logos. Sized by width + aspect-ratio:1 (NOT height:%, which doesn't resolve
@@ -280,27 +280,27 @@ export default function VerdureSingleParty({
         @keyframes vdGlow { 0%,100%{opacity:.55; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.05)} }
 
         .vd-booth__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(36px,5.4vw,62px); line-height:1.04; letter-spacing:-.02em; margin:0 0 14px; color:var(--moss); }
-        .vd-booth__slogan { font-family:var(--ft); font-size:17px; color:rgba(31,58,44,.8); line-height:1.55; margin:0 auto; max-width:540px; }
+        .vd-booth__slogan { font-family:var(--ft); font-size:17px; color:rgba(var(--moss-rgb),.8); line-height:1.55; margin:0 auto; max-width:540px; }
         /* scroll cue — tells the voter the ballot is further down (single-vote is a
            "read then decide" page; without this the vote action isn't discoverable
            above the fold). Click jumps straight to the decision. */
-        .vd-booth__cue { display:inline-flex; align-items:center; gap:9px; margin-top:26px; padding:11px 22px; border:1px solid var(--terra-soft); border-radius:999px; background:linear-gradient(180deg,#FCF5E6,var(--cream-2)); color:var(--terra-2); font-family:var(--ft); font-size:13px; font-weight:600; cursor:pointer; transition:transform .2s, border-color .2s, background .2s; box-shadow:0 8px 22px -16px rgba(31,58,44,.45); }
+        .vd-booth__cue { display:inline-flex; align-items:center; gap:9px; margin-top:26px; padding:11px 22px; border:1px solid var(--terra-soft); border-radius:999px; background:linear-gradient(180deg,var(--cream-2),var(--cream-2)); color:var(--terra-2); font-family:var(--ft); font-size:13px; font-weight:600; cursor:pointer; transition:transform .2s, border-color .2s, background .2s; box-shadow:0 8px 22px -16px rgba(var(--moss-rgb),.45); }
         .vd-booth__cue:hover { transform:translateY(-1px); border-color:var(--terra); background:var(--cream); }
         .vd-booth__cue .cue-arr { font-size:15px; line-height:1; animation:vdCueBounce 1.6s ease-in-out infinite; }
         @keyframes vdCueBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
-        .vd-booth__cover { display:block; margin:40px 0 0; cursor:zoom-in; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(31,58,44,.45); }
+        .vd-booth__cover { display:block; margin:40px 0 0; cursor:zoom-in; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(var(--moss-rgb),.45); }
         .vd-booth__cover img { width:100%; height:clamp(260px,38vw,440px); object-fit:cover; display:block; transition:transform .6s; }
         .vd-booth__cover:hover img { transform:scale(1.03); }
-        .vd-booth__cover figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(31,58,44,.78); padding:6px 14px; border-radius:999px; }
+        .vd-booth__cover figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(var(--moss-rgb),.78); padding:6px 14px; border-radius:999px; }
 
         .vd-booth__brief, .vd-booth__section { margin-top:48px; padding-top:36px; border-top:1px solid var(--rule); }
-        .vd-booth__shead { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:28px; padding-bottom:16px; border-bottom:1.5px solid rgba(31,58,44,.16); position:relative; }
+        .vd-booth__shead { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:28px; padding-bottom:16px; border-bottom:1.5px solid rgba(var(--moss-rgb),.16); position:relative; }
         .vd-booth__shead::after { content:""; position:absolute; left:0; bottom:-1.5px; width:58px; height:1.5px; background:var(--terra); }
         .vd-booth__kicker { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--terra-2); margin-bottom:10px; }
         .vd-booth__shead h2 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,4.2vw,46px); line-height:.98; letter-spacing:-.015em; color:var(--moss); margin:0; }
         .vd-booth__count { font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra-2); white-space:nowrap; padding-bottom:5px; }
-        .vd-booth__scroll { max-height:230px; overflow-y:auto; padding:22px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:18px; box-shadow:inset 0 2px 12px rgba(31,58,44,.05); }
-        .vd-booth__scroll p { font-family:var(--ft); font-size:17px; line-height:1.85; color:rgba(31,58,44,.9); margin:0; }
+        .vd-booth__scroll { max-height:230px; overflow-y:auto; padding:22px 24px; background:var(--cream-2); border:1px solid var(--rule); border-radius:18px; box-shadow:inset 0 2px 12px rgba(var(--moss-rgb),.05); }
+        .vd-booth__scroll p { font-family:var(--ft); font-size:17px; line-height:1.85; color:rgba(var(--moss-rgb),.9); margin:0; }
         .vd-booth__scroll::-webkit-scrollbar { width:6px; }
         .vd-booth__scroll::-webkit-scrollbar-track { background:transparent; }
         .vd-booth__scroll::-webkit-scrollbar-thumb { background:var(--rule); border-radius:99px; }
@@ -309,8 +309,8 @@ export default function VerdureSingleParty({
            (it showed a white edge over the dark posters); a faint DARK hairline ring
            + a moss photo backing means no light sliver ever shows at the top/corners. */
         .vd-cands { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
-        .vd-cand { background:var(--cream-2); border:0; border-radius:18px; overflow:hidden; padding:0; cursor:pointer; text-align:left; color:inherit; font:inherit; position:relative; transition:transform .25s, box-shadow .25s; box-shadow:0 16px 34px -22px rgba(31,58,44,.42), 0 0 0 1px rgba(31,58,44,.07); }
-        .vd-cand:hover, .vd-cand:focus-visible { transform:translateY(-7px); box-shadow:0 32px 56px -24px rgba(31,58,44,.5), 0 0 0 1.5px var(--terra); outline:none; }
+        .vd-cand { background:var(--cream-2); border:0; border-radius:18px; overflow:hidden; padding:0; cursor:pointer; text-align:left; color:inherit; font:inherit; position:relative; transition:transform .25s, box-shadow .25s; box-shadow:0 16px 34px -22px rgba(var(--moss-rgb),.42), 0 0 0 1px rgba(var(--moss-rgb),.07); }
+        .vd-cand:hover, .vd-cand:focus-visible { transform:translateY(-7px); box-shadow:0 32px 56px -24px rgba(var(--moss-rgb),.5), 0 0 0 1.5px var(--terra); outline:none; }
         .vd-cand__photo { width:100%; aspect-ratio:4/5; overflow:hidden; background:var(--moss); position:relative; }
         .vd-cand__photo img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
         .vd-cand:hover .vd-cand__photo img { transform:scale(1.05); }
@@ -324,57 +324,57 @@ export default function VerdureSingleParty({
         .vd-plist { list-style:none; margin:0; padding:0; }
         .vd-plist li { display:grid; grid-template-columns:46px 1fr; gap:20px; align-items:center; padding:18px 8px; border-top:1px solid var(--rule); border-radius:12px; transition:padding-left .22s, background .22s; }
         .vd-plist li:first-child { border-top:0; }
-        .vd-plist li:hover { padding-left:16px; background:rgba(250,244,228,.7); }
+        .vd-plist li:hover { padding-left:16px; background:rgba(var(--cream-2-rgb),.7); }
         .vd-plist .n { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; color:var(--terra); }
-        .vd-plist .t { font-family:var(--ft); font-size:16px; line-height:1.66; color:rgba(31,58,44,.9); }
+        .vd-plist .t { font-family:var(--ft); font-size:16px; line-height:1.66; color:rgba(var(--moss-rgb),.9); }
 
         /* THE DECISION — the ballot moment */
-        .vd-decision { margin-top:66px; padding-top:46px; border-top:2px solid rgba(31,58,44,.16); position:relative; scroll-margin-top:96px; }
+        .vd-decision { margin-top:66px; padding-top:46px; border-top:2px solid rgba(var(--moss-rgb),.16); position:relative; scroll-margin-top:96px; }
         .vd-decision::before { content:""; position:absolute; left:50%; top:-2px; transform:translateX(-50%); width:84px; height:2px; background:var(--terra); }
         .vd-decision__head { text-align:center; margin-bottom:34px; }
         .vd-decision__kicker { display:block; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-2); margin-bottom:14px; }
         .vd-decision__head h2 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,4.8vw,54px); line-height:1; letter-spacing:-.015em; color:var(--moss); margin:0 0 12px; }
-        .vd-decision__head p { font-family:var(--ft); font-size:15px; color:rgba(31,58,44,.72); margin:0; }
+        .vd-decision__head p { font-family:var(--ft); font-size:15px; color:rgba(var(--moss-rgb),.72); margin:0; }
 
-        .vd-opt { display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:22px; padding:22px 26px 22px 22px; background:var(--cream-2); border:1px solid var(--rule); border-radius:26px; cursor:pointer; margin-bottom:12px; transition:all .25s; outline:none; box-shadow:0 10px 26px -22px rgba(31,58,44,.3); }
+        .vd-opt { display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:22px; padding:22px 26px 22px 22px; background:var(--cream-2); border:1px solid var(--rule); border-radius:26px; cursor:pointer; margin-bottom:12px; transition:all .25s; outline:none; box-shadow:0 10px 26px -22px rgba(var(--moss-rgb),.3); }
         .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); }
-        .vd-opt.is-selected { background:var(--moss); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(31,58,44,.55); }
+        .vd-opt.is-selected { background:var(--moss); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(var(--moss-rgb),.55); }
         .vd-opt__disc { width:72px; height:72px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:42px; line-height:1; color:var(--moss); transition:all .25s; }
         .vd-opt__disc.sm { font-size:32px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra-soft); }
         .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
         /* primary choice (รับรอง) reads warmer/inviting vs the dashed abstain rows */
-        .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, #FCF5E6 0%, var(--cream-2) 100%); }
+        .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, var(--cream-2) 0%, var(--cream-2) 100%); }
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); color:var(--moss); }
         .vd-opt__main { min-width:0; }
         .vd-opt__kicker { font-family:var(--ft); font-size:11px; letter-spacing:.04em; color:var(--terra-2); margin-bottom:5px; }
         .vd-opt__kicker .en { font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase; opacity:.8; }
         .vd-opt__kicker .ac { color:var(--terra-2); }
-        .vd-opt.is-selected .vd-opt__kicker { color:rgba(244,236,219,.7); }
+        .vd-opt.is-selected .vd-opt__kicker { color:rgba(var(--cream-rgb),.7); }
         .vd-opt.is-selected .vd-opt__kicker .ac { color:var(--terra-soft); }
         .vd-opt__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; line-height:1.15; margin:0 0 4px; color:var(--moss); }
         .vd-opt.is-selected .vd-opt__name { color:var(--cream); }
-        .vd-opt__slogan { font-family:var(--ft); font-size:14px; color:rgba(31,58,44,.65); margin:0; line-height:1.4; }
-        .vd-opt.is-selected .vd-opt__slogan { color:rgba(244,236,219,.72); }
+        .vd-opt__slogan { font-family:var(--ft); font-size:14px; color:rgba(var(--moss-rgb),.65); margin:0; line-height:1.4; }
+        .vd-opt.is-selected .vd-opt__slogan { color:rgba(var(--cream-rgb),.72); }
         .vd-opt__check { width:42px; height:42px; border-radius:50%; border:1px solid var(--rule); background:transparent; display:grid; place-items:center; color:transparent; font-size:18px; transition:all .25s; flex-shrink:0; }
         .vd-opt.is-selected .vd-opt__check { background:var(--cream); border-color:var(--cream); color:var(--moss); }
         .vd-opt--abstain { background:transparent; border-style:dashed; }
         .vd-opt--abstain .vd-opt__name { font-size:21px; }
 
         .vd-confirm { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; margin-top:24px; padding:24px 24px 24px 30px; background:var(--cream-2); border:1px solid var(--rule); border-radius:26px; }
-        .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(31,58,44,.55); }
+        .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(var(--moss-rgb),.55); }
         .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; color:var(--moss); }
 
 
         /* confirm dialog — a warm cream card */
-        .vd-cm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(31,58,44,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:24px; }
-        .vd-cm__card { width:min(480px,100%); background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; text-align:center; box-shadow:0 40px 80px -24px rgba(31,58,44,.45); }
+        .vd-cm { position:fixed; inset:0; z-index:9100; display:grid; place-items:center; background:rgba(var(--moss-rgb),.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:24px; }
+        .vd-cm__card { width:min(480px,100%); background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; text-align:center; box-shadow:0 40px 80px -24px rgba(var(--moss-rgb),.45); }
         .vd-cm__eyebrow { font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--terra-2); margin-bottom:18px; }
         .vd-cm__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:32px; letter-spacing:-.02em; margin:0 0 10px; color:var(--moss); }
-        .vd-cm__sub { font-family:var(--ft); font-size:14px; color:rgba(31,58,44,.78); margin:0 0 22px; }
+        .vd-cm__sub { font-family:var(--ft); font-size:14px; color:rgba(var(--moss-rgb),.78); margin:0 0 22px; }
         .vd-cm__sub strong { color:var(--terra-2); }
         .vd-cm__pick { border:1px dashed var(--rule); border-radius:14px; padding:14px 18px; margin-bottom:24px; }
-        .vd-cm__pick .lbl { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(31,58,44,.55); margin-bottom:6px; }
+        .vd-cm__pick .lbl { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(var(--moss-rgb),.55); margin-bottom:6px; }
         .vd-cm__pick .val { font-family:var(--fd); font-style:italic; font-size:18px; color:var(--moss); }
         .vd-cm__actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
 

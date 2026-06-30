@@ -73,10 +73,10 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
         .vd-cand__kicker .rule { width:48px; height:1px; background:currentColor; }
         .vd-cand__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,96px); line-height:.96; letter-spacing:-.015em; margin:0; color:var(--cream); }
         .vd-cand__title em { color:var(--terra-soft); }
-        .vd-cand__deck { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.7); line-height:1.55; max-width:580px; margin:20px auto 0; }
+        .vd-cand__deck { font-family:var(--ft); font-size:17px; color:rgba(var(--cream-rgb),.7); line-height:1.55; max-width:580px; margin:20px auto 0; }
 
         .vd-ppanel { display:grid; grid-template-columns:auto 1fr auto; gap:48px; align-items:center; padding:48px 56px; background:var(--cream); color:var(--moss); border-radius:32px; margin-bottom:24px; cursor:pointer; transition:transform .3s, box-shadow .3s; position:relative; overflow:hidden; }
-        .vd-ppanel:hover { transform:translateY(-4px); box-shadow:0 30px 60px -20px rgba(31,58,44,.35); }
+        .vd-ppanel:hover { transform:translateY(-4px); box-shadow:0 30px 60px -20px rgba(var(--moss-rgb),.35); }
         .vd-ppanel--alt { background:var(--terra-soft); }
         .vd-ppanel__media { width:260px; height:260px; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; position:relative; overflow:hidden; flex-shrink:0; }
         .vd-ppanel--alt .vd-ppanel__media { background:var(--cream-2); }
@@ -97,7 +97,7 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
         .vd-ppanel__no { width:200px; height:200px; border-radius:50%; background:var(--moss); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:150px; line-height:1; letter-spacing:-.04em; flex-shrink:0; position:relative; }
         .vd-ppanel--alt .vd-ppanel__no { background:var(--terra); }
         .vd-ppanel__no::before { content:""; position:absolute; inset:-10px; border:1px dashed currentColor; border-radius:50%; opacity:.25; }
-        .vd-cand__empty { text-align:center; color:rgba(244,236,219,.7); font-size:16px; padding:80px 0; }
+        .vd-cand__empty { text-align:center; color:rgba(var(--cream-rgb),.7); font-size:16px; padding:80px 0; }
 
         @media (max-width:1100px) {
           .vd-cand { padding:92px 24px 130px; }

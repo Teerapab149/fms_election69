@@ -28,38 +28,59 @@ import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfi
 // dark surfaces/medallion/dock/ink (moss*), the accent (terra*), and the hairline/
 // gold. Every verdure surface reads these var()s on .vd-root, so swapping them =
 // the entire template re-tones. One source; cohesive palettes (owner-facing).
+// Each theme follows a 60/30/10 system: cream = background (60%), moss = the
+// dominant dark structural colour + ink/text (30%), and a 10% "pop" split into
+// terra = the decorative accent (em text, discs, edges, badges) and cta = the
+// action-button colour (often the same, but kept separate so a theme can use a
+// distinct button colour — e.g. terracotta accent with a sage button). ctaText =
+// the button label colour (cream on dark buttons, dark ink on light/gold buttons).
 const VERDURE_THEMES = {
-  // ดินเผา — forest green + terracotta on warm cream (the original identity)
+  // คลาสสิก พรีเมียม — deep forest + rich burgundy on light ivory (conservative, formal)
   "verdure": {
-    cream: "#F4ECDB", cream2: "#FAF4E4", cream3: "#E6DCC5",
-    moss: "#1F3A2C", moss2: "#2A4A39", moss3: "#3A5B49",
-    terra: "#BC5E3E", terra2: "#A24E32", soft: "#E3BFA9",
-    rule: "#D4C9AC", gold: "#D2A248",
+    cream: "#FDFBF7", cream2: "#FFFFFF", cream3: "#F0EBDF",
+    moss: "#1B362B", moss2: "#294A3C", moss3: "#3A5E4D",
+    terra: "#722F55", terra2: "#5C2545", soft: "#D8B6C8",
+    rule: "#E6DFD2", gold: "#B8895A",
+    cta: "#722F55", cta2: "#5C2545", ctaText: "#FDFBF7",
   },
-  // น้ำผึ้ง — espresso + honey-gold on warm parchment
+  // โมเดิร์น อะคาเดมิก — deep navy + muted gold on soft warm gray (smart, premium).
+  // terra (decorative accent, carries cream numerals) is a DEEPER gold than the
+  // brighter CTA button so the cream-on-gold discs stay legible.
   "verdure-honey": {
-    cream: "#F7EFDD", cream2: "#FDF7E8", cream3: "#ECDFC4",
-    moss: "#3A2E1C", moss2: "#4A3B26", moss3: "#5C4A30",
-    terra: "#C99A3F", terra2: "#A87F2E", soft: "#E8D3A0",
-    rule: "#DCCBA6", gold: "#E0B95A",
+    cream: "#F4F4F6", cream2: "#FCFCFD", cream3: "#E6E6EB",
+    moss: "#1A2B4C", moss2: "#26395E", moss3: "#344B73",
+    terra: "#A9863F", terra2: "#8A6D2E", soft: "#E6D3A8",
+    rule: "#DBDBE2", gold: "#CDA85F",
+    cta: "#C5A059", cta2: "#A9863F", ctaText: "#14223D",
   },
-  // ทะเล — deep teal + bright teal on cool mint cream
+  // คอนเทมโพรารี ครีเอทีฟ — terracotta accent + sage button on pale sand (modern magazine)
   "verdure-teal": {
-    cream: "#E7F0EE", cream2: "#F2F8F6", cream3: "#D4E6E2",
-    moss: "#143A3C", moss2: "#1E4D4F", moss3: "#2C6365",
-    terra: "#2F8C8C", terra2: "#246F6F", soft: "#A9D2D2",
-    rule: "#BFD6D2", gold: "#5FB3A8",
+    cream: "#F2EBE1", cream2: "#FAF5EC", cream3: "#E5DAC8",
+    moss: "#2D221E", moss2: "#3D2F28", moss3: "#4F3D33",
+    terra: "#AF5232", terra2: "#934026", soft: "#E3BCA8",
+    rule: "#DDD1BE", gold: "#C0894C",
+    cta: "#4E6B5E", cta2: "#3E574B", ctaText: "#F2EBE1",
   },
-  // เบอร์รี — deep plum + berry on rosy cream
+  // มินิมอล เทค — ink black + electric indigo on off-white (clean, digital)
   "verdure-berry": {
-    cream: "#F6ECEF", cream2: "#FCF3F6", cream3: "#EAD9DF",
-    moss: "#34233A", moss2: "#412C49", moss3: "#523A5B",
-    terra: "#9B3B6A", terra2: "#7E2E55", soft: "#D9A9C2",
-    rule: "#D9C4CE", gold: "#C98AAE",
+    cream: "#F8F9FA", cream2: "#FFFFFF", cream3: "#ECEEF1",
+    moss: "#141518", moss2: "#24262E", moss3: "#34373F",
+    terra: "#4F46E5", terra2: "#3F37C7", soft: "#C8C4F5",
+    rule: "#E4E7EB", gold: "#6366F1",
+    cta: "#4F46E5", cta2: "#3F37C7", ctaText: "#F8F9FA",
   },
 };
 export function verdureTheme(slug) {
   return VERDURE_THEMES[slug] || VERDURE_THEMES.verdure;
+}
+
+// hex → "r, g, b" string — so every alpha wash / shadow / translucent text in the
+// Verdure pages can read rgba(var(--moss-rgb), .9) and re-tint with the theme
+// (a plain hardcoded-triple rgba literal would stay forest-green forever). One
+// triple per themeable channel; the alpha stays inline at each call site.
+export function hexToRgbTriple(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(hex || "").trim());
+  return m ? `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}` : "31,58,44";
 }
 
 // ── derived election meta — everything year/number-specific comes from
@@ -236,7 +257,12 @@ export function VerdureBaseStyles() {
         --moss:${t.moss}; --moss-2:${t.moss2}; --moss-3:${t.moss3};
         --cream:${t.cream}; --cream-2:${t.cream2}; --cream-3:${t.cream3};
         --terra:${t.terra}; --terra-2:${t.terra2}; --terra-soft:${t.soft}; --gold:${t.gold};
-        --rule:${t.rule}; --rule-moss:rgba(244,236,219,.16);
+        --cta:${t.cta || t.terra}; --cta-2:${t.cta2 || t.terra2}; --cta-text:${t.ctaText || t.cream};
+        --moss-rgb:${hexToRgbTriple(t.moss)}; --moss-2-rgb:${hexToRgbTriple(t.moss2)};
+        --terra-rgb:${hexToRgbTriple(t.terra)};
+        --terra-soft-rgb:${hexToRgbTriple(t.soft)}; --gold-rgb:${hexToRgbTriple(t.gold)};
+        --cream-rgb:${hexToRgbTriple(t.cream)}; --cream-2-rgb:${hexToRgbTriple(t.cream2)};
+        --rule:${t.rule}; --rule-moss:rgba(var(--cream-rgb),.16);
         --fd:var(--font-dm-serif),'DM Serif Display',var(--font-plex-thai),Georgia,serif;
         --fs:var(--font-manrope),'Manrope',var(--font-plex-thai),system-ui,sans-serif;
         --ft:var(--font-plex-thai),'IBM Plex Sans Thai',var(--font-manrope),system-ui,sans-serif;
@@ -251,7 +277,11 @@ export function VerdureBaseStyles() {
       .vd-root.vd-theming, .vd-root.vd-theming *, .vd-root.vd-theming *::before, .vd-root.vd-theming *::after {
         transition: background-color .6s ease, background .6s ease, color .6s ease, border-color .6s ease, box-shadow .6s ease, fill .6s ease, stroke .6s ease !important;
       }
-      .vd-root a { color:inherit; text-decoration:none; }
+      /* links inherit ink, EXCEPT button-styled anchors (.vd-btn) — those must keep
+         their own label colour (var --cta-text); the bare vd-root-a rule (0,1,1)
+         would otherwise outrank vd-btn--terra (0,1,0) and force anchor CTAs to ink. */
+      .vd-root a:not(.vd-btn) { color:inherit; text-decoration:none; }
+      .vd-root a.vd-btn { text-decoration:none; }
       .vd-root ::selection { background:var(--terra); color:var(--cream); }
       .vd-tabular { font-variant-numeric:tabular-nums lining-nums; }
       .vd-smallcaps { font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
@@ -259,7 +289,7 @@ export function VerdureBaseStyles() {
       /* moss page variant */
       .vd-root.vd-moss { background:var(--moss); color:var(--cream); }
       .vd-root.vd-moss::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-        background-image:radial-gradient(circle at 12% 15%, rgba(188,94,62,.06) 0, transparent 35%), radial-gradient(circle at 88% 85%, rgba(210,162,72,.05) 0, transparent 35%); }
+        background-image:radial-gradient(circle at 12% 15%, rgba(var(--terra-rgb),.06) 0, transparent 35%), radial-gradient(circle at 88% 85%, rgba(var(--gold-rgb),.05) 0, transparent 35%); }
 
       /* edge label */
       .vd-edge { position:fixed; left:24px; top:50%; transform:translateY(-50%) rotate(-90deg); transform-origin:0 0; z-index:30; font-family:var(--fm); font-size:11px; letter-spacing:.35em; text-transform:uppercase; color:var(--moss); opacity:.55; white-space:nowrap; pointer-events:none; }
@@ -270,9 +300,9 @@ export function VerdureBaseStyles() {
 
       /* cornermark — sits on a translucent pill so its text stays readable over
          whatever content scrolls beneath the fixed chrome */
-      .vd-cornermark { position:fixed; top:22px; left:22px; z-index:35; display:flex; align-items:center; gap:12px; padding:6px 16px 6px 6px; border-radius:16px; background:rgba(250,244,228,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(31,58,44,.4); }
-      .vd-moss .vd-cornermark { background:rgba(36,65,48,.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
-      .vd-cornermark__logo { display:inline-flex; align-items:center; justify-content:center; height:36px; padding:6px 11px; border-radius:10px; background:var(--cream); box-shadow:inset 0 0 0 1px rgba(31,58,44,.08); flex-shrink:0; }
+      .vd-cornermark { position:fixed; top:22px; left:22px; z-index:35; display:flex; align-items:center; gap:12px; padding:6px 16px 6px 6px; border-radius:16px; background:rgba(var(--cream-2-rgb),.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(var(--moss-rgb),.4); }
+      .vd-moss .vd-cornermark { background:rgba(var(--moss-2-rgb),.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
+      .vd-cornermark__logo { display:inline-flex; align-items:center; justify-content:center; height:36px; padding:6px 11px; border-radius:10px; background:var(--cream); box-shadow:inset 0 0 0 1px rgba(var(--moss-rgb),.08); flex-shrink:0; }
       .vd-cornermark__logo-img { width:auto; height:28px; object-fit:contain; }
       .vd-cornermark__txt { font-family:var(--fm); font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:var(--moss); line-height:1.3; }
       .vd-cornermark__txt strong { display:block; font-family:var(--fd); font-size:14px; letter-spacing:0; font-weight:400; text-transform:none; color:var(--moss); }
@@ -284,11 +314,11 @@ export function VerdureBaseStyles() {
       .vd-chip-live { display:inline-flex; align-items:center; gap:10px; padding:10px 18px; border-radius:999px; background:var(--cream-2); border:1px solid var(--rule); font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); }
       .vd-chip-live--back { cursor:pointer; }
       .vd-moss .vd-chip-live { background:var(--moss-2); border-color:var(--rule-moss); color:var(--cream); }
-      .vd-chip-live .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 0 rgba(188,94,62,.55); animation:vdDot 1.8s ease-out infinite; }
+      .vd-chip-live .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55); animation:vdDot 1.8s ease-out infinite; }
       .vd-chip-live strong { color:var(--terra); font-weight:700; }
-      @keyframes vdDot { 0%{box-shadow:0 0 0 0 rgba(188,94,62,.55)} 70%{box-shadow:0 0 0 10px rgba(188,94,62,0)} }
-      .vd-user { position:relative; display:flex; align-items:center; gap:10px; padding:6px 12px 6px 6px; border-radius:16px; background:rgba(250,244,228,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(31,58,44,.4); border:0; }
-      .vd-moss .vd-user { background:rgba(36,65,48,.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
+      @keyframes vdDot { 0%{box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55)} 70%{box-shadow:0 0 0 10px rgba(var(--terra-rgb),0)} }
+      .vd-user { position:relative; display:flex; align-items:center; gap:10px; padding:6px 12px 6px 6px; border-radius:16px; background:rgba(var(--cream-2-rgb),.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(var(--moss-rgb),.4); border:0; }
+      .vd-moss .vd-user { background:rgba(var(--moss-2-rgb),.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
       .vd-user__av { width:36px; height:36px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-size:17px; border:0; padding:0; cursor:pointer; line-height:1; transition:background .2s; flex-shrink:0; }
       .vd-user__av:hover { background:var(--terra-2); }
       .vd-user__name { font-family:var(--fs); font-size:13px; font-weight:600; line-height:1.1; color:var(--moss); }
@@ -302,14 +332,14 @@ export function VerdureBaseStyles() {
       /* dock — clean labeled pill; active = cream fill + a terra index dot. No
          numbered discs (that read as a studio-dark echo); plain Thai labels so
          it's instantly understandable. */
-      .vd-dock { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:stretch; gap:2px; padding:6px; background:var(--moss); border-radius:999px; box-shadow:0 22px 60px -12px rgba(31,58,44,.55), 0 0 0 1px rgba(244,236,219,.08); }
+      .vd-dock { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:stretch; gap:2px; padding:6px; background:var(--moss); border-radius:999px; box-shadow:0 22px 60px -12px rgba(var(--moss-rgb),.55), 0 0 0 1px rgba(var(--cream-rgb),.08); }
       .vd-dock__link { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; padding:8px 22px; border-radius:999px; transition:background .25s, color .25s; }
       .vd-dock__dot { width:5px; height:5px; border-radius:50%; background:transparent; margin-bottom:3px; transition:background .25s, transform .25s; }
-      .vd-dock__th { font-family:var(--ft); font-size:14px; font-weight:600; color:rgba(244,236,219,.85); letter-spacing:.005em; line-height:1.1; transition:color .25s; white-space:nowrap; }
-      .vd-dock__en { font-family:var(--fm); font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:rgba(244,236,219,.6); margin-top:2px; transition:color .25s; }
+      .vd-dock__th { font-family:var(--ft); font-size:14px; font-weight:600; color:rgba(var(--cream-rgb),.85); letter-spacing:.005em; line-height:1.1; transition:color .25s; white-space:nowrap; }
+      .vd-dock__en { font-family:var(--fm); font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:rgba(var(--cream-rgb),.6); margin-top:2px; transition:color .25s; }
       .vd-dock__link:hover { background:var(--moss-2); }
       .vd-dock__link:hover .vd-dock__th { color:var(--cream); }
-      .vd-dock__link:hover .vd-dock__dot { background:rgba(188,94,62,.6); }
+      .vd-dock__link:hover .vd-dock__dot { background:rgba(var(--terra-rgb),.6); }
       .vd-dock__link.is-active { background:var(--cream); }
       .vd-dock__link.is-active .vd-dock__th { color:var(--moss); }
       .vd-dock__link.is-active .vd-dock__en { color:var(--terra); }
@@ -318,8 +348,8 @@ export function VerdureBaseStyles() {
       /* buttons */
       .vd-btn { display:inline-flex; align-items:center; gap:12px; padding:16px 26px; background:var(--moss); color:var(--cream); border:1px solid var(--moss); border-radius:999px; font-family:var(--fs); font-size:14px; font-weight:600; cursor:pointer; transition:all .25s; }
       .vd-btn:hover { background:var(--terra); border-color:var(--terra); }
-      .vd-btn--terra { background:var(--terra); border-color:var(--terra); color:var(--cream); }
-      .vd-btn--terra:hover { background:var(--moss); border-color:var(--moss); }
+      .vd-btn--terra { background:var(--cta); border-color:var(--cta); color:var(--cta-text); }
+      .vd-btn--terra:hover { background:var(--moss); border-color:var(--moss); color:var(--cream); }
       .vd-btn--ghost { background:transparent; border-color:var(--rule); color:var(--moss); }
       .vd-btn--ghost:hover { background:var(--moss); border-color:var(--moss); color:var(--cream); }
       .vd-moss .vd-btn--ghost { border-color:var(--rule-moss); color:var(--cream); }
@@ -354,7 +384,7 @@ export function VerdureBaseStyles() {
         .vd-cornermark__txt { display:none; }
         .vd-user { padding:5px; gap:6px; }
         .vd-user__meta { display:none; }
-        .vd-user.is-open .vd-user__meta { display:block; position:absolute; top:calc(100% + 8px); right:0; background:var(--cream-2); border:1px solid var(--rule); border-radius:14px; padding:10px 14px; box-shadow:0 18px 38px -18px rgba(31,58,44,.4); white-space:nowrap; text-align:right; z-index:40; }
+        .vd-user.is-open .vd-user__meta { display:block; position:absolute; top:calc(100% + 8px); right:0; background:var(--cream-2); border:1px solid var(--rule); border-radius:14px; padding:10px 14px; box-shadow:0 18px 38px -18px rgba(var(--moss-rgb),.4); white-space:nowrap; text-align:right; z-index:40; }
         .vd-moss .vd-user.is-open .vd-user__meta { background:var(--moss-2); border-color:var(--rule-moss); }
       }
       /* very small phones (≤360px) — tighten further so the pill never overflows */

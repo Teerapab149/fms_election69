@@ -47,20 +47,20 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
            status page carries the template's warmth, not flat cream */
         .vd-warm-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
           background:
-            radial-gradient(72% 46% at 50% 0%, rgba(210,162,72,.16) 0%, transparent 56%),
-            radial-gradient(60% 44% at 100% 8%, rgba(188,94,62,.09) 0%, transparent 50%),
-            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.30) 0%, transparent 56%),
-            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 46%, #EFE2CB 100%); }
+            radial-gradient(72% 46% at 50% 0%, rgba(var(--gold-rgb),.16) 0%, transparent 56%),
+            radial-gradient(60% 44% at 100% 8%, rgba(var(--terra-rgb),.09) 0%, transparent 50%),
+            radial-gradient(66% 52% at 0% 100%, rgba(var(--terra-soft-rgb),.30) 0%, transparent 56%),
+            linear-gradient(168deg, var(--cream-2) 0%, var(--cream) 46%, var(--cream-3) 100%); }
 
         .vd-closed { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:120px 24px 150px; position:relative; z-index:1; }
-        .vd-closed__disc { width:180px; height:180px; border-radius:50%; background:var(--moss); color:var(--cream); display:grid; place-items:center; position:relative; margin-bottom:36px; box-shadow:0 40px 60px -30px rgba(31,58,44,.4); }
+        .vd-closed__disc { width:180px; height:180px; border-radius:50%; background:var(--moss); color:var(--cream); display:grid; place-items:center; position:relative; margin-bottom:36px; box-shadow:0 40px 60px -30px rgba(var(--moss-rgb),.4); }
         .vd-closed__disc .ring { position:absolute; inset:-14px; border-radius:50%; border:1px dashed var(--terra); opacity:.4; }
         .vd-closed__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--terra-2); margin-bottom:22px; }
         .vd-closed__head { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(56px,8vw,108px); line-height:.92; letter-spacing:-.02em; margin:0 0 10px; color:var(--moss); }
         .vd-closed__head em { color:var(--terra); }
         .vd-closed__accent { width:72px; height:2px; background:var(--terra); margin:4px auto 26px; }
         .vd-closed__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(20px,2.4vw,26px); margin:0 0 12px; color:var(--moss); }
-        .vd-closed__desc { font-family:var(--ft); font-size:16px; color:rgba(31,58,44,.85); line-height:1.6; max-width:460px; margin:0 0 36px; }
+        .vd-closed__desc { font-family:var(--ft); font-size:16px; color:rgba(var(--moss-rgb),.85); line-height:1.6; max-width:460px; margin:0 0 36px; }
         @media (max-width:1100px) { .vd-closed { padding:96px 20px 130px; } }
         @media (max-width:560px) {
           .vd-closed { padding:84px 18px 128px; }

@@ -173,10 +173,10 @@ export default function VerdureResults({
            returns page carries the template's warmth, not flat cream */
         .vd-warm-bg { position:fixed; inset:0; z-index:0; pointer-events:none;
           background:
-            radial-gradient(72% 46% at 50% 0%, rgba(210,162,72,.16) 0%, transparent 56%),
-            radial-gradient(60% 44% at 100% 8%, rgba(188,94,62,.09) 0%, transparent 50%),
-            radial-gradient(66% 52% at 0% 100%, rgba(227,191,169,.30) 0%, transparent 56%),
-            linear-gradient(168deg, #FBF3E3 0%, #F4ECDB 46%, #EFE2CB 100%); }
+            radial-gradient(72% 46% at 50% 0%, rgba(var(--gold-rgb),.16) 0%, transparent 56%),
+            radial-gradient(60% 44% at 100% 8%, rgba(var(--terra-rgb),.09) 0%, transparent 50%),
+            radial-gradient(66% 52% at 0% 100%, rgba(var(--terra-soft-rgb),.30) 0%, transparent 56%),
+            linear-gradient(168deg, var(--cream-2) 0%, var(--cream) 46%, var(--cream-3) 100%); }
 
         .vd-returns { flex:1; padding:96px 80px 150px; max-width:1320px; margin:0 auto; width:100%; position:relative; z-index:1; }
         .vd-returns__h { text-align:center; margin-bottom:48px; }
@@ -188,27 +188,27 @@ export default function VerdureResults({
         /* result seal — moderate size, content fits inside; clean centred stat row
            below it (no more scattered/tilted orbital cards) */
         .vd-stage { display:grid; place-items:center; margin:4px 0 0; }
-        .vd-rdisc { width:clamp(300px,40vw,430px); height:clamp(300px,40vw,430px); border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, #305041 0%, #1F3A2C 58%); color:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:0 13%; box-shadow:0 50px 70px -40px rgba(31,58,44,.5), inset 0 3px 12px rgba(244,236,219,.06); }
-        .vd-rdisc::before { content:""; position:absolute; inset:14px; border:1px dashed rgba(244,236,219,.22); border-radius:50%; }
-        .vd-rdisc::after { content:""; position:absolute; inset:-26px; border:1px dashed rgba(188,94,62,.4); border-radius:50%; }
+        .vd-rdisc { width:clamp(300px,40vw,430px); height:clamp(300px,40vw,430px); border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:0 13%; box-shadow:0 50px 70px -40px rgba(var(--moss-rgb),.5), inset 0 3px 12px rgba(var(--cream-rgb),.06); }
+        .vd-rdisc::before { content:""; position:absolute; inset:14px; border:1px dashed rgba(var(--cream-rgb),.22); border-radius:50%; }
+        .vd-rdisc::after { content:""; position:absolute; inset:-26px; border:1px dashed rgba(var(--terra-rgb),.4); border-radius:50%; }
         .vd-rdisc__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }
         .vd-rdisc__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,3.6vw,50px); line-height:1.04; letter-spacing:-.02em; color:var(--cream); }
         .vd-rdisc__pct { font-family:var(--fm); font-size:12px; letter-spacing:.12em; color:var(--terra-soft); margin-top:16px; }
         .vd-rdisc__lock { width:54px; height:54px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; margin-bottom:20px; }
         .vd-rdisc__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(44px,6vw,84px); line-height:.92; letter-spacing:-.03em; color:var(--cream); margin:0; }
         .vd-rdisc__title em { color:var(--terra-soft); }
-        .vd-rdisc__deck { font-family:var(--ft); font-size:14px; color:rgba(244,236,219,.72); line-height:1.5; max-width:280px; margin:16px auto 0; }
-        .vd-rdisc__cd { margin-top:18px; font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:rgba(244,236,219,.65); }
+        .vd-rdisc__deck { font-family:var(--ft); font-size:14px; color:rgba(var(--cream-rgb),.72); line-height:1.5; max-width:280px; margin:16px auto 0; }
+        .vd-rdisc__cd { margin-top:18px; font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:rgba(var(--cream-rgb),.65); }
         .vd-rdisc__cd strong { font-family:var(--fd); font-style:italic; font-size:20px; font-weight:400; color:var(--cream); letter-spacing:-.02em; margin-left:8px; text-transform:none; }
 
         .vd-rstats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:36px; }
-        .vd-rstat { padding:24px 28px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; text-align:center; box-shadow:0 16px 40px -30px rgba(31,58,44,.4); }
+        .vd-rstat { padding:24px 28px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; text-align:center; box-shadow:0 16px 40px -30px rgba(var(--moss-rgb),.4); }
         .vd-rstat .lbl { font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra-2); margin-bottom:10px; }
         .vd-rstat .val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,3.6vw,46px); line-height:1; letter-spacing:-.02em; color:var(--moss); }
         .vd-rstat .val em { color:var(--terra); }
         .vd-rstat .val small { font-family:var(--fs); font-style:normal; font-size:13px; opacity:.5; margin-left:5px; letter-spacing:0; }
 
-        .vd-race, .vd-demo { background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; position:relative; overflow:hidden; box-shadow:0 24px 60px -42px rgba(31,58,44,.45); }
+        .vd-race, .vd-demo { background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; padding:36px; position:relative; overflow:hidden; box-shadow:0 24px 60px -42px rgba(var(--moss-rgb),.45); }
         .vd-race { margin-top:40px; }
         .vd-demo { margin-top:24px; }
         /* bilingual two-tier section head (EN kicker + serif headline) + terra
@@ -231,7 +231,7 @@ export default function VerdureResults({
         /* veil covers exactly the bars wrapper (not a fixed offset) so it never
            overlaps the taller two-tier head, at any breakpoint */
         .vd-race__barswrap { position:relative; }
-        .vd-race__veil { position:absolute; inset:0; background:rgba(244,236,219,.95); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); display:grid; place-items:center; text-align:center; padding:0 24px; }
+        .vd-race__veil { position:absolute; inset:0; background:rgba(var(--cream-rgb),.95); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); display:grid; place-items:center; text-align:center; padding:0 24px; }
         .vd-race__veil h4 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:32px; letter-spacing:-.015em; margin:0 0 8px; color:var(--moss); }
         .vd-race__veil h4 em { color:var(--terra); }
         .vd-race__veil p { font-family:var(--ft); font-size:15px; color:var(--moss); opacity:.82; max-width:380px; margin:0; }

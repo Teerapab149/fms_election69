@@ -15,12 +15,12 @@ import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useSession } from "next-auth/react";
-import VerdureChrome, { verdureSignIn, verdureMeta } from "./VerdureChrome";
+import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme } from "./VerdureChrome";
 import EditorElement from "../admin/editor/EditorElement";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { getBinding } from "../admin/editor/elementCatalog";
 import { buildTemplateStyles } from "../../lib/templateTokens";
-import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { resolveElectionDates } from "../../utils/electionConfig";
 
@@ -31,7 +31,7 @@ function VerdureSeal({ num, ordSuffix, faculty, cy, prefix }) {
   const rotY = useSpring(useTransform(px, [-0.5, 0.5], [-10, 10]), { stiffness: 120, damping: 16 });
   const sheenX = useTransform(px, [-0.5, 0.5], ["28%", "72%"]);
   const sheenY = useTransform(py, [-0.5, 0.5], ["26%", "74%"]);
-  const sheen = useMotionTemplate`radial-gradient(circle at ${sheenX} ${sheenY}, rgba(244,236,219,.22), rgba(244,236,219,0) 55%)`;
+  const sheen = useMotionTemplate`radial-gradient(circle at ${sheenX} ${sheenY}, rgba(var(--cream-rgb),.22), rgba(var(--cream-rgb),0) 55%)`;
 
   const onMove = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -110,6 +110,10 @@ export default function VerdureHome({
     );
   }, []);
 
+  // active colour theme — read BEFORE the !mounted guard so the hook order is
+  // stable (it's the body-canvas paint; see below)
+  const activeTemplateId = useActiveTemplateId();
+
   if (!mounted) return null;
 
   const effectiveConfigs = editorMode ? elementConfigs : (pageLayout?.elementConfigs?.home || {});
@@ -138,6 +142,8 @@ export default function VerdureHome({
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN", action: "signin", disabled: false };
 
   const meta = verdureMeta(globalConfig);
+  // body canvas sits outside .vd-root → paint it with the active theme's cream
+  const themeT = verdureTheme(activeTemplateId);
   const numberPart = String(meta.num);
   const sysMode = initialData?.systemMode || "AUTO";
 
@@ -153,7 +159,7 @@ export default function VerdureHome({
   return (
     <div className="fms-app vd-root">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
-      {!editorMode && <style>{"html,body{background:#F4ECDB;color-scheme:light}"}</style>}
+      {!editorMode && <style>{`html,body{background:${themeT.cream};color-scheme:light}`}</style>}
 
       <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode}
         edge={{ num: "01", label: "Index", th: "หน้าหลัก" }} />
@@ -213,23 +219,23 @@ export default function VerdureHome({
         .vd-seal { position:relative; width:clamp(290px,40vw,440px); height:clamp(290px,40vw,440px); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
         .vd-seal__ring { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
         .vd-seal__ringtext { font-family:var(--fm); font-size:13px; letter-spacing:.3em; fill:var(--terra); opacity:.7; text-transform:uppercase; }
-        .vd-seal__dash { position:absolute; inset:9%; border-radius:50%; border:1px dashed rgba(188,94,62,.45); pointer-events:none; }
-        .vd-seal__disc { position:relative; width:80%; height:80%; border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, #305041 0%, #1F3A2C 58%); color:var(--cream); display:grid; place-items:center; overflow:hidden; box-shadow:0 50px 70px -38px rgba(31,58,44,.55), inset 0 3px 12px rgba(244,236,219,.07), inset 0 -10px 30px rgba(0,0,0,.18); }
-        .vd-seal__disc::before { content:""; position:absolute; inset:14px; border-radius:50%; border:1px dashed rgba(244,236,219,.22); pointer-events:none; }
+        .vd-seal__dash { position:absolute; inset:9%; border-radius:50%; border:1px dashed rgba(var(--terra-rgb),.45); pointer-events:none; }
+        .vd-seal__disc { position:relative; width:80%; height:80%; border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:grid; place-items:center; overflow:hidden; box-shadow:0 50px 70px -38px rgba(var(--moss-rgb),.55), inset 0 3px 12px rgba(var(--cream-rgb),.07), inset 0 -10px 30px rgba(0,0,0,.18); }
+        .vd-seal__disc::before { content:""; position:absolute; inset:14px; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.22); pointer-events:none; }
         .vd-seal__sheen { position:absolute; inset:0; border-radius:50%; pointer-events:none; mix-blend-mode:screen; }
         .vd-home__disc-50 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(150px,20vw,230px); line-height:.86; letter-spacing:-.04em; color:var(--cream); position:relative; }
         .vd-home__disc-ord { position:absolute; top:20%; right:17%; font-family:var(--fm); font-size:11px; letter-spacing:.22em; color:var(--terra-soft); text-transform:uppercase; transform:rotate(18deg); }
 
         /* PRIMARY ACTION — readable on hover (darker terracotta, NOT moss, so it never
            merges into the moss seal behind it) */
-        .vd-home__cta { display:inline-flex; flex-direction:column; align-items:center; gap:2px; margin-top:-20px; position:relative; z-index:3; padding:17px 44px; border-radius:999px; background:var(--terra); color:var(--cream); border:1px solid var(--terra); box-shadow:0 16px 34px -14px rgba(188,94,62,.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
-        .vd-home__cta:hover { background:var(--terra-2); border-color:var(--terra-2); transform:translateY(-2px); box-shadow:0 20px 40px -14px rgba(162,78,50,.6); }
-        .vd-home__cta-label { font-family:var(--fs); font-weight:700; font-size:18px; letter-spacing:.01em; color:var(--cream); display:inline-flex; align-items:center; gap:11px; }
+        .vd-home__cta { display:inline-flex; flex-direction:column; align-items:center; gap:2px; margin-top:-20px; position:relative; z-index:3; padding:17px 44px; border-radius:999px; background:var(--cta); color:var(--cta-text); border:1px solid var(--cta); box-shadow:0 16px 34px -14px rgba(var(--terra-rgb),.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
+        .vd-home__cta:hover { background:var(--cta-2); border-color:var(--cta-2); transform:translateY(-2px); box-shadow:0 20px 40px -14px rgba(var(--terra-rgb),.6); }
+        .vd-home__cta-label { font-family:var(--fs); font-weight:700; font-size:18px; letter-spacing:.01em; color:var(--cta-text); display:inline-flex; align-items:center; gap:11px; }
         .vd-home__cta-label::after { content:"→"; font-size:18px; }
         .vd-home__cta.is-disabled { background:var(--cream-3); color:var(--moss); border-color:var(--rule); box-shadow:none; cursor:not-allowed; }
         .vd-home__cta.is-disabled .vd-home__cta-label { color:var(--moss); }
         .vd-home__cta.is-disabled .vd-home__cta-label::after { content:"●"; opacity:.5; }
-        .vd-home__cta-sub { font-family:var(--fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cream); opacity:.8; }
+        .vd-home__cta-sub { font-family:var(--fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cta-text); opacity:.8; }
         .vd-home__cta.is-disabled .vd-home__cta-sub { color:var(--moss); opacity:.6; }
         .vd-home__secondary { margin-top:16px; font-family:var(--fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--moss); opacity:.7; border-bottom:1px solid var(--rule); padding-bottom:2px; transition:opacity .2s, color .2s; }
         .vd-home__secondary:hover { opacity:1; color:var(--terra); }

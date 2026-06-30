@@ -30,24 +30,26 @@
 
 import { classicTemplate } from "./classic";
 
-// Palette — verdure.css :root (earth, harmonious)
-const MOSS      = "#1F3A2C"; // deep forest, primary dark surface + ink
-const MOSS_2    = "#2A4A39";
-const MOSS_3    = "#3A5B49";
-const CREAM     = "#F4ECDB"; // warm paper, primary light surface (page bg)
-const CREAM_2   = "#FAF4E4";
-const CREAM_3   = "#E6DCC5";
-const TERRA     = "#BC5E3E"; // primary accent
-const TERRA_2   = "#A24E32";
-const RULE      = "#D4C9AC"; // hairline on cream
-const SHADOW_SOFT = "0 30px 60px -20px rgba(31,58,44,.35)";
+// Base palette = the "Classic Premium" theme (deep forest + burgundy on ivory).
+// The live recolour engine lives in VerdureChrome.VERDURE_THEMES (4 full palettes);
+// these constants only seed the colorSwatch + the classic-layout fallback tokens.
+const MOSS      = "#1B362B"; // deep forest, primary dark surface + ink
+const MOSS_2    = "#294A3C";
+const MOSS_3    = "#3A5E4D";
+const CREAM     = "#FDFBF7"; // light ivory, primary light surface (page bg)
+const CREAM_2   = "#FFFFFF";
+const CREAM_3   = "#F0EBDF";
+const TERRA     = "#722F55"; // primary accent / CTA (rich burgundy)
+const TERRA_2   = "#5C2545";
+const RULE      = "#E6DFD2"; // hairline on ivory
+const SHADOW_SOFT = "0 30px 60px -20px rgba(27,54,43,.35)";
 
 export const verdureTemplate = {
   ...classicTemplate,
   id: "verdure",
   slug: "verdure",
-  name: "เวอร์เดอร์",
-  description: "เอดิทอเรียลเซริฟ — กระดาษครีมอุ่น เขียวมอสเข้ม แอ็กเซนต์ดินเผา วงกลม/เหรียญตราเป็นหัวใจ + ด็อกเมนูลอยด้านล่าง",
+  name: "เวอร์เดอร์ · คลาสสิก พรีเมียม",
+  description: "เลย์เอาต์เอดิทอเรียลเซริฟ — เส้นขอบตั้งด้านข้าง เหรียญตรา/วงกลมเป็นหัวใจ และด็อกเมนูลอยด้านล่าง เลือกโทนสีได้ 4 แบบ (คลาสสิก/อะคาเดมิก/ครีเอทีฟ/มินิมอล)",
   layoutFamily: "verdure", // real template — own page layouts (edge rail + dock + discs)
 
   colorSwatch: {
@@ -156,8 +158,8 @@ const mkVerdureTheme = (slug, name, primary, secondary) => ({
   colorSwatch: { primary, secondary: MOSS, background: CREAM },
 });
 
-export const verdureHoneyTemplate = mkVerdureTheme("verdure-honey", "เวอร์เดอร์ · น้ำผึ้ง", "#C99A3F");
-export const verdureTealTemplate = mkVerdureTheme("verdure-teal", "เวอร์เดอร์ · ทะเล", "#2F8C8C");
-export const verdureBerryTemplate = mkVerdureTheme("verdure-berry", "เวอร์เดอร์ · เบอร์รี", "#9B3B6A");
+export const verdureHoneyTemplate = mkVerdureTheme("verdure-honey", "เวอร์เดอร์ · โมเดิร์น อะคาเดมิก", "#C5A059");
+export const verdureTealTemplate = mkVerdureTheme("verdure-teal", "เวอร์เดอร์ · คอนเทมโพรารี ครีเอทีฟ", "#AF5232");
+export const verdureBerryTemplate = mkVerdureTheme("verdure-berry", "เวอร์เดอร์ · มินิมอล เทค", "#4F46E5");
 
 export default verdureTemplate;

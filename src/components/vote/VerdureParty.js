@@ -155,20 +155,20 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-profile { flex:1; padding:96px 80px 150px; max-width:1280px; margin:0 auto; width:100%; position:relative; z-index:1; }
 
         /* ribbon — standalone identity card: logo disc · name/slogan */
-        .vd-ribbon { display:grid; grid-template-columns:auto 1fr; gap:48px; align-items:center; padding:48px 56px; background:var(--moss); color:var(--cream); border-radius:28px; box-shadow:0 40px 80px -54px rgba(31,58,44,.4); }
+        .vd-ribbon { display:grid; grid-template-columns:auto 1fr; gap:48px; align-items:center; padding:48px 56px; background:var(--moss); color:var(--cream); border-radius:28px; box-shadow:0 40px 80px -54px rgba(var(--moss-rgb),.4); }
 
         /* group photo — its own section below the identity card */
         .vd-groupphoto { display:block; margin:18px 0 0; cursor:zoom-in; position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--rule); }
         .vd-groupphoto img { width:100%; height:clamp(240px,34vw,420px); object-fit:cover; display:block; transition:transform .5s; }
         .vd-groupphoto:hover img { transform:scale(1.02); }
-        .vd-groupphoto figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(31,58,44,.78); padding:6px 14px; border-radius:999px; }
+        .vd-groupphoto figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(var(--moss-rgb),.78); padding:6px 14px; border-radius:999px; }
         .vd-ribbon__no { width:132px; height:132px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:96px; line-height:1; letter-spacing:-.04em; flex-shrink:0; overflow:hidden; }
-        .vd-ribbon__no.has-logo { background:var(--cream-2); border:1px solid var(--rule); padding:18px; box-shadow:inset 0 0 0 1px rgba(31,58,44,.04); }
+        .vd-ribbon__no.has-logo { background:var(--cream-2); border:1px solid var(--rule); padding:18px; box-shadow:inset 0 0 0 1px rgba(var(--moss-rgb),.04); }
         .vd-ribbon__no img { width:100%; height:100%; object-fit:contain; display:block; }
         .vd-ribbon__main { min-width:0; }
         .vd-ribbon__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:12px; }
         .vd-ribbon__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(32px,4.2vw,54px); line-height:1.02; letter-spacing:-.015em; margin:0 0 14px; color:var(--cream); }
-        .vd-ribbon__slogan { font-family:var(--ft); font-size:17px; color:rgba(244,236,219,.78); line-height:1.5; margin:0; max-width:560px; }
+        .vd-ribbon__slogan { font-family:var(--ft); font-size:17px; color:rgba(var(--cream-rgb),.78); line-height:1.5; margin:0; max-width:560px; }
 
         /* chapters — generous spacing + a terra eyebrow above each head */
         .vd-chapter { position:relative; padding:88px 0 24px; overflow:hidden; }
@@ -182,14 +182,14 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
 
         /* Vision — logo crest + readable story column, then a photo banner */
         .vd-vision { display:grid; grid-template-columns:auto 1fr; gap:48px; align-items:center; margin-bottom:36px; }
-        .vd-crest { width:200px; height:200px; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); box-shadow:0 24px 50px -24px rgba(31,58,44,.3); display:grid; place-items:center; padding:26px; flex-shrink:0; }
+        .vd-crest { width:200px; height:200px; border-radius:50%; background:var(--cream-2); border:1px solid var(--rule); box-shadow:0 24px 50px -24px rgba(var(--moss-rgb),.3); display:grid; place-items:center; padding:26px; flex-shrink:0; }
         .vd-crest img { width:100%; height:100%; object-fit:contain; display:block; }
         .vd-vision__body p { font-family:var(--ft); font-size:19px; line-height:1.75; color:var(--moss); margin:0; max-width:680px; }
         .vd-vision__body .vd-muted { opacity:.7; }
         .vd-chapter__photo { margin:0; cursor:zoom-in; position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--rule); }
         .vd-chapter__photo img { width:100%; max-height:420px; object-fit:cover; display:block; transition:transform .4s; }
         .vd-chapter__photo:hover img { transform:scale(1.02); }
-        .vd-chapter__photo figcaption { position:absolute; left:14px; bottom:14px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(31,58,44,.8); padding:6px 14px; border-radius:999px; }
+        .vd-chapter__photo figcaption { position:absolute; left:14px; bottom:14px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(var(--moss-rgb),.8); padding:6px 14px; border-radius:999px; }
 
         /* Mission — its own ledger */
         .vd-missions { max-width:880px; }
@@ -201,14 +201,14 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
 
         .vd-policies { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; margin-top:12px; }
         .vd-policy { padding:34px 30px 34px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; position:relative; transition:all .25s; }
-        .vd-policy:hover { background:var(--cream); transform:translateY(-4px); box-shadow:0 24px 50px -28px rgba(31,58,44,.3); }
-        .vd-policy__no { position:absolute; top:-22px; left:26px; width:52px; height:52px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; box-shadow:0 8px 18px -8px rgba(188,94,62,.6); }
+        .vd-policy:hover { background:var(--cream); transform:translateY(-4px); box-shadow:0 24px 50px -28px rgba(var(--moss-rgb),.3); }
+        .vd-policy__no { position:absolute; top:-22px; left:26px; width:52px; height:52px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; box-shadow:0 8px 18px -8px rgba(var(--terra-rgb),.6); }
         .vd-policy__tag { display:inline-block; font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra); margin:10px 0 14px; }
         .vd-policy p { font-family:var(--ft); font-size:16px; line-height:1.6; color:var(--moss); margin:0; }
 
         .vd-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
         .vd-rtile { background:var(--cream-2); border:1px solid var(--rule); border-radius:20px; padding:18px 16px 22px; text-align:center; transition:all .25s; cursor:pointer; font:inherit; color:inherit; display:block; width:100%; }
-        .vd-rtile:hover, .vd-rtile:focus-visible { background:var(--cream); transform:translateY(-5px); outline:none; border-color:var(--terra); box-shadow:0 22px 44px -26px rgba(31,58,44,.34); }
+        .vd-rtile:hover, .vd-rtile:focus-visible { background:var(--cream); transform:translateY(-5px); outline:none; border-color:var(--terra); box-shadow:0 22px 44px -26px rgba(var(--moss-rgb),.34); }
         .vd-rtile__photo { width:100%; aspect-ratio:1; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; margin-bottom:16px; position:relative; overflow:hidden; }
         .vd-rtile__photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
         .vd-rtile__photo span { font-family:var(--fm); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); opacity:.55; }

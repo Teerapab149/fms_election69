@@ -8,7 +8,7 @@
 // Currently verdure-aware (its vars live on `.vd-root`); this is the seam Task B
 // generalises — add a family branch per template as its themes land.
 
-import { verdureTheme } from "../components/home/VerdureChrome";
+import { verdureTheme, hexToRgbTriple } from "../components/home/VerdureChrome";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
@@ -24,6 +24,13 @@ function injectVerdure(doc, themeSlug) {
     "--moss": v.moss, "--moss-2": v.moss2, "--moss-3": v.moss3,
     "--terra": v.terra, "--terra-2": v.terra2, "--terra-soft": v.soft,
     "--rule": v.rule, "--gold": v.gold,
+    "--cta": v.cta || v.terra, "--cta-2": v.cta2 || v.terra2, "--cta-text": v.ctaText || v.cream,
+    // RGB triples — keep the alpha washes/shadows/translucent text in sync (the
+    // pages read rgba(var(--moss-rgb), a) etc. so they re-tint with the theme).
+    "--moss-rgb": hexToRgbTriple(v.moss), "--moss-2-rgb": hexToRgbTriple(v.moss2),
+    "--terra-rgb": hexToRgbTriple(v.terra),
+    "--terra-soft-rgb": hexToRgbTriple(v.soft), "--gold-rgb": hexToRgbTriple(v.gold),
+    "--cream-rgb": hexToRgbTriple(v.cream), "--cream-2-rgb": hexToRgbTriple(v.cream2),
   };
   roots.forEach((r) => {
     r.classList.add("vd-theming");
