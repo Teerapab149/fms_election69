@@ -86,12 +86,19 @@ function PreviewBody() {
       window.location.href = getPath(`/template-preview?slug=${themeSlug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
     };
     const exit = () => {
-      // Opened in its own tab via window.open → closing returns to the chooser tab.
-      // If the browser blocks self-close (it does once the preview has navigated —
-      // changed page/theme — so the tab has history), fall back to the admin TEMPLATE
-      // SELECTOR (?tab=pageDesign), never the overview/home.
-      window.close();
-      setTimeout(() => { if (!window.closed) window.location.href = getPath('/admin?tab=pageDesign'); }, 250);
+      const selector = getPath('/admin?tab=pageDesign');
+      // Opened in its own tab via the chooser's "เปิดเต็มจอ" (window.open) → it has an
+      // opener, so close the tab to return to the chooser. window.close() can still be
+      // blocked once the preview has navigated (history > 1) → fall back to the admin
+      // TEMPLATE SELECTOR (never overview/home).
+      if (window.opener) {
+        window.close();
+        setTimeout(() => { if (!window.closed) window.location.href = selector; }, 250);
+        return;
+      }
+      // Loaded directly (deep link / an automated browser, no opener) → window.close()
+      // is a no-op that can hang the tab, so just navigate to the selector.
+      window.location.href = selector;
     };
     // src stays on the stable family slug so a swatch click never reloads the iframe
     // (the theme morphs in place); the wrapper injects `themeSlug` onto it.
