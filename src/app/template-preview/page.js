@@ -86,10 +86,12 @@ function PreviewBody() {
       window.location.href = getPath(`/template-preview?slug=${themeSlug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
     };
     const exit = () => {
-      // Opened in its own tab via window.open → closing returns to the chooser. If
-      // the browser blocks self-close, fall back to the admin chooser — never home.
+      // Opened in its own tab via window.open → closing returns to the chooser tab.
+      // If the browser blocks self-close (it does once the preview has navigated —
+      // changed page/theme — so the tab has history), fall back to the admin TEMPLATE
+      // SELECTOR (?tab=pageDesign), never the overview/home.
       window.close();
-      setTimeout(() => { if (!window.closed) window.location.href = getPath('/admin'); }, 250);
+      setTimeout(() => { if (!window.closed) window.location.href = getPath('/admin?tab=pageDesign'); }, 250);
     };
     // src stays on the stable family slug so a swatch click never reloads the iframe
     // (the theme morphs in place); the wrapper injects `themeSlug` onto it.

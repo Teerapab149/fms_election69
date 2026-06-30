@@ -824,7 +824,14 @@ export default function AdminDashboard() {
   const [advancedEditor, setAdvancedEditor] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setAdvancedEditor(new URLSearchParams(window.location.search).get('advanced') === '1');
+      const sp = new URLSearchParams(window.location.search);
+      setAdvancedEditor(sp.get('advanced') === '1');
+      // Deep-link a starting tab (e.g. the preview's "Exit" returns to ?tab=pageDesign,
+      // the template selector — never the overview). Ignore unknown values.
+      const tab = sp.get('tab');
+      if (tab && ['overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
+        setActiveTab(tab);
+      }
     }
   }, []);
   useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign' && advancedEditor); }, [activeTab, advancedEditor]);
