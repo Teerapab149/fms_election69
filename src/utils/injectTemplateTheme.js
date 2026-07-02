@@ -8,7 +8,7 @@
 // Currently verdure-aware (its vars live on `.vd-root`); this is the seam Task B
 // generalises — add a family branch per template as its themes land.
 
-import { verdureTheme, hexToRgbTriple } from "../components/home/VerdureChrome";
+import { verdureTheme, hexToRgbTriple } from "./verdurePalettes";
 import { gumroadTheme } from "./gumroadPalettes";
 
 export function injectTemplateTheme(doc, themeSlug) {

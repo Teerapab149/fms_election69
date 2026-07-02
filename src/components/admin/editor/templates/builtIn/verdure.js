@@ -29,31 +29,37 @@
  */
 
 import { classicTemplate } from "./classic";
+import { VERDURE_THEMES, hexToRgbTriple } from "../../../../../utils/verdurePalettes";
 
-// Base palette = the "Classic Premium" theme (deep forest + burgundy on ivory).
-// The live recolour engine lives in VerdureChrome.VERDURE_THEMES (4 full palettes);
-// these constants only seed the colorSwatch + the classic-layout fallback tokens.
-const MOSS      = "#1B362B"; // deep forest, primary dark surface + ink
-const MOSS_2    = "#294A3C";
-const MOSS_3    = "#3A5E4D";
-const CREAM     = "#FDFBF7"; // light ivory, primary light surface (page bg)
-const CREAM_2   = "#FFFFFF";
-const CREAM_3   = "#F0EBDF";
-const TERRA     = "#722F55"; // primary accent / CTA (rich burgundy)
-const TERRA_2   = "#5C2545";
-const RULE      = "#E6DFD2"; // hairline on ivory
-const SHADOW_SOFT = "0 30px 60px -20px rgba(27,54,43,.35)";
+// PARITY RULE (same as gumroad): every colour below derives from utils/
+// verdurePalettes.js — the SAME map VerdureBaseStyles (.vd-root vars) and the
+// preview morph read. The builder means every colour-theme variant carries its
+// FULL palette into Layer-1 tokens / element configs / page backgrounds on apply
+// — not just a swatch.
+function buildVerdureTemplate(slug, name, palette) {
+  const MOSS = palette.moss;     // dark surface + ink
+  const MOSS_2 = palette.moss2;
+  const MOSS_3 = palette.moss3;
+  const CREAM = palette.cream;   // paper (page bg)
+  const CREAM_2 = palette.cream2;
+  const CREAM_3 = palette.cream3;
+  const TERRA = palette.terra;   // decorative accent
+  const TERRA_2 = palette.terra2;
+  const RULE = palette.rule;     // hairline on paper
+  const CTA = palette.cta || TERRA;           // action-button colour
+  const CTA_TEXT = palette.ctaText || CREAM;  // button label colour
+  const SHADOW_SOFT = `0 30px 60px -20px rgba(${hexToRgbTriple(MOSS)},.35)`;
 
-export const verdureTemplate = {
+  return {
   ...classicTemplate,
-  id: "verdure",
-  slug: "verdure",
-  name: "เวอร์เดอร์ · คลาสสิก พรีเมียม",
+  id: slug,
+  slug,
+  name,
   description: "เลย์เอาต์เอดิทอเรียลเซริฟ — เส้นขอบตั้งด้านข้าง เหรียญตรา/วงกลมเป็นหัวใจ และด็อกเมนูลอยด้านล่าง เลือกโทนสีได้ 4 แบบ (คลาสสิก/อะคาเดมิก/ครีเอทีฟ/มินิมอล)",
   layoutFamily: "verdure", // real template — own page layouts (edge rail + dock + discs)
 
   colorSwatch: {
-    primary: TERRA,
+    primary: TERRA,   // decorative accent = the theme's most identifying colour (chip)
     secondary: MOSS,
     background: CREAM
   },
@@ -125,7 +131,7 @@ export const verdureTemplate = {
       config: { ...classicTemplate.elements["voteCTA-button"].config },
       vars: {
         ...classicTemplate.elements["voteCTA-button"].vars,
-        "--btn-bg": TERRA, "--btn-text": CREAM, "--btn-border-color": TERRA,
+        "--btn-bg": CTA, "--btn-text": CTA_TEXT, "--btn-border-color": CTA,
         "--btn-radius": "9999px", "--btn-shadow": "none", "--btn-hover-bg": MOSS,
         "--btn-padding-x": "32px", "--btn-padding-y": "18px", "--btn-font-size": "15px", "--btn-font-weight": "600"
       }
@@ -143,23 +149,17 @@ export const verdureTemplate = {
     },
     "vote-party-card":     { config: { ...classicTemplate.elements["vote-party-card"].config, backgroundColor: CREAM_2, borderColor: RULE } }
   }
-};
+  };
+}
 
-// ── Colour themes (accent-swap) ──────────────────────────────────────────────
-// Same verdure layout; only the accent changes (handled by --terra/--terra-2/
-// --terra-soft in VerdureChrome, keyed by slug). colorSwatch.primary = the accent
-// so the chooser shows the right swatch. layoutFamily stays "verdure" → the chooser
-// groups all four into one card with 4 swatches (like classic's colour themes).
-const mkVerdureTheme = (slug, name, primary, secondary) => ({
-  ...verdureTemplate,
-  id: slug,
-  slug,
-  name,
-  colorSwatch: { primary, secondary: MOSS, background: CREAM },
-});
-
-export const verdureHoneyTemplate = mkVerdureTheme("verdure-honey", "เวอร์เดอร์ · โมเดิร์น อะคาเดมิก", "#C5A059");
-export const verdureTealTemplate = mkVerdureTheme("verdure-teal", "เวอร์เดอร์ · คอนเทมโพรารี ครีเอทีฟ", "#AF5232");
-export const verdureBerryTemplate = mkVerdureTheme("verdure-berry", "เวอร์เดอร์ · มินิมอล เทค", "#4F46E5");
+// ── The 4 colour themes — each is a FULL build from its palette (tokens + element
+// configs + page backgrounds all follow), so applying a variant live matches the
+// preview exactly. layoutFamily stays "verdure" → one chooser card with swatches;
+// colorSwatch derives from the palette (primary = cta so the chip shows the theme's
+// signature button colour; the chooser groups by family).
+export const verdureTemplate      = buildVerdureTemplate("verdure", "เวอร์เดอร์ · คลาสสิก พรีเมียม", VERDURE_THEMES["verdure"]);
+export const verdureHoneyTemplate = buildVerdureTemplate("verdure-honey", "เวอร์เดอร์ · โมเดิร์น อะคาเดมิก", VERDURE_THEMES["verdure-honey"]);
+export const verdureTealTemplate  = buildVerdureTemplate("verdure-teal", "เวอร์เดอร์ · คอนเทมโพรารี ครีเอทีฟ", VERDURE_THEMES["verdure-teal"]);
+export const verdureBerryTemplate = buildVerdureTemplate("verdure-berry", "เวอร์เดอร์ · มินิมอล เทค", VERDURE_THEMES["verdure-berry"]);
 
 export default verdureTemplate;
