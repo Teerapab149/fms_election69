@@ -19,11 +19,11 @@ export default function HeroSubtitleGumroad({ leadText = "", org = "", style }) 
         <span className="gh-subtitle__org">{org}</span>
       </p>
       <style jsx global>{`
-        .gh-subtitle{ margin:0; font-size:clamp(16px,2cqw,21px); font-weight:600; line-height:1.5; color:var(--sub-color, #26271c); max-width:520px; }
-        .gh-hl{ background:var(--sub-accent, #C2F47E); padding:3px 8px; border-radius:4px; border:1.5px solid #26271c; font-weight:700; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+        .gh-subtitle{ margin:0; font-size:clamp(16px,2cqw,21px); font-weight:600; line-height:1.5; color:var(--sub-color, var(--ink, #26271c)); max-width:520px; }
+        .gh-hl{ background:var(--sub-accent, var(--lime, #C2F47E)); padding:3px 8px; border-radius:4px; border:1.5px solid var(--ink, #26271c); font-weight:700; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
         .gh-subtitle__lead{ display:block; line-height:1.45; }
         .gh-subtitle__lead .gh-hl{ font-size:clamp(17px,3.8cqw,23px); font-weight:800; letter-spacing:-.01em; }
-        .gh-subtitle__org{ display:inline-block; margin-top:14px; font-size:clamp(15px,2cqw,19px); font-weight:600; color:#26271c; letter-spacing:.01em; border-bottom:3px solid var(--sub-accent, #C2F47E); padding-bottom:2px; }
+        .gh-subtitle__org{ display:inline-block; margin-top:14px; font-size:clamp(15px,2cqw,19px); font-weight:600; color:var(--ink, #26271c); letter-spacing:.01em; border-bottom:3px solid var(--sub-accent, var(--lime, #C2F47E)); padding-bottom:2px; }
       `}</style>
     </>
   );

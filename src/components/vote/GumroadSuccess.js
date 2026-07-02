@@ -8,6 +8,7 @@
 // modal, and the unlock state. This renders the page chrome + card and calls back.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React from "react";
 import { Check, Megaphone, CheckCircle2, Tag, ArrowRight, BarChart3, Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
@@ -23,7 +24,8 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
   const canResults = isUnlocked || editorMode;
 
   return (
-    <div className="fms-app gsx-root">
+    <div className="fms-app gsx-root gum-root">
+      <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
       <SiteNavbar />
 

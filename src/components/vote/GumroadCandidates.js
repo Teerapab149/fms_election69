@@ -10,6 +10,7 @@
 // candidates/page.js owns fetching + the single-party redirect.
 
 import React from "react";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import { Users } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import SiteNavbar from "../elements/site-navbar/gumroad";
@@ -27,7 +28,8 @@ export default function GumroadCandidates({ candidates = [], editorMode = false 
   const copyrightYear = globalConfig.copyrightYear || calendarYear;
 
   return (
-    <div className="fms-app gc-root">
+    <div className="fms-app gc-root gum-root">
+      <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
       <SiteNavbar active="candidates" editorMode={editorMode} />
 

@@ -61,7 +61,7 @@ export default function SuccessPage({
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   const [templateReady, setTemplateReady] = useState(false);
-  const isGumroad = activeTemplateId === 'gumroad';
+  const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId === 'studio-dark';
   const isVerdure = activeTemplateId?.startsWith('verdure');
 

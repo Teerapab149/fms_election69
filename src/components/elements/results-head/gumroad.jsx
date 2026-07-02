@@ -14,14 +14,14 @@ export default function ResultsHeadGumroad({ statusLabel = "", title = "", subti
       <p className="gr-subtitle">{subtitle}</p>
       <style jsx global>{`
         .gr-head{ text-align:center; margin-bottom:42px; }
-        .gr-head .gr-sticker{ display:inline-flex; align-items:center; gap:8px; padding:9px 20px; background:#26271c; color:#FFF6EC;
-          border:2.5px solid #26271c; border-radius:999px; font-weight:700; font-size:14px; box-shadow:5px 5px 0 #26271c; white-space:nowrap; }
-        .gr-head .gr-dot{ width:9px; height:9px; border-radius:999px; background:#FF8A8A; box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:grPulse 1.6s ease-out infinite; }
+        .gr-head .gr-sticker{ display:inline-flex; align-items:center; gap:8px; padding:9px 20px; background:var(--ink, #26271c); color:var(--cream, #FFF6EC);
+          border:2.5px solid var(--ink, #26271c); border-radius:999px; font-weight:700; font-size:14px; box-shadow:5px 5px 0 var(--ink, #26271c); white-space:nowrap; }
+        .gr-head .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral, #FF8A8A); box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:grPulse 1.6s ease-out infinite; }
         @keyframes grPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
         .gr-head .gr-title{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           font-size:clamp(42px,9cqw,92px); line-height:.9; letter-spacing:-.035em; margin:20px 0 12px; text-transform:uppercase; }
-        .gr-head .gr-title em{ font-style:normal; background:#26271c; color:#C2F47E; border:2.5px solid #26271c; padding:2px 16px; display:inline-block; box-shadow:8px 8px 0 #FF9CE9; margin-left:10px; }
-        .gr-head .gr-subtitle{ font-size:clamp(15px,2cqw,18px); color:#5c5a4b; font-weight:600; max-width:660px; margin:0 auto; }
+        .gr-head .gr-title em{ font-style:normal; background:var(--ink, #26271c); color:var(--lime, #C2F47E); border:2.5px solid var(--ink, #26271c); padding:2px 16px; display:inline-block; box-shadow:8px 8px 0 var(--pink, #FF9CE9); margin-left:10px; }
+        .gr-head .gr-subtitle{ font-size:clamp(15px,2cqw,18px); color:var(--ink2, #5c5a4b); font-weight:600; max-width:660px; margin:0 auto; }
       `}</style>
     </div>
   );

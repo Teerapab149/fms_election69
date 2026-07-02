@@ -28,8 +28,8 @@ export default function HomeTickerGumroad({
       </div>
       <style jsx global>{`
         .gtick{
-          border-bottom:2.5px solid var(--tick-border, #26271c);
-          background:var(--tick-bg, #26271c); color:var(--tick-text, #FFF6EC);
+          border-bottom:2.5px solid var(--tick-border, var(--ink, #26271c));
+          background:var(--tick-bg, var(--ink, #26271c)); color:var(--tick-text, var(--cream, #FFF6EC));
           overflow:hidden; white-space:nowrap;
           font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           font-size:22px; letter-spacing:.02em;
@@ -37,7 +37,7 @@ export default function HomeTickerGumroad({
         .gtick__track{ display:inline-flex; align-items:center; gap:32px; padding:12px 0; animation:gtickMove 35s linear infinite; }
         .gtick__item{ display:inline-flex; align-items:center; gap:32px; }
         @keyframes gtickMove{ 0%{ transform:translateX(0); } 100%{ transform:translateX(-50%); } }
-        .gtick__dot{ width:12px; height:12px; background:var(--tick-accent, #FF9CE9); border-radius:999px; display:inline-block; }
+        .gtick__dot{ width:12px; height:12px; background:var(--tick-accent, var(--pink, #FF9CE9)); border-radius:999px; display:inline-block; }
         @media (max-width:980px){ .gtick{ font-size:18px; } }
       `}</style>
     </div>

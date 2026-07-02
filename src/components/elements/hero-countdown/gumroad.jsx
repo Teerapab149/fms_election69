@@ -48,14 +48,14 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
         ))}
       </div>
       <style jsx global>{`
-        .gh-cd{ height:100%; background:var(--cd-bg, #26271c); color:var(--cd-text, #FFF6EC); border:2.5px solid var(--cd-border, #26271c); border-radius:22px; box-shadow:8px 8px 0 var(--cd-border, #26271c);
+        .gh-cd{ height:100%; background:var(--cd-bg, var(--ink, #26271c)); color:var(--cd-text, var(--cream, #FFF6EC)); border:2.5px solid var(--cd-border, var(--ink, #26271c)); border-radius:22px; box-shadow:8px 8px 0 var(--cd-border, var(--ink, #26271c));
           padding:clamp(20px,2.2cqw,30px); display:flex; flex-direction:column; justify-content:space-between; gap:clamp(14px,2cqw,22px); }
-        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-weight:600; font-size:clamp(12px,1.4cqw,14px); text-transform:uppercase; letter-spacing:.15em; color:var(--cd-accent, #FF9CE9); }
+        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-weight:600; font-size:clamp(12px,1.4cqw,14px); text-transform:uppercase; letter-spacing:.15em; color:var(--cd-accent, var(--pink, #FF9CE9)); }
         .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(10px,1.4cqw,16px); margin-top:0; }
-        .gh-cd__cell{ background:var(--cd-cell, #FFF6EC); color:#26271c; border-radius:14px; padding:clamp(12px,1.8cqw,20px) 8px; text-align:center; border:2px solid #26271c; }
+        .gh-cd__cell{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; padding:clamp(12px,1.8cqw,20px) 8px; text-align:center; border:2px solid var(--ink, #26271c); }
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }
-        .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:#5c5a4b; margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
-        .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:#FF8A8A; display:inline-block; box-shadow:0 0 0 0 rgba(255,110,110,.8); animation:ghCdPulse 1.6s ease-out infinite; }
+        .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:var(--ink2, #5c5a4b); margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
+        .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 rgba(255,110,110,.8); animation:ghCdPulse 1.6s ease-out infinite; }
         @keyframes ghCdPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
       `}</style>
     </div>

@@ -34,8 +34,8 @@ export default function CandidatesHeadGumroad({
 
       <style jsx global>{`
         .gc-head{ position:relative; text-align:center; max-width:760px; margin:0 auto 48px; padding-top:8px;
-          --ch-ink:#26271c; --ch-ink2:#5c5a4b; --ch-accent:#FF9CE9;
-          --ch-lime:#C2F47E; --ch-sky:#B6E6FF; --ch-coral:#FF8A8A;
+          --ch-ink:var(--ink, #26271c); --ch-ink2:var(--ink2, #5c5a4b); --ch-accent:var(--pink, #FF9CE9);
+          --ch-lime:var(--lime, #C2F47E); --ch-sky:var(--sky, #B6E6FF); --ch-coral:var(--coral, #FF8A8A);
           --ch-fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; }
         .gc-title, .gc-subtitle{ position:relative; z-index:1; }
         /* confetti decorations — chunky pop shapes (ink border + hard shadow), straight */

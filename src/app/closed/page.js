@@ -23,7 +23,7 @@ export default function ClosedPage() {
     // page flashes for a frame before a dark template resolves (same gate the
     // other 5 pages use).
     const [templateReady, setTemplateReady] = useState(false);
-    const isGumroad = activeTemplateId === 'gumroad';
+    const isGumroad = activeTemplateId?.startsWith('gumroad');
     const isStudio = activeTemplateId === 'studio-dark';
     const isVerdure = activeTemplateId?.startsWith('verdure');
 

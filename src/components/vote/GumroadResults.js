@@ -12,6 +12,7 @@
 // the resolved data down. No scores leak before `isRevealed`.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React from "react";
 import { Lock } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
@@ -81,7 +82,8 @@ export default function GumroadResults({
     : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : "UPCOMING";
 
   return (
-    <div className="fms-app gr-root">
+    <div className="fms-app gr-root gum-root">
+      <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
       <SiteNavbar active="results" />
 

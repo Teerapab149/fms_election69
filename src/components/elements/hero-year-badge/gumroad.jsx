@@ -12,8 +12,8 @@ export default function HeroYearBadgeGumroad({ text = "" }) {
       <style jsx global>{`
         .ghyb{ margin-top:6px; }
         .ghyb__pill{ display:inline-flex; align-items:center; gap:8px; padding:7px 15px;
-          background:var(--yb-bg, #FFFDFA); border:2.5px solid #26271c; border-radius:999px;
-          font-weight:700; font-size:13px; box-shadow:3px 3px 0 #26271c; }
+          background:var(--yb-bg, var(--paper, #FFFDFA)); border:2.5px solid var(--ink, #26271c); border-radius:999px;
+          font-weight:700; font-size:13px; box-shadow:3px 3px 0 var(--ink, #26271c); }
       `}</style>
     </div>
   );

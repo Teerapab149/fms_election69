@@ -24,9 +24,9 @@ export default function StatCardGumroad(props) {
     <>
       <Composition node={buildStatCard(props)} />
       <style jsx global>{`
-        .el-stat-card{ background:#FFFDFA; border:2.5px solid #26271c; border-radius:22px; box-shadow:5px 5px 0 #26271c; padding:24px; }
-        .el-stat-card--pink{ background:#FF9CE9; }
-        .el-stat-card--lime{ background:#C2F47E; }
+        .el-stat-card{ background:var(--paper, #FFFDFA); border:2.5px solid var(--ink, #26271c); border-radius:22px; box-shadow:5px 5px 0 var(--ink, #26271c); padding:24px; }
+        .el-stat-card--pink{ background:var(--pink, #FF9CE9); }
+        .el-stat-card--lime{ background:var(--lime, #C2F47E); }
       `}</style>
     </>
   );

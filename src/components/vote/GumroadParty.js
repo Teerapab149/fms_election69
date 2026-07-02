@@ -15,6 +15,7 @@
 // `--pop` (pastel fill) + `--pop-deep` (jewel tone) used across the accents.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -70,9 +71,10 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
 
   return (
     <div
-      className="fms-app gp-root"
+      className="fms-app gp-root gum-root"
       style={{ "--pop": theme.soft, "--pop-deep": theme.main, "--pop-ink": theme.textOnLight }}
     >
+      <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
       <SiteNavbar active="candidates" />
 
@@ -233,7 +235,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-root{
           --ink:#26271c; --ink2:#5c5a4b; --cream:#FFF6EC; --cream2:#FFE9D6; --paper:#FFFDFA;
           --pink:#FF9CE9; --lime:#C2F47E; --yellow:#FFD24D; --sky:#B6E6FF; --coral:#FF8A8A;
-          --pop:#B6E6FF; --pop-deep:#147ac8; --pop-ink:#0e4f80;
+          --pop:var(--sky, #B6E6FF); --pop-deep:#147ac8; --pop-ink:#0e4f80;
           --bw:2.5px; --sh:5px 5px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink); --sh-lg:8px 8px 0 var(--ink);
           --fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --fm:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;

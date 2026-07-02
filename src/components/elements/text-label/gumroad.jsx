@@ -10,9 +10,9 @@ export default function TextLabelGumroad({ children, style }) {
       <style jsx global>{`
         .el-label{
           display:inline-block; padding:2px 11px;
-          background:#FFF6EC; border:2px solid #26271c; border-radius:999px;
+          background:var(--cream, #FFF6EC); border:2px solid var(--ink, #26271c); border-radius:999px;
           font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
-          font-size:11px; font-weight:700; letter-spacing:.08em; color:#26271c;
+          font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--ink, #26271c);
         }
       `}</style>
     </span>

@@ -20,10 +20,10 @@ export default function HeroTitleGumroad({ titlePart = "", numberPart = "", styl
            width and cqi collapses (title would overflow at ≤900). */
         .gh-title__fit{ container-type:inline-size; width:100%; }
         .gh-title{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
-          font-size:clamp(42px, 29cqi, 128px); line-height:.82; letter-spacing:-.045em; color:var(--title-color, #26271c); margin:0;
+          font-size:clamp(42px, 29cqi, 128px); line-height:.82; letter-spacing:-.045em; color:var(--title-color, var(--ink, #26271c)); margin:0;
           text-transform:uppercase; max-width:100%; overflow-wrap:anywhere; }
-        .gh-title em{ font-style:normal; font-size:1.15em; background:var(--title-accent, #FF9CE9); display:inline-block; padding:0 14px; margin:10px 0 0;
-          border:2.5px solid #26271c; box-shadow:8px 8px 0 #26271c; max-width:100%; }
+        .gh-title em{ font-style:normal; font-size:1.15em; background:var(--title-accent, var(--pink, #FF9CE9)); display:inline-block; padding:0 14px; margin:10px 0 0;
+          border:2.5px solid var(--ink, #26271c); box-shadow:8px 8px 0 var(--ink, #26271c); max-width:100%; }
       `}</style>
     </div>
   );

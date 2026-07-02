@@ -7,6 +7,7 @@
 // Pure presentation — closed/page.js owns status fetching + the (PSU SSO) logout.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React from "react";
 import { Lock, Clock, Flag, LogOut, ArrowRight } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
@@ -30,7 +31,8 @@ export default function GumroadClosed({ title, desc, variant = "closed", session
   const copyrightYear = globalConfig.copyrightYear || globalConfig.electionCalendarYear || "";
 
   return (
-    <div className="fms-app gcl-root">
+    <div className="fms-app gcl-root gum-root">
+      <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
       <SiteNavbar />
 

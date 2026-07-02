@@ -12,6 +12,7 @@
 // No back button — the topbar/navbar covers navigation.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, X, Ban } from "lucide-react";
@@ -78,7 +79,8 @@ export default function GumroadSingleParty({
   const greeting = user?.name ? `สวัสดีคุณ ${user.name}` : "";
 
   return (
-    <div className="fms-app gsp-root">
+    <div className="fms-app gsp-root gum-root">
+      <GumroadBaseStyles />
       <AnimatePresence>
         {!introDone && <GumroadPartyIntro key="intro" party={party} onDone={() => setIntroDone(true)} />}
       </AnimatePresence>

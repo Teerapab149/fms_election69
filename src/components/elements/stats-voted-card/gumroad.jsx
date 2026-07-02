@@ -14,8 +14,8 @@ export default function StatsVotedGumroad({ voted = 0 }) {
       <svg className="gh-ekg" viewBox="0 0 200 60" stroke="#1A1A1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M0 30 L40 30 L48 30 L54 10 L62 50 L70 30 L100 30 L108 30 L116 18 L124 42 L132 30 L200 30" /></svg>
       <style jsx global>{`
         .gh-stat{ position:relative; overflow:hidden; height:100%; display:flex; flex-direction:column; justify-content:space-between; gap:10px;
-          border:2.5px solid var(--stat-border, #26271c); border-radius:22px; padding:clamp(20px,2.2cqw,30px); box-shadow:5px 5px 0 var(--stat-border, #26271c); }
-        .gh-stat--pink{ background:var(--stat-bg, #FF9CE9); }
+          border:2.5px solid var(--stat-border, var(--ink, #26271c)); border-radius:22px; padding:clamp(20px,2.2cqw,30px); box-shadow:5px 5px 0 var(--stat-border, var(--ink, #26271c)); }
+        .gh-stat--pink{ background:var(--stat-bg, var(--pink, #FF9CE9)); }
         .gh-stat__lbl{ display:flex; align-items:center; gap:6px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(11px,1.3cqw,13px); font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
         .gh-stat__val{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(44px,7cqw,78px); line-height:.9; margin:0; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
         .gh-stat__unit{ font-size:clamp(16px,2cqw,22px); font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:700; margin-left:8px; }

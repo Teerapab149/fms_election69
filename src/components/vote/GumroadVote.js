@@ -17,6 +17,7 @@
 // key elements carry data-element + the stable Wrap → selectable in the editor.
 
 import React, { useRef, useCallback } from "react";
+import { GumroadBaseStyles } from "../home/GumroadTheme";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import { Check, Ban } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
@@ -100,7 +101,8 @@ export default function GumroadVote({
   }
 
   return (
-    <div className="fms-app gv-root">
+    <div className="fms-app gv-root gum-root">
+      <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
       <SiteNavbar />
 

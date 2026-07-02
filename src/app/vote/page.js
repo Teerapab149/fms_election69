@@ -79,7 +79,7 @@ export default function VotePage() {
     fetchConfig();
   }, []);
 
-  const isGumroad = activeTemplateId === 'gumroad';
+  const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId === 'studio-dark';
   const isVerdure = activeTemplateId?.startsWith('verdure');
 

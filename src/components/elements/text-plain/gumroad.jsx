@@ -8,7 +8,7 @@ export default function TextPlainGumroad({ children, style }) {
     <p className="el-plain" data-element="text-plain" data-variant="gumroad" style={style}>
       {children}
       <style jsx global>{`
-        .el-plain{ margin:0; font-size:13px; font-weight:400; line-height:1.5; color:#5c5a4b; }
+        .el-plain{ margin:0; font-size:13px; font-weight:400; line-height:1.5; color:var(--ink2, #5c5a4b); }
       `}</style>
     </p>
   );

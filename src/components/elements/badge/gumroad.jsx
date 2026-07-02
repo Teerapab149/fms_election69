@@ -12,8 +12,8 @@ export default function BadgeGumroad({ children, style }) {
         .el-badge{
           min-width:46px; height:46px; padding:0 10px;
           display:inline-flex; align-items:center; justify-content:center;
-          background:var(--pop, #FF9CE9); color:#26271c;
-          border:2.5px solid #26271c; border-radius:12px; box-shadow:3px 3px 0 #26271c;
+          background:var(--pop, var(--pink, #FF9CE9)); color:var(--ink, #26271c);
+          border:2.5px solid var(--ink, #26271c); border-radius:12px; box-shadow:3px 3px 0 var(--ink, #26271c);
           font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           font-size:24px; line-height:1;
         }

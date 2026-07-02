@@ -83,18 +83,18 @@ export default function PartyCardGumroad({ party, pop, editorMode = false }) {
       <style jsx global>{`
         .el-card, .el-card *{ box-sizing:border-box; }
         .el-card{
-          display:flex; flex-direction:column; background:#FFFDFA;
-          border:2.5px solid #26271c; border-radius:22px; box-shadow:5px 5px 0 #26271c;
+          display:flex; flex-direction:column; background:var(--paper, #FFFDFA);
+          border:2.5px solid var(--ink, #26271c); border-radius:22px; box-shadow:5px 5px 0 var(--ink, #26271c);
           overflow:hidden; text-decoration:none; color:inherit;
           transition:transform .14s ease-out, box-shadow .14s ease-out;
         }
-        .el-card:hover{ transform:translate(-3px,-3px); box-shadow:8px 8px 0 #26271c; }
-        .el-card__cover{ position:relative; aspect-ratio:16/9; background:#FFF6EC; border-bottom:2.5px solid #26271c; overflow:hidden; }
+        .el-card:hover{ transform:translate(-3px,-3px); box-shadow:8px 8px 0 var(--ink, #26271c); }
+        .el-card__cover{ position:relative; aspect-ratio:16/9; background:var(--cream, #FFF6EC); border-bottom:2.5px solid var(--ink, #26271c); overflow:hidden; }
         .el-card__body{ display:flex; flex-direction:column; gap:14px; padding:22px 24px 24px; flex:1; }
         .el-card__head{ display:flex; align-items:center; gap:14px; }
-        .el-card__logo{ width:58px; height:58px; flex-shrink:0; border:2.5px solid #26271c; border-radius:14px; background:#FFF6EC; overflow:hidden; box-shadow:3px 3px 0 #26271c; }
+        .el-card__logo{ width:58px; height:58px; flex-shrink:0; border:2.5px solid var(--ink, #26271c); border-radius:14px; background:var(--cream, #FFF6EC); overflow:hidden; box-shadow:3px 3px 0 var(--ink, #26271c); }
         .el-card__id{ min-width:0; }
-        .el-card:hover .el-btn{ box-shadow:5px 5px 0 #26271c; transform:translate(-1px,-1px); }
+        .el-card:hover .el-btn{ box-shadow:5px 5px 0 var(--ink, #26271c); transform:translate(-1px,-1px); }
       `}</style>
     </>
   );

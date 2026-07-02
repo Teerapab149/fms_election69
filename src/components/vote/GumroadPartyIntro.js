@@ -134,46 +134,46 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
 
       <style jsx global>{`
         .gsi-intro{
-          position:fixed; inset:0; z-index:9000; overflow:hidden; cursor:pointer; color:#26271c; text-align:center;
-          display:grid; place-items:center; background:#FFF6EC;
+          position:fixed; inset:0; z-index:9000; overflow:hidden; cursor:pointer; color:var(--ink, #26271c); text-align:center;
+          display:grid; place-items:center; background:var(--cream, #FFF6EC);
           background-image:
             radial-gradient(circle at 14% 16%, #FFD1F2 0, transparent 42%),
             radial-gradient(circle at 86% 84%, #DCF2FF 0, transparent 44%),
             radial-gradient(circle at 84% 14%, #DFFFC2 0, transparent 38%);
         }
-        .gsi-bar{ position:absolute; left:0; right:0; height:46px; background:#26271c; color:#FFF6EC; overflow:hidden; display:flex; align-items:center;
+        .gsi-bar{ position:absolute; left:0; right:0; height:46px; background:var(--ink, #26271c); color:var(--cream, #FFF6EC); overflow:hidden; display:flex; align-items:center;
           font-family:var(--fd,var(--font-archivo)); font-size:20px; letter-spacing:.02em; }
-        .gsi-bar--top{ top:0; border-bottom:2.5px solid #26271c; }
-        .gsi-bar--bottom{ bottom:0; border-top:2.5px solid #26271c; }
+        .gsi-bar--top{ top:0; border-bottom:2.5px solid var(--ink, #26271c); }
+        .gsi-bar--bottom{ bottom:0; border-top:2.5px solid var(--ink, #26271c); }
         .gsi-tick > span{ display:inline-flex; white-space:nowrap; animation:gsiTick 18s linear infinite; }
         .gsi-tick--rev > span{ animation-direction:reverse; }
         .gsi-tick em{ display:inline-flex; align-items:center; font-style:normal; }
-        .gsi-tick i{ width:8px; height:8px; border-radius:999px; background:#FF9CE9; margin:0 22px; }
+        .gsi-tick i{ width:8px; height:8px; border-radius:999px; background:var(--pink, #FF9CE9); margin:0 22px; }
         @keyframes gsiTick{ 0%{transform:translateX(0)} 100%{transform:translateX(-33.33%)} }
 
-        .gsi-shape{ position:absolute; border:3px solid #26271c; box-shadow:6px 6px 0 #26271c; }
-        .gsi-shape--lime{ top:18%; left:10%; width:64px; height:64px; background:#C2F47E; border-radius:18px; }
-        .gsi-shape--pink{ bottom:20%; right:12%; width:54px; height:54px; background:#FF9CE9; border-radius:999px; }
-        .gsi-shape--sky{ top:24%; right:16%; width:46px; height:46px; background:#B6E6FF; border-radius:14px; }
+        .gsi-shape{ position:absolute; border:3px solid var(--ink, #26271c); box-shadow:6px 6px 0 var(--ink, #26271c); }
+        .gsi-shape--lime{ top:18%; left:10%; width:64px; height:64px; background:var(--lime, #C2F47E); border-radius:18px; }
+        .gsi-shape--pink{ bottom:20%; right:12%; width:54px; height:54px; background:var(--pink, #FF9CE9); border-radius:999px; }
+        .gsi-shape--sky{ top:24%; right:16%; width:46px; height:46px; background:var(--sky, #B6E6FF); border-radius:14px; }
 
         .gsi-stage{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:18px; padding:24px; max-width:960px; }
         .gsi-stickers{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
-        .gsi-sticker{ display:inline-flex; align-items:center; gap:8px; padding:8px 18px; background:#FFF; border:2.5px solid #26271c;
-          border-radius:999px; font-family:var(--fb,var(--font-anuphan)); font-weight:700; font-size:14px; box-shadow:3px 3px 0 #26271c; }
-        .gsi-sticker--lime{ background:#C2F47E; }
-        .gsi-dot{ width:9px; height:9px; border-radius:999px; background:#FF8A8A; box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gsiPulse 1.6s ease-out infinite; }
+        .gsi-sticker{ display:inline-flex; align-items:center; gap:8px; padding:8px 18px; background:#FFF; border:2.5px solid var(--ink, #26271c);
+          border-radius:999px; font-family:var(--fb,var(--font-anuphan)); font-weight:700; font-size:14px; box-shadow:3px 3px 0 var(--ink, #26271c); }
+        .gsi-sticker--lime{ background:var(--lime, #C2F47E); }
+        .gsi-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral, #FF8A8A); box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gsiPulse 1.6s ease-out infinite; }
         @keyframes gsiPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
 
         .gsi-no{ font-family:var(--fd,var(--font-archivo)); font-size:clamp(64px,15vw,150px); line-height:.9;
-          background:#FF9CE9; border:3px solid #26271c; border-radius:26px; padding:6px 30px; box-shadow:8px 8px 0 #26271c; }
+          background:var(--pink, #FF9CE9); border:3px solid var(--ink, #26271c); border-radius:26px; padding:6px 30px; box-shadow:8px 8px 0 var(--ink, #26271c); }
 
         .gsi-name{ position:relative; display:inline-block; max-width:90vw; }
         .gsi-name__clip{ font-family:var(--fd,var(--font-archivo),var(--font-anuphan)); font-size:clamp(34px,8vw,96px);
           line-height:.94; letter-spacing:-.03em; text-transform:uppercase; text-wrap:balance; }
-        .gsi-name__swipe{ position:absolute; top:-4%; bottom:-4%; left:0; width:60%; background:#C2F47E; mix-blend-mode:multiply; pointer-events:none; }
+        .gsi-name__swipe{ position:absolute; top:-4%; bottom:-4%; left:0; width:60%; background:var(--lime, #C2F47E); mix-blend-mode:multiply; pointer-events:none; }
 
-        .gsi-slogan{ font-family:var(--fb,var(--font-anuphan)); font-style:italic; font-size:clamp(15px,2.6vw,22px); color:#5c5a4b; margin:2px 0 0; max-width:640px; }
-        .gsi-hint{ margin-top:14px; font-family:var(--fm,var(--font-space-grotesk),monospace); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#5c5a4b; }
+        .gsi-slogan{ font-family:var(--fb,var(--font-anuphan)); font-style:italic; font-size:clamp(15px,2.6vw,22px); color:var(--ink2, #5c5a4b); margin:2px 0 0; max-width:640px; }
+        .gsi-hint{ margin-top:14px; font-family:var(--fm,var(--font-space-grotesk),monospace); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink2, #5c5a4b); }
 
         @media (max-width:560px){ .gsi-shape{ display:none; } .gsi-bar{ height:38px; font-size:16px; } }
       `}</style>

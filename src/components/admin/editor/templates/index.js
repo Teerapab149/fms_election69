@@ -13,7 +13,7 @@ import { classicTemplate }    from "./builtIn/classic";
 import { modernDarkTemplate } from "./builtIn/modern-dark";
 import { playfulTemplate }    from "./builtIn/playful";
 import { minimalTemplate }    from "./builtIn/minimal";
-import { gumroadTemplate }    from "./builtIn/gumroad";
+import { gumroadTemplate, gumroadCyberTemplate, gumroadRetroTemplate, gumroadAcidTemplate } from "./builtIn/gumroad";
 import { studioDarkTemplate } from "./builtIn/studio-dark";
 import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerryTemplate } from "./builtIn/verdure";
 import { originalTemplate }   from "./builtIn/original";
@@ -24,6 +24,9 @@ const BUILT_IN_TEMPLATES = {
   playful:        playfulTemplate,
   minimal:        minimalTemplate,
   gumroad:        gumroadTemplate,
+  "gumroad-cyber": gumroadCyberTemplate,
+  "gumroad-retro": gumroadRetroTemplate,
+  "gumroad-acid":  gumroadAcidTemplate,
   "studio-dark":  studioDarkTemplate,
   verdure:        verdureTemplate,
   "verdure-honey": verdureHoneyTemplate,

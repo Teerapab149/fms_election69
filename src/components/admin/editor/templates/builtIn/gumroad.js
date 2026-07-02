@@ -314,4 +314,21 @@ export const gumroadTemplate = {
   }
 };
 
+// ── Colour themes (whole-palette swap) ───────────────────────────────────────
+// Same gumroad layout; the live recolour engine is GumroadTheme.GUMROAD_THEMES
+// (cream/ink/pink/lime/…). Each variant keeps layoutFamily "gumroad" so the chooser
+// groups all four into one card with swatches. colorSwatch.primary = the accent tile
+// colour so the chooser shows the right chip.
+const mkGumroadTheme = (slug, name, primary, secondary) => ({
+  ...gumroadTemplate,
+  id: slug,
+  slug,
+  name,
+  colorSwatch: { primary, secondary, background: CREAM },
+});
+
+export const gumroadCyberTemplate = mkGumroadTheme("gumroad-cyber", "แอ็กทีฟ พัลส์ · ไซเบอร์พังก์", "#00F0FF", "#A370F7");
+export const gumroadRetroTemplate = mkGumroadTheme("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", "#FF9233", "#14D4B4");
+export const gumroadAcidTemplate  = mkGumroadTheme("gumroad-acid",  "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", "#CCFF00", "#FF4A4A");
+
 export default gumroadTemplate;

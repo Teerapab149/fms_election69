@@ -11,10 +11,10 @@ export default function TextBodyGumroad({ children, icon, style }) {
       {icon ? " " : null}{children}
       <style jsx global>{`
         .el-body{
-          margin:0; font-size:14px; font-weight:500; line-height:1.55; color:#5c5a4b;
+          margin:0; font-size:14px; font-weight:500; line-height:1.55; color:var(--ink2, #5c5a4b);
           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
         }
-        .el-body__icon{ display:inline; vertical-align:-2px; color:var(--pop, #FF9CE9); }
+        .el-body__icon{ display:inline; vertical-align:-2px; color:var(--pop, var(--pink, #FF9CE9)); }
       `}</style>
     </p>
   );

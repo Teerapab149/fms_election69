@@ -11,7 +11,7 @@ export default function TextTitleGumroad({ children, as = "h3", style }) {
       <style jsx global>{`
         .el-title{
           margin:0; font-size:clamp(18px,2.4cqw,24px); font-weight:800; line-height:1.2;
-          letter-spacing:-.01em; color:#26271c;
+          letter-spacing:-.01em; color:var(--ink, #26271c);
           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
         }
       `}</style>

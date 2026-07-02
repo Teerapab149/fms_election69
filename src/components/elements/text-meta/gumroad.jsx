@@ -11,7 +11,7 @@ export default function TextMetaGumroad({ children, style }) {
       <style jsx global>{`
         .el-meta{
           font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
-          font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:#26271c;
+          font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:var(--ink, #26271c);
         }
       `}</style>
     </span>

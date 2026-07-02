@@ -97,48 +97,48 @@ export default function GumroadMobileMenu({ active = "" }) {
       )}
 
       <style jsx global>{`
-        .gnav-burger{ display:none; width:46px; height:46px; flex-shrink:0; border:2.5px solid #26271c; border-radius:14px;
-          background:#FFFDFA; place-items:center; cursor:pointer; box-shadow:3px 3px 0 #26271c; color:#26271c;
+        .gnav-burger{ display:none; width:46px; height:46px; flex-shrink:0; border:2.5px solid var(--ink, #26271c); border-radius:14px;
+          background:var(--paper, #FFFDFA); place-items:center; cursor:pointer; box-shadow:3px 3px 0 var(--ink, #26271c); color:var(--ink, #26271c);
           transition:transform .12s ease, box-shadow .12s ease, background .12s ease; }
-        .gnav-burger:hover{ background:#C2F47E; }
-        .gnav-burger:active{ transform:translate(2px,2px); box-shadow:0 0 0 #26271c; }
+        .gnav-burger:hover{ background:var(--lime, #C2F47E); }
+        .gnav-burger:active{ transform:translate(2px,2px); box-shadow:0 0 0 var(--ink, #26271c); }
 
         .gnav-scrim{ position:fixed; inset:0; z-index:1055; background:rgba(26,26,26,.42); backdrop-filter:blur(2px); }
         .gnav-drawer{ position:fixed; top:0; right:0; bottom:0; z-index:1060; width:min(84vw,330px); display:flex; flex-direction:column;
-          gap:14px; padding:24px 20px; overflow-y:auto; background:#FFF6EC; border-left:2.5px solid #26271c;
-          box-shadow:-10px 0 0 rgba(26,26,26,.12); color:#26271c;
+          gap:14px; padding:24px 20px; overflow-y:auto; background:var(--cream, #FFF6EC); border-left:2.5px solid var(--ink, #26271c);
+          box-shadow:-10px 0 0 rgba(26,26,26,.12); color:var(--ink, #26271c);
           font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           background-image:radial-gradient(circle at 90% 6%, #FFD1F2 0,transparent 40%),radial-gradient(circle at 10% 96%, #DCF2FF 0,transparent 42%); }
 
-        .gnav-status{ background:#FFFDFA; border:2.5px solid #26271c; border-radius:16px; box-shadow:3px 3px 0 #26271c;
+        .gnav-status{ background:var(--paper, #FFFDFA); border:2.5px solid var(--ink, #26271c); border-radius:16px; box-shadow:3px 3px 0 var(--ink, #26271c);
           padding:16px 18px; display:flex; flex-direction:column; gap:3px; }
-        .gnav-status.is-in{ background:#C2F47E; }
+        .gnav-status.is-in{ background:var(--lime, #C2F47E); }
         .gnav-status strong{ font-size:18px; line-height:1.2; }
-        .gnav-status small{ font-size:12px; color:#5c5a4b; }
-        .gnav-hi{ display:inline-flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5c5a4b; }
-        .gnav-livedot{ width:9px; height:9px; border-radius:999px; background:#FF8A8A; display:inline-block; }
+        .gnav-status small{ font-size:12px; color:var(--ink2, #5c5a4b); }
+        .gnav-hi{ display:inline-flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2, #5c5a4b); }
+        .gnav-livedot{ width:9px; height:9px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; }
 
         .gnav-dnav{ display:flex; flex-direction:column; gap:9px; }
-        .gnav-dlink{ padding:13px 16px; border:2px solid #26271c; border-radius:12px; background:#FFFDFA; font-weight:700; font-size:15px;
-          box-shadow:3px 3px 0 #26271c; text-decoration:none; color:#26271c; }
-        .gnav-dlink:hover{ background:#FF9CE9; }
-        .gnav-dlink.is-active{ background:#FF9CE9; }
+        .gnav-dlink{ padding:13px 16px; border:2px solid var(--ink, #26271c); border-radius:12px; background:var(--paper, #FFFDFA); font-weight:700; font-size:15px;
+          box-shadow:3px 3px 0 var(--ink, #26271c); text-decoration:none; color:var(--ink, #26271c); }
+        .gnav-dlink:hover{ background:var(--pink, #FF9CE9); }
+        .gnav-dlink.is-active{ background:var(--pink, #FF9CE9); }
 
         .gnav-auth{ margin-top:auto; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:16px 24px;
-          border:2.5px solid #26271c; border-radius:16px; font-weight:800; font-size:16px; box-shadow:5px 5px 0 #26271c;
-          cursor:pointer; color:#26271c; font-family:inherit; }
-        .gnav-auth--ink{ background:#26271c; color:#FFF6EC; }
-        .gnav-auth--coral{ background:#FF8A8A; }
+          border:2.5px solid var(--ink, #26271c); border-radius:16px; font-weight:800; font-size:16px; box-shadow:5px 5px 0 var(--ink, #26271c);
+          cursor:pointer; color:var(--ink, #26271c); font-family:inherit; }
+        .gnav-auth--ink{ background:var(--ink, #26271c); color:var(--cream, #FFF6EC); }
+        .gnav-auth--coral{ background:var(--coral, #FF8A8A); }
 
         /* desktop auth (shown by default; each page hides it at its mobile breakpoint) */
         .gnav-auth-d{ display:flex; align-items:center; gap:12px; }
         .gnav-userd{ display:flex; align-items:center; gap:12px; }
-        .gnav-userd__name{ font-weight:700; font-size:14px; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#26271c; }
-        .gnav-dbtn{ display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border:2.5px solid #26271c; border-radius:13px;
-          background:#FFFDFA; color:#26271c; font-weight:700; font-size:14px; box-shadow:3px 3px 0 #26271c; cursor:pointer; white-space:nowrap;
+        .gnav-userd__name{ font-weight:700; font-size:14px; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink, #26271c); }
+        .gnav-dbtn{ display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border:2.5px solid var(--ink, #26271c); border-radius:13px;
+          background:var(--paper, #FFFDFA); color:var(--ink, #26271c); font-weight:700; font-size:14px; box-shadow:3px 3px 0 var(--ink, #26271c); cursor:pointer; white-space:nowrap;
           font-family:inherit; transition:transform .12s ease, box-shadow .12s ease; }
-        .gnav-dbtn:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 #26271c; }
-        .gnav-dbtn--ink{ background:#26271c; color:#FFF6EC; }
+        .gnav-dbtn:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink, #26271c); }
+        .gnav-dbtn--ink{ background:var(--ink, #26271c); color:var(--cream, #FFF6EC); }
       `}</style>
     </>
   );

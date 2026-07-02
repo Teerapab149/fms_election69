@@ -16,6 +16,7 @@
 // selectable + base-editable in the admin editor, like classic.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "./GumroadTheme";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { ArrowRight } from "lucide-react";
@@ -183,7 +184,8 @@ export default function GumroadHome({
   })();
 
   return (
-    <div className="fms-app gh-root">
+    <div className="fms-app gh-root gum-root">
+      <GumroadBaseStyles />
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
 
       {/* ── TOPBAR (shared gumroad navbar element) ── */}

@@ -8,7 +8,7 @@
 //   - renders `data-element="site-navbar"` on root → future editor scoping (D10)
 //   - colours = Layer-2 `--nav-*` overrides → gumroad identity literals. We do NOT
 //     chain to Layer-1 `--color-*`: on this site those tokens are decoupled from the
-//     current "ละมุน" palette (--color-border #1A1A1A ≠ the warm ink #26271c the
+//     current "ละมุน" palette (--color-border #1A1A1A ≠ the warm ink var(--ink, #26271c) the
 //     pages use; --color-primary #8A2680 is purple, not the pink active pill). Per
 //     CLAUDE.md Rule 9 the gumroad navbar's cream/ink/pink IS its identity → hardcode
 //     it (matches the page body) and expose `--nav-*` as the editor knobs (Tier 2)
@@ -66,9 +66,9 @@ export default function SiteNavbarGumroad({ active = "", editorMode = false }) {
         .snav{
           position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:16px;
           padding:14px 32px;
-          background:var(--nav-bg, #FFF6EC);
-          border-bottom:2.5px solid var(--nav-border, #26271c);
-          color:var(--nav-text, #26271c);
+          background:var(--nav-bg, var(--cream, #FFF6EC));
+          border-bottom:2.5px solid var(--nav-border, var(--ink, #26271c));
+          color:var(--nav-text, var(--ink, #26271c));
         }
         /* 3 balanced zones — left & right flex equally so the centre nav is truly
            centred regardless of the logged-in name width. */
@@ -82,13 +82,13 @@ export default function SiteNavbarGumroad({ active = "", editorMode = false }) {
           transition:all .15s ease-out;
         }
         .snav__link:hover{
-          background:var(--nav-hover, #FFFDFA);
-          border-color:var(--nav-border, #26271c);
+          background:var(--nav-hover, var(--paper, #FFFDFA));
+          border-color:var(--nav-border, var(--ink, #26271c));
         }
         .snav__link.is-active{
-          background:var(--nav-accent, #FF9CE9);
-          border-color:var(--nav-border, #26271c);
-          box-shadow:3px 3px 0 var(--nav-border, #26271c);
+          background:var(--nav-accent, var(--pink, #FF9CE9));
+          border-color:var(--nav-border, var(--ink, #26271c));
+          box-shadow:3px 3px 0 var(--nav-border, var(--ink, #26271c));
         }
 
         /* mobile — hide desktop nav + desktop auth, reveal the shared burger
