@@ -10,11 +10,29 @@
 
 import { verdureTheme, hexToRgbTriple } from "./verdurePalettes";
 import { gumroadTheme } from "./gumroadPalettes";
+import { originalTheme } from "./originalPalettes";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
   if (themeSlug.startsWith("verdure")) injectVerdure(doc, themeSlug);
   else if (themeSlug.startsWith("gumroad")) injectGumroad(doc, themeSlug);
+  else if (themeSlug.startsWith("original")) injectOriginal(doc, themeSlug);
+}
+
+function injectOriginal(doc, themeSlug) {
+  const roots = doc.querySelectorAll(".orig-root");
+  if (!roots.length) return;
+  const t = originalTheme(themeSlug);
+  const vars = {
+    "--o-deep": t.deep, "--o-brand": t.brand, "--o-bright": t.bright, "--o-glow": t.glow,
+    "--o-mid": t.mid, "--o-soft": t.soft, "--o-soft2": t.soft2, "--o-line": t.line,
+    "--o-ink": t.ink, "--o-bg": t.bg,
+  };
+  roots.forEach((r) => {
+    r.classList.add("orig-theming");
+    for (const k in vars) r.style.setProperty(k, vars[k]);
+    setTimeout(() => r.classList.remove("orig-theming"), 600);
+  });
 }
 
 function injectGumroad(doc, themeSlug) {

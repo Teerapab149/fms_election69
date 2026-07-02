@@ -9,6 +9,7 @@ import { signIn, useSession } from "next-auth/react";
 import Navbar from './OriginalNavbar';
 import CountdownTimer from './OriginalCountdownTimer';
 import MeetCandidatesCard from './OriginalMeetCandidatesCard';
+import { OriginalBaseStyles } from './OriginalTheme';
 import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
@@ -94,7 +95,8 @@ export default function OriginalHome({ initialData }) {
     if (!mounted) return null;
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-kanit selection:bg-[#8A2680] selection:text-white relative">
+        <div className="orig-root min-h-screen w-full flex flex-col bg-[var(--o-bg)] text-slate-900 font-kanit selection:bg-[var(--o-brand)] selection:text-white relative">
+            <OriginalBaseStyles />
 
             {/* --- Background --- */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -127,9 +129,9 @@ export default function OriginalHome({ initialData }) {
                                         <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-slate-900 drop-shadow-sm">
                                             {elPrefix}
                                         </span>
-                                        <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[#8A2680] to-[#D946EF] drop-shadow-md relative">
+                                        <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[var(--o-brand)] to-[var(--o-glow)] drop-shadow-md relative">
                                             {elNumber}
-                                            <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[#D946EF] rounded-full opacity-30 animate-ping"></span>
+                                            <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[var(--o-glow)] rounded-full opacity-30 animate-ping"></span>
                                         </span>
                                     </h1>
                                 </div>
@@ -137,7 +139,7 @@ export default function OriginalHome({ initialData }) {
                                 <div className="space-y-2 lg:space-y-1">
                                     <div className="space-y-0.5">
                                         <h2 className="text-lg sm:text-2xl lg:text-2xl xl:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
-                                            โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8A2680] to-[#D946EF]">คณะกรรมการบริหาร</span>
+                                            โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--o-brand)] to-[var(--o-glow)]">คณะกรรมการบริหาร</span>
                                         </h2>
                                         <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-500">
                                             สโมสรนักศึกษาคณะวิทยาการจัดการ
@@ -145,7 +147,7 @@ export default function OriginalHome({ initialData }) {
                                     </div>
 
                                     <div className="flex justify-center lg:justify-start pt-2">
-                                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm hover:bg-purple-100 transition-colors cursor-default">
+                                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-[var(--o-soft)] text-[var(--o-brand)] border border-[var(--o-line)] text-xs md:text-sm font-bold shadow-sm hover:bg-[var(--o-soft2)] transition-colors cursor-default">
                                             <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                             ประจำปีการศึกษา {elAcademicYear}
                                         </span>
@@ -161,9 +163,9 @@ export default function OriginalHome({ initialData }) {
                                     let btnConfig = {
                                         isLoginAction: true, // ✅ เพิ่ม flag บอกว่านี่คือปุ่ม Login
                                         text: "เข้าสู่ระบบ / Sign in",
-                                        gradientBase: "from-[#691E61] via-[#8A2680] to-[#C026D3]",
+                                        gradientBase: "from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)]",
                                         gradientHover: "from-[#1e3a8a] via-[#1d4ed8] to-[#3b82f6]",
-                                        glowColor: "from-[#8A2680] to-[#3b82f6]",
+                                        glowColor: "from-[var(--o-brand)] to-[#3b82f6]",
                                         shadow: "shadow-[0_10px_20px_-5px_rgba(138,38,128,0.4)]",
                                         icon: <LogIn className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-1" />,
                                         animation: ""
@@ -326,7 +328,7 @@ export default function OriginalHome({ initialData }) {
                                 <div className="relative z-20 w-full p-1">
                                     {/* Header */}
                                     <div className="flex items-center gap-3 mb-4 px-1">
-                                        <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-purple-100 shadow-sm text-[#8A2680]">
+                                        <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)]">
                                             <TrendingUp className="w-5 h-5" />
                                             <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -346,7 +348,7 @@ export default function OriginalHome({ initialData }) {
                                     {/* Bento Grid */}
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Hero Card */}
-                                        <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#691E61] via-[#8A2680] to-[#C026D3] p-5 pb-7 text-white shadow-xl shadow-purple-900/20 group hover:-translate-y-1 transition-transform duration-500">
+                                        <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)] p-5 pb-7 text-white shadow-xl shadow-purple-900/20 group hover:-translate-y-1 transition-transform duration-500">
                                             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors"></div>
                                             <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl"></div>
                                             <div className="relative z-10 flex flex-col items-center text-center">
@@ -380,13 +382,13 @@ export default function OriginalHome({ initialData }) {
                                         </div>
 
                                         {/* Sub Card: Eligible */}
-                                        <div className="col-span-1 rounded-[24px] bg-white border-2 border-slate-100 p-4 shadow-sm flex flex-col justify-between group hover:border-purple-200 hover:shadow-md transition-all">
+                                        <div className="col-span-1 rounded-[24px] bg-white border-2 border-slate-100 p-4 shadow-sm flex flex-col justify-between group hover:border-[var(--o-line)] hover:shadow-md transition-all">
                                             <div className="flex justify-between items-start mb-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-purple-400">ผู้มีสิทธิรวม</span>
-                                                <Users className="w-4 h-4 text-slate-300 group-hover:text-purple-400 transition-colors" />
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-[var(--o-mid)]">ผู้มีสิทธิรวม</span>
+                                                <Users className="w-4 h-4 text-slate-300 group-hover:text-[var(--o-mid)] transition-colors" />
                                             </div>
                                             <div className="flex items-baseline gap-1">
-                                                <span className="text-2xl font-black text-slate-700 group-hover:text-purple-700 transition-colors tabular-nums leading-none">
+                                                <span className="text-2xl font-black text-slate-700 group-hover:text-[var(--o-deep)] transition-colors tabular-nums leading-none">
                                                     {stats.totalEligible.toLocaleString()}
                                                 </span>
                                                 <span className="text-xs font-bold text-slate-400">คน</span>
@@ -409,7 +411,7 @@ export default function OriginalHome({ initialData }) {
                                     {isMultiImage && (
                                         <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1.5">
                                             {slideshowImages.map((_, index) => (
-                                                <div key={index} className={`h-1.5 rounded-full transition-all duration-500 ${(currentImageIndex % slideshowImages.length) === index ? "w-8 bg-[#8A2680]" : "w-2 bg-slate-300"}`}></div>
+                                                <div key={index} className={`h-1.5 rounded-full transition-all duration-500 ${(currentImageIndex % slideshowImages.length) === index ? "w-8 bg-[var(--o-brand)]" : "w-2 bg-slate-300"}`}></div>
                                             ))}
                                         </div>
                                     )}

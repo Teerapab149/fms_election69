@@ -9,7 +9,7 @@ export default function MeetCandidatesCard() {
     <Link href="/candidates" className="group relative block w-full h-full">
       
       {/* ✨ 1. BACKGROUND GLOW (ลดความฟุ้งลงนิดนึงเพื่อให้ดูกระชับ) */}
-      <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 opacity-60 blur-sm transition-opacity duration-500 group-hover:opacity-100 animate-gradient-xy"></div>
+      <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-r from-[var(--o-brand)] via-pink-500 to-orange-400 opacity-60 blur-sm transition-opacity duration-500 group-hover:opacity-100 animate-gradient-xy"></div>
       
       {/* ✨ 2. MAIN CARD BODY */}
       {/* ปรับ p-4 (จากเดิม p-6) เพื่อลดความสูง */}
@@ -35,12 +35,12 @@ export default function MeetCandidatesCard() {
             <div className="flex flex-col items-start justify-center z-10 flex-1 min-w-0">
                
                {/* Badge */}
-               <div className="inline-flex items-center gap-1.5 mb-1.5 px-2 py-1 rounded-full bg-white/80 border border-purple-100 shadow-sm backdrop-blur-sm">
+               <div className="inline-flex items-center gap-1.5 mb-1.5 px-2 py-1 rounded-full bg-white/80 border border-[var(--o-soft2)] shadow-sm backdrop-blur-sm">
                   <span className="relative flex h-2 w-2">
-                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 opacity-75"></span>
-                     <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
+                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--o-mid)] opacity-75"></span>
+                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--o-brand)]"></span>
                   </span>
-                  <span className="text-[11px] font-extrabold tracking-widest uppercase text-purple-700">
+                  <span className="text-[11px] font-extrabold tracking-widest uppercase text-[var(--o-deep)]">
                      FMS ELECTION 2026
                   </span>
                </div>
@@ -48,13 +48,13 @@ export default function MeetCandidatesCard() {
                {/* Heading (ปรับ text-xl / text-2xl ให้ไม่ใหญ่คับกล่อง) */}
                <h3 className="text-xl sm:text-3xl font-black text-slate-900 leading-[1.1] tracking-tight drop-shadow-sm mb-2">
                   รู้จักผู้สมัคร<br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--o-brand)] to-pink-500">
                      ของคุณหรือยัง?
                   </span>
                </h3>
 
                {/* Button / CTA (Compact Version) */}
-               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-200 transition-all duration-300 group-hover:bg-purple-600 group-hover:shadow-purple-400/50 group-hover:translate-x-1">
+               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-200 transition-all duration-300 group-hover:bg-[var(--o-brand)] group-hover:shadow-purple-400/50 group-hover:translate-x-1">
                   <span className="whitespace-nowrap">ดูรายชื่อพรรค</span>
                   <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                </div>
@@ -65,10 +65,10 @@ export default function MeetCandidatesCard() {
             <div className="relative w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] shrink-0 flex items-center justify-center pointer-events-none">
                
                {/* Card Stack Background */}
-               <div className="absolute rotate-6 w-16 h-20 sm:w-20 sm:h-24 bg-white border border-purple-100 rounded-lg shadow-sm z-0 scale-90 translate-x-2 opacity-60"></div>
+               <div className="absolute rotate-6 w-16 h-20 sm:w-20 sm:h-24 bg-white border border-[var(--o-soft2)] rounded-lg shadow-sm z-0 scale-90 translate-x-2 opacity-60"></div>
                
                {/* Main Icon Container (เล็กลง) */}
-               <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg shadow-purple-300/50 flex items-center justify-center rotate-[-6deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500">
+               <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-[var(--o-mid)] to-pink-500 rounded-xl shadow-lg shadow-purple-300/50 flex items-center justify-center rotate-[-6deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500">
                   <Users className="text-white w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2.5} />
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent rounded-xl opacity-50"></div>
                </div>
@@ -79,7 +79,7 @@ export default function MeetCandidatesCard() {
                </div>
 
                {/* Vote Icon */}
-               <div className="absolute -bottom-1 left-2 bg-white text-purple-600 p-1.5 rounded-lg border border-purple-100 shadow-md -rotate-12 z-20">
+               <div className="absolute -bottom-1 left-2 bg-white text-[var(--o-brand)] p-1.5 rounded-lg border border-[var(--o-soft2)] shadow-md -rotate-12 z-20">
                   <Vote size={12} />
                </div>
 

@@ -113,8 +113,8 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
           icon: <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-[#9D3292]",
           textMain: "text-[#9D3292]",
-          textSub: "text-purple-400",
-          border: "border-purple-100",
+          textSub: "text-[var(--o-mid)]",
+          border: "border-[var(--o-soft2)]",
           shadow: "shadow-[0_2px_10px_rgba(157,50,146,0.15)]"
         };
     }
