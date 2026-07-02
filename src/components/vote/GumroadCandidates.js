@@ -67,7 +67,7 @@ export default function GumroadCandidates({ candidates = [], editorMode = false 
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink); font-family:var(--fb);
           container-type:inline-size; container-name:gc;
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gc-root *{ box-sizing:border-box; } .gc-root a{ text-decoration:none; color:inherit; } .gc-root img{ display:block; max-width:100%; }
 

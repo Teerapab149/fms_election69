@@ -279,7 +279,7 @@ export default function GumroadSingleParty({
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb); container-type:inline-size; container-name:gsp; padding-bottom:96px;
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gsp-root *{ box-sizing:border-box; } .gsp-root a{ text-decoration:none; color:inherit; } .gsp-root img{ display:block; max-width:100%; }
 
@@ -290,8 +290,8 @@ export default function GumroadSingleParty({
         .gsp-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
         .gsp-sticker--lime{ background:var(--lime); } .gsp-sticker--pink{ background:var(--pink); } .gsp-sticker--ink{ background:var(--ink); color:var(--cream); }
         .gsp-sticker--rotate{ transform:rotate(-3deg); }
-        .gsp-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gspPulse 1.6s ease-out infinite; }
-        @keyframes gspPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+        .gsp-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:gspPulse 1.6s ease-out infinite; }
+        @keyframes gspPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
 
         /* HERO */
         .gsp-hero{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); overflow:hidden; margin-bottom:28px; }
@@ -360,7 +360,7 @@ export default function GumroadSingleParty({
         .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); } .gsp-confirm:disabled{ opacity:.45; cursor:not-allowed; }
 
         /* MEMBER PROFILE MODAL */
-        .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:rgba(26,26,26,.62); backdrop-filter:blur(4px); }
+        .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }
         .gsp-modal__card{ position:relative; width:100%; max-width:860px; max-height:92vh; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:10px 10px 0 var(--ink); display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); }
         .gsp-modal__x{ position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
         .gsp-modal__x:hover{ background:var(--coral); }
@@ -375,7 +375,7 @@ export default function GumroadSingleParty({
         .gsp-modal__rows dd{ margin:0; font-size:18px; font-weight:700; word-break:break-word; }
 
         /* CONFIRM VOTE modal */
-        .gsp-confirm-modal{ position:fixed; inset:0; z-index:9600; display:grid; place-items:center; padding:20px; background:rgba(26,26,26,.62); backdrop-filter:blur(4px); }
+        .gsp-confirm-modal{ position:fixed; inset:0; z-index:9600; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }
         .gsp-cm__card{ width:100%; max-width:440px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:10px 10px 0 var(--ink); padding:30px 28px; text-align:center; }
         .gsp-cm__icon{ width:64px; height:64px; margin:0 auto 16px; display:grid; place-items:center; background:var(--yellow); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:var(--sh); transform:rotate(-4deg); font-family:var(--fd); font-size:36px; line-height:1; }
         .gsp-cm__title{ font-family:var(--fd); font-size:26px; text-transform:uppercase; margin:0 0 8px; }

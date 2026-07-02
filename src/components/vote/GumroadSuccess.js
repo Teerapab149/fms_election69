@@ -102,7 +102,7 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink); font-family:var(--fb);
           container-type:inline-size; container-name:gsx;
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gsx-root *{ box-sizing:border-box; } .gsx-root a{ text-decoration:none; color:inherit; } .gsx-root img{ display:block; max-width:100%; }
 
@@ -140,9 +140,9 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
         .gsx-btn--ink{ background:var(--ink); color:var(--cream); }
         .gsx-btn--pink{ background:var(--pink); }
         .gsx-btn--done{ background:var(--lime); cursor:default; box-shadow:var(--sh-sm); }
-        .gsx-btn--locked{ background:#EDE6DC; color:#9A8F80; border-color:#9A8F80; box-shadow:none; cursor:not-allowed; }
-        .gsx-livedot{ width:9px; height:9px; border-radius:999px; background:var(--coral); display:inline-block; box-shadow:0 0 0 0 rgba(255,110,110,.8); animation:gsxPulse 1.6s ease-out infinite; }
-        @keyframes gsxPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 9px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+        .gsx-btn--locked{ background:color-mix(in srgb, var(--ink2) 12%, var(--paper)); color:color-mix(in srgb, var(--ink2) 80%, var(--paper)); border-color:color-mix(in srgb, var(--ink2) 80%, var(--paper)); box-shadow:none; cursor:not-allowed; }
+        .gsx-livedot{ width:9px; height:9px; border-radius:999px; background:var(--coral); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:gsxPulse 1.6s ease-out infinite; }
+        @keyframes gsxPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 9px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
         .gsx-home{ margin-top:4px; font-size:13px; font-weight:700; color:var(--ink2); padding:6px; }
         .gsx-home:hover{ color:var(--ink); }
 

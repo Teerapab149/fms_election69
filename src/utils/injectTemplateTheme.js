@@ -9,7 +9,7 @@
 // generalises — add a family branch per template as its themes land.
 
 import { verdureTheme, hexToRgbTriple } from "../components/home/VerdureChrome";
-import { gumroadTheme } from "../components/home/GumroadTheme";
+import { gumroadTheme } from "./gumroadPalettes";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
@@ -24,6 +24,7 @@ function injectGumroad(doc, themeSlug) {
   const vars = {
     "--ink": t.ink, "--ink2": t.ink2, "--cream": t.cream, "--cream2": t.cream2, "--paper": t.paper,
     "--pink": t.pink, "--lime": t.lime, "--yellow": t.yellow, "--sky": t.sky, "--coral": t.coral,
+    "--gw1": t.gw1, "--gw2": t.gw2, "--gw3": t.gw3,
   };
   roots.forEach((r) => {
     r.classList.add("gum-theming");

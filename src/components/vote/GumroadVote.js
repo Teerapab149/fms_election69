@@ -187,7 +187,7 @@ export default function GumroadVote({
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb); container-type:inline-size; container-name:gv;
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
           padding-bottom:96px;
         }
         .gv-root *{ box-sizing:border-box; } .gv-root a{ text-decoration:none; color:inherit; }
@@ -196,8 +196,8 @@ export default function GumroadVote({
         .gv-head{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:16px; margin-bottom:36px; }
         .gv-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 16px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
         .gv-sticker--pink{ background:var(--pink); }
-        .gv-livedot{ width:9px; height:9px; border-radius:999px; background:#FF6E6E; box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:gvPulse 1.6s ease-out infinite; }
-        @keyframes gvPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+        .gv-livedot{ width:9px; height:9px; border-radius:999px; background:var(--coral, #FF6E6E); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:gvPulse 1.6s ease-out infinite; }
+        @keyframes gvPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
         .gv-title{ font-family:var(--fd); font-size:clamp(40px,8cqw,82px); letter-spacing:-.03em; line-height:.95; margin:0; text-transform:uppercase; }
         .gv-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:0 12px; display:inline-block; box-shadow:var(--sh); }
         .gv-subtitle{ font-size:clamp(14px,2cqw,18px); color:#4A4A4A; font-weight:500; max-width:620px; margin:0; }

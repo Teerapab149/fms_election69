@@ -38,25 +38,32 @@
  */
 
 import { classicTemplate } from "./classic";
+import { GUMROAD_THEMES } from "../../../../../utils/gumroadPalettes";
 
-// Palette constants (mirror styles.css :root, election-appropriate subset).
-const INK = "#1A1A1A"; // near-black border + text
-const INK_2 = "#4A4A4A"; // muted text
-const CREAM = "#FFF1E5"; // page bg
-const PAPER = "#FFFFFF"; // card surface
-const PINK = "#FF90E8"; // signature accent → primary
-const LIME = "#B6FF6E"; // fresh accent → accent
-const YELLOW = "#FFC900";
-const SKY = "#A8E1FF";
-const CORAL = "#FF6E6E";
-const SHADOW_HARD = "5px 5px 0 #1A1A1A";
+// PARITY RULE: every colour below derives from utils/gumroadPalettes.js — the SAME
+// map the layout components (.gum-root vars) and the preview morph read. Before,
+// this file carried its own pre-"ละมุน" hard palette (#FF90E8/#B6FF6E/#FFF1E5), so
+// applied Layer-1 tokens + element configs never matched what the preview showed.
+// The builder also means every colour-theme variant carries its FULL palette into
+// tokens/configs on apply — not just a swatch.
+function buildGumroadTemplate(slug, name, palette) {
+  const INK = palette.ink;      // chunky border + text
+  const INK_2 = palette.ink2;   // muted text
+  const CREAM = palette.cream;  // page bg
+  const PAPER = palette.paper;  // card surface
+  const PINK = palette.pink;    // signature accent → primary
+  const LIME = palette.lime;    // fresh accent → accent
+  const YELLOW = palette.yellow;
+  const SKY = palette.sky;
+  const CORAL = palette.coral;
+  const SHADOW_HARD = `5px 5px 0 ${INK}`;
 
-export const gumroadTemplate = {
+  return {
   ...classicTemplate,
-  id: "gumroad",
-  slug: "gumroad",
-  name: "แอ็กทีฟ พัลส์",
-  description: "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส ชมพู/ไลม์/เหลือง พื้นครีม",
+  id: slug,
+  slug,
+  name,
+  description: "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส พื้นสว่าง เลือกโทนสีได้ 5 แบบ",
   layoutFamily: "gumroad", // real template — own page layouts (poster-mosaic home ฯลฯ)
 
   colorSwatch: {
@@ -312,24 +319,17 @@ export const gumroadTemplate = {
       }
     }
   }
-};
+  };
+}
 
-// ── Colour themes (whole-palette swap) ───────────────────────────────────────
-// Same gumroad layout; the live recolour engine is GumroadTheme.GUMROAD_THEMES
-// (cream/ink/pink/lime/…). Each variant keeps layoutFamily "gumroad" so the chooser
-// groups all four into one card with swatches. colorSwatch.primary = the accent tile
-// colour so the chooser shows the right chip.
-const mkGumroadTheme = (slug, name, primary, secondary) => ({
-  ...gumroadTemplate,
-  id: slug,
-  slug,
-  name,
-  colorSwatch: { primary, secondary, background: CREAM },
-});
-
-export const gumroadCyberTemplate = mkGumroadTheme("gumroad-cyber", "แอ็กทีฟ พัลส์ · ไซเบอร์พังก์", "#00F0FF", "#A370F7");
-export const gumroadRetroTemplate = mkGumroadTheme("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", "#FF9233", "#14D4B4");
-export const gumroadAcidTemplate  = mkGumroadTheme("gumroad-acid",  "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", "#CCFF00", "#FF4A4A");
-export const gumroadPremiumTemplate = mkGumroadTheme("gumroad-premium", "แอ็กทีฟ พัลส์ · ไซเบอร์ป๊อป พรีเมียม", "#FF4B91", "#00D2FF");
+// ── The 5 colour themes — each is a FULL build from its palette (tokens + element
+// configs + page backgrounds all follow), so applying a variant live matches the
+// preview exactly. layoutFamily stays "gumroad" → one chooser card with swatches;
+// colorSwatch derives from the palette (primary = pink slot, secondary = lime slot).
+export const gumroadTemplate        = buildGumroadTemplate("gumroad", "แอ็กทีฟ พัลส์", GUMROAD_THEMES["gumroad"]);
+export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "แอ็กทีฟ พัลส์ · ไซเบอร์พังก์", GUMROAD_THEMES["gumroad-cyber"]);
+export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", GUMROAD_THEMES["gumroad-retro"]);
+export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", GUMROAD_THEMES["gumroad-acid"]);
+export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "แอ็กทีฟ พัลส์ · ไซเบอร์ป๊อป พรีเมียม", GUMROAD_THEMES["gumroad-premium"]);
 
 export default gumroadTemplate;

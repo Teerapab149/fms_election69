@@ -55,8 +55,8 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
         .gh-cd__cell{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; padding:clamp(12px,1.8cqw,20px) 8px; text-align:center; border:2px solid var(--ink, #26271c); }
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }
         .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:var(--ink2, #5c5a4b); margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
-        .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 rgba(255,110,110,.8); animation:ghCdPulse 1.6s ease-out infinite; }
-        @keyframes ghCdPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+        .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:ghCdPulse 1.6s ease-out infinite; }
+        @keyframes ghCdPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
       `}</style>
     </div>
   );

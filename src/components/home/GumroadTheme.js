@@ -14,41 +14,12 @@
 
 import { useState, useEffect } from "react";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
+import { GUMROAD_THEMES, gumroadTheme } from "../../utils/gumroadPalettes";
 
-export const GUMROAD_THEMES = {
-  // Original "ละมุน" warm pop (unchanged base — matches each page's local block)
-  "gumroad": {
-    ink: "#26271c", ink2: "#5c5a4b", cream: "#FFF6EC", cream2: "#FFE9D6", paper: "#FFFDFA",
-    pink: "#FF9CE9", lime: "#C2F47E", yellow: "#FFD24D", sky: "#B6E6FF", coral: "#FF8A8A",
-  },
-  // ไซเบอร์พังก์ — light gray + pitch-black frames + neon cyan / electric violet
-  "gumroad-cyber": {
-    ink: "#000000", ink2: "#3A4658", cream: "#F0F4F8", cream2: "#E2EAF2", paper: "#FFFFFF",
-    pink: "#00F0FF", lime: "#A370F7", yellow: "#7DF9FF", sky: "#00F0FF", coral: "#FF5470",
-  },
-  // เรโทร อาร์เคด (Y2K) — pastel-yellow paper + charcoal frames + tangerine / teal
-  "gumroad-retro": {
-    ink: "#1A1A1A", ink2: "#6B5D3F", cream: "#FFFDF0", cream2: "#FFF3C4", paper: "#FFFFFF",
-    pink: "#FF9233", lime: "#14D4B4", yellow: "#FFD24D", sky: "#14D4B4", coral: "#FF6B6B",
-  },
-  // แอซิด อินดัสเทรียล — stark off-white + pitch black + acid-lime volt / hot coral
-  "gumroad-acid": {
-    ink: "#000000", ink2: "#4A4A4A", cream: "#F6F6F6", cream2: "#EAEAEA", paper: "#FFFFFF",
-    pink: "#CCFF00", lime: "#FF4A4A", yellow: "#CCFF00", sky: "#FF4A4A", coral: "#FF4A4A",
-  },
-  // ไซเบอร์ป๊อป พรีเมียม — vibrant pink hero + cyber-blue / mint bento on premium
-  // off-white, pitch-black brutalist frames (Awwwards editorial, high-contrast).
-  // pink = dominant highlight (hero/active tab/buttons); sky = blue bento card;
-  // lime = mint success/progress; ink = #000 borders + flat shadows + text.
-  "gumroad-premium": {
-    ink: "#000000", ink2: "#55555F", cream: "#FAFAFA", cream2: "#F0EFF3", paper: "#FFFFFF",
-    pink: "#FF4B91", lime: "#00F5A0", yellow: "#FFD84D", sky: "#00D2FF", coral: "#FF5470",
-  },
-};
-
-export function gumroadTheme(slug) {
-  return GUMROAD_THEMES[slug] || GUMROAD_THEMES.gumroad;
-}
+// Palette map + lookup live in utils/gumroadPalettes.js (plain module) so the
+// server-side template definition (builtIn/gumroad.js → Layer-1 tokens + element
+// configs) reads the SAME source. Re-exported here for existing importers.
+export { GUMROAD_THEMES, gumroadTheme };
 
 export function GumroadBaseStyles() {
   // Live = active template (SSR-consistent). On /template-preview the previewed
@@ -66,6 +37,7 @@ export function GumroadBaseStyles() {
       .fms-app.gum-root {
         --ink:${t.ink}; --ink2:${t.ink2}; --cream:${t.cream}; --cream2:${t.cream2}; --paper:${t.paper};
         --pink:${t.pink}; --lime:${t.lime}; --yellow:${t.yellow}; --sky:${t.sky}; --coral:${t.coral};
+        --gw1:${t.gw1}; --gw2:${t.gw2}; --gw3:${t.gw3};
       }
       /* colour-theme morph — only while .gum-theming is on (added for ~0.5s on a
          theme switch), so every surface eases from the old palette to the new. */

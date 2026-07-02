@@ -292,7 +292,7 @@ export default function GumroadResults({
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb); container-type:inline-size; container-name:gr;
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gr-root *{ box-sizing:border-box; } .gr-root a{ text-decoration:none; color:inherit; } .gr-root img{ display:block; max-width:100%; }
         .tabular{ font-variant-numeric:tabular-nums; }
@@ -302,8 +302,8 @@ export default function GumroadResults({
         /* shared stickers (used by race + demo heads) */
         .gr-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); white-space:nowrap; }
         .gr-sticker--ink{ background:var(--ink); color:var(--cream); } .gr-sticker--pink{ background:var(--pink); } .gr-sticker--lime{ background:var(--lime); }
-        .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 rgba(255,110,110,.7); animation:grPulse 1.6s ease-out infinite; }
-        @keyframes grPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+        .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:grPulse 1.6s ease-out infinite; }
+        @keyframes grPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
 
         .gr-waiting{ text-align:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); padding:56px 28px; }
         .gr-waiting__icon{ font-size:48px; } .gr-waiting h2{ font-family:var(--fd); font-size:28px; text-transform:uppercase; margin:12px 0 6px; } .gr-waiting p{ color:var(--ink2); margin:0; }
@@ -317,7 +317,7 @@ export default function GumroadResults({
         .gr-headline__title em{ font-style:normal; color:var(--pink); }
         .gr-headline__sub{ position:relative; z-index:2; font-size:16px; color:rgba(255,241,229,.78); margin:4px 0 0; }
         .gr-lock{ position:relative; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-xl); padding:34px; }
-        .gr-lock::before{ content:""; position:absolute; inset:0; background-image:radial-gradient(circle at 20% 20%, #FFD1F2 0,transparent 50%),radial-gradient(circle at 80% 80%, #DFFFC2 0,transparent 50%); z-index:0; }
+        .gr-lock::before{ content:""; position:absolute; inset:0; background-image:radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--pink) 46%, white) 0,transparent 50%),radial-gradient(circle at 80% 80%, color-mix(in srgb, var(--lime) 50%, white) 0,transparent 50%); z-index:0; }
         .gr-lock > *{ position:relative; z-index:1; }
         .gr-lock__icon{ width:74px; height:74px; background:var(--yellow); border:var(--bw) solid var(--ink); border-radius:20px; box-shadow:var(--sh); display:grid; place-items:center; margin-bottom:18px; transform:rotate(-4deg); }
         .gr-lock h3{ font-family:var(--fd); font-size:clamp(26px,3cqw,38px); margin:4px 0 8px; text-transform:uppercase; }
@@ -337,7 +337,7 @@ export default function GumroadResults({
         .gr-rrow__track{ height:30px; background:var(--cream2); border:2px solid var(--ink); border-radius:999px; overflow:hidden; background-image:repeating-linear-gradient(45deg,transparent 0 10px,rgba(0,0,0,.05) 10px 12px); }
         .gr-rrow__fill{ height:100%; border-right:2px solid var(--ink); background-image:repeating-linear-gradient(45deg,transparent 0 10px,rgba(255,255,255,.4) 10px 12px); transition:width .6s cubic-bezier(.16,1,.3,1); min-width:6px; }
         .gr-rrow__pct{ font-family:var(--fd); font-size:17px; text-align:right; }
-        .gr-race__hidden{ position:absolute; inset:0; display:grid; place-items:center; gap:6px; background:rgba(255,241,229,.84); backdrop-filter:blur(6px); text-align:center; }
+        .gr-race__hidden{ position:absolute; inset:0; display:grid; place-items:center; gap:6px; background:color-mix(in srgb, var(--cream) 84%, transparent); backdrop-filter:blur(6px); text-align:center; }
         .gr-race__hidden div{ font-family:var(--fd); font-size:clamp(22px,4cqw,30px); text-transform:uppercase; letter-spacing:.04em; }
         .gr-race__hidden span{ font-size:14px; font-weight:500; color:var(--ink2); }
 

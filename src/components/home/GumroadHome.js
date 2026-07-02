@@ -281,7 +281,7 @@ export default function GumroadHome({
           container-type:inline-size; container-name:gh;
           /* soft diagonal pastel wash (pink → cream → mint) — replaces the harsh
              radial colour blobs with a gentle gradient. */
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gh-root *{ box-sizing:border-box; }
         .gh-root a{ text-decoration:none; color:inherit; }

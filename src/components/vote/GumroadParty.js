@@ -242,7 +242,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           --fb:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif;
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb); container-type:inline-size; container-name:gp;
-          background:linear-gradient(135deg, #FFE6F2 0%, #FFF7EE 46%, #EEF7DB 100%) fixed;
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gp-root *{ box-sizing:border-box; } .gp-root a{ text-decoration:none; color:inherit; } .gp-root img{ display:block; max-width:100%; }
 
@@ -311,7 +311,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-votebar__btn:hover{ transform:translate(-2px,-2px); }
 
         /* MEMBER PROFILE MODAL */
-        .gp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:rgba(26,26,26,.62); backdrop-filter:blur(4px); }
+        .gp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }
         .gp-modal__card{ position:relative; width:100%; max-width:860px; max-height:92vh; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:10px 10px 0 var(--ink); display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); }
         .gp-modal__x{ position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
         .gp-modal__x:hover{ background:var(--coral); }
@@ -326,7 +326,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-modal__rows dd{ margin:0; font-size:18px; font-weight:700; word-break:break-word; }
 
         /* GALLERY LIGHTBOX */
-        .gp-lb{ position:fixed; inset:0; z-index:9600; display:grid; place-items:center; padding:28px; background:rgba(26,26,26,.82); backdrop-filter:blur(4px); }
+        .gp-lb{ position:fixed; inset:0; z-index:9600; display:grid; place-items:center; padding:28px; background:color-mix(in srgb, var(--ink) 82%, transparent); backdrop-filter:blur(4px); }
         .gp-lb__img{ max-width:min(92vw,1100px); max-height:84vh; object-fit:contain; border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:10px 10px 0 rgba(0,0,0,.5); background:var(--paper); }
         .gp-lb__x{ position:absolute; top:18px; right:18px; width:44px; height:44px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
         .gp-lb__nav{ position:absolute; top:50%; transform:translateY(-50%); width:48px; height:48px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
