@@ -330,5 +330,6 @@ const mkGumroadTheme = (slug, name, primary, secondary) => ({
 export const gumroadCyberTemplate = mkGumroadTheme("gumroad-cyber", "แอ็กทีฟ พัลส์ · ไซเบอร์พังก์", "#00F0FF", "#A370F7");
 export const gumroadRetroTemplate = mkGumroadTheme("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", "#FF9233", "#14D4B4");
 export const gumroadAcidTemplate  = mkGumroadTheme("gumroad-acid",  "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", "#CCFF00", "#FF4A4A");
+export const gumroadPremiumTemplate = mkGumroadTheme("gumroad-premium", "แอ็กทีฟ พัลส์ · ไซเบอร์ป๊อป พรีเมียม", "#FF4B91", "#00D2FF");
 
 export default gumroadTemplate;

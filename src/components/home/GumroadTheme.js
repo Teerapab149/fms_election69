@@ -36,6 +36,14 @@ export const GUMROAD_THEMES = {
     ink: "#000000", ink2: "#4A4A4A", cream: "#F6F6F6", cream2: "#EAEAEA", paper: "#FFFFFF",
     pink: "#CCFF00", lime: "#FF4A4A", yellow: "#CCFF00", sky: "#FF4A4A", coral: "#FF4A4A",
   },
+  // ไซเบอร์ป๊อป พรีเมียม — vibrant pink hero + cyber-blue / mint bento on premium
+  // off-white, pitch-black brutalist frames (Awwwards editorial, high-contrast).
+  // pink = dominant highlight (hero/active tab/buttons); sky = blue bento card;
+  // lime = mint success/progress; ink = #000 borders + flat shadows + text.
+  "gumroad-premium": {
+    ink: "#000000", ink2: "#55555F", cream: "#FAFAFA", cream2: "#F0EFF3", paper: "#FFFFFF",
+    pink: "#FF4B91", lime: "#00F5A0", yellow: "#FFD84D", sky: "#00D2FF", coral: "#FF5470",
+  },
 };
 
 export function gumroadTheme(slug) {
