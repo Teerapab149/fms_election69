@@ -257,7 +257,7 @@ function NavButton({ href, label, isActive }) {
       >
         {label}
       </span>
-      <span className={`absolute inset-0 bg-[var(--o-brand)]/5 rounded-lg transform transition-all duration-300 ease-out origin-center
+      <span className={`absolute inset-0 bg-[var(--o-soft)] rounded-lg transform transition-all duration-300 ease-out origin-center
         ${isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100'}`}>
       </span>
       <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 h-[2px] rounded-full bg-[var(--o-brand)] transition-all duration-300 ease-in-out

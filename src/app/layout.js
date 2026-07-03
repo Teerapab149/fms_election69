@@ -222,7 +222,7 @@ export default async function RootLayout({ children }) {
             uses OriginalHome; the other pages render the classic components via each
             page's else branch — force Kanit across the whole subtree so they match
             (default font-sans is Anuphan now). Only when it is the active template. */}
-        {activeTemplateId === "original" && (
+        {activeTemplateId?.startsWith("original") && (
           <style dangerouslySetInnerHTML={{ __html: ".fms-app,.fms-app .font-sans{font-family:var(--font-kanit),sans-serif !important}" }} />
         )}
 
