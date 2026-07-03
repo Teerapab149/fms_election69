@@ -492,7 +492,7 @@ export default function SinglePartyView({
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
                       {/* Discover: Magenta Gradient */}
-                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[#D946EF] to-[#8B5CF6] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 discover-btn">
+                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 discover-btn">
                         <span className="relative z-10 flex items-center justify-center gap-2 text-xs lg:text-base">
                           Discover Our Vision <ChevronDown className="w-4 h-4" />
                         </span>
@@ -647,7 +647,7 @@ export default function SinglePartyView({
 
                       {/* 1. ANIMATED GLOW BACKDROP (Static Purple/Pink - No Animation) */}
                       {/* Mobile: Toned down (opacity-30, blur-sm) to prevent overcrowding. Desktop: Strong (opacity-70, blur-md) */}
-                      <div className="absolute -inset-[1px] md:-inset-[3px] rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-r from-[#D946EF] to-[#8B5CF6] opacity-30 md:opacity-70 blur-[2px] md:blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg"></div>
+                      <div className="absolute -inset-[1px] md:-inset-[3px] rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] opacity-30 md:opacity-70 blur-[2px] md:blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg"></div>
 
                       {/* 2. CARD SURFACE (White Background) */}
                       <div className="relative h-full bg-white rounded-[1.3rem] md:rounded-[2.3rem] overflow-hidden flex flex-col justify-start transition-all duration-300 bg-clip-padding">
@@ -659,7 +659,7 @@ export default function SinglePartyView({
 
                         {/* Content Container (Matches aspect ratio constraints) */}
                         <div className="relative z-10 p-5 md:p-10 flex flex-col h-full">
-                          <p className="text-[9px] md:text-xs font-bold uppercase tracking-widest text-[#C026D3] mb-2 md:mb-3">
+                          <p className="text-[9px] md:text-xs font-bold uppercase tracking-widest text-[var(--color-accent)] mb-2 md:mb-3">
                             นโยบายที่ {i + 1}
                           </p>
 
@@ -704,7 +704,7 @@ export default function SinglePartyView({
 
                   {/* --- HEADER SECTION (Above Image - White Background) --- */}
                   <div className="relative w-full pt-12 md:pt-24 pb-4 md:pb-8 bg-white flex flex-col items-center justify-center z-20">
-                    <span className="text-[#C026D3] font-bold tracking-[0.2em] uppercase text-xs md:text-lg drop-shadow-sm mb-3">
+                    <span className="text-[var(--color-accent)] font-bold tracking-[0.2em] uppercase text-xs md:text-lg drop-shadow-sm mb-3">
                       {partyName}
                     </span>
                     <h2 className="text-4xl md:text-7xl font-black text-[#1A1A1A] uppercase tracking-tight text-center px-4 leading-none">

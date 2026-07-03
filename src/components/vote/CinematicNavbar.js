@@ -91,7 +91,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
 
     // Helper for text color based on theme
     const getTextColor = () => {
-        if (scrolled) return "text-[#2E1065] hover:text-[#9333EA]";
+        if (scrolled) return "text-[#2E1065] hover:text-[var(--color-accent)]";
         return theme === 'light' ? "text-[#1A1A1A] hover:text-[#6A0DAD]" : "text-white hover:text-white/80";
     };
 
@@ -140,7 +140,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
                             <button
                                 key={item.id}
                                 onClick={() => { onScrollTo(item.id); setMenuOpen(false); }}
-                                className="text-left font-bold text-black/70 hover:text-[#6A0DAD] hover:bg-purple-50 rounded-xl px-4 py-3 text-xs w-full transition-all uppercase tracking-wider flex items-center justify-between group"
+                                className="text-left font-bold text-black/70 hover:text-[#6A0DAD] hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-xl px-4 py-3 text-xs w-full transition-all uppercase tracking-wider flex items-center justify-between group"
                             >
                                 {item.label}
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#6A0DAD] opacity-0 group-hover:opacity-100 transition-opacity" />

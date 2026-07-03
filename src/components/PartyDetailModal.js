@@ -75,7 +75,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
             Header
            ========================================================= */}
                 <div className="shrink-0 bg-white z-20 px-4 pt-10 pb-2 md:pt-12 text-center shadow-sm relative border-b border-slate-50">
-                    <div className="w-16 h-16 md:w-24 md:h-24 mx-auto rounded-full border-4 border-purple-50 overflow-hidden mb-2 shadow-sm bg-white relative z-10 flex items-center justify-center">
+                    <div className="w-16 h-16 md:w-24 md:h-24 mx-auto rounded-full border-4 border-[color-mix(in_srgb,var(--color-primary)_8%,white)] overflow-hidden mb-2 shadow-sm bg-white relative z-10 flex items-center justify-center">
                         {!partyLogoError && party.logoUrl ? (
                             <img
                                 src={getPath(party.logoUrl)}
@@ -86,9 +86,9 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                             <Users className="w-8 h-8 md:w-12 md:h-12 text-slate-300" />
                         )}
                     </div>
-                    <h2 className="text-lg md:text-2xl font-black text-[#8A2680] leading-tight mb-1">{party.name}</h2>
+                    <h2 className="text-lg md:text-2xl font-black text-[var(--color-primary)] leading-tight mb-1">{party.name}</h2>
                     <div className="mb-2">
-                        <span className="bg-purple-100 text-purple-800 text-[10px] md:text-xs font-bold px-3 py-0.5 rounded-full inline-block border border-purple-200">
+                        <span className="bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-purple-800 text-[10px] md:text-xs font-bold px-3 py-0.5 rounded-full inline-block border border-[color-mix(in_srgb,var(--color-primary)_22%,white)]">
                             เบอร์ {party.number}
                         </span>
                     </div>
@@ -106,7 +106,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                                 <MemberImage url={activeMember.imageUrl} />
                             </div>
                             <h2 className="text-xl md:text-2xl font-bold text-slate-800 text-center mb-2">{activeMember.name}</h2>
-                            <p className="text-purple-700 font-bold bg-purple-50 px-5 py-1.5 rounded-full text-sm md:text-base border border-purple-100 shadow-sm text-center">
+                            <p className="text-[var(--color-primary)] font-bold bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] px-5 py-1.5 rounded-full text-sm md:text-base border border-[color-mix(in_srgb,var(--color-primary)_14%,white)] shadow-sm text-center">
                                 {activeMember.position}
                             </p>
                         </div>
@@ -131,11 +131,11 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                                             onClick={() => setActiveMember({ ...m, position: displayPosition })}
                                             className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white cursor-pointer transition border border-transparent hover:border-slate-200 bg-white shadow-sm group"
                                         >
-                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-100 group-hover:border-purple-100 flex items-center justify-center">
+                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-100 group-hover:border-[color-mix(in_srgb,var(--color-primary)_14%,white)] flex items-center justify-center">
                                                 <MemberImage url={m.imageUrl} small />
                                             </div>
                                             <div className="flex-1 min-w-0 text-left">
-                                                <p className="text-xs md:text-sm font-bold text-slate-700 truncate group-hover:text-purple-700 transition-colors">{m.name}</p>
+                                                <p className="text-xs md:text-sm font-bold text-slate-700 truncate group-hover:text-[var(--color-primary)] transition-colors">{m.name}</p>
                                                 <p className="text-[10px] text-slate-400 truncate">{displayPosition}</p>
                                             </div>
                                             <ChevronLeft className="w-4 h-4 rotate-180 text-slate-300 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
@@ -158,7 +158,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                 {/* Footer Button */}
                 {showVoteButton && (
                     <div className="p-4 border-t border-slate-100 shrink-0 bg-white z-30">
-                        <button onClick={onConfirm} className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold text-base hover:bg-purple-700 transition shadow-lg shadow-purple-200">โหวตพรรคนี้</button>
+                        <button onClick={onConfirm} className="w-full py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold text-base hover:bg-[var(--color-primary)] transition shadow-lg shadow-purple-200">โหวตพรรคนี้</button>
                     </div>
                 )}
 

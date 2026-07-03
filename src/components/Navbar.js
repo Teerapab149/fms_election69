@@ -103,13 +103,13 @@ export default function Navbar() {
             className={`
               group relative flex items-center gap-2 px-5 py-2 rounded-full ml-2 transition-all duration-300
               ${pathname.startsWith('/candidates') || pathname.startsWith('/party')
-                ? 'bg-gradient-to-r from-purple-100 to-pink-50 text-[var(--color-primary,#8A2680)] shadow-inner font-bold'
-                : 'bg-white hover:bg-purple-50 text-slate-600 hover:text-[var(--color-primary,#8A2680)] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5'
+                ? 'bg-gradient-to-r from-[color-mix(in_srgb,var(--color-primary)_12%,white)] to-pink-50 text-[var(--color-primary,#8A2680)] shadow-inner font-bold'
+                : 'bg-white hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] text-slate-600 hover:text-[var(--color-primary,#8A2680)] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5'
               }
             `}
           >
             <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[var(--color-primary,#8A2680)] via-purple-400 to-pink-400 opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
-              <div className="w-full h-full rounded-full bg-white group-hover:bg-purple-50 transition-colors"></div>
+              <div className="w-full h-full rounded-full bg-white group-hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] transition-colors"></div>
             </div>
 
             <Users
@@ -170,7 +170,7 @@ export default function Navbar() {
 
         {/* ================= Hamburger Button ================= */}
         <button
-          className="lg:hidden p-2 text-[var(--color-primary,#8A2680)] rounded-xl hover:bg-purple-50 transition-colors focus:outline-none"
+          className="lg:hidden p-2 text-[var(--color-primary,#8A2680)] rounded-xl hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] transition-colors focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? (
@@ -191,7 +191,7 @@ export default function Navbar() {
         <div className="flex flex-col p-4 space-y-2 pb-6">
 
           {isLoggedIn && (
-            <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-2xl mb-4 border border-purple-100 flex items-center gap-4">
+            <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-2xl mb-4 border border-[color-mix(in_srgb,var(--color-primary)_14%,white)] flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-[var(--color-primary,#8A2680)] flex items-center justify-center text-white shadow-sm border border-grey-200">
                 <User size={24} />
               </div>
@@ -264,7 +264,7 @@ function MobileNavLink({ href, label, onClick, isActive }) {
       className={`
         relative flex items-center w-full px-5 py-3 text-sm font-bold transition-all duration-200 rounded-xl overflow-hidden
         ${isActive
-          ? 'bg-purple-50 text-[var(--color-primary,#8A2680)]'
+          ? 'bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] text-[var(--color-primary,#8A2680)]'
           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         }
       `}

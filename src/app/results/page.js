@@ -373,7 +373,7 @@ export default function ResultsPage() {
       ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
       : isVerdure
       ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
-      : "flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-purple-100 overflow-x-hidden relative"}>
+      : "flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}>
       <PageThemeOverrides page="results" />
 
       {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
@@ -441,14 +441,14 @@ export default function ResultsPage() {
           <>
             {/* Header (จากโค้ดเดิมของคุณ) */}
             <div className="text-center mb-8 lg:mb-16 mt-4 animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8A2680]/5 text-[#8A2680] text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-[#8A2680]/10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_5%,transparent)] text-[var(--color-primary)] text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8A2680]"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-primary)]"></span>
                 </span>
                 {finalStatus === "ENDED" ? "FINAL RESULT" : "REAL-TIME UPDATE"}
               </div>
-              <h1 className="text-2xl md:text-5xl font-black text-[#8A2680] mb-2 md:mb-3 tracking-tight">
+              <h1 className="text-2xl md:text-5xl font-black text-[var(--color-primary)] mb-2 md:mb-3 tracking-tight">
                 ผลการเลือกตั้ง {globalConfig.electionName}
               </h1>
               <p className="text-slate-500 text-xs md:text-base max-w-2xl mx-auto px-4">
@@ -471,10 +471,10 @@ export default function ResultsPage() {
                     isRevealed ? (
                       <><Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-yellow-500" /> สรุปผลการเลือกตั้ง (Official Results)</>
                     ) : (
-                      <div className="flex items-center gap-2 text-[#8A2680] font-bold">
+                      <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                         <div className="relative flex h-3 w-3 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                         </div>
                         <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
                           กำลังนับคะเเนนเสียงชาว FMS
@@ -482,10 +482,10 @@ export default function ResultsPage() {
                       </div>
                     )
                   ) : finalStatus === "ONGOING" ? (
-                    <div className="flex items-center gap-2 text-[#8A2680] font-bold">
+                    <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                       <div className="relative flex h-3 w-3 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                       </div>
                       <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
                         {isRevealed ? "📊 สรุปผลคะแนนปัจจุบัน (Real-time Results)" : "ขณะนี้กำลังนับคะแนนเสียงชาว FMS"}
@@ -499,20 +499,20 @@ export default function ResultsPage() {
                 {!isNotStarted && finalStatus !== "ENDED" && (
                   <div className="flex items-center gap-2 text-xs lg:text-base font-bold px-4 py-2 rounded-full border shadow-sm bg-slate-100 text-slate-600 border-slate-200">
                     <span>{electionStatus === "WAITING" ? "⏳ เริ่มใน:" : "🔴 ปิดใน:"}</span>
-                    <span className="font-mono text-[#8A2680] text-sm lg:text-lg">{mounted ? countdownText : "..."}</span>
+                    <span className="font-mono text-[var(--color-primary)] text-sm lg:text-lg">{mounted ? countdownText : "..."}</span>
                   </div>
                 )}
               </div>
 
               {finalStatus === "PRE_CAMPAIGN" ? (
                 <div className="flex flex-col items-center justify-center py-20 lg:py-32 bg-white/50 border border-dashed border-slate-300 rounded-[2rem] text-center px-4 animate-in fade-in zoom-in-95 duration-500">
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-purple-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-purple-100 animate-bounce-gentle">
-                    <Megaphone className="w-10 h-10 lg:w-12 lg:h-12 text-[#8A2680]" />
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-full flex items-center justify-center mb-6 shadow-sm border border-[color-mix(in_srgb,var(--color-primary)_14%,white)] animate-bounce-gentle">
+                    <Megaphone className="w-10 h-10 lg:w-12 lg:h-12 text-[var(--color-primary)]" />
                   </div>
                   <h3 className="text-xl lg:text-3xl font-black text-slate-700 mb-2">ยังไม่เปิดเผยรายชื่อผู้สมัคร</h3>
                   <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm lg:text-base"> ข้อมูลผู้สมัครจะเปิดเผยอย่างเป็นทางการในช่วงหาเสียงเลือกตั้ง <br className="hidden md:block" /> (ประมาณ 2 สัปดาห์ก่อนวันเลือกตั้งจริง) </p>
                   <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm text-xs lg:text-sm font-bold text-slate-600">
-                    <Calendar size={16} className="text-[#8A2680]" />
+                    <Calendar size={16} className="text-[var(--color-primary)]" />
                     <span>เปิดเผยข้อมูล: {campaignDateString}</span>
                   </div>
                 </div>
@@ -551,8 +551,8 @@ export default function ResultsPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"></div>
           <div className="relative bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl animate-in fade-in zoom-in duration-300 text-center">
-            <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-purple-50/50">
-              <Lock className="w-10 h-10 text-[#8A2680]" />
+            <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-purple-50/50">
+              <Lock className="w-10 h-10 text-[var(--color-primary)]" />
             </div>
             <h2 className="text-2xl font-black text-slate-800 mb-3">ข้อมูลถูกล็อกไว้</h2>
             <p className="text-slate-500 mb-8 leading-relaxed">
@@ -563,7 +563,7 @@ export default function ResultsPage() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push(modalType === "VOTE" ? "/vote" : "/success")}
-                className="w-full py-4 bg-[#8A2680] hover:bg-[#701e68] text-white rounded-2xl font-bold text-lg shadow-lg shadow-purple-200 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-4 bg-[var(--color-primary)] hover:bg-[#701e68] text-white rounded-2xl font-bold text-lg shadow-lg shadow-purple-200 transition-all flex items-center justify-center gap-2 group"
               >
                 {modalType === "VOTE" ? "ไปหน้าลงคะแนน" : "ไปทำแบบประเมิน"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />

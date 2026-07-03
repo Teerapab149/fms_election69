@@ -80,7 +80,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
         
         ${isWinner
           ? 'border-yellow-400 ring-2 ring-yellow-400/20 shadow-yellow-100 z-10'
-          : 'hover:bg-slate-50 lg:hover:border-purple-200'
+          : 'hover:bg-slate-50 lg:hover:border-[color-mix(in_srgb,var(--color-primary)_22%,white)]'
         }
       `}
     >
@@ -153,7 +153,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
                   className={`h-full rounded-full transition-all duration-1000 ease-out 
                         ${isWinner
                       ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
-                      : (isVoteNo ? 'bg-orange-400' : isDisapprove ? 'bg-red-500' : 'bg-gradient-to-r from-purple-400 to-[var(--color-primary,#8A2680)]')
+                      : (isVoteNo ? 'bg-orange-400' : isDisapprove ? 'bg-red-500' : 'bg-gradient-to-r from-[color-mix(in_srgb,var(--color-primary)_55%,white)] to-[var(--color-primary,#8A2680)]')
                     }`}
                   style={{ width: `${percentage}%` }}
                 />
