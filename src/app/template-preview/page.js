@@ -16,11 +16,12 @@
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
 // because the layout components are pure + we pass mock props.
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MotionConfig } from 'framer-motion';
 import { Palette, Check } from 'lucide-react';
 import { getPath } from '../../utils/basePath';
+import { hrefToDest } from '../../utils/previewNav';
 import TemplatePreviewWrapper from '../../components/admin/TemplatePreviewWrapper';
 
 import HomeRenderer from '../../components/home/HomeRenderer';
@@ -67,6 +68,11 @@ function PreviewBody() {
   const page = sp.get('page') || 'home';
   const variant = sp.get('variant') || '';
   const chrome = sp.get('chrome') === '1';
+  // interact=1 opts the NON-chrome render into full interactivity (clickable cards,
+  // party selection, simulated page flow). ABSENT → byte-identical static behaviour
+  // (the chooser slides never send it). The chrome wrapper injects it onto its inner
+  // iframe so the full-screen preview is interactive wherever it's used.
+  const interact = sp.get('interact') === '1';
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
 
   // Colour themes within this layout family (e.g. verdure terracotta/honey/teal/
@@ -80,11 +86,73 @@ function PreviewBody() {
   const repSlug = familyThemes[0]?.slug || slug;
   const [themeSlug, setThemeSlug] = useState(slug);
 
-  if (chrome) {
-    // Carry the chosen colour theme across page navigation (deep-links keep it).
-    const goto = (p, vr) => {
-      window.location.href = getPath(`/template-preview?slug=${themeSlug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
+  // ── interact-mode local state (unused in static mode; hooks stay unconditional so
+  //    ordering is identical in both branches) ─────────────────────────────────────
+  const [selectedPartyId, setSelectedPartyId] = useState(null);
+  const [partyNumber, setPartyNumber] = useState(PARTIES[0]?.number ?? 1);
+
+  // navTo — simulated in-preview navigation (interact mode). Inside the chrome
+  // iframe (window.parent !== window) we can't drive the outer window directly, so
+  // we postMessage the chrome doc's listener. Standalone (direct deep link) we
+  // self-navigate, preserving slug + variant + interact.
+  const navTo = useCallback((p, variantOrPartyNumber) => {
+    if (p === 'party' && variantOrPartyNumber != null) setPartyNumber(variantOrPartyNumber);
+    if (typeof window !== 'undefined' && window.parent !== window) {
+      const vr = p === 'party' ? undefined : variantOrPartyNumber;
+      window.parent.postMessage({ type: 'tp-nav', page: p, variant: vr }, window.location.origin);
+      return;
+    }
+    const isParty = p === 'party';
+    const vr = isParty ? '' : (variantOrPartyNumber || '');
+    const id = isParty && variantOrPartyNumber != null ? `&id=${variantOrPartyNumber}` : '';
+    window.location.href = getPath(`/template-preview?slug=${slug}&page=${p}${vr ? `&variant=${vr}` : ''}${id}&interact=1`);
+  }, [slug]);
+
+  // one seam catches the dock + every in-page <a> nav across all families (same
+  // logic as the playground, via the shared hrefToDest util).
+  const onClickCapture = useCallback((e) => {
+    const a = e.target?.closest?.('a');
+    if (!a) return;
+    const rawHref = a.getAttribute('href');
+    if (!rawHref || rawHref.startsWith('#') || rawHref.startsWith('mailto:')) return;
+    const dest = hrefToDest(a.href);
+    if (!dest) return; // external — allow normal navigation
+    e.preventDefault();
+    navTo(dest.page, dest.page === 'party' ? (dest.partyNumber ?? partyNumber) : undefined);
+  }, [navTo, partyNumber]);
+
+  // Carry the chosen colour theme across page navigation (deep-links keep it).
+  // Defined for BOTH branches: the chrome bar calls it directly; the message
+  // listener below routes iframe postMessage nav through it too. Kept as a
+  // useCallback so the listener effect has a stable, current reference.
+  const goto = useCallback((p, vr) => {
+    window.location.href = getPath(`/template-preview?slug=${themeSlug}&page=${p}${vr ? `&variant=${vr}` : ''}&chrome=1`);
+  }, [themeSlug]);
+
+  // CHROME only: the interactive inner iframe reports simulated navigation via
+  // postMessage (it can't drive the outer window directly). On {type:'tp-nav'}
+  // from the SAME origin, re-point the wrapper by navigating the outer window —
+  // goto keeps themeSlug, so the chosen colour theme survives the flow.
+  //  • vote    → default 'multi' unless we're already on the single variant
+  //  • results → keep the current variant, else 'revealed'
+  //  • party   → no variant
+  useEffect(() => {
+    if (!chrome) return undefined;
+    const onMsg = (e) => {
+      if (e.origin !== window.location.origin) return;
+      const d = e.data;
+      if (!d || d.type !== 'tp-nav') return;
+      let vr;
+      if (d.page === 'vote') vr = variant === 'single' ? 'single' : 'multi';
+      else if (d.page === 'results') vr = variant || 'revealed';
+      else vr = '';
+      goto(d.page, vr);
     };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [chrome, variant, goto]);
+
+  if (chrome) {
     const exit = () => {
       const selector = getPath('/admin?tab=pageDesign');
       // Opened in its own tab via the chooser's "เปิดเต็มจอ" (window.open) → it has an
@@ -101,8 +169,9 @@ function PreviewBody() {
       window.location.href = selector;
     };
     // src stays on the stable family slug so a swatch click never reloads the iframe
-    // (the theme morphs in place); the wrapper injects `themeSlug` onto it.
-    const raw = getPath(`/template-preview?slug=${repSlug}&page=${page}${variant ? `&variant=${variant}` : ''}`);
+    // (the theme morphs in place); the wrapper injects `themeSlug` onto it. &interact=1
+    // makes the full-screen preview clickable everywhere the chrome is used.
+    const raw = getPath(`/template-preview?slug=${repSlug}&page=${page}${variant ? `&variant=${variant}` : ''}&interact=1`);
     // NOTE: no PreviewMotionDamp here — this is the OUTER chrome doc; its loading
     // spinner must keep spinning. The damping lives in the iframe content below.
     return (
@@ -117,12 +186,105 @@ function PreviewBody() {
     );
   }
 
+  // interact mode → clickable render (party selection, simulated flow) wrapped in the
+  // click-interception seam + auth-safety CSS. Static mode → byte-identical original.
   return (
     <MotionConfig reducedMotion="always">
       <PreviewMotionDamp />
-      {renderPage()}
+      {interact ? (
+        <>
+          <PreviewInteractAuthGuard />
+          <div onClickCapture={onClickCapture}>{renderInteractive()}</div>
+        </>
+      ) : (
+        renderPage()
+      )}
     </MotionConfig>
   );
+
+  // ── INTERACTIVE render (interact=1 only) ─────────────────────────────────────────
+  // 3 distinct families render the REAL layout with editorMode={false} + real
+  // handlers; HOME goes through HomeRenderer WITHOUT editorMode + onSignIn (the merged
+  // seam). Classic/original inner pages keep their static EditorPreview renders for
+  // now (out of scope — flow still demonstrable: original home login → vote page).
+  // eslint-disable-next-line no-inner-declarations
+  function renderInteractive() {
+    if (page === 'home') {
+      return (
+        <HomeRenderer
+          onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
+          resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
+          initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: PARTIES }}
+        />
+      );
+    }
+
+    if (family === 'studio-dark' || family === 'gumroad' || family === 'verdure') {
+      const single = variant === 'single';
+      const revealed = variant === 'revealed';
+      const voteParties = single ? [PARTIES[0]] : PARTIES;
+      const byFamily = (studio, gumroad, verdure) =>
+        family === 'studio-dark' ? studio : family === 'verdure' ? verdure : gumroad;
+      const tpl = BUILT_IN_TEMPLATES[slug] || {};
+      const pageBg = tpl.pages?.[page]?.backgroundColor || tpl.theme?.colors?.background || tpl.theme?.background || '#ffffff';
+      const frame = (el) => <div className="min-h-screen w-full" style={{ background: pageBg }}>{el}</div>;
+      const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+
+      if (page === 'candidates') {
+        const C = byFamily(StudioDarkCandidates, GumroadCandidates, VerdureCandidates);
+        return frame(<C candidates={PARTIES} editorMode={false} />);
+      }
+      if (page === 'party') {
+        const P = byFamily(StudioDarkParty, GumroadParty, VerdureParty);
+        return frame(<P party={partyForDetail} galleryImages={[]} showBackToVote />);
+      }
+      if (page === 'vote') {
+        const V = byFamily(StudioDarkVote, GumroadVote, VerdureVote);
+        return frame(
+          <V
+            regularParties={voteParties}
+            specialOptions={SPECIAL}
+            selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId}
+            onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+            isSingleParty={single}
+            user={DUMMY_USER}
+            onConfirm={() => navTo('success')}
+            isSubmitting={false}
+            editorMode={false}
+          />
+        );
+      }
+      if (page === 'results') {
+        const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
+        return frame(
+          <R
+            candidates={resultsCandidates(revealed)}
+            totalVotes={revealed ? 625 : 0}
+            demographics={DEMOGRAPHICS}
+            finalStatus={revealed ? 'ENDED' : 'WAITING'}
+            isRevealed={revealed}
+            isNotStarted={!revealed}
+            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            onSelectParty={(p) => navTo('party', p?.number ?? 1)}
+            editorMode={false}
+          />
+        );
+      }
+      if (page === 'success') {
+        const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
+        return frame(<S user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />);
+      }
+      if (page === 'closed') {
+        const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
+        return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />);
+      }
+    }
+
+    // classic/original inner pages: keep the static EditorPreview renders (out of
+    // scope). The click seam still keeps their in-page links contained.
+    return renderPage();
+  }
 
   // eslint-disable-next-line no-inner-declarations
   function renderPage() {
@@ -259,6 +421,20 @@ function PreviewMotionDamp() {
   return (
     <style jsx global>{`
       *, *::before, *::after { animation-iteration-count: 1 !important; }
+    `}</style>
+  );
+}
+
+// interact mode ONLY: hide the DANGEROUS sign-out affordances (they would log the
+// real admin out — no seam, no session here anyway). Sign-IN CTAs stay visible;
+// they are simulated via onSignIn. Same selectors the playground uses (all 3
+// families share aria-label="ออกจากระบบ").
+function PreviewInteractAuthGuard() {
+  return (
+    <style jsx global>{`
+      [aria-label="ออกจากระบบ"],
+      .vd-user__out,
+      .sd-rail__logout-btn { display: none !important; }
     `}</style>
   );
 }
