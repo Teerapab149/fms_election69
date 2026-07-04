@@ -152,11 +152,12 @@ export default function ClosedPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-[var(--color-bg)] flex flex-col font-sans relative overflow-hidden">
             <PageThemeOverrides page="closed" />
-            <Navbar />
+            <div className="absolute inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '44px 44px' }}></div>
+            <div className="relative z-10"><Navbar /></div>
 
-            <main className="flex-grow flex flex-col items-center justify-center p-4">
+            <main className="relative z-10 flex-grow flex flex-col items-center justify-center p-4">
                 <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-slate-100 max-w-lg w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
 
                     <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">

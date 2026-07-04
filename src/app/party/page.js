@@ -686,10 +686,11 @@ function PartyContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden relative">
+    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[var(--color-bg)] overflow-x-hidden relative">
+      <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '44px 44px' }}></div>
       <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
 
-      <main className="flex-1 flex flex-col pt-16 xl:pt-16">
+      <main className="relative z-10 flex-1 flex flex-col pt-16 xl:pt-16">
 
         {/* 1. Banner */}
         <PartyBanner
@@ -765,7 +766,7 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
   const theme = PARTY_THEMES[party.id] || PARTY_THEMES[party.number] || DEFAULT_THEME;
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden relative">
+    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[var(--color-bg)] overflow-x-hidden relative">
       <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
       <main className="flex-1 flex flex-col pt-16 xl:pt-16">
         <PartyBanner party={party} theme={theme} galleryImages={galleryImages} onOpenLightbox={(img) => setLightboxImage(img || galleryImages[0])} />

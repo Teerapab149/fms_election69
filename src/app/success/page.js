@@ -242,7 +242,7 @@ export default function SuccessPage({
   // Render 
   // =========================================================
   return (
-    <div className={(isGumroad || isStudio || isVerdure) ? "relative" : "min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-slate-50"}>
+    <div className={(isGumroad || isStudio || isVerdure) ? "relative" : "min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-[var(--color-bg)]"}>
       {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* VERDURE layout (own glass-terrarium chrome); the form + alert modals below stay shared */}
@@ -278,8 +278,8 @@ export default function SuccessPage({
       {/* Background Grid */}
       {!isGumroad && !isStudio && !isVerdure && (
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808015_1px,transparent_1px),linear-gradient(to_bottom,#80808015_1px,transparent_1px)] bg-[size:40px_40px] md:bg-[size:60px_60px]"></div>
-        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-purple-400 opacity-20 blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '48px 48px' }}></div>
+        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-[var(--color-primary)] opacity-20 blur-[80px] md:blur-[120px]"></div>
         <div className="absolute right-0 bottom-0 -z-10 h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-emerald-400 opacity-20 blur-[80px] md:blur-[120px]"></div>
       </div>
       )}
@@ -287,7 +287,7 @@ export default function SuccessPage({
       {!isGumroad && !isStudio && !isVerdure && (isAuthorized || editorMode) && (
         <div className="w-full max-w-lg animate-fade-in-up relative z-10">
           <div className="bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-primary)] via-purple-500 to-pink-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[color-mix(in_srgb,var(--color-primary)_60%,white)]"></div>
 
             <div className="flex flex-col items-center text-center">
               {isSuccessMessageVisible && (
@@ -324,12 +324,12 @@ export default function SuccessPage({
               {isGoogleFormLinkVisible && (
                 <>
                   {/* Box: Announcement */}
-                  <div className="w-full bg-gradient-to-br from-purple-50/80 to-white border border-purple-100/80 rounded-2xl p-5 shadow-[0_2px_15px_rgba(138,38,128,0.05)] relative overflow-hidden text-left pb-6 mb-4">
-                    <div className="absolute top-0 right-0 -mr-4 -mt-4 text-purple-100/50 opacity-20 pointer-events-none">
+                  <div className="w-full bg-gradient-to-br from-[color-mix(in_srgb,var(--color-primary)_8%,white)] to-white border border-[color-mix(in_srgb,var(--color-primary)_15%,white)] rounded-2xl p-5 shadow-[0_2px_15px_color-mix(in_srgb,var(--color-primary)_6%,transparent)] relative overflow-hidden text-left pb-6 mb-4">
+                    <div className="absolute top-0 right-0 -mr-4 -mt-4 text-[color-mix(in_srgb,var(--color-primary)_16%,white)] opacity-20 pointer-events-none">
                       <Megaphone size={100} />
                     </div>
                     <div className="flex gap-4 items-start relative z-10">
-                      <div className="bg-white p-3 rounded-2xl text-[var(--color-primary)] shadow-sm ring-1 ring-purple-50 shrink-0 mt-1">
+                      <div className="bg-white p-3 rounded-2xl text-[var(--color-primary)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--color-primary)_10%,white)] shrink-0 mt-1">
                         <Megaphone size={24} strokeWidth={2.5} />
                       </div>
                       <div className="space-y-3 flex-1 min-w-0">
@@ -338,7 +338,7 @@ export default function SuccessPage({
                           <p className="text-slate-500 text-xs md:text-sm mt-1">กรุณาทำแบบประเมินให้ครบถ้วน</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[var(--color-primary)] text-xs font-bold border border-purple-200 whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)] text-xs font-bold border border-[color-mix(in_srgb,var(--color-primary)_25%,white)] whitespace-nowrap">
                             <CheckCircle2 size={12} /><span>ชั่วโมงกิจกรรม 2 ชม.</span>
                           </div>
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
@@ -347,10 +347,10 @@ export default function SuccessPage({
                         </div>
                       </div>
                     </div>
-                    <div className="relative z-10 mt-4 pt-3 border-t border-purple-100/60">
+                    <div className="relative z-10 mt-4 pt-3 border-t border-[color-mix(in_srgb,var(--color-primary)_15%,white)]">
                       <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
                         <span className="shrink-0">🔓</span>
-                        <span className="truncate">และ <span className="font-semibold text-[var(--color-primary)] underline decoration-purple-200 decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span></span>
+                        <span className="truncate">และ <span className="font-semibold text-[var(--color-primary)] underline decoration-[color-mix(in_srgb,var(--color-primary)_25%,white)] decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span></span>
                       </p>
                     </div>
                   </div>
@@ -376,8 +376,8 @@ export default function SuccessPage({
                         ) : (
                           <>
                             <span className="relative flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-primary)] opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                             </span>
                             <span>{cfg('success-form-btn').text || 'เปิดแบบประเมิน (คลิกที่นี่)'}</span>
                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -391,7 +391,7 @@ export default function SuccessPage({
                         onClick={() => { if (isUnlocked && !editorMode) router.push('/results'); }}
                         disabled={!isUnlocked && !editorMode}
                         className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base border transition-all duration-500 flex items-center justify-center gap-2
-                          ${(isUnlocked || editorMode) ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-purple-200 hover:bg-[#701e68] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
+                          ${(isUnlocked || editorMode) ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
                       >
                         {(isUnlocked || editorMode) ? (
                           <>ไปดูผลคะแนน (Results) <BarChart3 size={18} /></>
@@ -466,7 +466,7 @@ export default function SuccessPage({
             <div className="p-4 border-t border-gray-100 bg-white">
               <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
                 <div className="w-full">
-                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[var(--color-primary)] hover:bg-purple-50'}`}>
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,white)]'}`}>
                     <div className="relative flex items-center justify-center mt-0.5">
                       <input
                         type="checkbox"
@@ -494,7 +494,7 @@ export default function SuccessPage({
                   className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg
                     ${(!canConfirm || !isChecked)
                       ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                      : 'bg-[var(--color-primary)] text-white hover:bg-[#701e68] hover:shadow-purple-200 hover:-translate-y-0.5'
+                      : 'bg-[var(--color-primary)] text-white hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] hover:shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] hover:-translate-y-0.5'
                     }`}
                 >
                   {timeLeft > 0 ? (

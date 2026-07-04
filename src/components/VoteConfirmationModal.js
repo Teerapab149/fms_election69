@@ -18,12 +18,12 @@ export default function VoteConfirmationModal({
   // 🎨 ตั้งค่า Default Theme (สำหรับกรณีเลือกพรรค - Approve)
   let modalTheme = {
     color: 'text-[var(--color-primary)]',           // สีข้อความหลัก
-    bg: 'bg-purple-50',                // สีพื้นหลังการ์ด
-    border: 'border-purple-200',       // สีขอบการ์ด
+    bg: 'bg-[color-mix(in_srgb,var(--color-primary)_5%,white)]',                // สีพื้นหลังการ์ด
+    border: 'border-[color-mix(in_srgb,var(--color-primary)_22%,white)]',       // สีขอบการ์ด
     titleColor: 'text-slate-800',      // สีชื่อพรรค
-    subTitleColor: 'text-purple-600',  // สีข้อความ "ท่านเลือก"
-    iconBg: 'bg-purple-100',           // สีพื้นหลังไอคอนด้านบน
-    confirmBtn: 'bg-gradient-to-r from-[var(--color-primary)] to-[#701e68] shadow-purple-200', // ปุ่มยืนยัน
+    subTitleColor: 'text-[var(--color-primary)]',  // สีข้อความ "ท่านเลือก"
+    iconBg: 'bg-[color-mix(in_srgb,var(--color-primary)_12%,white)]',           // สีพื้นหลังไอคอนด้านบน
+    confirmBtn: 'bg-gradient-to-r from-[var(--color-primary)] to-[color-mix(in_srgb,var(--color-primary)_85%,black)] shadow-[color-mix(in_srgb,var(--color-primary)_25%,transparent)]', // ปุ่มยืนยัน
     label: party?.name,                // ชื่อที่แสดง
     subLabel: `เบอร์ ${party?.number}`, // ข้อความรอง
     // ไอคอนในการ์ด

@@ -20,17 +20,49 @@ export function injectTemplateTheme(doc, themeSlug) {
 }
 
 function injectOriginal(doc, themeSlug) {
-  const roots = doc.querySelectorAll(".orig-root");
-  if (!roots.length) return;
   const t = originalTheme(themeSlug);
-  const vars = {
+  // 1) Home surface — OriginalHome reads the --o-* ramp on .orig-root.
+  const roots = doc.querySelectorAll(".orig-root");
+  const oVars = {
     "--o-deep": t.deep, "--o-brand": t.brand, "--o-bright": t.bright, "--o-glow": t.glow,
     "--o-mid": t.mid, "--o-soft": t.soft, "--o-soft2": t.soft2, "--o-line": t.line,
     "--o-ink": t.ink, "--o-bg": t.bg,
   };
   roots.forEach((r) => {
     r.classList.add("orig-theming");
-    for (const k in vars) r.style.setProperty(k, vars[k]);
+    for (const k in oVars) r.style.setProperty(k, oVars[k]);
+    setTimeout(() => r.classList.remove("orig-theming"), 600);
+  });
+  // 2) Inner pages — the classic layout has NO .orig-root; it reads Layer-1
+  // --color-* tokens SSR'd on .fms-app from the APPLIED template, so a previewed
+  // slug must override them inline here (inline beats the SSR <style>). Without
+  // this branch every non-home slide silently ignored the swatch (the original-
+  // family preview≠live bug). Mapping MUST equal buildOriginalTemplate in
+  // builtIn/original.js — parity rule.
+  const apps = doc.querySelectorAll(".fms-app");
+  if (!apps.length) return;
+  // .orig-theming's ease rule lives in OriginalBaseStyles (rendered on home
+  // only) — carry an .fms-app-scoped copy into the iframe so inner pages morph
+  // smoothly instead of snapping.
+  if (!doc.getElementById("orig-morph-style")) {
+    const st = doc.createElement("style");
+    st.id = "orig-morph-style";
+    st.textContent =
+      ".fms-app.orig-theming, .fms-app.orig-theming *, .fms-app.orig-theming *::before, .fms-app.orig-theming *::after { transition: background-color .5s ease, background .5s ease, color .5s ease, border-color .5s ease, box-shadow .5s ease, fill .5s ease, stroke .5s ease !important; }";
+    doc.head.appendChild(st);
+  }
+  const tokens = {
+    "--color-primary": t.brand,
+    "--color-accent": t.bright,
+    "--color-bg": t.bg,
+    "--color-surface": "#FFFFFF",
+    "--color-text": t.ink,
+    "--color-text-muted": "#64748B",
+    "--color-border": t.line,
+  };
+  apps.forEach((r) => {
+    r.classList.add("orig-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
     setTimeout(() => r.classList.remove("orig-theming"), 600);
   });
 }

@@ -492,7 +492,7 @@ export default function SinglePartyView({
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
                       {/* Discover: Magenta Gradient */}
-                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95 discover-btn">
+                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-[color-mix(in_srgb,var(--color-primary)_30%,transparent)] transition-all hover:scale-105 active:scale-95 discover-btn">
                         <span className="relative z-10 flex items-center justify-center gap-2 text-xs lg:text-base">
                           Discover Our Vision <ChevronDown className="w-4 h-4" />
                         </span>
@@ -617,8 +617,8 @@ export default function SinglePartyView({
               <div className="grid gap-4 md:gap-6 max-w-3xl mx-auto w-full">
                 {(Array.isArray(missions) ? missions : ["สนับสนุนกิจกรรม", "พัฒนาสิ่งอำนวยความสะดวก"]).map((m, i) => (
                   <Reveal key={i} delay={i * 100}>
-                    <div className="flex items-center gap-4 md:gap-6 group p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-gray-200 hover:border-[#6D28D9] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                      <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-[#F3E8FF] text-[#6D28D9] flex items-center justify-center font-black text-lg md:text-xl border border-[#E9D5FF] group-hover:bg-[#6D28D9] group-hover:text-white transition-colors duration-300">
+                    <div className="flex items-center gap-4 md:gap-6 group p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-gray-200 hover:border-[var(--color-primary)] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                      <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)] flex items-center justify-center font-black text-lg md:text-xl border border-[color-mix(in_srgb,var(--color-primary)_20%,white)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
                         {i + 1}
                       </div>
                       <p className="text-base md:text-xl text-gray-700 font-medium leading-relaxed group-hover:text-[#2E1065] transition-colors">
@@ -664,7 +664,7 @@ export default function SinglePartyView({
                           </p>
 
                           {/* Title: Full text on mobile (No Clamp) */}
-                          <h3 className="text-sm md:text-2xl font-black text-gray-900 mb-2 md:mb-4 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
+                          <h3 className="text-sm md:text-2xl font-black text-gray-900 mb-2 md:mb-4 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all">
                             {typeof p === 'string' ? p : p.title}
                           </h3>
 

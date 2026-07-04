@@ -88,7 +88,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                     </div>
                     <h2 className="text-lg md:text-2xl font-black text-[var(--color-primary)] leading-tight mb-1">{party.name}</h2>
                     <div className="mb-2">
-                        <span className="bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-purple-800 text-[10px] md:text-xs font-bold px-3 py-0.5 rounded-full inline-block border border-[color-mix(in_srgb,var(--color-primary)_22%,white)]">
+                        <span className="bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-[color-mix(in_srgb,var(--color-primary)_80%,black)] text-[10px] md:text-xs font-bold px-3 py-0.5 rounded-full inline-block border border-[color-mix(in_srgb,var(--color-primary)_22%,white)]">
                             เบอร์ {party.number}
                         </span>
                     </div>
@@ -114,7 +114,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                         // ---------------- View 2: Dynamic List ----------------
                         <div className="p-4">
                             <h3 className="font-bold text-slate-700 mb-3 text-xs md:text-sm flex items-center gap-1.5 ml-1">
-                                <User className="w-3 h-3 md:w-4 md:h-4 text-purple-500" />
+                                <User className="w-3 h-3 md:w-4 md:h-4 text-[var(--color-primary)]" />
                                 {/* ✅ โชว์จำนวนตามจริง */}
                                 สมาชิกพรรค <span className="text-slate-400 font-normal">({realMembers.length})</span>
                             </h3>
@@ -138,7 +138,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                                                 <p className="text-xs md:text-sm font-bold text-slate-700 truncate group-hover:text-[var(--color-primary)] transition-colors">{m.name}</p>
                                                 <p className="text-[10px] text-slate-400 truncate">{displayPosition}</p>
                                             </div>
-                                            <ChevronLeft className="w-4 h-4 rotate-180 text-slate-300 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+                                            <ChevronLeft className="w-4 h-4 rotate-180 text-slate-300 group-hover:text-[var(--color-accent)] group-hover:translate-x-1 transition-all" />
                                         </li>
                                     );
                                 })}
@@ -158,7 +158,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                 {/* Footer Button */}
                 {showVoteButton && (
                     <div className="p-4 border-t border-slate-100 shrink-0 bg-white z-30">
-                        <button onClick={onConfirm} className="w-full py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold text-base hover:bg-[var(--color-primary)] transition shadow-lg shadow-purple-200">โหวตพรรคนี้</button>
+                        <button onClick={onConfirm} className="w-full py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold text-base hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] transition shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_25%,transparent)]">โหวตพรรคนี้</button>
                     </div>
                 )}
 

@@ -373,7 +373,8 @@ export default function ResultsPage() {
       ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
       : isVerdure
       ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
-      : "flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}>
+      : "flex flex-col min-h-screen bg-[var(--color-bg)] font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}
+      style={(!isGumroad && !isStudio && !isVerdure) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
       <PageThemeOverrides page="results" />
 
       {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
@@ -551,7 +552,7 @@ export default function ResultsPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"></div>
           <div className="relative bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl animate-in fade-in zoom-in duration-300 text-center">
-            <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-purple-50/50">
+            <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-[color-mix(in_srgb,var(--color-primary)_10%,white)]">
               <Lock className="w-10 h-10 text-[var(--color-primary)]" />
             </div>
             <h2 className="text-2xl font-black text-slate-800 mb-3">ข้อมูลถูกล็อกไว้</h2>
@@ -563,7 +564,7 @@ export default function ResultsPage() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push(modalType === "VOTE" ? "/vote" : "/success")}
-                className="w-full py-4 bg-[var(--color-primary)] hover:bg-[#701e68] text-white rounded-2xl font-bold text-lg shadow-lg shadow-purple-200 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-4 bg-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] text-white rounded-2xl font-bold text-lg shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] transition-all flex items-center justify-center gap-2 group"
               >
                 {modalType === "VOTE" ? "ไปหน้าลงคะแนน" : "ไปทำแบบประเมิน"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />

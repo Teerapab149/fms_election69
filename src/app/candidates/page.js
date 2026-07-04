@@ -149,13 +149,13 @@ export default function CandidatesPage({
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 relative overflow-x-hidden">
+    <div className="min-h-screen w-full flex flex-col bg-[var(--color-bg)] text-slate-900 relative overflow-x-hidden">
       {!editorMode && <PageThemeOverrides page="candidates" />}
 
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:30px_30px] md:bg-[size:40px_40px]"></div>
+        <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-[color-mix(in_srgb,var(--color-primary)_13%,transparent)] to-[color-mix(in_srgb,var(--color-accent)_13%,transparent)] rounded-full blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-[color-mix(in_srgb,var(--color-accent)_11%,transparent)] to-[color-mix(in_srgb,var(--color-primary)_11%,transparent)] rounded-full blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
       <div className="relative z-50">
@@ -171,7 +171,7 @@ export default function CandidatesPage({
               <div data-element="candidates-tagline" className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md shadow-sm transition-transform hover:scale-105"
                 style={{
                   backgroundColor: cfg('candidates-tagline').backgroundColor || 'var(--ctl-bg, rgba(255,255,255,0.8))',
-                  border: `1px solid ${cfg('candidates-tagline').borderColor || 'var(--ctl-border, #f3e8ff)'}`
+                  border: `1px solid ${cfg('candidates-tagline').borderColor || 'var(--ctl-border, color-mix(in srgb, var(--color-primary) 14%, white))'}`
                 }}>
                 <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || 'var(--ctl-accent, var(--color-primary))' }} />
                 <span className="text-[10px] md:text-xs font-black tracking-[0.15em] uppercase"
@@ -191,7 +191,7 @@ export default function CandidatesPage({
                   {cfg('candidates-title').text ? (
                     cfg('candidates-title').text
                   ) : (
-                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-purple-500">ผู้สมัคร</span></>
+                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]">ผู้สมัคร</span></>
                   )}
                 </h1>
               </Wrap>
@@ -210,8 +210,8 @@ export default function CandidatesPage({
                 <Wrap id="candidates-counter">
                   <div data-element="candidates-counter" className="flex items-center gap-2 px-4 py-1.5 rounded-full"
                     style={{
-                      backgroundColor: cfg('candidates-counter').backgroundColor || 'var(--cc-bg, rgba(138, 38, 128, 0.1))',
-                      border: `1px solid ${cfg('candidates-counter').borderColor || 'var(--cc-border, rgba(138, 38, 128, 0.2))'}`
+                      backgroundColor: cfg('candidates-counter').backgroundColor || 'var(--cc-bg, color-mix(in srgb, var(--color-primary) 10%, transparent))',
+                      border: `1px solid ${cfg('candidates-counter').borderColor || 'var(--cc-border, color-mix(in srgb, var(--color-primary) 20%, transparent))'}`
                     }}>
                     <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || 'var(--cc-accent, var(--color-primary))' }} />
                     <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || 'var(--cc-accent, var(--color-primary))' }}>
