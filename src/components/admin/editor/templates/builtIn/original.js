@@ -36,16 +36,19 @@ function buildOriginalTemplate(slug, name, description, p) {
 }
 
 export const originalTemplate = buildOriginalTemplate(
-  "original", "ออริจินัล", "ดีไซน์ต้นฉบับ SAMO (ม่วง-ขาว) — เวอร์ชันที่ทำไว้ดีที่สุด · เลือกโทนทางการได้ 4 แบบ",
+  "original", "ออริจินัล · ม่วง FMS", "ดีไซน์ต้นฉบับ SAMO (ม่วง-ขาว) — อัตลักษณ์แบรนด์คณะ · เลือกโทนพรีเมียมได้อีก 4 แบบ",
   ORIGINAL_THEMES["original"]);
 export const originalNavyTemplate = buildOriginalTemplate(
-  "original-navy", "ออริจินัล · ราชนาวี", "โทนกรมท่า + ทอง — ทางการ สุขุม น่าเชื่อถือ",
+  "original-navy", "ออริจินัล · กรมท่า-ทอง", "โทนกรมท่าเข้ม + ทองแมตต์ — ทางการ น่าเชื่อถือ หรูสุขุม",
   ORIGINAL_THEMES["original-navy"]);
-export const originalForestTemplate = buildOriginalTemplate(
-  "original-forest", "ออริจินัล · ป่าลึก", "โทนเขียวขรึม — สงบ หนักแน่น เป็นทางการ",
-  ORIGINAL_THEMES["original-forest"]);
-export const originalMaroonTemplate = buildOriginalTemplate(
-  "original-maroon", "ออริจินัล · เลือดหมู", "โทนเลือดหมู/แดงเข้ม — พิธีการ มีน้ำหนัก",
-  ORIGINAL_THEMES["original-maroon"]);
+export const originalEmeraldTemplate = buildOriginalTemplate(
+  "original-emerald", "ออริจินัล · มรกต-แชมเปญ", "โทนเขียวมรกต + แชมเปญทอง — ลึก ประณีต สง่างาม",
+  ORIGINAL_THEMES["original-emerald"]);
+export const originalCrimsonTemplate = buildOriginalTemplate(
+  "original-crimson", "ออริจินัล · เลือดหมู-แพลทินัม", "โทนแดงเข้ม + เทาแพลทินัม — โมเดิร์น หนักแน่น ทรงพลัง",
+  ORIGINAL_THEMES["original-crimson"]);
+export const originalAubergineTemplate = buildOriginalTemplate(
+  "original-aubergine", "ออริจินัล · ม่วงมะเขือ-ทองแดง", "โทนม่วงมะเขือ + ทองแดงเผา — โมเดิร์น มีพลัง คอนทราสต์สูง",
+  ORIGINAL_THEMES["original-aubergine"]);
 
 export default originalTemplate;

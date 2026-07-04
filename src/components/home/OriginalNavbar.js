@@ -114,12 +114,12 @@ export default function Navbar() {
             className={`
               group relative flex items-center gap-2 px-5 py-2 rounded-full ml-2 transition-all duration-300
               ${pathname.startsWith('/candidates') || pathname.startsWith('/party')
-                ? 'bg-gradient-to-r from-[var(--o-soft2)] to-pink-50 text-[var(--o-brand)] shadow-inner font-bold'
-                : 'bg-white hover:bg-[var(--o-soft)] text-slate-600 hover:text-[var(--o-brand)] hover:shadow-md hover:shadow-purple-200/50 hover:-translate-y-0.5'
+                ? 'bg-gradient-to-r from-[var(--o-soft2)] to-[var(--o-soft)] text-[var(--o-brand)] shadow-inner font-bold'
+                : 'bg-white hover:bg-[var(--o-soft)] text-slate-600 hover:text-[var(--o-brand)] hover:shadow-md hover:shadow-[color-mix(in_srgb,var(--o-brand)_20%,transparent)] hover:-translate-y-0.5'
               }
             `}
           >
-            <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[var(--o-brand)] via-[var(--o-mid)] to-pink-400 opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
+            <div className={`absolute inset-0 rounded-full p-[1.5px] bg-gradient-to-r from-[var(--o-brand)] via-[var(--o-mid)] to-[var(--o-glow)] opacity-20 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${pathname.startsWith('/candidates') ? 'opacity-100' : ''}`}>
               <div className="w-full h-full rounded-full bg-white group-hover:bg-[var(--o-soft)] transition-colors"></div>
             </div>
 
@@ -127,7 +127,7 @@ export default function Navbar() {
               size={18}
               className={`
                 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12 
-                ${pathname.startsWith('/candidates') ? 'text-[var(--o-brand)] fill-purple-200' : 'text-slate-400 group-hover:text-[var(--o-brand)]'}
+                ${pathname.startsWith('/candidates') ? 'text-[var(--o-brand)] fill-[var(--o-line)]' : 'text-slate-400 group-hover:text-[var(--o-brand)]'}
               `}
             />
 

@@ -3,41 +3,49 @@
 // build each variant's Layer-1 tokens from the SAME ramp the home layout reads —
 // the gumroad/verdure parity rule.
 //
-// Original's identity is a purple→fuchsia BRAND RAMP used across the home (title
-// gradient, headings, primary button, badge) + the classic inner pages (tokens).
-// A formal theme shifts the whole ramp. Slots (semantic, not Tailwind numbers):
+// Original is a LIGHT template: a dark BRAND hue drives readable text / gradient
+// title start / primary button, paired with a METALLIC (or bright) accent (the
+// `glow` slot) that only appears where it reads on light — the ping dot, the tail
+// of the title numeral gradient, badge highlights. Each theme carries its OWN
+// light background (`bg`) at a distinct temperature so no two themes read as the
+// same page. Slots (semantic, not Tailwind numbers):
 //   deep    — darkest brand stop (button base, deep gradient start)
-//   brand   — core brand (title, primary, links, --color-primary)
-//   bright  — bright accent (gradient end / the fuchsia pop)
-//   glow    — brightest sparkle (the ping dot)
-//   mid     — mid tint (secondary accents, purple-400/500)
-//   soft    — lightest tint (badge / chip background, purple-50)
-//   soft2   — slightly deeper tint (purple-100)
-//   line    — soft border on tint (purple-200)
-//   ink     — page text (near-black, kept warm-neutral per theme)
-//   bg      — page background (near-white)
-// The 4 themes are all FORMAL (this is the ceremonial/official-leaning template).
+//   brand   — core brand hue (title, primary, links, --color-primary)
+//   bright  — brighter brand stop (gradient end of the primary button)
+//   glow    — the accent (ping dot, title gradient tail, sparkle)
+//   mid     — mid accent tint (secondary/hover text — kept readable on white)
+//   soft    — lightest hue tint (badge / chip background)
+//   soft2   — slightly deeper tint (hover chip)
+//   line    — soft border on tint
+//   ink     — page text (near-black, warmed per theme)
+//   bg      — page background (distinct light temperature per theme)
+// Theme 1 is the SAMO brand identity (ม่วง-ขาว); the other 4 are formal/premium.
 
 export const ORIGINAL_THEMES = {
-  // ม่วง FMS — the SAMO brand identity (purple → fuchsia on white)
+  // ม่วง FMS — THE SAMO brand identity (purple → fuchsia on white). Flagship default.
   "original": {
     deep: "#691E61", brand: "#8A2680", bright: "#C026D3", glow: "#D946EF", mid: "#A855F7",
     soft: "#FAF5FF", soft2: "#F3E8FF", line: "#E9D5FF", ink: "#0F172A", bg: "#F8F9FD",
   },
-  // เนวี · ราชนาวี + ทอง — deep navy structure with a muted-gold accent (academic/formal)
+  // Midnight Navy & Matte Gold — Professional · Trustworthy · Luxurious.
   "original-navy": {
-    deep: "#14264A", brand: "#1E3A8A", bright: "#C6A15B", glow: "#D4AF37", mid: "#3B5A9A",
-    soft: "#F1F5FB", soft2: "#E7EEF7", line: "#CBD9EC", ink: "#0D172A", bg: "#F7F9FC",
+    deep: "#0B1F38", brand: "#1E3E62", bright: "#34618F", glow: "#D4AF37", mid: "#A8862E",
+    soft: "#EEF3FA", soft2: "#DEE9F6", line: "#C3D6EC", ink: "#0C1B2A", bg: "#E8F0FA",
   },
-  // เขียวขรึม — solemn deep forest green (regalia-formal)
-  "original-forest": {
-    deep: "#123B29", brand: "#1B5E3F", bright: "#3E9E6B", glow: "#4CAF7D", mid: "#3C8560",
-    soft: "#F0F7F3", soft2: "#E3F0E9", line: "#C7E0D2", ink: "#0E1F17", bg: "#F6FAF7",
+  // Emerald & Champagne — deep forest green + soft champagne gold. Sophisticated · Elegant.
+  "original-emerald": {
+    deep: "#0A2E20", brand: "#14603F", bright: "#1F7A50", glow: "#C9A86A", mid: "#A2854E",
+    soft: "#EFF5F1", soft2: "#DFEDE5", line: "#C6DED0", ink: "#0E1F17", bg: "#EAF2EA",
   },
-  // เลือดหมู — burgundy / maroon (ceremonial, weighty)
-  "original-maroon": {
-    deep: "#5C1A2E", brand: "#7B2233", bright: "#A63A4A", glow: "#C25666", mid: "#9E4453",
-    soft: "#FBF3F4", soft2: "#F6E5E8", line: "#ECC9CF", ink: "#1F1013", bg: "#FBF8F8",
+  // Crimson & Platinum — rich crimson on a neutral pearl/charcoal chrome. Modern · Bold.
+  "original-crimson": {
+    deep: "#6E1414", brand: "#A31D1D", bright: "#C43A2E", glow: "#D64545", mid: "#8A2B2B",
+    soft: "#F2F0F1", soft2: "#E6E3E5", line: "#D3D3D3", ink: "#1E1E24", bg: "#F5ECEC",
+  },
+  // Aubergine & Copper — deep plum + burnished copper. Active · High-Contrast.
+  "original-aubergine": {
+    deep: "#3A1633", brand: "#6B2A5E", bright: "#8C3A79", glow: "#D97706", mid: "#B4611D",
+    soft: "#F6EFF4", soft2: "#ECDCE7", line: "#DBC2D3", ink: "#241021", bg: "#F3E9F1",
   },
 };
 

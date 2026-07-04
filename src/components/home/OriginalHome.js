@@ -100,9 +100,9 @@ export default function OriginalHome({ initialData }) {
 
             {/* --- Background --- */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]"></div>
-                <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[100px]"></div>
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-[color-mix(in_srgb,var(--o-brand)_12%,transparent)] to-[color-mix(in_srgb,var(--o-glow)_12%,transparent)] rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-[color-mix(in_srgb,var(--o-bright)_10%,transparent)] to-[color-mix(in_srgb,var(--o-brand)_10%,transparent)] rounded-full blur-[100px]"></div>
+                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--o-brand) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--o-brand) 7%, transparent) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
                 <div className="bg-noise"></div>
             </div>
 
@@ -164,9 +164,9 @@ export default function OriginalHome({ initialData }) {
                                         isLoginAction: true, // ✅ เพิ่ม flag บอกว่านี่คือปุ่ม Login
                                         text: "เข้าสู่ระบบ / Sign in",
                                         gradientBase: "from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)]",
-                                        gradientHover: "from-[#1e3a8a] via-[#1d4ed8] to-[#3b82f6]",
-                                        glowColor: "from-[var(--o-brand)] to-[#3b82f6]",
-                                        shadow: "shadow-[0_10px_20px_-5px_rgba(138,38,128,0.4)]",
+                                        gradientHover: "from-[var(--o-brand)] via-[var(--o-bright)] to-[var(--o-glow)]",
+                                        glowColor: "from-[var(--o-brand)] to-[var(--o-bright)]",
+                                        shadow: "shadow-[0_10px_20px_-5px_color-mix(in_srgb,var(--o-brand)_40%,transparent)]",
                                         icon: <LogIn className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-1" />,
                                         animation: ""
                                     };
@@ -348,7 +348,7 @@ export default function OriginalHome({ initialData }) {
                                     {/* Bento Grid */}
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Hero Card */}
-                                        <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)] p-5 pb-7 text-white shadow-xl shadow-purple-900/20 group hover:-translate-y-1 transition-transform duration-500">
+                                        <div className="col-span-2 relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)] p-5 pb-7 text-white shadow-xl shadow-[color-mix(in_srgb,var(--o-deep)_22%,transparent)] group hover:-translate-y-1 transition-transform duration-500">
                                             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-colors"></div>
                                             <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-black/10 blur-xl"></div>
                                             <div className="relative z-10 flex flex-col items-center text-center">

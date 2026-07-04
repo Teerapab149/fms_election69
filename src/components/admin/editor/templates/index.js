@@ -16,7 +16,7 @@ import { minimalTemplate }    from "./builtIn/minimal";
 import { gumroadTemplate, gumroadCyberTemplate, gumroadRetroTemplate, gumroadAcidTemplate, gumroadPremiumTemplate } from "./builtIn/gumroad";
 import { studioDarkTemplate } from "./builtIn/studio-dark";
 import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerryTemplate } from "./builtIn/verdure";
-import { originalTemplate, originalNavyTemplate, originalForestTemplate, originalMaroonTemplate } from "./builtIn/original";
+import { originalTemplate, originalNavyTemplate, originalEmeraldTemplate, originalCrimsonTemplate, originalAubergineTemplate } from "./builtIn/original";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
@@ -33,10 +33,11 @@ const BUILT_IN_TEMPLATES = {
   "verdure-honey": verdureHoneyTemplate,
   "verdure-teal":  verdureTealTemplate,
   "verdure-berry": verdureBerryTemplate,
-  original:          originalTemplate,
-  "original-navy":   originalNavyTemplate,
-  "original-forest": originalForestTemplate,
-  "original-maroon": originalMaroonTemplate
+  original:            originalTemplate,
+  "original-navy":     originalNavyTemplate,
+  "original-emerald":  originalEmeraldTemplate,
+  "original-crimson":  originalCrimsonTemplate,
+  "original-aubergine": originalAubergineTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).
