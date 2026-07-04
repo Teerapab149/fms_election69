@@ -119,7 +119,7 @@ export default function VotePage() {
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
       : isVerdure
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#E7F1E2]"
-      : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]"}>
+      : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[var(--color-bg)]"}>
       <PageThemeOverrides page="vote" />
 
       {isVerdure ? (
@@ -162,14 +162,16 @@ export default function VotePage() {
        <>
       {!isSingleParty && (
         <>
-          {/* Background decoration — fixed, behind everything */}
+          {/* Full-bleed themed background — grid texture + soft corner blobs, same
+              language as the other pages (candidates/results/closed). */}
           <div className="fixed inset-0 z-0 pointer-events-none">
-            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:30px_30px] md:bg-[size:40px_40px]"></div>
+            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] rounded-full blur-[80px] md:blur-[120px]"
+              style={{ background: 'linear-gradient(to bottom right, color-mix(in srgb, var(--color-primary) 12%, transparent), color-mix(in srgb, var(--color-accent) 12%, transparent))' }} />
+            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] rounded-full blur-[80px] md:blur-[120px]"
+              style={{ background: 'linear-gradient(to top right, color-mix(in srgb, var(--color-accent) 10%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent))' }} />
+            <div className="absolute inset-0"
+              style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
           </div>
-
-          {/* Navbar */}
           <div className="relative z-50">
             <Navbar />
           </div>
