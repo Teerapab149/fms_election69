@@ -57,6 +57,12 @@ import SuccessPage from '../success/page';
 import { ClassicPartyPreview } from '../party/page';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 
+// Classic-family VOTE composition (mirrors src/app/vote/page.js multi-party branch)
+import MultiPartyView from '../../components/vote/MultiPartyView';
+import VoteFooter from '../../components/vote/VoteFooter';
+import PartyDetailModal from '../../components/PartyDetailModal';
+import VoteConfirmationModal from '../../components/VoteConfirmationModal';
+
 import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
 import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 
@@ -90,6 +96,10 @@ function PreviewBody() {
   //    ordering is identical in both branches) ─────────────────────────────────────
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [partyNumber, setPartyNumber] = useState(PARTIES[0]?.number ?? 1);
+  // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
+  const [detailParty, setDetailParty] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // navTo — simulated in-preview navigation (interact mode). Inside the chrome
   // iframe (window.parent !== window) we can't drive the outer window directly, so
@@ -281,8 +291,114 @@ function PreviewBody() {
       }
     }
 
-    // classic/original inner pages: keep the static EditorPreview renders (out of
-    // scope). The click seam still keeps their in-page links contained.
+    // ── classic family (incl. original) — VOTE page composed from the REAL pure
+    //    components exactly as app/vote/page.js does for multi-party, but with local
+    //    state and zero DB/auth. single → the real cinematic SinglePartyView + footer.
+    if (page === 'vote') {
+      const single = variant === 'single';
+      const tpl = BUILT_IN_TEMPLATES[slug] || {};
+      const pageBg = tpl.pages?.[page]?.backgroundColor || tpl.theme?.colors?.background || tpl.theme?.background || 'var(--color-bg)';
+      // Derive the selected party across regular + special options (as useVoteSystem
+      // does) so VoteFooter/VoteConfirmationModal get the right object + number.
+      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
+
+      if (single) {
+        // single → the REAL cinematic SinglePartyView (previewMode = full layout, intro
+        // skipped) + the same VoteFooter confirm affordance. Its 3-choice buttons drive
+        // local selection; footer (variant="single") → its own popup → navTo('success').
+        const singleParty = PARTIES[0];
+        const onSingleSelect = (id) => setSelectedPartyId(id);
+        return (
+          <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative" style={{ background: pageBg }}>
+            <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
+              <SinglePartyView
+                previewMode
+                candidate={singleParty}
+                selectedPartyId={selectedPartyId}
+                onSelect={onSingleSelect}
+                specialOptions={SPECIAL}
+                user={DUMMY_USER}
+              />
+            </main>
+            <VoteFooter
+              selectedParty={selectedParty}
+              isSubmitting={false}
+              variant="single"
+              partyPrimary={singleParty?.themePrimary || '#4D2A67'}
+              partyGold={singleParty?.themeGold || '#CDA176'}
+              onConfirm={() => navTo('success')}
+            />
+          </div>
+        );
+      }
+
+      // multi → MultiPartyView + VoteFooter(multi) + PartyDetailModal + VoteConfirmationModal
+      return (
+        <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative" style={{ background: pageBg }}>
+          {/* Full-bleed themed background — grid texture + soft corner blobs, same as
+              the real classic vote page (page.js lines 167-174), minus the auth Navbar. */}
+          <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] rounded-full blur-[80px] md:blur-[120px]"
+              style={{ background: 'linear-gradient(to bottom right, color-mix(in srgb, var(--color-primary) 12%, transparent), color-mix(in srgb, var(--color-accent) 12%, transparent))' }} />
+            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] rounded-full blur-[80px] md:blur-[120px]"
+              style={{ background: 'linear-gradient(to top right, color-mix(in srgb, var(--color-accent) 10%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent))' }} />
+            <div className="absolute inset-0"
+              style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+          </div>
+
+          <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
+            <MultiPartyView
+              regularParties={PARTIES}
+              specialOptions={SPECIAL}
+              selectedPartyId={selectedPartyId}
+              onSelect={setSelectedPartyId}
+              onViewDetails={(p) => { setDetailParty(p); setDetailOpen(true); }}
+              config={{}}
+            />
+          </main>
+
+          <VoteFooter
+            selectedParty={selectedParty}
+            isSubmitting={false}
+            variant="multi"
+            partyPrimary={PARTIES?.[0]?.themePrimary || '#4D2A67'}
+            partyGold={PARTIES?.[0]?.themeGold || '#CDA176'}
+            onConfirm={() => setConfirmOpen(true)}
+          />
+
+          {/* Modals — mirror app/vote/page.js (PartyDetailModal showVoteButton={false}) */}
+          <PartyDetailModal
+            party={detailParty}
+            isOpen={detailOpen}
+            onClose={() => setDetailOpen(false)}
+            showVoteButton={false}
+          />
+
+          <VoteConfirmationModal
+            isOpen={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
+            party={selectedParty}
+            isVoteNo={selectedParty?.number === 0}
+            isDisapprove={selectedParty?.number === -1}
+            isSubmitting={false}
+          />
+
+          {/* Vote-page keyframes (MultiPartyView cards use animate-fade-in-up) */}
+          <style jsx global>{`
+            @keyframes fade-in-up {
+              from { opacity: 0; transform: translateY(24px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          `}</style>
+        </div>
+      );
+    }
+
+    // other classic/original inner pages (candidates/results/closed/party): keep the
+    // static EditorPreview renders (out of scope). The click seam contains their links.
     return renderPage();
   }
 
