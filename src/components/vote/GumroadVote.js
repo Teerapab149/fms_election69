@@ -201,7 +201,7 @@ export default function GumroadVote({
         .gv-title{ font-family:var(--fd); font-size:clamp(40px,8cqw,82px); letter-spacing:-.03em; line-height:.95; margin:0; text-transform:uppercase; }
         .gv-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:0 12px; display:inline-block; box-shadow:var(--sh); }
         .gv-subtitle{ font-size:clamp(14px,2cqw,18px); color:#4A4A4A; font-weight:500; max-width:620px; margin:0; }
-        .gv-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
+        .gv-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:20px; }
         .gv-grid--single{ grid-template-columns:1fr; max-width:460px; margin:0 auto; }
         /* party tiles = <VotePartyCard> composites (own scoped styles) */
         .gv-or{ display:flex; align-items:center; gap:16px; margin:32px auto; }
@@ -220,7 +220,7 @@ export default function GumroadVote({
         .gv-confirm:disabled{ opacity:.45; cursor:not-allowed; }
 
         @container gv (max-width:780px){
-          .gv-grid{ grid-template-columns:1fr; gap:18px; }
+          .gv-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
           .gv-page{ padding:28px 16px; }
           .gv-footer{ flex-direction:column; align-items:stretch; gap:10px; padding:12px 16px; }
           .gv-confirm{ justify-content:center; }

@@ -41,7 +41,7 @@ export function buildVotePartyCard({ party, pop, isSel, onSelect, onViewDetails,
           party?.slogan ? { kind: "atom", type: "text-body", props: { children: `“${party.slogan}”` } } : null,
           { kind: "node", render: (
             <button type="button" className="gv-card__cta" onClick={(e) => { e.stopPropagation(); if (!editorMode) onViewDetails(party); }}>
-              ดูรายละเอียด <ArrowRight size={14} />
+              VIEW PROFILE <ArrowRight size={14} />
             </button>
           ) },
         ].filter(Boolean),
@@ -55,7 +55,7 @@ export default function VotePartyCardGumroad(props) {
     <>
       <Composition node={buildVotePartyCard(props)} />
       <style jsx global>{`
-        .gv-card{ position:relative; background:var(--paper, #FFFDFA); border:2.5px solid var(--ink, #26271c); border-radius:22px; box-shadow:5px 5px 0 var(--ink, #26271c); overflow:hidden; cursor:pointer; transition:transform .15s ease-out, box-shadow .15s ease-out; }
+        .gv-card{ position:relative; display:flex; flex-direction:column; background:var(--paper, #FFFDFA); border:2.5px solid var(--ink, #26271c); border-radius:22px; box-shadow:5px 5px 0 var(--ink, #26271c); overflow:hidden; cursor:pointer; transition:transform .15s ease-out, box-shadow .15s ease-out; }
         .gv-card:hover{ transform:translate(-3px,-3px); box-shadow:8px 8px 0 var(--ink, #26271c); }
         .gv-card.is-selected{ background:var(--pink, #FF9CE9); transform:rotate(-1deg); }
         .gv-card__no{ position:absolute; top:16px; left:16px; z-index:2; padding:6px 14px; background:var(--ink, #26271c); color:var(--cream, #FFF6EC); border-radius:999px; font-family:var(--font-archivo),'Archivo Black',system-ui,sans-serif; font-size:13px; }
@@ -67,11 +67,24 @@ export default function VotePartyCardGumroad(props) {
            tall/portrait logos were overflowing + getting clipped). padding keeps it off the edges. */
         .gv-card__media .el-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:22px; box-sizing:border-box; }
         .gv-card__ph{ font-family:var(--font-archivo),'Archivo Black',system-ui,sans-serif; font-size:18px; text-transform:uppercase; padding:6px 14px; border:2px solid var(--ink, #26271c); border-radius:999px; }
-        .gv-card__body{ padding:20px 22px; }
+        .gv-card__body{ padding:20px 22px; flex:1; display:flex; flex-direction:column; }
+        .gv-card__cta{ margin-top:auto; align-self:flex-start; }
         .gv-card__body .el-title{ font-family:var(--font-archivo),'Archivo Black',system-ui,sans-serif; font-size:24px; font-weight:400; letter-spacing:-.02em; margin:0 0 6px; text-transform:uppercase; -webkit-line-clamp:unset; }
-        .gv-card__body .el-body{ font-size:14px; color:#4A4A4A; margin:0 0 16px; font-style:italic; -webkit-line-clamp:unset; }
+        .gv-card__body .el-body{ display:none; }
         .gv-card__cta{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:2px solid var(--ink, #26271c); border-radius:999px; background:var(--paper, #FFFDFA); font-weight:700; font-size:13px; cursor:pointer; font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; }
         .gv-card.is-selected .gv-card__cta{ background:var(--ink, #26271c); color:var(--cream, #FFF6EC); }
+        /* narrow (2-up mobile): shrink so the chunky title fits inside the card */
+        @media (max-width:560px){
+          .gv-card{ border-width:2px; box-shadow:4px 4px 0 var(--ink, #26271c); }
+          .gv-card__media{ height:140px; border-bottom-width:2px; }
+          .gv-card__media .el-img{ padding:14px; }
+          .gv-card__body{ padding:13px 13px 15px; align-items:center; text-align:center; }
+          .gv-card__body .el-title{ font-size:15px; letter-spacing:-.01em; margin-bottom:4px; }
+          .gv-card__body .el-body{ font-size:11px; margin-bottom:12px; }
+          .gv-card__no{ top:10px; left:10px; padding:4px 10px; font-size:11px; }
+          .gv-card__check{ top:10px; right:10px; width:30px; height:30px; }
+          .gv-card__cta{ padding:6px 12px; font-size:12px; align-self:center; }
+        }
       `}</style>
     </>
   );

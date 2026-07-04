@@ -87,6 +87,7 @@ export default function VerdureVote({
           <span>ONE VOTE ONLY</span>
         </div>
 
+        <div className="vd-parties">
         {regularParties.map((p) => (
           <Opt key={p.id}
             disc={p.number}
@@ -95,11 +96,12 @@ export default function VerdureVote({
             kicker={<>PARTY No. {pad2(p.number)}</>}
             name={p.name}
             slogan={p.slogan ? `"${p.slogan}"` : null}
-            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>ดูโปรไฟล์พรรค · VIEW PROFILE →</a>}
+            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>VIEW PROFILE →</a>}
             selected={selectedPartyId === p.id}
             onClick={() => onSelect(p.id)}
           />
         ))}
+        </div>
 
         {abstain && (
           <Opt disc="×" discSm abstain kicker="ABSTAIN" name="งดออกเสียง"
@@ -147,6 +149,24 @@ export default function VerdureVote({
         /* each party reads as a warm, inviting card (mirrors the booth's primary option) */
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, var(--cream-2) 0%, var(--cream-2) 100%); }
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); }
+
+        /* GRID of party tiles — every party visible at once, equal weight (no top-bias) */
+        .vd-parties { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:14px; }
+        .vd-parties .vd-opt { display:flex; flex-direction:column; gap:8px; padding:22px 20px; margin-bottom:0; height:100%; }
+        .vd-parties .vd-opt__check { position:absolute; top:16px; right:16px; }
+        .vd-parties .vd-opt__kicker { display:none; }
+        .vd-parties .vd-opt__slogan { display:none; }
+        .vd-parties .vd-opt__main { display:flex; flex-direction:column; flex:1; min-width:0; }
+        .vd-parties .vd-opt__name { font-size:22px; margin-bottom:6px; }
+        .vd-parties .vd-opt__more { margin-top:auto; align-self:flex-start; }
+        @media (max-width:560px){
+          .vd-parties { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+          .vd-parties .vd-opt { padding:16px 14px; align-items:center; text-align:center; }
+          .vd-parties .vd-opt__main { align-items:center; text-align:center; }
+          .vd-parties .vd-opt__more { align-self:center; }
+          .vd-parties .vd-opt__name { font-size:19px; }
+          .vd-parties .vd-opt__check { top:12px; right:12px; width:34px; height:34px; }
+        }
         .vd-opt__disc { width:78px; height:78px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:48px; line-height:1; letter-spacing:-.04em; color:var(--moss); transition:all .25s; }
         .vd-opt__disc.sm { font-size:36px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }

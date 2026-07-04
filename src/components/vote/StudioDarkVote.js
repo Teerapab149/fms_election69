@@ -99,7 +99,7 @@ export default function StudioDarkVote({
         className="sdv-strip__view"
         onClick={(e) => { e.stopPropagation(); onViewDetails(party); }}
       >
-        View profile →
+        VIEW PROFILE →
       </button>
     </>
   );
@@ -130,7 +130,8 @@ export default function StudioDarkVote({
           <span>ONE VOTE ONLY</span>
         </div>
 
-        {/* PARTY STRIPS */}
+        {/* PARTY TILES — grid so every party is visible at once (no top-bias) */}
+        <div className="sdv-parties">
         {regularParties.map((p) => {
           const no = pad2(p.number);
           return (
@@ -146,6 +147,7 @@ export default function StudioDarkVote({
             />
           );
         })}
+        </div>
 
         {/* SPECIAL OPTION */}
         {abstain && (
@@ -202,6 +204,27 @@ export default function StudioDarkVote({
         .sdv-strip.is-selected::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--sd-accent); }
         .sdv-strip--dashed { border-bottom:0; border-top:1px dashed var(--sd-line-strong); margin-top:12px; padding-top:28px; }
         .sdv-strip--dashed + .sdv-strip--dashed { margin-top:0; border-top-style:solid; border-top-color:var(--sd-line); }
+
+        /* GRID of party tiles — all parties visible at once, equal weight */
+        .sdv-parties { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:4px 0 8px; }
+        .sdv-parties .sdv-strip { display:flex; flex-direction:column; align-items:stretch; gap:4px; padding:20px 18px; border:1px solid var(--sd-line); border-radius:14px; height:100%; }
+        .sdv-parties .sdv-strip:hover, .sdv-parties .sdv-strip:focus-visible, .sdv-parties .sdv-strip.is-selected { padding-left:18px; }
+        .sdv-parties .sdv-strip.is-selected { border-color:var(--sd-accent); }
+        .sdv-parties .sdv-strip.is-selected::before { display:none; }
+        .sdv-parties .sdv-strip__no { font-size:46px; margin-bottom:2px; }
+        .sdv-parties .sdv-strip__kicker { display:none; }
+        .sdv-parties .sdv-strip__slogan { display:none; }
+        .sdv-parties .sdv-strip__name { font-size:clamp(17px,1.5vw,20px); margin-bottom:8px; }
+        .sdv-parties .sdv-strip__meta { display:block; margin-top:auto; padding-top:10px; }
+        .sdv-parties .sdv-strip__mrow { display:none; }
+        .sdv-parties .sdv-strip__view { margin-top:2px; }
+        .sdv-parties .sdv-strip__check { position:absolute; top:16px; right:16px; }
+        @media (max-width:560px){
+          .sdv-parties { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+          .sdv-parties .sdv-strip { padding:16px 13px; border-radius:12px; align-items:center; text-align:center; }
+          .sdv-parties .sdv-strip__no { font-size:34px; text-align:center; }
+          .sdv-parties .sdv-strip__check { top:12px; right:12px; width:28px; height:28px; }
+        }
 
         .sdv-strip__no {
           font-family:var(--sd-sans); font-weight:400; font-size:72px; line-height:.85; letter-spacing:-.06em;
