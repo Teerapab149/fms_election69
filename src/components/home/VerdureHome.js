@@ -75,6 +75,9 @@ export default function VerdureHome({
   selectedElement = null, hoveredElement = null, onSelectElement = null,
   onHoverElement = null, onHoverEnd = null, pageLayout = null,
   resolvedTemplate = null, editorTokenStyles = null,
+  // Optional sign-in override (playground): the login CTA calls this instead of
+  // verdureSignIn() (next-auth). Absent = byte-identical live behaviour.
+  onSignIn = null,
 }) {
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
@@ -153,7 +156,7 @@ export default function VerdureHome({
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
-    if (CTA.action === "signin") { e.preventDefault(); verdureSignIn(); }
+    if (CTA.action === "signin") { e.preventDefault(); onSignIn ? onSignIn() : verdureSignIn(); }
   };
 
   return (

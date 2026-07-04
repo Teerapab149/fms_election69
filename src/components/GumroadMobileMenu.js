@@ -20,13 +20,16 @@ const LINKS = [
   { key: "results", href: "/results", label: "ผลการลงคะแนนเสียง" },
 ];
 
-export default function GumroadMobileMenu({ active = "" }) {
+export default function GumroadMobileMenu({ active = "", onSignIn = null }) {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const loggedIn = status === "authenticated" && !!session?.user;
   const navName = session?.user?.name || "";
   const navId = session?.user?.studentId || "";
   const BP = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+  // Optional sign-in override (playground): call it instead of next-auth signIn().
+  const doSignIn = () =>
+    onSignIn ? onSignIn() : signIn("authentik", { callbackUrl: BP + "/vote" });
 
   return (
     <>
@@ -41,7 +44,7 @@ export default function GumroadMobileMenu({ active = "" }) {
             </button>
           </div>
         ) : (
-          <button className="gnav-dbtn gnav-dbtn--ink" onClick={() => signIn("authentik", { callbackUrl: BP + "/vote" })}>
+          <button className="gnav-dbtn gnav-dbtn--ink" onClick={doSignIn}>
             <ArrowRight size={16} /> เข้าสู่ระบบ
           </button>
         )}
@@ -88,7 +91,7 @@ export default function GumroadMobileMenu({ active = "" }) {
                 <LogOut size={18} /> ออกจากระบบ
               </button>
             ) : (
-              <button className="gnav-auth gnav-auth--ink" onClick={() => signIn("authentik", { callbackUrl: BP + "/vote" })}>
+              <button className="gnav-auth gnav-auth--ink" onClick={doSignIn}>
                 <ArrowRight size={18} /> เข้าสู่ระบบ
               </button>
             )}

@@ -46,6 +46,9 @@ export default function StudioDarkHome({
   pageLayout = null,
   resolvedTemplate = null,
   editorTokenStyles = null,
+  // Optional sign-in override (playground): when present, the login CTA + rail
+  // sign-in call this instead of next-auth signIn(). Absent = live behaviour.
+  onSignIn = null,
 }) {
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
@@ -171,7 +174,7 @@ export default function StudioDarkHome({
     <div className="fms-app sd-root">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
 
-      <StudioDarkRail active="home" editorMode={editorMode} systemMode={sysMode} />
+      <StudioDarkRail active="home" editorMode={editorMode} systemMode={sysMode} onSignIn={onSignIn} />
 
       <main className="sd-main">
         {/* scene bar */}
@@ -211,7 +214,7 @@ export default function StudioDarkHome({
                 </Wrap>
                 <div className="sd-home__cta">
                   <Wrap id="voteCTA-button">
-                    <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} />
+                    <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
                   </Wrap>
                   <a href={editorMode ? undefined : getPath("/candidates")} className="sd-ghost">
                     ดูรายชื่อพรรค <span className="sd-ghost__arrow" aria-hidden>↗</span>

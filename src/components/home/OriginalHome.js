@@ -13,7 +13,7 @@ import { OriginalBaseStyles } from './OriginalTheme';
 import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
-export default function OriginalHome({ initialData }) {
+export default function OriginalHome({ initialData, onSignIn = null }) {
 
     const { data: session, status } = useSession();
     // election meta from admin globalConfig (ee059dc predated it — was hardcoded SAMO 49)
@@ -294,7 +294,7 @@ export default function OriginalHome({ initialData }) {
                                         // ✅ กรณีปุ่ม Login: ใช้ div + onClick (Direct Login)
                                         return (
                                             <div
-                                                onClick={() => signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}
+                                                onClick={() => onSignIn ? onSignIn() : signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}
                                                 className="group relative w-[90%] sm:w-auto inline-block cursor-pointer"
                                             >
                                                 <div className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r ${btnConfig.glowColor} opacity-40 blur-lg group-hover:opacity-80 transition-opacity duration-700 ${btnConfig.animation}`}></div>

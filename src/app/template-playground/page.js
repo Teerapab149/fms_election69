@@ -49,7 +49,7 @@ import GumroadResults from '../../components/vote/GumroadResults';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import GumroadClosed from '../../components/vote/GumroadClosed';
 
-import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
+import { DUMMY_USER } from '../../utils/editorDummyData';
 import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 
 const noop = () => {};
@@ -139,11 +139,12 @@ function PlaygroundBody() {
 
   let content;
   if (page === 'home') {
-    // view-only home — keeps its signIn() CTA inert; sandbox bar navigates off it
+    // INTERACTIVE home — the login CTA is seamed via onSignIn (a callback), so
+    // clicking "เข้าสู่ระบบ" simulates the real flow by switching to the local
+    // vote page instead of redirecting to PSU SSO. No editorMode, no DB, no auth.
     content = (
       <HomeRenderer
-        editorMode
-        editorData={DUMMY_ELECTION}
+        onSignIn={() => go('vote')}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
         initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 2004 }, candidates: PARTIES }}
       />
@@ -232,14 +233,16 @@ function PlaygroundBody() {
 
       <style jsx global>{`
         /* The playground is SESSION-LESS by intent: next-auth's SessionProvider is a
-           singleton (a nested session=null doesn't isolate), so instead of fighting it
-           we neutralise every auth ACTION in the chrome — the preview can never sign a
-           real user in or out. Pill avatar/name stay for realism; only the dangerous
-           buttons go. Covers all 3 families (signOut shares aria-label="ออกจากระบบ"). */
+           singleton (a nested session=null doesn't isolate). SIGN-IN is now SIMULATED
+           via the onSignIn callback (home → local vote page), so sign-in controls stay
+           VISIBLE. We only hide the DANGEROUS SIGN-OUT affordances — those would log the
+           real admin out (no seam, and no session exists here anyway). Covers all 3
+           families (signOut shares aria-label="ออกจากระบบ"). The gumroad .gnav-* auth
+           controls are sign-in-only when logged out (which the playground always is),
+           so they need no hiding — onSignIn simulates them. */
         [aria-label="ออกจากระบบ"],
         .vd-user__out,
-        .sd-signin, .sd-rail__logout-btn,
-        .gnav-auth, .gnav-auth-d, .gnav-dbtn { display:none !important; }
+        .sd-rail__logout-btn { display:none !important; }
 
         .tpg { position:fixed; right:16px; bottom:16px; z-index:100000; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
         .tpg__toggle { display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:999px; border:0; cursor:pointer;

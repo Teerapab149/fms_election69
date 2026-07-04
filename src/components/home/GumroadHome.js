@@ -53,6 +53,9 @@ export default function GumroadHome({
   pageLayout = null,
   resolvedTemplate = null,
   editorTokenStyles = null,
+  // Optional sign-in override (playground): when present, the login CTA calls
+  // this instead of next-auth signIn(). Absent = byte-identical live behaviour.
+  onSignIn = null,
 }) {
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
@@ -189,7 +192,7 @@ export default function GumroadHome({
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
 
       {/* ── TOPBAR (shared gumroad navbar element) ── */}
-      <SiteNavbar active="home" editorMode={editorMode} />
+      <SiteNavbar active="home" editorMode={editorMode} onSignIn={onSignIn} />
 
       {/* ── TICKER (element) ── */}
       <HomeTicker faculty={facultyEn} calendarYear={calendarYear} samoPrefix={samoPrefix} samoNumber={samoNumber} org={orgName} partyCount={partyCount} uni={uni} />
@@ -227,7 +230,7 @@ export default function GumroadHome({
 
           <div className="gh-cta">
             <Wrap id="voteCTA-button">
-              <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} />
+              <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
             </Wrap>
           </div>
 

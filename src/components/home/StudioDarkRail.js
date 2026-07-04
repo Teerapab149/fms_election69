@@ -36,7 +36,7 @@ const NAV = [
   { key: "results",    num: "04", label: "Returns",    th: "ผลคะแนน",     href: "/results" },
 ];
 
-export default function StudioDarkRail({ active = "home", editorMode = false, systemMode = "AUTO" }) {
+export default function StudioDarkRail({ active = "home", editorMode = false, systemMode = "AUTO", onSignIn = null }) {
   const globalConfig = useGlobalConfig();
   const { data: session, status } = useSession();
 
@@ -83,6 +83,8 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
   const linkHref = (href) => (editorMode ? undefined : getPath(href));
   const doSignIn = () => {
     if (editorMode) return;
+    // Optional sign-in override (playground) instead of next-auth signIn().
+    if (onSignIn) { onSignIn(); return; }
     signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" });
   };
   // Match the canonical logout flow (Navbar.js): clear the local NextAuth

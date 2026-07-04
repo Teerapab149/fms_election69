@@ -30,7 +30,7 @@ const LINKS = [
   { key: "results", href: "/results", label: "ผลการลงคะแนนเสียง" },
 ];
 
-export default function SiteNavbarGumroad({ active = "", editorMode = false }) {
+export default function SiteNavbarGumroad({ active = "", editorMode = false, onSignIn = null }) {
   return (
     <header className="snav" data-element="site-navbar" data-variant="gumroad">
       <a href={getPath("/")} className="snav__brand">
@@ -57,7 +57,7 @@ export default function SiteNavbarGumroad({ active = "", editorMode = false }) {
       </nav>
 
       <div className="snav__actions">
-        <GumroadMobileMenu active={active} editorMode={editorMode} />
+        <GumroadMobileMenu active={active} editorMode={editorMode} onSignIn={onSignIn} />
       </div>
 
       <style jsx global>{`

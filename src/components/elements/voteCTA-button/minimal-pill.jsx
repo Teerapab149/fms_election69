@@ -91,7 +91,7 @@ function hrefForState(stateId) {
   return null; // login: handled by signIn click
 }
 
-export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedConfig = null }) {
+export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedConfig = null, onSignIn = null }) {
   const currentState = deriveCurrentState(data);
   const visualState = mapToPrimaryState(currentState);
   const baseStyle = PRIMARY_STYLES[visualState];
@@ -161,9 +161,11 @@ export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedCon
       <div className="w-full flex justify-center lg:justify-start pt-0 pb-4">
         <div
           onClick={() =>
-            signIn("authentik", {
-              callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
-            })
+            onSignIn
+              ? onSignIn()
+              : signIn("authentik", {
+                  callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
+                })
           }
           className="cursor-pointer inline-block"
         >
