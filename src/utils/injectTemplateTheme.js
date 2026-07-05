@@ -110,9 +110,9 @@ function injectOriginal(doc, themeSlug) {
 }
 
 function injectGumroad(doc, themeSlug) {
-  const roots = doc.querySelectorAll(".gum-root");
-  if (!roots.length) return;
   const t = gumroadTheme(themeSlug);
+  // 1) The family ramp — .gum-root vars (absent on classic-rendered slides → no-op).
+  const roots = doc.querySelectorAll(".gum-root");
   const vars = {
     "--ink": t.ink, "--ink2": t.ink2, "--cream": t.cream, "--cream2": t.cream2, "--paper": t.paper,
     "--pink": t.pink, "--lime": t.lime, "--yellow": t.yellow, "--sky": t.sky, "--coral": t.coral,
@@ -123,12 +123,43 @@ function injectGumroad(doc, themeSlug) {
     for (const k in vars) r.style.setProperty(k, vars[k]);
     setTimeout(() => r.classList.remove("gum-theming"), 600);
   });
+  // 2) Layer-1 --color-* tokens on .fms-app — catalog elements (voteCTA, stats ฯลฯ)
+  // read --color-primary etc., and in a preview iframe those are SSR'd from the
+  // APPLIED template. Mapping MUST equal buildGumroadTemplate in builtIn/gumroad.js
+  // (pink→primary, lime→accent, cream→bg, paper→surface, ink→text/border,
+  // ink2→muted) — parity rule.
+  const apps = doc.querySelectorAll(".fms-app");
+  if (!apps.length) return;
+  // The .gum-theming ease rule (GumroadTheme.js) is scoped to .gum-root.gum-theming —
+  // carry an .fms-app-scoped copy into the iframe so non-gum-root nodes morph
+  // smoothly instead of snapping (mirrors injectOriginal's orig-morph-style).
+  if (!doc.getElementById("gum-morph-style")) {
+    const st = doc.createElement("style");
+    st.id = "gum-morph-style";
+    st.textContent =
+      ".fms-app.gum-theming, .fms-app.gum-theming *, .fms-app.gum-theming *::before, .fms-app.gum-theming *::after { transition: background-color .5s ease, background .5s ease, color .5s ease, border-color .5s ease, box-shadow .5s ease, fill .5s ease, stroke .5s ease !important; }";
+    doc.head.appendChild(st);
+  }
+  const tokens = {
+    "--color-primary": t.pink,
+    "--color-accent": t.lime,
+    "--color-bg": t.cream,
+    "--color-surface": t.paper,
+    "--color-text": t.ink,
+    "--color-text-muted": t.ink2,
+    "--color-border": t.ink,
+  };
+  apps.forEach((r) => {
+    r.classList.add("gum-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
+    setTimeout(() => r.classList.remove("gum-theming"), 600);
+  });
 }
 
 function injectVerdure(doc, themeSlug) {
-  const roots = doc.querySelectorAll(".vd-root");
-  if (!roots.length) return;
   const v = verdureTheme(themeSlug);
+  // 1) The family ramp — .vd-root vars (absent on classic-rendered slides → no-op).
+  const roots = doc.querySelectorAll(".vd-root");
   const vars = {
     "--cream": v.cream, "--cream-2": v.cream2, "--cream-3": v.cream3,
     "--moss": v.moss, "--moss-2": v.moss2, "--moss-3": v.moss3,
@@ -145,6 +176,36 @@ function injectVerdure(doc, themeSlug) {
   roots.forEach((r) => {
     r.classList.add("vd-theming");
     for (const k in vars) r.style.setProperty(k, vars[k]);
+    setTimeout(() => r.classList.remove("vd-theming"), 700);
+  });
+  // 2) Layer-1 --color-* tokens on .fms-app — same reason as injectGumroad/injectStudio.
+  // Mapping MUST equal buildVerdureTemplate in builtIn/verdure.js (terra→primary,
+  // terra2→accent, cream→bg, cream2→surface, moss→text, moss3→muted, rule→border)
+  // — parity rule.
+  const apps = doc.querySelectorAll(".fms-app");
+  if (!apps.length) return;
+  // The .vd-theming ease rule (VerdureChrome.js) is scoped to .vd-root.vd-theming —
+  // carry an .fms-app-scoped copy into the iframe so non-vd-root nodes morph
+  // smoothly instead of snapping (mirrors injectOriginal's orig-morph-style).
+  if (!doc.getElementById("vd-morph-style")) {
+    const st = doc.createElement("style");
+    st.id = "vd-morph-style";
+    st.textContent =
+      ".fms-app.vd-theming, .fms-app.vd-theming *, .fms-app.vd-theming *::before, .fms-app.vd-theming *::after { transition: background-color .5s ease, background .5s ease, color .5s ease, border-color .5s ease, box-shadow .5s ease, fill .5s ease, stroke .5s ease !important; }";
+    doc.head.appendChild(st);
+  }
+  const tokens = {
+    "--color-primary": v.terra,
+    "--color-accent": v.terra2,
+    "--color-bg": v.cream,
+    "--color-surface": v.cream2,
+    "--color-text": v.moss,
+    "--color-text-muted": v.moss3,
+    "--color-border": v.rule,
+  };
+  apps.forEach((r) => {
+    r.classList.add("vd-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
     setTimeout(() => r.classList.remove("vd-theming"), 700);
   });
 }

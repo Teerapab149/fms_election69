@@ -22,6 +22,7 @@ import { MotionConfig } from 'framer-motion';
 import { Palette, Check } from 'lucide-react';
 import { getPath } from '../../utils/basePath';
 import { hrefToDest } from '../../utils/previewNav';
+import { buildTemplateStyles } from '../../lib/templateTokens';
 import TemplatePreviewWrapper from '../../components/admin/TemplatePreviewWrapper';
 
 import HomeRenderer from '../../components/home/HomeRenderer';
@@ -80,6 +81,15 @@ function PreviewBody() {
   // iframe so the full-screen preview is interactive wherever it's used.
   const interact = sp.get('interact') === '1';
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
+  // The template being PREVIEWED (P2 #2 fix). layout.js SSRs the ACTIVE template's
+  // Layer-1 tokens on `.fms-app` site-wide — including this route — so previewing a
+  // NON-active template leaked the active palette into every token-consuming element
+  // (e.g. studio-dark's voteCTA rendered original's purple). Emit the previewed
+  // template's own tokens below; rendered inside `.fms-app` content it comes AFTER
+  // the layout <style> in DOM order and wins at equal specificity (same cascade
+  // trick the family homes use in non-editor mode). Unknown slug → emit nothing
+  // (previous behavior).
+  const previewedTemplate = BUILT_IN_TEMPLATES[slug];
 
   // Colour themes within this layout family (e.g. verdure terracotta/honey/teal/
   // berry). The full-screen bar shows them as swatches; clicking one re-tints IN
@@ -200,6 +210,12 @@ function PreviewBody() {
   // click-interception seam + auth-safety CSS. Static mode → byte-identical original.
   return (
     <MotionConfig reducedMotion="always">
+      {/* Layer-1/2 token scope of the PREVIEWED template — overrides the active
+          template's SSR'd tokens (see previewedTemplate note above). Emitted once,
+          above BOTH branches, so static (chooser slides) and interact renders agree. */}
+      {previewedTemplate && (
+        <style dangerouslySetInnerHTML={{ __html: buildTemplateStyles(previewedTemplate, '.fms-app') }} />
+      )}
       <PreviewMotionDamp />
       {interact ? (
         <>
