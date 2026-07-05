@@ -230,7 +230,10 @@ function buildGumroadTemplate(slug, name, palette) {
       vars: {
         ...classicTemplate.elements["voteCTA-button"].vars,
         "--btn-bg":         "var(--color-primary)",
-        "--btn-text":       INK,
+        // References the family ramp (injectGumroad pushes --ink on morph) with this
+        // variant's palette value as fallback — re-tints in previews, identical where
+        // the ramp is absent (e.g. admin element gallery).
+        "--btn-text":       `var(--ink, ${INK})`,
         "--btn-radius":     "var(--radius-button)", // 14px
         "--btn-padding-x":  "28px",
         "--btn-padding-y":  "18px",

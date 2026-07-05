@@ -131,8 +131,12 @@ function buildVerdureTemplate(slug, name, palette) {
       config: { ...classicTemplate.elements["voteCTA-button"].config },
       vars: {
         ...classicTemplate.elements["voteCTA-button"].vars,
-        "--btn-bg": CTA, "--btn-text": CTA_TEXT, "--btn-border-color": CTA,
-        "--btn-radius": "9999px", "--btn-shadow": "none", "--btn-hover-bg": MOSS,
+        // Layer-2 colour vars REFERENCE the family ramp (not literal hex) so preview
+        // swatch morphs re-tint them (injectVerdure pushes --cta/--cta-text/--moss);
+        // the fallback = this variant's palette value, so the element renders
+        // identically where the ramp is absent (e.g. admin element gallery).
+        "--btn-bg": `var(--cta, ${CTA})`, "--btn-text": `var(--cta-text, ${CTA_TEXT})`, "--btn-border-color": `var(--cta, ${CTA})`,
+        "--btn-radius": "9999px", "--btn-shadow": "none", "--btn-hover-bg": `var(--moss, ${MOSS})`,
         "--btn-padding-x": "32px", "--btn-padding-y": "18px", "--btn-font-size": "15px", "--btn-font-weight": "600"
       }
     },
