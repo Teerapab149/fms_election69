@@ -35,6 +35,7 @@ import ThreeDCarousel from "./ThreeDCarousel";
 import LiquidHero from "./LiquidHero.js";
 import EditorElement from '../admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
+import SinglePartyBaseStyles from './SinglePartyBaseStyles';
 
 export default function SinglePartyView({
   candidate,
@@ -273,11 +274,11 @@ export default function SinglePartyView({
         border-radius: 4px;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #D4AF37;
+        background: var(--spv-gold-bright, #D4AF37);
         border-radius: 4px;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #B8860B;
+        background: var(--spv-gold, #B8860B);
       }
 
       /* === SPOTLIGHT INTERACTION === */
@@ -288,18 +289,18 @@ export default function SinglePartyView({
 
       /* Specific Override for Discover Button: Turn GOLD in Spotlight */
       #spotlight-content .discover-btn {
-        background: linear-gradient(to right, #FCD34D, #B45309) !important;
-        color: #1A1A1A !important; 
-        box-shadow: 0 0 30px rgba(251, 191, 36, 0.6) !important; 
+        background: linear-gradient(to right, var(--spv-glow-2, #FCD34D), var(--spv-glow, #B45309)) !important;
+        color: var(--spv-dark, #1A1A1A) !important;
+        box-shadow: 0 0 30px rgba(251, 191, 36, 0.6) !important;
       }
       #spotlight-content .discover-btn svg {
-        color: #1A1A1A !important;
+        color: var(--spv-dark, #1A1A1A) !important;
       }
 
       /* Fix Party Number Badge Visibility (White BG needs Black Text) */
       #spotlight-content .party-number-badge {
-        color: #1A1A1A !important;
-        border-color: #1A1A1A !important;
+        color: var(--spv-dark, #1A1A1A) !important;
+        border-color: var(--spv-dark, #1A1A1A) !important;
       }
 
       body { overflow: hidden; } 
@@ -426,7 +427,8 @@ export default function SinglePartyView({
   if (!portalContainer) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] bg-white text-[#1A1A1A] font-sans h-[100dvh]">
+    <div className="fixed inset-0 z-[99999] bg-white font-sans h-[100dvh]" style={{ color: 'var(--spv-dark, #1A1A1A)' }}>
+      <SinglePartyBaseStyles />
       {globalStyles}
 
       <div className={`w-full h-full transition-transform duration-[800ms] ease-[cubic-bezier(0.76,0,0.24,1)] will-change-transform ${introFinished ? "-translate-y-full" : "translate-y-0"}`}>
@@ -456,7 +458,7 @@ export default function SinglePartyView({
                   <Reveal delay={0}>
                     {/* Party Number Badge - Pill Shaped */}
                     <div className="mb-6 lg:mb-8">
-                      <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[#1A1A1A] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm party-number-badge">
+                      <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[var(--spv-dark,#1A1A1A)] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm party-number-badge">
                         พรรคหมายเลข {partyNumber}
                       </span>
                     </div>
@@ -471,13 +473,13 @@ export default function SinglePartyView({
                       return (
                         <>
                           {/* Mobile: Split 2 Lines */}
-                          <h1 className="md:hidden text-5xl font-black uppercase text-[#1A1A1A] leading-[0.9] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                          <h1 className="md:hidden text-5xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-[0.9] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                             <span>{top}</span>
                             <span>{bottom}</span>
                           </h1>
 
                           {/* Desktop: Single Line */}
-                          <h1 className="hidden md:block text-6xl xl:text-8xl font-black uppercase text-[#1A1A1A] leading-none tracking-tight mb-6 drop-shadow-sm" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                          <h1 className="hidden md:block text-6xl xl:text-8xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-none tracking-tight mb-6 drop-shadow-sm" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                             {partyName}
                           </h1>
                         </>
@@ -500,7 +502,7 @@ export default function SinglePartyView({
                       </button>
 
                       {/* Vote: Glass styling (inverts automatically) */}
-                      <button onClick={() => scrollTo('vote')} className="vote-ready-btn w-full md:w-auto px-8 lg:px-10 py-3 lg:py-4 bg-white/30 backdrop-blur-md border border-black/10 text-[#1A1A1A] rounded-full font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-white transition-colors flex items-center justify-center gap-2 text-xs lg:text-base shadow-lg">
+                      <button onClick={() => scrollTo('vote')} className="vote-ready-btn w-full md:w-auto px-8 lg:px-10 py-3 lg:py-4 bg-white/30 backdrop-blur-md border border-black/10 text-[var(--spv-dark,#1A1A1A)] rounded-full font-bold uppercase tracking-widest hover:bg-[var(--spv-dark,#1A1A1A)] hover:text-white transition-colors flex items-center justify-center gap-2 text-xs lg:text-base shadow-lg">
                         <Target className="w-4 h-4" /> Ready to Vote?
                       </button>
                     </div>
@@ -511,7 +513,7 @@ export default function SinglePartyView({
           </section>
 
           {/* ===== SCROLL INDICATOR ===== */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition-opacity cursor-pointer text-[#1A1A1A]" onClick={() => scrollTo('symbol')}>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition-opacity cursor-pointer text-[var(--spv-dark,#1A1A1A)]" onClick={() => scrollTo('symbol')}>
             <span className="text-[10px] uppercase font-bold tracking-[0.3em]">Scroll</span>
             <ChevronDown className="w-5 h-5 animate-bounce" />
           </div>
@@ -530,10 +532,10 @@ export default function SinglePartyView({
 
                     {/* Header Block */}
                     <div className="mb-4 md:mb-0 lg:mb-10 text-center md:text-left">
-                      <span className="block text-sm font-bold tracking-[0.3em] text-[#B8860B] uppercase mb-2 lg:mb-3">
+                      <span className="block text-sm font-bold tracking-[0.3em] text-[var(--spv-gold,#B8860B)] uppercase mb-2 lg:mb-3">
                         The Identity
                       </span>
-                      <h2 className="text-5xl md:text-7xl font-black text-[#1A1A1A] uppercase tracking-tighter leading-[0.9]">
+                      <h2 className="text-5xl md:text-7xl font-black text-[var(--spv-dark,#1A1A1A)] uppercase tracking-tighter leading-[0.9]">
                         Logo <br /> Concept
                       </h2>
                     </div>
@@ -562,7 +564,7 @@ export default function SinglePartyView({
                     {/* md:mt-8 (Reduced from 24) to pull text box up on Tablet. lg:mt-0 aligns with logo top */}
                     <div className="bg-white p-8 lg:p-12 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-gray-100/80 relative">
                       {/* Decorative Quote */}
-                      <div className="absolute top-6 right-10 text-[#B8860B]/10 font-serif text-[10rem] leading-none pointer-events-none select-none">
+                      <div className="absolute top-6 right-10 text-[color-mix(in_srgb,var(--spv-gold,#B8860B)_10%,transparent)] font-serif text-[10rem] leading-none pointer-events-none select-none">
                         &rdquo;
                       </div>
 
@@ -591,21 +593,21 @@ export default function SinglePartyView({
           < section id="mission" className="w-full flex flex-col md:flex-row min-h-auto md:min-h-[60vh]" >
 
             {/* LEFT SIDE: Header (Deep Royal Purple) - 40% */}
-            < div className="w-full md:w-[40%] bg-[#2E1065] relative px-6 py-12 md:px-10 md:py-24 flex flex-col justify-center items-center text-center overflow-hidden" >
+            < div className="w-full md:w-[40%] bg-[var(--spv-deep,#2E1065)] relative px-6 py-12 md:px-10 md:py-24 flex flex-col justify-center items-center text-center overflow-hidden" >
               {/* Background Effects (Unity Theme: Purple/Gold) */}
-              < div className="absolute inset-0 bg-gradient-to-br from-[#2E1065] via-[#4C1D95] to-[#2E1065] opacity-100" ></div >
+              < div className="absolute inset-0 bg-gradient-to-br from-[var(--spv-deep,#2E1065)] via-[var(--spv-deep-2,#4C1D95)] to-[var(--spv-deep,#2E1065)] opacity-100" ></div >
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#D97706] rounded-full blur-[100px] opacity-20 animate-pulse"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--spv-glow,#D97706)] rounded-full blur-[100px] opacity-20 animate-pulse"></div>
 
               <div className="relative z-10">
                 <Reveal>
                   <div className="w-20 h-20 md:w-28 md:h-28 mb-6 md:mb-8 mx-auto bg-white/10 backdrop-blur-md rounded-2xl md:rounded-3xl border border-white/20 flex items-center justify-center shadow-[0_0_40px_rgba(217,119,6,0.4)]">
-                    <Target className="text-[#FCD34D] drop-shadow-md w-10 h-10 md:w-16 md:h-16" />
+                    <Target className="text-[var(--spv-glow-2,#FCD34D)] drop-shadow-md w-10 h-10 md:w-16 md:h-16" />
                   </div>
                   <h3 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-2 md:mb-4">
                     พันธกิจ
                   </h3>
-                  <p className="text-[#FCD34D] text-xs md:text-sm font-bold tracking-[0.3em] uppercase opacity-90">
+                  <p className="text-[var(--spv-glow-2,#FCD34D)] text-xs md:text-sm font-bold tracking-[0.3em] uppercase opacity-90">
                     OUR MISSION
                   </p>
                 </Reveal>
@@ -621,7 +623,7 @@ export default function SinglePartyView({
                       <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)] flex items-center justify-center font-black text-lg md:text-xl border border-[color-mix(in_srgb,var(--color-primary)_20%,white)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
                         {i + 1}
                       </div>
-                      <p className="text-base md:text-xl text-gray-700 font-medium leading-relaxed group-hover:text-[#2E1065] transition-colors">
+                      <p className="text-base md:text-xl text-gray-700 font-medium leading-relaxed group-hover:text-[var(--spv-deep,#2E1065)] transition-colors">
                         {m}
                       </p>
                     </div>
@@ -636,8 +638,8 @@ export default function SinglePartyView({
             <div className="container mx-auto px-6 relative z-10">
 
               <div className="text-center max-w-3xl mx-auto mb-16">
-                <span className="text-[#B8860B] font-bold tracking-[0.2em] uppercase text-sm">Our Policies</span>
-                <h2 className="text-4xl md:text-6xl font-black text-[#1A1A1A] mt-3 uppercase tracking-tight">นโยบายพรรค</h2>
+                <span className="text-[var(--spv-gold,#B8860B)] font-bold tracking-[0.2em] uppercase text-sm">Our Policies</span>
+                <h2 className="text-4xl md:text-6xl font-black text-[var(--spv-dark,#1A1A1A)] mt-3 uppercase tracking-tight">นโยบายพรรค</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
                 {(Array.isArray(policies) ? policies : ["นโยบายที่ 1", "นโยบายที่ 2", "นโยบายที่ 3"]).map((p, i) => (
@@ -653,7 +655,7 @@ export default function SinglePartyView({
                       <div className="relative h-full bg-white rounded-[1.3rem] md:rounded-[2.3rem] overflow-hidden flex flex-col justify-start transition-all duration-300 bg-clip-padding">
 
                         {/* BACKGROUND NUMBER */}
-                        <div className="absolute -top-2 -right-2 p-3 text-6xl md:text-[10rem] md:-top-4 md:-right-4 md:p-6 font-black text-[#2E1065]/15 group-hover:text-[#2E1065]/25 transition-colors z-0 select-none leading-none">
+                        <div className="absolute -top-2 -right-2 p-3 text-6xl md:text-[10rem] md:-top-4 md:-right-4 md:p-6 font-black text-[color-mix(in_srgb,var(--spv-deep,#2E1065)_15%,transparent)] group-hover:text-[var(--spv-deep,#2E1065)]/25 transition-colors z-0 select-none leading-none">
                           {i + 1}
                         </div>
 
@@ -707,7 +709,7 @@ export default function SinglePartyView({
                     <span className="text-[var(--color-accent)] font-bold tracking-[0.2em] uppercase text-xs md:text-lg drop-shadow-sm mb-3">
                       {partyName}
                     </span>
-                    <h2 className="text-4xl md:text-7xl font-black text-[#1A1A1A] uppercase tracking-tight text-center px-4 leading-none">
+                    <h2 className="text-4xl md:text-7xl font-black text-[var(--spv-dark,#1A1A1A)] uppercase tracking-tight text-center px-4 leading-none">
                       MEET THE TEAM
                     </h2>
                   </div>
@@ -724,7 +726,7 @@ export default function SinglePartyView({
                           alt="Team Vertical"
                           className="w-full h-auto shadow-2xl"
                         />
-                        <div className="absolute inset-0 bg-[#2E0249]/5 pointer-events-none mix-blend-multiply" />
+                        <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--spv-deep,#2E0249)_5%,transparent)] pointer-events-none mix-blend-multiply" />
                       </div>
                     )}
 
@@ -735,7 +737,7 @@ export default function SinglePartyView({
                         alt="Team Horizontal"
                         className="w-full h-auto object-contain max-h-[90vh] mx-auto shadow-2xl"
                       />
-                      <div className="absolute inset-0 bg-[#2E0249]/5 pointer-events-none mix-blend-multiply" />
+                      <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--spv-deep,#2E0249)_5%,transparent)] pointer-events-none mix-blend-multiply" />
                     </div>
                   </div>
                 </section>
@@ -746,8 +748,8 @@ export default function SinglePartyView({
 
                   <div className="container mx-auto px-4 md:px-6 relative z-10">
                     <div className="text-center mb-10 md:mb-12">
-                      <span className="text-[#B8860B] font-bold tracking-[0.2em] uppercase text-xs md:text-sm">{partyName}</span>
-                      <h2 className="text-4xl md:text-5xl font-black text-[#1A1A1A] mt-2 md:mt-3 uppercase tracking-tight">GALLERY</h2>
+                      <span className="text-[var(--spv-gold,#B8860B)] font-bold tracking-[0.2em] uppercase text-xs md:text-sm">{partyName}</span>
+                      <h2 className="text-4xl md:text-5xl font-black text-[var(--spv-dark,#1A1A1A)] mt-2 md:mt-3 uppercase tracking-tight">GALLERY</h2>
                     </div>
 
                     <div className="rounded-[24px] md:rounded-[32px] border border-black/10 bg-white shadow-[0_24px_70px_-50px_rgba(0,0,0,0.35)] p-2 md:p-6">
@@ -769,8 +771,8 @@ export default function SinglePartyView({
           < section id="team" className="py-24 bg-white relative overflow-hidden border-t border-black/5" >
             <div className="container mx-auto px-6 relative z-10">
               <div className="mb-16">
-                <span className="text-[#6A0DAD] font-bold tracking-[0.2em] uppercase text-sm">The Squad</span>
-                <h2 className="text-4xl md:text-5xl font-black text-[#1A1A1A] mt-2 uppercase tracking-tight">Members</h2>
+                <span className="text-[var(--spv-vote-glow,#6A0DAD)] font-bold tracking-[0.2em] uppercase text-sm">The Squad</span>
+                <h2 className="text-4xl md:text-5xl font-black text-[var(--spv-dark,#1A1A1A)] mt-2 uppercase tracking-tight">Members</h2>
               </div>
               <RevealGrid className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {members.map((m, i) => (
@@ -798,8 +800,8 @@ export default function SinglePartyView({
 
                     {/* Text Info */}
                     <div className="relative pl-1 transition-all duration-300 group-hover:translate-x-1">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#B8860B] mb-1 opacity-80 group-hover:opacity-100 transition-opacity">{m.position || "Member"}</p>
-                      <h4 className="text-lg font-black text-[#1A1A1A] leading-tight group-hover:text-[#6A0DAD] transition-colors">{m.name}</h4>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--spv-gold,#B8860B)] mb-1 opacity-80 group-hover:opacity-100 transition-opacity">{m.position || "Member"}</p>
+                      <h4 className="text-lg font-black text-[var(--spv-dark,#1A1A1A)] leading-tight group-hover:text-[var(--spv-vote-glow,#6A0DAD)] transition-colors">{m.name}</h4>
                     </div>
                   </div>
                 ))}
@@ -808,9 +810,9 @@ export default function SinglePartyView({
           </section>
 
           {/* === 6. VOTE === */}
-          <section id="vote" className="py-32 bg-[#1A1A1A] text-white relative overflow-hidden">
+          <section id="vote" className="py-32 bg-[var(--spv-dark,#1A1A1A)] text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#6A0DAD] blur-[150px] opacity-20 rounded-full pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--spv-vote-glow,#6A0DAD)] blur-[150px] opacity-20 rounded-full pointer-events-none" />
             <div className="container mx-auto px-6 relative z-10 max-w-4xl text-center">
               <Reveal>
                 <h2 className="text-5xl md:text-8xl font-black text-white mb-8 uppercase tracking-tighter">Your Vote <br /> Your Voice</h2>
@@ -834,13 +836,13 @@ export default function SinglePartyView({
                   {/* Secondary Options */}
                   <div className="grid grid-cols-2 gap-4">
                     {/* ไม่รับรอง Button - Solid Background */}
-                    <button onClick={() => onSelect(specialOptions?.disapprove?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.disapprove?.id ? 'bg-rose-500/20 border-2 border-rose-400 ring-2 ring-rose-400/50 shadow-lg shadow-rose-500/20' : 'bg-[#2A2A2A] border border-white/20 hover:bg-[#3A3A3A]'}`}>
+                    <button onClick={() => onSelect(specialOptions?.disapprove?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.disapprove?.id ? 'bg-rose-500/20 border-2 border-rose-400 ring-2 ring-rose-400/50 shadow-lg shadow-rose-500/20' : 'bg-[var(--spv-dark-2,#2A2A2A)] border border-white/20 hover:bg-[var(--spv-dark-3,#3A3A3A)]'}`}>
                       <XCircle className={selectedPartyId === specialOptions?.disapprove?.id ? 'text-rose-300' : 'text-white/70'} size={32} />
                       <span className={`font-bold text-lg ${selectedPartyId === specialOptions?.disapprove?.id ? 'text-white' : 'text-white/90'}`}>ไม่รับรอง</span>
                     </button>
 
                     {/* งดออกเสียง Button - Solid Background */}
-                    <button onClick={() => onSelect(specialOptions?.abstain?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.abstain?.id ? 'bg-amber-500/20 border-2 border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20' : 'bg-[#2A2A2A] border border-white/20 hover:bg-[#3A3A3A]'}`}>
+                    <button onClick={() => onSelect(specialOptions?.abstain?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.abstain?.id ? 'bg-amber-500/20 border-2 border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20' : 'bg-[var(--spv-dark-2,#2A2A2A)] border border-white/20 hover:bg-[var(--spv-dark-3,#3A3A3A)]'}`}>
                       <Ban className={selectedPartyId === specialOptions?.abstain?.id ? 'text-amber-300' : 'text-white/70'} size={32} />
                       <span className={`font-bold text-lg ${selectedPartyId === specialOptions?.abstain?.id ? 'text-white' : 'text-white/90'}`}>งดออกเสียง</span>
                     </button>

@@ -256,7 +256,7 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
                         className="absolute inset-0 z-10 pointer-events-none"
                         style={{ maskImage: maskImageValue, WebkitMaskImage: maskImageValue }}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#2E1065] via-[#7e22ce] to-[#ec4899] opacity-90" />
+                        <div className="absolute inset-0 opacity-90" style={{ background: "linear-gradient(to bottom right, var(--spv-hero-a, #2E1065), var(--spv-hero-b, #7e22ce), var(--spv-hero-c, #ec4899))" }} />
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay" />
 
                         <div className="absolute inset-0 flex flex-col items-center justify-center select-none overflow-hidden">

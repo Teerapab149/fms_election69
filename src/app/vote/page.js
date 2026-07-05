@@ -204,8 +204,8 @@ export default function VotePage() {
         selectedParty={selectedParty}
         isSubmitting={isSubmitting || isRedirecting} // ✅ Disable when redirecting too
         variant={isSingleParty ? "single" : "multi"}
-        partyPrimary={regularParties?.[0]?.themePrimary || "#4D2A67"}
-        partyGold={regularParties?.[0]?.themeGold || "#CDA176"}
+        partyPrimary={regularParties?.[0]?.themePrimary || (isSingleParty ? "var(--spv-footer-primary, #4D2A67)" : "#4D2A67")}
+        partyGold={regularParties?.[0]?.themeGold || (isSingleParty ? "var(--spv-footer-gold, #CDA176)" : "#CDA176")}
         onConfirm={
           isSingleParty
             ? onConfirmVote              // ✅ single: กดใน footer modal แล้วค่อย submitVote

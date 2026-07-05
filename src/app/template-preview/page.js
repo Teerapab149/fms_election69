@@ -325,8 +325,8 @@ function PreviewBody() {
               selectedParty={selectedParty}
               isSubmitting={false}
               variant="single"
-              partyPrimary={singleParty?.themePrimary || '#4D2A67'}
-              partyGold={singleParty?.themeGold || '#CDA176'}
+              partyPrimary={singleParty?.themePrimary || 'var(--spv-footer-primary, #4D2A67)'}
+              partyGold={singleParty?.themeGold || 'var(--spv-footer-gold, #CDA176)'}
               onConfirm={() => navTo('success')}
             />
           </div>
