@@ -31,215 +31,232 @@
  * self-contained StudioDark* layout components (not catalog elements — editing
  * there is theme-token + central text only, per the editor-strategy decision).
  *
+ * PARITY RULE (like gumroad/verdure/original): every colour derives from
+ * utils/studioDarkPalettes.js — the SAME ramp StudioDarkBaseStyles emits
+ * (--sd-* vars) and injectTemplateTheme pushes in previews. Each colour variant
+ * carries its FULL palette so an applied variant matches the preview.
+ *
  * Per P-LOG-005: do NOT modify classic.js here. All overrides spread from
  * classicTemplate first.
  */
 
 import { classicTemplate } from "./classic";
+import { STUDIO_THEMES } from "../../../../../utils/studioDarkPalettes";
 
-// Palette constants (mirror studio-v2.css :root).
-const BG       = "#14140F"; // warm soft-dark page canvas
-const SURFACE  = "#1B1B14"; // raised surface (bg-2)
-const SURFACE2 = "#232319"; // deeper surface (bg-3)
-const INK      = "#F2EDDF"; // primary text (warm off-white)
-const INK_2    = "#B5B0A2"; // muted text
-const INK_3    = "#7F7A6E"; // faint labels
-const LINE     = "#2E2E22"; // hairline rule / border
-const ACCENT   = "#D5FF3F"; // electric lime
-const ACCENT_2 = "#C7E866"; // softer lime
 const SHADOW_SOFT = "0 16px 48px rgba(0,0,0,.4)";
 
-export const studioDarkTemplate = {
-  ...classicTemplate,
-  id: "studio-dark",
-  slug: "studio-dark",
-  name: "สตูดิโอ ดาร์ก",
-  description: "สไตล์ดาร์กพรีเมียม — พื้นดำอุ่น เส้นบางคม แอ็กเซนต์ไลม์ ฟอนต์เรียบ + แถบเมนูซ้ายถาวร",
-  layoutFamily: "studio-dark", // real template — own page layouts (left rail + chapter scenes)
+// Palette slots per theme (see studioDarkPalettes.js): bg / bg2 / bg3 / bgRail,
+// line / lineStrong, ink / ink2 / ink3 / ink4, accent / accent2.
+function buildStudioTemplate(slug, name, description, p) {
+  return {
+    ...classicTemplate,
+    id: slug,
+    slug,
+    name,
+    description,
+    layoutFamily: "studio-dark", // real template — own page layouts (left rail + chapter scenes)
 
-  colorSwatch: {
-    primary: ACCENT,
-    secondary: INK,
-    background: BG
-  },
-
-  pages: {
-    home:       { visible: true },
-    vote:       { visible: true, backgroundColor: BG },
-    candidates: { visible: true, backgroundColor: BG },
-    results:    { visible: true, backgroundColor: BG },
-    closed:     { visible: true, backgroundColor: BG },
-    success:    { visible: true, backgroundColor: BG }
-  },
-
-  theme: {
-    colors: {
-      primary:    ACCENT,
-      accent:     ACCENT_2,
-      background: BG,
-      surface:    SURFACE,
-      text:       INK,
-      textMuted:  INK_2,
-      border:     LINE
-    },
-    typography: classicTemplate.theme?.typography,
-    spacing:    classicTemplate.theme?.spacing,
-    effects: {
-      borderRadius: "1.125rem", // 18px — soft, not chunky
-      shadow:       SHADOW_SOFT
-    },
-    // Layer 1 tokens — full set (no inheritance, snapshot-friendly).
-    tokens: {
-      "--color-primary":     ACCENT,
-      "--color-accent":      ACCENT_2,
-      "--color-bg":          BG,
-      "--color-surface":     SURFACE,
-      "--color-text":        INK,
-      "--color-text-muted":  INK_2,
-      "--color-border":      LINE,        // hairline rules everywhere
-      "--radius-sm":         "10px",
-      "--radius-md":         "14px",
-      "--radius-card":       "22px",
-      "--radius-button":     "9999px",    // pill buttons
-      "--shadow-card":       SHADOW_SOFT,
-      "--shadow-button":     "none",
-      // Display font LOADED via next/font (layout.js → --font-studio-sans = Inter,
-      // a near-identical sub for the prototype's Geist). Thai falls through to
-      // Anuphan. The literal names are the fallback for any out-of-scope context.
-      "--font-display":      "var(--font-studio-sans), 'Inter', var(--font-anuphan), 'Anuphan', system-ui, sans-serif",
-      "--font-body":         "var(--font-anuphan), 'Anuphan', var(--font-studio-sans), system-ui, sans-serif"
-    }
-  },
-
-  elements: {
-    ...classicTemplate.elements,
-
-    // === Hero text → warm off-white over dark ===
-    "hero-title": {
-      config: { ...classicTemplate.elements["hero-title"].config, color: INK }
-    },
-    "hero-subtitle": {
-      config: { ...classicTemplate.elements["hero-subtitle"].config, color: INK_2 }
-    },
-    "hero-subtitle2": {
-      config: { ...classicTemplate.elements["hero-subtitle2"].config, color: INK_3 }
-    },
-    "hero-year-badge": {
-      config: { ...classicTemplate.elements["hero-year-badge"].config, color: INK_3 }
+    colorSwatch: {
+      primary: p.accent,
+      secondary: p.ink,
+      background: p.bg
     },
 
-    // === Countdown — dark surface, ink cells, lime label (for non-home pages
-    // still on classic layout; the studio-dark home rail owns its own countdown) ===
-    "hero-countdown": (() => {
-      const base = classicTemplate.elements["hero-countdown"].config;
-      const dark = (s) => ({
-        ...s,
-        pillBackground: SURFACE,
-        badgeBackgroundColor: SURFACE2, badgeTextColor: INK,
-        textMain: INK, textSub: INK_2,
-        borderColor: LINE, shadowColor: "transparent"
-      });
-      return {
-        config: {
-          before: dark(base.before),
-          running: { ...dark(base.running), badgeBackgroundColor: ACCENT, badgeTextColor: BG },
-          paused: dark(base.paused),
-          manualEnded: dark(base.manualEnded),
-          nextYear: dark(base.nextYear)
+    pages: {
+      home:       { visible: true },
+      vote:       { visible: true, backgroundColor: p.bg },
+      candidates: { visible: true, backgroundColor: p.bg },
+      results:    { visible: true, backgroundColor: p.bg },
+      closed:     { visible: true, backgroundColor: p.bg },
+      success:    { visible: true, backgroundColor: p.bg }
+    },
+
+    theme: {
+      colors: {
+        primary:    p.accent,
+        accent:     p.accent2,
+        background: p.bg,
+        surface:    p.bg2,
+        text:       p.ink,
+        textMuted:  p.ink2,
+        border:     p.line
+      },
+      typography: classicTemplate.theme?.typography,
+      spacing:    classicTemplate.theme?.spacing,
+      effects: {
+        borderRadius: "1.125rem", // 18px — soft, not chunky
+        shadow:       SHADOW_SOFT
+      },
+      // Layer 1 tokens — full set (no inheritance, snapshot-friendly).
+      tokens: {
+        "--color-primary":     p.accent,
+        "--color-accent":      p.accent2,
+        "--color-bg":          p.bg,
+        "--color-surface":     p.bg2,
+        "--color-text":        p.ink,
+        "--color-text-muted":  p.ink2,
+        "--color-border":      p.line,      // hairline rules everywhere
+        "--radius-sm":         "10px",
+        "--radius-md":         "14px",
+        "--radius-card":       "22px",
+        "--radius-button":     "9999px",    // pill buttons
+        "--shadow-card":       SHADOW_SOFT,
+        "--shadow-button":     "none",
+        // Display font LOADED via next/font (layout.js → --font-studio-sans = Inter,
+        // a near-identical sub for the prototype's Geist). Thai falls through to
+        // Anuphan. The literal names are the fallback for any out-of-scope context.
+        "--font-display":      "var(--font-studio-sans), 'Inter', var(--font-anuphan), 'Anuphan', system-ui, sans-serif",
+        "--font-body":         "var(--font-anuphan), 'Anuphan', var(--font-studio-sans), system-ui, sans-serif"
+      }
+    },
+
+    elements: {
+      ...classicTemplate.elements,
+
+      // === Hero text → warm off-white over dark ===
+      "hero-title": {
+        config: { ...classicTemplate.elements["hero-title"].config, color: p.ink }
+      },
+      "hero-subtitle": {
+        config: { ...classicTemplate.elements["hero-subtitle"].config, color: p.ink2 }
+      },
+      "hero-subtitle2": {
+        config: { ...classicTemplate.elements["hero-subtitle2"].config, color: p.ink3 }
+      },
+      "hero-year-badge": {
+        config: { ...classicTemplate.elements["hero-year-badge"].config, color: p.ink3 }
+      },
+
+      // === Countdown — dark surface, ink cells, accent label (for non-home pages
+      // still on classic layout; the studio-dark home rail owns its own countdown) ===
+      "hero-countdown": (() => {
+        const base = classicTemplate.elements["hero-countdown"].config;
+        const dark = (s) => ({
+          ...s,
+          pillBackground: p.bg2,
+          badgeBackgroundColor: p.bg3, badgeTextColor: p.ink,
+          textMain: p.ink, textSub: p.ink2,
+          borderColor: p.line, shadowColor: "transparent"
+        });
+        return {
+          config: {
+            before: dark(base.before),
+            running: { ...dark(base.running), badgeBackgroundColor: p.accent, badgeTextColor: p.bg },
+            paused: dark(base.paused),
+            manualEnded: dark(base.manualEnded),
+            nextYear: dark(base.nextYear)
+          }
+        };
+      })(),
+
+      // === voteCTA — minimal-pill: accent outline on transparent, fills on hover.
+      // The variant reads --color-primary for outline/text and --color-surface
+      // for the hover text — both resolve to studio-dark tokens automatically. State
+      // logic (login/notVoted/voted/ended/closed/paused) is handled inside the variant. ===
+      "voteCTA-button": {
+        variant: "minimal-pill",
+        config: { ...classicTemplate.elements["voteCTA-button"].config },
+        vars: {
+          ...classicTemplate.elements["voteCTA-button"].vars,
+          "--btn-radius":       "9999px",
+          "--btn-hover-bg":     p.accent,
+          "--btn-padding-x":    "28px",
+          "--btn-padding-y":    "16px",
+          "--btn-font-size":    "15px",
+          "--btn-font-weight":  "500",
+          "--btn-letter-spacing": "0"
         }
-      };
-    })(),
+      },
 
-    // === voteCTA — minimal-pill: lime outline on transparent, fills lime on hover.
-    // The variant reads --color-primary (lime) for outline/text and --color-surface
-    // for the hover text — both resolve to studio-dark tokens automatically. State
-    // logic (login/notVoted/voted/ended/closed/paused) is handled inside the variant. ===
-    "voteCTA-button": {
-      variant: "minimal-pill",
-      config: { ...classicTemplate.elements["voteCTA-button"].config },
-      vars: {
-        ...classicTemplate.elements["voteCTA-button"].vars,
-        "--btn-radius":       "9999px",
-        "--btn-hover-bg":     ACCENT,
-        "--btn-padding-x":    "28px",
-        "--btn-padding-y":    "16px",
-        "--btn-font-size":    "15px",
-        "--btn-font-weight":  "500",
-        "--btn-letter-spacing": "0"
-      }
-    },
+      // === Stats — dark tiles, accent data highlights (non-home classic layout) ===
+      "stats-voted-card": {
+        config: {
+          backgroundType:  "solid",
+          backgroundColor: p.bg2,
+          textColor:       p.ink
+        }
+      },
+      "stats-progress-card": {
+        config: {
+          backgroundColor: p.bg2,
+          borderColor:     p.line,
+          numberColor:     p.ink,
+          labelColor:      p.ink2,
+          accentColor:     p.accent
+        }
+      },
+      "stats-eligible-card": {
+        config: {
+          backgroundColor: p.bg2,
+          borderColor:     p.line,
+          numberColor:     p.ink,
+          labelColor:      p.ink2,
+          iconColor:       p.accent
+        }
+      },
 
-    // === Stats — dark tiles, lime data accents (non-home classic layout) ===
-    "stats-voted-card": {
-      config: {
-        backgroundType:  "solid",
-        backgroundColor: SURFACE,
-        textColor:       INK
-      }
-    },
-    "stats-progress-card": {
-      config: {
-        backgroundColor: SURFACE,
-        borderColor:     LINE,
-        numberColor:     INK,
-        labelColor:      INK_2,
-        accentColor:     ACCENT
-      }
-    },
-    "stats-eligible-card": {
-      config: {
-        backgroundColor: SURFACE,
-        borderColor:     LINE,
-        numberColor:     INK,
-        labelColor:      INK_2,
-        iconColor:       ACCENT
-      }
-    },
+      // === Meet section — dark surface + accent CTA ===
+      "meet-section": {
+        config: {
+          visible:      true,
+          borderColor:  p.line,
+          glowFrom:     p.accent,
+          glowVia:      p.accent2,
+          glowTo:       p.bg2,
+          surfaceLight: false
+        }
+      },
+      "meet-title": {
+        config: { ...classicTemplate.elements["meet-title"].config, color: p.ink }
+      },
+      "meet-cta": {
+        config: {
+          ...classicTemplate.elements["meet-cta"].config,
+          backgroundColor: p.accent,
+          textColor:       p.bg
+        }
+      },
 
-    // === Meet section — dark surface + lime CTA ===
-    "meet-section": {
-      config: {
-        visible:      true,
-        borderColor:  LINE,
-        glowFrom:     ACCENT,
-        glowVia:      ACCENT_2,
-        glowTo:       SURFACE,
-        surfaceLight: false
-      }
-    },
-    "meet-title": {
-      config: { ...classicTemplate.elements["meet-title"].config, color: INK }
-    },
-    "meet-cta": {
-      config: {
-        ...classicTemplate.elements["meet-cta"].config,
-        backgroundColor: ACCENT,
-        textColor:       BG
-      }
-    },
+      // === Banner — dark surface, hairline frame ===
+      "banner-section": {
+        variant: "default",
+        config: { visible: true, borderColor: p.line },
+        vars: {
+          "--banner-bg":           "var(--color-surface)",
+          "--banner-border":       "var(--color-border)",
+          "--banner-border-width": "1px",
+          "--banner-radius":       "var(--radius-card)",
+          "--banner-shadow":       SHADOW_SOFT
+        }
+      },
 
-    // === Banner — dark surface, hairline frame ===
-    "banner-section": {
-      variant: "default",
-      config: { visible: true, borderColor: LINE },
-      vars: {
-        "--banner-bg":           "var(--color-surface)",
-        "--banner-border":       "var(--color-border)",
-        "--banner-border-width": "1px",
-        "--banner-radius":       "var(--radius-card)",
-        "--banner-shadow":       SHADOW_SOFT
-      }
-    },
-
-    // === Vote page card → dark surface ===
-    "vote-party-card": {
-      config: {
-        ...classicTemplate.elements["vote-party-card"].config,
-        backgroundColor: SURFACE,
-        borderColor:     LINE
+      // === Vote page card → dark surface ===
+      "vote-party-card": {
+        config: {
+          ...classicTemplate.elements["vote-party-card"].config,
+          backgroundColor: p.bg2,
+          borderColor:     p.line
+        }
       }
     }
-  }
-};
+  };
+}
+
+export const studioDarkTemplate = buildStudioTemplate(
+  "studio-dark", "สตูดิโอ ดาร์ก",
+  "สไตล์ดาร์กพรีเมียม — พื้นดำอุ่น เส้นบางคม แอ็กเซนต์ไลม์ ฟอนต์เรียบ + แถบเมนูซ้ายถาวร",
+  STUDIO_THEMES["studio-dark"]);
+export const studioDarkCyberTemplate = buildStudioTemplate(
+  "studio-dark-cyber", "สตูดิโอ ดาร์ก · ไซเบอร์ฟ้า",
+  "โทนดำน้ำเงินเย็น + ฟ้าไซเบอร์ — คมกริบ เทคนิคัล ทันสมัย",
+  STUDIO_THEMES["studio-dark-cyber"]);
+export const studioDarkMagentaTemplate = buildStudioTemplate(
+  "studio-dark-magenta", "สตูดิโอ ดาร์ก · แมเจนต้า",
+  "โทนดำอมพลัม + ชมพูแมเจนต้า — จัดจ้าน มีพลัง กล้าแสดงออก",
+  STUDIO_THEMES["studio-dark-magenta"]);
+export const studioDarkAmberTemplate = buildStudioTemplate(
+  "studio-dark-amber", "สตูดิโอ ดาร์ก · ทองอำพัน",
+  "โทนดำอุ่นอำพัน + ทองเหลว — ภูมิฐาน อบอุ่น พรีเมียม",
+  STUDIO_THEMES["studio-dark-amber"]);
 
 export default studioDarkTemplate;

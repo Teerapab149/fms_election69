@@ -24,6 +24,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { StudioDarkBaseStyles } from "./StudioDarkTheme";
 
 const NAV = [
   // NOTE: no "Profile / ข้อมูลพรรค" item — a party's detail page is reached
@@ -157,7 +158,8 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           !editorMode so it does NOT leak into the admin editor when the studio
           home is previewed inline there — that leak turned the admin's native
           form controls (the colour-picker hex inputs) dark. */}
-      {!editorMode && <style>{"html,body{background:#14140F;color-scheme:dark}"}</style>}
+      {!editorMode && <style>{"html,body{background:var(--sd-bg,#14140F);color-scheme:dark}"}</style>}
+      <StudioDarkBaseStyles />
 
       {/* ── DESKTOP LEFT RAIL ── */}
       <aside className="sd-rail">

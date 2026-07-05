@@ -11,12 +11,54 @@
 import { verdureTheme, hexToRgbTriple } from "./verdurePalettes";
 import { gumroadTheme } from "./gumroadPalettes";
 import { originalTheme } from "./originalPalettes";
+import { studioDarkTheme } from "./studioDarkPalettes";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
   if (themeSlug.startsWith("verdure")) injectVerdure(doc, themeSlug);
   else if (themeSlug.startsWith("gumroad")) injectGumroad(doc, themeSlug);
   else if (themeSlug.startsWith("original")) injectOriginal(doc, themeSlug);
+  else if (themeSlug.startsWith("studio-dark")) injectStudio(doc, themeSlug);
+}
+
+function injectStudio(doc, themeSlug) {
+  const t = studioDarkTheme(themeSlug);
+  const vars = {
+    "--sd-bg": t.bg, "--sd-bg-2": t.bg2, "--sd-bg-3": t.bg3, "--sd-bg-rail": t.bgRail,
+    "--sd-line": t.line, "--sd-line-strong": t.lineStrong,
+    "--sd-ink": t.ink, "--sd-ink-2": t.ink2, "--sd-ink-3": t.ink3, "--sd-ink-4": t.ink4,
+    "--sd-accent": t.accent, "--sd-accent-2": t.accent2,
+  };
+  // 1) The --sd-* ramp — inline on every declaring root (beats the hardcoded
+  // blocks) + on <html> so the dark html/body overscroll canvas re-tints
+  // (StudioDarkBaseStyles emits the same set on :root — parity rule).
+  const roots = doc.querySelectorAll(".sd-root, .sd-rail, .sd-topbar, .sdl-root");
+  for (const k in vars) doc.documentElement.style.setProperty(k, vars[k]);
+  roots.forEach((r) => {
+    r.classList.add("sd-theming");
+    for (const k in vars) r.style.setProperty(k, vars[k]);
+    setTimeout(() => r.classList.remove("sd-theming"), 600);
+  });
+  // 2) Layer-1 --color-* tokens on .fms-app — the studio HOME composes catalog
+  // elements (voteCTA minimal-pill, stats) that read --color-primary etc., and
+  // in a preview iframe those are SSR'd from the APPLIED template. Mapping MUST
+  // equal buildStudioTemplate in builtIn/studio-dark.js — parity rule. (The
+  // .sd-theming ease rule ships in StudioDarkBaseStyles, mounted by the rail /
+  // login on every studio slide, so the morph is smooth here too.)
+  const tokens = {
+    "--color-primary": t.accent,
+    "--color-accent": t.accent2,
+    "--color-bg": t.bg,
+    "--color-surface": t.bg2,
+    "--color-text": t.ink,
+    "--color-text-muted": t.ink2,
+    "--color-border": t.line,
+  };
+  doc.querySelectorAll(".fms-app").forEach((r) => {
+    r.classList.add("sd-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
+    setTimeout(() => r.classList.remove("sd-theming"), 600);
+  });
 }
 
 function injectOriginal(doc, themeSlug) {

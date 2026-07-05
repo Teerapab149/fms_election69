@@ -8,6 +8,7 @@
 // arrive as props, so the three template logins share one logic path.
 
 import { Loader2, AlertCircle, LogIn, ShieldCheck, FlaskConical, ArrowLeft } from "lucide-react";
+import { StudioDarkBaseStyles } from "../home/StudioDarkTheme";
 
 export default function StudioDarkLogin({
   error,
@@ -23,6 +24,7 @@ export default function StudioDarkLogin({
 }) {
   return (
     <div className="sdl-root">
+      <StudioDarkBaseStyles />
       <span className="sdl-corner sdl-corner--tl">FMS ELECTION · SAMO</span>
       <span className="sdl-corner sdl-corner--br">SECURED · PSU PASSPORT</span>
 
@@ -76,7 +78,7 @@ export default function StudioDarkLogin({
       </main>
 
       <style jsx global>{`
-        html, body { background:#14140F; color-scheme:dark; }
+        html, body { background:var(--sd-bg, #14140F); color-scheme:dark; }
         .sdl-root {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
           --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#7F7A6E; --sd-accent:#D5FF3F;

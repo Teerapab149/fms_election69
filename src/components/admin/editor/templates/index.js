@@ -14,7 +14,7 @@ import { modernDarkTemplate } from "./builtIn/modern-dark";
 import { playfulTemplate }    from "./builtIn/playful";
 import { minimalTemplate }    from "./builtIn/minimal";
 import { gumroadTemplate, gumroadCyberTemplate, gumroadRetroTemplate, gumroadAcidTemplate, gumroadPremiumTemplate } from "./builtIn/gumroad";
-import { studioDarkTemplate } from "./builtIn/studio-dark";
+import { studioDarkTemplate, studioDarkCyberTemplate, studioDarkMagentaTemplate, studioDarkAmberTemplate } from "./builtIn/studio-dark";
 import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerryTemplate } from "./builtIn/verdure";
 import { originalTemplate, originalNavyTemplate, originalEmeraldTemplate, originalCrimsonTemplate, originalAubergineTemplate } from "./builtIn/original";
 
@@ -29,6 +29,9 @@ const BUILT_IN_TEMPLATES = {
   "gumroad-acid":  gumroadAcidTemplate,
   "gumroad-premium": gumroadPremiumTemplate,
   "studio-dark":  studioDarkTemplate,
+  "studio-dark-cyber":   studioDarkCyberTemplate,
+  "studio-dark-magenta": studioDarkMagentaTemplate,
+  "studio-dark-amber":   studioDarkAmberTemplate,
   verdure:        verdureTemplate,
   "verdure-honey": verdureHoneyTemplate,
   "verdure-teal":  verdureTealTemplate,

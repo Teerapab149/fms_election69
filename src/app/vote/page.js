@@ -80,7 +80,7 @@ export default function VotePage() {
   }, []);
 
   const isGumroad = activeTemplateId?.startsWith('gumroad');
-  const isStudio = activeTemplateId === 'studio-dark';
+  const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
 
   // --- Handlers ---

@@ -24,7 +24,7 @@ export default function ClosedPage() {
     // other 5 pages use).
     const [templateReady, setTemplateReady] = useState(false);
     const isGumroad = activeTemplateId?.startsWith('gumroad');
-    const isStudio = activeTemplateId === 'studio-dark';
+    const isStudio = activeTemplateId?.startsWith('studio-dark');
     const isVerdure = activeTemplateId?.startsWith('verdure');
 
     useEffect(() => {
