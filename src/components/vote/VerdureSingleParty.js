@@ -79,9 +79,9 @@ const firstImage = (val) => {
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
-function Opt({ disc, discSm, kicker, name, slogan, selected, onClick, abstain }) {
+function Opt({ disc, discSm, kicker, name, slogan, selected, onClick, abstain, tone = "" }) {
   return (
-    <article className={`vd-opt ${abstain ? "vd-opt--abstain" : ""} ${selected ? "is-selected" : ""}`}
+    <article className={`vd-opt ${abstain ? "vd-opt--abstain" : ""} ${tone ? `vd-tone--${tone}` : ""} ${selected ? "is-selected" : ""}`}
       onClick={onClick} role="radio" aria-checked={selected} tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}>
       <div className={`vd-opt__disc ${discSm ? "sm" : ""}`}>{disc}</div>
@@ -197,9 +197,9 @@ export default function VerdureSingleParty({
             <h2>การตัดสินใจของคุณ</h2>
             <p>เลือกหนึ่งตัวเลือก แล้วกดยืนยัน · ลงคะแนนได้เพียงครั้งเดียว</p>
           </div>
-          <Opt disc="✓" kicker={<>เห็นชอบ · <span className="en">Approve</span></>} name="รับรอง" slogan={`เห็นชอบให้ ${party?.name || ""} ดำรงตำแหน่ง`} selected={kind === "approve"} onClick={pick(party?.id)} />
-          {disapprove && <Opt disc="×" discSm abstain kicker={<>ไม่เห็นชอบ · <span className="en">Disapprove</span></>} name="ไม่รับรอง" slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง" selected={kind === "disapprove"} onClick={pick(disapprove.id)} />}
-          {abstain && <Opt disc="×" discSm abstain kicker={<>งดออกเสียง · <span className="en">Abstain</span></>} name="งดออกเสียง" slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้" selected={kind === "abstain"} onClick={pick(abstain.id)} />}
+          <Opt disc="✓" tone="approve" kicker={<>เห็นชอบ · <span className="en">Approve</span></>} name="รับรอง" slogan={`เห็นชอบให้ ${party?.name || ""} ดำรงตำแหน่ง`} selected={kind === "approve"} onClick={pick(party?.id)} />
+          {disapprove && <Opt disc="×" discSm abstain tone="disapprove" kicker={<>ไม่เห็นชอบ · <span className="en">Disapprove</span></>} name="ไม่รับรอง" slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง" selected={kind === "disapprove"} onClick={pick(disapprove.id)} />}
+          {abstain && <Opt disc="×" discSm abstain tone="abstain" kicker={<>งดออกเสียง · <span className="en">Abstain</span></>} name="งดออกเสียง" slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้" selected={kind === "abstain"} onClick={pick(abstain.id)} />}
 
           <div className="vd-confirm">
             <div><div className="vd-confirm__lbl">YOUR SELECTION</div><div className="vd-confirm__val">{selectionLabel || "ยังไม่ได้เลือก · No selection"}</div></div>
@@ -338,11 +338,17 @@ export default function VerdureSingleParty({
 
         .vd-opt { display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:22px; padding:22px 26px 22px 22px; background:var(--cream-2); border:1px solid var(--rule); border-radius:26px; cursor:pointer; margin-bottom:12px; transition:all .25s; outline:none; box-shadow:0 10px 26px -22px rgba(var(--moss-rgb),.3); }
         .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); }
-        .vd-opt.is-selected { background:var(--moss); border-color:var(--moss); box-shadow:0 26px 50px -28px rgba(var(--moss-rgb),.55); }
+        /* Semantic vote tone — FIXED (approve=green, disapprove=red, abstain=amber),
+           never the theme accent, so the meaning holds across verdure palettes.
+           Warm-tuned to sit within the cream aesthetic; falls back to moss. */
+        .vd-tone--approve { --vd-tone:#33A066; }
+        .vd-tone--disapprove { --vd-tone:#C66260; }
+        .vd-tone--abstain { --vd-tone:#C7823A; }
+        .vd-opt.is-selected { background:var(--vd-tone, var(--moss)); border-color:var(--vd-tone, var(--moss)); box-shadow:0 26px 50px -28px rgba(var(--moss-rgb),.55); }
         .vd-opt__disc { width:72px; height:72px; border-radius:50%; background:var(--cream-3); border:1px solid var(--rule); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:42px; line-height:1; color:var(--moss); transition:all .25s; }
         .vd-opt__disc.sm { font-size:32px; }
         .vd-opt:hover .vd-opt__disc { background:var(--terra-soft); }
-        .vd-opt.is-selected .vd-opt__disc { background:var(--terra); color:var(--cream); border-color:var(--terra); }
+        .vd-opt.is-selected .vd-opt__disc { background:color-mix(in srgb, var(--vd-tone, var(--terra)) 78%, #000); color:var(--cream); border-color:color-mix(in srgb, var(--vd-tone, var(--terra)) 78%, #000); }
         /* primary choice (รับรอง) reads warmer/inviting vs the dashed abstain rows */
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) { border-color:var(--terra-soft); background:linear-gradient(180deg, var(--cream-2) 0%, var(--cream-2) 100%); }
         .vd-opt:not(.vd-opt--abstain):not(.is-selected) .vd-opt__disc { background:var(--terra-soft); border-color:var(--terra-soft); color:var(--moss); }

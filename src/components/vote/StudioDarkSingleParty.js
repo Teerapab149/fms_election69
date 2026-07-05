@@ -49,10 +49,10 @@ const firstImage = (val) => {
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
-function ChoiceStrip({ no, noClass = "", kicker, name, slogan, selected, onClick, dashedTop = false, dataElement }) {
+function ChoiceStrip({ no, noClass = "", kicker, name, slogan, selected, onClick, dashedTop = false, dataElement, tone = "" }) {
   return (
     <article
-      className={`sds-strip ${selected ? "is-selected" : ""} ${dashedTop ? "sds-strip--dashed" : ""}`}
+      className={`sds-strip ${tone ? `sds-strip--${tone}` : ""} ${selected ? "is-selected" : ""} ${dashedTop ? "sds-strip--dashed" : ""}`}
       data-element={dataElement}
       onClick={onClick}
       role="radio"
@@ -283,6 +283,7 @@ export default function StudioDarkSingleParty({
           selected={kind === "approve"}
           onClick={pick(party?.id)}
           dataElement="vote-approve-button"
+          tone="approve"
         />
         {disapprove && (
           <ChoiceStrip
@@ -295,6 +296,7 @@ export default function StudioDarkSingleParty({
             onClick={pick(disapprove.id)}
             dashedTop
             dataElement="vote-disapprove-button"
+            tone="disapprove"
           />
         )}
         {abstain && (
@@ -308,6 +310,7 @@ export default function StudioDarkSingleParty({
             onClick={pick(abstain.id)}
             dashedTop
             dataElement="vote-abstain-button"
+            tone="abstain"
           />
         )}
 
@@ -512,7 +515,13 @@ export default function StudioDarkSingleParty({
           transition:background .2s, padding-left .25s;
         }
         .sds-strip:hover, .sds-strip:focus-visible, .sds-strip.is-selected { background:var(--sd-bg-2); padding-left:28px; }
-        .sds-strip.is-selected::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--sd-accent); }
+        /* Semantic vote tone — FIXED green/red/orange, never the theme accent, so the
+           psychological meaning holds across studio-dark palettes. Falls back to the
+           accent for any untoned strip. */
+        .sds-strip--approve { --sds-tone:#4CC489; }
+        .sds-strip--disapprove { --sds-tone:#E27B78; }
+        .sds-strip--abstain { --sds-tone:#EBA457; }
+        .sds-strip.is-selected::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--sds-tone, var(--sd-accent)); }
         .sds-strip--dashed { border-bottom:0; border-top:1px dashed var(--sd-line-strong); margin-top:12px; padding-top:28px; }
         .sds-strip--dashed + .sds-strip--dashed { margin-top:0; border-top-style:solid; border-top-color:var(--sd-line); }
         .sds-strip__no {
@@ -520,7 +529,7 @@ export default function StudioDarkSingleParty({
           color:var(--sd-ink-4); transition:color .2s; text-align:left;
         }
         .sds-strip__no--sm { font-size:48px; }
-        .sds-strip:hover .sds-strip__no, .sds-strip.is-selected .sds-strip__no { color:var(--sd-accent); }
+        .sds-strip:hover .sds-strip__no, .sds-strip.is-selected .sds-strip__no { color:var(--sds-tone, var(--sd-accent)); }
         .sds-yes { font-size:.85em; }
         .sds-strip__main { min-width:0; }
         .sds-strip__kicker { font-family:var(--sd-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); margin-bottom:6px; }
@@ -531,7 +540,7 @@ export default function StudioDarkSingleParty({
           display:grid; place-items:center; color:var(--sd-ink-3); flex-shrink:0; transition:all .2s;
         }
         .sds-strip__check svg { opacity:0; transition:opacity .2s; }
-        .sds-strip.is-selected .sds-strip__check { background:var(--sd-accent); border-color:var(--sd-accent); color:var(--sd-bg); }
+        .sds-strip.is-selected .sds-strip__check { background:var(--sds-tone, var(--sd-accent)); border-color:var(--sds-tone, var(--sd-accent)); color:var(--sd-bg); }
         .sds-strip.is-selected .sds-strip__check svg { opacity:1; }
 
         .sds-footer {

@@ -356,7 +356,7 @@ export default function SinglePartyView({
                 borderWidth: cfg('vote-party-card').borderColor ? '1px' : undefined,
                 borderStyle: cfg('vote-party-card').borderColor ? 'solid' : undefined,
               }}
-              className="w-full bg-white/10 backdrop-blur-md border border-white/10 p-8 flex items-center justify-between text-left"
+              className="w-full bg-emerald-500/10 backdrop-blur-md border border-emerald-400/30 p-8 flex items-center justify-between text-left"
             >
               <div className="flex items-center gap-6">
                 <div className="w-14 h-14 rounded-full bg-emerald-400 text-white flex items-center justify-center">
@@ -387,10 +387,10 @@ export default function SinglePartyView({
                   borderWidth: cfg('vote-disapprove-button').borderColor ? '1px' : undefined,
                   borderStyle: cfg('vote-disapprove-button').borderColor ? 'solid' : undefined,
                 }}
-                className="w-full p-6 rounded-2xl bg-[#2A2A2A] border border-white/20 flex flex-col items-center gap-3"
+                className="w-full p-6 rounded-2xl bg-rose-500/10 border border-rose-400/40 flex flex-col items-center gap-3"
               >
-                <XCircle className="text-white/80" size={32} />
-                <span className="font-bold text-lg text-white/90">
+                <XCircle className="text-rose-300" size={32} />
+                <span className="font-bold text-lg text-rose-50">
                   {cfg('vote-disapprove-button').text || 'ไม่รับรอง'}
                 </span>
               </button>
@@ -409,10 +409,10 @@ export default function SinglePartyView({
                   borderWidth: cfg('vote-abstain-button').borderColor ? '1px' : undefined,
                   borderStyle: cfg('vote-abstain-button').borderColor ? 'solid' : undefined,
                 }}
-                className="w-full p-6 rounded-2xl bg-[#2A2A2A] border border-white/20 flex flex-col items-center gap-3"
+                className="w-full p-6 rounded-2xl bg-amber-500/10 border border-amber-400/40 flex flex-col items-center gap-3"
               >
-                <Ban className="text-white/80" size={32} />
-                <span className="font-bold text-lg text-white/90">
+                <Ban className="text-amber-300" size={32} />
+                <span className="font-bold text-lg text-amber-50">
                   {cfg('vote-abstain-button').text || 'งดออกเสียง'}
                 </span>
               </button>
@@ -834,14 +834,14 @@ export default function SinglePartyView({
                   {/* Secondary Options */}
                   <div className="grid grid-cols-2 gap-4">
                     {/* ไม่รับรอง Button - Solid Background */}
-                    <button onClick={() => onSelect(specialOptions?.disapprove?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.disapprove?.id ? 'bg-red-600 border-2 border-red-400 ring-2 ring-red-400 shadow-lg shadow-red-500/30' : 'bg-[#2A2A2A] border border-white/20 hover:bg-[#3A3A3A]'}`}>
-                      <XCircle className={selectedPartyId === specialOptions?.disapprove?.id ? 'text-white' : 'text-white/70'} size={32} />
+                    <button onClick={() => onSelect(specialOptions?.disapprove?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.disapprove?.id ? 'bg-rose-500/20 border-2 border-rose-400 ring-2 ring-rose-400/50 shadow-lg shadow-rose-500/20' : 'bg-[#2A2A2A] border border-white/20 hover:bg-[#3A3A3A]'}`}>
+                      <XCircle className={selectedPartyId === specialOptions?.disapprove?.id ? 'text-rose-300' : 'text-white/70'} size={32} />
                       <span className={`font-bold text-lg ${selectedPartyId === specialOptions?.disapprove?.id ? 'text-white' : 'text-white/90'}`}>ไม่รับรอง</span>
                     </button>
 
                     {/* งดออกเสียง Button - Solid Background */}
-                    <button onClick={() => onSelect(specialOptions?.abstain?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.abstain?.id ? 'bg-slate-600 border-2 border-slate-300 ring-2 ring-slate-300 shadow-lg shadow-slate-500/30' : 'bg-[#2A2A2A] border border-white/20 hover:bg-[#3A3A3A]'}`}>
-                      <Ban className={selectedPartyId === specialOptions?.abstain?.id ? 'text-white' : 'text-white/70'} size={32} />
+                    <button onClick={() => onSelect(specialOptions?.abstain?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.abstain?.id ? 'bg-amber-500/20 border-2 border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20' : 'bg-[#2A2A2A] border border-white/20 hover:bg-[#3A3A3A]'}`}>
+                      <Ban className={selectedPartyId === specialOptions?.abstain?.id ? 'text-amber-300' : 'text-white/70'} size={32} />
                       <span className={`font-bold text-lg ${selectedPartyId === specialOptions?.abstain?.id ? 'text-white' : 'text-white/90'}`}>งดออกเสียง</span>
                     </button>
                   </div>

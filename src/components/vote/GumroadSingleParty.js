@@ -347,10 +347,18 @@ export default function GumroadSingleParty({
         .gsp-choice__ic{ width:48px; height:48px; border-radius:999px; display:grid; place-items:center; border:var(--bw) solid var(--ink); background:var(--cream); }
         .gsp-choice__lb{ font-family:var(--fd); font-size:22px; text-transform:uppercase; letter-spacing:-.01em; }
         .gsp-choice__sub{ font-size:13px; color:var(--ink2); line-height:1.45; }
-        .gsp-choice--approve.is-on{ background:var(--lime); transform:rotate(-1deg); } .gsp-choice--approve.is-on .gsp-choice__ic{ background:#fff; }
-        .gsp-choice--no.is-on{ background:var(--coral); transform:rotate(1deg); } .gsp-choice--no.is-on .gsp-choice__ic{ background:#fff; }
-        .gsp-choice--abstain.is-on{ background:var(--yellow); transform:rotate(-1deg); } .gsp-choice--abstain.is-on .gsp-choice__ic{ background:#fff; }
-        .gsp-choice.is-on .gsp-choice__sub{ color:var(--ink); }
+        /* Semantic vote colours — FIXED soft tones, never theme-linked (approve=
+           green, disapprove=red, abstain=amber-orange) so the psychological meaning
+           holds on every gumroad palette (cyber/retro/acid). Soft mid-tone fills +
+           DARK ink text (gumroad's chunky idiom) + tone-coloured icon in a white
+           disc — keeps the icon visible after selecting. */
+        .gsp-choice--approve.is-on{ background:#3FB27C; transform:rotate(-1deg); }
+        .gsp-choice--no.is-on{ background:#DA6A67; transform:rotate(1deg); }
+        .gsp-choice--abstain.is-on{ background:#E89B4A; transform:rotate(-1deg); }
+        .gsp-choice.is-on .gsp-choice__ic{ background:#fff; border-color:var(--ink); }
+        .gsp-choice--approve.is-on .gsp-choice__ic{ color:#2E8C60; }
+        .gsp-choice--no.is-on .gsp-choice__ic{ color:#C24D4A; }
+        .gsp-choice--abstain.is-on .gsp-choice__ic{ color:#C87A2C; }
 
         /* FOOTER */
         .gsp-footer{ position:fixed; bottom:0; left:0; right:0; z-index:45; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:16px 28px; background:var(--ink); color:var(--cream); border-top:var(--bw) solid var(--ink); }
