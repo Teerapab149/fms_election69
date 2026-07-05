@@ -216,7 +216,7 @@ function PreviewBody() {
       {previewedTemplate && (
         <style dangerouslySetInnerHTML={{ __html: buildTemplateStyles(previewedTemplate, '.fms-app') }} />
       )}
-      <PreviewMotionDamp />
+      <PreviewMotionDamp interact={interact} />
       {interact ? (
         <>
           <PreviewInteractAuthGuard />
@@ -549,11 +549,25 @@ const DEFAULT_VARIANT = { vote: 'multi', results: 'revealed' };
 // (vdDot pulse, vdGlow, vdCueBounce) are allowed a single pass then stop. This kills
 // the spinner jank + lets preview_screenshot reach network-idle. Preview route only
 // — production pages never mount this, so live animations are untouched.
-function PreviewMotionDamp() {
+function PreviewMotionDamp({ interact = false }) {
   return (
-    <style jsx global>{`
-      *, *::before, *::after { animation-iteration-count: 1 !important; }
-    `}</style>
+    <>
+      <style jsx global>{`
+        *, *::before, *::after { animation-iteration-count: 1 !important; }
+      `}</style>
+      {/* P2 #3: the damp froze the gumroad ticker (gtickMove infinite → 1 pass).
+          INTERACT mode simulates the real flow, so the marquee must move; the class
+          selector (0,1,0) beats the universal damp (0,0,0) at equal !important.
+          Static chooser slides (no interact) stay fully damped by design. The only
+          CSS marquee today is .gtick__track — studio's sd-marquee is framer-driven
+          (JS, untouched by the CSS damp); vdDot/shine pulses stay damped.
+          Plain <style> (not styled-jsx): the SWC styled-jsx transform fails on a
+          conditionally-rendered <style jsx> ("failed to process"). */}
+      {interact && (
+        <style dangerouslySetInnerHTML={{ __html:
+          '.gtick__track { animation-iteration-count: infinite !important; }' }} />
+      )}
+    </>
   );
 }
 
