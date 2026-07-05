@@ -159,7 +159,10 @@ function buildStudioTemplate(slug, name, description, p) {
         vars: {
           ...classicTemplate.elements["voteCTA-button"].vars,
           "--btn-radius":       "9999px",
-          "--btn-hover-bg":     p.accent,
+          // Layer-2 colour vars must REFERENCE Layer-1 tokens (not literal hex) so
+          // preview swatch morphs re-tint them; resolution is identical since
+          // studio's accent == --color-primary in every colour variant.
+          "--btn-hover-bg":     "var(--color-primary)",
           "--btn-padding-x":    "28px",
           "--btn-padding-y":    "16px",
           "--btn-font-size":    "15px",
