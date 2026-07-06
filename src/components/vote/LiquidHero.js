@@ -282,6 +282,20 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
                     </motion.div>
                 )}
 
+                {/* MOBILE CONTENT SCRIM — unifies the busy light page + spotlight
+                    circle + member photos behind the hero text into one dark,
+                    theme-tinted field so all mobile text stays legible. Desktop
+                    keeps its spotlight-lens design (md:hidden). Re-tints per theme
+                    via --spv-deep. */}
+                <div
+                    className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 z-[15] pointer-events-none transition-colors duration-300 ease-in-out"
+                    style={{
+                        height: "80%",
+                        background:
+                            "radial-gradient(125% 60% at 50% 50%, color-mix(in srgb, var(--spv-deep, #2E1065) 95%, transparent) 0%, color-mix(in srgb, var(--spv-deep, #2E1065) 88%, transparent) 44%, color-mix(in srgb, var(--spv-deep, #2E1065) 40%, transparent) 66%, transparent 82%)",
+                    }}
+                />
+
                 {/* 3. LAYER: CURSOR LENS */}
                 <motion.div
                     className="absolute z-20 pointer-events-none flex items-center justify-center"
