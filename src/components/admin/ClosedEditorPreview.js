@@ -8,6 +8,8 @@ import EditorElement from './editor/EditorElement';
 import GumroadClosed from '../vote/GumroadClosed';
 import StudioDarkClosed from '../vote/StudioDarkClosed';
 import VerdureClosed from '../vote/VerdureClosed';
+import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from '../../utils/electionConfig';
 
 const STATE_MESSAGES = {
   waiting: {
@@ -37,7 +39,18 @@ export default function ClosedEditorPreview({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  const message = STATE_MESSAGES[simMode] || STATE_MESSAGES.waiting;
+  const globalConfig = useGlobalConfig();
+  const baseMessage = STATE_MESSAGES[simMode] || STATE_MESSAGES.waiting;
+  // Waiting detail derives from the resolved schedule (mirrors the live closed
+  // page) so the admin preview tracks admin-set dates instead of a stale string.
+  let message = baseMessage;
+  if (simMode === 'waiting') {
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+    message = {
+      ...baseMessage,
+      detail: `${formatThaiDate(ELECTION_START)} เวลา ${formatThaiTime(ELECTION_START)} - ${formatThaiTime(ELECTION_END)}`,
+    };
+  }
 
   // Per-template layout: gumroad / studio-dark have their own closed layouts.
   // simMode "paused" maps to the live page's "closed" variant.

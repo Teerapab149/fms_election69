@@ -39,3 +39,28 @@ export function resolveElectionDates(globalConfig) {
     ELECTION_END: pick(globalConfig?.electionEndAt, ELECTION_CONFIG.ELECTION_END),
   };
 }
+
+// ── Thai date/time formatters ────────────────────────────────────────────────
+// So UI copy (e.g. the closed page's "election starts on …" line) derives from
+// the resolved dates instead of a hardcoded string that drifts when admins move
+// the schedule. Client+server safe (pure date math). With the default dates
+// these render "วันที่ 6 กุมภาพันธ์ 2569" / "08.30 น." — byte-identical to the
+// strings they replace.
+const TH_MONTHS = [
+  "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+  "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+];
+
+export function formatThaiDate(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return `วันที่ ${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+
+export function formatThaiTime(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}.${mm} น.`;
+}

@@ -12,9 +12,12 @@ import GumroadClosed from "../../components/vote/GumroadClosed";
 import StudioDarkClosed from "../../components/vote/StudioDarkClosed";
 import VerdureClosed from "../../components/vote/VerdureClosed";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 
 export default function ClosedPage() {
     const { data: session } = useSession();
+    const globalConfig = useGlobalConfig();
     const [statusData, setStatusData] = useState(null);
 
     // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
@@ -41,13 +44,14 @@ export default function ClosedPage() {
         const { electionStatus, systemMode } = statusData;
 
         if (electionStatus === "WAITING") {
+            const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
             return {
                 variant: "waiting",
                 title: "ยังไม่เปิดรับลงคะแนน",
                 desc: (
                     <>
                         ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง การเลือกตั้งจะเริ่มใน <br />
-                        วันที่ 6 กุมภาพันธ์ 2569 เวลา 08.30 น. - 17.00 น.
+                        {formatThaiDate(ELECTION_START)} เวลา {formatThaiTime(ELECTION_START)} - {formatThaiTime(ELECTION_END)}
                     </>
                 )
             };
