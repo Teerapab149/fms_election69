@@ -572,7 +572,7 @@ export default function StudioDarkSingleParty({
 
         @media (max-width:1100px) {
           .sds-h { grid-template-columns:1fr; gap:20px; padding:36px 24px 24px; }
-          .sds-h__side { flex-direction:row-reverse; align-items:center; justify-content:flex-end; gap:24px; }
+          .sds-h__side { flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px 24px; }
           .sds-h__logo { width:96px; height:96px; }
           .sds-h__quick { display:flex; gap:24px; }
           .sds-h__row { text-align:left; }
