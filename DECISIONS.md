@@ -1685,6 +1685,35 @@ Also `goto(..., { waitUntil: 'networkidle' })` so hydration is settled first.
 prefer `pressSequentially` over `fill`, and assert the downstream state before acting on it.
 **Tags:** `#e2e` `#playwright` `#react-controlled-input` `#flaky-fix` `#test-net` `#pillar-1`
 
+### P-LOG-075: [2026-07-05] STUDIO-THEMES — Handoff palette-slot list ≠ what the layouts declare
+**Context:** Building `studioDarkPalettes.js`; the handoff said to take the slots from
+`builtIn/studio-dark.js` constants (9 slots).
+**Symptom:** (caught in Task-0, before any cost) with 9 slots the rail bg, faintest ink and
+strong hairline would have stayed base-lime on every colour variant.
+**Root cause:** builtIn Layer-1 tokens are a SUBSET of the vars the layout components actually
+declare — `--sd-bg-rail` / `--sd-ink-4` / `--sd-line-strong` exist only in the component
+`<style>` blocks, so a palette derived from builtIn misses them.
+**Fix:** Task-0 grep `--sd-.*:#` across src/components found all 4 declaration sites → real
+inventory = 12 slots.
+**Lesson:** Count palette slots from the var DECLARATION sites in the layouts, never from the
+builtIn token list.
+**Mitigation rule:** Before writing any `<family>Palettes.js`, run
+`grep -E "--<ns>-[a-z0-9-]+:" src/components` and paste the inventory into the report.
+**Tags:** `#palette` `#task0` `#single-source` `#theme-system`
+
+### P-LOG-076: [2026-07-06] TICKER-FIX — Conditionally rendering `<style jsx>` kills the whole module
+**Context:** PreviewMotionDamp needed an interact-only CSS exemption; first attempt was
+`{interact && <style jsx global>{...}</style>}`.
+**Symptom:** Next/SWC styled-jsx transform hard-fails the module ("Error: failed to process"),
+page dead, ~120 console errors buffered until rework.
+**Root cause:** the styled-jsx compiler must statically see every `<style jsx>` in the
+component; wrapping one in a conditional expression breaks its transform.
+**Fix:** conditional CSS goes in a plain `<style dangerouslySetInnerHTML={{ __html: css }}>`
+(same pattern the family homes use for token blocks); keep `<style jsx>` only for
+unconditional blocks.
+**Lesson:** `<style jsx>` must be rendered unconditionally; branch the CSS STRING, not the tag.
+**Tags:** `#styled-jsx` `#swc` `#next` `#preview`
+
 ---
 
 ## 🚫 Rejected Approaches
