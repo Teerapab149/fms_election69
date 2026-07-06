@@ -129,7 +129,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-slate-900 drop-shadow-sm">
                                             {elPrefix}
                                         </span>
-                                        <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[var(--o-brand)] to-[var(--o-glow)] drop-shadow-md relative">
+                                        <span className="text-[20vw] sm:text-[100px] md:text-[110px] lg:text-[85px] xl:text-[120px] 2xl:text-[150px] text-transparent bg-clip-text bg-gradient-to-b from-[var(--o-brand)] to-[var(--o-bright)] drop-shadow-md relative">
                                             {elNumber}
                                             <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-2 h-2 md:w-4 md:h-4 bg-[var(--o-glow)] rounded-full opacity-30 animate-ping"></span>
                                         </span>
@@ -139,7 +139,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                 <div className="space-y-2 lg:space-y-1">
                                     <div className="space-y-0.5">
                                         <h2 className="text-lg sm:text-2xl lg:text-2xl xl:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
-                                            โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--o-brand)] to-[var(--o-glow)]">คณะกรรมการบริหาร</span>
+                                            โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--o-brand)] to-[var(--o-bright)]">คณะกรรมการบริหาร</span>
                                         </h2>
                                         <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-500">
                                             สโมสรนักศึกษาคณะวิทยาการจัดการ
