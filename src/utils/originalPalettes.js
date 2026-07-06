@@ -6,9 +6,11 @@
 // Original is a LIGHT template: a dark BRAND hue drives readable text / gradient
 // title start / primary button, paired with a METALLIC (or bright) accent (the
 // `glow` slot) that only appears where it reads on light — the ping dot, the tail
-// of the title numeral gradient, badge highlights. Each theme carries its OWN
-// light background (`bg`) at a distinct temperature so no two themes read as the
-// same page. Slots (semantic, not Tailwind numbers):
+// of the title numeral gradient, badge highlights. Each theme (except the ม่วง
+// FMS flagship) carries its OWN clearly-coloured background (`bg`) — a visible
+// colour FIELD, not just a light tint — so switching themes visibly transforms
+// the page; `line` deepens to match so borders don't wash out against it. Slots
+// (semantic, not Tailwind numbers):
 //   deep    — darkest brand stop (button base, deep gradient start)
 //   brand   — core brand hue (title, primary, links, --color-primary)
 //   bright  — brighter brand stop (gradient end of the primary button)
@@ -30,22 +32,22 @@ export const ORIGINAL_THEMES = {
   // Midnight Navy & Antique Gold — Professional · Trustworthy · Luxurious.
   "original-navy": {
     deep: "#0A1D33", brand: "#1B3A5E", bright: "#2F5B88", glow: "#C9A227", mid: "#7A5F1B",
-    soft: "#EFF4FA", soft2: "#DEE9F5", line: "#C6D7EA", ink: "#0B1524", bg: "#F4F7FB",
+    soft: "#EFF4FA", soft2: "#DEE9F5", line: "#A9C3E1", ink: "#0B1524", bg: "#C9DCF2",
   },
   // Emerald & Champagne — deep forest green + soft champagne gold. Sophisticated · Elegant.
   "original-emerald": {
     deep: "#082A1D", brand: "#0F5638", bright: "#1E7C4E", glow: "#CBAC64", mid: "#7E6836",
-    soft: "#EEF5F0", soft2: "#DEEBE2", line: "#C7DBCE", ink: "#0C2016", bg: "#F2F6F2",
+    soft: "#EEF5F0", soft2: "#DEEBE2", line: "#A6CDB6", ink: "#0C2016", bg: "#C8E3D2",
   },
   // Crimson & Platinum — rich crimson on a neutral pearl/charcoal chrome. Modern · Bold.
   "original-crimson": {
     deep: "#5E1010", brand: "#9E1B1B", bright: "#BE3B2D", glow: "#98A2AE", mid: "#7E2626",
-    soft: "#F4F1F2", soft2: "#E8E4E6", line: "#D8D0D3", ink: "#1B1B21", bg: "#F7F4F5",
+    soft: "#F4F1F2", soft2: "#E8E4E6", line: "#DBB2B2", ink: "#1B1B21", bg: "#EFCFCF",
   },
   // Aubergine & Copper — deep plum + burnished copper. Active · High-Contrast.
   "original-aubergine": {
     deep: "#331229", brand: "#66295A", bright: "#8A3A76", glow: "#C1653B", mid: "#9C5227",
-    soft: "#F7F0F4", soft2: "#ECDDE7", line: "#DCC5D3", ink: "#211020", bg: "#F6EFF3",
+    soft: "#F7F0F4", soft2: "#ECDDE7", line: "#D4AFC7", ink: "#211020", bg: "#E9CCDF",
   },
 };
 
