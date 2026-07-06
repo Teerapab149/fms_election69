@@ -235,14 +235,14 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
             <div
                 ref={containerRef}
                 className={cn(
-                    "relative w-full h-screen overflow-hidden bg-[#F5F5F7] flex items-center justify-center isolate font-sans",
+                    "relative w-full h-screen overflow-hidden bg-[var(--spv-page-bg)] transition-colors duration-300 ease-in-out flex items-center justify-center isolate font-sans",
                     className
                 )}
             >
                 {/* 1. LAYER: DESIGNER GRID */}
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <div className="absolute inset-0 opacity-[0.08]"
-                        style={{ backgroundImage: `linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)`, backgroundSize: '80px 80px' }}
+                        style={{ backgroundImage: `linear-gradient(var(--spv-grid, #1a1a1a) 1px, transparent 1px), linear-gradient(90deg, var(--spv-grid, #1a1a1a) 1px, transparent 1px)`, backgroundSize: '80px 80px' }}
                     />
                     <div className="absolute top-[20%] left-[20%] w-4 h-4 border-l border-t border-black/20" />
                     <div className="absolute bottom-[20%] right-[20%] w-4 h-4 border-r border-b border-black/20" />
@@ -348,7 +348,7 @@ function DesktopFloatingMember({ member, springX, springY }) {
                         </div>
                     )}
                     <div className="absolute bottom-0 inset-x-0 bg-black/80 backdrop-blur-md py-2 px-3 border-t border-white/10">
-                        <p className="text-[8px] text-[#FFD700] font-mono leading-none tracking-widest mb-1">{member.position}</p>
+                        <p className="text-[8px] text-[var(--spv-member-gold)] font-mono leading-none tracking-widest mb-1">{member.position}</p>
                         <p className="text-[10px] text-white font-bold leading-none truncate">{member.name}</p>
                     </div>
                 </div>
@@ -398,7 +398,7 @@ function MobileFloatingMember({ member }) {
                     {/* Simplified/Removed Label for Micro-View if needed, or keep tiny */}
                     {/* For 50px width, text might be unreadable. Let's hide text or make it tiny dots? */}
                     {/* User didn't ask to remove text, but visual noise might be high. Let's keep a tiny bar. */}
-                    <div className="absolute bottom-0 inset-x-0 h-1 bg-[#FFD700]/80" />
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-[color-mix(in_srgb,var(--spv-member-gold)_80%,transparent)]" />
                 </div>
             </div>
         </div>

@@ -458,7 +458,7 @@ export default function SinglePartyView({
                   <Reveal delay={0}>
                     {/* Party Number Badge - Pill Shaped */}
                     <div className="mb-6 lg:mb-8">
-                      <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[var(--spv-dark,#1A1A1A)] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm party-number-badge">
+                      <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[var(--spv-dark,#1A1A1A)] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm transition-colors duration-300 ease-in-out party-number-badge">
                         พรรคหมายเลข {partyNumber}
                       </span>
                     </div>
@@ -473,13 +473,13 @@ export default function SinglePartyView({
                       return (
                         <>
                           {/* Mobile: Split 2 Lines */}
-                          <h1 className="md:hidden text-5xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-[0.9] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                          <h1 className="md:hidden text-5xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-[0.9] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1 transition-colors duration-300 ease-in-out" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                             <span>{top}</span>
                             <span>{bottom}</span>
                           </h1>
 
                           {/* Desktop: Single Line */}
-                          <h1 className="hidden md:block text-6xl xl:text-8xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-none tracking-tight mb-6 drop-shadow-sm" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                          <h1 className="hidden md:block text-6xl xl:text-8xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-none tracking-tight mb-6 drop-shadow-sm transition-colors duration-300 ease-in-out" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                             {partyName}
                           </h1>
                         </>
@@ -494,7 +494,7 @@ export default function SinglePartyView({
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
                       {/* Discover: Magenta Gradient */}
-                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-[color-mix(in_srgb,var(--color-primary)_30%,transparent)] transition-all hover:scale-105 active:scale-95 discover-btn">
+                      <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[var(--spv-brand)] to-[var(--spv-brand)] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-[color-mix(in_srgb,var(--spv-brand)_30%,transparent)] transition-all hover:scale-105 active:scale-95 discover-btn">
                         <span className="relative z-10 flex items-center justify-center gap-2 text-xs lg:text-base">
                           Discover Our Vision <ChevronDown className="w-4 h-4" />
                         </span>
@@ -532,10 +532,10 @@ export default function SinglePartyView({
 
                     {/* Header Block */}
                     <div className="mb-4 md:mb-0 lg:mb-10 text-center md:text-left">
-                      <span className="block text-sm font-bold tracking-[0.3em] text-[var(--spv-gold,#B8860B)] uppercase mb-2 lg:mb-3">
+                      <span className="block text-sm font-bold tracking-[0.3em] text-[var(--spv-gold,#B8860B)] uppercase mb-2 lg:mb-3 transition-colors duration-300 ease-in-out">
                         The Identity
                       </span>
-                      <h2 className="text-5xl md:text-7xl font-black text-[var(--spv-dark,#1A1A1A)] uppercase tracking-tighter leading-[0.9]">
+                      <h2 className="text-5xl md:text-7xl font-black text-[var(--spv-dark,#1A1A1A)] uppercase tracking-tighter leading-[0.9] transition-colors duration-300 ease-in-out">
                         Logo <br /> Concept
                       </h2>
                     </div>
@@ -593,7 +593,7 @@ export default function SinglePartyView({
           < section id="mission" className="w-full flex flex-col md:flex-row min-h-auto md:min-h-[60vh]" >
 
             {/* LEFT SIDE: Header (Deep Royal Purple) - 40% */}
-            < div className="w-full md:w-[40%] bg-[var(--spv-deep,#2E1065)] relative px-6 py-12 md:px-10 md:py-24 flex flex-col justify-center items-center text-center overflow-hidden" >
+            < div className="w-full md:w-[40%] bg-[var(--spv-deep,#2E1065)] transition-colors duration-300 ease-in-out relative px-6 py-12 md:px-10 md:py-24 flex flex-col justify-center items-center text-center overflow-hidden" >
               {/* Background Effects (Unity Theme: Purple/Gold) */}
               < div className="absolute inset-0 bg-gradient-to-br from-[var(--spv-deep,#2E1065)] via-[var(--spv-deep-2,#4C1D95)] to-[var(--spv-deep,#2E1065)] opacity-100" ></div >
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
@@ -607,7 +607,7 @@ export default function SinglePartyView({
                   <h3 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-2 md:mb-4">
                     พันธกิจ
                   </h3>
-                  <p className="text-[var(--spv-glow-2,#FCD34D)] text-xs md:text-sm font-bold tracking-[0.3em] uppercase opacity-90">
+                  <p className="text-[var(--spv-glow-2,#FCD34D)] text-xs md:text-sm font-bold tracking-[0.3em] uppercase opacity-90 transition-colors duration-300 ease-in-out">
                     OUR MISSION
                   </p>
                 </Reveal>
@@ -619,8 +619,8 @@ export default function SinglePartyView({
               <div className="grid gap-4 md:gap-6 max-w-3xl mx-auto w-full">
                 {(Array.isArray(missions) ? missions : ["สนับสนุนกิจกรรม", "พัฒนาสิ่งอำนวยความสะดวก"]).map((m, i) => (
                   <Reveal key={i} delay={i * 100}>
-                    <div className="flex items-center gap-4 md:gap-6 group p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-gray-200 hover:border-[var(--color-primary)] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                      <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)] flex items-center justify-center font-black text-lg md:text-xl border border-[color-mix(in_srgb,var(--color-primary)_20%,white)] group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors duration-300">
+                    <div className="flex items-center gap-4 md:gap-6 group p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-gray-200 hover:border-[var(--spv-brand)] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                      <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-[color-mix(in_srgb,var(--spv-brand)_12%,white)] text-[var(--spv-brand)] flex items-center justify-center font-black text-lg md:text-xl border border-[color-mix(in_srgb,var(--spv-brand)_20%,white)] group-hover:bg-[var(--spv-brand)] group-hover:text-white transition-colors duration-300">
                         {i + 1}
                       </div>
                       <p className="text-base md:text-xl text-gray-700 font-medium leading-relaxed group-hover:text-[var(--spv-deep,#2E1065)] transition-colors">
@@ -638,8 +638,8 @@ export default function SinglePartyView({
             <div className="container mx-auto px-6 relative z-10">
 
               <div className="text-center max-w-3xl mx-auto mb-16">
-                <span className="text-[var(--spv-gold,#B8860B)] font-bold tracking-[0.2em] uppercase text-sm">Our Policies</span>
-                <h2 className="text-4xl md:text-6xl font-black text-[var(--spv-dark,#1A1A1A)] mt-3 uppercase tracking-tight">นโยบายพรรค</h2>
+                <span className="text-[var(--spv-gold,#B8860B)] font-bold tracking-[0.2em] uppercase text-sm transition-colors duration-300 ease-in-out">Our Policies</span>
+                <h2 className="text-4xl md:text-6xl font-black text-[var(--spv-dark,#1A1A1A)] mt-3 uppercase tracking-tight transition-colors duration-300 ease-in-out">นโยบายพรรค</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
                 {(Array.isArray(policies) ? policies : ["นโยบายที่ 1", "นโยบายที่ 2", "นโยบายที่ 3"]).map((p, i) => (
@@ -649,7 +649,7 @@ export default function SinglePartyView({
 
                       {/* 1. ANIMATED GLOW BACKDROP (Static Purple/Pink - No Animation) */}
                       {/* Mobile: Toned down (opacity-30, blur-sm) to prevent overcrowding. Desktop: Strong (opacity-70, blur-md) */}
-                      <div className="absolute -inset-[1px] md:-inset-[3px] rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)] opacity-30 md:opacity-70 blur-[2px] md:blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg"></div>
+                      <div className="absolute -inset-[1px] md:-inset-[3px] rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-r from-[var(--spv-brand)] to-[var(--spv-brand)] opacity-30 md:opacity-70 blur-[2px] md:blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg"></div>
 
                       {/* 2. CARD SURFACE (White Background) */}
                       <div className="relative h-full bg-white rounded-[1.3rem] md:rounded-[2.3rem] overflow-hidden flex flex-col justify-start transition-all duration-300 bg-clip-padding">
@@ -661,12 +661,12 @@ export default function SinglePartyView({
 
                         {/* Content Container (Matches aspect ratio constraints) */}
                         <div className="relative z-10 p-5 md:p-10 flex flex-col h-full">
-                          <p className="text-[9px] md:text-xs font-bold uppercase tracking-widest text-[var(--color-accent)] mb-2 md:mb-3">
+                          <p className="text-[9px] md:text-xs font-bold uppercase tracking-widest text-[var(--spv-accent)] mb-2 md:mb-3">
                             นโยบายที่ {i + 1}
                           </p>
 
                           {/* Title: Full text on mobile (No Clamp) */}
-                          <h3 className="text-sm md:text-2xl font-black text-gray-900 mb-2 md:mb-4 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[var(--color-primary)] group-hover:to-[var(--color-accent)] transition-all">
+                          <h3 className="text-sm md:text-2xl font-black text-gray-900 mb-2 md:mb-4 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[var(--spv-brand)] group-hover:to-[var(--spv-accent)] transition-all">
                             {typeof p === 'string' ? p : p.title}
                           </h3>
 
@@ -706,10 +706,10 @@ export default function SinglePartyView({
 
                   {/* --- HEADER SECTION (Above Image - White Background) --- */}
                   <div className="relative w-full pt-12 md:pt-24 pb-4 md:pb-8 bg-white flex flex-col items-center justify-center z-20">
-                    <span className="text-[var(--color-accent)] font-bold tracking-[0.2em] uppercase text-xs md:text-lg drop-shadow-sm mb-3">
+                    <span className="text-[var(--spv-accent)] font-bold tracking-[0.2em] uppercase text-xs md:text-lg drop-shadow-sm mb-3 transition-colors duration-300 ease-in-out">
                       {partyName}
                     </span>
-                    <h2 className="text-4xl md:text-7xl font-black text-[var(--spv-dark,#1A1A1A)] uppercase tracking-tight text-center px-4 leading-none">
+                    <h2 className="text-4xl md:text-7xl font-black text-[var(--spv-dark,#1A1A1A)] uppercase tracking-tight text-center px-4 leading-none transition-colors duration-300 ease-in-out">
                       MEET THE TEAM
                     </h2>
                   </div>
@@ -748,8 +748,8 @@ export default function SinglePartyView({
 
                   <div className="container mx-auto px-4 md:px-6 relative z-10">
                     <div className="text-center mb-10 md:mb-12">
-                      <span className="text-[var(--spv-gold,#B8860B)] font-bold tracking-[0.2em] uppercase text-xs md:text-sm">{partyName}</span>
-                      <h2 className="text-4xl md:text-5xl font-black text-[var(--spv-dark,#1A1A1A)] mt-2 md:mt-3 uppercase tracking-tight">GALLERY</h2>
+                      <span className="text-[var(--spv-gold,#B8860B)] font-bold tracking-[0.2em] uppercase text-xs md:text-sm transition-colors duration-300 ease-in-out">{partyName}</span>
+                      <h2 className="text-4xl md:text-5xl font-black text-[var(--spv-dark,#1A1A1A)] mt-2 md:mt-3 uppercase tracking-tight transition-colors duration-300 ease-in-out">GALLERY</h2>
                     </div>
 
                     <div className="rounded-[24px] md:rounded-[32px] border border-black/10 bg-white shadow-[0_24px_70px_-50px_rgba(0,0,0,0.35)] p-2 md:p-6">
@@ -771,8 +771,8 @@ export default function SinglePartyView({
           < section id="team" className="py-24 bg-white relative overflow-hidden border-t border-black/5" >
             <div className="container mx-auto px-6 relative z-10">
               <div className="mb-16">
-                <span className="text-[var(--spv-vote-glow,#6A0DAD)] font-bold tracking-[0.2em] uppercase text-sm">The Squad</span>
-                <h2 className="text-4xl md:text-5xl font-black text-[var(--spv-dark,#1A1A1A)] mt-2 uppercase tracking-tight">Members</h2>
+                <span className="text-[var(--spv-vote-glow,#6A0DAD)] font-bold tracking-[0.2em] uppercase text-sm transition-colors duration-300 ease-in-out">The Squad</span>
+                <h2 className="text-4xl md:text-5xl font-black text-[var(--spv-dark,#1A1A1A)] mt-2 uppercase tracking-tight transition-colors duration-300 ease-in-out">Members</h2>
               </div>
               <RevealGrid className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {members.map((m, i) => (
@@ -810,9 +810,9 @@ export default function SinglePartyView({
           </section>
 
           {/* === 6. VOTE === */}
-          <section id="vote" className="py-32 bg-[var(--spv-dark,#1A1A1A)] text-white relative overflow-hidden">
+          <section id="vote" className="py-32 bg-[var(--spv-dark,#1A1A1A)] transition-colors duration-300 ease-in-out text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--spv-vote-glow,#6A0DAD)] blur-[150px] opacity-20 rounded-full pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--spv-vote-glow,#6A0DAD)] transition-colors duration-300 ease-in-out blur-[150px] opacity-20 rounded-full pointer-events-none" />
             <div className="container mx-auto px-6 relative z-10 max-w-4xl text-center">
               <Reveal>
                 <h2 className="text-5xl md:text-8xl font-black text-white mb-8 uppercase tracking-tighter">Your Vote <br /> Your Voice</h2>

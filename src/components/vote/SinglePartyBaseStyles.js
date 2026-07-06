@@ -44,6 +44,15 @@ function buildRamp(slug) {
       "--spv-hero-b": "#7e22ce",  // LiquidHero reveal gradient mid
       "--spv-hero-c": "#ec4899",  // LiquidHero reveal gradient end
       "--spv-vote-glow": "#6A0DAD", // vote-section blur glow + team accent
+      // NOTE (portal scope): the createPortal tree is OUTSIDE .fms-app, so the SSR'd
+      // Layer-1 --color-primary / --color-accent DO NOT reach it (verified: computed
+      // value is empty inside #cinematic-root). Portal consumers must use the parity
+      // slots above (--spv-brand / --spv-accent), never var(--color-*).
+      // Architectural grid + page canvas (LiquidHero layer 0). Defaults = current.
+      "--spv-grid": "#1a1a1a",    // designer grid-line ink
+      "--spv-page-bg": "#F5F5F7", // hero container light canvas
+      "--spv-member-gold": "#FFD700", // LiquidHero floating member label / bottom bar
+      "--spv-nav-accent": "#A91079",  // CinematicNavbar avatar/login gradient tail
       // Mesh pastels (LiquidMeshHeroBackground blobs / radials / conic)
       "--spv-mesh1": "rgba(165, 243, 252, 0.85)",
       "--spv-mesh2": "rgba(233, 213, 255, 0.85)",
@@ -74,6 +83,12 @@ function buildRamp(slug) {
     "--spv-hero-b": t.brand,
     "--spv-hero-c": t.bright,
     "--spv-vote-glow": t.brand,
+    // Grid ink follows the theme's deep brand stop (reads as a tinted blueprint
+    // grid at the hero's 8% opacity); canvas takes the theme's own bg field.
+    "--spv-grid": t.deep,
+    "--spv-page-bg": t.bg,
+    "--spv-member-gold": t.glow,
+    "--spv-nav-accent": t.bright,
     // Mesh pastels from soft/mid/glow tints with alpha (kept light + airy).
     "--spv-mesh1": `color-mix(in srgb, ${t.soft} 85%, transparent)`,
     "--spv-mesh2": `color-mix(in srgb, ${t.mid} 30%, transparent)`,
