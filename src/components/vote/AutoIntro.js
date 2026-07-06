@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SmartImage from "../SmartImage";
 import { getPath } from "../../utils/basePath"; // ✅ Import added
-import { ELECTION_CONFIG, ELECTION_YEAR, ELECTION_SLOGAN } from '../../utils/electionConfig';
+import { ELECTION_CONFIG, ELECTION_SLOGAN } from '../../utils/electionConfig';
+import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 // --- Configuration ---
 // Removed constant ANIMATION_DURATION to use simpler inline timing for punchier effect
@@ -65,6 +66,8 @@ export default function AutoIntro({
     onComplete,
     finished,
 }) {
+    const globalConfig = useGlobalConfig();
+    const electionYear = globalConfig?.electionCalendarYear ?? 2026;
     const [step, setStep] = useState(1);
 
     // ❌ Removed fixed setTimeout logic that caused skipping on lag
@@ -127,7 +130,7 @@ export default function AutoIntro({
                                 variants={containerVariants}
                             >
                                 <motion.div variants={badgeVariants} className="border border-[#1a1a1a] px-5 py-2 rounded-full text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-[#1a1a1a] mb-6 hover:bg-[#1a1a1a] hover:text-white transition-colors cursor-default">
-                                    Official Election {ELECTION_YEAR}
+                                    Official Election {electionYear}
                                 </motion.div>
 
                                 <MaskedText className="text-3xl md:text-6xl lg:text-8xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10" delay={0.1}>
@@ -151,7 +154,7 @@ export default function AutoIntro({
                                         onAnimationComplete={handleStep1Complete} // 🎯 Trigger
                                     >
                                         <span className="text-3xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-normal text-[#1a1a1a] z-10">
-                                            คณะวิทยาการจัดการ ปี {ELECTION_YEAR}
+                                            คณะวิทยาการจัดการ ปี {electionYear}
                                         </span>
                                     </motion.div>
                                 </div>

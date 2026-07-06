@@ -3,8 +3,11 @@
 
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Users, Vote, Star } from "lucide-react";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 export default function MeetCandidatesCard() {
+  const globalConfig = useGlobalConfig();
+  const calendarYear = globalConfig?.electionCalendarYear ?? 2026;
   return (
     <Link href="/candidates" className="group relative block w-full h-full">
       
@@ -40,7 +43,7 @@ export default function MeetCandidatesCard() {
                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--o-brand)]"></span>
                   </span>
                   <span className="text-[11px] font-extrabold tracking-widest uppercase text-[var(--o-deep)]">
-                     FMS ELECTION 2026
+                     FMS ELECTION {calendarYear}
                   </span>
                </div>
 

@@ -123,6 +123,8 @@ function HoverOverlay({ label }) {
 
 function HomePreview({ pageLayout, primaryColor }) {
   const globalConfig = useGlobalConfig();
+  const calendarYear = globalConfig.electionCalendarYear ?? 2026;
+  const nextYear = Number(calendarYear) + 1;
   return (
     <div className="bg-[#F8F9FD] min-h-[800px]">
       {/* Mock Navbar */}
@@ -147,7 +149,7 @@ function HomePreview({ pageLayout, primaryColor }) {
             {/* Hero */}
             <div className="py-8">
               <div className="inline-flex px-3 py-1 rounded-full bg-purple-50 border border-purple-200 mb-3">
-                <span className="text-[9px] font-bold" style={{ color: primaryColor }}>SEE YOU 2027</span>
+                <span className="text-[9px] font-bold" style={{ color: primaryColor }}>SEE YOU {nextYear}</span>
                 <span className="text-[9px] text-slate-500 ml-2">296D : 21H : 47M</span>
               </div>
               <h1 className="text-5xl font-black text-slate-900 leading-none">{globalConfig.electionNamePrefix}<span style={{ color: primaryColor }}>{globalConfig.electionNumber}</span></h1>
@@ -170,7 +172,7 @@ function HomePreview({ pageLayout, primaryColor }) {
 
             {/* Meet Candidates */}
             <div className="bg-white rounded-2xl border border-pink-100 p-4">
-              <span className="text-[9px] font-bold" style={{ color: primaryColor }}>FMS ELECTION 2026</span>
+              <span className="text-[9px] font-bold" style={{ color: primaryColor }}>FMS ELECTION {calendarYear}</span>
               <p className="text-sm font-bold mt-1">รู้จักผู้สมัครของคุณหรือยัง?</p>
               <div className="mt-2 inline-flex px-3 py-1 rounded-full bg-slate-900 text-white text-[9px] font-bold">
                 ดูรายชื่อพรรค →

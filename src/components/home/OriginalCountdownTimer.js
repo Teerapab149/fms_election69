@@ -98,7 +98,7 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
         };
       case 'NEXT_YEAR':
         return {
-          label: "SEE YOU 2027",
+          label: `SEE YOU ${ELECTION_NEXT_YEAR.getFullYear()}`,
           icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-slate-800",
           textMain: "text-slate-700",

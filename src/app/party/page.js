@@ -17,6 +17,7 @@ import StudioDarkParty from "../../components/vote/StudioDarkParty";
 import VerdureParty from "../../components/vote/VerdureParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // --- CONSTANTS ---
 const POSITION_ORDER = [
@@ -573,6 +574,8 @@ function PartyContent() {
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
   const source = searchParams.get('source');
+  const globalConfig = useGlobalConfig();
+  const copyrightYear = globalConfig?.copyrightYear ?? globalConfig?.electionCalendarYear ?? 2026;
 
   const [activeParty, setActiveParty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -734,7 +737,7 @@ function PartyContent() {
       {source === 'vote' && <BackToVoteBar />}
 
       <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
-        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU 2026. All Rights Reserved.</p>
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU {copyrightYear}. All Rights Reserved.</p>
       </footer>
     </div>
   );
@@ -762,6 +765,8 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
   const [selectedMember, setSelectedMember] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
   const listSectionRef = useRef(null);
+  const globalConfig = useGlobalConfig();
+  const copyrightYear = globalConfig?.copyrightYear ?? globalConfig?.electionCalendarYear ?? 2026;
   if (!party) return null;
   const theme = PARTY_THEMES[party.id] || PARTY_THEMES[party.number] || DEFAULT_THEME;
 
@@ -784,7 +789,7 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
       )}
       <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} themeColor={theme.main} />
       <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
-        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU 2026. All Rights Reserved.</p>
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU {copyrightYear}. All Rights Reserved.</p>
       </footer>
     </div>
   );

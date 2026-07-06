@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import SmartImage from "../SmartImage";
 import { getPath } from "../../utils/basePath";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // Throttle helper
 const throttle = (fn, ms) => {
@@ -119,6 +120,8 @@ const generateMobileGridPositions = (count) => {
 
 
 export const LiquidHero = ({ children, className, members = [], isActive = false }) => {
+    const globalConfig = useGlobalConfig();
+    const estdYear = globalConfig?.electionCalendarYear ?? 2026;
     const containerRef = useRef(null);
     const [mounted, setMounted] = useState(false);
     const [showMembers, setShowMembers] = useState(false);
@@ -247,7 +250,7 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
                     <div className="absolute top-[20%] left-[20%] w-4 h-4 border-l border-t border-black/20" />
                     <div className="absolute bottom-[20%] right-[20%] w-4 h-4 border-r border-b border-black/20" />
                     <div className="absolute top-8 left-8 text-[10px] font-mono text-black/30 tracking-[0.3em]">SYSTEM_READY // FMS ELECTION</div>
-                    <div className="absolute bottom-8 right-8 text-[10px] font-mono text-black/30 tracking-[0.3em] text-right">SCROLL_TO_VOTE <br /> [ESTD. 2026]</div>
+                    <div className="absolute bottom-8 right-8 text-[10px] font-mono text-black/30 tracking-[0.3em] text-right">SCROLL_TO_VOTE <br /> [ESTD. {estdYear}]</div>
                 </div>
 
                 {/* 2. LAYER: THE REVEAL */}

@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { Zap, Clock, CalendarDays, Hourglass, Flag } from 'lucide-react';
-import { resolveElectionDates, ELECTION_YEAR } from '../utils/electionConfig';
+import { resolveElectionDates } from '../utils/electionConfig';
 import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 
 const ICON_MAP = { Flag, Zap, Hourglass, CalendarDays, Clock };
@@ -49,6 +49,10 @@ export default function CountdownTimer({
     d.setFullYear(d.getFullYear() + 1);
     return d;
   }, [ELECTION_START]);
+  // Derived from the (admin-configurable) election dates, NOT the static
+  // electionConfig.ELECTION_YEAR constant — that constant drifts from
+  // globalConfig.electionCalendarYear once an admin updates the year.
+  const displayYear = ELECTION_NEXT_YEAR.getFullYear();
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
@@ -144,7 +148,7 @@ export default function CountdownTimer({
         };
       case 'NEXT_YEAR':
         return {
-          label: `SEE YOU ${ELECTION_YEAR}`,
+          label: `SEE YOU ${displayYear}`,
           icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-slate-800",
           textMain: "text-slate-700",
@@ -168,9 +172,9 @@ export default function CountdownTimer({
 
   const config = getConfig();
 
-  // Build display label — replace {YEAR} placeholder with ELECTION_YEAR
+  // Build display label — replace {YEAR} placeholder with the derived year
   const displayLabel = resolvedConfig
-    ? (resolvedConfig.label || config.label).replace('{YEAR}', ELECTION_YEAR)
+    ? (resolvedConfig.label || config.label).replace('{YEAR}', displayYear)
     : config.label;
 
   // Resolve icon when resolvedConfig overrides it

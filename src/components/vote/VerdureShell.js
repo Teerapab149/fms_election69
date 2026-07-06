@@ -15,8 +15,11 @@ export default function VerdureShell({
   editorMode = false,
   systemMode = "AUTO",
   edge = { num: "01", label: "Index", th: "" },
-  cornermarkTitle = "SAMO 50",
-  cornermarkSub = "FMS Election · 2570",
+  // null (not a literal string) so VerdureChrome's `cornermarkTitle || meta.wordmark`
+  // falls through to the live globalConfig-derived value when a page doesn't
+  // override it (see VerdureChrome.js meta / VerdureCandidates usage).
+  cornermarkTitle = null,
+  cornermarkSub = null,
   statusChip = null,
   backHref = null,
   backLabel = "",

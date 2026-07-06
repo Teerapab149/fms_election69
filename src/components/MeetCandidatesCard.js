@@ -6,6 +6,7 @@ import { useRef, useCallback } from "react";
 import { ArrowRight, Sparkles, Users, Vote, Star } from "lucide-react";
 import EditorElement from "./admin/editor/EditorElement";
 import { RADIUS_MAP } from "../utils/styleMaps";
+import { useGlobalConfig } from "../contexts/GlobalConfigContext";
 
 // Animated glow gradient (kept "to right", animated via .animate-gradient-xy).
 function buildGlowStyle(cfg) {
@@ -50,6 +51,8 @@ export default function MeetCandidatesCard({
   onHoverEnd = null,
   elementConfigs = null,
 }) {
+  const globalConfig = useGlobalConfig();
+  const calendarYear = globalConfig?.electionCalendarYear ?? 2026;
   // Dual-channel flat config read (editor elementConfigs / live resolvedTemplate).
   const getCardConfig = (id) =>
     elementConfigs?.[id]?.config ?? resolvedTemplate?.elements?.[id]?.config ?? null;
@@ -133,7 +136,7 @@ export default function MeetCandidatesCard({
                      <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
                   </span>
                   <span className="text-[11px] font-extrabold tracking-widest uppercase text-purple-700">
-                     FMS ELECTION 2026
+                     FMS ELECTION {calendarYear}
                   </span>
                </div>
 
