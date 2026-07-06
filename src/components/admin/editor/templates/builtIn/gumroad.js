@@ -46,7 +46,7 @@ import { GUMROAD_THEMES } from "../../../../../utils/gumroadPalettes";
 // applied Layer-1 tokens + element configs never matched what the preview showed.
 // The builder also means every colour-theme variant carries its FULL palette into
 // tokens/configs on apply — not just a swatch.
-function buildGumroadTemplate(slug, name, palette) {
+function buildGumroadTemplate(slug, name, palette, description) {
   const INK = palette.ink;      // chunky border + text
   const INK_2 = palette.ink2;   // muted text
   const CREAM = palette.cream;  // page bg
@@ -63,7 +63,7 @@ function buildGumroadTemplate(slug, name, palette) {
   id: slug,
   slug,
   name,
-  description: "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส พื้นสว่าง เลือกโทนสีได้ 5 แบบ",
+  description: description || "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส พื้นสว่าง เลือกโทนสีได้ 5 แบบ",
   layoutFamily: "gumroad", // real template — own page layouts (poster-mosaic home ฯลฯ)
 
   colorSwatch: {
@@ -334,5 +334,11 @@ export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "แ
 export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", GUMROAD_THEMES["gumroad-retro"]);
 export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", GUMROAD_THEMES["gumroad-acid"]);
 export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "แอ็กทีฟ พัลส์ · ไซเบอร์ป๊อป พรีเมียม", GUMROAD_THEMES["gumroad-premium"]);
+export const gumroadBubblegumTemplate = buildGumroadTemplate(
+  "gumroad-bubblegum",
+  "แอ็กทีฟ พัลส์ · บับเบิ้ลกัม ป๊อป",
+  GUMROAD_THEMES["gumroad-bubblegum"],
+  "สไตล์ Gumroad บับเบิ้ลกัม ป๊อป — ชมพูเป็นสีหลักทั้งบรรยากาศ ฟ้า-มินต์เป็นลูกคู่พาสเทล ขอบดำอมพลัม เงาคม (ไม่เบลอ)"
+);
 
 export default gumroadTemplate;

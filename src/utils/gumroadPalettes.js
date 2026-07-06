@@ -42,6 +42,12 @@ export const GUMROAD_THEMES = {
     pink: "#FF4B91", lime: "#00F5A0", yellow: "#FFD84D", sky: "#00D2FF", coral: "#FF5470",
     gw1: "#FFE3EE", gw2: "#FAFAFC", gw3: "#DDFBF0",
   },
+  // บับเบิ้ลกัม — pink-first pastel pop
+  "gumroad-bubblegum": {
+    ink: "#201318", ink2: "#6B4A5C", cream: "#FFF0F6", cream2: "#FFDEEC", paper: "#FFFDFE",
+    pink: "#FF74C4", lime: "#82E8B5", yellow: "#FFD97A", sky: "#7FD4FF", coral: "#FF8FA3",
+    gw1: "#FFDFF0", gw2: "#FFF7FB", gw3: "#DFF2FF",
+  },
 };
 
 export function gumroadTheme(slug) {
