@@ -121,8 +121,11 @@ template-preview เป็นเจ้าของ Layer-1 ของ slug ที
 ## §6 Task tickets (ละเอียดพอให้ทำได้โดยไม่ถาม)
 
 ### P1 — Critical fixes
-**T1.1 · ✅ DONE 2026-07-07 (commit 48b4284) — Original single-vote mobile: dark theme-tinted scrim (--spv-deep) unifies hero-text backing, white title/READY on mobile via max-md:, desktop byte-identical. Verified computed styles (screenshot ไม่ได้ — หน้า animate; contrast ~13:1). เหลือ: owner eyeball aesthetics + desktop title overflow ยังไม่แตะ (ในสโคปเดิมโอเค)**
-~~T1.1 · Original single-vote mobile redesign (วิกฤตสุด — ยืนยันด้วยตา 2026-07-06)~~
+**T1.1 · ⛔ REVERTED 2026-07-07 (revert 71de8ee).** ลอง scrim เข้มเต็มจอ (48b4284) → owner: "ดูเพี้ยน สีเต็มหน้ามาก แบบเดิม (desktop ย่อ) สวยกว่า" → revert กลับ original แล้ว.
+บทเรียน: อย่าเติม dark field ใหญ่ทับ spotlight-circle aesthetic — มันกลบความสวยของดีไซน์เดิม. ถ้าจะแก้ legibility มือถือ
+รอบหน้า = แตะ "เบามาก" (เงาใต้ตัวอักษรเฉพาะจุด/text-shadow แรงขึ้น/ย่อ member card ที่ทับ) ห้าม scrim เต็มแผง.
+Owner ยอมรับ original ตามเดิมได้ — ถามก่อนทำเวอร์ชันใหม่.
+~~T1.1 · Original single-vote mobile redesign~~
 - ไฟล์: src/components/vote/{SinglePartyView,LiquidHero}.js (+SinglePartyBaseStyles ถ้าต้องเพิ่ม slot)
 - อาการ: mobile วงกลม hero เต็มจอ + การ์ดสมาชิกอัดกริดชนหัวเรื่อง, ขาวบนภาพหน้าคนอ่านไม่ได้, ปุ่ม glass จมภาพ;
   desktop: ชื่อพรรคล้นวง, subtitle ครึ่งนอกวงขาวบนขาว, การ์ดโดน mask ตัดกลางหน้า, chrome "SYSTEM_READY" tech-noise
