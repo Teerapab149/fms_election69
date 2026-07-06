@@ -21,6 +21,10 @@
 //   line    — soft border on tint
 //   ink     — page text (near-black, warmed per theme)
 //   bg      — page background (distinct light temperature per theme)
+//   wash    — banner duotone harmoniser strength 0..1 (grayscale + colour overlay
+//             on the fixed purple-pink banner art). 0 = flagship (art shown as-is);
+//             the coloured-field themes lift it to ~0.5 so the banner reads as part
+//             of the field instead of a foreign purple rectangle.
 // Theme 1 is the SAMO brand identity (ม่วง-ขาว); the other 4 are formal/premium.
 
 export const ORIGINAL_THEMES = {
@@ -28,26 +32,31 @@ export const ORIGINAL_THEMES = {
   "original": {
     deep: "#691E61", brand: "#8A2680", bright: "#C026D3", glow: "#D946EF", mid: "#A855F7",
     soft: "#FAF5FF", soft2: "#F3E8FF", line: "#E9D5FF", ink: "#0F172A", bg: "#F8F9FD",
+    wash: 0,
   },
   // Midnight Navy & Antique Gold — Professional · Trustworthy · Luxurious.
   "original-navy": {
     deep: "#0A1D33", brand: "#1B3A5E", bright: "#2F5B88", glow: "#C9A227", mid: "#7A5F1B",
     soft: "#EFF4FA", soft2: "#DEE9F5", line: "#A9C3E1", ink: "#0B1524", bg: "#C9DCF2",
+    wash: 0.5,
   },
   // Emerald & Champagne — deep forest green + soft champagne gold. Sophisticated · Elegant.
   "original-emerald": {
     deep: "#082A1D", brand: "#0F5638", bright: "#1E7C4E", glow: "#CBAC64", mid: "#7E6836",
     soft: "#EEF5F0", soft2: "#DEEBE2", line: "#A6CDB6", ink: "#0C2016", bg: "#C8E3D2",
+    wash: 0.5,
   },
   // Crimson & Platinum — rich crimson on a neutral pearl/charcoal chrome. Modern · Bold.
   "original-crimson": {
     deep: "#5E1010", brand: "#9E1B1B", bright: "#BE3B2D", glow: "#98A2AE", mid: "#7E2626",
     soft: "#F4F1F2", soft2: "#E8E4E6", line: "#DBB2B2", ink: "#1B1B21", bg: "#EFCFCF",
+    wash: 0.5,
   },
   // Aubergine & Copper — deep plum + burnished copper. Active · High-Contrast.
   "original-aubergine": {
     deep: "#331229", brand: "#66295A", bright: "#8A3A76", glow: "#C1653B", mid: "#9C5227",
     soft: "#F7F0F4", soft2: "#ECDDE7", line: "#D4AFC7", ink: "#211020", bg: "#E9CCDF",
+    wash: 0.5,
   },
 };
 

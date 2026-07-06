@@ -15,13 +15,12 @@ export default function MeetCandidatesCard() {
       {/* ปรับ p-4 (จากเดิม p-6) เพื่อลดความสูง */}
       <div className="relative h-full w-full rounded-[22px] bg-white overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-[0.995]">
          
-         {/* Backgrounds */}
-         <div className="absolute inset-0 bg-gradient-to-br from-white via-[color-mix(in_srgb,var(--o-soft)_55%,#ffffff)] to-[color-mix(in_srgb,var(--o-soft2)_40%,#ffffff)]"></div>
-         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(var(--o-brand) 1px, transparent 1px)', backgroundSize: '14px 14px' }}></div>
+         {/* Backgrounds — neutral content surface (white → platinum), the 30 */}
+         <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-[#F6F7F8]"></div>
+         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(var(--o-ink) 1px, transparent 1px)', backgroundSize: '14px 14px' }}></div>
 
-         {/* Blobs (ปรับขนาดเล็กลง) */}
-         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[color-mix(in_srgb,var(--o-brand)_14%,transparent)] rounded-full blur-2xl animate-pulse"></div>
-         <div className="absolute -bottom-10 -left-5 w-32 h-32 bg-[color-mix(in_srgb,var(--o-glow)_20%,transparent)] rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+         {/* Accent glow — a single faint theme blob keeps the card alive without washing it (the 10%) */}
+         <div className="absolute -bottom-10 -left-5 w-32 h-32 bg-[color-mix(in_srgb,var(--o-glow)_14%,transparent)] rounded-full blur-2xl animate-pulse transition-colors duration-300" style={{ animationDelay: '1.5s' }}></div>
 
          {/* Shine Effect */}
          <div className="absolute inset-0 z-20 -translate-x-[150%] skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-1000 group-hover:animate-shine pointer-events-none" />

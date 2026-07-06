@@ -25,7 +25,7 @@ export function OriginalBaseStyles() {
       .orig-root {
         --o-deep:${t.deep}; --o-brand:${t.brand}; --o-bright:${t.bright}; --o-glow:${t.glow};
         --o-mid:${t.mid}; --o-soft:${t.soft}; --o-soft2:${t.soft2}; --o-line:${t.line};
-        --o-ink:${t.ink}; --o-bg:${t.bg};
+        --o-ink:${t.ink}; --o-bg:${t.bg}; --o-wash:${t.wash ?? 0};
       }
       /* colour-theme morph — eased for ~0.5s on a theme switch */
       .orig-root.orig-theming, .orig-root.orig-theming *, .orig-root.orig-theming *::before, .orig-root.orig-theming *::after {

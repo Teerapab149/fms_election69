@@ -102,7 +102,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-gradient-to-br from-[color-mix(in_srgb,var(--o-brand)_12%,transparent)] to-[color-mix(in_srgb,var(--o-glow)_12%,transparent)] rounded-full blur-[100px]"></div>
                 <div className="absolute bottom-[-10%] left-[-5%] w-[35%] h-[35%] bg-gradient-to-tr from-[color-mix(in_srgb,var(--o-bright)_10%,transparent)] to-[color-mix(in_srgb,var(--o-brand)_10%,transparent)] rounded-full blur-[100px]"></div>
-                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--o-brand) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--o-brand) 7%, transparent) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
+                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--o-ink) 7%, var(--o-bg)) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--o-ink) 7%, var(--o-bg)) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
                 <div className="bg-noise"></div>
             </div>
 
@@ -328,7 +328,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                 <div className="relative z-20 w-full p-1">
                                     {/* Header */}
                                     <div className="flex items-center gap-3 mb-4 px-1">
-                                        <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)]">
+                                        <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)] transition-colors duration-300">
                                             <TrendingUp className="w-5 h-5" />
                                             <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -372,7 +372,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                                 <PieChart className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
                                             </div>
                                             <div>
-                                                <div className="text-2xl font-black text-slate-800 tabular-nums leading-none">
+                                                <div className="text-2xl font-black text-[var(--o-brand)] tabular-nums leading-none transition-colors duration-300">
                                                     {stats.percentage}<span className="text-sm text-slate-400 ml-0.5">%</span>
                                                 </div>
                                                 <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
@@ -398,15 +398,17 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                 </div>
 
                                 {/* Slideshow */}
-                                <div className="w-full relative group rounded-3xl overflow-hidden shadow-2xl border border-white bg-white aspect-[16/9] lg:aspect-[2/1] xl:aspect-[16/10] transform transition-transform duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
+                                <div className="w-full relative group rounded-3xl overflow-hidden shadow-2xl border border-white bg-white aspect-[16/9] lg:aspect-[2/1] xl:aspect-[16/10] transform transition-transform duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]" style={{ borderTopColor: 'color-mix(in srgb, var(--o-glow) calc(var(--o-wash, 0) * 60%), #ffffff)' }}>
                                     <div className="relative w-full h-full">
                                         <div className="flex h-full will-change-transform" style={{ transform: `translateX(-${currentImageIndex * 100}%)`, transitionDuration: (isTransitioning && isMultiImage) ? '1500ms' : '0ms', transitionProperty: 'transform', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
                                             {extendedImages.map((src, index) => (
                                                 <div key={index} className="min-w-full h-full relative">
-                                                    <Image src={src} alt={`Campaign Poster ${index}`} fill className="object-cover object-top" priority={index === 0} />
+                                                    <Image src={src} alt={`Campaign Poster ${index}`} fill className="object-cover object-top" style={{ filter: 'grayscale(calc(var(--o-wash, 0) * 0.85))' }} priority={index === 0} />
                                                 </div>
                                             ))}
                                         </div>
+                                        {/* Duotone harmoniser — tints the fixed purple-pink art toward the active field. wash=0 → opacity 0 (art shown as-is). */}
+                                        <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ backgroundImage: 'linear-gradient(135deg, var(--o-deep), var(--o-brand))', mixBlendMode: 'color', opacity: 'var(--o-wash, 0)' }}></div>
                                     </div>
                                     {isMultiImage && (
                                         <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1.5">
