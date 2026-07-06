@@ -27,25 +27,25 @@ export const ORIGINAL_THEMES = {
     deep: "#691E61", brand: "#8A2680", bright: "#C026D3", glow: "#D946EF", mid: "#A855F7",
     soft: "#FAF5FF", soft2: "#F3E8FF", line: "#E9D5FF", ink: "#0F172A", bg: "#F8F9FD",
   },
-  // Midnight Navy & Matte Gold — Professional · Trustworthy · Luxurious.
+  // Midnight Navy & Antique Gold — Professional · Trustworthy · Luxurious.
   "original-navy": {
-    deep: "#0B1F38", brand: "#1E3E62", bright: "#34618F", glow: "#D4AF37", mid: "#A8862E",
-    soft: "#EEF3FA", soft2: "#DEE9F6", line: "#C3D6EC", ink: "#0C1B2A", bg: "#E8F0FA",
+    deep: "#0A1D33", brand: "#1B3A5E", bright: "#2F5B88", glow: "#C9A227", mid: "#7A5F1B",
+    soft: "#EFF4FA", soft2: "#DEE9F5", line: "#C6D7EA", ink: "#0B1524", bg: "#F4F7FB",
   },
   // Emerald & Champagne — deep forest green + soft champagne gold. Sophisticated · Elegant.
   "original-emerald": {
-    deep: "#0A2E20", brand: "#14603F", bright: "#1F7A50", glow: "#C9A86A", mid: "#A2854E",
-    soft: "#EFF5F1", soft2: "#DFEDE5", line: "#C6DED0", ink: "#0E1F17", bg: "#EAF2EA",
+    deep: "#082A1D", brand: "#0F5638", bright: "#1E7C4E", glow: "#CBAC64", mid: "#7E6836",
+    soft: "#EEF5F0", soft2: "#DEEBE2", line: "#C7DBCE", ink: "#0C2016", bg: "#F2F6F2",
   },
   // Crimson & Platinum — rich crimson on a neutral pearl/charcoal chrome. Modern · Bold.
   "original-crimson": {
-    deep: "#6E1414", brand: "#A31D1D", bright: "#C43A2E", glow: "#D64545", mid: "#8A2B2B",
-    soft: "#F2F0F1", soft2: "#E6E3E5", line: "#D3D3D3", ink: "#1E1E24", bg: "#F5ECEC",
+    deep: "#5E1010", brand: "#9E1B1B", bright: "#BE3B2D", glow: "#98A2AE", mid: "#7E2626",
+    soft: "#F4F1F2", soft2: "#E8E4E6", line: "#D8D0D3", ink: "#1B1B21", bg: "#F7F4F5",
   },
   // Aubergine & Copper — deep plum + burnished copper. Active · High-Contrast.
   "original-aubergine": {
-    deep: "#3A1633", brand: "#6B2A5E", bright: "#8C3A79", glow: "#D97706", mid: "#B4611D",
-    soft: "#F6EFF4", soft2: "#ECDCE7", line: "#DBC2D3", ink: "#241021", bg: "#F3E9F1",
+    deep: "#331229", brand: "#66295A", bright: "#8A3A76", glow: "#C1653B", mid: "#9C5227",
+    soft: "#F7F0F4", soft2: "#ECDDE7", line: "#DCC5D3", ink: "#211020", bg: "#F6EFF3",
   },
 };
 
