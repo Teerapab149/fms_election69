@@ -398,6 +398,8 @@ export default function VerdureSingleParty({
           .vd-booth__eyebrow { font-size:9.5px; letter-spacing:.1em; margin-bottom:24px; }
           .vd-cands { grid-template-columns:repeat(2,1fr); gap:14px; }
           .vd-plist li { gap:16px; }
+          /* caption to the photo's TOP so the floating bottom dock never covers it */
+          .vd-booth__cover figcaption { top:16px; bottom:auto; }
         }
       `}</style>
     </VerdureShell>
