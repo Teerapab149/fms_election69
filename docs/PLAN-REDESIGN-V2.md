@@ -63,6 +63,37 @@
 4. WS5 folder refactor + อัปเดต docs/handoff ทั้งชุด
 ประมาณการ: แต่ละ phase กิน 1-3 sessions (5h window) — ตัดงานเป็นชิ้นที่จบใน window เดียว + progress file `.specs/` เสมอ
 
+## ภาคผนวก — ผล audit ละเอียดรอบสอง (2026-07-06 ค่ำ: mobile / single-vote / navbar)
+
+### Single-vote ราย template (หน้าที่คนใช้จริงเยอะสุดวันเลือกตั้ง — mobile-first คือเกณฑ์หลัก)
+- **original (วิกฤตสุด — ยืนยันด้วยตา):**
+  - desktop: ชื่อพรรคล้นวงกลมไปกองบนพื้นขาว · subtitle ขาวครึ่งนอกวง = อ่านไม่ออก ·
+    การ์ดสมาชิกโดน mask ตัดกลางหน้า · chrome สาย tech (SYSTEM_READY, corner ticks) ขัดความทางการ
+  - mobile: วงกลมเต็มจอ + การ์ดสมาชิกอัดกริดแน่นชนตัวหนังสือ · ขาวบนภาพหน้าคน = contrast แย่ ·
+    ปุ่ม glass ลอยบนภาพยุ่ง · จังหวะหน้า ว่างบน-แน่นกลาง
+  - ทางแก้ (เข้า WS1): mobile ต้องออกแบบแยก — สมาชิกโชว์ 3-5 ใบพอ + dark scrim gradient
+    หลัง typography + title หลุดออกนอกวง (วงเป็น backdrop) — ห้ามใช้ desktop ย่อส่วน
+- **gumroad:** mobile ดีสุดในสี่ตัว · ติ: ปุ่มยืนยันดู enabled ทั้งที่ยังไม่เลือก (affordance ต้องชัด:
+  disabled จริงจนกว่าจะเลือก) · เลข "1" tile ลอย asymmetric กับโลโก้ · group photo crop ทับโลโก้มุม
+- **studio-dark:** ดี · ติ: การ์ดโลโก้พรรคขาวโดน crop ขอบขวาบน mobile — reposition/ลด
+- **verdure:** งามสุด · ติ: bottom pill nav ทับ caption ภาพกลุ่ม · ขอบภาพมี text artifact ฉูดฉาดหลุดโทน
+
+### Navbar / user chip (ที่เจ้าของว่า "แปลกๆ" — ยืนยัน จริงทุกตัว)
+- classic/original: วงกลมม่วง + chevron ลอยๆ ไม่มีชื่อ = ดูหลุดจากดีไซน์
+- gumroad: "Mock Student 66105..." truncate + ปุ่มออกจากระบบแยกก้อน = รก
+- studio/verdure: monogram circle เฉยๆ — generic เกินกว่า identity ของ template
+- **WS4 เพิ่ม: user-chip มาตรฐานต่อ template** — avatar + ชื่อ (ellipsis) + dropdown เดียว
+  (โปรไฟล์/ออกจากระบบ) ดีไซน์ตาม identity ของแต่ละตระกูล ทุก breakpoint
+
+### Responsive / สมมาตร / content
+- original home: ปุ่มฟ้า Results ใหญ่กลบ hierarchy บน mobile (ควรเป็นรอง ไม่ใช่พระเอก) ·
+  คอลัมน์ desktop ซ้ายเบา-ขวาหนัก ไม่สมดุล
+- studio home mobile: hero ว่างเยอะ + CTA state voted จาง จนหน้าดูไม่มีจุดหมาย
+- **content bug ข้ามตระกูล: ปี hardcode ปนกัน** — meet chip "FMS ELECTION 2026" อยู่ข้าง
+  "SEE YOU 2027"/"ปีการศึกษา 2570" (เจอทั้ง original + gumroad "2027") → WS4 เพิ่ม:
+  audit ผูกปีทุกจุดเข้า globalConfig ห้าม hardcode
+- WS4 เพิ่ม: mobile-first gate — ทุกหน้าใหม่ต้อง review ที่ 375px ก่อน desktop
+
 ## กติกาที่สืบทอด (ย้ำ)
 worker ห้าม commit จน advisor ตรวจ · ห้ามหยุด dev server · restore active template เดิมเสมอ ·
 ห้ามแตะ PartyTheme/semantic 3 choices/recharts consts · ภาษาไทยไม่ลงท้าย `.` ·
