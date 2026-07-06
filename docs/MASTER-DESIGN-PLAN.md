@@ -131,17 +131,16 @@ template-preview เป็นเจ้าของ Layer-1 ของ slug ที
   หรือวางบนแถบ scrim ข้ามวง (เลือกทางที่ contrast ผ่าน) + subtitle มีพื้นรอง + ลบ/ลด chrome tech-noise
 - เกณฑ์: 375px ทุกตัวอักษร contrast ≥4.5:1 บนพื้นจริง (วัด computed + จุดสุ่มบนภาพ) · ไม่มี element ถูกตัดกลางหน้า
   โดยไม่ตั้งใจ · byte-safe ต่อ desktop เดิมเท่าที่ไม่ขัดการแก้ · verify ผ่าน ?page=vote&variant=single&interact=1 ทุกธีม original
-**T1.2 · Gumroad single-vote confirm affordance**
-- ไฟล์: GumroadSingleParty.js — ปุ่มยืนยันต้องดู disabled จริง (opacity+cursor+ข้อความ "เลือกก่อนยืนยัน") จนกว่าจะเลือก
-  1 ใน 3 · แตะเฉพาะสไตล์/disabled state ห้ามแตะ logic โหวต · เช็คตระกูลอื่นมีอาการเดียวกันไหม (studio/verdure/classic) แล้วรายงาน
-**T1.3 · หน้า closed: วันที่ไทย hardcode** — สร้าง util formatThaiDate(date) (เดือนไทยเต็ม, พ.ศ.) ใช้
-  resolveElectionDates(globalConfig) ที่ src/app/closed/page.js:~50 + ClosedEditorPreview.js:~16 (flag ไว้ตั้งแต่ 1c8d09b)
+**T1.2 · ✅ DONE (83b74fb)** — gumroad confirm = ghost button + "เลือกตัวเลือกก่อน" จน kind!=null. หมายเหตุ:
+  studio/verdure ใช้ sd-btn/vd-btn design-system (verdure มี is-disabled) → ตรวจตาใน P2 ของตระกูลนั้น
+**T1.3 · ✅ DONE (3d26660)** — formatThaiDate/formatThaiTime ใน electionConfig; closed page + ClosedEditorPreview
+  bind resolveElectionDates(globalConfig); default = byte-identical กับสตริงเดิม
 
 ### P2 — Per-template polish (ทีละ ticket ทีละหน้า; ทุก ticket จบด้วย verify ritual + 375px gate)
 **T2.O · ORIGINAL (v1 — targeted เท่านั้น ห้ามเปลี่ยนบุคลิก)**
 - T2.O1 home: ปุ่ม Results ลดบทเป็น secondary (outline/เบาลง) ให้ CTA โหวตเด่นเดี่ยว · สมดุลคอลัมน์ desktop
   (ซ้ายเบา-ขวาหนัก) · จูน banner wash รายธีม (0.4-0.6) ให้ "แดง-เทา-ทอง" จริงบน crimson · grid ink 5-9% จูนตามตา
-- T2.O2 ธีม crimson: เลข "50" เปลี่ยนคู่ gradient เป็น deep→brand (ห้าม glow โลหะเป็นปลายเฉดบนพื้นอ่อน — ใช้ทุกธีมที่ glow อ่อน)
+- ✅ T2.O2 DONE (fc632e9): เลข "50" + heading accent เปลี่ยน tail `--o-glow`→`--o-bright` (glow โลหะจมบนสนามอ่อน แก้ทุกธีม; flagship near-identical) — ping dot ยังใช้ glow (sparkle)
 - T2.O3 inner pages (candidates/results/vote multi): ไล่เกณฑ์ §2 รายหน้า — spacing rhythm, tabular-nums, hierarchy ปุ่ม
 **T2.G · GUMROAD** — T2.G1 บับเบิ้ลกัม: ลด saturation ไฮไลต์ (#FF74C4→~#FF8FD0 family + พื้นไฮไลต์อ่อนลง) ·
   T2.G2 การ์ดภาพกลุ่ม: crop ไม่ทับโลโก้ (object-position/padding) · T2.G3 เลข "1" tile จัด alignment กับโลโก้ ·
