@@ -208,8 +208,12 @@ function PreviewBody() {
 
   // interact mode → clickable render (party selection, simulated flow) wrapped in the
   // click-interception seam + auth-safety CSS. Static mode → byte-identical original.
+  // reducedMotion: static slides stay damped ("always" — framer loops still, screenshots
+  // idle); INTERACT simulates the live site, where no MotionConfig exists (framer default
+  // = "never") — "always" here made repeat:Infinity transforms (sd-marquee) snap-loop at
+  // hyper speed instead of gliding, since reduced framer motion skips the 30s tween.
   return (
-    <MotionConfig reducedMotion="always">
+    <MotionConfig reducedMotion={interact ? 'never' : 'always'}>
       {/* Layer-1/2 token scope of the PREVIEWED template — overrides the active
           template's SSR'd tokens (see previewedTemplate note above). Emitted once,
           above BOTH branches, so static (chooser slides) and interact renders agree. */}
@@ -544,8 +548,9 @@ const PAGE_OPTS = [
 const DEFAULT_VARIANT = { vote: 'multi', results: 'revealed' };
 
 // Damps continuous motion on the preview surface so the renderer can idle: framer
-// transform loops are stilled by <MotionConfig reducedMotion="always"> (LiquidMesh
-// honours it, the verdure intro ring/etc. settle), and any infinite CSS @keyframes
+// transform loops are stilled by <MotionConfig reducedMotion="always"> in STATIC mode
+// (LiquidMesh honours it, the verdure intro ring/etc. settle; interact mode uses
+// "never" — see the MotionConfig note above), and any infinite CSS @keyframes
 // (vdDot pulse, vdGlow, vdCueBounce) are allowed a single pass then stop. This kills
 // the spinner jank + lets preview_screenshot reach network-idle. Preview route only
 // — production pages never mount this, so live animations are untouched.
@@ -556,16 +561,20 @@ function PreviewMotionDamp({ interact = false }) {
         *, *::before, *::after { animation-iteration-count: 1 !important; }
       `}</style>
       {/* P2 #3: the damp froze the gumroad ticker (gtickMove infinite → 1 pass).
-          INTERACT mode simulates the real flow, so the marquee must move; the class
-          selector (0,1,0) beats the universal damp (0,0,0) at equal !important.
+          INTERACT mode simulates the real flow, so the marquee must move — restore the
+          FULL design animation (duration + count + timing, byte-matching home-ticker/
+          gumroad.jsx), not just iteration-count: globals.css's reduce-motion rule also
+          forces animation-duration to 0.01ms, and an infinite count on a 0.01ms loop
+          spun the ticker at hyper speed on reduce-motion machines. The class selector
+          (0,1,0) beats both universal rules (0,0,0) at equal !important.
           Static chooser slides (no interact) stay fully damped by design. The only
           CSS marquee today is .gtick__track — studio's sd-marquee is framer-driven
-          (JS, untouched by the CSS damp); vdDot/shine pulses stay damped.
+          (see the MotionConfig note above); vdDot/shine pulses stay damped.
           Plain <style> (not styled-jsx): the SWC styled-jsx transform fails on a
-          conditionally-rendered <style jsx> ("failed to process"). */}
+          conditionally-rendered <style jsx> ("failed to process", P-LOG-076). */}
       {interact && (
         <style dangerouslySetInnerHTML={{ __html:
-          '.gtick__track { animation-iteration-count: infinite !important; }' }} />
+          '.gtick__track { animation: gtickMove 35s linear infinite !important; }' }} />
       )}
     </>
   );
