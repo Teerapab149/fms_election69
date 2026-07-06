@@ -415,21 +415,24 @@ export default function SuccessPage({
       {/* Modal & Alert */}
       {showModal && !editorMode && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in" onClick={() => setShowModal(false)}></div>
-          <div className="bg-white w-full sm:max-w-4xl h-[92vh] sm:h-[90vh] rounded-t-[2rem] sm:rounded-2xl shadow-2xl relative z-10 flex flex-col animate-in slide-in-from-bottom-10 overflow-hidden">
-            <div className="bg-white border-b border-gray-100 p-4 shrink-0 shadow-sm">
+          {/* P2 #4 (level A): shell colours ride the Layer-1 tokens so the modal follows
+              the active template; the Google Form inside the iframe cannot be themed
+              (accepted). Semantic colours (green copied-state, blue info chip) stay. */}
+          <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-text)_60%,transparent)] backdrop-blur-md animate-in fade-in" onClick={() => setShowModal(false)}></div>
+          <div className="bg-[var(--color-surface)] w-full sm:max-w-4xl h-[92vh] sm:h-[90vh] rounded-t-[2rem] sm:rounded-2xl shadow-2xl relative z-10 flex flex-col animate-in slide-in-from-bottom-10 overflow-hidden">
+            <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)] p-4 shrink-0 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="flex items-center gap-3 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                  <UserIcon size={18} className="text-slate-500" />
+                <div className="flex items-center gap-3 bg-[var(--color-bg)] px-3 py-2 rounded-xl border border-[var(--color-border)]">
+                  <UserIcon size={18} className="text-[var(--color-text-muted)]" />
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">ข้อมูลของคุณ</span>
-                    <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase">ข้อมูลของคุณ</span>
+                    <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-text)]">
                       {user && (
                         <>
-                          <button onClick={copyStudentId} className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-all ${isCopied ? 'bg-green-50 text-green-700 border-green-200' : 'bg-white border-slate-200'}`}>
+                          <button onClick={copyStudentId} className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition-all ${isCopied ? 'bg-green-50 text-green-700 border-green-200' : 'bg-[var(--color-surface)] border-[var(--color-border)]'}`}>
                             {user.studentId} {isCopied ? <Check size={12} /> : <Copy size={10} />}
                           </button>
-                          <span className="text-slate-300">|</span>
+                          <span className="text-[var(--color-border)]">|</span>
                           <span className="truncate max-w-[120px]">{user.name}</span>
                         </>
                       )}
@@ -439,49 +442,49 @@ export default function SuccessPage({
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 text-xs">
                   <ShieldCheck size={16} /> <span>ไม่จำเป็นต้อง Login Google</span>
                 </div>
-                <button onClick={() => setShowModal(false)} className="hidden md:block text-gray-400 hover:text-gray-600"><X size={24} /></button>
+                <button onClick={() => setShowModal(false)} className="hidden md:block text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><X size={24} /></button>
               </div>
             </div>
 
-            <div className="flex-1 bg-slate-50 relative">
+            <div className="flex-1 bg-[var(--color-bg)] relative">
               {!isFormLoaded && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--color-bg)]">
                   <Loader2 className="w-10 h-10 text-[var(--color-primary)] animate-spin mb-3" />
-                  <span className="text-slate-400 text-sm font-medium">กำลังโหลด...</span>
+                  <span className="text-[var(--color-text-muted)] text-sm font-medium">กำลังโหลด...</span>
                 </div>
               )}
               {googleFormUrl ? (
                 <iframe src={`${googleFormUrl}?embedded=true`} className="w-full h-full border-0" onLoad={() => setIsFormLoaded(true)} title="Evaluation Form"></iframe>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-                  <div className="bg-slate-100 p-4 rounded-full mb-3">
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] p-8 text-center">
+                  <div className="bg-[color-mix(in_srgb,var(--color-text)_6%,var(--color-surface))] p-4 rounded-full mb-3">
                     <AlertCircle size={32} />
                   </div>
-                  <p className="font-bold text-slate-600">ไม่พบลิงก์แบบประเมิน</p>
+                  <p className="font-bold text-[var(--color-text)]">ไม่พบลิงก์แบบประเมิน</p>
                   <p className="text-sm">กรุณาแจ้งผู้ดูแลระบบให้ตรวจสอบการตั้งค่า</p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-gray-100 bg-white">
+            <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
               <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
                 <div className="w-full">
-                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-slate-50 border-slate-200' : 'bg-white border-slate-200 hover:border-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,white)]'}`}>
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${timeLeft > 0 ? 'opacity-50 pointer-events-none bg-[var(--color-bg)] border-[var(--color-border)]' : 'bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface))]'}`}>
                     <div className="relative flex items-center justify-center mt-0.5">
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={(e) => setIsChecked(e.target.checked)}
                         disabled={timeLeft > 0}
-                        className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded focus:ring-2 focus:ring-[var(--color-primary)] checked:bg-[var(--color-primary)] checked:border-[var(--color-primary)] transition-all"
+                        className="peer appearance-none w-5 h-5 border-2 border-[var(--color-border)] rounded focus:ring-2 focus:ring-[var(--color-primary)] checked:bg-[var(--color-primary)] checked:border-[var(--color-primary)] transition-all"
                       />
-                      <Check size={14} className="absolute text-white scale-0 peer-checked:scale-100 transition-transform pointer-events-none" />
+                      <Check size={14} className="absolute text-[var(--color-surface)] scale-0 peer-checked:scale-100 transition-transform pointer-events-none" />
                     </div>
                     <div className="flex flex-col">
-                      <span className={`text-sm font-bold ${isChecked ? 'text-[var(--color-primary)]' : 'text-slate-600'}`}>
+                      <span className={`text-sm font-bold ${isChecked ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]'}`}>
                         ข้าพเจ้าได้ทำแบบประเมินเรียบร้อยแล้ว
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         * กรุณากรอกแบบประเมินให้ครบถ้วนก่อนบันทึก
                       </span>
                     </div>
@@ -493,8 +496,8 @@ export default function SuccessPage({
                   disabled={!canConfirm || !isChecked}
                   className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg
                     ${(!canConfirm || !isChecked)
-                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                      : 'bg-[var(--color-primary)] text-white hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] hover:shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] hover:-translate-y-0.5'
+                      ? 'bg-[color-mix(in_srgb,var(--color-text)_6%,var(--color-surface))] text-[var(--color-text-muted)] cursor-not-allowed shadow-none'
+                      : 'bg-[var(--color-primary)] text-[var(--color-surface)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] hover:shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] hover:-translate-y-0.5'
                     }`}
                 >
                   {timeLeft > 0 ? (
