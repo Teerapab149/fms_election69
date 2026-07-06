@@ -473,7 +473,7 @@ export default function SinglePartyView({
                       return (
                         <>
                           {/* Mobile: Split 2 Lines */}
-                          <h1 className="md:hidden text-4xl font-black uppercase text-white leading-[0.95] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1 transition-colors duration-300 ease-in-out" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.55)' }}>
+                          <h1 className="md:hidden text-5xl font-black uppercase text-[var(--spv-dark,#1A1A1A)] leading-[0.9] tracking-tight mb-4 drop-shadow-sm flex flex-col gap-1 transition-colors duration-300 ease-in-out" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                             <span>{top}</span>
                             <span>{bottom}</span>
                           </h1>
@@ -502,7 +502,7 @@ export default function SinglePartyView({
                       </button>
 
                       {/* Vote: Glass styling (inverts automatically) */}
-                      <button onClick={() => scrollTo('vote')} className="vote-ready-btn w-full md:w-auto px-8 lg:px-10 py-3 lg:py-4 bg-white/30 max-md:bg-white/10 backdrop-blur-md border border-black/10 max-md:border-white/40 text-[var(--spv-dark,#1A1A1A)] max-md:text-white rounded-full font-bold uppercase tracking-widest hover:bg-[var(--spv-dark,#1A1A1A)] hover:text-white transition-colors flex items-center justify-center gap-2 text-xs lg:text-base shadow-lg">
+                      <button onClick={() => scrollTo('vote')} className="vote-ready-btn w-full md:w-auto px-8 lg:px-10 py-3 lg:py-4 bg-white/30 backdrop-blur-md border border-black/10 text-[var(--spv-dark,#1A1A1A)] rounded-full font-bold uppercase tracking-widest hover:bg-[var(--spv-dark,#1A1A1A)] hover:text-white transition-colors flex items-center justify-center gap-2 text-xs lg:text-base shadow-lg">
                         <Target className="w-4 h-4" /> Ready to Vote?
                       </button>
                     </div>
