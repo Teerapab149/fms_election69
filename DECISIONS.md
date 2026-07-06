@@ -1714,6 +1714,21 @@ unconditional blocks.
 **Lesson:** `<style jsx>` must be rendered unconditionally; branch the CSS STRING, not the tag.
 **Tags:** `#styled-jsx` `#swc` `#next` `#preview`
 
+### P-LOG-077: [2026-07-06] SINGLE-VOTE — var(--color-*) inside a portal is silently dead
+**Context:** Theming the cinematic single-vote page (renders via createPortal outside `.fms-app`).
+**Symptom:** DISCOVER OUR VISION button rendered a fully transparent gradient on EVERY theme
+including flagship — unnoticed since the tokenization arc (673eef4 fixed the ramp but portal
+content still had 10 `var(--color-*)` uses).
+**Root cause:** Layer-1 `--color-*` tokens are scoped to `.fms-app`; portal content mounts on
+`document.body`, so those vars compute to empty → Tailwind gradient/text utilities produce
+nothing, silently.
+**Fix:** portal content reads the `--spv-*` ramp (emitted at `:root` for exactly this reason);
+never emit Layer-1 at `:root` (global leak).
+**Lesson:** inside any createPortal subtree, `var(--color-*)` is a bug by construction.
+**Mitigation rule:** when touching a portal component, `grep -n "var(--color-" <file>` must
+return 0 hits; use/extend the :root ramp instead.
+**Tags:** `#portal` `#css-vars` `#token-scope` `#single-vote`
+
 ---
 
 ## 🚫 Rejected Approaches
