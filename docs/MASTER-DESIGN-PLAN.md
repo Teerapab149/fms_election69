@@ -149,10 +149,11 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
   T2.G2 การ์ดภาพกลุ่ม: crop ไม่ทับโลโก้ (object-position/padding) · T2.G3 เลข "1" tile จัด alignment กับโลโก้ ·
   T2.G4 ticker ความเร็ว/ความถี่ข้อความ review (35s โอเคไหมบนจอแคบ)
 **T2.S · STUDIO-DARK** — T2.S1 การ์ดโลโก้ PSU บน rail ทำให้กลืน identity (ปรับ mat/ขนาด/พื้น) ·
-  T2.S2 การ์ดโลโก้พรรคใน single-vote mobile โดน crop ขวา — reposition · T2.S3 home mobile: hero ว่าง + CTA
-  voted จาง — เพิ่มน้ำหนัก CTA โซนแรก
-**T2.V · VERDURE** — T2.V1 bottom pill nav ทับ caption ภาพกลุ่ม (z/offset/จบภาพก่อน nav) ·
-  T2.V2 ขอบภาพกลุ่มมี text artifact ฉูดฉาด — ตรวจที่มา (ภาพ asset เองหรือ CSS) แล้วเก็บงานขอบ
+  ✅ T2.S2 DONE (11680c1): single-vote logo mobile ไม่ clip แล้ว (sds-h__side flex-wrap+space-between) ·
+  T2.S3 home mobile: hero ว่าง + CTA voted จาง — เพิ่มน้ำหนัก CTA โซนแรก
+**T2.V · VERDURE** — ✅ T2.V1 DONE (df7ec31): caption ภาพกลุ่มย้ายขึ้น top บนมือถือ → dock ไม่ทับแล้ว
+  (dock ยัง float ทับขอบล่างภาพ = inherent floating-nav; ยกhero ติด fixed top chrome, ย่อภาพ=taste → ไม่ทำ) ·
+  ❌ T2.V2 = ตัวหนังสือจางที่ก้นภาพเป็น text ที่ปริ้นมาในไฟล์ภาพหมู่เอง (asset ไม่ใช่ CSS) — แก้ที่ asset ไม่ใช่โค้ด
 **ทุกตระกูล**: หน้า results/success/closed ไล่เกณฑ์ §2 (ยังไม่เคย audit ละเอียด — worker เก็บ screenshot bare
   ทุกหน้า แปะรายงานให้ advisor ตัดสินรายจุดก่อนแก้)
 
