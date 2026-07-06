@@ -210,7 +210,7 @@ export default function GumroadSingleParty({
         </div>
         <button type="button" className="gsp-confirm" disabled={kind == null || isSubmitting || editorMode}
           onClick={() => !editorMode && kind != null && setConfirmOpen(true)}>
-          <Check size={20} strokeWidth={3} /> {isSubmitting ? "กำลังบันทึก..." : "ยืนยันการลงคะแนน"}
+          <Check size={20} strokeWidth={3} /> {isSubmitting ? "กำลังบันทึก..." : (kind == null ? "เลือกตัวเลือกก่อน" : "ยืนยันการลงคะแนน")}
         </button>
       </div>
 
@@ -365,7 +365,7 @@ export default function GumroadSingleParty({
         .gsp-footer__lbl{ font-family:var(--fm); font-size:11px; color:var(--lime); text-transform:uppercase; letter-spacing:.15em; }
         .gsp-footer__sel{ font-size:17px; font-weight:700; }
         .gsp-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:var(--fb); font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
-        .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); } .gsp-confirm:disabled{ opacity:.45; cursor:not-allowed; }
+        .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); } .gsp-confirm:disabled{ background:var(--paper); color:color-mix(in srgb, var(--ink) 40%, var(--paper)); border-color:color-mix(in srgb, var(--ink) 22%, var(--paper)); box-shadow:none; cursor:not-allowed; }
 
         /* MEMBER PROFILE MODAL */
         .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }
