@@ -16,6 +16,11 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
+  /* Product call: decorative marquees are exempt from the PRM freeze (studio-dark's
+     framer marquee already ignores PRM on live) — the rest of the site still honours it. */
+  .gtick__track {
+    animation: gtickMove 35s linear infinite !important;
+  }
 }
 
 html,
