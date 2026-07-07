@@ -72,17 +72,6 @@ export default function Navbar() {
 
         {/* ================= โซนโลโก้ ================= */}
         <Link href="/" className="flex items-center gap-3 md:gap-4">
-          <div className="hidden md:block transition-transform hover:scale-105 duration-300 flex-shrink-0">
-            <Image
-              src={getPath("/images/logo/fms_logo50_color.png")}
-              alt="FMS 50th"
-              width={480}
-              height={480}
-              className="w-auto h-9 md:h-14 lg:h-16 object-contain"
-              priority
-            />
-          </div>
-          <div className="hidden md:block h-6 md:h-10 w-[1px] bg-gray-300/50 mx-1"></div>
           <Image
             src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")}
             alt="FMS Name"
