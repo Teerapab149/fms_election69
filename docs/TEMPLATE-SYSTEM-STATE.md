@@ -34,7 +34,7 @@
 
 | ตระกูล | บุคลิก | ธีม | หมายเหตุ |
 |---|---|---|---|
-| `original` | SAMO คลาสสิก โมเดิร์นสะอาด (gold ee059dc) | 5: ม่วง FMS / กรมท่า-ทอง / มรกต-แชมเปญ / เลือดหมู-แพลทินัม / มะเขือ-ทองแดง | home = OriginalHome, inner = classic layout themed; ธีม field = สนามสีชัด (d35e2b1) |
+| `original` | SAMO คลาสสิก โมเดิร์นสะอาด (gold ee059dc) | **1: ม่วง FMS เท่านั้น** (owner call 2026-07-08 — งาน craft พาเลตต์เดียว, ธีม field 4 ตัวถูก un-register จาก chooser; palette/builder ยังอยู่ reversible) | home = OriginalHome, inner = classic layout themed |
 | `gumroad` | นีโอบรูทัล สนุก มีพลัง | 6: base / cyber / retro / acid / premium / **bubblegum** (ชมพู — candidate ปีหน้า) | owner ชอบ อย่าแตะโครง |
 | `studio-dark` | ดาร์ก editorial + rail ซ้าย + ไลม์ | 4: ไลม์ / ไซเบอร์ฟ้า / แมเจนต้า / ทองอำพัน | เกรดดีสุดใน audit (A-) |
 | `verdure` | เซริฟ editorial เขียว + wax-seal ceremony | 4: คลาสสิก / อะคาเดมิก / ครีเอทีฟ / มินิมอล(เบอร์รี) | ประณีตสุด |

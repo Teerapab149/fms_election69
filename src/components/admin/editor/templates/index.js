@@ -16,7 +16,12 @@ import { minimalTemplate }    from "./builtIn/minimal";
 import { gumroadTemplate, gumroadCyberTemplate, gumroadRetroTemplate, gumroadAcidTemplate, gumroadPremiumTemplate, gumroadBubblegumTemplate } from "./builtIn/gumroad";
 import { studioDarkTemplate, studioDarkCyberTemplate, studioDarkMagentaTemplate, studioDarkAmberTemplate } from "./builtIn/studio-dark";
 import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerryTemplate } from "./builtIn/verdure";
-import { originalTemplate, originalNavyTemplate, originalEmeraldTemplate, originalCrimsonTemplate, originalAubergineTemplate } from "./builtIn/original";
+// Original is intentionally purple-only in the chooser: it's a hand-crafted
+// single-palette design, so the field-colour variants (navy/emerald/crimson/
+// aubergine) never matched the flagship's craft (owner call 2026-07-08). The
+// builder + palettes are KEPT in builtIn/original.js + originalPalettes.js so
+// re-enabling is just re-importing + re-registering them below.
+import { originalTemplate } from "./builtIn/original";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
@@ -37,11 +42,8 @@ const BUILT_IN_TEMPLATES = {
   "verdure-honey": verdureHoneyTemplate,
   "verdure-teal":  verdureTealTemplate,
   "verdure-berry": verdureBerryTemplate,
-  original:            originalTemplate,
-  "original-navy":     originalNavyTemplate,
-  "original-emerald":  originalEmeraldTemplate,
-  "original-crimson":  originalCrimsonTemplate,
-  "original-aubergine": originalAubergineTemplate
+  original:            originalTemplate
+  // field-colour variants un-registered (purple-only) — see import note above
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).
