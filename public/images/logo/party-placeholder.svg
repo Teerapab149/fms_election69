@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ยังไม่มีโลโก้พรรค">
+  <!-- neutral group-of-people placeholder shown when a party has no logo -->
+  <g fill="#94A3B8">
+    <circle cx="33" cy="49" r="14"/>
+    <path d="M9 97c0-13.3 10.7-24 24-24s24 10.7 24 24z"/>
+    <circle cx="87" cy="49" r="14"/>
+    <path d="M63 97c0-13.3 10.7-24 24-24s24 10.7 24 24z"/>
+  </g>
+  <g fill="#64748B">
+    <circle cx="60" cy="41" r="17"/>
+    <path d="M31 101c0-16 13-29 29-29s29 13 29 29z"/>
+  </g>
+</svg>
