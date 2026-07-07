@@ -159,9 +159,11 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
   ทุกหน้า แปะรายงานให้ advisor ตัดสินรายจุดก่อนแก้)
 
 ### P3 — Cross-cutting
-**T3.1 · User chip มาตรฐานต่อ template** — ปัจจุบัน: classic/original วงกลมม่วง+chevron ไร้ชื่อ · gumroad ข้อความ
-  truncate+ปุ่มแยก รก · studio/verdure monogram จืด → ออกแบบ chip เดียวกัน 4 บุคลิก: avatar+ชื่อ (ellipsis ~12ch)
-  +dropdown (โปรไฟล์/ออกจากระบบ) · ทุก breakpoint · concept board ให้เจ้าของเลือกก่อน build (งานเปลี่ยนหน้าตา)
+**T3.1 · User chip** — ✅ gumroad DONE (2918121): แก้จาก bare text + full logout button เป็น stamped chip
+  (avatar monogram + name ellipsis) + icon-only logout 44×44. **ผลตรวจ 2026-07-08:** gumroad เป็นตัวเดียวที่รก
+  จริง — studio-dark (avatar+name ellipsis+icon logout, StudioDarkRail AuthBlock) + verdure (avatar+first-name+id+
+  icon logout, vd-user) **ใช้ pattern สะอาดอยู่แล้ว** = ไม่แตะ · classic/original = avatar+name+chevron dropdown
+  (มาตรฐาน สะอาด) = ไม่แตะ · gumroad ตอนนี้ consistent กับที่เหลือแล้ว
 **T3.2 · Motion policy เป็นเอกสาร** — ตาราง: surface × พฤติกรรม (live/bare/chrome/interact × PRM on/off) ลง docs/
 **T3.3 · State pages audit** — loading/error/empty ทุกตระกูลตามธีม (ThemedLoadingScreen มีแล้ว — เช็คครบทุก state)
 
