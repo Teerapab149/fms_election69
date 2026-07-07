@@ -141,8 +141,9 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
 
 ### P2 — Per-template polish (ทีละ ticket ทีละหน้า; ทุก ticket จบด้วย verify ritual + 375px gate)
 **T2.O · ORIGINAL (v1 — targeted เท่านั้น ห้ามเปลี่ยนบุคลิก)**
-- T2.O1 home: ปุ่ม Results ลดบทเป็น secondary (outline/เบาลง) ให้ CTA โหวตเด่นเดี่ยว · สมดุลคอลัมน์ desktop
-  (ซ้ายเบา-ขวาหนัก) · จูน banner wash รายธีม (0.4-0.6) ให้ "แดง-เทา-ทอง" จริงบน crimson · grid ink 5-9% จูนตามตา
+- T2.O1 home: ✅ banner duotone แรงขึ้น (c029fb6: grayscale*1.7 + overlay*1.5 → crimson แดง-เทาจริง, flagship untouched).
+  ⏳ เหลือ (ต้อง owner decide): ปุ่มฟ้า "ผลคะแนน" = semantic blue (#0369a1) ตีกับสนามแดง — อยู่ใน "ห้ามแตะ semantic"
+  → ต้องตกลงกติกา "semantic anchored vs theme-tempered" ก่อน · สมดุลคอลัมน์ desktop + grid ink = subjective จูนกับ owner
 - ✅ T2.O2 DONE (fc632e9): เลข "50" + heading accent เปลี่ยน tail `--o-glow`→`--o-bright` (glow โลหะจมบนสนามอ่อน แก้ทุกธีม; flagship near-identical) — ping dot ยังใช้ glow (sparkle)
 - T2.O3 inner pages (candidates/results/vote multi): ไล่เกณฑ์ §2 รายหน้า — spacing rhythm, tabular-nums, hierarchy ปุ่ม
 **T2.G · GUMROAD** — T2.G1 บับเบิ้ลกัม: ลด saturation ไฮไลต์ (#FF74C4→~#FF8FD0 family + พื้นไฮไลต์อ่อนลง) ·
@@ -180,6 +181,17 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
 5. ทุกธีมของตระกูลนั้น verify (morph ผ่าน chrome=1 หรือ apply+restore)
 6. Console + server error ว่าง · live ไม่กระทบ (ถ้าไม่ได้ apply)
 7. Progress file จบสถานะ · advisor commit + push · อัปเดตเอกสารนี้ (ขีดฆ่า ticket ที่เสร็จ พร้อม commit hash)
+
+## §8b Session 2026-07-07 (Opus main) — objective batch DONE
+Landed + pushed: T1.2 (83b74fb) · T1.3 (3d26660) · T2.O2 (fc632e9) · T2.S2 (11680c1) · T2.V1 (df7ec31)
+· T2.O1 banner (c029fb6). Reverted: T1.1 (71de8ee, owner: scrim buried the design).
+Assessed & deferred as subjective/needs-owner (do NOT touch unilaterally — liked templates / semantic / concept-board):
+- T2.S1 rail logo plate = functional light backing (PSU crest needs it), current state acceptable — subjective
+- T2.S3 studio mobile hero = reads clean/intentional, no objective defect
+- T2.V2 = text baked in the group-photo asset (not code)
+- T2.O1 blue Results button = semantic clash, needs the "semantic anchored vs theme-tempered" decision
+- T2.G bubblegum saturation = owner LIKES gumroad; T3.1 user-chip = needs concept board first
+**เหลือทั้งหมดเป็นงาน subjective/decision — session หน้าเปิด phase กับ owner ก่อนแตะ.**
 
 ## §8 สถานะปัจจุบัน (2026-07-07)
 - Branch new-version @ d3e1f8f (pushed) · active DB template = gumroad-premium (เจ้าของเลือกดูเอง)
