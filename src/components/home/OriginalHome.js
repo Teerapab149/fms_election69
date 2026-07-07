@@ -403,12 +403,12 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         <div className="flex h-full will-change-transform" style={{ transform: `translateX(-${currentImageIndex * 100}%)`, transitionDuration: (isTransitioning && isMultiImage) ? '1500ms' : '0ms', transitionProperty: 'transform', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
                                             {extendedImages.map((src, index) => (
                                                 <div key={index} className="min-w-full h-full relative">
-                                                    <Image src={src} alt={`Campaign Poster ${index}`} fill className="object-cover object-top" style={{ filter: 'grayscale(calc(var(--o-wash, 0) * 0.85))' }} priority={index === 0} />
+                                                    <Image src={src} alt={`Campaign Poster ${index}`} fill className="object-cover object-top" style={{ filter: 'grayscale(calc(var(--o-wash, 0) * 1.7))' }} priority={index === 0} />
                                                 </div>
                                             ))}
                                         </div>
                                         {/* Duotone harmoniser — tints the fixed purple-pink art toward the active field. wash=0 → opacity 0 (art shown as-is). */}
-                                        <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ backgroundImage: 'linear-gradient(135deg, var(--o-deep), var(--o-brand))', mixBlendMode: 'color', opacity: 'var(--o-wash, 0)' }}></div>
+                                        <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ backgroundImage: 'linear-gradient(135deg, var(--o-deep), var(--o-brand))', mixBlendMode: 'color', opacity: 'calc(var(--o-wash, 0) * 1.5)' }}></div>
                                     </div>
                                     {isMultiImage && (
                                         <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1.5">
