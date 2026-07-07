@@ -38,9 +38,12 @@ export default function GumroadMobileMenu({ active = "", onSignIn = null }) {
       <div className="gnav-auth-d">
         {loggedIn ? (
           <div className="gnav-userd">
-            <span className="gnav-userd__name">{navName || "ผู้ใช้"}</span>
-            <button className="gnav-dbtn" onClick={() => signOut({ callbackUrl: BP + "/" })}>
-              <LogOut size={15} /> ออกจากระบบ
+            <span className="gnav-userd__chip">
+              <span className="gnav-userd__ava" aria-hidden>{(navName || "ผู้ใช้").trim().charAt(0).toUpperCase()}</span>
+              <span className="gnav-userd__name">{navName || "ผู้ใช้"}</span>
+            </span>
+            <button className="gnav-dbtn gnav-dbtn--icon" onClick={() => signOut({ callbackUrl: BP + "/" })} aria-label="ออกจากระบบ" title="ออกจากระบบ">
+              <LogOut size={16} />
             </button>
           </div>
         ) : (
@@ -134,13 +137,23 @@ export default function GumroadMobileMenu({ active = "", onSignIn = null }) {
         .gnav-auth--coral{ background:var(--coral, #FF8A8A); }
 
         /* desktop auth (shown by default; each page hides it at its mobile breakpoint) */
-        .gnav-auth-d{ display:flex; align-items:center; gap:12px; }
-        .gnav-userd{ display:flex; align-items:center; gap:12px; }
-        .gnav-userd__name{ font-weight:700; font-size:14px; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink, #26271c); }
+        .gnav-auth-d{ display:flex; align-items:center; gap:10px; }
+        .gnav-userd{ display:flex; align-items:center; gap:10px; }
+        /* one cohesive stamped chip (avatar monogram + name) instead of bare floating
+           text — reads as a deliberate element and balances the logout stamp. */
+        .gnav-userd__chip{ display:inline-flex; align-items:center; gap:9px; max-width:210px;
+          padding:5px 15px 5px 5px; border:2.5px solid var(--ink, #26271c); border-radius:999px;
+          background:var(--paper, #FFFDFA); box-shadow:3px 3px 0 var(--ink, #26271c); }
+        .gnav-userd__ava{ width:28px; height:28px; flex-shrink:0; border-radius:999px; display:grid; place-items:center;
+          background:var(--pink, #FF9CE9); border:2px solid var(--ink, #26271c); font-weight:800; font-size:13px; line-height:1; color:var(--ink, #26271c); }
+        .gnav-userd__name{ font-weight:700; font-size:14px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink, #26271c); }
         .gnav-dbtn{ display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border:2.5px solid var(--ink, #26271c); border-radius:13px;
           background:var(--paper, #FFFDFA); color:var(--ink, #26271c); font-weight:700; font-size:14px; box-shadow:3px 3px 0 var(--ink, #26271c); cursor:pointer; white-space:nowrap;
           font-family:inherit; transition:transform .12s ease, box-shadow .12s ease; }
         .gnav-dbtn:hover{ transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink, #26271c); }
+        /* compact icon-only logout — square stamp (matches the burger''s language),
+           kills the long "ออกจากระบบ" text that made the desktop bar cluttered. */
+        .gnav-dbtn--icon{ width:44px; height:44px; padding:0; justify-content:center; flex-shrink:0; }
         .gnav-dbtn--ink{ background:var(--ink, #26271c); color:var(--cream, #FFF6EC); }
       `}</style>
     </>
