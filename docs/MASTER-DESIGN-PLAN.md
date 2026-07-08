@@ -164,6 +164,30 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
   จริง — studio-dark (avatar+name ellipsis+icon logout, StudioDarkRail AuthBlock) + verdure (avatar+first-name+id+
   icon logout, vd-user) **ใช้ pattern สะอาดอยู่แล้ว** = ไม่แตะ · classic/original = avatar+name+chevron dropdown
   (มาตรฐาน สะอาด) = ไม่แตะ · gumroad ตอนนี้ consistent กับที่เหลือแล้ว
+**T3.1b · User chip "ไม่จืด" (ตกลงกับ owner 2026-07-08 — รอ limit หาย ค่อยเริ่ม)**
+> โจทย์: studio-dark/verdure/(classic-original) chip สะอาดแต่ "จืด" (monogram เฉยๆ) — owner อยาก
+> ให้มีบุคลิกมากขึ้น **แต่กลัวปัญหาตามมา** → ต้อง plan ละเอียด + guardrail ก่อนแตะ
+>
+> **หลักการ:** เพิ่มบุคลิก "ต่อ identity ของแต่ละตระกูล" (ห้ามทำให้ทั้ง 4 เหมือนกัน) · โมเดิร์น ไม่ทางการมาก
+> (§1 taste) · **restyle เท่านั้น ห้ามแตะ logic auth** (useSession/signOut เดิม)
+> **ทิศทางต่อตระกูล (ให้ owner ดู concept board ก่อน build — งานเปลี่ยนหน้าตา):**
+>   - studio-dark: avatar เพิ่ม accent ring/สถานะ live-dot + ชื่อ + role label mono เล็ก ("VOTER") ให้เข้า editorial
+>   - verdure: avatar serif-italic disc (มีอยู่แล้ว) + เพิ่ม hover reveal/ceremony เล็กน้อย + wax-seal motif จิ๋ว
+>   - gumroad (ทำแล้ว): chunky stamp chip — อาจเพิ่ม micro-interaction กดแล้วเด้ง
+>   - classic/original: ยกระดับ dropdown ให้พรีเมียมขึ้น (avatar gradient brand + เมนูมี ripple/บรรทัดข้อมูล)
+>
+> **⚠️ GUARDRAILS (นี่คือ "ปัญหาที่จะตามมา" ที่ต้องกันล่วงหน้า):**
+>   1. ครอบ 3 auth states ครบ: logged-out (ปุ่ม login) / loading (status==="loading" อย่าให้กระพริบ) / logged-in
+>   2. ถ้าทำ dropdown: click-outside ปิด, Esc ปิด, focus-trap, z-index เหนือ content + เหนือ dock/rail, aria-expanded
+>   3. editorMode ต้องไม่ render auth จริง (P-LOG-002) — chip โชว์ static preview
+>   4. ชื่อยาว = ellipsis เสมอ (max-width) · mobile breakpoint แยก (rail/drawer/topbar ต่างกันต่อ template)
+>   5. สีต้องผ่าน token ของตระกูล (--sd-*/--vd-*/--o-*) ไม่ hardcode → morph/ธีมไม่พัง · portal(ถ้ามี dropdown)=P-LOG-077
+>   6. motion เคารพ reduced-motion · ไม่เพิ่ม animation ที่ทำ screenshot timeout เกินจำเป็น
+>   7. **verify ต้อง mock-login** (NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true, student 6610510149) เพื่อเห็น logged-in
+>      จริงทุกตระกูล + เช็ค logged-out ด้วย · owner eyeball ก่อนปิด (หน้า animate → computed + owner)
+> **ลำดับ:** concept board (Fable) → owner เลือกทิศทางต่อตระกูล → worker restyle ทีละตระกูล + verify 2 states →
+> commit แยกต่อตระกูล · **ห้าม big-bang ทั้ง 4 ในคอมมิตเดียว**
+
 **T3.2 · Motion policy เป็นเอกสาร** — ตาราง: surface × พฤติกรรม (live/bare/chrome/interact × PRM on/off) ลง docs/
 **T3.3 · State pages audit** — loading/error/empty ทุกตระกูลตามธีม (ThemedLoadingScreen มีแล้ว — เช็คครบทุก state)
 
