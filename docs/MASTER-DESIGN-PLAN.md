@@ -31,7 +31,9 @@
 - ✅ โมเดิร์น รุ่นใหม่ ไม่ทางการมาก — "ทางการหน่อยๆ" คือเครื่องปรุง ไม่ใช่ตัวจาน
 - ✅ Original v1 home (Kanit หนา สะอาด) · gumroad (สนุก มีพลัง) · studio-dark (ดาร์ก editorial) · verdure (ประณีต)
 - ✅ สีสันสวยงาม น่ารัก เข้าถึงง่าย สบายตา — ธีมชมพูพาสเทลคือของรักของเจ้าของ (gumroad-bubblegum)
-- ✅ สลับธีมแล้ว "ทั้งบรรยากาศ" ต้องเปลี่ยนเห็นชัด (ไม่ใช่แค่ accent)
+- ✅ สลับธีมแล้ว "ทั้งบรรยากาศ" ต้องเปลี่ยนเห็นชัด (ไม่ใช่แค่ accent) — **ใช้กับตระกูลที่มีหลายธีมเท่านั้น
+  (gumroad/studio/verdure); `original` เป็นข้อยกเว้นโดยเจตนา: owner เลือก craft พาเลตต์ม่วงเดียว (5f8f4bf)
+  — ห้าม "หวังดี" เอาธีม field กลับมาเพื่อ satisfy ข้อนี้**
 
 ### Protocol การเสนอดีไซน์ (บทเรียนจากการ reject 2 รอบ)
 1. งานที่เปลี่ยน "โครง/บุคลิก" ของหน้า → ทำ concept board (widget mockup) ให้เจ้าของดูก่อนเสมอ
@@ -185,8 +187,18 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
 >   6. motion เคารพ reduced-motion · ไม่เพิ่ม animation ที่ทำ screenshot timeout เกินจำเป็น
 >   7. **verify ต้อง mock-login** (NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true, student 6610510149) เพื่อเห็น logged-in
 >      จริงทุกตระกูล + เช็ค logged-out ด้วย · owner eyeball ก่อนปิด (หน้า animate → computed + owner)
-> **ลำดับ:** concept board (Fable) → owner เลือกทิศทางต่อตระกูล → worker restyle ทีละตระกูล + verify 2 states →
-> commit แยกต่อตระกูล · **ห้าม big-bang ทั้ง 4 ในคอมมิตเดียว**
+> **เพิ่มเติมจาก advisor review 2026-07-13 (ปิดช่องว่างก่อนเริ่มจริง):**
+>   8. concept board ต้องเสนอ **2-3 ทางเลือกต่อตระกูล** ไม่ใช่ทางเดียว — บทเรียน ประกาศ-concept/T1.1:
+>      single bet บนงานรสนิยม = โดน reject ทั้งก้อน ให้ owner "เลือก" ไม่ใช่ "อนุมัติ"
+>   9. Task-0 ต้องทำ **placement inventory ต่อตระกูล** ก่อนแตะ: chip แต่ละตระกูลอยู่หลายที่
+>      (studio: rail footer + topbar compact ×2 จุด · verdure: cornerstatus fixed + มี dropdown
+>      is-open อยู่แล้ว ห้ามพัง · gumroad: navbar desktop + drawer mobile · classic/original:
+>      navbar dropdown + mobile drawer) — แก้ครบทุกจุดของตระกูลนั้นใน commit เดียวกัน
+>   10. loading state ใช้ **skeleton footprint เท่า chip จริง** (กัน layout shift/กระพริบ) —
+>      ไม่ใช่แค่ "อย่าให้กระพริบ" ลอยๆ
+> **ลำดับ:** concept board 2-3 ทาง/ตระกูล (Fable) → owner เลือกรายตระกูล → worker restyle ทีละตระกูล
+> + verify logged-in (mock 6610510149) + logged-out + loading → commit แยกต่อตระกูล ·
+> **ห้าม big-bang ทั้ง 4 ในคอมมิตเดียว** · ตระกูลไหน owner ดูแล้วเฉยๆ = ข้ามได้ ไม่ต้องฝืนแก้
 
 **T3.2 · Motion policy เป็นเอกสาร** — ตาราง: surface × พฤติกรรม (live/bare/chrome/interact × PRM on/off) ลง docs/
 **T3.3 · State pages audit** — loading/error/empty ทุกตระกูลตามธีม (ThemedLoadingScreen มีแล้ว — เช็คครบทุก state)
