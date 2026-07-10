@@ -89,9 +89,9 @@ For each: **gumroad**, **studio-dark**, **original** —
   is `verdureTemplate`; variants spread it with new slug/name/colorSwatch).
 
 ## VERIFY (per CLAUDE.md Rule 8 — paste real output)
-- Don't stop the owner's dev server (port 3000); use `preview_start`. Admin login: both fields —
-  user `6610510129`, pw `6610510129@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL` (or
-  `node scripts/dev-admin-login.js`). Restore `activeTemplateId` to `original` after any apply test.
+- Don't stop the owner's dev server (port 3000); use `preview_start`. Admin login:
+  `node scripts/dev-admin-login.js` (self-serve, reads .env — never put literal creds in docs).
+  Restore `activeTemplateId` to `original` after any apply test.
 - Verdure/vote pages have heavy continuous animation → `preview_screenshot` TIMES OUT (renderer never
   idles). Verify via `preview_eval` reading computed styles / `.vd-root` vars / iframe content instead.
 - Gate: `npm run e2e:gate` + `npm run smoke` (e2e BEFORE smoke — rate limiter).

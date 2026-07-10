@@ -175,7 +175,7 @@ studio-dark ตอนนี้ **parity สะอาดอยู่แล้ว*
 # 1. login (token หมดอายุเรื่อยๆ — login ใหม่ได้เลย)
 node scripts/dev-admin-login.js            # เขียน .dev-admin-token.local
 TOKEN=$(cat .dev-admin-token.local)
-# creds สำหรับ browser: user 6610510129 / pw 6610510129@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL
+# creds สำหรับ browser: ใช้ node scripts/dev-admin-login.js (self-serve — อ่านจาก .env; ห้าม literal creds ใน docs)
 
 # 2. apply variant ที่จะเทสต์
 curl -s -X POST --cookie "admin_token=$TOKEN" \
