@@ -16,7 +16,7 @@
 | Security P0 (admin auth JWT cookie, vote race) | ✅ เสร็จตั้งแต่ 2026-06-10 arc |
 | Content binding (ปี/วันที่/ชื่องาน → globalConfig) | ✅ เสร็จ (1c8d09b, 3d26660) |
 | เครื่องมือ annual reset (`preflight`, `archive-year`, `import-students`) | ✅ สคริปต์มีแล้ว — แต่ยังไม่เคยซ้อมรอบจริง |
-| **`npm run build` เต็ม + `npm run smoke` บน tree ปัจจุบัน** | ❌ **ไม่เคยรันตลอด arc นี้ — คือตัวบล็อก deploy ตัวเดียวที่เหลือ** |
+| **`npm run build` เต็ม + `npm run smoke` บน tree ปัจจุบัน** | ✅ **ผ่านแล้ว 2026-07-13** (tree @ f1ee969): build ✓ 33/33 pages ไม่มี error · smoke ✓ 15 pass / 0 fail (auth/forged-token/rate-limit/vote-session/results-leak ครบ) — ดูหลักฐานเต็มใน §4.1 |
 | งานดีไซน์ subjective (semantic-colour rule, user-chip, P3 จูน) | ⏳ รอ owner ตัดสิน — ไม่บล็อก deploy |
 
 **นิยาม "พร้อม deploy" ของโปรเจกต์นี้ = ผ่าน §4 ทุกข้อ** ไม่ใช่แค่ "หน้าเว็บดูดี"
@@ -89,10 +89,12 @@ register ใน index.js → จบ (BaseStyles/injector/dispatch/chooser ตา
 
 ## §4 ✅ CHECKLIST ก่อน DEPLOY (เรียงลำดับ — ทำบนลงล่าง)
 
-1. **[บล็อก] Pre-deploy gate (MASTER-PLAN P0):** นัด owner หยุด dev server → `Remove-Item -Recurse -Force .next`
-   → `npm run build` ต้อง GREEN → start dev กลับ → `npm run smoke` ต้อง 15/15 → (แนะนำ) `npm run e2e:gate`
-   → **paste output จริงทั้งหมด** ลงรายงาน+อัปเดตไฟล์นี้ · ความเสี่ยงจริง: arc นี้แก้ไฟล์หลายสิบไฟล์โดยไม่เคย
-   full build — อาจมี import/JSX error ที่ dev-mode ไม่ฟ้อง
+1. ✅ **PASSED 2026-07-13 (Fable session, owner-approved server stop; tree @ f1ee969):**
+   `npm run build` → `✓ Generating static pages (33/33)` + route table เต็ม 33 routes ไม่มี error/warning
+   · `npm run smoke` → `tests 15 · pass 15 · fail 0` (4.2s) — ครอบ: public results ไม่ leak score ·
+   admin API 401 no-auth/forged-cookie · admin login wrong-pw 401/correct 200+httpOnly · vote ต้องมี
+   session · login rate-limited 429 · role/privilege invariants 7 เคส · dev server restart กลับแล้ว (:3000 live)
+   · `npm run e2e:gate` (Playwright) ยังไม่รัน — optional เพิ่มความมั่นใจ ไม่บล็อก
 2. **[บล็อก] Production config sweep:** `.env` จริง (DATABASE_URL, NEXTAUTH_SECRET, ADMIN_PRIVATE_KEY,
    ADMIN_AUTH_SECRET, NEXT_PUBLIC_BASE_PATH=/fms-ovs) · **`NEXT_PUBLIC_ENABLE_MOCK_LOGIN` ต้องไม่ = true**
    (ตอนนี้เปิดอยู่ใน .env.local!) · PSU SSO callback URL จริง
