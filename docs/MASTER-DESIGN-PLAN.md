@@ -206,8 +206,13 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
 ### P4
 **T4.1 · Folder refactor** — components/templates/{original,gumroad,studio-dark,verdure}/ · git mv + แก้ import +
   grep verify + build GREEN · commit เดี่ยว mechanical ห้ามปนงานดีไซน์ · ทำหลัง P0 เท่านั้น
-**T4.2 · Blossom Civic (template ที่ 5)** — DEFERRED จนเจ้าของสั่งเปิด · brief เดิม: world-class สีสันน่ารัก
-  เข้าถึงง่าย ทางการหน่อยๆ ธีม base ชมพูพาสเทล · เริ่มด้วย concept board หลายทิศทาง ห้าม build ก่อน approve
+**T4.2 · Blossom Civic (template ที่ 5)** — 🟢 **ACTIVE 2026-07-13 (owner สั่งเปิด)** — เหตุผลเชิงกลยุทธ์:
+  original เหลือม่วงเดียว (craft-over-shifting) ทำให้ choice หด → เพิ่มตระกูลที่ 5 ที่ **ออกแบบ color-first
+  ตั้งแต่วันแรก** (palette slots native เหมือน studio/verdure ไม่ใช่ retrofit แบบ original) · brief: world-class
+  สีสันน่ารัก เข้าถึงง่าย ทางการหน่อยๆ โมเดิร์น · ธีม base = ชมพูพาสเทลของ owner + alt 3 ธีม · slug `blossom`
+  · **สถานะ: concept board 3 ทิศทาง (Soft Pop Civic / Pastel Editorial / Bubble Card) เสนอ 2026-07-13 —
+  รอ owner เลือก** · หลังเลือก: build home ก่อน (หลัง slug ทดลอง, ไฟล์ใหม่ล้วน) → 6 หน้า → themes →
+  chip ออกแบบในตัว · ใช้สูตร add-template + invariants §3 ครบ · progress file `.specs/BLOSSOM-PROGRESS.md`
 
 ---
 
