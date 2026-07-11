@@ -1776,6 +1776,21 @@ a standalone `new ScrollTimeline()` resolve; defer live-motion to a no-preferenc
 
 ---
 
+### P-LOG-081: [2026-07-12] Fully-unstyled page in pane = check chunk 404 before blaming code (or the pane)
+**Context:** Verifying Blossom results (T3.5) — page text/DOM correct but screenshot showed a
+raw-HTML render (giant logo, no styles) and getComputedStyle returned browser defaults everywhere.
+**Symptom:** styled-jsx block absent from DOM, recharts SVGs = 0, yet SSR markup complete and
+console clean. Looks like P-LOG-080 or a component bug; it is neither.
+**Root cause:** `.next` manifest race (Rule 7 quirk) — `_next/static/chunks/app/<route>/page.js`
+returned 404 on every load, so hydration never ran: no client-injected styled-jsx, no
+ResponsiveContainer measurement. SSR HTML still renders, which masks the failure.
+**Fix/Verification rule:** when a page looks unstyled in the pane, read network requests FIRST
+and look for a 404 on the route's page chunk. If found → Rule 7 recovery (stop server, clear
+`.next`, restart, wait 15-20s). Touching the file to force HMR does NOT heal a stale manifest.
+**Tags:** `#verification` `#browser-pane` `#manifest-race` `#hydration`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

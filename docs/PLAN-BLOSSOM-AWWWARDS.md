@@ -106,7 +106,13 @@
       ฉลอง + receipt line + confetti เรขาคณิต + next-step panel, modal ฟอร์ม/auth guard คงอยู่ที่
       parent) / BlossomClosed (ประกาศเงียบ reason-aware) + dispatch + preview wiring;
       closed ไม่มีลิงก์ results ตาม seam จริงของพี่น้อง (ไม่ขยาย seam)
-- [ ] **T3.5 /results** — figures + chart โทน candy (recharts consts ห้าม sweep — กติกาเดิม)
+- [x] **T3.5 /results** ✅ DONE 2026-07-12 (`02b045b`) — BlossomResults (data moment:
+      hollow "ผลคะแนน" masthead + figures row ตาม stat grammar ของ home; EMBARGOED =
+      ink band เต็มจอ + countdown ไม่มี score รั่วก่อน reveal; revealed = ranking rows
+      ผู้ชนะใช้ diamond+pill เรขาคณิตล้วน + demographics เป็น recharts เดิมใน Blossom
+      panel — แตะแค่กรอบ, chart fills อ่านจาก blossomPalettes เพราะ SVG fill ไม่ resolve
+      var()) + dispatch + preview wiring interact+static; verify 4 ธีม/390px/original+
+      gumroad+live results ไม่กระทบ; ระหว่าง verify เจอ manifest race (Rule 7) → P-LOG-081
 - แนวทาง: ทำเป็น Blossom* components ใหม่ dispatch ด้วย `startsWith('blossom')`
   (แบบที่ตระกูลอื่นทำ) — **ห้าม rewrite classic**; ดู recipe ตระกูล verdure/studio-dark
 - Acceptance ต่อหน้า: 4 ธีมผ่าน + mobile + interact-mode ใน template-preview ไม่พัง (P-LOG-002)
