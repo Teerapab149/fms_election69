@@ -98,10 +98,12 @@ register ใน index.js → จบ (BaseStyles/injector/dispatch/chooser ตา
 2. **[บล็อก] Production config sweep:** `.env` จริง (DATABASE_URL, NEXTAUTH_SECRET, ADMIN_PRIVATE_KEY,
    ADMIN_AUTH_SECRET, NEXT_PUBLIC_BASE_PATH=/fms-ovs) · **`NEXT_PUBLIC_ENABLE_MOCK_LOGIN` ต้องไม่ = true**
    (ตอนนี้เปิดอยู่ใน .env.local!) · PSU SSO callback URL จริง
-3. **[บล็อก] Security scrub เอกสาร (ยืนยันด้วย git grep แล้ว 2026-07-07):** literal admin credential
-   `6610510129@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL` โผล่ที่ `docs/HANDOFF-THEME-SYSTEM-CONTINUE.md:178`
-   + `docs/HANDOFF-THEMES-PREVIEW-CONTINUE.md:93` — **ลบสตริงนี้ + ROTATE `ADMIN_JWT_SECRET`/`ADMIN_PASSWORD_AUTH_EXTRA`
-   ก่อน repo ถูกแชร์** (docs/MAINTENANCE-RUNBOOK.md §rotate สั่งไว้แล้ว — ทำจริงยัง) · เช็คซ้ำ `git grep -i "secret\|password\|9QpZxL" -- docs/`
+3. **[บล็อก] Security rotate (สโคปจริงใหญ่กว่าที่คิด — grep เต็ม 2026-07-13):** docs 2 ไฟล์ scrub แล้ว (8c000f6)
+   แต่ dev admin password ตัวเดิมยัง**ฝังเป็น literal ใน `prisma/seed.js:284,287` + `e2e/admin-console.spec.js:9`
+   + `scripts/smoke/election.test.mjs:16` (fallback)** — เป็น dev-seed โดยดีไซน์ + อยู่ใน git history ด้วย
+   → ก่อน deploy/แชร์ repo: **ROTATE `ADMIN_JWT_SECRET`/`ADMIN_PASSWORD_AUTH_EXTRA` (owner ทำ)** +
+   ticket เสริม: ย้าย seed/e2e password ไปอ่าน env (smoke ทำถูกแล้ว: `process.env.ADMIN_PASS || fallback`)
+   · เช็คซ้ำ `git grep -n 9QpZxL`
 4. **[ตัดสินใจ] เลือก template+ธีม production แล้ว apply** (ตอนนี้ DB = gumroad-premium จากการลองของ owner)
    · เช็ค `prisma/schema.prisma` activeTemplateId default ยัง "classic" → ควรเปลี่ยน "original" (Task C เก่า ยังค้าง)
 5. **[ตัดสินใจ] Legacy templates 4 ตัว** ซ่อนจาก chooser หรือคงไว้

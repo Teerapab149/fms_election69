@@ -1729,6 +1729,37 @@ never emit Layer-1 at `:root` (global leak).
 return 0 hits; use/extend the :root ramp instead.
 **Tags:** `#portal` `#css-vars` `#token-scope` `#single-vote`
 
+### P-LOG-078: [2026-07-11] BLOSSOM — a backtick in a comment inside a `<style jsx>` template literal ends the whole string
+**Context:** Authoring BlossomHome's large `<style jsx global>{` … `}</style>` block; a CSS
+comment inside it referred to a code token written in backticks.
+**Symptom:** SWC/styled-jsx parse-fails the ENTIRE module (the template string closed early at
+the stray backtick, so the rest was parsed as JS) — every rule after the comment vanished and the
+page went dead. Same failure surface as P-LOG-076.
+**Root cause:** the styled-jsx block is a JS template literal delimited by backticks; a `` ` ``
+anywhere inside it — including inside a `/* … */` CSS comment — terminates the literal. Comments
+are still INSIDE the string as far as the JS lexer is concerned.
+**Fix:** never put a backtick in ANY comment (CSS `/* */` or otherwise) inside a template literal;
+write the token in plain words, or move the note to a normal `//` JS comment outside the block.
+**Lesson:** inside a template-literal `<style jsx>`, the only safe backtick is the closing one.
+**Mitigation rule:** before saving a styled-jsx block, scan its comments for a stray `` ` ``.
+**Tags:** `#styled-jsx` `#swc` `#template-literal` `#blossom`
+
+### P-LOG-079: [2026-07-11] BLOSSOM — a bare `a{}` element rule in a scoped root beats every link class
+**Context:** Porting the Blossom mockup's global link reset (`.bl-root a { color… }`) into the
+home's styled-jsx; per-link classes (.bl-cta, .bl-nav__link, .bl-go, …) each set their own colour.
+**Symptom:** every link rendered the reset colour — .bl-cta / .bl-nav__link colours were
+overridden even though a class "should" outrank an element selector.
+**Root cause:** styled-jsx appends a scoping attribute to each selector, so `.bl-root a` compiles to
+`.bl-root a[data-…]` = specificity (0,2,1), HIGHER than a single class (0,1,0); it also sits earlier
+in source but wins on specificity regardless. The element reset outranks the component classes.
+**Fix:** wrap the scope-root element selector in `:where()` — `:where(.bl-root) a { … }` — which
+forces its specificity to 0, so any per-link class always wins (see BlossomHome.js ~L440).
+**Lesson:** a template-wide element reset (`a{}`, `h2{}`) inside a scoped root must be
+`:where()`-wrapped, or it silently outranks the very classes it is meant to defer to.
+**Mitigation rule:** any bare element selector under a scope root (`.ns-root a`, `.ns-root h2`, …)
+in styled-jsx should be written `:where(.ns-root) el`.
+**Tags:** `#styled-jsx` `#specificity` `#where` `#blossom`
+
 ---
 
 ## 🚫 Rejected Approaches

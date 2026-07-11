@@ -1,0 +1,128 @@
+# PLAN — Blossom "Candy Editorial" → 10/10 (Awwwards-grade ทั้ง flow)
+
+> สำหรับ session หน้า อ่านไฟล์นี้ → CLAUDE.md (Engineering Discipline) → memory
+> `blossom-claude-design-link` ตามลำดับ · Branch `new-version`
+> Workflow บังคับ: **Fable = advisor/reviewer เท่านั้น · Opus 4.8 subagent = worker ทุกงาน execution**
+> (brief ต้องมี Task-0 audit + raw outputs + ห้าม commit จนรีวิวผ่าน + ห้ามหยุด dev server :3000)
+
+## Feedback เจ้าของ 2026-07-11 (หลังดูของจริง)
+- ✅ **ถูกใจ Blossom โดยรวม** — ทิศทาง Candy Editorial ผ่าน ไม่ต้องรื้อ concept
+- ❌ **ปุ่ม "ดูผู้สมัคร" ซ้ำซ้อน** — hero มี `bl-cta2` "ดูผู้สมัคร →" (BlossomHome.js:354)
+  แล้ว section ถัดมา (โปสเตอร์+copy "รู้จักผู้สมัครของคุณหรือยัง") มี `bl-go`
+  "ดูผู้สมัครทั้งหมด" (BlossomHome.js:376) อีกอัน — ห่างกันแค่ scroll เดียว → แก้ใน P1.5
+- 🎯 สั่งลุยต่อจนถึง 10/10 ตามแผนนี้
+
+## สถานะ ณ 2026-07-11 (จบ session Claude Design → v2-C → 3 รอบ polish)
+
+ทำแล้ว (⚠️ **ทั้งหมดยัง UNCOMMITTED** อยู่ใน working tree):
+- `src/components/home/BlossomHome.js` — Candy Editorial เต็มหน้า: org-first headline
+  (hollow สโมสรนักศึกษา / solid คณะ+accent, split config-safe ที่ "คณะ"), แหวน textPath 300px
+  ทับ headline, โปสเตอร์แบบ pinned (กรอบขาว+เทป ไม่ crop), figures ไร้การ์ด + turnout bar,
+  **countdown = แถบหมึกเข้ม full-bleed (climax)**, entrance choreography CSS-only,
+  count-up on scroll, navbar full-bleed sticky + user chip 3 สถานะ + burger/sheet,
+  ตกแต่งเรขาคณิตล้วน (ห้าม icon/ดอกไม้ — กติกา taste ถาวร)
+- Token: `onPrimary` slot ใน blossomPalettes → BlossomTheme → injectTemplateTheme
+  (แก้ contrast CTA ธีมมินต์/บัตเตอร์)
+- Mockup ต้นทาง: `.specs/blossom-home-v2-c.html` · Claude Design project "Blossom Home
+  Redesign Brief" (2f43689c-...) + design system project มี `blossom/` bundle
+- P-LOG ค้างลง DECISIONS.md ตอน commit (เลขต่อจาก 076): backtick ในคอมเมนต์ภายใน
+  styled-jsx template literal = ปิด string ทั้งไฟล์พัง · `.bl-root a{}` ต้องใช้ `:where()`
+  ไม่งั้น specificity ชนะทุก link class
+
+## นิยาม 10/10 (สามเสา)
+1. **Craft** — ทุก pixel มีเหตุผล: image treatment, จังหวะ motion, รายละเอียด hover
+2. **Motion ตอบ scroll** — หน้าเล่าเรื่องตามการเลื่อน ไม่ใช่แค่ตอนโหลด
+3. **Coherence ทั้ง flow** — home หน้าเดียวไม่พอ ทั้ง journey (home→login→vote→success→results)
+   ต้องพูดภาษา Candy Editorial เดียวกัน ← **ช่องว่างใหญ่สุดตอนนี้**
+
+---
+
+## P1 — ปิดงานค้าง (ทำก่อนทุกอย่าง, ~30 นาที)
+- [ ] Verify ritual ที่ค้าง: authed user chip (mock session ผ่าน scripts/dev-admin-login.js
+      หรือ playground onSignIn), editor chooser slideshow
+- [ ] **Commit แยกก้อน** (atomic, explicit paths):
+      (1) token onPrimary 3 ไฟล์ · (2) BlossomHome.js redesign · (3) docs + DECISIONS.md
+      (P-LOG ใหม่ 2 ข้อ ด้านบน) — ลงท้าย Co-Authored-By ตามกติกา
+- Acceptance: build ไม่ต้องรัน (dev server ห้ามหยุด) แต่ compile log สะอาด + push
+
+## P1.5 — แก้ปุ่ม "ดูผู้สมัคร" ซ้ำ (feedback เจ้าของ, commit แยกต่อจาก P1)
+ปัญหา: hero `bl-cta2` (BlossomHome.js:354) กับ feature `bl-go` (BlossomHome.js:376)
+พาไป `/candidates` ทั้งคู่ ห่างกัน 1 scroll (navbar มีลิงก์ "ผู้สมัคร" อีกทาง = 3 ทางรวม)
+
+**แนวทางแนะนำ (A):** เปลี่ยน `bl-cta2` จากลิงก์ `/candidates` เป็น **anchor scroll
+ลงไป section รู้จักผู้สมัคร** — label ประมาณ "รู้จักผู้สมัคร ↓" (smooth scroll,
+`scroll-behavior` CSS หรือ scrollIntoView; ปิดใต้ reduced-motion ให้ jump ปกติ)
+- เหตุผล: คง balance 2 ปุ่มใน hero (เอาออกเฉย ๆ hero จะโล่งข้างเดียว), หน้าได้
+  narrative "เลื่อนลงมาอ่านก่อนค่อยไป" ตรงเสา Motion-ตอบ-scroll พอดี, ปุ่มพาออกหน้า
+  เหลือจุดเดียวคือ `bl-go` ใน section ที่มี context ครบ
+- editorMode: anchor ต้องไม่ scroll ใน editor preview (guard แบบเดียวกับ href เดิม)
+- **Fallback (B) ถ้า owner ไม่ชอบ A:** ตัด `bl-cta2` ทิ้ง เหลือ CTA หลักเดี่ยว
+  แล้วขยับ daterow/subline ให้ hero ยังแน่น — ทำ mock ให้ดูก่อนตัดจริง
+- Acceptance: 4 ธีม + 390px + hero ทุกสถานะ CTA (ก่อนเปิด/เปิด/โหวตแล้ว/ปิด/pause
+  ผ่าน template-preview interact) ไม่มี layout shift; commit แยก 1 ก้อน
+
+## P2 — Home micro-craft (ยกจาก 8 → 9, ~half day)
+- [ ] **T2.1 Digit roll**: เลข countdown เดินแบบ slide/roll (transform-only, ห้าม layout shift,
+      ปิดใต้ reduced-motion) — วินาทีเปลี่ยนคือชีพจรของแถบหมึก
+- [ ] **T2.2 Poster treatment**: duotone/grain ให้โปสเตอร์กลืนธีม (CSS filter/blend บน
+      wrapper — ห้ามแก้ไฟล์ภาพ เพราะ admin อัปโหลดเอง) + hover เผยสีจริง
+- [ ] **T2.3 Scroll parallax เบา ๆ**: blobs ขยับสวนทิศ scroll เล็กน้อย, แถบหมึก reveal
+      ตอนเข้าจอ (ใช้ CSS scroll-driven animations + fallback IntersectionObserver;
+      งบ perf: transform/opacity เท่านั้น)
+- [ ] **T2.4 CTA physics**: ปุ่มหลัก magnetic-lite (ตามเมาส์ ±4px) + press ยุบจริง;
+      hover ลิงก์ nav มี underline slide
+- [ ] **T2.5 จูน texture**: dot-grid + crop marks ตอนนี้จางเกิน (มองแทบไม่เห็นบนบางจอ) —
+      ขยับ opacity ขึ้นจนเห็นแบบตั้งใจแต่ไม่รบกวนตัวอักษร; เช็คทั้ง 4 ธีม
+- Acceptance ต่อ ticket: computed styles + screenshot ก่อน/หลัง + 60fps (ไม่มี jank ใน
+  Performance trace คร่าว ๆ) + reduced-motion ผ่าน
+
+## P3 — Inner pages ภาษา Blossom (ยกจาก 9 → 10, งานใหญ่สุด, ~2-3 sessions)
+ตอนนี้หน้า inner ใช้ classic layout + Layer-1 token จาก builtIn/blossom.js — ใช้งานได้
+แต่ไม่ใช่ Candy Editorial. ทำทีละหน้า (ลำดับตาม journey ผู้ใช้):
+- [ ] **T3.1 /candidates** — grid พรรคแบบ editorial (hairline rules + สติกเกอร์เรขาคณิต,
+      hover เผย accent)
+- [ ] **T3.2 /vote multi** — การ์ดพรรค + confirm modal โทน Blossom (สี 3 ทางเลือก
+      semantic เขียว/แดง/ส้ม **ห้ามแตะ** — กติกาเดิม)
+- [ ] **T3.3 /vote single (booth)** — cinematic เวอร์ชัน candy
+- [ ] **T3.4 /success + /closed** — แถบหมึก climax ซ้ำ motif จาก home
+- [ ] **T3.5 /results** — figures + chart โทน candy (recharts consts ห้าม sweep — กติกาเดิม)
+- แนวทาง: ทำเป็น Blossom* components ใหม่ dispatch ด้วย `startsWith('blossom')`
+  (แบบที่ตระกูลอื่นทำ) — **ห้าม rewrite classic**; ดู recipe ตระกูล verdure/studio-dark
+- Acceptance ต่อหน้า: 4 ธีมผ่าน + mobile + interact-mode ใน template-preview ไม่พัง (P-LOG-002)
+
+## P4 — Flow polish + gate
+- [ ] Transition ต่อเนื่องระหว่างหน้า (อย่างน้อย: token คงเส้น, navbar/footer ร่วม)
+- [ ] template-playground + /template-preview?interact=1 รองรับ blossom เต็ม flow
+- [ ] chooser slideshow ภาพครบทุกหน้า
+- [ ] ปิดท้าย: pre-deploy gate ปกติ (นัดหยุด server กับ owner → rm -rf .next → build GREEN
+      → smoke 15/15 → paste output จริง)
+
+## กติกาที่สืบทอด (ห้ามลืม)
+สี = var(--bl-*) เท่านั้น, ออกแบบบนชมพูแล้วตรวจ 4 ธีมทุกครั้ง · mobile-first 390px ·
+ตกแต่ง = เรขาคณิตเท่านั้น ห้าม icon/illustration/emoji · ห้ามลายเซ็นตระกูลอื่น (marquee,
+ขอบดำหนา+offset shadow, มืด+neon+rail, glass+ใบไม้) · ภาษาไทยห้ามลงท้าย "." ·
+เลขไทย/ราชการ tropes ห้าม · เนื้อหา visibility ห้ามพึ่ง JS · getPath ทุก URL ·
+semantic vote colours + PartyTheme.js + recharts consts ห้ามแตะ
+
+---
+
+## PROMPT สำหรับเปิด session หน้า (คัดลอกได้เลย)
+
+```
+อ่าน docs/PLAN-BLOSSOM-AWWWARDS.md ทั้งไฟล์ก่อน แล้วทำตามลำดับ
+P1 → P1.5 → P2 → P3 (P1 commit งานค้างต้องเสร็จก่อนแตะอะไรใหม่)
+
+P1.5 คือ feedback ล่าสุดของผม: ปุ่ม "ดูผู้สมัคร" ใน hero ซ้ำกับปุ่ม
+"ดูผู้สมัครทั้งหมด" ใน section ถัดมา — ทำตามแนวทาง A ในแผน (เปลี่ยนปุ่ม hero
+เป็น anchor scroll) แล้วให้ผมดูก่อน ถ้าไม่ชอบค่อย fallback B
+
+workflow บังคับ: คุณ (Fable) เป็น advisor/reviewer เท่านั้น — เขียน brief ลง .specs/
+แล้ว spawn Opus 4.8 subagent เป็น worker ทุกงาน execution; worker ห้าม commit
+จนคุณรีวิว raw outputs ผ่าน; ห้ามหยุด dev server :3000 (ผมดู live);
+verify ธีม = ดู computed styles จริง ไม่ใช่ screenshot อย่างเดียว แล้วตรวจครบ 4 ธีม
+(blossom / -sky / -mint / -butter) + มือถือ 390px ทุก ticket
+
+เป้าหมาย: ยก Blossom จาก ~8/10 เป็น 10/10 ตามนิยามสามเสาในแผน
+(craft / scroll motion / coherence ทั้ง flow) เริ่มจากรายงานสถานะ working tree
+กับผมก่อนว่า P1 ค้างอะไรบ้าง แล้วค่อยเริ่ม
+```
