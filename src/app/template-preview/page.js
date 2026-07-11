@@ -51,6 +51,8 @@ import VerdureSuccess from '../../components/vote/VerdureSuccess';
 import VerdureClosed from '../../components/vote/VerdureClosed';
 
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import BlossomSuccess from '../../components/vote/BlossomSuccess';
+import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
@@ -419,10 +421,12 @@ function PreviewBody() {
       );
     }
 
-    // Blossom family — its own Candy Editorial candidates layout (home goes through
-    // HomeRenderer above; other blossom inner pages fall to classic for now).
-    if (family === 'blossom' && page === 'candidates') {
-      return <BlossomCandidates candidates={PARTIES} editorMode={false} />;
+    // Blossom family — its own Candy Editorial inner pages (home goes through
+    // HomeRenderer above; remaining blossom inner pages fall to classic for now).
+    if (family === 'blossom') {
+      if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode={false} />;
+      if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
+      if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />;
     }
 
     // other classic/original inner pages (candidates/results/closed/party): keep the
@@ -519,9 +523,11 @@ function PreviewBody() {
     }
   }
 
-  // ── blossom family — Candy Editorial candidates layout (static preview slide) ──
-  if (family === 'blossom' && page === 'candidates') {
-    return <BlossomCandidates candidates={PARTIES} editorMode />;
+  // ── blossom family — Candy Editorial inner pages (static preview slides) ──
+  if (family === 'blossom') {
+    if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode />;
+    if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
+    if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode />;
   }
 
   // ── classic family (incl. original — its inner pages render the classic layout) ──

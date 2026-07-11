@@ -28,6 +28,7 @@ import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
 import VerdureSuccess from '../../components/vote/VerdureSuccess';
+import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import { fetchVoteStatus } from '../../hooks/useVoteStatus';
@@ -64,6 +65,7 @@ export default function SuccessPage({
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
 
   useEffect(() => {
     if (editorMode) { setTemplateReady(true); return; }
@@ -242,8 +244,18 @@ export default function SuccessPage({
   // Render 
   // =========================================================
   return (
-    <div className={(isGumroad || isStudio || isVerdure) ? "relative" : "min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-[var(--color-bg)]"}>
+    <div className={(isGumroad || isStudio || isVerdure || isBlossom) ? "relative" : "min-h-screen flex flex-col items-center justify-center font-sans p-4 md:p-6 relative overflow-hidden bg-[var(--color-bg)]"}>
       {!editorMode && <PageThemeOverrides page="success" />}
+
+      {/* BLOSSOM layout (own Candy Editorial chrome); the form + alert modals below stay shared */}
+      {isBlossom && (isAuthorized || editorMode) && (
+        <BlossomSuccess
+          user={user}
+          isUnlocked={isUnlocked}
+          onOpenForm={() => setShowModal(true)}
+          editorMode={editorMode}
+        />
+      )}
 
       {/* VERDURE layout (own glass-terrarium chrome); the form + alert modals below stay shared */}
       {isVerdure && (isAuthorized || editorMode) && (
@@ -276,7 +288,7 @@ export default function SuccessPage({
       )}
 
       {/* Background Grid */}
-      {!isGumroad && !isStudio && !isVerdure && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '48px 48px' }}></div>
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-[var(--color-primary)] opacity-20 blur-[80px] md:blur-[120px]"></div>
@@ -284,7 +296,7 @@ export default function SuccessPage({
       </div>
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && (isAuthorized || editorMode) && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && (isAuthorized || editorMode) && (
         <div className="w-full max-w-lg animate-fade-in-up relative z-10">
           <div className="bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[color-mix(in_srgb,var(--color-primary)_60%,white)]"></div>

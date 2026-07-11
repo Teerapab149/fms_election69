@@ -11,6 +11,7 @@ import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadClosed from "../../components/vote/GumroadClosed";
 import StudioDarkClosed from "../../components/vote/StudioDarkClosed";
 import VerdureClosed from "../../components/vote/VerdureClosed";
+import BlossomClosed from "../../components/vote/BlossomClosed";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
@@ -29,6 +30,7 @@ export default function ClosedPage() {
     const isGumroad = activeTemplateId?.startsWith('gumroad');
     const isStudio = activeTemplateId?.startsWith('studio-dark');
     const isVerdure = activeTemplateId?.startsWith('verdure');
+    const isBlossom = activeTemplateId?.startsWith('blossom');
 
     useEffect(() => {
         fetchVoteStatus().then(setStatusData).catch(() => {});
@@ -129,6 +131,22 @@ export default function ClosedPage() {
             <>
                 <PageThemeOverrides page="closed" />
                 <StudioDarkClosed
+                    title={title}
+                    desc={desc}
+                    variant={variant}
+                    session={session}
+                    onLogout={handleLogout}
+                />
+            </>
+        );
+    }
+
+    // BLOSSOM layout (own Candy Editorial chrome) — replaces the classic page entirely.
+    if (isBlossom) {
+        return (
+            <>
+                <PageThemeOverrides page="closed" />
+                <BlossomClosed
                     title={title}
                     desc={desc}
                     variant={variant}
