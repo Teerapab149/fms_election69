@@ -351,12 +351,12 @@ export default function BlossomHome({
 
           <div className="bl-cta-row">
             <a href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
-            <a href={editorMode ? undefined : getPath("/candidates")} className="bl-cta2">ดูผู้สมัคร →</a>
+            <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
           </div>
         </section>
 
         {/* ===== feature: pinned poster + meet-candidates copy ===== */}
-        <section className="bl-feature">
+        <section id="bl-meet" className="bl-feature">
           {/* geometric candy accent — solid half-circle peeking from the left (desktop) */}
           <span className="bl-feature-orb" aria-hidden="true" />
           {/* pinned-poster treatment (owner 2026-07-11): white mat + thin ink frame +
@@ -619,9 +619,20 @@ export default function BlossomHome({
           background:var(--bl-card); transform:translateY(-2px); }
         .bl-cta2:active { transform:scale(.97); }
 
+        /* hero cta2 anchor-scrolls here (#bl-meet) — smooth only when the user
+           allows motion (reduced-motion gets an instant jump for free); the rule
+           mounts with BlossomHome only, so it never leaks to other templates */
+        @media (prefers-reduced-motion:no-preference) {
+          html { scroll-behavior:smooth; }
+        }
+
         /* ---- feature: pinned poster (white mat + ink frame + washi tape + badge),
            copy flows around it on desktop ---- */
-        .bl-feature { margin-top:70px; position:relative; }
+        /* scroll-margin keeps the sticky topbar off the section head when the hero
+           cta2 anchor lands here — measured topbar: 89px mobile (the closed burger
+           sheet row adds its 16px flex row-gap), 73px on min-width:768px where the
+           sheet is display:none. Both get ~15px breathing room */
+        .bl-feature { margin-top:70px; position:relative; scroll-margin-top:104px; }
         /* geometric candy accent — hidden on mobile, half-circle peeks from left on desktop */
         .bl-feature-orb { display:none; }
         .bl-feature::before { content:""; position:absolute; top:-24px; right:0; width:14px; height:14px;
@@ -728,6 +739,8 @@ export default function BlossomHome({
           .bl-nav { display:flex; }
           .bl-userwrap { margin-left:0; }
           .bl-burger, .bl-sheet { display:none; }
+          /* topbar is 73px here (no sheet row) — tighten the anchor clearance */
+          .bl-feature { scroll-margin-top:88px; }
         }
         /* ========== DESKTOP: copy flows around the pinned poster ========== */
         @media (min-width:900px) {
