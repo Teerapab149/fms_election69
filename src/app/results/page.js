@@ -14,6 +14,7 @@ import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadResults from "../../components/vote/GumroadResults";
 import StudioDarkResults from "../../components/vote/StudioDarkResults";
 import VerdureResults from "../../components/vote/VerdureResults";
+import BlossomResults from "../../components/vote/BlossomResults";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
@@ -69,6 +70,7 @@ export default function ResultsPage() {
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
@@ -373,13 +375,29 @@ export default function ResultsPage() {
       ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
       : isVerdure
       ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
+      : isBlossom
+      ? "flex flex-col min-h-screen font-sans overflow-x-hidden relative"
       : "flex flex-col min-h-screen bg-[var(--color-bg)] font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}
-      style={(!isGumroad && !isStudio && !isVerdure) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
+      style={(!isGumroad && !isStudio && !isVerdure && !isBlossom) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
       <PageThemeOverrides page="results" />
 
       {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
       {isVerdure && isAuthorized && (
         <VerdureResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
+
+      {/* BLOSSOM layout (own Candy Editorial chrome); access modals below stay shared */}
+      {isBlossom && isAuthorized && (
+        <BlossomResults
           candidates={candidates}
           totalVotes={totalVotes}
           demographics={demographics}
@@ -419,9 +437,9 @@ export default function ResultsPage() {
         />
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && <Navbar />}
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && <Navbar />}
 
-      {!isGumroad && !isStudio && !isVerdure && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && (
         <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
@@ -435,7 +453,7 @@ export default function ResultsPage() {
       )}
 
       {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
-      {!isGumroad && !isStudio && !isVerdure && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && (
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
 
         {isAuthorized && (
@@ -604,7 +622,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && <SiteFooter className="mt-8 lg:mt-16" />}
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && <SiteFooter className="mt-8 lg:mt-16" />}
     </div>
   );
 }

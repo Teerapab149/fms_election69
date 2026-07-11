@@ -51,6 +51,7 @@ import VerdureSuccess from '../../components/vote/VerdureSuccess';
 import VerdureClosed from '../../components/vote/VerdureClosed';
 
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import BlossomResults from '../../components/vote/BlossomResults';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
@@ -425,6 +426,24 @@ function PreviewBody() {
     // HomeRenderer above; remaining blossom inner pages fall to classic for now).
     if (family === 'blossom') {
       if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode={false} />;
+      if (page === 'results') {
+        // revealed → ranking + demographics; otherwise the LOCKED embargo band (the
+        // real election-day state: polls open, scores sealed, turnout public).
+        const revealed = variant === 'revealed';
+        return (
+          <BlossomResults
+            candidates={resultsCandidates(revealed)}
+            totalVotes={revealed ? 625 : 418}
+            demographics={DEMOGRAPHICS}
+            finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+            isRevealed={revealed}
+            isNotStarted={false}
+            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            onSelectParty={(p) => navTo('party', p?.number ?? 1)}
+            editorMode={false}
+          />
+        );
+      }
       if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
       if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />;
     }
@@ -526,6 +545,22 @@ function PreviewBody() {
   // ── blossom family — Candy Editorial inner pages (static preview slides) ──
   if (family === 'blossom') {
     if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode />;
+    if (page === 'results') {
+      const revealed = variant === 'revealed';
+      return (
+        <BlossomResults
+          candidates={resultsCandidates(revealed)}
+          totalVotes={revealed ? 625 : 418}
+          demographics={DEMOGRAPHICS}
+          finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+          isRevealed={revealed}
+          isNotStarted={false}
+          countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          onSelectParty={noop}
+          editorMode
+        />
+      );
+    }
     if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
     if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode />;
   }
