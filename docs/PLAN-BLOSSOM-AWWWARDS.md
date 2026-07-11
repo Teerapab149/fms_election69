@@ -102,7 +102,10 @@
 - [ ] **T3.2 /vote multi** — การ์ดพรรค + confirm modal โทน Blossom (สี 3 ทางเลือก
       semantic เขียว/แดง/ส้ม **ห้ามแตะ** — กติกาเดิม)
 - [ ] **T3.3 /vote single (booth)** — cinematic เวอร์ชัน candy
-- [ ] **T3.4 /success + /closed** — แถบหมึก climax ซ้ำ motif จาก home
+- [x] **T3.4 /success + /closed** ✅ DONE 2026-07-12 (`a05194c`) — BlossomSuccess (ink-band
+      ฉลอง + receipt line + confetti เรขาคณิต + next-step panel, modal ฟอร์ม/auth guard คงอยู่ที่
+      parent) / BlossomClosed (ประกาศเงียบ reason-aware) + dispatch + preview wiring;
+      closed ไม่มีลิงก์ results ตาม seam จริงของพี่น้อง (ไม่ขยาย seam)
 - [ ] **T3.5 /results** — figures + chart โทน candy (recharts consts ห้าม sweep — กติกาเดิม)
 - แนวทาง: ทำเป็น Blossom* components ใหม่ dispatch ด้วย `startsWith('blossom')`
   (แบบที่ตระกูลอื่นทำ) — **ห้าม rewrite classic**; ดู recipe ตระกูล verdure/studio-dark
