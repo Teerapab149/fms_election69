@@ -53,6 +53,7 @@ import VerdureClosed from '../../components/vote/VerdureClosed';
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
 import BlossomResults from '../../components/vote/BlossomResults';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
+import BlossomVote from '../../components/vote/BlossomVote';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
@@ -316,6 +317,39 @@ function PreviewBody() {
       }
     }
 
+    // ── blossom family — MULTI ballot (T3.2). Local selection → the SHARED confirm
+    //    popup → navTo('success'), mirroring the classic multi interact flow. Single-
+    //    party is T3.3, so it falls through to the classic vote branch below.
+    if (family === 'blossom' && page === 'vote' && variant !== 'single') {
+      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
+      return (
+        <>
+          <BlossomVote
+            regularParties={PARTIES}
+            specialOptions={SPECIAL}
+            selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId}
+            onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+            isSingleParty={false}
+            user={DUMMY_USER}
+            onConfirm={() => setConfirmOpen(true)}
+            isSubmitting={false}
+            editorMode={false}
+          />
+          <VoteConfirmationModal
+            isOpen={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
+            party={selectedParty}
+            isVoteNo={selectedParty?.number === 0}
+            isDisapprove={selectedParty?.number === -1}
+            isSubmitting={false}
+          />
+        </>
+      );
+    }
+
     // ── classic family (incl. original) — VOTE page composed from the REAL pure
     //    components exactly as app/vote/page.js does for multi-party, but with local
     //    state and zero DB/auth. single → the real cinematic SinglePartyView + footer.
@@ -545,6 +579,23 @@ function PreviewBody() {
   // ── blossom family — Candy Editorial inner pages (static preview slides) ──
   if (family === 'blossom') {
     if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode />;
+    if (page === 'vote' && variant !== 'single') {
+      // T3.2 MULTI ballot static slide (single-party is T3.3 → falls to classic below)
+      return (
+        <BlossomVote
+          regularParties={PARTIES}
+          specialOptions={SPECIAL}
+          selectedPartyId={null}
+          onSelect={noop}
+          onViewDetails={noop}
+          isSingleParty={false}
+          user={DUMMY_USER}
+          onConfirm={noop}
+          isSubmitting={false}
+          editorMode
+        />
+      );
+    }
     if (page === 'results') {
       const revealed = variant === 'revealed';
       return (

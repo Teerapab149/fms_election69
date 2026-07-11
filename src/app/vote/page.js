@@ -15,6 +15,7 @@ import MultiPartyView from '../../components/vote/MultiPartyView';
 import GumroadVote from '../../components/vote/GumroadVote';
 import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VerdureVote from '../../components/vote/VerdureVote';
+import BlossomVote from '../../components/vote/BlossomVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -82,6 +83,10 @@ export default function VotePage() {
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
+  // T3.2: Blossom Candy Editorial ballot — MULTI-party only. Single-party keeps
+  // falling to the classic layout below until T3.3 builds the Blossom booth.
+  const useBlossomVote = isBlossom && !isSingleParty;
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -119,10 +124,24 @@ export default function VotePage() {
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
       : isVerdure
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#E7F1E2]"
+      : useBlossomVote
+      ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative"
       : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[var(--color-bg)]"}>
       <PageThemeOverrides page="vote" />
 
-      {isVerdure ? (
+      {useBlossomVote ? (
+        <BlossomVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={() => setIsConfirmModalOpen(true)}
+        />
+      ) : isVerdure ? (
         <VerdureVote
           regularParties={regularParties}
           specialOptions={specialOptions}
