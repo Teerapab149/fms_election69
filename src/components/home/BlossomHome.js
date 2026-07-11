@@ -52,7 +52,7 @@ function blossomMeta(gc = {}) {
 //    wearing the editorial skin (1.5px ink hairline bottom border, mono nav). Logo ·
 //    nav (mono) · user chip (sign-in / skeleton / authed pill + dropdown, T3.1b) ·
 //    burger. Mobile → real burger + slide-down sheet (menuOpen), tap targets ≥44px. ──
-function BlossomTopBar({ editorMode, onSignIn }) {
+export function BlossomTopBar({ editorMode, onSignIn, active = "/" }) {
   const { data: session, status } = useSession();
   const [mounted, setMounted] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
@@ -85,9 +85,9 @@ function BlossomTopBar({ editorMode, onSignIn }) {
   };
 
   const NAV = [
-    { th: "หน้าแรก", href: "/", on: true },
-    { th: "ผู้สมัคร", href: "/candidates", on: false },
-    { th: "ผลคะแนน", href: "/results", on: false },
+    { th: "หน้าแรก", href: "/" },
+    { th: "ผู้สมัคร", href: "/candidates" },
+    { th: "ผลคะแนน", href: "/results" },
   ];
 
   return (
@@ -101,7 +101,7 @@ function BlossomTopBar({ editorMode, onSignIn }) {
 
       <nav className="bl-nav">
         {NAV.map((n) => (
-          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className={n.on ? "bl-nav__link on" : "bl-nav__link"}>{n.th}</a>
+          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className={n.href === active ? "bl-nav__link on" : "bl-nav__link"}>{n.th}</a>
         ))}
       </nav>
 

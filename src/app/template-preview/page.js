@@ -50,6 +50,8 @@ import VerdureResults from '../../components/vote/VerdureResults';
 import VerdureSuccess from '../../components/vote/VerdureSuccess';
 import VerdureClosed from '../../components/vote/VerdureClosed';
 
+import BlossomCandidates from '../../components/vote/BlossomCandidates';
+
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
@@ -417,6 +419,12 @@ function PreviewBody() {
       );
     }
 
+    // Blossom family — its own Candy Editorial candidates layout (home goes through
+    // HomeRenderer above; other blossom inner pages fall to classic for now).
+    if (family === 'blossom' && page === 'candidates') {
+      return <BlossomCandidates candidates={PARTIES} editorMode={false} />;
+    }
+
     // other classic/original inner pages (candidates/results/closed/party): keep the
     // static EditorPreview renders (out of scope). The click seam contains their links.
     return renderPage();
@@ -509,6 +517,11 @@ function PreviewBody() {
       const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
       return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} />);
     }
+  }
+
+  // ── blossom family — Candy Editorial candidates layout (static preview slide) ──
+  if (family === 'blossom' && page === 'candidates') {
+    return <BlossomCandidates candidates={PARTIES} editorMode />;
   }
 
   // ── classic family (incl. original — its inner pages render the classic layout) ──

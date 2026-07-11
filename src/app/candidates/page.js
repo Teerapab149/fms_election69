@@ -16,6 +16,7 @@ import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadCandidates from '../../components/vote/GumroadCandidates';
 import StudioDarkCandidates from '../../components/vote/StudioDarkCandidates';
 import VerdureCandidates from '../../components/vote/VerdureCandidates';
+import BlossomCandidates from '../../components/vote/BlossomCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -41,6 +42,7 @@ export default function CandidatesPage({
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -144,6 +146,16 @@ export default function CandidatesPage({
       <>
         {!editorMode && <PageThemeOverrides page="candidates" />}
         <VerdureCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // BLOSSOM layout (own Candy Editorial chrome) — replaces the classic page entirely.
+  if (isBlossom) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <BlossomCandidates candidates={parties} editorMode={editorMode} />
       </>
     );
   }
