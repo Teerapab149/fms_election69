@@ -77,20 +77,18 @@
 - Acceptance: 4 ธีม + 390px + hero ทุกสถานะ CTA (ก่อนเปิด/เปิด/โหวตแล้ว/ปิด/pause
   ผ่าน template-preview interact) ไม่มี layout shift; commit แยก 1 ก้อน
 
-## P2 — Home micro-craft (ยกจาก 8 → 9, ~half day)
-- [ ] **T2.1 Digit roll**: เลข countdown เดินแบบ slide/roll (transform-only, ห้าม layout shift,
-      ปิดใต้ reduced-motion) — วินาทีเปลี่ยนคือชีพจรของแถบหมึก
-- [ ] **T2.2 Poster treatment**: duotone/grain ให้โปสเตอร์กลืนธีม (CSS filter/blend บน
-      wrapper — ห้ามแก้ไฟล์ภาพ เพราะ admin อัปโหลดเอง) + hover เผยสีจริง
-- [ ] **T2.3 Scroll parallax เบา ๆ**: blobs ขยับสวนทิศ scroll เล็กน้อย, แถบหมึก reveal
-      ตอนเข้าจอ (ใช้ CSS scroll-driven animations + fallback IntersectionObserver;
-      งบ perf: transform/opacity เท่านั้น)
-- [ ] **T2.4 CTA physics**: ปุ่มหลัก magnetic-lite (ตามเมาส์ ±4px) + press ยุบจริง;
-      hover ลิงก์ nav มี underline slide
-- [ ] **T2.5 จูน texture**: dot-grid + crop marks ตอนนี้จางเกิน (มองแทบไม่เห็นบนบางจอ) —
-      ขยับ opacity ขึ้นจนเห็นแบบตั้งใจแต่ไม่รบกวนตัวอักษร; เช็คทั้ง 4 ธีม
-- Acceptance ต่อ ticket: computed styles + screenshot ก่อน/หลัง + 60fps (ไม่มี jank ใน
-  Performance trace คร่าว ๆ) + reduced-motion ผ่าน
+## P2 — Home micro-craft ✅ DONE ทั้ง 5 (commit `0488db1`, 2026-07-11 ดึก)
+- [x] **T2.1 Digit roll** — per-char cells + glyph-keyed remount, no layout shift, stroke inherits
+- [x] **T2.2 Poster treatment** — duotone ผ่าน overlay --bl-primary mix-blend color, hover เผยสีจริง,
+      touch ได้ tint อ่อนแบบ always-on
+- [x] **T2.3 Scroll parallax** — CSS scroll-driven (@supports gated), base state visible เสมอ
+- [x] **T2.4 CTA physics** — magnetic-lite rAF (hover+fine pointer เท่านั้น, ปิดใน editor/reduce)
+      + nav underline slide
+- [x] **T2.5 จูน texture** — dot-grid 15%/24px, crop marks 45%
+- ⚠️ **หนี้ verify ค้าง:** browser pane ของเครื่อง dev บังคับ prefers-reduced-motion:reduce +
+  screenshot ค้าง → motion สด (digit roll ticking จริง / parallax / magnetic) verify ได้แค่
+  CSSOM+computed — ต้องรอบ visual กับเจ้าของบนเครื่องปกติ + ตั้งวันเลือกตั้งอนาคตชั่วคราว
+  เพื่อเห็น countdown เดินสด
 
 ## P3 — Inner pages ภาษา Blossom (ยกจาก 9 → 10, งานใหญ่สุด, ~2-3 sessions)
 ตอนนี้หน้า inner ใช้ classic layout + Layer-1 token จาก builtIn/blossom.js — ใช้งานได้
