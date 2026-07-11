@@ -5,6 +5,22 @@
 > Workflow บังคับ: **Fable = advisor/reviewer เท่านั้น · Opus 4.8 subagent = worker ทุกงาน execution**
 > (brief ต้องมี Task-0 audit + raw outputs + ห้าม commit จนรีวิวผ่าน + ห้ามหยุด dev server :3000)
 
+## ⏰ Automation (ตั้งไว้ 2026-07-11 กลางคืน — เจ้าของนอน)
+- Scheduled task `blossom-autorun-0230` (2026-07-12 02:30 +07): P2 micro-craft ~3-5 ticket เล็ก
+- Scheduled task `blossom-autorun-0800` (2026-07-12 08:00 +07): ปิด P2 ที่ค้าง → P3 ~2 ticket ใหญ่
+  (T3.1 /candidates → T3.4 /success+/closed; หน้า vote T3.2/T3.3 รอเจ้าของคุม)
+- เจ้าของอนุมัติล่วงหน้า: commit atomic ต่อ ticket หลัง verify ผ่าน + push ได้เลย
+- **งบต่อ session (วัดจากของจริง):** งานเล็ก 3-5 ticket หรือ งานใหญ่ ~2 ticket แล้ว token หมด —
+  อย่าเริ่ม ticket ใหม่ถ้าเหลือไม่พอทั้ง implement+verify+commit; ปิดรอบด้วย plan+memory+push เสมอ
+
+## สถานะ commit (อัปเดต 2026-07-11 กลางคืน)
+- ✅ P1 ทั้งหมด push แล้ว: `57d2c4b` token plumbing · `a3c574b` home redesign + 4 themes ·
+  `be55013` docs + P-LOG-078/079
+- ✅ P1.5 ปุ่ม hero → anchor scroll (แนวทาง A, เจ้าของอนุมัติ): `7e524a7`
+- ✅ P1.6 footer classic single-line + fix countdown colon มือถือ: `e195ee6` · gitignore
+  claude skill/: `1835349`
+- ➡️ ถัดไป: P2 (เริ่มที่ T2.1)
+
 ## Feedback เจ้าของ 2026-07-11 (หลังดูของจริง)
 - ✅ **ถูกใจ Blossom โดยรวม** — ทิศทาง Candy Editorial ผ่าน ไม่ต้องรื้อ concept
 - ❌ **ปุ่ม "ดูผู้สมัคร" ซ้ำซ้อน** — hero มี `bl-cta2` "ดูผู้สมัคร →" (BlossomHome.js:354)
