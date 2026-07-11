@@ -93,8 +93,12 @@
 ## P3 — Inner pages ภาษา Blossom (ยกจาก 9 → 10, งานใหญ่สุด, ~2-3 sessions)
 ตอนนี้หน้า inner ใช้ classic layout + Layer-1 token จาก builtIn/blossom.js — ใช้งานได้
 แต่ไม่ใช่ Candy Editorial. ทำทีละหน้า (ลำดับตาม journey ผู้ใช้):
-- [ ] **T3.1 /candidates** — grid พรรคแบบ editorial (hairline rules + สติกเกอร์เรขาคณิต,
-      hover เผย accent)
+- [x] **T3.1 /candidates** ✅ DONE 2026-07-12 เช้ามืด — BlossomCandidates.js (editorial index:
+      hollow "ผู้สมัคร" + count numeral + party index rows + empty state), dispatch isBlossom
+      ใน candidates/page.js (recipe เดียวกับ verdure), preview wiring interact+static,
+      BlossomTopBar → export + active prop; hover = row tint 7% (advisor ยอมรับ deviation
+      จาก underline — ชื่อพรรคไทย 2 บรรทัด clamp ทำ underline ดูพัง); verify 4 ธีม/390px/
+      classic untouched ผ่าน; P-LOG-080 (frozen-transition artifact) ลง DECISIONS แล้ว
 - [ ] **T3.2 /vote multi** — การ์ดพรรค + confirm modal โทน Blossom (สี 3 ทางเลือก
       semantic เขียว/แดง/ส้ม **ห้ามแตะ** — กติกาเดิม)
 - [ ] **T3.3 /vote single (booth)** — cinematic เวอร์ชัน candy

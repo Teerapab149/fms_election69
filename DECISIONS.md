@@ -1760,6 +1760,20 @@ forces its specificity to 0, so any per-link class always wins (see BlossomHome.
 in styled-jsx should be written `:where(.ns-root) el`.
 **Tags:** `#styled-jsx` `#specificity` `#where` `#blossom`
 
+### P-LOG-080: [2026-07-12] Browser-pane frozen transitions poison computed-style reads
+**Context:** Verifying Blossom candidates page colours via getComputedStyle in the dev-machine
+Browser pane (which is throttled + forces prefers-reduced-motion).
+**Symptom:** elements with `transition: background …` report their transition START value
+forever (e.g. CTA pill read `rgba(0,0,0,0)` instead of its real bg); a CSSTransition sits at
+`playState:"running", currentTime:0` and never advances. Looks exactly like a token bug.
+**Root cause:** pane throttling freezes the transition timeline at t=0; getComputedStyle then
+returns the interpolated (start) value, not the author value.
+**Fix/Verification rule:** before reading computed colours on this machine, disable transitions
+on the element (`el.style.transition='none'` + reflow) or assert against CSSOM rules; also
+remember scroll-driven animations can't be sampled here (verify via CSS.supports + CSSOM +
+a standalone `new ScrollTimeline()` resolve; defer live-motion to a no-preference machine).
+**Tags:** `#verification` `#browser-pane` `#transitions` `#computed-styles`
+
 ---
 
 ## 🚫 Rejected Approaches
