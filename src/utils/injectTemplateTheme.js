@@ -12,6 +12,7 @@ import { verdureTheme, hexToRgbTriple } from "./verdurePalettes";
 import { gumroadTheme } from "./gumroadPalettes";
 import { originalTheme } from "./originalPalettes";
 import { studioDarkTheme } from "./studioDarkPalettes";
+import { blossomTheme } from "./blossomPalettes";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
@@ -19,6 +20,55 @@ export function injectTemplateTheme(doc, themeSlug) {
   else if (themeSlug.startsWith("gumroad")) injectGumroad(doc, themeSlug);
   else if (themeSlug.startsWith("original")) injectOriginal(doc, themeSlug);
   else if (themeSlug.startsWith("studio-dark")) injectStudio(doc, themeSlug);
+  else if (themeSlug.startsWith("blossom")) injectBlossom(doc, themeSlug);
+}
+
+function injectBlossom(doc, themeSlug) {
+  const t = blossomTheme(themeSlug);
+  // 1) Home surface — BlossomHome reads the --bl-* ramp on .bl-root.
+  const blVars = {
+    "--bl-canvas": t.canvas, "--bl-card": t.card, "--bl-ink": t.ink, "--bl-ink2": t.ink2,
+    "--bl-faint": t.faint, "--bl-line": t.line,
+    "--bl-primary": t.primary, "--bl-primary-deep": t.primaryDeep, "--bl-primary-soft": t.primarySoft,
+    "--bl-on-primary": t.onPrimary,
+    "--bl-sup1": t.sup1, "--bl-sup1-ink": t.sup1Ink,
+    "--bl-sup2": t.sup2, "--bl-sup2-ink": t.sup2Ink,
+    "--bl-sup3": t.sup3, "--bl-sup3-ink": t.sup3Ink,
+  };
+  doc.querySelectorAll(".bl-root").forEach((r) => {
+    r.classList.add("bl-theming");
+    for (const k in blVars) r.style.setProperty(k, blVars[k]);
+    setTimeout(() => r.classList.remove("bl-theming"), 600);
+  });
+  // 2) Inner pages — the classic layout has NO .bl-root; it reads Layer-1
+  // --color-* tokens SSR'd on .fms-app from the APPLIED template, so a previewed
+  // slug must override them inline here (inline beats the SSR <style>). Mapping
+  // MUST equal buildBlossomTemplate in builtIn/blossom.js — parity rule.
+  const apps = doc.querySelectorAll(".fms-app");
+  if (!apps.length) return;
+  // .bl-theming's ease rule lives in BlossomBaseStyles (home only) — carry an
+  // .fms-app-scoped copy into the iframe so inner pages morph smoothly.
+  if (!doc.getElementById("bl-morph-style")) {
+    const st = doc.createElement("style");
+    st.id = "bl-morph-style";
+    st.textContent =
+      ".fms-app.bl-theming, .fms-app.bl-theming *, .fms-app.bl-theming *::before, .fms-app.bl-theming *::after { transition: background-color .5s ease, background .5s ease, color .5s ease, border-color .5s ease, box-shadow .5s ease, fill .5s ease, stroke .5s ease !important; }";
+    doc.head.appendChild(st);
+  }
+  const tokens = {
+    "--color-primary": t.primary,
+    "--color-accent": t.primaryDeep,
+    "--color-bg": t.canvas,
+    "--color-surface": t.card,
+    "--color-text": t.ink,
+    "--color-text-muted": t.ink2,
+    "--color-border": t.line,
+  };
+  apps.forEach((r) => {
+    r.classList.add("bl-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
+    setTimeout(() => r.classList.remove("bl-theming"), 600);
+  });
 }
 
 function injectStudio(doc, themeSlug) {
