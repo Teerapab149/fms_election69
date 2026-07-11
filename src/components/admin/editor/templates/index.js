@@ -22,6 +22,7 @@ import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerr
 // builder + palettes are KEPT in builtIn/original.js + originalPalettes.js so
 // re-enabling is just re-importing + re-registering them below.
 import { originalTemplate } from "./builtIn/original";
+import { blossomTemplate, blossomSkyTemplate, blossomMintTemplate, blossomButterTemplate } from "./builtIn/blossom";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
@@ -42,8 +43,12 @@ const BUILT_IN_TEMPLATES = {
   "verdure-honey": verdureHoneyTemplate,
   "verdure-teal":  verdureTealTemplate,
   "verdure-berry": verdureBerryTemplate,
-  original:            originalTemplate
+  original:            originalTemplate,
   // field-colour variants un-registered (purple-only) — see import note above
+  blossom:             blossomTemplate,
+  "blossom-sky":       blossomSkyTemplate,
+  "blossom-mint":      blossomMintTemplate,
+  "blossom-butter":    blossomButterTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).
