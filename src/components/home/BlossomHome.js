@@ -418,13 +418,9 @@ export default function BlossomHome({
           </div>
         </section>
 
-        {/* ===== footer ===== */}
+        {/* ===== footer — plain classic line (owner 2026-07-11: แบบเดิมที่เคยใช้) ===== */}
         <footer className="bl-footer">
-          <div className="bl-footer__lines">
-            <span>© FMS@PSU{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""} · ระบบเลือกตั้งออนไลน์</span>
-            <span>{meta.org}</span>
-          </div>
-          <span className="bl-fm">{meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""}</span>
+          <p>© FMS@PSU{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
@@ -723,15 +719,11 @@ export default function BlossomHome({
         .bl-count.is-closed .bl-count-line { display:none; }
         .bl-count.is-closed .bl-count-closed { display:block; }
 
-        /* ---- footer: follows the ink band (band already closes the page, so a
-           subtle line hairline replaces the heavy ink rule) ---- */
-        .bl-footer { margin-top:0; padding-top:26px; border-top:1px solid var(--bl-line);
-          display:flex; justify-content:space-between; align-items:flex-start; gap:10px 18px; flex-wrap:wrap;
-          font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
-          color:var(--bl-ink2); line-height:1.9; }
-        .bl-footer__lines { display:flex; flex-direction:column; gap:2px; min-width:0; }
-        .bl-footer .bl-fm { color:var(--bl-primary-deep); font-weight:700; flex-shrink:0;
-          display:inline-flex; align-items:center; }
+        /* ---- footer: plain classic single line, centered (owner 2026-07-11 —
+           the original-look small caps on the Blossom canvas, colours via tokens) ---- */
+        .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center; }
+        .bl-footer p { margin:0; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+          font-weight:500; color:var(--bl-ink2); }
 
         /* ========== TABLET+ : inline nav replaces burger/sheet ========== */
         @media (min-width:768px) {
@@ -741,6 +733,8 @@ export default function BlossomHome({
           .bl-burger, .bl-sheet { display:none; }
           /* topbar is 73px here (no sheet row) — tighten the anchor clearance */
           .bl-feature { scroll-margin-top:88px; }
+          /* footer follows the OriginalHome scale (10px mobile / 12px md) */
+          .bl-footer p { font-size:12px; }
         }
         /* ========== DESKTOP: copy flows around the pinned poster ========== */
         @media (min-width:900px) {
@@ -760,6 +754,10 @@ export default function BlossomHome({
         }
         @media (max-width:560px) {
           .bl-ring { position:relative; top:auto; right:auto; margin:0 0 22px auto; }
+          /* countdown: 4 segments + colons measure ~405px vs 346px available at 390 —
+             the 4th segment orphan-wrapped behind a dangling colon. Dropping the colon
+             separators (298px + gaps = ~321px) keeps all 4 digits full-size on one row */
+          .bl-colon { display:none; }
         }
 
         /* reduced motion — scope to .bl-root, keep transitions (theme morph may stay) */
