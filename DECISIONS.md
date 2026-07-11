@@ -1791,6 +1791,20 @@ and look for a 404 on the route's page chunk. If found → Rule 7 recovery (stop
 
 ---
 
+### P-LOG-082: [2026-07-12] Programmatic .click() → wait 2 rAF before reading computed state
+**Context:** Verifying BlossomVote's selected-row styles (T3.2) by dispatching `.click()` from
+javascript_tool, then immediately calling getComputedStyle.
+**Symptom:** the read reflects the PRE-update DOM — the `is-selected` class isn't applied yet,
+so colours/borders look "broken" even though the UI is correct.
+**Root cause:** React processes the state update and re-renders on the next tick; a synchronous
+read after a programmatic click races the render.
+**Fix/Verification rule:** after any programmatic interaction, await two nested
+`requestAnimationFrame`s (or a short timeout) before reading classes/computed styles.
+Complements P-LOG-080 (disable transitions first).
+**Tags:** `#verification` `#browser-pane` `#react` `#computed-styles`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

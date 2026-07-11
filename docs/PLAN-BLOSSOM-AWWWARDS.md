@@ -99,8 +99,16 @@
       BlossomTopBar → export + active prop; hover = row tint 7% (advisor ยอมรับ deviation
       จาก underline — ชื่อพรรคไทย 2 บรรทัด clamp ทำ underline ดูพัง); verify 4 ธีม/390px/
       classic untouched ผ่าน; P-LOG-080 (frozen-transition artifact) ลง DECISIONS แล้ว
-- [ ] **T3.2 /vote multi** — การ์ดพรรค + confirm modal โทน Blossom (สี 3 ทางเลือก
-      semantic เขียว/แดง/ส้ม **ห้ามแตะ** — กติกาเดิม)
+- [x] **T3.2 /vote multi** ✅ DONE 2026-07-12 (`441e02f`, owner คุมสด) — BlossomVote
+      (ballot moment: hollow "เลือกพรรค" + voter receipt + ballot index rows เลือกได้
+      selected = ink border + diamond เรขาคณิต; งดออกเสียง คง semantic ส้ม #ea580c
+      ไม่ทาสี candy; confirm bar fixed → เปิด shared VoteConfirmationModal ที่ parent
+      ไม่แตะ modal — อ่านโทน candy เองผ่าน PageThemeOverrides); dispatch guard
+      `isBlossom && !isSingleParty` (single ตกไป classic จนกว่า T3.3); disapprove
+      ไม่ render ใน multi ตาม convention MultiPartyView; preview wiring interact
+      (selection → popup → success) + static; verify flow เต็ม + 4 slug + 390px
+      (logo พับ, bar ซ้อนแนวตั้ง) + siblings/live untouched; P-LOG-082 (rAF ×2
+      หลัง programmatic click ก่อนอ่าน computed) ลง DECISIONS
 - [ ] **T3.3 /vote single (booth)** — cinematic เวอร์ชัน candy
 - [x] **T3.4 /success + /closed** ✅ DONE 2026-07-12 (`a05194c`) — BlossomSuccess (ink-band
       ฉลอง + receipt line + confetti เรขาคณิต + next-step panel, modal ฟอร์ม/auth guard คงอยู่ที่
