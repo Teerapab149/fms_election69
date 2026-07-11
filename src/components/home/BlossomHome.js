@@ -145,6 +145,25 @@ function BlossomTopBar({ editorMode, onSignIn }) {
   );
 }
 
+// ── countdown digit roll (T2.1): each value renders as fixed-width, overflow-
+//    hidden character cells. The inner char span is KEYED by its glyph, so when a
+//    position's digit changes React remounts just that span → the blRoll keyframe
+//    (translateY(100%)→0) plays for the incoming glyph only. Transform-only, so no
+//    layout shift; reduced-motion nukes the animation (global rule) → instant swap.
+//    Hollow-stroke segs style .bl-cd-n; color:transparent + -webkit-text-stroke
+//    inherit down to each .bl-cd-char, so the outline survives the split. ──
+function BlCdDigits({ value }) {
+  return (
+    <span className="bl-cd-n">
+      {String(value).split("").map((ch, i) => (
+        <span className="bl-cd-cell" key={i}>
+          <span className="bl-cd-char" key={ch}>{ch}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 // ── loop-safe phase-aware countdown (mirrors the 7086f21 tick pattern: stable
 //    interval, deps only on the resolved date strings + systemMode) ──
 function useCountdown(globalConfig, systemMode) {
@@ -240,6 +259,42 @@ export default function BlossomHome({
     io.observe(el);
     return () => io.disconnect();
   }, [mounted, editorMode, rawStats.totalVoted, pct, partyCount]);
+
+  // ── magnetic-lite CTA (T2.4, progressive enhancement) — the primary button drifts
+  //    up to ±4px toward the pointer (rAF-throttled, transform only). STRICTLY gated:
+  //    editorMode off (P-LOG-002 — no live behaviour in the editor), hover+fine pointer
+  //    only (never touch), and reduced-motion disables it. Disabled-state CTA opts out.
+  //    On leave the inline transform is cleared so the CSS hover/press transitions
+  //    resume. Never gates visibility — the button is fully rendered without it. ──
+  const ctaRef = useRef(null);
+  useEffect(() => {
+    if (!mounted || editorMode) return undefined;
+    const el = ctaRef.current;
+    if (!el) return undefined;
+    const fine = window.matchMedia("(hover:hover) and (pointer:fine)");
+    const reduce = window.matchMedia("(prefers-reduced-motion:reduce)");
+    if (!fine.matches || reduce.matches) return undefined;
+    const MAX = 4;
+    let raf = 0, tx = 0, ty = 0;
+    const apply = () => { raf = 0; el.style.transform = `translate(${tx}px, ${ty}px)`; };
+    const onMove = (e) => {
+      if (el.classList.contains("is-disabled")) return;
+      const r = el.getBoundingClientRect();
+      const clamp = (d, half) => Math.max(-MAX, Math.min(MAX, (d / Math.max(1, half)) * MAX));
+      tx = clamp(e.clientX - (r.left + r.width / 2), r.width / 2);
+      ty = clamp(e.clientY - (r.top + r.height / 2), r.height / 2);
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    const onLeave = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } el.style.transform = ""; };
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
+      if (raf) cancelAnimationFrame(raf);
+      el.style.transform = "";
+    };
+  }, [mounted, editorMode]);
 
   if (!mounted) return null;
 
@@ -350,7 +405,7 @@ export default function BlossomHome({
           )}
 
           <div className="bl-cta-row">
-            <a href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
+            <a ref={ctaRef} href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
             <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
           </div>
         </section>
@@ -406,13 +461,13 @@ export default function BlossomHome({
           <div className="bl-count__in">
             <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" />{cdCap}</div>
             <div className="bl-count-line">
-              <span className="bl-seg"><span className="bl-cd-n">{pad2(cd.d)}</span><span className="bl-u">วัน / DAYS</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u">วัน / DAYS</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><span className="bl-cd-n">{pad2(cd.h)}</span><span className="bl-u">ชม. / HRS</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u">ชม. / HRS</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><span className="bl-cd-n">{pad2(cd.m)}</span><span className="bl-u">นาที / MIN</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.m)} /><span className="bl-u">นาที / MIN</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><span className="bl-cd-n">{pad2(cd.s)}</span><span className="bl-u">วินาที / SEC</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.s)} /><span className="bl-u">วินาที / SEC</span></span>
             </div>
             <div className="bl-count-closed">{cd.label}<small>{cdClosedSmall}</small></div>
           </div>
@@ -429,8 +484,8 @@ export default function BlossomHome({
         .bl-root { overflow-x:hidden; }
         /* dot-grid paper texture — sits above the blobs (paint order), under content */
         .bl-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 9%, transparent) 1px, transparent 1.4px);
-          background-size:26px 26px; }
+          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 15%, transparent) 1px, transparent 1.4px);
+          background-size:24px 24px; }
         /* :where() keeps this default at zero specificity (mockup used bare "a{}")
            so per-link classes (.bl-cta, .bl-nav__link, ...) always win */
         :where(.bl-root) a { color:var(--bl-primary-deep); text-decoration:none; }
@@ -467,8 +522,15 @@ export default function BlossomHome({
         .bl-nav__link { font-family:var(--bl-fm); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
           color:var(--bl-ink2); position:relative; padding-bottom:2px; border-radius:4px; transition:color .2s ease; }
         .bl-nav__link.on, .bl-nav__link:hover { color:var(--bl-ink); }
-        .bl-nav__link.on::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:3px;
-          background:var(--bl-primary); border-radius:2px; }
+        /* underline (T2.4): every link carries the bar; it slides in from the left on
+           hover (scaleX 0→1, transform-only), while the active .on link holds it static
+           at full width. reduced-motion keeps the transition (not an animation) → still
+           fine; the bar just appears without the slide feel. */
+        .bl-nav__link::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:3px;
+          background:var(--bl-primary); border-radius:2px; transform:scaleX(0); transform-origin:left;
+          transition:transform .28s cubic-bezier(.22,1,.36,1); }
+        .bl-nav__link:hover::after { transform:scaleX(1); }
+        .bl-nav__link.on::after { transform:scaleX(1); }
 
         /* ---- user chip + burger ---- */
         .bl-userwrap { position:relative; margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
@@ -538,8 +600,8 @@ export default function BlossomHome({
         .bl-hero { position:relative; padding-top:34px; }
         /* print crop mark — editorial registration corner */
         .bl-hero::before { content:""; position:absolute; top:12px; left:0; width:14px; height:14px;
-          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 32%, transparent);
-          border-left:1.5px solid color-mix(in srgb, var(--bl-ink) 32%, transparent); }
+          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent);
+          border-left:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent); }
 
         /* spinning textPath ring — the family signature (enlarged; text sits OVER it) */
         .bl-ring { width:clamp(180px,26vw,300px); height:clamp(180px,26vw,300px);
@@ -632,8 +694,8 @@ export default function BlossomHome({
         /* geometric candy accent — hidden on mobile, half-circle peeks from left on desktop */
         .bl-feature-orb { display:none; }
         .bl-feature::before { content:""; position:absolute; top:-24px; right:0; width:14px; height:14px;
-          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 32%, transparent);
-          border-right:1.5px solid color-mix(in srgb, var(--bl-ink) 32%, transparent); }
+          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent);
+          border-right:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent); }
         .bl-posterwrap { width:min(80vw,380px); margin:0 auto; position:relative;
           animation:blPosterIn .8s cubic-bezier(.22,1,.36,1) both .85s; }
         .bl-poster { margin:0; position:relative; background:var(--bl-card); padding:10px 10px 14px;
@@ -642,7 +704,22 @@ export default function BlossomHome({
           transition:transform .25s ease, box-shadow .25s ease; }
         .bl-poster:hover { transform:rotate(0deg) translateY(-4px);
           box-shadow:0 28px 52px -22px color-mix(in srgb, var(--bl-ink) 34%, transparent); }
-        .bl-poster__img { display:block; width:100%; height:auto; border-radius:3px; }
+        /* duotone (T2.2, CSS only — image file untouched): the poster half-belongs to
+           the theme by default (grayscale + a --bl-primary "color" blend clipped to the
+           mat's inner edge), then reveals its true colour on hover. Touch devices (no
+           hover) keep a LIGHTER always-on tint so the poster stays readable with no way
+           to reveal — @media (hover:hover) strengthens the duotone + wires the reveal. */
+        .bl-poster__img { display:block; width:100%; height:auto; border-radius:3px;
+          filter:grayscale(.4) contrast(1.02); transition:filter .35s ease; }
+        .bl-poster::after { content:""; position:absolute; top:10px; left:10px; right:10px; bottom:14px;
+          border-radius:3px; background:var(--bl-primary); mix-blend-mode:color; opacity:.28;
+          pointer-events:none; transition:opacity .35s ease; }
+        @media (hover:hover) {
+          .bl-poster__img { filter:grayscale(.85) contrast(1.04); }
+          .bl-poster::after { opacity:.5; }
+          .bl-poster:hover .bl-poster__img { filter:none; }
+          .bl-poster:hover::after { opacity:0; }
+        }
         .bl-poster__tape { position:absolute; top:-11px; width:64px; height:22px; border-radius:2px;
           background:color-mix(in srgb, var(--bl-primary-soft) 82%, transparent);
           border:1px solid color-mix(in srgb, var(--bl-primary) 28%, transparent); }
@@ -701,9 +778,17 @@ export default function BlossomHome({
         .bl-count-cap::after { content:""; flex:1; height:1px; background:color-mix(in srgb, var(--bl-canvas) 20%, transparent); }
         .bl-count-line { display:flex; align-items:baseline; gap:2vw; margin-top:14px; flex-wrap:wrap; }
         .bl-seg { display:flex; flex-direction:column; }
-        /* solid digits = canvas (light on ink); two hollow segs stroked primary / canvas */
+        /* solid digits = canvas (light on ink); two hollow segs stroked primary / canvas.
+           digit roll (T2.1): .bl-cd-n is an inline-flex row of fixed 1ch cells; each cell
+           clips its char, which slides up on remount (blRoll). tabular-nums keeps every
+           glyph 1ch wide → cells never resize between values → zero layout shift. */
         .bl-cd-n { font-family:var(--bl-fd); font-weight:800; font-size:clamp(52px,13vw,120px); line-height:.95;
-          letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:var(--bl-canvas); }
+          letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:var(--bl-canvas);
+          display:inline-flex; align-items:flex-start; }
+        .bl-cd-cell { display:inline-block; width:1ch; height:.95em; overflow:hidden; position:relative; }
+        .bl-cd-char { display:block; text-align:center; will-change:transform;
+          animation:blRoll .28s cubic-bezier(.22,1,.36,1) both; }
+        @keyframes blRoll { from { transform:translateY(100%); } }
         .bl-count-line .bl-seg:nth-child(3) .bl-cd-n { color:transparent;
           -webkit-text-stroke:2.5px var(--bl-primary); text-stroke:2.5px var(--bl-primary); }
         .bl-count-line .bl-seg:nth-child(7) .bl-cd-n { color:transparent;
@@ -759,6 +844,29 @@ export default function BlossomHome({
              separators (298px + gaps = ~321px) keeps all 4 digits full-size on one row */
           .bl-colon { display:none; }
         }
+
+        /* ===== T2.3 scroll parallax — progressive enhancement, transform/opacity ONLY.
+           Gated behind BOTH @supports (animation-timeline) AND no-preference: any
+           unsupporting engine (Firefox/Safari today) or reduced-motion user gets the
+           fully-visible static page — the base rules above ARE the visible state, these
+           only add motion. No JS. Blobs (decorative) counter-scroll on a page scroll()
+           timeline as a SECOND animation paired to their existing blMorph (border-radius
+           morph + transform parallax don't fight). Ink band + figures — which carry NO
+           entrance animation (blRise lives on .bl-feature et al., not here) — rise+fade
+           on their own view() timeline as they enter. ===== */
+        @supports (animation-timeline: view()) {
+          @media (prefers-reduced-motion:no-preference) {
+            .bl-blob-1 { animation:blMorph 14s ease-in-out infinite alternate, blBlobPar linear both;
+              animation-timeline:auto, scroll(root block); }
+            .bl-blob-2 { animation:blMorph 18s ease-in-out infinite alternate-reverse, blBlobParRev linear both;
+              animation-timeline:auto, scroll(root block); }
+            .bl-figures, .bl-count { animation:blViewRise linear both;
+              animation-timeline:view(); animation-range:cover 0% cover 30%; }
+          }
+        }
+        @keyframes blBlobPar { from { transform:translateY(5vh); } to { transform:translateY(-5vh); } }
+        @keyframes blBlobParRev { from { transform:translateY(-4vh); } to { transform:translateY(4vh); } }
+        @keyframes blViewRise { from { opacity:0; transform:translateY(42px); } to { opacity:1; transform:translateY(0); } }
 
         /* reduced motion — scope to .bl-root, keep transitions (theme morph may stay) */
         @media (prefers-reduced-motion:reduce) {
