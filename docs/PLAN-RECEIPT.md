@@ -31,8 +31,13 @@
     contrast+holo ramp) — ยกจาก scratchpad, ไฟล์ต้นทางไม่ commit (design artifact)
   - ✅ **owner ตอบคำถามเปิด §9 ครบ 2026-07-12 (LOCKED):** กระดาษอุ่น · 4 ธีม ·
     ตราปั๊มเท่านั้น (ห้ามลายมือ) · ephemeral ยืนยัน — ดู CONCEPT §9
-  - ⏸ NEXT: เลือก Success direction (Fable กำลังทำการ์ด direction A/B/C ให้เลือก) →
-    เลือกแล้วเริ่ม R1 build ได้เลย (gate ครบ: Blossom ปิด + ephemeral ยืนยัน + เลือก direction)
+  - ✅ **Success direction A/B/C push เข้า project แล้ว** (การ์ดกลุ่ม "Receipt"):
+    A = `holo-foil-demo.html` (ใบเสร็จกลาง symmetric + seal/CTA ข้าง — clean/product) ·
+    B = `success-B-printer.html` (หัวเครื่องพิมพ์ + ใบเสร็จไหลลง — cinematic mobile,
+    **Fable แนะนำ** เพราะตรง vision "ค่อยๆ print ออกมา" สุด + mobile-native + animate ง่าย) ·
+    C = `success-C-collage.html` (headline + วัตถุกระดาษแปะเทป — editorial showpiece แต่ desktop-lean/sparse)
+  - ⏸ NEXT: owner เลือก 1 direction (ปรับต่อใน claude.ai/design ได้) → เริ่ม R1 build
+    (gate ครบทุกข้อแล้ว: Blossom ปิด + ephemeral ยืนยัน + รอแค่ตัวเลือก direction)
 - R1..R5 = ยังไม่เริ่ม (build phase เริ่มเมื่อ owner เลือก direction จาก R0)
 
 **เงื่อนไขเริ่ม build:** Blossom ต้องปิด (P4 gate) ก่อน — ห้ามคู่ขนานสองตระกูลครึ่ง ๆ กลาง ๆ
