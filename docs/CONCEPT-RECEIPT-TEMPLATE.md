@@ -19,7 +19,7 @@ Challenge จาก owner: เหมือนเลือกตั้งจร�
 | Prompt เดิมของ owner (ดำสนิท + neo-brutalism + neon lime) | **ชนลายเซ็น gumroad (neo-brutal) + studio-dark (ดำ+lime) — ห้ามใช้ตามตรง** |
 | Dark theme | **owner ยกเลิกแล้ว — ไม่จำเป็นต้อง dark** (2026-07-12) ทิศทางหลัก = โต๊ะกระดาษโทนสว่าง |
 | Color shifting | **owner ต้องการ** → signature = holographic security foil (ดู §4) |
-| Doodle ลายมือ/หน้ายิ้ม | ขัด taste rule (ห้าม icon ตกแต่ง) → ใช้ภาษา "งานพิมพ์ราชการ" แทน: ตราปั๊มหมึก, รูเจาะ, รอยปรุ, sticker die-cut เรขาคณิต — ลายมือได้เฉพาะแบบ "ปากกาเซ็นชื่อ/ประทับ" ถ้า owner อนุมัติตอนเห็นภาพ |
+| Doodle ลายมือ/หน้ายิ้ม | **owner ตัดสิน 2026-07-12: ตราปั๊มเท่านั้น** — ห้ามลายมือเขียน/ลายเซ็น/หน้ายิ้ม/doodle ทุกชนิด; decoration = ตราปั๊มหมึก + รูเจาะ + รอยปรุ + die-cut เรขาคณิต + barcode เท่านั้น |
 | **Ballot secrecy (ซีเรียส)** | ใบเสร็จโชว์ "เลือกอะไร" ได้**ครั้งเดียว ณ moment พิมพ์เท่านั้น** — ไม่ persist, ไม่มีปุ่ม save, ออกจากหน้าแล้วดูซ้ำไม่ได้, พิมพ์กำกับ "ไม่ใช่หลักฐานทางการ"; barcode/QR encode แค่ ballot-ref + timestamp **ห้าม encode ตัวเลือก** (กัน screenshot เป็นหลักฐานซื้อเสียง — ระบบนี้ผ่าน security audit จริงมาแล้ว) |
 | ฟอนต์ไทย monospace | ไม่มีจริงในโลก → ใช้ **Chakra Petch** (ทรงเหลี่ยม/เทคนิคัล ให้เสียงสลิปเครื่องพิมพ์) + tabular numerals; Latin/เลข = mono แท้ (Space Mono/IBM Plex Mono); หัวเรื่อง = sans โครงสร้างทางการโมเดิร์น (ตัวเต็ง: IBM Plex Sans Thai — "ทางการพอ" ไม่แก่) |
 
@@ -109,9 +109,11 @@ hand-drawn smiley doodles. Youthful, high-energy, meticulously aligned to an inv
 grid. Mobile-first 390px; Thai text must read perfectly on the receipt.
 ```
 
-## 9. คำถามเปิดรอ owner ตัดสิน (ตอบตอนเห็นภาพ R0 ก็ได้)
+## 9. คำถามเปิด — ✅ OWNER ตอบครบแล้ว 2026-07-12 (LOCKED — เป็นกติกา build ทันที)
 
-1. โต๊ะพื้นหลัง: กระดาษอุ่น vs เทากลาง vs มีธีมใดธีมหนึ่งเป็น dark เป็น variant พิเศษ
-2. จำนวนธีม: 4 ตาม convention หรือน้อยกว่าเพราะ holo ทำหน้าที่ความหลากหลายอยู่แล้ว
-3. ลายมือ: แบนสนิท หรืออนุญาตแบบ "หมึกปั๊ม/ลายเซ็น" เท่านั้น
-4. ใบเสร็จ ephemeral (ทางที่ Fable แนะนำ) — confirm ยืนยันอีกครั้งก่อน build จริง
+1. **โต๊ะพื้นหลัง = กระดาษอุ่น** (warm paper `--rc-desk #F7F4EE` ~97L) — ไม่มี dark variant
+2. **จำนวนธีม = 4** (ม่วง FMS default / ฟ้า / เหลือง fill-only / เจด) ตาม convention พี่น้อง
+3. **ลายมือ = ตราปั๊มเท่านั้น** — ห้ามลายมือเขียน/ลายเซ็น/หน้ายิ้ม/doodle ทุกชนิด;
+   decoration = ตราปั๊มหมึก + รูเจาะ + รอยปรุ + die-cut เรขาคณิต + barcode เท่านั้น
+4. **Ephemeral receipt = ยืนยัน** — ใบเสร็จโชว์ตัวเลือกครั้งเดียวไม่ persist (ballot secrecy §2
+   ครบทุกข้อ: ไม่มี save/download/share, barcode=ref-only, ป้าย "ไม่ใช่หลักฐานทางการ")

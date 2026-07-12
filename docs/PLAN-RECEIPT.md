@@ -29,9 +29,10 @@
     การ์ด live 2 ใบ กลุ่ม "Receipt": **`holo-foil-demo.html`** (ฟอยล์ color-shift + ตอบ pointer
     + reduced-motion static — verify ด้วย Playwright แล้ว) + **`palette.html`** (base+4 accent
     contrast+holo ramp) — ยกจาก scratchpad, ไฟล์ต้นทางไม่ commit (design artifact)
-  - ⏸ NEXT (owner): เปิด claude.ai/design → project นี้ → ดูการ์ด "Receipt" 2 ใบ →
-    สั่ง iterate 2-3 direction ของ **หน้า Success/ใบเสร็จ** (workflow เดียวกับ Blossom v2-C) →
-    ตอบคำถามเปิด §9 ทั้ง 4 ข้อจากภาพ → กลับมาให้ Fable sync เข้า repo (เริ่ม R1 build)
+  - ✅ **owner ตอบคำถามเปิด §9 ครบ 2026-07-12 (LOCKED):** กระดาษอุ่น · 4 ธีม ·
+    ตราปั๊มเท่านั้น (ห้ามลายมือ) · ephemeral ยืนยัน — ดู CONCEPT §9
+  - ⏸ NEXT: เลือก Success direction (Fable กำลังทำการ์ด direction A/B/C ให้เลือก) →
+    เลือกแล้วเริ่ม R1 build ได้เลย (gate ครบ: Blossom ปิด + ephemeral ยืนยัน + เลือก direction)
 - R1..R5 = ยังไม่เริ่ม (build phase เริ่มเมื่อ owner เลือก direction จาก R0)
 
 **เงื่อนไขเริ่ม build:** Blossom ต้องปิด (P4 gate) ก่อน — ห้ามคู่ขนานสองตระกูลครึ่ง ๆ กลาง ๆ
