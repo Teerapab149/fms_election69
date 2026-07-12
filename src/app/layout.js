@@ -1,6 +1,6 @@
 import './globals.css';
 import Providers from "../components/Providers";
-import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono } from 'next/font/google';
+import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -160,6 +160,20 @@ const spaceMono = Space_Mono({
   display: 'swap',
 });
 
+// Receipt template family (Template #6 — "Paper Materiality"). Chakra Petch = the
+// squared, technical Thai receipt voice with tabular numerals (the "printer slip"
+// sound); paired with IBM Plex Sans Thai (structural headings, already loaded) +
+// Space Mono (Latin/digits/ballot-ref, already loaded). Loading is mandatory — a
+// declared font-family does nothing unless next/font loads it AND it is consumed
+// via a CSS var (--rc-fr on .rc-root). impeccable rule; root cause of the gumroad
+// font drift.
+const chakraPetch = Chakra_Petch({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-chakra',
+  display: 'swap',
+});
+
 // Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
 // so link previews resolve to the real host, not localhost. basePath rides along
 // so the image URL is the full /fms-ovs/... path the asset is actually served at.
@@ -213,7 +227,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} font-sans antialiased`}>
+      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} ${chakraPetch.variable} font-sans antialiased`}>
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}

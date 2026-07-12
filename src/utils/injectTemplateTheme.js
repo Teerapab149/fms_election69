@@ -13,6 +13,7 @@ import { gumroadTheme } from "./gumroadPalettes";
 import { originalTheme } from "./originalPalettes";
 import { studioDarkTheme } from "./studioDarkPalettes";
 import { blossomTheme } from "./blossomPalettes";
+import { receiptTheme } from "./receiptPalettes";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
@@ -21,6 +22,56 @@ export function injectTemplateTheme(doc, themeSlug) {
   else if (themeSlug.startsWith("original")) injectOriginal(doc, themeSlug);
   else if (themeSlug.startsWith("studio-dark")) injectStudio(doc, themeSlug);
   else if (themeSlug.startsWith("blossom")) injectBlossom(doc, themeSlug);
+  else if (themeSlug.startsWith("receipt")) injectReceipt(doc, themeSlug);
+}
+
+function injectReceipt(doc, themeSlug) {
+  const t = receiptTheme(themeSlug);
+  // 1) Receipt surfaces — the pages read the --rc-* ramp on .rc-root.
+  const rcVars = {
+    "--rc-desk": t.desk, "--rc-desk-shade": t.deskShade,
+    "--rc-receipt": t.receipt, "--rc-receipt-edge": t.receiptEdge,
+    "--rc-ink": t.ink, "--rc-ink2": t.ink2, "--rc-faint": t.faint,
+    "--rc-line": t.line, "--rc-stamp-line": t.stampLine,
+    "--rc-holo-1": t.holo1, "--rc-holo-2": t.holo2, "--rc-holo-3": t.holo3,
+    "--rc-holo-4": t.holo4, "--rc-holo-5": t.holo5,
+    "--rc-holo-angle": t.holoAngle, "--rc-holo-shift": t.holoShift,
+    "--rc-accent": t.accent, "--rc-accent-deep": t.accentDeep, "--rc-on-accent": t.onAccent,
+  };
+  doc.querySelectorAll(".rc-root").forEach((r) => {
+    r.classList.add("rc-theming");
+    for (const k in rcVars) r.style.setProperty(k, rcVars[k]);
+    setTimeout(() => r.classList.remove("rc-theming"), 600);
+  });
+  // 2) Inner pages — the classic layout has NO .rc-root; it reads Layer-1
+  // --color-* tokens SSR'd on .fms-app from the APPLIED template, so a previewed
+  // slug must override them inline here (inline beats the SSR <style>). Mapping
+  // MUST equal buildReceiptTemplate in builtIn/receipt.js — parity rule.
+  const apps = doc.querySelectorAll(".fms-app");
+  if (!apps.length) return;
+  // .rc-theming's ease rule lives in ReceiptBaseStyles (receipt pages only) —
+  // carry an .fms-app-scoped copy into the iframe so inner pages morph smoothly.
+  if (!doc.getElementById("rc-morph-style")) {
+    const st = doc.createElement("style");
+    st.id = "rc-morph-style";
+    st.textContent =
+      ".fms-app.rc-theming, .fms-app.rc-theming *, .fms-app.rc-theming *::before, .fms-app.rc-theming *::after { transition: background-color .5s ease, background .5s ease, color .5s ease, border-color .5s ease, box-shadow .5s ease, fill .5s ease, stroke .5s ease !important; }";
+    doc.head.appendChild(st);
+  }
+  const tokens = {
+    "--color-primary": t.accent,
+    "--color-accent": t.accentDeep,
+    "--color-bg": t.desk,
+    "--color-surface": t.receipt,
+    "--color-text": t.ink,
+    "--color-text-muted": t.ink2,
+    "--color-border": t.line,
+  };
+  apps.forEach((r) => {
+    r.classList.add("rc-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
+    setTimeout(() => r.classList.remove("rc-theming"), 600);
+  });
 }
 
 function injectBlossom(doc, themeSlug) {
