@@ -56,6 +56,8 @@ import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import BlossomVote from '../../components/vote/BlossomVote';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
+import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
+
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
@@ -501,6 +503,12 @@ function PreviewBody() {
       if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />;
     }
 
+    // ── receipt family — the "printer moment" Success (R1). Other receipt pages
+    //    are ticketed later; they fall through to classic below for now.
+    if (family === 'receipt' && page === 'success') {
+      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
+    }
+
     // other classic/original inner pages (candidates/results/closed/party): keep the
     // static EditorPreview renders (out of scope). The click seam contains their links.
     return renderPage();
@@ -635,6 +643,12 @@ function PreviewBody() {
     }
     if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
     if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode />;
+  }
+
+  // ── receipt family — static "printer moment" Success slide (R1). editorMode →
+  //    no print animation, sample choice, full receipt visible for review. ──
+  if (family === 'receipt') {
+    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
   }
 
   // ── classic family (incl. original — its inner pages render the classic layout) ──
