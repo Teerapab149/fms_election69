@@ -821,16 +821,20 @@ export default function BlossomHome({
           /* footer follows the OriginalHome scale (10px mobile / 12px md) */
           .bl-footer p { font-size:12px; }
         }
-        /* ========== DESKTOP: copy flows around the pinned poster ========== */
+        /* ========== DESKTOP: poster pinned right, copy centered against it ==========
+           (was float wrap-around — copy never grew tall enough to actually flow under
+           the poster, so the float only produced a bottom-left void; flex + align-center
+           keeps the same visible composition and stays balanced for ANY poster ratio) */
         @media (min-width:900px) {
           .bl-hero { padding-top:52px; }
           /* ring enlarged + pulled up-right so it OVERLAPS the hollow headline line;
              ring z-index:1 < headline z-index:2 → text renders over the ring */
           .bl-ring { right:2vw; top:-6px; }
-          .bl-feature { display:block; }
-          .bl-posterwrap { float:right; width:400px; margin:-6px 10px 26px 52px; }
-          .bl-feature-copy { margin-top:10px; max-width:none; position:relative; z-index:1; }
-          .bl-feature::after { content:""; display:table; clear:both; }
+          /* NOTE: no .bl-feature::after clearfix here — an in-flow ::after would count
+             as a flex item and add a phantom gap slot */
+          .bl-feature { display:flex; flex-direction:row-reverse; align-items:center; gap:52px; }
+          .bl-posterwrap { float:none; flex:0 0 400px; width:400px; margin:0 10px 0 0; }
+          .bl-feature-copy { flex:1; min-width:0; margin-top:0; max-width:none; position:relative; z-index:1; }
           /* solid half-circle candy (geometry) peeking from the left edge, behind content */
           .bl-feature-orb { display:block; position:absolute; left:0; top:38%; width:90px; height:90px;
             border-radius:50%; background:var(--bl-sup3); transform:translateX(-50%); z-index:0; }

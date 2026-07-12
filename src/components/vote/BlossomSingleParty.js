@@ -435,9 +435,11 @@ export default function BlossomSingleParty({
           color:var(--bl-ink2); }
         .bl-single-root .bl-sp-num b { color:var(--bl-primary-deep); font-weight:700; }
         /* display word — SOLID (the party name), calm ink; not hollow (action page). */
+        /* party name wraps up to ~3 lines (masthead grows with content); ellipsis only
+           caps an extreme name at line 3. line-clamp:2 clipped long names to "…" at 390 */
         .bl-single-root .bl-sp-word { margin:6px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:.98;
-          font-size:clamp(34px,8vw,66px); letter-spacing:-.02em; color:var(--bl-ink);
-          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+          font-size:clamp(34px,8vw,66px); letter-spacing:-.02em; color:var(--bl-ink); overflow-wrap:break-word;
+          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .bl-single-root .bl-sp-slogan { margin:12px 0 0; font-family:var(--bl-fd); font-weight:500; font-style:italic;
           font-size:clamp(15px,3.6vw,18px); line-height:1.6; color:var(--bl-ink2); }
 
