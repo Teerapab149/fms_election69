@@ -21,9 +21,11 @@
 //     button → onConfirm() (opens the SHARED VoteConfirmationModal owned by
 //     vote/page.js — its markup/semantics are untouched here)
 //
-// SINGLE-PARTY is out of scope for this ticket (T3.3): vote/page.js dispatches to
-// BlossomVote only when `isBlossom && !isSingleParty`, so the single-party booth
-// keeps falling to the classic layout until then.
+// SINGLE-PARTY (T3.3): when only one party stands, BlossomVote dispatches to
+// BlossomSingleParty (the calm Candy Editorial booth) — the same internal-dispatch
+// recipe the other families use (VerdureVote -> VerdureSingleParty). vote/page.js
+// routes ALL blossom /vote here (single + multi) and passes onConfirm = the direct
+// submit for single, or the shared-modal opener for multi.
 //
 // Pure presentation: vote/page.js owns auth, the vote-system hook, PartyDetailModal
 // + VoteConfirmationModal + the submit/redirect flow. Colours flow ONLY through
@@ -36,6 +38,7 @@ import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import BlossomSingleParty from "./BlossomSingleParty";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -56,7 +59,9 @@ function VoteRow({
         onClick={onSelect}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect?.(); } }}
       >
-        <span className="bl-vopt__mark" aria-hidden="true"><span className="bl-vopt__dia" /></span>
+        <span className="bl-vopt__mark" aria-hidden="true">
+          <svg className="bl-vopt__tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4.2 4.2L19 7" /></svg>
+        </span>
         {index != null && <span className="bl-vopt__idx">{index}</span>}
         <span className="bl-vopt__logo">
           {logo ? (
@@ -91,7 +96,27 @@ export default function BlossomVote({
   onSelect = () => {}, onViewDetails = () => {}, isSingleParty = false,
   user = null, onConfirm = () => {}, isSubmitting = false, editorMode = false,
 }) {
+  // hook must run before any early return (Rules of Hooks) — the single booth reads
+  // its own config, so gc is only consumed by the multi branch below.
   const gc = useGlobalConfig() || {};
+
+  // SINGLE-PARTY booth (T3.3) — dispatch the calm Candy Editorial booth, the same
+  // recipe as VerdureVote -> VerdureSingleParty. onConfirm is the direct submit.
+  if (isSingleParty) {
+    return (
+      <BlossomSingleParty
+        party={regularParties?.[0] || {}}
+        specialOptions={specialOptions}
+        selectedPartyId={selectedPartyId}
+        onSelect={onSelect}
+        onConfirm={onConfirm}
+        isSubmitting={isSubmitting}
+        user={user}
+        editorMode={editorMode}
+      />
+    );
+  }
+
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
   const copyrightYear = gc.copyrightYear ?? "";
@@ -134,7 +159,7 @@ export default function BlossomVote({
         {/* ===== editorial masthead: mono kick + hollow display word ===== */}
         <header className="bl-vote-head">
           <span className="bl-vote-kick"><span className="bl-vote-dot" aria-hidden="true" />ลงคะแนนเสียง · ONE VOTE ONLY</span>
-          <h1 className="bl-vote-word">เลือกพรรค</h1>
+          <h1 className="bl-vote-word">เลือก<span>พรรค</span></h1>
         </header>
         <p className="bl-vote-deck">
           เลือกได้เพียงหนึ่งตัวเลือก แตะที่พรรคเพื่อเลือก หรือกด “ดูรายละเอียด” เพื่ออ่านนโยบายก่อนตัดสินใจ เมื่อยืนยันแล้วจะไม่สามารถแก้ไขได้
@@ -147,7 +172,10 @@ export default function BlossomVote({
           <span className="bl-vote-voter__row"><b>BALLOT</b>{count} {count === 1 ? "PARTY" : "PARTIES"}</span>
         </div>
 
-        {/* ===== ballot rows ===== */}
+        {/* ===== ballot paper — the hero object: choices sit on a clean card so the
+               dotted canvas never runs under dense text ===== */}
+        <section className="bl-vpaper" aria-label="บัตรลงคะแนน">
+        <div className="bl-vpaper__cap"><span>บัตรลงคะแนน · BALLOT PAPER</span><em>1 คน · 1 เสียง</em></div>
         <ul className="bl-vballot">
           {parties.map((p, i) => (
             <VoteRow
@@ -178,6 +206,7 @@ export default function BlossomVote({
             />
           )}
         </ul>
+        </section>
       </div>
 
       {/* ===== fixed confirm bar (Blossom chrome) ===== */}
@@ -213,19 +242,23 @@ export default function BlossomVote({
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
         .bl-vote-root { overflow-x:hidden; }
-        /* dot-grid paper texture — above the blobs, under content */
+        /* dot-grid paper texture — softened on the ballot page (owner: 15%/24px reads
+           as visual noise under dense selectable rows); the ballot itself sits on a
+           solid paper card so text never runs over the dots */
         .bl-vote-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 15%, transparent) 1px, transparent 1.4px);
-          background-size:24px 24px; }
+          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
+          background-size:28px 28px; }
         :where(.bl-vote-root) a { color:var(--bl-primary-deep); text-decoration:none; }
         :where(.bl-vote-root) a:hover { color:var(--bl-ink); }
 
+        /* blobs — faded toward the canvas on this page (owner: full-strength candy
+           shapes behind a dense ballot read as eye strain) */
         .bl-vote-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
         .bl-vote-root .bl-blob-1 { top:-16vw; right:-22vw; width:64vw; height:64vw; min-width:380px; min-height:380px;
-          background:var(--bl-primary-soft); border-radius:52% 48% 60% 40%/55% 60% 40% 45%;
+          background:color-mix(in srgb, var(--bl-primary-soft) 45%, var(--bl-canvas)); border-radius:52% 48% 60% 40%/55% 60% 40% 45%;
           animation:blMorph 14s ease-in-out infinite alternate; }
         .bl-vote-root .bl-blob-2 { bottom:4%; left:-18vw; width:46vw; height:46vw; min-width:280px; min-height:280px;
-          background:var(--bl-sup3); border-radius:60% 40% 45% 55%/45% 55% 60% 40%;
+          background:color-mix(in srgb, var(--bl-sup3) 45%, var(--bl-canvas)); border-radius:60% 40% 45% 55%/45% 55% 60% 40%;
           animation:blMorph 18s ease-in-out infinite alternate-reverse; }
         @keyframes blMorph {
           0%   { border-radius:52% 48% 60% 40%/55% 60% 40% 45%; }
@@ -334,12 +367,12 @@ export default function BlossomVote({
         .bl-vote-root .bl-vote-dot { width:7px; height:7px; border-radius:50%; background:var(--bl-primary);
           animation:blVBlip 1.6s infinite; }
         @keyframes blVBlip { 50%{opacity:.3} }
+        /* display word — SOLID two-tone (ink + candy). The family's hollow outline
+           reads too faint at this size on the dotted canvas (owner feedback: จาง/แสบตา)
+           and this is the action page, so legibility wins here. */
         .bl-vote-root .bl-vote-word { margin:12px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:.9;
-          font-size:clamp(56px,15vw,132px); letter-spacing:-.02em; color:transparent;
-          -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
-        @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-vote-root .bl-vote-word { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
-        }
+          font-size:clamp(52px,13.5vw,120px); letter-spacing:-.02em; color:var(--bl-ink); }
+        .bl-vote-root .bl-vote-word span { color:var(--bl-primary-deep); }
         .bl-vote-root .bl-vote-deck { margin:20px 0 0; max-width:620px; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(15px,3.6vw,18px); line-height:1.7; color:var(--bl-ink2);
           animation:blVRise .6s ease both .14s; }
@@ -352,30 +385,44 @@ export default function BlossomVote({
           font-family:var(--bl-fm); font-size:12px; letter-spacing:.04em; color:var(--bl-ink); min-width:0; }
         .bl-vote-root .bl-vote-voter__row b { font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-faint); }
 
+        /* ---- ballot paper card (the hero object on the page) ---- */
+        .bl-vote-root .bl-vpaper { margin-top:36px; background:var(--bl-card); border:1.5px solid var(--bl-ink);
+          border-radius:24px; overflow:hidden; animation:blVRise .55s ease both .24s;
+          box-shadow:0 24px 50px -30px color-mix(in srgb, var(--bl-ink) 22%, transparent); }
+        .bl-vote-root .bl-vpaper__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+          padding:15px 22px; border-bottom:1.5px solid var(--bl-ink);
+          background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-card)); }
+        .bl-vote-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
+          text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
+        .bl-vote-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
+          letter-spacing:.14em; color:var(--bl-primary-deep); white-space:nowrap; }
+
         /* ---- ballot rows (candidates index grammar, made selectable) ---- */
-        .bl-vote-root .bl-vballot { list-style:none; margin:36px 0 0; padding:0; border-top:1px solid var(--bl-line); }
+        .bl-vote-root .bl-vballot { list-style:none; margin:0; padding:0; }
         .bl-vote-root .bl-vopt { border-bottom:1px solid var(--bl-line); animation:blVRise .55s ease both; }
+        .bl-vote-root .bl-vopt:last-child { border-bottom:none; }
         .bl-vote-root .bl-vopt:nth-child(1) { animation-delay:.06s; }
         .bl-vote-root .bl-vopt:nth-child(2) { animation-delay:.12s; }
         .bl-vote-root .bl-vopt:nth-child(3) { animation-delay:.18s; }
         .bl-vote-root .bl-vopt:nth-child(4) { animation-delay:.24s; }
         .bl-vote-root .bl-vopt:nth-child(n+5) { animation-delay:.3s; }
         .bl-vote-root .bl-vopt__hit { position:relative; display:grid; grid-template-columns:auto auto auto 1fr auto; align-items:center;
-          gap:18px; padding:22px 8px; cursor:pointer; color:var(--bl-ink);
-          border:2px solid transparent; border-radius:18px;
-          transition:background .25s ease, border-color .25s ease, padding-left .25s ease; }
-        .bl-vote-root .bl-vopt__hit:hover { background:color-mix(in srgb, var(--bl-primary) 7%, var(--bl-canvas)); }
-        .bl-vote-root .bl-vopt.is-selected .bl-vopt__hit { background:var(--bl-primary-soft); border-color:var(--bl-ink); }
+          gap:18px; padding:22px 20px; cursor:pointer; color:var(--bl-ink);
+          border-left:4px solid transparent;
+          transition:background .25s ease, border-color .25s ease; }
+        .bl-vote-root .bl-vopt__hit:hover { background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-card)); }
+        .bl-vote-root .bl-vopt.is-selected .bl-vopt__hit { background:var(--bl-primary-soft); border-left-color:var(--bl-primary-deep); }
 
-        /* selection marker — hollow square that fills to a solid candy diamond (geometry) */
-        .bl-vote-root .bl-vopt__mark { width:26px; height:26px; flex:none; border-radius:7px;
-          border:2px solid var(--bl-line); display:grid; place-items:center; background:var(--bl-card);
-          transition:border-color .2s ease, background .2s ease; }
+        /* selection marker — round radio that FILLS candy with a white tick
+           (owner 2026-07-12: no square boxes — a check reads instantly) */
+        .bl-vote-root .bl-vopt__mark { width:28px; height:28px; flex:none; border-radius:50%;
+          border:2px solid color-mix(in srgb, var(--bl-ink2) 40%, var(--bl-line)); display:grid; place-items:center;
+          background:var(--bl-card); transition:border-color .2s ease, background .2s ease; }
         .bl-vote-root .bl-vopt__hit:hover .bl-vopt__mark { border-color:var(--bl-primary); }
-        .bl-vote-root .bl-vopt__dia { width:12px; height:12px; background:var(--bl-primary-deep); transform:rotate(45deg) scale(0);
-          transition:transform .22s cubic-bezier(.22,1,.36,1); }
-        .bl-vote-root .bl-vopt.is-selected .bl-vopt__mark { border-color:var(--bl-ink); background:var(--bl-card); }
-        .bl-vote-root .bl-vopt.is-selected .bl-vopt__dia { transform:rotate(45deg) scale(1); }
+        .bl-vote-root .bl-vopt__tick { width:15px; height:15px; color:var(--bl-on-primary, var(--bl-card));
+          transform:scale(0); transition:transform .22s cubic-bezier(.22,1,.36,1); }
+        .bl-vote-root .bl-vopt.is-selected .bl-vopt__mark { border-color:var(--bl-primary-deep); background:var(--bl-primary-deep); }
+        .bl-vote-root .bl-vopt.is-selected .bl-vopt__tick { transform:scale(1); }
 
         .bl-vote-root .bl-vopt__idx { font-family:var(--bl-fd); font-weight:800; font-size:clamp(22px,5.4vw,40px);
           font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-deep); width:auto; flex:none; }
@@ -407,47 +454,46 @@ export default function BlossomVote({
         /* งดออกเสียง — quieter row, KEEPS its semantic ORANGE coding (ส้ม family,
            mirrors classic MultiPartyView + shared VoteConfirmationModal). These
            oranges are semantic vote colours, deliberately NOT var(--bl-*) candy. */
-        .bl-vote-root .bl-vopt--abstain .bl-vopt__hit { }
         .bl-vote-root .bl-vopt--abstain .bl-vopt__idx,
         .bl-vote-root .bl-vopt--abstain .bl-vopt__logo-ph { color:#ea580c; }
         .bl-vote-root .bl-vopt--abstain .bl-vopt__kick { color:#c2410c; }
-        .bl-vote-root .bl-vopt--abstain .bl-vopt__hit:hover { background:color-mix(in srgb, #ea580c 7%, var(--bl-canvas)); }
+        .bl-vote-root .bl-vopt--abstain .bl-vopt__hit:hover { background:color-mix(in srgb, #ea580c 6%, var(--bl-card)); }
         .bl-vote-root .bl-vopt--abstain .bl-vopt__hit:hover .bl-vopt__mark { border-color:#ea580c; }
         .bl-vote-root .bl-vopt--abstain.is-selected .bl-vopt__hit { background:color-mix(in srgb, #ea580c 9%, var(--bl-card));
-          border-color:#ea580c; }
-        .bl-vote-root .bl-vopt--abstain.is-selected .bl-vopt__mark { border-color:#ea580c; }
-        .bl-vote-root .bl-vopt--abstain .bl-vopt__dia { background:#ea580c; }
+          border-left-color:#ea580c; }
+        .bl-vote-root .bl-vopt--abstain.is-selected .bl-vopt__mark { border-color:#ea580c; background:#ea580c; }
+        .bl-vote-root .bl-vopt--abstain .bl-vopt__tick { color:#fff; }
         .bl-vote-root .bl-vopt--abstain .bl-vopt__name { font-size:clamp(18px,4.4vw,24px); }
 
-        /* ---- fixed confirm bar ---- */
+        /* ---- fixed confirm bar — INK BAND (the family's climax grammar: home
+           countdown / success / results embargo), not a generic frosted strip ---- */
         .bl-vote-root .bl-vconfirm { position:fixed; left:0; right:0; bottom:0; z-index:38;
-          background:color-mix(in srgb, var(--bl-canvas) 92%, transparent);
-          -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-          border-top:1.5px solid var(--bl-ink); }
+          background:var(--bl-ink); border-top:3px solid var(--bl-primary); }
         .bl-vote-root .bl-vconfirm__in { max-width:1200px; margin:0 auto; padding:14px 22px;
           display:flex; align-items:center; gap:18px; }
         .bl-vote-root .bl-vconfirm__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .bl-vote-root .bl-vconfirm__lab { font-family:var(--bl-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
-          color:var(--bl-faint); }
+          color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
         .bl-vote-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bl-vote-root .bl-vconfirm__val--empty { color:var(--bl-ink2); font-weight:600; }
-        .bl-vote-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary-deep); transform:rotate(45deg); }
-        .bl-vote-root .bl-vconfirm__val.is-abstain { color:#c2410c; }
-        .bl-vote-root .bl-vconfirm__val.is-abstain .bl-vconfirm__dia { background:#ea580c; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bl-vote-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
+        .bl-vote-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
+        /* abstain on the ink band — lighter semantic orange for contrast on dark */
+        .bl-vote-root .bl-vconfirm__val.is-abstain { color:#fdba74; }
+        .bl-vote-root .bl-vconfirm__val.is-abstain .bl-vconfirm__dia { background:#f97316; }
         .bl-vote-root .bl-vconfirm__btn { flex:none; display:inline-flex; align-items:center; justify-content:center; gap:9px;
           min-height:52px; padding:14px 26px; border-radius:999px; border:none; cursor:pointer;
           font-family:var(--bl-fd); font-weight:700; font-size:16px;
-          color:var(--bl-on-primary, var(--bl-card)); background:var(--bl-primary-deep);
-          box-shadow:0 12px 26px color-mix(in srgb, var(--bl-primary-deep) 30%, transparent);
-          transition:transform .2s ease, background .25s ease, box-shadow .25s ease; }
+          color:var(--bl-on-primary, var(--bl-card)); background:var(--bl-primary);
+          transition:transform .2s ease, background .25s ease, filter .25s ease; }
         .bl-vote-root .bl-vconfirm__btn svg { flex:none; transition:transform .25s ease; }
-        .bl-vote-root .bl-vconfirm.is-ready .bl-vconfirm__btn:hover { transform:translateY(-2px); }
+        .bl-vote-root .bl-vconfirm.is-ready .bl-vconfirm__btn:hover { transform:translateY(-2px); filter:brightness(1.06); }
         .bl-vote-root .bl-vconfirm.is-ready .bl-vconfirm__btn:hover svg { transform:translateX(3px); }
         .bl-vote-root .bl-vconfirm__btn:active { transform:scale(.97); }
-        .bl-vote-root .bl-vconfirm__btn:disabled { cursor:not-allowed; color:var(--bl-faint);
-          background:color-mix(in srgb, var(--bl-line) 55%, var(--bl-card)); box-shadow:none; }
+        .bl-vote-root .bl-vconfirm__btn:disabled { cursor:not-allowed;
+          color:color-mix(in srgb, var(--bl-canvas) 45%, transparent);
+          background:color-mix(in srgb, var(--bl-canvas) 14%, transparent); }
 
         @keyframes blVRise { from { opacity:0; transform:translateY(16px); } }
 
@@ -458,14 +504,16 @@ export default function BlossomVote({
           .bl-vote-root .bl-userwrap { margin-left:0; }
           .bl-vote-root .bl-burger, .bl-vote-root .bl-sheet { display:none; }
           .bl-vote-root .bl-footer p { font-size:12px; }
-          .bl-vote-root .bl-vopt__hit { gap:24px; padding:26px 12px; }
+          .bl-vote-root .bl-vopt__hit { gap:24px; padding:26px 26px; }
         }
 
         /* ================= MOBILE (<=560): rows reflow, tap targets >=44px ================= */
         @media (max-width:560px) {
           .bl-vote-root .bl-page { padding-bottom:172px; }
           .bl-vote-root .bl-vopt__hit { grid-template-columns:auto auto 1fr; grid-template-areas:"mark idx body" "more more more";
-            gap:12px 14px; padding:18px 8px; }
+            gap:12px 14px; padding:18px 16px; }
+          .bl-vote-root .bl-vpaper { border-radius:20px; }
+          .bl-vote-root .bl-vpaper__cap { padding:13px 16px; }
           .bl-vote-root .bl-vopt__mark { grid-area:mark; align-self:center; }
           .bl-vote-root .bl-vopt__idx { grid-area:idx; align-self:center; }
           /* logo folds away on the narrowest layout — the index numeral + name carry identity */

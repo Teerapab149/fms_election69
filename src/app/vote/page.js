@@ -84,9 +84,9 @@ export default function VotePage() {
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
-  // T3.2: Blossom Candy Editorial ballot — MULTI-party only. Single-party keeps
-  // falling to the classic layout below until T3.3 builds the Blossom booth.
-  const useBlossomVote = isBlossom && !isSingleParty;
+  // Blossom Candy Editorial ballot — MULTI (T3.2) + SINGLE booth (T3.3). BlossomVote
+  // dispatches internally to BlossomSingleParty when isSingleParty.
+  const useBlossomVote = isBlossom;
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -139,7 +139,7 @@ export default function VotePage() {
           isSingleParty={isSingleParty}
           user={session?.user}
           isSubmitting={isSubmitting || isRedirecting}
-          onConfirm={() => setIsConfirmModalOpen(true)}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isVerdure ? (
         <VerdureVote

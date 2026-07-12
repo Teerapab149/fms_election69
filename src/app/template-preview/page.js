@@ -317,9 +317,28 @@ function PreviewBody() {
       }
     }
 
+    // ── blossom family — SINGLE-PARTY booth (T3.3). BlossomVote dispatches to the
+    //    calm Candy Editorial booth; its OWN confirm dialog calls onConfirm (the
+    //    submit) → navTo('success'). No shared VoteConfirmationModal for single.
+    if (family === 'blossom' && page === 'vote' && variant === 'single') {
+      return (
+        <BlossomVote
+          regularParties={PARTIES}
+          specialOptions={SPECIAL}
+          selectedPartyId={selectedPartyId}
+          onSelect={setSelectedPartyId}
+          onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+          isSingleParty
+          user={DUMMY_USER}
+          onConfirm={() => navTo('success')}
+          isSubmitting={false}
+          editorMode={false}
+        />
+      );
+    }
+
     // ── blossom family — MULTI ballot (T3.2). Local selection → the SHARED confirm
-    //    popup → navTo('success'), mirroring the classic multi interact flow. Single-
-    //    party is T3.3, so it falls through to the classic vote branch below.
+    //    popup → navTo('success'), mirroring the classic multi interact flow.
     if (family === 'blossom' && page === 'vote' && variant !== 'single') {
       const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
@@ -579,8 +598,10 @@ function PreviewBody() {
   // ── blossom family — Candy Editorial inner pages (static preview slides) ──
   if (family === 'blossom') {
     if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode />;
-    if (page === 'vote' && variant !== 'single') {
-      // T3.2 MULTI ballot static slide (single-party is T3.3 → falls to classic below)
+    if (page === 'vote') {
+      // ballot static slide — MULTI (T3.2) or SINGLE booth (T3.3); editorMode disables
+      // selection/confirm so the slide is a calm static presentation.
+      const single = variant === 'single';
       return (
         <BlossomVote
           regularParties={PARTIES}
@@ -588,7 +609,7 @@ function PreviewBody() {
           selectedPartyId={null}
           onSelect={noop}
           onViewDetails={noop}
-          isSingleParty={false}
+          isSingleParty={single}
           user={DUMMY_USER}
           onConfirm={noop}
           isSubmitting={false}
