@@ -55,9 +55,16 @@
 - **Acceptance R0:** มี 2-3 direction ของหน้า Success ให้ owner เลือก + owner ตอบคำถาม
   §9 ครบ 4 ข้อ + ยืนยัน ephemeral receipt ก่อนลง build
 
-### R1 — Success/ใบเสร็จ (หัวใจ ทำก่อน)
-- **ทำอะไร:** ReceiptSuccess — moment พิมพ์ใบเสร็จทีละบรรทัด + holo strip + ตราซีล +
-  ขอบหยักฉีก; เนื้อใบเสร็จตาม reference card (ephemeral ตาม §2)
+### R1 — Success/ใบเสร็จ ✅ DONE 2026-07-12 (`784b654` plumbing + `51c9f93` Success)
+- Plumbing: receiptPalettes/ReceiptTheme/builtIn/receipt/injector case + Chakra Petch (layout.js)
+- ReceiptSuccess จาก direction B — Fable image-review 4 ธีม × desktop/390 ผ่าน (เหลือง CTA=ink
+  ✓, printer moment เป็น mobile-native, ballot-secrecy ครบ, base-visible ยืนยัน); P-LOG-084
+  (negative-z paint-order) ลง DECISIONS
+- ⚠️ **ค้างให้ owner ยืนยัน:** worker เพิ่ม prop `choice` (optional, ตัวที่ 5) — production
+  ไม่เผยตัวเลือก (โชว์ "บันทึกแล้ว · เป็นความลับ"), editor/preview โชว์ตัวอย่าง; **R3 vote-flow
+  จะเป็นคนตัดสินว่าจะส่ง choice ephemeral ตอน submit ไหม** (ผูก ballot secrecy §2 — ค่า default
+  = ไม่เผย ปลอดภัยสุด) → ยืนยันตอนทำ R3
+- เดิม: ReceiptSuccess — moment พิมพ์ใบเสร็จทีละบรรทัด + holo strip + ตราซีล + ขอบหยักฉีก
 - **Acceptance R1:** moment ผ่านสายตา owner + **ballot secrecy (§2) ครบทุกข้อ**
   (ไม่มี save/download/share, choice ephemeral, barcode = ref-only, ป้าย
   "ไม่ใช่หลักฐานทางการ") + fallback reduced-motion/JS-fail โชว์ใบเสร็จเต็มทันที +

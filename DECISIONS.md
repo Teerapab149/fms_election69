@@ -1817,6 +1817,24 @@ on the sandbox bar, not the page's button.
 sandbox bar first. Pointer-clicks stay reliable on /template-preview (no sandbox bar).
 **Tags:** `#verification` `#playwright` `#template-playground` `#z-index`
 
+### P-LOG-084: [2026-07-12] A negative-z child paints ABOVE its own element's background
+**Context:** Receipt R1 — a CTA button with a holographic-foil *rim*: `.cta` (accent fill) with
+a `.rc-foil` child set `position:absolute; inset:-2px; z-index:-1` meant to peek out as a foil
+edge behind the button.
+**Symptom:** the CTA rendered as a low-contrast foil-filled block, not an accent fill with a
+foil rim — the foil covered the button's own background.
+**Root cause:** CSS paint order — an element's own background paints at the very bottom of its
+stacking context; a child with `z-index:-1` still paints ABOVE the parent's background (it is
+only below the parent's *content*, in front of the parent's bg). So the foil overlay hid the
+accent fill.
+**Fix:** layer explicitly — foil rim child `z-index:0`, an accent-fill `::before` at `z-index:1`,
+label wrapper at `z-index:2`. The `::before` fill sits over the foil, the label over the fill,
+the foil only shows in the `inset:-2px` rim.
+**Lesson:** for a foil/gradient *rim* (or any "peek behind" edge), don't rely on negative-z over
+the element's own background — use a z-indexed `::before` fill + wrapped content, so the overlay
+is the RIM not the whole face.
+**Tags:** `#css` `#stacking-context` `#paint-order` `#receipt`
+
 ---
 
 ## 🚫 Rejected Approaches
