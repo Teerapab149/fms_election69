@@ -1805,6 +1805,20 @@ Complements P-LOG-080 (disable transitions first).
 
 ---
 
+### P-LOG-083: [2026-07-12] Playground sandbox bar intercepts pointer clicks on fixed bottom bars
+**Context:** P4 — verifying the blossom flow inside /template-playground with Playwright.
+**Symptom:** Playwright pointer-clicks on buttons inside a page's fixed BOTTOM confirm bar
+time out / hit the wrong element, even though the button is visible.
+**Root cause:** the playground's floating sandbox bar sits at z-index 100000 (bottom-right)
+and overlaps fixed bottom-bar buttons at common viewport sizes — the pointer event lands
+on the sandbox bar, not the page's button.
+**Fix/Verification rule:** when driving pages INSIDE the playground, use DOM `.click()`
+(dispatches straight to the handler) for anything in a fixed bottom bar, or collapse the
+sandbox bar first. Pointer-clicks stay reliable on /template-preview (no sandbox bar).
+**Tags:** `#verification` `#playwright` `#template-playground` `#z-index`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

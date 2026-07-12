@@ -133,11 +133,20 @@
 - Acceptance ต่อหน้า: 4 ธีมผ่าน + mobile + interact-mode ใน template-preview ไม่พัง (P-LOG-002)
 
 ## P4 — Flow polish + gate
-- [ ] Transition ต่อเนื่องระหว่างหน้า (อย่างน้อย: token คงเส้น, navbar/footer ร่วม)
-- [ ] template-playground + /template-preview?interact=1 รองรับ blossom เต็ม flow
-- [ ] chooser slideshow ภาพครบทุกหน้า
-- [ ] ปิดท้าย: pre-deploy gate ปกติ (นัดหยุด server กับ owner → rm -rf .next → build GREEN
-      → smoke 15/15 → paste output จริง)
+- [x] Transition ต่อเนื่องระหว่างหน้า ✅ 2026-07-12 — coherence audit ผ่าน: BlossomTopBar +
+      footer ครบ 7 หน้า, ไม่มี token หลุดใน Blossom*.js (hex ที่เหลือ = semantic/ink โดยเจตนา)
+- [x] template-playground + /template-preview?interact=1 รองรับ blossom เต็ม flow ✅ `9b0de6a`
+      (playground: TEMPLATES/COMPONENTS + mirror preview-interact wiring — multi = shared
+      VoteConfirmationModal ที่ parent / single booth confirm ภายใน / results locked =
+      embargo band / party = ClassicPartyPreview ตาม live fallthrough เพราะไม่มี BlossomParty
+      by design; click-through 12/12 + 4 ธีม probe + 390px overflow 0) — P-LOG-083
+- [x] chooser slideshow ภาพครบทุกหน้า ✅ — 9 สไลด์ render ถูก (desk+mob, 4 ธีม inject ไม่หลุด,
+      0 error ใหม่; party slide = classic ตาม design; ภาพ .specs/shots/p4/)
+- [ ] ปิดท้าย: pre-deploy gate ปกติ (หยุด server → rm -rf .next → build GREEN
+      → smoke 15/15 → paste output จริง) — ⏸ 2026-07-12 classifier บล็อกการ kill server
+      จาก session นี้ → รอ owner หยุดเอง (Ctrl+C) หรือยืนยันตรง ๆ อีกครั้ง
+- หมายเหตุ gap รู้ตัว: blossom ไม่มีหน้า party ของตัวเอง (/party = classic) — เสนอเป็น
+  ticket polish แยกถ้า owner ต้องการ Candy Editorial ครบ journey
 
 ## กติกาที่สืบทอด (ห้ามลืม)
 สี = var(--bl-*) เท่านั้น, ออกแบบบนชมพูแล้วตรวจ 4 ธีมทุกครั้ง · mobile-first 390px ·
