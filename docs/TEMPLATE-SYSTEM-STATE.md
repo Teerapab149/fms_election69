@@ -16,7 +16,7 @@
 | Security P0 (admin auth JWT cookie, vote race) | ✅ เสร็จตั้งแต่ 2026-06-10 arc |
 | Content binding (ปี/วันที่/ชื่องาน → globalConfig) | ✅ เสร็จ (1c8d09b, 3d26660) |
 | เครื่องมือ annual reset (`preflight`, `archive-year`, `import-students`) | ✅ สคริปต์มีแล้ว — แต่ยังไม่เคยซ้อมรอบจริง |
-| **`npm run build` เต็ม + `npm run smoke` บน tree ปัจจุบัน** | ✅ **ผ่านแล้ว 2026-07-13** (tree @ f1ee969): build ✓ 33/33 pages ไม่มี error · smoke ✓ 15 pass / 0 fail (auth/forged-token/rate-limit/vote-session/results-leak ครบ) — ดูหลักฐานเต็มใน §4.1 |
+| **`npm run build` เต็ม + `npm run smoke` บน tree ปัจจุบัน** | ✅ **ผ่านล่าสุด 2026-07-12** (tree @ 2e3d8ac — รวม Blossom P1-P4 ครบ): build ✓ 33/33 pages, compile warning เดิม 2 จุด (jose Edge-Runtime + browserslist เก่า — ไม่ใช่ error) · smoke ✓ 15 pass / 0 fail (12.3s) · รอบก่อนหน้า 2026-07-13(sic) @ f1ee969 ก็ผ่าน — ดู §4.1 |
 | งานดีไซน์ subjective (semantic-colour rule, user-chip, P3 จูน) | ⏳ รอ owner ตัดสิน — ไม่บล็อก deploy |
 
 **นิยาม "พร้อม deploy" ของโปรเจกต์นี้ = ผ่าน §4 ทุกข้อ** ไม่ใช่แค่ "หน้าเว็บดูดี"

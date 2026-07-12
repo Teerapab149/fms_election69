@@ -142,9 +142,11 @@
       by design; click-through 12/12 + 4 ธีม probe + 390px overflow 0) — P-LOG-083
 - [x] chooser slideshow ภาพครบทุกหน้า ✅ — 9 สไลด์ render ถูก (desk+mob, 4 ธีม inject ไม่หลุด,
       0 error ใหม่; party slide = classic ตาม design; ภาพ .specs/shots/p4/)
-- [ ] ปิดท้าย: pre-deploy gate ปกติ (หยุด server → rm -rf .next → build GREEN
-      → smoke 15/15 → paste output จริง) — ⏸ 2026-07-12 classifier บล็อกการ kill server
-      จาก session นี้ → รอ owner หยุดเอง (Ctrl+C) หรือยืนยันตรง ๆ อีกครั้ง
+- [x] ปิดท้าย: pre-deploy gate ✅ ผ่าน 2026-07-12 (owner ยืนยัน kill server ผ่าน dialog):
+      tree @ 2e3d8ac → rm .next → `npm run build` GREEN ✓ 33/33 pages (warning เดิม
+      jose Edge-Runtime + browserslist — ไม่ใช่ error) → server กลับ :3000 →
+      `npm run smoke` ✓ 15 pass / 0 fail (12.3s) — หลักฐานเต็มใน TEMPLATE-SYSTEM-STATE.md
+      **→ P4 ครบทุกข้อ = Blossom 10/10 arc ปิดอย่างเป็นทางการ**
 - หมายเหตุ gap รู้ตัว: blossom ไม่มีหน้า party ของตัวเอง (/party = classic) — เสนอเป็น
   ticket polish แยกถ้า owner ต้องการ Candy Editorial ครบ journey
 
