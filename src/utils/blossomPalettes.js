@@ -5,12 +5,15 @@
 // rule. Applying a variant live therefore matches its preview byte-for-byte.
 //
 // Blossom is a LIGHT, friendly template: a saturated candy PRIMARY drives the big
-// title numeral / CTA / avatar, sitting on a soft ~97L tint of that primary
-// (`canvas`). Cards stay pure white; ink is a constant deep-plum near-black so
+// title numeral / CTA / avatar, sitting on a near-neutral PAPER canvas that keeps
+// only a whisper of the primary hue (~98L, low chroma — owner 2026-07-12: the old
+// saturated ~97L tints read as eye strain page-wide; candy lives in ACCENTS, the
+// page itself is calm paper). Cards stay pure white; ink is a constant deep-plum
+// near-black so
 // text contrast never drifts as the theme changes. Three SUPPORT colour pairs
 // (a light chip bg + a dark readable ink, ≥4.5:1) rotate per theme so the stat
 // chips stay multi-colour and playful in every variant. Slots (semantic):
-//   canvas       — page background (soft ~97L tint of primary)
+//   canvas       — page background (near-neutral paper, whisper of primary)
 //   card         — surface (#FFFFFF, CONSTANT every theme)
 //   ink          — page text (deep plum near-black, CONSTANT every theme)
 //   ink2         — muted text (labels/subtitles, CONSTANT — neutral plum-mute)
@@ -26,9 +29,9 @@
 //   sup2/sup2Ink — support chip pair #2
 //   sup3/sup3Ink — support chip pair #3
 // Theme 1 (blossom · ชมพู) is the approved mockup base; the other 3 derive by the
-// same rule (canvas ≈ 97L tint of primary · deep ≈ primary darkened ~12-15% ·
-// ink/card/ink2/faint held constant · support pairs rotated so each theme keeps
-// three OTHER accents beside its own primary).
+// same rule (canvas ≈ near-neutral ~98L paper with a whisper of primary · deep ≈
+// primary darkened ~12-15% · ink/card/ink2/faint held constant · support pairs
+// rotated so each theme keeps three OTHER accents beside its own primary).
 
 // ── the four fixed support-chip colour pairs (bg is light, ink is dark, ≥4.5:1
 //    on that bg) — rotated into sup1/sup2/sup3 per theme so a theme never lists
@@ -55,28 +58,28 @@ function makeTheme({ canvas, line, primary, primaryDeep, primarySoft, onPrimary 
 }
 
 export const BLOSSOM_THEMES = {
-  // ชมพู — the approved Soft Pop mockup base. Candy pink on blush canvas.
+  // ชมพู — the approved Soft Pop mockup base. Candy pink on calm blush paper.
   "blossom": makeTheme({
-    canvas: "#FFF3F8", line: "#F2D7E4",
+    canvas: "#FCF9FA", line: "#EDE2E8",
     primary: "#FF6FBF", primaryDeep: "#E24FA3", primarySoft: "#FFE1F0",
     sups: [SUP_MINT, SUP_SKY, SUP_BUTTER],
   }),
   // ฟ้า — friendly sky blue.
   "blossom-sky": makeTheme({
-    canvas: "#F0F7FF", line: "#D6E6F7",
+    canvas: "#F9FBFD", line: "#E1E8F0",
     primary: "#6FB4FF", primaryDeep: "#4A94E8", primarySoft: "#DCEBFF",
     sups: [SUP_PINK, SUP_MINT, SUP_BUTTER],
   }),
   // มินต์ — fresh mint green.
   "blossom-mint": makeTheme({
-    canvas: "#EFFBF5", line: "#CFEEDF",
+    canvas: "#F8FBF9", line: "#DFEAE3",
     primary: "#5BD6A0", primaryDeep: "#3BB584", primarySoft: "#D3F5E6",
     onPrimary: INK, // white on #3BB584 ≈ 2.6:1 — ink reads 6:1
     sups: [SUP_PINK, SUP_SKY, SUP_BUTTER],
   }),
   // บัตเตอร์ — warm butter yellow.
   "blossom-butter": makeTheme({
-    canvas: "#FFF9EE", line: "#F5E4C4",
+    canvas: "#FCFAF5", line: "#EDE6D6",
     primary: "#FFC85C", primaryDeep: "#E8A93B", primarySoft: "#FFEFCC",
     onPrimary: INK, // white on #E8A93B ≈ 2.1:1 — ink reads 7.5:1
     sups: [SUP_PINK, SUP_SKY, SUP_MINT],

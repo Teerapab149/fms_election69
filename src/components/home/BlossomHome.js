@@ -484,8 +484,8 @@ export default function BlossomHome({
         .bl-root { overflow-x:hidden; }
         /* dot-grid paper texture — sits above the blobs (paint order), under content */
         .bl-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 15%, transparent) 1px, transparent 1.4px);
-          background-size:24px 24px; }
+          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
+          background-size:28px 28px; }
         /* :where() keeps this default at zero specificity (mockup used bare "a{}")
            so per-link classes (.bl-cta, .bl-nav__link, ...) always win */
         :where(.bl-root) a { color:var(--bl-primary-deep); text-decoration:none; }
@@ -494,10 +494,10 @@ export default function BlossomHome({
         /* organic candy blobs — absolute within .bl-root (root is relative) */
         .bl-blob { position:absolute; pointer-events:none; z-index:0; }
         .bl-blob-1 { top:-16vw; right:-22vw; width:64vw; height:64vw; min-width:380px; min-height:380px;
-          background:var(--bl-primary-soft); border-radius:52% 48% 60% 40%/55% 60% 40% 45%;
+          background:color-mix(in srgb, var(--bl-primary-soft) 45%, var(--bl-canvas)); border-radius:52% 48% 60% 40%/55% 60% 40% 45%;
           animation:blMorph 14s ease-in-out infinite alternate; }
         .bl-blob-2 { bottom:4%; left:-18vw; width:46vw; height:46vw; min-width:280px; min-height:280px;
-          background:var(--bl-sup3); border-radius:60% 40% 45% 55%/45% 55% 60% 40%;
+          background:color-mix(in srgb, var(--bl-sup3) 45%, var(--bl-canvas)); border-radius:60% 40% 45% 55%/45% 55% 60% 40%;
           animation:blMorph 18s ease-in-out infinite alternate-reverse; }
         @keyframes blMorph {
           0%   { border-radius:52% 48% 60% 40%/55% 60% 40% 45%; }
@@ -600,8 +600,8 @@ export default function BlossomHome({
         .bl-hero { position:relative; padding-top:34px; }
         /* print crop mark — editorial registration corner */
         .bl-hero::before { content:""; position:absolute; top:12px; left:0; width:14px; height:14px;
-          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent);
-          border-left:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent); }
+          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 38%, transparent);
+          border-left:1.5px solid color-mix(in srgb, var(--bl-ink) 38%, transparent); }
 
         /* spinning textPath ring — the family signature (enlarged; text sits OVER it) */
         .bl-ring { width:clamp(180px,26vw,300px); height:clamp(180px,26vw,300px);
@@ -694,8 +694,8 @@ export default function BlossomHome({
         /* geometric candy accent — hidden on mobile, half-circle peeks from left on desktop */
         .bl-feature-orb { display:none; }
         .bl-feature::before { content:""; position:absolute; top:-24px; right:0; width:14px; height:14px;
-          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent);
-          border-right:1.5px solid color-mix(in srgb, var(--bl-ink) 45%, transparent); }
+          border-top:1.5px solid color-mix(in srgb, var(--bl-ink) 38%, transparent);
+          border-right:1.5px solid color-mix(in srgb, var(--bl-ink) 38%, transparent); }
         .bl-posterwrap { width:min(80vw,380px); margin:0 auto; position:relative;
           animation:blPosterIn .8s cubic-bezier(.22,1,.36,1) both .85s; }
         .bl-poster { margin:0; position:relative; background:var(--bl-card); padding:10px 10px 14px;

@@ -120,17 +120,17 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root { overflow-x:hidden; }
         /* dot-grid paper texture — above the blobs, under content */
         .bl-cand-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 15%, transparent) 1px, transparent 1.4px);
-          background-size:24px 24px; }
+          background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
+          background-size:28px 28px; }
         :where(.bl-cand-root) a { color:var(--bl-primary-deep); text-decoration:none; }
         :where(.bl-cand-root) a:hover { color:var(--bl-ink); }
 
         .bl-cand-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
         .bl-cand-root .bl-blob-1 { top:-16vw; right:-22vw; width:64vw; height:64vw; min-width:380px; min-height:380px;
-          background:var(--bl-primary-soft); border-radius:52% 48% 60% 40%/55% 60% 40% 45%;
+          background:color-mix(in srgb, var(--bl-primary-soft) 45%, var(--bl-canvas)); border-radius:52% 48% 60% 40%/55% 60% 40% 45%;
           animation:blMorph 14s ease-in-out infinite alternate; }
         .bl-cand-root .bl-blob-2 { bottom:4%; left:-18vw; width:46vw; height:46vw; min-width:280px; min-height:280px;
-          background:var(--bl-sup3); border-radius:60% 40% 45% 55%/45% 55% 60% 40%;
+          background:color-mix(in srgb, var(--bl-sup3) 45%, var(--bl-canvas)); border-radius:60% 40% 45% 55%/45% 55% 60% 40%;
           animation:blMorph 18s ease-in-out infinite alternate-reverse; }
         @keyframes blMorph {
           0%   { border-radius:52% 48% 60% 40%/55% 60% 40% 45%; }
