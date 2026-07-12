@@ -49,6 +49,19 @@ import GumroadResults from '../../components/vote/GumroadResults';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import GumroadClosed from '../../components/vote/GumroadClosed';
 
+import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import BlossomVote from '../../components/vote/BlossomVote';
+import BlossomResults from '../../components/vote/BlossomResults';
+import BlossomSuccess from '../../components/vote/BlossomSuccess';
+import BlossomClosed from '../../components/vote/BlossomClosed';
+
+// blossom has NO BlossomParty (P3 by design) — its /party mirrors the live site,
+// which falls to the classic cinematic detail (same as /template-preview interact).
+import { ClassicPartyPreview } from '../party/page';
+// shared confirm popup for the blossom MULTI ballot (owned by the parent, exactly
+// as /template-preview interact + the real vote/page.js compose it).
+import VoteConfirmationModal from '../../components/VoteConfirmationModal';
+
 import { DUMMY_USER } from '../../utils/editorDummyData';
 import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 import { hrefToDest } from '../../utils/previewNav';
@@ -61,12 +74,17 @@ const COMPONENTS = {
   verdure: { candidates: VerdureCandidates, party: VerdureParty, vote: VerdureVote, results: VerdureResults, success: VerdureSuccess, closed: VerdureClosed },
   'studio-dark': { candidates: StudioDarkCandidates, party: StudioDarkParty, vote: StudioDarkVote, results: StudioDarkResults, success: StudioDarkSuccess, closed: StudioDarkClosed },
   gumroad: { candidates: GumroadCandidates, party: GumroadParty, vote: GumroadVote, results: GumroadResults, success: GumroadSuccess, closed: GumroadClosed },
+  // blossom has NO `party` key — /party is special-cased to ClassicPartyPreview below
+  // (mirrors the live fallthrough). vote is special-cased too (single booth confirms
+  // internally; multi opens the shared VoteConfirmationModal at the parent).
+  blossom: { candidates: BlossomCandidates, vote: BlossomVote, results: BlossomResults, success: BlossomSuccess, closed: BlossomClosed },
 };
 
 const TEMPLATES = [
   { slug: 'verdure', label: 'Verdure' },
   { slug: 'studio-dark', label: 'Studio Dark' },
   { slug: 'gumroad', label: 'Gumroad' },
+  { slug: 'blossom', label: 'Blossom' },
 ];
 const PAGES = [
   { key: 'home', th: 'หน้าหลัก' },
@@ -91,6 +109,7 @@ function PlaygroundBody() {
   const [partyNumber, setPartyNumber] = useState(1);
   const [single, setSingle] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false); // blossom MULTI shared popup
   const [barOpen, setBarOpen] = useState(true);
 
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'verdure';
@@ -135,20 +154,55 @@ function PlaygroundBody() {
     const C = map.candidates;
     content = <C candidates={PARTIES} editorMode={false} />;
   } else if (page === 'party') {
-    const P = map.party;
-    content = <P party={partyForDetail} galleryImages={[]} showBackToVote />;
+    // blossom has no party layout — mirror the live fallthrough to the classic
+    // cinematic detail (same choice /template-preview interact makes for blossom).
+    if (family === 'blossom') {
+      content = <ClassicPartyPreview party={partyForDetail} galleryImages={[]} />;
+    } else {
+      const P = map.party;
+      content = <P party={partyForDetail} galleryImages={[]} showBackToVote />;
+    }
   } else if (page === 'vote') {
     const V = map.vote;
-    content = (
-      <V regularParties={voteParties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
-        onSelect={setSelectedPartyId} onViewDetails={onViewDetails} isSingleParty={single}
-        user={DUMMY_USER} onConfirm={onConfirm} isSubmitting={false} editorMode={false} />
-    );
+    if (family === 'blossom' && !single) {
+      // MULTI ballot — local selection → the SHARED confirm popup → success
+      // (mirrors /template-preview interact + the real vote/page.js multi flow).
+      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
+      content = (
+        <>
+          <V regularParties={PARTIES} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId} onViewDetails={onViewDetails} isSingleParty={false}
+            user={DUMMY_USER} onConfirm={() => setConfirmOpen(true)} isSubmitting={false} editorMode={false} />
+          <VoteConfirmationModal
+            isOpen={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={() => { setConfirmOpen(false); onConfirm(); }}
+            party={selectedParty}
+            isVoteNo={selectedParty?.number === 0}
+            isDisapprove={selectedParty?.number === -1}
+            isSubmitting={false}
+          />
+        </>
+      );
+    } else {
+      // blossom SINGLE booth confirms internally → onConfirm; other families uniform.
+      content = (
+        <V regularParties={voteParties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
+          onSelect={setSelectedPartyId} onViewDetails={onViewDetails} isSingleParty={single}
+          user={DUMMY_USER} onConfirm={onConfirm} isSubmitting={false} editorMode={false} />
+      );
+    }
   } else if (page === 'results') {
     const R = map.results;
+    // blossom LOCKED = the election-day embargo band (polls open, scores sealed,
+    // turnout public) — not the "not started" empty state. Mirror /template-preview.
+    const blossom = family === 'blossom';
     content = (
-      <R candidates={resultsCandidates(revealed)} totalVotes={revealed ? 625 : 0} demographics={DEMOGRAPHICS}
-        finalStatus={revealed ? 'ENDED' : 'WAITING'} isRevealed={revealed} isNotStarted={!revealed}
+      <R candidates={resultsCandidates(revealed)}
+        totalVotes={revealed ? 625 : (blossom ? 418 : 0)} demographics={DEMOGRAPHICS}
+        finalStatus={revealed ? 'ENDED' : (blossom ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
+        isNotStarted={blossom ? false : !revealed}
         countdownText={revealed ? '' : 'เหลืออีก 02:14:33'} onSelectParty={(p) => go('party', { partyNumber: p?.number ?? 1 })} editorMode={false} />
     );
   } else if (page === 'success') {
