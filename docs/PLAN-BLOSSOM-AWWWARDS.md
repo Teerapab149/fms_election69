@@ -109,7 +109,14 @@
       (selection → popup → success) + static; verify flow เต็ม + 4 slug + 390px
       (logo พับ, bar ซ้อนแนวตั้ง) + siblings/live untouched; P-LOG-082 (rAF ×2
       หลัง programmatic click ก่อนอ่าน computed) ลง DECISIONS
-- [ ] **T3.3 /vote single (booth)** — cinematic เวอร์ชัน candy
+- [x] **T3.3 /vote single (booth)** ✅ DONE 2026-07-12 (`f0720e6`) — BlossomSingleParty
+      (calm booth: masthead พรรค + policy index rows + team grid + 3-choice บนการ์ดกระดาษ,
+      semantic เขียว/แดง/ส้มคงเดิม verified, ink-band confirm bar + paper dialog); พ่วง
+      **calm pass ทั้งตระกูล** (`a7fad4a`): canvas 4 ธีม → paper ~98L, dots 8%/28px,
+      blobs จาง 45%, crop marks 38% — Fable **image-review ผ่านทั้ง 7 หน้า** ด้วย Playwright
+      harness (.specs/shot-blossom.js — ใช้แทน pane ที่ screenshot พัง/reduced-motion)
+      Polish ค้างเล็ก: ชื่อพรรคยาวใน masthead มือถือโดน clamp "…" (ควร wrap 2-3 บรรทัด) ·
+      home feature ช่องว่างซ้ายล่างกว้างไปนิดบน desktop
 - [x] **T3.4 /success + /closed** ✅ DONE 2026-07-12 (`a05194c`) — BlossomSuccess (ink-band
       ฉลอง + receipt line + confetti เรขาคณิต + next-step panel, modal ฟอร์ม/auth guard คงอยู่ที่
       parent) / BlossomClosed (ประกาศเงียบ reason-aware) + dispatch + preview wiring;
