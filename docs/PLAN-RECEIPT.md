@@ -129,14 +129,22 @@
 - **ทำอะไร:** ReceiptResults (register tape ยาว + embargo SEALED holo, recharts
   ใส่กรอบกระดาษ consts ห้ามแตะ) + ReceiptClosed (สลิปแปะเทป reason-aware)
   + **ReceiptCandidates** (ช่องว่างแผนเดิม — ตาม grammar BlossomCandidates)
-  + **home addendum จาก mockup ที่ 2 ของ owner (Fable คัดแล้ว):** รอยฉีกขอบกระดาษ
-  เผยชั้นกระดาษเข้มกว่า (ห้ามหินอ่อน — ขัด material honesty), เชือกร้อย grommet
+  + **home addendum จาก mockup ที่ 2 ของ owner (Fable คัดแล้ว):** เชือกร้อย grommet
   โยงการ์ดโน้ต→ป้าย CTA, ghost stamp มีรายละเอียดวงแหวน+ตัวอักษรแบบตราจริง;
+  ~~รอยฉีกขอบกระดาษ~~ **CANCELLED** — กระดาษฉีกขาดชนภาพ "ฉีกบัตรเลือกตั้ง"
+  (owner ตั้งคำถาม + Fable วิเคราะห์เห็นพ้อง; ฉีกได้เฉพาะตามรอยปรุ — กติกาใหม่ทุก R);
   **โทนคงอุ่น + ม่วง FMS ตาม lock เดิม** (โทนเย็น/ลาเวนเดอร์ของ mockup = รอ owner
   สั่งเองเท่านั้น)
 - **Acceptance R4:** embargo ไม่รั่ว score ก่อน reveal + recharts consts/fills
   untouched + closed ไม่ลิงก์ results ตาม seam + candidates ไม่นับ pseudo-candidate
   เป็นพรรค + ทุกธีม + 390px + fallback + spec `.specs/receipt/R4-RESULTS-CLOSED-CANDIDATES.md`
+- ✅ **DONE 2026-07-13 `442777f`** — Fable รีวิวผ่าน (dispatch diff อ่านเอง 3 ไฟล์ +
+  probe อิสระ: embargo 0 แถว/ไม่มีเลขคะแนน/foil seal จริง + API mask score=0 ต้นน้ำ,
+  reveal 3 แถว+winner stamp+3 charts, closed ลิงก์ body = กลับหน้าแรกเท่านั้น
+  (ผลคะแนนที่เจอ = topbar nav ชั้น chrome แชร์ทุกหน้า ถูกต้อง), candidates ไม่มี
+  pseudo card + editorMode ถอด href ตาม P-LOG-002, ghost textPath จาก meta ไม่มี
+  ปี hardcode, เชือก pointer-events none) · จุดแขวน R4.5: ตำแหน่งเชือกผูก grommet
+  เป็น fixed offset — จูนสายตาตอน owner ดู
 
 ### R5 — Playground/preview/chooser + gate
 - **ทำอะไร:** ต่อ receipt เข้า template-playground + /template-preview?interact=1
