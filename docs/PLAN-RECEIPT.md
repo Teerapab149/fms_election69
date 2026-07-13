@@ -80,6 +80,29 @@
 - Build pass แต่ละหน้า = "good first pass, family-consistent" — gates แข็ง (token/
   semantic/base-visible/mobile/P-LOG) ยังบังคับเต็ม แต่การถกดีไซน์ละเอียดยกไป R4.5
 
+### R2.5 — Home "Elegant Desk" polish (owner-directed 2026-07-13 — IN FLIGHT)
+- **ที่มา:** owner ส่ง image-gen prompt (โต๊ะกระดาษ elegant) + feedback: (1) พื้นหลังห้าม
+  watermark logo ซ้ำๆ ("PSU ตลกมาก") ต้อง elegant (2) UI ยังอ่านเป็น "การ์ด" ซ้ำ template อื่น
+  → ดันเป็น "กระดาษจริง" (3) **Home ที่ polish แล้ว = reference ทุกหน้าที่เหลือ** แล้วไล่ทำ
+  ต่อเนื่องทุกหน้าเลย ไม่ต้องรอ (แก้ operating mode เดิมบางส่วน — polish home ก่อน แล้ว
+  build หน้าที่เหลือด้วยภาษาใหม่)
+- **Fable วิเคราะห์ prompt:** เอา laid-paper bg + blind-emboss seal 2-3 จุด (ห้าม tile) +
+  paper-stack hero + paperclip + split-flap countdown tiles + manila note stats +
+  die-cut tag CTA + light audit ทิศเดียว + topbar เส้นปรุ; ตัดทิ้ง walnut frame /
+  กิ่งมะกอก / ตราโลหะโบราณ / เส้นลายมือ (owner lock ตราปั๊มเท่านั้น)
+- **Spec:** `.specs/receipt/R2.5-HOME-ELEGANT-DESK.md` · worker = Opus 4.8 subagent
+- ✅ **DONE 2026-07-13 `e003fc3`** — Fable review ผ่านทุกแกนที่ตรวจได้ (probe อิสระ:
+  laid ::after จริง, seal 3/2 จุด desktop/mobile, paperclip+stack 2 แผ่น, tile 3px+seam,
+  note #F5EDDA คงที่ 4 ธีม + contrast 5.06:1, grommet+studs เป็น pseudo, เงาทิศเดียว
+  down-right, topbar ปรุ, 390px scrollWidth=390, yellow onAccent=ink)
+- ⚠️ **pixel capture ล่มทั้ง session** (screenshot timeout ทุก call ทั้ง worker+Fable —
+  DOM/JS ปกติ) → visual eyeball สุดท้าย = owner ตอน R4.5; จุดจูนที่แขวนไว้: opacity
+  emboss seal (~5% ink) ถ้าจางไป/เข้มไปปรับที่ `.rc-desk-seals`
+- ⚠️ ช่องว่างแผนเดิม: ตระกูลอื่นมีหน้า **Candidates** (BlossomCandidates) แต่ R0-R5
+  ไม่มี ReceiptCandidates → เพิ่มเข้า R4 (ไม่งั้น nav /candidates หลุดตระกูล)
+- ⚠️ R3 ค้าง untracked: ReceiptVote.js + ephemeralChoice.js — คิวถัดไป ทำต่อด้วย
+  ภาษา desk ใหม่จาก home (laid bg + light ทิศเดียว + tile materiality)
+
 ### R2 — Home + countdown บัตรคิว
 - **ทำอะไร:** ReceiptHome — โต๊ะหน่วยเลือกตั้ง + countdown เป็นบัตรคิว + turnout
   register tape + CTA เข้าคูหา
