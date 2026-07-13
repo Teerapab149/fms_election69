@@ -199,7 +199,10 @@
    (translate-only + base-visible: JS-fail/reduced-motion เห็นเต็มทันที) · ตราปั๊มกดตอน
    select · foil ตอบ pointer — ห้าม fade-gate เนื้อหา (P-LOG เดิมทั้งหมด apply)
 
-### 2 · Composition spec ต่อหน้า (สรุป — worker อ่านคู่กับ concept §4)
+### 2 · Composition spec ต่อหน้า — ⭐ ฉบับละเอียดเต็มอยู่ที่ `docs/PLAN-RECEIPT-V2-PAGES.md`
+> (วิเคราะห์จากภาพจริงทุกหน้า + spec ราย element + motion + mobile + verify ต่อหน้า +
+> ตารางลำดับ v2-R1..R7 พร้อมงบ worker — worker ทุกตัวอ่านไฟล์นั้นก่อนเริ่ม R ของตัวเอง)
+> สรุปย่อด้านล่างคงไว้เพื่อ orientation:
 - **Home:** dispenser → เทปพิมพ์ [บัตรคิว countdown] → [ประกาศ/ชื่องาน] → [register
   turnout] → CTA = ป้าย tag ห้อยเชือกออก **นอกขอบเทป**; โน้ตมะนิลา+โปสเตอร์+ephemera
   scatter รอบเทป; ghost stamp ทับมุมเทป
