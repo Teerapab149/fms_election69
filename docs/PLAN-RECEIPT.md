@@ -166,7 +166,94 @@
 
 ---
 
-## 🆕 R6-R8 — Owner feedback round 2026-07-13 ค่ำ (จากการดู chooser จริง)
+## 🎯 MASTER PLAN v2 — Identity & Completion (พิมพ์เขียว session หน้า — เขียน 2026-07-13 ค่ำ)
+
+> **Owner feedback ครบ 4 ข้อ:** (1) เรียบไป (2) party ยังเป็น classic (3) สลับธีมเปลี่ยนแค่
+> สีตัวอักษร (4) **layout คล้าย Blossom ไม่ unique** + สั่ง: plan ให้เต็มที่สุด แล้วเริ่ม
+> implement **session หน้า** + **BlossomParty ต้องเสร็จด้วย**
+> Section R6-R8 ด้านล่างถูก **ดูดรวมเข้า v2 นี้แล้ว** (เลขใหม่ อ่านจากตรงนี้เป็นหลัก)
+
+### 0 · วินิจฉัย "ทำไมเหมือน Blossom" (Fable ตรวจโค้ดจริงทั้งสองไฟล์)
+- โครงจริงต่างกัน (Blossom = single-column editorial flow; Receipt = grid ซ้าย-ขวา) แต่
+  **DNA ผิวซ้ำกันหมด**: sticky topbar + เส้น hairline เต็มจอ · eyebrow mono uppercase ·
+  การ์ดขาวมุมมนบนพื้นกระดาษอ่อน · poster/รูปกลางหน้า · footer บรรทัดเดียวกลาง —
+  สองตระกูลพูดภาษา "สิ่งพิมพ์ editorial" เดียวกัน ต่างแค่สำเนียง
+- ของที่ Receipt มีแล้วและ **unique จริง** (ต้องดันขึ้นเป็นพระเอก): holo foil · split-flap ·
+  ตราปั๊ม semantic · รอยปรุ/die-cut · printer moment (success) · เชือก+grommet · บัตรคิว
+- **ยาที่ถูกโรค: เปลี่ยนกระดูก ไม่ใช่เพิ่มเครื่องสำอาง** → composition ใหม่ทั้งตระกูล
+
+### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
+1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
+   receipt-stock กว้าง ~40-44% วาง **offset ซ้าย/ขวาไม่กลาง** (สลับข้างตามหน้า)
+   เนื้อหาหลัก = "ท่อนที่พิมพ์บนเทป" คั่นด้วยแถบรอยปรุจริง (ฉีกตามปรุ — P-LOG-086)
+   มือถือ: เทปกลายเป็น full-width (สัดส่วนใบเสร็จจริง) — โครงนี้ไม่มีตระกูลไหนใช้
+2. **Dispenser anchor** — หัวเครื่องพิมพ์/ช่องจ่ายบัตร dock บนสุดของเทป (ใต้ topbar):
+   ทั้งหน้า = สิ่งที่เครื่องนี้เพิ่งพิมพ์ออกมา (ขยาย signature ของ success ให้เป็นตรรกะ
+   ของทั้งตระกูล)
+3. **Desk scatter** — ของรอง (โน้ตมะนิลา, โปสเตอร์, ตราปั๊ม, ซีล foil, ต้นขั้ว) วางนอกเทป
+   เอียง/เหลื่อม **ทับขอบเทปเสมอ** (overlap = ความจริงของโต๊ะ) แทน grid คู่ขนานแบบเดิม
+4. **Topbar เลิก hairline editorial** → "แถบหัวโต๊ะ": โลโก้บนป้ายกระดาษเสียบคลิป, nav เป็น
+   ต้นขั้วบัตรเรียงกัน (active = ต้นขั้วถูกฉีกตามปรุ), user chip = บัตรพนักงานหนีบ —
+   behaviour/DOM logic เดิมทุกอย่าง เปลี่ยนเฉพาะผิว+รูปทรง
+5. **Motion = การพิมพ์** — ท่อนเทปล่างสุด "พิมพ์ออกมา" ตอน scroll เข้า viewport
+   (translate-only + base-visible: JS-fail/reduced-motion เห็นเต็มทันที) · ตราปั๊มกดตอน
+   select · foil ตอบ pointer — ห้าม fade-gate เนื้อหา (P-LOG เดิมทั้งหมด apply)
+
+### 2 · Composition spec ต่อหน้า (สรุป — worker อ่านคู่กับ concept §4)
+- **Home:** dispenser → เทปพิมพ์ [บัตรคิว countdown] → [ประกาศ/ชื่องาน] → [register
+  turnout] → CTA = ป้าย tag ห้อยเชือกออก **นอกขอบเทป**; โน้ตมะนิลา+โปสเตอร์+ephemera
+  scatter รอบเทป; ghost stamp ทับมุมเทป
+- **Vote multi:** เทปกว้างขึ้นเป็นบัตรลงคะแนน (ท่อนเดียวยาว) แถวพรรคพิมพ์บนเทป,
+  tray ยืนยัน = ต้นขั้วรอฉีกท้ายเทป (มีอยู่แล้ว — ยกเข้าตรรกะเทป)
+- **Vote single:** โต๊ะประทับตรา — บัตรพรรคเต็มใบวางกลาง, ตราปั๊ม 3 อันวางเป็น "ของจริง
+  บนโต๊ะ" ข้างแท่นหมึก (ไม่ใช่ 3 การ์ดเรียงแบบตอนนี้)
+- **Success:** คงเดิม (unique อยู่แล้ว) + ผูกเข้า dispenser เดียวกับ home
+- **Results:** เทป = แถบผลคะแนนยาว (มีแล้ว) — จัดเข้า spine + ผนึก SEALED คาดขวางเทป
+- **Candidates:** เทป index รายชื่อพรรค + ใบปลิว scatter สองข้างเทป
+- **Party (ใหม่):** แฟ้ม dossier เปิดวาง **ทับ** เทปที่พิมพ์ index ประวัติ — spec เดิม R6 ล่าง
+- **Closed:** สลิปแปะเทปกลางโต๊ะ (หน้าเดียวที่ spine สั้น — จงใจให้เงียบ)
+
+### 3 · ลำดับงาน (เลขใหม่ v2 — ทำตามลำดับ ทีละ R ต่อ session ได้)
+| R | งาน | หมายเหตุ |
+|---|---|---|
+| **v2-R1** | **Home recompose** เป็น tape-spine + desk-scatter + topbar ใหม่ | หน้าอ้างอิงของโครงใหม่; logic seams ห้ามแตะ; Playwright shot ทุกธีม×2 viewport |
+| **v2-R2** | **Tinted paper themes** (ธีมละโต๊ะ: ครีม/ฟ้าเช้า/งาช้างแดด/sage) | แก้ receiptPalettes ไฟล์เดียว + contrast gate 4×3 + chroma ต่ำคุม "ยังเป็นกระดาษ" |
+| **v2-R3** | **Propagate โครงใหม่**: vote multi/single → results → candidates → closed → success (เบา) | ทีละหน้า commit แยก; แต่ละหน้า verify ครบชุด |
+| **v2-R4** | **ReceiptParty** แฟ้ม dossier (ภาษาโครงใหม่) + ถอน classic fallthrough ฝั่ง receipt | ตาม spec R6 เดิมล่าง + hydration warning classic หายเอง |
+| **v2-R5** | **Richness pass** (แก้ "เรียบไป") + เก็บตก R4.5: emboss opacity, จุดผูกเชือก, "SAMO 50 · 0002" spacing, queue-slip done-state, chooser ORDER | owner-guided ทีละหน้า |
+| **v2-R6** | **BlossomParty** (ตระกูล Blossom — worker แยก อ่าน PLAN-BLOSSOM-AWWWARDS ก่อน) | ภาษา blossom ไม่ใช่ receipt; dispatch party/page.js + ถอน fallthrough ฝั่ง blossom; แก้ hydration warning เดิมไปในตัว |
+| **v2-R7** | **Gate ปิดท้าย**: chooser ครบ 9 สไลด์จริง + interact full-flow + build gate (owner หยุด server เอง) | + Playwright screenshot ครบทุกหน้า×4 ธีม เป็นหลักฐานส่งมอบ |
+
+### 4 · Workflow มาตรฐาน (อัปเดตจากบทเรียน session นี้)
+- Fable = advisor/reviewer · Opus 4.8 subagent = worker ต่อ R · ห้าม commit จน Fable
+  รีวิว raw outputs + probe อิสระ · ห้ามแตะ :3000 (worker server pin :56989 แล้ว)
+- **Screenshot ใช้ Playwright ได้แล้ว** (สคริปต์ต้นแบบ: scratchpad `shot-receipt.js` —
+  require playwright จาก node_modules โปรเจกต์ตรงๆ) → ทุก R ต่อจากนี้ **แนบภาพจริง**
+  ไม่ใช่ probe อย่างเดียว; ระวัง artifact: bg fixed ไม่ตามใน fullPage capture
+- worker ชน session limit → SendMessage resume จาก transcript เดิม (พิสูจน์แล้วใช้ได้)
+- กติกาแข็งเดิมทั้งหมด (base-visible / semantic / getPath / ไทยไม่ลงท้าย "." / 390px /
+  editorMode guards / ห้าม torn edge — ฉีกตามปรุเท่านั้น) apply ทุก R
+
+### 5 · คำถามเปิดถึง owner (ตอบก่อนเริ่ม v2-R1 จะดีมาก ไม่ตอบ = Fable ตัดสินเอง)
+1. เทป spine offset ซ้ายหรือขวาบนหน้า home (Fable แนะนำ**ซ้าย** — สายตาไทยอ่าน
+   ซ้าย→ขวา ให้ scatter/CTA อยู่ขวา)
+2. topbar แบบ "ต้นขั้วบัตร nav" กล้าพอไหม หรือเอาแบบกลางๆ ก่อน (Fable แนะนำ**กล้า** —
+   นี่คือจุดที่ฆ่าความเหมือน Blossom ได้เยอะสุดรองจาก spine)
+3. ธีมฟ้า/เจด โทนกระดาษเย็นลงเล็กน้อยโดย "ครีมอุ่น" เป็นแค่ธีมม่วง default — โอเคไหม
+   (lock เดิมบอกกระดาษอุ่น; v2-R2 ตีความว่า lock = default ไม่ใช่ทุกธีม)
+
+### PROMPT เปิด session หน้า (คัดลอกได้เลย)
+```
+อ่าน docs/PLAN-RECEIPT.md ตั้งแต่ "MASTER PLAN v2" → CONCEPT-RECEIPT-TEMPLATE.md
+→ CLAUDE.md Engineering Discipline แล้วเริ่ม v2-R1 (Home recompose: tape spine +
+desk scatter + topbar ใหม่) — Fable advisor + Opus worker ตามเดิม, screenshot ด้วย
+Playwright ทุกรอบ, ห้ามแตะ :3000, commit หลัง Fable รีวิวเท่านั้น
+ตอบคำถามเปิด §5 ของผม: (1)... (2)... (3)...
+```
+
+---
+
+## 🆕 R6-R8 — Owner feedback round 2026-07-13 ค่ำ (จากการดู chooser จริง — ถูกดูดเข้า v2 แล้ว อ่านเฉพาะ spec รายละเอียด R6/R7/R8 ที่ v2 อ้างถึง)
 
 > Owner feedback 3 ข้อ: (1) โดยรวม **เรียบมาก มากไปด้วย** (2) **หน้า party ยังไม่เปลี่ยน**
 > (สไลด์ 3/9 โชว์ classic fallthrough) (3) **สลับธีมแล้วเปลี่ยนแค่สีตัวอักษร** อยากให้
