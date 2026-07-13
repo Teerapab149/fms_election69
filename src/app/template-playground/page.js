@@ -55,6 +55,12 @@ import BlossomResults from '../../components/vote/BlossomResults';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
+import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
+import ReceiptVote from '../../components/vote/ReceiptVote';
+import ReceiptResults from '../../components/vote/ReceiptResults';
+import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
+import ReceiptClosed from '../../components/vote/ReceiptClosed';
+
 // blossom has NO BlossomParty (P3 by design) — its /party mirrors the live site,
 // which falls to the classic cinematic detail (same as /template-preview interact).
 import { ClassicPartyPreview } from '../party/page';
@@ -78,6 +84,10 @@ const COMPONENTS = {
   // (mirrors the live fallthrough). vote is special-cased too (single booth confirms
   // internally; multi opens the shared VoteConfirmationModal at the parent).
   blossom: { candidates: BlossomCandidates, vote: BlossomVote, results: BlossomResults, success: BlossomSuccess, closed: BlossomClosed },
+  // receipt mirrors blossom exactly: no `party` layout (→ ClassicPartyPreview), vote
+  // dispatches single→ReceiptSingleParty (internal confirm) / multi→shared modal, and
+  // results renders the election-day embargo band when locked (same as blossom).
+  receipt: { candidates: ReceiptCandidates, vote: ReceiptVote, results: ReceiptResults, success: ReceiptSuccess, closed: ReceiptClosed },
 };
 
 const TEMPLATES = [
@@ -85,6 +95,7 @@ const TEMPLATES = [
   { slug: 'studio-dark', label: 'Studio Dark' },
   { slug: 'gumroad', label: 'Gumroad' },
   { slug: 'blossom', label: 'Blossom' },
+  { slug: 'receipt', label: 'Receipt' },
 ];
 const PAGES = [
   { key: 'home', th: 'หน้าหลัก' },
@@ -154,9 +165,9 @@ function PlaygroundBody() {
     const C = map.candidates;
     content = <C candidates={PARTIES} editorMode={false} />;
   } else if (page === 'party') {
-    // blossom has no party layout — mirror the live fallthrough to the classic
-    // cinematic detail (same choice /template-preview interact makes for blossom).
-    if (family === 'blossom') {
+    // blossom/receipt have no party layout — mirror the live fallthrough to the
+    // classic cinematic detail (same choice /template-preview interact makes).
+    if (family === 'blossom' || family === 'receipt') {
       content = <ClassicPartyPreview party={partyForDetail} galleryImages={[]} />;
     } else {
       const P = map.party;
@@ -164,7 +175,7 @@ function PlaygroundBody() {
     }
   } else if (page === 'vote') {
     const V = map.vote;
-    if (family === 'blossom' && !single) {
+    if ((family === 'blossom' || family === 'receipt') && !single) {
       // MULTI ballot — local selection → the SHARED confirm popup → success
       // (mirrors /template-preview interact + the real vote/page.js multi flow).
       const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
@@ -186,7 +197,7 @@ function PlaygroundBody() {
         </>
       );
     } else {
-      // blossom SINGLE booth confirms internally → onConfirm; other families uniform.
+      // blossom/receipt SINGLE booth confirms internally → onConfirm; other families uniform.
       content = (
         <V regularParties={voteParties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
           onSelect={setSelectedPartyId} onViewDetails={onViewDetails} isSingleParty={single}
@@ -195,14 +206,14 @@ function PlaygroundBody() {
     }
   } else if (page === 'results') {
     const R = map.results;
-    // blossom LOCKED = the election-day embargo band (polls open, scores sealed,
-    // turnout public) — not the "not started" empty state. Mirror /template-preview.
-    const blossom = family === 'blossom';
+    // blossom/receipt LOCKED = the election-day embargo band (polls open, scores
+    // sealed, turnout public) — not the "not started" empty state. Mirror /template-preview.
+    const embargo = family === 'blossom' || family === 'receipt';
     content = (
       <R candidates={resultsCandidates(revealed)}
-        totalVotes={revealed ? 625 : (blossom ? 418 : 0)} demographics={DEMOGRAPHICS}
-        finalStatus={revealed ? 'ENDED' : (blossom ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
-        isNotStarted={blossom ? false : !revealed}
+        totalVotes={revealed ? 625 : (embargo ? 418 : 0)} demographics={DEMOGRAPHICS}
+        finalStatus={revealed ? 'ENDED' : (embargo ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
+        isNotStarted={embargo ? false : !revealed}
         countdownText={revealed ? '' : 'เหลืออีก 02:14:33'} onSelectParty={(p) => go('party', { partyNumber: p?.number ?? 1 })} editorMode={false} />
     );
   } else if (page === 'success') {

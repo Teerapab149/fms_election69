@@ -383,6 +383,61 @@ function PreviewBody() {
       );
     }
 
+    // ── receipt family — SINGLE-PARTY ink-stamp booth (R3). ReceiptVote dispatches
+    //    to ReceiptSingleParty; its OWN confirm dialog calls onConfirm (the submit)
+    //    → navTo('success'). No shared VoteConfirmationModal for single. MUST precede
+    //    the generic `if (page === 'vote')` classic catch-all below (which would
+    //    otherwise render receipt's ballot with the classic MultiPartyView).
+    if (family === 'receipt' && page === 'vote' && variant === 'single') {
+      return (
+        <ReceiptVote
+          regularParties={PARTIES}
+          specialOptions={SPECIAL}
+          selectedPartyId={selectedPartyId}
+          onSelect={setSelectedPartyId}
+          onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+          isSingleParty
+          user={DUMMY_USER}
+          onConfirm={() => navTo('success')}
+          isSubmitting={false}
+          editorMode={false}
+        />
+      );
+    }
+
+    // ── receipt family — MULTI ballot (R3). Local selection → the SHARED confirm
+    //    popup → navTo('success'), mirroring the classic/blossom multi interact flow.
+    //    MUST precede the generic `if (page === 'vote')` classic catch-all below.
+    if (family === 'receipt' && page === 'vote' && variant !== 'single') {
+      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
+      return (
+        <>
+          <ReceiptVote
+            regularParties={PARTIES}
+            specialOptions={SPECIAL}
+            selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId}
+            onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+            isSingleParty={false}
+            user={DUMMY_USER}
+            onConfirm={() => setConfirmOpen(true)}
+            isSubmitting={false}
+            editorMode={false}
+          />
+          <VoteConfirmationModal
+            isOpen={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
+            party={selectedParty}
+            isVoteNo={selectedParty?.number === 0}
+            isDisapprove={selectedParty?.number === -1}
+            isSubmitting={false}
+          />
+        </>
+      );
+    }
+
     // ── classic family (incl. original) — VOTE page composed from the REAL pure
     //    components exactly as app/vote/page.js does for multi-party, but with local
     //    state and zero DB/auth. single → the real cinematic SinglePartyView + footer.
@@ -513,58 +568,6 @@ function PreviewBody() {
       }
       if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
       if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />;
-    }
-
-    // ── receipt family — SINGLE-PARTY ink-stamp booth (R3). ReceiptVote dispatches
-    //    to ReceiptSingleParty; its OWN confirm dialog calls onConfirm (the submit)
-    //    → navTo('success'). No shared VoteConfirmationModal for single.
-    if (family === 'receipt' && page === 'vote' && variant === 'single') {
-      return (
-        <ReceiptVote
-          regularParties={PARTIES}
-          specialOptions={SPECIAL}
-          selectedPartyId={selectedPartyId}
-          onSelect={setSelectedPartyId}
-          onViewDetails={(p) => navTo('party', p?.number ?? 1)}
-          isSingleParty
-          user={DUMMY_USER}
-          onConfirm={() => navTo('success')}
-          isSubmitting={false}
-          editorMode={false}
-        />
-      );
-    }
-
-    // ── receipt family — MULTI ballot (R3). Local selection → the SHARED confirm
-    //    popup → navTo('success'), mirroring the classic/blossom multi interact flow.
-    if (family === 'receipt' && page === 'vote' && variant !== 'single') {
-      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
-      const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
-      return (
-        <>
-          <ReceiptVote
-            regularParties={PARTIES}
-            specialOptions={SPECIAL}
-            selectedPartyId={selectedPartyId}
-            onSelect={setSelectedPartyId}
-            onViewDetails={(p) => navTo('party', p?.number ?? 1)}
-            isSingleParty={false}
-            user={DUMMY_USER}
-            onConfirm={() => setConfirmOpen(true)}
-            isSubmitting={false}
-            editorMode={false}
-          />
-          <VoteConfirmationModal
-            isOpen={confirmOpen}
-            onClose={() => setConfirmOpen(false)}
-            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
-            party={selectedParty}
-            isVoteNo={selectedParty?.number === 0}
-            isDisapprove={selectedParty?.number === -1}
-            isSubmitting={false}
-          />
-        </>
-      );
     }
 
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
