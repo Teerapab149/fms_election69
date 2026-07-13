@@ -30,6 +30,7 @@ import { RECEIPT_THEMES } from "../../../../../utils/receiptPalettes";
 
 function buildReceiptTemplate(slug, name, description, p) {
   const DESK = p.desk, RECEIPT = p.receipt, INK = p.ink, INK2 = p.ink2, LINE = p.line;
+  const NOTE = p.note; // manila note-stock — CONSTANT stock, carried into the Layer-1 emit
   const ACCENT = p.accent, DEEP = p.accentDeep, ON_ACCENT = p.onAccent;
   // paper voice — soft curl lift, crisp printed-card corners. NOT chunky-stamp.
   const SHADOW_CARD = `0 10px 30px -14px color-mix(in srgb, ${INK} 35%, transparent)`;
@@ -71,6 +72,7 @@ function buildReceiptTemplate(slug, name, description, p) {
         "--color-text":        INK,
         "--color-text-muted":  INK2,
         "--color-border":      LINE,
+        "--rc-note":           NOTE,
         "--radius-sm":         "6px",
         "--radius-md":         "8px",
         "--radius-card":       "10px",

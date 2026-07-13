@@ -34,6 +34,7 @@ export function ReceiptBaseStyles() {
       .rc-root {
         --rc-desk:${t.desk}; --rc-desk-shade:${t.deskShade};
         --rc-receipt:${t.receipt}; --rc-receipt-edge:${t.receiptEdge};
+        --rc-note:${t.note};
         --rc-ink:${t.ink}; --rc-ink2:${t.ink2}; --rc-faint:${t.faint};
         --rc-line:${t.line}; --rc-stamp-line:${t.stampLine};
         --rc-holo-1:${t.holo1}; --rc-holo-2:${t.holo2}; --rc-holo-3:${t.holo3};

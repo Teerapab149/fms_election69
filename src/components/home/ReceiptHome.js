@@ -270,6 +270,15 @@ export default function ReceiptHome({
 
       <ReceiptTopBar editorMode={editorMode} onSignIn={onSignIn} />
 
+      {/* blind-emboss seals pressed into the desk paper — 2-3 curated spots, NOT
+          tiled, no logos. Pure decoration (aria-hidden), built from ring+ring+diamond
+          in --rc-ink at ~5% + a 1px receipt highlight so each reads as pressed IN. */}
+      <div className="rc-desk-seals" aria-hidden="true">
+        <span className="rc-seal rc-seal--a"><i /><b /></span>
+        <span className="rc-seal rc-seal--b"><i /><b /></span>
+        <span className="rc-seal rc-seal--c"><i /><b /></span>
+      </div>
+
       <div className="rc-home-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
@@ -283,21 +292,29 @@ export default function ReceiptHome({
             {/* ghost of a previous ink stamp on the desk (very faint) */}
             <div className="rc-ghost" aria-hidden="true"><span>{meta.prefix} {meta.number}</span></div>
 
-            <div className="rc-notice-card">
-              <div className="rc-notice-eyebrow">◆ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ◆</div>
-              <h1 className="rc-notice-title">{meta.org}</h1>
-              <p className="rc-notice-deck">{meta.campaign}</p>
+            {/* the sheet stack — two backing sheets (aria-hidden) sized to the card so
+                the hero reads as the top of a small paper stack. Light from top-left →
+                the stack shadows fall down-right (T6). */}
+            <div className="rc-sheet-stack">
+              <span className="rc-paper rc-paper--2" aria-hidden="true" />
+              <span className="rc-paper rc-paper--1" aria-hidden="true" />
 
-              {/* perforation rule */}
-              <div className="rc-perf" aria-hidden="true" />
+              <div className="rc-notice-card">
+                <div className="rc-notice-eyebrow">◆ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ◆</div>
+                <h1 className="rc-notice-title">{meta.org}</h1>
+                <p className="rc-notice-deck">{meta.campaign}</p>
 
-              {ELECTION_START && (
-                <div className="rc-daterow">
-                  <span className="rc-daterow-k">เปิดหีบ</span>
-                  <span className="rc-daterow-v">{formatThaiDate(ELECTION_START)}</span>
-                  <span className="rc-daterow-t">{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
-                </div>
-              )}
+                {/* perforation rule */}
+                <div className="rc-perf" aria-hidden="true" />
+
+                {ELECTION_START && (
+                  <div className="rc-daterow">
+                    <span className="rc-daterow-k">เปิดหีบ</span>
+                    <span className="rc-daterow-v">{formatThaiDate(ELECTION_START)}</span>
+                    <span className="rc-daterow-t">{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* ballot STUB peeking from under the notice card (decorative, non-secret) */}
@@ -305,6 +322,21 @@ export default function ReceiptHome({
               <div className="rc-stub-h">ต้นขั้ว · STUB</div>
               <div className="rc-stub-ref">{meta.prefix} {meta.number} · 0049</div>
             </div>
+
+            {/* one metal paperclip over the card's top-left corner — warm-silver wire
+                (colours from the --rc-* ramp), light from top-left. Decoration only. */}
+            <svg className="rc-clip" viewBox="0 0 44 108" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="rcClipG" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" style={{ stopColor: "var(--rc-receipt)" }} />
+                  <stop offset=".35" style={{ stopColor: "var(--rc-faint)" }} />
+                  <stop offset=".62" style={{ stopColor: "var(--rc-stamp-line)" }} />
+                  <stop offset="1" style={{ stopColor: "var(--rc-ink2)" }} />
+                </linearGradient>
+              </defs>
+              <path d="M15 98 V28 a13 13 0 0 1 26 0 V80 a7 7 0 0 1 -14 0 V38"
+                fill="none" stroke="url(#rcClipG)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </section>
 
           {/* ===== right rail: the ticket dispenser + register + CTA ===== */}
@@ -368,6 +400,9 @@ export default function ReceiptHome({
                 className={`rc-cta ${CTA.disabled ? "is-disabled" : ""}`}
               >
                 {!CTA.disabled && <span className="rc-foil" aria-hidden="true" />}
+                {/* die-cut tag grommet — a punched hole ringed with metal at the left
+                    end. Present in every state (no layout shift), aria-hidden. */}
+                <span className="rc-grommet" aria-hidden="true" />
                 <span className="rc-cta-in">{CTA.label}<span className="rc-cta-arrow" aria-hidden="true">→</span></span>
               </a>
               <a href={editorMode ? undefined : getPath("/candidates")} className="rc-cta2">ดูผู้สมัคร<span aria-hidden="true"> →</span></a>
@@ -398,13 +433,29 @@ export default function ReceiptHome({
       <style jsx global>{`
         /* ========== BASE (mobile-first — the polling desk) ========== */
         .rc-home-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
-        /* dot-grid paper texture (8%) — above the desk, under content */
+        /* LAID-PAPER texture — fine horizontal laid lines (~1px every 4px, ~2.5% ink)
+           crossed by sparse vertical chain lines (~1.5px every 104px, ~1.8% ink). Felt,
+           not seen. Above the desk, under content. */
         .rc-home-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background-image:radial-gradient(color-mix(in srgb, var(--rc-ink) 8%, transparent) 1px, transparent 1.5px);
-          background-size:26px 26px; }
-        /* soft desk vignette — depth not darkness (no negative z — P-LOG-084) */
+          background-image:
+            repeating-linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 2.6%, transparent) 0 1px, transparent 1px 4px),
+            repeating-linear-gradient(90deg, color-mix(in srgb, var(--rc-ink) 1.8%, transparent) 0 1.5px, transparent 1.5px 104px); }
+        /* soft desk vignette — depth not darkness (no negative z — P-LOG-084).
+           Light from top-left → the darkening sits low-right (T6). */
         .rc-home-root::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background:radial-gradient(125% 120% at 50% 20%, transparent 46%, var(--rc-desk-shade) 100%); opacity:.7; }
+          background:radial-gradient(135% 130% at 34% 12%, transparent 44%, var(--rc-desk-shade) 100%); opacity:.7; }
+
+        /* ---- blind-emboss seals pressed into the desk (2-3 curated spots) ---- */
+        .rc-home-root .rc-desk-seals { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+        .rc-home-root .rc-seal { position:absolute; display:block; border-radius:50%;
+          border:2px solid var(--rc-ink); opacity:.05;
+          filter:drop-shadow(1px 1px 0 color-mix(in srgb, var(--rc-receipt) 70%, transparent)); }
+        .rc-home-root .rc-seal i { position:absolute; inset:14%; border-radius:50%; border:1.5px solid var(--rc-ink); }
+        .rc-home-root .rc-seal b { position:absolute; left:50%; top:50%; width:18%; height:18%;
+          border:1.5px solid var(--rc-ink); transform:translate(-50%,-50%) rotate(45deg); }
+        .rc-home-root .rc-seal--a { width:230px; height:230px; top:96px; right:-46px; transform:rotate(-8deg); }
+        .rc-home-root .rc-seal--b { width:264px; height:264px; bottom:150px; left:-58px; transform:rotate(6deg); }
+        .rc-home-root .rc-seal--c { width:184px; height:184px; top:52%; right:5%; transform:rotate(-3deg); opacity:.045; }
 
         :where(.rc-home-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-home-root a:focus-visible, .rc-home-root button:focus-visible {
@@ -413,8 +464,10 @@ export default function ReceiptHome({
         /* ---- topbar: sticky, full-bleed ink hairline, mono nav ---- */
         .rc-home-root .rc-topbar { position:sticky; top:0; z-index:40;
           background:color-mix(in srgb, var(--rc-desk) 88%, transparent);
-          -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-          border-bottom:1.5px solid var(--rc-stamp-line); }
+          -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+        /* receipt-native perforated hairline (dash rule) instead of a solid border */
+        .rc-home-root .rc-topbar::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1.5px;
+          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
         .rc-home-root .rc-topbar__in { max-width:1120px; margin:0 auto; padding:12px 20px;
           display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
         .rc-home-root .rc-logo { display:inline-flex; align-items:center; flex-shrink:0; }
@@ -453,7 +506,7 @@ export default function ReceiptHome({
         .rc-home-root .rc-userchip__caret { color:var(--rc-ink2); font-size:11px; }
         .rc-home-root .rc-usermenu { position:absolute; top:calc(100% + 8px); right:0; width:220px; background:var(--rc-receipt);
           border:1.5px solid var(--rc-stamp-line); border-radius:10px; overflow:hidden; z-index:50;
-          box-shadow:0 18px 40px -18px color-mix(in srgb, var(--rc-ink) 22%, transparent); }
+          box-shadow:2px 20px 42px -20px color-mix(in srgb, var(--rc-ink) 22%, transparent); }
         .rc-home-root .rc-usermenu__head { padding:14px 16px; border-bottom:1px dotted var(--rc-line); }
         .rc-home-root .rc-usermenu__name { font-family:var(--rc-fh); font-weight:700; font-size:14px; color:var(--rc-ink);
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -489,9 +542,27 @@ export default function ReceiptHome({
 
         /* ---- 1 · NOTICE CARD ---- */
         .rc-home-root .rc-notice { position:relative; }
+        /* the hero is a SHEET OF PAPER, not an app card → crisp 4px corners (page-local,
+           token untouched) + a soft curl shadow that falls down-right (T6). */
         .rc-home-root .rc-notice-card { position:relative; z-index:2; background:var(--rc-receipt);
-          border:1px solid var(--rc-line); border-radius:var(--rc-radius-card, 10px); padding:26px 24px 30px;
-          box-shadow:var(--rc-shadow-card, 0 10px 30px -14px color-mix(in srgb, var(--rc-ink) 35%, transparent)); }
+          border:1px solid var(--rc-line); border-radius:4px; padding:26px 24px 30px;
+          box-shadow:2px 16px 34px -18px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
+
+        /* the sheet stack sizes to the card so the backing sheets don't span the stub */
+        .rc-home-root .rc-sheet-stack { position:relative; }
+        /* two backing sheets under the card → a small paper stack */
+        .rc-home-root .rc-paper { position:absolute; z-index:1; inset:0; border-radius:4px;
+          background:var(--rc-receipt-edge); border:1px solid var(--rc-line); }
+        .rc-home-root .rc-paper--1 { transform:rotate(1.4deg) translate(4px, 5px);
+          box-shadow:2px 12px 26px -16px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
+        .rc-home-root .rc-paper--2 { transform:rotate(-1.8deg) translate(-3px, 9px);
+          background:var(--rc-desk-shade);
+          box-shadow:3px 16px 30px -18px color-mix(in srgb, var(--rc-ink) 26%, transparent); }
+
+        /* one metal paperclip over the card's top-left corner */
+        .rc-home-root .rc-clip { position:absolute; z-index:3; top:-16px; left:20px; width:23px; height:auto;
+          transform:rotate(-9deg); overflow:visible;
+          filter:drop-shadow(1.5px 2.5px 1.5px color-mix(in srgb, var(--rc-ink) 30%, transparent)); }
         .rc-home-root .rc-notice-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
           color:var(--rc-ink2); text-align:center; }
         .rc-home-root .rc-notice-title { margin:14px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.12;
@@ -508,15 +579,15 @@ export default function ReceiptHome({
 
         /* ghost stamp on the desk behind the card */
         .rc-home-root .rc-ghost { position:absolute; z-index:0; right:-18px; top:-22px; width:104px; height:104px;
-          border-radius:50%; border:2px solid var(--rc-ink); opacity:.08; transform:rotate(-12deg); display:grid; place-items:center; }
+          border-radius:50%; border:2px solid var(--rc-ink); opacity:.07; transform:rotate(-12deg); display:grid; place-items:center; }
         .rc-home-root .rc-ghost span { font-family:var(--rc-fm); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
           color:var(--rc-ink); text-align:center; }
 
         /* ballot stub peeking from under the card */
         .rc-home-root .rc-stub { position:relative; z-index:1; width:180px; margin:-8px 0 0 18px; padding:12px 14px 12px 16px;
           transform:rotate(-2.5deg); transform-origin:top left; background:var(--rc-receipt);
-          border-radius:0 0 6px 6px; border-left:3px solid var(--rc-accent);
-          box-shadow:var(--rc-shadow-card, 0 8px 18px -9px color-mix(in srgb, var(--rc-ink) 42%, transparent)); }
+          border-radius:0 0 4px 4px; border-left:3px solid var(--rc-accent);
+          box-shadow:2px 10px 20px -11px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
         .rc-home-root .rc-stub::before { content:""; position:absolute; top:6px; bottom:6px; right:38px; width:2px;
           background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 3px, transparent 3px 6px); }
         .rc-home-root .rc-stub-h { font-family:var(--rc-fm); font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:var(--rc-ink2); }
@@ -543,7 +614,7 @@ export default function ReceiptHome({
 
         /* the queue slip = a small receipt (banding + jagged bottom edge) */
         .rc-home-root .rc-slip { position:relative; z-index:2; margin:-2px 12px 0; padding:18px 18px 24px; background:var(--rc-receipt);
-          box-shadow:0 14px 30px -16px color-mix(in srgb, var(--rc-ink) 40%, transparent);
+          box-shadow:2px 16px 32px -18px color-mix(in srgb, var(--rc-ink) 40%, transparent);
           background-image:repeating-linear-gradient(180deg, transparent 0 24px, color-mix(in srgb, var(--rc-ink) 3%, transparent) 24px 25px);
           -webkit-mask:radial-gradient(6px 8px at 8px 100%, transparent 96%, #000) bottom left/16px 8px repeat-x, linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat;
                   mask:radial-gradient(6px 8px at 8px 100%, transparent 96%, #000) bottom left/16px 8px repeat-x, linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat; }
@@ -554,16 +625,26 @@ export default function ReceiptHome({
 
         .rc-home-root .rc-slip-digits { display:flex; align-items:flex-start; justify-content:center; gap:6px; margin-top:14px; }
         .rc-home-root .rc-seg { display:flex; flex-direction:column; align-items:center; }
-        .rc-home-root .rc-cd-n { font-family:var(--rc-fr); font-weight:700; font-size:clamp(34px, 12vw, 48px); line-height:.95;
-          letter-spacing:.01em; font-variant-numeric:tabular-nums; color:var(--rc-ink); display:inline-flex; align-items:flex-start; }
-        .rc-home-root .rc-cd-cell { display:inline-block; width:1ch; height:.95em; overflow:hidden; position:relative; }
-        .rc-home-root .rc-cd-char { display:block; text-align:center; will-change:transform;
+        .rc-home-root .rc-cd-n { font-family:var(--rc-fr); font-weight:700; font-size:clamp(30px, 11vw, 44px); line-height:1;
+          letter-spacing:0; font-variant-numeric:tabular-nums; color:var(--rc-ink); display:inline-flex; align-items:center; gap:3px; }
+        /* each digit is a split-flap TILE — receipt→edge gradient (top half brighter),
+           1px tooth border, 3px corners, a hairline seam across the middle. Fixed em
+           width + tabular-nums → no layout shift when a digit rolls. */
+        .rc-home-root .rc-cd-cell { box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center;
+          width:.74em; height:1.14em; overflow:hidden; position:relative;
+          background:linear-gradient(180deg, var(--rc-receipt), var(--rc-receipt-edge));
+          border:1px solid var(--rc-stamp-line); border-radius:3px;
+          box-shadow:1px 2px 5px -3px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-home-root .rc-cd-cell::after { content:""; position:absolute; left:0; right:0; top:50%; height:1px; z-index:2;
+          background:color-mix(in srgb, var(--rc-ink) 20%, transparent); }
+        .rc-home-root .rc-cd-char { display:block; line-height:1; text-align:center; will-change:transform;
           animation:rcRoll .28s cubic-bezier(.22,1,.36,1) both; }
         @keyframes rcRoll { from { transform:translateY(100%); } }
         .rc-home-root .rc-u { font-family:var(--rc-fm); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;
           color:var(--rc-ink2); margin-top:6px; }
         .rc-home-root .rc-colon { font-family:var(--rc-fr); font-weight:400; font-size:clamp(26px, 9vw, 38px);
-          color:color-mix(in srgb, var(--rc-ink2) 60%, var(--rc-receipt)); align-self:flex-start; line-height:1; }
+          color:color-mix(in srgb, var(--rc-ink2) 60%, var(--rc-receipt)); align-self:flex-start; line-height:1;
+          margin-top:.08em; }
 
         .rc-home-root .rc-slip-foot { margin-top:16px; text-align:center; font-family:var(--rc-fm); font-size:9px;
           letter-spacing:.24em; color:var(--rc-faint); }
@@ -578,9 +659,19 @@ export default function ReceiptHome({
         .rc-home-root .rc-ticket.is-done .rc-slip-stamp { display:block; }
 
         /* ---- 3 · TURNOUT REGISTER TAPE ---- */
-        .rc-home-root .rc-register-tape { position:relative; background:var(--rc-receipt); border-radius:6px;
-          padding:16px 18px; box-shadow:0 8px 20px -12px color-mix(in srgb, var(--rc-ink) 34%, transparent);
-          border-top:1px dashed var(--rc-line); border-bottom:1px dashed var(--rc-line); }
+        /* manila note-stock — warmer paper than the receipt, pinned by two metal
+           fasteners at the top corners, tilted a hair. ink2-on-note = ~5.06:1 (AA). */
+        .rc-home-root .rc-register-tape { position:relative; background:var(--rc-note); border-radius:3px;
+          padding:22px 18px 16px; transform:rotate(.6deg); transform-origin:center top;
+          border:1px solid color-mix(in srgb, var(--rc-note) 80%, var(--rc-ink));
+          box-shadow:2px 12px 24px -14px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-home-root .rc-register-tape::before,
+        .rc-home-root .rc-register-tape::after { content:""; position:absolute; top:9px; width:11px; height:11px;
+          border-radius:50%; z-index:1;
+          background:radial-gradient(circle at 38% 32%, var(--rc-receipt), var(--rc-faint) 52%, var(--rc-ink2) 100%);
+          box-shadow:0 1.5px 2px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-home-root .rc-register-tape::before { left:12px; }
+        .rc-home-root .rc-register-tape::after { right:12px; }
         .rc-home-root .rc-register-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding:7px 0; border-bottom:1px dotted var(--rc-line); }
         .rc-home-root .rc-register-row:last-child { border-bottom:none; }
@@ -603,11 +694,19 @@ export default function ReceiptHome({
         /* foil sits as a shimmering RIM behind an accent fill (::before), text on top —
            reads as an accent CTA with a holographic edge. Layered by z-index (a negative-z
            child would paint OVER the element's own bg — P-LOG-084). */
+        /* die-cut TAG — paper corners (6px, page-local) + foil rim (P-LOG-084 layering
+           kept intact) + a punched grommet hole at the left end. Lift shadow down-right (T6). */
         .rc-home-root .rc-cta { position:relative; isolation:isolate; display:block; text-align:center; cursor:pointer;
-          padding:16px; border-radius:var(--rc-radius-button, 8px); background:transparent; transition:transform .18s ease; }
-        .rc-home-root .rc-cta .rc-foil { position:absolute; inset:-2px; z-index:0; border-radius:calc(var(--rc-radius-button, 8px) + 2px); }
+          padding:16px; border-radius:6px; background:transparent; transition:transform .18s ease, box-shadow .2s ease;
+          box-shadow:2px 9px 20px -11px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-home-root .rc-cta .rc-foil { position:absolute; inset:-2px; z-index:0; border-radius:8px; }
         .rc-home-root .rc-cta::before { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit;
           background:var(--rc-accent); transition:background .2s ease; }
+        /* grommet — punched hole (desk shows through) ringed with warm metal */
+        .rc-home-root .rc-cta .rc-grommet { position:absolute; z-index:3; left:15px; top:50%; transform:translateY(-50%);
+          width:15px; height:15px; border-radius:50%; background:var(--rc-desk);
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)),
+                     inset 0 2px 3px color-mix(in srgb, var(--rc-ink) 45%, transparent); }
         .rc-home-root .rc-cta-in { position:relative; z-index:2; display:inline-flex; align-items:center; justify-content:center;
           gap:10px; font-family:var(--rc-fh); font-weight:700; font-size:16px; color:var(--rc-on-accent); }
         .rc-home-root .rc-cta-arrow { transition:transform .2s ease; }
@@ -615,14 +714,15 @@ export default function ReceiptHome({
         .rc-home-root .rc-cta:hover::before { background:var(--rc-accent-deep); }
         .rc-home-root .rc-cta:hover .rc-cta-arrow { transform:translateX(3px); }
         .rc-home-root .rc-cta:active { transform:scale(.98); }
-        .rc-home-root .rc-cta.is-disabled { cursor:not-allowed; }
+        .rc-home-root .rc-cta.is-disabled { cursor:not-allowed;
+          box-shadow:1px 3px 9px -6px color-mix(in srgb, var(--rc-ink) 24%, transparent); }
         .rc-home-root .rc-cta.is-disabled::before { background:color-mix(in srgb, var(--rc-ink2) 26%, var(--rc-line)); }
         .rc-home-root .rc-cta.is-disabled .rc-cta-in { color:color-mix(in srgb, var(--rc-receipt) 90%, var(--rc-ink)); }
         .rc-home-root .rc-cta.is-disabled:hover { transform:none; }
         .rc-home-root .rc-cta.is-disabled:hover .rc-cta-arrow { transform:none; }
 
         .rc-home-root .rc-cta2 { display:inline-flex; align-items:center; justify-content:center; min-height:44px;
-          padding:13px; border-radius:var(--rc-radius-button, 8px); font-family:var(--rc-fh); font-weight:600; font-size:14px;
+          padding:13px; border-radius:4px; font-family:var(--rc-fh); font-weight:600; font-size:14px;
           background:none; border:1.5px solid var(--rc-ink); color:var(--rc-ink);
           transition:transform .18s ease, border-color .2s ease, color .2s ease; }
         .rc-home-root .rc-cta2:hover { color:var(--rc-accent-deep); border-color:var(--rc-accent-deep); transform:translateY(-2px); }
@@ -632,15 +732,15 @@ export default function ReceiptHome({
         .rc-home-root .rc-poster-sec { position:relative; margin-top:56px; }
         .rc-home-root .rc-posterwrap { width:min(82vw, 360px); margin:0 auto; position:relative; }
         .rc-home-root .rc-poster { margin:0; position:relative; background:var(--rc-receipt); padding:10px 10px 14px;
-          border:1px solid var(--rc-line); border-radius:6px; transform:rotate(-2deg);
-          box-shadow:var(--rc-shadow-card, 0 22px 44px -20px color-mix(in srgb, var(--rc-ink) 30%, transparent));
+          border:1px solid var(--rc-line); border-radius:4px; transform:rotate(-2deg);
+          box-shadow:3px 24px 46px -22px color-mix(in srgb, var(--rc-ink) 30%, transparent);
           transition:transform .25s ease; }
         .rc-home-root .rc-poster:hover { transform:rotate(0deg) translateY(-4px); }
         .rc-home-root .rc-poster-img { display:block; width:100%; height:auto; border-radius:3px; }
         .rc-home-root .rc-poster-tape { position:absolute; top:-11px; width:64px; height:22px; border-radius:1px;
           opacity:.55; mix-blend-mode:multiply;
           background:linear-gradient(135deg, color-mix(in srgb, var(--rc-holo-1) 55%, transparent), color-mix(in srgb, var(--rc-holo-3) 55%, transparent));
-          box-shadow:0 1px 3px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
+          box-shadow:1px 2px 3px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
         .rc-home-root .rc-poster-tape--l { left:18px; transform:rotate(-8deg); }
         .rc-home-root .rc-poster-tape--r { right:18px; transform:rotate(6deg); }
         .rc-home-root .rc-poster-cap { text-align:center; margin-top:16px; font-family:var(--rc-fm); font-size:10px;
@@ -649,7 +749,7 @@ export default function ReceiptHome({
         /* a small foil seal chip on the desk beside the poster */
         .rc-home-root .rc-chip { display:none; position:absolute; right:calc(50% - 210px); bottom:24px; width:48px; height:48px;
           border-radius:50%; overflow:hidden; transform:rotate(12deg); place-items:center;
-          box-shadow:var(--rc-shadow-card, 0 8px 18px -9px color-mix(in srgb, var(--rc-ink) 42%, transparent)); }
+          box-shadow:1px 10px 20px -10px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
         .rc-home-root .rc-chip .rc-foil { position:absolute; inset:-30%; }
 
         /* ---- footer ---- */
@@ -691,6 +791,11 @@ export default function ReceiptHome({
         /* ---- MOBILE : keep the desk calm (colons + stub stay; no loose chip) ---- */
         @media (max-width:420px) {
           .rc-home-root .rc-slip-digits { gap:3px; }
+          /* shrink the flip tiles so DD:HH:MM:SS fits 390px with no shift */
+          .rc-home-root .rc-cd-n { font-size:clamp(24px, 7.6vw, 32px); gap:2px; }
+          .rc-home-root .rc-colon { font-size:clamp(20px, 6vw, 28px); }
+          /* only 2 emboss seals on the small desk */
+          .rc-home-root .rc-seal--c { display:none; }
         }
 
         /* reduced motion — freeze every animation (foil stays statically iridescent),

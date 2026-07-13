@@ -44,6 +44,10 @@ const INK2        = "#6B635B"; // faded print / muted labels (≥4.5:1)
 const FAINT       = "#A79E93"; // faintest mono eyebrows / register-tape print
 const LINE        = "#E2DCD1"; // hairline / perforation dot line
 const STAMP_LINE  = "#CFC7B9"; // heavier stamp/border tooth
+// manila note-stock — a warmer paper than the receipt, for the turnout note card.
+// CONSTANT across every theme (a physical stock, not a themed surface). ink2
+// (#6B635B) on it measures ~5.06:1 (≥4.5 AA) — verified in R2.5.
+const NOTE        = "#F5EDDA"; // manila note stock (warm, ~93L)
 
 // holo-foil ramp — shared across every theme; only holoShift (a hue offset) rotates.
 const HOLO_1 = "#8AD7FF"; // cyan
@@ -56,6 +60,7 @@ const HOLO_ANGLE = "128deg";
 function makeTheme({ accent, accentDeep, holoShift, onAccent = RECEIPT }) {
   return {
     desk: DESK, deskShade: DESK_SHADE, receipt: RECEIPT, receiptEdge: RECEIPT_EDGE,
+    note: NOTE,
     ink: INK, ink2: INK2, faint: FAINT, line: LINE, stampLine: STAMP_LINE,
     holo1: HOLO_1, holo2: HOLO_2, holo3: HOLO_3, holo4: HOLO_4, holo5: HOLO_5,
     holoAngle: HOLO_ANGLE, holoShift,
