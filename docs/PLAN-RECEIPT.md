@@ -146,12 +146,23 @@
   ปี hardcode, เชือก pointer-events none) · จุดแขวน R4.5: ตำแหน่งเชือกผูก grommet
   เป็น fixed offset — จูนสายตาตอน owner ดู
 
-### R5 — Playground/preview/chooser + gate
-- **ทำอะไร:** ต่อ receipt เข้า template-playground + /template-preview?interact=1
-  เต็ม flow + chooser slideshow + pre-deploy gate
-- **Acceptance R5:** click-through ครบทุกหน้า + 4 ธีม probe + 390px overflow 0 +
-  pre-deploy gate (หยุด server → rm -rf .next → build GREEN → smoke → paste
-  output จริง — ต้องให้ owner หยุด server เอง ถ้า classifier บล็อก)
+### R5 — Playground/preview/chooser + gate ✅ DONE (ยกเว้น build gate) 2026-07-13
+- playground: receipt เข้า TEMPLATES/COMPONENTS ตามแบบ blossom เป๊ะ (party →
+  ClassicPartyPreview fallthrough เหมือน blossom) · interact full flow ผ่านทั้ง multi
+  (shared modal) + single (booth confirm) → success + secrecy · **เจอ+แก้ P-LOG-085**:
+  receipt vote branch ใน renderInteractive อยู่หลัง classic catch-all → ย้ายขึ้นก่อน
+  (diff = relocation เท่านั้น — Fable ตรวจ diff เอง)
+- **admin chooser: ไม่ต้องแก้โค้ด** — receipt โผล่เป็น "ใบเสร็จ · ม่วง (ทดลอง)" + 4 ชิพ
+  + สไลด์หน้าจริง; worker ทดสอบ **apply จริง** (mock admin) → activeTemplateId=receipt
+  → ทุกหน้า live เป็น rc-root → **restore กลับ gumroad-bubblegum แล้ว** (Fable ยืนยัน
+  อิสระ: หน้า live กลับเป็น gumroad ไม่มี rc-root)
+- หมายเหตุ: chooser ORDER array ไม่มี blossom/receipt → ทั้งคู่เรียงท้ายสุด (พฤติกรรม
+  เดิมของ blossom ไม่ใช่ bug; owner อยากจัดตำแหน่งค่อยเพิ่ม) · hydration warning
+  DeepSeaParticles บน classic party fallthrough = ของเดิม ไม่เกี่ยว R5
+- ⏳ **ค้างชิ้นเดียว: pre-deploy build gate** (หยุด server → rm -rf .next → build GREEN
+  → smoke) — **owner ต้องหยุด server เอง** แล้วสั่งรันตอนสะดวก
+- **Acceptance R5 (เดิม):** click-through ครบทุกหน้า + 4 ธีม probe + 390px overflow 0 ✅
+  + pre-deploy gate ⏳ รอ owner
 
 ---
 

@@ -1835,6 +1835,28 @@ the element's own background — use a z-indexed `::before` fill + wrapped conte
 is the RIM not the whole face.
 **Tags:** `#css` `#stacking-context` `#paint-order` `#receipt`
 
+### P-LOG-085: [2026-07-13] Interact-mode vote branches must precede the classic vote catch-all
+**Context:** Receipt R5 — template-preview `renderInteractive()` has a generic
+`if (page === 'vote')` classic catch-all. Receipt's single/multi vote branches were added
+BELOW it (R3), so in interact mode receipt vote silently rendered the classic MultiPartyView.
+The STATIC `renderPage()` had the correct ordering — only interact was wrong, so static
+slides looked fine and the bug hid until full-flow click-through.
+**Fix:** relocated the receipt vote branches above the catch-all (net-zero move) + ordering
+comments at both sites.
+**Lesson:** a family with its own vote layout must place its interact vote branches BEFORE
+the generic classic catch-all in `renderInteractive()` — and verify BOTH render paths
+(static + interact) per family, because they dispatch independently.
+**Tags:** `#template-preview` `#dispatch-order` `#receipt` `#interact`
+
+### P-LOG-086: [2026-07-13] Torn-paper (irregular tear) is banned in this election context
+**Context:** Receipt R4 — owner mockup showed a ragged torn-edge reveal; owner then asked
+whether torn paper hurts credibility on an election site.
+**Decision (design rule, permanent):** irregular torn edges collide with the Thai image of
+"ฉีกบัตรเลือกตั้ง" (a crime + protest symbol) and damage-metaphors erode perceived integrity
+on civic/transactional surfaces. The family's tear language is PERFORATION-ONLY (receipt
+torn off a roll, perf lines, die-cut) — intentional, controlled separation.
+**Tags:** `#design-rule` `#receipt` `#credibility` `#thai-context`
+
 ---
 
 ## 🚫 Rejected Approaches
