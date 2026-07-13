@@ -17,6 +17,7 @@ import GumroadCandidates from '../../components/vote/GumroadCandidates';
 import StudioDarkCandidates from '../../components/vote/StudioDarkCandidates';
 import VerdureCandidates from '../../components/vote/VerdureCandidates';
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -43,6 +44,7 @@ export default function CandidatesPage({
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -156,6 +158,16 @@ export default function CandidatesPage({
       <>
         {!editorMode && <PageThemeOverrides page="candidates" />}
         <BlossomCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // RECEIPT layout (own paper-desk chrome) — replaces the classic page entirely.
+  if (isReceipt) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <ReceiptCandidates candidates={parties} editorMode={editorMode} />
       </>
     );
   }

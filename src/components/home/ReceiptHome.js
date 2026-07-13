@@ -289,8 +289,24 @@ export default function ReceiptHome({
         <div className="rc-home-top">
           {/* ===== 1 · NOTICE CARD (hero) — a printed event card on the desk ===== */}
           <section className="rc-notice">
-            {/* ghost of a previous ink stamp on the desk (very faint) */}
-            <div className="rc-ghost" aria-hidden="true"><span>{meta.prefix} {meta.number}</span></div>
+            {/* ghost of a previous ink stamp on the desk (very faint) — a real two-
+                ring stamp with curved lettering read straight from receiptMeta (no
+                hardcoded year/number). Kept at ~.07 opacity so it stays a whisper. */}
+            <div className="rc-ghost" aria-hidden="true">
+              <svg className="rc-ghost-svg" viewBox="0 0 120 120" focusable="false">
+                <defs>
+                  <path id="rcGhostArc" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" />
+                </defs>
+                <circle className="rc-ghost-ring" cx="60" cy="60" r="54" />
+                <circle className="rc-ghost-ring rc-ghost-ring--in" cx="60" cy="60" r="42" />
+                <text className="rc-ghost-arc">
+                  <textPath href="#rcGhostArc" xlinkHref="#rcGhostArc" startOffset="0%">
+                    {`${meta.faculty} ELECTION · ${meta.prefix} ${meta.number}`}
+                  </textPath>
+                </text>
+                <text className="rc-ghost-mark" x="60" y="72">✶</text>
+              </svg>
+            </div>
 
             {/* the sheet stack — two backing sheets (aria-hidden) sized to the card so
                 the hero reads as the top of a small paper stack. Light from top-left →
@@ -392,6 +408,13 @@ export default function ReceiptHome({
 
             {/* 4 · CTA block — foil-rim primary (6-state ladder) + ink-outline secondary */}
             <section className="rc-cta-block">
+              {/* a short string tying the manila register note (above) down to the CTA
+                  grommet — reads as a hanging tag pulled from the register. Purely
+                  decorative: absolute, aria-hidden, never eats pointer/layout. */}
+              <svg className="rc-cta-string" viewBox="0 0 48 74" aria-hidden="true" focusable="false" preserveAspectRatio="none">
+                <path className="rc-cta-string__ln" d="M14 -2 C 10 20, 30 30, 22 52" fill="none" />
+                <circle className="rc-cta-string__pin" cx="14" cy="-1" r="2.4" />
+              </svg>
               <a
                 href={ctaHref}
                 onClick={onCta}
@@ -557,11 +580,17 @@ export default function ReceiptHome({
         .rc-home-root .rc-daterow-k { font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--rc-accent-deep); font-weight:700; }
         .rc-home-root .rc-daterow-t { color:var(--rc-ink2); }
 
-        /* ghost stamp on the desk behind the card */
-        .rc-home-root .rc-ghost { position:absolute; z-index:0; right:-18px; top:-22px; width:104px; height:104px;
-          border-radius:50%; border:2px solid var(--rc-ink); opacity:.07; transform:rotate(-12deg); display:grid; place-items:center; }
-        .rc-home-root .rc-ghost span { font-family:var(--rc-fm); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-          color:var(--rc-ink); text-align:center; }
+        /* ghost stamp on the desk behind the card — a real two-ring stamp with curved
+           lettering, kept faint. The SVG draws the rings + textPath; opacity holds the
+           whisper (T4c). */
+        .rc-home-root .rc-ghost { position:absolute; z-index:0; right:-20px; top:-24px; width:112px; height:112px;
+          opacity:.075; transform:rotate(-12deg); pointer-events:none; }
+        .rc-home-root .rc-ghost-svg { display:block; width:100%; height:100%; overflow:visible; }
+        .rc-home-root .rc-ghost-ring { fill:none; stroke:var(--rc-ink); stroke-width:2.4; }
+        .rc-home-root .rc-ghost-ring--in { stroke-width:1.4; }
+        .rc-home-root .rc-ghost-arc { fill:var(--rc-ink); font-family:var(--rc-fm); font-size:10px; letter-spacing:.14em;
+          text-transform:uppercase; }
+        .rc-home-root .rc-ghost-mark { fill:var(--rc-ink); font-family:var(--rc-fr); font-size:22px; text-anchor:middle; }
 
         /* ballot stub peeking from under the card */
         .rc-home-root .rc-stub { position:relative; z-index:1; width:180px; margin:-8px 0 0 18px; padding:12px 14px 12px 16px;
@@ -670,7 +699,15 @@ export default function ReceiptHome({
           transition:width .6s ease; }
 
         /* ---- 4 · CTA block ---- */
-        .rc-home-root .rc-cta-block { display:flex; flex-direction:column; gap:10px; }
+        .rc-home-root .rc-cta-block { position:relative; display:flex; flex-direction:column; gap:10px; }
+        /* the tag-string tying the register note above to the CTA grommet — sits over
+           the top-left of the CTA, drawn from just above the block down to the grommet.
+           Decorative only: no pointer, no layout box that pushes siblings (T4b). */
+        .rc-home-root .rc-cta-string { position:absolute; z-index:4; left:8px; top:-30px; width:48px; height:74px;
+          pointer-events:none; overflow:visible;
+          filter:drop-shadow(1px 1.5px 1px color-mix(in srgb, var(--rc-ink) 22%, transparent)); }
+        .rc-home-root .rc-cta-string__ln { stroke:var(--rc-stamp-line); stroke-width:1.8; stroke-linecap:round; }
+        .rc-home-root .rc-cta-string__pin { fill:var(--rc-ink2); }
         /* foil sits as a shimmering RIM behind an accent fill (::before), text on top —
            reads as an accent CTA with a holographic edge. Layered by z-index (a negative-z
            child would paint OVER the element's own bg — P-LOG-084). */

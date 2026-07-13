@@ -58,6 +58,9 @@ import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
 import ReceiptVote from '../../components/vote/ReceiptVote';
+import ReceiptResults from '../../components/vote/ReceiptResults';
+import ReceiptClosed from '../../components/vote/ReceiptClosed';
+import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
 
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
@@ -77,6 +80,14 @@ import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
 import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 
 const noop = () => {};
+
+// receipt CLOSED preview copy — reason-aware, mirrors closed/page.js getMessage()
+// semantics (waiting / ended / paused). Drive via ?variant=ended|closed|waiting.
+function receiptClosedCopy(variant) {
+  if (variant === 'ended') return { variant: 'ended', title: 'สิ้นสุดระยะเวลาลงคะแนน', desc: 'การเลือกตั้งได้สิ้นสุดลงแล้ว ขอบคุณทุกท่านที่เข้ามาใช้สิทธิ' };
+  if (variant === 'closed' || variant === 'paused') return { variant: 'closed', title: 'ระบบปิดรับลงคะแนน', desc: 'ระบบเลือกตั้งถูกปิดชั่วคราว หรือหมดเวลาการลงคะแนนแล้ว กรุณาติดต่อเจ้าหน้าที่หากมีข้อสงสัย' };
+  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดหีบเลือกตั้ง' };
+}
 
 function PreviewBody() {
   const sp = useSearchParams();
@@ -562,6 +573,36 @@ function PreviewBody() {
       return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
     }
 
+    // ── receipt family — CANDIDATES (R4). paper flyers on the desk; links to party. ──
+    if (family === 'receipt' && page === 'candidates') {
+      return <ReceiptCandidates candidates={PARTIES} editorMode={false} />;
+    }
+
+    // ── receipt family — RESULTS (R4). revealed → register-tape standings + demo;
+    //    otherwise the SEALED embargo slip (polls open, scores sealed, turnout public). ──
+    if (family === 'receipt' && page === 'results') {
+      const revealed = variant === 'revealed';
+      return (
+        <ReceiptResults
+          candidates={resultsCandidates(revealed)}
+          totalVotes={revealed ? 625 : 418}
+          demographics={DEMOGRAPHICS}
+          finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+          isRevealed={revealed}
+          isNotStarted={false}
+          countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          onSelectParty={(p) => navTo('party', p?.number ?? 1)}
+          editorMode={false}
+        />
+      );
+    }
+
+    // ── receipt family — CLOSED (R4). reason via ?variant=ended|closed|waiting. ──
+    if (family === 'receipt' && page === 'closed') {
+      const c = receiptClosedCopy(variant);
+      return <ReceiptClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
+    }
+
     // other classic/original inner pages (candidates/results/closed/party): keep the
     // static EditorPreview renders (out of scope). The click seam contains their links.
     return renderPage();
@@ -720,7 +761,28 @@ function PreviewBody() {
         />
       );
     }
+    if (page === 'candidates') return <ReceiptCandidates candidates={PARTIES} editorMode />;
     if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
+    if (page === 'results') {
+      const revealed = variant === 'revealed';
+      return (
+        <ReceiptResults
+          candidates={resultsCandidates(revealed)}
+          totalVotes={revealed ? 625 : 418}
+          demographics={DEMOGRAPHICS}
+          finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+          isRevealed={revealed}
+          isNotStarted={false}
+          countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          onSelectParty={noop}
+          editorMode
+        />
+      );
+    }
+    if (page === 'closed') {
+      const c = receiptClosedCopy(variant);
+      return <ReceiptClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode />;
+    }
   }
 
   // ── classic family (incl. original — its inner pages render the classic layout) ──
