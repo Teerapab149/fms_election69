@@ -20,7 +20,7 @@ import {
   Tag,
   AlertCircle,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // ✅ นำเข้าระบบแก้ไขจาก Editor
 import EditorElement from '../../components/admin/editor/EditorElement';
@@ -33,6 +33,7 @@ import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
 import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import { fetchVoteStatus } from '../../hooks/useVoteStatus';
+import { consumeEphemeralChoice } from '../../utils/ephemeralChoice';
 
 export default function SuccessPage({ 
   editorMode = false,
@@ -59,6 +60,21 @@ export default function SuccessPage({
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "", action: null });
   const [isVoted, setIsVoted] = useState(false);
+
+  // BALLOT SECRECY (CONCEPT §2) — the just-cast choice for the Receipt printer moment,
+  // read ONCE from the in-memory ephemeral holder at mount (the receipt vote flow sets
+  // it on a successful submit + SOFT navigation). consume clears it immediately so it
+  // can never be shown twice; the ref guards against the dev StrictMode double-effect
+  // re-consuming (which would drop the value). No storage / URL / cookie is touched —
+  // a reload or hard-nav loses it by design → ReceiptSuccess falls back to the secrecy
+  // statement. Only used by the receipt layout below.
+  const ephemeralConsumedRef = useRef(false);
+  const [ephemeralChoice, setEphemeralChoiceState] = useState(null);
+  useEffect(() => {
+    if (editorMode || ephemeralConsumedRef.current) return;
+    ephemeralConsumedRef.current = true;
+    setEphemeralChoiceState(consumeEphemeralChoice());
+  }, [editorMode]);
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
@@ -256,6 +272,7 @@ export default function SuccessPage({
           isUnlocked={isUnlocked}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
+          choice={ephemeralChoice}
         />
       )}
 

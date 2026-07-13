@@ -91,8 +91,15 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
   const stubRef = stamp?.ref || "···· · ···· · ···· · ····";
 
   return (
-    <div className={`fms-app rc-root rc-suc-root${editorMode ? "" : " rc-printing"}`}>
+    <div className={`fms-app rc-root rc-suc-root rc-desk${editorMode ? "" : " rc-printing"}`}>
       <ReceiptBaseStyles />
+
+      {/* blind-emboss seals on the desk behind the receipt — faint, shared .rc-desk
+          language (matches home/vote), pure decoration (aria-hidden) */}
+      <div className="rc-desk-seals" aria-hidden="true">
+        <span className="rc-seal rc-seal--a"><i /><b /></span>
+        <span className="rc-seal rc-seal--b"><i /><b /></span>
+      </div>
 
       <div className="rc-suc-wrap">
         {/* LEFT (desktop) / TOP (mobile) — the display headline block */}
@@ -223,16 +230,12 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         /* one identity constant with no palette token: the warning-red of the
            "not an official record" stamp (Rule 9 — variant identity is hardcoded;
            NOT a vote-semantic red, which stays untouched and unused on success). */
-        .rc-suc-root { --rc-stamp-red:#B91C1C;
-          overflow-x:hidden; padding:26px 18px 44px;
-          background-image:radial-gradient(color-mix(in srgb, var(--rc-ink) 8%, transparent) 1px, transparent 1.5px);
-          background-size:26px 26px; }
-        /* soft radial vignette — depth not darkness. Biased upward so the desk reads
-           stronger toward the edges and bottom. Sits above the dot grid, below the
-           content (which is z-index:1). No negative z (P-LOG-084). */
-        .rc-suc-root::before { content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
-          background:radial-gradient(125% 120% at 50% 28%, transparent 42%, var(--rc-desk-shade) 100%);
-          opacity:.7; }
+        /* laid-paper ::after + desk vignette ::before + blind-emboss seals now come
+           from the SHARED .rc-desk classes in ReceiptBaseStyles (T1) — this root opts
+           in via rc-desk so the printer moment rests on the SAME desk as home/vote
+           (was a bespoke dot-grid + vignette). The machine/receipt/ephemera below are
+           untouched. */
+        .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; padding:26px 18px 44px; }
 
         .rc-suc-wrap { position:relative; z-index:1; max-width:400px; margin:0 auto; }
 
@@ -337,7 +340,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-stub { position:absolute; z-index:1; left:-14px; bottom:56px; width:150px;
           padding:9px 12px 10px 15px; transform:rotate(-5deg); transform-origin:bottom left;
           background:var(--rc-receipt); border-radius:4px; border-left:3px solid var(--rc-accent);
-          box-shadow:var(--rc-shadow-object, 0 8px 18px -9px color-mix(in srgb, var(--rc-ink) 42%, transparent)); }
+          box-shadow:2px 8px 18px -9px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
         .rc-suc-root .rc-suc-stub::before { content:""; position:absolute; top:5px; bottom:5px; right:30px; width:2px;
           background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 3px, transparent 3px 6px); }
         .rc-suc-root .rc-suc-stub-h { font-family:var(--rc-fm); font-size:8px; letter-spacing:.16em;
@@ -357,7 +360,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         /* a small foil seal chip resting on the desk */
         .rc-suc-root .rc-suc-chip { position:absolute; z-index:1; right:-8px; bottom:132px; width:44px; height:44px;
           border-radius:50%; overflow:hidden; transform:rotate(12deg); display:grid; place-items:center;
-          box-shadow:var(--rc-shadow-object, 0 8px 18px -9px color-mix(in srgb, var(--rc-ink) 42%, transparent)); }
+          box-shadow:2px 8px 18px -9px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
         .rc-suc-root .rc-suc-chip .rc-foil { position:absolute; inset:-30%; }
 
         /* a ghost of a previous ink stamp, ON the desk (border ink ~9% opacity) */
@@ -370,20 +373,13 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         /* a short register-tape scrap peeking from the left edge */
         .rc-suc-root .rc-suc-regtape { position:absolute; z-index:0; left:-34px; top:128px; width:126px; height:26px;
           background:var(--rc-receipt); transform:rotate(-6deg); overflow:hidden; display:flex; align-items:center;
-          padding-left:12px; box-shadow:0 5px 12px -7px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+          padding-left:12px; box-shadow:2px 5px 12px -7px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
         .rc-suc-root .rc-suc-regtape span { font-family:var(--rc-fm); font-size:8px; letter-spacing:.18em;
           color:var(--rc-faint); white-space:nowrap; font-variant-numeric:tabular-nums; }
 
-        /* ---- holographic foil (ported from tokens.css .rc-foil) ---- */
-        .rc-suc-root .rc-foil { background-image:linear-gradient(var(--rc-holo-angle),
-            var(--rc-holo-1), var(--rc-holo-2), var(--rc-holo-3), var(--rc-holo-4), var(--rc-holo-5), var(--rc-holo-1));
-          background-size:300% 300%; background-position:calc(var(--rc-px, .5) * 100%) calc(var(--rc-py, .5) * 100%);
-          filter:hue-rotate(var(--rc-holo-shift)) saturate(1.15); animation:rcFoilDrift 9s linear infinite; }
-        .rc-suc-root .rc-foil--conic { background-image:conic-gradient(from 0deg,
-            var(--rc-holo-1), var(--rc-holo-2), var(--rc-holo-3), var(--rc-holo-4), var(--rc-holo-5), var(--rc-holo-1));
-          background-size:auto; animation:rcFoilSpin 14s linear infinite; }
-        @keyframes rcFoilDrift { 0%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } 100%{ background-position:0% 50%; } }
-        @keyframes rcFoilSpin { to { transform:rotate(360deg); } }
+        /* holographic foil (.rc-foil / .rc-foil--conic + keyframes) now shared via
+           .rc-desk in ReceiptBaseStyles (T1) — byte-identical to the former local
+           block, so the security strip + seal render unchanged. */
 
         /* ---- actions (on the desk) ---- */
         .rc-suc-root .rc-suc-actions { margin-top:24px; display:flex; flex-direction:column; gap:10px; }

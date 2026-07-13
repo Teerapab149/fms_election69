@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
+import { setEphemeralChoice } from '../../utils/ephemeralChoice';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
@@ -16,6 +18,7 @@ import GumroadVote from '../../components/vote/GumroadVote';
 import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VerdureVote from '../../components/vote/VerdureVote';
 import BlossomVote from '../../components/vote/BlossomVote';
+import ReceiptVote from '../../components/vote/ReceiptVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -38,6 +41,7 @@ export default function VotePage() {
     handleSelectParty,
     submitVote
   } = useVoteSystem();
+  const router = useRouter();
   const handleSingleSelect = (id) => {
     handleSelectParty(id);
   };
@@ -84,9 +88,13 @@ export default function VotePage() {
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
   // Blossom Candy Editorial ballot — MULTI (T3.2) + SINGLE booth (T3.3). BlossomVote
   // dispatches internally to BlossomSingleParty when isSingleParty.
   const useBlossomVote = isBlossom;
+  // Receipt "Paper Materiality" ballot — MULTI sheet + SINGLE ink-stamp booth (R3).
+  // ReceiptVote dispatches internally to ReceiptSingleParty when isSingleParty.
+  const useReceiptVote = isReceipt;
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -102,14 +110,38 @@ export default function VotePage() {
     else if (type === 'NO_VOTE') handleSelectParty(specialOptions.abstain?.id);
   };
 
+  // Receipt-only: the ballot-secrecy §2 label shown ONCE on the printer-moment
+  // success page. Number 0 = abstain, -1 = disapprove, else the party name. Never
+  // persisted — only the in-memory ephemeral holder carries it (see below).
+  const receiptChoiceLabel = () => {
+    const p = selectedParty;
+    if (!p) return null;
+    if (p.number === 0) return "งดออกเสียง";
+    if (p.number === -1) return "ไม่รับรอง";
+    return p.name || null;
+  };
+
   const onConfirmVote = async () => {
     if (isRedirecting) return; // 🔒 Guard
+
+    // Capture the choice label BEFORE the POST (selection can't change mid-submit).
+    const choiceLabel = isReceipt ? receiptChoiceLabel() : null;
 
     const success = await submitVote();
     if (success) {
       setIsRedirecting(true); // 🔒 Lock UI
       setIsConfirmModalOpen(false)
-      window.location.href = getPath("/success");
+      // Receipt family: hand the just-cast choice to the in-memory ephemeral holder
+      // (CONCEPT §2 / §9 Q4 — shown once, never persisted, no storage/URL/cookie) and
+      // navigate SOFT so the module scope survives to the success page's mount, where
+      // consumeEphemeralChoice() reads it once. A hard nav would (by design) drop the
+      // value → the secrecy fallback. Every other family keeps its hard-nav redirect.
+      if (isReceipt) {
+        setEphemeralChoice(choiceLabel);
+        router.push("/success");
+      } else {
+        window.location.href = getPath("/success");
+      }
     };
   };
 
@@ -124,12 +156,24 @@ export default function VotePage() {
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
       : isVerdure
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#E7F1E2]"
-      : useBlossomVote
+      : useBlossomVote || useReceiptVote
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative"
       : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[var(--color-bg)]"}>
       <PageThemeOverrides page="vote" />
 
-      {useBlossomVote ? (
+      {useReceiptVote ? (
+        <ReceiptVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : useBlossomVote ? (
         <BlossomVote
           regularParties={regularParties}
           specialOptions={specialOptions}

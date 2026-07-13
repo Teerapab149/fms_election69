@@ -264,7 +264,7 @@ export default function ReceiptHome({
     : cd.label === "เปิดหีบใน" ? "STARTS IN" : "CLOSES IN";
 
   return (
-    <div className="fms-app rc-root rc-home-root">
+    <div className="fms-app rc-root rc-home-root rc-desk">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
       <ReceiptBaseStyles />
 
@@ -432,30 +432,10 @@ export default function ReceiptHome({
 
       <style jsx global>{`
         /* ========== BASE (mobile-first — the polling desk) ========== */
+        /* laid-paper ::after + desk vignette ::before + blind-emboss seals now come
+           from the SHARED .rc-desk classes in ReceiptBaseStyles (T1) — this root
+           opts in via the rc-desk class. */
         .rc-home-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
-        /* LAID-PAPER texture — fine horizontal laid lines (~1px every 4px, ~2.5% ink)
-           crossed by sparse vertical chain lines (~1.5px every 104px, ~1.8% ink). Felt,
-           not seen. Above the desk, under content. */
-        .rc-home-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background-image:
-            repeating-linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 2.6%, transparent) 0 1px, transparent 1px 4px),
-            repeating-linear-gradient(90deg, color-mix(in srgb, var(--rc-ink) 1.8%, transparent) 0 1.5px, transparent 1.5px 104px); }
-        /* soft desk vignette — depth not darkness (no negative z — P-LOG-084).
-           Light from top-left → the darkening sits low-right (T6). */
-        .rc-home-root::before { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-          background:radial-gradient(135% 130% at 34% 12%, transparent 44%, var(--rc-desk-shade) 100%); opacity:.7; }
-
-        /* ---- blind-emboss seals pressed into the desk (2-3 curated spots) ---- */
-        .rc-home-root .rc-desk-seals { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-        .rc-home-root .rc-seal { position:absolute; display:block; border-radius:50%;
-          border:2px solid var(--rc-ink); opacity:.05;
-          filter:drop-shadow(1px 1px 0 color-mix(in srgb, var(--rc-receipt) 70%, transparent)); }
-        .rc-home-root .rc-seal i { position:absolute; inset:14%; border-radius:50%; border:1.5px solid var(--rc-ink); }
-        .rc-home-root .rc-seal b { position:absolute; left:50%; top:50%; width:18%; height:18%;
-          border:1.5px solid var(--rc-ink); transform:translate(-50%,-50%) rotate(45deg); }
-        .rc-home-root .rc-seal--a { width:230px; height:230px; top:96px; right:-46px; transform:rotate(-8deg); }
-        .rc-home-root .rc-seal--b { width:264px; height:264px; bottom:150px; left:-58px; transform:rotate(6deg); }
-        .rc-home-root .rc-seal--c { width:184px; height:184px; top:52%; right:5%; transform:rotate(-3deg); opacity:.045; }
 
         :where(.rc-home-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-home-root a:focus-visible, .rc-home-root button:focus-visible {
@@ -757,16 +737,8 @@ export default function ReceiptHome({
         .rc-home-root .rc-home-footer p { margin:0; font-family:var(--rc-fm); font-size:10px; letter-spacing:.12em;
           text-transform:uppercase; color:var(--rc-ink2); }
 
-        /* ---- holographic foil (ported from ReceiptSuccess / tokens.css) ---- */
-        .rc-home-root .rc-foil { background-image:linear-gradient(var(--rc-holo-angle),
-            var(--rc-holo-1), var(--rc-holo-2), var(--rc-holo-3), var(--rc-holo-4), var(--rc-holo-5), var(--rc-holo-1));
-          background-size:300% 300%; background-position:calc(var(--rc-px, .5) * 100%) calc(var(--rc-py, .5) * 100%);
-          filter:hue-rotate(var(--rc-holo-shift)) saturate(1.15); animation:rcFoilDrift 9s linear infinite; }
-        .rc-home-root .rc-foil--conic { background-image:conic-gradient(from 0deg,
-            var(--rc-holo-1), var(--rc-holo-2), var(--rc-holo-3), var(--rc-holo-4), var(--rc-holo-5), var(--rc-holo-1));
-          background-size:auto; animation:rcFoilSpin 14s linear infinite; }
-        @keyframes rcFoilDrift { 0%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } 100%{ background-position:0% 50%; } }
-        @keyframes rcFoilSpin { to { transform:rotate(360deg); } }
+        /* holographic foil (.rc-foil / .rc-foil--conic + keyframes) now shared via
+           .rc-desk in ReceiptBaseStyles (T1). */
 
         /* ========== TABLET+ : inline nav replaces burger/sheet ========== */
         @media (min-width:768px) {
