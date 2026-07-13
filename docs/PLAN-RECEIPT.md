@@ -70,6 +70,16 @@
   "ไม่ใช่หลักฐานทางการ") + fallback reduced-motion/JS-fail โชว์ใบเสร็จเต็มทันที +
   ทุกธีม + 390px + modal ฟอร์ม/auth guard คงอยู่ที่ parent
 
+### ⚠️ Operating mode จาก owner (2026-07-12 ดึก — บังคับทุก R ที่เหลือ)
+- owner **ยังไม่ถูกใจ design โดยรวม** แต่สั่ง: **ทำให้ครบทุกหน้าก่อน แล้ว polish ใหญ่
+  ทีเดียวตอนจบ** (ดูภาพรวมก่อนค่อยจูน) → เพิ่ม phase **R4.5 — Owner-guided polish round**
+  (ไล่เก็บ feedback ทีละหน้าจากภาพรวมจริง ก่อน R5 gate)
+- เป้าเพิ่ม: owner ต้อง **เข้าไปดูเล่นได้จากฝั่ง admin** (chooser slideshow) — receipt
+  4 slugs register แล้วตั้งแต่ R1; slide จะจริงขึ้นเรื่อย ๆ เมื่อ R2-R4 ลง; verify chooser
+  ทุกครั้งที่หน้าใหม่ลง
+- Build pass แต่ละหน้า = "good first pass, family-consistent" — gates แข็ง (token/
+  semantic/base-visible/mobile/P-LOG) ยังบังคับเต็ม แต่การถกดีไซน์ละเอียดยกไป R4.5
+
 ### R2 — Home + countdown บัตรคิว
 - **ทำอะไร:** ReceiptHome — โต๊ะหน่วยเลือกตั้ง + countdown เป็นบัตรคิว + turnout
   register tape + CTA เข้าคูหา
