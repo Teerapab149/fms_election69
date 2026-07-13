@@ -166,6 +166,67 @@
 
 ---
 
+## 🆕 R6-R8 — Owner feedback round 2026-07-13 ค่ำ (จากการดู chooser จริง)
+
+> Owner feedback 3 ข้อ: (1) โดยรวม **เรียบมาก มากไปด้วย** (2) **หน้า party ยังไม่เปลี่ยน**
+> (สไลด์ 3/9 โชว์ classic fallthrough) (3) **สลับธีมแล้วเปลี่ยนแค่สีตัวอักษร** อยากให้
+> เปลี่ยนทั้งหน้าแบบ template อื่น — สถานะ: **แผนเขียนแล้ว รอ owner เคาะก่อนลงมือ**
+
+### R6 — ReceiptParty "แฟ้มประวัติพรรค" (ปิดช่อง classic fallthrough)
+- **คอนเซปต์:** หน้า party = **แฟ้มเอกสารพรรค (dossier)** เปิดวางบนโต๊ะ — hero เป็น
+  ปกแฟ้มกระดาษแข็ง + แถบ index tab + ตราปั๊มหมายเลขพรรค + logo; สมาชิก = บัตร
+  ประจำตัวพิมพ์/รูปแปะเทปเรียงใน grid; นโยบาย = คูปองรอยปรุฉีกได้ทีละใบ (ฉีกตามปรุ
+  เท่านั้น — P-LOG-086); วิสัยทัศน์ = จดหมายพิมพ์บนหัวกระดาษพรรค; แถบ foil ที่สัน
+  แฟ้ม = ลายเซ็นตระกูล
+- **Seam:** ไฟล์ใหม่ `src/components/vote/ReceiptParty.js` + dispatch ใน
+  `party/page.js` ตามแบบ GumroadParty/VerdureParty เป๊ะ (props: party,
+  galleryImages, showBackToVote) + ถอน receipt ออกจาก blossom-style classic
+  fallthrough ใน template-playground/template-preview → ชี้ ReceiptParty
+  (สไลด์ chooser อัปเดตเองอัตโนมัติ) — Blossom ไม่แตะ (ของเขาเป็น by-design)
+- **Acceptance:** ทุกธีม + 390px + ไม่มี auth logic ในตัว component + PartyTheme.js
+  ห้ามแตะ + hydration warning ตัวเก่า (DeepSeaParticles) หายไปเองเพราะเลิกใช้ classic
+
+### R7 — Theme depth: "เปลี่ยนธีม = เปลี่ยนโต๊ะทั้งตัว" (tinted paper system)
+- **วินิจฉัยจากสถาปัตย์:** ปัจจุบัน desk/deskShade/receipt/note/line เป็น **ค่าคงที่
+  ข้ามธีม** (by design เดิม — "ink/card constant" กันคอนทราสต์เพี้ยน) เหลือแค่
+  accent+holoShift หมุนต่อธีม → ตาสัมผัสจึงเห็นแค่ "สีตัวหนังสือเปลี่ยน" ตามที่ owner ว่า
+- **ทางแก้:** ทำ **กระดาษย้อมโทนต่อธีม** — ธีมละ "โต๊ะ" ของตัวเอง โดย **ink คงที่เดิม**
+  (รักษาบทเรียนคอนทราสต์) และ semantic โหวต/holo ramp คงที่:
+  - ม่วง (default) — ครีมอุ่นเดิม `#F7F4EE` / โน้ตมะนิลา `#F5EDDA`
+  - ฟ้า — กระดาษเทา-ฟ้าเช้าตรู่ ~`#F0F3F7` / โน้ตฟ้าซีด ~`#E9EFF7`
+  - เหลือง — งาช้างอาบแดด ~`#F9F3E1` / โน้ตฟางเข้ม ~`#F6ECC9`
+  - เจด — กระดาษ sage ~`#EFF4EE` / โน้ต celadon ซีด ~`#E7F0E5`
+  - ต่อธีมยังย้อม: deskShade / receiptEdge / line / stampLine (derived จาก desk
+    โทนเดียวกัน) + receipt stock ขยับได้เล็กน้อย (~1-2 จุด hue ห้ามหลุด near-white)
+- **จุดแข็งของสถาปัตย์เรา:** ทุกอย่างไหลผ่าน `--rc-*` อยู่แล้ว → **แก้ค่าที่
+  receiptPalettes.js ไฟล์เดียว** (makeTheme รับ per-theme paper set) ที่เหลือ
+  ReceiptTheme/builtIn/injector รับไปเอง ไม่ต้องแตะ component ใดเลย
+- **Gate แข็ง:** ink2 บน desk+note+receipt ของทุกธีม ≥4.5:1 (คำนวณจริง paste ตัวเลข
+  ครบ 4×3 ค่า) · semantic โหวต (เขียว/แดง/ส้ม) ตรวจบนกระดาษย้อมทุกโทน · chooser
+  ชิพ 4 สีอัปเดตสะท้อนโต๊ะจริง · parity preview=live byte-for-byte เหมือนเดิม
+- **เสี่ยงที่ต้องระวัง:** ย้อมแรงไป = หลุด "กระดาษ" กลายเป็น "หน้าจอสี" — คุม chroma
+  ต่ำ (โทนกระดาษจริง ไม่ใช่ pastel UI) + Fable image-review ก่อน commit
+
+### R8 — "Dress the desk 2" — richness pass แก้ "เรียบไป" (ทำหลัง R7)
+- **หลัก:** เพิ่มความแน่นแบบ curated (เสา 1 ของ concept) ไม่ใช่รก — เติม "ของบนโต๊ะ"
+  และ "ร่องรอยการใช้งาน" ให้ทุกหน้า:
+  - Home: เติมคอลัมน์ซ้ายใต้ hero (ตรายาง+แท่นหมึก / ใบเสร็จม้วนงอ / คลิปเสียบ
+    กองเอกสาร) + queue ticket สถานะปิดหีบให้มีเนื้อขึ้น + เส้นคั่น section เป็นแถบรอยปรุ
+  - Vote: หัวบัตรเพิ่ม watermark band + เลขบัตรจัด spacing ("SAMO 50 · 0002") +
+    ephemera ขอบโต๊ะ
+  - Candidates: ใบปลิวเพิ่มเทป/มุมพับ/ตราปั๊มวันที่
+  - Results/Closed/Success: grain กระดาษจางๆ (SVG feTurbulence data-URI คุม
+    ขนาด+perf) + ตราปั๊มประปราย
+  - ทุกหน้า: มือถือคงความสงบ (density เพิ่มเฉพาะ ≥900px เป็นหลัก)
+- **โหมดทำงาน:** ทีละหน้าแบบ R4.5 (owner ดู chooser → feedback → เก็บ) — เริ่มจาก
+  home เป็น reference density แล้วไล่ทั้งตระกูล
+
+**ลำดับแนะนำ:** R6 (ช่องโหว่ที่เห็นชัดสุด) → R7 (ไฟล์เดียว impact ทั้งระบบ) → R8
+(ต้องเห็นโทนสุดท้ายจาก R7 ก่อนถึงจูน density ถูก) — R6+R7 autonomous ได้,
+R8 = owner-guided
+
+---
+
 ## กติกาที่สืบทอด (จาก concept §6 — ห้ามลืม ทุก R)
 ตระกูลใหม่แยกไฟล์ **ห้าม rewrite ของเดิม** · dispatch `slug.startsWith('receipt')`
 ตาม seam ที่มีอยู่ (แบบ verdure/studio-dark/blossom) · **สี semantic โหวต
