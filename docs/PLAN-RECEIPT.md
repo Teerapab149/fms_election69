@@ -109,18 +109,34 @@
 - **Acceptance R2:** ทุกธีม + 390px + ทุกสถานะ CTA (ก่อนเปิด/เปิด/โหวตแล้ว/ปิด/pause
   ผ่าน template-preview interact) ไม่ layout shift + countdown fallback static
 
-### R3 — Vote multi + single
-- **ทำอะไร:** ReceiptVote (บัตรกระดาษ ☐ + ฉีกรอยปรุ) + ReceiptSingleParty
-  (ตราปั๊ม 3 อัน semantic เขียว/แดง/ส้ม)
-- **Acceptance R3:** semantic vote colours verified ไม่ถูก accent/holo แตะ +
+### R3 — Vote multi + single ✅ DONE 2026-07-13 (`1fe8259` + chore `9947c52`)
+- ReceiptVote (ต่อจากร่างค้าง) + ReceiptSingleParty ใหม่ (ปั๊ม 3 อัน #16A34A/#DC2626/
+  #EA580C คงที่ทุกธีม) + **ภาษา desk แยกเป็น shared class `.rc-desk` ใน
+  ReceiptBaseStyles** (T1 gate: home computed เดิมเป๊ะ) + ephemeral wiring
+  (set ที่ vote/page.js on POST success → **soft router.push** เฉพาะ receipt เพื่อให้
+  module memory รอด → consume ครั้งเดียวที่ success mount, StrictMode-guarded) +
+  dispatch vote/success/template-preview ครบ; Fable รีวิวผ่าน (probe อิสระ: multi 3 แถว
+  ไม่มีแถว -1, kick ส้ม semantic, tray 129px, single dispatch ถูก, ปั๊ม 3 สีคงที่บนธีมเหลือง,
+  390 = 390, อ่าน wiring จริงทั้งสองฝั่ง)
+- Divergence ที่ยอมรับ: receipt ใช้ soft nav ไป /success (ตระกูลอื่น hard nav) — จำเป็นต่อ
+  ephemeral, comment ในโค้ดครบ · playground entry เลื่อนไป R5 ตามแผน ·
+  launch.json pin worker server ที่ :56989 กันแย่ง :3000 ของ owner
+- **Acceptance R3 (เดิม):** semantic vote colours verified ไม่ถูก accent/holo แตะ +
   dispatch guard single vs multi + fallback ทุก interaction + ทุกธีม + 390px +
-  shared confirmation modal ไม่ถูกแก้
+  shared confirmation modal ไม่ถูกแก้ — ครบทุกข้อ (raw ใน worker report R3)
 
-### R4 — Results + Closed
+### R4 — Results + Closed + Candidates + home addendum (ขยาย 2026-07-13)
 - **ทำอะไร:** ReceiptResults (register tape ยาว + embargo SEALED holo, recharts
   ใส่กรอบกระดาษ consts ห้ามแตะ) + ReceiptClosed (สลิปแปะเทป reason-aware)
+  + **ReceiptCandidates** (ช่องว่างแผนเดิม — ตาม grammar BlossomCandidates)
+  + **home addendum จาก mockup ที่ 2 ของ owner (Fable คัดแล้ว):** รอยฉีกขอบกระดาษ
+  เผยชั้นกระดาษเข้มกว่า (ห้ามหินอ่อน — ขัด material honesty), เชือกร้อย grommet
+  โยงการ์ดโน้ต→ป้าย CTA, ghost stamp มีรายละเอียดวงแหวน+ตัวอักษรแบบตราจริง;
+  **โทนคงอุ่น + ม่วง FMS ตาม lock เดิม** (โทนเย็น/ลาเวนเดอร์ของ mockup = รอ owner
+  สั่งเองเท่านั้น)
 - **Acceptance R4:** embargo ไม่รั่ว score ก่อน reveal + recharts consts/fills
-  untouched + closed ไม่ลิงก์ results ตาม seam + ทุกธีม + 390px + fallback
+  untouched + closed ไม่ลิงก์ results ตาม seam + candidates ไม่นับ pseudo-candidate
+  เป็นพรรค + ทุกธีม + 390px + fallback + spec `.specs/receipt/R4-RESULTS-CLOSED-CANDIDATES.md`
 
 ### R5 — Playground/preview/chooser + gate
 - **ทำอะไร:** ต่อ receipt เข้า template-playground + /template-preview?interact=1
