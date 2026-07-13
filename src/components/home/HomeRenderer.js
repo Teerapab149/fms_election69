@@ -17,14 +17,18 @@ import StudioDarkHome from "./StudioDarkHome";
 import VerdureHome from "./VerdureHome";
 import OriginalHome from "./OriginalHome";
 import BlossomHome from "./BlossomHome";
+import ReceiptHome from "./ReceiptHome";
 
 // slug → layout component. Absent slug = classic layout (HomeContent).
+// Colour-variant slugs (e.g. receipt-blue) resolve via the layoutFamily fallback
+// below, so only each family's BASE slug needs an entry here.
 const HOME_LAYOUTS = {
   gumroad: GumroadHome,
   "studio-dark": StudioDarkHome,
   verdure: VerdureHome,
   original: OriginalHome,
   blossom: BlossomHome,
+  receipt: ReceiptHome,
 };
 
 export default function HomeRenderer(props) {
