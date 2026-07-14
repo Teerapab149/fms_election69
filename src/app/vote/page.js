@@ -18,7 +18,7 @@ import GumroadVote from '../../components/vote/GumroadVote';
 import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VerdureVote from '../../components/vote/VerdureVote';
 import BlossomVote from '../../components/vote/BlossomVote';
-import ReceiptVote from '../../components/vote/ReceiptVote';
+import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -52,6 +52,12 @@ export default function VotePage() {
 
   // ✅ Prevent double click during redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Receipt-only "หย่อนบัตรลงหีบ" scene (ruling C3). The overlay + controller live in
+  // ReceiptVote; here we only orchestrate it around the awaited submit for the receipt
+  // branch. Hook is unconditional (Rules of Hooks); sceneNode is rendered only when the
+  // active template is receipt, so every other family is byte-unaffected.
+  const { playDrop, sceneNode } = useBallotDrop();
 
   // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
   const [voteConfig, setVoteConfig] = useState({});
@@ -127,21 +133,36 @@ export default function VotePage() {
     // Capture the choice label BEFORE the POST (selection can't change mid-submit).
     const choiceLabel = isReceipt ? receiptChoiceLabel() : null;
 
+    // Receipt family: play the "หย่อนบัตรลงหีบ" scene AROUND the awaited submit (ruling
+    // C3). playDrop starts the ~900ms fold+drop overlay, fires submitVote() in parallel,
+    // HOLDS the final frame until it resolves, then returns the result — the vote is
+    // NEVER coupled to the animation (reduced-motion / JS-fail skip the scene but still
+    // await the submit). On success we keep the EXACT ephemeral + soft-nav seam; on
+    // failure the ballot bounces back and submitVote's own alert is the error. The
+    // shared modal is closed first (multi) so the scene is unobstructed; the modal
+    // itself is untouched. Every other family keeps its original hard-nav path.
+    if (isReceipt) {
+      setIsConfirmModalOpen(false);
+      const success = await playDrop(submitVote);
+      if (success) {
+        setIsRedirecting(true); // 🔒 Lock UI
+        // hand the just-cast choice to the in-memory ephemeral holder (CONCEPT §2 / §9
+        // Q4 — shown once, never persisted, no storage/URL/cookie) and navigate SOFT so
+        // the module scope survives to the success page's mount, where
+        // consumeEphemeralChoice() reads it once. A hard nav would (by design) drop the
+        // value → the secrecy fallback.
+        setEphemeralChoice(choiceLabel);
+        router.push("/success");
+      }
+      return;
+    }
+
     const success = await submitVote();
     if (success) {
       setIsRedirecting(true); // 🔒 Lock UI
       setIsConfirmModalOpen(false)
-      // Receipt family: hand the just-cast choice to the in-memory ephemeral holder
-      // (CONCEPT §2 / §9 Q4 — shown once, never persisted, no storage/URL/cookie) and
-      // navigate SOFT so the module scope survives to the success page's mount, where
-      // consumeEphemeralChoice() reads it once. A hard nav would (by design) drop the
-      // value → the secrecy fallback. Every other family keeps its hard-nav redirect.
-      if (isReceipt) {
-        setEphemeralChoice(choiceLabel);
-        router.push("/success");
-      } else {
-        window.location.href = getPath("/success");
-      }
+      // Every non-receipt family keeps its hard-nav redirect.
+      window.location.href = getPath("/success");
     };
   };
 
@@ -277,6 +298,10 @@ export default function VotePage() {
       />
        </>
       )}
+
+      {/* Receipt-only ballot-drop scene overlay (ruling C3). Client-only; renders inert
+          until playDrop runs. Never mounted for other families. */}
+      {isReceipt && sceneNode}
 
       {/* Modals */}
       <PartyDetailModal

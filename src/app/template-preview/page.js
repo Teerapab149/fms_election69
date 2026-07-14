@@ -57,7 +57,7 @@ import BlossomVote from '../../components/vote/BlossomVote';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
-import ReceiptVote from '../../components/vote/ReceiptVote';
+import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
 import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptClosed from '../../components/vote/ReceiptClosed';
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
@@ -124,6 +124,12 @@ function PreviewBody() {
 
   // ── interact-mode local state (unused in static mode; hooks stay unconditional so
   //    ordering is identical in both branches) ─────────────────────────────────────
+  // receipt ballot-drop scene (ruling C3) — interact plays the SAME client-side scene
+  // as the live seam, around a simulated submit. ?fail=1 is a PREVIEW-ONLY dev flag
+  // (never read by the live vote page): the simulated submit resolves false so the
+  // bounce-back error path can be exercised without a server.
+  const { playDrop, sceneNode } = useBallotDrop();
+  const dropFail = sp.get('fail') === '1';
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [partyNumber, setPartyNumber] = useState(PARTIES[0]?.number ?? 1);
   // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
@@ -389,19 +395,26 @@ function PreviewBody() {
     //    the generic `if (page === 'vote')` classic catch-all below (which would
     //    otherwise render receipt's ballot with the classic MultiPartyView).
     if (family === 'receipt' && page === 'vote' && variant === 'single') {
+      // booth confirm → the ballot-drop scene plays around a simulated submit (ruling
+      // C3: the scene runs on BOTH the single and multi paths), then navTo('success').
+      // ?fail=1 → the simulated submit returns false → the ballot bounces back.
+      const submitSim = () => new Promise((resolve) => setTimeout(() => resolve(!dropFail), 600));
       return (
-        <ReceiptVote
-          regularParties={PARTIES}
-          specialOptions={SPECIAL}
-          selectedPartyId={selectedPartyId}
-          onSelect={setSelectedPartyId}
-          onViewDetails={(p) => navTo('party', p?.number ?? 1)}
-          isSingleParty
-          user={DUMMY_USER}
-          onConfirm={() => navTo('success')}
-          isSubmitting={false}
-          editorMode={false}
-        />
+        <>
+          <ReceiptVote
+            regularParties={PARTIES}
+            specialOptions={SPECIAL}
+            selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId}
+            onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+            isSingleParty
+            user={DUMMY_USER}
+            onConfirm={async () => { const ok = await playDrop(submitSim); if (ok) navTo('success'); }}
+            isSubmitting={false}
+            editorMode={false}
+          />
+          {sceneNode}
+        </>
       );
     }
 
@@ -411,6 +424,10 @@ function PreviewBody() {
     if (family === 'receipt' && page === 'vote' && variant !== 'single') {
       const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
+      // shared-modal confirm → close it → the ballot-drop scene plays around a
+      // simulated submit (ruling C3), then navTo('success'). The modal itself is
+      // untouched. ?fail=1 → the simulated submit returns false → bounce-back.
+      const submitSim = () => new Promise((resolve) => setTimeout(() => resolve(!dropFail), 600));
       return (
         <>
           <ReceiptVote
@@ -428,12 +445,13 @@ function PreviewBody() {
           <VoteConfirmationModal
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
-            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
+            onConfirm={async () => { setConfirmOpen(false); const ok = await playDrop(submitSim); if (ok) navTo('success'); }}
             party={selectedParty}
             isVoteNo={selectedParty?.number === 0}
             isDisapprove={selectedParty?.number === -1}
             isSubmitting={false}
           />
+          {sceneNode}
         </>
       );
     }

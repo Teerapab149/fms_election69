@@ -28,12 +28,16 @@
 // indicator using transform/opacity only, so JS-off / reduced-motion / editorMode
 // render the full booth instantly (no JS-gated content).
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+
+// stamp imprint glyph + Thai label per semantic choice (kind)
+const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "—" };
+const STAMP_LABEL = { approve: "รับรอง", disapprove: "ไม่รับรอง", abstain: "งดออกเสียง" };
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -83,6 +87,11 @@ export default function ReceiptSingleParty({
   const copyrightYear = gc.copyrightYear ?? "";
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // stamping-desk enhancement state (JS-only; the 3 rows below stay the base path)
+  const [ghostKind, setGhostKind] = useState(null);   // the previous imprint, fading out
+  const prevKindRef = useRef(null);
+  const [showJump, setShowJump] = useState(false);      // sticky "jump to decision" shortcut
+  const jumpSentinelRef = useRef(null);
 
   const abstain = specialOptions?.abstain;
   const disapprove = specialOptions?.disapprove;
@@ -111,6 +120,47 @@ export default function ReceiptSingleParty({
 
   const pick = (id) => () => { if (!editorMode && id != null) onSelect(id); };
   const canConfirm = kind != null && !isSubmitting && !editorMode;
+
+  // over-stamp: when the choice CHANGES, flash the previous imprint as a fading ghost
+  // (transform/opacity only). Never gates content — the slot is aria-hidden decoration.
+  useEffect(() => {
+    const prev = prevKindRef.current;
+    prevKindRef.current = kind;
+    if (prev && prev !== kind) {
+      setGhostKind(prev);
+      const t = setTimeout(() => setGhostKind(null), 650);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [kind]);
+
+  // sticky "ไปที่การตัดสินใจ ↓" shortcut — appears once the top masthead scrolls out of
+  // view AND hides again while the decision zone itself is on screen. TWO
+  // IntersectionObservers, no scroll listener (A7.1); both disconnect on unmount.
+  // editorMode never arms it (static slide).
+  useEffect(() => {
+    if (editorMode || typeof window === "undefined" || !("IntersectionObserver" in window)) return undefined;
+    const headEl = jumpSentinelRef.current;
+    const decisionEl = document.getElementById("rc-sp-decision");
+    if (!headEl) return undefined;
+    let pastHead = false;
+    let atDecision = false;
+    const apply = () => setShowJump(pastHead && !atDecision);
+    const ioHead = new IntersectionObserver(
+      (entries) => { pastHead = !entries[0].isIntersecting; apply(); },
+      { rootMargin: "-40px 0px 0px 0px", threshold: 0 }
+    );
+    ioHead.observe(headEl);
+    let ioDec = null;
+    if (decisionEl) {
+      ioDec = new IntersectionObserver(
+        (entries) => { atDecision = entries[0].isIntersecting; apply(); },
+        { rootMargin: "0px 0px -20% 0px", threshold: 0.05 }
+      );
+      ioDec.observe(decisionEl);
+    }
+    return () => { ioHead.disconnect(); if (ioDec) ioDec.disconnect(); };
+  }, [editorMode]);
 
   return (
     <div className="fms-app rc-root rc-single-root rc-desk">
@@ -150,6 +200,9 @@ export default function ReceiptSingleParty({
             </div>
           </div>
         </header>
+        {/* IO sentinel — once this scrolls above the fold, the sticky decision
+            shortcut appears (no scroll listener) */}
+        <div ref={jumpSentinelRef} aria-hidden="true" className="rc-jump-sentinel" />
 
         {/* voter register strip — mono, register-tape voice (mirrors ReceiptVote) */}
         <div className="rc-vvoter">
@@ -230,6 +283,31 @@ export default function ReceiptSingleParty({
             </div>
             <div className="rc-perf" aria-hidden="true" />
 
+            {/* the empty stamping SLOT — the pressed imprint of the CURRENT choice
+                appears here (ink-soak scale + tilt); a changed choice over-stamps with
+                the old one ghosted out. Enhancement layer only (aria-hidden): the three
+                role=radio stamps below are the base path — keyboard + no-JS + reduced-
+                motion all read the plain rows with no imprint gate. */}
+            <div className="rc-stampslot" aria-hidden="true">
+              {/* 3-colour ink pad — one well per semantic tone, resting in the corner */}
+              <span className="rc-inkwells">
+                <i className="rc-inkwell rc-inkwell--a" /><i className="rc-inkwell rc-inkwell--d" /><i className="rc-inkwell rc-inkwell--x" />
+              </span>
+              <span className="rc-stampslot__hint"><span className="rc-mono">STAMP HERE ·</span> <span>ประทับตราของคุณที่นี่</span></span>
+              {ghostKind && (
+                <span key={`g-${ghostKind}`} className={`rc-imprint rc-imprint--ghost rc-sopt--${ghostKind}`}>
+                  <span className="rc-imprint__glyph">{STAMP_GLYPH[ghostKind]}</span>
+                  <span className="rc-imprint__txt">{STAMP_LABEL[ghostKind]}</span>
+                </span>
+              )}
+              {kind && (
+                <span key={`c-${kind}`} className={`rc-imprint rc-sopt--${kind}`}>
+                  <span className="rc-imprint__glyph">{STAMP_GLYPH[kind]}</span>
+                  <span className="rc-imprint__txt">{STAMP_LABEL[kind]}</span>
+                </span>
+              )}
+            </div>
+
             <ul className="rc-sballot">
               <StampRow
                 tone="approve"
@@ -268,6 +346,19 @@ export default function ReceiptSingleParty({
           </div>
         </section>
       </div>
+
+      {/* sticky shortcut to the decision zone — a tiny ticket STUB that slides in once
+          the party masthead scrolls out of view (IO-driven). Fades on mobile so it
+          never fights the tray. */}
+      <button
+        type="button"
+        className={`rc-jump${showJump ? " is-in" : ""}`}
+        onClick={() => { const el = document.getElementById("rc-sp-decision"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+        tabIndex={showJump ? 0 : -1}
+        aria-hidden={showJump ? undefined : "true"}
+      >
+        ไปที่การตัดสินใจ<span className="rc-jump__arrow" aria-hidden="true"> ↓</span>
+      </button>
 
       {/* ===== fixed confirm tray — paper strip (torn perforation top) + foil button ===== */}
       <div className={`rc-vbar${canConfirm ? " is-ready" : ""}`}>
@@ -333,23 +424,37 @@ export default function ReceiptSingleParty({
         :where(.rc-single-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-single-root a:focus-visible, .rc-single-root button:focus-visible,
         .rc-single-root [role="radio"]:focus-visible { outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
+        /* mono utility — ONLY Latin / digits / symbols ever wear it (A10.3) */
+        .rc-single-root .rc-mono { font-family:var(--rc-fm); }
 
-        /* ---- topbar (ported 1:1 from ReceiptHome, scoped to .rc-single-root) ---- */
+        /* ---- topbar "head of the desk" (A3 / ruling #4: NO backdrop-filter — opaque
+           desk fill + a perforated hairline; stub-nav skin ported from ReceiptHome) ---- */
         .rc-single-root .rc-topbar { position:sticky; top:0; z-index:40;
-          background:color-mix(in srgb, var(--rc-desk) 88%, transparent);
-          -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-          border-bottom:1.5px solid var(--rc-stamp-line); }
-        .rc-single-root .rc-topbar__in { max-width:1120px; margin:0 auto; padding:12px 20px;
-          display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-        .rc-single-root .rc-logo { display:inline-flex; align-items:center; flex-shrink:0; }
-        .rc-single-root .rc-logo__img { height:30px; width:auto; object-fit:contain; display:block; }
-        .rc-single-root .rc-nav { display:none; gap:20px; margin-left:auto; align-items:center; }
-        .rc-single-root .rc-nav__link { font-family:var(--rc-fm); font-size:11px; letter-spacing:.16em;
-          text-transform:uppercase; color:var(--rc-ink2); position:relative; padding-bottom:2px; transition:color .2s ease; }
-        .rc-single-root .rc-nav__link.on, .rc-single-root .rc-nav__link:hover { color:var(--rc-ink); }
-        .rc-single-root .rc-nav__link::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:2px;
-          background:var(--rc-accent); transform:scaleX(0); transform-origin:left; transition:transform .28s cubic-bezier(.22,1,.36,1); }
-        .rc-single-root .rc-nav__link:hover::after, .rc-single-root .rc-nav__link.on::after { transform:scaleX(1); }
+          background:color-mix(in srgb, var(--rc-desk) 96%, var(--rc-receipt)); }
+        .rc-single-root .rc-topbar::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1.5px;
+          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
+        .rc-single-root .rc-topbar__in { max-width:1120px; margin:0 auto; padding:10px 20px;
+          display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        .rc-single-root .rc-logo { position:relative; display:inline-flex; align-items:center; flex-shrink:0;
+          padding:6px 12px 6px 14px; background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+          box-shadow:1px 3px 8px -5px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-single-root .rc-logo::before { content:""; position:absolute; left:-3px; top:8px; width:10px; height:18px;
+          border:2px solid var(--rc-faint); border-right:none; border-radius:6px 0 0 6px; background:transparent; transform:rotate(-4deg); }
+        .rc-single-root .rc-logo__img { height:28px; width:auto; object-fit:contain; display:block; }
+        .rc-single-root .rc-nav { display:none; gap:8px; margin-left:auto; align-items:center; }
+        .rc-single-root .rc-nav__link { position:relative; display:inline-flex; align-items:center; min-height:40px;
+          font-family:var(--rc-fr); font-weight:600; font-size:12.5px; letter-spacing:.01em; color:var(--rc-ink2);
+          padding:0 13px 0 16px; background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+          transition:transform .15s ease, color .2s ease, background .2s ease, border-color .2s ease; }
+        .rc-single-root .rc-nav__link::before { content:""; position:absolute; left:4px; top:7px; bottom:7px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 2px, transparent 2px 5px); }
+        .rc-single-root .rc-nav__link:hover { transform:translateY(-1px); color:var(--rc-ink); border-color:var(--rc-accent); }
+        .rc-single-root .rc-nav__link.on { color:var(--rc-accent-deep); border-color:var(--rc-accent);
+          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); }
+        .rc-single-root .rc-nav__link.on::before { left:1px;
+          background:repeating-linear-gradient(180deg, var(--rc-accent) 0 2px, transparent 2px 5px); }
         .rc-single-root .rc-userwrap { position:relative; margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
         .rc-single-root .rc-loginbtn { display:inline-flex; align-items:center; min-height:44px; font-family:var(--rc-fh);
           font-weight:600; font-size:13px; color:var(--rc-on-accent); background:var(--rc-accent); border:none; cursor:pointer;
@@ -360,10 +465,15 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-skelbar { display:block; width:58px; height:12px; border-radius:3px;
           background:color-mix(in srgb, var(--rc-ink2) 30%, var(--rc-receipt)); animation:rcPulse 1.3s ease-in-out infinite; }
         @keyframes rcPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+        /* user chip = a LANYARD CARD (cut corner + a punched grommet hole on top) */
         .rc-single-root .rc-userchip { position:relative; }
-        .rc-single-root .rc-userchip__btn { display:inline-flex; align-items:center; gap:9px; min-height:44px; background:var(--rc-receipt);
-          border:1.5px solid var(--rc-stamp-line); border-radius:var(--rc-radius-button, 8px); padding:5px 12px 5px 5px; cursor:pointer;
-          font-family:inherit; transition:transform .15s ease, border-color .2s ease; }
+        .rc-single-root .rc-userchip__btn { position:relative; display:inline-flex; align-items:center; gap:9px; min-height:44px;
+          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); padding:5px 14px 5px 5px; cursor:pointer;
+          font-family:inherit; clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+          transition:transform .15s ease, border-color .2s ease; }
+        .rc-single-root .rc-userchip__btn::after { content:""; position:absolute; top:5px; right:12px; width:9px; height:9px;
+          border-radius:50%; background:var(--rc-desk);
+          box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)); }
         .rc-single-root .rc-userchip__btn:hover { border-color:var(--rc-accent); }
         .rc-single-root .rc-userchip__btn:active { transform:scale(.97); }
         .rc-single-root .rc-userchip__av { width:30px; height:30px; border-radius:50%; flex-shrink:0; display:grid; place-items:center;
@@ -391,9 +501,12 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sheet { flex:0 0 100%; display:flex; flex-direction:column; gap:6px; overflow:hidden; max-height:0; opacity:0;
           transition:max-height .28s ease, opacity .28s ease, padding .28s ease; }
         .rc-single-root .rc-sheet.is-open { max-height:280px; opacity:1; padding:12px 0 4px; }
-        .rc-single-root .rc-sheet__link { display:flex; align-items:center; min-height:44px; padding:11px 16px; border-radius:8px;
-          font-family:var(--rc-fm); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--rc-ink);
-          background:var(--rc-receipt); border:1px solid var(--rc-line); transition:border-color .2s ease; }
+        .rc-single-root .rc-sheet__link { position:relative; display:flex; align-items:center; min-height:48px; padding:0 16px 0 20px;
+          font-family:var(--rc-fr); font-weight:600; font-size:14px; color:var(--rc-ink);
+          background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px); transition:border-color .2s ease; }
+        .rc-single-root .rc-sheet__link::before { content:""; position:absolute; left:5px; top:9px; bottom:9px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 2px, transparent 2px 5px); }
         .rc-single-root .rc-sheet__link:hover { border-color:var(--rc-accent); }
 
         /* ---- page container ---- */
@@ -452,18 +565,26 @@ export default function ReceiptSingleParty({
           text-transform:uppercase; color:var(--rc-ink2); white-space:nowrap; padding-bottom:3px; font-variant-numeric:tabular-nums; }
         .rc-single-root .rc-sp-story { margin:20px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2); }
 
-        /* policies — print index rows */
-        .rc-single-root .rc-sp-plist { list-style:none; margin:12px 0 0; padding:0; }
-        .rc-single-root .rc-sp-plist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:baseline;
-          padding:18px 6px; border-bottom:1px dotted var(--rc-line); }
-        .rc-single-root .rc-sp-plist li:last-child { border-bottom:none; }
-        .rc-single-root .rc-sp-plist .n { font-family:var(--rc-fh); font-weight:700; font-size:clamp(22px,5vw,34px); line-height:1;
-          font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--rc-accent-deep); }
-        .rc-single-root .rc-sp-plist .t { font-family:var(--rc-fr); font-size:15px; line-height:1.6; color:var(--rc-ink); }
+        /* policies — perforated COUPONS, one per row (die-cut left edge; hover lifts) */
+        .rc-single-root .rc-sp-plist { list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:12px; }
+        .rc-single-root .rc-sp-plist li { position:relative; display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:center;
+          padding:16px 18px 16px 26px; background:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px;
+          box-shadow:1px 8px 20px -16px color-mix(in srgb, var(--rc-ink) 40%, transparent);
+          transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+        .rc-single-root .rc-sp-plist li::before { content:""; position:absolute; left:9px; top:12px; bottom:12px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 3px, transparent 3px 7px); }
+        .rc-single-root .rc-sp-plist li:hover { transform:translateY(-3px); border-color:var(--rc-accent);
+          box-shadow:2px 16px 28px -20px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-single-root .rc-sp-plist .n { display:grid; place-items:center; width:40px; height:40px; flex:none; border-radius:50%;
+          border:2px solid var(--rc-accent-deep); font-family:var(--rc-fh); font-weight:800; font-size:18px; line-height:1;
+          font-variant-numeric:tabular-nums; color:var(--rc-accent-deep); }
+        .rc-single-root .rc-sp-plist .t { font-family:var(--rc-fr); font-size:15px; line-height:1.55; color:var(--rc-ink); }
 
-        /* team — portrait grid */
-        .rc-single-root .rc-sp-team { margin-top:20px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-        .rc-single-root .rc-sp-cand { margin:0; background:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px;
+        /* team — a horizontal PHOTO-STRIP off the print machine (scrolls x) */
+        .rc-single-root .rc-sp-team { margin-top:20px; display:flex; gap:14px; overflow-x:auto; padding:2px 2px 10px;
+          scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
+        .rc-single-root .rc-sp-cand { margin:0; flex:0 0 clamp(150px, 44vw, 188px); scroll-snap-align:start;
+          background:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px;
           overflow:hidden; transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
         .rc-single-root .rc-sp-cand:hover { transform:translateY(-4px); border-color:var(--rc-accent);
           box-shadow:2px 22px 40px -26px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
@@ -518,6 +639,18 @@ export default function ReceiptSingleParty({
           border-radius:6px; background:var(--rc-receipt); display:grid; place-items:center; transition:border-color .2s ease; }
         .rc-single-root .rc-sopt__hit:hover .rc-sopt__pad { border-color:var(--rc-tone); }
         .rc-single-root .rc-sopt.is-selected .rc-sopt__pad { border-color:var(--rc-tone-deep); }
+        /* the rubber FACE — each stamp head wears its semantic tone at rest (a rubber
+           strip along the bottom of the head), so the three stamps read green/red/orange
+           before any interaction */
+        .rc-single-root .rc-sopt__pad { box-shadow:inset 0 -8px 0 color-mix(in srgb, var(--rc-tone) 55%, var(--rc-receipt)); }
+        /* rubber-stamp HANDLE — a dark grip rising above the rubber head; hover lifts
+           it, selecting presses it down (transform-only). Reads the row as a real stamp. */
+        .rc-single-root .rc-sopt__pad::after { content:""; position:absolute; left:50%; top:-15px; transform:translateX(-50%);
+          width:15px; height:17px; border-radius:5px 5px 3px 3px;
+          background:linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 68%, var(--rc-faint)), var(--rc-ink));
+          box-shadow:0 2px 4px -1px color-mix(in srgb, var(--rc-ink) 45%, transparent); transition:transform .2s ease; }
+        .rc-single-root .rc-sopt__hit:hover .rc-sopt__pad::after { transform:translateX(-50%) translateY(-2px); }
+        .rc-single-root .rc-sopt.is-selected .rc-sopt__pad::after { transform:translateX(-50%) translateY(1px); }
         .rc-single-root .rc-sopt__ink { position:absolute; inset:7px; border:3px solid var(--rc-tone-deep); border-radius:5px;
           display:grid; place-items:center; font-family:var(--rc-fh); font-weight:800; font-size:22px; line-height:1;
           color:var(--rc-tone-deep); transform:scale(0) rotate(-16deg); opacity:0;
@@ -531,6 +664,47 @@ export default function ReceiptSingleParty({
           letter-spacing:-.01em; color:var(--rc-ink); }
         .rc-single-root .rc-sopt.is-selected .rc-sopt__name { color:var(--rc-tone-deep); }
         .rc-single-root .rc-sopt__note { margin-top:2px; font-family:var(--rc-fr); font-size:13.5px; line-height:1.5; color:var(--rc-ink2); }
+
+        /* ---- the empty stamping SLOT + pressed imprint (enhancement layer) ---- */
+        .rc-single-root .rc-stampslot { position:relative; margin:4px 0 8px; min-height:90px; display:grid; place-items:center;
+          border:1.5px dashed var(--rc-stamp-line); border-radius:8px; overflow:hidden;
+          background:color-mix(in srgb, var(--rc-ink) 2%, var(--rc-receipt)); }
+        /* hint: mono LATIN lead-in + Chakra Thai (A10.3 — Thai never wears mono) */
+        .rc-single-root .rc-stampslot__hint { font-family:var(--rc-fr); font-size:12px; letter-spacing:.06em;
+          color:var(--rc-faint); display:inline-flex; align-items:baseline; gap:6px; }
+        .rc-single-root .rc-stampslot__hint .rc-mono { font-size:10px; letter-spacing:.18em; text-transform:uppercase; }
+        /* 3-colour ink pad in the slot corner — SEMANTIC wells (fixed, never accent) */
+        .rc-single-root .rc-inkwells { position:absolute; right:10px; bottom:8px; display:inline-flex; gap:4px; }
+        .rc-single-root .rc-inkwell { width:20px; height:9px; border-radius:2px;
+          border:1px solid color-mix(in srgb, var(--rc-ink) 22%, transparent);
+          box-shadow:inset 0 1.5px 2px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
+        .rc-single-root .rc-inkwell--a { background:color-mix(in srgb, #16A34A 72%, var(--rc-receipt)); }
+        .rc-single-root .rc-inkwell--d { background:color-mix(in srgb, #DC2626 72%, var(--rc-receipt)); }
+        .rc-single-root .rc-inkwell--x { background:color-mix(in srgb, #EA580C 72%, var(--rc-receipt)); }
+        /* the imprint — a rotated ring stamp in the choice's SEMANTIC tone. Base state
+           is the FINAL (visible) frame; rcSoak only supplies the entrance from-state, so
+           reduced-motion / JS-nuked-animation shows the pressed stamp instantly and the
+           row radios remain the true fallback. --rc-tone comes from the rc-sopt--* class. */
+        .rc-single-root .rc-imprint { position:absolute; display:inline-flex; align-items:center; gap:10px; padding:8px 18px;
+          border:3px solid var(--rc-tone-deep); border-radius:8px; background:color-mix(in srgb, var(--rc-tone) 8%, var(--rc-receipt));
+          transform:rotate(-7deg) scale(1); opacity:.94; animation:rcSoak .34s cubic-bezier(.34,1.56,.64,1) both; }
+        .rc-single-root .rc-imprint__glyph { font-family:var(--rc-fh); font-weight:800; font-size:26px; line-height:1; color:var(--rc-tone-deep); }
+        .rc-single-root .rc-imprint__txt { font-family:var(--rc-fh); font-weight:800; font-size:20px; letter-spacing:.02em; color:var(--rc-tone-deep); }
+        .rc-single-root .rc-imprint--ghost { opacity:0; animation:rcGhostOut .65s ease forwards; }
+        @keyframes rcSoak { from { transform:rotate(-7deg) scale(.9); opacity:0; } }
+        @keyframes rcGhostOut { 0% { transform:rotate(-7deg) scale(1); opacity:.5; } 100% { transform:rotate(-11deg) scale(1.06); opacity:0; } }
+
+        /* ---- sticky "ไปที่การตัดสินใจ ↓" shortcut (IO-driven, transform/opacity) ---- */
+        .rc-single-root .rc-jump-sentinel { height:1px; width:1px; }
+        .rc-single-root .rc-jump { position:fixed; right:16px; bottom:98px; z-index:39; display:inline-flex; align-items:center;
+          min-height:44px; padding:0 16px 0 20px; cursor:pointer; font-family:var(--rc-fh); font-weight:700; font-size:13.5px;
+          color:var(--rc-on-accent); background:var(--rc-accent-deep); border:none;
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+          box-shadow:2px 12px 26px -12px color-mix(in srgb, var(--rc-ink) 55%, transparent);
+          transform:translateY(16px); opacity:0; pointer-events:none;
+          transition:transform .28s cubic-bezier(.22,1,.36,1), opacity .28s ease; }
+        .rc-single-root .rc-jump.is-in { transform:translateY(0); opacity:1; pointer-events:auto; }
+        .rc-single-root .rc-jump__arrow { margin-left:2px; }
 
         .rc-single-root .rc-ballot-foot { margin-top:8px; text-align:center; font-family:var(--rc-fm); font-size:9px;
           letter-spacing:.24em; color:var(--rc-faint); }
@@ -573,9 +747,10 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-vbar__btn:disabled::before { background:color-mix(in srgb, var(--rc-ink2) 22%, var(--rc-line)); }
         .rc-single-root .rc-vbar__btn:disabled .rc-vbar__btn-in { color:color-mix(in srgb, var(--rc-receipt) 88%, var(--rc-ink)); }
 
-        /* ---- confirm dialog (Receipt paper card) ---- */
+        /* ---- confirm dialog (Receipt paper card) — NO backdrop-filter (A7.1): a solid
+           ink scrim instead of a blur ---- */
         .rc-single-root .rc-scm { position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:24px;
-          background:color-mix(in srgb, var(--rc-ink) 46%, transparent); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+          background:color-mix(in srgb, var(--rc-ink) 56%, transparent);
           animation:rcScmFade .2s ease both; }
         .rc-single-root .rc-scm__card { width:min(460px,100%); background:var(--rc-receipt); border:1px solid var(--rc-line);
           border-radius:4px; padding:32px; text-align:center; animation:rcScmPop .28s cubic-bezier(.16,1,.3,1) both;
@@ -639,6 +814,9 @@ export default function ReceiptSingleParty({
           .rc-single-root .rc-vbar__btn { width:100%; }
           .rc-single-root .rc-scm__actions { flex-direction:column-reverse; }
           .rc-single-root .rc-scm__cancel, .rc-single-root .rc-scm__go { width:100%; flex:none; }
+          /* shortcut clears the taller mobile tray + reads quieter (spec: จางบนมือถือ) */
+          .rc-single-root .rc-jump { right:12px; bottom:172px; font-size:12.5px; }
+          .rc-single-root .rc-jump.is-in { opacity:.82; }
         }
 
         /* reduced motion — freeze every animation (foil stays statically iridescent),

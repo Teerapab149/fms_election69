@@ -35,6 +35,7 @@
 // editorMode render the complete ballot instantly (the ink mark is a selection
 // indicator, not gated content).
 
+import { useState, useCallback } from "react";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
@@ -44,6 +45,131 @@ import ReceiptSingleParty from "./ReceiptSingleParty";
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const pad4 = (n) => String(n ?? 0).padStart(4, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
+
+// ── BALLOT-DROP SCENE (addendum A9.2 / ruling C3) — the signature "cast" moment.
+//    A client-only overlay: the marked ballot folds (scaleY) and slides down into a
+//    ballot-box slot rising from the bottom of the screen (~900ms, transform/opacity
+//    ONLY — no backdrop-filter, no layout props, no scroll listener). It plays while
+//    submitVote() is awaited and HOLDS its final frame until the promise resolves;
+//    on success the parent navigates (soft router.push / navTo) which unmounts it, on
+//    failure the ballot bounces back and the overlay clears so the existing error
+//    (the hook's alert) shows. reduced-motion / no-window → the scene is SKIPPED
+//    entirely (playDrop still awaits submit → the vote is NEVER coupled to the
+//    animation). Rendered by the PARENT (vote/page.js + template-preview interact);
+//    editorMode static never calls playDrop, so it never plays there. ──
+export function BallotDropScene({ phase = "idle" }) {
+  return (
+    <div className={`rc-root rc-drop rc-drop--${phase}`} aria-hidden="true">
+      <div className="rc-drop__paper">
+        <span className="rc-drop__paper-line rc-dropmono">BALLOT · ✓</span>
+        <span className="rc-drop__paper-band" />
+      </div>
+      <div className="rc-drop__box">
+        <span className="rc-drop__slot" />
+        <div className="rc-drop__front">
+          <span className="rc-drop__front-th">หีบบัตรเลือกตั้ง</span>
+          <span className="rc-drop__front-en rc-dropmono">BALLOT BOX</span>
+        </div>
+      </div>
+      <style jsx global>{`
+        /* overlay root — opaque desk wash (NO backdrop-filter, ruling #4); token
+           access via the piggy-backed .rc-root class. .rc-root.rc-drop = 0,2,0 so it
+           beats the base .rc-root rule regardless of source order. */
+        .rc-root.rc-drop { position:fixed; inset:0; z-index:70; min-height:0;
+          display:grid; place-items:end center; overflow:hidden; pointer-events:none;
+          background:color-mix(in srgb, var(--rc-desk) 78%, transparent);
+          opacity:0; transition:opacity .18s ease; }
+        .rc-drop.rc-drop--drop, .rc-drop.rc-drop--error { opacity:1; pointer-events:auto; }
+        .rc-drop.rc-drop--idle { visibility:hidden; }
+        .rc-drop .rc-dropmono { font-family:var(--rc-fm); }
+
+        /* the ballot box — rises from the bottom of the screen (translateY only) */
+        .rc-drop__box { position:relative; z-index:1; width:min(300px, 74vw); height:150px;
+          transform:translateY(130%); }
+        .rc-drop.rc-drop--drop .rc-drop__box { animation:rcBoxRise .34s cubic-bezier(.22,1,.36,1) both; }
+        .rc-drop.rc-drop--error .rc-drop__box { animation:rcBoxRise .34s cubic-bezier(.22,1,.36,1) both; }
+        .rc-drop__slot { position:absolute; z-index:3; left:50%; top:-3px; transform:translateX(-50%);
+          width:56%; height:9px; border-radius:5px; background:var(--rc-ink);
+          box-shadow:inset 0 2px 4px color-mix(in srgb, var(--rc-ink) 80%, transparent); }
+        .rc-drop__front { position:absolute; z-index:2; inset:0; border-radius:8px 8px 4px 4px;
+          background:linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 82%, var(--rc-faint)), var(--rc-ink));
+          border:1px solid color-mix(in srgb, var(--rc-ink) 60%, var(--rc-faint));
+          display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+          box-shadow:0 -14px 34px -18px color-mix(in srgb, var(--rc-ink) 60%, transparent); }
+        .rc-drop__front-th { font-family:var(--rc-fh); font-weight:700; font-size:16px;
+          color:color-mix(in srgb, var(--rc-receipt) 90%, var(--rc-faint)); }
+        .rc-drop__front-en { font-size:9px; letter-spacing:.28em; text-transform:uppercase;
+          color:color-mix(in srgb, var(--rc-faint) 70%, var(--rc-receipt)); }
+
+        /* the ballot being cast — sits above the slot, then folds + drops through it.
+           z-index below the box FRONT so it disappears behind the box as it descends. */
+        .rc-drop__paper { position:absolute; z-index:2; left:50%; bottom:118px; width:min(178px, 46vw); height:112px;
+          margin-left:calc(min(178px, 46vw) / -2); border-radius:4px; background:var(--rc-receipt);
+          border:1px solid var(--rc-line); transform-origin:bottom center; transform:translateY(40px) scaleY(1);
+          opacity:0; padding:14px 14px 0; overflow:hidden;
+          box-shadow:2px 12px 26px -14px color-mix(in srgb, var(--rc-ink) 45%, transparent);
+          background-image:repeating-linear-gradient(180deg, transparent 0 15px, color-mix(in srgb, var(--rc-ink) 4%, transparent) 15px 16px); }
+        .rc-drop__paper-line { display:block; font-size:10px; letter-spacing:.18em; color:var(--rc-accent-deep); }
+        .rc-drop__paper-band { display:block; margin-top:10px; height:26px; border-radius:3px;
+          background:color-mix(in srgb, var(--rc-accent) 12%, transparent); }
+        .rc-drop.rc-drop--drop .rc-drop__paper { animation:rcPaperCast .9s cubic-bezier(.5,0,.6,1) both; }
+        .rc-drop.rc-drop--error .rc-drop__paper { animation:rcPaperBounce .42s cubic-bezier(.34,1.56,.64,1) both; }
+
+        @keyframes rcBoxRise { from { transform:translateY(130%); } to { transform:translateY(0); } }
+        @keyframes rcPaperCast {
+          0%   { transform:translateY(40px) scaleY(1); opacity:0; }
+          16%  { transform:translateY(-4px) scaleY(1); opacity:1; }
+          40%  { transform:translateY(-4px) scaleY(1); opacity:1; }
+          58%  { transform:translateY(0px) scaleY(.5); opacity:1; }
+          100% { transform:translateY(96px) scaleY(.16); opacity:.85; }
+        }
+        @keyframes rcPaperBounce {
+          0%   { transform:translateY(-4px) scaleY(1); opacity:1; }
+          45%  { transform:translateY(20px) scaleY(.72); opacity:1; }
+          100% { transform:translateY(-56px) scaleY(1); opacity:0; }
+        }
+        /* the vote is NEVER coupled to the scene — reduced-motion skips playDrop's
+           animation entirely (parent still awaits submit), but freeze here too so a
+           mid-flight class can't animate. */
+        @media (prefers-reduced-motion:reduce) {
+          .rc-drop, .rc-drop * { animation:none !important; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// controller for the ballot-drop scene. playDrop(submit) starts the scene (unless
+// reduced-motion / SSR), fires submit() in parallel, HOLDS the final frame until the
+// promise resolves, then returns submit()'s result. success → the parent navigates
+// (unmounts the overlay); failure → the ballot bounces back, the overlay clears, and
+// the result (false) flows back so the parent's existing error path runs. The vote
+// result is decoupled: submit is always awaited and its value always returned.
+export function useBallotDrop() {
+  const [phase, setPhase] = useState("idle");
+  const playDrop = useCallback(async (submit) => {
+    const reduced = typeof window !== "undefined" && window.matchMedia
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const play = !reduced && typeof window !== "undefined";
+    if (play) setPhase("drop");
+    const minHold = play ? new Promise((r) => setTimeout(r, 900)) : Promise.resolve();
+    let result = false;
+    try { result = await (typeof submit === "function" ? submit() : submit); }
+    catch (e) { result = false; }
+    if (result) {
+      await minHold;            // hold the folded-into-slot frame until submit resolves
+      return result;            // parent navigates → overlay unmounts on the final frame
+    }
+    if (play) {                 // failure → bounce the ballot back out, then clear
+      setPhase("error");
+      await new Promise((r) => setTimeout(r, 440));
+    }
+    setPhase("idle");
+    return result;
+  }, []);
+  const sceneNode = <BallotDropScene phase={phase} />;
+  return { playDrop, sceneNode, dropActive: phase !== "idle" };
+}
 
 // one ballot row (party or abstain). role=radio, keyboard-operable. The mark-box is
 // an ink square; selecting presses an ink ✓ stamp in (transform/opacity only).
@@ -65,7 +191,11 @@ function VoteRow({
         <span className="rc-vrow__box" aria-hidden="true">
           <span className="rc-vrow__mark">✓</span>
         </span>
-        {index != null && <span className="rc-vrow__idx">{index}</span>}
+        {index != null ? (
+          <span className="rc-vrow__stamp" aria-hidden="true"><span className="rc-vrow__stamp-n">{index}</span></span>
+        ) : (
+          <span className="rc-vrow__stamp rc-vrow__stamp--x" aria-hidden="true"><span className="rc-vrow__stamp-n">×</span></span>
+        )}
         <span className="rc-vrow__logo">
           {logo ? (
             <img src={logo} alt={name} />
@@ -88,6 +218,8 @@ function VoteRow({
             ดูรายละเอียด<span aria-hidden="true"> →</span>
           </button>
         )}
+        {/* tiny "เลือกแล้ว" ink stamp pressed into the row corner on selection */}
+        <span className="rc-vrow__chosen" aria-hidden="true">เลือกแล้ว</span>
       </div>
     </li>
   );
@@ -161,29 +293,37 @@ export default function ReceiptVote({
           <span>{prefix} {number}</span>
         </div>
 
-        {/* ===== masthead ===== */}
-        <header className="rc-vhead">
-          <span className="rc-vhead__eyebrow">◆ ลงคะแนนเสียง · ONE VOTE ONLY ◆</span>
-          <h1 className="rc-vhead__title">เลือกพรรคที่คุณไว้วางใจ</h1>
-          <p className="rc-vhead__deck">เลือกได้เพียงหนึ่งตัวเลือก แตะที่พรรคเพื่อทำเครื่องหมาย หรือกด “ดูรายละเอียด” เพื่ออ่านนโยบายก่อนตัดสินใจ เมื่อยืนยันแล้วจะไม่สามารถแก้ไขได้</p>
-        </header>
-
-        {/* voter register strip — mono, register-tape voice */}
-        <div className="rc-vvoter">
-          <span className="rc-vvoter__row"><b>ผู้มีสิทธิ์</b>{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
-          <span className="rc-vvoter__row"><b>รหัส</b>{sid}</span>
-          <span className="rc-vvoter__row"><b>บัตร</b>{count} {count === 1 ? "พรรค" : "พรรค"}</span>
+        {/* right-scatter (desk-scatter language): a LANYARD VOTER CARD + an ink pad
+            with a waiting rubber stamp (hints at the single-party stamping booth).
+            floats right of the ballot on desktop; a slim strip above it on mobile. */}
+        <div className="rc-vscatter" aria-label="ข้อมูลผู้มีสิทธิ์">
+          <div className="rc-vcard">
+            <span className="rc-vcard__grommet" aria-hidden="true" />
+            <span className="rc-vcard__kick rc-mono">VOTER CARD</span>
+            <span className="rc-vcard__name">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
+            <span className="rc-vcard__id rc-mono">{sid}</span>
+            <span className="rc-vcard__meta">บัตร {count} พรรค · หนึ่งเสียง</span>
+          </div>
+          <div className="rc-inkpad" aria-hidden="true">
+            <span className="rc-inkpad__well" />
+            <span className="rc-inkpad__stamp"><i /><b /></span>
+          </div>
         </div>
 
-        {/* ===== the ballot sheet — the hero object, resting on the desk ===== */}
+        {/* ===== the ballot sheet — the hero object, resting on the desk. The page
+            title is now PRINTED on the sheet itself (A5), no floating editorial H1. ===== */}
         <section className="rc-ballot" aria-label="บัตรลงคะแนน">
           {/* ghost of a previous ink stamp on the desk behind the sheet */}
           <div className="rc-ballot-ghost" aria-hidden="true"><span>{prefix} {number} ✓</span></div>
 
           <div className="rc-ballot-sheet">
-            <div className="rc-ballot-head">
-              <span className="rc-ballot-head__l">บัตรลงคะแนน · BALLOT PAPER</span>
-              <span className="rc-ballot-head__r">No. {prefix}{number} · {pad4(count)}</span>
+            <div className="rc-ballot-mast">
+              {/* watermark band — accent 4%, full sheet width, behind the masthead ONLY
+                  (never behind the party rows, so name contrast is untouched) */}
+              <span className="rc-ballot-wm" aria-hidden="true"><span className="rc-mono">{prefix} {number} · OFFICIAL BALLOT · ONE VOTE ONLY · {prefix} {number} · OFFICIAL BALLOT</span></span>
+              <span className="rc-ballot-serial rc-mono">BALLOT PAPER · No. {prefix} {number} · {pad4(count)}</span>
+              <h1 className="rc-ballot-title">บัตรลงคะแนนเลือกตั้ง</h1>
+              <p className="rc-ballot-note">เลือกได้เพียงหนึ่งตัวเลือก แตะที่พรรคเพื่อทำเครื่องหมาย หรือกดดูรายละเอียดเพื่ออ่านนโยบายก่อนตัดสินใจ</p>
             </div>
             <div className="rc-perf" aria-hidden="true" />
 
@@ -245,7 +385,7 @@ export default function ReceiptVote({
           >
             {canConfirm && <span className="rc-foil" aria-hidden="true" />}
             <span className="rc-vbar__btn-in">
-              {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"}<span className="rc-vbar__arrow" aria-hidden="true">→</span>
+              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตรลงหีบ"}<span className="rc-vbar__arrow" aria-hidden="true">→</span>
             </span>
           </button>
         </div>
@@ -266,23 +406,39 @@ export default function ReceiptVote({
         :where(.rc-vote-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-vote-root a:focus-visible, .rc-vote-root button:focus-visible,
         .rc-vote-root [role="radio"]:focus-visible { outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
+        /* mono utility — ONLY Latin / digits / symbols ever wear it (A10.3) */
+        .rc-vote-root .rc-mono { font-family:var(--rc-fm); }
 
-        /* ---- topbar (ported 1:1 from ReceiptHome, scoped to .rc-vote-root) ---- */
+        /* ---- topbar "head of the desk" (A3 / ruling #4: NO backdrop-filter — opaque
+           desk fill + a perforated hairline; stub-nav skin ported from ReceiptHome) ---- */
         .rc-vote-root .rc-topbar { position:sticky; top:0; z-index:40;
-          background:color-mix(in srgb, var(--rc-desk) 88%, transparent);
-          -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-          border-bottom:1.5px solid var(--rc-stamp-line); }
-        .rc-vote-root .rc-topbar__in { max-width:1120px; margin:0 auto; padding:12px 20px;
-          display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-        .rc-vote-root .rc-logo { display:inline-flex; align-items:center; flex-shrink:0; }
-        .rc-vote-root .rc-logo__img { height:30px; width:auto; object-fit:contain; display:block; }
-        .rc-vote-root .rc-nav { display:none; gap:20px; margin-left:auto; align-items:center; }
-        .rc-vote-root .rc-nav__link { font-family:var(--rc-fm); font-size:11px; letter-spacing:.16em;
-          text-transform:uppercase; color:var(--rc-ink2); position:relative; padding-bottom:2px; transition:color .2s ease; }
-        .rc-vote-root .rc-nav__link.on, .rc-vote-root .rc-nav__link:hover { color:var(--rc-ink); }
-        .rc-vote-root .rc-nav__link::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:2px;
-          background:var(--rc-accent); transform:scaleX(0); transform-origin:left; transition:transform .28s cubic-bezier(.22,1,.36,1); }
-        .rc-vote-root .rc-nav__link:hover::after, .rc-vote-root .rc-nav__link.on::after { transform:scaleX(1); }
+          background:color-mix(in srgb, var(--rc-desk) 96%, var(--rc-receipt)); }
+        .rc-vote-root .rc-topbar::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1.5px;
+          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
+        .rc-vote-root .rc-topbar__in { max-width:1120px; margin:0 auto; padding:10px 20px;
+          display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        /* logo on a clipped paper tag with a tiny clip */
+        .rc-vote-root .rc-logo { position:relative; display:inline-flex; align-items:center; flex-shrink:0;
+          padding:6px 12px 6px 14px; background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+          box-shadow:1px 3px 8px -5px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-vote-root .rc-logo::before { content:""; position:absolute; left:-3px; top:8px; width:10px; height:18px;
+          border:2px solid var(--rc-faint); border-right:none; border-radius:6px 0 0 6px; background:transparent; transform:rotate(-4deg); }
+        .rc-vote-root .rc-logo__img { height:28px; width:auto; object-fit:contain; display:block; }
+        /* nav = a row of ticket STUBS (cut corner + left perforation); active = torn */
+        .rc-vote-root .rc-nav { display:none; gap:8px; margin-left:auto; align-items:center; }
+        .rc-vote-root .rc-nav__link { position:relative; display:inline-flex; align-items:center; min-height:40px;
+          font-family:var(--rc-fr); font-weight:600; font-size:12.5px; letter-spacing:.01em; color:var(--rc-ink2);
+          padding:0 13px 0 16px; background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+          transition:transform .15s ease, color .2s ease, background .2s ease, border-color .2s ease; }
+        .rc-vote-root .rc-nav__link::before { content:""; position:absolute; left:4px; top:7px; bottom:7px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 2px, transparent 2px 5px); }
+        .rc-vote-root .rc-nav__link:hover { transform:translateY(-1px); color:var(--rc-ink); border-color:var(--rc-accent); }
+        .rc-vote-root .rc-nav__link.on { color:var(--rc-accent-deep); border-color:var(--rc-accent);
+          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); }
+        .rc-vote-root .rc-nav__link.on::before { left:1px;
+          background:repeating-linear-gradient(180deg, var(--rc-accent) 0 2px, transparent 2px 5px); }
         .rc-vote-root .rc-userwrap { position:relative; margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
         .rc-vote-root .rc-loginbtn { display:inline-flex; align-items:center; min-height:44px; font-family:var(--rc-fh);
           font-weight:600; font-size:13px; color:var(--rc-on-accent); background:var(--rc-accent); border:none; cursor:pointer;
@@ -293,10 +449,15 @@ export default function ReceiptVote({
         .rc-vote-root .rc-skelbar { display:block; width:58px; height:12px; border-radius:3px;
           background:color-mix(in srgb, var(--rc-ink2) 30%, var(--rc-receipt)); animation:rcPulse 1.3s ease-in-out infinite; }
         @keyframes rcPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+        /* user chip = a LANYARD CARD (cut corner + a punched grommet hole on top) */
         .rc-vote-root .rc-userchip { position:relative; }
-        .rc-vote-root .rc-userchip__btn { display:inline-flex; align-items:center; gap:9px; min-height:44px; background:var(--rc-receipt);
-          border:1.5px solid var(--rc-stamp-line); border-radius:var(--rc-radius-button, 8px); padding:5px 12px 5px 5px; cursor:pointer;
-          font-family:inherit; transition:transform .15s ease, border-color .2s ease; }
+        .rc-vote-root .rc-userchip__btn { position:relative; display:inline-flex; align-items:center; gap:9px; min-height:44px;
+          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); padding:5px 14px 5px 5px; cursor:pointer;
+          font-family:inherit; clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+          transition:transform .15s ease, border-color .2s ease; }
+        .rc-vote-root .rc-userchip__btn::after { content:""; position:absolute; top:5px; right:12px; width:9px; height:9px;
+          border-radius:50%; background:var(--rc-desk);
+          box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)); }
         .rc-vote-root .rc-userchip__btn:hover { border-color:var(--rc-accent); }
         .rc-vote-root .rc-userchip__btn:active { transform:scale(.97); }
         .rc-vote-root .rc-userchip__av { width:30px; height:30px; border-radius:50%; flex-shrink:0; display:grid; place-items:center;
@@ -324,9 +485,12 @@ export default function ReceiptVote({
         .rc-vote-root .rc-sheet { flex:0 0 100%; display:flex; flex-direction:column; gap:6px; overflow:hidden; max-height:0; opacity:0;
           transition:max-height .28s ease, opacity .28s ease, padding .28s ease; }
         .rc-vote-root .rc-sheet.is-open { max-height:280px; opacity:1; padding:12px 0 4px; }
-        .rc-vote-root .rc-sheet__link { display:flex; align-items:center; min-height:44px; padding:11px 16px; border-radius:8px;
-          font-family:var(--rc-fm); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--rc-ink);
-          background:var(--rc-receipt); border:1px solid var(--rc-line); transition:border-color .2s ease; }
+        .rc-vote-root .rc-sheet__link { position:relative; display:flex; align-items:center; min-height:48px; padding:0 16px 0 20px;
+          font-family:var(--rc-fr); font-weight:600; font-size:14px; color:var(--rc-ink);
+          background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px); transition:border-color .2s ease; }
+        .rc-vote-root .rc-sheet__link::before { content:""; position:absolute; left:5px; top:9px; bottom:9px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 2px, transparent 2px 5px); }
         .rc-vote-root .rc-sheet__link:hover { border-color:var(--rc-accent); }
 
         /* ---- page container ---- */
@@ -335,22 +499,45 @@ export default function ReceiptVote({
           border-bottom:1px dotted var(--rc-line); font-family:var(--rc-fm); font-size:10px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--rc-faint); }
 
-        /* ---- masthead ---- */
-        .rc-vote-root .rc-vhead { margin-top:32px; padding-bottom:22px; border-bottom:1.5px solid var(--rc-stamp-line);
-          animation:rcVRise .55s ease both .04s; }
-        .rc-vote-root .rc-vhead__eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
-          color:var(--rc-ink2); }
-        .rc-vote-root .rc-vhead__title { margin:12px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.08;
-          letter-spacing:-.01em; font-size:clamp(30px, 7vw, 52px); color:var(--rc-ink); }
-        .rc-vote-root .rc-vhead__deck { margin:16px 0 0; max-width:56ch; font-family:var(--rc-fr); font-size:15px;
-          line-height:1.7; color:var(--rc-ink2); }
+        /* ---- right-scatter: lanyard voter card + ink pad w/ a waiting stamp ---- */
+        .rc-vote-root .rc-vscatter { display:flex; align-items:flex-start; justify-content:flex-start; gap:16px;
+          margin:24px 0 -4px; flex-wrap:wrap; animation:rcVRise .55s ease both .1s; }
+        .rc-vote-root .rc-vcard { position:relative; min-width:210px; padding:14px 16px 13px; transform:rotate(-1.4deg);
+          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line);
+          clip-path:polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+          box-shadow:2px 12px 26px -16px color-mix(in srgb, var(--rc-ink) 40%, transparent);
+          display:flex; flex-direction:column; gap:3px; }
+        .rc-vote-root .rc-vcard__grommet { position:absolute; top:7px; right:15px; width:11px; height:11px; border-radius:50%;
+          background:var(--rc-desk); box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)); }
+        .rc-vote-root .rc-vcard__kick { font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--rc-ink2); }
+        .rc-vote-root .rc-vcard__name { font-family:var(--rc-fh); font-weight:700; font-size:16px; color:var(--rc-ink);
+          max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .rc-vote-root .rc-vcard__id { font-size:11px; letter-spacing:.1em; color:var(--rc-accent-deep); font-variant-numeric:tabular-nums; }
+        .rc-vote-root .rc-vcard__meta { margin-top:3px; font-family:var(--rc-fr); font-size:11px; color:var(--rc-ink2); }
+        /* ink pad + a waiting rubber stamp (CSS/SVG only) — hints at the single booth */
+        .rc-vote-root .rc-inkpad { position:relative; width:66px; height:58px; flex:none; transform:rotate(3deg); align-self:flex-end; }
+        .rc-vote-root .rc-inkpad__well { position:absolute; left:0; bottom:0; width:66px; height:20px; border-radius:4px;
+          background:linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 26%, var(--rc-receipt)), color-mix(in srgb, var(--rc-ink) 50%, var(--rc-receipt)));
+          border:1px solid var(--rc-stamp-line); box-shadow:inset 0 2px 4px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
+        .rc-vote-root .rc-inkpad__stamp { position:absolute; left:16px; bottom:12px; width:30px; height:44px; }
+        .rc-vote-root .rc-inkpad__stamp i { position:absolute; left:11px; top:0; width:8px; height:28px; border-radius:3px;
+          background:linear-gradient(180deg, var(--rc-ink2), var(--rc-ink)); }
+        .rc-vote-root .rc-inkpad__stamp b { position:absolute; left:0; bottom:0; width:30px; height:14px; border-radius:3px;
+          background:var(--rc-accent-deep); box-shadow:0 3px 6px -3px color-mix(in srgb, var(--rc-ink) 50%, transparent); }
 
-        /* ---- voter register strip ---- */
-        .rc-vote-root .rc-vvoter { margin-top:20px; display:flex; flex-wrap:wrap; gap:10px 26px; padding:14px 0 2px;
-          animation:rcVRise .55s ease both .1s; }
-        .rc-vote-root .rc-vvoter__row { display:inline-flex; align-items:baseline; gap:9px; font-family:var(--rc-fm);
-          font-size:12px; letter-spacing:.04em; color:var(--rc-ink); min-width:0; font-variant-numeric:tabular-nums; }
-        .rc-vote-root .rc-vvoter__row b { font-weight:400; letter-spacing:.14em; text-transform:uppercase; color:var(--rc-faint); }
+        /* ---- masthead PRINTED on the ballot sheet (A5 — no floating editorial H1) ---- */
+        .rc-vote-root .rc-ballot-mast { position:relative; overflow:hidden; padding-bottom:2px; }
+        .rc-vote-root .rc-ballot-wm { position:absolute; left:-22px; right:-22px; top:12px; height:54px; z-index:0;
+          display:flex; align-items:center; justify-content:center; overflow:hidden; pointer-events:none;
+          background:color-mix(in srgb, var(--rc-accent) 4%, transparent); transform:rotate(-.6deg); }
+        .rc-vote-root .rc-ballot-wm .rc-mono { font-size:20px; letter-spacing:.3em; text-transform:uppercase; white-space:nowrap;
+          font-weight:700; color:color-mix(in srgb, var(--rc-accent) 9%, transparent); }
+        .rc-vote-root .rc-ballot-serial { position:relative; z-index:1; display:block; font-size:10px; letter-spacing:.14em;
+          color:var(--rc-ink2); font-variant-numeric:tabular-nums; }
+        .rc-vote-root .rc-ballot-title { position:relative; z-index:1; margin:8px 0 0; font-family:var(--rc-fh); font-weight:700;
+          line-height:1.1; letter-spacing:-.01em; font-size:clamp(26px, 5.5vw, 40px); color:var(--rc-ink); }
+        .rc-vote-root .rc-ballot-note { position:relative; z-index:1; margin:8px 0 0; max-width:52ch; font-family:var(--rc-fr);
+          font-size:13.5px; line-height:1.6; color:var(--rc-ink2); }
 
         /* ---- the ballot sheet ---- */
         .rc-vote-root .rc-ballot { position:relative; margin-top:30px; animation:rcVRise .55s ease both .16s; }
@@ -383,10 +570,10 @@ export default function ReceiptVote({
         .rc-vote-root .rc-vrow__hit { position:relative; display:grid; grid-template-columns:auto auto auto 1fr auto; align-items:center;
           gap:16px; padding:20px 6px; cursor:pointer; color:var(--rc-ink); transition:background .2s ease; }
         .rc-vote-root .rc-vrow__hit:hover { background:color-mix(in srgb, var(--rc-accent) 5%, transparent); }
-        .rc-vote-root .rc-vrow.is-selected .rc-vrow__hit { background:color-mix(in srgb, var(--rc-accent) 8%, transparent); }
+        .rc-vote-root .rc-vrow.is-selected .rc-vrow__hit { background:color-mix(in srgb, var(--rc-accent) 5%, transparent); }
 
         /* ink MARK-BOX — square with a heavy ink tooth; select presses an ink ✓ stamp in */
-        .rc-vote-root .rc-vrow__box { width:30px; height:30px; flex:none; border:2px solid var(--rc-stamp-line); border-radius:4px;
+        .rc-vote-root .rc-vrow__box { width:26px; height:26px; flex:none; border:2px solid var(--rc-stamp-line); border-radius:4px;
           background:var(--rc-receipt); display:grid; place-items:center; transition:border-color .2s ease; }
         .rc-vote-root .rc-vrow__hit:hover .rc-vrow__box { border-color:var(--rc-accent); }
         .rc-vote-root .rc-vrow.is-selected .rc-vrow__box { border-color:var(--rc-accent-deep); }
@@ -394,8 +581,19 @@ export default function ReceiptVote({
           transform:scale(0) rotate(-14deg); opacity:0; transition:transform .24s cubic-bezier(.34,1.56,.64,1), opacity .18s ease; }
         .rc-vote-root .rc-vrow.is-selected .rc-vrow__mark { transform:scale(1) rotate(-8deg); opacity:1; }
 
-        .rc-vote-root .rc-vrow__idx { font-family:var(--rc-fh); font-weight:700; font-size:clamp(22px,5.4vw,36px);
-          font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--rc-accent-deep); flex:none; }
+        /* party number = a circular INK STAMP (accent ring + accent number), not a floating numeral */
+        .rc-vote-root .rc-vrow__stamp { position:relative; width:52px; height:52px; flex:none; display:grid; place-items:center;
+          border:2px solid var(--rc-accent-deep); border-radius:50%; transform:rotate(-6deg);
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--rc-accent) 22%, transparent); }
+        .rc-vote-root .rc-vrow__stamp::before { content:""; position:absolute; inset:4px; border-radius:50%;
+          border:1px dashed color-mix(in srgb, var(--rc-accent-deep) 40%, transparent); }
+        .rc-vote-root .rc-vrow__stamp-n { font-family:var(--rc-fh); font-weight:800; font-size:22px; line-height:1;
+          font-variant-numeric:tabular-nums; color:var(--rc-accent-deep); }
+        /* abstain keeps semantic orange on its stamp ring */
+        .rc-vote-root .rc-vrow--abstain .rc-vrow__stamp { border-color:#c2410c;
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, #ea580c 22%, transparent); }
+        .rc-vote-root .rc-vrow--abstain .rc-vrow__stamp::before { border-color:color-mix(in srgb, #c2410c 40%, transparent); }
+        .rc-vote-root .rc-vrow--abstain .rc-vrow__stamp-n { color:#c2410c; }
         .rc-vote-root .rc-vrow__logo { width:56px; height:56px; flex:none; border-radius:8px; overflow:hidden;
           background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center; }
         .rc-vote-root .rc-vrow__logo img { width:100%; height:100%; object-fit:cover; }
@@ -412,11 +610,25 @@ export default function ReceiptVote({
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
         .rc-vote-root .rc-vrow__stat { margin-top:5px; font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.14em;
           text-transform:uppercase; color:var(--rc-faint); }
-        .rc-vote-root .rc-vrow__more { display:inline-flex; align-items:center; flex:none; min-height:44px; padding:10px 16px;
-          border-radius:var(--rc-radius-button, 8px); background:none; border:1.5px solid var(--rc-ink); cursor:pointer;
+        /* details button = a tiny ticket STUB (cut corner + left perforation, A3) */
+        .rc-vote-root .rc-vrow__more { position:relative; display:inline-flex; align-items:center; flex:none; min-height:44px;
+          padding:0 14px 0 18px; background:var(--rc-receipt); border:1.5px solid var(--rc-ink); cursor:pointer;
+          clip-path:polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
           font-family:var(--rc-fh); font-weight:600; font-size:13px; color:var(--rc-ink);
           transition:border-color .2s ease, color .2s ease, transform .18s ease; }
+        .rc-vote-root .rc-vrow__more::before { content:""; position:absolute; left:4px; top:8px; bottom:8px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-ink) 0 2px, transparent 2px 5px); }
         .rc-vote-root .rc-vrow__more:hover { border-color:var(--rc-accent-deep); color:var(--rc-accent-deep); transform:translateY(-1px); }
+
+        /* tiny "เลือกแล้ว" stamp pressed into the row corner on selection (scale/opacity) */
+        .rc-vote-root .rc-vrow__chosen { position:absolute; top:10px; right:10px; z-index:2; padding:3px 9px;
+          font-family:var(--rc-fh); font-weight:700; font-size:11px; letter-spacing:.02em; color:var(--rc-accent-deep);
+          border:1.5px solid var(--rc-accent-deep); border-radius:4px; pointer-events:none;
+          background:color-mix(in srgb, var(--rc-receipt) 82%, transparent);
+          transform:rotate(-7deg) scale(0); opacity:0;
+          transition:transform .24s cubic-bezier(.34,1.56,.64,1), opacity .18s ease; }
+        .rc-vote-root .rc-vrow.is-selected .rc-vrow__chosen { transform:rotate(-7deg) scale(1); opacity:.95; }
+        .rc-vote-root .rc-vrow--abstain .rc-vrow__chosen { color:#c2410c; border-color:#c2410c; }
 
         /* งดออกเสียง — quieter row, KEEPS semantic ORANGE (ส้ม family; NOT var(--rc-*)) */
         .rc-vote-root .rc-vrow--abstain .rc-vrow__idx,
@@ -483,6 +695,8 @@ export default function ReceiptVote({
           .rc-vote-root .rc-userwrap { margin-left:0; }
           .rc-vote-root .rc-burger, .rc-vote-root .rc-sheet { display:none; }
           .rc-vote-root .rc-vrow__hit { gap:20px; padding:22px 10px; }
+          /* scatter tucks to the RIGHT of the desk on wider screens (overlap ballot top) */
+          .rc-vote-root .rc-vscatter { justify-content:flex-end; }
         }
 
         /* ================= MOBILE (<=560): rows reflow, tap targets >=44px ================= */
@@ -491,7 +705,8 @@ export default function ReceiptVote({
           .rc-vote-root .rc-vrow__hit { grid-template-columns:auto auto 1fr; grid-template-areas:"box idx body" "more more more";
             gap:12px 12px; padding:16px 4px; }
           .rc-vote-root .rc-vrow__box { grid-area:box; align-self:center; }
-          .rc-vote-root .rc-vrow__idx { grid-area:idx; align-self:center; }
+          .rc-vote-root .rc-vrow__stamp { grid-area:idx; align-self:center; width:46px; height:46px; }
+          .rc-vote-root .rc-vrow__stamp-n { font-size:19px; }
           .rc-vote-root .rc-vrow__logo { display:none; }
           .rc-vote-root .rc-vrow__body { grid-area:body; }
           .rc-vote-root .rc-vrow__more { grid-area:more; justify-content:center; width:100%; }
