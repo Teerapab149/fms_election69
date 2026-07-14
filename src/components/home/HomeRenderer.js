@@ -20,7 +20,7 @@ import BlossomHome from "./BlossomHome";
 import ReceiptHome from "./ReceiptHome";
 
 // slug → layout component. Absent slug = classic layout (HomeContent).
-// Colour-variant slugs (e.g. receipt-blue) resolve via the layoutFamily fallback
+// Colour-variant slugs (e.g. receipt-teal) resolve via the layoutFamily fallback
 // below, so only each family's BASE slug needs an entry here.
 const HOME_LAYOUTS = {
   gumroad: GumroadHome,

@@ -129,25 +129,26 @@ function buildReceiptTemplate(slug, name, description, p) {
   };
 }
 
-// ── the 4 colour themes — each a FULL build from its palette (tokens + element
+// ── the 4 paper themes — each a FULL build from its palette (tokens + element
 // configs + page backgrounds all follow), so applying a variant matches preview.
-// layoutFamily stays "receipt" → one chooser card with swatches. All 4 marked
-// "(ทดลอง)" — experimental phase (Success done first, other pages ticketed).
-export const receiptTemplate       = buildReceiptTemplate(
-  "receipt", "ใบเสร็จ · ม่วง (ทดลอง)",
-  "Paper Materiality — ใบเสร็จพิมพ์จริงบนโต๊ะกระดาษอุ่น ขอบหยักฉีก ตราปั๊ม โฮโลแกรมกันปลอม โทนม่วง FMS · เลือกโทนได้ 4 แบบ",
+// layoutFamily stays "receipt" → one chooser card with swatches. v2-R2: the swatch
+// = a DIFFERENT ROLL OF PAPER (warm-white / cool-white / carbonless-blue / gray),
+// each with its own accent + foil hue. Default (ม่วง FMS) is byte-frozen from R2.5.
+export const receiptTemplate        = buildReceiptTemplate(
+  "receipt", "ใบเสร็จ · ม่วง FMS",
+  "กระดาษใบเสร็จอุ่นบนโต๊ะนับคะแนน ขอบหยักฉีก ตราปั๊ม โฮโลแกรมกันปลอม หมึกม่วง FMS · เลือกได้ 4 ม้วนกระดาษ",
   RECEIPT_THEMES["receipt"]);
-export const receiptBlueTemplate   = buildReceiptTemplate(
-  "receipt-blue", "ใบเสร็จ · ฟ้า (ทดลอง)",
-  "Paper Materiality โทนฟ้าอิเล็กทริก — สดคม เทคนิคัล อ่านง่าย",
-  RECEIPT_THEMES["receipt-blue"]);
-export const receiptYellowTemplate = buildReceiptTemplate(
-  "receipt-yellow", "ใบเสร็จ · เหลือง (ทดลอง)",
-  "Paper Materiality โทนเหลืองซิกแนล — สว่างสะดุดตา หมึกดำบนพื้นเหลือง",
-  RECEIPT_THEMES["receipt-yellow"]);
-export const receiptJadeTemplate   = buildReceiptTemplate(
-  "receipt-jade", "ใบเสร็จ · เจด (ทดลอง)",
-  "Paper Materiality โทนเจดเขียวอมฟ้า — สะอาดตา ทันสมัย มีมิติ",
-  RECEIPT_THEMES["receipt-jade"]);
+export const receiptInkBlueTemplate = buildReceiptTemplate(
+  "receipt-ink-blue", "ใบเสร็จ · หมึกน้ำเงิน",
+  "ม้วนกระดาษขาวเย็น หมึกน้ำเงินเข้ม คมสะอาด อ่านง่าย",
+  RECEIPT_THEMES["receipt-ink-blue"]);
+export const receiptTealTemplate    = buildReceiptTemplate(
+  "receipt-teal", "ใบเสร็จ · ครามทะเล",
+  "สำเนากระดาษก๊อปปี้ฟ้า หมึกครามทะเลเย็นตา ดูเป็นเอกสารจริง",
+  RECEIPT_THEMES["receipt-teal"]);
+export const receiptCarbonTemplate  = buildReceiptTemplate(
+  "receipt-carbon", "ใบเสร็จ · สำเนาถ่านดำ",
+  "สำเนากระดาษถ่านสีเทา หมึกเทาเข้มไร้สี เรียบนิ่ง เท่แบบเอกสาร",
+  RECEIPT_THEMES["receipt-carbon"]);
 
 export default receiptTemplate;

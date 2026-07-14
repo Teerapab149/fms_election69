@@ -23,7 +23,7 @@ import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerr
 // re-enabling is just re-importing + re-registering them below.
 import { originalTemplate } from "./builtIn/original";
 import { blossomTemplate, blossomSkyTemplate, blossomMintTemplate, blossomButterTemplate } from "./builtIn/blossom";
-import { receiptTemplate, receiptBlueTemplate, receiptYellowTemplate, receiptJadeTemplate } from "./builtIn/receipt";
+import { receiptTemplate, receiptInkBlueTemplate, receiptTealTemplate, receiptCarbonTemplate } from "./builtIn/receipt";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
@@ -51,9 +51,9 @@ const BUILT_IN_TEMPLATES = {
   "blossom-mint":      blossomMintTemplate,
   "blossom-butter":    blossomButterTemplate,
   receipt:             receiptTemplate,
-  "receipt-blue":      receiptBlueTemplate,
-  "receipt-yellow":    receiptYellowTemplate,
-  "receipt-jade":      receiptJadeTemplate
+  "receipt-ink-blue":  receiptInkBlueTemplate,
+  "receipt-teal":      receiptTealTemplate,
+  "receipt-carbon":    receiptCarbonTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).

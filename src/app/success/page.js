@@ -273,7 +273,6 @@ export default function SuccessPage({
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
           choice={ephemeralChoice}
-          formUrl={googleFormUrl}
         />
       )}
 

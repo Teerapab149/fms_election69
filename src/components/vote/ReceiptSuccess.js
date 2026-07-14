@@ -54,7 +54,7 @@ function randRefGroup() {
   return s;
 }
 
-export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false, choice = null, formUrl = "" }) {
+export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false, choice = null }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -83,36 +83,6 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
       ref: `${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()}`,
     });
   }, [editorMode]);
-
-  // QR to the evaluation form (RULING C2) — encodes ONLY SystemConfig.googleFormUrl,
-  // passed in from the page; NEVER any voter data (secrecy §2 stays intact). The QR
-  // library is LIGHT + DYNAMIC-imported HERE ONLY, so Next code-splits it into a chunk
-  // loaded solely by this success component — it never enters the shared/vote bundles
-  // (A7.5). Rendered as an inline SVG path (thermal-black modules, no image file). With
-  // no form URL the block simply does not render (no layout hole); the on-screen
-  // evaluate button below is the base-visible affordance (QR = scan from another device,
-  // button = tap on this one), so a JS-off client keeps the working button.
-  const [qr, setQr] = useState(null);
-  useEffect(() => {
-    let alive = true;
-    if (!formUrl) { setQr(null); return undefined; }
-    import("qrcode-generator")
-      .then((mod) => {
-        if (!alive) return;
-        const qrcode = mod.default || mod;
-        const g = qrcode(0, "M"); // type 0 = auto-fit version, EC level M
-        g.addData(formUrl);
-        g.make();
-        const n = g.getModuleCount();
-        let d = "";
-        for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
-          if (g.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
-        }
-        setQr({ n, d });
-      })
-      .catch(() => { if (alive) setQr(null); });
-    return () => { alive = false; };
-  }, [formUrl]);
 
   // The choice is shown ONCE, ephemerally. In editor/preview a sample makes the
   // "printer moment" reviewable; in production with no ephemeral choice we show a
@@ -201,19 +171,16 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <div className="rc-suc-pr rc-suc-barcode" aria-hidden="true" />
             <div className="rc-suc-pr rc-suc-ref">{stamp?.ref || "···· · ···· · ···· · ····"}</div>
 
-            {/* real QR to the evaluation form (RULING C2) — printed under the barcode;
-                renders only when a form URL exists (no hole otherwise). Thai label in
-                Chakra (mono has no Thai glyphs — A10.3). Encodes the form URL only. */}
-            {formUrl && qr && (
-              <div className="rc-suc-pr rc-suc-qr">
-                <div className="rc-suc-qr-frame">
-                  <svg className="rc-suc-qr-svg" viewBox={`0 0 ${qr.n} ${qr.n}`} shapeRendering="crispEdges" role="img" aria-label="คิวอาร์โค้ดแบบประเมินการใช้งาน">
-                    <path d={qr.d} />
-                  </svg>
-                </div>
-                <div className="rc-suc-qr-lbl">สแกนเพื่อประเมินการใช้งาน</div>
-              </div>
-            )}
+            {/* decorative print mark — a small, STATIC data-dot pattern printed under
+                the barcode (thermal-ink module grid). Purely ornamental (aria-hidden):
+                a fixed, hardcoded module map with NO QR finder squares and NO scan
+                label — it is honest print decoration, NOT a scannable code. Encodes
+                nothing; the on-screen evaluate button is the real affordance. */}
+            <div className="rc-suc-pr rc-suc-print" aria-hidden="true">
+              <svg className="rc-suc-print-svg" viewBox="0 0 8 8" shapeRendering="crispEdges">
+                <path d="M0 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM6 0h1v1h-1zM1 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM7 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM6 5h1v1h-1zM1 6h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM5 7h1v1h-1z" />
+              </svg>
+            </div>
 
             {/* foil seal */}
             <div className="rc-suc-pr rc-suc-seal" aria-hidden="true">
@@ -387,15 +354,11 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-ref { margin-top:6px; font-family:var(--rc-fm); font-size:10px; letter-spacing:.26em;
           color:var(--rc-ink2); text-align:center; font-variant-numeric:tabular-nums; }
 
-        /* ---- QR to the eval form (RULING C2) — thermal-black modules on a quiet
-           receipt panel; Thai label in Chakra (A10.3) ---- */
-        .rc-suc-root .rc-suc-qr { margin:18px 0 4px; display:flex; flex-direction:column; align-items:center; gap:9px; }
-        .rc-suc-root .rc-suc-qr-frame { width:132px; height:132px; padding:9px; background:var(--rc-receipt);
-          box-shadow:inset 0 0 0 1px var(--rc-stamp-line); }
-        .rc-suc-root .rc-suc-qr-svg { display:block; width:100%; height:100%; }
-        .rc-suc-root .rc-suc-qr-svg path { fill:var(--rc-ink); }
-        .rc-suc-root .rc-suc-qr-lbl { font-family:var(--rc-fr); font-size:11px; font-weight:600; letter-spacing:.02em;
-          color:var(--rc-ink2); text-align:center; }
+        /* ---- decorative print mark — a small static thermal-ink data-dot grid
+           (no finder squares, no label; ornament only) printed under the barcode ---- */
+        .rc-suc-root .rc-suc-print { margin:14px 0 2px; display:flex; justify-content:center; }
+        .rc-suc-root .rc-suc-print-svg { display:block; width:56px; height:56px; opacity:.62; }
+        .rc-suc-root .rc-suc-print-svg path { fill:var(--rc-ink2); }
 
         .rc-suc-root .rc-suc-seal { position:relative; width:56px; height:56px; margin:16px auto 0; border-radius:50%;
           display:grid; place-items:center;
@@ -548,7 +511,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root.rc-printing .rc-suc-strip   { animation-delay:.82s; }
         .rc-suc-root.rc-printing .rc-suc-barcode { animation-delay:.94s; }
         .rc-suc-root.rc-printing .rc-suc-ref     { animation-delay:1.02s; }
-        .rc-suc-root.rc-printing .rc-suc-qr      { animation-delay:1.08s; }
+        .rc-suc-root.rc-printing .rc-suc-print   { animation-delay:1.08s; }
         .rc-suc-root.rc-printing .rc-suc-seal    { animation-delay:1.14s; }
         .rc-suc-root.rc-printing .rc-suc-stamp   { animation-delay:1.28s; }
         @keyframes rcPrintRow { from { opacity:0; transform:translateY(-8px); } }
