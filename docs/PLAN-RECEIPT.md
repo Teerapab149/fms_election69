@@ -182,6 +182,18 @@
   ตราปั๊ม semantic · รอยปรุ/die-cut · printer moment (success) · เชือก+grommet · บัตรคิว
 - **ยาที่ถูกโรค: เปลี่ยนกระดูก ไม่ใช่เพิ่มเครื่องสำอาง** → composition ใหม่ทั้งตระกูล
 
+### ⚠️ AMENDMENT 2026-07-14 (owner review v2-R1 จริง — บังคับเหนือ §1 เดิม)
+- Owner ดู v2-R1 แล้ว: **ม้วนใบเสร็จทั้งหน้า = "หนักข้างทันที" + ใบเสร็จควรเป็นของ
+  หน้า success เท่านั้น** → แก้รัฐธรรมนูญ: **tape spine ไม่ใช่โครงสากลทุกหน้า**
+- บทบาทวัสดุใหม่: **ใบเสร็จ = นาฬิกา (home: dispenser+สลิปคิว) และใบเสร็จจริง
+  (success) เท่านั้น** · เนื้อหาหลัก home = กองกระดาษ+คลิปหนีบ (ภาษา R2.5 ที่ owner
+  ชอบ) · ballot (vote) = แผ่นบัตรกระดาษ (ไม่ใช่ใบเสร็จ — คงตามเดิม) · results =
+  แถบ tape ยาวได้ (ใบสรุปผล = ใบเสร็จโดยธรรมชาติ ยอมรับได้ แต่ให้ดูน้ำหนักตอน R3b)
+- ตัวแยกจาก Blossom ที่เหลือยังบังคับครบ: stub topbar · dispenser hardware ·
+  desk scatter/overlap · ตราปั๊ม · flip tiles · grain/วัสดุ · เชือก+grommet
+- v2-R1 commit `cf7bc64` = checkpoint ก่อน rebalance; **v2-R1.5 = home rebalance +
+  success polish (B4+QR ดึงมาทำเลย)** spec `.specs/receipt/V2-R1.5-REBALANCE.md`
+
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
    receipt-stock กว้าง ~40-44% วาง **offset ซ้าย/ขวาไม่กลาง** (สลับข้างตามหน้า)
