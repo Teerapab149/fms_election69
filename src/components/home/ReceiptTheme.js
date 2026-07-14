@@ -22,6 +22,7 @@ import { RECEIPT_THEMES, receiptTheme } from "../../utils/receiptPalettes";
 export { RECEIPT_THEMES, receiptTheme };
 
 export function ReceiptBaseStyles() {
+  const bp = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
   const activeSlug = useActiveTemplateId();
   const [previewSlug, setPreviewSlug] = useState(null);
   useEffect(() => {
@@ -100,6 +101,16 @@ export function ReceiptBaseStyles() {
         background-size:auto; animation:rcFoilSpin 14s linear infinite; }
       @keyframes rcFoilDrift { 0%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } 100%{ background-position:0% 50%; } }
       @keyframes rcFoilSpin { to { transform:rotate(360deg); } }
+
+      /* ===== GRAIN (v2-R1 T1 / addendum A7.2, ruling C1) — a static, build-time
+         alpha-only PNG tile (128x128, ~3KB, net darkening ~0.016 over paper). One
+         file for every theme + device: the receipt paper tint shows through, the
+         grain only adds thermal-print tooth. Zero runtime rasterize (no feTurbulence
+         at paint). .rc-grain = receipt stock + grain — used on the tape sheet and
+         any main paper surface in T3-T5. Colour still flows from the ramp. ===== */
+      .rc-grain { background-color:var(--rc-receipt);
+        background-image:url("${bp}/images/receipt/grain-128.png");
+        background-repeat:repeat; background-size:128px 128px; }
     `}</style>
   );
 }
