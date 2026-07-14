@@ -5,8 +5,8 @@
       "name": "fms-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 56989,
-      "autoPort": true
+      "port": 3000,
+      "autoPort": false
     }
   ]
 }
