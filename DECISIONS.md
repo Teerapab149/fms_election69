@@ -1857,6 +1857,22 @@ on civic/transactional surfaces. The family's tear language is PERFORATION-ONLY 
 torn off a roll, perf lines, die-cut) — intentional, controlled separation.
 **Tags:** `#design-rule` `#receipt` `#credibility` `#thai-context`
 
+### P-LOG-087: [2026-07-14] Backtick inside a CSS comment kills the styled-jsx template literal
+**Context:** v2-R1 — CSS comments like `/* the `from` state */` inside `<style jsx global>{`...`}`.
+**Symptom:** the backtick in the comment terminates the JS template literal → cryptic
+syntax error far from the real cause. Bit the worker twice in one session.
+**Lesson:** never use backticks anywhere inside a styled-jsx template literal, including
+CSS comments. Quote names with '...' or nothing.
+**Tags:** `#styled-jsx` `#template-literal` `#receipt`
+
+### P-LOG-088: [2026-07-14] Full-page metaphor ≠ better metaphor (tape-spine over-application)
+**Context:** v2-R1 put ALL home content on one long receipt roll; owner: "หนักข้างทันที"
+and receipt everywhere dilutes the real receipt on success.
+**Lesson:** a material metaphor earns its place per OBJECT, not per page. One material,
+one role: receipt = clock (home) + the vote receipt (success). When a concept sounds
+strong, apply it to the smallest element that carries the story before scaling up.
+**Tags:** `#design-rule` `#receipt` `#composition`
+
 ---
 
 ## 🚫 Rejected Approaches

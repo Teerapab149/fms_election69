@@ -191,8 +191,18 @@
   แถบ tape ยาวได้ (ใบสรุปผล = ใบเสร็จโดยธรรมชาติ ยอมรับได้ แต่ให้ดูน้ำหนักตอน R3b)
 - ตัวแยกจาก Blossom ที่เหลือยังบังคับครบ: stub topbar · dispenser hardware ·
   desk scatter/overlap · ตราปั๊ม · flip tiles · grain/วัสดุ · เชือก+grommet
-- v2-R1 commit `cf7bc64` = checkpoint ก่อน rebalance; **v2-R1.5 = home rebalance +
-  success polish (B4+QR ดึงมาทำเลย)** spec `.specs/receipt/V2-R1.5-REBALANCE.md`
+- v2-R1 commit `cf7bc64` = checkpoint ก่อน rebalance; **v2-R1.5 ✅ DONE `67e6e15`**
+  (spec `.specs/receipt/V2-R1.5-REBALANCE.md`) — Fable รีวิวผ่าน: สมดุลกลับมา
+  (stack ซ้าย + นาฬิกาใบเสร็จขวา + โน้ต register), success ได้ B4 + QR จริง
+  (qrcode-generator 2.0.4 — ตรวจ provenance แล้วของแท้ kazuhikoarase, dynamic
+  import แยก chunk, encode googleFormUrl เท่านั้น), CTA map diff-verified,
+  probes+ภาพครบ; P-LOG-087 (backtick styled-jsx) + P-LOG-088 (metaphor per
+  object) ลง DECISIONS แล้ว
+- คำตัดสินค้าง: mono-ไทย 9 จุดเก่าใน success (copy secrecy ห้ามแตะ) → sweep
+  เฉพาะกิจตอน v2-R3c พร้อม owner sign-off · ที่ว่างซ้ายล่าง home → v2-R5
+- **NEXT: v2-R2 tinted paper themes** (lineup LOCKED: ม่วงFMS/น้ำเงิน262/คราม210/
+  ถ่านดำ achromatic + paper-tint ต่อธีม) — receiptPalettes chain เดิม + contrast
+  gate 4×3 + probe t-ถ่านดำข้างตราแดง semantic
 
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
