@@ -100,6 +100,10 @@ function PreviewBody() {
   // (the chooser slides never send it). The chrome wrapper injects it onto its inner
   // iframe so the full-screen preview is interactive wherever it's used.
   const interact = sp.get('interact') === '1';
+  // ?qr=1 feeds a sample eval-form URL to the Receipt success preview so its QR is
+  // reviewable (encodes only this sample link — never voter data). Absent → the QR
+  // block does not render (matches "no googleFormUrl": no layout hole).
+  const qrSample = sp.get('qr') === '1' ? 'https://forms.gle/fms-samo-eval' : '';
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
   // The template being PREVIEWED (P2 #2 fix). layout.js SSRs the ACTIVE template's
   // Layer-1 tokens on `.fms-app` site-wide — including this route — so previewing a
@@ -573,7 +577,7 @@ function PreviewBody() {
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
     //    are ticketed later; they fall through to classic below for now.
     if (family === 'receipt' && page === 'success') {
-      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
+      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} formUrl={qrSample} />;
     }
 
     // ── receipt family — CANDIDATES (R4). paper flyers on the desk; links to party. ──
@@ -765,7 +769,7 @@ function PreviewBody() {
       );
     }
     if (page === 'candidates') return <ReceiptCandidates candidates={PARTIES} editorMode />;
-    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
+    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode formUrl={qrSample} />;
     if (page === 'results') {
       const revealed = variant === 'revealed';
       return (

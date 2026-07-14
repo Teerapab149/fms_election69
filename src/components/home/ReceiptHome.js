@@ -1,13 +1,17 @@
 "use client";
 
 // ReceiptHome — HOME for the "Receipt · Paper Materiality" template family
-// (Template #6). v2-R1 recompose: the page is a "TAPE SPINE + DESK SCATTER". A
-// dispenser head docks at the top of one continuous receipt roll (offset LEFT),
-// which prints four segments — headwork, the queue-ticket countdown (split-flap),
-// the turnout register, and a reference tail with a jagged perforated end. Desk
-// objects (manila note, a hanging CTA tag, a ticket-stub secondary CTA, the promo
-// poster, a foil seal) scatter to the RIGHT, overlapping the tape edge. No family
-// uses this skeleton — it's what kills the "looks like Blossom" read.
+// (Template #6). v2-R1.5 rebalance: the owner ruled the full-page receipt roll read
+// lopsided ("หนักข้างทันที") and that receipt material belongs to the success page —
+// so on HOME the receipt survives only as the CLOCK. The org-name notice returns to
+// a PAPER STACK held by a metal paperclip (the R2.5 language, upgraded with grain +
+// 4px corners + a peeking stub). Composition: a paper-stack hero on the LEFT; a
+// right rail carrying the CLOCK (dispenser head + a printed queue slip: split-flap,
+// ref line, jagged bottom, red closed-stamp state) → a manila note that hosts the
+// turnout register + the hanging CTA tag → a ticket-stub secondary CTA; the promo
+// poster + a foil seal sit in a band below. The queue slip is the ONLY receipt-stock
+// object on the page. No family uses this skeleton — it kills the "looks like
+// Blossom" read without the lopsided tape.
 //
 // LOGIC SEAMS are ported 1:1 from BlossomHome and UNTOUCHED by the recompose:
 // receiptMeta is config-driven (Arabic digits, admin-editable, NEVER hardcoded
@@ -322,131 +326,123 @@ export default function ReceiptHome({
 
       <div className="rc-home-wrap">
         <div className="rc-stage">
-          <div className="rc-spine">
+          {/* ===== HERO — the org-name NOTICE returns to a PAPER STACK held by a
+              metal paperclip (the R2.5 language the owner loved), upgraded: receipt-
+              stock card w/ 4px corners + .rc-grain, two tilted backing sheets, a
+              ghost ink-stamp over the corner (opacity .12), and a ticket STUB peeking
+              from underneath. NOT on the tape, NO "ท่อนที่" header. ===== */}
+          <section className="rc-hero">
+            <div className="rc-stack">
+              <span className="rc-stack-sheet rc-stack-sheet--b" aria-hidden="true" />
+              <span className="rc-stack-sheet rc-stack-sheet--a" aria-hidden="true" />
 
-          {/* ===== DISPENSER — the ink-machine head docked atop the tape. The whole
-              page reads as the strip this machine just printed. LED ↔ systemMode. ===== */}
-          <div className={`rc-disp led-${ledState}`}>
-            <div className="rc-disp-body">
-              <span className="rc-disp-label rc-mono">{meta.prefix} {meta.number} · HOME</span>
-              <span className="rc-disp-led" aria-hidden="true" />
-            </div>
-            <div className="rc-disp-slot" aria-hidden="true" />
-          </div>
-
-          {/* ===== TAPE SPINE — one continuous receipt roll, offset LEFT on desktop;
-              content = segments printed on the tape, split by full-width perforation.
-              The paper (.rc-grain) carries the static grain tile + receipt tint. ===== */}
-          <div className="rc-tape rc-grain">
-
-            {/* ── T1 · headwork — replaces the editorial hero (A5). ── */}
-            <section className="rc-seg rc-seg--head">
-              {/* ghost of a prior ink stamp, over the tape corner (opacity .12, B1) */}
-              <div className="rc-ghost" aria-hidden="true">
-                <svg className="rc-ghost-svg" viewBox="0 0 120 120" focusable="false">
-                  <defs>
-                    <path id="rcGhostArc" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" />
-                  </defs>
-                  <circle className="rc-ghost-ring" cx="60" cy="60" r="54" />
-                  <circle className="rc-ghost-ring rc-ghost-ring--in" cx="60" cy="60" r="42" />
-                  <text className="rc-ghost-arc">
-                    <textPath href="#rcGhostArc" xlinkHref="#rcGhostArc" startOffset="0%">
-                      {`${meta.faculty} ELECTION · ${meta.prefix} ${meta.number}`}
-                    </textPath>
-                  </text>
-                  <text className="rc-ghost-mark" x="60" y="72">✶</text>
-                </svg>
+              {/* a ticket stub peeking out from under the card (A3 stub language) */}
+              <div className="rc-stub-peek" aria-hidden="true">
+                <span className="rc-mono">STUB</span>
+                <span className="rc-stub-peek-ref rc-mono">{meta.prefix} {meta.number}</span>
               </div>
 
-              <div className="rc-seg-head"><span>ท่อนที่</span> <span className="rc-mono">01 · NOTICE</span></div>
-              <div className="rc-notice-eyebrow rc-mono">◆ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ◆</div>
-              <h1 className="rc-notice-title">{meta.org}</h1>
-              <p className="rc-notice-deck">{meta.campaign}</p>
-              {ELECTION_START && (
-                <div className="rc-daterow">
-                  <span className="rc-daterow-k">เปิดหีบ</span>
-                  <span className="rc-daterow-v">{formatThaiDate(ELECTION_START)}</span>
-                  <span className="rc-daterow-t">{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
+              <article className="rc-card rc-grain">
+                {/* metal paperclip clasped over the top edge of the card */}
+                <span className="rc-clip" aria-hidden="true"><i /></span>
+
+                {/* ghost of a prior ink stamp over the card corner (opacity .12, B1) */}
+                <div className="rc-ghost" aria-hidden="true">
+                  <svg className="rc-ghost-svg" viewBox="0 0 120 120" focusable="false">
+                    <defs>
+                      <path id="rcGhostArc" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" />
+                    </defs>
+                    <circle className="rc-ghost-ring" cx="60" cy="60" r="54" />
+                    <circle className="rc-ghost-ring rc-ghost-ring--in" cx="60" cy="60" r="42" />
+                    <text className="rc-ghost-arc">
+                      <textPath href="#rcGhostArc" xlinkHref="#rcGhostArc" startOffset="0%">
+                        {`${meta.faculty} ELECTION · ${meta.prefix} ${meta.number}`}
+                      </textPath>
+                    </text>
+                    <text className="rc-ghost-mark" x="60" y="72">✶</text>
+                  </svg>
                 </div>
-              )}
-            </section>
 
-            <div className="rc-perf" aria-hidden="true" />
+                <div className="rc-notice-eyebrow rc-mono">◆ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ◆</div>
+                <h1 className="rc-notice-title">{meta.org}</h1>
+                <p className="rc-notice-deck">{meta.campaign}</p>
+                {ELECTION_START && (
+                  <div className="rc-daterow">
+                    <span className="rc-daterow-k">เปิดหีบ</span>
+                    <span className="rc-daterow-v">{formatThaiDate(ELECTION_START)}</span>
+                    <span className="rc-daterow-t">{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
+                  </div>
+                )}
+              </article>
+            </div>
+          </section>
 
-            {/* ── T2 · queue-ticket countdown (the split-flap, now printed on the tape) ── */}
-            <section className={`rc-seg rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="เวลานับถอยหลัง">
-              <div className="rc-seg-head"><span>ท่อนที่</span> <span className="rc-mono">02 · QUEUE</span></div>
-              <div className="rc-slip-cap"><span>{slipLabel}</span><small className="rc-mono">{slipSub}</small></div>
+          {/* ===== RIGHT RAIL (sticky on desktop) — the CLOCK, then the manila note
+              carrying the turnout register + the hanging CTA tag, then the secondary
+              ticket-stub CTA. ===== */}
+          <div className="rc-rail">
 
-              {/* live digits (DD:HH:MM:SS) — base-visible tabular Chakra Petch */}
-              <div className="rc-slip-digits">
-                <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
-                <span className="rc-colon">:</span>
-                <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
-                <span className="rc-colon">:</span>
-                <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
-                <span className="rc-colon">:</span>
-                <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
+            {/* ── CLOCK — the ONLY receipt object of the page: the dispenser head
+                (SAMO n · HOME + LED ↔ systemMode) and a queue slip emerging from the
+                slot (split-flap, ref line, jagged bottom; closed → red cross-stamp).
+                print-reveal stays on THIS single slip. ── */}
+            <div className={`rc-clock rc-disp led-${ledState}`}>
+              <div className="rc-disp-body">
+                <span className="rc-disp-label rc-mono">{meta.prefix} {meta.number} · HOME</span>
+                <span className="rc-disp-led" aria-hidden="true" />
+              </div>
+              <div className="rc-disp-slot" aria-hidden="true" />
+
+              <section className={`rc-slip rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="บัตรคิวนับถอยหลัง">
+                <div className="rc-slip-head"><span className="rc-mono">QUEUE ·</span> <span>คิวเข้าคูหา</span></div>
+                <div className="rc-slip-cap"><span>{slipLabel}</span><small className="rc-mono">{slipSub}</small></div>
+
+                {/* live digits (DD:HH:MM:SS) — base-visible tabular Chakra Petch */}
+                <div className="rc-slip-digits">
+                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
+                  <span className="rc-colon">:</span>
+                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
+                  <span className="rc-colon">:</span>
+                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
+                  <span className="rc-colon">:</span>
+                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
+                </div>
+
+                {/* done-state — the slip is cross-stamped in red instead of digits */}
+                <div className="rc-slip-stamp"><span>{cd.label}</span></div>
+                {isEnded && (
+                  <div className="rc-close-line">ปิดรับบัตรคิว · เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                )}
+                <div className="rc-slip-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
+                <div className="rc-slip-end" aria-hidden="true" />
+              </section>
+            </div>
+
+            {/* manila note — carries the turnout register + hangs the CTA tag */}
+            <div className="rc-note">
+              <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
+              <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
+              <div className="rc-note-h">เข้าคูหา</div>
+              <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่หีบเปิด</p>
+
+              {/* ── turnout register — real-time stats, back on the manila note ── */}
+              <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
+                <div className="rc-register-row">
+                  <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
+                  <span className="rc-register-v">{fmtInt(rawStats.totalVoted)}<small>คน</small></span>
+                </div>
+                <div className="rc-register-row">
+                  <span className="rc-register-k">อัตราการใช้สิทธิ์</span>
+                  <span className="rc-register-v">{pct}<small>%</small></span>
+                </div>
+                <div className="rc-register-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></div>
+                <div className="rc-register-row">
+                  <span className="rc-register-k">ผู้ลงสมัคร</span>
+                  <span className="rc-register-v">{partyCount}<small>พรรค</small></span>
+                </div>
               </div>
 
-              {/* done-state — the ticket is cross-stamped in red instead of digits */}
-              <div className="rc-slip-stamp"><span>{cd.label}</span></div>
-              {isEnded && (
-                <div className="rc-close-line">ปิดรับบัตรคิว · เวลาปิด {formatThaiTime(ELECTION_END)}</div>
-              )}
-              <div className="rc-slip-foot">◆ ◆ ◆ คิวเข้าคูหา ◆ ◆ ◆</div>
-            </section>
-
-            <div className="rc-perf" aria-hidden="true" />
-
-            {/* ── T3 · turnout register — real-time stats in receipt voice ── */}
-            <section className="rc-seg rc-seg--reveal rc-register" aria-label="สถิติการใช้สิทธิ์">
-              <div className="rc-seg-head"><span>ท่อนที่</span> <span className="rc-mono">03 · REGISTER</span></div>
-              <div className="rc-register-row">
-                <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
-                <span className="rc-register-v">{fmtInt(rawStats.totalVoted)}<small>คน</small></span>
-              </div>
-              <div className="rc-register-row">
-                <span className="rc-register-k">อัตราการใช้สิทธิ์</span>
-                <span className="rc-register-v">{pct}<small>%</small></span>
-              </div>
-              <div className="rc-register-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></div>
-              <div className="rc-register-row">
-                <span className="rc-register-k">ผู้ลงสมัคร</span>
-                <span className="rc-register-v">{partyCount}<small>พรรค</small></span>
-              </div>
-            </section>
-
-            <div className="rc-perf" aria-hidden="true" />
-
-            {/* ── T4 · reference tail + jagged perforated end ── */}
-            <section className="rc-seg rc-seg--reveal rc-seg--tail">
-              <div className="rc-seg-head"><span>ท่อนที่</span> <span className="rc-mono">04 · REF</span></div>
-              <div className="rc-barcode" aria-hidden="true" />
-              <div className="rc-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
-              <div className="rc-tape-close">◆ ◆ ◆ สิ้นสุดรายการ ◆ ◆ ◆</div>
-            </section>
-
-            {/* jagged perforated end of the tape (scallop = die-cut, NOT a torn edge) */}
-            <div className="rc-tape-end" aria-hidden="true" />
-          </div>{/* /rc-tape */}
-          </div>{/* /rc-spine */}
-
-          {/* ===== DESK SCATTER — objects laid on the desk that OVERLAP the tape's
-              right edge (≥24px). Desktop: a right gutter column beside the tape,
-              distributed along its height; mobile: stacked below the tape (calm). ===== */}
-          <div className="rc-gutter">
-            {/* manila note + hanging PRIMARY CTA tag (6-state ladder) + a ticket-stub
-                secondary CTA + foil seal */}
-            <div className="rc-scatter rc-scatter--a">
-              <div className="rc-note">
-                <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
-                <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
-                <div className="rc-note-h">เข้าคูหา</div>
-                <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่หีบเปิด</p>
-              </div>
-
-              {/* hanging PRIMARY CTA tag — the 6-state ladder, strung from the note */}
+              {/* hanging PRIMARY CTA tag — the 6-state ladder, strung from the note pin */}
               <div className="rc-tagwrap">
                 <svg className="rc-tag-string" viewBox="0 0 60 46" aria-hidden="true" focusable="false" preserveAspectRatio="none">
                   <path className="rc-tag-string__ln" d="M12 0 C 8 22, 40 22, 30 45" fill="none" />
@@ -467,26 +463,25 @@ export default function ReceiptHome({
                   <span className="rc-cta-in">{CTA.label}<span className="rc-cta-arrow" aria-hidden="true">→</span></span>
                 </a>
               </div>
-
-              {/* secondary CTA = a real ticket STUB (A3 stub language) */}
-              <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
-                <span className="rc-stubcta-th">ดูผู้สมัคร</span><span className="rc-cta-arrow" aria-hidden="true"> →</span>
-              </a>
-
-              {/* small foil seal chip resting on the desk */}
-              <span className="rc-chip" aria-hidden="true"><span className="rc-foil rc-foil--conic" /></span>
             </div>
 
-            {/* the admin promo poster, taped to the desk */}
-            <div className="rc-scatter rc-scatter--b">
-              <figure className="rc-poster">
-                <span className="rc-poster-tape rc-poster-tape--l" aria-hidden="true" />
-                <span className="rc-poster-tape rc-poster-tape--r" aria-hidden="true" />
-                <img src={posterSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="rc-poster-img" loading="lazy" />
-              </figure>
-              <div className="rc-poster-cap">โปสเตอร์ประชาสัมพันธ์</div>
-            </div>
-          </div>{/* /rc-gutter */}
+            {/* secondary CTA = a real ticket STUB (A3 stub language) */}
+            <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
+              <span className="rc-stubcta-th">ดูผู้สมัคร</span><span className="rc-cta-arrow" aria-hidden="true"> →</span>
+            </a>
+          </div>{/* /rc-rail */}
+
+          {/* ===== POSTER band — the admin promo poster taped down, with a small foil
+              seal chip; bottom of the desk, centre-right. ===== */}
+          <div className="rc-poster-sec">
+            <figure className="rc-poster">
+              <span className="rc-poster-tape rc-poster-tape--l" aria-hidden="true" />
+              <span className="rc-poster-tape rc-poster-tape--r" aria-hidden="true" />
+              <img src={posterSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="rc-poster-img" loading="lazy" />
+              <figcaption className="rc-poster-cap">โปสเตอร์ประชาสัมพันธ์</figcaption>
+            </figure>
+            <span className="rc-chip" aria-hidden="true"><span className="rc-foil rc-foil--conic" /></span>
+          </div>
         </div>{/* /rc-stage */}
 
         {/* ===== footer — classic single centered line ===== */}
@@ -633,37 +628,58 @@ export default function ReceiptHome({
         .rc-home-root .rc-disp-slot::after { content:""; position:absolute; left:12px; right:12px; top:4px; height:3px;
           border-radius:2px; background:color-mix(in srgb, var(--rc-ink) 55%, var(--rc-faint)); }
 
-        /* ================= TAPE SPINE (T3 / A1) ================= */
-        /* mobile-first: near full-width; segments printed on the receipt roll. */
-        .rc-home-root .rc-disp, .rc-home-root .rc-tape { margin-left:12px; margin-right:12px; }
-        .rc-home-root .rc-tape { position:relative; z-index:2; margin-top:-5px; padding:2px clamp(16px,4vw,26px) 0;
+        /* ================= HERO — paper-stack notice (A5 return to the R2.5 language) ================= */
+        /* the org-name card on receipt stock, clasped by a metal paperclip, with two
+           tilted backing sheets and a ticket stub peeking underneath. NOT a tape. */
+        .rc-home-root .rc-hero { position:relative; z-index:2; }
+        .rc-home-root .rc-stack { position:relative; align-self:flex-start; max-width:520px; margin:8px 12px 0; }
+        .rc-home-root .rc-card { position:relative; z-index:3; border-radius:4px; padding:38px 22px 22px;
+          background-color:var(--rc-receipt); border:1px solid var(--rc-line);
+          box-shadow:2px 20px 42px -24px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        /* two tilted backing sheets — the paper "stack" */
+        .rc-home-root .rc-stack-sheet { position:absolute; inset:0; border-radius:4px; background:var(--rc-receipt);
+          border:1px solid var(--rc-line);
+          box-shadow:1px 10px 22px -16px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-home-root .rc-stack-sheet--a { z-index:2; transform:rotate(-1.5deg) translate(-6px, 5px); }
+        .rc-home-root .rc-stack-sheet--b { z-index:1; transform:rotate(1.8deg) translate(7px, 9px);
+          background:var(--rc-receipt-edge); }
+        /* metal paperclip clasped over the top edge (gem clip = two nested loops) */
+        .rc-home-root .rc-clip { position:absolute; z-index:4; top:-15px; left:30px; width:22px; height:54px;
+          border:2.5px solid color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-faint)); border-radius:11px;
+          background:linear-gradient(105deg, transparent 44%, color-mix(in srgb, var(--rc-receipt) 70%, transparent) 50%, transparent 56%); }
+        .rc-home-root .rc-clip i { position:absolute; left:5px; right:5px; top:7px; bottom:-3px;
+          border:2.5px solid color-mix(in srgb, var(--rc-ink2) 45%, var(--rc-faint)); border-bottom:none; border-radius:7px 7px 0 0; }
+        /* a ticket stub peeking from under the card's lower-left */
+        .rc-home-root .rc-stub-peek { position:absolute; z-index:0; left:26px; bottom:-15px; display:inline-flex;
+          align-items:baseline; gap:8px; padding:8px 14px 11px; transform:rotate(-2.4deg); transform-origin:top left;
+          background:var(--rc-receipt); border:1px solid var(--rc-line); border-top:none; border-radius:0 0 4px 4px;
+          box-shadow:2px 9px 18px -11px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
+        .rc-home-root .rc-stub-peek .rc-mono { font-size:9px; letter-spacing:.2em; color:var(--rc-ink2); }
+        .rc-home-root .rc-stub-peek-ref { color:var(--rc-ink); font-variant-numeric:tabular-nums; }
+
+        /* ================= CLOCK — dispenser + queue slip (the ONLY receipt object) ================= */
+        .rc-home-root .rc-clock { position:relative; z-index:3; margin:0 12px; }
+        /* the queue slip emerges from the dispenser slot; grain paper + die-cut end */
+        .rc-home-root .rc-slip { position:relative; z-index:2; margin:-5px 8px 0; padding:16px clamp(16px,4.5vw,22px) 0;
           border-radius:0 0 3px 3px;
-          box-shadow:2px 18px 40px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
-        /* rolled paper edges (thin inset gradients on each side) */
-        .rc-home-root .rc-tape::before, .rc-home-root .rc-tape::after { content:""; position:absolute; top:0; bottom:0; width:7px;
+          box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-home-root .rc-slip::before, .rc-home-root .rc-slip::after { content:""; position:absolute; top:0; bottom:0; width:6px;
           pointer-events:none; z-index:1; }
-        .rc-home-root .rc-tape::before { left:0; background:linear-gradient(90deg, var(--rc-receipt-edge), transparent); }
-        .rc-home-root .rc-tape::after { right:0; background:linear-gradient(270deg, var(--rc-receipt-edge), transparent); }
-
-        /* ---- a tape SEGMENT ---- */
-        .rc-home-root .rc-seg { position:relative; z-index:2; padding:20px 4px 22px; }
-        .rc-home-root .rc-seg--head { padding-top:22px; }
-        /* segment head line — "ท่อนที่ NN · NAME": container Chakra, number/Latin mono (A10.3) */
-        .rc-home-root .rc-seg-head { display:flex; align-items:baseline; gap:7px; font-family:var(--rc-fr);
-          font-size:10px; font-weight:600; letter-spacing:.06em; color:var(--rc-accent-deep); text-transform:uppercase; margin-bottom:12px; }
-        .rc-home-root .rc-seg-head .rc-mono { font-size:10px; letter-spacing:.16em; color:var(--rc-ink2); font-weight:400; }
-
-        /* full-width perforation between segments (extends into the tape padding) */
-        .rc-home-root .rc-perf { height:1.5px; margin:0 calc(-1 * clamp(16px,4vw,26px));
-          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
-
-        /* jagged perforated tape end (scallops = die-cut, not a torn edge — P-LOG-086) */
-        .rc-home-root .rc-tape-end { height:11px; margin:0 calc(-1 * clamp(16px,4vw,26px)); background:var(--rc-receipt);
+        .rc-home-root .rc-slip::before { left:0; background:linear-gradient(90deg, var(--rc-receipt-edge), transparent); }
+        .rc-home-root .rc-slip::after { right:0; background:linear-gradient(270deg, var(--rc-receipt-edge), transparent); }
+        /* slip head — mono "QUEUE ·" + Chakra Thai (A10.3) */
+        .rc-home-root .rc-slip-head { display:flex; align-items:baseline; gap:7px; font-family:var(--rc-fr);
+          font-size:11px; font-weight:600; letter-spacing:.04em; color:var(--rc-accent-deep); text-transform:uppercase; margin-bottom:12px; }
+        .rc-home-root .rc-slip-head .rc-mono { font-size:10px; letter-spacing:.18em; color:var(--rc-ink2); font-weight:400; }
+        /* ref line + jagged die-cut end of the slip (scallop = die-cut, NOT torn — P-LOG-086) */
+        .rc-home-root .rc-slip-ref { margin-top:16px; font-size:11px; letter-spacing:.16em; color:var(--rc-ink);
+          font-variant-numeric:tabular-nums; }
+        .rc-home-root .rc-slip-end { height:11px; margin:14px calc(-1 * clamp(16px,4.5vw,22px)) 0; background:var(--rc-receipt);
           box-shadow:0 8px 18px -14px color-mix(in srgb, var(--rc-ink) 40%, transparent);
           -webkit-mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x;
                   mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x; }
 
-        /* ---- T1 headwork content ---- */
+        /* ---- notice card content ---- */
         .rc-home-root .rc-notice-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
           color:var(--rc-ink2); }
         .rc-home-root .rc-notice-title { margin:12px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.12;
@@ -712,9 +728,6 @@ export default function ReceiptHome({
         .rc-home-root .rc-colon { font-family:var(--rc-fr); font-weight:400; font-size:clamp(26px, 8vw, 38px);
           color:color-mix(in srgb, var(--rc-ink2) 60%, var(--rc-receipt)); align-self:flex-start; line-height:1; margin-top:.08em; }
 
-        .rc-home-root .rc-slip-foot { margin-top:16px; font-family:var(--rc-fr); font-size:11px; font-weight:600;
-          letter-spacing:.16em; color:var(--rc-faint); }
-
         /* done-state — red cross-stamp laid diagonally across the ticket (B1) */
         .rc-home-root .rc-slip-stamp { display:none; margin:16px 0 6px; width:fit-content; padding:7px 18px;
           transform:rotate(-6deg); border:2.5px solid var(--rc-stamp-red); border-radius:6px; opacity:.9; }
@@ -722,8 +735,7 @@ export default function ReceiptHome({
           color:var(--rc-stamp-red); }
         .rc-home-root .rc-close-line { display:none; margin-top:6px; font-family:var(--rc-fr); font-size:13px; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; }
-        .rc-home-root .rc-ticket.is-done .rc-slip-digits,
-        .rc-home-root .rc-ticket.is-done .rc-slip-foot { display:none; }
+        .rc-home-root .rc-ticket.is-done .rc-slip-digits { display:none; }
         .rc-home-root .rc-ticket.is-done .rc-slip-stamp { display:block; }
         .rc-home-root .rc-ticket.is-ended .rc-close-line { display:block; }
 
@@ -747,26 +759,19 @@ export default function ReceiptHome({
         .rc-home-root .rc-register-bar > span { display:block; height:100%; border-radius:2px; background:var(--rc-accent);
           transform-origin:left center; }
 
-        /* ---- T4 reference tail ---- */
-        .rc-home-root .rc-barcode { height:46px; margin-top:2px;
-          background:repeating-linear-gradient(90deg,
-            var(--rc-ink) 0 2px, transparent 2px 4px, var(--rc-ink) 4px 5px, transparent 5px 9px,
-            var(--rc-ink) 9px 12px, transparent 12px 14px, var(--rc-ink) 14px 15px, transparent 15px 20px); }
-        .rc-home-root .rc-ref { margin-top:9px; font-size:11px; letter-spacing:.16em; color:var(--rc-ink);
-          font-variant-numeric:tabular-nums; }
-        .rc-home-root .rc-tape-close { margin-top:16px; text-align:center; font-family:var(--rc-fr); font-size:11px;
-          font-weight:600; letter-spacing:.14em; color:var(--rc-faint); }
+        /* the register now sits ON the manila note, divided from the note copy above */
+        .rc-home-root .rc-note .rc-register { margin-top:14px; padding-top:12px;
+          border-top:1px dashed color-mix(in srgb, var(--rc-note) 60%, var(--rc-ink)); }
 
-        /* ================= SCATTER (desk objects) ================= */
-        /* mobile-first: the gutter stacks BELOW the tape (calm); desktop lifts it into
-           a right-hand column that OVERLAPS the tape edge (see the 1024px block). */
-        .rc-home-root .rc-spine { position:relative; z-index:2; }
-        .rc-home-root .rc-gutter { position:relative; z-index:6; margin:14px 12px 0;
+        /* ================= RAIL + DESK OBJECTS ================= */
+        /* mobile-first: hero first, then the rail (clock, note+register+CTA, stub)
+           stacks below it, then the poster band. desktop lifts the rail into a sticky
+           right column that slightly overlaps the hero's right edge (see 1024px). */
+        .rc-home-root .rc-rail { position:relative; z-index:6; margin:22px 0 0;
           display:flex; flex-direction:column; gap:22px; }
-        .rc-home-root .rc-scatter { position:relative; padding:8px 2px 6px; display:flex; flex-direction:column; gap:14px; }
 
         /* manila note pinned by two fasteners */
-        .rc-home-root .rc-note { position:relative; align-self:flex-start; max-width:300px; background:var(--rc-note); border-radius:3px;
+        .rc-home-root .rc-note { position:relative; align-self:flex-start; max-width:340px; background:var(--rc-note); border-radius:3px;
           padding:20px 18px 16px; transform:rotate(-1.2deg);
           border:1px solid color-mix(in srgb, var(--rc-note) 80%, var(--rc-ink));
           box-shadow:2px 12px 24px -14px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
@@ -830,8 +835,8 @@ export default function ReceiptHome({
           box-shadow:1px 10px 20px -10px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
         .rc-home-root .rc-chip .rc-foil { position:absolute; inset:-30%; }
 
-        /* ---- poster (scatter B) ---- */
-        .rc-home-root .rc-scatter--b { align-items:center; }
+        /* ---- poster band (bottom, centre-right on desktop) ---- */
+        .rc-home-root .rc-poster-sec { margin-top:30px; display:flex; flex-direction:column; align-items:center; gap:16px; }
         .rc-home-root .rc-poster { margin:0; position:relative; width:min(78vw, 320px); background:var(--rc-receipt); padding:10px 10px 14px;
           border:1px solid var(--rc-line); border-radius:4px; transform:rotate(-2deg);
           box-shadow:3px 24px 46px -22px color-mix(in srgb, var(--rc-ink) 30%, transparent);
@@ -866,25 +871,25 @@ export default function ReceiptHome({
           .rc-home-root .rc-burger, .rc-home-root .rc-sheet { display:none; }
         }
 
-        /* ================= DESKTOP : tape offset LEFT + scatter overlaps RIGHT ================= */
-        /* a 2-column grid: the spine (dispenser + tape) sits LEFT (offset via the
-           stage padding-left, NOT centred); the gutter is a right column pulled 56px
-           OVER the tape edge (overlap ≥24) and distributed along the tape's height, so
-           nothing overflows the footer and the top-right isn't empty. */
+        /* ================= DESKTOP : hero stack LEFT (~57%) + sticky rail RIGHT ================= */
+        /* a 2-column grid — the paper-stack hero sits LEFT (with right whitespace); the
+           rail (clock, note+register+CTA, stub) is a sticky RIGHT column pulled slightly
+           OVER the hero's right edge. The card is capped so the overlap lands on empty
+           desk, never on the title / stats text. The poster band spans full width below,
+           centre-right. */
         @media (min-width:1024px) {
           .rc-home-root .rc-stage { display:grid; align-items:start;
-            grid-template-columns:clamp(480px, 42vw, 560px) minmax(0, 1fr);
-            padding-left:max(0px, calc(8vw - 20px)); }
-          .rc-home-root .rc-spine { grid-column:1; min-width:0; }
-          .rc-home-root .rc-disp, .rc-home-root .rc-tape { width:auto; margin-left:0; margin-right:0; }
-          /* inset the printed content from the tape's RIGHT edge so the scatter overlaps
-             an EMPTY paper band (the tape edge), never the title / stats text. */
-          .rc-home-root .rc-seg { padding-right:60px; }
-          .rc-home-root .rc-gutter { grid-column:2; align-self:stretch; margin:0 0 0 -44px;
-            justify-content:space-between; gap:clamp(24px, 4vh, 60px); padding:118px 0 36px; }
-          .rc-home-root .rc-scatter { padding:0; }
+            grid-template-columns:minmax(0, 57%) minmax(0, 1fr);
+            column-gap:clamp(24px, 4vw, 52px); row-gap:44px;
+            padding-left:max(0px, calc(6vw - 20px)); }
+          .rc-home-root .rc-hero { grid-column:1; grid-row:1; }
+          .rc-home-root .rc-stack { max-width:480px; margin-left:0; margin-right:0; }
+          .rc-home-root .rc-rail { grid-column:2; grid-row:1; position:sticky; top:84px;
+            margin:6px 0 0 -28px; gap:clamp(20px, 3vh, 34px); }
           .rc-home-root .rc-note { max-width:none; }
-          .rc-home-root .rc-poster { width:100%; }
+          .rc-home-root .rc-poster-sec { grid-column:1 / -1; grid-row:2; flex-direction:row;
+            align-items:flex-end; justify-content:center; gap:24px; padding-left:16%; }
+          .rc-home-root .rc-poster { width:min(320px, 42%); }
           .rc-home-root .rc-notice-title { font-size:clamp(34px, 3vw, 46px); }
         }
 

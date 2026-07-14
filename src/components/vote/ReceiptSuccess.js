@@ -54,7 +54,7 @@ function randRefGroup() {
   return s;
 }
 
-export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false, choice = null }) {
+export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false, choice = null, formUrl = "" }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -83,6 +83,36 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
       ref: `${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()}`,
     });
   }, [editorMode]);
+
+  // QR to the evaluation form (RULING C2) — encodes ONLY SystemConfig.googleFormUrl,
+  // passed in from the page; NEVER any voter data (secrecy §2 stays intact). The QR
+  // library is LIGHT + DYNAMIC-imported HERE ONLY, so Next code-splits it into a chunk
+  // loaded solely by this success component — it never enters the shared/vote bundles
+  // (A7.5). Rendered as an inline SVG path (thermal-black modules, no image file). With
+  // no form URL the block simply does not render (no layout hole); the on-screen
+  // evaluate button below is the base-visible affordance (QR = scan from another device,
+  // button = tap on this one), so a JS-off client keeps the working button.
+  const [qr, setQr] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (!formUrl) { setQr(null); return undefined; }
+    import("qrcode-generator")
+      .then((mod) => {
+        if (!alive) return;
+        const qrcode = mod.default || mod;
+        const g = qrcode(0, "M"); // type 0 = auto-fit version, EC level M
+        g.addData(formUrl);
+        g.make();
+        const n = g.getModuleCount();
+        let d = "";
+        for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+          if (g.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+        }
+        setQr({ n, d });
+      })
+      .catch(() => { if (alive) setQr(null); });
+    return () => { alive = false; };
+  }, [formUrl]);
 
   // The choice is shown ONCE, ephemerally. In editor/preview a sample makes the
   // "printer moment" reviewable; in production with no ephemeral choice we show a
@@ -118,6 +148,9 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           {/* desk ephemera — aria-hidden, print-language only; positioned on the desk
               with soft object shadows. z-below the receipt so objects tuck under it. */}
           <div className="rc-suc-ephemera" aria-hidden="true">
+            {/* a tiny test-print calibration strip peeking beside the slot (thermal
+                bands, decorative — desktop only) */}
+            <div className="rc-suc-testprint" />
             {/* a ghost of a previous ink stamp, ON the desk (very faint) */}
             <div className="rc-suc-ghost"><span>{prefix} {number} ✓</span></div>
             {/* a short register-tape scrap peeking from the left edge */}
@@ -168,6 +201,20 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <div className="rc-suc-pr rc-suc-barcode" aria-hidden="true" />
             <div className="rc-suc-pr rc-suc-ref">{stamp?.ref || "···· · ···· · ···· · ····"}</div>
 
+            {/* real QR to the evaluation form (RULING C2) — printed under the barcode;
+                renders only when a form URL exists (no hole otherwise). Thai label in
+                Chakra (mono has no Thai glyphs — A10.3). Encodes the form URL only. */}
+            {formUrl && qr && (
+              <div className="rc-suc-pr rc-suc-qr">
+                <div className="rc-suc-qr-frame">
+                  <svg className="rc-suc-qr-svg" viewBox={`0 0 ${qr.n} ${qr.n}`} shapeRendering="crispEdges" role="img" aria-label="คิวอาร์โค้ดแบบประเมินการใช้งาน">
+                    <path d={qr.d} />
+                  </svg>
+                </div>
+                <div className="rc-suc-qr-lbl">สแกนเพื่อประเมินการใช้งาน</div>
+              </div>
+            )}
+
             {/* foil seal */}
             <div className="rc-suc-pr rc-suc-seal" aria-hidden="true">
               <span className="rc-suc-seal-disc"><span className="rc-foil rc-foil--conic" /></span>
@@ -189,13 +236,24 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
                 ส่งแบบประเมินเรียบร้อยแล้ว
               </div>
             ) : (
-              <button type="button" className="rc-suc-cta" onClick={() => !editorMode && onOpenForm()}>
-                <span className="rc-foil" aria-hidden="true" />
-                <span className="rc-suc-cta-in">
-                  ทำแบบประเมิน (รับชั่วโมงกิจกรรม)
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
-                </span>
-              </button>
+              /* evaluate button — restyled as a die-cut TAG hung on a string with a
+                 grommet (same language as home); the BUTTON + its onOpenForm action are
+                 unchanged (RULING C2: the evaluate button must NOT be removed) */
+              <div className="rc-suc-tagwrap">
+                <svg className="rc-suc-tag-string" viewBox="0 0 60 40" aria-hidden="true" focusable="false" preserveAspectRatio="none">
+                  <path className="rc-suc-tag-ln" d="M14 0 C 10 20, 40 20, 30 39" fill="none" />
+                  <path className="rc-suc-tag-ln" d="M46 0 C 50 20, 20 20, 30 39" fill="none" />
+                  <circle className="rc-suc-tag-pin" cx="30" cy="1.5" r="3" />
+                </svg>
+                <button type="button" className="rc-suc-cta" onClick={() => !editorMode && onOpenForm()}>
+                  <span className="rc-foil" aria-hidden="true" />
+                  <span className="rc-suc-grommet" aria-hidden="true" />
+                  <span className="rc-suc-cta-in">
+                    ทำแบบประเมิน (รับชั่วโมงกิจกรรม)
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
+                  </span>
+                </button>
+              </div>
             )}
 
             <a
@@ -243,8 +301,18 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root a:focus-visible, .rc-suc-root button:focus-visible {
           outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
 
-        /* ---- display headline block (LEFT column on desktop) ---- */
-        .rc-suc-root .rc-suc-headline { text-align:center; margin-bottom:22px; }
+        /* ---- display headline block (LEFT column on desktop) — a manila note card
+           taped down with two holo strips (B4) ---- */
+        .rc-suc-root .rc-suc-headline { position:relative; text-align:center; margin-bottom:22px;
+          background:var(--rc-note); border:1px solid color-mix(in srgb, var(--rc-note) 80%, var(--rc-ink));
+          border-radius:4px; padding:26px 22px 24px; transform:rotate(-.8deg);
+          box-shadow:2px 14px 30px -18px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-suc-root .rc-suc-headline::before, .rc-suc-root .rc-suc-headline::after { content:""; position:absolute;
+          top:-10px; width:66px; height:20px; border-radius:1px; opacity:.55; mix-blend-mode:multiply;
+          background:linear-gradient(135deg, color-mix(in srgb, var(--rc-holo-1) 55%, transparent), color-mix(in srgb, var(--rc-holo-3) 55%, transparent));
+          box-shadow:1px 2px 3px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
+        .rc-suc-root .rc-suc-headline::before { left:22px; transform:rotate(-7deg); }
+        .rc-suc-root .rc-suc-headline::after { right:22px; transform:rotate(6deg); }
         .rc-suc-root .rc-suc-hl-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.24em;
           text-transform:uppercase; color:var(--rc-ink2); margin-bottom:14px; }
         .rc-suc-root .rc-suc-display { display:flex; flex-direction:column; align-items:center;
@@ -319,6 +387,16 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-ref { margin-top:6px; font-family:var(--rc-fm); font-size:10px; letter-spacing:.26em;
           color:var(--rc-ink2); text-align:center; font-variant-numeric:tabular-nums; }
 
+        /* ---- QR to the eval form (RULING C2) — thermal-black modules on a quiet
+           receipt panel; Thai label in Chakra (A10.3) ---- */
+        .rc-suc-root .rc-suc-qr { margin:18px 0 4px; display:flex; flex-direction:column; align-items:center; gap:9px; }
+        .rc-suc-root .rc-suc-qr-frame { width:132px; height:132px; padding:9px; background:var(--rc-receipt);
+          box-shadow:inset 0 0 0 1px var(--rc-stamp-line); }
+        .rc-suc-root .rc-suc-qr-svg { display:block; width:100%; height:100%; }
+        .rc-suc-root .rc-suc-qr-svg path { fill:var(--rc-ink); }
+        .rc-suc-root .rc-suc-qr-lbl { font-family:var(--rc-fr); font-size:11px; font-weight:600; letter-spacing:.02em;
+          color:var(--rc-ink2); text-align:center; }
+
         .rc-suc-root .rc-suc-seal { position:relative; width:56px; height:56px; margin:16px auto 0; border-radius:50%;
           display:grid; place-items:center;
           box-shadow:var(--rc-shadow-object, 0 2px 8px -3px color-mix(in srgb, var(--rc-ink) 25%, transparent)); }
@@ -377,6 +455,13 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-regtape span { font-family:var(--rc-fm); font-size:8px; letter-spacing:.18em;
           color:var(--rc-faint); white-space:nowrap; font-variant-numeric:tabular-nums; }
 
+        /* a tiny test-print calibration strip peeking beside the slot (thermal bands) */
+        .rc-suc-root .rc-suc-testprint { position:absolute; z-index:1; right:-12px; top:38px; width:96px; height:20px;
+          transform:rotate(6deg); background:var(--rc-receipt); overflow:hidden;
+          box-shadow:2px 6px 14px -8px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-suc-root .rc-suc-testprint::after { content:""; position:absolute; inset:4px 8px;
+          background:repeating-linear-gradient(90deg, color-mix(in srgb, var(--rc-ink) 40%, transparent) 0 3px, transparent 3px 7px); }
+
         /* holographic foil (.rc-foil / .rc-foil--conic + keyframes) now shared via
            .rc-desk in ReceiptBaseStyles (T1) — byte-identical to the former local
            block, so the security strip + seal render unchanged. */
@@ -387,13 +472,29 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
            top — so the button reads as an accent CTA with a holographic edge (concept:
            "foil = CTA edge"), NOT a low-contrast foil-filled block. Layered by z-index
            because a negative-z child would paint OVER the element's own background. */
-        .rc-suc-root .rc-suc-cta { position:relative; isolation:isolate; border:none; cursor:pointer;
-          padding:15px; border-radius:var(--rc-radius-button, 8px); background:transparent;
-          transition:transform .18s ease; }
+        /* the evaluate button hangs from a string as a die-cut TAG (home language) */
+        .rc-suc-root .rc-suc-tagwrap { position:relative; padding-top:26px; }
+        .rc-suc-root .rc-suc-tag-string { position:absolute; z-index:1; left:50%; top:-2px; width:60px; height:40px;
+          transform:translateX(-50%); pointer-events:none; overflow:visible;
+          filter:drop-shadow(1px 1.5px 1px color-mix(in srgb, var(--rc-ink) 22%, transparent)); }
+        .rc-suc-root .rc-suc-tag-ln { stroke:var(--rc-stamp-line); stroke-width:1.8; stroke-linecap:round;
+          transform-origin:30px 0; transition:transform .3s ease; fill:none; }
+        .rc-suc-root .rc-suc-tag-pin { fill:var(--rc-ink2); }
+        .rc-suc-root .rc-suc-tagwrap:hover .rc-suc-tag-ln { animation:rcSucSway 1.4s ease-in-out infinite; }
+        @keyframes rcSucSway { 0%,100%{ transform:rotate(-1.5deg); } 50%{ transform:rotate(1.5deg); } }
+
+        .rc-suc-root .rc-suc-cta { position:relative; isolation:isolate; display:block; width:100%; text-align:center;
+          border:none; cursor:pointer; padding:15px 16px 15px 36px; border-radius:var(--rc-radius-button, 8px);
+          background:transparent; transition:transform .18s ease; }
         .rc-suc-root .rc-suc-cta .rc-foil { position:absolute; inset:-2px; z-index:0;
           border-radius:calc(var(--rc-radius-button, 8px) + 2px); }
         .rc-suc-root .rc-suc-cta::before { content:""; position:absolute; inset:0; z-index:1;
           border-radius:inherit; background:var(--rc-accent); transition:background .2s ease; }
+        /* die-cut grommet — punched hole ringed with metal (matches home) */
+        .rc-suc-root .rc-suc-grommet { position:absolute; z-index:3; left:15px; top:50%; transform:translateY(-50%);
+          width:15px; height:15px; border-radius:50%; background:var(--rc-desk);
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)),
+                     inset 0 2px 3px color-mix(in srgb, var(--rc-ink) 45%, transparent); }
         .rc-suc-root .rc-suc-cta-in { position:relative; z-index:2; display:inline-flex; align-items:center;
           justify-content:center; gap:9px; font-family:var(--rc-fh); font-weight:600; font-size:15px;
           color:var(--rc-on-accent); }
@@ -403,10 +504,14 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-cta:hover .rc-suc-cta-in svg { transform:translate(2px,-2px); }
         .rc-suc-root .rc-suc-cta:active { transform:scale(.98); }
 
-        .rc-suc-root .rc-suc-cta2 { display:inline-flex; align-items:center; justify-content:center; gap:9px;
-          padding:13px; border-radius:var(--rc-radius-button, 8px); font-family:var(--rc-fh); font-weight:600; font-size:14px;
-          background:none; border:1.5px solid var(--rc-ink); color:var(--rc-ink); cursor:pointer;
+        /* results button = a real ticket STUB (cut corner + left perforation, home language) */
+        .rc-suc-root .rc-suc-cta2 { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:9px;
+          min-height:46px; padding:0 16px 0 24px; font-family:var(--rc-fh); font-weight:600; font-size:14px;
+          background:var(--rc-receipt); border:1.5px solid var(--rc-ink); color:var(--rc-ink); cursor:pointer;
+          clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
           transition:transform .18s ease, border-color .2s ease, color .2s ease; }
+        .rc-suc-root .rc-suc-cta2::before { content:""; position:absolute; left:6px; top:9px; bottom:9px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-ink) 0 2px, transparent 2px 5px); }
         .rc-suc-root .rc-suc-cta2 svg { flex:none; transition:transform .2s ease; }
         .rc-suc-root .rc-suc-results:hover { color:var(--rc-accent-deep); border-color:var(--rc-accent-deep); transform:translateY(-2px); }
         .rc-suc-root .rc-suc-results:hover svg { transform:translateX(3px); }
@@ -443,6 +548,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root.rc-printing .rc-suc-strip   { animation-delay:.82s; }
         .rc-suc-root.rc-printing .rc-suc-barcode { animation-delay:.94s; }
         .rc-suc-root.rc-printing .rc-suc-ref     { animation-delay:1.02s; }
+        .rc-suc-root.rc-printing .rc-suc-qr      { animation-delay:1.08s; }
         .rc-suc-root.rc-printing .rc-suc-seal    { animation-delay:1.14s; }
         .rc-suc-root.rc-printing .rc-suc-stamp   { animation-delay:1.28s; }
         @keyframes rcPrintRow { from { opacity:0; transform:translateY(-8px); } }
@@ -473,6 +579,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           .rc-suc-root .rc-suc-ghost,
           .rc-suc-root .rc-suc-regtape,
           .rc-suc-root .rc-suc-chip,
+          .rc-suc-root .rc-suc-testprint,
           .rc-suc-root .rc-suc-tape--loose { display:none; }
         }
 
