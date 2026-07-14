@@ -244,6 +244,16 @@
    นี่คือจุดที่ฆ่าความเหมือน Blossom ได้เยอะสุดรองจาก spine)
 3. ธีมฟ้า/เจด โทนกระดาษเย็นลงเล็กน้อยโดย "ครีมอุ่น" เป็นแค่ธีมม่วง default — โอเคไหม
    (lock เดิมบอกกระดาษอุ่น; v2-R2 ตีความว่า lock = default ไม่ใช่ทุกธีม)
+4. **Theme lineup ใหม่ (จาก ADDENDUM+ruling):** กฎ forbidden-zone จับได้ว่าเจด
+   ชนโซนเขียว semantic และเหลืองเฉียดโซนส้ม → Fable เสนอ 4 ธีมใหม่: ม่วง FMS
+   (default คงเดิม) · หมึกน้ำเงิน 262 · ครามทะเล 210 · สำเนาถ่านดำ achromatic —
+   ยุบเหลือง+เจดทิ้ง โอเคไหม หรือให้เก็บโดยขยับ hue หนีโซน (ไม่ตอบ = ใช้ lineup ใหม่)
+
+> **ADDENDUM บังคับอ่าน:** `docs/ADDENDUM-RECEIPT-V2-PERF-THEME.md` (perf gates /
+> theme token 2 ชั้น / ฉากหย่อนหีบ / QR / mono rule) — **พร้อมส่วน FABLE IN-REPO
+> RULING ท้ายไฟล์** ที่แก้ 4 จุดซึ่ง advisor รอบนอกไม่เห็นโค้ดจริง (Lighthouse →
+> build gate เท่านั้น · A8 ลง palette chain เดิมห้ามสร้าง data-theme ใหม่ ·
+> lineup ธีมต้องคงม่วง FMS default · backdrop-filter topbar ต้องถอนใน v2-R1)
 
 ### PROMPT เปิด session หน้า (คัดลอกได้เลย)
 ```
