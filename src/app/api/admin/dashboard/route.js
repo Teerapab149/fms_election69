@@ -114,19 +114,31 @@ export async function POST(req) {
       return NextResponse.json({ message: "Success" });
     }
 
-    // กรณี: ล้างคะแนนทั้งหมด (Reset)
+    // กรณี: ล้างคะแนนทั้งหมด (Reset) — pre-election / dev reset only.
+    // NOTE (v2-SEC): this also empties the append-only ballot box + resets the
+    // hash chain to genesis so score/ballots/chain stay consistent. That delete
+    // needs DELETE on "Ballot", which the INSERT-only production app role does
+    // NOT have (scripts/sql/ballot-grants.sql) — by design a CERTIFIED election
+    // is not resettable through the app. In dev (grants not applied) it works.
     if (action === 'RESET_VOTES') {
       const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
       // 1. รีเซ็ต User ให้กลับเป็นยังไม่โหวต (เฉพาะนักศึกษาปี 1-4)
       await db.user.updateMany({
         where: { year: { in: validYears } },
-        data: { isVoted: false, candidateId: null }
+        data: { isVoted: false, votedAt: null }
       });
       // 2. รีเซ็ตคะแนนผู้สมัครเป็น 0
       await db.candidate.updateMany({
         data: { score: 0 }
       });
-      // 3. ปลดธง anonymized (กลับไปนับคะแนนสดจาก candidateId อีกครั้ง)
+      // 3. เคลียร์กล่องบัตร + รีเซ็ตโซ่กลับ genesis (ให้ reconcile/verify ตรงกัน)
+      await db.ballot.deleteMany({});
+      await db.chainHead.upsert({
+        where: { id: 1 },
+        update: { head: 'GENESIS', seq: 0 },
+        create: { id: 1, head: 'GENESIS', seq: 0 },
+      });
+      // 4. ปลดธง anonymized (กลับไปสถานะนับคะแนนสดตามปกติ)
       const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
       if (cfg?.globalConfig?.ballotsAnonymized) {
         await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...cfg.globalConfig, ballotsAnonymized: false } } });
@@ -134,12 +146,20 @@ export async function POST(req) {
       return NextResponse.json({ success: true, message: "Reset votes successfully for eligible students (Year 1-4)" });
     }
 
-    // กรณี: ลบข้อมูลการลงคะแนนรายบุคคล (Anonymize ballots — P0-6, ballot secrecy)
-    // เก็บ candidateId ไว้ระหว่างเลือกตั้งเพื่อความถูกต้อง แล้ว "freeze คะแนนรวมลง
-    // Candidate.score → ล้าง User.candidateId ทั้งหมด" หลังประกาศผล เพื่อไม่ให้เหลือ
-    // ร่องรอยว่าใครเลือกพรรคใด (isVoted ยังอยู่ เพื่อความถูกต้องของ turnout).
+    // กรณี: รับรอง/ปิดผลอย่างเป็นทางการ (Certify — v2-SEC re-semantics of ANONYMIZE_BALLOTS)
+    //
+    // ⚠️ v2-SEC: ballots are now UNLINKABLE BY CONSTRUCTION — a Ballot row has no
+    // userId and the choice is encrypted, so there is NO who-voted-for-whom link
+    // left to wipe (that was the old model's job). What this action does now:
+    //   • assert the box is closed + results published (unchanged guard)
+    //   • flip the `ballotsAnonymized` flag = the CERTIFICATION marker downstream
+    //     tools honour (e.g. reconcile refuses to --fix a certified DB).
+    // The per-party tally is Candidate.score, kept atomically at vote time — it is
+    // ALREADY the frozen record; there is nothing to re-count from a link column.
+    // (The residual coarse hourBucket on each Ballot cannot be stripped here: the
+    // production app role is INSERT-only on "Ballot". Removing it, if ever wanted,
+    // is a documented offline DBA step — see scripts/sql/ballot-grants.sql.)
     if (action === 'ANONYMIZE_BALLOTS') {
-      const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
       const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
       const mode = cfg?.systemMode || "AUTO";
       const { resolveElectionDates } = await import("../../../../utils/electionConfig");
@@ -151,33 +171,32 @@ export async function POST(req) {
         return NextResponse.json({ error: "ทำได้เฉพาะหลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น" }, { status: 400 });
       }
       if (cfg?.globalConfig?.ballotsAnonymized) {
-        return NextResponse.json({ message: "ข้อมูลถูกลบไปก่อนหน้านี้แล้ว" });
+        return NextResponse.json({ message: "รับรองผลไปก่อนหน้านี้แล้ว" });
       }
 
-      // 1) freeze คะแนนสุดท้ายลงคอลัมน์ score (นับจาก candidateId ก่อนล้าง)
-      const cands = await db.candidate.findMany({ select: { id: true } });
-      for (const c of cands) {
-        const n = await db.user.count({ where: { candidateId: c.id, year: { in: validYears } } });
-        await db.candidate.update({ where: { id: c.id }, data: { score: n } });
-      }
-      // 2) ล้าง link ใครเลือกพรรคใด (คง isVoted ไว้)
-      await db.user.updateMany({ where: { year: { in: validYears } }, data: { candidateId: null } });
-      // 3) ตั้งธง → results จะอ่านคะแนนจากคอลัมน์ score ที่ freeze ไว้แทน _count
+      // ตั้งธงรับรองผล → downstream tools (reconcile) ถือว่าคะแนนถูก freeze แล้ว
       await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...(cfg.globalConfig || {}), ballotsAnonymized: true } } });
 
-      return NextResponse.json({ success: true, message: "ลบข้อมูลการลงคะแนนรายบุคคลแล้ว — คะแนนรวมถูกบันทึกไว้ครบ" });
+      return NextResponse.json({ success: true, message: "รับรองผลเรียบร้อย — บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้ว และคะแนนรวมถูกบันทึกไว้ครบ" });
     }
 
-    // กรณี: ล้างข้อมูลพรรคทั้งหมด (Reset Candidates) 
+    // กรณี: ล้างข้อมูลพรรคทั้งหมด (Reset Candidates)
     if (action === 'RESET_CANDIDATES') {
       const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
       await db.candidate.updateMany({
         data: { score: 0 }
       });
-      // Also clear candidateId from users
+      // Also reset each voter's cast flag (no candidateId link exists anymore)
       await db.user.updateMany({
         where: { year: { in: validYears } },
-        data: { candidateId: null }
+        data: { isVoted: false, votedAt: null }
+      });
+      // Empty the ballot box + reset the chain so a rebuilt party list starts clean
+      await db.ballot.deleteMany({});
+      await db.chainHead.upsert({
+        where: { id: 1 },
+        update: { head: 'GENESIS', seq: 0 },
+        create: { id: 1, head: 'GENESIS', seq: 0 },
       });
       await db.member.deleteMany({});
       await db.candidate.deleteMany({});

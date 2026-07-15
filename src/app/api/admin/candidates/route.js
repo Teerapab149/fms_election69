@@ -579,14 +579,12 @@ export async function DELETE(req) {
     });
 
     await db.$transaction(async (tx) => {
-      await tx.user.updateMany({
-        where: { candidateId: target_id },
-        data: {
-          isVoted: false,
-          candidateId: null
-        }
-      });
-
+      // v2-SEC: ballots are anonymous + encrypted, so we can no longer identify
+      // (and un-vote) the users who chose this party — that link is gone by
+      // design. Deleting a party is therefore a PRE-ELECTION setup action; doing
+      // it after votes exist leaves this party's ballots orphaned in the box
+      // (they'd decrypt to a missing candidateId) and drops its score, which the
+      // chain audit will flag as ballots>score drift. The admin owns that choice.
       await tx.member.deleteMany({
         where: { candidateId: target_id }
       });

@@ -27,13 +27,14 @@ model User {
   year             String?
   yearStatus       String?
 
-  isVoted         Boolean  @default(false)
-  isFormCompleted Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  isAdmin         Boolean  @default(false)
-
-  candidateId Int?
-  candidate   Candidate? @relation(fields: [candidateId], references: [id])
+  isVoted         Boolean   @default(false)
+  votedAt         DateTime? // when THIS voter cast their ballot — their own
+  //                          non-secret data (drives the success receipt). No
+  //                          link to a Ballot row: which party they chose lives
+  //                          only inside the encrypted, unlinkable Ballot (v2-SEC).
+  isFormCompleted Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  isAdmin         Boolean   @default(false)
 
   authoredTemplates Template[] @relation("AuthoredTemplates")
 }
@@ -71,9 +72,41 @@ model Candidate {
   policies    Json?
 
   members Member[]
-  voters  User[]
 
   score Int @default(0)
+}
+
+// ============================================================
+// v2-SEC — anonymous, encrypted, tamper-evident ballot box (LOCKED "B+" 60e0de2)
+// ============================================================
+//
+// A Ballot carries NO userId and NO fine timestamp — it is structurally
+// unlinkable to the voter who cast it. `payload` is RSA-OAEP ciphertext of
+// {c: candidateId, n: nonce} under the election PUBLIC key; the private key
+// never exists on the server (dispute-only, offline). The tally the results
+// API serves is still Candidate.score (atomic increment) — losing the private
+// key loses only dispute-recount, never the election result.
+//
+// Every row is HMAC-chained (prevHash → rowHash) so a silent edit to any past
+// ballot breaks the chain and is detectable (scripts/verify-ballot-chain.js).
+// App DB role is INSERT-only on this table (scripts/sql/ballot-grants.sql) so
+// the app itself structurally cannot rewrite a cast ballot.
+model Ballot {
+  seq        Int    @id @default(autoincrement()) // chain order (residual risk accepted)
+  payload    String // base64 RSA-OAEP(sha256) of JSON {c: candidateId, n: nonce}
+  hourBucket String? // coarse "2569-02-06T09" at most — never a fine timestamp
+  prevHash   String // rowHash of seq-1 (genesis = "GENESIS")
+  rowHash    String // HMAC-SHA256(BALLOT_CHAIN_SECRET, prevHash|payload|seq)
+}
+
+// Single-row (id=1) tip of the ballot chain. The `UPDATE ... WHERE id=1` inside
+// the vote transaction takes a Postgres row lock that SERIALIZES concurrent
+// votes — this is what guarantees two simultaneous ballots still produce a
+// verifiable, gap-free chain. Seeded with head="GENESIS", seq=0.
+model ChainHead {
+  id   Int    @id @default(1)
+  head String @default("GENESIS")
+  seq  Int    @default(0)
 }
 
 // Append-only trail of admin actions (mode changes, reset, anonymize, etc.) for

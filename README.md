@@ -110,6 +110,37 @@ npm run e2e:gate   # Playwright: vote flow + invariants
 npm run build      # ต้อง GREEN ก่อน deploy เสมอ (หยุด dev server ก่อน — Windows .next lock)
 ```
 
+## 🔐 บัตรลงคะแนนแบบเข้ารหัส + Key Ceremony (v2-SEC)
+
+บัตรทุกใบถูกเก็บใน `Ballot` แบบ **ไม่มี userId + เข้ารหัส + ต่อ hash chain** — โครงสร้าง
+กันไม่ให้รู้ว่าใครเลือกพรรคไหน และตรวจจับการแก้บัตรย้อนหลังได้ (ดู
+`prisma/migrations/*_v2_sec_anonymous_ballots`, `src/lib/ballotCrypto.js`,
+`src/lib/ballotChain.js`)
+
+**ทำ 1 ครั้งต่อปีการเลือกตั้ง (บนเครื่อง offline ที่เชื่อถือได้):**
+
+```bash
+node scripts/generate-election-keys.js   # พิมพ์คู่กุญแจ + chain secret ออก stdout เท่านั้น
+```
+
+- **private key** → พิมพ์ลงกระดาษ แบ่งเก็บ (อจ.ที่ปรึกษา + ประธานสโมสร) — **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo**
+  ใช้เฉพาะตอนมีข้อพิพาท (`scripts/decrypt-recount.js --key <path>` แบบ offline) · กุญแจหาย =
+  เสียแค่ dispute-recount ไม่เสียผลเลือกตั้ง (tally จริง = `Candidate.score`)
+- **public key** → ตั้งเป็น env `ELECTION_BALLOT_PUBLIC_KEY` บนเซิร์ฟเวอร์
+- **chain secret** → ตั้งเป็น env `BALLOT_CHAIN_SECRET` บนเซิร์ฟเวอร์ + เก็บสำเนานอกเครื่อง
+- ถ้า env กุญแจไม่ครบ → `/api/vote` **fail closed** (โหวตไม่ได้ ไม่มีการเก็บ plaintext)
+
+**ระหว่าง/หลังเลือกตั้ง:**
+
+```bash
+node scripts/verify-ballot-chain.js      # ตรวจโซ่ทั้งตาราง + score/turnout ตรงกันไหม
+node scripts/export-chain-head.js        # เก็บปลายโซ่ไว้นอกเครื่องเป็นระยะ (cron)
+node scripts/reconcile-scores.js         # audit ก่อนเปิดผล (runbook §5.1)
+```
+
+Production ควรรัน `scripts/sql/ballot-grants.sql` เพื่อให้ role ของแอป **INSERT-only บน `Ballot`**
+(แก้/ลบบัตรไม่ได้เชิงโครงสร้าง)
+
 ## 🚢 Deploy
 
 Docker + subpath `/fms-ovs` · **ก่อน deploy จริงให้ไล่ checklist ใน

@@ -159,23 +159,22 @@ async function adminLogin() {
   return `admin_token=${token}`;
 }
 
-/** Reverse every e2e mutation: decrement the score each e2e ballot added, then
- *  delete the e2e users. Idempotent + also sweeps leftovers from a crashed run. */
+/** Delete the e2e users. Idempotent + sweeps leftovers from a crashed run.
+ *
+ *  ⚠️ v2-SEC CHANGE (flagged for owner): ballots are now anonymous + append-only
+ *  (no User.candidateId link, and the app role cannot DELETE from "Ballot"), so
+ *  this can no longer reverse the per-candidate score by walking each e2e user's
+ *  ballot. An e2e vote leaves behind: +1 chained Ballot and +1 Candidate.score
+ *  that this teardown does NOT undo — so after a run #ballots/#score stay in sync
+ *  with each other but exceed #isVoted once the e2e users are deleted (the
+ *  reconcile "#ballots==#voted" check would report drift). The right long-term
+ *  fix is a suite-level snapshot/restore of "Ballot" + "ChainHead" + scores (or a
+ *  disposable test DB); until the owner picks one, prefer re-seeding the dev DB
+ *  after an e2e run rather than trusting reconcile on it. */
 async function cleanupE2EUsers() {
   const db = prisma();
-  const voters = await db.user.findMany({
-    where: { studentId: { startsWith: E2E_PREFIX }, isVoted: true, candidateId: { not: null } },
-    select: { candidateId: true },
-  });
-  const byCandidate = {};
-  for (const v of voters) byCandidate[v.candidateId] = (byCandidate[v.candidateId] || 0) + 1;
-  for (const [cid, n] of Object.entries(byCandidate)) {
-    await db.candidate
-      .update({ where: { id: Number(cid) }, data: { score: { decrement: n } } })
-      .catch(() => {}); // candidate may have been deleted between runs — ignore
-  }
   const del = await db.user.deleteMany({ where: { studentId: { startsWith: E2E_PREFIX } } });
-  return { deleted: del.count, scoreReversed: byCandidate };
+  return { deleted: del.count, scoreReversed: null };
 }
 
 module.exports = {

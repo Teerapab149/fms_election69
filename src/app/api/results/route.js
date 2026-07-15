@@ -57,14 +57,15 @@ export async function GET(request) {
 
     const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
     // Per-party tally = Candidate.score, the single source of truth (P2,
-    // 2026-06-12). The vote API maintains it atomically with the ballot claim
-    // (P0-2), RESET_VOTES zeroes it, and ANONYMIZE_BALLOTS re-freezes it before
-    // wiping candidateId (P0-6) — so reads are identical before and after
-    // anonymize. scripts/reconcile-scores.js audits score against the ballots;
-    // run it before revealing results (runbook §5.1). Counting ballots live here
-    // (the old `_count.voters` with a year filter) silently DROPPED legitimate
-    // votes whenever a voter's `year` changed after casting (e.g. the yearly
-    // student import) — score counts what was cast.
+    // 2026-06-12). The vote API maintains it atomically with each ballot append
+    // (P0-2 + v2-SEC), and RESET_VOTES zeroes it. Under v2-SEC ballots are
+    // anonymous + encrypted, so results NEVER reads a per-voter link — score is
+    // the frozen record by construction. scripts/reconcile-scores.js audits
+    // score against the (chained) ballot box; run it before revealing results
+    // (runbook §5.1). Counting ballots live here (the old `_count.voters` with a
+    // year filter) silently DROPPED legitimate votes whenever a voter's `year`
+    // changed after casting (e.g. the yearly student import) — score counts what
+    // was cast.
     const allCandidatesRaw = await db.candidate.findMany({
       include: { members: true }
     });
