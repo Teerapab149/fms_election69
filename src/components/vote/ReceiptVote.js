@@ -289,7 +289,7 @@ export default function ReceiptVote({
       <div className="rc-vote-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span>ลงคะแนน · CAST YOUR VOTE</span>
+          <span><span className="rc-th">ลงคะแนน</span> · CAST YOUR VOTE</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -334,10 +334,10 @@ export default function ReceiptVote({
                   index={pad2(p.number)}
                   number={p.number}
                   logoUrl={p.logoUrl}
-                  kick={<>พรรคหมายเลข <b>{p.number}</b></>}
+                  kick={<><span className="rc-th">พรรคหมายเลข</span> <b>{p.number}</b></>}
                   name={p.name}
                   slogan={p.slogan || null}
-                  stat={p.members?.length ? `ทีมงาน ${p.members.length} คน` : null}
+                  stat={p.members?.length ? <><span className="rc-th">ทีมงาน</span> {p.members.length} <span className="rc-th">คน</span></> : null}
                   selected={selectedPartyId === p.id}
                   onSelect={() => onSelect(p.id)}
                   onDetails={() => onViewDetails(p)}
@@ -349,7 +349,7 @@ export default function ReceiptVote({
                   index={null}
                   number={0}
                   abstain
-                  kick="งดออกเสียง · ABSTAIN"
+                  kick={<><span className="rc-th">งดออกเสียง</span> · ABSTAIN</>}
                   name="ไม่ประสงค์ลงคะแนน"
                   slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                   selected={abstain.id === selectedPartyId}
@@ -358,7 +358,7 @@ export default function ReceiptVote({
               )}
             </ul>
 
-            <div className="rc-ballot-foot" aria-hidden="true">◆ ◆ ◆ หนึ่งคน หนึ่งเสียง ◆ ◆ ◆</div>
+            <div className="rc-ballot-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">หนึ่งคน หนึ่งเสียง</span> ◆ ◆ ◆</div>
           </div>
         </section>
       </div>
@@ -368,7 +368,7 @@ export default function ReceiptVote({
         <div className="rc-vbar__perf" aria-hidden="true" />
         <div className="rc-vbar__in">
           <div className="rc-vbar__sel">
-            <span className="rc-vbar__lab">การเลือกของคุณ · YOUR SELECTION</span>
+            <span className="rc-vbar__lab"><span className="rc-th">การเลือกของคุณ</span> · YOUR SELECTION</span>
             {selection ? (
               <span className={`rc-vbar__val${selection.abstain ? " is-abstain" : ""}`}>
                 <span className="rc-vbar__dot" aria-hidden="true" />{selection.name}
@@ -408,6 +408,9 @@ export default function ReceiptVote({
         .rc-vote-root [role="radio"]:focus-visible { outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
         /* mono utility — ONLY Latin / digits / symbols ever wear it (A10.3) */
         .rc-vote-root .rc-mono { font-family:var(--rc-fm); }
+        /* Thai-in-a-mono-line utility — the Thai half of a bilingual mono label wears
+           Chakra Petch so it never falls back (Space Mono has no Thai glyphs, C4) */
+        .rc-vote-root .rc-th { font-family:var(--rc-fr) !important; }
 
         /* ---- topbar "head of the desk" (A3 / ruling #4: NO backdrop-filter — opaque
            desk fill + a perforated hairline; stub-nav skin ported from ReceiptHome) ---- */

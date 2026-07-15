@@ -46,6 +46,10 @@ import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfi
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
+// wrap the THAI runs of a runtime string in Chakra spans (A10.3 / ruling C4 — Space
+// Mono has no Thai glyphs). Font-family only: text bytes + order stay identical.
+const thaiSafe = (s) => String(s ?? "").split(/([฀-๿]+)/).map((part, i) =>
+  /[฀-๿]/.test(part) ? <span className="rc-th" key={i}>{part}</span> : part);
 const CHART_FONT = "var(--font-chakra),'Chakra Petch',var(--font-plex-thai),system-ui,sans-serif";
 
 // mix two #rrggbb colours — `wa` is the weight of `a` (0..1), the rest is `b`. Used
@@ -68,7 +72,7 @@ function RcTooltip({ active, payload, label }) {
   return (
     <div className="rc-tip">
       <span className="rc-tip__name">{name}</span>
-      <span className="rc-tip__val">{(p?.value || 0).toLocaleString()} คน</span>
+      <span className="rc-tip__val">{(p?.value || 0).toLocaleString()} <span className="rc-th">คน</span></span>
     </div>
   );
 }
@@ -112,7 +116,9 @@ export default function ReceiptResults({
   const pctOf = (c) => (totalVotes > 0 ? ((c?.score || 0) / totalVotes) * 100 : 0);
   const subOf = (c) => {
     const n = parseInt(c.number);
-    return n > 0 ? `PARTY NO. ${pad2(c.number)}` : (n === 0 ? "ABSTAIN · งดออกเสียง" : "DISAPPROVE · ไม่รับรอง");
+    return n > 0 ? `PARTY NO. ${pad2(c.number)}` : (n === 0
+      ? <>ABSTAIN · <span className="rc-th">งดออกเสียง</span></>
+      : <>DISAPPROVE · <span className="rc-th">ไม่รับรอง</span></>);
   };
 
   // winner = highest score in the eligible pool (parties, plus DISAPPROVE only in a
@@ -161,17 +167,17 @@ export default function ReceiptResults({
       <span className="rc-rnote__pin rc-rnote__pin--r" aria-hidden="true" />
       <div className="rc-rnote__cap"><span className="rc-mono">REGISTER</span><span>บันทึกผู้ใช้สิทธิ์</span></div>
       <div className="rc-rfig">
-        <span className="rc-rfig__k">{live && <span className="rc-live-dot" aria-hidden="true" />}ใช้สิทธิ์แล้ว · TOTAL VOTES</span>
-        <span className="rc-rfig__n">{fmt(totalVotes)}<small>เสียง</small></span>
+        <span className="rc-rfig__k">{live && <span className="rc-live-dot" aria-hidden="true" />}<span className="rc-th">ใช้สิทธิ์แล้ว</span> · TOTAL VOTES</span>
+        <span className="rc-rfig__n">{fmt(totalVotes)}<small><span className="rc-th">เสียง</span></small></span>
       </div>
       <div className="rc-rfig">
-        <span className="rc-rfig__k">อัตราการใช้สิทธิ์ · TURNOUT</span>
+        <span className="rc-rfig__k"><span className="rc-th">อัตราการใช้สิทธิ์</span> · TURNOUT</span>
         <span className="rc-rfig__n">{turnout.toFixed(1)}<small>%</small></span>
       </div>
       <div className="rc-rfig__bar" aria-hidden="true"><span style={{ width: `${Math.min(100, turnout)}%` }} /></div>
       <div className="rc-rfig">
-        <span className="rc-rfig__k">ผู้มีสิทธิ์ · ELIGIBLE</span>
-        <span className="rc-rfig__n">{fmt(totalEligible)}<small>คน</small></span>
+        <span className="rc-rfig__k"><span className="rc-th">ผู้มีสิทธิ์</span> · ELIGIBLE</span>
+        <span className="rc-rfig__n">{fmt(totalEligible)}<small><span className="rc-th">คน</span></small></span>
       </div>
     </div>
   );
@@ -192,7 +198,7 @@ export default function ReceiptResults({
       <div className="rc-res-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span>ผลคะแนน · RESULTS</span>
+          <span><span className="rc-th">ผลคะแนน</span> · RESULTS</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -226,7 +232,7 @@ export default function ReceiptResults({
 
               <ol className="rc-standings">
                 <li className="rc-standings-head" aria-hidden="true">
-                  <span>ITEM · รายการ</span><span>คะแนน · VOTES</span>
+                  <span>ITEM · <span className="rc-th">รายการ</span></span><span><span className="rc-th">คะแนน</span> · VOTES</span>
                 </li>
                 {candidates.map((c, i) => {
                   const n = parseInt(c.number);
@@ -248,7 +254,7 @@ export default function ReceiptResults({
                         <span className="rc-srow__name">{c.name}</span>
                       </span>
                       <span className="rc-srow__data">
-                        <span className="rc-srow__num">{fmt(c.score || 0)}<small>เสียง</small></span>
+                        <span className="rc-srow__num">{fmt(c.score || 0)}<small><span className="rc-th">เสียง</span></small></span>
                         <span className="rc-srow__track" aria-hidden="true"><span style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%` }} /></span>
                         <span className="rc-srow__pct">{pct.toFixed(1)}%</span>
                       </span>
@@ -265,7 +271,7 @@ export default function ReceiptResults({
                   );
                 })}
               </ol>
-              <div className="rc-standings-foot" aria-hidden="true">◆ ◆ ◆ สรุปผลคะแนน ◆ ◆ ◆</div>
+              <div className="rc-standings-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">สรุปผลคะแนน</span> ◆ ◆ ◆</div>
             </section>
 
             {/* ---- RIGHT: scatter rail — turnout note + holo-taped report cards ---- */}
@@ -277,7 +283,7 @@ export default function ReceiptResults({
                   {byGender.length > 0 && (
                     <div className="rc-report">
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
-                      <div className="rc-panel__cap"><span>เพศ · BY GENDER</span><em>§ 01</em></div>
+                      <div className="rc-panel__cap"><span><span className="rc-th">เพศ</span> · BY GENDER</span><em>§ 01</em></div>
                       <div className="rc-donut">
                         <ResponsiveContainer width="100%" height={230}>
                           <PieChart>
@@ -289,7 +295,7 @@ export default function ReceiptResults({
                             <Tooltip content={<RcTooltip />} />
                           </PieChart>
                         </ResponsiveContainer>
-                        <div className="rc-donut__c"><strong>{genderTotal.toLocaleString()}</strong><span>คน</span></div>
+                        <div className="rc-donut__c"><strong>{genderTotal.toLocaleString()}</strong><span><span className="rc-th">คน</span></span></div>
                       </div>
                       <div className="rc-legend">
                         {byGender.map((g, i) => (
@@ -304,7 +310,7 @@ export default function ReceiptResults({
                   {byYear.length > 0 && (
                     <div className="rc-report">
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
-                      <div className="rc-panel__cap"><span>ชั้นปี · BY YEAR</span><em>§ 02</em></div>
+                      <div className="rc-panel__cap"><span><span className="rc-th">ชั้นปี</span> · BY YEAR</span><em>§ 02</em></div>
                       <ResponsiveContainer width="100%" height={230}>
                         <BarChart data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke={t.line} />
@@ -322,7 +328,7 @@ export default function ReceiptResults({
                   {byMajor.length > 0 && (
                     <div className="rc-report rc-report--wide">
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
-                      <div className="rc-panel__cap"><span>สาขา · BY MAJOR</span><em>§ 03</em></div>
+                      <div className="rc-panel__cap"><span><span className="rc-th">สาขา</span> · BY MAJOR</span><em>§ 03</em></div>
                       <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
                         <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                           <CartesianGrid horizontal={false} stroke={t.line} />
@@ -349,7 +355,7 @@ export default function ReceiptResults({
                 {/* holo-foil security strip stamped SEALED across the slip */}
                 <div className="rc-seal-strip" aria-hidden="true">
                   <span className="rc-foil" />
-                  <span className="rc-seal-strip__txt">SEALED · ปิดผนึก · SEALED · ปิดผนึก</span>
+                  <span className="rc-seal-strip__txt">SEALED · <span className="rc-th">ปิดผนึก</span> · SEALED · <span className="rc-th">ปิดผนึก</span></span>
                 </div>
                 {/* the string tie that keeps the roll shut (SVG, decorative) */}
                 <svg className="rc-seal-tie" viewBox="0 0 400 60" aria-hidden="true" focusable="false" preserveAspectRatio="none">
@@ -359,7 +365,7 @@ export default function ReceiptResults({
                   <path className="rc-seal-tie__bow" d="M200 30 C176 12, 160 20, 172 32 C160 44, 176 50, 200 30" />
                   <path className="rc-seal-tie__bow" d="M200 30 C224 12, 240 20, 228 32 C240 44, 224 50, 200 30" />
                 </svg>
-                <div className="rc-seal-cap"><span className="rc-seal-cap__dia" aria-hidden="true" />ปิดผนึกไว้ · EMBARGOED</div>
+                <div className="rc-seal-cap"><span className="rc-seal-cap__dia" aria-hidden="true" /><span className="rc-th">ปิดผนึกไว้</span> · EMBARGOED</div>
                 <h1 className="rc-seal-head">ผลคะแนนถูกผนึกไว้</h1>
                 <p className="rc-seal-deck">
                   {singleParty
@@ -367,7 +373,7 @@ export default function ReceiptResults({
                     : "ผลคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์จะเปิดเผยพร้อมกันเมื่อปิดหีบเลือกตั้ง เพื่อความเป็นธรรมกับทุกพรรค"}
                 </p>
                 <div className="rc-perf" aria-hidden="true" />
-                <div className="rc-seal-note">{lockNote}</div>
+                <div className="rc-seal-note">{thaiSafe(lockNote)}</div>
                 <div className="rc-seal-foot" aria-hidden="true">◆ {faculty} ELECTION{calYear !== "" ? ` · ${calYear}` : ""} ◆</div>
                 {/* rolled-up bottom lip — the receipt is still a wound coil */}
                 <div className="rc-seal-roll" aria-hidden="true" />
@@ -398,6 +404,9 @@ export default function ReceiptResults({
           outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
         /* mono utility — ONLY Latin / digits / symbols ever wear it (A10.3) */
         .rc-res-root .rc-mono { font-family:var(--rc-fm); }
+        /* Thai-in-a-mono-line utility — the Thai half of a bilingual mono label wears
+           Chakra Petch so it never falls back (Space Mono has no Thai glyphs, C4) */
+        .rc-res-root .rc-th { font-family:var(--rc-fr) !important; }
 
         /* ---- topbar "head of the desk" (A3 / ruling #4: NO backdrop-filter — opaque
            desk fill + a perforated hairline; ticket-stub nav ported from ReceiptHome) ---- */

@@ -66,7 +66,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
       <div className="rc-cand-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span>ผู้สมัคร · CANDIDATES</span>
+          <span><span className="rc-th">ผู้สมัคร</span> · CANDIDATES</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -78,13 +78,13 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
                 <span className="rc-index-serial rc-mono">INDEX · No. {prefix} {number} · {pad2(count)}</span>
                 <span className="rc-index-eyebrow rc-mono">◆ {faculty} ELECTION{calYear !== "" ? ` · ${calYear}` : ""} ◆</span>
                 <h1 className="rc-index-title">ผู้สมัคร</h1>
-                <div className="rc-index-count"><strong>{pad2(count)}</strong><span>พรรค<br />PARTIES</span></div>
+                <div className="rc-index-count"><strong>{pad2(count)}</strong><span><span className="rc-th">พรรค</span><br />PARTIES</span></div>
                 <p className="rc-index-deck">เลือกพรรคเพื่อเปิดอ่านวิสัยทัศน์ นโยบาย และรายชื่อทีมงานทั้งหมด ก่อนตัดสินใจกาบัตร</p>
               </div>
               <div className="rc-perf" aria-hidden="true" />
 
               <ol className="rc-index-list">
-                <li className="rc-index-head" aria-hidden="true"><span>NO.</span><span>พรรค · PARTY</span></li>
+                <li className="rc-index-head" aria-hidden="true"><span>NO.</span><span><span className="rc-th">พรรค</span> · PARTY</span></li>
                 {parties.map((p, i) => (
                   <li className="rc-index-row" key={p.id || i}>
                     <a className="rc-index-link" href={`#rc-flyer-${p.number}`}>
@@ -98,7 +98,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
                   </li>
                 ))}
               </ol>
-              <div className="rc-index-foot" aria-hidden="true">◆ ◆ ◆ สิ้นสุดสารบบ ◆ ◆ ◆</div>
+              <div className="rc-index-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">สิ้นสุดสารบบ</span> ◆ ◆ ◆</div>
             </aside>
 
             {/* ---- RIGHT: the party FLYERS scattered on the desk ---- */}
@@ -124,13 +124,13 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
                             <span className="rc-flyer__logo-ph" aria-hidden="true">{pad2(p.number)}</span>
                           )}
                         </span>
-                        <span className="rc-flyer__no rc-mono">พรรคหมายเลข<b>{pad2(p.number)}</b></span>
+                        <span className="rc-flyer__no rc-mono"><span className="rc-th">พรรคหมายเลข</span><b>{pad2(p.number)}</b></span>
                       </span>
 
                       <span className="rc-flyer__body">
                         <span className="rc-flyer__name">{p.name}</span>
                         {p.slogan && <span className="rc-flyer__slogan">{p.slogan}</span>}
-                        <span className="rc-flyer__stat">{memberCount > 0 ? `ทีมงาน ${memberCount} คน` : "ทีมงานกำลังปรับปรุงข้อมูล"}</span>
+                        <span className="rc-flyer__stat">{memberCount > 0 ? <><span className="rc-th">ทีมงาน</span> {memberCount} <span className="rc-th">คน</span></> : <span className="rc-th">ทีมงานกำลังปรับปรุงข้อมูล</span>}</span>
                       </span>
 
                       <span className="rc-flyer__cta">เปิดแฟ้มพรรค<span className="rc-flyer__arrow" aria-hidden="true"> →</span></span>
@@ -181,6 +181,9 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
           outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
         /* mono utility — ONLY Latin / digits / symbols ever wear it (A10.3) */
         .rc-cand-root .rc-mono { font-family:var(--rc-fm); }
+        /* Thai-in-a-mono-line utility — the Thai half of a bilingual mono label wears
+           Chakra Petch so it never falls back (Space Mono has no Thai glyphs, C4) */
+        .rc-cand-root .rc-th { font-family:var(--rc-fr) !important; }
 
         /* ---- topbar "head of the desk" (A3 / ruling #4: NO backdrop-filter — opaque
            desk fill + a perforated hairline; ticket-stub nav ported from ReceiptHome) ---- */

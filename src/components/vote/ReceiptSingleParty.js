@@ -178,13 +178,13 @@ export default function ReceiptSingleParty({
       <div className="rc-single-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span>ลงคะแนน · SINGLE BALLOT</span>
+          <span><span className="rc-th">ลงคะแนน</span> · SINGLE BALLOT</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== party feature masthead ===== */}
         <header className="rc-sp-head">
-          <span className="rc-sp-kick">◆ พรรคเดียวที่ลงสมัคร · THE ONLY PARTY ◆</span>
+          <span className="rc-sp-kick">◆ <span className="rc-th">พรรคเดียวที่ลงสมัคร</span> · THE ONLY PARTY ◆</span>
           <div className="rc-sp-hero">
             <span className="rc-sp-logo">
               {logo ? (
@@ -194,7 +194,7 @@ export default function ReceiptSingleParty({
               )}
             </span>
             <div className="rc-sp-title">
-              <span className="rc-sp-num">พรรคหมายเลข <b>{no}</b></span>
+              <span className="rc-sp-num"><span className="rc-th">พรรคหมายเลข</span> <b>{no}</b></span>
               <h1 className="rc-sp-word">{party?.name || "พรรค"}</h1>
               {party?.slogan && <p className="rc-sp-slogan">“{party.slogan}”</p>}
             </div>
@@ -206,16 +206,16 @@ export default function ReceiptSingleParty({
 
         {/* voter register strip — mono, register-tape voice (mirrors ReceiptVote) */}
         <div className="rc-vvoter">
-          <span className="rc-vvoter__row"><b>ผู้มีสิทธิ์</b>{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
-          <span className="rc-vvoter__row"><b>รหัส</b>{sid}</span>
-          <span className="rc-vvoter__row"><b>บัตร</b>1 พรรค</span>
+          <span className="rc-vvoter__row"><b><span className="rc-th">ผู้มีสิทธิ์</span></b><span className="rc-th">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
+          <span className="rc-vvoter__row"><b><span className="rc-th">รหัส</span></b>{sid}</span>
+          <span className="rc-vvoter__row"><b><span className="rc-th">บัตร</span></b>1 <span className="rc-th">พรรค</span></span>
         </div>
 
         {/* group cover — framed like a print taped to the desk (never cropped hard) */}
         {cover && (
           <figure className="rc-sp-cover">
             <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption>ภาพหมู่พรรค · GROUP PHOTO</figcaption>
+            <figcaption><span className="rc-th">ภาพหมู่พรรค</span> · GROUP PHOTO</figcaption>
           </figure>
         )}
 
@@ -236,7 +236,7 @@ export default function ReceiptSingleParty({
             <div className="rc-sp-sec__head">
               <span className="rc-sp-sec__kick">KEY POLICIES</span>
               <h2 className="rc-sp-sec__title">นโยบายเด่น</h2>
-              <span className="rc-sp-sec__count">{pad2(policies.length)} ข้อ</span>
+              <span className="rc-sp-sec__count">{pad2(policies.length)} <span className="rc-th">ข้อ</span></span>
             </div>
             <ol className="rc-sp-plist">
               {policies.map((p, i) => (
@@ -252,7 +252,7 @@ export default function ReceiptSingleParty({
             <div className="rc-sp-sec__head">
               <span className="rc-sp-sec__kick">THE TEAM</span>
               <h2 className="rc-sp-sec__title">ทีมผู้สมัคร</h2>
-              <span className="rc-sp-sec__count">{pad2(members.length)} คน</span>
+              <span className="rc-sp-sec__count">{pad2(members.length)} <span className="rc-th">คน</span></span>
             </div>
             <div className="rc-sp-team">
               {members.map((m, i) => {
@@ -278,8 +278,8 @@ export default function ReceiptSingleParty({
           <div className="rc-ballot-ghost" aria-hidden="true"><span>{prefix} {number} ✓</span></div>
           <div className="rc-ballot-sheet">
             <div className="rc-ballot-head">
-              <span className="rc-ballot-head__l">การตัดสินใจ · YOUR DECISION</span>
-              <span className="rc-ballot-head__r">หนึ่งคน · หนึ่งเสียง</span>
+              <span className="rc-ballot-head__l"><span className="rc-th">การตัดสินใจ</span> · YOUR DECISION</span>
+              <span className="rc-ballot-head__r"><span className="rc-th">หนึ่งคน</span> · <span className="rc-th">หนึ่งเสียง</span></span>
             </div>
             <div className="rc-perf" aria-hidden="true" />
 
@@ -312,7 +312,7 @@ export default function ReceiptSingleParty({
               <StampRow
                 tone="approve"
                 glyph="✓"
-                kick="เห็นชอบ · APPROVE"
+                kick={<><span className="rc-th">เห็นชอบ</span> · APPROVE</>}
                 name="รับรอง"
                 note={`เห็นชอบให้ ${party?.name || "พรรคนี้"} ดำรงตำแหน่ง`}
                 selected={kind === "approve"}
@@ -322,7 +322,7 @@ export default function ReceiptSingleParty({
                 <StampRow
                   tone="disapprove"
                   glyph="✕"
-                  kick="ไม่เห็นชอบ · DISAPPROVE"
+                  kick={<><span className="rc-th">ไม่เห็นชอบ</span> · DISAPPROVE</>}
                   name="ไม่รับรอง"
                   note="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
                   selected={kind === "disapprove"}
@@ -333,7 +333,7 @@ export default function ReceiptSingleParty({
                 <StampRow
                   tone="abstain"
                   glyph="—"
-                  kick="งดออกเสียง · ABSTAIN"
+                  kick={<><span className="rc-th">งดออกเสียง</span> · ABSTAIN</>}
                   name="งดออกเสียง"
                   note="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                   selected={kind === "abstain"}
@@ -342,7 +342,7 @@ export default function ReceiptSingleParty({
               )}
             </ul>
 
-            <div className="rc-ballot-foot" aria-hidden="true">◆ ◆ ◆ กดตราปั๊มเพื่อเลือก ◆ ◆ ◆</div>
+            <div className="rc-ballot-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">กดตราปั๊มเพื่อเลือก</span> ◆ ◆ ◆</div>
           </div>
         </section>
       </div>
@@ -365,7 +365,7 @@ export default function ReceiptSingleParty({
         <div className="rc-vbar__perf" aria-hidden="true" />
         <div className="rc-vbar__in">
           <div className="rc-vbar__sel">
-            <span className="rc-vbar__lab">การเลือกของคุณ · YOUR SELECTION</span>
+            <span className="rc-vbar__lab"><span className="rc-th">การเลือกของคุณ</span> · YOUR SELECTION</span>
             {selectionLabel ? (
               <span className={`rc-vbar__val rc-vbar__val--${kind}`}>
                 <span className="rc-vbar__dot" aria-hidden="true" />{selectionLabel}
@@ -426,6 +426,9 @@ export default function ReceiptSingleParty({
         .rc-single-root [role="radio"]:focus-visible { outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
         /* mono utility — ONLY Latin / digits / symbols ever wear it (A10.3) */
         .rc-single-root .rc-mono { font-family:var(--rc-fm); }
+        /* Thai-in-a-mono-line utility — the Thai half of a bilingual mono label wears
+           Chakra Petch so it never falls back (Space Mono has no Thai glyphs, C4) */
+        .rc-single-root .rc-th { font-family:var(--rc-fr) !important; }
 
         /* ---- topbar "head of the desk" (A3 / ruling #4: NO backdrop-filter — opaque
            desk fill + a perforated hairline; stub-nav skin ported from ReceiptHome) ---- */

@@ -48,6 +48,11 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 const TH_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 const HEX = "0123456789ABCDEFGHJKMNPQRTUVWXY";
 
+// wrap the THAI runs of a runtime string in Chakra spans (A10.3 / ruling C4 — Space
+// Mono has no Thai glyphs). Font-family only: text bytes + order stay identical.
+const thaiSafe = (s) => String(s ?? "").split(/([฀-๿]+)/).map((part, i) =>
+  /[฀-๿]/.test(part) ? <span className="rc-th" key={i}>{part}</span> : part);
+
 function randRefGroup() {
   let s = "";
   for (let i = 0; i < 4; i++) s += HEX[Math.floor(Math.random() * HEX.length)];
@@ -104,7 +109,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
       <div className="rc-suc-wrap">
         {/* LEFT (desktop) / TOP (mobile) — the display headline block */}
         <header className="rc-suc-headline">
-          <div className="rc-suc-hl-eyebrow">◆ บันทึกคะแนนแล้ว · BALLOT RECORDED ◆</div>
+          <div className="rc-suc-hl-eyebrow">◆ <span className="rc-th">บันทึกคะแนนแล้ว</span> · BALLOT RECORDED ◆</div>
           <div className="rc-suc-display">
             <span className="rc-suc-display-1">เสียงของคุณ</span>
             <span className="rc-suc-display-2">ถูกนับแล้ว</span>
@@ -127,7 +132,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <div className="rc-suc-regtape"><span>0142 · 0938 · 1204 · 0071 · 0559</span></div>
             {/* the ballot STUB — tucked under the receipt's lower-left, same ref */}
             <div className="rc-suc-stub">
-              <div className="rc-suc-stub-h">ต้นขั้ว · STUB No.</div>
+              <div className="rc-suc-stub-h"><span className="rc-th">ต้นขั้ว</span> · STUB No.</div>
               <div className="rc-suc-stub-ref">{stubRef}</div>
             </div>
             {/* holo tape strips — one pins the stub, one loose on the desk */}
@@ -137,7 +142,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <span className="rc-suc-chip"><span className="rc-foil rc-foil--conic" /></span>
           </div>
 
-          <div className="rc-suc-eyebrow">◆ กำลังพิมพ์ใบเสร็จ · printing ◆</div>
+          <div className="rc-suc-eyebrow">◆ <span className="rc-th">กำลังพิมพ์ใบเสร็จ</span> · printing ◆</div>
 
           {/* the ballot-printer head + slot */}
           <div className="rc-suc-machine" aria-hidden="true">
@@ -152,19 +157,19 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <h1 className="rc-suc-pr rc-suc-title">บันทึกคะแนนแล้ว</h1>
             <div className="rc-suc-pr rc-suc-sub">BALLOT RECORDED</div>
 
-            <div className="rc-suc-pr rc-suc-line"><span className="rc-suc-k">วันที่ / DATE</span><b>{stamp?.date || "—"}</b></div>
+            <div className="rc-suc-pr rc-suc-line"><span className="rc-suc-k">วันที่ / DATE</span><b>{thaiSafe(stamp?.date || "—")}</b></div>
             <div className="rc-suc-pr rc-suc-line"><span className="rc-suc-k">เวลา / TIME</span><b>{stamp?.time || "—"}</b></div>
 
             {/* the CHOICE — rendered exactly once, ephemeral */}
             <div className="rc-suc-pr rc-suc-pick">
-              <div className="rc-suc-pick-lbl">ตัวเลือกของคุณ · your choice (แสดงครั้งเดียว)</div>
+              <div className="rc-suc-pick-lbl"><span className="rc-th">ตัวเลือกของคุณ</span> · your choice (<span className="rc-th">แสดงครั้งเดียว</span>)</div>
               <div className="rc-suc-pick-val">{choiceText}</div>
             </div>
 
             {/* holographic security strip */}
             <div className="rc-suc-pr rc-suc-strip">
               <span className="rc-foil" aria-hidden="true" />
-              <span className="rc-suc-strip-t">Security · ของแท้</span>
+              <span className="rc-suc-strip-t">Security · <span className="rc-th">ของแท้</span></span>
             </div>
 
             {/* decorative barcode — encodes NOTHING (pure CSS) */}
@@ -189,7 +194,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             </div>
 
             {/* not-an-official-record stamp (ballot secrecy) */}
-            <div className="rc-suc-pr rc-suc-stamp">✻ ไม่ใช่หลักฐานทางการ ✻</div>
+            <div className="rc-suc-pr rc-suc-stamp">✻ <span className="rc-th">ไม่ใช่หลักฐานทางการ</span> ✻</div>
           </div>
         </div>
 
@@ -240,11 +245,11 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
               )}
             </a>
 
-            <a href={editorMode ? undefined : getPath("/")} className="rc-suc-home">← กลับหน้าแรก</a>
+            <a href={editorMode ? undefined : getPath("/")} className="rc-suc-home">← <span className="rc-th">กลับหน้าแรก</span></a>
           </div>
 
           <div className="rc-suc-foot">
-            ใบเสร็จนี้ดูซ้ำไม่ได้ · ไม่มีการบันทึก/ดาวน์โหลด · barcode = เลขอ้างอิงเท่านั้น
+            <span className="rc-th">ใบเสร็จนี้ดูซ้ำไม่ได้</span> · <span className="rc-th">ไม่มีการบันทึก/ดาวน์โหลด</span> · barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
           </div>
 
           <footer className="rc-suc-copy">© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>
@@ -263,6 +268,11 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; padding:26px 18px 44px; }
 
         .rc-suc-wrap { position:relative; z-index:1; max-width:400px; margin:0 auto; }
+
+        /* Thai-in-a-mono-line utility (A10.3 / ruling C4): the Thai half of a bilingual
+           mono label wears Chakra Petch so it never silently falls back — Space Mono has
+           no Thai glyphs. Font-family ONLY; wording/DOM of the printer moment untouched. */
+        .rc-suc-root .rc-th { font-family:var(--rc-fr) !important; }
 
         :where(.rc-suc-root) a { text-decoration:none; }
         .rc-suc-root a:focus-visible, .rc-suc-root button:focus-visible {
