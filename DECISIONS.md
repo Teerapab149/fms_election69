@@ -1892,6 +1892,17 @@ receipt family need `!important` (same pattern as the reduced-motion nuke) — a
 "swept to zero" claim must be re-probed at RUNTIME, not assumed from the source edit.
 **Tags:** `#css-specificity` `#styled-jsx` `#receipt`
 
+### P-LOG-091: [2026-07-16] prisma migrate dev demands a reset when the DB drifted via db push
+**Context:** v2-SEC migration — the dev DB had been advanced with `db push`, so its state
+was ahead of the 4 committed migrations; `prisma migrate dev` insisted on a full reset
+(would wipe the 500-voter dev DB).
+**Fix:** hand-write the migration SQL → `prisma db execute --file` → `prisma migrate
+resolve --applied <name>` → `prisma generate`. `migrate status` then reports clean, and
+prod (`migrate deploy`) runs the same file normally.
+**Lesson:** never accept a reset to land one migration on a drifted dev DB; execute +
+resolve preserves data and keeps history honest.
+**Tags:** `#prisma` `#migration` `#dev-db`
+
 ---
 
 ## 🚫 Rejected Approaches

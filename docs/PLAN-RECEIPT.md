@@ -282,10 +282,22 @@
     — ชั้น 2+3 ทำให้ "แก้แบบไม่ถูกจับ" แทบเป็นไปไม่ได้ = mechanism จริงของข้อนี้
   - residual risk ที่ยอมรับ: กรรมการที่ถือ key + DB เต็ม + วิเคราะห์ลำดับ insert
     อาจ correlate ได้บางส่วน — บันทึกไว้เป็นข้อจำกัดที่รู้ตัว
-- **ลำดับ:** session หน้าเปิด v2-SEC implement ตาม LOCKED ข้างบน (schema Ballot +
-  vote route + GRANT sql + keygen script + chain-verify + migration + ปรับ
-  reconcile/anonymize) → แล้วค่อย F1 (แตะ success/vote seam เดียวกัน —
-  migration เดียว)
+- ✅ **v2-SEC DONE `8166d41` 2026-07-16** — implement ครบตาม LOCKED + Fable รีวิว
+  เข้ม (อ่าน tx seam เอง + รัน verify-ballot-chain เอง 394/394/394 PASS + grep
+  leak เอง): Ballot/ChainHead + ballotCrypto/ballotChain + vote route fail-closed
+  + FOR UPDATE serialization (พิสูจน์ 6 โหวตพร้อมกัน gap-free) + tamper test จับ
+  seq ที่โดนแก้ได้จริง + tooling ครบ (verify/export-head/decrypt-recount/grants.sql)
+  + User.candidateId หายทั้งระบบ + seeds สองตัวสร้างบัตรผ่าน helper เดียวกับ
+  production + P-LOG-091 (migrate dev vs db-push drift)
+- **ค้างตามคำตัดสิน Fable:** e2e teardown ต้องใช้ test DB แยก/snapshot (ticket
+  e2e ภายหลัง — suite ยังไม่ใช้งานจริง) · docs เก่า (MAINTENANCE-RUNBOOK §5.1,
+  HANDOFF-5YEAR, PROJECT_UNDERSTANDING, PLAN-NEXT-SESSION) ยังเล่าโมเดลเก่า →
+  docs pass ตอน R7 · ANONYMIZE = certification flag (อนุมัติแล้ว)
+- **prod deploy notes:** ต้อง gen กุญแจจริง + ตั้ง ELECTION_BALLOT_PUBLIC_KEY /
+  BALLOT_CHAIN_SECRET + apply ballot-grants.sql + migrate deploy (คู่มือใน README)
+- **NEXT: v2-R4a** (success identity receipt ใช้ User.votedAt ใหม่ + พิมพ์งอกจาก
+  slot + ReceiptConfirmSlip + retire ephemeralChoice) → R4b ReceiptParty →
+  R4c BlossomParty → R5 richness
 
 ### ลำดับ session หน้า (สรุป): v2-SEC (เลือกทาง+implement) → v2-R4a (success
 พิมพ์จริง + ใบเสร็จ identity + ReceiptConfirmSlip + retire ephemeral) → v2-R4b
