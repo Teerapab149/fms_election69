@@ -264,8 +264,28 @@
   /api/vote · ตรวจว่าไม่มี API ไหนคืน candidateId ของ user ออกไป (สแกนทุก
   endpoint) · คง TOCTOU transaction เดิม (P0 audit) · AdminAuditLog ห้ามมี
   ballot data
-- **ลำดับ:** session หน้าเปิด v2-SEC ก่อน (spec + owner เลือก A/B/C) → แล้วค่อย
-  F1 (เพราะ F1 แตะ success/vote seam เดียวกัน — ทำทีเดียว migration เดียว)
+- ✅ **OWNER เลือกแล้ว 2026-07-15 — ดีไซน์ LOCKED = "B+"** (B + integrity ตามที่
+  owner เพิ่ม: "ห้ามใครแก้โหวตจาก 1 เป็น 2 ได้"):
+  1. **Ballot ไม่มี userId + ไม่มีเวลาละเอียด** (hourBucket อย่างมาก) — เวลาโหวต
+     ละเอียดเก็บบน **User.votedAt** (ข้อมูลของตัว voter เอง ไม่ลับ) → ใบเสร็จ
+     success โชว์เวลาจริงได้จากฝั่ง user ไม่ต้องหลอกนาฬิกา (คำตอบคำถาม owner)
+  2. **payload = ciphertext** (encrypt candidateId+nonce ด้วย public key กรรมการ;
+     private key **ไม่อยู่บนเซิร์ฟเวอร์** — พิมพ์/แบ่งเก็บ อจ.ที่ปรึกษา+ประธาน;
+     กุญแจหาย = เสียแค่ dispute-recount ไม่เสียผลเลือกตั้ง เพราะ tally จริง =
+     Candidate.score atomic increment เดิม)
+  3. **Hash chain + HMAC ต่อใบ** (prevHash‖rowHash; secret ฝั่ง server) + export
+     ปลายโซ่ออกนอก DB เป็นระยะ → แก้บัตร = โซ่ขาด ตรวจเจอ; reconcile-scores
+     เขียนใหม่เป็น chain-verify + count
+  4. **DB GRANT: app role INSERT-only บน Ballot (ห้าม UPDATE/DELETE)** — สิทธิ์
+     ของแอปแก้บัตรไม่ได้เชิงโครงสร้าง; UPDATE User จำกัด field; hardening ชุดเดิมครบ
+  - ความจริงที่แจ้ง owner แล้ว: superuser DB ยังแก้ได้เสมอ (ไม่มีระบบไหนกัน 100%)
+    — ชั้น 2+3 ทำให้ "แก้แบบไม่ถูกจับ" แทบเป็นไปไม่ได้ = mechanism จริงของข้อนี้
+  - residual risk ที่ยอมรับ: กรรมการที่ถือ key + DB เต็ม + วิเคราะห์ลำดับ insert
+    อาจ correlate ได้บางส่วน — บันทึกไว้เป็นข้อจำกัดที่รู้ตัว
+- **ลำดับ:** session หน้าเปิด v2-SEC implement ตาม LOCKED ข้างบน (schema Ballot +
+  vote route + GRANT sql + keygen script + chain-verify + migration + ปรับ
+  reconcile/anonymize) → แล้วค่อย F1 (แตะ success/vote seam เดียวกัน —
+  migration เดียว)
 
 ### ลำดับ session หน้า (สรุป): v2-SEC (เลือกทาง+implement) → v2-R4a (success
 พิมพ์จริง + ใบเสร็จ identity + ReceiptConfirmSlip + retire ephemeral) → v2-R4b
