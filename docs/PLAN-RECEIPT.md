@@ -207,7 +207,12 @@
 - **รายการจูน R4.5 สะสม:** ชื่อพรรคยาวตัดบรรทัดถี่ในแถบ standings แคบ · โดนัท
   2 หมวดสีใกล้ (ตัวเลือก: ใช้ปลาย ramp) · BY YEAR y-axis label แคบ (recharts
   consts freeze — ยกไปคุยพร้อม consts) · ที่ว่างซ้ายล่าง home · ตำแหน่งเชือก tag
-- v2-R3c (closed B7 + mono sweep) — IN FLIGHT ตอนบันทึกนี้ รอ report/รีวิว/commit
+- ✅ **v2-R3c DONE `6469fd8`** — closed "เครื่องหยุดพิมพ์" (LED reason-mapped, ต้นขั้ว
+  CTA, ephemera 2 ชิ้น ended-only, backdrop-filter ตัวสุดท้ายของตระกูลหลุดแล้ว) +
+  mono sweep 92→0 จุดทั้ง 10 page states (font-only, copy byte-identical; ยกเว้น
+  ยอมรับ: กรอบ secrecy stamp แคบลง 2.83px = ขนาดจริงของ Chakra ไม่มี knock-on)
+  + P-LOG-090 (font utility ต้อง !important + re-probe runtime เสมอ) ·
+  ค้าง R4.5: กอง used-ticket โผล่บนมือถือ? + hoist thaiSafe() ตอน F1
 
 ---
 

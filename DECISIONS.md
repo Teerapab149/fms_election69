@@ -1883,6 +1883,15 @@ marker or right-aligned content inside the overlapped edge must be inset by ≥N
 same breakpoint — and overlap compositions MUST be verified by pixels, not DOM probes.
 **Tags:** `#layout` `#overlap` `#receipt` `#verification`
 
+### P-LOG-090: [2026-07-15] Font-override leaf utilities must be !important in this family
+**Context:** v2-R3c mono sweep — `.rc-th { font-family:var(--rc-fr) }` utility left 5
+residual hits because compound descendant rules like `.rc-res-root .rc-donut__c span`
+(specificity 0,2,1) silently out-specify a plain class utility (0,2,0).
+**Lesson:** leaf utilities that override inherited/element-targeted font rules in the
+receipt family need `!important` (same pattern as the reduced-motion nuke) — and any
+"swept to zero" claim must be re-probed at RUNTIME, not assumed from the source edit.
+**Tags:** `#css-specificity` `#styled-jsx` `#receipt`
+
 ---
 
 ## 🚫 Rejected Approaches
