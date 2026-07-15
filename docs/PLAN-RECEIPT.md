@@ -207,11 +207,64 @@
 - **รายการจูน R4.5 สะสม:** ชื่อพรรคยาวตัดบรรทัดถี่ในแถบ standings แคบ · โดนัท
   2 หมวดสีใกล้ (ตัวเลือก: ใช้ปลาย ramp) · BY YEAR y-axis label แคบ (recharts
   consts freeze — ยกไปคุยพร้อม consts) · ที่ว่างซ้ายล่าง home · ตำแหน่งเชือก tag
-- **NEXT: v2-R3c** — ReceiptClosed polish (B7: เทปสั้น "เครื่องหยุดพิมพ์" + ต้นขั้ว
-  CTA + ephemera เงียบ + LED ตามเหตุผล) + **family mono sweep** (จุดไทย-ใน-mono
-  เก่าทุกหน้า → แยก span Chakra; เปลี่ยนแค่ font ไม่แตะ copy — ปลอดภัยต่อ
-  secrecy rule) → แล้วเหลือ R4 ReceiptParty → R5 richness → R6 BlossomParty
-  → R7 gate
+- v2-R3c (closed B7 + mono sweep) — IN FLIGHT ตอนบันทึกนี้ รอ report/รีวิว/commit
+
+---
+
+## 🆕 OWNER FEEDBACK ROUND 3 (2026-07-15) + คิว SESSION หน้า — อ่านก่อนเริ่มงานใหม่
+
+### F1 · Success "ใบเสร็จต้องพิมพ์จริง + เป็นใบเสร็จของ user" (v2-R4a — ทำก่อน)
+- **ปัญหา owner ชี้:** (ก) animation ไม่อ่านเป็น "กระดาษกำลังพิมพ์ออกจากเครื่อง"
+  (ข) ช่อง "ตัวเลือกของคุณ · YOUR CHOICE" **เอาออกทั้งบล็อก** — ไม่ต้องบอกตัวเลือก
+  (ค) ใส่ข้อมูล**ผู้ใช้**บนใบเสร็จแทน: ชื่อ / รหัส / สาขา / ชั้นปี (User model มีครบ:
+  name, studentId, major, year — ตรวจ seam ว่า success page มีอะไรใน session/
+  userData แล้ว fetch เพิ่มถ้าจำเป็น; **ห้ามใส่ตัวเลือกโหวตเด็ดขาด**)
+- **ผลพวงดี:** ตัดช่องตัวเลือก = **retire ephemeralChoice ทั้งกลไก** (module +
+  set/consume + soft-nav divergence ของ receipt → กลับ hard nav เหมือนตระกูลอื่น
+  ได้) — ลบโค้ด ลดความเสี่ยง secrecy เหลือศูนย์ที่ชั้น UI
+- **พิมพ์จริง:** กระดาษ**งอกออกจาก slot จริง** (ความสูงใบเสร็จค่อยๆ ยืด/translate
+  จากหลัง slot + clip, แถวโผล่เมื่อกระดาษถึง ไม่ใช่ fade แถวบนกระดาษที่กางเต็ม
+  อยู่แล้ว) + จังหวะ feed เป็นห้วงๆ แบบ thermal; base-visible เดิม (JS-fail =
+  ใบเต็มทันที)
+### F2 · Vote confirmation modal ไม่เข้าภาษา (v2-R4a ต่อเนื่อง)
+- Shared VoteConfirmationModal (ภาพที่ owner ส่ง) = สไตล์ app ทั่วไป ขัดตระกูล →
+  สร้าง **ReceiptConfirmSlip** ของตระกูลเอง (สลิปกระดาษยืนยัน + ปุ่มต้นขั้ว/foil)
+  ใช้เฉพาะ branch receipt ใน vote/page.js — **ไฟล์ shared modal ห้ามแตะ** (ตระกูล
+  อื่นใช้ต่อ); ฉากหย่อนหีบต่อจาก confirm เดิม; single booth confirm มีของตัวเอง
+  แล้ว ปรับให้พี่น้องกัน
+### F3 · หน้า party ทั้งสองตระกูล — owner ทวงครั้งที่สอง (ยกลำดับขึ้น)
+- v2-R4b = **ReceiptParty** (spec B8 + แฟ้ม dossier) · v2-R4c = **BlossomParty**
+  (ภาษา blossom, อ่าน PLAN-BLOSSOM-AWWWARDS ก่อน) — เสร็จแล้วถอน classic
+  fallthrough ของทั้งคู่ใน party/page.js + playground/preview
+### F4 · Home ยังโล่งบางส่วน + การจัดวางยังไม่ดี (เข้า v2-R5 richness — owner จะ
+  ไล่ดูเป็นรอบๆ; ใช้ R4.5 tune list สะสมข้างบนด้วย)
+
+### 🔐 v2-SEC — Vote secrecy ที่ชั้น DB (คำขอจากคนวงใน — วิเคราะห์โดย Fable 2026-07-15)
+- **ช่องโหว่ปัจจุบัน (ยืนยันจาก schema+โค้ดจริง):** `User.candidateId` เก็บลิงก์ตรง
+  ใครโหวตพรรคไหน ตลอดช่วงเลือกตั้ง (anonymize ภายหลังตอน certify ผ่าน
+  ANONYMIZE_BALLOTS) → ใครอ่าน DB ได้ระหว่างเลือกตั้ง (DBA/backup/connection
+  string หลุด) เห็นหมด; backup ที่ถ่ายก่อน anonymize = ลิงก์คงอยู่ถาวรนอกระบบ
+- **ทางเลือก 3 ทาง (ต้องให้ owner เลือกก่อนแตะ — เปลี่ยน data model):**
+  - **A ไม่เก็บลิงก์เลย:** vote = set isVoted + increment score ใน transaction จบ
+    — ลับสุด แต่ recount/audit ไม่ได้เลย (reconcile-scores ตาย)
+  - **B กล่องบัตรแบบ unlinkable (Fable แนะนำ):** ตาราง `Ballot { id uuid,
+    candidateId, ไม่มี userId, timestamp หยาบ/ไม่มี }` + User เหลือ isVoted —
+    นับ recount ได้ (reconcile เขียนใหม่ให้นับ Ballot), เชื่อมกลับหาคนไม่ได้เชิง
+    โครงสร้าง; ต้องกัน timing correlation (ปัดเวลาเป็นชั่วโมง/ไม่เก็บ)
+  - **C encrypt บัตรด้วย public key คณะกรรมการ** (private key offline, เปิดเฉพาะ
+    ข้อพิพาท): แข็งสุดแบบมีพิธี แต่ key management โดยนักศึกษา = เสี่ยงทำ key
+    หาย; ใหญ่เกิน scale นี้ — เว้นแต่คนวงในต้องการ audit-with-decrypt จริง
+- **Hardening ควบ (ทำได้ทุกทาง):** DB role ของแอปแบบ least-privilege (no DDL) ·
+  แยก creds admin · encrypt backups + นโยบายลบ backup ก่อน certify · rate limit
+  /api/vote · ตรวจว่าไม่มี API ไหนคืน candidateId ของ user ออกไป (สแกนทุก
+  endpoint) · คง TOCTOU transaction เดิม (P0 audit) · AdminAuditLog ห้ามมี
+  ballot data
+- **ลำดับ:** session หน้าเปิด v2-SEC ก่อน (spec + owner เลือก A/B/C) → แล้วค่อย
+  F1 (เพราะ F1 แตะ success/vote seam เดียวกัน — ทำทีเดียว migration เดียว)
+
+### ลำดับ session หน้า (สรุป): v2-SEC (เลือกทาง+implement) → v2-R4a (success
+พิมพ์จริง + ใบเสร็จ identity + ReceiptConfirmSlip + retire ephemeral) → v2-R4b
+ReceiptParty → v2-R4c BlossomParty → v2-R5 richness (home + R4.5 list) → R7 gate
 
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
