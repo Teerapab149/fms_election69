@@ -200,9 +200,18 @@
   object) ลง DECISIONS แล้ว
 - คำตัดสินค้าง: mono-ไทย 9 จุดเก่าใน success (copy secrecy ห้ามแตะ) → sweep
   เฉพาะกิจตอน v2-R3c พร้อม owner sign-off · ที่ว่างซ้ายล่าง home → v2-R5
-- **NEXT: v2-R2 tinted paper themes** (lineup LOCKED: ม่วงFMS/น้ำเงิน262/คราม210/
-  ถ่านดำ achromatic + paper-tint ต่อธีม) — receiptPalettes chain เดิม + contrast
-  gate 4×3 + probe t-ถ่านดำข้างตราแดง semantic
+- ✅ v2-R2 DONE `89cc461` (4 ธีมม้วนกระดาษ + QR de-function) · ✅ v2-R3a DONE
+  `b5cc020` (โต๊ะประทับตรา + ฉากหย่อนหีบ) · ✅ v2-R3b DONE `262a673` (results
+  winner-stamp เขียว + chart ramp accent + candidates index/flyers N=2) +
+  P-LOG-089 (overlap ต้องมี clearance inset + ตรวจด้วย pixel)
+- **รายการจูน R4.5 สะสม:** ชื่อพรรคยาวตัดบรรทัดถี่ในแถบ standings แคบ · โดนัท
+  2 หมวดสีใกล้ (ตัวเลือก: ใช้ปลาย ramp) · BY YEAR y-axis label แคบ (recharts
+  consts freeze — ยกไปคุยพร้อม consts) · ที่ว่างซ้ายล่าง home · ตำแหน่งเชือก tag
+- **NEXT: v2-R3c** — ReceiptClosed polish (B7: เทปสั้น "เครื่องหยุดพิมพ์" + ต้นขั้ว
+  CTA + ephemera เงียบ + LED ตามเหตุผล) + **family mono sweep** (จุดไทย-ใน-mono
+  เก่าทุกหน้า → แยก span Chakra; เปลี่ยนแค่ font ไม่แตะ copy — ปลอดภัยต่อ
+  secrecy rule) → แล้วเหลือ R4 ReceiptParty → R5 richness → R6 BlossomParty
+  → R7 gate
 
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์

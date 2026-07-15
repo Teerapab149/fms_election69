@@ -1873,6 +1873,16 @@ one role: receipt = clock (home) + the vote receipt (success). When a concept so
 strong, apply it to the smallest element that carries the story before scaling up.
 **Tags:** `#design-rule` `#receipt` `#composition`
 
+### P-LOG-089: [2026-07-15] Scatter-overlap zones need content clearance insets
+**Context:** v2-R3b — desk-scatter composition overlaps a rail over a receipt strip's
+edge by 34px. The winner stamp (absolute, right-anchored) and the index directory's
+arrows sat inside the overlapped band → visually buried under the rail. DOM probes
+passed (elements exist, no overflow); only screenshot review caught it.
+**Lesson:** whenever two layers deliberately overlap by N px, every absolutely-placed
+marker or right-aligned content inside the overlapped edge must be inset by ≥N at the
+same breakpoint — and overlap compositions MUST be verified by pixels, not DOM probes.
+**Tags:** `#layout` `#overlap` `#receipt` `#verification`
+
 ---
 
 ## 🚫 Rejected Approaches
