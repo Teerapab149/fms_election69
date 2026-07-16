@@ -1920,6 +1920,14 @@ comments and a CSS section comment; only the grep=0 gate caught them.
 next reader — every relabel ticket needs a whole-file grep gate on the old term.
 **Tags:** `#copy-sweep` `#comments` `#verify`
 
+### P-LOG-094: [2026-07-16] Thai status-word dedup checks must count meanings, not substrings
+**Context:** v2-R5c dedupe gate — counting raw occurrences of "ปิดโหวต" false-positives
+on the WAITING state because ปิดโหวต is a substring of เ**ปิดโหวต**ในอีก.
+**Lesson:** dedup probes for Thai status copy must evaluate per rendered element with
+its semantic pair (which meaning does this node express?), never raw string counts —
+Thai has no word boundaries for a regex to anchor on.
+**Tags:** `#thai-copy` `#probe` `#verify`
+
 ---
 
 ## 🚫 Rejected Approaches

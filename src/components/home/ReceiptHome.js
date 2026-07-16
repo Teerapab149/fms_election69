@@ -291,10 +291,12 @@ export default function ReceiptHome({
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
   const posterSrc = getPath("/images/prob/samo49_1.png");
 
-  // ── queue-slip copy per state (no trailing period). Live = "…ในอีก";
-  //    done/paused = the plain status phrase, shown as a stamp instead of digits. ──
+  // ── queue-slip copy per state (no trailing period). Live = "…ในอีก". done = a
+  //    NON-duplicate status phrase for the cap (the red stamp already carries the
+  //    plain status word, so the cap must say something else): ended → "รอประกาศ
+  //    ผลคะแนน", pause → "รอเปิดระบบอีกครั้ง". Each meaning renders exactly once (T1). ──
   const slipLabel = cd.done
-    ? cd.label
+    ? (cd.label === "ระบบพักชั่วคราว" ? "รอเปิดระบบอีกครั้ง" : "รอประกาศผลคะแนน")
     : cd.label === "เปิดโหวตใน" ? "เปิดโหวตในอีก"
       : cd.label === "ปิดโหวตใน" ? "ปิดโหวตในอีก"
         : "กำลังโหลด";
@@ -447,7 +449,7 @@ export default function ReceiptHome({
                 {/* done-state — the slip is cross-stamped in red instead of digits */}
                 <div className="rc-slip-stamp"><span>{cd.label}</span></div>
                 {isEnded && (
-                  <div className="rc-close-line">ปิดโหวตแล้ว · เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                  <div className="rc-close-line">เวลาปิด {formatThaiTime(ELECTION_END)}</div>
                 )}
                 <div className="rc-slip-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
                 <div className="rc-slip-end" aria-hidden="true" />
@@ -465,6 +467,15 @@ export default function ReceiptHome({
             </div>
           </div>{/* /rc-rail */}
 
+          {/* ===== PERFORATION TRACK (v2-R5c) — a full-width punched separator that
+              gives the desk a rhythm break between its top band (hero + rail) and its
+              bottom band (turnout + poster). Desktop punches holes across the stage
+              with a tiny mono desk-tag clipped on the line; mobile keeps a plain faint
+              hairline (no tag). Pure-CSS ephemera, aria-hidden, base-visible. ===== */}
+          <div className="rc-perf-track" aria-hidden="true">
+            <span className="rc-perf-badge rc-mono">◆ {meta.prefix} {meta.number} · LIVE DESK ◆</span>
+          </div>
+
           {/* ===== TURNOUT register — the real-time stats pulled off the manila note
               into their OWN full-width receipt slip (bottom-left on desktop): a mono
               head, the SAME live rows (used/rate/bar/parties — semantics untouched),
@@ -476,6 +487,18 @@ export default function ReceiptHome({
                 (≤2, accent-faint, aria-hidden) */}
             <span className="rc-sticker rc-sticker--dot" aria-hidden="true" />
             <span className="rc-sticker rc-sticker--sq" aria-hidden="true" />
+
+            {/* v2-R5c ephemera — a small piece of holographic tape on the slip's free
+                (top-left) corner: the family's color-shift signature living OUTSIDE the
+                CTA (shared .rc-foil ramp; reduced-motion freezes it static) */}
+            <span className="rc-holo-tape rc-foil" aria-hidden="true" />
+            {/* used ballot-stub scraps torn along the perforation, lying under the
+                slip's lower-left edge (≤3, faint, aria-hidden; hidden on mobile) */}
+            <span className="rc-stubs" aria-hidden="true">
+              <span className="rc-stub-scrap rc-stub-scrap--c" />
+              <span className="rc-stub-scrap rc-stub-scrap--b" />
+              <span className="rc-stub-scrap rc-stub-scrap--a" />
+            </span>
             <div className="rc-turnout-head"><span className="rc-mono">TURNOUT ·</span> <span>รายงานยอดผู้ใช้สิทธิ์</span></div>
             <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
               <div className="rc-register-row">
@@ -859,6 +882,41 @@ export default function ReceiptHome({
           clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
           box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
 
+        /* ---- holographic tape (v2-R5c) — one small piece on the turnout slip's free
+           corner: the color-shift signature living OUTSIDE the CTA. Uses the shared
+           .rc-foil ramp (animated drift); reduced-motion freezes it to a static
+           iridescent sheen; multiply + low opacity reads it as translucent film. ---- */
+        .rc-home-root .rc-holo-tape { position:absolute; z-index:5; top:-10px; left:-8px; width:46px; height:20px;
+          border-radius:1px; transform:rotate(-24deg); opacity:.5; mix-blend-mode:multiply; pointer-events:none;
+          box-shadow:1px 2px 4px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
+
+        /* ---- used ballot-stub scraps (v2-R5c) — desk ephemera lying under the turnout
+           slip's lower-left, torn along a perforation (die-cut top edge). ≤3 small
+           faint scraps, aria-hidden; hidden on the calm mobile desk (≤420). ---- */
+        .rc-home-root .rc-stubs { position:absolute; z-index:1; left:14px; bottom:-26px; width:132px; height:34px;
+          pointer-events:none; }
+        .rc-home-root .rc-stub-scrap { position:absolute; bottom:0; width:52px; height:30px; border-radius:2px;
+          background:var(--rc-receipt); border:1px solid var(--rc-line); border-top:none;
+          box-shadow:1px 5px 12px -8px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        /* the torn-off perforation edge along the top of each scrap (holes = desk through) */
+        .rc-home-root .rc-stub-scrap::before { content:""; position:absolute; left:0; right:0; top:-1px; height:3px;
+          background:radial-gradient(circle at center, var(--rc-desk) 1.4px, transparent 1.7px) top left/7px 3px repeat-x; }
+        /* a faint printed bar across the scrap */
+        .rc-home-root .rc-stub-scrap::after { content:""; position:absolute; left:6px; right:6px; top:11px; height:2px;
+          border-radius:1px; background:color-mix(in srgb, var(--rc-ink2) 26%, transparent); }
+        .rc-home-root .rc-stub-scrap--a { left:0; transform:rotate(-3deg); }
+        .rc-home-root .rc-stub-scrap--b { left:26px; bottom:2px; transform:rotate(2.5deg); background:var(--rc-receipt-edge); }
+        .rc-home-root .rc-stub-scrap--c { left:52px; transform:rotate(-1.5deg); opacity:.9; }
+
+        /* ---- perforation track (v2-R5c) — full-width punched rhythm line between the
+           desk's top band and bottom band. mobile-first = a plain faint hairline, no
+           tag; ≥1024 the holes punch through + a mono desk-tag sits centred on it. ---- */
+        .rc-home-root .rc-perf-track { position:relative; display:flex; align-items:center; justify-content:center;
+          height:16px; margin:8px 12px; }
+        .rc-home-root .rc-perf-track::before { content:""; position:absolute; left:0; right:0; top:50%; height:1px;
+          transform:translateY(-50%); background:color-mix(in srgb, var(--rc-line) 80%, transparent); }
+        .rc-home-root .rc-perf-badge { display:none; }
+
         /* ================= RAIL + DESK OBJECTS ================= */
         /* mobile-first: hero (card + CTA action row) first, then the rail (clock +
            note) stacks below it, then the turnout slip + poster band. desktop lifts the
@@ -1004,8 +1062,15 @@ export default function ReceiptHome({
           .rc-home-root .rc-rail { grid-column:2; grid-row:1; position:sticky; top:84px;
             margin:6px 0 0 -28px; gap:clamp(20px, 3vh, 34px); }
           .rc-home-root .rc-note { max-width:none; }
-          .rc-home-root .rc-turnout { grid-column:1; grid-row:2; margin:0; max-width:380px; }
-          .rc-home-root .rc-poster-sec { grid-column:2; grid-row:2; flex-direction:column;
+          /* the perforation track takes its OWN full-width row between the bands, with
+             the holes punched through + a mono desk-tag clipped on the line. */
+          .rc-home-root .rc-perf-track { grid-column:1 / -1; grid-row:2; height:20px; margin:0 4px; }
+          .rc-home-root .rc-perf-track::before { height:8px;
+            background:radial-gradient(circle at center, var(--rc-stamp-line) 1.3px, transparent 1.7px) center/13px 100% repeat-x; }
+          .rc-home-root .rc-perf-badge { display:inline-block; position:relative; z-index:1; padding:3px 14px;
+            background:var(--rc-desk); font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--rc-ink2); }
+          .rc-home-root .rc-turnout { grid-column:1; grid-row:3; margin:0; max-width:380px; }
+          .rc-home-root .rc-poster-sec { grid-column:2; grid-row:3; flex-direction:column;
             align-items:center; justify-content:flex-start; margin-top:0; }
           .rc-home-root .rc-poster { width:min(420px, 100%); }
           .rc-home-root .rc-notice-title { font-size:clamp(34px, 3vw, 46px); }
@@ -1018,6 +1083,8 @@ export default function ReceiptHome({
           .rc-home-root .rc-colon { font-size:clamp(20px, 6vw, 28px); }
           .rc-home-root .rc-seal--c { display:none; }
           .rc-home-root .rc-actions { margin-left:12px; margin-right:12px; }
+          /* keep the mobile desk calm — ephemera off, perf track stays a plain hairline */
+          .rc-home-root .rc-stubs, .rc-home-root .rc-holo-tape { display:none; }
         }
 
         /* reduced motion — freeze every animation (foil stays statically iridescent),
