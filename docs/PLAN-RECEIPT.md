@@ -327,9 +327,22 @@
   → ticket **v2-R4d**: เติม missions ใน single ทั้งสอง + relabel party ทั้งสอง
   (brief `.specs/BRIEF-R4D-PARTY-DATA.md`)
 
-### ลำดับ session หน้า (สรุป): v2-R4b ReceiptParty ✅ → v2-R4c BlossomParty ✅ →
-F5+F6 (sweep คำ + home layout รอบ 2) → **v2-R4d party data ครบชุด (F7)** →
-v2-R4a (success identity + ConfirmSlip + retire ephemeral) → v2-R5 richness → R7 gate
+- **🆕 OWNER ROUND-5 (2026-07-16 ค่ำ — จากภาพ results + ไล่ดูจริง):**
+  - **F8 · Results ต้องจัดลำดับใหม่:** ชื่อพรรคใน standings กดเข้า party ได้ — ผิด
+    ต้องกดไม่ได้ (ถอด onSelectParty chain) · หน้า "ซับซ้อน มองยาก" → hierarchy:
+    ชั้น 1 ผู้ชนะเด่นสุด (winner hero) → ชั้น 2 standings กระชับ (แก้ชื่อยาวตัดบรรทัดถี่)
+    → ชั้น 3 ข้อมูลทั่วไป/กราฟ; embargo mode ห้ามแตะ → spec V2-R5D-RESULTS-MODAL.md
+  - **F9 · Party member modal ไม่เด้ง** ทั้งสองตระกูล — สมมติฐาน: fixed-position
+    modal ใน transformed ancestor (playground/preview) → แก้ด้วย portal ใน
+    component เรา (shared CandidateModal ห้ามแตะ) — อยู่ใน spec R5d เดียวกัน
+  - **Success:** owner ยังไม่เห็นใบเสร็จจริง → v2-R4a ยกขึ้นทำทันที (spawn แล้ว)
+  - หลัง R5b owner ติ 2 จุดเข้า R5c แล้ว: "ปิดโหวตแล้ว" ซ้ำ ~3 ที่บนแถบ register +
+    หน้า "ยังดูขาดๆ" (เส้นปรุคั่นโซน + ephemera + เทปโฮโล — spec V2-R5C-DEDUP-FILL.md)
+
+### ลำดับ session หน้า (สรุป): v2-R4b ✅ → v2-R4c ✅ → F5+F6 ✅ (`c7ff181`+`1fe7c17`)
+→ v2-R4d ✅ (`fdb5804`) → v2-R5a ✅ (`83e1a41`) → v2-R5b ✅ (`e361c35`) →
+**v2-R5c (dedupe+fill — รันอยู่) ∥ v2-R4a (success — รันอยู่)** → v2-R5d (results
+hierarchy + modal fix) → richness เก็บตก + R4.5 list → R7 gate
 
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
