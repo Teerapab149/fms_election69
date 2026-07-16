@@ -88,7 +88,7 @@ const noop = () => {};
 function receiptClosedCopy(variant) {
   if (variant === 'ended') return { variant: 'ended', title: 'สิ้นสุดระยะเวลาลงคะแนน', desc: 'การเลือกตั้งได้สิ้นสุดลงแล้ว ขอบคุณทุกท่านที่เข้ามาใช้สิทธิ' };
   if (variant === 'closed' || variant === 'paused') return { variant: 'closed', title: 'ระบบปิดรับลงคะแนน', desc: 'ระบบเลือกตั้งถูกปิดชั่วคราว หรือหมดเวลาการลงคะแนนแล้ว กรุณาติดต่อเจ้าหน้าที่หากมีข้อสงสัย' };
-  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดหีบเลือกตั้ง' };
+  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดโหวต' };
 }
 
 function PreviewBody() {

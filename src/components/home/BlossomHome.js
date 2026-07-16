@@ -174,11 +174,11 @@ function useCountdown(globalConfig, systemMode) {
       const now = Date.now();
       let target, label, live = false, done = false;
       if (systemMode === "PAUSE") { label = "ระบบพักชั่วคราว"; done = true; }
-      else if (systemMode === "ENDED") { label = "ปิดหีบแล้ว"; done = true; }
-      else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดหีบใน"; live = true; }
-      else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดหีบใน"; }
-      else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดหีบใน"; live = true; }
-      else { label = "ปิดหีบแล้ว"; done = true; }
+      else if (systemMode === "ENDED") { label = "ปิดโหวตแล้ว"; done = true; }
+      else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
+      else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดโหวตใน"; }
+      else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
+      else { label = "ปิดโหวตแล้ว"; done = true; }
       if (done || !target) { setCd({ d: 0, h: 0, m: 0, s: 0, label, live, done }); return; }
       const diff = Math.max(0, target - now);
       setCd({
@@ -357,10 +357,10 @@ export default function BlossomHome({
   // ── countdown caption + closed-block copy (driven by cd) ──
   const cdCap = cd.done
     ? "สถานะ / STATUS"
-    : cd.label === "เปิดหีบใน"
-      ? "เปิดหีบในอีก / STARTS IN"
-      : cd.label === "ปิดหีบใน"
-        ? "ปิดหีบในอีก / CLOSES IN"
+    : cd.label === "เปิดโหวตใน"
+      ? "เปิดโหวตในอีก / STARTS IN"
+      : cd.label === "ปิดโหวตใน"
+        ? "ปิดโหวตในอีก / CLOSES IN"
         : "กำลังโหลด / LOADING";
   const cdClosedSmall = cd.label === "ระบบพักชั่วคราว"
     ? "SYSTEM PAUSED · กลับมาเปิดอีกครั้งเร็ว ๆ นี้"
@@ -399,7 +399,7 @@ export default function BlossomHome({
 
           {ELECTION_START && (
             <div className="bl-daterow">
-              <span className="bl-daterow__pill">เปิดหีบ {formatThaiDate(ELECTION_START)}</span>
+              <span className="bl-daterow__pill">เปิดโหวต {formatThaiDate(ELECTION_START)}</span>
               <span>{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
             </div>
           )}

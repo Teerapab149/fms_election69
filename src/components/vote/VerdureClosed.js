@@ -11,8 +11,8 @@ import { Lock, Clock, CheckCheck, LogOut } from "lucide-react";
 import VerdureShell from "./VerdureShell";
 
 const VARIANTS = {
-  waiting: { Icon: Clock,      kicker: "OPENS SOON · ยังไม่เปิดหีบ", head: (<>Not yet<br /><em>open.</em></>), edge: "Status" },
-  ended:   { Icon: CheckCheck, kicker: "POLLS CLOSED · ปิดหีบแล้ว",  head: (<>That&rsquo;s<br />a <em>wrap.</em></>), edge: "Status" },
+  waiting: { Icon: Clock,      kicker: "OPENS SOON · ยังไม่เปิดโหวต", head: (<>Not yet<br /><em>open.</em></>), edge: "Status" },
+  ended:   { Icon: CheckCheck, kicker: "POLLS CLOSED · ปิดโหวตแล้ว",  head: (<>That&rsquo;s<br />a <em>wrap.</em></>), edge: "Status" },
   closed:  { Icon: Lock,       kicker: "ON HOLD · ปิดชั่วคราว",      head: (<>Ballot<br />on <em>hold.</em></>),  edge: "Status" },
 };
 

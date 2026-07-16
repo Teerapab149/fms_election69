@@ -124,17 +124,17 @@ export default function GumroadResults({
                   <h3>ผลการนับ<br />ยังถูกล็อก</h3>
                   <p>
                     {singleParty
-                      ? "เพื่อความโปร่งใส ผลการรับรองจะถูกเปิดเผยเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น"
-                      : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะถูกเปิดเผยพร้อมกันเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น"}
+                      ? "เพื่อความโปร่งใส ผลการรับรองจะถูกเปิดเผยเมื่อปิดโหวตแล้วเท่านั้น"
+                      : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะถูกเปิดเผยพร้อมกันเมื่อปิดโหวตแล้วเท่านั้น"}
                   </p>
-                  {countdownText ? <div className="gr-lock__cd">{ended ? "ปิดหีบแล้ว · รอประกาศผล" : `ปิดใน ${countdownText}`}</div> : null}
+                  {countdownText ? <div className="gr-lock__cd">{ended ? "ปิดโหวตแล้ว · รอประกาศผล" : `ปิดใน ${countdownText}`}</div> : null}
                 </div>
               </div>
             )}
 
             {/* STAT CARDS — stat-card composites (Layer 2) */}
             <div className="gr-stats">
-              <StatCard tone="pink" lbl="★ คะแนนเสียงรวม · TOTAL" value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดหีบ" />
+              <StatCard tone="pink" lbl="★ คะแนนเสียงรวม · TOTAL" value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
               <StatCard lbl="ผู้มีสิทธิ์ · ELIGIBLE" value={totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
               <StatCard tone="lime" lbl="ความคืบหน้า · TURNOUT" value={turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
             </div>
@@ -144,7 +144,7 @@ export default function GumroadResults({
               <div className="gr-race__head">
                 <div>
                   <h3>📊 {singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h3>
-                  <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏหลังปิดหีบเลือกตั้งแล้วเท่านั้น"}</p>
+                  <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏหลังปิดโหวตแล้วเท่านั้น"}</p>
                 </div>
                 <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● LIVE" : "🔒 LOCKED"}</span>
               </div>
@@ -199,7 +199,7 @@ export default function GumroadResults({
                   </div>
                   <div className="gr-race__hidden">
                     <div>🔒 HIDDEN UNTIL CLOSE</div>
-                    <span>ผลคะแนนจะแสดงเมื่อปิดหีบเลือกตั้งแล้วเท่านั้น</span>
+                    <span>ผลคะแนนจะแสดงเมื่อปิดโหวตแล้วเท่านั้น</span>
                   </div>
                 </>
               )}

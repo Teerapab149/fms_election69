@@ -53,7 +53,7 @@ export default function VotePage() {
   // ✅ Prevent double click during redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Receipt-only "หย่อนบัตรลงหีบ" scene (ruling C3). The overlay + controller live in
+  // Receipt-only "หย่อนบัตร" scene (ruling C3). The overlay + controller live in
   // ReceiptVote; here we only orchestrate it around the awaited submit for the receipt
   // branch. Hook is unconditional (Rules of Hooks); sceneNode is rendered only when the
   // active template is receipt, so every other family is byte-unaffected.
@@ -133,7 +133,7 @@ export default function VotePage() {
     // Capture the choice label BEFORE the POST (selection can't change mid-submit).
     const choiceLabel = isReceipt ? receiptChoiceLabel() : null;
 
-    // Receipt family: play the "หย่อนบัตรลงหีบ" scene AROUND the awaited submit (ruling
+    // Receipt family: play the "หย่อนบัตร" scene AROUND the awaited submit (ruling
     // C3). playDrop starts the ~900ms fold+drop overlay, fires submitVote() in parallel,
     // HOLDS the final frame until it resolves, then returns the result — the vote is
     // NEVER coupled to the animation (reduced-motion / JS-fail skip the scene but still

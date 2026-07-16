@@ -67,7 +67,7 @@ export function BallotDropScene({ phase = "idle" }) {
       <div className="rc-drop__box">
         <span className="rc-drop__slot" />
         <div className="rc-drop__front">
-          <span className="rc-drop__front-th">หีบบัตรเลือกตั้ง</span>
+          <span className="rc-drop__front-th">กล่องรับบัตร</span>
           <span className="rc-drop__front-en rc-dropmono">BALLOT BOX</span>
         </div>
       </div>
@@ -385,7 +385,7 @@ export default function ReceiptVote({
           >
             {canConfirm && <span className="rc-foil" aria-hidden="true" />}
             <span className="rc-vbar__btn-in">
-              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตรลงหีบ"}<span className="rc-vbar__arrow" aria-hidden="true">→</span>
+              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-vbar__arrow" aria-hidden="true">→</span>
             </span>
           </button>
         </div>

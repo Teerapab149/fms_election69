@@ -24,13 +24,13 @@ import StudioDarkShell from "./StudioDarkShell";
 const VARIANTS = {
   waiting: {
     Icon: Clock,
-    kicker: "OPENS SOON · ยังไม่เปิดหีบ",
+    kicker: "OPENS SOON · ยังไม่เปิดโหวต",
     headline: (<>Not yet<br /><em>open.</em></>),
     live: false,
   },
   ended: {
     Icon: CheckCheck,
-    kicker: "POLLS CLOSED · ปิดหีบแล้ว",
+    kicker: "POLLS CLOSED · ปิดโหวตแล้ว",
     headline: (<>That&rsquo;s<br />a <em>wrap.</em></>),
     live: false,
   },

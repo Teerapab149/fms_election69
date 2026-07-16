@@ -36,7 +36,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 // identity, so all variants share it.
 const EYEBROW = {
   waiting: { th: "ใกล้เปิดหน่วยเลือกตั้ง", en: "UPCOMING" },
-  ended: { th: "ปิดหีบเลือกตั้งแล้ว", en: "CLOSED" },
+  ended: { th: "ปิดโหวตแล้ว", en: "CLOSED" },
   closed: { th: "พักปรับปรุงระบบ", en: "MAINTENANCE" },
 };
 

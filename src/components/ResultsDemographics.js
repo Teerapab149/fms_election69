@@ -111,7 +111,7 @@ export default function ResultsDemographics({
         <BarChart3 className="text-slate-400" size={32} />
       </div>
       <h3 className="text-lg font-bold text-slate-600">สถิติยังไม่เปิดเผย</h3>
-      <p className="text-slate-400 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดหีบเลือกตั้งแล้วเท่านั้น</p>
+      <p className="text-slate-400 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดโหวตแล้วเท่านั้น</p>
     </div>
   );
 }
