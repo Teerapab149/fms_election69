@@ -15,6 +15,7 @@ import CandidateModal from '../../components/CandidateModal';
 import GumroadParty from "../../components/vote/GumroadParty";
 import StudioDarkParty from "../../components/vote/StudioDarkParty";
 import VerdureParty from "../../components/vote/VerdureParty";
+import ReceiptParty from "../../components/vote/ReceiptParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
@@ -589,6 +590,7 @@ function PartyContent() {
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
 
   const listSectionRef = useRef(null);
 
@@ -684,6 +686,16 @@ function PartyContent() {
       <>
         <PageThemeOverrides page="party" />
         <VerdureParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // RECEIPT layout (own paper-dossier chrome) — replaces the classic cinematic page entirely.
+  if (isReceipt) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <ReceiptParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
       </>
     );
   }

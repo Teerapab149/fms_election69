@@ -56,6 +56,7 @@ import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
+import ReceiptParty from '../../components/vote/ReceiptParty';
 import ReceiptVote from '../../components/vote/ReceiptVote';
 import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
@@ -84,10 +85,10 @@ const COMPONENTS = {
   // (mirrors the live fallthrough). vote is special-cased too (single booth confirms
   // internally; multi opens the shared VoteConfirmationModal at the parent).
   blossom: { candidates: BlossomCandidates, vote: BlossomVote, results: BlossomResults, success: BlossomSuccess, closed: BlossomClosed },
-  // receipt mirrors blossom exactly: no `party` layout (→ ClassicPartyPreview), vote
+  // receipt has its OWN party layout (ReceiptParty — paper dossier, v2-R4b); vote
   // dispatches single→ReceiptSingleParty (internal confirm) / multi→shared modal, and
   // results renders the election-day embargo band when locked (same as blossom).
-  receipt: { candidates: ReceiptCandidates, vote: ReceiptVote, results: ReceiptResults, success: ReceiptSuccess, closed: ReceiptClosed },
+  receipt: { candidates: ReceiptCandidates, party: ReceiptParty, vote: ReceiptVote, results: ReceiptResults, success: ReceiptSuccess, closed: ReceiptClosed },
 };
 
 const TEMPLATES = [
@@ -165,9 +166,10 @@ function PlaygroundBody() {
     const C = map.candidates;
     content = <C candidates={PARTIES} editorMode={false} />;
   } else if (page === 'party') {
-    // blossom/receipt have no party layout — mirror the live fallthrough to the
-    // classic cinematic detail (same choice /template-preview interact makes).
-    if (family === 'blossom' || family === 'receipt') {
+    // blossom still has no party layout — mirror the live fallthrough to the classic
+    // cinematic detail. receipt now has ReceiptParty (via map.party), same as the
+    // other families with a real party layout.
+    if (family === 'blossom') {
       content = <ClassicPartyPreview party={partyForDetail} galleryImages={[]} />;
     } else {
       const P = map.party;

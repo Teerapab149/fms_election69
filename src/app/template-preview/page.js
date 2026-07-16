@@ -61,6 +61,7 @@ import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
 import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptClosed from '../../components/vote/ReceiptClosed';
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
+import ReceiptParty from '../../components/vote/ReceiptParty';
 
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
@@ -599,6 +600,13 @@ function PreviewBody() {
       return <ReceiptCandidates candidates={PARTIES} editorMode={false} />;
     }
 
+    // ── receipt family — PARTY detail (R4b). the paper dossier; replaces the classic
+    //    fallthrough (kills the DeepSeaParticles hydration warning). ──
+    if (family === 'receipt' && page === 'party') {
+      const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+      return <ReceiptParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
+    }
+
     // ── receipt family — RESULTS (R4). revealed → register-tape standings + demo;
     //    otherwise the SEALED embargo slip (polls open, scores sealed, turnout public). ──
     if (family === 'receipt' && page === 'results') {
@@ -783,6 +791,7 @@ function PreviewBody() {
       );
     }
     if (page === 'candidates') return <ReceiptCandidates candidates={PARTIES} editorMode />;
+    if (page === 'party') return <ReceiptParty party={PARTIES[0]} galleryImages={[]} showBackToVote={false} editorMode />;
     if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
     if (page === 'results') {
       const revealed = variant === 'revealed';
