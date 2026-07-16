@@ -318,9 +318,18 @@
   classic; verify single ทั้งสองด้วยภาพตอนทำ party — ถ้า owner เจอปัญหาที่ single
   จริงจะรอ feedback ตอนดู party)
 
-### ลำดับ session หน้า (สรุป): v2-R4b ReceiptParty → v2-R4c BlossomParty →
-F5+F6 (home layout รอบ 2 + sweep คำต้องห้าม) → v2-R4a (success identity +
-ConfirmSlip + retire ephemeral) → v2-R5 richness (home + R4.5 list) → R7 gate
+- **F7 · ข้อมูลพรรคต้องครบชุด (owner 2026-07-16 รอบสาม):** มาตรฐานข้อมูลพรรค
+  ตาม original = ชื่อพรรค · นโยบาย · พันธกิจ · **ความหมายสัญลักษณ์ (logoMeaning
+  คู่กับโลโก้)** — audit พบ: ReceiptSingleParty + BlossomSingleParty **ขาด missions
+  ทั้งคู่** (มีแค่ logoMeaning-เป็น-about + policies) · ReceiptParty/BlossomParty
+  มีข้อมูลครบแต่**ติดป้าย logoMeaning เป็น "วิสัยทัศน์" — ผิด** ต้องเป็น
+  "ความหมายสัญลักษณ์ · LOGO MEANING" แบบ Logo Concept ของ classic
+  → ticket **v2-R4d**: เติม missions ใน single ทั้งสอง + relabel party ทั้งสอง
+  (brief `.specs/BRIEF-R4D-PARTY-DATA.md`)
+
+### ลำดับ session หน้า (สรุป): v2-R4b ReceiptParty ✅ → v2-R4c BlossomParty ✅ →
+F5+F6 (sweep คำ + home layout รอบ 2) → **v2-R4d party data ครบชุด (F7)** →
+v2-R4a (success identity + ConfirmSlip + retire ephemeral) → v2-R5 richness → R7 gate
 
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
