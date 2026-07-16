@@ -50,6 +50,7 @@ import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import GumroadClosed from '../../components/vote/GumroadClosed';
 
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import BlossomParty from '../../components/vote/BlossomParty';
 import BlossomVote from '../../components/vote/BlossomVote';
 import BlossomResults from '../../components/vote/BlossomResults';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
@@ -62,9 +63,6 @@ import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
 import ReceiptClosed from '../../components/vote/ReceiptClosed';
 
-// blossom has NO BlossomParty (P3 by design) — its /party mirrors the live site,
-// which falls to the classic cinematic detail (same as /template-preview interact).
-import { ClassicPartyPreview } from '../party/page';
 // shared confirm popup for the blossom MULTI ballot (owned by the parent, exactly
 // as /template-preview interact + the real vote/page.js compose it).
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
@@ -81,10 +79,10 @@ const COMPONENTS = {
   verdure: { candidates: VerdureCandidates, party: VerdureParty, vote: VerdureVote, results: VerdureResults, success: VerdureSuccess, closed: VerdureClosed },
   'studio-dark': { candidates: StudioDarkCandidates, party: StudioDarkParty, vote: StudioDarkVote, results: StudioDarkResults, success: StudioDarkSuccess, closed: StudioDarkClosed },
   gumroad: { candidates: GumroadCandidates, party: GumroadParty, vote: GumroadVote, results: GumroadResults, success: GumroadSuccess, closed: GumroadClosed },
-  // blossom has NO `party` key — /party is special-cased to ClassicPartyPreview below
-  // (mirrors the live fallthrough). vote is special-cased too (single booth confirms
-  // internally; multi opens the shared VoteConfirmationModal at the parent).
-  blossom: { candidates: BlossomCandidates, vote: BlossomVote, results: BlossomResults, success: BlossomSuccess, closed: BlossomClosed },
+  // blossom now has its OWN party layout (BlossomParty — Candy Editorial feature,
+  // v2-R4c). vote is special-cased (single booth confirms internally; multi opens the
+  // shared VoteConfirmationModal at the parent).
+  blossom: { candidates: BlossomCandidates, party: BlossomParty, vote: BlossomVote, results: BlossomResults, success: BlossomSuccess, closed: BlossomClosed },
   // receipt has its OWN party layout (ReceiptParty — paper dossier, v2-R4b); vote
   // dispatches single→ReceiptSingleParty (internal confirm) / multi→shared modal, and
   // results renders the election-day embargo band when locked (same as blossom).
@@ -166,15 +164,10 @@ function PlaygroundBody() {
     const C = map.candidates;
     content = <C candidates={PARTIES} editorMode={false} />;
   } else if (page === 'party') {
-    // blossom still has no party layout — mirror the live fallthrough to the classic
-    // cinematic detail. receipt now has ReceiptParty (via map.party), same as the
-    // other families with a real party layout.
-    if (family === 'blossom') {
-      content = <ClassicPartyPreview party={partyForDetail} galleryImages={[]} />;
-    } else {
-      const P = map.party;
-      content = <P party={partyForDetail} galleryImages={[]} showBackToVote />;
-    }
+    // every family now has a real party layout via map.party (blossom → BlossomParty,
+    // receipt → ReceiptParty, etc.), all sharing the uniform party prop contract.
+    const P = map.party;
+    content = <P party={partyForDetail} galleryImages={[]} showBackToVote />;
   } else if (page === 'vote') {
     const V = map.vote;
     if ((family === 'blossom' || family === 'receipt') && !single) {

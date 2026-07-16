@@ -16,6 +16,7 @@ import GumroadParty from "../../components/vote/GumroadParty";
 import StudioDarkParty from "../../components/vote/StudioDarkParty";
 import VerdureParty from "../../components/vote/VerdureParty";
 import ReceiptParty from "../../components/vote/ReceiptParty";
+import BlossomParty from "../../components/vote/BlossomParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
@@ -591,6 +592,7 @@ function PartyContent() {
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
 
   const listSectionRef = useRef(null);
 
@@ -696,6 +698,16 @@ function PartyContent() {
       <>
         <PageThemeOverrides page="party" />
         <ReceiptParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // BLOSSOM layout (own Candy Editorial chrome) — replaces the classic cinematic page entirely.
+  if (isBlossom) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <BlossomParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
       </>
     );
   }

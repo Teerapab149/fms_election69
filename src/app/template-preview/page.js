@@ -51,6 +51,7 @@ import VerdureSuccess from '../../components/vote/VerdureSuccess';
 import VerdureClosed from '../../components/vote/VerdureClosed';
 
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import BlossomParty from '../../components/vote/BlossomParty';
 import BlossomResults from '../../components/vote/BlossomResults';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import BlossomVote from '../../components/vote/BlossomVote';
@@ -564,9 +565,14 @@ function PreviewBody() {
     }
 
     // Blossom family — its own Candy Editorial inner pages (home goes through
-    // HomeRenderer above; remaining blossom inner pages fall to classic for now).
+    // HomeRenderer above).
     if (family === 'blossom') {
       if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode={false} />;
+      // PARTY detail (T3.6). the Candy Editorial feature; replaces the classic fallthrough.
+      if (page === 'party') {
+        const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+        return <BlossomParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
+      }
       if (page === 'results') {
         // revealed → ranking + demographics; otherwise the LOCKED embargo band (the
         // real election-day state: polls open, scores sealed, turnout public).
@@ -729,6 +735,7 @@ function PreviewBody() {
   // ── blossom family — Candy Editorial inner pages (static preview slides) ──
   if (family === 'blossom') {
     if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode />;
+    if (page === 'party') return <BlossomParty party={PARTIES[0]} galleryImages={[]} showBackToVote={false} editorMode />;
     if (page === 'vote') {
       // ballot static slide — MULTI (T3.2) or SINGLE booth (T3.3); editorMode disables
       // selection/confirm so the slide is a calm static presentation.
