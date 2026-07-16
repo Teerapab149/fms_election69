@@ -184,11 +184,11 @@ function useCountdown(globalConfig, systemMode) {
       const now = Date.now();
       let target, label, live = false, done = false;
       if (systemMode === "PAUSE") { label = "ระบบพักชั่วคราว"; done = true; }
-      else if (systemMode === "ENDED") { label = "ปิดหีบแล้ว"; done = true; }
-      else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดหีบใน"; live = true; }
-      else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดหีบใน"; }
-      else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดหีบใน"; live = true; }
-      else { label = "ปิดหีบแล้ว"; done = true; }
+      else if (systemMode === "ENDED") { label = "ปิดโหวตแล้ว"; done = true; }
+      else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
+      else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดโหวตใน"; }
+      else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
+      else { label = "ปิดโหวตแล้ว"; done = true; }
       if (done || !target) { setCd({ d: 0, h: 0, m: 0, s: 0, label, live, done }); return; }
       const diff = Math.max(0, target - now);
       setCd({
@@ -294,21 +294,21 @@ export default function ReceiptHome({
   //    done/paused = the plain status phrase, shown as a stamp instead of digits. ──
   const slipLabel = cd.done
     ? cd.label
-    : cd.label === "เปิดหีบใน" ? "เปิดหีบในอีก"
-      : cd.label === "ปิดหีบใน" ? "ปิดหีบในอีก"
+    : cd.label === "เปิดโหวตใน" ? "เปิดโหวตในอีก"
+      : cd.label === "ปิดโหวตใน" ? "ปิดโหวตในอีก"
         : "กำลังโหลด";
   const slipSub = cd.done
     ? (cd.label === "ระบบพักชั่วคราว" ? "SYSTEM PAUSED" : "POLL CLOSED")
-    : cd.label === "เปิดหีบใน" ? "STARTS IN" : "CLOSES IN";
+    : cd.label === "เปิดโหวตใน" ? "STARTS IN" : "CLOSES IN";
 
   // dispenser LED ↔ the SAME systemMode ladder (via cd — no new state). SEMANTIC,
   // locked across every theme (A8.1): live=mint-green / before-open+pause=yellow /
   // ended+closed=faint-red. open when the countdown is live; closed only when the
-  // poll has truly ended ("ปิดหีบแล้ว"); pause + pre-open fall to the waiting amber.
-  const ledState = cd.live ? "open" : (cd.done && cd.label === "ปิดหีบแล้ว") ? "closed" : "wait";
+  // poll has truly ended ("ปิดโหวตแล้ว"); pause + pre-open fall to the waiting amber.
+  const ledState = cd.live ? "open" : (cd.done && cd.label === "ปิดโหวตแล้ว") ? "closed" : "wait";
   // poll fully closed → the queue segment gets the red cross-stamp + a printed close
   // line (B1), instead of an empty ticket. Pause keeps just its stamp.
-  const isEnded = cd.done && cd.label === "ปิดหีบแล้ว";
+  const isEnded = cd.done && cd.label === "ปิดโหวตแล้ว";
 
   return (
     <div ref={rootRef} className="fms-app rc-root rc-home-root rc-desk">
@@ -368,7 +368,7 @@ export default function ReceiptHome({
                 <p className="rc-notice-deck">{meta.campaign}</p>
                 {ELECTION_START && (
                   <div className="rc-daterow">
-                    <span className="rc-daterow-k">เปิดหีบ</span>
+                    <span className="rc-daterow-k">เปิดโหวต</span>
                     <span className="rc-daterow-v">{formatThaiDate(ELECTION_START)}</span>
                     <span className="rc-daterow-t">{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
                   </div>
@@ -393,8 +393,8 @@ export default function ReceiptHome({
               </div>
               <div className="rc-disp-slot" aria-hidden="true" />
 
-              <section className={`rc-slip rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="บัตรคิวนับถอยหลัง">
-                <div className="rc-slip-head"><span className="rc-mono">QUEUE ·</span> <span>คิวเข้าคูหา</span></div>
+              <section className={`rc-slip rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="นับถอยหลังการโหวต">
+                <div className="rc-slip-head"><span className="rc-mono">VOTE ·</span> <span>ลงคะแนน</span></div>
                 <div className="rc-slip-cap"><span>{slipLabel}</span><small className="rc-mono">{slipSub}</small></div>
 
                 {/* live digits (DD:HH:MM:SS) — base-visible tabular Chakra Petch */}
@@ -411,7 +411,7 @@ export default function ReceiptHome({
                 {/* done-state — the slip is cross-stamped in red instead of digits */}
                 <div className="rc-slip-stamp"><span>{cd.label}</span></div>
                 {isEnded && (
-                  <div className="rc-close-line">ปิดรับบัตรคิว · เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                  <div className="rc-close-line">ปิดโหวตแล้ว · เวลาปิด {formatThaiTime(ELECTION_END)}</div>
                 )}
                 <div className="rc-slip-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
                 <div className="rc-slip-end" aria-hidden="true" />
@@ -422,25 +422,8 @@ export default function ReceiptHome({
             <div className="rc-note">
               <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
               <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
-              <div className="rc-note-h">เข้าคูหา</div>
-              <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่หีบเปิด</p>
-
-              {/* ── turnout register — real-time stats, back on the manila note ── */}
-              <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
-                <div className="rc-register-row">
-                  <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
-                  <span className="rc-register-v">{fmtInt(rawStats.totalVoted)}<small>คน</small></span>
-                </div>
-                <div className="rc-register-row">
-                  <span className="rc-register-k">อัตราการใช้สิทธิ์</span>
-                  <span className="rc-register-v">{pct}<small>%</small></span>
-                </div>
-                <div className="rc-register-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></div>
-                <div className="rc-register-row">
-                  <span className="rc-register-k">ผู้ลงสมัคร</span>
-                  <span className="rc-register-v">{partyCount}<small>พรรค</small></span>
-                </div>
-              </div>
+              <div className="rc-note-h">ลงคะแนน</div>
+              <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่เปิดโหวต</p>
 
               {/* hanging PRIMARY CTA tag — the 6-state ladder, strung from the note pin */}
               <div className="rc-tagwrap">
@@ -471,8 +454,35 @@ export default function ReceiptHome({
             </a>
           </div>{/* /rc-rail */}
 
-          {/* ===== POSTER band — the admin promo poster taped down, with a small foil
-              seal chip; bottom of the desk, centre-right. ===== */}
+          {/* ===== TURNOUT register — the real-time stats pulled off the manila note
+              into their OWN full-width receipt slip (bottom-left on desktop): a mono
+              head, the SAME live rows (used/rate/bar/parties — semantics untouched),
+              a ref line + die-cut end + one-direction shadow. Balances the poster at
+              bottom-right; unconditionally visible (no reveal-arming — matches its
+              bottom-row sibling, the poster). ===== */}
+          <section className="rc-turnout rc-grain" aria-label="รายงานยอดผู้ใช้สิทธิ์">
+            <div className="rc-turnout-head"><span className="rc-mono">TURNOUT ·</span> <span>รายงานยอดผู้ใช้สิทธิ์</span></div>
+            <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
+              <div className="rc-register-row">
+                <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
+                <span className="rc-register-v">{fmtInt(rawStats.totalVoted)}<small>คน</small></span>
+              </div>
+              <div className="rc-register-row">
+                <span className="rc-register-k">อัตราการใช้สิทธิ์</span>
+                <span className="rc-register-v">{pct}<small>%</small></span>
+              </div>
+              <div className="rc-register-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></div>
+              <div className="rc-register-row">
+                <span className="rc-register-k">ผู้ลงสมัคร</span>
+                <span className="rc-register-v">{partyCount}<small>พรรค</small></span>
+              </div>
+            </div>
+            <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · TURNOUT</div>
+            <div className="rc-turnout-end" aria-hidden="true" />
+          </section>
+
+          {/* ===== POSTER band — the admin promo poster taped down; bottom of the
+              desk, docked RIGHT on desktop (balances the turnout slip at left). ===== */}
           <div className="rc-poster-sec">
             <figure className="rc-poster">
               <span className="rc-poster-tape rc-poster-tape--l" aria-hidden="true" />
@@ -480,7 +490,6 @@ export default function ReceiptHome({
               <img src={posterSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="rc-poster-img" loading="lazy" />
               <figcaption className="rc-poster-cap">โปสเตอร์ประชาสัมพันธ์</figcaption>
             </figure>
-            <span className="rc-chip" aria-hidden="true"><span className="rc-foil rc-foil--conic" /></span>
           </div>
         </div>{/* /rc-stage */}
 
@@ -684,8 +693,10 @@ export default function ReceiptHome({
           color:var(--rc-ink2); }
         .rc-home-root .rc-notice-title { margin:12px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.12;
           letter-spacing:-.01em; font-size:clamp(27px, 6vw, 42px); color:var(--rc-ink); }
-        .rc-home-root .rc-notice-deck { margin:12px 0 0; max-width:44ch; font-family:var(--rc-fr); font-size:15px;
-          line-height:1.7; color:var(--rc-ink2); }
+        /* the campaign/PROJECT name — elevated in the hierarchy (larger + bolder +
+           full ink) so it reads as the headline subject under the org identity. */
+        .rc-home-root .rc-notice-deck { margin:14px 0 0; max-width:40ch; font-family:var(--rc-fr); font-size:18px;
+          font-weight:600; line-height:1.5; letter-spacing:.005em; color:var(--rc-ink); }
         .rc-home-root .rc-daterow { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:18px;
           font-family:var(--rc-fr); font-size:13px; letter-spacing:.01em; color:var(--rc-ink); font-variant-numeric:tabular-nums; }
         .rc-home-root .rc-daterow-k { font-family:var(--rc-fr); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
@@ -759,9 +770,24 @@ export default function ReceiptHome({
         .rc-home-root .rc-register-bar > span { display:block; height:100%; border-radius:2px; background:var(--rc-accent);
           transform-origin:left center; }
 
-        /* the register now sits ON the manila note, divided from the note copy above */
-        .rc-home-root .rc-note .rc-register { margin-top:14px; padding-top:12px;
-          border-top:1px dashed color-mix(in srgb, var(--rc-note) 60%, var(--rc-ink)); }
+        /* ---- turnout register slip — its OWN receipt-stock object (bottom-left on
+           desktop). full-width paper card: mono head, the live register rows, a ref
+           line + die-cut end + single-direction shadow. base-visible. ---- */
+        .rc-home-root .rc-turnout { position:relative; z-index:2; margin:22px auto 0; max-width:360px;
+          background-color:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px 4px 3px 3px;
+          padding:16px clamp(16px,4vw,20px) 0;
+          box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-home-root .rc-turnout-head { display:flex; align-items:baseline; gap:7px; margin-bottom:6px;
+          font-family:var(--rc-fr); font-size:12px; font-weight:700; letter-spacing:.02em;
+          color:var(--rc-accent-deep); text-transform:uppercase; }
+        .rc-home-root .rc-turnout-head .rc-mono { font-size:10px; letter-spacing:.18em; color:var(--rc-ink2); font-weight:400; }
+        .rc-home-root .rc-turnout-head span:last-child { text-transform:none; font-size:13px; }
+        .rc-home-root .rc-turnout-ref { margin-top:14px; font-size:10px; letter-spacing:.16em; color:var(--rc-ink2);
+          font-variant-numeric:tabular-nums; }
+        .rc-home-root .rc-turnout-end { height:11px; margin:12px calc(-1 * clamp(16px,4vw,20px)) 0; background:var(--rc-receipt);
+          box-shadow:0 8px 18px -14px color-mix(in srgb, var(--rc-ink) 40%, transparent);
+          -webkit-mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x;
+                  mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x; }
 
         /* ================= RAIL + DESK OBJECTS ================= */
         /* mobile-first: hero first, then the rail (clock, note+register+CTA, stub)
@@ -829,13 +855,7 @@ export default function ReceiptHome({
         .rc-home-root .rc-stubcta:hover { transform:translateY(-2px); color:var(--rc-accent-deep); border-color:var(--rc-accent-deep); }
         .rc-home-root .rc-stubcta:active { transform:scale(.98); }
 
-        /* small foil seal chip on the desk */
-        .rc-home-root .rc-chip { position:relative; align-self:flex-start; width:46px; height:46px; border-radius:50%; overflow:hidden;
-          transform:rotate(12deg); display:grid; place-items:center;
-          box-shadow:1px 10px 20px -10px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
-        .rc-home-root .rc-chip .rc-foil { position:absolute; inset:-30%; }
-
-        /* ---- poster band (bottom, centre-right on desktop) ---- */
+        /* ---- poster band (bottom, docked right on desktop) ---- */
         .rc-home-root .rc-poster-sec { margin-top:30px; display:flex; flex-direction:column; align-items:center; gap:16px; }
         .rc-home-root .rc-poster { margin:0; position:relative; width:min(78vw, 320px); background:var(--rc-receipt); padding:10px 10px 14px;
           border:1px solid var(--rc-line); border-radius:4px; transform:rotate(-2deg);
@@ -871,25 +891,26 @@ export default function ReceiptHome({
           .rc-home-root .rc-burger, .rc-home-root .rc-sheet { display:none; }
         }
 
-        /* ================= DESKTOP : hero stack LEFT (~57%) + sticky rail RIGHT ================= */
-        /* a 2-column grid — the paper-stack hero sits LEFT (with right whitespace); the
-           rail (clock, note+register+CTA, stub) is a sticky RIGHT column pulled slightly
-           OVER the hero's right edge. The card is capped so the overlap lands on empty
-           desk, never on the title / stats text. The poster band spans full width below,
-           centre-right. */
+        /* ================= DESKTOP : 2×2 desk — hero + turnout LEFT, rail + poster RIGHT =====
+           a 2-column grid. row 1: the paper-stack hero (LEFT ~57%) + the sticky rail
+           (clock, note+CTA, stub) pulled slightly OVER the hero's right edge. row 2: the
+           TURNOUT slip docks bottom-LEFT (under the hero) and the poster docks bottom-
+           RIGHT (under the rail) — a balanced bottom band. The card is capped so the rail
+           overlap lands on empty desk, never on the title text. */
         @media (min-width:1024px) {
           .rc-home-root .rc-stage { display:grid; align-items:start;
             grid-template-columns:minmax(0, 57%) minmax(0, 1fr);
-            column-gap:clamp(24px, 4vw, 52px); row-gap:44px;
+            column-gap:clamp(24px, 4vw, 52px); row-gap:40px;
             padding-left:max(0px, calc(6vw - 20px)); }
           .rc-home-root .rc-hero { grid-column:1; grid-row:1; }
           .rc-home-root .rc-stack { max-width:480px; margin-left:0; margin-right:0; }
           .rc-home-root .rc-rail { grid-column:2; grid-row:1; position:sticky; top:84px;
             margin:6px 0 0 -28px; gap:clamp(20px, 3vh, 34px); }
           .rc-home-root .rc-note { max-width:none; }
-          .rc-home-root .rc-poster-sec { grid-column:1 / -1; grid-row:2; flex-direction:row;
-            align-items:flex-end; justify-content:center; gap:24px; padding-left:16%; }
-          .rc-home-root .rc-poster { width:min(320px, 42%); }
+          .rc-home-root .rc-turnout { grid-column:1; grid-row:2; margin:0; max-width:380px; }
+          .rc-home-root .rc-poster-sec { grid-column:2; grid-row:2; flex-direction:column;
+            align-items:center; justify-content:flex-start; margin-top:0; }
+          .rc-home-root .rc-poster { width:min(300px, 100%); }
           .rc-home-root .rc-notice-title { font-size:clamp(34px, 3vw, 46px); }
         }
 
