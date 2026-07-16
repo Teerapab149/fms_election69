@@ -398,8 +398,14 @@ export default function ReceiptHome({
                 <span className="rc-cta-in">{CTA.label}<span className="rc-cta-arrow" aria-hidden="true">→</span></span>
               </a>
 
-              <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
-                <span className="rc-stubcta-th">ดูผู้สมัคร</span><span className="rc-cta-arrow" aria-hidden="true"> →</span>
+              <a href={editorMode ? undefined : getPath("/candidates")} className="rc-ticket-cta">
+                <span className="rc-tkt-perf" aria-hidden="true" />
+                <span className="rc-tkt-notch rc-tkt-notch--t" aria-hidden="true" />
+                <span className="rc-tkt-notch rc-tkt-notch--b" aria-hidden="true" />
+                <span className="rc-tkt-main">
+                  <span className="rc-tkt-th">ดูผู้สมัคร</span>
+                  <span className="rc-tkt-mono rc-mono">CANDIDATES →</span>
+                </span>
               </a>
             </div>
           </section>
@@ -409,18 +415,21 @@ export default function ReceiptHome({
               hero card, so the rail ends at the note with nothing floating. ===== */}
           <div className="rc-rail">
 
-            {/* ── CLOCK — the ONLY receipt object of the page: the dispenser head
-                (SAMO n · HOME + LED ↔ systemMode) and a queue slip emerging from the
-                slot (split-flap, ref line, jagged bottom; closed → red cross-stamp).
-                print-reveal stays on THIS single slip. ── */}
-            <div className={`rc-clock rc-disp led-${ledState}`}>
-              <div className="rc-disp-body">
-                <span className="rc-disp-label rc-mono">{meta.prefix} {meta.number} · HOME</span>
-                <span className="rc-disp-led" aria-hidden="true" />
-              </div>
-              <div className="rc-disp-slot" aria-hidden="true" />
+            {/* ── CLOCK — the ONLY receipt object of the page (v2-R5b): the black
+                dispenser box is retired. It is now a CONTINUOUS thermal register STRIP
+                fastened to the desk with two pieces of clear tape (top + bottom, edges
+                + under-shadow visible), faint print-banding overlaid, and the old
+                machine LED reborn as a round die-cut STICKER on the strip corner —
+                colour ↔ ledState (semantics UNCHANGED). print-reveal stays on THIS
+                single strip. ── */}
+            <div className={`rc-clock rc-strip led-${ledState}`}>
+              <span className="rc-tape rc-tape--top" aria-hidden="true" />
+              <span className="rc-tape rc-tape--bot" aria-hidden="true" />
+              <span className="rc-strip-led" aria-hidden="true" />
 
               <section className={`rc-slip rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="นับถอยหลังการโหวต">
+                <span className="rc-band" aria-hidden="true" />
+                <div className="rc-strip-id rc-mono">{meta.prefix} {meta.number} · HOME</div>
                 <div className="rc-slip-head"><span className="rc-mono">VOTE ·</span> <span>ลงคะแนน</span></div>
                 <div className="rc-slip-cap"><span>{slipLabel}</span><small className="rc-mono">{slipSub}</small></div>
 
@@ -463,20 +472,24 @@ export default function ReceiptHome({
               bottom-right; unconditionally visible (no reveal-arming — matches its
               bottom-row sibling, the poster). ===== */}
           <section className="rc-turnout rc-grain" aria-label="รายงานยอดผู้ใช้สิทธิ์">
+            {/* two geometric die-cut stickers stuck on the corners as desk ephemera
+                (≤2, accent-faint, aria-hidden) */}
+            <span className="rc-sticker rc-sticker--dot" aria-hidden="true" />
+            <span className="rc-sticker rc-sticker--sq" aria-hidden="true" />
             <div className="rc-turnout-head"><span className="rc-mono">TURNOUT ·</span> <span>รายงานยอดผู้ใช้สิทธิ์</span></div>
             <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
               <div className="rc-register-row">
                 <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
-                <span className="rc-register-v">{fmtInt(rawStats.totalVoted)}<small>คน</small></span>
+                <span className="rc-register-v"><span className="rc-reg-num rc-mono">{fmtInt(rawStats.totalVoted)}</span><small>คน</small></span>
               </div>
               <div className="rc-register-row">
                 <span className="rc-register-k">อัตราการใช้สิทธิ์</span>
-                <span className="rc-register-v">{pct}<small>%</small></span>
+                <span className="rc-register-v"><span className="rc-reg-num rc-mono">{pct}</span><small>%</small></span>
               </div>
               <div className="rc-register-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></div>
               <div className="rc-register-row">
                 <span className="rc-register-k">ผู้ลงสมัคร</span>
-                <span className="rc-register-v">{partyCount}<small>พรรค</small></span>
+                <span className="rc-register-v"><span className="rc-reg-num rc-mono">{partyCount}</span><small>พรรค</small></span>
               </div>
             </div>
             <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · TURNOUT</div>
@@ -489,6 +502,8 @@ export default function ReceiptHome({
             <figure className="rc-poster">
               <span className="rc-poster-tape rc-poster-tape--l" aria-hidden="true" />
               <span className="rc-poster-tape rc-poster-tape--r" aria-hidden="true" />
+              <span className="rc-poster-tape rc-poster-tape--bl" aria-hidden="true" />
+              <span className="rc-poster-tape rc-poster-tape--br" aria-hidden="true" />
               <img src={posterSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="rc-poster-img" loading="lazy" />
               <figcaption className="rc-poster-cap">โปสเตอร์ประชาสัมพันธ์</figcaption>
             </figure>
@@ -617,36 +632,61 @@ export default function ReceiptHome({
         .rc-home-root .rc-home-wrap { position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:26px 20px 80px; }
         .rc-home-root .rc-stage { position:relative; }
 
-        /* ================= DISPENSER (T3 / A2) ================= */
-        /* the ink machine + slot dock at the top of the tape; the first segment
-           peeks from the slot (tape margin-top negative). width/offset MATCH the tape
-           via the shared selector below. */
-        .rc-home-root .rc-disp { position:relative; z-index:3; }
-        .rc-home-root .rc-disp-body { display:flex; align-items:center; justify-content:space-between; gap:12px;
-          padding:11px 16px 13px; border-radius:12px 12px 3px 3px;
-          background:linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 84%, var(--rc-faint)), var(--rc-ink)); }
-        .rc-home-root .rc-disp-label { font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
-          color:color-mix(in srgb, var(--rc-faint) 80%, var(--rc-receipt)); }
-        .rc-home-root .rc-disp-led { width:9px; height:9px; border-radius:50%; flex-shrink:0;
-          background:var(--rc-led-wait); box-shadow:0 0 9px var(--rc-led-wait); animation:rcLed 2.4s ease-in-out infinite; }
-        .rc-home-root .rc-disp.led-open .rc-disp-led { background:var(--rc-led-open); box-shadow:0 0 9px var(--rc-led-open); }
-        .rc-home-root .rc-disp.led-wait .rc-disp-led { background:var(--rc-led-wait); box-shadow:0 0 9px var(--rc-led-wait); }
-        .rc-home-root .rc-disp.led-closed .rc-disp-led { background:var(--rc-led-closed); box-shadow:0 0 7px var(--rc-led-closed); opacity:.9; }
-        @keyframes rcLed { 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
-        /* slot — a dark inset the tape emerges from */
-        .rc-home-root .rc-disp-slot { height:12px; margin:0 8px; background:var(--rc-ink); border-radius:0 0 6px 6px; position:relative;
-          box-shadow:inset 0 2px 5px color-mix(in srgb, var(--rc-ink) 82%, transparent); }
-        .rc-home-root .rc-disp-slot::after { content:""; position:absolute; left:12px; right:12px; top:4px; height:3px;
-          border-radius:2px; background:color-mix(in srgb, var(--rc-ink) 55%, var(--rc-faint)); }
+        /* ============ REGISTER STRIP (v2-R5b — replaces the black dispenser) ============
+           The generic black machine box + dark slot are RETIRED. The clock is now a
+           CONTINUOUS thermal register strip fastened to the desk with two pieces of
+           clear tape; the machine LED is reborn as a die-cut sticker on the corner. */
+        .rc-home-root .rc-strip { position:relative; z-index:3; }
+        /* clear tape — a translucent light film. Every Receipt theme's paper stock is
+           near-white (incl. carbon → #FAFAF8), so mixing --rc-receipt with transparent
+           reads as clear tape on ALL themes. Diagonal sheen + lit edges + under-shadow. */
+        .rc-home-root .rc-tape { position:absolute; z-index:6; left:50%; width:84px; height:24px; pointer-events:none;
+          background:linear-gradient(115deg,
+            color-mix(in srgb, var(--rc-receipt) 48%, transparent) 0%,
+            color-mix(in srgb, var(--rc-receipt) 16%, transparent) 38%,
+            color-mix(in srgb, var(--rc-receipt) 66%, transparent) 50%,
+            color-mix(in srgb, var(--rc-receipt) 18%, transparent) 62%,
+            color-mix(in srgb, var(--rc-receipt) 46%, transparent) 100%);
+          border-left:1px solid color-mix(in srgb, var(--rc-ink) 9%, transparent);
+          border-right:1px solid color-mix(in srgb, var(--rc-ink) 9%, transparent);
+          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 42%, transparent),
+                     inset 0 0 0 1px color-mix(in srgb, var(--rc-receipt) 34%, transparent); }
+        .rc-home-root .rc-tape--top { top:-9px; transform:translateX(-50%) rotate(-2.6deg); }
+        .rc-home-root .rc-tape--bot { bottom:20px; transform:translateX(-50%) rotate(1.8deg); }
+        /* LED → round die-cut STICKER on the strip's top-right corner. colour ↔ ledState
+           (SEMANTIC — unchanged). die-cut = a receipt-white rim around the colour. */
+        .rc-home-root .rc-strip-led { position:absolute; z-index:7; top:-8px; right:18px;
+          width:22px; height:22px; border-radius:50%; background:var(--rc-led-wait);
+          border:2.5px solid var(--rc-receipt);
+          box-shadow:0 3px 7px -3px color-mix(in srgb, var(--rc-ink) 46%, transparent),
+                     inset 0 0 0 1px color-mix(in srgb, var(--rc-ink) 14%, transparent); }
+        .rc-home-root .rc-strip.led-open .rc-strip-led { background:var(--rc-led-open); }
+        .rc-home-root .rc-strip.led-wait .rc-strip-led { background:var(--rc-led-wait); }
+        .rc-home-root .rc-strip.led-closed .rc-strip-led { background:var(--rc-led-closed); opacity:.92; }
+        /* mono strip id — carries the retired machine label "SAMO n · HOME" */
+        .rc-home-root .rc-strip-id { font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+          color:var(--rc-ink2); margin-bottom:12px; }
+        /* faint print-banding overlay (~3% ink horizontal lines) — the thermal look.
+           z-index:-1 → paints above the grain paper, BELOW the print (text). */
+        .rc-home-root .rc-band { position:absolute; inset:0; z-index:-1; pointer-events:none;
+          background:repeating-linear-gradient(180deg,
+            color-mix(in srgb, var(--rc-ink) 3%, transparent) 0 1px, transparent 1px 8px); }
 
         /* ================= HERO — paper-stack notice (A5 return to the R2.5 language) ================= */
         /* the org-name card on receipt stock, clasped by a metal paperclip, with two
            tilted backing sheets and a ticket stub peeking underneath. NOT a tape. */
         .rc-home-root .rc-hero { position:relative; z-index:2; }
         .rc-home-root .rc-stack { position:relative; align-self:flex-start; max-width:520px; margin:8px 12px 0; }
+        /* the hero card now reads as thermal stock (v2-R5b): faint horizontal print-
+           banding layered under the print, plus a tighter bottom box-shadow that reads
+           as the sheet curling/lifting off the desk. Stays a paper STACK, not a roll. */
         .rc-home-root .rc-card { position:relative; z-index:3; border-radius:4px; padding:38px 22px 22px;
-          background-color:var(--rc-receipt); border:1px solid var(--rc-line);
-          box-shadow:2px 20px 42px -24px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+          background-color:var(--rc-receipt);
+          background-image:repeating-linear-gradient(180deg,
+            color-mix(in srgb, var(--rc-ink) 3%, transparent) 0 1px, transparent 1px 8px);
+          border:1px solid var(--rc-line);
+          box-shadow:2px 20px 42px -24px color-mix(in srgb, var(--rc-ink) 40%, transparent),
+                     0 11px 15px -11px color-mix(in srgb, var(--rc-ink) 36%, transparent); }
         /* two tilted backing sheets — the paper "stack" */
         .rc-home-root .rc-stack-sheet { position:absolute; inset:0; border-radius:4px; background:var(--rc-receipt);
           border:1px solid var(--rc-line);
@@ -655,11 +695,11 @@ export default function ReceiptHome({
         .rc-home-root .rc-stack-sheet--b { z-index:1; transform:rotate(1.8deg) translate(7px, 9px);
           background:var(--rc-receipt-edge); }
         /* metal paperclip clasped over the top edge (gem clip = two nested loops) */
-        .rc-home-root .rc-clip { position:absolute; z-index:4; top:-15px; left:30px; width:22px; height:54px;
-          border:2.5px solid color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-faint)); border-radius:11px;
+        .rc-home-root .rc-clip { position:absolute; z-index:4; top:-15px; left:32px; width:16px; height:54px;
+          border:2px solid color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-faint)); border-radius:8px;
           background:linear-gradient(105deg, transparent 44%, color-mix(in srgb, var(--rc-receipt) 70%, transparent) 50%, transparent 56%); }
-        .rc-home-root .rc-clip i { position:absolute; left:5px; right:5px; top:7px; bottom:-3px;
-          border:2.5px solid color-mix(in srgb, var(--rc-ink2) 45%, var(--rc-faint)); border-bottom:none; border-radius:7px 7px 0 0; }
+        .rc-home-root .rc-clip i { position:absolute; left:4px; right:4px; top:7px; bottom:-3px;
+          border:2px solid color-mix(in srgb, var(--rc-ink2) 45%, var(--rc-faint)); border-bottom:none; border-radius:5px 5px 0 0; }
         /* a ticket stub peeking from under the card's lower-left */
         .rc-home-root .rc-stub-peek { position:absolute; z-index:0; left:26px; bottom:-15px; display:inline-flex;
           align-items:baseline; gap:8px; padding:8px 14px 11px; transform:rotate(-2.4deg); transform-origin:top left;
@@ -670,9 +710,10 @@ export default function ReceiptHome({
 
         /* ================= CLOCK — dispenser + queue slip (the ONLY receipt object) ================= */
         .rc-home-root .rc-clock { position:relative; z-index:3; margin:0 12px; }
-        /* the queue slip emerges from the dispenser slot; grain paper + die-cut end */
-        .rc-home-root .rc-slip { position:relative; z-index:2; margin:-5px 8px 0; padding:16px clamp(16px,4.5vw,22px) 0;
-          border-radius:0 0 3px 3px;
+        /* the register strip — a continuous thermal slip; grain paper + die-cut end.
+           No slot tuck now (v2-R5b): straight top, rounded top corners, taped down. */
+        .rc-home-root .rc-slip { position:relative; z-index:2; margin:0 8px; padding:18px clamp(16px,4.5vw,22px) 0;
+          border-radius:3px 3px 0 0;
           box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
         .rc-home-root .rc-slip::before, .rc-home-root .rc-slip::after { content:""; position:absolute; top:0; bottom:0; width:6px;
           pointer-events:none; z-index:1; }
@@ -742,10 +783,17 @@ export default function ReceiptHome({
           color:color-mix(in srgb, var(--rc-ink2) 60%, var(--rc-receipt)); align-self:flex-start; line-height:1; margin-top:.08em; }
 
         /* done-state — red cross-stamp laid diagonally across the ticket (B1) */
-        .rc-home-root .rc-slip-stamp { display:none; margin:16px 0 6px; width:fit-content; padding:7px 18px;
+        .rc-home-root .rc-slip-stamp { position:relative; display:none; margin:16px 0 6px; width:fit-content; padding:7px 18px;
           transform:rotate(-6deg); border:2.5px solid var(--rc-stamp-red); border-radius:6px; opacity:.9; }
-        .rc-home-root .rc-slip-stamp span { font-family:var(--rc-fh); font-weight:700; font-size:22px; letter-spacing:.02em;
+        .rc-home-root .rc-slip-stamp span { position:relative; z-index:0; font-family:var(--rc-fh); font-weight:700; font-size:22px; letter-spacing:.02em;
           color:var(--rc-stamp-red); }
+        /* organic ink texture (v2-R5b) — faint paper-coloured patches overlaid so the
+           red reads as unevenly pressed ink, not a flat fill. Static (A7-safe). */
+        .rc-home-root .rc-slip-stamp::after { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit; pointer-events:none;
+          background:
+            radial-gradient(58% 42% at 18% 28%, color-mix(in srgb, var(--rc-receipt) 34%, transparent), transparent 62%),
+            radial-gradient(42% 52% at 78% 66%, color-mix(in srgb, var(--rc-receipt) 26%, transparent), transparent 58%),
+            radial-gradient(30% 34% at 54% 18%, color-mix(in srgb, var(--rc-receipt) 22%, transparent), transparent 52%); }
         .rc-home-root .rc-close-line { display:none; margin-top:6px; font-family:var(--rc-fr); font-size:13px; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; }
         .rc-home-root .rc-ticket.is-done .rc-slip-digits { display:none; }
@@ -753,13 +801,19 @@ export default function ReceiptHome({
         .rc-home-root .rc-ticket.is-ended .rc-close-line { display:block; }
 
         /* ---- T3 turnout register ---- */
+        /* rows given more vertical air (v2-R5b) so the left slip's bottom lands ~level
+           with the enlarged poster at right. */
         .rc-home-root .rc-register-row { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
-          padding:8px 0; border-bottom:1px dotted var(--rc-line); }
+          padding:16px 0; border-bottom:1px dotted var(--rc-line); }
         .rc-home-root .rc-register-row:last-child { border-bottom:none; }
         .rc-home-root .rc-register-k { font-family:var(--rc-fr); font-size:12px; letter-spacing:.02em;
           color:var(--rc-ink2); display:inline-flex; align-items:center; }
         .rc-home-root .rc-register-v { font-family:var(--rc-fr); font-weight:700; font-size:25px; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; letter-spacing:.01em; }
+        /* the stat NUMBER itself → Space Mono tabular (Latin/digits only — A10.3); the
+           Thai/symbol unit keeps Chakra via .rc-register-v small. */
+        .rc-home-root .rc-reg-num { font-family:var(--rc-fm); font-variant-numeric:tabular-nums;
+          font-size:24px; letter-spacing:0; line-height:1; }
         .rc-home-root .rc-register-v small { font-family:var(--rc-fr); font-size:11px; font-weight:400; color:var(--rc-ink2);
           margin-left:5px; letter-spacing:.02em; }
         .rc-home-root .rc-live-dot { width:6px; height:6px; border-radius:50%; background:var(--rc-accent); margin-right:6px;
@@ -791,6 +845,20 @@ export default function ReceiptHome({
           -webkit-mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x;
                   mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x; }
 
+        /* geometric die-cut STICKERS (v2-R5b) — desk ephemera stuck on the turnout
+           slip's corners. Exactly TWO, accent-faint, aria-hidden — a circle + a cut-
+           corner square. Anchored to corners so they never float / clutter. */
+        .rc-home-root .rc-sticker { position:absolute; z-index:5; pointer-events:none; }
+        .rc-home-root .rc-sticker--dot { top:-13px; right:-9px; width:34px; height:34px; border-radius:50%; transform:rotate(-8deg);
+          background:color-mix(in srgb, var(--rc-accent) 14%, var(--rc-receipt));
+          border:1.5px solid color-mix(in srgb, var(--rc-accent) 40%, transparent);
+          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        .rc-home-root .rc-sticker--sq { left:-10px; bottom:28px; width:28px; height:28px; transform:rotate(6deg);
+          background:color-mix(in srgb, var(--rc-accent) 10%, var(--rc-receipt));
+          border:1.5px solid color-mix(in srgb, var(--rc-accent) 34%, transparent);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
+
         /* ================= RAIL + DESK OBJECTS ================= */
         /* mobile-first: hero (card + CTA action row) first, then the rail (clock +
            note) stacks below it, then the turnout slip + poster band. desktop lifts the
@@ -816,12 +884,12 @@ export default function ReceiptHome({
            FIRST (actionable immediately); ≥640px becomes a single tag + stub row. ---- */
         .rc-home-root .rc-actions { position:relative; z-index:5; margin:26px 12px 0;
           display:flex; flex-direction:column; align-items:stretch; gap:12px; }
-        /* stub goes full-width & centred while stacked; ≥640 it shrinks to content */
-        .rc-home-root .rc-actions .rc-stubcta { align-self:stretch; justify-content:center; }
+        /* ticket goes full-width & centred while stacked; ≥640 it shrinks to content */
+        .rc-home-root .rc-actions .rc-ticket-cta { align-self:stretch; justify-content:center; }
         @media (min-width:640px) {
           .rc-home-root .rc-actions { flex-direction:row; align-items:stretch; flex-wrap:wrap; }
           .rc-home-root .rc-actions .rc-cta { flex:1 1 240px; }
-          .rc-home-root .rc-actions .rc-stubcta { flex:0 0 auto; align-self:auto; }
+          .rc-home-root .rc-actions .rc-ticket-cta { flex:0 0 auto; align-self:auto; }
         }
 
         /* die-cut TAG CTA — foil rim behind an accent fill, grommet at the left */
@@ -829,7 +897,10 @@ export default function ReceiptHome({
           padding:18px 22px 18px 40px; border-radius:6px; background:transparent; transform:rotate(-0.6deg);
           transition:transform .18s ease, box-shadow .2s ease;
           box-shadow:2px 11px 24px -12px color-mix(in srgb, var(--rc-ink) 36%, transparent); }
-        .rc-home-root .rc-cta .rc-foil { position:absolute; inset:-2px; z-index:0; border-radius:8px; }
+        /* v2-R5b: soften the foil shift on the home CTA — slower drift = a more premium,
+           less busy iridescence (overrides the shared 9s drift for THIS foil only). */
+        .rc-home-root .rc-cta .rc-foil { position:absolute; inset:-2px; z-index:0; border-radius:8px;
+          animation-duration:16s; opacity:.92; }
         .rc-home-root .rc-cta::before { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit;
           background:var(--rc-accent); transition:background .2s ease; }
         .rc-home-root .rc-cta .rc-grommet { position:absolute; z-index:3; left:14px; top:50%; transform:translateY(-50%);
@@ -850,31 +921,49 @@ export default function ReceiptHome({
         .rc-home-root .rc-cta.is-disabled:hover { transform:rotate(-0.6deg); }
         .rc-home-root .rc-cta.is-disabled:hover .rc-cta-arrow { transform:none; }
 
-        /* secondary CTA — a real ticket STUB (cut corner + left perforation) */
-        .rc-home-root .rc-stubcta { position:relative; align-self:flex-start; display:inline-flex; align-items:center; gap:6px;
-          min-height:44px; padding:0 16px 0 20px; font-family:var(--rc-fh); font-weight:600; font-size:14px; color:var(--rc-ink);
-          background:var(--rc-receipt); border:1.5px solid var(--rc-ink);
-          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
-          transition:transform .18s ease, border-color .2s ease, color .2s ease; }
-        .rc-home-root .rc-stubcta::before { content:""; position:absolute; left:5px; top:8px; bottom:8px; width:2px;
+        /* secondary CTA — a real die-cut TICKET (v2-R5b): a paper body + stub split by a
+           vertical PERFORATION with a semicircle NOTCH punched top & bottom on the perf
+           line; a Thai label over a mono "CANDIDATES →" line; hover = lift + slight tilt.
+           (owner flagged the old flat stub as too plain.) */
+        .rc-home-root .rc-ticket-cta { position:relative; align-self:flex-start; display:inline-flex; align-items:center;
+          min-height:54px; padding:0 46px 0 18px; background:var(--rc-receipt); border:1.5px solid var(--rc-ink);
+          border-radius:4px; box-shadow:2px 9px 20px -11px color-mix(in srgb, var(--rc-ink) 36%, transparent);
+          transition:transform .18s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease; }
+        .rc-home-root .rc-tkt-main { display:flex; flex-direction:column; gap:3px; }
+        .rc-home-root .rc-tkt-th { font-family:var(--rc-fh); font-weight:700; font-size:15px; line-height:1.1; color:var(--rc-ink); }
+        .rc-home-root .rc-tkt-mono { font-size:9px; letter-spacing:.18em; color:var(--rc-ink2); }
+        /* vertical perforation dividing body from the right stub */
+        .rc-home-root .rc-tkt-perf { position:absolute; top:7px; bottom:7px; right:32px; width:2px; opacity:.55;
           background:repeating-linear-gradient(180deg, var(--rc-ink) 0 2px, transparent 2px 5px); }
-        .rc-home-root .rc-stubcta:hover { transform:translateY(-2px); color:var(--rc-accent-deep); border-color:var(--rc-accent-deep); }
-        .rc-home-root .rc-stubcta:active { transform:scale(.98); }
+        /* semicircle notches punched INTO the top & bottom edges, on the perf line (show
+           the desk through the die-cut). */
+        .rc-home-root .rc-tkt-notch { position:absolute; right:27px; width:12px; height:6px; background:var(--rc-desk);
+          box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--rc-ink) 16%, transparent); }
+        .rc-home-root .rc-tkt-notch--t { top:-1.5px; border-radius:0 0 12px 12px; }
+        .rc-home-root .rc-tkt-notch--b { bottom:-1.5px; border-radius:12px 12px 0 0; }
+        .rc-home-root .rc-ticket-cta:hover { transform:translateY(-2px) rotate(-1deg); color:var(--rc-accent-deep);
+          border-color:var(--rc-accent-deep); box-shadow:3px 12px 24px -11px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-home-root .rc-ticket-cta:hover .rc-tkt-th { color:var(--rc-accent-deep); }
+        .rc-home-root .rc-ticket-cta:active { transform:scale(.98); }
 
         /* ---- poster band (bottom, docked right on desktop) ---- */
         .rc-home-root .rc-poster-sec { margin-top:30px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-        .rc-home-root .rc-poster { margin:0; position:relative; width:min(78vw, 320px); background:var(--rc-receipt); padding:10px 10px 14px;
+        /* v2-R5b: the poster is meant to READ — enlarged ~+40% (owner flagged it as too
+           small), now taped at all FOUR corners. */
+        .rc-home-root .rc-poster { margin:0; position:relative; width:min(88vw, 400px); background:var(--rc-receipt); padding:10px 10px 14px;
           border:1px solid var(--rc-line); border-radius:4px; transform:rotate(-2deg);
           box-shadow:3px 24px 46px -22px color-mix(in srgb, var(--rc-ink) 30%, transparent);
           transition:transform .25s ease; }
         .rc-home-root .rc-poster:hover { transform:rotate(0deg) translateY(-4px); }
         .rc-home-root .rc-poster-img { display:block; width:100%; height:auto; border-radius:3px; }
-        .rc-home-root .rc-poster-tape { position:absolute; top:-11px; width:64px; height:22px; border-radius:1px;
+        .rc-home-root .rc-poster-tape { position:absolute; width:64px; height:22px; border-radius:1px;
           opacity:.55; mix-blend-mode:multiply;
           background:linear-gradient(135deg, color-mix(in srgb, var(--rc-holo-1) 55%, transparent), color-mix(in srgb, var(--rc-holo-3) 55%, transparent));
           box-shadow:1px 2px 3px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
-        .rc-home-root .rc-poster-tape--l { left:18px; transform:rotate(-8deg); }
-        .rc-home-root .rc-poster-tape--r { right:18px; transform:rotate(6deg); }
+        .rc-home-root .rc-poster-tape--l { top:-11px; left:18px; transform:rotate(-8deg); }
+        .rc-home-root .rc-poster-tape--r { top:-11px; right:18px; transform:rotate(6deg); }
+        .rc-home-root .rc-poster-tape--bl { bottom:-11px; left:18px; transform:rotate(6deg); }
+        .rc-home-root .rc-poster-tape--br { bottom:-11px; right:18px; transform:rotate(-8deg); }
         .rc-home-root .rc-poster-cap { text-align:center; margin-top:14px; font-family:var(--rc-fr); font-size:11px;
           letter-spacing:.06em; color:var(--rc-ink2); }
 
@@ -918,7 +1007,7 @@ export default function ReceiptHome({
           .rc-home-root .rc-turnout { grid-column:1; grid-row:2; margin:0; max-width:380px; }
           .rc-home-root .rc-poster-sec { grid-column:2; grid-row:2; flex-direction:column;
             align-items:center; justify-content:flex-start; margin-top:0; }
-          .rc-home-root .rc-poster { width:min(300px, 100%); }
+          .rc-home-root .rc-poster { width:min(420px, 100%); }
           .rc-home-root .rc-notice-title { font-size:clamp(34px, 3vw, 46px); }
         }
 

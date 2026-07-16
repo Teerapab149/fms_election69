@@ -1903,6 +1903,23 @@ prod (`migrate deploy`) runs the same file normally.
 resolve preserves data and keeps history honest.
 **Tags:** `#prisma` `#migration` `#dev-db`
 
+### P-LOG-092: [2026-07-16] getComputedStyle serializes color-mix as color(srgb …/a), not rgba()
+**Context:** v2-R5b banding probe — a regex matching only `rgba?(…)` grabbed the
+`transparent` stop of a `color-mix(… 3%, transparent)` value (alpha 0) and falsely
+reported "banding 0%"; the real computed value serializes as CSS Color 4
+`color(srgb .1098 .0941 .0824 / 0.03)`.
+**Lesson:** probes that read opacity/colour out of `color-mix()` must parse the
+`color(srgb … / a)` form (or dump the raw string), never assume `rgba()`.
+**Tags:** `#probe` `#css-color-4` `#verify`
+
+### P-LOG-093: [2026-07-16] Relabel sweeps must grep the whole file, comments included
+**Context:** v2-R4d — after relabelling the party "วิสัยทัศน์" JSX headings to
+ความหมายสัญลักษณ์, stale VISION references survived in top-of-file structure
+comments and a CSS section comment; only the grep=0 gate caught them.
+**Lesson:** a lying label in a comment outlives a JSX-only edit and misleads the
+next reader — every relabel ticket needs a whole-file grep gate on the old term.
+**Tags:** `#copy-sweep` `#comments` `#verify`
+
 ---
 
 ## 🚫 Rejected Approaches
