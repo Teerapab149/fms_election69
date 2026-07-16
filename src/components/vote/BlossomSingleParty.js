@@ -86,6 +86,9 @@ export default function BlossomSingleParty({
   const logo = resolveSrc(party?.logoUrl);
   const cover = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
   const story = (party?.logoMeaning || "").trim();
+  const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
+  // keep the placeholder defaults preparePartyData injects out of the printed pages
+  const missions = (party?.missions || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
   const policies = (party?.policies || []).map(asText).filter(Boolean);
   const members = sortMembersByPosition(party?.members || []);
   const no = party?.number;
@@ -159,14 +162,31 @@ export default function BlossomSingleParty({
           </figure>
         )}
 
-        {/* about the party */}
-        {story && (
+        {/* logo meaning — the story explains the party mark (logo chip ties them) */}
+        {showStory && (
           <section className="bl-sp-sec">
             <div className="bl-sp-sec__head">
-              <span className="bl-sp-sec__kick">ABOUT THE PARTY</span>
-              <h2 className="bl-sp-sec__title">เกี่ยวกับพรรค</h2>
+              {logo && <span className="bl-sp-sec__logo"><img src={logo} alt={party?.name || "โลโก้พรรค"} /></span>}
+              <span className="bl-sp-sec__kick">LOGO MEANING</span>
+              <h2 className="bl-sp-sec__title">ความหมายสัญลักษณ์</h2>
             </div>
             <p className="bl-sp-story">{story}</p>
+          </section>
+        )}
+
+        {/* พันธกิจ — missions, mono numerals + list */}
+        {missions.length > 0 && (
+          <section className="bl-sp-sec">
+            <div className="bl-sp-sec__head">
+              <span className="bl-sp-sec__kick">MISSION</span>
+              <h2 className="bl-sp-sec__title">พันธกิจ</h2>
+              <span className="bl-sp-sec__count">{pad2(missions.length)} ข้อ</span>
+            </div>
+            <ol className="bl-sp-mlist">
+              {missions.map((m, i) => (
+                <li key={i}><span className="bl-sp-mlist__n">{pad2(i + 1)}</span><span className="bl-sp-mlist__t">{m}</span></li>
+              ))}
+            </ol>
           </section>
         )}
 
@@ -472,6 +492,19 @@ export default function BlossomSingleParty({
           text-transform:uppercase; color:var(--bl-ink2); white-space:nowrap; padding-bottom:3px; }
         .bl-single-root .bl-sp-story { margin:22px 0 0; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px);
           line-height:1.85; color:var(--bl-ink2); }
+        /* small logo chip on the LOGO MEANING head — ties the story to the mark */
+        .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
+        .bl-single-root .bl-sp-sec__logo img { width:100%; height:100%; object-fit:cover; }
+        /* missions — mono numerals + list (mirrors the ballot family voice) */
+        .bl-single-root .bl-sp-mlist { list-style:none; margin:20px 0 0; padding:0; }
+        .bl-single-root .bl-sp-mlist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:baseline;
+          padding:18px 6px; border-bottom:1px solid var(--bl-line); }
+        .bl-single-root .bl-sp-mlist li:last-child { border-bottom:none; }
+        .bl-single-root .bl-sp-mlist__n { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,18px); line-height:1.4;
+          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-deep); }
+        .bl-single-root .bl-sp-mlist__t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.7;
+          color:var(--bl-ink); }
 
         /* policies — index rows */
         .bl-single-root .bl-sp-plist { list-style:none; margin:14px 0 0; padding:0; }

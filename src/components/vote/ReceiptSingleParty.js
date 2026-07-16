@@ -99,6 +99,9 @@ export default function ReceiptSingleParty({
   const logo = resolveSrc(party?.logoUrl);
   const cover = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
   const story = (party?.logoMeaning || "").trim();
+  const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
+  // keep the placeholder defaults preparePartyData injects out of the printed pages
+  const missions = (party?.missions || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
   const policies = (party?.policies || []).map(asText).filter(Boolean);
   const members = sortMembersByPosition(party?.members || []);
   const no = party?.number;
@@ -219,14 +222,31 @@ export default function ReceiptSingleParty({
           </figure>
         )}
 
-        {/* about the party */}
-        {story && (
+        {/* logo meaning — the story explains the party mark (logo chip ties them) */}
+        {showStory && (
           <section className="rc-sp-sec">
             <div className="rc-sp-sec__head">
-              <span className="rc-sp-sec__kick">ABOUT THE PARTY</span>
-              <h2 className="rc-sp-sec__title">เกี่ยวกับพรรค</h2>
+              {logo && <span className="rc-sp-sec__logo"><img src={logo} alt={party?.name || "โลโก้พรรค"} /></span>}
+              <span className="rc-sp-sec__kick">LOGO MEANING</span>
+              <h2 className="rc-sp-sec__title"><span className="rc-th">ความหมายสัญลักษณ์</span></h2>
             </div>
             <p className="rc-sp-story">{story}</p>
+          </section>
+        )}
+
+        {/* พันธกิจ — missions, numbered in the receipt voice (mono 01/02…) */}
+        {missions.length > 0 && (
+          <section className="rc-sp-sec">
+            <div className="rc-sp-sec__head">
+              <span className="rc-sp-sec__kick">MISSION</span>
+              <h2 className="rc-sp-sec__title"><span className="rc-th">พันธกิจ</span></h2>
+              <span className="rc-sp-sec__count">{pad2(missions.length)} <span className="rc-th">ข้อ</span></span>
+            </div>
+            <ol className="rc-sp-mlist">
+              {missions.map((m, i) => (
+                <li key={i}><span className="rc-sp-mlist__n rc-mono">{pad2(i + 1)}</span><span className="rc-sp-mlist__t">{m}</span></li>
+              ))}
+            </ol>
           </section>
         )}
 
@@ -567,6 +587,18 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sp-sec__count { margin-left:auto; font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--rc-ink2); white-space:nowrap; padding-bottom:3px; font-variant-numeric:tabular-nums; }
         .rc-single-root .rc-sp-story { margin:20px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2); }
+        /* small logo chip on the LOGO MEANING head — ties the story to the mark */
+        .rc-single-root .rc-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:6px; overflow:hidden; align-self:center;
+          background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center; }
+        .rc-single-root .rc-sp-sec__logo img { width:100%; height:100%; object-fit:cover; }
+        /* missions — numbered lines in the receipt voice (mono numeral, Chakra text) */
+        .rc-single-root .rc-sp-mlist { list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
+        .rc-single-root .rc-sp-mlist li { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
+          padding-top:14px; border-top:1px dotted var(--rc-line); }
+        .rc-single-root .rc-sp-mlist li:first-child { border-top:none; padding-top:0; }
+        .rc-single-root .rc-sp-mlist__n { font-family:var(--rc-fm); font-weight:700; font-size:16px; line-height:1.3;
+          font-variant-numeric:tabular-nums; color:var(--rc-accent-deep); }
+        .rc-single-root .rc-sp-mlist__t { font-family:var(--rc-fr); font-size:15px; line-height:1.6; color:var(--rc-ink); }
 
         /* policies — perforated COUPONS, one per row (die-cut left edge; hover lifts) */
         .rc-single-root .rc-sp-plist { list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:12px; }

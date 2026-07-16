@@ -10,7 +10,7 @@
 // sitting beside the logo medallion + party name (solid display) + slogan deck, ruled
 // by a hairline. Below, printed "articles" separated by hairlines, each with a Thai-
 // leading bilingual head:
-//   1. วิสัยทัศน์ (logoMeaning) — a big editorial PULL-QUOTE
+//   1. ความหมายสัญลักษณ์ (logoMeaning) — a big editorial PULL-QUOTE
 //   2. พันธกิจ (missions) — mono 01 / 02 numerals + list
 //   3. นโยบายเด่น (policies — string OR { title, desc }) — a numbered editorial grid
 //   4. ทีมผู้สมัคร (members, ordered by committee hierarchy via the shared memberSort
@@ -111,12 +111,14 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           </div>
         </header>
 
-        {/* ===== 1. วิสัยทัศน์ — editorial pull-quote ===== */}
+        {/* ===== 1. ความหมายสัญลักษณ์ (logoMeaning) — editorial pull-quote; a small
+             logo beside the head ties the quote to the mark it explains ===== */}
         {showStory && (
-          <section className="bl-psec" aria-label="วิสัยทัศน์พรรค">
+          <section className="bl-psec" aria-label="ความหมายสัญลักษณ์">
             <div className="bl-psec__head">
-              <span className="bl-psec__kick">VISION</span>
-              <h2 className="bl-psec__title">วิสัยทัศน์พรรค</h2>
+              {logo && <span className="bl-psec__logo"><img src={logo} alt={party?.name || "โลโก้พรรค"} loading="lazy" /></span>}
+              <span className="bl-psec__kick">LOGO MEANING</span>
+              <h2 className="bl-psec__title">ความหมายสัญลักษณ์</h2>
             </div>
             <blockquote className="bl-pquote">
               <span className="bl-pquote__mark" aria-hidden="true">“</span>
@@ -407,12 +409,16 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           border-bottom:1.5px solid var(--bl-ink); }
         .bl-party-root .bl-psec__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
           color:var(--bl-faint); align-self:center; padding-bottom:2px; }
+        /* small logo chip on the LOGO MEANING head — ties the pull-quote to the mark */
+        .bl-party-root .bl-psec__logo { width:38px; height:38px; flex:none; border-radius:11px; overflow:hidden; align-self:center;
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
+        .bl-party-root .bl-psec__logo img { width:100%; height:100%; object-fit:cover; }
         .bl-party-root .bl-psec__title { margin:0; font-family:var(--bl-fd); font-weight:800; font-size:clamp(24px,6vw,40px);
           line-height:.95; letter-spacing:-.02em; color:var(--bl-ink); }
         .bl-party-root .bl-psec__count { margin-left:auto; font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--bl-ink2); white-space:nowrap; padding-bottom:3px; }
 
-        /* ---- 1. วิสัยทัศน์ — editorial pull-quote ---- */
+        /* ---- 1. ความหมายสัญลักษณ์ — editorial pull-quote ---- */
         .bl-party-root .bl-pquote { position:relative; margin:26px 0 0; padding:0 0 0 30px;
           border-left:3px solid var(--bl-primary); }
         .bl-party-root .bl-pquote__mark { position:absolute; left:14px; top:-18px; font-family:var(--bl-fd); font-weight:800;

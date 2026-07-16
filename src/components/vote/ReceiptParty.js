@@ -9,7 +9,8 @@
 // the folder cover carries the accent index tab, an ink-ring number stamp, the logo,
 // name/slogan and a faint "OFFICIAL PARTY FILE" ghost ring + a rubber band across the
 // corner. Inside the file, printed pages in order:
-//   1. a VISION LETTER on the party letterhead — logoMeaning + missions (mono 01/02…)
+//   1. a LOGO MEANING letter on the party letterhead — logoMeaning explains the mark
+//      (enlarged letterhead logo); then a MISSION section — missions (mono 01/02…)
 //   2. POLICIES as perforated COUPONS, one per item (same coupon idiom as B3
 //      ReceiptSingleParty — hover lifts ≤2 at a time; a policy may be a string OR a
 //      { title, desc } object)
@@ -138,38 +139,42 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           </div>
         </div>
 
-        {/* ===== 1. VISION LETTER — printed on the party letterhead ===== */}
-        {(showStory || missions.length > 0) && (
-          <section className="rc-letter" aria-label="วิสัยทัศน์พรรค">
+        {/* ===== 1. LOGO MEANING — printed on the party letterhead; the enlarged
+             letterhead logo ties the text to the mark it explains ===== */}
+        {showStory && (
+          <section className="rc-letter" aria-label="ความหมายสัญลักษณ์">
             <div className="rc-letter__head">
-              <span className="rc-letter__logo">
-                {logo ? <img src={logo} alt="" width="34" height="34" loading="lazy" /> : <span aria-hidden="true">{pad2(no)}</span>}
+              <span className="rc-letter__logo rc-letter__logo--lg">
+                {logo ? <img src={logo} alt={party?.name || "โลโก้พรรค"} width="56" height="56" loading="lazy" /> : <span aria-hidden="true">{pad2(no)}</span>}
               </span>
               <span className="rc-letter__id">
                 <span className="rc-letter__org">{party?.name || "พรรค"}</span>
-                <span className="rc-letter__sub rc-mono">VISION MEMO · {prefix} {number}</span>
+                <span className="rc-letter__sub rc-mono">LOGO MEANING · {prefix} {number}</span>
               </span>
             </div>
             <div className="rc-letter__rule" aria-hidden="true" />
-
-            {showStory && (
-              <>
-                <h2 className="rc-letter__title"><span className="rc-th">สาส์นวิสัยทัศน์</span></h2>
-                <p className="rc-letter__body">{story}</p>
-              </>
-            )}
-
-            {missions.length > 0 && (
-              <ol className="rc-mlist">
-                {missions.map((m, i) => (
-                  <li key={i}><span className="rc-mlist__n rc-mono">{pad2(i + 1)}</span><span className="rc-mlist__t">{m}</span></li>
-                ))}
-              </ol>
-            )}
+            <h2 className="rc-letter__title"><span className="rc-th">ความหมายสัญลักษณ์</span></h2>
+            <p className="rc-letter__body">{story}</p>
           </section>
         )}
 
-        {/* ===== 2. POLICIES — perforated coupons, one per item ===== */}
+        {/* ===== 2. MISSION — พันธกิจ, numbered in the receipt voice ===== */}
+        {missions.length > 0 && (
+          <section className="rc-sec" aria-label="พันธกิจพรรค">
+            <div className="rc-sec__head">
+              <span className="rc-sec__kick rc-mono">MISSION</span>
+              <h2 className="rc-sec__title"><span className="rc-th">พันธกิจ</span></h2>
+              <span className="rc-sec__count rc-mono">{pad2(missions.length)} <span className="rc-th">ข้อ</span></span>
+            </div>
+            <ol className="rc-mlist">
+              {missions.map((m, i) => (
+                <li key={i}><span className="rc-mlist__n rc-mono">{pad2(i + 1)}</span><span className="rc-mlist__t">{m}</span></li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {/* ===== 3. POLICIES — perforated coupons, one per item ===== */}
         {policiesRaw.length > 0 && (
           <section className="rc-sec" aria-label="นโยบายพรรค">
             <div className="rc-sec__head">
@@ -195,7 +200,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
 
-        {/* ===== 3. THE TEAM — lanyard-card grid (opens shared CandidateModal) ===== */}
+        {/* ===== 4. THE TEAM — lanyard-card grid (opens shared CandidateModal) ===== */}
         {members.length > 0 && (
           <section className="rc-sec" aria-label="ทีมผู้สมัคร">
             <div className="rc-sec__head">
@@ -227,7 +232,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
 
-        {/* ===== 4. GALLERY — a horizontal photo-strip (hidden when empty) ===== */}
+        {/* ===== 5. GALLERY — a horizontal photo-strip (hidden when empty) ===== */}
         {gallery.length > 0 && (
           <section className="rc-sec rc-gal" aria-label="ภาพกิจกรรมพรรค">
             <div className="rc-sec__head">
@@ -464,7 +469,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         .rc-party-root .rc-folder__slogan { margin:12px 0 0; max-width:52ch; font-family:var(--rc-fr); font-size:15px; line-height:1.6;
           color:var(--rc-ink2); }
 
-        /* ================= VISION LETTER ================= */
+        /* ================= LOGO MEANING LETTER ================= */
         .rc-party-root .rc-letter { position:relative; margin-top:44px; background:var(--rc-receipt);
           border:1px solid var(--rc-line); border-radius:4px; padding:26px clamp(20px,4vw,34px) 30px;
           box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
@@ -473,6 +478,8 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           background:var(--rc-desk); border:1px solid var(--rc-stamp-line); font-family:var(--rc-fr); font-weight:700; font-size:15px;
           color:var(--rc-accent-deep); }
         .rc-party-root .rc-letter__logo img { width:100%; height:100%; object-fit:cover; }
+        /* enlarged letterhead logo — the LOGO MEANING letter shows the mark it explains */
+        .rc-party-root .rc-letter__logo--lg { width:56px; height:56px; font-size:19px; }
         .rc-party-root .rc-letter__id { display:flex; flex-direction:column; gap:2px; min-width:0; }
         .rc-party-root .rc-letter__org { font-family:var(--rc-fh); font-weight:700; font-size:16px; color:var(--rc-ink);
           overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
