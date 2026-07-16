@@ -295,13 +295,30 @@
   docs pass ตอน R7 · ANONYMIZE = certification flag (อนุมัติแล้ว)
 - **prod deploy notes:** ต้อง gen กุญแจจริง + ตั้ง ELECTION_BALLOT_PUBLIC_KEY /
   BALLOT_CHAIN_SECRET + apply ballot-grants.sql + migrate deploy (คู่มือใน README)
-- **NEXT: v2-R4a** (success identity receipt ใช้ User.votedAt ใหม่ + พิมพ์งอกจาก
-  slot + ReceiptConfirmSlip + retire ephemeralChoice) → R4b ReceiptParty →
-  R4c BlossomParty → R5 richness
+- v2-R4a IN FLIGHT (success identity receipt + ConfirmSlip + retire ephemeral)
 
-### ลำดับ session หน้า (สรุป): v2-SEC (เลือกทาง+implement) → v2-R4a (success
-พิมพ์จริง + ใบเสร็จ identity + ReceiptConfirmSlip + retire ephemeral) → v2-R4b
-ReceiptParty → v2-R4c BlossomParty → v2-R5 richness (home + R4.5 list) → R7 gate
+### 🆕 OWNER ROUND-4 (2026-07-16 — จากภาพ home + คำสั่งลำดับใหม่)
+- **F5 · คำต้องห้ามใหม่ (กติกาถาวรตระกูล receipt — เข้า taste constitution):**
+  ❌ "คูหา" ❌ "หีบ" ในคำสถานะ/ป้าย (ปิดหีบ/เปิดหีบ/คิวเข้าคูหา/เข้าคูหา) — ทางการ
+  โบราณเกิน → ใช้ **"โหวต" / "ลงคะแนน"** (ปิดโหวตแล้ว, เปิดโหวตใน, ไปลงคะแนน)
+  **ยกเว้น:** ฉากหย่อนหีบ ("หย่อนบัตรลงหีบ →", "หีบบัตรเลือกตั้ง · BALLOT BOX") —
+  metaphor กายภาพที่ owner อนุมัติเอง คงไว้; sweep ทั้งตระกูล (home slip labels /
+  โน้ต "เข้าคูหา" / closed eyebrow "ปิดหีบเลือกตั้งแล้ว" / ฯลฯ)
+- **F6 · Home layout รอบ 2:** ซ้ายล่างโล่ง → ย้าย**สถิติ**ลงซ้ายล่างแบบจัดสวย ·
+  **โปสเตอร์**ย้ายไปขวาล่าง · "โครงการเลือกตั้งคณะกรรมการบริหาร" ต้องเด่นกว่านี้
+  บนการ์ด hero · **ลบ foil seal chip กลม** (owner: "คืออะไร ไม่มีก็ได้") — จุดนี้
+  ลามถึง: ทบทวน chip/จุด foil ลอยๆ ที่ไม่มีหน้าที่ในหน้าอื่นด้วย
+- **ลำดับที่ owner สั่ง (อัปเดต 2026-07-16 รอบสอง — ข้อความล่าสุด override):**
+  **party pages ก่อนทุกอย่าง (R4b Receipt + R4c Blossom)** → แล้วค่อย F5+F6
+  (home layout + sweep คำ) → v2-R4a (success identity) ยังอยู่ในคิวถัดไป
+  (หมายเหตุ: vote single มีแล้วทั้งสองตระกูล — ReceiptSingleParty โต๊ะประทับตรา +
+  BlossomSingleParty booth; ที่ยังไม่มีจริงคือ party detail ทั้งคู่ fallthrough
+  classic; verify single ทั้งสองด้วยภาพตอนทำ party — ถ้า owner เจอปัญหาที่ single
+  จริงจะรอ feedback ตอนดู party)
+
+### ลำดับ session หน้า (สรุป): v2-R4b ReceiptParty → v2-R4c BlossomParty →
+F5+F6 (home layout รอบ 2 + sweep คำต้องห้าม) → v2-R4a (success identity +
+ConfirmSlip + retire ephemeral) → v2-R5 richness (home + R4.5 list) → R7 gate
 
 ### 1 · รัฐธรรมนูญ composition ใหม่: "TAPE SPINE + DESK SCATTER"
 1. **Tape spine** — ใบเสร็จม้วนยาวต่อเนื่องเป็น "กระดูกสันหลัง" ของทุกหน้า: คอลัมน์
