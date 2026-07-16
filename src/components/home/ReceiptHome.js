@@ -5,13 +5,14 @@
 // lopsided ("หนักข้างทันที") and that receipt material belongs to the success page —
 // so on HOME the receipt survives only as the CLOCK. The org-name notice returns to
 // a PAPER STACK held by a metal paperclip (the R2.5 language, upgraded with grain +
-// 4px corners + a peeking stub). Composition: a paper-stack hero on the LEFT; a
-// right rail carrying the CLOCK (dispenser head + a printed queue slip: split-flap,
-// ref line, jagged bottom, red closed-stamp state) → a manila note that hosts the
-// turnout register + the hanging CTA tag → a ticket-stub secondary CTA; the promo
-// poster + a foil seal sit in a band below. The queue slip is the ONLY receipt-stock
-// object on the page. No family uses this skeleton — it kills the "looks like
-// Blossom" read without the lopsided tape.
+// 4px corners + a peeking stub). Composition (v2-R5a rebalance): a paper-stack hero
+// on the LEFT with the primary CTA ladder sat directly beneath it as a big die-cut
+// desk tag + a "ดูผู้สมัคร" ticket-stub beside it (read→act in one glance); a right
+// rail carrying the CLOCK (dispenser head + a printed queue slip: split-flap, ref
+// line, jagged bottom, red closed-stamp state) → a short manila note (head + verify
+// line, no CTA); the turnout slip + promo poster sit in a balanced band below. The
+// queue slip is the ONLY receipt-stock object on the page. No family uses this
+// skeleton — it kills the "looks like Blossom" read without the lopsided tape.
 //
 // LOGIC SEAMS are ported 1:1 from BlossomHome and UNTOUCHED by the recompose:
 // receiptMeta is config-driven (Arabic digits, admin-editable, NEVER hardcoded
@@ -375,11 +376,37 @@ export default function ReceiptHome({
                 )}
               </article>
             </div>
+
+            {/* ===== ACTION ROW — the primary CTA ladder sat as a big die-cut tag
+                directly on the desk (grommet + foil rim on usable states, ~-0.6deg
+                tilt) with the "ดูผู้สมัคร" ticket-stub beside it. Placed right under the
+                hero card so the read→act path is one glance. The CTA logic / href /
+                onCta / aria / disabled are the SAME 6-state ladder — only re-skinned +
+                re-placed (the hanging string is retired). ===== */}
+            <div className="rc-actions">
+              <a
+                href={ctaHref}
+                onClick={onCta}
+                role="button"
+                aria-disabled={CTA.disabled ? "true" : undefined}
+                className={`rc-cta ${CTA.disabled ? "is-disabled" : ""}`}
+              >
+                {!CTA.disabled && <span className="rc-foil" aria-hidden="true" />}
+                {/* die-cut grommet — punched hole ringed with metal (present in every
+                    state → no layout shift), aria-hidden */}
+                <span className="rc-grommet" aria-hidden="true" />
+                <span className="rc-cta-in">{CTA.label}<span className="rc-cta-arrow" aria-hidden="true">→</span></span>
+              </a>
+
+              <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
+                <span className="rc-stubcta-th">ดูผู้สมัคร</span><span className="rc-cta-arrow" aria-hidden="true"> →</span>
+              </a>
+            </div>
           </section>
 
-          {/* ===== RIGHT RAIL (sticky on desktop) — the CLOCK, then the manila note
-              carrying the turnout register + the hanging CTA tag, then the secondary
-              ticket-stub CTA. ===== */}
+          {/* ===== RIGHT RAIL (sticky on desktop) — the CLOCK, then a short manila
+              note (head + verify line). The CTA ladder + secondary stub moved under the
+              hero card, so the rail ends at the note with nothing floating. ===== */}
           <div className="rc-rail">
 
             {/* ── CLOCK — the ONLY receipt object of the page: the dispenser head
@@ -418,40 +445,15 @@ export default function ReceiptHome({
               </section>
             </div>
 
-            {/* manila note — carries the turnout register + hangs the CTA tag */}
+            {/* manila note — the turnout register moved to its own slip and the CTA
+                ladder moved under the hero card, so the note now carries only the
+                "ลงคะแนน" head + a short verify-rights line. The rail ends here. */}
             <div className="rc-note">
               <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
               <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
               <div className="rc-note-h">ลงคะแนน</div>
               <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่เปิดโหวต</p>
-
-              {/* hanging PRIMARY CTA tag — the 6-state ladder, strung from the note pin */}
-              <div className="rc-tagwrap">
-                <svg className="rc-tag-string" viewBox="0 0 60 46" aria-hidden="true" focusable="false" preserveAspectRatio="none">
-                  <path className="rc-tag-string__ln" d="M12 0 C 8 22, 40 22, 30 45" fill="none" />
-                  <path className="rc-tag-string__ln rc-tag-string__ln2" d="M48 0 C 52 22, 22 22, 30 45" fill="none" />
-                  <circle className="rc-tag-string__pin" cx="30" cy="1.5" r="3" />
-                </svg>
-                <a
-                  href={ctaHref}
-                  onClick={onCta}
-                  role="button"
-                  aria-disabled={CTA.disabled ? "true" : undefined}
-                  className={`rc-cta ${CTA.disabled ? "is-disabled" : ""}`}
-                >
-                  {!CTA.disabled && <span className="rc-foil" aria-hidden="true" />}
-                  {/* die-cut grommet — punched hole ringed with metal (present in every
-                      state → no layout shift), aria-hidden */}
-                  <span className="rc-grommet" aria-hidden="true" />
-                  <span className="rc-cta-in">{CTA.label}<span className="rc-cta-arrow" aria-hidden="true">→</span></span>
-                </a>
-              </div>
             </div>
-
-            {/* secondary CTA = a real ticket STUB (A3 stub language) */}
-            <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
-              <span className="rc-stubcta-th">ดูผู้สมัคร</span><span className="rc-cta-arrow" aria-hidden="true"> →</span>
-            </a>
           </div>{/* /rc-rail */}
 
           {/* ===== TURNOUT register — the real-time stats pulled off the manila note
@@ -790,9 +792,10 @@ export default function ReceiptHome({
                   mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x; }
 
         /* ================= RAIL + DESK OBJECTS ================= */
-        /* mobile-first: hero first, then the rail (clock, note+register+CTA, stub)
-           stacks below it, then the poster band. desktop lifts the rail into a sticky
-           right column that slightly overlaps the hero's right edge (see 1024px). */
+        /* mobile-first: hero (card + CTA action row) first, then the rail (clock +
+           note) stacks below it, then the turnout slip + poster band. desktop lifts the
+           rail into a sticky right column that slightly overlaps the hero's right edge
+           (see 1024px). */
         .rc-home-root .rc-rail { position:relative; z-index:6; margin:22px 0 0;
           display:flex; flex-direction:column; gap:22px; }
 
@@ -808,21 +811,24 @@ export default function ReceiptHome({
         .rc-home-root .rc-note-h { font-family:var(--rc-fh); font-weight:700; font-size:16px; color:var(--rc-ink); }
         .rc-home-root .rc-note-b { margin:6px 0 0; font-family:var(--rc-fr); font-size:13px; line-height:1.6; color:var(--rc-ink2); }
 
-        /* hanging PRIMARY CTA tag */
-        .rc-home-root .rc-tagwrap { position:relative; align-self:flex-start; padding-top:30px; margin-left:24px; }
-        .rc-home-root .rc-tag-string { position:absolute; z-index:1; left:-14px; top:-2px; width:60px; height:46px;
-          pointer-events:none; overflow:visible;
-          filter:drop-shadow(1px 1.5px 1px color-mix(in srgb, var(--rc-ink) 22%, transparent)); }
-        .rc-home-root .rc-tag-string__ln { stroke:var(--rc-stamp-line); stroke-width:1.8; stroke-linecap:round;
-          transform-origin:30px 0; transition:transform .3s ease; }
-        .rc-home-root .rc-tag-string__pin { fill:var(--rc-ink2); }
-        .rc-home-root .rc-tagwrap:hover .rc-tag-string__ln { animation:rcSway 1.4s ease-in-out infinite; }
-        @keyframes rcSway { 0%,100%{ transform:rotate(-1.5deg); } 50%{ transform:rotate(1.5deg); } }
+        /* ---- action row — primary CTA (die-cut desk tag) + secondary stub, sat
+           directly under the hero card. mobile-first: a full-width column with the CTA
+           FIRST (actionable immediately); ≥640px becomes a single tag + stub row. ---- */
+        .rc-home-root .rc-actions { position:relative; z-index:5; margin:26px 12px 0;
+          display:flex; flex-direction:column; align-items:stretch; gap:12px; }
+        /* stub goes full-width & centred while stacked; ≥640 it shrinks to content */
+        .rc-home-root .rc-actions .rc-stubcta { align-self:stretch; justify-content:center; }
+        @media (min-width:640px) {
+          .rc-home-root .rc-actions { flex-direction:row; align-items:stretch; flex-wrap:wrap; }
+          .rc-home-root .rc-actions .rc-cta { flex:1 1 240px; }
+          .rc-home-root .rc-actions .rc-stubcta { flex:0 0 auto; align-self:auto; }
+        }
 
         /* die-cut TAG CTA — foil rim behind an accent fill, grommet at the left */
         .rc-home-root .rc-cta { position:relative; isolation:isolate; display:block; text-align:center; cursor:pointer;
-          padding:16px 18px 16px 34px; border-radius:6px; background:transparent; transition:transform .18s ease, box-shadow .2s ease;
-          box-shadow:2px 9px 20px -11px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+          padding:18px 22px 18px 40px; border-radius:6px; background:transparent; transform:rotate(-0.6deg);
+          transition:transform .18s ease, box-shadow .2s ease;
+          box-shadow:2px 11px 24px -12px color-mix(in srgb, var(--rc-ink) 36%, transparent); }
         .rc-home-root .rc-cta .rc-foil { position:absolute; inset:-2px; z-index:0; border-radius:8px; }
         .rc-home-root .rc-cta::before { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit;
           background:var(--rc-accent); transition:background .2s ease; }
@@ -831,17 +837,17 @@ export default function ReceiptHome({
           box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)),
                      inset 0 2px 3px color-mix(in srgb, var(--rc-ink) 45%, transparent); }
         .rc-home-root .rc-cta-in { position:relative; z-index:2; display:inline-flex; align-items:center; justify-content:center;
-          gap:10px; font-family:var(--rc-fh); font-weight:700; font-size:16px; color:var(--rc-on-accent); }
+          gap:10px; font-family:var(--rc-fh); font-weight:700; font-size:17px; color:var(--rc-on-accent); }
         .rc-home-root .rc-cta-arrow { transition:transform .2s ease; }
-        .rc-home-root .rc-cta:hover { transform:translateY(-2px); }
+        .rc-home-root .rc-cta:hover { transform:rotate(-0.6deg) translateY(-2px); }
         .rc-home-root .rc-cta:hover::before { background:var(--rc-accent-deep); }
         .rc-home-root .rc-cta:hover .rc-cta-arrow { transform:translateX(3px); }
-        .rc-home-root .rc-cta:active { transform:scale(.98); }
+        .rc-home-root .rc-cta:active { transform:rotate(-0.6deg) scale(.98); }
         .rc-home-root .rc-cta.is-disabled { cursor:not-allowed;
           box-shadow:1px 3px 9px -6px color-mix(in srgb, var(--rc-ink) 24%, transparent); }
         .rc-home-root .rc-cta.is-disabled::before { background:color-mix(in srgb, var(--rc-ink2) 26%, var(--rc-line)); }
         .rc-home-root .rc-cta.is-disabled .rc-cta-in { color:color-mix(in srgb, var(--rc-receipt) 90%, var(--rc-ink)); }
-        .rc-home-root .rc-cta.is-disabled:hover { transform:none; }
+        .rc-home-root .rc-cta.is-disabled:hover { transform:rotate(-0.6deg); }
         .rc-home-root .rc-cta.is-disabled:hover .rc-cta-arrow { transform:none; }
 
         /* secondary CTA — a real ticket STUB (cut corner + left perforation) */
@@ -892,18 +898,20 @@ export default function ReceiptHome({
         }
 
         /* ================= DESKTOP : 2×2 desk — hero + turnout LEFT, rail + poster RIGHT =====
-           a 2-column grid. row 1: the paper-stack hero (LEFT ~57%) + the sticky rail
-           (clock, note+CTA, stub) pulled slightly OVER the hero's right edge. row 2: the
-           TURNOUT slip docks bottom-LEFT (under the hero) and the poster docks bottom-
-           RIGHT (under the rail) — a balanced bottom band. The card is capped so the rail
-           overlap lands on empty desk, never on the title text. */
+           a 2-column grid. row 1: the paper-stack hero + CTA action row (LEFT ~57%) +
+           the sticky rail (clock + short note) pulled slightly OVER the hero's right
+           edge. row 2: the TURNOUT slip docks bottom-LEFT (under the hero) and the poster
+           docks bottom-RIGHT (under the rail) — a balanced bottom band with tighter
+           row-gap. The card is capped so the rail overlap lands on empty desk, never on
+           the title text. */
         @media (min-width:1024px) {
           .rc-home-root .rc-stage { display:grid; align-items:start;
             grid-template-columns:minmax(0, 57%) minmax(0, 1fr);
-            column-gap:clamp(24px, 4vw, 52px); row-gap:40px;
+            column-gap:clamp(24px, 4vw, 52px); row-gap:30px;
             padding-left:max(0px, calc(6vw - 20px)); }
           .rc-home-root .rc-hero { grid-column:1; grid-row:1; }
           .rc-home-root .rc-stack { max-width:480px; margin-left:0; margin-right:0; }
+          .rc-home-root .rc-actions { margin-left:0; margin-right:0; max-width:480px; }
           .rc-home-root .rc-rail { grid-column:2; grid-row:1; position:sticky; top:84px;
             margin:6px 0 0 -28px; gap:clamp(20px, 3vh, 34px); }
           .rc-home-root .rc-note { max-width:none; }
@@ -920,7 +928,7 @@ export default function ReceiptHome({
           .rc-home-root .rc-cd-n { font-size:clamp(24px, 7.4vw, 32px); gap:2px; }
           .rc-home-root .rc-colon { font-size:clamp(20px, 6vw, 28px); }
           .rc-home-root .rc-seal--c { display:none; }
-          .rc-home-root .rc-tagwrap { margin-left:12px; }
+          .rc-home-root .rc-actions { margin-left:12px; margin-right:12px; }
         }
 
         /* reduced motion — freeze every animation (foil stays statically iridescent),
