@@ -14,14 +14,14 @@ import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-import { resolveElectionDates } from "../../utils/electionConfig";
+import { resolveElectionDates, parseBangkok, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // Live turnout (participation) breakdown for the admin overview — by ปี/สาขา/เพศ.
@@ -464,6 +464,121 @@ const CandidatesTab = () => {
   )
 };
 
+// ── ADM-1 · Election readiness check ────────────────────────────────────────
+// ปุ่มเดียวที่กรรมการกดก่อนวันจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม. read-only ล้วน —
+// เรียก GET /api/admin/readiness แล้วแสดงผลตาม level (pass/warn/fail).
+const READINESS_LEVEL = {
+  pass: { Icon: CheckCircle2, cls: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
+  warn: { Icon: AlertTriangle, cls: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" },
+  fail: { Icon: XCircle, cls: "text-red-600", bg: "bg-red-50", border: "border-red-100" },
+};
+
+const ReadinessCard = () => {
+  const globalConfig = useGlobalConfig();
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+  const scheduleRows = [
+    { label: "เปิดตัวผู้สมัคร", key: "campaignStartAt", date: CAMPAIGN_START },
+    { label: "เปิดหีบ", key: "electionStartAt", date: ELECTION_START },
+    { label: "ปิดหีบ", key: "electionEndAt", date: ELECTION_END },
+  ];
+
+  const runCheck = async () => {
+    setRunning(true);
+    setError(null);
+    try {
+      const res = await fetch(getPath("/api/admin/readiness"), { credentials: "include" });
+      if (!res.ok) throw new Error(`สถานะ ${res.status}`);
+      const data = await res.json();
+      setResult(data);
+    } catch (e) {
+      setError("ตรวจไม่สำเร็จ — " + e.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-[#8A2680]/10 text-[#8A2680] p-2.5 rounded-xl"><ShieldCheck className="h-6 w-6" /></div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-700">ตรวจความพร้อมระบบ · READINESS</h3>
+            <p className="text-sm text-slate-500">กดก่อนวันเลือกตั้งจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม</p>
+          </div>
+        </div>
+        <button
+          onClick={runCheck}
+          disabled={running}
+          className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#8A2680] text-white rounded-lg font-bold text-sm shadow-md hover:bg-[#7a2270] transition-all disabled:opacity-50"
+        >
+          {running ? <><Loader2 className="w-4 h-4 animate-spin" /> กำลังตรวจ</> : <><ShieldCheck className="w-4 h-4" /> ตรวจตอนนี้</>}
+        </button>
+      </div>
+
+      {/* สรุป schedule ปัจจุบัน (resolved จริง) */}
+      <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-100">
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">กำหนดการปัจจุบัน</h4>
+        <div className="space-y-2">
+          {scheduleRows.map((r) => {
+            const fromDb = parseBangkok(globalConfig?.[r.key]) !== null;
+            return (
+              <div key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="font-bold text-slate-600">{r.label}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-slate-700">{formatThaiDate(r.date)} · {formatThaiTime(r.date)}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${fromDb ? "bg-[#8A2680]/10 text-[#8A2680]" : "bg-slate-200 text-slate-500"}`}>
+                    {fromDb ? "DB" : "ค่าเริ่มต้น"}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+      )}
+
+      {result && (
+        <div>
+          {/* สรุปหัว */}
+          <div className="flex flex-wrap items-center gap-3 mb-4 text-sm font-bold">
+            <span className="flex items-center gap-1.5 text-emerald-600"><CheckCircle2 className="w-4 h-4" /> ผ่าน {result.summary.pass}</span>
+            <span className="flex items-center gap-1.5 text-amber-600"><AlertTriangle className="w-4 h-4" /> เตือน {result.summary.warn}</span>
+            <span className="flex items-center gap-1.5 text-red-600"><XCircle className="w-4 h-4" /> ไม่ผ่าน {result.summary.fail}</span>
+          </div>
+
+          <div className="space-y-2">
+            {result.checks.map((c) => {
+              const lv = READINESS_LEVEL[c.level] || READINESS_LEVEL.warn;
+              const Icon = lv.Icon;
+              return (
+                <div key={c.id} className={`flex items-start gap-3 p-3 rounded-xl border ${lv.bg} ${lv.border}`}>
+                  <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${lv.cls}`} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-700">{c.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{c.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!result && !error && (
+        <p className="text-sm text-slate-400 text-center py-4">กด “ตรวจตอนนี้” เพื่อเริ่มตรวจความพร้อม</p>
+      )}
+    </div>
+  );
+};
+
 const SettingsTab = () => {
   const [systemMode, setSystemMode] = useState("AUTO");
   const [googleFormUrl, setGoogleFormUrl] = useState("");
@@ -560,6 +675,8 @@ const SettingsTab = () => {
   };
 
   return (
+    <div className="space-y-6">
+    <ReadinessCard />
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-8">
         <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl"><Power className="h-6 w-6" /></div>
@@ -808,6 +925,7 @@ const SettingsTab = () => {
         isLoading={processing}
       />
     </div >
+    </div>
   )
 };
 
