@@ -14,8 +14,8 @@
 //   2. พันธกิจ (missions) — mono 01 / 02 numerals + list
 //   3. นโยบายเด่น (policies — string OR { title, desc }) — a numbered editorial grid
 //   4. ทีมผู้สมัคร (members, ordered by committee hierarchy via the shared memberSort
-//      util) — editorial portrait cards; a card opens the SHARED CandidateModal
-//      (untouched).
+//      util) — editorial portrait cards; a card opens the blossom family's own
+//      BlossomMemberModal.
 //   5. ภาพกิจกรรม — a horizontal photo-strip (hidden silently when empty); a tap opens
 //      this component's OWN lightbox (no shared lightbox).
 // showBackToVote → a candy pill "กลับไปลงคะแนน" in the family's voice (NOT the shared
@@ -40,7 +40,7 @@ import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
-import CandidateModal from "../CandidateModal";
+import BlossomMemberModal from "./BlossomMemberModal";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -57,7 +57,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
-  // portal-mount guard — the shared CandidateModal is position:fixed; parenting it to
+  // portal-mount guard — the member modal is position:fixed; parenting it to
   // document.body immunises it against any transformed / overflow-clipped ancestor a
   // host surface (playground, preview, future chrome) might introduce. SSR-safe: portal
   // only after mount so `document` is defined.
@@ -176,7 +176,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
 
-        {/* ===== 4. ทีมผู้สมัคร — editorial portrait cards → CandidateModal ===== */}
+        {/* ===== 4. ทีมผู้สมัคร — editorial portrait cards → BlossomMemberModal ===== */}
         {members.length > 0 && (
           <section className="bl-psec" aria-label="ทีมผู้สมัคร">
             <div className="bl-psec__head">
@@ -251,10 +251,10 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         </a>
       )}
 
-      {/* shared candidate modal — untouched shared component (dark card, its own lightbox);
+      {/* member modal — the blossom family's own candy-editorial card (its own lightbox);
           portalled to <body> so its fixed positioning can never be clipped by an ancestor. */}
       {mounted && selectedMember && createPortal(
-        <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} />,
+        <BlossomMemberModal member={selectedMember} onClose={() => setSelectedMember(null)} />,
         document.body
       )}
 

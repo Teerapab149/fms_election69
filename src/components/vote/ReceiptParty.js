@@ -15,7 +15,7 @@
 //      ReceiptSingleParty — hover lifts ≤2 at a time; a policy may be a string OR a
 //      { title, desc } object)
 //   3. the TEAM as a grid of LANYARD CARDS (punched grommet + clip + photo + name +
-//      position + mono number). A card opens the SHARED CandidateModal (untouched).
+//      position + mono number). A card opens the receipt family's own ReceiptMemberModal.
 //      Members are ordered by position priority via the shared memberSort util.
 //   4. a GALLERY photo-strip (horizontal) — hidden silently when there are no images;
 //      a tap opens this component's OWN lightbox (no shared lightbox).
@@ -39,7 +39,7 @@ import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
-import CandidateModal from "../CandidateModal";
+import ReceiptMemberModal from "./ReceiptMemberModal";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -63,7 +63,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
-  // portal-mount guard — the shared CandidateModal is position:fixed; parenting it to
+  // portal-mount guard — the member modal is position:fixed; parenting it to
   // document.body immunises it against any transformed / overflow-clipped ancestor a
   // host surface (playground, preview, future chrome) might introduce. SSR-safe: portal
   // only after mount so `document` is defined.
@@ -207,7 +207,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
 
-        {/* ===== 4. THE TEAM — lanyard-card grid (opens shared CandidateModal) ===== */}
+        {/* ===== 4. THE TEAM — lanyard-card grid (opens ReceiptMemberModal) ===== */}
         {members.length > 0 && (
           <section className="rc-sec" aria-label="ทีมผู้สมัคร">
             <div className="rc-sec__head">
@@ -288,10 +288,10 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         </a>
       )}
 
-      {/* shared candidate modal — untouched shared component (dark card, its own lightbox);
+      {/* member modal — the receipt family's own dossier card (its own lightbox);
           portalled to <body> so its fixed positioning can never be clipped by an ancestor. */}
       {mounted && selectedMember && createPortal(
-        <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} />,
+        <ReceiptMemberModal member={selectedMember} onClose={() => setSelectedMember(null)} />,
         document.body
       )}
 
