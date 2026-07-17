@@ -401,6 +401,11 @@ export default function GumroadResults({
           .gr-rank{ grid-template-columns:1fr auto; gap:8px 12px; }
           .gr-rank__track{ grid-column:1 / -1; order:3; }
           .gr-winner{ transform:none; } .gr-winner__logo{ width:64px; height:64px; }
+          /* winner hero stacks on phones — logo / identity / score each on its own
+             line so the big % can never collide with the name or slogan */
+          .gr-winner__main{ flex-direction:column; align-items:flex-start; }
+          .gr-winner__name{ font-size:clamp(24px,7.5cqw,34px); }
+          .gr-winner__pct{ font-size:clamp(40px,13cqw,60px); }
         }
       `}</style>
     </div>

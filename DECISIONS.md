@@ -1971,6 +1971,28 @@ misleading location.
 
 ---
 
+### P-LOG-099: [2026-07-18] Ballot party names must never clamp to one line
+**Context:** v2-R8 mobile ballot compaction — a worker shortened rows by clamping the
+party name to 1 line ("พรรคก้าว…" / "The Unity…"). On a ballot two parties can share a
+prefix; a truncated name makes choices indistinguishable at the moment of voting.
+**Lesson:** Compact ballot rows by folding secondary lines (slogan, team count — both
+one tap away in details), never the name. The name keeps its 2-line clamp at full
+column width; readability of the choice outranks row height.
+**Tags:** `#mobile` `#ballot` `#ux`
+
+---
+
+### P-LOG-100: [2026-07-18] template-preview's classic candidates/results are static EditorPreviews
+**Context:** v2-R9 `?parties=N` harness — every family reflects the mock roster except
+classic/original candidates + results, which render `CandidatesEditorPreview` /
+`ResultsEditorPreview` with their own internal 2-party dummy data and ignore mock props.
+**Lesson:** Harness work that varies mock data does not reach those two classic pages;
+verifying them needs the real components (`MultiPartyView` renders real; the other two
+don't). Wire the real components first if classic must be exercised.
+**Tags:** `#harness` `#template-preview` `#classic`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
