@@ -39,7 +39,9 @@ test('admin API rejects no-auth (401)', async () => {
 });
 
 test('admin API rejects a forged admin_token cookie (401)', async () => {
-  const r = await fetch(`${BASE}/api/admin/config`, { headers: { cookie: 'admin_token=forged.junk.value' } });
+  // /api/admin/config was removed in ADM-3 (ghost endpoint) — dashboard carries
+  // the same adminGuard and is the canonical admin surface to probe.
+  const r = await fetch(`${BASE}/api/admin/dashboard`, { headers: { cookie: 'admin_token=forged.junk.value' } });
   assert.equal(r.status, 401);
 });
 
