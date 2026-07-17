@@ -29,7 +29,6 @@ export async function GET(req) {
         totalVoters,
         votedCount,
         turnout: totalVoters > 0 ? ((votedCount / totalVoters) * 100).toFixed(2) : 0,
-        isVoteOpen: config.isVoteOpen,
         showResult: config.showResult,
         systemMode: config.systemMode || "AUTO",
         googleFormUrl: config.googleFormUrl || ""

@@ -29,8 +29,8 @@ src/
 │   └── api/
 │       ├── admin/
 │       │   ├── candidates/route.js   # CRUD candidates + members
-│       │   ├── config/route.js       # System config GET/PUT
-│       │   └── dashboard/route.js    # Admin dashboard stats + actions
+│       │   ├── dashboard/route.js    # Admin dashboard stats + actions
+│       │   └── readiness/route.js    # ADM-1 ตรวจความพร้อมระบบ (read-only)
 │       ├── check-status/route.js     # Election status check
 │       ├── home-info/route.js        # Home page data (SSR)
 │       ├── party/route.js            # Public party data
