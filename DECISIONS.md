@@ -1936,6 +1936,15 @@ that needs a multi-party state must create its own temp candidate and remove it 
 never rely on restoring an old snapshot.
 **Tags:** `#e2e` `#dev-db` `#tooling`
 
+### P-LOG-098: [2026-07-17] Chart cell fills and custom legend swatches are parallel maps — recolour both
+**Context:** v2-R6 donut recolour — cells moved from the CHART ramp to a new DONUT
+ramp; the custom legend swatches were a separate `.map()` still reading CHART and
+silently desynced from the recoloured cells.
+**Lesson:** when recolouring recharts cells, grep the same component for the
+legend/label map and update it in lockstep; verify by comparing computed legend
+background to cell fill.
+**Tags:** `#recharts` `#receipt` `#verify`
+
 ---
 
 ### P-LOG-096: [2026-07-17] TZ correctness must be proven on epochs — rendered strings can hide a compensating parse bug

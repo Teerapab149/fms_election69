@@ -31,7 +31,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
-import { ReceiptBaseStyles } from "../home/ReceiptTheme";
+import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 
@@ -309,6 +309,12 @@ export default function ReceiptSingleParty({
                 role=radio stamps below are the base path — keyboard + no-JS + reduced-
                 motion all read the plain rows with no imprint gate. */}
             <div className="rc-stampslot" aria-hidden="true">
+              {/* faint blind ring-impression — a previous stamp's ghost with the
+                  faculty เรือสำเภา at its centre (v2-R6). A soft ink watermark the
+                  live semantic imprint presses over. */}
+              <span className="rc-stampslot__impress">
+                <ReceiptShipMark className="rc-stampslot__ship" strokeWidth={3} />
+              </span>
               {/* 3-colour ink pad — one well per semantic tone, resting in the corner */}
               <span className="rc-inkwells">
                 <i className="rc-inkwell rc-inkwell--a" /><i className="rc-inkwell rc-inkwell--d" /><i className="rc-inkwell rc-inkwell--x" />
@@ -712,8 +718,16 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-stampslot { position:relative; margin:4px 0 8px; min-height:90px; display:grid; place-items:center;
           border:1.5px dashed var(--rc-stamp-line); border-radius:8px; overflow:hidden;
           background:color-mix(in srgb, var(--rc-ink) 2%, var(--rc-receipt)); }
+        /* faint blind ring-impression watermark centred in the empty slot — a ring in
+           --rc-ink at low opacity with the faculty ship at its centre (v2-R6), an ink
+           impression under the hint. z:0 so the hint (z:1) + semantic imprints stamp
+           over it. Rotated a touch so it reads as a pressed mark, not a reticle. */
+        .rc-single-root .rc-stampslot__impress { position:absolute; left:50%; top:50%; z-index:0;
+          width:64px; height:64px; transform:translate(-50%,-50%) rotate(-7deg); border-radius:50%;
+          border:2px solid var(--rc-ink); opacity:.07; display:grid; place-items:center; pointer-events:none; }
+        .rc-single-root .rc-stampslot__ship { width:58%; height:58%; color:var(--rc-ink); }
         /* hint: mono LATIN lead-in + Chakra Thai (A10.3 — Thai never wears mono) */
-        .rc-single-root .rc-stampslot__hint { font-family:var(--rc-fr); font-size:12px; letter-spacing:.06em;
+        .rc-single-root .rc-stampslot__hint { position:relative; z-index:1; font-family:var(--rc-fr); font-size:12px; letter-spacing:.06em;
           color:var(--rc-faint); display:inline-flex; align-items:baseline; gap:6px; }
         .rc-single-root .rc-stampslot__hint .rc-mono { font-size:10px; letter-spacing:.18em; text-transform:uppercase; }
         /* 3-colour ink pad in the slot corner — SEMANTIC wells (fixed, never accent) */

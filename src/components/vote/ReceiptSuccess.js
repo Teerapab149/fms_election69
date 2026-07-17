@@ -46,7 +46,7 @@
 
 import { useState, useEffect } from "react";
 import { getPath } from "../../utils/basePath";
-import { ReceiptBaseStyles } from "../home/ReceiptTheme";
+import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const TH_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -209,7 +209,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
               {/* foil seal */}
               <div className="rc-suc-seal" aria-hidden="true">
                 <span className="rc-suc-seal-disc"><span className="rc-foil rc-foil--conic" /></span>
-                <span className="rc-suc-seal-core"><b>OK</b></span>
+                <span className="rc-suc-seal-core"><ReceiptShipMark className="rc-suc-seal-ship" strokeWidth={3} /></span>
               </div>
 
               {/* not-an-official-record stamp (ballot secrecy) */}
@@ -398,7 +398,10 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-seal-core { position:relative; width:34px; height:34px; border-radius:50%;
           display:grid; place-items:center; background:var(--rc-receipt);
           box-shadow:inset 0 0 0 1px var(--rc-stamp-line); }
-        .rc-suc-root .rc-suc-seal-core b { font-family:var(--rc-fm); font-size:7px; letter-spacing:.1em; color:var(--rc-accent-deep); }
+        /* the seal core carries the faculty เรือสำเภา line-art (v2-R6) — ink stroke on
+           the receipt-stock core, ringed by the foil disc behind it. Replaces the old
+           "OK" text medallion so success wears the same system ship as the desk seals. */
+        .rc-suc-root .rc-suc-seal-ship { width:22px; height:22px; color:var(--rc-ink); }
 
         .rc-suc-root .rc-suc-stamp { width:fit-content; margin:16px auto 0; padding:4px 12px; transform:rotate(-6deg);
           border:2px solid var(--rc-stamp-red); border-radius:6px; color:var(--rc-stamp-red); opacity:.85;

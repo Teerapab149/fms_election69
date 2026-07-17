@@ -103,6 +103,13 @@ export default function ReceiptResults({
   // every theme; on achromatic carbon the four steps separate by lightness (order +
   // labels carry the meaning). Never reaches for the vote semantic greens/reds/oranges.
   const CHART = [t.accent, t.accentDeep, mixHex(t.accent, t.receipt, 0.55), mixHex(t.accent, t.receipt, 0.30)];
+  // DONUT ramp (v2-R6) — the SAME four ramp steps, re-ordered so adjacent categories
+  // pull from OPPOSITE ends of the ramp (dark accentDeep → palest tint → mid → accent).
+  // The gender donut is usually 2 categories; with CHART's order those were accent +
+  // accentDeep (two near-identical darks). This order gives the 2-slice donut its
+  // widest possible lightness gap while staying one branded family (no new hue, never
+  // the vote semantics). Bars keep CHART (their extra categories read fine there).
+  const DONUT = [t.accentDeep, mixHex(t.accent, t.receipt, 0.30), mixHex(t.accent, t.receipt, 0.55), t.accent];
 
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
@@ -316,7 +323,7 @@ export default function ReceiptResults({
                             <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                               innerRadius={58} outerRadius={86} paddingAngle={3} stroke={t.receipt} strokeWidth={3}
                               startAngle={90} endAngle={-270} isAnimationActive={false}>
-                              {byGender.map((g, i) => <Cell key={i} fill={CHART[i % CHART.length]} />)}
+                              {byGender.map((g, i) => <Cell key={i} fill={DONUT[i % DONUT.length]} />)}
                             </Pie>
                             <Tooltip content={<RcTooltip />} />
                           </PieChart>
@@ -326,7 +333,7 @@ export default function ReceiptResults({
                       <div className="rc-legend">
                         {byGender.map((g, i) => (
                           <span className="rc-legend__i" key={i}>
-                            <i style={{ background: CHART[i % CHART.length] }} />{g.name}<b>{(g.value || 0).toLocaleString()}</b>
+                            <i style={{ background: DONUT[i % DONUT.length] }} />{g.name}<b>{(g.value || 0).toLocaleString()}</b>
                           </span>
                         ))}
                       </div>

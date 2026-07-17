@@ -274,7 +274,10 @@ export default function TemplateChooserTab() {
   // One card per layout family (classic family retired). Each family keeps its
   // colour themes (e.g. verdure terracotta/honey/teal/berry) → clickable swatches.
   const families = useMemo(() => {
-    const ORDER = ["original", "gumroad", "studio-dark", "verdure"];
+    // v2-R6 — surface the newest, most-complete families first: receipt + blossom
+    // lead, then original, then the earlier real templates. Families absent here fall
+    // to the end (index 99); the classic family is filtered out above regardless.
+    const ORDER = ["receipt", "blossom", "original", "gumroad", "studio-dark", "verdure"];
     const REP = { gumroad: "gumroad", "studio-dark": "studio-dark", verdure: "verdure", original: "original" };
     const groups = {};
     for (const t of templates) {
