@@ -22,7 +22,7 @@
 //  • A floating SANDBOX bar gives reliable nav + state toggles (single/multi,
 //    results locked/revealed, template switch) independent of the template chrome.
 
-import { Suspense, useState, useCallback } from 'react';
+import { Suspense, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import HomeRenderer from '../../components/home/HomeRenderer';
@@ -68,7 +68,7 @@ import ReceiptClosed from '../../components/vote/ReceiptClosed';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
 
 import { DUMMY_USER } from '../../utils/editorDummyData';
-import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
+import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 import { hrefToDest } from '../../utils/previewNav';
 
 const noop = () => {};
@@ -122,6 +122,14 @@ function PlaygroundBody() {
   const [confirmOpen, setConfirmOpen] = useState(false); // blossom MULTI shared popup
   const [barOpen, setBarOpen] = useState(true);
 
+  // ?parties=N — DB-free multi-party harness (v2-R9), same contract as /template-preview.
+  // int 2..6, default 2, garbage → 2. makeParties(2) === the old default roster.
+  const partiesN = (() => {
+    const raw = parseInt(sp.get('parties'), 10);
+    return Number.isFinite(raw) && raw >= 2 && raw <= 6 ? raw : 2;
+  })();
+  const parties = useMemo(() => makeParties(partiesN), [partiesN]);
+
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'verdure';
   const map = COMPONENTS[family] || COMPONENTS.verdure;
 
@@ -143,8 +151,8 @@ function PlaygroundBody() {
     go(dest.page, dest.partyNumber != null ? { partyNumber: dest.partyNumber } : {});
   }, [go]);
 
-  const voteParties = single ? [PARTIES[0]] : PARTIES;
-  const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+  const voteParties = single ? [parties[0]] : parties;
+  const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
   const onViewDetails = (p) => go('party', { partyNumber: p?.number ?? 1 });
   const onConfirm = () => go('success');
 
@@ -157,12 +165,12 @@ function PlaygroundBody() {
       <HomeRenderer
         onSignIn={() => go('vote')}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-        initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 2004 }, candidates: PARTIES }}
+        initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 2004 }, candidates: parties }}
       />
     );
   } else if (page === 'candidates') {
     const C = map.candidates;
-    content = <C candidates={PARTIES} editorMode={false} />;
+    content = <C candidates={parties} editorMode={false} />;
   } else if (page === 'party') {
     // every family now has a real party layout via map.party (blossom → BlossomParty,
     // receipt → ReceiptParty, etc.), all sharing the uniform party prop contract.
@@ -173,11 +181,11 @@ function PlaygroundBody() {
     if ((family === 'blossom' || family === 'receipt') && !single) {
       // MULTI ballot — local selection → the SHARED confirm popup → success
       // (mirrors /template-preview interact + the real vote/page.js multi flow).
-      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const allSelectable = [...parties, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
       content = (
         <>
-          <V regularParties={PARTIES} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
+          <V regularParties={parties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
             onSelect={setSelectedPartyId} onViewDetails={onViewDetails} isSingleParty={false}
             user={DUMMY_USER} onConfirm={() => setConfirmOpen(true)} isSubmitting={false} editorMode={false} />
           <VoteConfirmationModal
@@ -205,7 +213,7 @@ function PlaygroundBody() {
     // sealed, turnout public) — not the "not started" empty state. Mirror /template-preview.
     const embargo = family === 'blossom' || family === 'receipt';
     content = (
-      <R candidates={resultsCandidates(revealed)}
+      <R candidates={resultsCandidates(revealed, parties)}
         totalVotes={revealed ? 625 : (embargo ? 418 : 0)} demographics={DEMOGRAPHICS}
         finalStatus={revealed ? 'ENDED' : (embargo ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
         isNotStarted={embargo ? false : !revealed}

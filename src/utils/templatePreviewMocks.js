@@ -40,10 +40,29 @@ export const mkParty = (i, name, slogan, color) => ({
   missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
 });
 
-export const PARTIES = [
-  mkParty(1, "The Unity Concord Of FMS 2", "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน", "#2D6CDF"),
-  mkParty(2, "พรรคก้าวไกลวิทยาการจัดการ", "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS", "#E0457B"),
+// Party presets — index 0/1 are the canonical default pair (makeParties(2) must stay
+// byte-identical to the old hardcoded PARTIES so the admin chooser slideshow never
+// drifts). 2..5 extend the roster for N>2 harness testing (?parties=N). Distinct
+// names/slogans/colours; preset[2] is a deliberately long name (~50 chars) to exercise
+// the clamp across vote row / candidates card / results row / confirm bar.
+const PARTY_PRESETS = [
+  { name: "The Unity Concord Of FMS 2", slogan: "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน", color: "#2D6CDF" },
+  { name: "พรรคก้าวไกลวิทยาการจัดการ", slogan: "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS", color: "#E0457B" },
+  { name: "พรรคพลังนักศึกษาวิทยาการจัดการเพื่อการพัฒนาที่ยั่งยืน", slogan: "รวมพลังทุกสาขา สร้างการเปลี่ยนแปลงที่จับต้องได้จริง", color: "#F59E0B" },
+  { name: "พรรคใจอาสา", slogan: "เสียงของนักศึกษา คือหัวใจของการทำงาน", color: "#10B981" },
+  { name: "พรรคเดินหน้า FMS", slogan: "โปร่งใส ตรวจสอบได้ ทุกงบประมาณกิจกรรม", color: "#8B5CF6" },
+  { name: "พรรคนวัตกรรมรุ่นใหม่", slogan: "เทคโนโลยีเพื่อชีวิตนักศึกษาที่ดีกว่าเดิม", color: "#EF4444" },
 ];
+
+// makeParties(n) — n parties (n clamped by the caller). preset[i % len] cycles if a
+// caller ever exceeds the preset count; the harness caps n at 6 (= preset count).
+export const makeParties = (n) =>
+  Array.from({ length: n }, (_, i) => {
+    const p = PARTY_PRESETS[i % PARTY_PRESETS.length];
+    return mkParty(i + 1, p.name, p.slogan, p.color);
+  });
+
+export const PARTIES = makeParties(2);
 
 export const SPECIAL = {
   abstain: { id: 998, number: 0, name: "งดออกเสียง" },
@@ -64,9 +83,15 @@ export const DEMOGRAPHICS = {
   ],
 };
 
-// results candidates: revealed shows real scores; locked = all 0 (embargo)
-export const resultsCandidates = (revealed) => [
-  { ...PARTIES[0], score: revealed ? 312 : 0 },
-  { ...PARTIES[1], score: revealed ? 245 : 0 },
+// results candidates: revealed shows real scores; locked = all 0 (embargo).
+// Scores are a distinct descending ramp with a clear winner (preset[0]); scales with
+// the party count so ?parties=N produces a coherent standings board (abstain stays
+// last, id 998). N=2 → 312/245 + abstain 68 = byte-identical to the old default.
+const RESULT_SCORES = [312, 245, 189, 143, 96, 58];
+export const resultsCandidates = (revealed, parties = PARTIES) => [
+  ...parties.map((p, i) => ({
+    ...p,
+    score: revealed ? (RESULT_SCORES[i] ?? Math.max(20, 300 - i * 55)) : 0,
+  })),
   { id: 998, number: 0, name: "งดออกเสียง", score: revealed ? 68 : 0 },
 ];

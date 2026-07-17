@@ -16,7 +16,7 @@
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
 // because the layout components are pure + we pass mock props.
 
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MotionConfig } from 'framer-motion';
 import { Palette, Check } from 'lucide-react';
@@ -79,7 +79,7 @@ import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
 
 import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
-import { PARTIES, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
+import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 
 const noop = () => {};
 
@@ -132,8 +132,17 @@ function PreviewBody() {
   // bounce-back error path can be exercised without a server.
   const { playDrop, sceneNode } = useBallotDrop();
   const dropFail = sp.get('fail') === '1';
+  // ?parties=N — DB-free multi-party harness (v2-R9). int 2..6, default 2, garbage → 2.
+  // makeParties(2) is byte-identical to the old default roster, so the chooser slideshow
+  // (which never passes ?parties) is unchanged. Memoised on N so the array identity is
+  // stable across re-renders (layout components may key off prop identity).
+  const partiesN = (() => {
+    const raw = parseInt(sp.get('parties'), 10);
+    return Number.isFinite(raw) && raw >= 2 && raw <= 6 ? raw : 2;
+  })();
+  const parties = useMemo(() => makeParties(partiesN), [partiesN]);
   const [selectedPartyId, setSelectedPartyId] = useState(null);
-  const [partyNumber, setPartyNumber] = useState(PARTIES[0]?.number ?? 1);
+  const [partyNumber, setPartyNumber] = useState(parties[0]?.number ?? 1);
   // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
   const [detailParty, setDetailParty] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -272,7 +281,7 @@ function PreviewBody() {
         <HomeRenderer
           onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
           resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-          initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: PARTIES }}
+          initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
         />
       );
     }
@@ -280,17 +289,17 @@ function PreviewBody() {
     if (family === 'studio-dark' || family === 'gumroad' || family === 'verdure') {
       const single = variant === 'single';
       const revealed = variant === 'revealed';
-      const voteParties = single ? [PARTIES[0]] : PARTIES;
+      const voteParties = single ? [parties[0]] : parties;
       const byFamily = (studio, gumroad, verdure) =>
         family === 'studio-dark' ? studio : family === 'verdure' ? verdure : gumroad;
       const tpl = BUILT_IN_TEMPLATES[slug] || {};
       const pageBg = tpl.pages?.[page]?.backgroundColor || tpl.theme?.colors?.background || tpl.theme?.background || '#ffffff';
       const frame = (el) => <div className="min-h-screen w-full" style={{ background: pageBg }}>{el}</div>;
-      const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+      const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
 
       if (page === 'candidates') {
         const C = byFamily(StudioDarkCandidates, GumroadCandidates, VerdureCandidates);
-        return frame(<C candidates={PARTIES} editorMode={false} />);
+        return frame(<C candidates={parties} editorMode={false} />);
       }
       if (page === 'party') {
         const P = byFamily(StudioDarkParty, GumroadParty, VerdureParty);
@@ -317,7 +326,7 @@ function PreviewBody() {
         const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
         return frame(
           <R
-            candidates={resultsCandidates(revealed)}
+            candidates={resultsCandidates(revealed, parties)}
             totalVotes={revealed ? 625 : 0}
             demographics={DEMOGRAPHICS}
             finalStatus={revealed ? 'ENDED' : 'WAITING'}
@@ -345,7 +354,7 @@ function PreviewBody() {
     if (family === 'blossom' && page === 'vote' && variant === 'single') {
       return (
         <BlossomVote
-          regularParties={PARTIES}
+          regularParties={parties}
           specialOptions={SPECIAL}
           selectedPartyId={selectedPartyId}
           onSelect={setSelectedPartyId}
@@ -362,12 +371,12 @@ function PreviewBody() {
     // ── blossom family — MULTI ballot (T3.2). Local selection → the SHARED confirm
     //    popup → navTo('success'), mirroring the classic multi interact flow.
     if (family === 'blossom' && page === 'vote' && variant !== 'single') {
-      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const allSelectable = [...parties, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
       return (
         <>
           <BlossomVote
-            regularParties={PARTIES}
+            regularParties={parties}
             specialOptions={SPECIAL}
             selectedPartyId={selectedPartyId}
             onSelect={setSelectedPartyId}
@@ -404,7 +413,7 @@ function PreviewBody() {
       return (
         <>
           <ReceiptVote
-            regularParties={PARTIES}
+            regularParties={parties}
             specialOptions={SPECIAL}
             selectedPartyId={selectedPartyId}
             onSelect={setSelectedPartyId}
@@ -425,7 +434,7 @@ function PreviewBody() {
     //    the other families) → navTo('success'). MUST precede the generic
     //    `if (page === 'vote')` classic catch-all below.
     if (family === 'receipt' && page === 'vote' && variant !== 'single') {
-      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const allSelectable = [...parties, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
       // slip confirm → close it → the ballot-drop scene plays around a simulated
       // submit (ruling C3), then navTo('success'). ?fail=1 → the simulated submit
@@ -434,7 +443,7 @@ function PreviewBody() {
       return (
         <>
           <ReceiptVote
-            regularParties={PARTIES}
+            regularParties={parties}
             specialOptions={SPECIAL}
             selectedPartyId={selectedPartyId}
             onSelect={setSelectedPartyId}
@@ -468,14 +477,14 @@ function PreviewBody() {
       const pageBg = tpl.pages?.[page]?.backgroundColor || tpl.theme?.colors?.background || tpl.theme?.background || 'var(--color-bg)';
       // Derive the selected party across regular + special options (as useVoteSystem
       // does) so VoteFooter/VoteConfirmationModal get the right object + number.
-      const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
+      const allSelectable = [...parties, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
 
       if (single) {
         // single → the REAL cinematic SinglePartyView (previewMode = full layout, intro
         // skipped) + the same VoteFooter confirm affordance. Its 3-choice buttons drive
         // local selection; footer (variant="single") → its own popup → navTo('success').
-        const singleParty = PARTIES[0];
+        const singleParty = parties[0];
         const onSingleSelect = (id) => setSelectedPartyId(id);
         return (
           <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative" style={{ background: pageBg }}>
@@ -517,7 +526,7 @@ function PreviewBody() {
 
           <main className="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-4xl w-full">
             <MultiPartyView
-              regularParties={PARTIES}
+              regularParties={parties}
               specialOptions={SPECIAL}
               selectedPartyId={selectedPartyId}
               onSelect={setSelectedPartyId}
@@ -530,8 +539,8 @@ function PreviewBody() {
             selectedParty={selectedParty}
             isSubmitting={false}
             variant="multi"
-            partyPrimary={PARTIES?.[0]?.themePrimary || '#4D2A67'}
-            partyGold={PARTIES?.[0]?.themeGold || '#CDA176'}
+            partyPrimary={parties?.[0]?.themePrimary || '#4D2A67'}
+            partyGold={parties?.[0]?.themeGold || '#CDA176'}
             onConfirm={() => setConfirmOpen(true)}
           />
 
@@ -568,10 +577,10 @@ function PreviewBody() {
     // Blossom family — its own Candy Editorial inner pages (home goes through
     // HomeRenderer above).
     if (family === 'blossom') {
-      if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode={false} />;
+      if (page === 'candidates') return <BlossomCandidates candidates={parties} editorMode={false} />;
       // PARTY detail (T3.6). the Candy Editorial feature; replaces the classic fallthrough.
       if (page === 'party') {
-        const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+        const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
         return <BlossomParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
       }
       if (page === 'results') {
@@ -580,7 +589,7 @@ function PreviewBody() {
         const revealed = variant === 'revealed';
         return (
           <BlossomResults
-            candidates={resultsCandidates(revealed)}
+            candidates={resultsCandidates(revealed, parties)}
             totalVotes={revealed ? 625 : 418}
             demographics={DEMOGRAPHICS}
             finalStatus={revealed ? 'ENDED' : 'ONGOING'}
@@ -604,13 +613,13 @@ function PreviewBody() {
 
     // ── receipt family — CANDIDATES (R4). paper flyers on the desk; links to party. ──
     if (family === 'receipt' && page === 'candidates') {
-      return <ReceiptCandidates candidates={PARTIES} editorMode={false} />;
+      return <ReceiptCandidates candidates={parties} editorMode={false} />;
     }
 
     // ── receipt family — PARTY detail (R4b). the paper dossier; replaces the classic
     //    fallthrough (kills the DeepSeaParticles hydration warning). ──
     if (family === 'receipt' && page === 'party') {
-      const partyForDetail = PARTIES.find((p) => p.number === partyNumber) || PARTIES[0];
+      const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
       return <ReceiptParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
     }
 
@@ -620,7 +629,7 @@ function PreviewBody() {
       const revealed = variant === 'revealed';
       return (
         <ReceiptResults
-          candidates={resultsCandidates(revealed)}
+          candidates={resultsCandidates(revealed, parties)}
           totalVotes={revealed ? 625 : 418}
           demographics={DEMOGRAPHICS}
           finalStatus={revealed ? 'ENDED' : 'ONGOING'}
@@ -652,7 +661,7 @@ function PreviewBody() {
         editorMode
         editorData={DUMMY_ELECTION}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-        initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: PARTIES }}
+        initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
       />
     );
   }
@@ -661,7 +670,7 @@ function PreviewBody() {
   if (family === 'studio-dark' || family === 'gumroad' || family === 'verdure') {
     const single = variant === 'single';
     const revealed = variant === 'revealed';
-    const voteParties = single ? [PARTIES[0]] : PARTIES;
+    const voteParties = single ? [parties[0]] : parties;
     // pick the layout component for this family per page
     const byFamily = (studio, gumroad, verdure) =>
       family === 'studio-dark' ? studio : family === 'verdure' ? verdure : gumroad;
@@ -676,18 +685,18 @@ function PreviewBody() {
 
     if (page === 'candidates') {
       const C = byFamily(StudioDarkCandidates, GumroadCandidates, VerdureCandidates);
-      return frame(<C candidates={PARTIES} editorMode />);
+      return frame(<C candidates={parties} editorMode />);
     }
     if (page === 'party') {
       const P = byFamily(StudioDarkParty, GumroadParty, VerdureParty);
-      return frame(<P party={PARTIES[0]} galleryImages={[]} showBackToVote={false} />);
+      return frame(<P party={parties[0]} galleryImages={[]} showBackToVote={false} />);
     }
     if (page === 'vote') {
       // dev-only: preview the Verdure single-party cinematic wax-seal intro in
       // isolation (no DB change, live election untouched). ?…&variant=single&intro=1
       if (family === 'verdure' && single && sp.get('intro') === '1') {
         return frame(
-          <VerdureSingleParty party={PARTIES[0]} specialOptions={SPECIAL} selectedPartyId={null}
+          <VerdureSingleParty party={parties[0]} specialOptions={SPECIAL} selectedPartyId={null}
             onSelect={noop} onConfirm={noop} isSubmitting={false} user={DUMMY_USER} editorMode forceIntro />
         );
       }
@@ -711,7 +720,7 @@ function PreviewBody() {
       const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
       return frame(
         <R
-          candidates={resultsCandidates(revealed)}
+          candidates={resultsCandidates(revealed, parties)}
           totalVotes={revealed ? 625 : 0}
           demographics={DEMOGRAPHICS}
           finalStatus={revealed ? 'ENDED' : 'WAITING'}
@@ -734,15 +743,15 @@ function PreviewBody() {
 
   // ── blossom family — Candy Editorial inner pages (static preview slides) ──
   if (family === 'blossom') {
-    if (page === 'candidates') return <BlossomCandidates candidates={PARTIES} editorMode />;
-    if (page === 'party') return <BlossomParty party={PARTIES[0]} galleryImages={[]} showBackToVote={false} editorMode />;
+    if (page === 'candidates') return <BlossomCandidates candidates={parties} editorMode />;
+    if (page === 'party') return <BlossomParty party={parties[0]} galleryImages={[]} showBackToVote={false} editorMode />;
     if (page === 'vote') {
       // ballot static slide — MULTI (T3.2) or SINGLE booth (T3.3); editorMode disables
       // selection/confirm so the slide is a calm static presentation.
       const single = variant === 'single';
       return (
         <BlossomVote
-          regularParties={PARTIES}
+          regularParties={parties}
           specialOptions={SPECIAL}
           selectedPartyId={null}
           onSelect={noop}
@@ -759,7 +768,7 @@ function PreviewBody() {
       const revealed = variant === 'revealed';
       return (
         <BlossomResults
-          candidates={resultsCandidates(revealed)}
+          candidates={resultsCandidates(revealed, parties)}
           totalVotes={revealed ? 625 : 418}
           demographics={DEMOGRAPHICS}
           finalStatus={revealed ? 'ENDED' : 'ONGOING'}
@@ -784,7 +793,7 @@ function PreviewBody() {
       const single = variant === 'single';
       return (
         <ReceiptVote
-          regularParties={PARTIES}
+          regularParties={parties}
           specialOptions={SPECIAL}
           selectedPartyId={null}
           onSelect={noop}
@@ -797,14 +806,14 @@ function PreviewBody() {
         />
       );
     }
-    if (page === 'candidates') return <ReceiptCandidates candidates={PARTIES} editorMode />;
-    if (page === 'party') return <ReceiptParty party={PARTIES[0]} galleryImages={[]} showBackToVote={false} editorMode />;
+    if (page === 'candidates') return <ReceiptCandidates candidates={parties} editorMode />;
+    if (page === 'party') return <ReceiptParty party={parties[0]} galleryImages={[]} showBackToVote={false} editorMode />;
     if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
     if (page === 'results') {
       const revealed = variant === 'revealed';
       return (
         <ReceiptResults
-          candidates={resultsCandidates(revealed)}
+          candidates={resultsCandidates(revealed, parties)}
           totalVotes={revealed ? 625 : 418}
           demographics={DEMOGRAPHICS}
           finalStatus={revealed ? 'ENDED' : 'ONGOING'}
@@ -827,13 +836,13 @@ function PreviewBody() {
     // single → the REAL cinematic SinglePartyView (previewMode = full layout, intro
     // skipped) instead of the stripped editor placeholder; multi → editor preview.
     if (variant === 'single') {
-      return <SinglePartyView previewMode candidate={PARTIES[0]} specialOptions={SPECIAL} selectedPartyId={null} onSelect={noop} user={DUMMY_USER} />;
+      return <SinglePartyView previewMode candidate={parties[0]} specialOptions={SPECIAL} selectedPartyId={null} onSelect={noop} user={DUMMY_USER} />;
     }
     return <VoteEditorPreview simMode="multi" pageLayout={null} elementConfigs={{}} />;
   }
   if (page === 'results') return <ResultsEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} revealed={variant !== 'locked'} />;
   if (page === 'closed') return <ClosedEditorPreview simMode="waiting" />;
-  if (page === 'party') return <ClassicPartyPreview party={PARTIES[0]} />;
+  if (page === 'party') return <ClassicPartyPreview party={parties[0]} />;
   if (page === 'success') return <SuccessPage editorMode pageLayout={null} elementConfigs={{}} />;
 
   // unknown page
