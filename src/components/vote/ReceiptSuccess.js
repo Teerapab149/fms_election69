@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // ReceiptSuccess — POST-VOTE SUCCESS for the "Receipt · Paper Materiality" template
 // family (Template #6), direction B ("printer moment"): a dark ballot-printer head
@@ -22,23 +22,27 @@
 // Colours flow ONLY through var(--rc-*), emitted by ReceiptBaseStyles on .rc-root —
 // a theme swap re-tints the whole page in place.
 //
-// BALLOT SECRECY (CONCEPT §2 — every point is a hard gate):
+// BALLOT SECRECY (CONCEPT §2 — every point is a hard gate, v2-R4a shape):
 //   • NO save / download / share / copy affordance anywhere.
-//   • The chosen item renders ONCE, here, from the ephemeral `choice` prop (or a
-//     sample in editor/preview). It is NEVER fetched or persisted; production with
-//     no ephemeral choice shows a secrecy statement instead of a party.
+//   • The receipt shows NO vote choice in ANY form — it is an IDENTITY receipt:
+//     the voter's own name / student id / major / year + their real cast time
+//     (User.votedAt via the session-gated `voter` block of /api/check-status).
+//     Nothing on it is secret; nothing on it links to a ballot.
 //   • The barcode is a purely decorative CSS graphic — it encodes NOTHING. The ref
-//     line is a random ephemeral ballot-ref + timestamp, NEVER the choice. The desk
-//     STUB reuses that SAME ephemeral ref (a non-secret), never the choice.
+//     line is a random ephemeral ballot-ref, NEVER anything vote-related. The desk
+//     STUB reuses that SAME ephemeral ref (a non-secret).
 //   • The "ไม่ใช่หลักฐานทางการ / not an official record" stamp is always visible.
 //
-// PRINT ANIMATION (CSS-only, base-visible): the receipt rows reveal top-to-bottom
-// with a stepper jitter via keyframes whose ONLY job is the hidden `from` (opacity
-// 0). The BASE state is fully visible, so JS-off / reduced-motion / editorMode /
-// animation:none all show the full receipt instantly — never JS-gated (past
-// incident). The `.rc-printing` class (added only in the live, non-editor render)
-// opts the rows into the reveal; reduced-motion nukes every animation but keeps the
-// foil statically iridescent. The desk ephemera + headline are always base-visible.
+// PRINT ANIMATION (v2-R4a "พิมพ์จริง" — CSS-only, transform-only, base-visible):
+// the whole receipt sits inside an overflow-hidden WINDOW under the printer slot
+// and FEEDS DOWN out of it — translateY from -101% to 0 with thermal-burst holds
+// in the keyframes (advance… hold… advance), so the paper physically emerges and
+// its printed content appears as the paper does (not a fade of rows on an already
+// unrolled sheet). The BASE state is translateY(0) (fully fed), so JS-off /
+// reduced-motion / editorMode / animation:none all show the full receipt
+// instantly — never JS-gated (past incident). Only `.rc-printing` (live,
+// non-editor render) opts the paper into the feed; transform is the only
+// animated property (A7.1). The desk ephemera + headline are always base-visible.
 
 import { useState, useEffect } from "react";
 import { getPath } from "../../utils/basePath";
@@ -59,7 +63,23 @@ function randRefGroup() {
   return s;
 }
 
-export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false, choice = null }) {
+// format a User.votedAt value (ISO string / Date) into the receipt's Thai
+// date + time stamp. Returns null when absent — the receipt then OMITS the
+// date/time lines cleanly (no "-") per v2-R4a.
+function formatVotedAt(votedAt) {
+  if (!votedAt) return null;
+  const d = new Date(votedAt);
+  if (isNaN(d.getTime())) return null;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mon = TH_MONTHS[d.getMonth()];
+  const yy = d.getFullYear() + 543; // Buddhist era
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return { date: `${dd} ${mon} ${yy}`, time: `${hh}:${mm}:${ss}` };
+}
+
+export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -67,33 +87,28 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
 
   const resultsUnlocked = isUnlocked || editorMode;
 
-  // Ephemeral print-moment stamp (date / time / ballot-ref) — computed client-side
-  // only, never persisted, never sent anywhere. editor/preview uses a stable sample
-  // so the reviewed slide is deterministic (and SSR has no hydration mismatch).
-  const [stamp, setStamp] = useState(
-    editorMode ? { date: "06 ก.พ. 2569", time: "10:24:07", ref: "A7F3 · 90K2 · 1739 · 0847" } : null
-  );
+  // Decorative ballot-ref — random, ephemeral, encodes nothing (client-effect so
+  // SSR has no hydration mismatch). editor/preview uses a stable sample so the
+  // reviewed slide is deterministic.
+  const [ref, setRef] = useState(editorMode ? "A7F3 · 90K2 · 1739 · 0847" : null);
   useEffect(() => {
     if (editorMode) return;
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, "0");
-    const mon = TH_MONTHS[now.getMonth()];
-    const yy = now.getFullYear() + 543; // Buddhist era
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    const ss = String(now.getSeconds()).padStart(2, "0");
-    setStamp({
-      date: `${dd} ${mon} ${yy}`,
-      time: `${hh}:${mm}:${ss}`,
-      ref: `${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()}`,
-    });
+    setRef(`${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()}`);
   }, [editorMode]);
 
-  // The choice is shown ONCE, ephemerally. In editor/preview a sample makes the
-  // "printer moment" reviewable; in production with no ephemeral choice we show a
-  // secrecy statement rather than a party (never fetched, never persisted).
-  const choiceText = choice || (editorMode ? "พรรคตัวอย่างวิทยาการจัดการ" : "บันทึกแล้ว · เป็นความลับ");
-  const stubRef = stamp?.ref || "···· · ···· · ···· · ····";
+  // VOTER IDENTITY (v2-R4a) — the user's OWN profile: name / studentId / major /
+  // year, and the REAL cast time from User.votedAt (server truth, not the client
+  // clock). Missing fields → their line is omitted cleanly (never "-").
+  // editor/preview uses a deterministic mock so the slide is reviewable.
+  const voterName = user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : null);
+  const voterId = user?.studentId || (editorMode ? "6610510149" : null);
+  const voterMajor = user?.major || (editorMode ? "สาขาวิชาการตลาด" : null);
+  const voterYear = user?.year || (editorMode ? "ปี 3" : null);
+  const stamp = editorMode
+    ? { date: "06 ก.พ. 2569", time: "10:24:07" }
+    : formatVotedAt(user?.votedAt);
+
+  const stubRef = ref || "···· · ···· · ···· · ····";
 
   return (
     <div className={`fms-app rc-root rc-suc-root rc-desk${editorMode ? "" : " rc-printing"}`}>
@@ -109,7 +124,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
       <div className="rc-suc-wrap">
         {/* LEFT (desktop) / TOP (mobile) — the display headline block */}
         <header className="rc-suc-headline">
-          <div className="rc-suc-hl-eyebrow">◆ <span className="rc-th">บันทึกคะแนนแล้ว</span> · BALLOT RECORDED ◆</div>
+          <div className="rc-suc-hl-eyebrow">✶ <span className="rc-th">บันทึกคะแนนแล้ว</span> · BALLOT RECORDED ✶</div>
           <div className="rc-suc-display">
             <span className="rc-suc-display-1">เสียงของคุณ</span>
             <span className="rc-suc-display-2">ถูกนับแล้ว</span>
@@ -142,7 +157,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <span className="rc-suc-chip"><span className="rc-foil rc-foil--conic" /></span>
           </div>
 
-          <div className="rc-suc-eyebrow">◆ <span className="rc-th">กำลังพิมพ์ใบเสร็จ</span> · printing ◆</div>
+          <div className="rc-suc-eyebrow">✶ <span className="rc-th">กำลังพิมพ์ใบเสร็จ</span> · printing ✶</div>
 
           {/* the ballot-printer head + slot */}
           <div className="rc-suc-machine" aria-hidden="true">
@@ -151,50 +166,55 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <div className="rc-suc-slot" />
           </div>
 
-          {/* the receipt hanging out of the slot */}
-          <div className="rc-suc-receipt">
-            <div className="rc-suc-pr rc-suc-logo">◆ ◆ ◆ {prefix} {number} ◆ ◆ ◆</div>
-            <h1 className="rc-suc-pr rc-suc-title">บันทึกคะแนนแล้ว</h1>
-            <div className="rc-suc-pr rc-suc-sub">BALLOT RECORDED</div>
+          {/* the feed WINDOW — overflow-hidden throat under the slot; the receipt
+              translates down out of it (v2-R4a "พิมพ์จริง"). Layout height comes from
+              the receipt in normal flow (transform never reflows → CLS 0). */}
+          <div className="rc-suc-window">
+            {/* the receipt feeding out of the slot */}
+            <div className="rc-suc-receipt">
+              <div className="rc-suc-logo">✶ ✶ ✶ {prefix} {number} ✶ ✶ ✶</div>
+              <h1 className="rc-suc-title">บันทึกคะแนนแล้ว</h1>
+              <div className="rc-suc-sub">BALLOT RECORDED</div>
 
-            <div className="rc-suc-pr rc-suc-line"><span className="rc-suc-k">วันที่ / DATE</span><b>{thaiSafe(stamp?.date || "—")}</b></div>
-            <div className="rc-suc-pr rc-suc-line"><span className="rc-suc-k">เวลา / TIME</span><b>{stamp?.time || "—"}</b></div>
+              {/* VOTER IDENTITY (v2-R4a) — the voter's own record; never any choice.
+                  Missing fields are omitted cleanly (no "-"). */}
+              {stamp && <div className="rc-suc-line"><span className="rc-suc-k">วันที่ / DATE</span><b>{thaiSafe(stamp.date)}</b></div>}
+              {stamp && <div className="rc-suc-line"><span className="rc-suc-k">เวลาใช้สิทธิ์ / TIME</span><b>{stamp.time}</b></div>}
+              {voterName && <div className="rc-suc-line"><span className="rc-suc-k">ผู้ใช้สิทธิ์ / VOTER</span><b>{thaiSafe(voterName)}</b></div>}
+              {voterId && <div className="rc-suc-line"><span className="rc-suc-k">รหัสนักศึกษา / ID</span><b>{voterId}</b></div>}
+              {voterMajor && <div className="rc-suc-line"><span className="rc-suc-k">สาขา / MAJOR</span><b>{thaiSafe(voterMajor)}</b></div>}
+              {voterYear && <div className="rc-suc-line"><span className="rc-suc-k">ชั้นปี / YEAR</span><b>{thaiSafe(voterYear)}</b></div>}
 
-            {/* the CHOICE — rendered exactly once, ephemeral */}
-            <div className="rc-suc-pr rc-suc-pick">
-              <div className="rc-suc-pick-lbl"><span className="rc-th">ตัวเลือกของคุณ</span> · your choice (<span className="rc-th">แสดงครั้งเดียว</span>)</div>
-              <div className="rc-suc-pick-val">{choiceText}</div>
+              {/* holographic security strip */}
+              <div className="rc-suc-strip">
+                <span className="rc-foil" aria-hidden="true" />
+                <span className="rc-suc-strip-t">Security · <span className="rc-th">ของแท้</span></span>
+              </div>
+
+              {/* decorative barcode — encodes NOTHING (pure CSS) */}
+              <div className="rc-suc-barcode" aria-hidden="true" />
+              <div className="rc-suc-ref">{stubRef}</div>
+
+              {/* decorative print mark — a small, STATIC data-dot pattern printed under
+                  the barcode (thermal-ink module grid). Purely ornamental (aria-hidden):
+                  a fixed, hardcoded module map with NO QR finder squares and NO scan
+                  label — it is honest print decoration, NOT a scannable code. Encodes
+                  nothing; the on-screen evaluate button is the real affordance. */}
+              <div className="rc-suc-print" aria-hidden="true">
+                <svg className="rc-suc-print-svg" viewBox="0 0 8 8" shapeRendering="crispEdges">
+                  <path d="M0 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM6 0h1v1h-1zM1 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM7 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM6 5h1v1h-1zM1 6h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM5 7h1v1h-1z" />
+                </svg>
+              </div>
+
+              {/* foil seal */}
+              <div className="rc-suc-seal" aria-hidden="true">
+                <span className="rc-suc-seal-disc"><span className="rc-foil rc-foil--conic" /></span>
+                <span className="rc-suc-seal-core"><b>OK</b></span>
+              </div>
+
+              {/* not-an-official-record stamp (ballot secrecy) */}
+              <div className="rc-suc-stamp">✻ <span className="rc-th">ไม่ใช่หลักฐานทางการ</span> ✻</div>
             </div>
-
-            {/* holographic security strip */}
-            <div className="rc-suc-pr rc-suc-strip">
-              <span className="rc-foil" aria-hidden="true" />
-              <span className="rc-suc-strip-t">Security · <span className="rc-th">ของแท้</span></span>
-            </div>
-
-            {/* decorative barcode — encodes NOTHING (pure CSS) */}
-            <div className="rc-suc-pr rc-suc-barcode" aria-hidden="true" />
-            <div className="rc-suc-pr rc-suc-ref">{stamp?.ref || "···· · ···· · ···· · ····"}</div>
-
-            {/* decorative print mark — a small, STATIC data-dot pattern printed under
-                the barcode (thermal-ink module grid). Purely ornamental (aria-hidden):
-                a fixed, hardcoded module map with NO QR finder squares and NO scan
-                label — it is honest print decoration, NOT a scannable code. Encodes
-                nothing; the on-screen evaluate button is the real affordance. */}
-            <div className="rc-suc-pr rc-suc-print" aria-hidden="true">
-              <svg className="rc-suc-print-svg" viewBox="0 0 8 8" shapeRendering="crispEdges">
-                <path d="M0 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM6 0h1v1h-1zM1 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM7 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM6 5h1v1h-1zM1 6h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM5 7h1v1h-1z" />
-              </svg>
-            </div>
-
-            {/* foil seal */}
-            <div className="rc-suc-pr rc-suc-seal" aria-hidden="true">
-              <span className="rc-suc-seal-disc"><span className="rc-foil rc-foil--conic" /></span>
-              <span className="rc-suc-seal-core"><b>OK</b></span>
-            </div>
-
-            {/* not-an-official-record stamp (ballot secrecy) */}
-            <div className="rc-suc-pr rc-suc-stamp">✻ <span className="rc-th">ไม่ใช่หลักฐานทางการ</span> ✻</div>
           </div>
         </div>
 
@@ -249,7 +269,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           </div>
 
           <div className="rc-suc-foot">
-            <span className="rc-th">ใบเสร็จนี้ดูซ้ำไม่ได้</span> · <span className="rc-th">ไม่มีการบันทึก/ดาวน์โหลด</span> · barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
+            <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span> · <span className="rc-th">การลงคะแนนของคุณเป็นความลับ</span> · barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
           </div>
 
           <footer className="rc-suc-copy">© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>
@@ -327,8 +347,15 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-slot::after { content:""; position:absolute; left:8px; right:8px; top:5px; height:3px;
           border-radius:2px; background:color-mix(in srgb, var(--rc-ink) 55%, var(--rc-faint)); }
 
-        /* ---- the receipt printing downward (MOMENT — untouched but z-lifted) ---- */
-        .rc-suc-root .rc-suc-receipt { position:relative; z-index:2; margin:-2px 10px 0; padding:22px 20px 30px;
+        /* ---- the feed WINDOW + the receipt printing downward (v2-R4a) ----
+           The window is the overflow-hidden throat below the slot: the receipt
+           starts translated fully above it (hidden) and FEEDS DOWN into view.
+           Height comes from the receipt in normal flow — transform never
+           reflows, so the stage never shifts (CLS 0). Horizontal padding keeps
+           the paper's soft shadow inside the clip. */
+        .rc-suc-root .rc-suc-window { position:relative; z-index:2; margin:-2px 0 0; padding:0 10px 16px;
+          overflow:hidden; }
+        .rc-suc-root .rc-suc-receipt { position:relative; z-index:2; padding:22px 20px 30px;
           background:var(--rc-receipt);
           box-shadow:0 14px 30px -16px color-mix(in srgb, var(--rc-ink) 40%, transparent);
           background-image:repeating-linear-gradient(180deg, transparent 0 26px, color-mix(in srgb, var(--rc-ink) 3%, transparent) 26px 27px);
@@ -345,13 +372,6 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           padding:8px 0; border-bottom:1px dotted var(--rc-line); font-variant-numeric:tabular-nums; }
         .rc-suc-root .rc-suc-line .rc-suc-k { color:var(--rc-ink2); }
         .rc-suc-root .rc-suc-line b { font-family:var(--rc-fm); font-weight:600; color:var(--rc-ink); }
-
-        .rc-suc-root .rc-suc-pick { margin:14px 0; padding:12px; text-align:center;
-          border:1.5px dashed var(--rc-stamp-line); border-radius:6px; }
-        .rc-suc-root .rc-suc-pick-lbl { font-family:var(--rc-fm); font-size:9px; letter-spacing:.2em;
-          text-transform:uppercase; color:var(--rc-faint); }
-        .rc-suc-root .rc-suc-pick-val { margin-top:4px; font-family:var(--rc-fh); font-weight:700; font-size:17px;
-          color:var(--rc-ink); }
 
         .rc-suc-root .rc-suc-strip { position:relative; overflow:hidden; height:30px; margin:16px 0 6px; border-radius:6px; }
         .rc-suc-root .rc-suc-strip .rc-foil { position:absolute; inset:0; }
@@ -507,24 +527,27 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           font-family:var(--rc-fm); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--rc-ink2);
           text-align:center; }
 
-        /* ---- PRINT REVEAL (CSS-only, BASE-VISIBLE) — the keyframes only supply the
-           hidden 'from'; base state is opacity 1, so JS-off / editorMode / no-anim =
-           the full receipt shows instantly. Only .rc-printing opts rows into the
-           stepper-jitter reveal. ---- */
-        .rc-suc-root.rc-printing .rc-suc-pr { animation:rcPrintRow .5s steps(5, end) both; }
-        .rc-suc-root.rc-printing .rc-suc-logo  { animation-delay:.05s; }
-        .rc-suc-root.rc-printing .rc-suc-title { animation-delay:.18s; }
-        .rc-suc-root.rc-printing .rc-suc-sub   { animation-delay:.30s; }
-        .rc-suc-root.rc-printing .rc-suc-line:nth-of-type(1) { animation-delay:.42s; }
-        .rc-suc-root.rc-printing .rc-suc-line:nth-of-type(2) { animation-delay:.52s; }
-        .rc-suc-root.rc-printing .rc-suc-pick    { animation-delay:.66s; }
-        .rc-suc-root.rc-printing .rc-suc-strip   { animation-delay:.82s; }
-        .rc-suc-root.rc-printing .rc-suc-barcode { animation-delay:.94s; }
-        .rc-suc-root.rc-printing .rc-suc-ref     { animation-delay:1.02s; }
-        .rc-suc-root.rc-printing .rc-suc-print   { animation-delay:1.08s; }
-        .rc-suc-root.rc-printing .rc-suc-seal    { animation-delay:1.14s; }
-        .rc-suc-root.rc-printing .rc-suc-stamp   { animation-delay:1.28s; }
-        @keyframes rcPrintRow { from { opacity:0; transform:translateY(-8px); } }
+        /* ---- PRINT FEED (v2-R4a "พิมพ์จริง" — CSS-only, transform-only, BASE-VISIBLE)
+           The receipt translates from fully above the window (-101%, clipped =
+           invisible) down to its resting place (0). The keyframes hold at
+           intermediate positions — the stop-start rhythm of a thermal printer
+           feeding paper in bursts. BASE state is translateY(0) (fully fed), so
+           JS-off / editorMode / reduced-motion / animation:none all show the
+           complete receipt instantly; only .rc-printing opts the paper into the
+           feed. fill-mode "both" keeps it hidden during the small lead-in delay. ---- */
+        .rc-suc-root.rc-printing .rc-suc-receipt { animation:rcFeed 2.6s linear both .2s; }
+        @keyframes rcFeed {
+          0%   { transform:translateY(-101%); }
+          10%  { transform:translateY(-86%); }
+          17%  { transform:translateY(-86%); }
+          30%  { transform:translateY(-58%); }
+          38%  { transform:translateY(-58%); }
+          52%  { transform:translateY(-34%); }
+          60%  { transform:translateY(-34%); }
+          74%  { transform:translateY(-12%); }
+          82%  { transform:translateY(-12%); }
+          100% { transform:translateY(0); }
+        }
 
         /* ---- TABLET+ : a touch more air ---- */
         @media (min-width:768px) {

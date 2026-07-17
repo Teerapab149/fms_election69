@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // ReceiptSingleParty — SINGLE-PARTY VOTE (booth) for the "Receipt · Paper
 // Materiality" template family (Template #6), in the print/desk language established
@@ -187,7 +187,7 @@ export default function ReceiptSingleParty({
 
         {/* ===== party feature masthead ===== */}
         <header className="rc-sp-head">
-          <span className="rc-sp-kick">◆ <span className="rc-th">พรรคเดียวที่ลงสมัคร</span> · THE ONLY PARTY ◆</span>
+          <span className="rc-sp-kick">✶ <span className="rc-th">พรรคเดียวที่ลงสมัคร</span> · THE ONLY PARTY ✶</span>
           <div className="rc-sp-hero">
             <span className="rc-sp-logo">
               {logo ? (
@@ -362,7 +362,7 @@ export default function ReceiptSingleParty({
               )}
             </ul>
 
-            <div className="rc-ballot-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">กดตราปั๊มเพื่อเลือก</span> ◆ ◆ ◆</div>
+            <div className="rc-ballot-foot" aria-hidden="true">✶ ✶ ✶ <span className="rc-th">กดตราปั๊มเพื่อเลือก</span> ✶ ✶ ✶</div>
           </div>
         </section>
       </div>
@@ -408,11 +408,16 @@ export default function ReceiptSingleParty({
         </div>
       </div>
 
-      {/* ===== confirm dialog (Receipt paper card) — single-party has no shared modal ===== */}
+      {/* ===== confirm dialog — the booth's own paper slip, surface-sibling of the
+          multi ballot's ReceiptConfirmSlip (v2-R4a T4): die-cut corner + top
+          perforation + grain, mono CONFIRM header, quiet stub cancel, foil-rim
+          "หย่อนบัตร →" confirm (F5 wording). Semantics unchanged: onConfirm() IS
+          the submit — single-party has no shared modal. ===== */}
       {confirmOpen && (
         <div className="rc-scm" onClick={() => !isSubmitting && setConfirmOpen(false)} role="dialog" aria-modal="true">
-          <div className="rc-scm__card" onClick={(e) => e.stopPropagation()}>
-            <span className="rc-scm__eyebrow">ยืนยันครั้งสุดท้าย · FINAL CONFIRMATION</span>
+          <div className="rc-scm__card rc-grain" onClick={(e) => e.stopPropagation()}>
+            <span className="rc-scm__perf" aria-hidden="true" />
+            <span className="rc-scm__eyebrow">CONFIRM · <span className="rc-th">ยืนยันครั้งสุดท้าย</span></span>
             <h3 className="rc-scm__title">ยืนยันการลงคะแนน</h3>
             <p className="rc-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`rc-scm__pick rc-scm__pick--${kind}`}>
@@ -422,7 +427,10 @@ export default function ReceiptSingleParty({
             <div className="rc-scm__actions">
               <button type="button" className="rc-scm__cancel" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>
               <button type="button" className="rc-scm__go" onClick={() => onConfirm()} disabled={isSubmitting}>
-                {isSubmitting ? "กำลังบันทึก…" : "ยืนยัน ลงคะแนนเลย"}<span className="rc-scm__arrow" aria-hidden="true">→</span>
+                {!isSubmitting && <span className="rc-foil" aria-hidden="true" />}
+                <span className="rc-scm__go-in">
+                  {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-scm__arrow" aria-hidden="true">→</span>
+                </span>
               </button>
             </div>
           </div>
@@ -757,7 +765,7 @@ export default function ReceiptSingleParty({
           font-weight:700; font-size:clamp(16px,4.2vw,22px); line-height:1.15; color:var(--rc-ink);
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .rc-single-root .rc-vbar__val--empty { color:var(--rc-faint); font-weight:600; }
-        .rc-single-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); transform:rotate(45deg); }
+        .rc-single-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); border-radius:50%; }
         /* selection tint follows the SEMANTIC tone of the chosen stamp (fixed colours) */
         .rc-single-root .rc-vbar__val--approve { color:#15803D; }
         .rc-single-root .rc-vbar__val--approve .rc-vbar__dot { background:#16A34A; }
@@ -787,9 +795,14 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-scm { position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:24px;
           background:color-mix(in srgb, var(--rc-ink) 56%, transparent);
           animation:rcScmFade .2s ease both; }
-        .rc-single-root .rc-scm__card { width:min(460px,100%); background:var(--rc-receipt); border:1px solid var(--rc-line);
-          border-radius:4px; padding:32px; text-align:center; animation:rcScmPop .28s cubic-bezier(.16,1,.3,1) both;
+        /* card = a paper slip torn off a pad (sibling of ReceiptConfirmSlip): die-cut
+           corner + top perforation strip + grain (.rc-grain supplies stock+tile). */
+        .rc-single-root .rc-scm__card { position:relative; width:min(460px,100%); border:1px solid var(--rc-line);
+          clip-path:polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px);
+          padding:32px; text-align:center; animation:rcScmPop .28s cubic-bezier(.16,1,.3,1) both;
           box-shadow:3px 44px 80px -30px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-single-root .rc-scm__perf { position:absolute; left:10px; right:10px; top:7px; height:2px; pointer-events:none;
+          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
         .rc-single-root .rc-scm__eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
           color:var(--rc-faint); }
         .rc-single-root .rc-scm__title { margin:12px 0 8px; font-family:var(--rc-fh); font-weight:700; font-size:clamp(24px,6vw,32px);
@@ -809,14 +822,23 @@ export default function ReceiptSingleParty({
           font-family:var(--rc-fh); font-weight:700; font-size:15px; color:var(--rc-ink);
           background:var(--rc-receipt); border:1.5px solid var(--rc-ink); transition:background .2s ease; }
         .rc-single-root .rc-scm__cancel:hover { background:color-mix(in srgb, var(--rc-ink) 6%, var(--rc-receipt)); }
-        .rc-single-root .rc-scm__go { flex:2; display:inline-flex; align-items:center; justify-content:center; gap:9px;
-          min-height:50px; padding:13px 22px; border-radius:var(--rc-radius-button, 8px); border:none; cursor:pointer;
-          font-family:var(--rc-fh); font-weight:700; font-size:15px; color:var(--rc-on-accent); background:var(--rc-accent-deep);
-          transition:transform .2s ease, filter .25s ease; }
-        .rc-single-root .rc-scm__go:hover { filter:brightness(1.06); transform:translateY(-1px); }
+        /* confirm = foil RIM behind an accent fill, text on top (rc-cta idiom) —
+           sibling of ReceiptConfirmSlip's confirm */
+        .rc-single-root .rc-scm__go { position:relative; isolation:isolate; flex:2; border:none; cursor:pointer;
+          min-height:50px; padding:13px 22px; border-radius:var(--rc-radius-button, 8px); background:transparent;
+          transition:transform .2s ease; }
+        .rc-single-root .rc-scm__go .rc-foil { position:absolute; inset:-2px; z-index:0;
+          border-radius:calc(var(--rc-radius-button, 8px) + 2px); }
+        .rc-single-root .rc-scm__go::before { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit;
+          background:var(--rc-accent); transition:background .2s ease; }
+        .rc-single-root .rc-scm__go-in { position:relative; z-index:2; display:inline-flex; align-items:center;
+          justify-content:center; gap:9px; font-family:var(--rc-fh); font-weight:700; font-size:15px; color:var(--rc-on-accent); }
+        .rc-single-root .rc-scm__go:hover { transform:translateY(-1px); }
+        .rc-single-root .rc-scm__go:hover::before { background:var(--rc-accent-deep); }
         .rc-single-root .rc-scm__go .rc-scm__arrow { transition:transform .25s ease; }
         .rc-single-root .rc-scm__go:hover .rc-scm__arrow { transform:translateX(3px); }
         .rc-single-root .rc-scm__go:disabled, .rc-single-root .rc-scm__cancel:disabled { opacity:.6; cursor:not-allowed; }
+        .rc-single-root .rc-scm__go:disabled::before { background:color-mix(in srgb, var(--rc-ink2) 40%, var(--rc-receipt)); }
 
         @keyframes rcVRise { from { opacity:0; transform:translateY(14px); } }
         @keyframes rcScmFade { from { opacity:0; } }

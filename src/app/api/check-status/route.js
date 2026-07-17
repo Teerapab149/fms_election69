@@ -42,16 +42,32 @@ export async function GET(request) {
       }
     }
 
-    // 🔐 isVoted is personal — read it for the VERIFIED session user only, never
-    // from a query param (which let anyone probe any student's vote status).
+    // 🔐 isVoted + voter identity are personal — read them for the VERIFIED session
+    // user only, never from a query param (which let anyone probe any student's
+    // vote status). `voter` (v2-R4a success identity receipt) carries ONLY the
+    // session user's own profile fields (name / studentId / major / year) plus
+    // their own votedAt (their personal cast time — not ballot data). It NEVER
+    // contains any vote choice: post v2-SEC there is no user→candidate link in
+    // the schema at all. Unauthenticated requests get the public election status
+    // with NO voter block (this endpoint is shared by pre-login pages).
     let isVoted = false;
+    let voter = null;
     const session = await getServerSession(authOptions);
     if (session?.user?.studentId) {
       const user = await db.user.findUnique({
         where: { studentId: String(session.user.studentId) },
-        select: { isVoted: true },
+        select: { isVoted: true, name: true, studentId: true, major: true, year: true, votedAt: true },
       });
-      if (user) isVoted = user.isVoted;
+      if (user) {
+        isVoted = user.isVoted;
+        voter = {
+          name: user.name,
+          studentId: user.studentId,
+          major: user.major,
+          year: user.year,
+          votedAt: user.votedAt,
+        };
+      }
     }
 
     return NextResponse.json({
@@ -60,7 +76,8 @@ export async function GET(request) {
       showResult: config.showResult,
       systemMode: sysMode,
       electionStatus: electionStatus,
-      googleFormUrl: config.googleFormUrl || ""
+      googleFormUrl: config.googleFormUrl || "",
+      ...(voter ? { voter } : {})
     });
   } catch (error) {
     console.error(error);

@@ -1928,6 +1928,14 @@ its semantic pair (which meaning does this node express?), never raw string coun
 Thai has no word boundaries for a regex to anchor on.
 **Tags:** `#thai-copy` `#probe` `#verify`
 
+### P-LOG-095: [2026-07-16] election-switch snapshot restore is not durable across candidate deletions
+**Context:** v2-R4a e2e — `.specs/election-switch.js restore` failed because its saved
+snapshot referenced candidate id=8, deleted from the dev DB since the snapshot was taken.
+**Lesson:** DB snapshots keyed to candidate ids rot when candidates are deleted; e2e
+that needs a multi-party state must create its own temp candidate and remove it after,
+never rely on restoring an old snapshot.
+**Tags:** `#e2e` `#dev-db` `#tooling`
+
 ---
 
 ## 🚫 Rejected Approaches

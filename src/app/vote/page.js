@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
-import { setEphemeralChoice } from '../../utils/ephemeralChoice';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
@@ -18,7 +17,7 @@ import GumroadVote from '../../components/vote/GumroadVote';
 import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VerdureVote from '../../components/vote/VerdureVote';
 import BlossomVote from '../../components/vote/BlossomVote';
-import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
+import ReceiptVote, { useBallotDrop, ReceiptConfirmSlip } from '../../components/vote/ReceiptVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -116,42 +115,26 @@ export default function VotePage() {
     else if (type === 'NO_VOTE') handleSelectParty(specialOptions.abstain?.id);
   };
 
-  // Receipt-only: the ballot-secrecy §2 label shown ONCE on the printer-moment
-  // success page. Number 0 = abstain, -1 = disapprove, else the party name. Never
-  // persisted — only the in-memory ephemeral holder carries it (see below).
-  const receiptChoiceLabel = () => {
-    const p = selectedParty;
-    if (!p) return null;
-    if (p.number === 0) return "งดออกเสียง";
-    if (p.number === -1) return "ไม่รับรอง";
-    return p.name || null;
-  };
-
   const onConfirmVote = async () => {
     if (isRedirecting) return; // 🔒 Guard
-
-    // Capture the choice label BEFORE the POST (selection can't change mid-submit).
-    const choiceLabel = isReceipt ? receiptChoiceLabel() : null;
 
     // Receipt family: play the "หย่อนบัตร" scene AROUND the awaited submit (ruling
     // C3). playDrop starts the ~900ms fold+drop overlay, fires submitVote() in parallel,
     // HOLDS the final frame until it resolves, then returns the result — the vote is
     // NEVER coupled to the animation (reduced-motion / JS-fail skip the scene but still
-    // await the submit). On success we keep the EXACT ephemeral + soft-nav seam; on
-    // failure the ballot bounces back and submitVote's own alert is the error. The
-    // shared modal is closed first (multi) so the scene is unobstructed; the modal
-    // itself is untouched. Every other family keeps its original hard-nav path.
+    // await the submit). On failure the ballot bounces back and submitVote's own alert
+    // is the error. The receipt confirm slip is closed first (multi) so the scene is
+    // unobstructed. Every other family keeps its original hard-nav path.
     if (isReceipt) {
       setIsConfirmModalOpen(false);
       const success = await playDrop(submitVote);
       if (success) {
         setIsRedirecting(true); // 🔒 Lock UI
-        // hand the just-cast choice to the in-memory ephemeral holder (CONCEPT §2 / §9
-        // Q4 — shown once, never persisted, no storage/URL/cookie) and navigate SOFT so
-        // the module scope survives to the success page's mount, where
-        // consumeEphemeralChoice() reads it once. A hard nav would (by design) drop the
-        // value → the secrecy fallback.
-        setEphemeralChoice(choiceLabel);
+        // Receipt keeps a SOFT router.push purely for UX: the drop scene holds its
+        // final frame and a soft transition lets success mount without a full-page
+        // flash. This is NOT a secrecy mechanism anymore — since v2-R4a the success
+        // receipt shows only the voter's own identity (never any choice), so a hard
+        // reload of /success is equally safe.
         router.push("/success");
       }
       return;
@@ -311,7 +294,22 @@ export default function VotePage() {
         showVoteButton={false}
       />
 
-      {!isSingleParty && (
+      {/* Receipt family gets its OWN paper confirm slip (v2-R4a T4) — same open/
+          confirm/cancel semantics; the shared VoteConfirmationModal below stays
+          byte-untouched for every other family. */}
+      {!isSingleParty && isReceipt && (
+        <ReceiptConfirmSlip
+          isOpen={isConfirmModalOpen}
+          onClose={() => setIsConfirmModalOpen(false)}
+          onConfirm={onConfirmVote}
+          party={selectedParty}
+          isVoteNo={selectedParty?.number === 0}
+          isDisapprove={selectedParty?.number === -1}
+          isSubmitting={isSubmitting || isRedirecting}
+        />
+      )}
+
+      {!isSingleParty && !isReceipt && (
         <VoteConfirmationModal
           isOpen={isConfirmModalOpen}
           onClose={() => setIsConfirmModalOpen(false)}

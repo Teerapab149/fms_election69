@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // ReceiptVote — VOTE (multi-party ballot) page for the "Receipt · Paper
 // Materiality" template family (Template #6), in the print language established by
@@ -35,7 +35,7 @@
 // editorMode render the complete ballot instantly (the ink mark is a selection
 // indicator, not gated content).
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
@@ -169,6 +169,150 @@ export function useBallotDrop() {
   }, []);
   const sceneNode = <BallotDropScene phase={phase} />;
   return { playDrop, sceneNode, dropActive: phase !== "idle" };
+}
+
+// ── RECEIPT CONFIRM SLIP (v2-R4a T4) — the receipt family's OWN confirmation,
+//    replacing the shared VoteConfirmationModal on the receipt branch ONLY (the
+//    shared modal file is untouched; every other family keeps using it). Semantics
+//    mirror the shared modal exactly: open from the tray's confirm → ยืนยัน runs
+//    onConfirm (→ the ballot-drop scene → the original flow) / ยกเลิก + Esc +
+//    scrim-click close (never while submitting). Surface is the family's print
+//    language instead of the generic app modal: a die-cut paper SLIP (cut corner +
+//    edge perforation + grain) centred on an OPAQUE ink scrim (no backdrop-filter,
+//    A7.1), mono CONFIRM header, the picked party name + number (shown at confirm
+//    time only — nothing is recorded yet), a quiet ticket-stub cancel and a
+//    foil-rim "หย่อนบัตร →" confirm (F5 wording). a11y: role=dialog + aria-modal +
+//    focus moves to the confirm button on open. Used by the live vote page AND
+//    template-preview interact. ──
+export function ReceiptConfirmSlip({
+  isOpen = false, onClose = () => {}, onConfirm = () => {},
+  party = null, isVoteNo = false, isDisapprove = false, isSubmitting = false,
+}) {
+  const confirmRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    confirmRef.current?.focus();
+    const onKey = (e) => { if (e.key === "Escape" && !isSubmitting) onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, isSubmitting, onClose]);
+
+  if (!isOpen) return null;
+
+  // mirror the shared modal's three cases: party / abstain (orange) / disapprove
+  // (red) — semantic colours fixed, deliberately NOT var(--rc-*).
+  const tone = isVoteNo ? "abstain" : isDisapprove ? "disapprove" : "party";
+  const label = isVoteNo ? "งดออกเสียง" : isDisapprove ? "ไม่รับรอง" : (party?.name || "—");
+  const subLabel = isVoteNo
+    ? "ไม่ประสงค์ลงคะแนนเสียง"
+    : isDisapprove
+    ? "ไม่ประสงค์ให้ผู้สมัครได้รับเลือก"
+    : (party?.number != null ? <><span className="rc-th">พรรคหมายเลข</span> {party.number}</> : null);
+
+  return (
+    <div
+      className="rc-root rc-cslip"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rc-cslip-title"
+      onClick={() => !isSubmitting && onClose()}
+    >
+      <div className="rc-cslip__card rc-grain" onClick={(e) => e.stopPropagation()}>
+        <span className="rc-cslip__perf" aria-hidden="true" />
+        <span className="rc-cslip__eyebrow">CONFIRM · <span className="rc-th">ยืนยันครั้งสุดท้าย</span></span>
+        <h3 id="rc-cslip-title" className="rc-cslip__title">ยืนยันการลงคะแนน</h3>
+        <p className="rc-cslip__sub">โปรดตรวจสอบความถูกต้อง ท่านไม่สามารถแก้ไขได้หลังจากยืนยัน</p>
+        <div className={`rc-cslip__pick rc-cslip__pick--${tone}`}>
+          <span className="rc-cslip__pick-lab"><span className="rc-th">ท่านเลือก</span> · YOUR SELECTION</span>
+          <span className="rc-cslip__pick-val">{label}</span>
+          {subLabel && <span className="rc-cslip__pick-sub">{subLabel}</span>}
+        </div>
+        <div className="rc-cslip__actions">
+          <button type="button" className="rc-cslip__cancel" onClick={() => !isSubmitting && onClose()} disabled={isSubmitting}>
+            ยกเลิก
+          </button>
+          <button type="button" ref={confirmRef} className="rc-cslip__go" onClick={() => !isSubmitting && onConfirm()} disabled={isSubmitting}>
+            {!isSubmitting && <span className="rc-foil" aria-hidden="true" />}
+            <span className="rc-cslip__go-in">
+              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-cslip__arrow" aria-hidden="true">→</span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <style jsx global>{`
+        /* opaque ink scrim — NO backdrop-filter (A7.1). .rc-root.rc-cslip = 0,2,0 so
+           it beats the base .rc-root rule regardless of source order. */
+        .rc-root.rc-cslip { position:fixed; inset:0; z-index:60; min-height:0; display:grid; place-items:center;
+          padding:24px; background:color-mix(in srgb, var(--rc-ink) 56%, transparent); animation:rcCslipFade .2s ease both; }
+        /* the paper slip — die-cut corner + grain tile; a torn-perforation strip runs
+           along the top edge so it reads as a slip torn off a pad. */
+        .rc-root .rc-cslip__card { position:relative; width:min(440px, 100%); padding:30px 28px 26px; text-align:center;
+          border:1px solid var(--rc-line); clip-path:polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px);
+          box-shadow:3px 44px 80px -30px color-mix(in srgb, var(--rc-ink) 40%, transparent);
+          animation:rcCslipPop .28s cubic-bezier(.16,1,.3,1) both; }
+        .rc-root .rc-cslip__perf { position:absolute; left:10px; right:10px; top:7px; height:2px; pointer-events:none;
+          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
+        .rc-root .rc-cslip__eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+          color:var(--rc-faint); }
+        .rc-root .rc-cslip__eyebrow .rc-th { font-family:var(--rc-fr) !important; }
+        .rc-root .rc-cslip__title { margin:12px 0 8px; font-family:var(--rc-fh); font-weight:700;
+          font-size:clamp(24px, 6vw, 32px); letter-spacing:-.01em; color:var(--rc-ink); }
+        .rc-root .rc-cslip__sub { margin:0 0 20px; font-family:var(--rc-fr); font-size:14px; line-height:1.6; color:var(--rc-ink2); }
+        /* the picked item — a dashed ink frame on the slip; tone = semantic colour */
+        .rc-root .rc-cslip__pick { display:flex; flex-direction:column; gap:5px; padding:16px 18px; margin-bottom:22px;
+          border:1.5px dashed var(--rc-stamp-line); border-radius:6px; text-align:left; }
+        .rc-root .rc-cslip__pick--party { border-color:var(--rc-accent-deep);
+          background:color-mix(in srgb, var(--rc-accent) 7%, var(--rc-receipt)); }
+        .rc-root .rc-cslip__pick--abstain { border-color:#EA580C; background:color-mix(in srgb, #EA580C 7%, var(--rc-receipt)); }
+        .rc-root .rc-cslip__pick--disapprove { border-color:#DC2626; background:color-mix(in srgb, #DC2626 7%, var(--rc-receipt)); }
+        .rc-root .rc-cslip__pick-lab { font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+          color:var(--rc-ink2); }
+        .rc-root .rc-cslip__pick-lab .rc-th { font-family:var(--rc-fr) !important; }
+        .rc-root .rc-cslip__pick-val { font-family:var(--rc-fh); font-weight:700; font-size:19px; line-height:1.3; color:var(--rc-ink); }
+        .rc-root .rc-cslip__pick--abstain .rc-cslip__pick-val { color:#C2410C; }
+        .rc-root .rc-cslip__pick--disapprove .rc-cslip__pick-val { color:#DC2626; }
+        .rc-root .rc-cslip__pick-sub { font-family:var(--rc-fr); font-size:12.5px; color:var(--rc-ink2); }
+        .rc-root .rc-cslip__pick-sub .rc-th { font-family:var(--rc-fr) !important; }
+        .rc-root .rc-cslip__actions { display:flex; gap:12px; }
+        /* cancel = a quiet ticket STUB (cut corner + left perforation) */
+        .rc-root .rc-cslip__cancel { position:relative; flex:1; display:inline-flex; align-items:center; justify-content:center;
+          min-height:50px; padding:0 16px 0 22px; cursor:pointer; font-family:var(--rc-fh); font-weight:600; font-size:15px;
+          color:var(--rc-ink); background:var(--rc-receipt); border:1.5px solid var(--rc-ink);
+          clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); transition:background .2s ease; }
+        .rc-root .rc-cslip__cancel::before { content:""; position:absolute; left:6px; top:9px; bottom:9px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-ink) 0 2px, transparent 2px 5px); }
+        .rc-root .rc-cslip__cancel:hover { background:color-mix(in srgb, var(--rc-ink) 6%, var(--rc-receipt)); }
+        /* confirm = foil RIM behind an accent fill, text on top (rc-cta idiom) */
+        .rc-root .rc-cslip__go { position:relative; isolation:isolate; flex:1.6; border:none; cursor:pointer;
+          min-height:50px; padding:13px 20px; border-radius:var(--rc-radius-button, 8px); background:transparent;
+          transition:transform .18s ease; }
+        .rc-root .rc-cslip__go .rc-foil { position:absolute; inset:-2px; z-index:0;
+          border-radius:calc(var(--rc-radius-button, 8px) + 2px);
+          background-image:linear-gradient(var(--rc-holo-angle),
+            var(--rc-holo-1), var(--rc-holo-2), var(--rc-holo-3), var(--rc-holo-4), var(--rc-holo-5), var(--rc-holo-1));
+          background-size:300% 300%; background-position:calc(var(--rc-px, .5) * 100%) calc(var(--rc-py, .5) * 100%);
+          filter:hue-rotate(var(--rc-holo-shift)) saturate(1.15); animation:rcFoilDrift 9s linear infinite; }
+        .rc-root .rc-cslip__go::before { content:""; position:absolute; inset:0; z-index:1; border-radius:inherit;
+          background:var(--rc-accent); transition:background .2s ease; }
+        .rc-root .rc-cslip__go-in { position:relative; z-index:2; display:inline-flex; align-items:center; justify-content:center;
+          gap:9px; font-family:var(--rc-fh); font-weight:700; font-size:15px; color:var(--rc-on-accent); }
+        .rc-root .rc-cslip__arrow { transition:transform .2s ease; }
+        .rc-root .rc-cslip__go:hover { transform:translateY(-1px); }
+        .rc-root .rc-cslip__go:hover::before { background:var(--rc-accent-deep); }
+        .rc-root .rc-cslip__go:hover .rc-cslip__arrow { transform:translateX(3px); }
+        .rc-root .rc-cslip__go:active { transform:scale(.98); }
+        .rc-root .rc-cslip__go:disabled, .rc-root .rc-cslip__cancel:disabled { opacity:.6; cursor:not-allowed; }
+        .rc-root .rc-cslip__go:disabled::before { background:color-mix(in srgb, var(--rc-ink2) 40%, var(--rc-receipt)); }
+        .rc-root .rc-cslip__cancel:focus-visible, .rc-root .rc-cslip__go:focus-visible {
+          outline:2px solid var(--rc-accent-deep); outline-offset:3px; }
+        @keyframes rcCslipFade { from { opacity:0; } }
+        @keyframes rcCslipPop { from { opacity:0; transform:translateY(18px) scale(.96); } }
+        @media (prefers-reduced-motion:reduce) {
+          .rc-cslip, .rc-cslip * { animation:none !important; }
+        }
+      `}</style>
+    </div>
+  );
 }
 
 // one ballot row (party or abstain). role=radio, keyboard-operable. The mark-box is
@@ -358,7 +502,7 @@ export default function ReceiptVote({
               )}
             </ul>
 
-            <div className="rc-ballot-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">หนึ่งคน หนึ่งเสียง</span> ◆ ◆ ◆</div>
+            <div className="rc-ballot-foot" aria-hidden="true">✶ ✶ ✶ <span className="rc-th">หนึ่งคน หนึ่งเสียง</span> ✶ ✶ ✶</div>
           </div>
         </section>
       </div>
@@ -660,7 +804,7 @@ export default function ReceiptVote({
           font-weight:700; font-size:clamp(16px,4.2vw,22px); line-height:1.15; color:var(--rc-ink);
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .rc-vote-root .rc-vbar__val--empty { color:var(--rc-faint); font-weight:600; }
-        .rc-vote-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); transform:rotate(45deg); }
+        .rc-vote-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); border-radius:50%; }
         /* abstain keeps its semantic orange */
         .rc-vote-root .rc-vbar__val.is-abstain { color:#c2410c; }
         .rc-vote-root .rc-vbar__val.is-abstain .rc-vbar__dot { background:#ea580c; }

@@ -58,7 +58,7 @@ import BlossomVote from '../../components/vote/BlossomVote';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
-import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
+import ReceiptVote, { useBallotDrop, ReceiptConfirmSlip } from '../../components/vote/ReceiptVote';
 import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptClosed from '../../components/vote/ReceiptClosed';
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
@@ -420,15 +420,16 @@ function PreviewBody() {
       );
     }
 
-    // ── receipt family — MULTI ballot (R3). Local selection → the SHARED confirm
-    //    popup → navTo('success'), mirroring the classic/blossom multi interact flow.
-    //    MUST precede the generic `if (page === 'vote')` classic catch-all below.
+    // ── receipt family — MULTI ballot (R3). Local selection → the family's OWN
+    //    ReceiptConfirmSlip (v2-R4a T4 — the shared VoteConfirmationModal stays for
+    //    the other families) → navTo('success'). MUST precede the generic
+    //    `if (page === 'vote')` classic catch-all below.
     if (family === 'receipt' && page === 'vote' && variant !== 'single') {
       const allSelectable = [...PARTIES, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
-      // shared-modal confirm → close it → the ballot-drop scene plays around a
-      // simulated submit (ruling C3), then navTo('success'). The modal itself is
-      // untouched. ?fail=1 → the simulated submit returns false → bounce-back.
+      // slip confirm → close it → the ballot-drop scene plays around a simulated
+      // submit (ruling C3), then navTo('success'). ?fail=1 → the simulated submit
+      // returns false → bounce-back.
       const submitSim = () => new Promise((resolve) => setTimeout(() => resolve(!dropFail), 600));
       return (
         <>
@@ -444,7 +445,7 @@ function PreviewBody() {
             isSubmitting={false}
             editorMode={false}
           />
-          <VoteConfirmationModal
+          <ReceiptConfirmSlip
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
             onConfirm={async () => { setConfirmOpen(false); const ok = await playDrop(submitSim); if (ok) navTo('success'); }}
