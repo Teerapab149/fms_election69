@@ -1938,6 +1938,30 @@ never rely on restoring an old snapshot.
 
 ---
 
+### P-LOG-096: [2026-07-17] TZ correctness must be proven on epochs — rendered strings can hide a compensating parse bug
+**Context:** ADM-2 — the old code parsed schedule strings in host-local TZ AND formatted
+with host-local getHours(). On a Docker/UTC host both errors shifted +7h and cancelled:
+the displayed time "08.30 น." looked right while the actual open/close instants were
+7 hours late (the prime suspect for "ระบบไม่เปิดตามเวลา" last year).
+**Lesson:** A display-only spot check passes while schedule logic is broken. Verify TZ
+fixes by comparing epoch/getTime() across `TZ=UTC` vs `TZ=Asia/Bangkok` runs, and only
+then compare rendered strings for byte-fidelity.
+**Tags:** `#timezone` `#verification` `#deploy`
+
+---
+
+### P-LOG-097: [2026-07-17] When hoisting a helper out of an inner function, re-check every free variable's scope
+**Context:** v2-R5g — `partsTo(target)` was hoisted from `tick()` into the effect body
+but still referenced `now` (block-scoped inside `tick()`). The ReferenceError surfaced
+as a React render error pointing at the component line, not the throwing line, and only
+in the two states that called the helper — reading like a harness/mock issue.
+**Lesson:** After extracting a helper during a refactor, pass every formerly-in-scope
+variable explicitly as a parameter; a throw inside a useEffect body reports at a
+misleading location.
+**Tags:** `#react` `#refactor` `#debugging`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
