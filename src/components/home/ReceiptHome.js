@@ -33,7 +33,7 @@
 import { getPath } from "../../utils/basePath";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { ReceiptBaseStyles } from "./ReceiptTheme";
+import { ReceiptBaseStyles, RC_SHIP_PATHS } from "./ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
@@ -175,29 +175,58 @@ function RcSlipDigits({ value }) {
   );
 }
 
-// ── loop-safe phase-aware countdown — ported verbatim from BlossomHome (the
-//    systemMode ladder is identical across the families). ──
+// ── loop-safe phase-aware countdown (v2-R5f — state coherence). The core countdown
+//    math (target − now → d/h/m/s) is UNCHANGED from BlossomHome; what changed is
+//    that each state now carries a `kind` discriminator so every downstream consumer
+//    (LED / cap / sheet body / stamp) reads ONE field instead of string-matching the
+//    display label (the F5 lockstep hazard). The kinds:
+//      before  — AUTO, now < start          → flip COUNTDOWN to open (amber LED)
+//      open    — AUTO, in the voting window  → flip COUNTDOWN to close (green LED)
+//      manual  — MANUAL_OPEN (any clock)     → forced open: a REAL wall clock ticks
+//                (HH:MM:SS); NO target, NEVER "done", NEVER a red stamp (green LED)
+//      pause   — PAUSE                       → static "รอเปิดอีกครั้ง" (amber LED)
+//      ended   — ENDED, or AUTO past close   → the election-day sheet + red stamp (red LED)
+//    MANUAL_OPEN used to point its countdown at ELECTION_END → after the real close
+//    it read a negative/done state (green LED but "POLL CLOSED" + a half-sentence red
+//    stamp). It now has its own branch and never touches the countdown target. ──
 function useCountdown(globalConfig, systemMode) {
-  const [cd, setCd] = useState({ d: 0, h: 0, m: 0, s: 0, label: "กำลังโหลด", live: false, done: false });
+  const [cd, setCd] = useState({ d: 0, h: 0, m: 0, s: 0, kind: "loading", label: "กำลังโหลด", live: false, done: false });
   useEffect(() => {
     const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
     const tick = () => {
       const now = Date.now();
-      let target, label, live = false, done = false;
-      if (systemMode === "PAUSE") { label = "ระบบพักชั่วคราว"; done = true; }
-      else if (systemMode === "ENDED") { label = "ปิดโหวตแล้ว"; done = true; }
-      else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
-      else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดโหวตใน"; }
-      else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
-      else { label = "ปิดโหวตแล้ว"; done = true; }
-      if (done || !target) { setCd({ d: 0, h: 0, m: 0, s: 0, label, live, done }); return; }
+      // MANUAL_OPEN — forced open regardless of the clock: show a live wall clock,
+      // never a countdown/target, never done. (green LED via live:true.)
+      if (systemMode === "MANUAL_OPEN") {
+        const dt = new Date();
+        setCd({ d: 0, h: dt.getHours(), m: dt.getMinutes(), s: dt.getSeconds(),
+          kind: "manual", label: "เปิดโหวตอยู่", live: true, done: false });
+        return;
+      }
+      if (systemMode === "PAUSE") {
+        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "pause", label: "ระบบพักชั่วคราว", live: false, done: true });
+        return;
+      }
+      if (systemMode === "ENDED") {
+        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
+        return;
+      }
+      // AUTO ladder — the clock decides.
+      if (now >= ELECTION_END) {
+        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
+        return;
+      }
+      const before = now < ELECTION_START;
+      const target = before ? ELECTION_START : ELECTION_END;
       const diff = Math.max(0, target - now);
       setCd({
         d: Math.floor(diff / 86400000),
         h: Math.floor((diff / 3600000) % 24),
         m: Math.floor((diff / 60000) % 60),
         s: Math.floor((diff / 1000) % 60),
-        label, live, done: diff <= 0,
+        kind: before ? "before" : "open",
+        label: before ? "เปิดโหวตใน" : "ปิดโหวตใน",
+        live: !before, done: false,
       });
     };
     tick();
@@ -294,27 +323,41 @@ export default function ReceiptHome({
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
   const posterSrc = getPath("/images/prob/samo49_1.png");
 
-  // ── queue-slip copy per state (no trailing period). Live = "…ในอีก". done = a
-  //    NON-duplicate status phrase for the cap (the red stamp already carries the
-  //    plain status word, so the cap must say something else): ended → "รอประกาศ
-  //    ผลคะแนน", pause → "รอเปิดระบบอีกครั้ง". Each meaning renders exactly once (T1). ──
-  const slipLabel = cd.done
-    ? (cd.label === "ระบบพักชั่วคราว" ? "รอเปิดระบบอีกครั้ง" : "รอประกาศผลคะแนน")
-    : cd.label === "เปิดโหวตใน" ? "เปิดโหวตในอีก"
-      : cd.label === "ปิดโหวตใน" ? "ปิดโหวตในอีก"
-        : "กำลังโหลด";
-  const slipSub = cd.done
-    ? (cd.label === "ระบบพักชั่วคราว" ? "SYSTEM PAUSED" : "POLL CLOSED")
-    : cd.label === "เปิดโหวตใน" ? "STARTS IN" : "CLOSES IN";
+  // ── one discriminator (cd.kind) drives every consumer below — no fragile label
+  //    string-matching (F5 lockstep). Booleans read straight off it. ──
+  const kind = cd.kind;                                  // before|open|manual|pause|ended|loading
+  const isEnded = kind === "ended";
+  const isManual = kind === "manual";
+  const isPause = kind === "pause";
+  // before/open/loading all show the flip COUNTDOWN (loading = a sub-frame flash of 0s)
+  const isCountdown = kind === "before" || kind === "open" || kind === "loading";
 
-  // dispenser LED ↔ the SAME systemMode ladder (via cd — no new state). SEMANTIC,
-  // locked across every theme (A8.1): live=mint-green / before-open+pause=yellow /
-  // ended+closed=faint-red. open when the countdown is live; closed only when the
-  // poll has truly ended ("ปิดโหวตแล้ว"); pause + pre-open fall to the waiting amber.
-  const ledState = cd.live ? "open" : (cd.done && cd.label === "ปิดโหวตแล้ว") ? "closed" : "wait";
-  // poll fully closed → the queue segment gets the red cross-stamp + a printed close
-  // line (B1), instead of an empty ticket. Pause keeps just its stamp.
-  const isEnded = cd.done && cd.label === "ปิดโหวตแล้ว";
+  // dispenser LED — SEMANTIC, locked across every theme (A8.1). open (green) when the
+  // poll is truly open: AUTO in-window OR MANUAL_OPEN. closed (faint-red) ONLY when
+  // truly ended. pause + pre-open fall to the waiting amber. The red LED (and every
+  // red-stamp / "POLL CLOSED" phrase) therefore appears for ENDED alone.
+  const ledState = (kind === "open" || kind === "manual") ? "open" : isEnded ? "closed" : "wait";
+
+  // queue-slip cap copy per kind (no trailing period). Thai head + a mono sub-label.
+  // Each meaning renders exactly ONCE (R5c): the red stamp carries "ปิดโหวตแล้ว", so
+  // the ended cap says the NON-duplicate "รอประกาศผลคะแนน" instead.
+  const CAP = {
+    before:  { th: "เปิดโหวตในอีก", en: "STARTS IN" },
+    open:    { th: "ปิดโหวตในอีก", en: "CLOSES IN" },
+    manual:  { th: "เปิดโหวตอยู่", en: "OPEN NOW" },
+    pause:   { th: "พักระบบชั่วคราว", en: "SYSTEM PAUSED" },
+    ended:   { th: "รอประกาศผลคะแนน", en: "POLL CLOSED" },
+    loading: { th: "กำลังโหลด", en: "" },
+  };
+  const cap = CAP[kind] || CAP.loading;
+
+  // election-day parts for the ENDED sheet (T2) — the voting day + close time, parsed
+  // from the SAME resolved dates (config-driven; no literals). "วันที่ 6 กุมภาพันธ์
+  // 2569" → day "6" / month-year "กุมภาพันธ์ 2569".
+  const electionDay = ELECTION_START || ELECTION_END;
+  const endDateMatch = electionDay ? formatThaiDate(electionDay).match(/วันที่\s+(\S+)\s+(\S+)\s+(\S+)/) : null;
+  const endDayNum = endDateMatch ? endDateMatch[1] : "";
+  const endMonthYear = endDateMatch ? `${endDateMatch[2]} ${endDateMatch[3]}` : "";
 
   return (
     <div ref={rootRef} className="fms-app rc-root rc-home-root rc-desk">
@@ -365,7 +408,11 @@ export default function ReceiptHome({
                         {`${meta.faculty} ELECTION · ${meta.prefix} ${meta.number}`}
                       </textPath>
                     </text>
-                    <text className="rc-ghost-mark" x="60" y="72">✶</text>
+                    {/* faculty เรือสำเภา at the seal centre (v2-R5f) — the SAME outline
+                        as the desk seal, scaled into the 120-box ghost, inked via CSS */}
+                    <g className="rc-ghost-ship" transform="translate(36 34) scale(.48)">
+                      {RC_SHIP_PATHS.map((d, i) => <path key={i} d={d} />)}
+                    </g>
                   </svg>
                 </div>
 
@@ -440,33 +487,62 @@ export default function ReceiptHome({
               <span className="rc-cal-stack rc-cal-stack--2" aria-hidden="true" />
               <span className="rc-cal-stack rc-cal-stack--1" aria-hidden="true" />
 
-              <section className={`rc-cal-sheet rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="นับถอยหลังการโหวต">
+              <section className={`rc-cal-sheet rc-grain rc-seg--reveal rc-ticket ${isEnded ? "is-ended" : ""} ${isManual ? "is-manual" : ""} ${isPause ? "is-pause" : ""}`} aria-label="สถานะการลงคะแนน">
                 <span className="rc-band" aria-hidden="true" />
                 <span className="rc-cal-perf" aria-hidden="true" />
                 <div className="rc-cal-id rc-mono">{meta.prefix} {meta.number} · HOME</div>
                 <div className="rc-cal-head"><span className="rc-mono">VOTE ·</span> <span>ลงคะแนน</span></div>
-                <div className="rc-slip-cap"><span>{slipLabel}</span><small className="rc-mono">{slipSub}</small></div>
+                <div className="rc-slip-cap"><span>{cap.th}</span>{cap.en ? <small className="rc-mono">{cap.en}</small> : null}</div>
 
-                {/* live flip-calendar digits (DD:HH:MM:SS) — base-visible tabular Chakra Petch */}
-                <div className="rc-slip-digits">
-                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
-                  <span className="rc-colon">:</span>
-                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
-                  <span className="rc-colon">:</span>
-                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
-                  <span className="rc-colon">:</span>
-                  <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
-                </div>
-
-                {/* today's REAL date (client-computed) */}
-                <div className="rc-cal-today" aria-label="วันที่วันนี้">{todayTh}</div>
-
-                {/* done-state — the page is cross-stamped in red instead of digits */}
-                <div className="rc-slip-stamp"><span>{cd.label}</span></div>
-                {isEnded && (
-                  <div className="rc-close-line">เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                {/* before/open — the flip COUNTDOWN to the target (DD:HH:MM:SS) */}
+                {isCountdown && (
+                  <div className="rc-slip-digits">
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
+                    <span className="rc-colon">:</span>
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
+                    <span className="rc-colon">:</span>
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
+                    <span className="rc-colon">:</span>
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
+                  </div>
                 )}
-                <div className="rc-cal-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
+
+                {/* MANUAL_OPEN — a live wall CLOCK (HH:MM:SS, ticks every second). The
+                    countdown target has no meaning under a forced-open, so we show the
+                    real time instead (same flip tiles reused). */}
+                {isManual && (
+                  <div className="rc-slip-digits rc-slip-clock" aria-label="เวลาปัจจุบัน">
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
+                    <span className="rc-colon">:</span>
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
+                    <span className="rc-colon">:</span>
+                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
+                  </div>
+                )}
+
+                {/* PAUSE — a calm waiting line (no digits, no stamp) */}
+                {isPause && <div className="rc-pause-line">รอเปิดอีกครั้ง</div>}
+
+                {/* ENDED — the election-DAY calendar sheet (T2): the big voting-day
+                    number under its month/year, cross-stamped in red, with the close
+                    time printed below. The red stamp appears HERE and nowhere else. */}
+                {isEnded && (
+                  <div className="rc-endsheet">
+                    <div className="rc-endsheet-month">{endMonthYear}</div>
+                    <div className="rc-endsheet-daywrap">
+                      <div className="rc-endsheet-day">{endDayNum}</div>
+                      <span className="rc-slip-stamp rc-endsheet-stamp"><span>ปิดโหวตแล้ว</span></span>
+                    </div>
+                    <div className="rc-endsheet-weekday">วันเลือกตั้ง</div>
+                    <div className="rc-close-line">เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                  </div>
+                )}
+
+                {/* today's REAL date — every live state; the ended day-sheet prints the
+                    election date itself instead */}
+                {!isEnded && <div className="rc-cal-today" aria-label="วันที่วันนี้">{todayTh}</div>}
+
+                <div className="rc-cal-ref rc-mono">{meta.prefix} {meta.number}{meta.calYear !== "" ? ` · ${meta.calYear}` : ""}</div>
               </section>
             </div>
 
@@ -537,9 +613,9 @@ export default function ReceiptHome({
               desk, docked RIGHT on desktop (balances the turnout slip at left). ===== */}
           <div className="rc-poster-sec">
             <figure className="rc-poster">
+              {/* v2-R5f: two quiet translucent tabs on opposite corners (was 4 holo
+                  strips) — reads as taped to the desk without shouting */}
               <span className="rc-poster-tape rc-poster-tape--l" aria-hidden="true" />
-              <span className="rc-poster-tape rc-poster-tape--r" aria-hidden="true" />
-              <span className="rc-poster-tape rc-poster-tape--bl" aria-hidden="true" />
               <span className="rc-poster-tape rc-poster-tape--br" aria-hidden="true" />
               <img src={posterSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="rc-poster-img" loading="lazy" />
               <figcaption className="rc-poster-cap">โปสเตอร์ประชาสัมพันธ์</figcaption>
@@ -675,8 +751,8 @@ export default function ReceiptHome({
            a THICK block of pages whose edges peek below/right (still-to-tear), a
            perforation tear-guide under the binding, and a standing shadow on the desk.
            The machine LED lives on as a die-cut sticker at the binding corner (colour ↔
-           ledState — SEMANTIC, unchanged). Logic (useCountdown / ledState / isEnded /
-           slipLabel) is UNTOUCHED — only the skin changed. */
+           ledState — SEMANTIC, unchanged). The sheet's face is driven by cd.kind
+           (v2-R5f state table) — see useCountdown. */
         .rc-home-root .rc-cal { position:relative; z-index:3; margin:16px 12px 0; padding-top:14px; }
         /* the standing shadow the whole block casts on the desk below */
         .rc-home-root .rc-cal::after { content:""; position:absolute; z-index:0; left:8%; right:6%; bottom:-14px; height:22px;
@@ -785,7 +861,6 @@ export default function ReceiptHome({
            Chakra (Thai present) — NOT mono per A10.3. */
         .rc-home-root .rc-cal-today { margin-top:14px; text-align:center; font-family:var(--rc-fr); font-size:12px;
           letter-spacing:.02em; color:var(--rc-ink2); font-variant-numeric:tabular-nums; }
-        .rc-home-root .rc-ticket.is-done .rc-cal-today { display:none; }
         /* mono ref line (Latin/digits) */
         .rc-home-root .rc-cal-ref { margin-top:16px; font-size:11px; letter-spacing:.16em; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; }
@@ -813,7 +888,9 @@ export default function ReceiptHome({
         .rc-home-root .rc-ghost-ring--in { stroke-width:1.4; }
         .rc-home-root .rc-ghost-arc { fill:var(--rc-ink); font-family:var(--rc-fm); font-size:10px; letter-spacing:.14em;
           text-transform:uppercase; }
-        .rc-home-root .rc-ghost-mark { fill:var(--rc-ink); font-family:var(--rc-fr); font-size:22px; text-anchor:middle; }
+        /* v2-R5f — the faculty เรือสำเภา line-art at the ghost seal's centre */
+        .rc-home-root .rc-ghost-ship { fill:none; stroke:var(--rc-ink); stroke-width:3;
+          stroke-linecap:round; stroke-linejoin:round; }
 
         /* ---- T2 queue-ticket countdown ---- */
         .rc-home-root .rc-slip-cap { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
@@ -841,8 +918,9 @@ export default function ReceiptHome({
         .rc-home-root .rc-colon { font-family:var(--rc-fr); font-weight:400; font-size:clamp(26px, 8vw, 38px);
           color:color-mix(in srgb, var(--rc-ink2) 60%, var(--rc-receipt)); align-self:flex-start; line-height:1; margin-top:.08em; }
 
-        /* done-state — red cross-stamp laid diagonally across the ticket (B1) */
-        .rc-home-root .rc-slip-stamp { position:relative; display:none; margin:16px 0 6px; width:fit-content; padding:7px 18px;
+        /* red cross-stamp — a diagonal ink stamp (B1). Rendered only on the ENDED
+           day-sheet now (conditional JSX), so no display toggle needed. */
+        .rc-home-root .rc-slip-stamp { position:relative; width:fit-content; padding:7px 18px;
           transform:rotate(-6deg); border:2.5px solid var(--rc-stamp-red); border-radius:6px; opacity:.9; }
         .rc-home-root .rc-slip-stamp span { position:relative; z-index:0; font-family:var(--rc-fh); font-weight:700; font-size:22px; letter-spacing:.02em;
           color:var(--rc-stamp-red); }
@@ -853,11 +931,37 @@ export default function ReceiptHome({
             radial-gradient(58% 42% at 18% 28%, color-mix(in srgb, var(--rc-receipt) 34%, transparent), transparent 62%),
             radial-gradient(42% 52% at 78% 66%, color-mix(in srgb, var(--rc-receipt) 26%, transparent), transparent 58%),
             radial-gradient(30% 34% at 54% 18%, color-mix(in srgb, var(--rc-receipt) 22%, transparent), transparent 52%); }
-        .rc-home-root .rc-close-line { display:none; margin-top:6px; font-family:var(--rc-fr); font-size:13px; color:var(--rc-ink);
+        .rc-home-root .rc-close-line { margin-top:12px; text-align:center; font-family:var(--rc-fr); font-size:13px; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; }
-        .rc-home-root .rc-ticket.is-done .rc-slip-digits { display:none; }
-        .rc-home-root .rc-ticket.is-done .rc-slip-stamp { display:block; }
-        .rc-home-root .rc-ticket.is-ended .rc-close-line { display:block; }
+
+        /* ---- MANUAL_OPEN wall clock — the flip tiles reused for HH:MM:SS. Three
+           groups instead of four; identical tile sizing to the countdown. ---- */
+        .rc-home-root .rc-slip-clock { /* inherits .rc-slip-digits layout */ }
+
+        /* ---- PAUSE — a calm centred waiting line (no digits, no stamp) ---- */
+        .rc-home-root .rc-pause-line { margin-top:22px; margin-bottom:8px; text-align:center; font-family:var(--rc-fr);
+          font-size:14px; letter-spacing:.01em; color:var(--rc-ink2); }
+
+        /* ================= T2 — ENDED "election-day" calendar sheet =================
+           The done state is no longer an empty ticket: the top page becomes a torn-off
+           calendar leaf for the VOTING DAY — the day number huge + tabular, the month/
+           year above, "วันเลือกตั้ง" below, the red "ปิดโหวตแล้ว" stamp pressed diagonally
+           over the number's corner, and the close time printed under it. Dense enough to
+           read as well-composed as the live countdown, never a bare slip. */
+        .rc-home-root .rc-endsheet { position:relative; margin-top:14px; text-align:center; }
+        .rc-home-root .rc-endsheet-month { font-family:var(--rc-fr); font-size:14px; font-weight:600; letter-spacing:.04em;
+          color:var(--rc-accent-deep); }
+        .rc-home-root .rc-endsheet-daywrap { position:relative; display:inline-block; margin:2px auto 0; }
+        .rc-home-root .rc-endsheet-day { font-family:var(--rc-fr); font-weight:700; font-size:clamp(78px, 26vw, 118px); line-height:1;
+          letter-spacing:-.02em; color:var(--rc-ink); font-variant-numeric:tabular-nums; }
+        /* the red stamp pressed diagonally over the number's corner — one line, never
+           wrapped (an absolutely-positioned stamp would otherwise wrap inside the
+           narrow day-number box) */
+        .rc-home-root .rc-endsheet-stamp { position:absolute; z-index:2; top:14px; right:-14px; transform:rotate(-11deg);
+          transform-origin:center; white-space:nowrap; }
+        .rc-home-root .rc-endsheet-stamp span { font-size:19px; }
+        .rc-home-root .rc-endsheet-weekday { margin-top:6px; font-family:var(--rc-fr); font-size:13px; letter-spacing:.06em;
+          color:var(--rc-ink2); }
 
         /* ---- T3 turnout register ---- */
         /* rows given more vertical air (v2-R5b) so the left slip's bottom lands ~level
@@ -908,23 +1012,28 @@ export default function ReceiptHome({
            slip's corners. Exactly TWO, accent-faint, aria-hidden — a circle + a cut-
            corner square. Anchored to corners so they never float / clutter. */
         .rc-home-root .rc-sticker { position:absolute; z-index:5; pointer-events:none; }
+        /* v2-R5f: chroma pulled down so they sit quietly on the corners (were louder
+           accent tints competing with the turnout numbers) */
         .rc-home-root .rc-sticker--dot { top:-13px; right:-9px; width:34px; height:34px; border-radius:50%; transform:rotate(-8deg);
-          background:color-mix(in srgb, var(--rc-accent) 14%, var(--rc-receipt));
-          border:1.5px solid color-mix(in srgb, var(--rc-accent) 40%, transparent);
-          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt));
+          border:1.5px solid color-mix(in srgb, var(--rc-accent) 24%, transparent);
+          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 28%, transparent); }
         .rc-home-root .rc-sticker--sq { left:-10px; bottom:28px; width:28px; height:28px; transform:rotate(6deg);
-          background:color-mix(in srgb, var(--rc-accent) 10%, var(--rc-receipt));
-          border:1.5px solid color-mix(in srgb, var(--rc-accent) 34%, transparent);
+          background:color-mix(in srgb, var(--rc-accent) 6%, var(--rc-receipt));
+          border:1.5px solid color-mix(in srgb, var(--rc-accent) 20%, transparent);
           clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
-          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
+          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 26%, transparent); }
 
         /* ---- holographic tape (v2-R5c) — one small piece on the turnout slip's free
            corner: the color-shift signature living OUTSIDE the CTA. Uses the shared
            .rc-foil ramp (animated drift); reduced-motion freezes it to a static
            iridescent sheen; multiply + low opacity reads it as translucent film. ---- */
-        .rc-home-root .rc-holo-tape { position:absolute; z-index:5; top:-10px; left:-8px; width:46px; height:20px;
-          border-radius:1px; transform:rotate(-24deg); opacity:.5; mix-blend-mode:multiply; pointer-events:none;
-          box-shadow:1px 2px 4px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
+        /* v2-R5f: this is now the ONLY holographic piece left on the desk (poster tapes
+           went matte) — kept as the family's single quiet colour-shift signature,
+           nudged a touch fainter so it reads as a calm accent, not a focal point. */
+        .rc-home-root .rc-holo-tape { position:absolute; z-index:5; top:-10px; left:-8px; width:42px; height:18px;
+          border-radius:1px; transform:rotate(-24deg); opacity:.4; mix-blend-mode:multiply; pointer-events:none;
+          box-shadow:1px 2px 4px -1px color-mix(in srgb, var(--rc-ink) 26%, transparent); }
 
         /* ---- used ballot-stub scraps (v2-R5c) — desk ephemera lying under the turnout
            slip's lower-left, torn along a perforation (die-cut top edge). ≤3 small
@@ -1050,14 +1159,15 @@ export default function ReceiptHome({
           transition:transform .25s ease; }
         .rc-home-root .rc-poster:hover { transform:rotate(0deg) translateY(-4px); }
         .rc-home-root .rc-poster-img { display:block; width:100%; height:auto; border-radius:3px; }
-        .rc-home-root .rc-poster-tape { position:absolute; width:64px; height:22px; border-radius:1px;
-          opacity:.55; mix-blend-mode:multiply;
-          background:linear-gradient(135deg, color-mix(in srgb, var(--rc-holo-1) 55%, transparent), color-mix(in srgb, var(--rc-holo-3) 55%, transparent));
-          box-shadow:1px 2px 3px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
-        .rc-home-root .rc-poster-tape--l { top:-11px; left:18px; transform:rotate(-8deg); }
-        .rc-home-root .rc-poster-tape--r { top:-11px; right:18px; transform:rotate(6deg); }
-        .rc-home-root .rc-poster-tape--bl { bottom:-11px; left:18px; transform:rotate(6deg); }
-        .rc-home-root .rc-poster-tape--br { bottom:-11px; right:18px; transform:rotate(-8deg); }
+        /* v2-R5f: quiet translucent tabs (was multi-colour holo). Frosted paper tone
+           via low-alpha ink + multiply, so they read as matte tape that belongs to the
+           desk rather than iridescent film competing with the poster. */
+        .rc-home-root .rc-poster-tape { position:absolute; width:60px; height:20px; border-radius:1px;
+          opacity:.5; mix-blend-mode:multiply;
+          background:linear-gradient(135deg, color-mix(in srgb, var(--rc-ink) 9%, transparent), color-mix(in srgb, var(--rc-ink) 5%, transparent));
+          box-shadow:1px 2px 3px -1px color-mix(in srgb, var(--rc-ink) 22%, transparent); }
+        .rc-home-root .rc-poster-tape--l { top:-10px; left:18px; transform:rotate(-8deg); }
+        .rc-home-root .rc-poster-tape--br { bottom:-10px; right:18px; transform:rotate(-8deg); }
         .rc-home-root .rc-poster-cap { text-align:center; margin-top:14px; font-family:var(--rc-fr); font-size:11px;
           letter-spacing:.06em; color:var(--rc-ink2); }
 

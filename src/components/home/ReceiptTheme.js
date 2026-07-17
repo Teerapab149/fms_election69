@@ -21,6 +21,47 @@ import { RECEIPT_THEMES, receiptTheme } from "../../utils/receiptPalettes";
 
 export { RECEIPT_THEMES, receiptTheme };
 
+// ── faculty ship mark (v2-R5f / T3) — the FMS symbol is a เรือสำเภา (trade junk).
+// A single ink line-art stamp of that ship replaces the generic ✶/nested-ring mark
+// wherever the family stamped a centre glyph (ghost stamp on the home hero card;
+// the blind-emboss desk seal centre). SINGLE SOURCE of the outline: RC_SHIP_PATHS.
+// The component (currentColor stroke) draws it inline inside an existing SVG scope
+// (the ghost); the same paths are encoded once into RC_SHIP_MASK so the pure-CSS
+// desk seal can paint a ship in --rc-ink via a mask (no extra markup on every page).
+// Elegant, not cartoonish; NO diamond/lozenge (owner banned those family-wide).
+export const RC_SHIP_PATHS = [
+  // hull — a crescent with raised prow & stern (a trade-ship hull)
+  "M14,63 C20,60 26,60 32,60 L68,60 C74,60 80,60 86,63 C74,75 64,78 50,78 C36,78 26,75 14,63 Z",
+  // mast
+  "M50,60 L50,17",
+  // mainsail — a battened sail bulging to the lee
+  "M50,22 C66,27 71,41 61,51 L50,51",
+  // a batten line across the mainsail
+  "M50,36 C58,36 63,38 66,41",
+  // foresail — the smaller headsail
+  "M50,29 C39,33 39,45 47,51 L50,51",
+  // masthead pennant
+  "M50,17 L60,20 L50,23",
+  // two wave lines under the hull
+  "M16,85 q7,-5 14,0 t14,0 t14,0 t14,0",
+  "M22,91 q7,-5 14,0 t14,0 t14,0",
+];
+
+export function ReceiptShipMark({ className, strokeWidth = 2, style }) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 100 100" fill="none"
+      stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true" focusable="false">
+      {RC_SHIP_PATHS.map((d, i) => <path key={i} d={d} />)}
+    </svg>
+  );
+}
+
+// the SAME outline, encoded as a CSS mask so the desk seal's centre paints a faint
+// ship in --rc-ink (alpha-only mask → the seal's own opacity keeps it "จาง").
+const RC_SHIP_SVG = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='#000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'>${RC_SHIP_PATHS.map((d) => `<path d='${d}'/>`).join("")}</svg>`;
+export const RC_SHIP_MASK = `url("data:image/svg+xml,${encodeURIComponent(RC_SHIP_SVG)}") center/contain no-repeat`;
+
 export function ReceiptBaseStyles() {
   const bp = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
   const activeSlug = useActiveTemplateId();
@@ -84,8 +125,12 @@ export function ReceiptBaseStyles() {
         border:2px solid var(--rc-ink); opacity:.05;
         filter:drop-shadow(1px 1px 0 color-mix(in srgb, var(--rc-receipt) 70%, transparent)); }
       .rc-desk .rc-seal i { position:absolute; inset:14%; border-radius:50%; border:1.5px solid var(--rc-ink); }
-      .rc-desk .rc-seal b { position:absolute; left:50%; top:50%; width:15%; height:15%;
-        border-radius:50%; border:1.5px solid var(--rc-ink); transform:translate(-50%,-50%); }
+      /* v2-R5f: the seal centre is now the faculty เรือสำเภา (masked in --rc-ink),
+         ringed by the two rings above — "วงแหวน + เรือจาง". The seal's .05 opacity
+         keeps the ship a faint blind-emboss. */
+      .rc-desk .rc-seal b { position:absolute; left:50%; top:50%; width:52%; height:52%;
+        transform:translate(-50%,-50%); background:var(--rc-ink);
+        -webkit-mask:${RC_SHIP_MASK}; mask:${RC_SHIP_MASK}; }
       .rc-desk .rc-seal--a { width:230px; height:230px; top:96px; right:-46px; transform:rotate(-8deg); }
       .rc-desk .rc-seal--b { width:264px; height:264px; bottom:150px; left:-58px; transform:rotate(6deg); }
       .rc-desk .rc-seal--c { width:184px; height:184px; top:52%; right:5%; transform:rotate(-3deg); opacity:.045; }
