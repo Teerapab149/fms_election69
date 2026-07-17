@@ -76,15 +76,16 @@ export function ReceiptBaseStyles() {
         background:radial-gradient(135% 130% at 34% 12%, transparent 44%, var(--rc-desk-shade) 100%); opacity:.7; }
 
       /* blind-emboss seals pressed into the desk (2-3 curated spots, NOT tiled, no
-         logos). Ring + ring + diamond in --rc-ink at ~5% + a 1px receipt highlight
-         so each reads as pressed IN. */
+         logos). Ring + ring + centre dot in --rc-ink at ~5% + a 1px receipt highlight
+         so each reads as pressed IN — a notary/rubber-stamp target (no rotated square:
+         the owner banned diamond/lozenge shapes family-wide, v2-R5e). */
       .rc-desk .rc-desk-seals { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
       .rc-desk .rc-seal { position:absolute; display:block; border-radius:50%;
         border:2px solid var(--rc-ink); opacity:.05;
         filter:drop-shadow(1px 1px 0 color-mix(in srgb, var(--rc-receipt) 70%, transparent)); }
       .rc-desk .rc-seal i { position:absolute; inset:14%; border-radius:50%; border:1.5px solid var(--rc-ink); }
-      .rc-desk .rc-seal b { position:absolute; left:50%; top:50%; width:18%; height:18%;
-        border:1.5px solid var(--rc-ink); transform:translate(-50%,-50%) rotate(45deg); }
+      .rc-desk .rc-seal b { position:absolute; left:50%; top:50%; width:15%; height:15%;
+        border-radius:50%; border:1.5px solid var(--rc-ink); transform:translate(-50%,-50%); }
       .rc-desk .rc-seal--a { width:230px; height:230px; top:96px; right:-46px; transform:rotate(-8deg); }
       .rc-desk .rc-seal--b { width:264px; height:264px; bottom:150px; left:-58px; transform:rotate(6deg); }
       .rc-desk .rc-seal--c { width:184px; height:184px; top:52%; right:5%; transform:rotate(-3deg); opacity:.045; }

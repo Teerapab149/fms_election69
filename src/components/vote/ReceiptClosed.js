@@ -136,7 +136,7 @@ export default function ReceiptClosed({
               )}
             </div>
 
-            <div className="rc-closed-foot" aria-hidden="true">◆ ◆ ◆ {faculty} ELECTION ◆ ◆ ◆</div>
+            <div className="rc-closed-foot" aria-hidden="true">✶ ✶ ✶ {faculty} ELECTION ✶ ✶ ✶</div>
           </div>
         </section>
 
@@ -305,7 +305,7 @@ export default function ReceiptClosed({
 
         .rc-closed-root .rc-closed-cap { position:relative; z-index:2; display:flex; align-items:center; gap:12px; font-family:var(--rc-fm);
           font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--rc-ink2); }
-        .rc-closed-root .rc-closed-cap__dia { width:9px; height:9px; flex:none; background:var(--rc-accent); transform:rotate(45deg); }
+        .rc-closed-root .rc-closed-cap__dia { width:9px; height:9px; flex:none; background:var(--rc-accent); border-radius:50%; }
         .rc-closed-root .rc-closed-cap::after { content:""; flex:1; height:1px;
           background:repeating-linear-gradient(90deg, var(--rc-line) 0 4px, transparent 4px 8px); }
         .rc-closed-root .rc-closed-head { position:relative; z-index:2; margin:16px 0 0; font-family:var(--rc-fh); font-weight:700;

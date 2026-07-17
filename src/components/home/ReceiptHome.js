@@ -265,6 +265,9 @@ export default function ReceiptHome({
   const meta = receiptMeta(globalConfig);
   const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
   const pad2 = (n) => String(n).padStart(2, "0");
+  // today's REAL date for the calendar page — client-only (component is gated on
+  // `mounted`, so new Date() never causes a hydration mismatch). NOT a mock.
+  const todayTh = formatThaiDate(new Date());
 
   // CTA state ladder — editor forces login (no auth); live/preview resolves it.
   // Labels + hrefs are BYTE-IDENTICAL to BlossomHome's CTA map.
@@ -366,7 +369,7 @@ export default function ReceiptHome({
                   </svg>
                 </div>
 
-                <div className="rc-notice-eyebrow rc-mono">◆ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ◆</div>
+                <div className="rc-notice-eyebrow rc-mono">✶ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ✶</div>
                 <h1 className="rc-notice-title">{meta.org}</h1>
                 <p className="rc-notice-deck">{meta.campaign}</p>
                 {ELECTION_START && (
@@ -417,25 +420,34 @@ export default function ReceiptHome({
               hero card, so the rail ends at the note with nothing floating. ===== */}
           <div className="rc-rail">
 
-            {/* ── CLOCK — the ONLY receipt object of the page (v2-R5b): the black
-                dispenser box is retired. It is now a CONTINUOUS thermal register STRIP
-                fastened to the desk with two pieces of clear tape (top + bottom, edges
-                + under-shadow visible), faint print-banding overlaid, and the old
-                machine LED reborn as a round die-cut STICKER on the strip corner —
-                colour ↔ ledState (semantics UNCHANGED). print-reveal stays on THIS
-                single strip. ── */}
-            <div className={`rc-clock rc-strip led-${ledState}`}>
-              <span className="rc-tape rc-tape--top" aria-hidden="true" />
-              <span className="rc-tape rc-tape--bot" aria-hidden="true" />
-              <span className="rc-strip-led" aria-hidden="true" />
+            {/* ── CLOCK — the ONLY receipt object of the page (v2-R5e): a STANDING desk
+                TEAR-OFF CALENDAR. A twin-loop wire binding is clasped over the top; a
+                thick block of pages peeks below/right (still-to-tear); a perforation
+                tear-guide runs under the binding; a standing shadow grounds it. The top
+                page carries the same content (id · VOTE row · the big flip countdown ·
+                today's date · red ENDED stamp). The machine LED lives on as a die-cut
+                sticker at the binding corner — colour ↔ ledState (semantics UNCHANGED).
+                print-reveal stays on the top page. ── */}
+            <div className={`rc-clock rc-cal led-${ledState}`}>
+              {/* twin-loop wire binding clasped over the top edge */}
+              <div className="rc-cal-bind" aria-hidden="true">
+                <span /><span /><span /><span /><span /><span /><span />
+              </div>
+              {/* the machine LED reborn as a die-cut sticker at the binding corner */}
+              <span className="rc-cal-led" aria-hidden="true" />
+              {/* the block of pages still to tear — stacked sheet edges behind the top page */}
+              <span className="rc-cal-stack rc-cal-stack--3" aria-hidden="true" />
+              <span className="rc-cal-stack rc-cal-stack--2" aria-hidden="true" />
+              <span className="rc-cal-stack rc-cal-stack--1" aria-hidden="true" />
 
-              <section className={`rc-slip rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="นับถอยหลังการโหวต">
+              <section className={`rc-cal-sheet rc-grain rc-seg--reveal rc-ticket ${cd.done ? "is-done" : ""} ${isEnded ? "is-ended" : ""}`} aria-label="นับถอยหลังการโหวต">
                 <span className="rc-band" aria-hidden="true" />
-                <div className="rc-strip-id rc-mono">{meta.prefix} {meta.number} · HOME</div>
-                <div className="rc-slip-head"><span className="rc-mono">VOTE ·</span> <span>ลงคะแนน</span></div>
+                <span className="rc-cal-perf" aria-hidden="true" />
+                <div className="rc-cal-id rc-mono">{meta.prefix} {meta.number} · HOME</div>
+                <div className="rc-cal-head"><span className="rc-mono">VOTE ·</span> <span>ลงคะแนน</span></div>
                 <div className="rc-slip-cap"><span>{slipLabel}</span><small className="rc-mono">{slipSub}</small></div>
 
-                {/* live digits (DD:HH:MM:SS) — base-visible tabular Chakra Petch */}
+                {/* live flip-calendar digits (DD:HH:MM:SS) — base-visible tabular Chakra Petch */}
                 <div className="rc-slip-digits">
                   <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
                   <span className="rc-colon">:</span>
@@ -446,13 +458,15 @@ export default function ReceiptHome({
                   <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
                 </div>
 
-                {/* done-state — the slip is cross-stamped in red instead of digits */}
+                {/* today's REAL date (client-computed) */}
+                <div className="rc-cal-today" aria-label="วันที่วันนี้">{todayTh}</div>
+
+                {/* done-state — the page is cross-stamped in red instead of digits */}
                 <div className="rc-slip-stamp"><span>{cd.label}</span></div>
                 {isEnded && (
                   <div className="rc-close-line">เวลาปิด {formatThaiTime(ELECTION_END)}</div>
                 )}
-                <div className="rc-slip-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
-                <div className="rc-slip-end" aria-hidden="true" />
+                <div className="rc-cal-ref rc-mono">{meta.prefix} {meta.number} · No. 0049</div>
               </section>
             </div>
 
@@ -473,7 +487,7 @@ export default function ReceiptHome({
               with a tiny mono desk-tag clipped on the line; mobile keeps a plain faint
               hairline (no tag). Pure-CSS ephemera, aria-hidden, base-visible. ===== */}
           <div className="rc-perf-track" aria-hidden="true">
-            <span className="rc-perf-badge rc-mono">◆ {meta.prefix} {meta.number} · LIVE DESK ◆</span>
+            <span className="rc-perf-badge rc-mono">✶ {meta.prefix} {meta.number} · LIVE DESK ✶</span>
           </div>
 
           {/* ===== TURNOUT register — the real-time stats pulled off the manila note
@@ -655,40 +669,50 @@ export default function ReceiptHome({
         .rc-home-root .rc-home-wrap { position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:26px 20px 80px; }
         .rc-home-root .rc-stage { position:relative; }
 
-        /* ============ REGISTER STRIP (v2-R5b — replaces the black dispenser) ============
-           The generic black machine box + dark slot are RETIRED. The clock is now a
-           CONTINUOUS thermal register strip fastened to the desk with two pieces of
-           clear tape; the machine LED is reborn as a die-cut sticker on the corner. */
-        .rc-home-root .rc-strip { position:relative; z-index:3; }
-        /* clear tape — a translucent light film. Every Receipt theme's paper stock is
-           near-white (incl. carbon → #FAFAF8), so mixing --rc-receipt with transparent
-           reads as clear tape on ALL themes. Diagonal sheen + lit edges + under-shadow. */
-        .rc-home-root .rc-tape { position:absolute; z-index:6; left:50%; width:84px; height:24px; pointer-events:none;
-          background:linear-gradient(115deg,
-            color-mix(in srgb, var(--rc-receipt) 48%, transparent) 0%,
-            color-mix(in srgb, var(--rc-receipt) 16%, transparent) 38%,
-            color-mix(in srgb, var(--rc-receipt) 66%, transparent) 50%,
-            color-mix(in srgb, var(--rc-receipt) 18%, transparent) 62%,
-            color-mix(in srgb, var(--rc-receipt) 46%, transparent) 100%);
-          border-left:1px solid color-mix(in srgb, var(--rc-ink) 9%, transparent);
-          border-right:1px solid color-mix(in srgb, var(--rc-ink) 9%, transparent);
-          box-shadow:0 3px 8px -3px color-mix(in srgb, var(--rc-ink) 42%, transparent),
-                     inset 0 0 0 1px color-mix(in srgb, var(--rc-receipt) 34%, transparent); }
-        .rc-home-root .rc-tape--top { top:-9px; transform:translateX(-50%) rotate(-2.6deg); }
-        .rc-home-root .rc-tape--bot { bottom:20px; transform:translateX(-50%) rotate(1.8deg); }
-        /* LED → round die-cut STICKER on the strip's top-right corner. colour ↔ ledState
-           (SEMANTIC — unchanged). die-cut = a receipt-white rim around the colour. */
-        .rc-home-root .rc-strip-led { position:absolute; z-index:7; top:-8px; right:18px;
-          width:22px; height:22px; border-radius:50%; background:var(--rc-led-wait);
+        /* ============ DESK TEAR-OFF CALENDAR (v2-R5e — replaces the taped strip) ============
+           The v2-R5b register strip read too flat ("กระดาษแปะเฉยๆ เรียบไป"). The clock is
+           now a STANDING desk calendar: a twin-loop wire binding clasped over the top,
+           a THICK block of pages whose edges peek below/right (still-to-tear), a
+           perforation tear-guide under the binding, and a standing shadow on the desk.
+           The machine LED lives on as a die-cut sticker at the binding corner (colour ↔
+           ledState — SEMANTIC, unchanged). Logic (useCountdown / ledState / isEnded /
+           slipLabel) is UNTOUCHED — only the skin changed. */
+        .rc-home-root .rc-cal { position:relative; z-index:3; margin:16px 12px 0; padding-top:14px; }
+        /* the standing shadow the whole block casts on the desk below */
+        .rc-home-root .rc-cal::after { content:""; position:absolute; z-index:0; left:8%; right:6%; bottom:-14px; height:22px;
+          border-radius:50%; pointer-events:none;
+          background:radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--rc-ink) 24%, transparent), transparent 72%); }
+
+        /* twin-loop WIRE BINDING clasped over the top edge — a row of small metal loops
+           sitting above a thin spine bar (wire-o binding). */
+        .rc-home-root .rc-cal-bind { position:absolute; z-index:7; top:0; left:16px; right:16px; height:20px;
+          display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
+        .rc-home-root .rc-cal-bind::before { content:""; position:absolute; left:-5px; right:-5px; top:11px; height:3px; border-radius:2px;
+          background:linear-gradient(180deg, color-mix(in srgb, var(--rc-faint) 72%, var(--rc-receipt)),
+            color-mix(in srgb, var(--rc-ink2) 52%, var(--rc-faint))); }
+        .rc-home-root .rc-cal-bind span { position:relative; z-index:1; width:9px; height:18px; border-radius:5px 5px 3px 3px;
+          border:2px solid color-mix(in srgb, var(--rc-ink2) 52%, var(--rc-faint)); border-bottom:none;
+          background:linear-gradient(105deg, transparent 42%, color-mix(in srgb, var(--rc-receipt) 74%, transparent) 50%, transparent 58%); }
+
+        /* LED die-cut STICKER at the binding's right corner (colour ↔ ledState — SEMANTIC,
+           unchanged from v2-R5b). die-cut = a receipt-white rim around the colour. */
+        .rc-home-root .rc-cal-led { position:absolute; z-index:8; top:-8px; right:22px;
+          width:20px; height:20px; border-radius:50%; background:var(--rc-led-wait);
           border:2.5px solid var(--rc-receipt);
           box-shadow:0 3px 7px -3px color-mix(in srgb, var(--rc-ink) 46%, transparent),
                      inset 0 0 0 1px color-mix(in srgb, var(--rc-ink) 14%, transparent); }
-        .rc-home-root .rc-strip.led-open .rc-strip-led { background:var(--rc-led-open); }
-        .rc-home-root .rc-strip.led-wait .rc-strip-led { background:var(--rc-led-wait); }
-        .rc-home-root .rc-strip.led-closed .rc-strip-led { background:var(--rc-led-closed); opacity:.92; }
-        /* mono strip id — carries the retired machine label "SAMO n · HOME" */
-        .rc-home-root .rc-strip-id { font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
-          color:var(--rc-ink2); margin-bottom:12px; }
+        .rc-home-root .rc-cal.led-open .rc-cal-led { background:var(--rc-led-open); }
+        .rc-home-root .rc-cal.led-wait .rc-cal-led { background:var(--rc-led-wait); }
+        .rc-home-root .rc-cal.led-closed .rc-cal-led { background:var(--rc-led-closed); opacity:.92; }
+
+        /* the BLOCK of pages still to tear — three stacked sheet edges behind the top
+           page, offset down/right so their edges read as thickness. */
+        .rc-home-root .rc-cal-stack { position:absolute; z-index:1; left:0; right:0; top:12px; bottom:0; border-radius:3px;
+          background:var(--rc-receipt-edge); border:1px solid var(--rc-line);
+          box-shadow:1px 8px 18px -14px color-mix(in srgb, var(--rc-ink) 38%, transparent); }
+        .rc-home-root .rc-cal-stack--1 { transform:translate(3px, 4px); }
+        .rc-home-root .rc-cal-stack--2 { transform:translate(6px, 8px); background:color-mix(in srgb, var(--rc-receipt-edge) 88%, var(--rc-ink)); }
+        .rc-home-root .rc-cal-stack--3 { transform:translate(9px, 12px); background:color-mix(in srgb, var(--rc-receipt-edge) 80%, var(--rc-ink)); }
         /* faint print-banding overlay (~3% ink horizontal lines) — the thermal look.
            z-index:-1 → paints above the grain paper, BELOW the print (text). */
         .rc-home-root .rc-band { position:absolute; inset:0; z-index:-1; pointer-events:none;
@@ -731,28 +755,40 @@ export default function ReceiptHome({
         .rc-home-root .rc-stub-peek .rc-mono { font-size:9px; letter-spacing:.2em; color:var(--rc-ink2); }
         .rc-home-root .rc-stub-peek-ref { color:var(--rc-ink); font-variant-numeric:tabular-nums; }
 
-        /* ================= CLOCK — dispenser + queue slip (the ONLY receipt object) ================= */
+        /* ================= CLOCK — desk tear-off CALENDAR (the ONLY receipt object) ================= */
         .rc-home-root .rc-clock { position:relative; z-index:3; margin:0 12px; }
-        /* the register strip — a continuous thermal slip; grain paper + die-cut end.
-           No slot tuck now (v2-R5b): straight top, rounded top corners, taped down. */
-        .rc-home-root .rc-slip { position:relative; z-index:2; margin:0 8px; padding:18px clamp(16px,4.5vw,22px) 0;
-          border-radius:3px 3px 0 0;
+        /* the top (current) PAGE of the calendar — grain paper on receipt stock. */
+        .rc-home-root .rc-cal-sheet { position:relative; z-index:2; margin:14px 0 0; padding:24px clamp(16px,4.5vw,22px) 20px;
+          background-color:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:3px;
           box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
-        .rc-home-root .rc-slip::before, .rc-home-root .rc-slip::after { content:""; position:absolute; top:0; bottom:0; width:6px;
-          pointer-events:none; z-index:1; }
-        .rc-home-root .rc-slip::before { left:0; background:linear-gradient(90deg, var(--rc-receipt-edge), transparent); }
-        .rc-home-root .rc-slip::after { right:0; background:linear-gradient(270deg, var(--rc-receipt-edge), transparent); }
-        /* slip head — mono "QUEUE ·" + Chakra Thai (A10.3) */
-        .rc-home-root .rc-slip-head { display:flex; align-items:baseline; gap:7px; font-family:var(--rc-fr);
+        /* PERFORATION tear-guide just under the binding — punched holes across the sheet
+           (fold along here + tear the day off; die-cut holes, NOT a torn edge — P-LOG-086). */
+        .rc-home-root .rc-cal-perf { position:absolute; z-index:3; left:0; right:0; top:11px; height:3px; pointer-events:none;
+          background:radial-gradient(circle at center, var(--rc-desk) 1.5px, transparent 1.9px) top left/9px 3px repeat-x; opacity:.8; }
+        /* mono page id — carries the retired machine label "SAMO n · HOME" (Latin/digits) */
+        .rc-home-root .rc-cal-id { font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+          color:var(--rc-ink2); margin-bottom:10px; }
+        /* page head — mono "VOTE ·" + Chakra Thai (A10.3) */
+        .rc-home-root .rc-cal-head { display:flex; align-items:baseline; gap:7px; font-family:var(--rc-fr);
           font-size:11px; font-weight:600; letter-spacing:.04em; color:var(--rc-accent-deep); text-transform:uppercase; margin-bottom:12px; }
-        .rc-home-root .rc-slip-head .rc-mono { font-size:10px; letter-spacing:.18em; color:var(--rc-ink2); font-weight:400; }
-        /* ref line + jagged die-cut end of the slip (scallop = die-cut, NOT torn — P-LOG-086) */
-        .rc-home-root .rc-slip-ref { margin-top:16px; font-size:11px; letter-spacing:.16em; color:var(--rc-ink);
+        .rc-home-root .rc-cal-head .rc-mono { font-size:10px; letter-spacing:.18em; color:var(--rc-ink2); font-weight:400; }
+        /* the flip countdown is the sheet's HERO — centred + enlarged (flip-clock tiles) */
+        .rc-home-root .rc-cal .rc-slip-digits { justify-content:center; gap:7px; margin-top:14px; }
+        /* flip-calendar tiles carry unit labels — colons are clock grammar, and an
+           orphaned colon at a wrap point reads broken. The calendar drops them, and
+           the tiles size to keep all four groups on ONE row of the sheet. */
+        .rc-home-root .rc-cal .rc-colon { display:none; }
+        .rc-home-root .rc-cal .rc-slip-digits { gap:10px; flex-wrap:nowrap; }
+        .rc-home-root .rc-cal .rc-cd-n { font-size:clamp(26px, 7.5vw, 37px); }
+        .rc-home-root .rc-cal .rc-cd-n { font-size:clamp(34px, 12vw, 52px); }
+        /* today's REAL date (client-computed), printed small + centred under the number.
+           Chakra (Thai present) — NOT mono per A10.3. */
+        .rc-home-root .rc-cal-today { margin-top:14px; text-align:center; font-family:var(--rc-fr); font-size:12px;
+          letter-spacing:.02em; color:var(--rc-ink2); font-variant-numeric:tabular-nums; }
+        .rc-home-root .rc-ticket.is-done .rc-cal-today { display:none; }
+        /* mono ref line (Latin/digits) */
+        .rc-home-root .rc-cal-ref { margin-top:16px; font-size:11px; letter-spacing:.16em; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; }
-        .rc-home-root .rc-slip-end { height:11px; margin:14px calc(-1 * clamp(16px,4.5vw,22px)) 0; background:var(--rc-receipt);
-          box-shadow:0 8px 18px -14px color-mix(in srgb, var(--rc-ink) 40%, transparent);
-          -webkit-mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x;
-                  mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x; }
 
         /* ---- notice card content ---- */
         .rc-home-root .rc-notice-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.22em; text-transform:uppercase;

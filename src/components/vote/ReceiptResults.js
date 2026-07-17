@@ -221,7 +221,7 @@ export default function ReceiptResults({
                 </span>
                 <h1 className="rc-strip-title">ผลคะแนน</h1>
                 <p className="rc-strip-deck">{deckCopy}</p>
-                <span className="rc-strip-stamp rc-mono" aria-hidden="true">◆ {faculty} · OFFICIAL COUNT{calYear !== "" ? ` · ${calYear}` : ""} ◆</span>
+                <span className="rc-strip-stamp rc-mono" aria-hidden="true">✶ {faculty} · OFFICIAL COUNT{calYear !== "" ? ` · ${calYear}` : ""} ✶</span>
               </div>
               <div className="rc-perf" aria-hidden="true" />
 
@@ -271,7 +271,7 @@ export default function ReceiptResults({
                   );
                 })}
               </ol>
-              <div className="rc-standings-foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">สรุปผลคะแนน</span> ◆ ◆ ◆</div>
+              <div className="rc-standings-foot" aria-hidden="true">✶ ✶ ✶ <span className="rc-th">สรุปผลคะแนน</span> ✶ ✶ ✶</div>
             </section>
 
             {/* ---- RIGHT: scatter rail — turnout note + holo-taped report cards ---- */}
@@ -374,7 +374,7 @@ export default function ReceiptResults({
                 </p>
                 <div className="rc-perf" aria-hidden="true" />
                 <div className="rc-seal-note">{thaiSafe(lockNote)}</div>
-                <div className="rc-seal-foot" aria-hidden="true">◆ {faculty} ELECTION{calYear !== "" ? ` · ${calYear}` : ""} ◆</div>
+                <div className="rc-seal-foot" aria-hidden="true">✶ {faculty} ELECTION{calYear !== "" ? ` · ${calYear}` : ""} ✶</div>
                 {/* rolled-up bottom lip — the receipt is still a wound coil */}
                 <div className="rc-seal-roll" aria-hidden="true" />
               </div>
@@ -684,7 +684,7 @@ export default function ReceiptResults({
         .rc-res-root .rc-seal-tie__knot { fill:var(--rc-accent-deep); opacity:.9; }
         .rc-res-root .rc-seal-cap { position:relative; z-index:3; margin-top:52px; display:flex; align-items:center; gap:12px;
           font-family:var(--rc-fm); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--rc-ink2); }
-        .rc-res-root .rc-seal-cap__dia { width:9px; height:9px; flex:none; background:var(--rc-accent); transform:rotate(45deg); }
+        .rc-res-root .rc-seal-cap__dia { width:9px; height:9px; flex:none; background:var(--rc-accent); border-radius:50%; }
         .rc-res-root .rc-seal-cap::after { content:""; flex:1; height:1px; background:repeating-linear-gradient(90deg, var(--rc-line) 0 4px, transparent 4px 8px); }
         .rc-res-root .rc-seal-head { position:relative; z-index:3; margin:16px 0 0; font-family:var(--rc-fh); font-weight:700;
           font-size:clamp(26px,7vw,40px); line-height:1.08; letter-spacing:-.01em; color:var(--rc-ink); }

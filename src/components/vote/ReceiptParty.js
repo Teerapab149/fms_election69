@@ -104,14 +104,14 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         <div className="rc-dossier">
           {/* register tape under the folder: the party's printed index */}
           <aside className="rc-file-tape" aria-label="ทะเบียนพรรค">
-            <span className="rc-file-tape__mast rc-mono">◆ PARTY REGISTER · {faculty} ◆</span>
+            <span className="rc-file-tape__mast rc-mono">✶ PARTY REGISTER · {faculty} ✶</span>
             <dl className="rc-file-reg">
               <div><dt className="rc-mono"><span className="rc-th">ชื่อพรรค</span> · NAME</dt><dd>{party?.name || "—"}</dd></div>
               <div><dt className="rc-mono"><span className="rc-th">หมายเลข</span> · NO.</dt><dd>{pad2(no)}</dd></div>
               <div><dt className="rc-mono"><span className="rc-th">จำนวนทีม</span> · TEAM</dt><dd>{teamCount > 0 ? <>{pad2(teamCount)} <span className="rc-th">คน</span></> : <span className="rc-th">รอข้อมูล</span>}</dd></div>
               {party?.slogan && <div className="rc-file-reg__slogan"><dt className="rc-mono"><span className="rc-th">คำขวัญ</span> · SLOGAN</dt><dd>“{party.slogan}”</dd></div>}
             </dl>
-            <div className="rc-file-tape__foot" aria-hidden="true">◆ ◆ ◆ <span className="rc-th">ปลายทะเบียน</span> ◆ ◆ ◆</div>
+            <div className="rc-file-tape__foot" aria-hidden="true">✶ ✶ ✶ <span className="rc-th">ปลายทะเบียน</span> ✶ ✶ ✶</div>
           </aside>
 
           {/* folder cover laid over the tape */}
