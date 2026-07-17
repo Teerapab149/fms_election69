@@ -175,32 +175,62 @@ function RcSlipDigits({ value }) {
   );
 }
 
-// ── loop-safe phase-aware countdown (v2-R5f — state coherence). The core countdown
+// ── loop-safe phase-aware countdown (v2-R5g — clock semantics). The core countdown
 //    math (target − now → d/h/m/s) is UNCHANGED from BlossomHome; what changed is
 //    that each state now carries a `kind` discriminator so every downstream consumer
 //    (LED / cap / sheet body / stamp) reads ONE field instead of string-matching the
 //    display label (the F5 lockstep hazard). The kinds:
-//      before  — AUTO, now < start          → flip COUNTDOWN to open (amber LED)
-//      open    — AUTO, in the voting window  → flip COUNTDOWN to close (green LED)
-//      manual  — MANUAL_OPEN (any clock)     → forced open: a REAL wall clock ticks
-//                (HH:MM:SS); NO target, NEVER "done", NEVER a red stamp (green LED)
-//      pause   — PAUSE                       → static "รอเปิดอีกครั้ง" (amber LED)
-//      ended   — ENDED, or AUTO past close   → the election-day sheet + red stamp (red LED)
-//    MANUAL_OPEN used to point its countdown at ELECTION_END → after the real close
-//    it read a negative/done state (green LED but "POLL CLOSED" + a half-sentence red
-//    stamp). It now has its own branch and never touches the countdown target. ──
+//      before  — AUTO, now < start                     → flip COUNTDOWN to open (amber LED)
+//      open    — AUTO in-window, OR MANUAL_OPEN before  → flip COUNTDOWN to CLOSE
+//                ELECTION_END                             (green LED). A forced-open poll
+//                                                         still counts down to its scheduled
+//                                                         close — never a wall clock (R5g-ก).
+//      manual  — MANUAL_OPEN past ELECTION_END          → forced-open FALLBACK: no digits,
+//                                                         no target, "เปิดโหวตอยู่" + today's
+//                                                         date. NEVER a red stamp / "POLL
+//                                                         CLOSED" (green LED). Protects the
+//                                                         R5f regression: no red under manual.
+//      pause   — PAUSE                                   → static "รอเปิดอีกครั้ง" (amber LED)
+//      ended   — ENDED, or AUTO past close              → the election-day sheet + red stamp,
+//                                                         then a "เจอกันปีหน้า" countdown to
+//                                                         next year's start (red LED). d/h/m/s
+//                                                         now carry that next-year delta.
+//    MANUAL_OPEN used to show a live wall clock (HH:MM:SS) with no target. It now counts
+//    down to ELECTION_END while the scheduled window is still open, and only falls back to
+//    the digitless "เปิดโหวตอยู่" sheet once the clock passes the scheduled close. ──
 function useCountdown(globalConfig, systemMode) {
   const [cd, setCd] = useState({ d: 0, h: 0, m: 0, s: 0, kind: "loading", label: "กำลังโหลด", live: false, done: false });
   useEffect(() => {
     const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+    // next election is ~1 year after this cycle's start. Deliberately an ESTIMATE:
+    // once next year's config dates are actually set, resolveElectionDates returns the
+    // real values and this delta is replaced automatically — no code change needed.
+    const nextStart = ELECTION_START
+      ? (() => { const d = new Date(ELECTION_START); d.setFullYear(d.getFullYear() + 1); return d.getTime(); })()
+      : null;
+    // d/h/m/s from `now` to a target (clamped ≥ 0). Reused by open + ended countdowns.
+    const partsTo = (target, now) => {
+      const diff = target != null ? Math.max(0, target - now) : 0;
+      return {
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff / 3600000) % 24),
+        m: Math.floor((diff / 60000) % 60),
+        s: Math.floor((diff / 1000) % 60),
+      };
+    };
     const tick = () => {
       const now = Date.now();
-      // MANUAL_OPEN — forced open regardless of the clock: show a live wall clock,
-      // never a countdown/target, never done. (green LED via live:true.)
+      // MANUAL_OPEN — forced open. While the scheduled window is still open, count DOWN
+      // to the scheduled close (identical to AUTO-open); a forced-open poll must not read
+      // as a wall clock (R5g-ก). Only once the clock passes the scheduled close does it
+      // fall back to a digitless "เปิดโหวตอยู่" sheet — still open, still green LED, and
+      // NEVER a countdown target / red stamp.
       if (systemMode === "MANUAL_OPEN") {
-        const dt = new Date();
-        setCd({ d: 0, h: dt.getHours(), m: dt.getMinutes(), s: dt.getSeconds(),
-          kind: "manual", label: "เปิดโหวตอยู่", live: true, done: false });
+        if (now < ELECTION_END) {
+          setCd({ ...partsTo(ELECTION_END, now), kind: "open", label: "ปิดโหวตใน", live: true, done: false });
+          return;
+        }
+        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "manual", label: "เปิดโหวตอยู่", live: true, done: false });
         return;
       }
       if (systemMode === "PAUSE") {
@@ -208,12 +238,12 @@ function useCountdown(globalConfig, systemMode) {
         return;
       }
       if (systemMode === "ENDED") {
-        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
+        setCd({ ...partsTo(nextStart, now), kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
         return;
       }
       // AUTO ladder — the clock decides.
       if (now >= ELECTION_END) {
-        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
+        setCd({ ...partsTo(nextStart, now), kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
         return;
       }
       const before = now < ELECTION_START;
@@ -507,18 +537,9 @@ export default function ReceiptHome({
                   </div>
                 )}
 
-                {/* MANUAL_OPEN — a live wall CLOCK (HH:MM:SS, ticks every second). The
-                    countdown target has no meaning under a forced-open, so we show the
-                    real time instead (same flip tiles reused). */}
-                {isManual && (
-                  <div className="rc-slip-digits rc-slip-clock" aria-label="เวลาปัจจุบัน">
-                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
-                    <span className="rc-colon">:</span>
-                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
-                    <span className="rc-colon">:</span>
-                    <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
-                  </div>
-                )}
+                {/* MANUAL_OPEN past the scheduled close — forced-open fallback (R5g-ก):
+                    NO digits and NO wall clock. The cap "เปิดโหวตอยู่ · OPEN NOW" + today's
+                    date below carry the state; the green LED stays. No red stamp ever. */}
 
                 {/* PAUSE — a calm waiting line (no digits, no stamp) */}
                 {isPause && <div className="rc-pause-line">รอเปิดอีกครั้ง</div>}
@@ -535,6 +556,23 @@ export default function ReceiptHome({
                     </div>
                     <div className="rc-endsheet-weekday">วันเลือกตั้ง</div>
                     <div className="rc-close-line">เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                  </div>
+                )}
+
+                {/* ENDED — a live countdown to next year's election (T2). Sits under the
+                    election-day leaf, separated by a perforation rule. The day tile can run
+                    to 3 digits (~360 right after the vote) so this row is sized down to stay
+                    on ONE line at 390px. New meaning ("เจอกันปีหน้า"), never duplicating the
+                    "รอประกาศผลคะแนน" cap above (R5c one-meaning rule). */}
+                {isEnded && (
+                  <div className="rc-nextyear">
+                    <div className="rc-nextyear-cap"><span>เจอกันปีหน้า</span><small className="rc-mono">SEE YOU NEXT YEAR</small></div>
+                    <div className="rc-slip-digits rc-nextyear-digits" aria-label="นับถอยหลังสู่การเลือกตั้งครั้งถัดไป">
+                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
+                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
+                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
+                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
+                    </div>
                   </div>
                 )}
 
@@ -934,10 +972,6 @@ export default function ReceiptHome({
         .rc-home-root .rc-close-line { margin-top:12px; text-align:center; font-family:var(--rc-fr); font-size:13px; color:var(--rc-ink);
           font-variant-numeric:tabular-nums; }
 
-        /* ---- MANUAL_OPEN wall clock — the flip tiles reused for HH:MM:SS. Three
-           groups instead of four; identical tile sizing to the countdown. ---- */
-        .rc-home-root .rc-slip-clock { /* inherits .rc-slip-digits layout */ }
-
         /* ---- PAUSE — a calm centred waiting line (no digits, no stamp) ---- */
         .rc-home-root .rc-pause-line { margin-top:22px; margin-bottom:8px; text-align:center; font-family:var(--rc-fr);
           font-size:14px; letter-spacing:.01em; color:var(--rc-ink2); }
@@ -962,6 +996,18 @@ export default function ReceiptHome({
         .rc-home-root .rc-endsheet-stamp span { font-size:19px; }
         .rc-home-root .rc-endsheet-weekday { margin-top:6px; font-family:var(--rc-fr); font-size:13px; letter-spacing:.06em;
           color:var(--rc-ink2); }
+
+        /* ---- T2 "เจอกันปีหน้า" — a live countdown to next year's election, printed under
+           the election-day leaf. A dashed perforation rule (never a torn edge) separates
+           it; the tiles are sized DOWN from the hero countdown so the day group can carry
+           3 digits without wrapping off the sheet at 390px. ---- */
+        .rc-home-root .rc-nextyear { margin-top:20px; padding-top:16px; border-top:1px dashed var(--rc-line); }
+        .rc-home-root .rc-nextyear-cap { display:flex; flex-direction:column; align-items:center; gap:3px; }
+        .rc-home-root .rc-nextyear-cap span { font-family:var(--rc-fr); font-size:15px; letter-spacing:.01em;
+          color:var(--rc-accent-deep); font-weight:700; }
+        .rc-home-root .rc-nextyear-cap small { font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--rc-faint); }
+        .rc-home-root .rc-cal .rc-nextyear-digits { margin-top:12px; gap:8px; flex-wrap:nowrap; }
+        .rc-home-root .rc-cal .rc-nextyear-digits .rc-cd-n { font-size:clamp(20px, 6.2vw, 28px); }
 
         /* ---- T3 turnout register ---- */
         /* rows given more vertical air (v2-R5b) so the left slip's bottom lands ~level
