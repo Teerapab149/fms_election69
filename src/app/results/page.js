@@ -411,7 +411,8 @@ export default function ResultsPage() {
         />
       )}
 
-      {/* RECEIPT layout (own paper-desk chrome); access modals below stay shared */}
+      {/* RECEIPT layout (own paper-desk chrome); access modals below stay shared.
+          NO onSelectParty — receipt standings are a printed record, not links (v2-R5d) */}
       {isReceipt && isAuthorized && (
         <ReceiptResults
           candidates={candidates}
@@ -421,7 +422,6 @@ export default function ResultsPage() {
           isRevealed={isRevealed}
           isNotStarted={isNotStarted}
           countdownText={mounted ? countdownText : ""}
-          onSelectParty={(c) => setSelectedParty(c)}
         />
       )}
 

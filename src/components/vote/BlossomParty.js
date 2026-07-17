@@ -33,7 +33,8 @@
 // is fully visible — nothing is gated on JS/animation, so JS-off / reduced-motion
 // render the full spread instantly (entrance keyframes only supply the from-frame).
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
@@ -56,6 +57,12 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  // portal-mount guard — the shared CandidateModal is position:fixed; parenting it to
+  // document.body immunises it against any transformed / overflow-clipped ancestor a
+  // host surface (playground, preview, future chrome) might introduce. SSR-safe: portal
+  // only after mount so `document` is defined.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const no = party?.number;
   const logo = resolveSrc(party?.logoUrl);
@@ -244,9 +251,11 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         </a>
       )}
 
-      {/* shared candidate modal — untouched shared component (dark card, its own lightbox) */}
-      {selectedMember && (
-        <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} />
+      {/* shared candidate modal — untouched shared component (dark card, its own lightbox);
+          portalled to <body> so its fixed positioning can never be clipped by an ancestor. */}
+      {mounted && selectedMember && createPortal(
+        <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} />,
+        document.body
       )}
 
       {/* gallery lightbox — this component's OWN (no shared lightbox) */}

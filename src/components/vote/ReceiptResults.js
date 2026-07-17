@@ -79,7 +79,7 @@ function RcTooltip({ active, payload, label }) {
 
 export default function ReceiptResults({
   candidates = [], totalVotes = 0, demographics = {}, finalStatus = "WAITING",
-  isRevealed = false, isNotStarted = false, countdownText = "", onSelectParty = () => {}, editorMode = false,
+  isRevealed = false, isNotStarted = false, countdownText = "", editorMode = false,
 }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
@@ -133,6 +133,15 @@ export default function ReceiptResults({
     pool.forEach((c) => { if ((c.score || 0) > (top?.score ?? -1)) top = c; });
     return top && (top.score || 0) > 0 ? top.id : null;
   }, [candidates, revealed, singleParty]);
+
+  // owner round-5 (ข) — 3-layer hierarchy. Layer 1 = the WINNER HERO (the winning
+  // party — or in a single-party ballot, the winning verdict — presented headline-
+  // size at the top of the sheet). Layer 2 = the remaining standings, compact.
+  // The winner row is EXTRACTED from the list; ranks keep the original array order
+  // (call sites sort by score when revealed) so layer 2 numbering stays truthful.
+  const winner = revealed ? candidates.find((c) => c.id === winnerId) : null;
+  const standingRows = winner ? candidates.filter((c) => c.id !== winnerId) : candidates;
+  const rankOf = (c) => pad2(candidates.indexOf(c) + 1);
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const byYear = clean(demographics?.byYear);
@@ -225,48 +234,64 @@ export default function ReceiptResults({
               </div>
               <div className="rc-perf" aria-hidden="true" />
 
+              {/* ===== LAYER 1 — WINNER HERO (3-second read: who won) =====
+                  the winning party (or the winning verdict on a single-party ballot)
+                  printed headline-size with the big green ผู้ชนะ · WINNER text stamp.
+                  Semantic green only — never the brand accent; text-only stamp. */}
+              {winner && (
+                <section className="rc-hero" aria-label={singleParty ? "ผลการรับรอง" : "ผู้ชนะการเลือกตั้ง"}>
+                  <div className="rc-hero__body">
+                    <span className="rc-hero__kick rc-mono">
+                      {singleParty ? <><span className="rc-th">ผลการรับรอง</span> · VERDICT</> : subOf(winner)}
+                    </span>
+                    <h2 className="rc-hero__name">{winner.name}</h2>
+                    <div className="rc-hero__figs">
+                      <span className="rc-hero__num">{fmt(winner.score || 0)}<small><span className="rc-th">เสียง</span></small></span>
+                      <span className="rc-hero__pct rc-mono">{pctOf(winner).toFixed(1)}%</span>
+                    </div>
+                    <span className="rc-hero__track" aria-hidden="true"><span style={{ width: `${Math.max(pctOf(winner), 2)}%` }} /></span>
+                  </div>
+                  <span className="rc-herostamp" aria-hidden="true">
+                    <span className="rc-herostamp__ring" />
+                    <span className="rc-herostamp__txt">ผู้ชนะ<em>WINNER</em></span>
+                  </span>
+                </section>
+              )}
+
+              {/* ===== LAYER 2 — remaining standings, compact printed record ===== */}
               <div className="rc-strip-sechead">
-                <span className="rc-strip-kick rc-mono">{singleParty ? "VERDICT" : "STANDINGS"}</span>
-                <h2 className="rc-strip-h">{singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h2>
+                <span className="rc-strip-kick rc-mono">{winner ? "STANDINGS" : (singleParty ? "VERDICT" : "STANDINGS")}</span>
+                <h2 className="rc-strip-h">
+                  {winner
+                    ? (singleParty ? "คะแนนตัวเลือกที่เหลือ" : "อันดับคะแนนที่เหลือ")
+                    : (singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค")}
+                </h2>
               </div>
 
               <ol className="rc-standings">
                 <li className="rc-standings-head" aria-hidden="true">
                   <span>ITEM · <span className="rc-th">รายการ</span></span><span><span className="rc-th">คะแนน</span> · VOTES</span>
                 </li>
-                {candidates.map((c, i) => {
+                {standingRows.map((c, i) => {
                   const n = parseInt(c.number);
-                  const isWin = c.id === winnerId;
                   const isPseudo = n <= 0;
                   const pct = pctOf(c);
-                  const cls = `rc-srow${isWin ? " is-win" : ""}${isPseudo ? " is-pseudo" : ""}`;
-                  const inner = (
-                    <>
-                      {isWin && (
-                        <span className="rc-winstamp" aria-hidden="true">
-                          <span className="rc-winstamp__ring" />
-                          <span className="rc-winstamp__txt">ผู้ชนะ<em>WINNER</em></span>
-                        </span>
-                      )}
-                      <span className="rc-srow__idx">{pad2(i + 1)}</span>
-                      <span className="rc-srow__body">
-                        <span className="rc-srow__kick">{subOf(c)}</span>
-                        <span className="rc-srow__name">{c.name}</span>
-                      </span>
-                      <span className="rc-srow__data">
-                        <span className="rc-srow__num">{fmt(c.score || 0)}<small><span className="rc-th">เสียง</span></small></span>
-                        <span className="rc-srow__track" aria-hidden="true"><span style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%` }} /></span>
-                        <span className="rc-srow__pct">{pct.toFixed(1)}%</span>
-                      </span>
-                    </>
-                  );
                   return (
-                    <li key={c.id || i} className={cls}>
-                      {n > 0 ? (
-                        <button type="button" className="rc-srow__link" onClick={() => onSelectParty(c)}>{inner}</button>
-                      ) : (
-                        <div className="rc-srow__link rc-srow__link--static">{inner}</div>
-                      )}
+                    <li key={c.id || i} className={`rc-srow${isPseudo ? " is-pseudo" : ""}`}>
+                      {/* owner round-5 (ก): standings rows are a PRINTED RECORD — never a
+                          link. No button, no hover affordance, no cursor lie. */}
+                      <div className="rc-srow__row">
+                        <span className="rc-srow__idx">{rankOf(c)}</span>
+                        <span className="rc-srow__body">
+                          <span className="rc-srow__kick">{subOf(c)}</span>
+                          <span className="rc-srow__name">{c.name}</span>
+                        </span>
+                        <span className="rc-srow__data">
+                          <span className="rc-srow__num">{fmt(c.score || 0)}<small><span className="rc-th">เสียง</span></small></span>
+                          <span className="rc-srow__track" aria-hidden="true"><span style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%` }} /></span>
+                          <span className="rc-srow__pct">{pct.toFixed(1)}%</span>
+                        </span>
+                      </div>
                     </li>
                   );
                 })}
@@ -274,8 +299,9 @@ export default function ReceiptResults({
               <div className="rc-standings-foot" aria-hidden="true">✶ ✶ ✶ <span className="rc-th">สรุปผลคะแนน</span> ✶ ✶ ✶</div>
             </section>
 
-            {/* ---- RIGHT: scatter rail — turnout note + holo-taped report cards ---- */}
+            {/* ---- RIGHT: scatter rail — LAYER 3, the general data, voiced down ---- */}
             <aside className="rc-res-rail">
+              <span className="rc-rail-kick rc-mono" aria-hidden="true"><span className="rc-th">ข้อมูลประกอบ</span> · TURNOUT &amp; DEMOGRAPHICS</span>
               {turnoutNote}
 
               {hasDemo && (
@@ -552,45 +578,65 @@ export default function ReceiptResults({
           font-family:var(--rc-fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--rc-faint); }
         .rc-res-root .rc-srow { position:relative; border-bottom:1px dotted var(--rc-line); }
         .rc-res-root .rc-srow:last-child { border-bottom:none; }
-        .rc-res-root .rc-srow__link { width:100%; display:grid; grid-template-columns:auto 1fr; gap:6px 14px; align-items:center;
-          padding:16px 4px; background:none; border:0; text-align:left; color:var(--rc-ink); font-family:inherit;
-          transition:background .22s ease, padding-left .22s ease; }
-        .rc-res-root button.rc-srow__link { cursor:pointer; }
-        .rc-res-root button.rc-srow__link:hover { background:color-mix(in srgb, var(--rc-accent) 6%, var(--rc-receipt)); padding-left:10px; }
-        .rc-res-root button.rc-srow__link:active { background:color-mix(in srgb, var(--rc-accent) 10%, var(--rc-receipt)); }
-        .rc-res-root .rc-srow__idx { font-family:var(--rc-fm); font-weight:700; font-size:clamp(14px,3.4vw,18px);
+        /* LAYER 2 — a printed record row: NOT interactive (owner round-5 ก). No button,
+           no hover shift, no pointer cursor. Quieter figures than the hero; the name
+           column owns the width and clamps at 2 lines max. */
+        .rc-res-root .rc-srow__row { width:100%; display:grid; grid-template-columns:auto 1fr; gap:6px 14px; align-items:center;
+          padding:14px 4px; color:var(--rc-ink); }
+        .rc-res-root .rc-srow__idx { font-family:var(--rc-fm); font-weight:700; font-size:clamp(13px,3.2vw,16px);
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--rc-faint); width:32px; flex:none; align-self:start; padding-top:4px; }
         .rc-res-root .rc-srow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .rc-res-root .rc-srow__kick { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--rc-ink2); }
-        .rc-res-root .rc-srow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(18px,4.4vw,26px); line-height:1.14;
-          letter-spacing:-.01em; color:var(--rc-ink); }
-        .rc-res-root button.rc-srow__link:hover .rc-srow__name { color:var(--rc-accent-deep); }
-        .rc-res-root .rc-srow__data { grid-column:2; display:grid; grid-template-columns:1fr; gap:7px; margin-top:5px; }
-        .rc-res-root .rc-srow__num { font-family:var(--rc-fr); font-weight:700; font-size:clamp(28px,7vw,44px); line-height:1;
+        .rc-res-root .rc-srow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(16px,4vw,21px); line-height:1.22;
+          letter-spacing:-.01em; color:var(--rc-ink);
+          display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .rc-res-root .rc-srow__data { grid-column:2; display:grid; grid-template-columns:1fr; gap:6px; margin-top:5px; }
+        .rc-res-root .rc-srow__num { font-family:var(--rc-fr); font-weight:700; font-size:clamp(20px,5vw,28px); line-height:1;
           font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--rc-ink); }
-        .rc-res-root .rc-srow__num small { font-family:var(--rc-fm); font-size:.3em; font-weight:400; color:var(--rc-ink2); margin-left:6px; letter-spacing:.04em; }
-        .rc-res-root .rc-srow.is-win .rc-srow__num { color:var(--rc-win-green); }
+        .rc-res-root .rc-srow__num small { font-family:var(--rc-fm); font-size:.34em; font-weight:400; color:var(--rc-ink2); margin-left:6px; letter-spacing:.04em; }
         .rc-res-root .rc-srow.is-pseudo .rc-srow__num { color:var(--rc-faint); }
         .rc-res-root .rc-srow__track { height:5px; border-radius:3px; overflow:hidden;
           background:color-mix(in srgb, var(--rc-line) 60%, var(--rc-receipt)); }
         .rc-res-root .rc-srow__track > span { display:block; height:100%; border-radius:3px; background:var(--rc-accent);
           transition:width .7s cubic-bezier(.16,1,.3,1); }
-        .rc-res-root .rc-srow.is-win .rc-srow__track > span { background:var(--rc-win-green); }
         .rc-res-root .rc-srow.is-pseudo .rc-srow__track > span { background:var(--rc-faint); }
         .rc-res-root .rc-srow__pct { font-family:var(--rc-fm); font-size:12px; letter-spacing:.06em; color:var(--rc-ink2);
           font-variant-numeric:tabular-nums; }
 
-        /* winner = a tilted TWO-RING ink stamp in SEMANTIC GREEN, pressed over the row
-           (theme-independent — never the brand accent). Absolutely placed so it never
-           reflows the row; sits within the strip padding so it can't force overflow. */
-        .rc-res-root .rc-winstamp { position:absolute; z-index:3; top:8px; right:2px; display:inline-grid; place-items:center;
-          padding:8px 15px; transform:rotate(-8deg); color:var(--rc-win-green); pointer-events:none; }
-        .rc-res-root .rc-winstamp__ring { position:absolute; inset:0; border-radius:7px; border:2.5px solid var(--rc-win-green); opacity:.9; }
-        .rc-res-root .rc-winstamp__ring::after { content:""; position:absolute; inset:3px; border-radius:5px; border:1px solid var(--rc-win-green); opacity:.7; }
-        .rc-res-root .rc-winstamp__txt { position:relative; display:flex; flex-direction:column; align-items:center; line-height:1;
-          font-family:var(--rc-fh); font-weight:800; font-size:15px; letter-spacing:.01em; }
-        .rc-res-root .rc-winstamp__txt em { font-family:var(--rc-fm); font-style:normal; font-weight:700; font-size:7.5px;
-          letter-spacing:.24em; margin-top:3px; }
+        /* ===== LAYER 1 — WINNER HERO (owner round-5 ข: 3-second read) =====
+           the winning party / verdict at headline scale + the big green ink stamp.
+           SEMANTIC GREEN only (theme-independent, never the brand accent); the stamp
+           is text-only (no star/diamond marks — owner mark rule). */
+        .rc-res-root .rc-hero { position:relative; display:grid; grid-template-columns:1fr; gap:16px; align-items:center;
+          margin-top:20px; padding:4px 4px 24px; border-bottom:1.5px solid var(--rc-ink); }
+        .rc-res-root .rc-hero__body { min-width:0; }
+        .rc-res-root .rc-hero__kick { display:block; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--rc-ink2); }
+        .rc-res-root .rc-hero__name { margin:8px 0 0; font-family:var(--rc-fh); font-weight:800; font-size:clamp(34px,8vw,58px);
+          line-height:1.06; letter-spacing:-.015em; color:var(--rc-ink); overflow-wrap:anywhere; }
+        .rc-res-root .rc-hero__figs { display:flex; align-items:baseline; gap:16px; margin-top:12px; flex-wrap:wrap; }
+        .rc-res-root .rc-hero__num { font-family:var(--rc-fr); font-weight:800; font-size:clamp(34px,8vw,52px); line-height:1;
+          font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--rc-win-green); }
+        .rc-res-root .rc-hero__num small { font-family:var(--rc-fm); font-size:.28em; font-weight:400; color:var(--rc-ink2);
+          margin-left:7px; letter-spacing:.06em; }
+        .rc-res-root .rc-hero__pct { font-size:15px; font-weight:700; letter-spacing:.06em; color:var(--rc-ink2);
+          font-variant-numeric:tabular-nums; }
+        .rc-res-root .rc-hero__track { display:block; height:8px; border-radius:4px; margin-top:14px; overflow:hidden;
+          background:color-mix(in srgb, var(--rc-line) 60%, var(--rc-receipt)); }
+        .rc-res-root .rc-hero__track > span { display:block; height:100%; border-radius:4px; background:var(--rc-win-green);
+          transition:width .7s cubic-bezier(.16,1,.3,1); }
+        .rc-res-root .rc-herostamp { position:relative; justify-self:start; display:inline-grid; place-items:center;
+          padding:12px 24px; transform:rotate(-6deg); color:var(--rc-win-green); pointer-events:none; }
+        .rc-res-root .rc-herostamp__ring { position:absolute; inset:0; border-radius:9px; border:3px solid var(--rc-win-green); opacity:.9; }
+        .rc-res-root .rc-herostamp__ring::after { content:""; position:absolute; inset:4px; border-radius:6px;
+          border:1.5px solid var(--rc-win-green); opacity:.7; }
+        .rc-res-root .rc-herostamp__txt { position:relative; display:flex; flex-direction:column; align-items:center; line-height:1;
+          font-family:var(--rc-fh); font-weight:800; font-size:clamp(20px,4.6vw,26px); letter-spacing:.01em; }
+        .rc-res-root .rc-herostamp__txt em { font-family:var(--rc-fm); font-style:normal; font-weight:700; font-size:10px;
+          letter-spacing:.3em; margin-top:4px; }
+        @media (min-width:640px) {
+          .rc-res-root .rc-hero { grid-template-columns:1fr auto; }
+          .rc-res-root .rc-herostamp { justify-self:end; margin-right:6px; }
+        }
 
         /* jagged receipt tear at the very bottom of the strip */
         .rc-res-root .rc-standings-foot { position:relative; text-align:center; padding:14px 0 20px; margin-top:6px;
@@ -599,8 +645,11 @@ export default function ReceiptResults({
           -webkit-mask:radial-gradient(6px 8px at 8px 100%, transparent 96%, #000) bottom left/16px 8px repeat-x, linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat;
                   mask:radial-gradient(6px 8px at 8px 100%, transparent 96%, #000) bottom left/16px 8px repeat-x, linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat; }
 
-        /* ================= RIGHT RAIL — scatter (manila note + report cards) ================= */
+        /* ================= RIGHT RAIL — LAYER 3, scatter (manila note + report cards) ================= */
         .rc-res-root .rc-res-rail { position:relative; z-index:2; display:flex; flex-direction:column; gap:22px; }
+        /* layer-3 kick — a faint filing label; whispers "supporting data" (revealed only) */
+        .rc-res-root .rc-rail-kick { font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+          color:var(--rc-faint); margin-bottom:-8px; }
 
         /* manila turnout note, pinned — the public figures live here */
         .rc-res-root .rc-rnote { position:relative; align-self:flex-start; width:100%; max-width:360px; background:var(--rc-note);
@@ -647,7 +696,8 @@ export default function ReceiptResults({
         .rc-res-root .rc-report__tape .rc-foil { position:absolute; inset:-40%; }
         .rc-res-root .rc-panel__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding-bottom:12px; margin-bottom:14px; border-bottom:1px dotted var(--rc-line); }
-        .rc-res-root .rc-panel__cap span { font-family:var(--rc-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--rc-ink); }
+        /* layer-3 section heads voiced DOWN (ink2, not ink) so the hero stays the loudest voice */
+        .rc-res-root .rc-panel__cap span { font-family:var(--rc-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--rc-ink2); }
         .rc-res-root .rc-panel__cap em { font-family:var(--rc-fm); font-style:normal; font-size:9.5px; letter-spacing:.14em; color:var(--rc-accent-deep); }
         .rc-res-root .rc-donut { position:relative; }
         .rc-res-root .rc-donut__c { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
@@ -713,8 +763,9 @@ export default function ReceiptResults({
           .rc-res-root .rc-nav { display:flex; }
           .rc-res-root .rc-userwrap { margin-left:0; }
           .rc-res-root .rc-burger, .rc-res-root .rc-sheet { display:none; }
-          /* standings: score column moves beside the name */
-          .rc-res-root .rc-srow__link { grid-template-columns:auto 1fr minmax(200px,300px); align-items:center; }
+          /* standings: score column moves beside the name — the NAME column owns the
+             leftover width (long party names get 1-2 lines, no squeeze) */
+          .rc-res-root .rc-srow__row { grid-template-columns:auto 1fr minmax(150px,210px); align-items:center; }
           .rc-res-root .rc-srow__data { grid-column:auto; margin-top:0; }
         }
 
@@ -726,10 +777,10 @@ export default function ReceiptResults({
           .rc-res-root .rc-res-stage--seal { grid-template-columns:minmax(0, 560px) minmax(0, 1fr); }
           .rc-res-root .rc-strip { grid-column:1; grid-row:1; }
           .rc-res-root .rc-res-rail { grid-column:2; grid-row:1; margin-left:-34px; margin-top:14px; z-index:4; }
-          /* keep the winner stamp + the score column clear of the 34px rail overlap:
+          /* keep the hero stamp + the score column clear of the 34px rail overlap:
              inset the stamp and pull the standings' right edge in on desktop only */
-          .rc-res-root .rc-winstamp { right:48px; }
-          .rc-res-root .rc-srow__link { grid-template-columns:auto 1fr minmax(180px,260px); padding-right:44px; }
+          .rc-res-root .rc-herostamp { margin-right:44px; }
+          .rc-res-root .rc-srow__row { grid-template-columns:auto 1fr minmax(150px,200px); padding-right:44px; }
           .rc-res-root .rc-standings-head { margin-right:40px; }
           .rc-res-root .rc-rnote { transform:rotate(-1.4deg); max-width:none; }
           .rc-res-root .rc-report--wide { margin-right:-10px; }
@@ -739,8 +790,9 @@ export default function ReceiptResults({
         @media (max-width:420px) {
           .rc-res-root .rc-strip { padding:20px 14px 6px; }
           .rc-res-root .rc-strip .rc-perf { margin-left:-14px; margin-right:-14px; }
-          .rc-res-root .rc-winstamp { top:6px; padding:6px 11px; }
-          .rc-res-root .rc-winstamp__txt { font-size:13px; }
+          .rc-res-root .rc-herostamp { padding:9px 17px; }
+          .rc-res-root .rc-herostamp__txt { font-size:17px; }
+          .rc-res-root .rc-herostamp__txt em { font-size:8px; }
           .rc-res-root .rc-seal--c { display:none; }
         }
 

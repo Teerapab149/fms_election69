@@ -627,7 +627,6 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-          onSelectParty={(p) => navTo('party', p?.number ?? 1)}
           editorMode={false}
         />
       );
@@ -812,7 +811,6 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-          onSelectParty={noop}
           editorMode
         />
       );
