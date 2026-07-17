@@ -8,7 +8,8 @@ them. Branch `new-version`.
 ## 0. WHERE WE ARE (so we don't redo done work)
 - **Security foundation = DONE** (P0-1..P0-6 + P1). Verified admin JWT cookie auth,
   atomic vote guard (no double-vote / race), ballot-rule validation, tally hidden from
-  admin until reveal, ballot anonymize, rate limit, AdminAuditLog, backup/restore scripts.
+  admin until reveal, anonymous encrypted tamper-evident ballots (v2-SEC), rate limit,
+  AdminAuditLog, backup/restore scripts.
   Authoritative detail: **`docs/PLAN-NEXT-SESSION.md`** §1. DO NOT re-audit from scratch.
 - **DB migrations exist** (`prisma/migrations/`, 5 + lock) — but there's drift vs `db push`
   (a clean baseline is still a P2, below).
@@ -29,7 +30,9 @@ break voting.** This is the single biggest longevity investment.
    results → turnout. Plus the INVARIANTS that must never regress:
    - vote-once (second submit rejected; the atomic guard),
    - concurrent double-submit race (two requests, one wins),
-   - ballot secrecy / anonymize (admin can't see per-party tally pre-reveal; anonymize nulls candidateId),
+   - ballot secrecy (admin can't see per-party tally pre-reveal; v2-SEC: ballots are
+     anonymous+encrypted by construction — no `candidateId` link to null; "Certify" just
+     freezes the record via the `ballotsAnonymized` flag),
    - eligibility (only valid years/faculty),
    - admin-auth (no forged `admin_token`; non-staff SSO ≠ admin).
 2. **Unit tests** for the pure logic: `useVoteSystem` selection, ballot-rule validation,

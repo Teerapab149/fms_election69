@@ -1,3 +1,11 @@
+> ⚠️ **ARCHIVED (2026-07-17) — superseded.** This was the 2026-06-12 "next session"
+> handoff; everything it queued has since shipped (v2-SEC anonymous encrypted ballots,
+> ADM-1/2/3, F5 word-ban, receipt template through R7). It now describes a **pre-v2-SEC
+> world** — notably `User.candidateId` and the old "anonymize nulls candidateId" model,
+> both of which **no longer exist**. Kept as a historical record only.
+> **For current state read:** `docs/DEPLOY-CHECKLIST-2026.md` (deploy), `README.md` +
+> `docs/MAINTENANCE-RUNBOOK.md` (ops/model), `docs/TEMPLATE-SYSTEM-STATE.md` (system state).
+
 # HANDOFF — FMS Election (SAMO 49/50), next session
 
 Last updated 2026-06-12 (end of a long multi-arc session). **Self-contained — the

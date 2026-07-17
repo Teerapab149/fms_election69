@@ -11,8 +11,10 @@
 
 ## 0. ระบบนี้คืออะไร (1 ย่อหน้า)
 Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy เป็น Docker ที่ subpath
-`/fms-ovs`. หน้า admin ใช้ RSA-encrypted token. ข้อมูลเลือกตั้ง (พรรค/สมาชิก/คะแนน) อยู่ใน DB; วันเวลาเลือกตั้ง
-ตั้งได้ใน admin (เก็บใน `SystemConfig.globalConfig`) โดยมีค่า default ในโค้ด (`src/utils/electionConfig.js`) เป็น fallback.
+`/fms-ovs`. หน้า admin ใช้ **httpOnly JWT cookie `admin_token`** (P0-1 — เลิกใช้ RSA token เก่าแล้ว). ข้อมูล
+เลือกตั้ง (พรรค/สมาชิก/คะแนน) อยู่ใน DB; บัตรลงคะแนนเก็บแบบนิรนาม+เข้ารหัส+ต่อ hash chain (v2-SEC — ดู §11);
+วันเวลาเลือกตั้งตั้งได้ใน admin (เก็บใน `SystemConfig.globalConfig`) โดยมีค่า default ในโค้ด
+(`src/utils/electionConfig.js`) เป็น fallback. **Deploy ปีนี้: ไล่ `docs/DEPLOY-CHECKLIST-2026.md` ทีละขั้น.**
 
 ---
 
@@ -29,7 +31,7 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
    → **เปลี่ยนสีก็ทำให้ "รู้สึกใหม่" ได้ทั้งปีโดยไม่ต้องสร้าง template ใหม่** (กลไก variety หลัก). + เลือก template,
    จัด Sections หน้า Home (เปิด/ปิด/ลำดับ), สลับ variant ของ element (คลัง 47 ชนิด).
 4. **โหมดระบบ + แสดงผล + Google Form** — แท็บ **"ตั้งค่าระบบ"**: `AUTO` (ใช้เวลาจาก electionConfig) /
-   `OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
+   `MANUAL_OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
 5. **รีเซ็ตเริ่มปีใหม่** — แท็บ **"ตั้งค่าระบบ"**: ปุ่ม **"ล้างคะแนนโหวตทั้งหมด"** + **"ล้างพรรคและสมาชิกทั้งหมด"**.
    ⚠️ **สำรอง DB ก่อนเสมอ** (ดู §5). (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
 6. ✅ **วันเวลาเลือกตั้ง (เปิด/ปิดหีบ/เปิดตัวผู้สมัคร)** — **ทำใน admin ได้แล้ว (2026-06-09)**:
@@ -50,19 +52,30 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 ```
 เก็บ "ปีนั้น = ผลนี้ + หน้าตานี้" ลง git ถาวร **ก่อน** reset (ตอนคะแนนยังอยู่). ดู `archive/README.md`.
 
-**B. Anonymize (หลังรับรองผล — ลบร่องรอยว่าใครเลือกใคร, P0-6):** กดปุ่ม **"ลบข้อมูลการลงคะแนนรายบุคคล"**
-ในแท็บ "ตั้งค่าระบบ". ทำได้เฉพาะหลังปิดหีบ + เผยแพร่ผลแล้ว (irreversible — สำรอง DB ก่อน, §5).
-คะแนนรวมถูก freeze ลง `Candidate.score` → ผลไม่เปลี่ยน, `isVoted` ยังอยู่ (turnout ถูกต้อง).
+**B. รับรองผล / Certify (หลังปิดหีบ + เผยแพร่ผล):** กดปุ่ม **"รับรองผล"** ในแท็บ "ตั้งค่าระบบ"
+(action `ANONYMIZE_BALLOTS` — ชื่อเดิม P0-6, ตอนนี้เป็น *certification flag*).
+⚠️ **v2-SEC เปลี่ยนความหมาย:** บัตรทุกใบ **ไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วโดยโครงสร้าง** (`Ballot`
+ไม่มี `userId` + choice เข้ารหัส) — ไม่มี "ร่องรอยว่าใครเลือกใคร" ให้ลบเหมือนโมเดลเก่า. ปุ่มนี้จึงแค่
+**ตั้งธง `globalConfig.ballotsAnonymized = true`** เป็นหมุดรับรองผล ที่ downstream tools ยอมรับ
+(เช่น reconcile-scores ถือว่า `Candidate.score` ถูก freeze แล้ว). ทำได้เฉพาะหลังปิดหีบ + เปิด `showResult`
+(ระบบกันทำกลางคัน). คะแนนรวมอยู่ที่ `Candidate.score` (atomic increment ตอนโหวต) = บันทึกสุดท้ายอยู่แล้ว.
 
 **C. ตั้งปีใหม่ (admin UI):** ตามข้อ 1–6 ด้านบน — ตั้งชื่อ/ปี/วันเวลา, `systemMode=AUTO`, seed พรรคจริง,
 ลบพรรคทดสอบ, **"ล้างคะแนนโหวตทั้งหมด"** (RESET_VOTES), `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่.
 
-**D. ตรวจก่อนเปิดหีบ (gate):**
+**D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```
-npm run preflight            # ✓/⚠/✗ ครบทุกข้อ (mode/showResult/พรรคทดสอบ/คะแนน=0/ยังไม่โหวต/
+# ทาง 1 (แนะนำ กรรมการกดเองได้): แท็บ "ตั้งค่าระบบ" → ปุ่ม "ตรวจความพร้อมระบบ" (ADM-1)
+#   เรียก GET /api/admin/readiness (read-only) → สรุป pass/warn/fail 14 ข้อ:
+#   schedule (ลำดับเวลา/เปิดตัวผู้สมัคร/แหล่งเวลา/อดีต), mode.coherence, candidates
+#   (มีพรรค/พรรคเดียวมีตัวเลือกครบ/เนื้อหาครบ), voters, tally.integrity, config
+#   (googleForm/ผลรั่ว/ธีม), env.mock — ต้อง "ไม่มี fail" (warn อ่านทีละข้อ)
+
+# ทาง 2 (CLI สำหรับ dev): script อ่านอย่างเดียว
+npm run preflight            # ✓/⚠/✗ (mode/showResult/พรรคทดสอบ/คะแนน=0/ยังไม่โหวต/
                              #   วันเวลา/รายชื่อ/secrets/mock-login) — exit 1 ถ้ามี ✗
 ```
-ถ้ายังมี ✗ = **ยังไม่พร้อม** ห้ามเปิด. แก้ให้เขียวก่อน แล้วค่อยเปิดหีบ.
+ถ้ายังมี fail/✗ = **ยังไม่พร้อม** ห้ามเปิด. แก้ให้เขียวก่อน แล้วค่อยเปิดหีบ.
 
 ---
 
@@ -74,7 +87,11 @@ NEXT_PUBLIC_BASE_PATH     # subpath ตอน deploy (ค่า: /fms-ovs)
 ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (auth แอดมิน — P0-1)
 ADMIN_PASSWORD_AUTH_EXTRA # bootstrap password แอดมิน (ครั้งแรก) — ดู /api/admin/login
 ADMIN_STUDENT_IDS         # รหัส นศ. ที่เป็นแอดมิน (คั่นด้วย ,) — ดู §10
+ELECTION_BALLOT_PUBLIC_KEY # v2-SEC: public key เข้ารหัสบัตร (PEM, \n-escaped) — ดู §11 + DEPLOY-CHECKLIST
+BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain ของบัตร — ดู §11 + DEPLOY-CHECKLIST
 ```
+> 🔑 **`ELECTION_BALLOT_PUBLIC_KEY` + `BALLOT_CHAIN_SECRET` ไม่ครบ → `/api/vote` fail closed**
+> (โหวตไม่ได้ ไม่มีการเก็บ plaintext). **private key ไม่อยู่บนเซิร์ฟเวอร์** (offline, dispute-only — §11).
 + ตัวแปร PSU SSO (client id/secret/issuer) — ดู `src/lib/auth.js`. **เก็บในที่ปลอดภัย + สำรองไว้** (ถ้าหาย = ตั้งใหม่). ห้าม commit ลง git.
 
 > ⚠️ **เลิกใช้แล้ว (P0-1, 2026-06-10):** `ADMIN_PRIVATE_KEY` / `ADMIN_AUTH_SECRET` /
@@ -140,18 +157,21 @@ sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
 docker compose restart web
 ```
 - รูปผู้สมัคร/สมาชิก mount เป็น volume `./public/images` ใน compose แล้ว → redeploy ไม่หาย.
-- **สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, Anonymize, แก้ schema, อัปเดต deps.**
+- **สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, รับรองผล (Certify), แก้ schema, อัปเดต deps.**
 - ⚠️ **backup ที่ไม่เคยกู้ = ไม่มี backup** → ซ้อม `restore.sh` ใส่ DB ทิ้งๆ อย่างน้อย 1 ครั้งก่อนวันเลือกตั้ง.
 
 ### 5.1 ตรวจคะแนนก่อนประกาศผล (certification — ทำทุกครั้งก่อนเปิด showResult)
 หน้า results อ่านคะแนนจากคอลัมน์ `Candidate.score` (single source of truth, 2026-06-12).
-ก่อนเปิดเผยผล ให้ตรวจว่า score ตรงกับบัตรจริง (`User.candidateId`):
+⚠️ **v2-SEC เปลี่ยนวิธีตรวจ:** บัตรตอนนี้ **นิรนาม+เข้ารหัส (ไม่มี `User.candidateId`)** — recount
+รายพรรคจาก plaintext ทำไม่ได้บนเซิร์ฟเวอร์ (ทำได้เฉพาะ offline ด้วย private key — §11). ก่อนประกาศผล
+ให้ตรวจ 2 อย่าง: **โซ่ HMAC ไม่ถูกแก้** + **invariant รวมตรงกัน** (`#บัตร == sum(score) == #isVoted ปี1-4`):
 ```
-node scripts/reconcile-scores.js          # รายงานอย่างเดียว — ต้องขึ้น "no drift" ทุกพรรค
-node scripts/reconcile-scores.js --fix    # ถ้า drift: เขียนจำนวนบัตรจริงทับ score (สำรอง DB ก่อน)
+node scripts/verify-ballot-chain.js       # recompute โซ่ทั้งตาราง + cross-check ChainHead + count
+node scripts/reconcile-scores.js          # audit เดียวกัน (แชร์ scripts/lib/chainVerify.js) — ต้อง PASS
 ```
-ถ้าเจอ drift = มีโค้ด/การแก้ DB ที่เปลี่ยนบัตรโดยไม่อัปเดต score — หาสาเหตุก่อนประกาศ.
-สคริปต์จะไม่ยอมรันหลัง Anonymize (บัตรถูกลบแล้ว — score ที่ freeze ไว้คือบันทึกสุดท้าย).
+> ทั้งสองต้องการ `BALLOT_CHAIN_SECRET` ใน env/.env. **ไม่มี `--fix` อีกแล้ว** — score ถูก maintain
+> แบบ atomic ตอนโหวต + กล่องบัตร append-only → mismatch = เหตุจริงต้องสอบสวน (มี code path แตะข้างเดียว)
+> ไม่ใช่เขียนทับ. reconcile ยังรันได้หลังรับรองผล (`ballotsAnonymized`) แต่จะเตือนว่าคะแนน freeze แล้ว.
 
 ---
 
@@ -239,3 +259,33 @@ node scripts/reconcile-scores.js --fix    # ถ้า drift: เขียนจ�
 **หมายเหตุ (แก้ 2026-06-12):** เดิมโค้ดดูแค่ `groups[0]` (กลุ่มแรกเท่านั้น) → ถ้า IdP
 ส่งลำดับกลุ่มไม่ตรง admin จริงอาจตกเป็น student เงียบ ๆ. แก้ให้สแกนทั้ง array แล้ว.
 ถ้าจะตั้ง admin **โดยไม่ผ่านกลุ่ม SSO** ให้ใช้ทาง 3 (`ADMIN_STUDENT_IDS`) — ไม่ต้องแตะกลุ่ม.
+
+---
+
+## 11. บัตรลงคะแนนแบบนิรนาม+เข้ารหัส+ตรวจการแก้ได้ (v2-SEC "B+", locked `60e0de2`, impl `8166d41`)
+
+**โมเดล (แทนที่ของเก่าที่เก็บ `User.candidateId`):** ทุกใบลงในตาราง `Ballot`
+- **ไม่มี `userId`** + เวลาหยาบระดับชั่วโมง (`hourBucket`) เท่านั้น → เชื่อมกลับหาคนโหวตไม่ได้เชิงโครงสร้าง
+  (เวลาโหวตละเอียดอยู่บน `User.votedAt` = ข้อมูลของ voter เอง ไม่ลับ)
+- **`payload` = RSA-OAEP ciphertext** ของ `{c: candidateId, n: nonce}` ด้วย public key กรรมการ
+- **HMAC hash-chain ต่อใบ** (`prevHash → rowHash`, secret = `BALLOT_CHAIN_SECRET`) → แก้บัตรย้อนหลัง = โซ่ขาด ตรวจเจอ
+- **tally จริง = `Candidate.score`** (atomic increment ตอนโหวต) — กุญแจ private หาย = เสียแค่ dispute-recount ไม่เสียผล
+
+**Key ceremony (ทำ 1 ครั้ง/ปี บนเครื่อง offline — รายละเอียดใน `docs/DEPLOY-CHECKLIST-2026.md`):**
+```
+node scripts/generate-election-keys.js    # พิมพ์ keypair + chain secret ออก stdout เท่านั้น (ไม่เขียนดิสก์)
+```
+- **private key** → พิมพ์กระดาษ แบ่งเก็บ (อจ.ที่ปรึกษา + ประธานสโมสร) **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo**
+- **public key** → env `ELECTION_BALLOT_PUBLIC_KEY` · **chain secret** → env `BALLOT_CHAIN_SECRET` + สำเนานอกเครื่อง
+
+**ระหว่าง/หลังเลือกตั้ง:**
+```
+node scripts/verify-ballot-chain.js       # ตรวจโซ่ + count (certification, ก่อนเปิด showResult)
+node scripts/export-chain-head.js         # เก็บปลายโซ่ไว้นอก DB เป็นระยะ (cron) → จับ tamper ที่ปลอมโซ่ด้วย
+node scripts/decrypt-recount.js --key <path-to-private.pem>   # OFFLINE เท่านั้น, เฉพาะข้อพิพาท (นับรายพรรค)
+```
+> **Production ต้อง apply `scripts/sql/ballot-grants.sql`** → DB role ของแอปเป็น **INSERT-only บน `Ballot`**
+> (แก้/ลบบัตรไม่ได้เชิงโครงสร้าง แม้แอปถูก compromise). superuser DB ยังแก้ได้เสมอ (ไม่มีระบบไหนกัน 100%)
+> — แต่ "แก้แบบไม่ถูกจับ" ต้องมี chain secret + superuser + rewrite ปลายโซ่ที่ export ออกไปแล้ว = แทบเป็นไปไม่ได้.
+
+> ปุ่ม **"รับรองผล"** (§1.1 B) ตั้งธง `ballotsAnonymized` — ไม่ได้ลบบัตร (บัตรนิรนามอยู่แล้ว) แค่หมุดรับรอง.

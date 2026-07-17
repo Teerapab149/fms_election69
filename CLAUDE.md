@@ -73,25 +73,34 @@ prisma/
 model User {
   id, studentId (unique), name, email, facultyId, departmentId
   role ("student" | "ADMIN"), year, major, gender
-  isVoted (Boolean), isFormCompleted (Boolean), isAdmin (Boolean)
-  candidateId? → Candidate
+  isVoted (Boolean), isFormCompleted (Boolean), isAdmin (Boolean), votedAt?
+  // ⚠️ v2-SEC (2026-07-16): User.candidateId REMOVED — no voter→choice link exists.
+  // The choice lives only in the anonymous encrypted Ballot table (see below).
 }
 
 model Candidate {
-  id, name (unique), number (unique), slogan?, logoUrl?
+  id, name (unique), number (unique), slogan?, logoUrl?, color?
   groupImageUrls (Json?), officialImageUrl?, mobileHeroImage (Json?)
   logoMeaning?, missions (Json?), policies (Json?)
-  members → Member[], voters → User[], score (Int)
+  members → Member[], score (Int)   // score = the tally; no `voters` relation (v2-SEC)
 }
 
 model Member {
   id, studentId (unique), name, number, imageUrl, modalImageUrl?
-  major?, position?, candidateId → Candidate
+  major?, position?, candidateId → Candidate   // Member↔Candidate FK still exists
 }
 
+// v2-SEC — anonymous, encrypted, tamper-evident ballot box (LOCKED "B+")
+model Ballot {
+  seq (PK), payload (RSA-OAEP ciphertext of {c: candidateId, n: nonce})
+  hourBucket? (coarse), prevHash, rowHash (HMAC chain — no userId, no fine time)
+}
+model ChainHead { id (always 1), head (default "GENESIS"), seq }  // chain tip
+
 model SystemConfig {
-  id (always 1), isVoteOpen, showResult, systemMode ("AUTO"|"MANUAL_OPEN"|"PAUSE"|"ENDED")
-  googleFormUrl?, updatedAt
+  id (always 1), isVoteOpen (legacy — no longer gates after ADM-3), showResult
+  systemMode ("AUTO"|"MANUAL_OPEN"|"PAUSE"|"ENDED"), googleFormUrl?
+  globalConfig (Json — dates/meta/ballotsAnonymized flag), activeTemplateId?, updatedAt
 }
 ```
 

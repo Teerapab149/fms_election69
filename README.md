@@ -45,8 +45,14 @@ npm run dev                    # http://localhost:3000/fms-ovs
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXTAUTH_SECRET` | key เข้ารหัส session NextAuth |
 | `NEXT_PUBLIC_BASE_PATH` | subpath deploy (default `/fms-ovs`) |
-| `ADMIN_PRIVATE_KEY` / `ADMIN_AUTH_SECRET` | ระบบ auth ของ admin (JWT cookie) |
+| `ADMIN_JWT_SECRET` | เซ็น/ตรวจ `admin_token` JWT cookie (auth แอดมิน — P0-1) |
+| `ADMIN_PASSWORD_AUTH_EXTRA` | bootstrap password แอดมินครั้งแรก (ดู `/api/admin/login`) |
+| `ADMIN_STUDENT_IDS` | รหัส นศ. ที่เป็นแอดมิน (คั่นด้วย `,`) |
+| `ELECTION_BALLOT_PUBLIC_KEY` / `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน v2-SEC (ดู §v2-SEC ด้านล่าง) |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | `true` = โชว์ปุ่ม Mock Login (**DEV เท่านั้น — ห้ามเปิดบน production**) |
+
+> ⚠️ **เลิกใช้แล้ว (P0-1):** `ADMIN_PRIVATE_KEY` / `ADMIN_AUTH_SECRET` /
+> `NEXT_PUBLIC_ADMIN_*` — ระบบ admin auth เก่าฝัง secret ใน client bundle ถูกถอดออกแล้ว
 
 **เข้าระบบตอน dev:** หน้า login มีช่อง Mock Login (ใส่รหัสนักศึกษาจาก seed) ·
 admin: `node scripts/dev-admin-login.js` แล้วเข้า `/fms-ovs/admin`
@@ -143,9 +149,11 @@ Production ควรรัน `scripts/sql/ballot-grants.sql` เพื่อใ
 
 ## 🚢 Deploy
 
-Docker + subpath `/fms-ovs` · **ก่อน deploy จริงให้ไล่ checklist ใน
-[docs/TEMPLATE-SYSTEM-STATE.md §4](docs/TEMPLATE-SYSTEM-STATE.md)** (build gate, env จริง,
-ปิด mock login, เลือก template production, scrub เอกสาร)
+Docker + subpath `/fms-ovs` · **deploy จริงปีนี้ให้ไล่ทีละขั้นใน
+[docs/DEPLOY-CHECKLIST-2026.md](docs/DEPLOY-CHECKLIST-2026.md)** (key ceremony,
+env จริง, ballot-grants.sql, migrate deploy, ปุ่มตรวจความพร้อม ADM-1, เลือก template,
+smoke test) · ภาพรวมสถานะระบบ + build gate ดู
+[docs/TEMPLATE-SYSTEM-STATE.md §4](docs/TEMPLATE-SYSTEM-STATE.md)
 
 ## 📚 แผนที่เอกสาร
 
