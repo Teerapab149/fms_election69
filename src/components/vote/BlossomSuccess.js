@@ -74,7 +74,25 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
             <div className="bl-succ-receipt">
               <span className="bl-succ-receipt__row"><b>VOTER ID</b>{sid}</span>
               {name && <span className="bl-succ-receipt__row"><b>NAME</b>{name}</span>}
-              <span className="bl-succ-receipt__row"><b>SECURED BY</b>PSU Passport</span>
+              <span className="bl-succ-receipt__row bl-succ-receipt__row--sec"><b>SECURED BY</b>PSU Passport</span>
+            </div>
+
+            {/* form-first CTA — the primary evaluation entry lives IN the ink band, at
+                the climax, so it lands in the first viewport (v2-R8 T1). onOpenForm +
+                isUnlocked gating are unchanged from the former next-section button. */}
+            <div className="bl-succ-cta">
+              <span className="bl-succ-cta__kick">ขั้นตอนสุดท้าย · 2 นาที · รับชั่วโมงกิจกรรม 2 ชม.</span>
+              {isUnlocked && !editorMode ? (
+                <div className="bl-succ-cta__done">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  ส่งแบบประเมินเรียบร้อยแล้ว
+                </div>
+              ) : (
+                <button type="button" className="bl-succ-cta__btn" onClick={() => !editorMode && onOpenForm()}>
+                  เปิดแบบประเมิน (รับชั่วโมงกิจกรรม)
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -97,18 +115,9 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           </header>
 
           <div className="bl-succ-actions">
-            {isUnlocked && !editorMode ? (
-              <div className="bl-succ-done">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                ส่งแบบประเมินเรียบร้อยแล้ว
-              </div>
-            ) : (
-              <button type="button" className="bl-succ-btn bl-succ-btn--primary" onClick={() => !editorMode && onOpenForm()}>
-                เปิดแบบประเมิน (รับชั่วโมงกิจกรรม)
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
-              </button>
-            )}
-
+            {/* the PRIMARY evaluate CTA now lives in the ink band above (v2-R8 T1);
+                this section keeps the supporting results pill + home link only. The
+                results gating (resultsUnlocked) is unchanged. */}
             <a
               href={resultsUnlocked ? getPath("/results") : undefined}
               className={`bl-succ-btn bl-succ-btn--results ${resultsUnlocked ? "" : "is-disabled"}`}
@@ -283,6 +292,26 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-succ-receipt__row b { font-weight:400; letter-spacing:.16em; text-transform:uppercase;
           color:color-mix(in srgb, var(--bl-canvas) 52%, transparent); }
 
+        /* ---- form-first CTA ON the ink band (v2-R8 T1) — a candy pill at the climax,
+           with a one-line mono kick above it to entice the tap ---- */
+        .bl-succ-root .bl-succ-cta { margin-top:30px; display:flex; flex-direction:column; align-items:flex-start; gap:13px; }
+        .bl-succ-root .bl-succ-cta__kick { font-family:var(--bl-fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+          color:color-mix(in srgb, var(--bl-canvas) 62%, transparent); }
+        .bl-succ-root .bl-succ-cta__btn { display:inline-flex; align-items:center; justify-content:center; gap:11px; min-height:56px;
+          padding:16px 34px; border-radius:999px; border:none; cursor:pointer;
+          font-family:var(--bl-fd); font-weight:700; font-size:17px;
+          color:var(--bl-on-primary, var(--bl-card)); background:var(--bl-primary);
+          box-shadow:0 16px 34px color-mix(in srgb, var(--bl-primary) 42%, transparent);
+          transition:transform .2s ease, background .25s ease, filter .25s ease; }
+        .bl-succ-root .bl-succ-cta__btn svg { flex:none; transition:transform .25s ease; }
+        .bl-succ-root .bl-succ-cta__btn:hover { transform:translateY(-3px); filter:brightness(1.05); }
+        .bl-succ-root .bl-succ-cta__btn:hover svg { transform:translate(2px,-2px); }
+        .bl-succ-root .bl-succ-cta__btn:active { transform:scale(.97); }
+        .bl-succ-root .bl-succ-cta__done { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:56px;
+          padding:16px 30px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:16px;
+          color:var(--bl-canvas); background:color-mix(in srgb, var(--bl-primary) 28%, transparent);
+          border:1.5px solid color-mix(in srgb, var(--bl-primary) 55%, transparent); }
+
         /* confetti — solid geometry, subtle float; nuked by reduced-motion */
         .bl-succ-root .bl-confetti { position:absolute; inset:0; z-index:0; pointer-events:none; }
         .bl-succ-root .bl-cf { position:absolute; width:11px; height:11px; opacity:.9; }
@@ -360,9 +389,17 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           .bl-succ-root .bl-succ-actions { padding-top:6px; }
         }
 
-        /* ================= MOBILE (<=560): tighten band + stack ================= */
+        /* ================= MOBILE (<=560): tighten band so the form-first CTA lands
+           in the first viewport (v2-R8 T1) ================= */
         @media (max-width:560px) {
-          .bl-succ-root .bl-succ-band { padding:52px 20px 56px; }
+          .bl-succ-root .bl-succ-band { padding:40px 20px 44px; }
+          /* smaller display headline + tighter rhythm reclaim the vertical budget */
+          .bl-succ-root .bl-succ-head { font-size:clamp(40px,10.5vw,124px); }
+          .bl-succ-root .bl-succ-deck { margin-top:16px; }
+          .bl-succ-root .bl-succ-receipt { margin-top:20px; padding-top:16px; }
+          /* SECURED BY is not critical on the narrowest layout — drop it to buy space */
+          .bl-succ-root .bl-succ-receipt__row--sec { display:none; }
+          .bl-succ-root .bl-succ-cta { margin-top:22px; }
           .bl-succ-root .bl-succ-next__head { grid-template-columns:1fr; gap:6px; }
           .bl-succ-root .bl-succ-next__idx { padding-top:0; }
         }

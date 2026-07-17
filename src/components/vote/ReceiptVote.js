@@ -849,14 +849,25 @@ export default function ReceiptVote({
         /* ================= MOBILE (<=560): rows reflow, tap targets >=44px ================= */
         @media (max-width:560px) {
           .rc-vote-root .rc-vote-wrap { padding-bottom:210px; }
-          .rc-vote-root .rc-vrow__hit { grid-template-columns:auto auto 1fr; grid-template-areas:"box idx body" "more more more";
-            gap:12px 12px; padding:16px 4px; }
+          /* v2-R8 T3: the details STUB rides INLINE in the rightmost column (was a
+             full-width second row that doubled each party's height). Row stays a
+             single grid line → far shorter cards when N parties stack. The stub keeps
+             its ticket language + a >=44px hit target. */
+          .rc-vote-root .rc-vrow__hit { grid-template-columns:auto auto 1fr; grid-template-areas:"box idx body" "box idx more";
+            gap:8px 10px; padding:14px 4px; }
+          /* slogan + team-count fold away at this width — truncated near-useless here,
+             and both live one tap away in the details stub / party page. The NAME gets
+             the full column at its 2-line clamp (ballot names must stay readable). */
+          .rc-vote-root .rc-vrow__slogan, .rc-vote-root .rc-vrow__stat { display:none; }
           .rc-vote-root .rc-vrow__box { grid-area:box; align-self:center; }
-          .rc-vote-root .rc-vrow__stamp { grid-area:idx; align-self:center; width:46px; height:46px; }
-          .rc-vote-root .rc-vrow__stamp-n { font-size:19px; }
+          .rc-vote-root .rc-vrow__stamp { grid-area:idx; align-self:center; width:44px; height:44px; }
+          .rc-vote-root .rc-vrow__stamp-n { font-size:18px; }
           .rc-vote-root .rc-vrow__logo { display:none; }
           .rc-vote-root .rc-vrow__body { grid-area:body; }
-          .rc-vote-root .rc-vrow__more { grid-area:more; justify-content:center; width:100%; }
+          .rc-vote-root .rc-vrow__more { grid-area:more; justify-self:start; align-self:start;
+            padding:0 12px 0 16px; font-size:12px; }
+          /* the "→" glyph is dropped inline to keep the stub narrow; the label carries it */
+          .rc-vote-root .rc-vrow__more span { display:none; }
           .rc-vote-root .rc-vbar__in { flex-direction:column; align-items:stretch; gap:10px; padding:12px 18px; }
           .rc-vote-root .rc-vbar__btn { width:100%; }
         }

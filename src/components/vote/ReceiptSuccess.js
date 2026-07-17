@@ -287,7 +287,22 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
            untouched. */
         .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; padding:26px 18px 44px; }
 
-        .rc-suc-wrap { position:relative; z-index:1; max-width:400px; margin:0 auto; }
+        /* MOBILE (default): the wrap is a single-column grid so the evaluate ACTIONS
+           ride UP directly under the headline — above the printer stage — so the
+           form CTA lands in the first viewport (form-first, v2-R8 T2). The printing
+           of the receipt stays a moment, just below the CTA. .rc-suc-tail dissolves
+           (display:contents) so its children (actions / foot / copy) become grid
+           siblings and the stage can slot BETWEEN actions and the fine print. Desktop
+           (>=900) restores the original two-column collage byte-for-byte. */
+        .rc-suc-wrap { position:relative; z-index:1; max-width:400px; margin:0 auto;
+          display:grid; grid-template-columns:1fr;
+          grid-template-areas:"headline" "actions" "stage" "foot" "copy"; }
+        .rc-suc-root .rc-suc-headline { grid-area:headline; }
+        .rc-suc-root .rc-suc-stage { grid-area:stage; }
+        .rc-suc-root .rc-suc-tail { display:contents; }
+        .rc-suc-root .rc-suc-actions { grid-area:actions; }
+        .rc-suc-root .rc-suc-foot { grid-area:foot; }
+        .rc-suc-root .rc-suc-copy { grid-area:copy; }
 
         /* Thai-in-a-mono-line utility (A10.3 / ruling C4): the Thai half of a bilingual
            mono label wears Chakra Petch so it never silently falls back — Space Mono has
@@ -569,7 +584,10 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           .rc-suc-root .rc-suc-display { align-items:flex-start; font-size:clamp(34px, 3.6vw, 52px); }
           .rc-suc-root .rc-suc-deck { margin-left:0; margin-right:0; }
           .rc-suc-root .rc-suc-stage { grid-area:stage; align-self:center; }
-          .rc-suc-root .rc-suc-tail { grid-area:tail; align-self:start; }
+          /* restore the tail box (dissolved to display:contents on mobile) so the
+             desktop left column re-groups actions + fine print + copyright exactly
+             as before — byte-for-byte with the pre-R8 collage. */
+          .rc-suc-root .rc-suc-tail { grid-area:tail; align-self:start; display:block; }
           .rc-suc-root .rc-suc-actions { margin-top:26px; }
         }
 

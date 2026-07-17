@@ -99,14 +99,18 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
 
         @media (max-width:1100px) { .vd-success { padding:96px 20px 130px; } }
         @media (max-width:560px) {
-          .vd-success { padding:84px 16px 128px; }
-          .vd-orn { width:min(300px,82vw); height:min(300px,82vw); margin-bottom:30px; }
+          /* v2-R8 T4: squeeze the ornament hero + top padding so the evaluate CTA
+             lands in the first viewport (form-first). Lightest touch in the Verdure
+             language — the seal shrinks, the moss screen tightens; nothing restyled. */
+          .vd-success { padding:44px 16px 120px; }
+          .vd-orn { width:min(208px,54vw); height:min(208px,54vw); margin-bottom:20px; }
           .vd-orn__disc { width:64%; height:64%; }
-          .vd-orn__ring--2 { inset:22px; }
-          .vd-success__head { margin-bottom:30px; }
+          .vd-orn__ring--2 { inset:18px; }
+          .vd-success__head { margin-bottom:22px; }
+          .vd-success__head h1 { font-size:clamp(40px,11vw,92px); }
           .vd-success__head p { font-size:15px; }
           .vd-receipt__h { padding:13px 18px; }
-          .vd-receipt__row { gap:14px; padding:12px 18px; }
+          .vd-receipt__row { gap:14px; padding:11px 18px; }
           .vd-receipt__cta { padding:18px; }
         }
       `}</style>

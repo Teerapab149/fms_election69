@@ -149,6 +149,20 @@ export default function StudioDarkSuccess({
           .sds-scene { grid-template-columns:1fr; min-height:0; }
           .sds-left { border-right:0; border-bottom:1px solid var(--sd-line); padding:48px 24px; }
           .sds-right { padding:40px 24px 56px; }
+          /* v2-R8 T4 (form-first): single-column, lift the pitch + evaluate CTA above
+             the receipt so the button lands in the first viewport. The receipt (the
+             proof) trails below — desktop 50/50 split is untouched. */
+          .sds-right .sds-callout { order:1; }
+          .sds-right .sds-actions { order:2; }
+          .sds-right .sds-receipt { order:3; }
+        }
+        @media (max-width:560px) {
+          /* tighten the thank-you hero on phones so the reordered CTA clears 844 */
+          .sds-left { padding:36px 20px; }
+          .sds-mark { width:60px; height:60px; margin-bottom:20px; }
+          .sds-chapter { margin-bottom:18px; }
+          .sds-title { font-size:clamp(44px,12vw,108px); margin-bottom:18px; }
+          .sds-right { padding:28px 20px 52px; gap:18px; }
         }
       `}</style>
     </StudioDarkShell>

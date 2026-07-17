@@ -510,8 +510,16 @@ export default function BlossomVote({
         /* ================= MOBILE (<=560): rows reflow, tap targets >=44px ================= */
         @media (max-width:560px) {
           .bl-vote-root .bl-page { padding-bottom:172px; }
-          .bl-vote-root .bl-vopt__hit { grid-template-columns:auto auto 1fr; grid-template-areas:"mark idx body" "more more more";
-            gap:12px 14px; padding:18px 16px; }
+          /* v2-R8 T3: the "ดูรายละเอียด" pill rides INLINE in the rightmost column
+             (was a full-width second row that doubled each party's height). Row stays
+             a single grid line → far shorter cards when N parties stack. The pill keeps
+             its candy language + a >=44px hit target. */
+          .bl-vote-root .bl-vopt__hit { grid-template-columns:auto auto 1fr; grid-template-areas:"mark idx body" "mark idx more";
+            gap:8px 12px; padding:16px 16px; }
+          /* slogan + team-count fold away at this width — truncated near-useless here,
+             and both live one tap away in the details pill / party page. The NAME gets
+             the full column at its 2-line clamp (ballot names must stay readable). */
+          .bl-vote-root .bl-vopt__slogan, .bl-vote-root .bl-vopt__stat { display:none; }
           .bl-vote-root .bl-vpaper { border-radius:20px; }
           .bl-vote-root .bl-vpaper__cap { padding:13px 16px; }
           .bl-vote-root .bl-vopt__mark { grid-area:mark; align-self:center; }
@@ -519,7 +527,10 @@ export default function BlossomVote({
           /* logo folds away on the narrowest layout — the index numeral + name carry identity */
           .bl-vote-root .bl-vopt__logo { display:none; }
           .bl-vote-root .bl-vopt__body { grid-area:body; }
-          .bl-vote-root .bl-vopt__more { grid-area:more; justify-content:center; width:100%; }
+          .bl-vote-root .bl-vopt__more { grid-area:more; justify-self:start; align-self:start;
+            padding:0 16px; font-size:12.5px; }
+          /* the arrow icon is dropped inline to keep the pill narrow beside the name */
+          .bl-vote-root .bl-vopt__more svg { display:none; }
           .bl-vote-root .bl-vconfirm__in { flex-direction:column; align-items:stretch; gap:12px; padding:12px 18px; }
           .bl-vote-root .bl-vconfirm__btn { width:100%; }
         }
