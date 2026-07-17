@@ -357,6 +357,8 @@ export default function ResultsPage() {
   else countdownText = `${minutes} น. ${seconds} วิ.`;
 
   const campaignDateString = campaignDate ? campaignDate.toLocaleDateString('th-TH', {
+    timeZone: 'Asia/Bangkok', // ADM-2: pin to Bangkok so a Docker/UTC host shows the
+    // same calendar day as a Thai host (byte-identical on TH). Schedule = Asia/Bangkok.
     day: 'numeric', month: 'long', year: 'numeric'
   }) : "เร็วๆ นี้";
 
