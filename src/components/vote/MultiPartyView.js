@@ -72,16 +72,20 @@ export default function MultiPartyView({
     ? (partyCount <= 3 ? "standard" : "compact")
     : abstainStyle;
 
-  // Always ≥2 columns on mobile so voters see multiple parties at once (no scroll
-  // to reach the 2nd party); scale up as the count grows.
+  // ≥2 columns on mobile while the grid cards run (≤5 parties) so voters see
+  // multiple parties at once. Once the COMPACT cards kick in (>5), phones drop to a
+  // single column: the compact card truncates its name to one line, and at 2-up the
+  // column is ~10 Thai chars wide — parties sharing a prefix become indistinguishable
+  // on the ballot. Full-width rows keep every name readable (ยึด P-LOG-099).
   const getGridClasses = () => {
     switch (gridCols) {
       case "2": return "grid-cols-2";
       case "3": return "grid-cols-2 lg:grid-cols-3";
       default:
         if (partyCount <= 4) return "grid-cols-2";
-        if (partyCount <= 6) return "grid-cols-2 sm:grid-cols-3";
-        return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+        if (partyCount <= 5) return "grid-cols-2 sm:grid-cols-3";
+        if (partyCount <= 6) return "grid-cols-1 sm:grid-cols-3";
+        return "grid-cols-1 sm:grid-cols-3 lg:grid-cols-4";
     }
   };
 
