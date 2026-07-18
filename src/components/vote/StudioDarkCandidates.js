@@ -97,6 +97,12 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
               </a>
             );
           })}
+          {parties.length % 2 === 1 && (
+            <div className="sdc-panel sdc-filler" aria-hidden="true">
+              <span className="sdc-filler__mark">✦</span>
+              <span className="sdc-filler__note">ABSTAIN IS A RIGHT · งดออกเสียงคือสิทธิ์</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="sdc-empty">
@@ -150,6 +156,15 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
         .sdc-panel__cell .lbl { font-family:var(--sd-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3); }
         .sdc-panel__cell .val { font-family:var(--sd-sans); font-size:24px; margin-top:6px; font-weight:400; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
 
+        /* odd-N filler — fills the trailing empty cell of the 2-col grid so the
+           bottom-right corner isn't left blank. Non-interactive, SD mono language.
+           Desktop 2-col only; hidden at ≤1100px (1-col → no empty cell to fill). */
+        .sdc-filler { cursor:default; align-items:center; justify-content:center; text-align:center; gap:18px; }
+        .sdc-filler:hover { background:transparent; }
+        .sdc-filler::after { display:none; }
+        .sdc-filler__mark { font-family:var(--sd-serif); font-style:italic; font-size:44px; color:var(--sd-ink-3); line-height:1; }
+        .sdc-filler__note { font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3); }
+
         .sdc-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:64px 24px; }
         .sdc-empty__box { width:min(420px,100%); height:180px; }
         .sdc-empty p { color:var(--sd-ink-2); font-size:15px; margin:0; }
@@ -159,6 +174,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
           .sdc-panel { border-right:0; min-height:0; padding:32px 24px; }
           .sdc-panel::after { right:24px; top:32px; }
           .sdc-panel__media { height:200px; }
+          .sdc-filler { display:none; }
         }
       `}</style>
     </StudioDarkShell>

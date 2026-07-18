@@ -510,6 +510,15 @@ export default function BlossomVote({
         /* ================= MOBILE (<=560): rows reflow, tap targets >=44px ================= */
         @media (max-width:560px) {
           .bl-vote-root .bl-page { padding-bottom:172px; }
+          /* v2-R10: tighten the masthead rhythm so the ballot card enters the first
+             viewport sooner — same grammar (kick / two-tone word / deck / voter rows),
+             just less air on a phone. Nothing is dropped. */
+          .bl-vote-root .bl-issue-line { padding:8px 0; }
+          .bl-vote-root .bl-vote-head { margin-top:22px; padding-bottom:14px; }
+          .bl-vote-root .bl-vote-word { margin-top:8px; font-size:clamp(40px,11vw,52px); }
+          .bl-vote-root .bl-vote-deck { margin-top:12px; font-size:14px; line-height:1.55; }
+          .bl-vote-root .bl-vote-voter { margin-top:14px; padding:12px 0 2px; gap:6px 18px; }
+          .bl-vote-root .bl-vpaper { margin-top:20px; }
           /* v2-R8 T3: the "ดูรายละเอียด" pill rides INLINE in the rightmost column
              (was a full-width second row that doubled each party's height). Row stays
              a single grid line → far shorter cards when N parties stack. The pill keeps
