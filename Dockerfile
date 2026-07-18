@@ -1,4 +1,6 @@
-FROM node:18-alpine AS base
+# Node 20 LTS (Node 18 reached EOL Apr 2025). Next 14.2 supports Node 18.17+/20/22.
+# If you bump this, run `docker build` + a smoke test before deploying.
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -23,15 +25,14 @@ COPY . .
 # Arguments for build time
 ARG BASE_PATH
 ARG ASSET_PREFIX
-ARG NEXT_PUBLIC_ADMIN_PUBLIC_KEY
-ARG NEXT_PUBLIC_ADMIN_AUTH_SECRET
 
 # Environment variables for build time
+# NOTE: NEXT_PUBLIC_ADMIN_PUBLIC_KEY / NEXT_PUBLIC_ADMIN_AUTH_SECRET were REMOVED
+# (P0-1 security fix) — admin auth is now the httpOnly admin_token JWT cookie,
+# verified server-side. No admin secret is shipped to the client bundle.
 ENV BASE_PATH=${BASE_PATH}
 ENV ASSET_PREFIX=${ASSET_PREFIX}
 ENV NEXT_PUBLIC_BASE_PATH=${BASE_PATH}
-ENV NEXT_PUBLIC_ADMIN_PUBLIC_KEY=${NEXT_PUBLIC_ADMIN_PUBLIC_KEY}
-ENV NEXT_PUBLIC_ADMIN_AUTH_SECRET=${NEXT_PUBLIC_ADMIN_AUTH_SECRET}
 
 # Generate Prisma Client
 RUN npx prisma generate

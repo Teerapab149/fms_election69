@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { rateLimit, clientIp } from "../../../../lib/rateLimit";
 
 function isEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || ""));
@@ -9,6 +10,15 @@ function isEmail(v) {
 
 export async function POST(request) {
     try {
+        // Throttle brute-force against the bcrypt check: 10 attempts / 5 min / IP.
+        const rl = rateLimit(`admin-login:${clientIp(request)}`, { limit: 10, windowMs: 5 * 60 * 1000 });
+        if (!rl.ok) {
+            return NextResponse.json(
+                { success: false, message: `พยายามเข้าสู่ระบบบ่อยเกินไป ลองใหม่ใน ${rl.retryAfter} วินาที` },
+                { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+            );
+        }
+
         const body = await request.json();
         const { username, password } = body;
 

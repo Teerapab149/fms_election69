@@ -13,14 +13,47 @@ import { classicTemplate }    from "./builtIn/classic";
 import { modernDarkTemplate } from "./builtIn/modern-dark";
 import { playfulTemplate }    from "./builtIn/playful";
 import { minimalTemplate }    from "./builtIn/minimal";
-import { gumroadTemplate }    from "./builtIn/gumroad";
+import { gumroadTemplate, gumroadCyberTemplate, gumroadRetroTemplate, gumroadAcidTemplate, gumroadPremiumTemplate, gumroadBubblegumTemplate } from "./builtIn/gumroad";
+import { studioDarkTemplate, studioDarkCyberTemplate, studioDarkMagentaTemplate, studioDarkAmberTemplate } from "./builtIn/studio-dark";
+import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerryTemplate } from "./builtIn/verdure";
+// Original is intentionally purple-only in the chooser: it's a hand-crafted
+// single-palette design, so the field-colour variants (navy/emerald/crimson/
+// aubergine) never matched the flagship's craft (owner call 2026-07-08). The
+// builder + palettes are KEPT in builtIn/original.js + originalPalettes.js so
+// re-enabling is just re-importing + re-registering them below.
+import { originalTemplate } from "./builtIn/original";
+import { blossomTemplate, blossomSkyTemplate, blossomMintTemplate, blossomButterTemplate } from "./builtIn/blossom";
+import { receiptTemplate, receiptInkBlueTemplate, receiptTealTemplate, receiptCarbonTemplate } from "./builtIn/receipt";
 
 const BUILT_IN_TEMPLATES = {
   classic:        classicTemplate,
   "modern-dark":  modernDarkTemplate,
   playful:        playfulTemplate,
   minimal:        minimalTemplate,
-  gumroad:        gumroadTemplate
+  gumroad:        gumroadTemplate,
+  "gumroad-cyber": gumroadCyberTemplate,
+  "gumroad-retro": gumroadRetroTemplate,
+  "gumroad-acid":  gumroadAcidTemplate,
+  "gumroad-premium": gumroadPremiumTemplate,
+  "gumroad-bubblegum": gumroadBubblegumTemplate,
+  "studio-dark":  studioDarkTemplate,
+  "studio-dark-cyber":   studioDarkCyberTemplate,
+  "studio-dark-magenta": studioDarkMagentaTemplate,
+  "studio-dark-amber":   studioDarkAmberTemplate,
+  verdure:        verdureTemplate,
+  "verdure-honey": verdureHoneyTemplate,
+  "verdure-teal":  verdureTealTemplate,
+  "verdure-berry": verdureBerryTemplate,
+  original:            originalTemplate,
+  // field-colour variants un-registered (purple-only) — see import note above
+  blossom:             blossomTemplate,
+  "blossom-sky":       blossomSkyTemplate,
+  "blossom-mint":      blossomMintTemplate,
+  "blossom-butter":    blossomButterTemplate,
+  receipt:             receiptTemplate,
+  "receipt-ink-blue":  receiptInkBlueTemplate,
+  "receipt-teal":      receiptTealTemplate,
+  "receipt-carbon":    receiptCarbonTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).
@@ -69,6 +102,9 @@ export async function listTemplates(prisma, filters = {}) {
         description: tpl.description,
         isBuiltIn: true,
         isLocked: tpl.isLocked || false,
+        // "classic" = theme-recolor of the original layout; "gumroad"/"studio-dark"
+        // = real templates with their own layouts (drives the gallery thumb + chip).
+        layoutFamily: tpl.layoutFamily || "classic",
         colorSwatch: tpl.colorSwatch,
         authorId: null,
         authorName: null,
@@ -109,6 +145,9 @@ export async function listTemplates(prisma, filters = {}) {
         return {
           ...rest,
           isBuiltIn: false,
+          // DB templates are token forks — HomeRenderer dispatches layouts by
+          // SLUG, and a fork's new slug falls back to the classic layout.
+          layoutFamily: "classic",
           authorName: author?.name || null,
           colorSwatch: deriveColorSwatch(theme),
           elementCount: elements ? Object.keys(elements).length : 0,

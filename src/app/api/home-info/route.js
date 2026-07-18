@@ -3,8 +3,19 @@ import { db } from "../../../lib/db";
 
 export const dynamic = "force-dynamic";
 
+// v2-R10 micro-cache — home-info is the read every visitor hammers at poll
+// opening (load test 2026-07-18: 300 concurrent → home SSR p95 4.3s with this
+// route on its critical path). One in-process snapshot, TTL 8s: turnout/status
+// may lag ≤8s, which the UI already tolerates — the client countdown runs
+// locally and the actual vote gate is /api/check-status + /api/vote (uncached).
+const SNAP_TTL_MS = 8000;
+let snap = { at: 0, body: null };
+
 export async function GET() {
   try {
+    if (snap.body && Date.now() - snap.at < SNAP_TTL_MS) {
+      return NextResponse.json(snap.body);
+    }
     const candidates = await db.candidate.findMany({
       select: {
         id: true,
@@ -30,7 +41,8 @@ export async function GET() {
       config = await db.systemConfig.create({ data: { id: 1, isVoteOpen: true, systemMode: "AUTO" } });
     }
 
-    const { ELECTION_START, ELECTION_END } = await import("../../../utils/electionConfig").then(m => m.ELECTION_CONFIG);
+    const { resolveElectionDates } = await import("../../../utils/electionConfig");
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(config.globalConfig);
     const now = Date.now();
     const sysMode = config.systemMode || "AUTO";
 
@@ -60,13 +72,15 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
+    const body = {
       candidates,
       stats: { totalEligible, totalVoted },
       isSystemOpen: isSystemOpen,
       systemMode: sysMode,
       electionStatus: electionStatus
-    });
+    };
+    snap = { at: Date.now(), body };
+    return NextResponse.json(body);
 
   } catch (error) {
     console.error("🔥 Error fetching home info:", error);

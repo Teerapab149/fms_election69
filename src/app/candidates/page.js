@@ -6,12 +6,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Users, ChevronRight, Loader2, Sparkles, Megaphone } from 'lucide-react';
 import Navbar from "../../components/Navbar";
+import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { PARTY_THEMES, DEFAULT_THEME } from '../../utils/PartyTheme';
 
 import EditorElement from '../../components/admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import SiteFooter from '../../components/SiteFooter';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
+import GumroadCandidates from '../../components/vote/GumroadCandidates';
+import StudioDarkCandidates from '../../components/vote/StudioDarkCandidates';
+import VerdureCandidates from '../../components/vote/VerdureCandidates';
+import BlossomCandidates from '../../components/vote/BlossomCandidates';
+import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CandidatesPage({
@@ -31,6 +37,15 @@ export default function CandidatesPage({
   const [loading, setLoading] = useState(!editorMode);
   const [apiLayout, setApiLayout] = useState(null);
 
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [templateReady, setTemplateReady] = useState(false);
+  const isGumroad = activeTemplateId?.startsWith('gumroad');
+  const isStudio = activeTemplateId?.startsWith('studio-dark');
+  const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
+
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
       id={id}
@@ -48,13 +63,16 @@ export default function CandidatesPage({
     : defaults;
 
   useEffect(() => {
-    if (editorMode || pageLayout) return;
+    if (editorMode) { setTemplateReady(true); return; }
+    if (pageLayout) { setTemplateReady(true); return; }
     fetch(getPath("/api/admin/page-layout"))
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.candidates) setApiLayout(data.candidates);
+        if (data?.activeTemplateId) setActiveTemplateId(data.activeTemplateId);
       })
-      .catch(e => console.error(e));
+      .catch(e => console.error(e))
+      .finally(() => setTemplateReady(true));
   }, [editorMode, pageLayout]);
 
   useEffect(() => {
@@ -102,20 +120,66 @@ export default function CandidatesPage({
     return activeLayout[index].visible !== false;
   };
 
-  if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-[#F8F9FD]">
-      <Loader2 className="animate-spin w-10 h-10 text-[var(--color-primary)]" />
-    </div>
-  );
+  if (loading || (!editorMode && !templateReady)) return <ThemedLoadingScreen text="กำลังโหลดข้อมูลผู้สมัคร..." />;
+
+  // GUMROAD layout (own topbar/footer) — replaces the classic page entirely.
+  if (isGumroad) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <GumroadCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // STUDIO DARK layout (own rail/scene chrome) — replaces the classic page entirely.
+  if (isStudio) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <StudioDarkCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // VERDURE layout (own glass-terrarium chrome) — replaces the classic page entirely.
+  if (isVerdure) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <VerdureCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // BLOSSOM layout (own Candy Editorial chrome) — replaces the classic page entirely.
+  if (isBlossom) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <BlossomCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // RECEIPT layout (own paper-desk chrome) — replaces the classic page entirely.
+  if (isReceipt) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <ReceiptCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 relative overflow-x-hidden">
+    <div className="min-h-screen w-full flex flex-col bg-[var(--color-bg)] text-slate-900 relative overflow-x-hidden">
       {!editorMode && <PageThemeOverrides page="candidates" />}
 
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:30px_30px] md:bg-[size:40px_40px]"></div>
+        <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-[color-mix(in_srgb,var(--color-primary)_13%,transparent)] to-[color-mix(in_srgb,var(--color-accent)_13%,transparent)] rounded-full blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-[color-mix(in_srgb,var(--color-accent)_11%,transparent)] to-[color-mix(in_srgb,var(--color-primary)_11%,transparent)] rounded-full blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
       <div className="relative z-50">
@@ -131,7 +195,7 @@ export default function CandidatesPage({
               <div data-element="candidates-tagline" className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md shadow-sm transition-transform hover:scale-105"
                 style={{
                   backgroundColor: cfg('candidates-tagline').backgroundColor || 'var(--ctl-bg, rgba(255,255,255,0.8))',
-                  border: `1px solid ${cfg('candidates-tagline').borderColor || 'var(--ctl-border, #f3e8ff)'}`
+                  border: `1px solid ${cfg('candidates-tagline').borderColor || 'var(--ctl-border, color-mix(in srgb, var(--color-primary) 14%, white))'}`
                 }}>
                 <Sparkles className="w-4 h-4" style={{ color: cfg('candidates-tagline').textColor || 'var(--ctl-accent, var(--color-primary))' }} />
                 <span className="text-[10px] md:text-xs font-black tracking-[0.15em] uppercase"
@@ -151,7 +215,7 @@ export default function CandidatesPage({
                   {cfg('candidates-title').text ? (
                     cfg('candidates-title').text
                   ) : (
-                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-purple-500">ผู้สมัคร</span></>
+                    <>ทำความรู้จัก <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]">ผู้สมัคร</span></>
                   )}
                 </h1>
               </Wrap>
@@ -170,8 +234,8 @@ export default function CandidatesPage({
                 <Wrap id="candidates-counter">
                   <div data-element="candidates-counter" className="flex items-center gap-2 px-4 py-1.5 rounded-full"
                     style={{
-                      backgroundColor: cfg('candidates-counter').backgroundColor || 'var(--cc-bg, rgba(138, 38, 128, 0.1))',
-                      border: `1px solid ${cfg('candidates-counter').borderColor || 'var(--cc-border, rgba(138, 38, 128, 0.2))'}`
+                      backgroundColor: cfg('candidates-counter').backgroundColor || 'var(--cc-bg, color-mix(in srgb, var(--color-primary) 10%, transparent))',
+                      border: `1px solid ${cfg('candidates-counter').borderColor || 'var(--cc-border, color-mix(in srgb, var(--color-primary) 20%, transparent))'}`
                     }}>
                     <Megaphone className="w-4 h-4" style={{ color: cfg('candidates-counter').textColor || 'var(--cc-accent, var(--color-primary))' }} />
                     <span className="text-sm md:text-base font-bold" style={{ color: cfg('candidates-counter').textColor || 'var(--cc-accent, var(--color-primary))' }}>

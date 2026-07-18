@@ -6,6 +6,8 @@ import VoteFooter from '../vote/VoteFooter';
 import MultiPartyView from '../vote/MultiPartyView';
 import SinglePartyView from '../vote/SinglePartyView';
 import GumroadVote from '../vote/GumroadVote';
+import StudioDarkVote from '../vote/StudioDarkVote';
+import VerdureVote from '../vote/VerdureVote';
 import EditorElement from './editor/EditorElement';
 import {
   DUMMY_PARTIES_MULTI,
@@ -25,11 +27,13 @@ export default function VoteEditorPreview({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  // Per-template layout: gumroad has its own distinct vote layout.
-  if (templateSlug === 'gumroad') {
+  // Per-template layout: gumroad / studio-dark / verdure have their own distinct vote layouts.
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
     const single = simMode === 'single';
+    const VoteLayout = templateSlug === 'studio-dark' ? StudioDarkVote
+      : templateSlug === 'verdure' ? VerdureVote : GumroadVote;
     return (
-      <GumroadVote
+      <VoteLayout
         editorMode
         regularParties={single ? DUMMY_PARTIES_SINGLE : DUMMY_PARTIES_MULTI}
         specialOptions={DUMMY_SPECIAL_OPTIONS}
@@ -94,10 +98,20 @@ export default function VoteEditorPreview({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <Navbar />
+    <div className="min-h-screen bg-[var(--color-bg)] relative overflow-hidden">
+      {/* Full-bleed themed background — mirrors the real vote page. */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] rounded-full blur-[80px] md:blur-[120px]"
+          style={{ background: 'linear-gradient(to bottom right, color-mix(in srgb, var(--color-primary) 12%, transparent), color-mix(in srgb, var(--color-accent) 12%, transparent))' }} />
+        <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] rounded-full blur-[80px] md:blur-[120px]"
+          style={{ background: 'linear-gradient(to top right, color-mix(in srgb, var(--color-accent) 10%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent))' }} />
+        <div className="absolute inset-0"
+          style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      </div>
 
-      <div className="max-w-6xl mx-auto px-4 lg:px-8 py-6 lg:py-12">
+      <div className="relative z-50"><Navbar /></div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 lg:px-8 py-6 lg:py-12">
         <MultiPartyView
           editorMode={true}
           regularParties={DUMMY_PARTIES_MULTI}

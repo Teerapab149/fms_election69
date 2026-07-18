@@ -16,59 +16,29 @@
 // selectable + base-editable in the admin editor, like classic.
 
 import { getPath } from "../../utils/basePath";
+import { GumroadBaseStyles } from "./GumroadTheme";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
-import { useSession, signIn } from "next-auth/react";
-import { ArrowRight, Calendar, CheckCircle2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { ArrowRight } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
+import SiteNavbar from "../elements/site-navbar/gumroad";
+import HomeTicker from "../elements/home-ticker/gumroad";
+import SiteFooter from "../elements/site-footer/gumroad";
+import HeroCountdown from "../elements/hero-countdown/gumroad";
+import StatsVoted from "../elements/stats-voted-card/gumroad";
+import StatsEligible from "../elements/stats-eligible-card/gumroad";
+import MeetSection from "../elements/meet-section/gumroad";
+import HeroTitle from "../elements/hero-title/gumroad";
+import HeroSubtitle from "../elements/hero-subtitle/gumroad";
+import HeroYearBadge from "../elements/hero-year-badge/gumroad";
 import { SIZE_MAP, WEIGHT_MAP } from "../../utils/styleMaps";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { resolveStatefulConfig } from "../admin/editor/templateEngine";
 import { getBinding, isBoundElement } from "../admin/editor/elementCatalog";
 import { buildTemplateStyles, buildElementCss } from "../../lib/templateTokens";
 import { getVoteCTAVariant } from "../elements/voteCTA-button";
-import { ELECTION_CONFIG } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
-
-// ── Bento countdown (gumroad-styled; reuses ELECTION_CONFIG timing) ──
-function GumroadCountdown({ systemMode = "AUTO" }) {
-  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
-  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, label: "STARTS IN", sub: "เปิดรับลงคะแนนใน", live: false });
-  useEffect(() => {
-    const calc = () => {
-      const now = Date.now();
-      // Phase + Thai sub-label mirror CountdownTimer.js conditions:
-      //  before→opens, running→closes, paused/ended→already-closed.
-      let diff, label, sub, live = false;
-      if (systemMode === "PAUSE") { label = "PAUSED"; sub = "พักลงคะแนนชั่วคราว"; diff = 0; }
-      else if (systemMode === "ENDED") { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
-      else if (systemMode === "MANUAL_OPEN") { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
-      else if (now < ELECTION_START) { label = "STARTS IN"; sub = "เปิดรับลงคะแนนใน"; diff = ELECTION_START - now; }
-      else if (now < ELECTION_END) { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
-      else { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
-      setT(diff > 0
-        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label, sub, live }
-        : { d: 0, h: 0, m: 0, s: 0, label, sub, live });
-    };
-    calc();
-    const id = setInterval(calc, 1000);
-    return () => clearInterval(id);
-  }, [ELECTION_START, ELECTION_END, systemMode]);
-  const cells = [{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }];
-  return (
-    <div className="gh-cd" data-element="hero-countdown">
-      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · {t.sub}</div>
-      <div className="gh-cd__grid">
-        {cells.map((c, i) => (
-          <div key={i} className="gh-cd__cell">
-            <div className="gh-cd__num">{String(c.n).padStart(2, "0")}</div>
-            <div className="gh-cd__unit">{c.u}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+import { useVoteStatus } from "../../hooks/useVoteStatus";
 
 export default function GumroadHome({
   initialData,
@@ -83,21 +53,18 @@ export default function GumroadHome({
   pageLayout = null,
   resolvedTemplate = null,
   editorTokenStyles = null,
+  // Optional sign-in override (playground): when present, the login CTA calls
+  // this instead of next-auth signIn(). Absent = byte-identical live behaviour.
+  onSignIn = null,
 }) {
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
   const [mounted, setMounted] = useState(false);
-  const [isVotedReal, setIsVotedReal] = useState(false);
+  // Shared cached status (one request per navigation across all consumers).
+  const { isVoted: isVotedReal } = useVoteStatus({
+    enabled: !editorMode && status === "authenticated",
+  });
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => {
-    if (editorMode) return;
-    if (status === "authenticated" && session?.user?.studentId) {
-      fetch(getPath(`/api/check-status?studentId=${session.user.studentId}`))
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d) setIsVotedReal(d.isVoted === true); })
-        .catch(() => {});
-    }
-  }, [session?.user?.studentId, status, editorMode]);
 
   const editorStateRef = useRef(null);
   editorStateRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
@@ -129,7 +96,9 @@ export default function GumroadHome({
     if (c.fontSize && !opts.skipSize) st.fontSize = SIZE_MAP[c.fontSize];
     if (c.color && !opts.skipColor) st.color = c.color;
     if (c.fontWeight) st.fontWeight = WEIGHT_MAP[c.fontWeight];
-    if (c.align) st.textAlign = c.align;
+    // skipAlign: let the layout/CSS own alignment (a stale `align:left` in saved
+    // config was pinning the hero title left, overriding the mobile centre).
+    if (c.align && !opts.skipAlign) st.textAlign = c.align;
     return Object.keys(st).length ? st : undefined;
   };
   const isVisible = (id) => effectiveConfigs?.[id]?.config?.visible !== false;
@@ -165,7 +134,15 @@ export default function GumroadHome({
     : [buildTemplateStyles(effectiveTemplate, ".fms-app"), buildElementCss(pageLayout?.elementCss?.home, ".fms-app")].filter(Boolean).join("\n\n");
 
   // voteCTA (chunky-stamp element)
-  const runtimeCtx = buildRuntimeContext({ session, systemConfig: initialData?.systemConfig, electionStatus: initialData?.electionStatus, userData: initialData?.userData });
+  // Resolve the voteCTA state from the FRESH client-side vote status (isVotedReal),
+  // not the SSR session flag — otherwise the config (text) stays "notVoted" while the
+  // chunky-stamp visual flips to "voted", producing a "✓ VOTE NOW" disabled mismatch.
+  const runtimeCtx = buildRuntimeContext({
+    session,
+    systemConfig: initialData?.systemConfig,
+    electionStatus: initialData?.electionStatus,
+    userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
+  });
   const voteCTAState = resolveElementState("voteCTA-button", runtimeCtx);
   const voteCTAOverrides = pageLayout?.elementOverrides?.["voteCTA-button"]?.[voteCTAState] || {};
   const voteCTAConfig = resolveStatefulConfig(effectiveTemplate, "voteCTA-button", voteCTAState, voteCTAOverrides);
@@ -210,126 +187,94 @@ export default function GumroadHome({
   })();
 
   return (
-    <div className="fms-app gh-root">
+    <div className="fms-app gh-root gum-root">
+      <GumroadBaseStyles />
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
 
-      {/* ── TOPBAR ── */}
-      <header className="gh-topbar">
-        <a href={getPath("/")} className="gh-brand">
-          <Image src={getPath("/images/logo/fms_logo50_color.png")} alt="FMS 50th" width={480} height={480} className="gh-brand__badge" priority />
-          <span className="gh-brand__div" />
-          <Image src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")} alt="FMS PSU" width={1200} height={384} className="gh-brand__word" priority />
-        </a>
-        <nav className="gh-nav">
-          <a href={getPath("/")} className="gh-navlink is-active">หน้าแรก</a>
-          <a href={getPath("/candidates")} className="gh-navlink">Meet Candidates</a>
-          <a href={getPath("/results")} className="gh-navlink">ผลการลงคะแนนเสียง</a>
-        </nav>
-        <div className="gh-topbar__right">
-          <button className="gh-btn gh-btn--ink" onClick={() => !editorMode && signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" })}>
-            <ArrowRight size={16} /> เข้าสู่ระบบ
-          </button>
-        </div>
-      </header>
+      {/* ── TOPBAR (shared gumroad navbar element) ── */}
+      <SiteNavbar active="home" editorMode={editorMode} onSignIn={onSignIn} />
 
-      {/* ── TICKER ── */}
-      <div className="gh-ticker">
-        <div className="gh-ticker__track">
-          {[0, 1].map((k) => (
-            <span key={k} className="gh-ticker__item">
-              ★ {facultyEn} ELECTION {calendarYear} <Dot /> {samoPrefix} {samoNumber} <Dot /> CAST YOUR VOTE <Dot /> {orgName} <Dot /> {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"} RUNNING <Dot /> POWERED BY {uni} PASSPORT <Dot />
-            </span>
-          ))}
-        </div>
-      </div>
+      {/* ── TICKER (element) ── */}
+      <HomeTicker faculty={facultyEn} calendarYear={calendarYear} samoPrefix={samoPrefix} samoNumber={samoNumber} org={orgName} partyCount={partyCount} uni={uni} />
 
-      {/* ── HOME GRID ── */}
-      <main className="gh-home">
-        {/* LEFT */}
-        <div className="gh-home__left">
-          <div className="gh-eyebrow">
+      {/* ── HOME — "POSTER MOSAIC" ──
+          A new interlocking tile mosaic (NOT the old text-left / cards-right
+          split). Big hero TILE on the left + a varied mosaic of countdown / stats
+          / meet tiles wrapping the right. Fills the fold, balanced. Gumroad colours
+          + chunky identity kept. All Wrap ids + data-element preserved. */}
+      <main className="gh-mosaic">
+
+        {/* HERO TILE */}
+        <section className="gh-hero gh-area-hero">
+          <div className="gh-hero__top">
             <span className="gh-sticker gh-sticker--lime">⚡ {facultyEn} ELECTION {calendarYear}</span>
-            <span className={`gh-sticker ${statusInfo.cls} gh-sticker--rotate`}>
-              {statusInfo.live && <span className="gh-livedot" />} {statusInfo.label}
-            </span>
           </div>
 
           <Wrap id="hero-title">
-            <h1 className="gh-title" data-element="hero-title" style={getTextStyle("hero-title", { skipSize: true })}>
-              {titlePart}
-              {numberPart && <><br /><em>{numberPart}</em></>}
-            </h1>
+            <HeroTitle titlePart={titlePart} numberPart={numberPart} style={getTextStyle("hero-title", { skipSize: true, skipAlign: true })} />
           </Wrap>
 
           <Wrap id="hero-subtitle">
-            <p className="gh-subtitle" data-element="hero-subtitle" style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true })}>
-              {/* line 1 — project name: the punchy lead (lime marker box) */}
-              <span className="gh-subtitle__lead"><span className="gh-hl">{getText("hero-subtitle", globalConfig.campaignTitle)}</span></span>
-              {/* line 2 — organization: quieter supporting line (smaller, lime chip, no box) */}
-              <span className="gh-subtitle__org">{getText("hero-subtitle2", globalConfig.organizationName)}</span>
-            </p>
+            <HeroSubtitle
+              leadText={String(getText("hero-subtitle", globalConfig.campaignTitle))}
+              org={getText("hero-subtitle2", globalConfig.organizationName)}
+              style={getTextStyle("hero-subtitle", { skipSize: true, skipColor: true, skipAlign: true })}
+            />
           </Wrap>
 
           {isVisible("hero-year-badge") && (
             <Wrap id="hero-year-badge">
-              <div className="gh-yearrow">
-                <span className="gh-sticker gh-sticker--paper gh-sticker--year"><Calendar size={18} /> {yearText}</span>
-              </div>
+              <HeroYearBadge text={yearText} />
             </Wrap>
           )}
 
           <div className="gh-cta">
             <Wrap id="voteCTA-button">
-              <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} />
+              <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
             </Wrap>
           </div>
-        </div>
 
-        {/* RIGHT — bento aside */}
-        <aside className="gh-aside">
-          <Wrap id="hero-countdown" className="gh-span2">
-            <div className="gh-span2"><GumroadCountdown systemMode={sysMode} /></div>
-          </Wrap>
+          {/* MOBILE-ONLY meet shortcut so the "ดูผู้สมัคร" action is visible above the
+              fold on phones (the editable meet-section is the tile below; this is a
+              plain duplicate link, no editor id, to avoid a second selectable element). */}
+          <a href={editorMode ? undefined : getPath("/candidates")} className="gh-meetbtn gh-meetbtn--m">
+            <span className="gh-meetbtn__q">{getText("meet-title", "รู้จักผู้สมัครของคุณหรือยัง?")}</span>
+            <span className="gh-meetbtn__go">ดูผู้สมัคร <ArrowRight size={20} strokeWidth={2.8} /></span>
+          </a>
+        </section>
 
-          <Wrap id="stats-voted-card">
-            <div className="gh-stat gh-stat--pink" data-element="stats-voted-card">
-              <div className="gh-stat__lbl"><CheckCircle2 size={14} /> ใช้สิทธิ์แล้ว · VOTED</div>
-              <div className="gh-stat__val">{rawStats.totalVoted.toLocaleString()}<span className="gh-stat__unit">คน</span></div>
-              <div className="gh-stat__sub">นักศึกษาที่ลงคะแนนแล้ว</div>
-              <svg className="gh-ekg" viewBox="0 0 200 60" stroke="#1A1A1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M0 30 L40 30 L48 30 L54 10 L62 50 L70 30 L100 30 L108 30 L116 18 L124 42 L132 30 L200 30" /></svg>
-            </div>
-          </Wrap>
+        {/* COUNTDOWN TILE (element) */}
+        <Wrap id="hero-countdown" className="gh-area-cd">
+          <div className="gh-area-cd"><HeroCountdown systemMode={sysMode} /></div>
+        </Wrap>
 
-          <Wrap id="stats-eligible-card">
-            <div className="gh-stat gh-stat--lime" data-element="stats-eligible-card">
-              <div className="gh-stat__lbl">ผู้มีสิทธิ์รวม · ELIGIBLE</div>
-              <div className="gh-stat__val">{rawStats.totalEligible.toLocaleString()}<span className="gh-stat__unit">คน</span></div>
-              <div className="gh-stat__sub">ความคืบหน้า · {pct}%</div>
-            </div>
-          </Wrap>
+        {/* VOTED TILE (element) */}
+        <Wrap id="stats-voted-card" className="gh-area-voted">
+          <div className="gh-area-voted"><StatsVoted voted={rawStats.totalVoted} /></div>
+        </Wrap>
 
-          <Wrap id="meet-section" className="gh-span2">
-            <a href={editorMode ? undefined : getPath("/candidates")} className="gh-meet gh-span2" data-element="meet-section">
-              <div>
-                <h3 className="gh-meet__title">{getText("meet-title", "รู้จักผู้สมัครของคุณหรือยัง?")}</h3>
-                <p className="gh-meet__sub">{partyCount} พรรคในปีนี้ · ดูวิสัยทัศน์ก่อนลงคะแนน</p>
-              </div>
-              <span className="gh-btn gh-btn--pink">ดูรายชื่อพรรค <ArrowRight size={16} /></span>
-            </a>
-          </Wrap>
-        </aside>
+        {/* ELIGIBLE TILE (element) */}
+        <Wrap id="stats-eligible-card" className="gh-area-elig">
+          <div className="gh-area-elig"><StatsEligible eligible={rawStats.totalEligible} pct={pct} /></div>
+        </Wrap>
+
+        {/* MEET TILE (element; desktop — hidden on mobile where the hero shortcut takes over) */}
+        <Wrap id="meet-section" className="gh-area-meet">
+          <div className="gh-area-meet">
+            <MeetSection href={editorMode ? undefined : getPath("/candidates")} title={getText("meet-title", "รู้จักผู้สมัครของคุณหรือยัง?")} partyCount={partyCount} />
+          </div>
+        </Wrap>
       </main>
 
-      {/* ── FOOTER ── */}
-      <footer className="gh-footer">
-        <div>© {facultyEn}@{uni} {copyrightYear} · ALL RIGHTS RESERVED</div>
-        <div className="gh-footer__edition"><span className="gh-star">★</span> ACTIVE PULSE EDITION <span className="gh-star">★</span></div>
-      </footer>
+      {/* ── FOOTER (element) ── */}
+      <SiteFooter faculty={facultyEn} uni={uni} year={copyrightYear} />
 
       <style jsx global>{`
         .gh-root {
-          --ink:#1A1A1A; --ink2:#4A4A4A; --cream:#FFF1E5; --cream2:#FFE4CE; --paper:#FFF;
-          --pink:#FF90E8; --lime:#B6FF6E; --yellow:#FFC900; --sky:#A8E1FF; --coral:#FF6E6E;
+          /* softer "ละมุน" palette: warm dark-olive ink (not pure black) +
+             slightly calmer pops, so borders/shadows/dark tiles read gentle. */
+          --ink:#26271c; --ink2:#5c5a4b; --cream:#FFF6EC; --cream2:#FFE9D6; --paper:#FFFDFA;
+          --pink:#FF9CE9; --lime:#C2F47E; --yellow:#FFD24D; --sky:#B6E6FF; --coral:#FF8A8A;
           --bw:2.5px; --sh:5px 5px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink); --sh-lg:8px 8px 0 var(--ink);
           --fd:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --fm:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace;
@@ -337,57 +282,37 @@ export default function GumroadHome({
           min-height:100vh; display:flex; flex-direction:column; color:var(--ink);
           font-family:var(--fb);
           container-type:inline-size; container-name:gh;
-          background:var(--cream);
-          background-image:
-            radial-gradient(circle at 12% 18%, #FFD1F2 0, transparent 38%),
-            radial-gradient(circle at 88% 8%, #DFFFC2 0, transparent 32%),
-            radial-gradient(circle at 92% 92%, #DCF2FF 0, transparent 38%);
-          background-attachment:fixed;
+          /* soft diagonal pastel wash (pink → cream → mint) — replaces the harsh
+             radial colour blobs with a gentle gradient. */
+          background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gh-root *{ box-sizing:border-box; }
         .gh-root a{ text-decoration:none; color:inherit; }
 
-        /* topbar */
-        .gh-topbar{ position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between;
-          gap:16px; padding:14px 32px; background:var(--cream); border-bottom:var(--bw) solid var(--ink); }
-        .gh-brand{ display:flex; align-items:center; gap:14px; flex-shrink:0; }
-        .gh-brand__badge{ width:auto; height:48px; object-fit:contain; }
-        .gh-brand__div{ width:2px; height:36px; background:var(--ink); display:inline-block; }
-        .gh-brand__word{ width:auto; height:34px; object-fit:contain; }
-        .gh-nav{ display:flex; align-items:center; gap:4px; }
-        .gh-navlink{ padding:8px 16px; border-radius:999px; font-weight:600; font-size:15px; border:2px solid transparent; transition:all .15s ease-out; white-space:nowrap; }
-        .gh-navlink:hover{ background:var(--paper); border-color:var(--ink); }
-        .gh-navlink.is-active{ background:var(--pink); border-color:var(--ink); box-shadow:var(--sh-sm); }
-        .gh-topbar__right{ display:flex; align-items:center; gap:12px; flex-shrink:0; }
+        /* topbar = shared <SiteNavbar> element (own scoped styles) */
 
-        /* buttons */
-        .gh-btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 20px; border:var(--bw) solid var(--ink);
-          border-radius:14px; background:var(--paper); color:var(--ink); font-weight:700; font-size:15px;
-          font-family:var(--fb); box-shadow:var(--sh-sm); cursor:pointer; white-space:nowrap;
-          transition:transform .12s ease-out, box-shadow .12s ease-out; }
-        .gh-btn:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
-        .gh-btn:active{ transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
-        .gh-btn--ink{ background:var(--ink); color:var(--cream); }
-        .gh-btn--pink{ background:var(--pink); }
-        .gh-btn--lime{ background:var(--lime); }
-        .gh-btn--lg{ padding:18px 28px; font-size:17px; border-radius:16px; box-shadow:var(--sh); }
-        .gh-btn--lg:hover{ transform:translate(-3px,-3px); box-shadow:var(--sh-lg); }
-
-        /* ticker */
-        .gh-ticker{ border-bottom:var(--bw) solid var(--ink); background:var(--ink); color:var(--cream);
-          overflow:hidden; white-space:nowrap; font-family:var(--fd); font-size:22px; letter-spacing:.02em; }
-        .gh-ticker__track{ display:inline-flex; align-items:center; gap:32px; padding:12px 0; animation:ghTicker 35s linear infinite; }
-        .gh-ticker__item{ display:inline-flex; align-items:center; gap:32px; }
-        @keyframes ghTicker{ 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-        .gh-dot{ width:12px; height:12px; background:var(--pink); border-radius:999px; display:inline-block; }
-
-        .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral); display:inline-block; box-shadow:0 0 0 0 rgba(255,110,110,.8); animation:ghPulse 1.6s ease-out infinite; }
-        @keyframes ghPulse{ 0%{box-shadow:0 0 0 0 rgba(255,110,110,.7)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
+        /* ticker = <HomeTicker> element (own scoped styles) */
 
         /* home grid */
-        .gh-home{ flex:1; width:100%; max-width:1500px; margin:0 auto; display:grid;
-          grid-template-columns:1.15fr 1fr; gap:56px; padding:48px 56px 80px; align-items:center; }
-        .gh-home__left{ position:relative; min-width:0; }
+        /* home — POSTER MOSAIC: interlocking chunky tiles fill the fold */
+        .gh-mosaic{ flex:1; width:100%; max-width:1280px; margin:0 auto;
+          padding:clamp(20px,3.4cqw,44px) clamp(16px,4cqw,48px) clamp(36px,5cqw,64px);
+          display:grid; gap:clamp(13px,1.7cqw,20px);
+          grid-template-columns:1.6fr 1fr 1fr;
+          grid-template-areas:
+            "hero cd    cd"
+            "hero voted elig"
+            "hero meet  meet"; }
+        .gh-area-hero{ grid-area:hero; } .gh-area-cd{ grid-area:cd; }
+        .gh-area-voted{ grid-area:voted; } .gh-area-elig{ grid-area:elig; } .gh-area-meet{ grid-area:meet; }
+
+        /* HERO TILE — the focal poster block */
+        .gh-hero{ display:flex; flex-direction:column; justify-content:center; gap:clamp(18px,2cqw,26px); min-width:0;
+          background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:var(--sh-lg);
+          padding:clamp(26px,3.2cqw,46px); }
+        .gh-hero__top{ display:flex; gap:11px; flex-wrap:wrap; align-items:center; }
+        /* tilts removed — clean aligned composition reads as more balanced */
+        .gh-rot-l, .gh-rot-r{ transform:none; }
 
         .gh-eyebrow{ display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
         .gh-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 14px; background:var(--paper);
@@ -395,86 +320,61 @@ export default function GumroadHome({
         .gh-sticker--lime{ background:var(--lime); }
         .gh-sticker--paper{ background:var(--paper); }
         .gh-sticker--rotate{ transform:rotate(-3deg); }
-        /* year badge — deliberately larger than the eyebrow stickers */
-        .gh-sticker--year{ font-size:17px; padding:10px 20px; border-radius:14px; box-shadow:var(--sh-sm); }
 
-        .gh-title{ font-family:var(--fd); font-size:clamp(64px,14cqw,200px); line-height:.85; letter-spacing:-.04em;
-          color:var(--ink); margin:0; text-transform:uppercase; }
-        .gh-title em{ font-style:normal; background:var(--pink); display:inline-block; padding:0 12px; margin:10px 0 0;
-          border:var(--bw) solid var(--ink); box-shadow:var(--sh); transform:rotate(-2deg); }
-        .gh-subtitle{ margin:28px 0 0; font-size:clamp(19px,2.6cqw,26px); font-weight:600; line-height:1.5; color:var(--ink); max-width:580px; }
-        .gh-hl{ background:var(--lime); padding:2px 8px; border-radius:4px; border:1.5px solid var(--ink); font-weight:700;
-          box-decoration-break:clone; -webkit-box-decoration-break:clone; }
-        /* line 1 — the punchy lead: big, heavy, in the bordered lime marker box */
-        .gh-subtitle__lead{ display:block; }
-        .gh-subtitle__lead .gh-hl{ font-size:clamp(20px,2.7cqw,27px); font-weight:800; letter-spacing:-.01em; }
-        /* line 2 — organisation: distinctly quieter — smaller, lighter, no box,
-           just a lime underline accent so the two lines read as different roles */
-        .gh-subtitle__org{ display:inline-block; margin-top:14px; font-size:clamp(14px,1.8cqw,18px);
-          font-weight:500; color:var(--ink); letter-spacing:.02em; border-bottom:3px solid var(--lime); padding-bottom:2px; }
-        .gh-yearrow{ margin-top:20px; }
-        .gh-cta{ margin-top:36px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+        /* hero title + subtitle + year-badge = library elements (own scoped styles) */
+        .gh-cta{ margin-top:8px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
 
-        /* bento aside */
-        .gh-aside{ display:grid; grid-template-columns:1fr 1fr; gap:20px; min-width:0; }
-        .gh-span2{ grid-column:1 / -1; }
-        .gh-cd{ background:var(--ink); color:var(--cream); border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh-lg); padding:22px 26px; }
-        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--fm); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.15em; color:var(--pink); }
-        .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px; }
-        .gh-cd__cell{ background:var(--cream); color:var(--ink); border-radius:12px; padding:10px 8px; text-align:center; }
-        .gh-cd__num{ font-family:var(--fd); font-size:clamp(26px,4.4cqw,44px); line-height:1; font-variant-numeric:tabular-nums; }
-        .gh-cd__unit{ font-family:var(--fm); font-size:11px; color:var(--ink2); margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
-
-        .gh-stat{ position:relative; overflow:hidden; border:var(--bw) solid var(--ink); border-radius:22px; padding:22px; box-shadow:var(--sh); }
-        .gh-stat--pink{ background:var(--pink); }
-        .gh-stat--lime{ background:var(--lime); }
-        .gh-stat__lbl{ display:flex; align-items:center; gap:6px; font-family:var(--fm); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.12em; }
-        .gh-stat__val{ font-family:var(--fd); font-size:clamp(34px,6cqw,56px); line-height:1; margin-top:8px; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
-        .gh-stat__unit{ font-size:20px; font-family:var(--fb); font-weight:600; margin-left:8px; }
-        .gh-stat__sub{ font-size:13px; margin-top:8px; font-weight:500; position:relative; z-index:1; }
-        .gh-ekg{ position:absolute; right:-12px; bottom:-10px; width:140px; opacity:.85; z-index:0; }
-
-        .gh-meet{ display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--paper);
-          border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh); padding:22px 26px;
+        /* meet — "dark + lime" CTA (variant 2): olive bar, small light question,
+           big lime "ดูผู้สมัคร →". Seen first in the hero (both PC + mobile). */
+        .gh-meetbtn{ display:flex; flex-direction:column; align-items:flex-start; gap:5px; width:100%;
+          background:var(--ink); border:var(--bw) solid var(--ink); border-radius:18px; box-shadow:5px 5px 0 rgba(38,39,28,.28); padding:16px 20px;
           transition:transform .12s ease-out, box-shadow .12s ease-out; }
-        .gh-meet:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh-lg); }
-        .gh-meet__title{ margin:0; font-size:22px; font-weight:700; }
-        .gh-meet__sub{ margin:4px 0 0; font-size:14px; color:var(--ink2); }
+        .gh-meetbtn:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
+        .gh-meetbtn__q{ font-size:clamp(12px,1.4cqw,13px); font-weight:600; color:#d8d4c6; }
+        .gh-meetbtn__go{ display:inline-flex; align-items:center; gap:9px; font-size:clamp(19px,2.2cqw,23px); font-weight:900; line-height:1.15; color:var(--lime); }
+        .gh-meetbtn:hover .gh-meetbtn__go svg{ transform:translateX(4px); }
+        .gh-meetbtn__go svg{ transition:transform .15s ease-out; }
+        .gh-meetbtn--m{ display:none; }  /* shown only on tablet/phone (see @container) */
 
-        /* footer */
-        .gh-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream);
-          display:flex; align-items:center; justify-content:space-between; gap:16px; font-family:var(--fm); font-size:13px; flex-wrap:wrap; }
-        .gh-footer__edition{ display:flex; gap:14px; align-items:center; }
-        .gh-star{ color:var(--pink); font-size:18px; }
+        /* mosaic tiles (countdown / stats / meet) = library elements (own scoped styles) */
+
+        /* footer = <SiteFooter> element (own scoped styles) */
 
         /* ── RESPONSIVE ── */
-        /* laptop / small desktop */
-        @container gh (max-width:1200px){
-          .gh-home{ gap:40px; padding:40px 40px 64px; }
-        }
-        /* tablet — single column, hide nav */
+        /* tablet — hero full width on top, mosaic reflows below; hide desktop nav */
         @container gh (max-width:980px){
-          .gh-home{ grid-template-columns:1fr; gap:36px; padding:32px 28px 60px; align-items:stretch; }
-          .gh-nav{ display:none; }
-          .gh-topbar{ padding:12px 20px; }
-          .gh-ticker{ font-size:18px; }
+          .gh-mosaic{ grid-template-columns:1fr 1fr; gap:14px;
+            grid-template-areas:
+              "hero  hero"
+              "cd    cd"
+              "voted elig"; }
+          .gh-area-meet{ display:none; }     /* tile hidden — hero shortcut covers it */
+          .gh-meetbtn--m{ display:flex; }     /* show the hero meet shortcut */
+          .gh-hero{ text-align:center; align-items:center; }
+          .gh-hero__top{ justify-content:center; }
+          .gh-subtitle{ margin-left:auto; margin-right:auto; }
+          .gh-cta{ justify-content:center; }
+          .gh-meetbtn{ justify-content:center; }
         }
-        /* phone */
+        /* phone — single column stack */
         @container gh (max-width:560px){
           .gh-hide-sm{ display:none; }
-          .gh-aside{ grid-template-columns:1fr; }
-          .gh-home{ padding:24px 16px 48px; }
-          .gh-topbar{ padding:10px 14px; }
-          .gh-brand__div, .gh-brand__word{ display:none; }
-          .gh-brand__badge{ height:40px; }
+          .gh-mosaic{ grid-template-columns:1fr; gap:13px; padding:20px 16px 44px;
+            grid-template-areas:
+              "hero"
+              "cd"
+              "voted"
+              "elig"; }
           .gh-cta{ flex-direction:column; align-items:stretch; }
           .gh-cta > *{ width:100%; justify-content:center; }
-          .gh-cd__num{ font-size:30px; }
+          /* the login-state CTA carries large config padding/font (good on desktop,
+             too tall on a phone where it also wraps) — trim it down here so it reads
+             as a normal-height button. Overriding the element's inline style needs
+             !important. */
+          .gh-cta .chunky-stamp-btn{ padding:13px 22px !important; font-size:16px !important; }
           .gh-footer{ flex-direction:column; gap:10px; text-align:center; }
         }
       `}</style>
     </div>
   );
 }
-
-function Dot() { return <span className="gh-dot" />; }

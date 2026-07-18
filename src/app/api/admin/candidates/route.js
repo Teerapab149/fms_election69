@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import crypto from "crypto";
+import { optimizeImage } from "../../../../lib/imageOptimize";
+import { adminGuard } from "../../../../lib/auth/adminCheck";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
@@ -56,48 +57,6 @@ async function deleteMultipleImageFiles(imageUrls) {
   }
 }
 
-const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
-  ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : null;
-
-function verifyAdminToken(request) {
-  const encryptedToken = request.headers.get('x-admin-token');
-  const now = Date.now();
-
-  if (!encryptedToken || !PRIVATE_KEY) {
-    return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
-  }
-
-  try {
-    const buffer = Buffer.from(encryptedToken, "base64");
-    const decryptedData = crypto.privateDecrypt(
-      {
-        key: PRIVATE_KEY,
-        padding: crypto.constants.RSA_PKCS1_PADDING,
-      },
-      buffer
-    );
-
-    const decryptedString = decryptedData.toString("utf8");
-    const [secret, timestamp] = decryptedString.split('|');
-
-    const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
-
-    if (secret !== EXPECTED_SECRET) {
-      return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
-    }
-
-    if (now - parseInt(timestamp) > 3600000) {
-      return NextResponse.json({ error: "Token Expired" }, { status: 403 });
-    }
-
-    return null;
-
-  } catch (decryptionError) {
-    console.error("Decryption failed:", decryptionError);
-    return NextResponse.json({ error: "Invalid Token Format" }, { status: 403 });
-  }
-}
 
 function getPositionPriority(position) {
   if (!position) return 999;
@@ -168,7 +127,7 @@ async function uploadLogo(file, candidateName) {
     const uploadDir = path.join(process.cwd(), "public/images/candidates/logo");
 
     if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 700, format: "keep" }));
 
     return `/images/candidates/logo/${fileName}`;
   }
@@ -186,7 +145,7 @@ async function uploadOfficialImage(file, candidateName) {
     const uploadDir = path.join(process.cwd(), "public/images/candidates/officialImageUrl");
 
     if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
 
     return `/images/candidates/officialImageUrl/${fileName}`;
   }
@@ -211,7 +170,7 @@ async function uploadMultipleMobileHeroImages(files, candidateName, candidateId)
 
       const fileName = `MOBILE_HERO_${safeName}_${Date.now()}_${i}.jpg`;
 
-      await writeFile(path.join(uploadDir, fileName), buffer);
+      await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1280, quality: 80 }));
       uploadedUrls.push(`/images/candidates/mobileheroimage/party${candidateId}/${fileName}`);
     }
   }
@@ -234,7 +193,7 @@ async function uploadMultipleGroupImages(files, candidateName, candidateId) {
 
       const fileName = `GROUP_${safeName}_${Date.now()}_${i}.jpg`;
 
-      await writeFile(path.join(uploadDir, fileName), buffer);
+      await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
       uploadedUrls.push(`/images/candidates/groupimage/party${candidateId}/${fileName}`);
     }
   }
@@ -257,7 +216,7 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
       await mkdir(uploadDir, { recursive: true });
     }
 
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 800, quality: 82 }));
     return `/images/members/${folderName}/${fileName}`;
   }
 
@@ -289,7 +248,7 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
       await mkdir(uploadDir, { recursive: true });
     }
 
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1000, quality: 82 }));
     return `/images/members/${folderName}/Modal/${fileName}`;
   }
 
@@ -306,7 +265,7 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
 
 // --- PUT (Update) ---
 export async function PUT(req) {
-  const authError = verifyAdminToken(req);
+  const authError = await adminGuard(req);
   if (authError) return authError;
   try {
     const { searchParams } = new URL(req.url);
@@ -320,6 +279,7 @@ export async function PUT(req) {
     if (formData.has("name")) dataToUpdate.name = formData.get("name");
     if (formData.has("number")) dataToUpdate.number = parseInt(formData.get("number"));
     if (formData.has("slogan")) dataToUpdate.slogan = formData.get("slogan");
+    if (formData.has("color")) dataToUpdate.color = formData.get("color") || null;
     if (formData.has("logoMeaning")) dataToUpdate.logoMeaning = formData.get("logoMeaning");
 
     if (formData.has("missions")) {
@@ -505,13 +465,14 @@ export async function PUT(req) {
 
 // --- POST (Create) ---
 export async function POST(req) {
-  const authError = verifyAdminToken(req);
+  const authError = await adminGuard(req);
   if (authError) return authError;
   try {
     const formData = await req.formData();
     const name = formData.get("name");
     const number = parseInt(formData.get("number"));
     const slogan = formData.get("slogan");
+    const color = formData.get("color") || null;
     const logoMeaning = formData.get("logoMeaning");
     const file = formData.get("file");
     const officialFile = formData.get("officialImage");
@@ -548,6 +509,7 @@ export async function POST(req) {
         name,
         number,
         slogan,
+        color,
         logoUrl,
         officialImageUrl,
         mobileHeroImage,
@@ -602,7 +564,7 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
-  const authError = verifyAdminToken(req);
+  const authError = await adminGuard(req);
   if (authError) return authError;
   let target_id = null;
   try {
@@ -617,14 +579,12 @@ export async function DELETE(req) {
     });
 
     await db.$transaction(async (tx) => {
-      await tx.user.updateMany({
-        where: { candidateId: target_id },
-        data: {
-          isVoted: false,
-          candidateId: null
-        }
-      });
-
+      // v2-SEC: ballots are anonymous + encrypted, so we can no longer identify
+      // (and un-vote) the users who chose this party — that link is gone by
+      // design. Deleting a party is therefore a PRE-ELECTION setup action; doing
+      // it after votes exist leaves this party's ballots orphaned in the box
+      // (they'd decrypt to a missing candidateId) and drops its score, which the
+      // chain audit will flag as ballots>score drift. The admin owns that choice.
       await tx.member.deleteMany({
         where: { candidateId: target_id }
       });

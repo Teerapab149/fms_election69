@@ -1,0 +1,97 @@
+// Shared MOCK data for the read-only template gallery preview
+// (/template-preview) and the interactive template playground
+// (/template-playground). One source so the two can't drift apart.
+//
+// Shaped for the REAL layout components (richer than editorDummyData —
+// members[]/policies[]/logoMeaning/groupImageUrls that the vote + party
+// pages consume). Pure presentation data; never touches the database.
+
+// real party-logo artwork (admin-uploaded style — opaque JPG, not the institutional
+// FMS mark) so the preview shows what an actual party logo looks like in the disc
+const PARTY_LOGOS = [
+  "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769963446319.jpg",
+  "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769902576579.jpg",
+];
+
+export const mkMembers = (n) =>
+  Array.from({ length: n }, (_, i) => ({
+    id: i + 1, number: i + 1, name: `สมาชิกพรรค คนที่ ${i + 1}`,
+    position: i === 0 ? "President" : i < 5 ? "Core Exec" : "Dept Head",
+    imageUrl: `/images/members/party_1/${(i % 9) + 1}.jpg`,
+  }));
+
+export const POLICIES = [
+  "ยกระดับโครงการรับน้องและกิจกรรมเปิดใหม่ ให้สะท้อนความหลากหลายของนักศึกษาในศตวรรษที่ 21",
+  "ส่งเสริมกิจกรรมความหลากหลาย เปิดโอกาสให้นักศึกษามีส่วนร่วม และเสริมสร้างศักยภาพผ่านชมรม",
+  "เปิดพื้นที่พบปะแลกเปลี่ยน เพื่อนำพาเยาวชนสู่อนาคตที่สดใสและเข้าใจซึ่งกันและกัน",
+  "สร้างเวทีสำหรับคนรุ่นใหม่ เพื่อความหลากหลายทางความคิด ให้เกิดการพัฒนาในทุกกิจกรรม",
+];
+
+export const MISSIONS = [
+  "รวมพลังความหลากหลายของนักศึกษาให้เป็นหนึ่งเดียว เพื่อขับเคลื่อนสโมสรนักศึกษา",
+  "สร้างความเปลี่ยนแปลงที่ยั่งยืนให้แก่คณะวิทยาการจัดการ รุ่นที่ 50",
+];
+
+export const mkParty = (i, name, slogan, color) => ({
+  id: i, number: i, name, slogan, color,
+  logoUrl: PARTY_LOGOS[(i - 1) % PARTY_LOGOS.length], groupImageUrls: ["/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg"], officialImageUrl: null, mobileHeroImage: null,
+  logoMeaning:
+    "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ",
+  missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
+});
+
+// Party presets — index 0/1 are the canonical default pair (makeParties(2) must stay
+// byte-identical to the old hardcoded PARTIES so the admin chooser slideshow never
+// drifts). 2..5 extend the roster for N>2 harness testing (?parties=N). Distinct
+// names/slogans/colours; preset[2] is a deliberately long name (~50 chars) to exercise
+// the clamp across vote row / candidates card / results row / confirm bar.
+const PARTY_PRESETS = [
+  { name: "The Unity Concord Of FMS 2", slogan: "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน", color: "#2D6CDF" },
+  { name: "พรรคก้าวไกลวิทยาการจัดการ", slogan: "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS", color: "#E0457B" },
+  { name: "พรรคพลังนักศึกษาวิทยาการจัดการเพื่อการพัฒนาที่ยั่งยืน", slogan: "รวมพลังทุกสาขา สร้างการเปลี่ยนแปลงที่จับต้องได้จริง", color: "#F59E0B" },
+  { name: "พรรคใจอาสา", slogan: "เสียงของนักศึกษา คือหัวใจของการทำงาน", color: "#10B981" },
+  { name: "พรรคเดินหน้า FMS", slogan: "โปร่งใส ตรวจสอบได้ ทุกงบประมาณกิจกรรม", color: "#8B5CF6" },
+  { name: "พรรคนวัตกรรมรุ่นใหม่", slogan: "เทคโนโลยีเพื่อชีวิตนักศึกษาที่ดีกว่าเดิม", color: "#EF4444" },
+];
+
+// makeParties(n) — n parties (n clamped by the caller). preset[i % len] cycles if a
+// caller ever exceeds the preset count; the harness caps n at 6 (= preset count).
+export const makeParties = (n) =>
+  Array.from({ length: n }, (_, i) => {
+    const p = PARTY_PRESETS[i % PARTY_PRESETS.length];
+    return mkParty(i + 1, p.name, p.slogan, p.color);
+  });
+
+export const PARTIES = makeParties(2);
+
+export const SPECIAL = {
+  abstain: { id: 998, number: 0, name: "งดออกเสียง" },
+  disapprove: { id: 999, number: -1, name: "ไม่รับรอง" },
+};
+
+export const DEMOGRAPHICS = {
+  totalEligible: 2004,
+  byYear: [
+    { name: "ปี 1", value: 145 }, { name: "ปี 2", value: 132 },
+    { name: "ปี 3", value: 118 }, { name: "ปี 4", value: 105 },
+  ],
+  byGender: [{ name: "หญิง", value: 266 }, { name: "ชาย", value: 234 }],
+  byMajor: [
+    { name: "บัญชี", value: 142 }, { name: "การเงิน", value: 98 },
+    { name: "การจัดการ", value: 87 }, { name: "การตลาด", value: 73 },
+    { name: "ระบบสารสนเทศ", value: 56 },
+  ],
+};
+
+// results candidates: revealed shows real scores; locked = all 0 (embargo).
+// Scores are a distinct descending ramp with a clear winner (preset[0]); scales with
+// the party count so ?parties=N produces a coherent standings board (abstain stays
+// last, id 998). N=2 → 312/245 + abstain 68 = byte-identical to the old default.
+const RESULT_SCORES = [312, 245, 189, 143, 96, 58];
+export const resultsCandidates = (revealed, parties = PARTIES) => [
+  ...parties.map((p, i) => ({
+    ...p,
+    score: revealed ? (RESULT_SCORES[i] ?? Math.max(20, 300 - i * 55)) : 0,
+  })),
+  { id: 998, number: 0, name: "งดออกเสียง", score: revealed ? 68 : 0 },
+];

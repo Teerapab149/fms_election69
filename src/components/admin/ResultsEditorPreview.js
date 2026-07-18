@@ -7,6 +7,9 @@ import ResultsStatsBar from '../ResultsStatsBar';
 import ResultsDemographics from '../ResultsDemographics';
 import SiteFooter from '../SiteFooter';
 import EditorElement from './editor/EditorElement';
+import GumroadResults from '../vote/GumroadResults';
+import StudioDarkResults from '../vote/StudioDarkResults';
+import VerdureResults from '../vote/VerdureResults';
 import {
   DUMMY_RESULTS_MULTI,
   DUMMY_RESULTS_SINGLE,
@@ -17,6 +20,8 @@ import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function ResultsEditorPreview({
   simMode = "multi",
+  revealed = true, // false → "ปิดผล" locked state (scores hidden, polls ongoing)
+  templateSlug = null,
   selectedElement = null,
   hoveredElement = null,
   onSelectElement = null,
@@ -30,10 +35,29 @@ export default function ResultsEditorPreview({
     : DUMMY_RESULTS_TOTALS.multi;
   const totalEligible = DUMMY_RESULTS_DEMOGRAPHICS.totalEligible;
 
-  const status = "ENDED";
-  const isRevealed = true;
-  const isEnded = true;
+  const status = revealed ? "ENDED" : "ONGOING";
+  const isRevealed = revealed;
+  const isEnded = revealed;
   const isNotStarted = false;
+
+  // Per-template layout: gumroad / studio-dark have their own results layouts.
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+    const ResultsLayout = templateSlug === 'studio-dark' ? StudioDarkResults
+      : templateSlug === 'verdure' ? VerdureResults : GumroadResults;
+    return (
+      <ResultsLayout
+        editorMode
+        candidates={candidates}
+        totalVotes={totalVotes}
+        demographics={DUMMY_RESULTS_DEMOGRAPHICS}
+        finalStatus={status}
+        isRevealed={isRevealed}
+        isNotStarted={isNotStarted}
+        countdownText=""
+        onSelectParty={() => {}}
+      />
+    );
+  }
 
   // Stable Wrap identity (see HomeContent): inline definition remounts the
   // wrapped subtree on every hover re-render → animation flicker.

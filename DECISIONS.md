@@ -1664,6 +1664,383 @@ system is for per-ELEMENT reuse across templates; the layout dispatcher is for p
 
 ---
 
+### P-LOG-074: [2026-06-26] Playwright `fill()` races a React controlled input → button stuck disabled
+**Context:** Standing up the Pillar-1 e2e net (`e2e/vote-flow`, `e2e/invariants`). The login
+helper used `input.fill(studentId)` then clicked "Mock Login". The button is
+`disabled={!mockStudentId.trim()}`; it stayed disabled through the whole timeout — the click
+never landed ("element is not enabled" on every retry).
+**Root cause:** `fill()` sets the value + dispatches one input event, but on a freshly-rendered
+controlled input it can land before/around React attaching its onChange, so `setMockStudentId`
+never fires and React's state stays `""`. Manually filling the same field via proper events
+DID enable the button — proving the page logic was fine, the test interaction was the bug.
+**Fix:** type with real keystrokes and gate the click on the enabled state:
+```js
+await input.click();
+await input.pressSequentially(studentId, { delay: 15 });
+await expect(submit).toBeEnabled();   // fails loudly here if a keystroke was missed
+await submit.click();
+```
+Also `goto(..., { waitUntil: 'networkidle' })` so hydration is settled first.
+**Rule:** For controlled inputs whose siblings react to their value (enable/disable, validation),
+prefer `pressSequentially` over `fill`, and assert the downstream state before acting on it.
+**Tags:** `#e2e` `#playwright` `#react-controlled-input` `#flaky-fix` `#test-net` `#pillar-1`
+
+### P-LOG-075: [2026-07-05] STUDIO-THEMES — Handoff palette-slot list ≠ what the layouts declare
+**Context:** Building `studioDarkPalettes.js`; the handoff said to take the slots from
+`builtIn/studio-dark.js` constants (9 slots).
+**Symptom:** (caught in Task-0, before any cost) with 9 slots the rail bg, faintest ink and
+strong hairline would have stayed base-lime on every colour variant.
+**Root cause:** builtIn Layer-1 tokens are a SUBSET of the vars the layout components actually
+declare — `--sd-bg-rail` / `--sd-ink-4` / `--sd-line-strong` exist only in the component
+`<style>` blocks, so a palette derived from builtIn misses them.
+**Fix:** Task-0 grep `--sd-.*:#` across src/components found all 4 declaration sites → real
+inventory = 12 slots.
+**Lesson:** Count palette slots from the var DECLARATION sites in the layouts, never from the
+builtIn token list.
+**Mitigation rule:** Before writing any `<family>Palettes.js`, run
+`grep -E "--<ns>-[a-z0-9-]+:" src/components` and paste the inventory into the report.
+**Tags:** `#palette` `#task0` `#single-source` `#theme-system`
+
+### P-LOG-076: [2026-07-06] TICKER-FIX — Conditionally rendering `<style jsx>` kills the whole module
+**Context:** PreviewMotionDamp needed an interact-only CSS exemption; first attempt was
+`{interact && <style jsx global>{...}</style>}`.
+**Symptom:** Next/SWC styled-jsx transform hard-fails the module ("Error: failed to process"),
+page dead, ~120 console errors buffered until rework.
+**Root cause:** the styled-jsx compiler must statically see every `<style jsx>` in the
+component; wrapping one in a conditional expression breaks its transform.
+**Fix:** conditional CSS goes in a plain `<style dangerouslySetInnerHTML={{ __html: css }}>`
+(same pattern the family homes use for token blocks); keep `<style jsx>` only for
+unconditional blocks.
+**Lesson:** `<style jsx>` must be rendered unconditionally; branch the CSS STRING, not the tag.
+**Tags:** `#styled-jsx` `#swc` `#next` `#preview`
+
+### P-LOG-077: [2026-07-06] SINGLE-VOTE — var(--color-*) inside a portal is silently dead
+**Context:** Theming the cinematic single-vote page (renders via createPortal outside `.fms-app`).
+**Symptom:** DISCOVER OUR VISION button rendered a fully transparent gradient on EVERY theme
+including flagship — unnoticed since the tokenization arc (673eef4 fixed the ramp but portal
+content still had 10 `var(--color-*)` uses).
+**Root cause:** Layer-1 `--color-*` tokens are scoped to `.fms-app`; portal content mounts on
+`document.body`, so those vars compute to empty → Tailwind gradient/text utilities produce
+nothing, silently.
+**Fix:** portal content reads the `--spv-*` ramp (emitted at `:root` for exactly this reason);
+never emit Layer-1 at `:root` (global leak).
+**Lesson:** inside any createPortal subtree, `var(--color-*)` is a bug by construction.
+**Mitigation rule:** when touching a portal component, `grep -n "var(--color-" <file>` must
+return 0 hits; use/extend the :root ramp instead.
+**Tags:** `#portal` `#css-vars` `#token-scope` `#single-vote`
+
+### P-LOG-078: [2026-07-11] BLOSSOM — a backtick in a comment inside a `<style jsx>` template literal ends the whole string
+**Context:** Authoring BlossomHome's large `<style jsx global>{` … `}</style>` block; a CSS
+comment inside it referred to a code token written in backticks.
+**Symptom:** SWC/styled-jsx parse-fails the ENTIRE module (the template string closed early at
+the stray backtick, so the rest was parsed as JS) — every rule after the comment vanished and the
+page went dead. Same failure surface as P-LOG-076.
+**Root cause:** the styled-jsx block is a JS template literal delimited by backticks; a `` ` ``
+anywhere inside it — including inside a `/* … */` CSS comment — terminates the literal. Comments
+are still INSIDE the string as far as the JS lexer is concerned.
+**Fix:** never put a backtick in ANY comment (CSS `/* */` or otherwise) inside a template literal;
+write the token in plain words, or move the note to a normal `//` JS comment outside the block.
+**Lesson:** inside a template-literal `<style jsx>`, the only safe backtick is the closing one.
+**Mitigation rule:** before saving a styled-jsx block, scan its comments for a stray `` ` ``.
+**Tags:** `#styled-jsx` `#swc` `#template-literal` `#blossom`
+
+### P-LOG-079: [2026-07-11] BLOSSOM — a bare `a{}` element rule in a scoped root beats every link class
+**Context:** Porting the Blossom mockup's global link reset (`.bl-root a { color… }`) into the
+home's styled-jsx; per-link classes (.bl-cta, .bl-nav__link, .bl-go, …) each set their own colour.
+**Symptom:** every link rendered the reset colour — .bl-cta / .bl-nav__link colours were
+overridden even though a class "should" outrank an element selector.
+**Root cause:** styled-jsx appends a scoping attribute to each selector, so `.bl-root a` compiles to
+`.bl-root a[data-…]` = specificity (0,2,1), HIGHER than a single class (0,1,0); it also sits earlier
+in source but wins on specificity regardless. The element reset outranks the component classes.
+**Fix:** wrap the scope-root element selector in `:where()` — `:where(.bl-root) a { … }` — which
+forces its specificity to 0, so any per-link class always wins (see BlossomHome.js ~L440).
+**Lesson:** a template-wide element reset (`a{}`, `h2{}`) inside a scoped root must be
+`:where()`-wrapped, or it silently outranks the very classes it is meant to defer to.
+**Mitigation rule:** any bare element selector under a scope root (`.ns-root a`, `.ns-root h2`, …)
+in styled-jsx should be written `:where(.ns-root) el`.
+**Tags:** `#styled-jsx` `#specificity` `#where` `#blossom`
+
+### P-LOG-080: [2026-07-12] Browser-pane frozen transitions poison computed-style reads
+**Context:** Verifying Blossom candidates page colours via getComputedStyle in the dev-machine
+Browser pane (which is throttled + forces prefers-reduced-motion).
+**Symptom:** elements with `transition: background …` report their transition START value
+forever (e.g. CTA pill read `rgba(0,0,0,0)` instead of its real bg); a CSSTransition sits at
+`playState:"running", currentTime:0` and never advances. Looks exactly like a token bug.
+**Root cause:** pane throttling freezes the transition timeline at t=0; getComputedStyle then
+returns the interpolated (start) value, not the author value.
+**Fix/Verification rule:** before reading computed colours on this machine, disable transitions
+on the element (`el.style.transition='none'` + reflow) or assert against CSSOM rules; also
+remember scroll-driven animations can't be sampled here (verify via CSS.supports + CSSOM +
+a standalone `new ScrollTimeline()` resolve; defer live-motion to a no-preference machine).
+**Tags:** `#verification` `#browser-pane` `#transitions` `#computed-styles`
+
+---
+
+### P-LOG-081: [2026-07-12] Fully-unstyled page in pane = check chunk 404 before blaming code (or the pane)
+**Context:** Verifying Blossom results (T3.5) — page text/DOM correct but screenshot showed a
+raw-HTML render (giant logo, no styles) and getComputedStyle returned browser defaults everywhere.
+**Symptom:** styled-jsx block absent from DOM, recharts SVGs = 0, yet SSR markup complete and
+console clean. Looks like P-LOG-080 or a component bug; it is neither.
+**Root cause:** `.next` manifest race (Rule 7 quirk) — `_next/static/chunks/app/<route>/page.js`
+returned 404 on every load, so hydration never ran: no client-injected styled-jsx, no
+ResponsiveContainer measurement. SSR HTML still renders, which masks the failure.
+**Fix/Verification rule:** when a page looks unstyled in the pane, read network requests FIRST
+and look for a 404 on the route's page chunk. If found → Rule 7 recovery (stop server, clear
+`.next`, restart, wait 15-20s). Touching the file to force HMR does NOT heal a stale manifest.
+**Tags:** `#verification` `#browser-pane` `#manifest-race` `#hydration`
+
+---
+
+### P-LOG-082: [2026-07-12] Programmatic .click() → wait 2 rAF before reading computed state
+**Context:** Verifying BlossomVote's selected-row styles (T3.2) by dispatching `.click()` from
+javascript_tool, then immediately calling getComputedStyle.
+**Symptom:** the read reflects the PRE-update DOM — the `is-selected` class isn't applied yet,
+so colours/borders look "broken" even though the UI is correct.
+**Root cause:** React processes the state update and re-renders on the next tick; a synchronous
+read after a programmatic click races the render.
+**Fix/Verification rule:** after any programmatic interaction, await two nested
+`requestAnimationFrame`s (or a short timeout) before reading classes/computed styles.
+Complements P-LOG-080 (disable transitions first).
+**Tags:** `#verification` `#browser-pane` `#react` `#computed-styles`
+
+---
+
+### P-LOG-083: [2026-07-12] Playground sandbox bar intercepts pointer clicks on fixed bottom bars
+**Context:** P4 — verifying the blossom flow inside /template-playground with Playwright.
+**Symptom:** Playwright pointer-clicks on buttons inside a page's fixed BOTTOM confirm bar
+time out / hit the wrong element, even though the button is visible.
+**Root cause:** the playground's floating sandbox bar sits at z-index 100000 (bottom-right)
+and overlaps fixed bottom-bar buttons at common viewport sizes — the pointer event lands
+on the sandbox bar, not the page's button.
+**Fix/Verification rule:** when driving pages INSIDE the playground, use DOM `.click()`
+(dispatches straight to the handler) for anything in a fixed bottom bar, or collapse the
+sandbox bar first. Pointer-clicks stay reliable on /template-preview (no sandbox bar).
+**Tags:** `#verification` `#playwright` `#template-playground` `#z-index`
+
+### P-LOG-084: [2026-07-12] A negative-z child paints ABOVE its own element's background
+**Context:** Receipt R1 — a CTA button with a holographic-foil *rim*: `.cta` (accent fill) with
+a `.rc-foil` child set `position:absolute; inset:-2px; z-index:-1` meant to peek out as a foil
+edge behind the button.
+**Symptom:** the CTA rendered as a low-contrast foil-filled block, not an accent fill with a
+foil rim — the foil covered the button's own background.
+**Root cause:** CSS paint order — an element's own background paints at the very bottom of its
+stacking context; a child with `z-index:-1` still paints ABOVE the parent's background (it is
+only below the parent's *content*, in front of the parent's bg). So the foil overlay hid the
+accent fill.
+**Fix:** layer explicitly — foil rim child `z-index:0`, an accent-fill `::before` at `z-index:1`,
+label wrapper at `z-index:2`. The `::before` fill sits over the foil, the label over the fill,
+the foil only shows in the `inset:-2px` rim.
+**Lesson:** for a foil/gradient *rim* (or any "peek behind" edge), don't rely on negative-z over
+the element's own background — use a z-indexed `::before` fill + wrapped content, so the overlay
+is the RIM not the whole face.
+**Tags:** `#css` `#stacking-context` `#paint-order` `#receipt`
+
+### P-LOG-085: [2026-07-13] Interact-mode vote branches must precede the classic vote catch-all
+**Context:** Receipt R5 — template-preview `renderInteractive()` has a generic
+`if (page === 'vote')` classic catch-all. Receipt's single/multi vote branches were added
+BELOW it (R3), so in interact mode receipt vote silently rendered the classic MultiPartyView.
+The STATIC `renderPage()` had the correct ordering — only interact was wrong, so static
+slides looked fine and the bug hid until full-flow click-through.
+**Fix:** relocated the receipt vote branches above the catch-all (net-zero move) + ordering
+comments at both sites.
+**Lesson:** a family with its own vote layout must place its interact vote branches BEFORE
+the generic classic catch-all in `renderInteractive()` — and verify BOTH render paths
+(static + interact) per family, because they dispatch independently.
+**Tags:** `#template-preview` `#dispatch-order` `#receipt` `#interact`
+
+### P-LOG-086: [2026-07-13] Torn-paper (irregular tear) is banned in this election context
+**Context:** Receipt R4 — owner mockup showed a ragged torn-edge reveal; owner then asked
+whether torn paper hurts credibility on an election site.
+**Decision (design rule, permanent):** irregular torn edges collide with the Thai image of
+"ฉีกบัตรเลือกตั้ง" (a crime + protest symbol) and damage-metaphors erode perceived integrity
+on civic/transactional surfaces. The family's tear language is PERFORATION-ONLY (receipt
+torn off a roll, perf lines, die-cut) — intentional, controlled separation.
+**Tags:** `#design-rule` `#receipt` `#credibility` `#thai-context`
+
+### P-LOG-087: [2026-07-14] Backtick inside a CSS comment kills the styled-jsx template literal
+**Context:** v2-R1 — CSS comments like `/* the `from` state */` inside `<style jsx global>{`...`}`.
+**Symptom:** the backtick in the comment terminates the JS template literal → cryptic
+syntax error far from the real cause. Bit the worker twice in one session.
+**Lesson:** never use backticks anywhere inside a styled-jsx template literal, including
+CSS comments. Quote names with '...' or nothing.
+**Tags:** `#styled-jsx` `#template-literal` `#receipt`
+
+### P-LOG-088: [2026-07-14] Full-page metaphor ≠ better metaphor (tape-spine over-application)
+**Context:** v2-R1 put ALL home content on one long receipt roll; owner: "หนักข้างทันที"
+and receipt everywhere dilutes the real receipt on success.
+**Lesson:** a material metaphor earns its place per OBJECT, not per page. One material,
+one role: receipt = clock (home) + the vote receipt (success). When a concept sounds
+strong, apply it to the smallest element that carries the story before scaling up.
+**Tags:** `#design-rule` `#receipt` `#composition`
+
+### P-LOG-089: [2026-07-15] Scatter-overlap zones need content clearance insets
+**Context:** v2-R3b — desk-scatter composition overlaps a rail over a receipt strip's
+edge by 34px. The winner stamp (absolute, right-anchored) and the index directory's
+arrows sat inside the overlapped band → visually buried under the rail. DOM probes
+passed (elements exist, no overflow); only screenshot review caught it.
+**Lesson:** whenever two layers deliberately overlap by N px, every absolutely-placed
+marker or right-aligned content inside the overlapped edge must be inset by ≥N at the
+same breakpoint — and overlap compositions MUST be verified by pixels, not DOM probes.
+**Tags:** `#layout` `#overlap` `#receipt` `#verification`
+
+### P-LOG-090: [2026-07-15] Font-override leaf utilities must be !important in this family
+**Context:** v2-R3c mono sweep — `.rc-th { font-family:var(--rc-fr) }` utility left 5
+residual hits because compound descendant rules like `.rc-res-root .rc-donut__c span`
+(specificity 0,2,1) silently out-specify a plain class utility (0,2,0).
+**Lesson:** leaf utilities that override inherited/element-targeted font rules in the
+receipt family need `!important` (same pattern as the reduced-motion nuke) — and any
+"swept to zero" claim must be re-probed at RUNTIME, not assumed from the source edit.
+**Tags:** `#css-specificity` `#styled-jsx` `#receipt`
+
+### P-LOG-091: [2026-07-16] prisma migrate dev demands a reset when the DB drifted via db push
+**Context:** v2-SEC migration — the dev DB had been advanced with `db push`, so its state
+was ahead of the 4 committed migrations; `prisma migrate dev` insisted on a full reset
+(would wipe the 500-voter dev DB).
+**Fix:** hand-write the migration SQL → `prisma db execute --file` → `prisma migrate
+resolve --applied <name>` → `prisma generate`. `migrate status` then reports clean, and
+prod (`migrate deploy`) runs the same file normally.
+**Lesson:** never accept a reset to land one migration on a drifted dev DB; execute +
+resolve preserves data and keeps history honest.
+**Tags:** `#prisma` `#migration` `#dev-db`
+
+### P-LOG-092: [2026-07-16] getComputedStyle serializes color-mix as color(srgb …/a), not rgba()
+**Context:** v2-R5b banding probe — a regex matching only `rgba?(…)` grabbed the
+`transparent` stop of a `color-mix(… 3%, transparent)` value (alpha 0) and falsely
+reported "banding 0%"; the real computed value serializes as CSS Color 4
+`color(srgb .1098 .0941 .0824 / 0.03)`.
+**Lesson:** probes that read opacity/colour out of `color-mix()` must parse the
+`color(srgb … / a)` form (or dump the raw string), never assume `rgba()`.
+**Tags:** `#probe` `#css-color-4` `#verify`
+
+### P-LOG-093: [2026-07-16] Relabel sweeps must grep the whole file, comments included
+**Context:** v2-R4d — after relabelling the party "วิสัยทัศน์" JSX headings to
+ความหมายสัญลักษณ์, stale VISION references survived in top-of-file structure
+comments and a CSS section comment; only the grep=0 gate caught them.
+**Lesson:** a lying label in a comment outlives a JSX-only edit and misleads the
+next reader — every relabel ticket needs a whole-file grep gate on the old term.
+**Tags:** `#copy-sweep` `#comments` `#verify`
+
+### P-LOG-094: [2026-07-16] Thai status-word dedup checks must count meanings, not substrings
+**Context:** v2-R5c dedupe gate — counting raw occurrences of "ปิดโหวต" false-positives
+on the WAITING state because ปิดโหวต is a substring of เ**ปิดโหวต**ในอีก.
+**Lesson:** dedup probes for Thai status copy must evaluate per rendered element with
+its semantic pair (which meaning does this node express?), never raw string counts —
+Thai has no word boundaries for a regex to anchor on.
+**Tags:** `#thai-copy` `#probe` `#verify`
+
+### P-LOG-095: [2026-07-16] election-switch snapshot restore is not durable across candidate deletions
+**Context:** v2-R4a e2e — `.specs/election-switch.js restore` failed because its saved
+snapshot referenced candidate id=8, deleted from the dev DB since the snapshot was taken.
+**Lesson:** DB snapshots keyed to candidate ids rot when candidates are deleted; e2e
+that needs a multi-party state must create its own temp candidate and remove it after,
+never rely on restoring an old snapshot.
+**Tags:** `#e2e` `#dev-db` `#tooling`
+
+### P-LOG-098: [2026-07-17] Chart cell fills and custom legend swatches are parallel maps — recolour both
+**Context:** v2-R6 donut recolour — cells moved from the CHART ramp to a new DONUT
+ramp; the custom legend swatches were a separate `.map()` still reading CHART and
+silently desynced from the recoloured cells.
+**Lesson:** when recolouring recharts cells, grep the same component for the
+legend/label map and update it in lockstep; verify by comparing computed legend
+background to cell fill.
+**Tags:** `#recharts` `#receipt` `#verify`
+
+---
+
+### P-LOG-096: [2026-07-17] TZ correctness must be proven on epochs — rendered strings can hide a compensating parse bug
+**Context:** ADM-2 — the old code parsed schedule strings in host-local TZ AND formatted
+with host-local getHours(). On a Docker/UTC host both errors shifted +7h and cancelled:
+the displayed time "08.30 น." looked right while the actual open/close instants were
+7 hours late (the prime suspect for "ระบบไม่เปิดตามเวลา" last year).
+**Lesson:** A display-only spot check passes while schedule logic is broken. Verify TZ
+fixes by comparing epoch/getTime() across `TZ=UTC` vs `TZ=Asia/Bangkok` runs, and only
+then compare rendered strings for byte-fidelity.
+**Tags:** `#timezone` `#verification` `#deploy`
+
+---
+
+### P-LOG-097: [2026-07-17] When hoisting a helper out of an inner function, re-check every free variable's scope
+**Context:** v2-R5g — `partsTo(target)` was hoisted from `tick()` into the effect body
+but still referenced `now` (block-scoped inside `tick()`). The ReferenceError surfaced
+as a React render error pointing at the component line, not the throwing line, and only
+in the two states that called the helper — reading like a harness/mock issue.
+**Lesson:** After extracting a helper during a refactor, pass every formerly-in-scope
+variable explicitly as a parameter; a throw inside a useEffect body reports at a
+misleading location.
+**Tags:** `#react` `#refactor` `#debugging`
+
+---
+
+### P-LOG-099: [2026-07-18] Ballot party names must never clamp to one line
+**Context:** v2-R8 mobile ballot compaction — a worker shortened rows by clamping the
+party name to 1 line ("พรรคก้าว…" / "The Unity…"). On a ballot two parties can share a
+prefix; a truncated name makes choices indistinguishable at the moment of voting.
+**Lesson:** Compact ballot rows by folding secondary lines (slogan, team count — both
+one tap away in details), never the name. The name keeps its 2-line clamp at full
+column width; readability of the choice outranks row height.
+**Tags:** `#mobile` `#ballot` `#ux`
+
+---
+
+### P-LOG-100: [2026-07-18] template-preview's classic candidates/results are static EditorPreviews
+**Context:** v2-R9 `?parties=N` harness — every family reflects the mock roster except
+classic/original candidates + results, which render `CandidatesEditorPreview` /
+`ResultsEditorPreview` with their own internal 2-party dummy data and ignore mock props.
+**Lesson:** Harness work that varies mock data does not reach those two classic pages;
+verifying them needs the real components (`MultiPartyView` renders real; the other two
+don't). Wire the real components first if classic must be exercised.
+**Tags:** `#harness` `#template-preview` `#classic`
+
+---
+
+### P-LOG-101: [2026-07-18] A family root's `a{color:inherit}` reset silently beats single-class button colour modifiers
+**Context:** v2-R10 sweep — GumroadClosed's CTA `.gcl-btn--ink` (specificity 0,1,0)
+lost to `.gcl-root a{color:inherit}` (0,1,1) and rendered ink-on-ink (invisible
+label). It hid for weeks because the session path renders a `<button>` (unaffected);
+only the no-session `<a>` path lost the cascade.
+**Lesson:** When a template root declares a broad anchor colour reset, every colour
+modifier that can land on an `<a>` must be scoped under the root
+(`.root .btn--x`, 0,2,0) so it wins. Audit both element flavours of dual
+`<a>`/`<button>` CTAs — they cascade differently.
+**Tags:** `#css` `#specificity` `#template`
+
+---
+
+### P-LOG-102: [2026-07-18] Migration history must be re-proven on a fresh DB after any `prisma db push` era
+**Context:** Committed migrations no longer reproduced the live schema — 24
+columns across 4 tables (SystemConfig.systemMode/googleFormUrl/pageLayout/
+themeConfig/globalConfig, User.isFormCompleted/isAdmin/…, Candidate template
+columns, Member.number/…) existed on dev only via `prisma db push`. A fresh
+`migrate deploy` (the documented DEPLOY-CHECKLIST-2026.md path) built a DB the
+app cannot run on. Found while building the v2-R11 e2e test DB.
+**Fix:** `prisma migrate diff --from-migrations prisma/migrations
+--to-schema-datamodel prisma/schema.prisma --script` → committed as
+`20260718180000_catchup_db_push_drift` (afc9e08). Verified twice on scratch DBs:
+full 7-migration chain `migrate deploy` on a fresh DB → `migrate diff
+--from-url <scratch> --to-schema-datamodel prisma/schema.prisma` =
+"No difference detected". Dev DB marks it applied via `migrate resolve --applied`.
+**Lesson:** `db push` is fine for prototyping but silently forks history from
+reality. Before any deploy-readiness claim, prove `migrate deploy` on a scratch
+DB and diff against schema.prisma — the dev DB working proves nothing about a
+fresh install. e2e globalSetup can now switch from `db push` back to
+`migrate deploy` (optional follow-up).
+**Tags:** `#prisma` `#migrations` `#deploy` `#drift`
+
+---
+
+### P-LOG-103: [2026-07-18] `next start` force-overrides NODE_ENV — dev-only providers never register on a prod-build test server
+**Context:** v2-R11 first live e2e run — global.setup spawned `next start` with
+`NODE_ENV=development` hoping to enable the mock-login NextAuth provider (gated
+on `NODE_ENV !== "production"`). Next force-sets production; sign-in silently
+bounced back to /login and 7/9 tests failed at the same waitForURL.
+**Lesson:** Never gate test-only server behaviour on NODE_ENV when the server
+under test is a prod build. Gate on an explicit opt-in a real deployment cannot
+satisfy — here `E2E_MOCK_LOGIN=true` **AND** a DATABASE_URL whose db name ends
+with `_e2e` (dual condition, both required — src/lib/auth.js).
+**Tags:** `#e2e` `#nextjs` `#auth`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

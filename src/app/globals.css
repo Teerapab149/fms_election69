@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* a11y: honour the OS "reduce motion" setting site-wide. Collapse LOOPING /
+   autoplay motion (marquees, pulses, spinners, cinematic intros — all `animation`)
+   so it doesn't move for motion-sensitive users. !important so it wins over each
+   component's <style jsx global>.
+   NOTE: we intentionally DO NOT collapse `transition-duration`. Brief, user-
+   initiated hover/focus transitions (colour change, subtle lift) are not a
+   motion-sickness trigger, and killing them made every button hover snap "stiff"
+   instead of gliding (it overrode the templates' hover micro-interactions). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  /* Product call: decorative marquees are exempt from the PRM freeze (studio-dark's
+     framer marquee already ignores PRM on live) — the rest of the site still honours it. */
+  .gtick__track {
+    animation: gtickMove 35s linear infinite !important;
+  }
+}
+
 html,
 body {
   height: 100%;

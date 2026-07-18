@@ -2,6 +2,7 @@
 
 import { Calendar } from "lucide-react";
 import CountdownTimer from "../CountdownTimer";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // HeroBlock — SAMO 49 headline + countdown + year badge
 // config props: showCountdown (bool), showStatusBadge (bool)
@@ -9,6 +10,8 @@ import CountdownTimer from "../CountdownTimer";
 export default function HeroBlock({ config = {}, data = {} }) {
   const { showCountdown = true, showStatusBadge = true } = config;
   const { initialData } = data;
+  const globalConfig = useGlobalConfig();
+  const academicYearTh = globalConfig?.academicYearTh ?? 2569;
 
   return (
     <div className="w-full text-center lg:text-left space-y-4 pt-8 md:pt-10 pb-0 animate-fade-in-up">
@@ -51,7 +54,7 @@ export default function HeroBlock({ config = {}, data = {} }) {
           <div className="flex justify-center lg:justify-start pt-1">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-purple-50 text-[#8A2680] border border-purple-200 text-xs md:text-sm font-bold shadow-sm">
               <Calendar className="w-3.5 h-3.5" />
-              ประจำปีการศึกษา 2569
+              ประจำปีการศึกษา {academicYearTh}
             </span>
           </div>
         )}

@@ -8,8 +8,6 @@ services:
       args:
         - BASE_PATH=${BASE_PATH}
         - ASSET_PREFIX=${ASSET_PREFIX}
-        - NEXT_PUBLIC_ADMIN_PUBLIC_KEY=${NEXT_PUBLIC_ADMIN_PUBLIC_KEY}
-        - NEXT_PUBLIC_ADMIN_AUTH_SECRET=${NEXT_PUBLIC_ADMIN_AUTH_SECRET}
     container_name: fms-election-web
     restart: always
     ports:
@@ -32,13 +30,12 @@ services:
       # Database
       - DATABASE_URL=${DATABASE_URL}
 
-      # Secrets
+      # Secrets — admin auth is the signed admin_token JWT cookie (P0-1).
+      # NEXT_PUBLIC_ADMIN_* + the RSA ADMIN_PRIVATE_KEY/ADMIN_AUTH_SECRET pair are
+      # no longer used by the app; remove from .env after rotating (see runbook).
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - ADMIN_PRIVATE_KEY=${ADMIN_PRIVATE_KEY}
-      - NEXT_PUBLIC_ADMIN_PUBLIC_KEY=${NEXT_PUBLIC_ADMIN_PUBLIC_KEY}
-      - ADMIN_AUTH_SECRET=${ADMIN_AUTH_SECRET}
-      - NEXT_PUBLIC_ADMIN_AUTH_SECRET=${NEXT_PUBLIC_ADMIN_AUTH_SECRET}
       - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
+      - ADMIN_PASSWORD_AUTH_EXTRA=${ADMIN_PASSWORD_AUTH_EXTRA}
 
     command: node --security-revert=CVE-2023-46809 server.js
 

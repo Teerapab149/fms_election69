@@ -1,52 +1,32 @@
 /**
- * Admin auth check helper for Template-system API routes.
+ * Admin auth check helpers for ALL admin API routes (P0-1, 2026-06-10).
  *
- * Accepts ADMIN role, STAFF role, or legacy isAdmin=true.
- * Phase 5+ will add role hierarchy and granular permissions.
- *
- * Auth bridge (Phase 3 Day 2B):
- *   1. Try NextAuth session (PSU SSO admins)
- *   2. Fall back to legacy x-admin-token RSA header (admins logged in via
- *      /admin/login dedicated page)
- *   Either path grants admin access.
+ * Accepts ADMIN role, STAFF role, or isAdmin=true via either:
+ *   1. NextAuth session (PSU SSO admins/staff)
+ *   2. The signed `admin_token` JWT cookie from /api/admin/login
+ * Phase 5+ may add role hierarchy and granular permissions.
  */
 
-import crypto from "crypto";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth.js";
-
-const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
-  ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, "\n")
-  : null;
-
-function verifyLegacyAdminToken(request) {
-  const encryptedToken = request?.headers?.get?.("x-admin-token");
-  if (!encryptedToken || !PRIVATE_KEY) return false;
-
-  try {
-    const buffer = Buffer.from(encryptedToken, "base64");
-    const decrypted = crypto.privateDecrypt(
-      { key: PRIVATE_KEY, padding: crypto.constants.RSA_PKCS1_PADDING },
-      buffer
-    );
-    const [secret, timestamp] = decrypted.toString("utf8").split("|");
-    const expected = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
-    if (secret !== expected) return false;
-    if (Date.now() - parseInt(timestamp, 10) > 3600000) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { verifyAdminCookie } from "./verifyAdminJwt.js";
 
 /**
- * Require authenticated admin user.
+ * Require authenticated admin user. Two accepted identities:
+ *   1. NextAuth SSO session whose DB role is ADMIN/STAFF (or isAdmin flag) —
+ *      PSU staff path.
+ *   2. The `admin_token` JWT cookie from /api/admin/login (bcrypt + signed,
+ *      ADMIN_JWT_SECRET) — the dedicated admin-login path (dev admin uses this).
  *
- * @param {Request} [request] - optional Next.js request, enables x-admin-token fallback
- * @returns { ok: true, user } on success
- * @returns { ok: false, status, error } on failure
+ * The old client-minted `x-admin-token` (RSA-wrapped NEXT_PUBLIC secret) path
+ * was REMOVED — the secret shipped in the public bundle, so anyone could forge it.
+ *
+ * @param {Request} request - Next.js request (needed for the cookie path)
+ * @returns { ok: true, user } | { ok: false, status, error }
  */
 export async function requireAdmin(request) {
+  // 1) NextAuth SSO session (PSU staff)
   let session;
   try {
     session = await getServerSession(authOptions);
@@ -56,32 +36,22 @@ export async function requireAdmin(request) {
   }
 
   if (session?.user) {
-    const role = session.user.role || session.user.token?.role;
+    const role = session.user.role;
     const isAdmin = session.user.isAdmin === true;
-    const studentId = session.user.studentId || session.user.token?.studentId;
-
-    const hasAdminAccess =
-      role === "ADMIN" ||
-      role === "STAFF" ||
-      isAdmin === true;
-
-    if (hasAdminAccess) {
+    if (role === "ADMIN" || role === "STAFF" || isAdmin) {
       return {
         ok: true,
-        user: {
-          id: session.user.id || session.user.token?.id,
-          studentId,
-          role,
-          isAdmin
-        }
+        user: { id: session.user.id, studentId: session.user.studentId, role, isAdmin: true },
       };
     }
   }
 
-  if (request && verifyLegacyAdminToken(request)) {
+  // 2) Dedicated /admin/login JWT cookie
+  const payload = verifyAdminCookie(request);
+  if (payload) {
     return {
       ok: true,
-      user: { id: null, studentId: null, role: "ADMIN", isAdmin: true, legacyToken: true }
+      user: { id: payload.sub, studentId: payload.studentId || null, role: payload.role || "ADMIN", isAdmin: true, viaCookie: true },
     };
   }
 
@@ -89,6 +59,18 @@ export async function requireAdmin(request) {
     return { ok: false, status: 401, error: "Not authenticated" };
   }
   return { ok: false, status: 403, error: "Admin access required" };
+}
+
+/**
+ * Route-handler guard. Returns a NextResponse to `return` on failure, or null
+ * when the caller is an admin. Drop-in for the legacy pattern:
+ *   const authError = await adminGuard(request);
+ *   if (authError) return authError;
+ */
+export async function adminGuard(request) {
+  const auth = await requireAdmin(request);
+  if (auth.ok) return null;
+  return NextResponse.json({ error: auth.error }, { status: auth.status });
 }
 
 /**

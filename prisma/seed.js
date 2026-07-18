@@ -1,9 +1,24 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs'); // Import bcryptjs
+const { loadEnv } = require('../scripts/lib/loadEnv');
+const { encryptBallot } = require('../src/lib/ballotCrypto');
+const { appendBallotTx, hourBucketBangkok } = require('../src/lib/ballotChain');
+
+loadEnv();
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Start seeding...');
+
+  // v2-SEC: seeded ballots must be chained EXACTLY like real ones (same helper),
+  // so the ballot-crypto env must be present or reconcile/verify would diverge.
+  const publicKeyPem = process.env.ELECTION_BALLOT_PUBLIC_KEY;
+  const chainSecret = process.env.BALLOT_CHAIN_SECRET;
+  if (!publicKeyPem || !chainSecret) {
+    throw new Error(
+      'Seeding needs ELECTION_BALLOT_PUBLIC_KEY + BALLOT_CHAIN_SECRET (run scripts/generate-election-keys.js and set them in .env).'
+    );
+  }
 
   // 1. ล้างข้อมูลเก่า
   try {
@@ -12,6 +27,9 @@ async function main() {
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Member" RESTART IDENTITY CASCADE;`);
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "User" RESTART IDENTITY CASCADE;`);
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Candidate" RESTART IDENTITY CASCADE;`);
+    // v2-SEC: empty the ballot box + reset the chain to genesis so the seeded
+    // ballots form a fresh, self-consistent chain (score == ballots == voted).
+    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Ballot" RESTART IDENTITY CASCADE;`);
     console.log('🧹 Database cleaned');
   } catch (error) {
     console.log('⚠️ Truncate failed, using deleteMany...');
@@ -19,7 +37,14 @@ async function main() {
     await prisma.member.deleteMany();
     await prisma.user.deleteMany();
     await prisma.candidate.deleteMany();
+    await prisma.ballot.deleteMany();
   }
+  // Reset the chain tip to genesis (idempotent — table may be empty in dev).
+  await prisma.chainHead.upsert({
+    where: { id: 1 },
+    update: { head: 'GENESIS', seq: 0 },
+    create: { id: 1, head: 'GENESIS', seq: 0 },
+  });
 
   // 2. สร้าง SystemConfig (สำคัญมาก! ระบบต้องมี ID=1 เสมอ)
   await prisma.systemConfig.create({
@@ -233,17 +258,10 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
 
     const isVoted = Math.random() < 0.8;
     let votedCandidateId = null;
-
     if (isVoted) {
       // สุ่มโหวตให้ Candidate ที่สร้างไว้จริง (รวมทั้ง No Vote/Vote No)
       const randomCandidate = createdCandidates[Math.floor(Math.random() * createdCandidates.length)];
       votedCandidateId = randomCandidate.id;
-
-      // อัปเดตคะแนน
-      await prisma.candidate.update({
-        where: { id: votedCandidateId },
-        data: { score: { increment: 1 } }
-      });
     }
 
     // กำหนดคำนำหน้าชื่อ
@@ -252,6 +270,8 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
     // Mapping YearStatus
     const yearStatusMap = { 'ปี 1': '1', 'ปี 2': '2', 'ปี 3': '3', 'ปี 4': '4' };
     const yearStatus = yearStatusMap[randomYear] || '1';
+
+    const votedAt = isVoted ? new Date() : null;
 
     await prisma.user.create({
       data: {
@@ -270,10 +290,25 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
         subMajorNameThai: selectedMajor.name,// ชื่อภาษาไทย
 
         isVoted: isVoted,
-        candidateId: votedCandidateId,
+        votedAt: votedAt,
         isAdmin: false
       }
     });
+
+    // v2-SEC: append the anonymous, encrypted, chained ballot through the SAME
+    // helper the vote route uses, and tally the score — in one transaction, so
+    // #ballots == sum(score) == #voted stays exact for reconcile/verify.
+    if (isVoted) {
+      const payload = encryptBallot(votedCandidateId, publicKeyPem);
+      const hourBucket = hourBucketBangkok(votedAt.getTime());
+      await prisma.$transaction(async (tx) => {
+        await appendBallotTx(tx, { payload, hourBucket, chainSecret });
+        await tx.candidate.update({
+          where: { id: votedCandidateId },
+          data: { score: { increment: 1 } },
+        });
+      });
+    }
   }
   console.log(`✅ 500 Voters created.`);
 
@@ -300,7 +335,7 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
         email: '6610510149@email.psu.ac.th',
         gender: 'M', major: 'BIS', year: 'ปี 3',
         yearStatus: '3',
-        isVoted: false, candidateId: null,
+        isVoted: false,
         role: 'ADMIN',
         isAdmin: true,
         passwordHash: adminPasswordHash1,
@@ -311,7 +346,7 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
         email: '6610510129@email.psu.ac.th',
         gender: 'F', major: 'BIS', year: 'ปี 3',
         yearStatus: '3',
-        isVoted: false, candidateId: null,
+        isVoted: false,
         role: 'ADMIN',
         isAdmin: true,
         passwordHash: adminPasswordHash2,

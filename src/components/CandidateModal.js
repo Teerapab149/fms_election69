@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2 } from 'lucide-react';
-import { ELECTION_CONFIG, ELECTION_YEAR, ELECTION_SLOGAN } from '../utils/electionConfig';
+import { ELECTION_CONFIG, ELECTION_SLOGAN } from '../utils/electionConfig';
 import SimpleLightbox from './vote/SimpleLightbox';
 import { getPath } from '../utils/basePath';
+import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 
 export default function CandidateModal({ member, onClose }) {
+  const globalConfig = useGlobalConfig();
+  const electionYear = globalConfig?.electionCalendarYear ?? 2026;
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [displayImage, setDisplayImage] = useState(member?.modalImageUrl || member?.imageUrl);
 
@@ -131,7 +134,7 @@ export default function CandidateModal({ member, onClose }) {
             {/* Footer Watermark */}
             <div className="mt-10 flex items-center space-x-3 text-white/20 text-[10px] font-bold tracking-[0.2em] uppercase">
               <div className="h-[1px] w-6 bg-white/20" />
-              <span>FMS Election {ELECTION_YEAR}</span>
+              <span>FMS Election {electionYear}</span>
             </div>
           </motion.div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
@@ -9,9 +10,14 @@ import { Loader2, Sparkles } from 'lucide-react';
 // Components
 import Navbar from '../../components/Navbar';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
+import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
 import GumroadVote from '../../components/vote/GumroadVote';
+import StudioDarkVote from '../../components/vote/StudioDarkVote';
+import VerdureVote from '../../components/vote/VerdureVote';
+import BlossomVote from '../../components/vote/BlossomVote';
+import ReceiptVote, { useBallotDrop, ReceiptConfirmSlip } from '../../components/vote/ReceiptVote';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -34,6 +40,7 @@ export default function VotePage() {
     handleSelectParty,
     submitVote
   } = useVoteSystem();
+  const router = useRouter();
   const handleSingleSelect = (id) => {
     handleSelectParty(id);
   };
@@ -45,10 +52,20 @@ export default function VotePage() {
   // ✅ Prevent double click during redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  // Receipt-only "หย่อนบัตร" scene (ruling C3). The overlay + controller live in
+  // ReceiptVote; here we only orchestrate it around the awaited submit for the receipt
+  // branch. Hook is unconditional (Rules of Hooks); sceneNode is rendered only when the
+  // active template is receipt, so every other family is byte-unaffected.
+  const { playDrop, sceneNode } = useBallotDrop();
+
   // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
   const [voteConfig, setVoteConfig] = useState({});
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // Gate render until the template is known — otherwise the classic layout (with
+  // its own cinematic AutoIntro) flashes for a frame before the real template
+  // resolves, looking like a stray "old intro".
+  const [templateReady, setTemplateReady] = useState(false);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -65,12 +82,24 @@ export default function VotePage() {
         }
       } catch (e) {
         console.warn('Failed to fetch page layout, using defaults');
+      } finally {
+        setTemplateReady(true);
       }
     };
     fetchConfig();
   }, []);
 
-  const isGumroad = activeTemplateId === 'gumroad';
+  const isGumroad = activeTemplateId?.startsWith('gumroad');
+  const isStudio = activeTemplateId?.startsWith('studio-dark');
+  const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
+  // Blossom Candy Editorial ballot — MULTI (T3.2) + SINGLE booth (T3.3). BlossomVote
+  // dispatches internally to BlossomSingleParty when isSingleParty.
+  const useBlossomVote = isBlossom;
+  // Receipt "Paper Materiality" ballot — MULTI sheet + SINGLE ink-stamp booth (R3).
+  // ReceiptVote dispatches internally to ReceiptSingleParty when isSingleParty.
+  const useReceiptVote = isReceipt;
 
   // --- Handlers ---
   const handleViewDetails = (party) => {
@@ -89,33 +118,102 @@ export default function VotePage() {
   const onConfirmVote = async () => {
     if (isRedirecting) return; // 🔒 Guard
 
+    // Receipt family: play the "หย่อนบัตร" scene AROUND the awaited submit (ruling
+    // C3). playDrop starts the ~900ms fold+drop overlay, fires submitVote() in parallel,
+    // HOLDS the final frame until it resolves, then returns the result — the vote is
+    // NEVER coupled to the animation (reduced-motion / JS-fail skip the scene but still
+    // await the submit). On failure the ballot bounces back and submitVote's own alert
+    // is the error. The receipt confirm slip is closed first (multi) so the scene is
+    // unobstructed. Every other family keeps its original hard-nav path.
+    if (isReceipt) {
+      setIsConfirmModalOpen(false);
+      const success = await playDrop(submitVote);
+      if (success) {
+        setIsRedirecting(true); // 🔒 Lock UI
+        // Receipt keeps a SOFT router.push purely for UX: the drop scene holds its
+        // final frame and a soft transition lets success mount without a full-page
+        // flash. This is NOT a secrecy mechanism anymore — since v2-R4a the success
+        // receipt shows only the voter's own identity (never any choice), so a hard
+        // reload of /success is equally safe.
+        router.push("/success");
+      }
+      return;
+    }
+
     const success = await submitVote();
     if (success) {
       setIsRedirecting(true); // 🔒 Lock UI
       setIsConfirmModalOpen(false)
+      // Every non-receipt family keeps its hard-nav redirect.
       window.location.href = getPath("/success");
     };
   };
 
 
   // --- Render ---
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FD]">
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#8A2680]/20 to-purple-500/20 rounded-full blur-xl animate-pulse" />
-          <Loader2 className="relative w-12 h-12 text-[var(--color-primary)] animate-spin mb-4" />
-        </div>
-        <p className="text-slate-500 font-semibold animate-pulse mt-4">กำลังตรวจสอบสิทธิ์...</p>
-      </div>
-    );
+  if (isLoading || !templateReady) {
+    return <ThemedLoadingScreen text="กำลังตรวจสอบสิทธิ์..." />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[#F8F9FD]">
+    <div className={isStudio
+      ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
+      : isVerdure
+      ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#E7F1E2]"
+      : useBlossomVote || useReceiptVote
+      ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative"
+      : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[var(--color-bg)]"}>
       <PageThemeOverrides page="vote" />
 
-      {isGumroad ? (
+      {useReceiptVote ? (
+        <ReceiptVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : useBlossomVote ? (
+        <BlossomVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : isVerdure ? (
+        <VerdureVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : isStudio ? (
+        <StudioDarkVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : isGumroad ? (
         <GumroadVote
           regularParties={regularParties}
           specialOptions={specialOptions}
@@ -131,14 +229,16 @@ export default function VotePage() {
        <>
       {!isSingleParty && (
         <>
-          {/* Background decoration — fixed, behind everything */}
+          {/* Full-bleed themed background — grid texture + soft corner blobs, same
+              language as the other pages (candidates/results/closed). */}
           <div className="fixed inset-0 z-0 pointer-events-none">
-            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:30px_30px] md:bg-[size:40px_40px]"></div>
+            <div className="absolute top-[-10%] right-[-5%] w-[60%] md:w-[40%] h-[40%] rounded-full blur-[80px] md:blur-[120px]"
+              style={{ background: 'linear-gradient(to bottom right, color-mix(in srgb, var(--color-primary) 12%, transparent), color-mix(in srgb, var(--color-accent) 12%, transparent))' }} />
+            <div className="absolute bottom-[-5%] left-[-5%] w-[50%] md:w-[35%] h-[35%] rounded-full blur-[80px] md:blur-[120px]"
+              style={{ background: 'linear-gradient(to top right, color-mix(in srgb, var(--color-accent) 10%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent))' }} />
+            <div className="absolute inset-0"
+              style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
           </div>
-
-          {/* Navbar */}
           <div className="relative z-50">
             <Navbar />
           </div>
@@ -171,8 +271,8 @@ export default function VotePage() {
         selectedParty={selectedParty}
         isSubmitting={isSubmitting || isRedirecting} // ✅ Disable when redirecting too
         variant={isSingleParty ? "single" : "multi"}
-        partyPrimary={regularParties?.[0]?.themePrimary || "#4D2A67"}
-        partyGold={regularParties?.[0]?.themeGold || "#CDA176"}
+        partyPrimary={regularParties?.[0]?.themePrimary || (isSingleParty ? "var(--spv-footer-primary, #4D2A67)" : "#4D2A67")}
+        partyGold={regularParties?.[0]?.themeGold || (isSingleParty ? "var(--spv-footer-gold, #CDA176)" : "#CDA176")}
         onConfirm={
           isSingleParty
             ? onConfirmVote              // ✅ single: กดใน footer modal แล้วค่อย submitVote
@@ -182,6 +282,10 @@ export default function VotePage() {
        </>
       )}
 
+      {/* Receipt-only ballot-drop scene overlay (ruling C3). Client-only; renders inert
+          until playDrop runs. Never mounted for other families. */}
+      {isReceipt && sceneNode}
+
       {/* Modals */}
       <PartyDetailModal
         party={partyForModal}
@@ -190,7 +294,22 @@ export default function VotePage() {
         showVoteButton={false}
       />
 
-      {!isSingleParty && (
+      {/* Receipt family gets its OWN paper confirm slip (v2-R4a T4) — same open/
+          confirm/cancel semantics; the shared VoteConfirmationModal below stays
+          byte-untouched for every other family. */}
+      {!isSingleParty && isReceipt && (
+        <ReceiptConfirmSlip
+          isOpen={isConfirmModalOpen}
+          onClose={() => setIsConfirmModalOpen(false)}
+          onConfirm={onConfirmVote}
+          party={selectedParty}
+          isVoteNo={selectedParty?.number === 0}
+          isDisapprove={selectedParty?.number === -1}
+          isSubmitting={isSubmitting || isRedirecting}
+        />
+      )}
+
+      {!isSingleParty && !isReceipt && (
         <VoteConfirmationModal
           isOpen={isConfirmModalOpen}
           onClose={() => setIsConfirmModalOpen(false)}

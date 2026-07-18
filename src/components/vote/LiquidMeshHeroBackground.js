@@ -77,7 +77,7 @@ export default function LiquidMeshHeroBackground({
     () => [
       {
         id: "cyan",
-        color: "rgba(165, 243, 252, 0.85)", // #A5F3FC
+        color: "var(--spv-mesh1, rgba(165, 243, 252, 0.85))", // #A5F3FC
         base: { x: "15%", y: "20%" },
         size: "520px",
         z: 1,
@@ -87,7 +87,7 @@ export default function LiquidMeshHeroBackground({
       },
       {
         id: "lavender",
-        color: "rgba(233, 213, 255, 0.85)", // #E9D5FF
+        color: "var(--spv-mesh2, rgba(233, 213, 255, 0.85))", // #E9D5FF
         base: { x: "70%", y: "18%" },
         size: "560px",
         z: 2,
@@ -97,7 +97,7 @@ export default function LiquidMeshHeroBackground({
       },
       {
         id: "pink",
-        color: "rgba(251, 207, 232, 0.80)", // #FBCFE8
+        color: "var(--spv-mesh3, rgba(251, 207, 232, 0.80))", // #FBCFE8
         base: { x: "75%", y: "70%" },
         size: "600px",
         z: 3,
@@ -117,7 +117,7 @@ export default function LiquidMeshHeroBackground({
       },
       {
         id: "mix",
-        color: "rgba(221, 214, 254, 0.55)", // gentle lavender-white mix
+        color: "var(--spv-mesh-mix, rgba(221, 214, 254, 0.55))", // gentle lavender-white mix
         base: { x: "48%", y: "45%" },
         size: "720px",
         z: 4,
@@ -145,9 +145,9 @@ export default function LiquidMeshHeroBackground({
         className="pointer-events-none absolute inset-0 -z-20"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-[#f6fbff]" />
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_20%_10%,rgba(165,243,252,0.55),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(1100px_circle_at_80%_15%,rgba(233,213,255,0.55),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_70%_80%,rgba(251,207,232,0.50),transparent_60%)]" />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(1200px circle at 20% 10%, var(--spv-mesh1, rgba(165,243,252,0.55)), transparent 60%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(1100px circle at 80% 15%, var(--spv-mesh2, rgba(233,213,255,0.55)), transparent 60%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(1200px circle at 70% 80%, var(--spv-mesh3, rgba(251,207,232,0.50)), transparent 60%)" }} />
       </div>
 
       {/* Liquid blobs layer */}
@@ -177,7 +177,7 @@ export default function LiquidMeshHeroBackground({
 
         {/* Soft “mesh” enhancer (cheap): a faint conic wash */}
         <div className="pointer-events-none absolute inset-0 opacity-60">
-          <div className="absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(165,243,252,0.18),rgba(233,213,255,0.18),rgba(251,207,232,0.18),rgba(255,255,255,0.18),rgba(165,243,252,0.18))]" />
+          <div className="absolute inset-0" style={{ background: "conic-gradient(from 180deg at 50% 50%, var(--spv-mesh1, rgba(165,243,252,0.18)), var(--spv-mesh2, rgba(233,213,255,0.18)), var(--spv-mesh3, rgba(251,207,232,0.18)), rgba(255,255,255,0.18), var(--spv-mesh1, rgba(165,243,252,0.18)))" }} />
         </div>
       </div>
 

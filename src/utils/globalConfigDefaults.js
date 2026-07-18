@@ -45,7 +45,7 @@ export const GLOBAL_CONFIG_FIELDS = [
   {
     group: "ข้อมูลโครงการ",
     fields: [
-      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร" },
+      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", multiline: true, hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร · กด Enter เพื่อขึ้นบรรทัดใหม่เอง" },
       { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", hint: "เช่น คณะกรรมการบริหาร" },
     ],
   },
@@ -57,6 +57,14 @@ export const GLOBAL_CONFIG_FIELDS = [
       { key: "facultyName", label: "ชื่อคณะ", type: "text", hint: "เช่น คณะวิทยาการจัดการ" },
       { key: "facultyShortEn", label: "ชื่อคณะ (อักษรย่อ EN)", type: "text", hint: "เช่น FMS" },
       { key: "university", label: "มหาวิทยาลัย", type: "text", hint: "เช่น PSU" },
+    ],
+  },
+  {
+    group: "ช่วงเวลาเลือกตั้ง (Election Schedule)",
+    fields: [
+      { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร (Campaign)", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
+      { key: "electionStartAt", label: "เปิดหีบ / เริ่มลงคะแนน", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
+      { key: "electionEndAt", label: "ปิดหีบ / สิ้นสุดลงคะแนน", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
     ],
   },
   {

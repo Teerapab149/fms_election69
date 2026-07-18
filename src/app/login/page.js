@@ -7,11 +7,17 @@ import Navbar from "../../components/Navbar";
 import { Loader2, AlertCircle, LogIn, ShieldCheck, FlaskConical } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import SiteFooter from "../../components/SiteFooter";
+import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
+import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
+import StudioDarkLogin from "../../components/login/StudioDarkLogin";
+import VerdureLogin from "../../components/login/VerdureLogin";
+import GumroadLogin from "../../components/login/GumroadLogin";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams(); // ดึงค่าจาก URL
   const { data: session, status } = useSession();
+  const activeTemplateId = useActiveTemplateId();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -72,12 +78,27 @@ export default function LoginPage() {
   };
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin" />
-      </div>
-    );
+    return <ThemedLoadingScreen text="กำลังตรวจสอบเซสชัน..." />;
   }
+
+  // Theme the login to the active template (studio-dark / gumroad have their own
+  // looks; classic is the default below). Logic stays here — the template
+  // components are presentational and share these props.
+  const templateLoginProps = {
+    error,
+    loading,
+    onLogin: handleLogin,
+    showMock: process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true",
+    mockStudentId,
+    setMockStudentId,
+    mockLoading,
+    onMockLogin: handleMockLogin,
+    onBack: () => router.push("/"),
+    onAdmin: () => router.push("/admin"),
+  };
+  if (activeTemplateId?.startsWith("studio-dark")) return <StudioDarkLogin {...templateLoginProps} />;
+  if (activeTemplateId?.startsWith("gumroad")) return <GumroadLogin {...templateLoginProps} />;
+  if (activeTemplateId?.startsWith("verdure")) return <VerdureLogin {...templateLoginProps} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">

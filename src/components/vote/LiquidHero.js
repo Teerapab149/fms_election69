@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import SmartImage from "../SmartImage";
 import { getPath } from "../../utils/basePath";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // Throttle helper
 const throttle = (fn, ms) => {
@@ -119,6 +120,8 @@ const generateMobileGridPositions = (count) => {
 
 
 export const LiquidHero = ({ children, className, members = [], isActive = false }) => {
+    const globalConfig = useGlobalConfig();
+    const estdYear = globalConfig?.electionCalendarYear ?? 2026;
     const containerRef = useRef(null);
     const [mounted, setMounted] = useState(false);
     const [showMembers, setShowMembers] = useState(false);
@@ -235,19 +238,19 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
             <div
                 ref={containerRef}
                 className={cn(
-                    "relative w-full h-screen overflow-hidden bg-[#F5F5F7] flex items-center justify-center isolate font-sans",
+                    "relative w-full h-screen overflow-hidden bg-[var(--spv-page-bg)] transition-colors duration-300 ease-in-out flex items-center justify-center isolate font-sans",
                     className
                 )}
             >
                 {/* 1. LAYER: DESIGNER GRID */}
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <div className="absolute inset-0 opacity-[0.08]"
-                        style={{ backgroundImage: `linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)`, backgroundSize: '80px 80px' }}
+                        style={{ backgroundImage: `linear-gradient(var(--spv-grid, #1a1a1a) 1px, transparent 1px), linear-gradient(90deg, var(--spv-grid, #1a1a1a) 1px, transparent 1px)`, backgroundSize: '80px 80px' }}
                     />
                     <div className="absolute top-[20%] left-[20%] w-4 h-4 border-l border-t border-black/20" />
                     <div className="absolute bottom-[20%] right-[20%] w-4 h-4 border-r border-b border-black/20" />
                     <div className="absolute top-8 left-8 text-[10px] font-mono text-black/30 tracking-[0.3em]">SYSTEM_READY // FMS ELECTION</div>
-                    <div className="absolute bottom-8 right-8 text-[10px] font-mono text-black/30 tracking-[0.3em] text-right">SCROLL_TO_VOTE <br /> [ESTD. 2026]</div>
+                    <div className="absolute bottom-8 right-8 text-[10px] font-mono text-black/30 tracking-[0.3em] text-right">SCROLL_TO_VOTE <br /> [ESTD. {estdYear}]</div>
                 </div>
 
                 {/* 2. LAYER: THE REVEAL */}
@@ -256,7 +259,7 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
                         className="absolute inset-0 z-10 pointer-events-none"
                         style={{ maskImage: maskImageValue, WebkitMaskImage: maskImageValue }}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#2E1065] via-[#7e22ce] to-[#ec4899] opacity-90" />
+                        <div className="absolute inset-0 opacity-90" style={{ background: "linear-gradient(to bottom right, var(--spv-hero-a, #2E1065), var(--spv-hero-b, #7e22ce), var(--spv-hero-c, #ec4899))" }} />
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay" />
 
                         <div className="absolute inset-0 flex flex-col items-center justify-center select-none overflow-hidden">
@@ -348,7 +351,7 @@ function DesktopFloatingMember({ member, springX, springY }) {
                         </div>
                     )}
                     <div className="absolute bottom-0 inset-x-0 bg-black/80 backdrop-blur-md py-2 px-3 border-t border-white/10">
-                        <p className="text-[8px] text-[#FFD700] font-mono leading-none tracking-widest mb-1">{member.position}</p>
+                        <p className="text-[8px] text-[var(--spv-member-gold)] font-mono leading-none tracking-widest mb-1">{member.position}</p>
                         <p className="text-[10px] text-white font-bold leading-none truncate">{member.name}</p>
                     </div>
                 </div>
@@ -398,7 +401,7 @@ function MobileFloatingMember({ member }) {
                     {/* Simplified/Removed Label for Micro-View if needed, or keep tiny */}
                     {/* For 50px width, text might be unreadable. Let's hide text or make it tiny dots? */}
                     {/* User didn't ask to remove text, but visual noise might be high. Let's keep a tiny bar. */}
-                    <div className="absolute bottom-0 inset-x-0 h-1 bg-[#FFD700]/80" />
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-[color-mix(in_srgb,var(--spv-member-gold)_80%,transparent)]" />
                 </div>
             </div>
         </div>

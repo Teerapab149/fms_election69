@@ -102,6 +102,7 @@ export default function PropertyPanel({
   selectedElement,
   elementConfigs,
   pageLayout,
+  resolvedTemplate,
   onUpdateConfig,
   onApplyPreset,
   onDeselect,
@@ -130,7 +131,7 @@ export default function PropertyPanel({
   const variantPickerEl = selectedElement ? (
     <VariantPicker
       elementId={selectedElement}
-      currentVariant={elementVariants?.[selectedElement]}
+      currentVariant={elementVariants?.[selectedElement] ?? resolvedTemplate?.elements?.[selectedElement]?.variant}
       isOverridden={!!elementVariants && selectedElement in elementVariants}
       onSelect={(variantId) => onSetVariant?.(selectedElement, variantId)}
       onReset={() => onResetVariant?.(selectedElement)}
@@ -205,6 +206,7 @@ export default function PropertyPanel({
           <StatefulGallery
             elementId={selectedElement}
             sourceTemplate={sourceTemplate}
+            resolvedTemplate={resolvedTemplate}
             elementOverrides={elementOverrides}
             onUpdateOverride={(stateId, key, value) => {
               onUpdateStatefulOverride?.(selectedElement, stateId, key, value);

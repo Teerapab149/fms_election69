@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
+import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import ResultCard from "../../components/ResultCard";
 import PartyDetailModal from "../../components/PartyDetailModal";
 import ResultsStatsBar from "../../components/ResultsStatsBar";
 import ResultsDemographics from "../../components/ResultsDemographics";
 import SiteFooter from "../../components/SiteFooter";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
-import { ELECTION_CONFIG } from "../../utils/electionConfig";
+import GumroadResults from "../../components/vote/GumroadResults";
+import StudioDarkResults from "../../components/vote/StudioDarkResults";
+import VerdureResults from "../../components/vote/VerdureResults";
+import BlossomResults from "../../components/vote/BlossomResults";
+import ReceiptResults from "../../components/vote/ReceiptResults";
+import { resolveElectionDates } from "../../utils/electionConfig";
 import { getPath } from "../../utils/basePath";
+import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 
 import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
@@ -20,6 +27,12 @@ export default function ResultsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
+  // dates-to-admin: resolve effective election dates (admin-set in globalConfig, else
+  // electionConfig.js defaults). Shadows the old static import so existing refs work.
+  const ELECTION_CONFIG = useMemo(
+    () => resolveElectionDates(globalConfig),
+    [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
+  );
 
   // ✅ 1. State สำหรับระบบความปลอดภัย (Logic ที่เพิ่มเข้ามา)
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -45,6 +58,22 @@ export default function ResultsPage() {
   const [selectedParty, setSelectedParty] = useState(null);
   const [isRevealed, setIsRevealed] = useState(false); // ✅ สถานะบังคับเปิดเผยข้อมูล
 
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [templateReady, setTemplateReady] = useState(false);
+  useEffect(() => {
+    fetch(getPath('/api/admin/page-layout'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .catch(() => {})
+      .finally(() => setTemplateReady(true));
+  }, []);
+  const isGumroad = activeTemplateId?.startsWith('gumroad');
+  const isStudio = activeTemplateId?.startsWith('studio-dark');
+  const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
+
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
   // ==========================================
@@ -55,10 +84,8 @@ export default function ResultsPage() {
         const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
         // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
-        const resStatus = await fetch(getPath(`/api/check-status?t=${Date.now()}`)); // Add timestamp to prevent caching
-        if (!resStatus.ok) throw new Error("Failed to fetch system status");
-
-        const statusData = await resStatus.json();
+        // Shared cached fetch (no-store under the hood — replaces the ?t= cache-bust).
+        const statusData = await fetchVoteStatus();
 
         const isSystemClosed = statusData.systemMode === "PAUSE";
         const isManualEnd = statusData.systemMode === "ENDED";
@@ -109,10 +136,9 @@ export default function ResultsPage() {
             return;
           }
 
-          // เช็คสถานะส่วนตัวอีกรอบ (พร้อม studentId)
-          const resUser = await fetch(getPath(`/api/check-status?studentId=${session?.user?.studentId}&t=${Date.now()}`));
-          if (!resUser.ok) throw new Error("Failed to fetch user status");
-          const userData = await resUser.json();
+          // เช็คสถานะส่วนตัว — same endpoint; the shared cache makes this free
+          // (the server reads isVoted from the verified session, not a param).
+          const userData = await fetchVoteStatus();
 
           // ถ้ายังไม่โหวต -> ห้ามเข้า (ต้องไปโหวตก่อน)
           if (!userData.isVoted) {
@@ -316,42 +342,126 @@ export default function ResultsPage() {
     targetDate = ELECTION_END;
   }
 
-  const timeDiff = targetDate - now;
+  // clamp to 0 — when MANUAL_OPEN forces ONGOING but ELECTION_END is in the past,
+  // targetDate - now would go negative and render "ปิดใน -25 น." (bug). Never show negatives.
+  const timeDiff = Math.max(0, targetDate - now);
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
   const minutes = Math.floor((timeDiff / 1000 / 60) % 60);
   const seconds = Math.floor((timeDiff / 1000) % 60);
 
   let countdownText = "";
-  if (days > 0) countdownText = `${days} วัน ${hours} ชม. ${minutes} น.`;
+  if (timeDiff <= 0) countdownText = "เร็วๆ นี้";
+  else if (days > 0) countdownText = `${days} วัน ${hours} ชม. ${minutes} น.`;
   else if (hours > 0) countdownText = `${hours} ชม. ${minutes} น. ${seconds} วิ.`;
   else countdownText = `${minutes} น. ${seconds} วิ.`;
 
   const campaignDateString = campaignDate ? campaignDate.toLocaleDateString('th-TH', {
+    timeZone: 'Asia/Bangkok', // ADM-2: pin to Bangkok so a Docker/UTC host shows the
+    // same calendar day as a Thai host (byte-identical on TH). Schedule = Asia/Bangkok.
     day: 'numeric', month: 'long', year: 'numeric'
   }) : "เร็วๆ นี้";
 
   const isNotStarted = finalStatus === "WAITING" || finalStatus === "PRE_CAMPAIGN";
 
   // ✅ 4. Loading UI (คงความ Responsive เดิม)
-  if (loading && finalStatus !== "ENDED") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 text-[#8A2680] animate-spin mb-4" />
-        <p className="text-slate-500 font-medium">กำลังตรวจสอบสิทธิ์เข้าถึง...</p>
-      </div>
-    );
+  if ((loading || !templateReady) && finalStatus !== "ENDED") {
+    return <ThemedLoadingScreen text="กำลังตรวจสอบสิทธิ์เข้าถึง..." />;
+  }
+  // Hard-gate on template so the classic layout never flashes before gumroad resolves.
+  if (!templateReady) {
+    return <ThemedLoadingScreen text="กำลังโหลด..." />;
   }
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-purple-100 overflow-x-hidden relative">
+    <div className={isStudio
+      ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
+      : isVerdure
+      ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
+      : isBlossom || isReceipt
+      ? "flex flex-col min-h-screen font-sans overflow-x-hidden relative"
+      : "flex flex-col min-h-screen bg-[var(--color-bg)] font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}
+      style={(!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
       <PageThemeOverrides page="results" />
-      <Navbar />
 
-      <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-      </div>
+      {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
+      {isVerdure && isAuthorized && (
+        <VerdureResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
+
+      {/* BLOSSOM layout (own Candy Editorial chrome); access modals below stay shared */}
+      {isBlossom && isAuthorized && (
+        <BlossomResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
+
+      {/* RECEIPT layout (own paper-desk chrome); access modals below stay shared.
+          NO onSelectParty — receipt standings are a printed record, not links (v2-R5d) */}
+      {isReceipt && isAuthorized && (
+        <ReceiptResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+        />
+      )}
+
+      {/* GUMROAD layout (own topbar/footer); access modals below stay shared */}
+      {isGumroad && isAuthorized && (
+        <GumroadResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
+
+      {/* STUDIO DARK layout (own rail chrome); access modals below stay shared */}
+      {isStudio && isAuthorized && (
+        <StudioDarkResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+          onSelectParty={(c) => setSelectedParty(c)}
+        />
+      )}
+
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && <Navbar />}
+
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && (
+        <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
+          style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+        </div>
+      )}
 
       {selectedParty && (
         <PartyDetailModal
@@ -360,21 +470,22 @@ export default function ResultsPage() {
         />
       )}
 
-      {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) */}
+      {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && (
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
 
         {isAuthorized && (
           <>
             {/* Header (จากโค้ดเดิมของคุณ) */}
             <div className="text-center mb-8 lg:mb-16 mt-4 animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8A2680]/5 text-[#8A2680] text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-[#8A2680]/10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_5%,transparent)] text-[var(--color-primary)] text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8A2680]"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-primary)]"></span>
                 </span>
                 {finalStatus === "ENDED" ? "FINAL RESULT" : "REAL-TIME UPDATE"}
               </div>
-              <h1 className="text-2xl md:text-5xl font-black text-[#8A2680] mb-2 md:mb-3 tracking-tight">
+              <h1 className="text-2xl md:text-5xl font-black text-[var(--color-primary)] mb-2 md:mb-3 tracking-tight">
                 ผลการเลือกตั้ง {globalConfig.electionName}
               </h1>
               <p className="text-slate-500 text-xs md:text-base max-w-2xl mx-auto px-4">
@@ -397,10 +508,10 @@ export default function ResultsPage() {
                     isRevealed ? (
                       <><Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-yellow-500" /> สรุปผลการเลือกตั้ง (Official Results)</>
                     ) : (
-                      <div className="flex items-center gap-2 text-[#8A2680] font-bold">
+                      <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                         <div className="relative flex h-3 w-3 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                         </div>
                         <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
                           กำลังนับคะเเนนเสียงชาว FMS
@@ -408,10 +519,10 @@ export default function ResultsPage() {
                       </div>
                     )
                   ) : finalStatus === "ONGOING" ? (
-                    <div className="flex items-center gap-2 text-[#8A2680] font-bold">
+                    <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                       <div className="relative flex h-3 w-3 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#8A2680]"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                       </div>
                       <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
                         {isRevealed ? "📊 สรุปผลคะแนนปัจจุบัน (Real-time Results)" : "ขณะนี้กำลังนับคะแนนเสียงชาว FMS"}
@@ -425,20 +536,20 @@ export default function ResultsPage() {
                 {!isNotStarted && finalStatus !== "ENDED" && (
                   <div className="flex items-center gap-2 text-xs lg:text-base font-bold px-4 py-2 rounded-full border shadow-sm bg-slate-100 text-slate-600 border-slate-200">
                     <span>{electionStatus === "WAITING" ? "⏳ เริ่มใน:" : "🔴 ปิดใน:"}</span>
-                    <span className="font-mono text-[#8A2680] text-sm lg:text-lg">{mounted ? countdownText : "..."}</span>
+                    <span className="font-mono text-[var(--color-primary)] text-sm lg:text-lg">{mounted ? countdownText : "..."}</span>
                   </div>
                 )}
               </div>
 
               {finalStatus === "PRE_CAMPAIGN" ? (
                 <div className="flex flex-col items-center justify-center py-20 lg:py-32 bg-white/50 border border-dashed border-slate-300 rounded-[2rem] text-center px-4 animate-in fade-in zoom-in-95 duration-500">
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-purple-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-purple-100 animate-bounce-gentle">
-                    <Megaphone className="w-10 h-10 lg:w-12 lg:h-12 text-[#8A2680]" />
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-full flex items-center justify-center mb-6 shadow-sm border border-[color-mix(in_srgb,var(--color-primary)_14%,white)] animate-bounce-gentle">
+                    <Megaphone className="w-10 h-10 lg:w-12 lg:h-12 text-[var(--color-primary)]" />
                   </div>
                   <h3 className="text-xl lg:text-3xl font-black text-slate-700 mb-2">ยังไม่เปิดเผยรายชื่อผู้สมัคร</h3>
                   <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm lg:text-base"> ข้อมูลผู้สมัครจะเปิดเผยอย่างเป็นทางการในช่วงหาเสียงเลือกตั้ง <br className="hidden md:block" /> (ประมาณ 2 สัปดาห์ก่อนวันเลือกตั้งจริง) </p>
                   <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm text-xs lg:text-sm font-bold text-slate-600">
-                    <Calendar size={16} className="text-[#8A2680]" />
+                    <Calendar size={16} className="text-[var(--color-primary)]" />
                     <span>เปิดเผยข้อมูล: {campaignDateString}</span>
                   </div>
                 </div>
@@ -470,14 +581,15 @@ export default function ResultsPage() {
           </>
         )}
       </main>
+      )}
 
       {/* ✅ 6. ACCESS DENIED MODAL (Logic ตัวดักหน้าช่วงเลือกตั้ง) */}
       {showAccessModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"></div>
           <div className="relative bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl animate-in fade-in zoom-in duration-300 text-center">
-            <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-purple-50/50">
-              <Lock className="w-10 h-10 text-[#8A2680]" />
+            <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--color-primary)_6%,white)] rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-[color-mix(in_srgb,var(--color-primary)_10%,white)]">
+              <Lock className="w-10 h-10 text-[var(--color-primary)]" />
             </div>
             <h2 className="text-2xl font-black text-slate-800 mb-3">ข้อมูลถูกล็อกไว้</h2>
             <p className="text-slate-500 mb-8 leading-relaxed">
@@ -488,7 +600,7 @@ export default function ResultsPage() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push(modalType === "VOTE" ? "/vote" : "/success")}
-                className="w-full py-4 bg-[#8A2680] hover:bg-[#701e68] text-white rounded-2xl font-bold text-lg shadow-lg shadow-purple-200 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-4 bg-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] text-white rounded-2xl font-bold text-lg shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] transition-all flex items-center justify-center gap-2 group"
               >
                 {modalType === "VOTE" ? "ไปหน้าลงคะแนน" : "ไปทำแบบประเมิน"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
@@ -528,7 +640,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      <SiteFooter className="mt-8 lg:mt-16" />
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && <SiteFooter className="mt-8 lg:mt-16" />}
     </div>
   );
 }

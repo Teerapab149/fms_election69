@@ -440,6 +440,17 @@ Earlier vision considered "each element has its own design gallery".
 REJECTED because it leads to incoherent mixed designs. Templates are 
 curated whole-system designs (Canva model).
 
+> **⚠️ SUPERSEDED 2026-06-08 by the 3-layer model.** The user intentionally
+> re-opened free composition: Layer 1 = atoms, Layer 2 = components (groups of
+> atoms, locked), Layer 3 = pages → templates. The incoherence D-306 feared is
+> mitigated by giving EACH layer ready-made presets (สำเร็จรูป, coherent) *plus*
+> build-your-own (flexible) — not by forbidding composition. Layout stays
+> responsive (Hybrid model C: compose visually, compile to flex/grid, no absolute
+> canvas — consistent with STYLED_BLOCKS Guardrail #2). First proof: the
+> candidates party-card decomposed into Layer-1 atoms + recomposed via
+> `src/components/elements/_composer/Composition.jsx`. The per-element "gallery"
+> D-306 rejected is really the Layer-1/2 library + presets, which is coherent.
+
 ### D-307 (Phase 3): Visibility toggles per element
 Each template entry has `visible: bool`. Templates can hide elements 
 they don't want to show. User overrides can re-show them.

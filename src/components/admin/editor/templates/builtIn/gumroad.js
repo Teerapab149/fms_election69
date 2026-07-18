@@ -38,25 +38,33 @@
  */
 
 import { classicTemplate } from "./classic";
+import { GUMROAD_THEMES } from "../../../../../utils/gumroadPalettes";
 
-// Palette constants (mirror styles.css :root, election-appropriate subset).
-const INK = "#1A1A1A"; // near-black border + text
-const INK_2 = "#4A4A4A"; // muted text
-const CREAM = "#FFF1E5"; // page bg
-const PAPER = "#FFFFFF"; // card surface
-const PINK = "#FF90E8"; // signature accent → primary
-const LIME = "#B6FF6E"; // fresh accent → accent
-const YELLOW = "#FFC900";
-const SKY = "#A8E1FF";
-const CORAL = "#FF6E6E";
-const SHADOW_HARD = "5px 5px 0 #1A1A1A";
+// PARITY RULE: every colour below derives from utils/gumroadPalettes.js — the SAME
+// map the layout components (.gum-root vars) and the preview morph read. Before,
+// this file carried its own pre-"ละมุน" hard palette (#FF90E8/#B6FF6E/#FFF1E5), so
+// applied Layer-1 tokens + element configs never matched what the preview showed.
+// The builder also means every colour-theme variant carries its FULL palette into
+// tokens/configs on apply — not just a swatch.
+function buildGumroadTemplate(slug, name, palette, description) {
+  const INK = palette.ink;      // chunky border + text
+  const INK_2 = palette.ink2;   // muted text
+  const CREAM = palette.cream;  // page bg
+  const PAPER = palette.paper;  // card surface
+  const PINK = palette.pink;    // signature accent → primary
+  const LIME = palette.lime;    // fresh accent → accent
+  const YELLOW = palette.yellow;
+  const SKY = palette.sky;
+  const CORAL = palette.coral;
+  const SHADOW_HARD = `5px 5px 0 ${INK}`;
 
-export const gumroadTemplate = {
+  return {
   ...classicTemplate,
-  id: "gumroad",
-  slug: "gumroad",
-  name: "แอ็กทีฟ พัลส์",
-  description: "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส ชมพู/ไลม์/เหลือง พื้นครีม",
+  id: slug,
+  slug,
+  name,
+  description: description || "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส พื้นสว่าง เลือกโทนสีได้ 5 แบบ",
+  layoutFamily: "gumroad", // real template — own page layouts (poster-mosaic home ฯลฯ)
 
   colorSwatch: {
     primary: PINK,
@@ -179,36 +187,53 @@ export const gumroadTemplate = {
     // per-state FILL flows through from config.backgroundColor (filled-variant
     // compatibility, see chunky-stamp.jsx). So we paint each state a pop colour.
     // login maps→notVoted visual; both styled independently via their own config.
+    // CTA_SIZE: chunky-stamp reads fontSize/paddingX/paddingY from per-state
+    // config (Layer 3), which OVERRIDES the --btn-* vars below. Classic ships
+    // lg/10/4 (≈18px font, 40px/16px pad) — too dainty for the gumroad hero.
+    // Bump every state to a bolder stamp: xl font + 12/5 padding. Spread AFTER
+    // the classic spread so it wins.
     "voteCTA-button": {
       variant: "chunky-stamp",
       config: {
         login: {
           ...classicTemplate.elements["voteCTA-button"].config.login,
-          backgroundColor: INK, textColor: CREAM
+          backgroundColor: INK, textColor: CREAM,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
         notVoted: {
           ...classicTemplate.elements["voteCTA-button"].config.notVoted,
-          backgroundColor: LIME, textColor: INK
+          backgroundColor: LIME, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
-        // voted = chunky-stamp's surface "card" look (bg ignored when voted) — keep.
-        voted: classicTemplate.elements["voteCTA-button"].config.voted,
+        // voted = chunky-stamp's surface "card" look (bg ignored when voted) — keep,
+        // but match the bolder sizing so the post-vote CTA isn't smaller.
+        voted: {
+          ...classicTemplate.elements["voteCTA-button"].config.voted,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
+        },
         ended: {
           ...classicTemplate.elements["voteCTA-button"].config.ended,
-          backgroundColor: YELLOW, textColor: INK
+          backgroundColor: YELLOW, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
         closed: {
           ...classicTemplate.elements["voteCTA-button"].config.closed,
-          backgroundColor: YELLOW, textColor: INK
+          backgroundColor: YELLOW, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         },
         paused: {
           ...classicTemplate.elements["voteCTA-button"].config.paused,
-          backgroundColor: SKY, textColor: INK
+          backgroundColor: SKY, textColor: INK,
+          fontSize: "xl", paddingX: "12", paddingY: "5"
         }
       },
       vars: {
         ...classicTemplate.elements["voteCTA-button"].vars,
         "--btn-bg":         "var(--color-primary)",
-        "--btn-text":       INK,
+        // References the family ramp (injectGumroad pushes --ink on morph) with this
+        // variant's palette value as fallback — re-tints in previews, identical where
+        // the ramp is absent (e.g. admin element gallery).
+        "--btn-text":       `var(--ink, ${INK})`,
         "--btn-radius":     "var(--radius-button)", // 14px
         "--btn-padding-x":  "28px",
         "--btn-padding-y":  "18px",
@@ -297,6 +322,23 @@ export const gumroadTemplate = {
       }
     }
   }
-};
+  };
+}
+
+// ── The 5 colour themes — each is a FULL build from its palette (tokens + element
+// configs + page backgrounds all follow), so applying a variant live matches the
+// preview exactly. layoutFamily stays "gumroad" → one chooser card with swatches;
+// colorSwatch derives from the palette (primary = pink slot, secondary = lime slot).
+export const gumroadTemplate        = buildGumroadTemplate("gumroad", "แอ็กทีฟ พัลส์", GUMROAD_THEMES["gumroad"]);
+export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "แอ็กทีฟ พัลส์ · ไซเบอร์พังก์", GUMROAD_THEMES["gumroad-cyber"]);
+export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", GUMROAD_THEMES["gumroad-retro"]);
+export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", GUMROAD_THEMES["gumroad-acid"]);
+export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "แอ็กทีฟ พัลส์ · ไซเบอร์ป๊อป พรีเมียม", GUMROAD_THEMES["gumroad-premium"]);
+export const gumroadBubblegumTemplate = buildGumroadTemplate(
+  "gumroad-bubblegum",
+  "แอ็กทีฟ พัลส์ · บับเบิ้ลกัม ป๊อป",
+  GUMROAD_THEMES["gumroad-bubblegum"],
+  "สไตล์ Gumroad บับเบิ้ลกัม ป๊อป — ชมพูเป็นสีหลักทั้งบรรยากาศ ฟ้า-มินต์เป็นลูกคู่พาสเทล ขอบดำอมพลัม เงาคม (ไม่เบลอ)"
+);
 
 export default gumroadTemplate;

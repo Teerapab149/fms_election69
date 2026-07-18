@@ -12,22 +12,91 @@ import CompletedActionModal from "../../components/CompletedActionModal";
 import ErrorActionModal from "../../components/ErrorActionModal";
 import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
+import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
-import { getEncryptedToken } from "../../utils/auth";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-import { ELECTION_CONFIG } from "../../utils/electionConfig";
+import { resolveElectionDates, parseBangkok, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+
+// Live turnout (participation) breakdown for the admin overview — by ปี/สาขา/เพศ.
+// PARTICIPATION ONLY: counts of who has voted vs eligible per group; it never
+// reveals which party a group chose. This is what the committee uses to chase
+// the groups that haven't turned out yet. Bars colour by turnout % (low = amber,
+// so low-turnout groups pop) and are sorted lowest-first within สาขา.
+function TurnoutGroup({ title, rows, sortByTurnout = false }) {
+  if (!rows || rows.length === 0) return null;
+  const data = [...rows];
+  if (sortByTurnout) {
+    data.sort((a, b) => {
+      const pa = a.eligible > 0 ? a.value / a.eligible : 0;
+      const pb = b.eligible > 0 ? b.value / b.eligible : 0;
+      return pa - pb;
+    });
+  }
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+      <h4 className="text-sm font-bold text-slate-700 mb-3">{title}</h4>
+      <div className="space-y-3">
+        {data.map((r, i) => {
+          const elig = r.eligible || 0;
+          const pct = elig > 0 ? (r.value / elig) * 100 : 0;
+          const color = pct >= 60 ? '#16a34a' : pct >= 30 ? '#f59e0b' : '#ef4444';
+          return (
+            <div key={r.name || i}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-semibold text-slate-600 truncate pr-2">{r.name || '—'}</span>
+                <span className="text-slate-400 font-mono shrink-0">
+                  {r.value.toLocaleString()}/{elig.toLocaleString()} · <span style={{ color }} className="font-bold">{pct.toFixed(0)}%</span>
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TurnoutBreakdown({ demographics }) {
+  const { byYear = [], byMajor = [], byGender = [] } = demographics || {};
+  const hasData = byYear.length || byMajor.length || byGender.length;
+  if (!hasData) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center text-sm text-slate-400">
+        ความคืบหน้าการใช้สิทธิ์แยกตามกลุ่มจะแสดงเมื่อเริ่มเปิดลงคะแนน
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-bold text-slate-700">ความคืบหน้าการใช้สิทธิ์ (Turnout)</h3>
+        <span className="text-[11px] text-slate-400">ใช้สำหรับติดตามกลุ่มที่ยังมาน้อย · ไม่แสดงว่าเลือกพรรคใด</span>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <TurnoutGroup title="แยกตามชั้นปี" rows={byYear} />
+        <TurnoutGroup title="แยกตามสาขา (เรียงจากน้อยสุด)" rows={byMajor} sortByTurnout />
+        <TurnoutGroup title="แยกตามเพศ" rows={byGender} />
+      </div>
+    </div>
+  );
+}
 
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');
 
-  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+  const globalConfig = useGlobalConfig();
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
 
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -40,16 +109,9 @@ const OverviewTab = () => {
 
   const fetchResults = async () => {
     try {
-
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) {
-        console.error("Encryption failed");
-        return;
-      }
-
-      const res = await fetch(getPath("/api/results"), {
-        headers: { 'x-admin-token': encryptedToken }
-      });
+      // Admin identity = httpOnly admin_token cookie (sent automatically) — the
+      // old client-minted x-admin-token header was removed (P0-1).
+      const res = await fetch(getPath("/api/results"), { credentials: 'include' });
 
       const data = await res.json();
 
@@ -217,6 +279,9 @@ const OverviewTab = () => {
           </p>
         </div>
       </div>
+
+      {/* Live turnout breakdown — participation only, never per-party tally */}
+      <TurnoutBreakdown demographics={demographics} />
     </div>
   )
 };
@@ -239,17 +304,9 @@ const CandidatesTab = () => {
   const fetchResults = async () => {
     setCandidates([]);
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) {
-        console.error("Encryption failed");
-        return;
-      }
-
       const res = await fetch(getPath(`/api/results?t=${Date.now()}`), {
         cache: 'no-store',
-        headers: {
-          'x-admin-token': encryptedToken,
-        }
+        credentials: 'include',
       });
       const data = await res.json();
 
@@ -407,6 +464,121 @@ const CandidatesTab = () => {
   )
 };
 
+// ── ADM-1 · Election readiness check ────────────────────────────────────────
+// ปุ่มเดียวที่กรรมการกดก่อนวันจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม. read-only ล้วน —
+// เรียก GET /api/admin/readiness แล้วแสดงผลตาม level (pass/warn/fail).
+const READINESS_LEVEL = {
+  pass: { Icon: CheckCircle2, cls: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
+  warn: { Icon: AlertTriangle, cls: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" },
+  fail: { Icon: XCircle, cls: "text-red-600", bg: "bg-red-50", border: "border-red-100" },
+};
+
+const ReadinessCard = () => {
+  const globalConfig = useGlobalConfig();
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+  const scheduleRows = [
+    { label: "เปิดตัวผู้สมัคร", key: "campaignStartAt", date: CAMPAIGN_START },
+    { label: "เปิดหีบ", key: "electionStartAt", date: ELECTION_START },
+    { label: "ปิดหีบ", key: "electionEndAt", date: ELECTION_END },
+  ];
+
+  const runCheck = async () => {
+    setRunning(true);
+    setError(null);
+    try {
+      const res = await fetch(getPath("/api/admin/readiness"), { credentials: "include" });
+      if (!res.ok) throw new Error(`สถานะ ${res.status}`);
+      const data = await res.json();
+      setResult(data);
+    } catch (e) {
+      setError("ตรวจไม่สำเร็จ — " + e.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-[#8A2680]/10 text-[#8A2680] p-2.5 rounded-xl"><ShieldCheck className="h-6 w-6" /></div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-700">ตรวจความพร้อมระบบ · READINESS</h3>
+            <p className="text-sm text-slate-500">กดก่อนวันเลือกตั้งจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม</p>
+          </div>
+        </div>
+        <button
+          onClick={runCheck}
+          disabled={running}
+          className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#8A2680] text-white rounded-lg font-bold text-sm shadow-md hover:bg-[#7a2270] transition-all disabled:opacity-50"
+        >
+          {running ? <><Loader2 className="w-4 h-4 animate-spin" /> กำลังตรวจ</> : <><ShieldCheck className="w-4 h-4" /> ตรวจตอนนี้</>}
+        </button>
+      </div>
+
+      {/* สรุป schedule ปัจจุบัน (resolved จริง) */}
+      <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-100">
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">กำหนดการปัจจุบัน</h4>
+        <div className="space-y-2">
+          {scheduleRows.map((r) => {
+            const fromDb = parseBangkok(globalConfig?.[r.key]) !== null;
+            return (
+              <div key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="font-bold text-slate-600">{r.label}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-slate-700">{formatThaiDate(r.date)} · {formatThaiTime(r.date)}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${fromDb ? "bg-[#8A2680]/10 text-[#8A2680]" : "bg-slate-200 text-slate-500"}`}>
+                    {fromDb ? "DB" : "ค่าเริ่มต้น"}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+      )}
+
+      {result && (
+        <div>
+          {/* สรุปหัว */}
+          <div className="flex flex-wrap items-center gap-3 mb-4 text-sm font-bold">
+            <span className="flex items-center gap-1.5 text-emerald-600"><CheckCircle2 className="w-4 h-4" /> ผ่าน {result.summary.pass}</span>
+            <span className="flex items-center gap-1.5 text-amber-600"><AlertTriangle className="w-4 h-4" /> เตือน {result.summary.warn}</span>
+            <span className="flex items-center gap-1.5 text-red-600"><XCircle className="w-4 h-4" /> ไม่ผ่าน {result.summary.fail}</span>
+          </div>
+
+          <div className="space-y-2">
+            {result.checks.map((c) => {
+              const lv = READINESS_LEVEL[c.level] || READINESS_LEVEL.warn;
+              const Icon = lv.Icon;
+              return (
+                <div key={c.id} className={`flex items-start gap-3 p-3 rounded-xl border ${lv.bg} ${lv.border}`}>
+                  <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${lv.cls}`} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-700">{c.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{c.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!result && !error && (
+        <p className="text-sm text-slate-400 text-center py-4">กด “ตรวจตอนนี้” เพื่อเริ่มตรวจความพร้อม</p>
+      )}
+    </div>
+  );
+};
+
 const SettingsTab = () => {
   const [systemMode, setSystemMode] = useState("AUTO");
   const [googleFormUrl, setGoogleFormUrl] = useState("");
@@ -426,13 +598,7 @@ const SettingsTab = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const encryptedToken = getEncryptedToken();
-        if (!encryptedToken) {
-          console.error("Encryption failed");
-          return;
-        }
-
-        const res = await fetch(getPath('/api/admin/dashboard'), { headers: { 'x-admin-token': encryptedToken, } });
+        const res = await fetch(getPath('/api/admin/dashboard'), { credentials: 'include' });
         const data = await res.json();
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
@@ -453,9 +619,6 @@ const SettingsTab = () => {
 
     setProcessing(true);
     try {
-      const encryptedToken = getEncryptedToken();
-      if (!encryptedToken) return;
-
       let action = activeModal;
       let body = { action };
 
@@ -469,7 +632,8 @@ const SettingsTab = () => {
 
       const res = await fetch(getPath('/api/admin/dashboard'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': encryptedToken },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
@@ -488,10 +652,13 @@ const SettingsTab = () => {
           setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
         } else if (action === 'RESET_CANDIDATES') {
           setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
+        } else if (action === 'ANONYMIZE_BALLOTS') {
+          setSuccessMessage({ title: 'ลบข้อมูลรายบุคคลสำเร็จ!', msg: 'คะแนนรวมถูกบันทึกไว้ครบ และความเชื่อมโยงว่าใครเลือกพรรคใดถูกลบถาวรแล้ว' });
         }
         setIsSuccessOpen(true);
       } else {
-        setErrorMessage({ title: `Error ${res.status}`, msg: res.statusText });
+        const errData = await res.json().catch(() => ({}));
+        setErrorMessage({ title: `ดำเนินการไม่สำเร็จ (${res.status})`, msg: errData.error || res.statusText });
         setIsErrorOpen(true);
       }
     } catch (error) {
@@ -508,6 +675,8 @@ const SettingsTab = () => {
   };
 
   return (
+    <div className="space-y-6">
+    <ReadinessCard />
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-8">
         <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl"><Power className="h-6 w-6" /></div>
@@ -653,6 +822,31 @@ const SettingsTab = () => {
             Reset
           </button>
         </div>
+
+        <div className='p-3' />
+
+        {/* Ballot secrecy — anonymize after results are certified (irreversible) */}
+        <div className="flex items-center justify-between gap-4 p-6 bg-indigo-50 rounded-xl border border-indigo-100 transition-colors hover:border-indigo-300">
+          <div className="min-w-0">
+            <h4 className="text-lg font-bold text-indigo-800 flex items-center gap-2">
+              <Power className="w-5 h-5" />
+              ลบข้อมูลการลงคะแนนรายบุคคล
+            </h4>
+            <p className="text-xs text-indigo-500 mt-1">
+              ลบความเชื่อมโยง “ใครเลือกพรรคใด” อย่างถาวร (คะแนนรวมยังอยู่ครบ) — ทำได้หลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น
+            </p>
+          </div>
+
+          <button
+            onClick={() => setActiveModal('ANONYMIZE_BALLOTS')}
+            disabled={processing || !isShowResult}
+            title={!isShowResult ? 'ต้องเผยแพร่ผลก่อน' : ''}
+            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
+          >
+            <Power className="w-4 h-4" />
+            Anonymize
+          </button>
+        </div>
       </div>
 
       <CompletedActionModal
@@ -712,6 +906,16 @@ const SettingsTab = () => {
       />
 
       <ConfirmModal
+        isOpen={activeModal === 'ANONYMIZE_BALLOTS'}
+        onClose={() => setActiveModal(null)}
+        onConfirm={handleConfirmAction}
+        title="ลบข้อมูลการลงคะแนนรายบุคคล?"
+        message={`คะแนนรวมของแต่ละพรรคจะถูกบันทึกไว้ครบ แต่ความเชื่อมโยงว่า "ใครเลือกพรรคใด" จะถูกลบอย่างถาวร — กู้คืนไม่ได้ ควรทำหลังรับรองผลแล้วเท่านั้น`}
+        variant="danger"
+        isLoading={processing}
+      />
+
+      <ConfirmModal
         isOpen={activeModal === 'SET_GOOGLE_FORM'}
         onClose={() => setActiveModal(null)}
         onConfirm={handleConfirmAction}
@@ -721,6 +925,7 @@ const SettingsTab = () => {
         isLoading={processing}
       />
     </div >
+    </div>
   )
 };
 
@@ -732,7 +937,22 @@ export default function AdminDashboard() {
   // Auto-collapse on the editor tab to give the canvas room; user can toggle.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign'); }, [activeTab]);
+  // The full element editor is now an author-only tool — staff get the clean
+  // template chooser by default. ?advanced=1 reveals the editor (kept in git).
+  const [advancedEditor, setAdvancedEditor] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      setAdvancedEditor(sp.get('advanced') === '1');
+      // Deep-link a starting tab (e.g. the preview's "Exit" returns to ?tab=pageDesign,
+      // the template selector — never the overview). Ignore unknown values.
+      const tab = sp.get('tab');
+      if (tab && ['overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
+  useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign' && advancedEditor); }, [activeTab, advancedEditor]);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
   const handleLogout = async () => {
@@ -748,7 +968,7 @@ export default function AdminDashboard() {
     { id: 'overview', label: 'ภาพรวม', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
     { id: 'globalConfig', label: 'ตั้งค่าทั่วไป', icon: <Settings className="h-5 w-5" /> },
     { id: 'candidates', label: 'จัดการผู้สมัคร', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
-    { id: 'pageDesign', label: 'ออกแบบหน้าเว็บ', icon: <Palette className="h-5 w-5" /> },
+    { id: 'pageDesign', label: 'เลือกธีม (Template)', icon: <Palette className="h-5 w-5" /> },
     { id: 'settings', label: 'ตั้งค่าระบบ', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
   ];
 
@@ -861,7 +1081,7 @@ export default function AdminDashboard() {
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'globalConfig' && <GlobalConfigTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
-          {activeTab === 'pageDesign' && <PageDesignTab />}
+          {activeTab === 'pageDesign' && (advancedEditor ? <PageDesignTab /> : <TemplateChooserTab />)}
           {activeTab === 'settings' && <SettingsTab />}
         </main>
       </div>

@@ -225,7 +225,7 @@ export default function StatefulGallery({
 
               {/* Preview — rendered button with resolved config */}
               <div className="px-3 pb-3 pt-1">
-                <GalleryPreview elementId={elementId} stateId={state.id} resolvedConfig={resolvedConfig} type={element.type} />
+                <GalleryPreview elementId={elementId} stateId={state.id} resolvedConfig={resolvedConfig} resolvedTemplate={resolvedTemplate} type={element.type} />
               </div>
 
               {/* Controls — expanded only */}
@@ -260,11 +260,13 @@ export default function StatefulGallery({
 /**
  * GalleryPreview — renders the element at small size showing current state.
  */
-function GalleryPreview({ elementId, stateId, resolvedConfig, type }) {
+function GalleryPreview({ elementId, stateId, resolvedConfig, resolvedTemplate, type }) {
   if (elementId === 'voteCTA-button') {
     return (
       <div className="bg-slate-50 rounded-md p-4 flex items-center justify-center min-h-[80px]">
-        <VoteCTABlock config={{}} data={{}} resolvedConfig={resolvedConfig} forceState={stateId} />
+        {/* pass resolvedTemplate so the preview picks the template's variant
+            (e.g. gumroad → chunky-stamp) instead of falling back to default/classic */}
+        <VoteCTABlock config={{}} data={{}} resolvedConfig={resolvedConfig} resolvedTemplate={resolvedTemplate} forceState={stateId} />
       </div>
     );
   }

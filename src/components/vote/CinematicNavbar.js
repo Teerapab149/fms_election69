@@ -90,13 +90,16 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
     ];
 
     // Helper for text color based on theme
+    // Themed via --spv-* (emitted at :root by SinglePartyBaseStyles): this navbar
+    // renders inside the cinematic portal, OUTSIDE .fms-app, so Layer-1 --color-*
+    // never reaches it — --spv-* is the only themable channel here.
     const getTextColor = () => {
-        if (scrolled) return "text-[#2E1065] hover:text-[#9333EA]";
-        return theme === 'light' ? "text-[#1A1A1A] hover:text-[#6A0DAD]" : "text-white hover:text-white/80";
+        if (scrolled) return "text-[var(--spv-deep)] hover:text-[var(--spv-accent)]";
+        return theme === 'light' ? "text-[var(--spv-dark)] hover:text-[var(--spv-vote-glow)]" : "text-white hover:text-white/80";
     };
 
     const getDividerColor = () => {
-        if (scrolled) return "bg-[#2E1065]/10";
+        if (scrolled) return "bg-[color-mix(in_srgb,var(--spv-deep)_10%,transparent)]";
         return theme === 'light' ? "bg-black/10" : "bg-white/20";
     };
 
@@ -107,7 +110,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
             {user ? (
                 <div className="bg-gray-50/80 rounded-2xl p-4 border border-black/5">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#6A0DAD] to-[#A91079] text-white flex items-center justify-center text-lg shadow-md font-bold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[var(--spv-vote-glow)] to-[var(--spv-nav-accent)] text-white flex items-center justify-center text-lg shadow-md font-bold">
                             {user.name?.[0] || <User size={18} />}
                         </div>
                         <div className="overflow-hidden">
@@ -125,7 +128,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
             ) : (
                 <Link
                     href="/login"
-                    className="w-full py-3 rounded-2xl bg-[#1A1A1A] hover:bg-gradient-to-r hover:from-[#6A0DAD] hover:to-[#A91079] text-white text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-2xl bg-[var(--spv-dark)] hover:bg-gradient-to-r hover:from-[var(--spv-vote-glow)] hover:to-[var(--spv-nav-accent)] text-white text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
                 >
                     <User size={16} /> Login
                 </Link>
@@ -140,10 +143,10 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
                             <button
                                 key={item.id}
                                 onClick={() => { onScrollTo(item.id); setMenuOpen(false); }}
-                                className="text-left font-bold text-black/70 hover:text-[#6A0DAD] hover:bg-purple-50 rounded-xl px-4 py-3 text-xs w-full transition-all uppercase tracking-wider flex items-center justify-between group"
+                                className="text-left font-bold text-black/70 hover:text-[var(--spv-vote-glow)] hover:bg-[color-mix(in_srgb,var(--spv-brand)_6%,white)] rounded-xl px-4 py-3 text-xs w-full transition-all uppercase tracking-wider flex items-center justify-between group"
                             >
                                 {item.label}
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#6A0DAD] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--spv-vote-glow)] opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                         ))}
                     </div>
@@ -187,6 +190,8 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
                                 alt="PSU FMS"
                                 fill
                                 className="object-contain"
+                                unoptimized
+                                priority
                             />
                         </div>
                     </Link>

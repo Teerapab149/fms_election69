@@ -91,7 +91,7 @@ function hrefForState(stateId) {
   return null; // login: handled by signIn click
 }
 
-export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedConfig = null }) {
+export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedConfig = null, onSignIn = null }) {
   const currentState = deriveCurrentState(data);
   const visualState = mapToPrimaryState(currentState);
   const baseStyle = PRIMARY_STYLES[visualState];
@@ -134,11 +134,21 @@ export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedCon
       {!isDisabled && <ArrowRight size={18} />}
 
       <style jsx>{`
-        .minimal-pill-btn:not(:disabled):hover {
-          background-color: var(--btn-hover-bg, var(--color-primary));
-          color: var(--color-surface, #ffffff);
-          border-color: var(--btn-hover-bg, var(--color-primary));
+        .minimal-pill-btn {
+          transition: background-color .2s, color .2s, border-color .2s, transform .2s, box-shadow .2s;
         }
+        /* !important: the variant sets background/color/border as INLINE styles
+           (transparent fill is its resting identity), and inline styles outrank a
+           plain stylesheet :hover rule — so without this the lime fill never
+           applied and the button looked inert on hover. */
+        .minimal-pill-btn:not(:disabled):hover {
+          background-color: var(--btn-hover-bg, var(--color-primary)) !important;
+          color: var(--color-surface, #ffffff) !important;
+          border-color: var(--btn-hover-bg, var(--color-primary)) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+        }
+        .minimal-pill-btn:not(:disabled):active { transform: translateY(0); }
       `}</style>
     </button>
   );
@@ -151,9 +161,11 @@ export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedCon
       <div className="w-full flex justify-center lg:justify-start pt-0 pb-4">
         <div
           onClick={() =>
-            signIn("authentik", {
-              callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
-            })
+            onSignIn
+              ? onSignIn()
+              : signIn("authentik", {
+                  callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
+                })
           }
           className="cursor-pointer inline-block"
         >

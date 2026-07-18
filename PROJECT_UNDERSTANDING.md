@@ -169,8 +169,13 @@ Stores everyone who can log in. Key fields:
 | `name` | String | Full name |
 | `year` | String | Year 1–4 (only these can vote) |
 | `isVoted` | Boolean | Has this person already voted? |
+| `votedAt` | DateTime | When they cast their ballot (their own, non-secret data) |
 | `isAdmin` | Boolean | Is this person an admin? |
-| `candidateId` | Int (FK) | Which candidate they voted for |
+
+> ⚠️ **v2-SEC (2026-07-16):** `User.candidateId` was **removed** — there is no
+> longer any column linking a voter to their choice. Ballots live in a separate
+> anonymous, encrypted, hash-chained `Ballot` table (no `userId`). See the
+> `Ballot` / `ChainHead` models and `src/lib/ballotCrypto.js` / `ballotChain.js`.
 
 ### `Candidate` — Election groups (parties)
 Each candidate group has:
@@ -337,11 +342,17 @@ Admins can:
 5. Student selects a candidate or chooses "abstain" / "disapprove"
 6. A confirmation popup appears
 7. Student confirms → POST to `/api/vote`
-8. Server (in a database **transaction**):
-   - Sets `user.isVoted = true`
-   - Sets `user.candidateId = selectedId`
-   - Increments `candidate.score += 1`
+8. Server (in a database **transaction**, v2-SEC):
+   - Compare-and-set `user.isVoted = true` + stamps `user.votedAt` (one-shot guard)
+   - Appends one **anonymous encrypted ballot** to the `Ballot` hash-chain
+     (no `userId`; choice is RSA-encrypted with the election public key)
+   - Increments `candidate.score += 1` (the tally results are served from)
 9. Student is redirected to `/success`
+
+> The old `user.candidateId = selectedId` link no longer exists — the choice is
+> only ever stored encrypted in `Ballot.payload`, unreadable without the offline
+> private key. `/api/vote` **fails closed** if `ELECTION_BALLOT_PUBLIC_KEY` /
+> `BALLOT_CHAIN_SECRET` are unset (never stores a plaintext choice).
 
 ### Special Candidate Numbers
 - `number = 0` → Abstain (no confidence vote)

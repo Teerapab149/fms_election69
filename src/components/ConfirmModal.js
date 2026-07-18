@@ -15,10 +15,10 @@ export default function ConfirmationModal({
 
     // กำหนดสีตามประเภทการใช้งาน 
     const isDanger = variant === 'danger';
-    const iconColor = isDanger ? 'text-red-600 bg-red-100' : 'text-[#8A2680] bg-purple-100';
+    const iconColor = isDanger ? 'text-red-600 bg-red-100' : 'text-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_12%,white)]';
     const buttonColor = isDanger
         ? 'bg-red-600 hover:bg-red-700 text-white'
-        : 'bg-[#8A2680] hover:bg-[#701e68] text-white';
+        : 'bg-[var(--color-primary)] hover:bg-[#701e68] text-white';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">

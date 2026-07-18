@@ -3,20 +3,20 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { GLOBAL_CONFIG_DEFAULTS, mergeWithDefaults } from "../utils/globalConfigDefaults";
 import { getPath } from "../utils/basePath";
-import { getEncryptedToken } from "../utils/auth";
 
 const GlobalConfigContext = createContext({
   config: GLOBAL_CONFIG_DEFAULTS,
   updateField: async () => {},
   replaceConfig: () => {},
   isUpdating: false,
+  activeTemplateId: "classic",
 });
 
 /**
  * GlobalConfigProvider — wraps app tree, distributes globalConfig.
  * Provides read access via useGlobalConfig() and write access via useGlobalConfigUpdate().
  */
-export function GlobalConfigProvider({ value: initialValue, children }) {
+export function GlobalConfigProvider({ value: initialValue, activeTemplateId = "classic", children }) {
   const [config, setConfig] = useState(() => mergeWithDefaults(initialValue));
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -62,13 +62,11 @@ export function GlobalConfigProvider({ value: initialValue, children }) {
         return nextConfig;
       });
 
-      const token = getEncryptedToken();
+      // Admin identity = httpOnly admin_token cookie (sent automatically; P0-1)
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-token": token,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ globalConfig: nextConfig }),
       });
 
@@ -93,8 +91,8 @@ export function GlobalConfigProvider({ value: initialValue, children }) {
   }, []);
 
   const contextValue = useMemo(
-    () => ({ config, updateField, replaceConfig, isUpdating }),
-    [config, updateField, replaceConfig, isUpdating]
+    () => ({ config, updateField, replaceConfig, isUpdating, activeTemplateId }),
+    [config, updateField, replaceConfig, isUpdating, activeTemplateId]
   );
 
   return (
@@ -110,6 +108,16 @@ export function GlobalConfigProvider({ value: initialValue, children }) {
 export function useGlobalConfig() {
   const ctx = useContext(GlobalConfigContext);
   return ctx.config;
+}
+
+/**
+ * useActiveTemplateId — the SSR-provided active template slug ("classic" /
+ * "gumroad" / "studio-dark" / ...). Known on first paint (rides the layout's
+ * server render), so theme-matched loading screens never flash the wrong color.
+ */
+export function useActiveTemplateId() {
+  const ctx = useContext(GlobalConfigContext);
+  return ctx.activeTemplateId || "classic";
 }
 
 /**

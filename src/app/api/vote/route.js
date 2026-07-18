@@ -2,53 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
 import { db } from "../../../lib/db";
-import crypto from "crypto";
-
-const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
-  ? process.env.ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
-  : null;
-
-function verifyAdminToken(request) {
-  const encryptedToken = request.headers.get('x-admin-token');
-  const now = Date.now();
-
-  if (!encryptedToken || !PRIVATE_KEY) {
-    return NextResponse.json({ error: "Unauthorized / Config Error" }, { status: 401 });
-  }
-
-  try {
-    const buffer = Buffer.from(encryptedToken, "base64");
-    const decryptedData = crypto.privateDecrypt(
-      {
-        key: PRIVATE_KEY,
-        padding: crypto.constants.RSA_PKCS1_PADDING,
-      },
-      buffer
-    );
-
-    const decryptedString = decryptedData.toString("utf8");
-    const [secret, timestamp] = decryptedString.split('|');
-    const EXPECTED_SECRET = process.env.ADMIN_AUTH_SECRET || "fallback_secret";
-
-    if (secret !== EXPECTED_SECRET) {
-      return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
-    }
-
-    if (now - parseInt(timestamp) > 3600000) {
-      return NextResponse.json({ error: "Token Expired" }, { status: 403 });
-    }
-
-    return null;
-
-  } catch (decryptionError) {
-    console.error("Decryption failed:", decryptionError);
-    return NextResponse.json({ error: "Invalid Token Format" }, { status: 403 });
-  }
-}
+import { rateLimit } from "../../../lib/rateLimit";
+import { encryptBallot } from "../../../lib/ballotCrypto";
+import { appendBallotTx, hourBucketBangkok } from "../../../lib/ballotChain";
 
 export async function POST(request) {
-  // const authError = verifyAdminToken(request);
-  // if (authError) return authError;
   try {
     // 🔐 Security Fix: ดึง studentId จาก verified session แทน request body
     const session = await getServerSession(authOptions);
@@ -58,6 +16,31 @@ export async function POST(request) {
 
     const studentId = session.user.studentId; // ✅ จาก session ที่ verify แล้ว
 
+    // Throttle vote spam per user (the atomic guard already enforces one-shot;
+    // this just stops a client hammering the endpoint): 15 / min / studentId.
+    // Dev-scale in-memory limiter — a real multi-instance deploy should move this
+    // to shared middleware (Redis) keyed on user+IP.
+    const rl = rateLimit(`vote:${studentId}`, { limit: 15, windowMs: 60 * 1000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: `ดำเนินการบ่อยเกินไป ลองใหม่ใน ${rl.retryAfter} วินาที` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+
+    // 🔒 FAIL CLOSED (v2-SEC): without the election public key + chain secret we
+    // cannot produce an encrypted, chained ballot — so we refuse to vote rather
+    // than EVER fall back to storing a plaintext choice. No DB write happens here.
+    const publicKeyPem = process.env.ELECTION_BALLOT_PUBLIC_KEY;
+    const chainSecret = process.env.BALLOT_CHAIN_SECRET;
+    if (!publicKeyPem || !chainSecret) {
+      console.error("[vote] FAIL CLOSED: missing ELECTION_BALLOT_PUBLIC_KEY / BALLOT_CHAIN_SECRET");
+      return NextResponse.json(
+        { error: "ระบบลงคะแนนยังไม่พร้อม (กุญแจเข้ารหัสบัตรไม่ถูกตั้งค่า) กรุณาแจ้งผู้ดูแลระบบ" },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { candidateId } = body;
     // หมายเหตุ: ไม่ใช้ studentId จาก body อีกต่อไป เพื่อป้องกันการโหวตแทนคนอื่น
@@ -65,7 +48,8 @@ export async function POST(request) {
     // 0. 🛑 SECURITY GATE:
     const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
     const mode = systemConfig?.systemMode || "AUTO";
-    const { ELECTION_END, ELECTION_START } = await import("../../../utils/electionConfig").then(m => m.ELECTION_CONFIG);
+    const { resolveElectionDates } = await import("../../../utils/electionConfig");
+    const { ELECTION_END, ELECTION_START } = resolveElectionDates(systemConfig?.globalConfig);
     const now = Date.now();
 
     // 0.1 Check Manual Modes First
@@ -92,11 +76,31 @@ export async function POST(request) {
     }
 
     // 1. ตรวจสอบข้อมูล
-    if (candidateId === undefined) {
+    const parsedId = parseInt(candidateId);
+    if (candidateId === undefined || Number.isNaN(parsedId)) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
 
-    // 2. เช็คว่า User นี้เคยโหวตไปหรือยัง
+    // 1.1 🛡️ Validate the choice against THIS ballot's rules (P0-3).
+    //   number > 0  → real party (always selectable)
+    //   number == 0 → งดออกเสียง / abstain (always selectable)
+    //   number == -1 → ไม่รับรอง / disapprove — ONLY valid when exactly one real
+    //                   party is running (single-party ballot)
+    const allCandidates = await db.candidate.findMany({ select: { id: true, number: true } });
+    const target = allCandidates.find((c) => c.id === parsedId);
+    if (!target) {
+      return NextResponse.json({ error: "ไม่พบตัวเลือกที่เลือก" }, { status: 400 });
+    }
+    const realPartyCount = allCandidates.filter((c) => c.number > 0).length;
+    const validChoice =
+      target.number > 0 ||
+      target.number === 0 ||
+      (target.number === -1 && realPartyCount === 1);
+    if (!validChoice) {
+      return NextResponse.json({ error: "ตัวเลือกไม่ถูกต้องสำหรับบัตรเลือกตั้งนี้" }, { status: 400 });
+    }
+
+    // 2. เช็คผู้ใช้ + สิทธิ์ (early checks ให้ข้อความที่เป็นมิตร; การกันโหวตซ้ำจริงอยู่ที่ atomic guard ด้านล่าง)
     const user = await db.user.findFirst({
       where: { studentId: studentId }
     });
@@ -115,22 +119,47 @@ export async function POST(request) {
       return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
     }
 
-    // 3. เริ่ม Transaction (ทำพร้อมกัน 2 อย่าง: บวกคะแนนพรรค + แปะป้ายว่าโหวตแล้ว)
-    await db.$transaction([
-      // 3.1 เพิ่มคะแนนให้พรรค
-      db.candidate.update({
-        where: { id: parseInt(candidateId) },
+    // Encrypt the choice + compute the coarse bucket OUTSIDE the transaction so
+    // the chain row-lock (below) is held for the shortest possible time. Payload
+    // depends only on the choice + a fresh nonce — never on chain state.
+    const votedAt = new Date();
+    const payload = encryptBallot(parsedId, publicKeyPem);
+    const hourBucket = hourBucketBangkok(votedAt.getTime());
+
+    // 3. 🔒 Atomic vote — combines THREE integrity guarantees in ONE transaction:
+    //   (a) TOCTOU one-shot (P0-2): updateMany with isVoted:false is a
+    //       compare-and-set — only ONE concurrent request flips the flag
+    //       (count===1); the loser (count===0) is rejected, so the ballot box +
+    //       score can never be touched twice by the same voter.
+    //   (b) Ballot-chain serialization (v2-SEC): the `SELECT ... FOR UPDATE` on
+    //       ChainHead(id=1) takes a Postgres ROW LOCK. Two simultaneous votes
+    //       block on it and commit one-after-another, so every ballot gets the
+    //       real previous rowHash as its prevHash → the chain is gap-free and
+    //       verifiable even under a dead heat (proved by the concurrency test).
+    //   (c) Tally (unchanged): the atomic Candidate.score increment.
+    const outcome = await db.$transaction(async (tx) => {
+      // (a) claim the one-shot right to vote + stamp the voter's own time
+      const claim = await tx.user.updateMany({
+        where: { id: user.id, isVoted: false },
+        data: { isVoted: true, votedAt },
+      });
+      if (claim.count === 0) return "ALREADY_VOTED";
+
+      // (b) append the encrypted ballot to the chain — the shared helper takes
+      //     the ChainHead FOR UPDATE row lock that serializes concurrent votes.
+      await appendBallotTx(tx, { payload, hourBucket, chainSecret });
+
+      // (c) tally — the single source of truth the results API serves
+      await tx.candidate.update({
+        where: { id: parsedId },
         data: { score: { increment: 1 } },
-      }),
-      // 3.2 อัปเดตสถานะ User ว่าโหวตแล้ว
-      db.user.update({
-        where: { id: user.id },
-        data: {
-          isVoted: true,
-          candidateId: parseInt(candidateId)
-        },
-      }),
-    ]);
+      });
+      return "OK";
+    });
+
+    if (outcome === "ALREADY_VOTED") {
+      return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
+    }
 
     return NextResponse.json({ success: true });
 

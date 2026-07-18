@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma as db } from "../lib/prisma";
+import { resolveSsoPrivileges } from "./auth/roleFromSso.mjs";
 
 const AUTHENTIK_BASE_URL = "https://psusso.psu.ac.th";
 const CLIENT_ID = process.env.AUTHENTIK_CLIENT_ID;
@@ -109,7 +110,14 @@ export const authOptions = {
     // เปิดใช้งานโดยเพิ่มใน .env.local:
     //   NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true
     // Provider นี้จะไม่ถูก register เลยใน production (NODE_ENV === "production")
-    ...(process.env.NODE_ENV !== "production" ? [
+    // ── ข้อยกเว้นเดียว (v2-R11): e2e gate รัน PROD BUILD (`next start` บังคับ
+    // NODE_ENV=production เสมอ) กับ DB ทดสอบแยก — อนุญาต provider เฉพาะเมื่อ
+    // เงื่อนไขครบ "ทั้งสอง": runner ตั้ง E2E_MOCK_LOGIN=true อย่างชัดเจน และ
+    // DATABASE_URL ชี้ database ที่ชื่อลงท้าย _e2e จริง. deployment จริงไม่มีทาง
+    // ผ่านทั้งคู่ (ไม่ตั้ง flag + DB ชื่อจริง) — mock login จึงยังปิดตายบน prod.
+    ...(process.env.NODE_ENV !== "production" ||
+        (process.env.E2E_MOCK_LOGIN === "true" &&
+         /_e2e(\?|$)/.test(process.env.DATABASE_URL || "")) ? [
       CredentialsProvider({
         id: "mock-login",
         name: "Mock Login",
@@ -177,21 +185,15 @@ export const authOptions = {
 
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
-          const group = String(user.groups?.[0] || "").toLowerCase();
-          // Phase 3+ STAFF role:
-          // - "faculty" group → STAFF (full edit + audit access)
-          // - Set via env: STAFF_STUDENT_IDS="ID1,ID2,..." (Day 8 seed script)
-          // - STAFF counts as admin for setAdmin flag below
-          const roleMap = {
-            staff: "ADMIN",
-            student: "student",
-            faculty: "STAFF",
-          };
-          let newRole = roleMap[group] || "student";
-          if (user.studentId === "6610510149" || user.studentId === "6610510129") {
-            // newRole = "ADMIN"; // ไม่เปลี่ยน Role เป็น ADMIN เพื่อให้ยังคงสถานะนักศึกษาในการโหวต
-          }
-          let setAdmin = (user.studentId === "6610510149" || user.studentId === "6610510129") ? true : (newRole === "ADMIN" || newRole === "STAFF" ? true : false);
+          // SSO group + ADMIN_STUDENT_IDS allowlist → privilege. The rule lives
+          // in roleFromSso.mjs (pure, covered by scripts/smoke/roleFromSso.test.mjs)
+          // and is documented in runbook §10. Invariant: a PSU account in neither
+          // "staff"/"faculty" group nor the allowlist gets role=student, no admin.
+          const { role: newRole, isAdmin: setAdmin } = resolveSsoPrivileges({
+            groups: user.groups,
+            studentId: user.studentId,
+            adminIdsEnv: process.env.ADMIN_STUDENT_IDS,
+          });
 
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },
@@ -239,6 +241,7 @@ export const authOptions = {
           token.id = dbUser.id;
           token.studentId = dbUser.studentId;
           token.role = dbUser.role;
+          token.isAdmin = dbUser.isAdmin;
           token.isVoted = dbUser.isVoted;
           token.facultyId = dbUser.facultyId;
           token.departmentId = dbUser.departmentId;
@@ -257,6 +260,7 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.studentId = token.studentId;
         session.user.role = token.role;
+        session.user.isAdmin = token.isAdmin === true;
         session.user.isVoted = token.isVoted;
         session.user.facultyId = token.facultyId;
         session.user.departmentId = token.departmentId;

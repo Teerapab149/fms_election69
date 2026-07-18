@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "import-students": "node scripts/import-students.js"
+    "import-students": "node scripts/import-students.js",
+    "smoke": "node --test \"scripts/smoke/**/*.test.mjs\"",
+    "e2e": "playwright test",
+    "e2e:gate": "playwright test vote-flow invariants",
+    "e2e:setup": "node e2e/global.setup.js",
+    "verify": "bash scripts/verify.sh",
+    "preflight": "node scripts/preflight-year.js",
+    "archive-year": "node scripts/archive-year.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
@@ -15,6 +22,7 @@
     "clsx": "^2.1.1",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.30.0",
+    "jose": "^6.2.3",
     "jsencrypt": "^3.5.4",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",

@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { Save, Loader2, CheckCircle2 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { getPath } from "../../utils/basePath";
-import { getEncryptedToken } from "../../utils/auth";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
 
 /**
  * GlobalConfigTab — admin form to edit globalConfig.
- * Reads/writes via /api/admin/global-config using RSA-encrypted admin token.
+ * Reads/writes via /api/admin/global-config; admin identity = the httpOnly
+ * admin_token cookie (sent automatically — P0-1).
  *
  * Stays in sync with the element editor: initial values come from
  * GlobalConfigContext (so any field already updated via PropertyPanel's bound
@@ -31,9 +31,8 @@ export default function GlobalConfigTab() {
   useEffect(() => {
     async function load() {
       try {
-        const token = getEncryptedToken();
         const res = await fetch(getPath("/api/admin/global-config"), {
-          headers: { "x-admin-token": token },
+          credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
@@ -69,13 +68,10 @@ export default function GlobalConfigTab() {
     setSaving(true);
     setError(null);
     try {
-      const token = getEncryptedToken();
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-token": token,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ globalConfig: config }),
       });
       if (!res.ok) throw new Error("Save failed");
@@ -136,17 +132,26 @@ export default function GlobalConfigTab() {
                       ↺ ค่าเริ่มต้น
                     </button>
                   </div>
-                  <input
-                    type={field.type}
-                    value={config[field.key] ?? ""}
-                    onChange={(e) =>
-                      handleChange(
-                        field.key,
-                        field.type === "number" ? Number(e.target.value) : e.target.value
-                      )
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:outline-none text-sm"
-                  />
+                  {field.multiline ? (
+                    <textarea
+                      rows={2}
+                      value={config[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:outline-none text-sm resize-y leading-relaxed"
+                    />
+                  ) : (
+                    <input
+                      type={field.type === "datetime" ? "datetime-local" : field.type}
+                      value={config[field.key] ?? ""}
+                      onChange={(e) =>
+                        handleChange(
+                          field.key,
+                          field.type === "number" ? Number(e.target.value) : e.target.value
+                        )
+                      }
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:outline-none text-sm"
+                    />
+                  )}
                   {field.hint && (
                     <p className="text-[10px] text-slate-400 mt-1">{field.hint}</p>
                   )}

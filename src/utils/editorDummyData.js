@@ -45,7 +45,12 @@ export const DUMMY_ABSTAIN = {
 
 export const DUMMY_USER = {
   name: "Teerapab Boonsri",
-  studentId: "6610510149"
+  studentId: "6610510149",
+  // v2-R4a: identity-receipt fields (success shows the voter's own profile).
+  // Additive — templates that only read name/studentId ignore these.
+  major: "สาขาวิชาการตลาด",
+  year: "ปี 3",
+  votedAt: "2026-02-06T03:24:07.000Z"
 };
 
 export const DUMMY_PARTY_DETAIL = {

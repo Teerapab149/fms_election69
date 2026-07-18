@@ -12,6 +12,14 @@ import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 import BackToVoteBar from "../../components/BackToVoteBar";
 import CandidateModal from '../../components/CandidateModal';
+import GumroadParty from "../../components/vote/GumroadParty";
+import StudioDarkParty from "../../components/vote/StudioDarkParty";
+import VerdureParty from "../../components/vote/VerdureParty";
+import ReceiptParty from "../../components/vote/ReceiptParty";
+import BlossomParty from "../../components/vote/BlossomParty";
+import PageThemeOverrides from "../../components/PageThemeOverrides";
+import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // --- CONSTANTS ---
 const POSITION_ORDER = [
@@ -568,12 +576,23 @@ function PartyContent() {
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
   const source = searchParams.get('source');
+  const globalConfig = useGlobalConfig();
+  const copyrightYear = globalConfig?.copyrightYear ?? globalConfig?.electionCalendarYear ?? 2026;
 
   const [activeParty, setActiveParty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [lightboxImage, setLightboxImage] = useState(null);
+
+  // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
+  const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const [templateReady, setTemplateReady] = useState(false);
+  const isGumroad = activeTemplateId?.startsWith('gumroad');
+  const isStudio = activeTemplateId?.startsWith('studio-dark');
+  const isVerdure = activeTemplateId?.startsWith('verdure');
+  const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isBlossom = activeTemplateId?.startsWith('blossom');
 
   const listSectionRef = useRef(null);
 
@@ -630,16 +649,75 @@ function PartyContent() {
       .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
   }, [activeParty]);
 
+  useEffect(() => {
+    fetch(getPath('/api/admin/page-layout'))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .catch(() => {})
+      .finally(() => setTemplateReady(true));
+  }, []);
+
   const currentTheme = activeParty ? (PARTY_THEMES[activeParty.id] || PARTY_THEMES[activeParty.number] || DEFAULT_THEME) : DEFAULT_THEME;
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>;
+  if (loading || !templateReady) return <ThemedLoadingScreen text="กำลังโหลดข้อมูลพรรค..." />;
   if (!activeParty) return null;
 
+  // GUMROAD layout (own topbar/footer) — replaces the classic cinematic page entirely.
+  if (isGumroad) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <GumroadParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // STUDIO DARK layout (own rail/scene chrome) — replaces the classic cinematic page entirely.
+  if (isStudio) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <StudioDarkParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // VERDURE layout (own glass-terrarium chrome) — replaces the classic cinematic page entirely.
+  if (isVerdure) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <VerdureParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // RECEIPT layout (own paper-dossier chrome) — replaces the classic cinematic page entirely.
+  if (isReceipt) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <ReceiptParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
+  // BLOSSOM layout (own Candy Editorial chrome) — replaces the classic cinematic page entirely.
+  if (isBlossom) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <BlossomParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+      </>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden relative">
+    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[var(--color-bg)] overflow-x-hidden relative">
+      <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '44px 44px' }}></div>
       <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
 
-      <main className="flex-1 flex flex-col pt-16 xl:pt-16">
+      <main className="relative z-10 flex-1 flex flex-col pt-16 xl:pt-16">
 
         {/* 1. Banner */}
         <PartyBanner
@@ -683,7 +761,7 @@ function PartyContent() {
       {source === 'vote' && <BackToVoteBar />}
 
       <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
-        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU 2026. All Rights Reserved.</p>
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU {copyrightYear}. All Rights Reserved.</p>
       </footer>
     </div>
   );
@@ -691,7 +769,7 @@ function PartyContent() {
 
 export default function PartyPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>}>
+    <Suspense fallback={<ThemedLoadingScreen text="กำลังโหลดข้อมูลพรรค..." />}>
       <PartyContent />
     </Suspense>
   );
@@ -702,4 +780,41 @@ function MemberImage({ url }) {
   // ✅ ใช้ getPath wrap url
   if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-1/2 h-1/2" /></div>;
   return <img src={getPath(url)} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" loading="lazy" />;
+}
+
+// Read-only CLASSIC party detail for /template-preview (classic + original families).
+// Mirrors PartyContent's classic branch with mock props — no fetch, no auth — so the
+// chooser's party slide shows the real cinematic layout instead of a placeholder.
+export function ClassicPartyPreview({ party, galleryImages = [] }) {
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const listSectionRef = useRef(null);
+  const globalConfig = useGlobalConfig();
+  const copyrightYear = globalConfig?.copyrightYear ?? globalConfig?.electionCalendarYear ?? 2026;
+  if (!party) return null;
+  const theme = PARTY_THEMES[party.id] || PARTY_THEMES[party.number] || DEFAULT_THEME;
+
+  return (
+    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[var(--color-bg)] overflow-x-hidden relative">
+      <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
+      <main className="flex-1 flex flex-col pt-16 xl:pt-16">
+        <PartyBanner party={party} theme={theme} galleryImages={galleryImages} onOpenLightbox={(img) => setLightboxImage(img || galleryImages[0])} />
+        <PartyVisionSection party={party} theme={theme} />
+        <PartyChartSection party={party} theme={theme} onSelectMember={setSelectedMember} onScrollToList={() => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+        <div ref={listSectionRef}>
+          <CandidateList members={party.members} theme={theme} onSelectMember={setSelectedMember} />
+        </div>
+      </main>
+      {lightboxImage && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center" onClick={() => setLightboxImage(null)}>
+          <button onClick={() => setLightboxImage(null)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20"><X size={28} /></button>
+          <img src={getPath(lightboxImage)} className="max-w-full max-h-[85vh] object-contain shadow-2xl" alt="Lightbox" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+      <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} themeColor={theme.main} />
+      <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU {copyrightYear}. All Rights Reserved.</p>
+      </footer>
+    </div>
+  );
 }

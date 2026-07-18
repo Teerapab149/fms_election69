@@ -5,7 +5,7 @@ import { authOptions } from "../lib/auth"; // ✅ Import authOptions
 import HomeRenderer from "../components/home/HomeRenderer"; // per-template home layout dispatcher
 
 import { db } from "../lib/db";
-import { ELECTION_CONFIG } from "../utils/electionConfig";
+import { resolveElectionDates } from "../utils/electionConfig";
 import { getTemplate } from "../components/admin/editor/templates";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +43,7 @@ async function getHomeData(session) {
       resolvedTemplate = await getTemplate("classic", db);
     }
 
-    const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(config.globalConfig);
     const now = Date.now();
     const sysMode = config.systemMode || "AUTO";
 

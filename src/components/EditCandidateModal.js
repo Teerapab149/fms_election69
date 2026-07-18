@@ -4,7 +4,7 @@ import { getPath } from "../utils/basePath";
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
-import { getEncryptedToken } from "../utils/auth";
+import { buildPartyTheme } from "../utils/partyColors";
 
 export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdate }) {
     const [formData, setFormData] = useState({
@@ -12,6 +12,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         number: '',
         logoMeaning: '',
         slogan: '',
+        color: '',
         missions: '',
         policies: ''
     });
@@ -94,6 +95,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 name: candidate.name || '',
                 number: candidate.number || '',
                 slogan: candidate.slogan || '',
+                color: candidate.color || '',
                 logoMeaning: candidate.logoMeaning || '',
                 missions: Array.isArray(candidate.missions) ? candidate.missions.join('\n') : (candidate.missions || ''),
                 policies: Array.isArray(candidate.policies) ? candidate.policies.join('\n') : (candidate.policies || ''),
@@ -141,6 +143,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 name: '',
                 number: '',
                 slogan: '',
+                color: '',
                 logoMeaning: '',
                 missions: '',
                 policies: ''
@@ -288,6 +291,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             data.append('number', formData.number);
             data.append('logoMeaning', formData.logoMeaning);
             data.append('slogan', formData.slogan);
+            data.append('color', formData.color || '');
             data.append('missions', formData.missions);
             data.append('policies', formData.policies);
             data.append('policies', formData.policies);
@@ -321,24 +325,19 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 }
             });
 
-            const encryptedToken = getEncryptedToken();
-            if (!encryptedToken) {
-                console.error("Encryption failed");
-                return;
-            }
-
+            // Admin identity = httpOnly admin_token cookie (sent automatically; P0-1)
             let res;
             if (candidate) {
                 res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                     method: 'PUT',
                     body: data,
-                    headers: { 'x-admin-token': encryptedToken, }
+                    credentials: 'include',
                 });
             } else {
                 res = await fetch(getPath(`/api/admin/candidates`), {
                     method: 'POST',
                     body: data,
-                    headers: { 'x-admin-token': encryptedToken, }
+                    credentials: 'include',
                 });
             }
 
@@ -365,15 +364,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     const handleConfirmDelete = async () => {
         setIsLoading(true);
         try {
-            const encryptedToken = getEncryptedToken();
-            if (!encryptedToken) {
-                console.error("Encryption failed");
-                return;
-            }
-
             const res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                 method: 'DELETE',
-                headers: { 'x-admin-token': encryptedToken, }
+                credentials: 'include',
             });
             if (!res.ok) {
                 throw console.log(res)
@@ -535,6 +528,72 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">สีประจำพรรค <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            name="color"
+                                            value={formData.color || '#7fc8ff'}
+                                            onChange={handleChange}
+                                            className="h-10 w-14 rounded-lg border border-gray-300 cursor-pointer bg-white p-1"
+                                            aria-label="เลือกสีประจำพรรค"
+                                        />
+                                        <input
+                                            type="text"
+                                            name="color"
+                                            value={formData.color || ''}
+                                            onChange={handleChange}
+                                            placeholder="#7FC8FF · เว้นว่าง = สีอัตโนมัติ"
+                                            className="flex-1 rounded-xl border border-gray-300 px-4 py-2 text-gray-900 font-mono text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                                        />
+                                        {formData.color ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleChange({ target: { name: 'color', value: '' } })}
+                                                className="text-xs text-gray-500 hover:text-purple-600 whitespace-nowrap"
+                                            >
+                                                ↺ สีอัตโนมัติ
+                                            </button>
+                                        ) : null}
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติตามลำดับพรรค (พรรค 1 ฟ้า · 2 แดง · 3 เขียว · …) · สีที่เลือกจะถูกปรับให้เข้ากับโทนเว็บโดยอัตโนมัติ</p>
+
+                                    {/* Live preview — the full colour SET the site derives from this one pick */}
+                                    {(() => {
+                                        const t = buildPartyTheme(
+                                            { color: formData.color, number: formData.number },
+                                            Math.max(0, (parseInt(formData.number) || 1) - 1)
+                                        );
+                                        const swatches = [
+                                            { c: t.soft, label: 'พาสเทล' },
+                                            { c: t.main, label: 'เข้ม' },
+                                            { c: t.textOnLight, label: 'ตัวอักษร' },
+                                        ];
+                                        return (
+                                            <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                                                        ชุดสีที่ระบบจะใช้กับพรรคนี้
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400">
+                                                        {formData.color ? 'จากสีที่เลือก' : 'อัตโนมัติ'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-stretch gap-2">
+                                                    {swatches.map((s) => (
+                                                        <div key={s.label} className="flex-1 flex flex-col items-center gap-1">
+                                                            <div className="w-full h-9 rounded-lg border border-gray-300" style={{ backgroundColor: s.c }} />
+                                                            <span className="text-[9px] text-gray-500">{s.label}</span>
+                                                            <span className="text-[8px] font-mono text-gray-400 uppercase">{s.c}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="mt-2 h-2.5 rounded-full border border-gray-300" style={{ background: t.gradient }} />
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">พันธกิจ (Missions)</label>

@@ -194,10 +194,14 @@ export function PaddingSlider({ label, value, onChange, min = 2, max = 16, step 
 }
 
 export function WeightToggle({ label, value, onChange }) {
+  // Weights the site body font (Anuphan) renders DISTINCTLY — it tops out at 700, so
+  // a "900" step here was a no-op (browser clamps 800/900 → the 700 face). 400/600/700
+  // each look different, so the toggle always does something visible. (True Black-900
+  // Thai would need a 900-capable display font wired as the heading face.)
   const options = [
     { key: "400", label: "ปกติ" },
-    { key: "700", label: "หนา" },
-    { key: "900", label: "หนามาก" },
+    { key: "600", label: "หนา" },
+    { key: "700", label: "หนามาก" },
   ];
   const current = String(value || "400");
   return (

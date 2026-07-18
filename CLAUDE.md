@@ -29,8 +29,8 @@ src/
 │   └── api/
 │       ├── admin/
 │       │   ├── candidates/route.js   # CRUD candidates + members
-│       │   ├── config/route.js       # System config GET/PUT
-│       │   └── dashboard/route.js    # Admin dashboard stats + actions
+│       │   ├── dashboard/route.js    # Admin dashboard stats + actions
+│       │   └── readiness/route.js    # ADM-1 ตรวจความพร้อมระบบ (read-only)
 │       ├── check-status/route.js     # Election status check
 │       ├── home-info/route.js        # Home page data (SSR)
 │       ├── party/route.js            # Public party data
@@ -73,25 +73,34 @@ prisma/
 model User {
   id, studentId (unique), name, email, facultyId, departmentId
   role ("student" | "ADMIN"), year, major, gender
-  isVoted (Boolean), isFormCompleted (Boolean), isAdmin (Boolean)
-  candidateId? → Candidate
+  isVoted (Boolean), isFormCompleted (Boolean), isAdmin (Boolean), votedAt?
+  // ⚠️ v2-SEC (2026-07-16): User.candidateId REMOVED — no voter→choice link exists.
+  // The choice lives only in the anonymous encrypted Ballot table (see below).
 }
 
 model Candidate {
-  id, name (unique), number (unique), slogan?, logoUrl?
+  id, name (unique), number (unique), slogan?, logoUrl?, color?
   groupImageUrls (Json?), officialImageUrl?, mobileHeroImage (Json?)
   logoMeaning?, missions (Json?), policies (Json?)
-  members → Member[], voters → User[], score (Int)
+  members → Member[], score (Int)   // score = the tally; no `voters` relation (v2-SEC)
 }
 
 model Member {
   id, studentId (unique), name, number, imageUrl, modalImageUrl?
-  major?, position?, candidateId → Candidate
+  major?, position?, candidateId → Candidate   // Member↔Candidate FK still exists
 }
 
+// v2-SEC — anonymous, encrypted, tamper-evident ballot box (LOCKED "B+")
+model Ballot {
+  seq (PK), payload (RSA-OAEP ciphertext of {c: candidateId, n: nonce})
+  hourBucket? (coarse), prevHash, rowHash (HMAC chain — no userId, no fine time)
+}
+model ChainHead { id (always 1), head (default "GENESIS"), seq }  // chain tip
+
 model SystemConfig {
-  id (always 1), isVoteOpen, showResult, systemMode ("AUTO"|"MANUAL_OPEN"|"PAUSE"|"ENDED")
-  googleFormUrl?, updatedAt
+  id (always 1), isVoteOpen (legacy — no longer gates after ADM-3), showResult
+  systemMode ("AUTO"|"MANUAL_OPEN"|"PAUSE"|"ENDED"), googleFormUrl?
+  globalConfig (Json — dates/meta/ballotsAnonymized flag), activeTemplateId?, updatedAt
 }
 ```
 
@@ -106,15 +115,16 @@ import { getPath } from "../utils/basePath";
 // ❌ "/api/vote" (จะพังใน Docker deployment)
 ```
 
-### 2. Admin Authentication
-Admin API ใช้ RSA-encrypted token ส่งผ่าน header `x-admin-token`
+### 2. Admin Authentication (P0-1 security fix, 2026-06-10)
+Admin identity = httpOnly cookie `admin_token` (signed JWT จาก `/api/admin/login`)
+ส่งอัตโนมัติทุก same-origin request — ฝั่ง client แค่ใส่ `credentials: 'include'`:
 ```js
-import { getEncryptedToken } from "../utils/auth";
-const token = getEncryptedToken();
-fetch(getPath("/api/admin/..."), {
-  headers: { 'x-admin-token': token }
-});
+fetch(getPath("/api/admin/..."), { credentials: 'include' });
 ```
+ฝั่ง server ทุก admin route ต้องเรียก `adminGuard(request)` (หรือ `requireAdmin`)
+จาก `src/lib/auth/adminCheck.js` — รับ NextAuth session (ADMIN/STAFF) หรือ JWT cookie.
+⛔ ห้ามนำ pattern เก่ากลับมา: `getEncryptedToken()` / header `x-admin-token` /
+`NEXT_PUBLIC_ADMIN_*` ถูกลบแล้ว (P0-1) เพราะ secret ฝังใน client bundle → ใครก็ forge ได้.
 
 ### 3. Design System Colors
 - **Primary:** `#8A2680` (deep purple — FMS brand)

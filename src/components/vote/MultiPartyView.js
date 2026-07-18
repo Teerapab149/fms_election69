@@ -2,9 +2,10 @@
 
 import { useRef, useCallback } from "react";
 import PartyCard from "../PartyCard";
-import { Ban, Check } from "lucide-react";
+import { Ban, Check, CalendarDays } from "lucide-react";
 import EditorElement from '../admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
+import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function MultiPartyView({
   regularParties,
@@ -50,6 +51,12 @@ export default function MultiPartyView({
 
   const partyCount = regularParties.length;
 
+  // Election meta for the header (same source as the home hero).
+  const gc = useGlobalConfig() || {};
+  const elPrefix = gc.electionNamePrefix || "SAMO";
+  const elNumber = gc.electionNumber ?? 50;
+  const elAcademicYear = gc.academicYearTh ?? 2570;
+
   const {
     gridCols = "auto",
     cardVariant = "auto",
@@ -58,37 +65,49 @@ export default function MultiPartyView({
   } = config;
 
   const resolvedCardVariant = cardVariant === "auto"
-    ? (partyCount <= 3 ? "grid" : "compact")
+    ? (partyCount <= 5 ? "grid" : "compact")
     : cardVariant;
 
   const resolvedAbstainStyle = abstainStyle === "auto"
     ? (partyCount <= 3 ? "standard" : "compact")
     : abstainStyle;
 
+  // ≥2 columns on mobile while the grid cards run (≤5 parties) so voters see
+  // multiple parties at once. Once the COMPACT cards kick in (>5), phones drop to a
+  // single column: the compact card truncates its name to one line, and at 2-up the
+  // column is ~10 Thai chars wide — parties sharing a prefix become indistinguishable
+  // on the ballot. Full-width rows keep every name readable (ยึด P-LOG-099).
   const getGridClasses = () => {
     switch (gridCols) {
-      case "2": return "grid-cols-1 sm:grid-cols-2";
-      case "3": return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-      default:  
-        if (partyCount <= 2) return "grid-cols-1 sm:grid-cols-2";
-        if (partyCount <= 4) return "grid-cols-1 sm:grid-cols-2";
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+      case "2": return "grid-cols-2";
+      case "3": return "grid-cols-2 lg:grid-cols-3";
+      default:
+        if (partyCount <= 4) return "grid-cols-2";
+        if (partyCount <= 5) return "grid-cols-2 sm:grid-cols-3";
+        if (partyCount <= 6) return "grid-cols-1 sm:grid-cols-3";
+        return "grid-cols-1 sm:grid-cols-3 lg:grid-cols-4";
     }
   };
 
+  // Widen the container as columns grow so cards keep a comfortable size.
+  const gridMaxW = partyCount <= 4 ? "max-w-2xl" : partyCount <= 6 ? "max-w-4xl" : "max-w-6xl";
+
   return (
     <div className="w-full">
-      
-      <div className="text-center mb-8 space-y-2">
+
+      <div className="text-center mb-8 space-y-2.5 flex flex-col items-center">
         <Wrap id="vote-header-badge">
           <span data-element="vote-header-badge" style={{
             // Tier-2 owns the colour (deconfliction): read the var directly, no
             // `cfg().color ||` prefix — that prefix created the dual source and a
             // stale DB elementConfigs.color would mask the var in the editor.
             color: 'var(--vh-badge-color, var(--color-primary))',
-            fontSize: SIZE_MAP[cfg('vote-header-badge').fontSize] || '0.75rem',
+            fontSize: SIZE_MAP[cfg('vote-header-badge').fontSize] || '0.7rem',
             fontWeight: WEIGHT_MAP[cfg('vote-header-badge').fontWeight] || cfg('vote-header-badge').fontWeight || 700,
-          }} className="inline-block uppercase tracking-widest">
+            backgroundColor: 'color-mix(in srgb, var(--color-primary) 9%, transparent)',
+            boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 20%, transparent)',
+          }} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full uppercase tracking-[0.16em]">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
             {cfg('vote-header-badge').text || 'ลงคะแนนเสียง'}
           </span>
         </Wrap>
@@ -104,6 +123,16 @@ export default function MultiPartyView({
           </h1>
         </Wrap>
 
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[13px] md:text-sm font-semibold"
+          style={{
+            color: 'var(--color-primary)',
+            backgroundColor: 'color-mix(in srgb, var(--color-primary) 7%, transparent)',
+            boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 16%, transparent)',
+          }}>
+          <CalendarDays className="w-4 h-4" />
+          <span>{elPrefix} {elNumber} · ประจำปีการศึกษา {elAcademicYear}</span>
+        </div>
+
         <Wrap id="vote-header-subtitle">
           <p data-element="vote-header-subtitle" style={{
             color: 'var(--vh-subtitle-color, var(--color-text-muted, #64748b))',
@@ -116,7 +145,7 @@ export default function MultiPartyView({
         </Wrap>
       </div>
 
-      <div className={`grid ${getGridClasses()} gap-3 sm:gap-4 lg:gap-6 max-w-2xl mx-auto`}>
+      <div className={`grid ${getGridClasses()} gap-2.5 sm:gap-4 lg:gap-6 ${gridMaxW} mx-auto`}>
         {regularParties.map((party, index) => {
           const cardInner = (
             <PartyCard
@@ -168,10 +197,10 @@ export default function MultiPartyView({
                 borderColor: cfg('vote-abstain-button').borderColor || undefined,
               } : undefined}
               className={`relative w-full rounded-2xl p-4 flex items-center justify-center gap-3
-              transition-all duration-300 border-2
+              transition-all duration-300
               ${selectedPartyId === specialOptions.abstain.id
-                ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-200/50 scale-[1.02]'
-                : 'bg-white border-slate-100 text-slate-700 hover:border-orange-300 hover:shadow-md'}`}>
+                ? 'bg-orange-500 text-white shadow-[0_16px_38px_-12px_rgba(234,88,12,0.55)] scale-[1.01]'
+                : 'bg-white text-slate-700 ring-1 ring-slate-100 shadow-[0_6px_24px_-10px_rgba(30,23,45,0.16)] hover:ring-orange-200 hover:shadow-[0_12px_32px_-10px_rgba(234,88,12,0.28)] hover:-translate-y-0.5'}`}>
               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
                 ${selectedPartyId === specialOptions.abstain.id ? 'bg-white/20' : 'bg-orange-50 text-orange-600'}`}>
                 <Ban size={22} strokeWidth={2.5} />

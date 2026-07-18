@@ -12,6 +12,8 @@ async function main() {
         await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Member" RESTART IDENTITY CASCADE;`);
         await prisma.$executeRawUnsafe(`TRUNCATE TABLE "User" RESTART IDENTITY CASCADE;`);
         await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Candidate" RESTART IDENTITY CASCADE;`);
+        // v2-SEC: empty the ballot box too (all users here are unvoted → empty).
+        await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Ballot" RESTART IDENTITY CASCADE;`);
         console.log('🧹 Database cleaned');
     } catch (error) {
         console.log('⚠️ Truncate failed, using deleteMany...');
@@ -19,7 +21,14 @@ async function main() {
         await prisma.member.deleteMany();
         await prisma.user.deleteMany();
         await prisma.candidate.deleteMany();
+        await prisma.ballot.deleteMany();
     }
+    // v2-SEC: reset the chain tip to genesis (this template seeds ZERO ballots).
+    await prisma.chainHead.upsert({
+        where: { id: 1 },
+        update: { head: 'GENESIS', seq: 0 },
+        create: { id: 1, head: 'GENESIS', seq: 0 },
+    });
 
     // 2. สร้าง SystemConfig (สำคัญมาก! ระบบต้องมี ID=1 เสมอ)
     await prisma.systemConfig.create({
@@ -241,7 +250,6 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
             subMajorNameThai: selectedMajor.name,// ชื่อภาษาไทย
 
             isVoted: false,                      // ทุกคนยังไม่โหวต
-            candidateId: null,                   // ไม่มี Candidate
             isAdmin: false
         });
     }
@@ -277,7 +285,7 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
                 email: '6610510149@email.psu.ac.th',
                 gender: 'M', major: 'BIS', year: 'ปี 3',
                 yearStatus: '3',
-                isVoted: false, candidateId: null,
+                isVoted: false,
                 role: 'ADMIN',
                 isAdmin: true,
                 passwordHash: adminPasswordHash1,
@@ -288,7 +296,7 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
                 email: '6610510129@email.psu.ac.th',
                 gender: 'F', major: 'BIS', year: 'ปี 3',
                 yearStatus: '3',
-                isVoted: false, candidateId: null,
+                isVoted: false,
                 role: 'ADMIN',
                 isAdmin: true,
                 passwordHash: adminPasswordHash2,

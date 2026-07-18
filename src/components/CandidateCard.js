@@ -36,7 +36,7 @@ export default function CandidateCard({ candidate, onClick }) {
                 <div className="flex justify-between items-start mb-1 lg:mb-3 gap-2">
                     <div className="min-w-0 flex-1">
                         {/* ชื่อพรรค */}
-                        <h3 className="font-bold text-slate-800 truncate leading-tight group-hover:text-[#8A2680] transition-colors text-base lg:text-lg" >
+                        <h3 className="font-bold text-slate-800 truncate leading-tight group-hover:text-[var(--color-primary)] transition-colors text-base lg:text-lg" >
                             {candidate.name || "ไม่ระบุชื่อพรรค"}
                         </h3>
 

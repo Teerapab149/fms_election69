@@ -4,7 +4,6 @@ import { getPath } from "../utils/basePath";
 import { useState, useEffect } from 'react';
 import { X, Save, Trash2, Loader2, Upload, User, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
-import { getEncryptedToken } from "../utils/auth";
 
 const PREDEFINED_POSITIONS = [
     "นายกสโมสรนักศึกษา",
@@ -219,15 +218,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 data.append(`member_modal_file_${currentMember.studentId}`, currentMember.modalImageFile);
             }
 
-            const encryptedToken = getEncryptedToken();
-            if (!encryptedToken) {
-                console.error("Encryption failed");
-                return;
-            }
-
+            // Admin identity = httpOnly admin_token cookie (sent automatically; P0-1)
             const res = await fetch(getPath(`/api/admin/candidates?id=${candidate.id}`), {
                 method: 'PUT',
-                headers: { 'x-admin-token': encryptedToken, },
+                credentials: 'include',
                 body: data,
             });
 

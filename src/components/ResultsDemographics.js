@@ -32,7 +32,7 @@ export default function ResultsDemographics({
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-8 animate-fade-in-up">
           <div className="order-2 lg:order-1 bg-white p-4 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100">
             <div className="flex items-center gap-3 mb-4 lg:mb-8">
-              <div className="bg-purple-100 p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[var(--color-primary,#8A2680)]" /></div>
+              <div className="bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-[var(--color-primary,#8A2680)]" /></div>
               <h3 className="text-base lg:text-xl font-bold text-slate-700">แยกตามสาขา</h3>
             </div>
             <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">
@@ -40,7 +40,7 @@ export default function ResultsDemographics({
                 <BarChart data={byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={50} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
+                  <YAxis type="category" dataKey="name" width={isMobile ? 96 : 120} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
                   <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
                   <Bar dataKey="value" fill={COLORS_BAR} radius={[0, 4, 4, 0]} barSize={isMobile ? 24 : 40} />
                 </BarChart>
@@ -111,7 +111,7 @@ export default function ResultsDemographics({
         <BarChart3 className="text-slate-400" size={32} />
       </div>
       <h3 className="text-lg font-bold text-slate-600">สถิติยังไม่เปิดเผย</h3>
-      <p className="text-slate-400 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดหีบเลือกตั้งแล้วเท่านั้น</p>
+      <p className="text-slate-400 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดโหวตแล้วเท่านั้น</p>
     </div>
   );
 }
