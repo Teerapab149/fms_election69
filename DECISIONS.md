@@ -2028,6 +2028,19 @@ fresh install. e2e globalSetup can now switch from `db push` back to
 
 ---
 
+### P-LOG-103: [2026-07-18] `next start` force-overrides NODE_ENV — dev-only providers never register on a prod-build test server
+**Context:** v2-R11 first live e2e run — global.setup spawned `next start` with
+`NODE_ENV=development` hoping to enable the mock-login NextAuth provider (gated
+on `NODE_ENV !== "production"`). Next force-sets production; sign-in silently
+bounced back to /login and 7/9 tests failed at the same waitForURL.
+**Lesson:** Never gate test-only server behaviour on NODE_ENV when the server
+under test is a prod build. Gate on an explicit opt-in a real deployment cannot
+satisfy — here `E2E_MOCK_LOGIN=true` **AND** a DATABASE_URL whose db name ends
+with `_e2e` (dual condition, both required — src/lib/auth.js).
+**Tags:** `#e2e` `#nextjs` `#auth`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

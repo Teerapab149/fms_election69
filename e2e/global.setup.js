@@ -111,7 +111,12 @@ module.exports = async function globalSetup() {
   const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
     env: {
       ...process.env,
-      NODE_ENV: 'development', // enable mock-login provider + non-Secure cookies on http
+      // NOTE: `next start` force-overrides NODE_ENV to "production" (proven in the
+      // first gate run — sign-in bounced because the provider never registered).
+      // The mock-login provider is instead enabled by the DUAL condition below:
+      // E2E_MOCK_LOGIN flag + a DATABASE_URL whose db name ends with _e2e
+      // (see src/lib/auth.js) — a real deployment can never satisfy both.
+      E2E_MOCK_LOGIN: 'true',
       DATABASE_URL: TEST_DB_URL,
       PORT: String(PORT),
       NEXTAUTH_URL: `http://localhost:${PORT}${BASE_PATH}`,

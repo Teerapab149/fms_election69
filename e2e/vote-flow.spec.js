@@ -71,7 +71,9 @@ test.describe('Vote flow (receipt template, isolated test DB)', () => {
 
     // 5. IDENTITY RECEIPT (v2-R4a): the voter's own name + studentId, exactly the
     //    seeded fixture values. (Never any choice — v2-SEC has no such link.)
-    await expect(page.getByText('บันทึกคะแนนแล้ว')).toBeVisible({ timeout: 15000 });
+    // strict-mode: the phrase appears twice (headline eyebrow + receipt title) —
+    // target the receipt's own h1.
+    await expect(page.getByRole('heading', { name: 'บันทึกคะแนนแล้ว' })).toBeVisible({ timeout: 15000 });
     const receipt = page.locator('.rc-suc-line', { hasText: 'ผู้ใช้สิทธิ์' });
     await expect(receipt).toContainText(VOTER.name);
     const idLine = page.locator('.rc-suc-line', { hasText: 'รหัสนักศึกษา' });

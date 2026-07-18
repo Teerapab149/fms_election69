@@ -110,7 +110,14 @@ export const authOptions = {
     // เปิดใช้งานโดยเพิ่มใน .env.local:
     //   NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true
     // Provider นี้จะไม่ถูก register เลยใน production (NODE_ENV === "production")
-    ...(process.env.NODE_ENV !== "production" ? [
+    // ── ข้อยกเว้นเดียว (v2-R11): e2e gate รัน PROD BUILD (`next start` บังคับ
+    // NODE_ENV=production เสมอ) กับ DB ทดสอบแยก — อนุญาต provider เฉพาะเมื่อ
+    // เงื่อนไขครบ "ทั้งสอง": runner ตั้ง E2E_MOCK_LOGIN=true อย่างชัดเจน และ
+    // DATABASE_URL ชี้ database ที่ชื่อลงท้าย _e2e จริง. deployment จริงไม่มีทาง
+    // ผ่านทั้งคู่ (ไม่ตั้ง flag + DB ชื่อจริง) — mock login จึงยังปิดตายบน prod.
+    ...(process.env.NODE_ENV !== "production" ||
+        (process.env.E2E_MOCK_LOGIN === "true" &&
+         /_e2e(\?|$)/.test(process.env.DATABASE_URL || "")) ? [
       CredentialsProvider({
         id: "mock-login",
         name: "Mock Login",
