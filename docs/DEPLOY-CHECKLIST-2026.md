@@ -25,6 +25,13 @@
 
 ## 1. เตรียม environment variables (ยังไม่ตั้งกุญแจบัตร — ทำใน §2)
 
+> 🛑 **บังคับ (2026-07-19):** docker-compose เวอร์ชันก่อนหน้าเคย hardcode
+> รหัสผ่าน Postgres และ `NEXTAUTH_SECRET` ของเครื่อง dev ไว้ในไฟล์ — และ repo
+> เป็น public บน GitHub ค่าเหล่านั้นจึงถือว่า**หลุดแล้ว** (ยังอยู่ใน git history)
+> ห้ามนำค่าใดที่เคยอยู่ในไฟล์ compose มาใช้บน production เด็ดขาด — ทุก secret
+> ของ prod ต้อง**สุ่มใหม่ทั้งหมด** และเครื่อง dev ควรเปลี่ยนรหัส Postgres ท้องถิ่นด้วย
+> (compose ปัจจุบันอ่าน `POSTGRES_PASSWORD` จาก `.env` แล้ว ไม่มี secret ในไฟล์อีก)
+
 ตั้งบน **server env** (Docker env / `.env` ที่ gitignored) — **ห้าม commit ลง git**:
 
 | ตัวแปร | ค่า / หมายเหตุ |

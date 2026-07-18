@@ -5,3 +5,12 @@ npm-debug.log
 README.md
 .next
 .git
+
+# never bake secrets or test artifacts into the image
+.env
+.env.*
+*.local
+e2e
+test-results
+.specs
+playwright.config.js

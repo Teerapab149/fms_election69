@@ -37,7 +37,12 @@ services:
       - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
       - ADMIN_PASSWORD_AUTH_EXTRA=${ADMIN_PASSWORD_AUTH_EXTRA}
 
-    command: node --security-revert=CVE-2023-46809 server.js
+    # NOTE: the old `--security-revert=CVE-2023-46809` flag was removed — it
+    # re-enabled Node's vulnerable PKCS#1 v1.5 decryption for the RETIRED admin
+    # RSA login (P0-1). v2-SEC ballot crypto is RSA-OAEP and does not need it.
+    command: node server.js
+    depends_on:
+      - db
 
   db:
     image: postgres:15-alpine
@@ -45,7 +50,8 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: teerapab1150
+      # Set POSTGRES_PASSWORD in .env — never commit a real password here
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: fms_election
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
