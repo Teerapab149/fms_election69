@@ -113,6 +113,28 @@ export async function POST(req) {
       return NextResponse.json({ message: "Success" });
     }
 
+    // 🛑 v2-R10 guard — both destructive resets below wipe the live ballot box;
+    // while voting is effectively OPEN a mis-click would destroy a running
+    // election. Require the box to be closed first: PAUSE / ENDED, or AUTO
+    // outside the voting window. (MANUAL_OPEN = force-open → always blocked.)
+    if (action === 'RESET_VOTES' || action === 'RESET_CANDIDATES') {
+      const cfg0 = await db.systemConfig.findFirst({ where: { id: 1 } });
+      const m0 = cfg0?.systemMode || "AUTO";
+      let votingOpen = m0 === "MANUAL_OPEN";
+      if (m0 === "AUTO") {
+        const { resolveElectionDates } = await import("../../../../utils/electionConfig");
+        const { ELECTION_START, ELECTION_END } = resolveElectionDates(cfg0?.globalConfig);
+        const now = Date.now();
+        votingOpen = now >= new Date(ELECTION_START).getTime() && now < new Date(ELECTION_END).getTime();
+      }
+      if (votingOpen) {
+        return NextResponse.json(
+          { error: "ระบบโหวตกำลังเปิดอยู่ — สั่งพักระบบ (PAUSE) หรือปิดระบบ (ENDED) ก่อน จึงจะรีเซ็ตข้อมูลได้" },
+          { status: 400 }
+        );
+      }
+    }
+
     // กรณี: ล้างคะแนนทั้งหมด (Reset) — pre-election / dev reset only.
     // NOTE (v2-SEC): this also empties the append-only ballot box + resets the
     // hash chain to genesis so score/ballots/chain stay consistent. That delete
