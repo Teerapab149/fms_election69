@@ -8,10 +8,11 @@
 //
 // Key ceremony (once per election year):
 //   1. Run this on an offline / trusted machine.
-//   2. PRIVATE KEY  → printed on paper, split-custody between the advisor(s) and
-//      the student-council president. It is needed ONLY to settle a dispute
-//      (offline decrypt-recount). Losing it loses dispute-recount, NOT the
-//      election result (the tally is Candidate.score, kept server-side).
+//   2. PRIVATE KEY  → printed on paper, split-custody between two people on the
+//      faculty side (e.g. the staff member operating the system + the advisor).
+//      It is needed ONLY to settle a dispute (offline decrypt-recount). Losing
+//      it loses dispute-recount, NOT the election result (the tally is
+//      Candidate.score, kept server-side).
 //   3. PUBLIC KEY    → set as ELECTION_BALLOT_PUBLIC_KEY on the server (env).
 //   4. CHAIN SECRET  → set as BALLOT_CHAIN_SECRET on the server (env). Keep a
 //      copy off-box; export the chain head periodically so tampering that also
@@ -38,21 +39,22 @@ ${line}
   ELECTION BALLOT KEY CEREMONY — output is printed ONCE, never stored
 ${line}
 
---- PRIVATE KEY (offline, split-custody — DO NOT put on the server) ---------
+--- PRIVATE KEY — พิมพ์ลงกระดาษ เก็บ offline เท่านั้น ห้ามขึ้นเซิร์ฟเวอร์ ----------
 
 ${privateKey.trim()}
 
---- PUBLIC KEY (server env: ELECTION_BALLOT_PUBLIC_KEY) ---------------------
+--- PUBLIC KEY (ตัวเดียวกับใน .env ด้านล่าง — ไม่ต้องจดซ้ำ) -------------------
 
 ${publicKey.trim()}
 
---- .env-ready values (paste into the SERVER env, gitignored) ---------------
+--- วาง 2 บรรทัดนี้ลง .env ของเซิร์ฟเวอร์ (แล้วจบขั้นตอนฝั่งเซิร์ฟเวอร์) ----------
 
 ELECTION_BALLOT_PUBLIC_KEY="${esc(publicKey)}"
 BALLOT_CHAIN_SECRET="${chainSecret}"
 
 ${line}
-  Store the private key + chain secret OFF this machine, then clear the
-  scrollback. The server keeps ONLY the public key and the chain secret.
+  สรุป: 1) พิมพ์ PRIVATE KEY ลงกระดาษ แบ่งเก็บ 2 คนฝั่งคณะ (เจ้าหน้าที่ + อาจารย์)
+       2) วาง 2 บรรทัดบนลง .env   3) จด BALLOT_CHAIN_SECRET สำรองนอกเครื่อง
+       4) ปิดหน้าต่างนี้ — ระบบไม่เก็บอะไรไว้เลย รันใหม่ได้ค่าใหม่เสมอ
 ${line}
 `);
