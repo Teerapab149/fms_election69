@@ -60,7 +60,7 @@ npm run dev        # http://localhost:3000/fms-ovs
 node scripts/generate-election-keys.js
 ```
 
-private key พิมพ์ลงกระดาษแบ่งเก็บระหว่างอาจารย์ที่ปรึกษากับประธานสโมสร ห้ามอยู่บน
+private key พิมพ์ลงกระดาษแบ่งเก็บระหว่างเจ้าหน้าที่ผู้ดูแลระบบกับอาจารย์ที่ปรึกษา ห้ามอยู่บน
 เซิร์ฟเวอร์หรือใน repo — ใช้เฉพาะตอนมีข้อพิพาทเพื่อ recount แบบ offline ส่วน public key
 กับ chain secret ตั้งเป็น env บนเซิร์ฟเวอร์ และบน production ต้องรัน
 `scripts/sql/ballot-grants.sql` เพื่อให้แอปมีสิทธิ์แค่ INSERT บนตารางบัตร

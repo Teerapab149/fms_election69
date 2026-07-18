@@ -307,7 +307,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 ```
 node scripts/generate-election-keys.js    # พิมพ์ keypair + chain secret ออก stdout เท่านั้น (ไม่เขียนดิสก์)
 ```
-- **private key** → พิมพ์กระดาษ แบ่งเก็บ (อจ.ที่ปรึกษา + ประธานสโมสร) **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo**
+- **private key** → พิมพ์กระดาษ แบ่งเก็บ (เจ้าหน้าที่ผู้ดูแลระบบ + อจ.ที่ปรึกษา) **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo**
 - **public key** → env `ELECTION_BALLOT_PUBLIC_KEY` · **chain secret** → env `BALLOT_CHAIN_SECRET` + สำเนานอกเครื่อง
 
 **ระหว่าง/หลังเลือกตั้ง:**
