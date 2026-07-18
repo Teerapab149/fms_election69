@@ -139,7 +139,10 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
 
         .blm__top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-right:38px; }
         .blm__eyebrow { display:inline-flex; align-items:center; gap:8px; font-family:var(--bl-fm); font-size:10px;
-          letter-spacing:.18em; text-transform:uppercase; color:var(--bl-faint); }
+          letter-spacing:.18em; text-transform:uppercase; color:var(--bl-faint);
+          /* keep on one line — flex-squeeze against the flex:none number pill was
+             wrapping the Thai word "ผู้สมัคร" mid-character with a dangling "·" */
+          white-space:nowrap; }
         .blm__tick { width:8px; height:8px; flex:none; background:var(--bl-primary); transform:rotate(45deg); border-radius:1.5px; }
         .blm__no { display:inline-flex; align-items:baseline; gap:6px; flex:none; padding:5px 12px; border-radius:999px;
           background:var(--bl-primary-soft); color:var(--bl-primary-deep);

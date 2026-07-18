@@ -40,7 +40,7 @@ export default function ResultsDemographics({
                 <BarChart data={byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={50} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
+                  <YAxis type="category" dataKey="name" width={isMobile ? 96 : 120} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
                   <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none' }} />
                   <Bar dataKey="value" fill={COLORS_BAR} radius={[0, 4, 4, 0]} barSize={isMobile ? 24 : 40} />
                 </BarChart>

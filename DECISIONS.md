@@ -1993,6 +1993,19 @@ don't). Wire the real components first if classic must be exercised.
 
 ---
 
+### P-LOG-101: [2026-07-18] A family root's `a{color:inherit}` reset silently beats single-class button colour modifiers
+**Context:** v2-R10 sweep — GumroadClosed's CTA `.gcl-btn--ink` (specificity 0,1,0)
+lost to `.gcl-root a{color:inherit}` (0,1,1) and rendered ink-on-ink (invisible
+label). It hid for weeks because the session path renders a `<button>` (unaffected);
+only the no-session `<a>` path lost the cascade.
+**Lesson:** When a template root declares a broad anchor colour reset, every colour
+modifier that can land on an `<a>` must be scoped under the root
+(`.root .btn--x`, 0,2,0) so it wins. Audit both element flavours of dual
+`<a>`/`<button>` CTAs — they cascade differently.
+**Tags:** `#css` `#specificity` `#template`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

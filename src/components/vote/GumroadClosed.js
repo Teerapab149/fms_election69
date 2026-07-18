@@ -80,7 +80,9 @@ export default function GumroadClosed({ title, desc, variant = "closed", session
           cursor:pointer; color:var(--ink); font-family:var(--fb); transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gcl-btn:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh-lg); }
         .gcl-btn:active{ transform:translate(2px,2px); box-shadow:0 0 0 var(--ink); }
-        .gcl-btn--ink{ background:var(--ink); color:var(--cream); }
+        /* scoped under .gcl-root so the ink text colour beats .gcl-root a{color:inherit}
+           (0,1,1) — the CTA is an <a>, so at (0,1,0) it lost and rendered ink-on-ink */
+        .gcl-root .gcl-btn--ink{ background:var(--ink); color:var(--cream); }
         .gcl-btn--coral{ background:var(--coral); }
 
         /* footer = <SiteFooter> element (own scoped styles) */
