@@ -250,7 +250,7 @@ silently rename the seventh state.
 The Claude.ai writing specs is working from:
 - Project knowledge that may be stale
 - Patterns inferred from prior sessions
-- VISION.md, ADR-001, DECISIONS.md (these are authoritative)
+- DECISIONS.md, docs/MASTER-DESIGN-PLAN.md (these are authoritative)
 
 The spec writer **cannot** verify:
 - Exact prop shapes of components they reference
@@ -414,7 +414,7 @@ The spec writer is not infallible. You should push back when:
 - Spec contradicts source code reality (audit revealed mismatch)
 - Spec's verification commands are wrong (e.g., grep regex too broad)
 - Spec's time budget is unrealistic given audit findings
-- Spec's architectural rule contradicts ADR-001 or VISION.md
+- Spec's architectural rule contradicts docs/MASTER-DESIGN-PLAN.md or DECISIONS.md
 - Spec asks for behavior change in something marked "preserve"
 
 Push back format:
@@ -461,12 +461,17 @@ If any "no" answer → flag in final report, don't hide.
 
 | Need | File |
 |---|---|
-| Project vision / north star | VISION.md |
-| Architecture decisions | ADR-001-architecture.md |
+| Project overview / onboarding | README.md |
+| System state + pre-deploy checklist | docs/TEMPLATE-SYSTEM-STATE.md, docs/DEPLOY-CHECKLIST-2026.md |
+| Design plan + owner taste + tickets | docs/MASTER-DESIGN-PLAN.md |
 | Accumulated lessons | DECISIONS.md (P-LOG-001..NNN) |
 | Current state | PROGRESS.md |
 | Engineering discipline (this) | CLAUDE.md |
-| Past session specs | .specs/LIVE_STEP_*.md (gitignored, may not exist on fresh clone) |
+| Past session specs | .specs/ (gitignored, may not exist on fresh clone) |
+
+> Historical planning docs (VISION.md, ADR-001, PHASE*/PLAN-*/HANDOFF-* of closed
+> arcs) were removed from the tree 2026-07-19 (owner order: keep only living docs)
+> — recover any of them from git history before that date if ever needed.
 
 Always read in this order at session start. The spec is downstream
 of these.
