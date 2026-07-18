@@ -30,12 +30,14 @@ services:
       - AUTHENTIK_REDIRECT_URI=http://localhost:3000/fms-ovs/api/auth/authentik/callback
 
       # Override Database URL to point to the internal 'db' container
-      - DATABASE_URL=postgresql://postgres:teerapab1150@db:5432/fms_election?schema=public
+      # (POSTGRES_PASSWORD comes from .env — never commit a real password here)
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/fms_election?schema=public
 
-      # Secret Keys (Using default or from .env)
-      - NEXTAUTH_SECRET=teerapabmegu1150fms_election2026dontcopymeplsah
+      # Secret Keys — from .env only
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 
-    command: node --security-revert=CVE-2023-46809 server.js
+    # CVE revert flag removed — only the retired P0-1 admin RSA login needed it
+    command: node server.js
 
     # Enable host networking for Windows
     extra_hosts:
@@ -47,7 +49,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: teerapab1150
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: fms_election
     ports:
       - "5433:5432" # Host:5433 -> Container:5432 (Avoid conflict with local Postgres)
