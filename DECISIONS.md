@@ -2006,6 +2006,28 @@ modifier that can land on an `<a>` must be scoped under the root
 
 ---
 
+### P-LOG-102: [2026-07-18] Migration history must be re-proven on a fresh DB after any `prisma db push` era
+**Context:** Committed migrations no longer reproduced the live schema — 24
+columns across 4 tables (SystemConfig.systemMode/googleFormUrl/pageLayout/
+themeConfig/globalConfig, User.isFormCompleted/isAdmin/…, Candidate template
+columns, Member.number/…) existed on dev only via `prisma db push`. A fresh
+`migrate deploy` (the documented DEPLOY-CHECKLIST-2026.md path) built a DB the
+app cannot run on. Found while building the v2-R11 e2e test DB.
+**Fix:** `prisma migrate diff --from-migrations prisma/migrations
+--to-schema-datamodel prisma/schema.prisma --script` → committed as
+`20260718180000_catchup_db_push_drift` (afc9e08). Verified twice on scratch DBs:
+full 7-migration chain `migrate deploy` on a fresh DB → `migrate diff
+--from-url <scratch> --to-schema-datamodel prisma/schema.prisma` =
+"No difference detected". Dev DB marks it applied via `migrate resolve --applied`.
+**Lesson:** `db push` is fine for prototyping but silently forks history from
+reality. Before any deploy-readiness claim, prove `migrate deploy` on a scratch
+DB and diff against schema.prisma — the dev DB working proves nothing about a
+fresh install. e2e globalSetup can now switch from `db push` back to
+`migrate deploy` (optional follow-up).
+**Tags:** `#prisma` `#migrations` `#deploy` `#drift`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
