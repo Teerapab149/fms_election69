@@ -133,15 +133,47 @@ bash scripts/verify.sh          # build GREEN → e2e vote-net → smoke (คร
 VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
 ```
 ครอบอะไรบ้าง:
-- **e2e** (`npm run e2e:gate` = Playwright `e2e/vote-flow` + `e2e/invariants`, รันที่ `PW_BASE_URL`,
-  default :3000): happy path (login→vote→success→results) + 5 invariants ที่ห้าม regress —
-  vote-once, race (1 ชนะ), ballot-secrecy (admin ไม่เห็น tally ก่อน reveal), eligibility (ปี 1-4),
-  admin-auth (forge admin_token ไม่ได้). ทุก test mint user `e2e-*` ใหม่แล้วลบ + คืน score/config เอง.
-- **smoke** (`npm run smoke`): invariants ระดับ HTTP + กฎสิทธิ์ admin (roleFromSso).
-- ลำดับ e2e ก่อน smoke ตั้งใจ — admin login ใน e2e ต้องมาก่อน burst ของ smoke (rate-limit 10/5นาที/IP).
-- การเลือกตั้งจริงรันอยู่: รัน gate บน staging/เครื่อง dev ไม่ใช่ prod (มันแก้ systemMode/showResult ชั่วคราวแล้วคืน).
-- ⚠️ `e2e/admin-console.spec.js` (ของเดิม คนละชุด) ยังมี 11 เคสแดงค้าง — ไม่อยู่ใน gate
-  (`e2e:gate` คัดเฉพาะ vote-net) รอแก้แยก.
+- **e2e** (`npm run e2e` ครบชุด / `npm run e2e:gate` = `vote-flow` + `invariants`):
+  happy path (login→เลือก→ยืนยัน→success โชว์ identity receipt→หีบ +1 + โซ่ HMAC verify ผ่าน)
+  + invariants ที่ห้าม regress — vote-once, race (1 ชนะ), results embargo (API+หน้าเว็บไม่รั่ว
+  tally ก่อน reveal แม้ admin), eligibility (ปี 1-4), admin-auth (no-cookie/forge → 401 ทั้ง
+  dashboard และ readiness), vote-no-session → 401 · บวก `abstain` (งดออกเสียงไม่แตะพรรคจริง)
+  และ `closed` (ENDED → /vote เด้ง /closed + API ปฏิเสธ) ในชุดเต็ม.
+  **v2-R11: e2e รันบน test DB แยก + server แยก (:3100) — ไม่แตะ dev DB/dev server แล้ว (ดู §4.2).**
+- **smoke** (`npm run smoke`): invariants ระดับ HTTP + กฎสิทธิ์ admin (roleFromSso) — ยังรันกับ
+  dev server :3000 ตามเดิม.
+- ลำดับ e2e ก่อน smoke ไม่ critical แล้ว (คนละ server คนละ DB) — แต่ smoke ยัง trip login
+  rate-limit ของ :3000 เองตามเดิม (10/5นาที/IP).
+- ⚠️ `e2e/admin-console.spec.js` (ของเดิม คนละชุด) ยังมี 11 เคสแดงค้าง — ถูก exclude ออกจาก
+  playwright config (`testIgnore`) รอแก้แยก.
+
+## 4.2 e2e test DB (v2-R11) — วิธีทำงาน + วิธีรัน
+e2e ทั้งชุดแยกตัวจาก dev สมบูรณ์: **DB ของตัวเอง + server ของตัวเอง**. คนดูแลรุ่นถัดไปกดรันได้เลย:
+```
+npm run build        # 1) ต้องมี prod build ก่อน (หยุด dev server ตอน build — Windows .next lock)
+npm run e2e:gate     # 2) หรือ npm run e2e (ครบชุด) — setup ทำทุกอย่างให้อัตโนมัติ
+```
+สิ่งที่ globalSetup (e2e/global.setup.js) ทำให้อัตโนมัติ:
+1. เช็ค `.next/BUILD_ID` — ไม่มี = fail-fast พร้อมข้อความบอกให้ build (ไม่ build ให้เอง)
+2. สร้าง DB `<ชื่อ dev DB>_e2e` ถ้ายังไม่มี (เช่น `fms_election_e2e`) + sync schema ด้วย
+   `prisma db push` (⚠️ ไม่ใช่ `migrate deploy` — migration history เก่าไม่ครบ schema ปัจจุบัน
+   เช่น `SystemConfig.systemMode` ไม่เคยถูก capture เป็น migration; พบตอนทำ v2-R11 ต้องเก็บ
+   drift นี้เป็น migration จริงก่อน deploy รอบหน้า)
+3. seed fixture เล็ก: 2 พรรค + งดออกเสียง/ไม่รับรอง + voter 3 คน + admin 1 + SystemConfig
+   MANUAL_OPEN + template `receipt` (หน้า success พิมพ์ identity receipt ที่ spec ตรวจ)
+4. รัน `next start -p 3100` ชี้ `DATABASE_URL` ไป test DB (dev :3000 ไม่ถูกแตะ)
+5. globalTeardown: ปิด server + TRUNCATE ทุกตารางใน test DB (เก็บ DB ไว้ให้รอบหน้าเร็ว)
+
+กติกาความปลอดภัย (สำคัญที่สุด):
+- **ทุก destructive SQL (CREATE/TRUNCATE/UPDATE ตรง) ผ่าน guard `assertTestDb` ใน
+  `e2e/helpers/testDb.js`** — ถาม `current_database()` จาก connection จริงแล้วปฏิเสธทันที
+  ถ้าชื่อไม่ลงท้าย `_e2e`. dev DB (`fms_election`) จึงพังจาก e2e ไม่ได้เชิงโครงสร้าง.
+- e2e gate รันกับ **build local เท่านั้น** — mock login ถูก bake ตอน build
+  (`NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true` ใน .env.local). build สำหรับ deploy จริงใช้ env prod
+  (mock=false) และ**ห้าม**รัน e2e กับ build นั้น (login panel ไม่มีให้กด — fail เอง).
+- server :3100 ถูก start ด้วย `NODE_ENV=development` โดยเจตนา (เสิร์ฟ prod build เหมือนเดิม
+  แต่ NextAuth ยอม register mock-login provider ซึ่ง gate ที่ `NODE_ENV !== 'production'`).
+- ลำดับ gate เต็ม: **build → smoke → e2e:gate** (นโยบาย §4.1: ไม่เขียว ห้าม merge).
 
 ---
 

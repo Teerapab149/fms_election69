@@ -111,10 +111,21 @@ docs/                  เอกสารทั้งหมด (state, design pl
 ## ✅ ทดสอบ
 
 ```bash
-npm run smoke      # sanity 15 เคส (ต้องมี dev server รันอยู่)
-npm run e2e:gate   # Playwright: vote flow + invariants
+npm run smoke      # sanity 15 เคส (ต้องมี dev server รันอยู่ :3000)
+npm run e2e        # Playwright ครบชุด: vote-flow + invariants + abstain + closed
+npm run e2e:gate   # ชุดเร็วสำหรับ gate: vote-flow + invariants
 npm run build      # ต้อง GREEN ก่อน deploy เสมอ (หยุด dev server ก่อน — Windows .next lock)
 ```
+
+**e2e ใช้ test DB แยก + server แยก (v2-R11) — ไม่แตะ dev เลย:**
+- globalSetup สร้าง DB `<ชื่อ dev DB>_e2e` อัตโนมัติ (`CREATE DATABASE` + `prisma migrate deploy`
+  + seed เล็ก) แล้วรัน `next start` ที่ **:3100** ชี้ DATABASE_URL ไป test DB — dev server :3000
+  และ DB `fms_election` ไม่ถูกแตะ; ทุก destructive SQL มี guard บังคับชื่อ DB ลงท้าย `_e2e`
+- ต้องมี **prod build** ก่อน (`npm run build`) — ถ้าไม่มี `.next/BUILD_ID` setup จะ fail-fast
+  พร้อมบอกวิธี · ลำดับ gate: **build → smoke → e2e:gate**
+- e2e gate รันกับ **build local เท่านั้น** (mock login ถูก bake ตอน build ด้วย
+  `NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true` ใน .env.local) — build สำหรับ deploy จริงใช้ env prod
+  (mock=false) และ**ไม่**รัน e2e กับมัน · รายละเอียด: runbook §4.1-4.2
 
 ## 🔐 บัตรลงคะแนนแบบเข้ารหัส + Key Ceremony (v2-SEC)
 
