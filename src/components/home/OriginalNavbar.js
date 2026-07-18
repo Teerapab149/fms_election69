@@ -79,6 +79,7 @@ export default function Navbar() {
             height={384}
             className="block w-auto h-8 md:h-10 lg:h-12 object-contain filter hover:brightness-110 transition-all"
             priority
+            unoptimized
           />
         </Link>
 

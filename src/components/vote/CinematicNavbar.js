@@ -190,6 +190,8 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
                                 alt="PSU FMS"
                                 fill
                                 className="object-contain"
+                                unoptimized
+                                priority
                             />
                         </div>
                     </Link>
