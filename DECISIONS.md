@@ -1945,6 +1945,16 @@ legend/label map and update it in lockstep; verify by comparing computed legend
 background to cell fill.
 **Tags:** `#recharts` `#receipt` `#verify`
 
+### P-LOG-106: [2026-07-19] A stray unclosed declaration block silently swallows adjacent styled-jsx rules
+**Context:** v2-R14 — the StoryClamp `.rc-sc` variable rules in ReceiptParty were
+accidentally nested inside the `.rc-letter__body {}` declaration block, so
+`--sc-max`/`--sc-fade` fell back to defaults and the party-letter fade never
+rendered — with zero errors anywhere.
+**Lesson:** when inserting CSS rules adjacent to an existing block in a large
+styled-jsx template, confirm the prior block is closed; a runtime probe of the
+intended computed value (not just "page renders") is the only reliable catch.
+**Tags:** `#styled-jsx` `#css` `#receipt` `#verify`
+
 ---
 
 ### P-LOG-096: [2026-07-17] TZ correctness must be proven on epochs — rendered strings can hide a compensating parse bug

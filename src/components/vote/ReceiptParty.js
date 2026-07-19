@@ -224,9 +224,9 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
                     <button type="button" className="rc-lany__btn" onClick={() => openMember(m)} aria-label={m.name}>
                       <span className="rc-lany__grommet" aria-hidden="true" />
                       <span className="rc-lany__clip" aria-hidden="true" />
-                      <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(m.number ?? i + 1)}</span>
                       <span className="rc-lany__photo">
                         {img ? <img src={img} alt={m.name} loading="lazy" /> : <span className="rc-lany__ph" aria-hidden="true">{(m.name || "?").trim().charAt(0)}</span>}
+                        <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(m.number ?? i + 1)}</span>
                       </span>
                       <span className="rc-lany__body">
                         <span className="rc-lany__name">{m.name}</span>
@@ -499,12 +499,20 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           border-top:1.5px solid var(--rc-stamp-line); border-bottom:1px solid var(--rc-line); }
         .rc-party-root .rc-letter__title { margin:22px 0 0; font-family:var(--rc-fh); font-weight:700; font-size:clamp(20px,4.5vw,28px);
           letter-spacing:-.01em; color:var(--rc-ink); }
-        .rc-party-root .rc-letter__body { margin:14px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2);
-        /* StoryClamp — a long letter folds behind a paper fade so the sections
-           below (missions / policies / team) stay within reach */
-        .rc-party-root .rc-sc { --sc-max:9.5em; --sc-fade:var(--rc-receipt); }
+        /* the letter fills the content column; the reading measure is capped so long
+           lines stay comfortable (~70ch) on wide screens — v2-R14 roomier letter */
+        .rc-party-root .rc-letter__body { margin:14px 0 0; max-width:72ch; font-family:var(--rc-fr); font-size:15.5px;
+          line-height:1.85; color:var(--rc-ink2); white-space:pre-line; }
+        /* StoryClamp — a long letter scrolls INSIDE a fixed-height paper box so the
+           sections below (missions / policies / team) stay within reach. A roomier cap
+           on the party letter than the booth; fade + hint use the receipt paper tone.
+           v2-R14 fix: these rc-sc rules were previously written INSIDE the
+           rc-letter__body block (a stray nested declaration), so --sc-max / --sc-fade
+           silently fell back to the StoryClamp defaults (11em, transparent) and the
+           party-letter bottom fade never showed. Pulled out to the top level so they
+           apply again (P-LOG-106). */
+        .rc-party-root .rc-sc { --sc-max:15em; --sc-fade:var(--rc-receipt); }
         .rc-party-root .rc-sc .sc__hint { color:var(--rc-accent-deep); font-family:var(--rc-fm); text-transform:uppercase; }
-          white-space:pre-line; }
         /* missions — numbered lines in the receipt voice (mono numeral, Chakra text) */
         .rc-party-root .rc-mlist { list-style:none; margin:24px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
         .rc-party-root .rc-mlist li { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
@@ -541,28 +549,35 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         .rc-party-root .rc-coupon__title { font-family:var(--rc-fr); font-weight:700; font-size:15.5px; line-height:1.4; color:var(--rc-ink); }
         .rc-party-root .rc-coupon__desc { font-family:var(--rc-fr); font-size:13.5px; line-height:1.55; color:var(--rc-ink2); }
 
-        /* ================= TEAM — lanyard cards ================= */
-        .rc-party-root .rc-team { list-style:none; margin:22px 0 0; padding:0; display:grid; grid-template-columns:1fr; gap:14px; }
+        /* ================= TEAM — portrait lanyard cards (v2-R14: photo is the hero) =========
+           owner ruling: the old card showed a 64px thumbnail with the name dominating —
+           "เห็นชื่อซะส่วนใหญ่ ภาพไม่ชัด". The card is now PHOTO-FIRST: a large 4/5 portrait
+           fills the card top, name + role print on the paper strip below. Receipt language
+           kept — paper card, punched grommet + clip, mono number tag. */
+        .rc-party-root .rc-team { list-style:none; margin:22px 0 0; padding:0; display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
         .rc-party-root .rc-lany { position:relative; }
-        .rc-party-root .rc-lany__btn { position:relative; display:flex; align-items:center; gap:16px; width:100%; text-align:left;
-          padding:16px 18px 16px 16px; margin-top:8px; cursor:pointer; color:var(--rc-ink);
-          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); border-radius:4px 4px 6px 6px;
+        .rc-party-root .rc-lany__btn { position:relative; display:flex; flex-direction:column; width:100%; text-align:left;
+          padding:0; margin-top:10px; cursor:pointer; color:var(--rc-ink);
+          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); border-radius:5px 5px 6px 6px;
           box-shadow:1px 10px 24px -18px color-mix(in srgb, var(--rc-ink) 40%, transparent);
           transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
-        .rc-party-root .rc-lany__btn:hover { transform:translateY(-3px); border-color:var(--rc-accent);
-          box-shadow:2px 18px 30px -20px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
-        /* punched grommet hole on the top edge + the clip through it */
-        .rc-party-root .rc-lany__grommet { position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:26px; height:9px;
+        .rc-party-root .rc-lany__btn:hover { transform:translateY(-4px); border-color:var(--rc-accent);
+          box-shadow:2px 20px 34px -20px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        /* punched grommet hole on the top edge + the clip through it (z above the photo) */
+        .rc-party-root .rc-lany__grommet { position:absolute; z-index:3; top:-4px; left:50%; transform:translateX(-50%); width:26px; height:9px;
           border-radius:9px; background:var(--rc-desk); border:1.5px solid var(--rc-stamp-line); }
-        .rc-party-root .rc-lany__clip { position:absolute; top:-11px; left:50%; transform:translateX(-50%); width:11px; height:16px;
+        .rc-party-root .rc-lany__clip { position:absolute; z-index:3; top:-11px; left:50%; transform:translateX(-50%); width:11px; height:16px;
           border:2px solid var(--rc-faint); border-bottom:none; border-radius:6px 6px 0 0; background:transparent; }
-        .rc-party-root .rc-lany__no { position:absolute; top:8px; right:10px; font-size:9px; letter-spacing:.08em; color:var(--rc-faint);
-          font-variant-numeric:tabular-nums; }
-        .rc-party-root .rc-lany__photo { position:relative; width:64px; height:64px; flex:none; border-radius:5px; overflow:hidden;
-          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); border:1px solid var(--rc-line); display:grid; place-items:center; }
+        /* the big portrait — full card width, 4/5 aspect so the face reads clearly */
+        .rc-party-root .rc-lany__photo { position:relative; width:100%; aspect-ratio:4/5; flex:none; border-radius:4px 4px 0 0; overflow:hidden;
+          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); border-bottom:1px solid var(--rc-line); display:grid; place-items:center; }
         .rc-party-root .rc-lany__photo img { width:100%; height:100%; object-fit:cover; }
-        .rc-party-root .rc-lany__ph { font-family:var(--rc-fh); font-weight:700; font-size:26px; color:var(--rc-accent-deep); }
-        .rc-party-root .rc-lany__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
+        .rc-party-root .rc-lany__ph { font-family:var(--rc-fh); font-weight:700; font-size:clamp(44px,12vw,64px); color:var(--rc-accent-deep); }
+        /* mono number — a small tag pinned in the photo corner (readable over the image) */
+        .rc-party-root .rc-lany__no { position:absolute; z-index:2; top:8px; right:8px; padding:2px 7px; border-radius:3px; font-size:9.5px;
+          letter-spacing:.08em; color:var(--rc-receipt); background:color-mix(in srgb, var(--rc-ink) 72%, transparent);
+          font-variant-numeric:tabular-nums; }
+        .rc-party-root .rc-lany__body { min-width:0; display:flex; flex-direction:column; gap:3px; padding:12px 14px 14px; }
         .rc-party-root .rc-lany__name { font-family:var(--rc-fh); font-weight:700; font-size:16px; line-height:1.2; color:var(--rc-ink);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .rc-party-root .rc-lany__btn:hover .rc-lany__name { color:var(--rc-accent-deep); }

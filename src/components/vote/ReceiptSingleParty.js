@@ -103,7 +103,12 @@ export default function ReceiptSingleParty({
   const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
   // keep the placeholder defaults preparePartyData injects out of the printed pages
   const missions = (party?.missions || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
-  const policies = (party?.policies || []).map(asText).filter(Boolean);
+  // policies mirror the party page: keep the RAW item so a { title, desc } object
+  // renders BOTH halves (the single page must never show less than the party page)
+  const policies = (party?.policies || []).filter((p) => {
+    const t = asText(p);
+    return t && !t.startsWith("ยังไม่มีข้อมูล");
+  });
   const members = sortMembersByPosition(party?.members || []);
   const no = party?.number;
 
@@ -260,9 +265,19 @@ export default function ReceiptSingleParty({
               <span className="rc-sp-sec__count">{pad2(policies.length)} <span className="rc-th">ข้อ</span></span>
             </div>
             <ol className="rc-sp-plist">
-              {policies.map((p, i) => (
-                <li key={i}><span className="n">{pad2(i + 1)}</span><span className="t">{p}</span></li>
-              ))}
+              {policies.map((p, i) => {
+                const title = typeof p === "object" ? (p.title || p.text || p.name || "") : p;
+                const desc = typeof p === "object" ? (p.desc || p.description || p.detail || "") : "";
+                return (
+                  <li key={i}>
+                    <span className="n">{pad2(i + 1)}</span>
+                    <span className="t">
+                      <span className="rc-sp-plist__title">{title}</span>
+                      {desc && <span className="rc-sp-plist__desc">{desc}</span>}
+                    </span>
+                  </li>
+                );
+              })}
             </ol>
           </section>
         )}
@@ -639,12 +654,16 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sp-plist .n { display:grid; place-items:center; width:40px; height:40px; flex:none; border-radius:50%;
           border:2px solid var(--rc-accent-deep); font-family:var(--rc-fh); font-weight:800; font-size:18px; line-height:1;
           font-variant-numeric:tabular-nums; color:var(--rc-accent-deep); }
-        .rc-single-root .rc-sp-plist .t { font-family:var(--rc-fr); font-size:15px; line-height:1.55; color:var(--rc-ink); }
+        /* the coupon body — headline + (optional) supporting line, mirroring the party
+           page's rc-coupon so the single page never carries less policy detail */
+        .rc-single-root .rc-sp-plist .t { min-width:0; display:flex; flex-direction:column; gap:4px; }
+        .rc-single-root .rc-sp-plist__title { font-family:var(--rc-fr); font-weight:700; font-size:15.5px; line-height:1.4; color:var(--rc-ink); }
+        .rc-single-root .rc-sp-plist__desc { font-family:var(--rc-fr); font-size:13.5px; line-height:1.55; color:var(--rc-ink2); }
 
-        /* team — a horizontal PHOTO-STRIP off the print machine (scrolls x) */
-        .rc-single-root .rc-sp-team { margin-top:20px; display:flex; gap:14px; overflow-x:auto; padding:2px 2px 10px;
-          scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
-        .rc-single-root .rc-sp-cand { margin:0; flex:0 0 clamp(150px, 44vw, 188px); scroll-snap-align:start;
+        /* team — a portrait-card GRID so all 17 candidates are seen at once (owner
+           ruling v2-R14: no more horizontal scroll strip). Mobile 2 cols → 4 at ≥768. */
+        .rc-single-root .rc-sp-team { margin-top:20px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; padding:2px 0 4px; }
+        .rc-single-root .rc-sp-cand { margin:0;
           background:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px;
           overflow:hidden; transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
         .rc-single-root .rc-sp-cand:hover { transform:translateY(-4px); border-color:var(--rc-accent);
