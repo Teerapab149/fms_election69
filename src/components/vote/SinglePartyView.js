@@ -455,14 +455,18 @@ export default function SinglePartyView({
                 {/* ===== CONTENT: Centered & Dark/Contrast ===== */}
                 <div className="flex flex-col items-center justify-center text-center w-full"> {/* Removed max-w-5xl here as the wrapper handles it, or keep it? Wrapper is max-w-6xl. Keep max-w-5xl for tightness. */}
 
-                  <Reveal delay={0}>
+                  {/* v2-R12: staged hero reveal — badge → name → slogan → dual CTA,
+                      each a beat later, once the intro clears (isActive). */}
+                  <Reveal delay={80}>
                     {/* Party Number Badge - Pill Shaped */}
                     <div className="mb-6 lg:mb-8">
                       <span className="px-4 py-2 lg:px-6 lg:py-3 bg-white/80 backdrop-blur-md border border-black/5 text-[var(--spv-dark,#1A1A1A)] text-xs lg:text-sm font-bold uppercase tracking-[0.2em] rounded-full shadow-sm transition-colors duration-300 ease-in-out party-number-badge">
                         พรรคหมายเลข {partyNumber}
                       </span>
                     </div>
+                  </Reveal>
 
+                  <Reveal delay={200}>
                     {/* Party Name - Dynamic Split for Mobile / Full for Desktop */}
                     {(() => {
                       const words = partyName.split(' ');
@@ -485,13 +489,17 @@ export default function SinglePartyView({
                         </>
                       );
                     })()}
+                  </Reveal>
 
+                  <Reveal delay={320}>
                     {/* Slogan - White text for maximum readability */}
                     <p className="text-base md:text-xl lg:text-2xl text-white font-semibold leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
                       {candidate?.slogan || "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"}
                     </p>
+                  </Reveal>
 
-                    {/* Action Buttons */}
+                  <Reveal delay={440}>
+                    {/* Action Buttons — the pair rises together, a beat after the slogan */}
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
                       {/* Discover: Magenta Gradient */}
                       <button onClick={() => scrollTo('symbol')} className="w-full md:w-auto group relative px-8 lg:px-10 py-3 lg:py-4 bg-gradient-to-r from-[var(--spv-brand)] to-[var(--spv-brand)] text-white rounded-full font-bold uppercase tracking-widest overflow-hidden shadow-lg hover:shadow-[color-mix(in_srgb,var(--spv-brand)_30%,transparent)] transition-all hover:scale-105 active:scale-95 discover-btn">

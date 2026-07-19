@@ -124,6 +124,9 @@ export default function StudioDarkSingleParty({
           reduced-motion — see StudioDarkMemberModal note) */}
       {!introDone && <StudioDarkPartyIntro party={party} onDone={() => setIntroDone(true)} />}
 
+      {/* is-live gates the booth entrance choreography so it plays AFTER the intro
+          wipes (display:contents = no layout box). base = fully visible. */}
+      <div className={`sds-live-wrap${introDone ? " is-live" : ""}`} style={{ display: "contents" }}>
       {/* PROFILE HEADER — same voice as the party page */}
       <div className="sds-h" data-element="vote-party-card">
         <div className="sds-h__no" aria-hidden="true">{no.slice(0, -1)}<em>{no.slice(-1)}</em></div>
@@ -330,6 +333,7 @@ export default function StudioDarkSingleParty({
           </button>
         </div>
       </section>
+      </div>{/* /sds-live-wrap */}
 
       {/* CONFIRM — double-check (the vote is one-shot). Entrance animates;
           close is INSTANT — exit callbacks hang under forced reduced-motion
@@ -569,6 +573,26 @@ export default function StudioDarkSingleParty({
         .sds-cm__pick-lbl { display:block; font-family:var(--sd-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); margin-bottom:6px; }
         .sds-cm__pick-val { font-family:var(--sd-sans); font-size:17px; color:var(--sd-ink); font-weight:500; }
         .sds-cm__actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+        /* ================= ENTRANCE MOTION (v2-R12) =================
+           Editorial "print reveal": the mono kicker types in (stepped clip-path —
+           no width animation, so no layout), the numeral / title / slogan rise, the
+           story photo unfurls via clip-path inset, and section heads settle. Gated
+           on .is-live so it plays after the intro wipes. transform/clip-path/opacity
+           only; base state visible for no-JS + reduced-motion. */
+        .sds-live-wrap.is-live .sds-h__kicker { animation:sdsType 1s steps(22) both .22s; }
+        @keyframes sdsType { from { clip-path:inset(0 100% 0 0); } }
+        .sds-live-wrap.is-live .sds-h__no { animation:sdsRise .6s cubic-bezier(.16,1,.3,1) both .05s; }
+        .sds-live-wrap.is-live .sds-h__title { animation:sdsRise .6s cubic-bezier(.16,1,.3,1) both .18s; }
+        .sds-live-wrap.is-live .sds-h__slogan { animation:sdsRise .6s cubic-bezier(.16,1,.3,1) both .32s; }
+        .sds-live-wrap.is-live .sds-section h2 { animation:sdsRise .6s ease both .1s; }
+        .sds-live-wrap.is-live .sds-story__media { animation:sdsUnfurl .72s cubic-bezier(.16,1,.3,1) both .16s; }
+        @keyframes sdsRise { from { opacity:0; transform:translateY(16px); } }
+        @keyframes sdsUnfurl { from { clip-path:inset(0 0 100% 0); opacity:.35; } }
+
+        @media (prefers-reduced-motion:reduce) {
+          .sds-live-wrap *, .sds-live-wrap *::before, .sds-live-wrap *::after { animation:none !important; }
+        }
 
         @media (max-width:1100px) {
           .sds-h { grid-template-columns:1fr; gap:20px; padding:36px 24px 24px; }

@@ -2041,6 +2041,16 @@ with `_e2e` (dual condition, both required — src/lib/auth.js).
 
 ---
 
+### P-LOG-104: [2026-07-19] Backtick characters inside styled-jsx CSS comments terminate the template literal
+**Context:** v2-R12 — a CSS comment inside `<style jsx>{`...`}` contained
+`` `from` ``/`` `both` `` in prose. The backticks closed the JS template literal
+mid-style → `Expected '}', got 'from'` → 500 on every route sharing the chunk.
+**Lesson:** Never type a backtick anywhere inside a styled-jsx template literal,
+including comments. Quote CSS identifiers with 'single quotes' or nothing.
+**Tags:** `#styled-jsx` `#syntax` `#template`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

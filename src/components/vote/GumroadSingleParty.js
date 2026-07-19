@@ -79,7 +79,7 @@ export default function GumroadSingleParty({
   const greeting = user?.name ? `สวัสดีคุณ ${user.name}` : "";
 
   return (
-    <div className="fms-app gsp-root gum-root">
+    <div className={`fms-app gsp-root gum-root${introDone ? " is-live" : ""}`}>
       <GumroadBaseStyles />
       <AnimatePresence>
         {!introDone && <GumroadPartyIntro key="intro" party={party} onDone={() => setIntroDone(true)} />}
@@ -397,6 +397,40 @@ export default function GumroadSingleParty({
         .gsp-cm__go{ background:var(--lime); color:var(--ink); }
         .gsp-cm__cancel:not(:disabled):hover,.gsp-cm__go:not(:disabled):hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gsp-cm__go:disabled,.gsp-cm__cancel:disabled{ opacity:.5; cursor:not-allowed; }
+
+        /* ================= ENTRANCE MOTION (v2-R12) =================
+           Party PRESENTATION rhythm: badges pop in, the number stamps down, the
+           name + slogan rise, the group photo drifts (ken-burns), content cards
+           settle in. transform/opacity only; every rule is a from-only keyframe
+           with both-fill so the BASE state stays fully visible (no-JS / reduced-
+           motion land everything in place). Entrances are gated on .is-live (set
+           when the cinematic intro finishes) so the choreography plays AFTER the
+           intro wipes — not hidden behind it. globals.css PRM squashes duration to
+           .01ms; the scoped guard below is belt-and-braces. */
+        .gsp-root.is-live .gsp-eyebrow .gsp-sticker{ animation:gspPop .5s cubic-bezier(.34,1.56,.64,1) both; }
+        .gsp-root.is-live .gsp-eyebrow .gsp-sticker:nth-child(1){ animation-delay:.06s; }
+        .gsp-root.is-live .gsp-eyebrow .gsp-sticker:nth-child(2){ animation-delay:.15s; }
+        @keyframes gspPop{ from{ transform:scale(.6) rotate(7deg); opacity:0; } }
+
+        .gsp-root.is-live .gsp-hero{ animation:gspRise .6s cubic-bezier(.16,1,.3,1) both .1s; }
+        /* number = an ink stamp tapped onto the card (over-scale settle + tilt) */
+        .gsp-root.is-live .gsp-hero__no{ animation:gspStamp .5s cubic-bezier(.34,1.56,.64,1) both .34s; }
+        @keyframes gspStamp{ 0%{ transform:scale(1.28) rotate(-6deg); opacity:0; } 60%{ opacity:1; } }
+        /* name + slogan rise a beat after the card lands */
+        .gsp-root.is-live .gsp-hero__title{ animation:gspRise .55s cubic-bezier(.16,1,.3,1) both .26s; }
+        .gsp-root.is-live .gsp-hero__slogan{ animation:gspRise .55s cubic-bezier(.16,1,.3,1) both .4s; }
+        /* group photo = very slow ken-burns, direction alternates (ambient) */
+        .gsp-root.is-live .gsp-hero__media img{ animation:gspKen 22s ease-in-out infinite alternate; }
+        @keyframes gspKen{ from{ transform:scale(1) translate(0,0); } to{ transform:scale(1.045) translate(-1.2%,-1%); } }
+        /* content cards settle in, gently staggered (capped well under 1.2s) */
+        .gsp-root.is-live .gsp-section{ animation:gspRise .55s ease both .3s; }
+        .gsp-root.is-live .gsp-block{ animation:gspRise .55s ease both .4s; }
+        .gsp-root.is-live .gsp-vote{ animation:gspRise .55s ease both .5s; }
+        @keyframes gspRise{ from{ opacity:0; transform:translateY(20px); } }
+
+        @media (prefers-reduced-motion:reduce){
+          .gsp-root *, .gsp-root *::before, .gsp-root *::after{ animation:none !important; }
+        }
 
         /* RESPONSIVE */
         @container gsp (max-width:880px){

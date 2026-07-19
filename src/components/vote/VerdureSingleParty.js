@@ -127,7 +127,7 @@ export default function VerdureSingleParty({
       {!introDone && <VerdureBallotIntro party={party} no={no} onDone={() => setIntroDone(true)} />}
 
       <div className="vd-booth-bg" aria-hidden />
-      <div className="vd-booth">
+      <div className={`vd-booth${introDone ? " is-live" : ""}`}>
         <div className="vd-booth__head">
           <div className="vd-booth__eyebrow">★ THE ONLY PARTY · พรรคเดียวที่ลงสมัคร ★</div>
           <div className="vd-seal">
@@ -383,6 +383,19 @@ export default function VerdureSingleParty({
         .vd-cm__pick .lbl { display:block; font-family:var(--fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(var(--moss-rgb),.55); margin-bottom:6px; }
         .vd-cm__pick .val { font-family:var(--fd); font-style:italic; font-size:18px; color:var(--moss); }
         .vd-cm__actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+        /* ================= ENTRANCE MOTION (v2-R12) — light touch =================
+           Verdure's booth already passed the owner's eye, so this is featherweight:
+           the head + group cover fade-rise softly once the wax-seal intro lifts
+           (gated on .is-live). The seal glow (vdGlow) + scroll cue (vdCueBounce)
+           ambients are unchanged. transform/opacity only; base state visible. */
+        .vd-booth.is-live .vd-booth__head { animation:vdSoftRise .8s cubic-bezier(.16,1,.3,1) both .06s; }
+        .vd-booth.is-live .vd-booth__cover { animation:vdSoftRise .85s cubic-bezier(.16,1,.3,1) both .2s; }
+        @keyframes vdSoftRise { from { opacity:0; transform:translateY(18px); } }
+
+        @media (prefers-reduced-motion:reduce) {
+          .vd-booth *, .vd-booth *::before, .vd-booth *::after { animation:none !important; }
+        }
 
         @media (max-width:1100px) {
           .vd-booth { padding:96px 20px 130px; }
