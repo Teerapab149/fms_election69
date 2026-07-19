@@ -13,11 +13,16 @@ const PARTY_LOGOS = [
   "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769902576579.jpg",
 ];
 
+// Members carry BOTH image files, like real records do: imageUrl (team card) and
+// modalImageUrl (the standalone portrait the member modal presents big — v2-R13).
+// Every 5th member deliberately ships WITHOUT modalImageUrl so the modal's
+// fallback (framed) mode stays exercisable in the harness.
 export const mkMembers = (n) =>
   Array.from({ length: n }, (_, i) => ({
     id: i + 1, number: i + 1, name: `สมาชิกพรรค คนที่ ${i + 1}`,
     position: i === 0 ? "President" : i < 5 ? "Core Exec" : "Dept Head",
     imageUrl: `/images/members/party_1/${(i % 9) + 1}.jpg`,
+    modalImageUrl: (i + 1) % 5 === 0 ? null : `/images/members/party_1/Modal/${(i % 6) + 1}.jpg`,
   }));
 
 export const POLICIES = [
