@@ -86,15 +86,26 @@ export default function VerdureHome({
 
   useEffect(() => { setMounted(true); }, []);
 
-  const [cd, setCd] = useState("--:--:--");
+  // Phase-aware countdown: before open → count to START ("OPENS IN"); during →
+  // count to END ("CLOSES IN"); after → "ปิดแล้ว". A day segment prefixes the
+  // clock when >0 day remains so a multi-day gap doesn't render as "946:12:33".
+  const [cd, setCd] = useState({ label: "CLOSES IN · ปิดใน", value: "--:--:--" });
   useEffect(() => {
-    const { ELECTION_END } = resolveElectionDates(globalConfig);
-    const tick = () => {
-      const diff = ELECTION_END - Date.now();
-      if (diff <= 0) { setCd("ปิดแล้ว"); return; }
-      const h = Math.floor(diff / 3600000), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+    const fmt = (diff) => {
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff / 3600000) % 24), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
       const p = (n) => String(n).padStart(2, "0");
-      setCd(`${p(h)}:${p(m)}:${p(s)}`);
+      const hms = `${p(h)}:${p(m)}:${p(s)}`;
+      return d > 0 ? `${d} วัน ${hms}` : hms;
+    };
+    const tick = () => {
+      const now = Date.now();
+      const start = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
+      const end = ELECTION_END instanceof Date ? ELECTION_END.getTime() : NaN;
+      if (!isNaN(start) && now < start) { setCd({ label: "OPENS IN · เปิดใน", value: fmt(start - now) }); return; }
+      if (!isNaN(end) && now < end) { setCd({ label: "CLOSES IN · ปิดใน", value: fmt(end - now) }); return; }
+      setCd({ label: "CLOSES IN · ปิดใน", value: "ปิดแล้ว" });
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -198,7 +209,7 @@ export default function VerdureHome({
           <span className="vd-home__ledger-sep" />
           <div className="vd-home__stat"><div className="lbl">TURNOUT · สัดส่วน</div><div className="val vd-tabular">{pct}<small>%</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">CLOSES IN · ปิดใน</div><div className="val vd-tabular">{cd}</div></div>
+          <div className="vd-home__stat"><div className="lbl">{cd.label}</div><div className="val vd-tabular">{cd.value}</div></div>
           <span className="vd-home__ledger-sep" />
           <div className="vd-home__stat"><div className="lbl">PARTIES · พรรค</div><div className="val vd-tabular">{partyCount}</div></div>
         </div>
