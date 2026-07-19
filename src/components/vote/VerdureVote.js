@@ -10,14 +10,27 @@
 // Same vote-system contract as the other templates. SINGLE-PARTY dispatches to
 // VerdureSingleParty.
 
+import { useEffect, useMemo, useState } from "react";
 import VerdureShell from "./VerdureShell";
 import VerdureSingleParty from "./VerdureSingleParty";
 import { getPath } from "../../utils/basePath";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates } from "../../utils/electionConfig";
 import { verdureMeta } from "../home/VerdureChrome";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
+
+// "ปิดใน 3 วัน 08:47:07" — remaining time to ELECTION_END for the meta strip.
+// Day segment only when d > 0; null when the end has passed (the ballot page is
+// only reachable while polls are open — no closed state is invented here).
+const fmtCloseIn = (end) => {
+  const ms = (end instanceof Date ? end.getTime() : NaN) - Date.now();
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  return `${d > 0 ? `${d} วัน ` : ""}${pad2(Math.floor((s / 3600) % 24))}:${pad2(Math.floor((s / 60) % 60))}:${pad2(s % 60)}`;
+};
 
 function Opt({ disc, discSm = false, logoUrl = null, num = null, kicker, name, slogan, more = null, selected, onClick, abstain = false }) {
   const logo = resolveSrc(logoUrl);
@@ -46,6 +59,22 @@ export default function VerdureVote({
 }) {
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
+
+  // live close-clock (vd-B1B) — hooks sit ABOVE the single-party dispatch so the
+  // hook order is stable. editorMode: compute once, no interval (the editor
+  // preview must not tick); single-party: the interval is skipped (unused there).
+  const { ELECTION_END } = useMemo(
+    () => resolveElectionDates(gc),
+    [gc?.campaignStartAt, gc?.electionStartAt, gc?.electionEndAt]
+  );
+  const [closeIn, setCloseIn] = useState(() => fmtCloseIn(ELECTION_END));
+  useEffect(() => {
+    if (editorMode || isSingleParty) return undefined;
+    setCloseIn(fmtCloseIn(ELECTION_END));
+    const id = setInterval(() => setCloseIn(fmtCloseIn(ELECTION_END)), 1000);
+    return () => clearInterval(id);
+  }, [editorMode, isSingleParty, ELECTION_END]);
+
   if (isSingleParty) {
     return (
       <VerdureSingleParty party={regularParties[0] || {}} specialOptions={specialOptions}
@@ -83,6 +112,9 @@ export default function VerdureVote({
 
         <div className="vd-ballot__meta">
           <span><span className="ac">●</span> BALLOT OPEN</span>
+          {/* suppressHydrationWarning on the element that OWNS the ticking text
+              node — SSR + client render the clock a second apart by nature */}
+          {closeIn && <span className="vd-ballot__cd">ปิดใน <strong className="vd-tabular" suppressHydrationWarning>{closeIn}</strong></span>}
           <span>{regularParties.length} {regularParties.length === 1 ? "PARTY" : "PARTIES"}</span>
           <span>ONE VOTE ONLY</span>
         </div>
@@ -112,7 +144,9 @@ export default function VerdureVote({
         <div className="vd-confirm">
           <div>
             <div className="vd-confirm__lbl">YOUR SELECTION</div>
-            <div className="vd-confirm__val">{selectedName || "ยังไม่ได้เลือก · No selection"}</div>
+            {/* key remount on selection change → one-shot settle animation (CSS,
+                visible throughout — from-state is translated, never opacity-0) */}
+            <div className="vd-confirm__val" key={selectedName || "none"}>{selectedName || "ยังไม่ได้เลือก · No selection"}</div>
           </div>
           <button type="button" className={`vd-btn vd-btn--terra vd-btn--lg ${selectedPartyId == null || isSubmitting ? "is-disabled" : ""}`}
             disabled={selectedPartyId == null || isSubmitting} onClick={() => onConfirm()}>
@@ -142,6 +176,10 @@ export default function VerdureVote({
 
         .vd-ballot__meta { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; background:var(--cream-2); border:1px dashed var(--rule); border-radius:999px; margin-bottom:22px; font-family:var(--fm); font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); opacity:.85; }
         .vd-ballot__meta .ac { color:var(--terra); font-weight:700; }
+        /* live close-clock segment — same mono voice as the strip, terra accent
+           on the ticking digits (vd-tabular keeps them from jittering) */
+        .vd-ballot__cd { white-space:nowrap; }
+        .vd-ballot__cd strong { font-weight:700; color:var(--terra); letter-spacing:.08em; margin-left:2px; }
 
         .vd-opt { display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:24px; padding:20px 28px 20px 20px; background:var(--cream-2); border:1px solid var(--rule); border-radius:28px; cursor:pointer; margin-bottom:12px; transition:all .25s; position:relative; outline:none; box-shadow:0 10px 26px -22px rgba(var(--moss-rgb),.3); }
         .vd-opt:hover, .vd-opt:focus-visible { background:var(--cream); border-color:var(--terra-soft); transform:translateY(-2px); box-shadow:0 20px 40px -26px rgba(var(--moss-rgb),.4); }
@@ -155,12 +193,18 @@ export default function VerdureVote({
         .vd-parties .vd-opt { display:flex; flex-direction:column; gap:8px; padding:22px 20px; margin-bottom:0; height:100%; }
         .vd-parties .vd-opt__check { position:absolute; top:16px; right:16px; }
         .vd-parties .vd-opt__kicker { display:none; }
-        .vd-parties .vd-opt__slogan { display:none; }
+        /* slogan restored on desktop tiles (vd-B1B) — clamped to 2 lines so tile
+           heights stay balanced; VIEW PROFILE keeps its margin-top:auto anchor so
+           a party without a slogan still bottom-aligns with its neighbours */
+        .vd-parties .vd-opt__slogan { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:13px; line-height:1.45; margin:0 0 4px; }
         .vd-parties .vd-opt__main { display:flex; flex-direction:column; flex:1; min-width:0; }
         .vd-parties .vd-opt__name { font-size:22px; margin-bottom:6px; }
         .vd-parties .vd-opt__more { margin-top:auto; align-self:flex-start; }
         @media (max-width:560px){
           .vd-parties { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+          /* phones keep the pre-vd-B1B decluttered tile — 2-col centred tiles are
+             too tight for a 2-line slogan */
+          .vd-parties .vd-opt__slogan { display:none; }
           .vd-parties .vd-opt { padding:16px 14px; align-items:center; text-align:center; }
           .vd-parties .vd-opt__main { align-items:center; text-align:center; }
           .vd-parties .vd-opt__more { align-self:center; }
@@ -203,7 +247,12 @@ export default function VerdureVote({
 
         .vd-confirm { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; margin-top:36px; padding:24px 24px 24px 32px; background:var(--moss); color:var(--cream); border-radius:28px; }
         .vd-confirm__lbl { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; opacity:.55; }
-        .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; letter-spacing:-.005em; }
+        /* selection acknowledgement — the serif line settles in with a small
+           spring on every change (key remount). From-state stays visible
+           (opacity .35 + rise, never 0); reduced-motion / no-JS = instant text */
+        .vd-confirm__val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:22px; margin-top:4px; letter-spacing:-.005em; animation:vdValIn .38s cubic-bezier(.34,1.56,.64,1); }
+        @keyframes vdValIn { from { opacity:.35; transform:translateY(7px); } }
+        @media (prefers-reduced-motion: reduce) { .vd-confirm__val { animation:none; } }
         /* the confirm bar itself is moss — the global cta->moss hover would make
            the button vanish into the bar. Darken within the CTA family so the
            hover stays clearly distinct from the dark bar. */
