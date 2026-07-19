@@ -97,7 +97,38 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         .vd-receipt__cta { padding:20px 24px; border-top:1px dashed var(--rule-moss); display:grid; gap:10px; }
         .vd-receipt__done { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px; border:1px solid rgba(var(--terra-rgb),.4); border-radius:999px; background:rgba(var(--terra-rgb),.12); color:var(--terra-soft); font-family:var(--fs); font-size:14px; font-weight:600; }
 
-        @media (max-width:1100px) { .vd-success { padding:96px 20px 130px; } }
+        /* vd-B1E: desktop two-column desk — seal + headline on the left, receipt
+           card on the right, both vertically centred, so the evaluate CTA lands in
+           the first viewport on wide screens (and the wasted whitespace is dignified
+           into a composition). CSS-only recompose of the three existing siblings. */
+        @media (min-width:1101px) {
+          .vd-success {
+            place-items:stretch;
+            grid-template-columns:minmax(0,1fr) minmax(0,480px);
+            grid-template-areas:"orn receipt" "head receipt";
+            column-gap:clamp(64px,6vw,96px);
+            align-content:center;
+            max-width:1160px;
+            margin:0 auto;
+            padding:56px 40px 112px;
+          }
+          .vd-orn { grid-area:orn; width:min(360px,40vh); height:min(360px,40vh); margin:0 0 24px; justify-self:center; align-self:end; }
+          .vd-orn__disc { width:61%; height:61%; }
+          .vd-orn__ring--2 { inset:8.3%; }
+          .vd-success__head { grid-area:head; max-width:none; margin:0; justify-self:stretch; align-self:start; }
+          .vd-receipt { grid-area:receipt; margin:0; justify-self:center; align-self:center; }
+        }
+        /* vd-B1E: tablet 561–1100 keeps the single centred column but squeezes the
+           top padding + seal + headline so the evaluate CTA reaches the fold. */
+        @media (max-width:1100px) {
+          .vd-success { padding:36px 20px 126px; }
+          .vd-orn { width:min(200px,26vh); height:min(200px,26vh); margin-bottom:16px; }
+          .vd-orn__disc { width:61%; height:61%; }
+          .vd-orn__ring--2 { inset:8.3%; }
+          .vd-success__head { margin-bottom:18px; }
+          .vd-success__head h1 { font-size:clamp(40px,5vw,58px); }
+          .vd-success__head p { font-size:15px; }
+        }
         @media (max-width:560px) {
           /* v2-R8 T4: squeeze the ornament hero + top padding so the evaluate CTA
              lands in the first viewport (form-first). Lightest touch in the Verdure
