@@ -282,7 +282,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-card__p{ font-size:15px; line-height:1.65; color:var(--ink2); margin:0; }
         /* StoryClamp — long story folds behind a paper fade */
         .gp-sc{ --sc-max:8.2em; --sc-fade:var(--paper); }
-        .gp-sc .sc__btn{ color:var(--ink); font-family:var(--fb); text-decoration:underline; text-underline-offset:3px; }
+        .gp-sc .sc__hint{ color:var(--ink2); font-family:var(--fm, inherit); text-transform:uppercase; }
         .gp-story{ max-height:190px; overflow-y:auto; margin-top:2px; padding-right:10px;
           -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent); mask-image:linear-gradient(180deg,#000 80%,transparent); }
         .gp-story::-webkit-scrollbar{ width:8px; } .gp-story::-webkit-scrollbar-thumb{ background:var(--ink); border-radius:999px; } .gp-story::-webkit-scrollbar-track{ background:transparent; }

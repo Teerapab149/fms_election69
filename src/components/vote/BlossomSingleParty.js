@@ -500,7 +500,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-sp-story { margin:22px 0 0; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px);
         /* StoryClamp — the booth keeps the decision zone close: a long story folds */
         .bl-single-root .bl-sc { --sc-max:8em; --sc-fade:var(--bl-card); }
-        .bl-single-root .bl-sc .sc__btn { color:var(--bl-primary-deep); font-family:var(--bl-fd); }
+        .bl-single-root .bl-sc .sc__hint { color:var(--bl-primary-deep); font-family:var(--bl-fm); text-transform:uppercase; }
           line-height:1.85; color:var(--bl-ink2); }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;

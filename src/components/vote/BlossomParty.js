@@ -440,8 +440,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         /* StoryClamp — a long logo-meaning collapses behind a canvas fade so the
            sections below stay reachable; the toggle wears the candy accent */
         .bl-party-root .bl-sc { --sc-max:9.6em; --sc-fade:var(--bl-canvas); }
-        .bl-party-root .bl-sc .sc__btn { color:var(--bl-primary-deep); font-family:var(--bl-fd); }
-        .bl-party-root .bl-sc .sc__btn:hover { color:var(--bl-ink); }
+        .bl-party-root .bl-sc .sc__hint { color:var(--bl-primary-deep); font-family:var(--bl-fm); text-transform:uppercase; }
 
         /* ---- 2. พันธกิจ — mono numerals + list ---- */
         .bl-party-root .bl-mlist { list-style:none; margin:20px 0 0; padding:0; }

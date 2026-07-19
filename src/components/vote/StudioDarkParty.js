@@ -253,8 +253,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-vision__story p { font-size:16px; line-height:1.75; color:var(--sd-ink); font-weight:300; margin:0; }
         /* StoryClamp — long manifesto folds behind a panel fade */
         .sdp-sc { --sc-max:9em; --sc-fade:var(--sd-bg); }
-        .sdp-sc .sc__btn { color:var(--sd-accent); font-family:var(--sd-mono); font-size:11px;
-          letter-spacing:.16em; text-transform:uppercase; }
+        .sdp-sc .sc__hint { color:var(--sd-accent); font-family:var(--sd-mono); text-transform:uppercase; }
         .sdp-story__cap {
           position:absolute; left:12px; bottom:12px; font-family:var(--sd-mono); font-size:9px;
           letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2);

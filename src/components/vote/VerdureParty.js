@@ -192,8 +192,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         /* StoryClamp — a long story folds behind a cream fade so the sections
            below stay in reach */
         .vd-sc { --sc-max:9em; --sc-fade:var(--cream); max-width:680px; }
-        .vd-sc .sc__btn { color:var(--moss); font-family:var(--ft); font-style:italic; }
-        .vd-sc .sc__btn:hover { color:var(--terra, var(--moss)); }
+        .vd-sc .sc__hint { color:var(--moss); font-family:var(--ft); font-style:italic; }
         .vd-chapter__photo { margin:0; cursor:zoom-in; position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--rule); }
         .vd-chapter__photo img { width:100%; max-height:420px; object-fit:cover; display:block; transition:transform .4s; }
         .vd-chapter__photo:hover img { transform:scale(1.02); }

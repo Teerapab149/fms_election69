@@ -612,7 +612,7 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sp-story { margin:20px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2); }
         /* StoryClamp — the booth keeps the stamping desk close: a long story folds */
         .rc-single-root .rc-sc { --sc-max:9em; --sc-fade:var(--rc-receipt); }
-        .rc-single-root .rc-sc .sc__btn { color:var(--rc-accent-deep); font-family:var(--rc-fh); }
+        .rc-single-root .rc-sc .sc__hint { color:var(--rc-accent-deep); font-family:var(--rc-fm); text-transform:uppercase; }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .rc-single-root .rc-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:6px; overflow:hidden; align-self:center;
           background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center; }

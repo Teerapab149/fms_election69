@@ -319,7 +319,7 @@ export default function GumroadSingleParty({
         .gsp-card__p{ font-size:15px; line-height:1.65; color:var(--ink2); margin:0; }
         /* StoryClamp — long story folds behind a paper fade */
         .gsp-sc{ --sc-max:8.2em; --sc-fade:var(--paper); }
-        .gsp-sc .sc__btn{ color:var(--ink); font-family:var(--fb); text-decoration:underline; text-underline-offset:3px; }
+        .gsp-sc .sc__hint{ color:var(--ink2); font-family:var(--fm, inherit); text-transform:uppercase; }
         /* story — capped + scrollable so a long write-up never bloats the row */
         .gsp-story{ max-height:190px; overflow-y:auto; margin-top:2px; padding-right:10px;
           -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent); mask-image:linear-gradient(180deg,#000 80%,transparent); }

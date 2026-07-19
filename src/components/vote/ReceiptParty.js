@@ -503,8 +503,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         /* StoryClamp — a long letter folds behind a paper fade so the sections
            below (missions / policies / team) stay within reach */
         .rc-party-root .rc-sc { --sc-max:9.5em; --sc-fade:var(--rc-receipt); }
-        .rc-party-root .rc-sc .sc__btn { color:var(--rc-accent-deep); font-family:var(--rc-fh); }
-        .rc-party-root .rc-sc .sc__btn:hover { color:var(--rc-ink); }
+        .rc-party-root .rc-sc .sc__hint { color:var(--rc-accent-deep); font-family:var(--rc-fm); text-transform:uppercase; }
           white-space:pre-line; }
         /* missions — numbered lines in the receipt voice (mono numeral, Chakra text) */
         .rc-party-root .rc-mlist { list-style:none; margin:24px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
