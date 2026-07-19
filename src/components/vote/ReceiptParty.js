@@ -40,6 +40,7 @@ import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import ReceiptMemberModal from "./ReceiptMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -161,7 +162,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
             </div>
             <div className="rc-letter__rule" aria-hidden="true" />
             <h2 className="rc-letter__title"><span className="rc-th">ความหมายสัญลักษณ์</span></h2>
-            <p className="rc-letter__body">{story}</p>
+            <StoryClamp className="rc-sc"><p className="rc-letter__body">{story}</p></StoryClamp>
           </section>
         )}
 
@@ -499,6 +500,11 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         .rc-party-root .rc-letter__title { margin:22px 0 0; font-family:var(--rc-fh); font-weight:700; font-size:clamp(20px,4.5vw,28px);
           letter-spacing:-.01em; color:var(--rc-ink); }
         .rc-party-root .rc-letter__body { margin:14px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2);
+        /* StoryClamp — a long letter folds behind a paper fade so the sections
+           below (missions / policies / team) stay within reach */
+        .rc-party-root .rc-sc { --sc-max:9.5em; --sc-fade:var(--rc-receipt); }
+        .rc-party-root .rc-sc .sc__btn { color:var(--rc-accent-deep); font-family:var(--rc-fh); }
+        .rc-party-root .rc-sc .sc__btn:hover { color:var(--rc-ink); }
           white-space:pre-line; }
         /* missions — numbered lines in the receipt voice (mono numeral, Chakra text) */
         .rc-party-root .rc-mlist { list-style:none; margin:24px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }

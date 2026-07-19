@@ -41,6 +41,7 @@ import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import BlossomMemberModal from "./BlossomMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -129,7 +130,9 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             </div>
             <blockquote className="bl-pquote">
               <span className="bl-pquote__mark" aria-hidden="true">“</span>
-              <p className="bl-pquote__body">{story}</p>
+              <StoryClamp className="bl-sc">
+                <p className="bl-pquote__body">{story}</p>
+              </StoryClamp>
             </blockquote>
           </section>
         )}
@@ -434,6 +437,11 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           font-size:76px; line-height:1; color:var(--bl-primary-soft); pointer-events:none; user-select:none; }
         .bl-party-root .bl-pquote__body { position:relative; margin:0; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(18px,4.4vw,26px); line-height:1.6; letter-spacing:-.01em; color:var(--bl-ink); white-space:pre-line; }
+        /* StoryClamp — a long logo-meaning collapses behind a canvas fade so the
+           sections below stay reachable; the toggle wears the candy accent */
+        .bl-party-root .bl-sc { --sc-max:9.6em; --sc-fade:var(--bl-canvas); }
+        .bl-party-root .bl-sc .sc__btn { color:var(--bl-primary-deep); font-family:var(--bl-fd); }
+        .bl-party-root .bl-sc .sc__btn:hover { color:var(--bl-ink); }
 
         /* ---- 2. พันธกิจ — mono numerals + list ---- */
         .bl-party-root .bl-mlist { list-style:none; margin:20px 0 0; padding:0; }

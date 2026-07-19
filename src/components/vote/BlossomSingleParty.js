@@ -31,6 +31,7 @@ import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import StoryClamp from "./StoryClamp";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -170,7 +171,7 @@ export default function BlossomSingleParty({
               <span className="bl-sp-sec__kick">LOGO MEANING</span>
               <h2 className="bl-sp-sec__title">ความหมายสัญลักษณ์</h2>
             </div>
-            <p className="bl-sp-story">{story}</p>
+            <StoryClamp className="bl-sc"><p className="bl-sp-story">{story}</p></StoryClamp>
           </section>
         )}
 
@@ -497,6 +498,9 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-sp-sec__count { margin-left:auto; font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--bl-ink2); white-space:nowrap; padding-bottom:3px; }
         .bl-single-root .bl-sp-story { margin:22px 0 0; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px);
+        /* StoryClamp — the booth keeps the decision zone close: a long story folds */
+        .bl-single-root .bl-sc { --sc-max:8em; --sc-fade:var(--bl-card); }
+        .bl-single-root .bl-sc .sc__btn { color:var(--bl-primary-deep); font-family:var(--bl-fd); }
           line-height:1.85; color:var(--bl-ink2); }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;

@@ -23,6 +23,7 @@ import { sortMembersByPosition } from "../../utils/memberSort";
 import { buildPartyTheme } from "../../utils/partyColors";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
+import StoryClamp from "./StoryClamp";
 
 // --- data helpers (party fields are loose JSON from the admin) ---
 const asText = (it) =>
@@ -116,7 +117,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                 <span className="gp-sticker gp-sticker--pop">💡 เรื่องราวของพรรค</span>
                 <h2 className="gp-card__h">แนวคิด & ที่มา</h2>
                 <div className="gp-story">
-                  <p className="gp-card__p">{story}</p>
+                  <StoryClamp className="gp-sc"><p className="gp-card__p">{story}</p></StoryClamp>
                 </div>
                 <span className="gp-story__hint">เลื่อนเพื่ออ่านต่อ ↓</span>
               </article>
@@ -279,6 +280,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-block{ margin-bottom:24px; }
         .gp-card__h{ font-family:var(--fd); font-size:22px; margin:12px 0 12px; letter-spacing:-.01em; text-transform:uppercase; }
         .gp-card__p{ font-size:15px; line-height:1.65; color:var(--ink2); margin:0; }
+        /* StoryClamp — long story folds behind a paper fade */
+        .gp-sc{ --sc-max:8.2em; --sc-fade:var(--paper); }
+        .gp-sc .sc__btn{ color:var(--ink); font-family:var(--fb); text-decoration:underline; text-underline-offset:3px; }
         .gp-story{ max-height:190px; overflow-y:auto; margin-top:2px; padding-right:10px;
           -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent); mask-image:linear-gradient(180deg,#000 80%,transparent); }
         .gp-story::-webkit-scrollbar{ width:8px; } .gp-story::-webkit-scrollbar-thumb{ background:var(--ink); border-radius:999px; } .gp-story::-webkit-scrollbar-track{ background:transparent; }

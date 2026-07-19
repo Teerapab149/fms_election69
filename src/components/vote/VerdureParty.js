@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import VerdureShell from "./VerdureShell";
 import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
 const firstImage = (val) => {
@@ -81,7 +82,9 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
               <h2>Vision &amp; <em>identity.</em></h2>
             </div>
             <div className="vd-vision__body">
-              {story ? <p>{story}</p> : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ</p>}
+              {story
+                ? <StoryClamp className="vd-sc"><p>{story}</p></StoryClamp>
+                : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ</p>}
             </div>
           </section>
         )}
@@ -186,6 +189,11 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-crest img { width:100%; height:100%; object-fit:contain; display:block; }
         .vd-vision__body p { font-family:var(--ft); font-size:19px; line-height:1.75; color:var(--moss); margin:0; max-width:680px; }
         .vd-vision__body .vd-muted { opacity:.7; }
+        /* StoryClamp — a long story folds behind a cream fade so the sections
+           below stay in reach */
+        .vd-sc { --sc-max:9em; --sc-fade:var(--cream); max-width:680px; }
+        .vd-sc .sc__btn { color:var(--moss); font-family:var(--ft); font-style:italic; }
+        .vd-sc .sc__btn:hover { color:var(--terra, var(--moss)); }
         .vd-chapter__photo { margin:0; cursor:zoom-in; position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--rule); }
         .vd-chapter__photo img { width:100%; max-height:420px; object-fit:cover; display:block; transition:transform .4s; }
         .vd-chapter__photo:hover img { transform:scale(1.02); }

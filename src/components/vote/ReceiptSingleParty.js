@@ -34,6 +34,7 @@ import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import StoryClamp from "./StoryClamp";
 
 // stamp imprint glyph + Thai label per semantic choice (kind)
 const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "—" };
@@ -230,7 +231,7 @@ export default function ReceiptSingleParty({
               <span className="rc-sp-sec__kick">LOGO MEANING</span>
               <h2 className="rc-sp-sec__title"><span className="rc-th">ความหมายสัญลักษณ์</span></h2>
             </div>
-            <p className="rc-sp-story">{story}</p>
+            <StoryClamp className="rc-sc"><p className="rc-sp-story">{story}</p></StoryClamp>
           </section>
         )}
 
@@ -609,6 +610,9 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sp-sec__count { margin-left:auto; font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--rc-ink2); white-space:nowrap; padding-bottom:3px; font-variant-numeric:tabular-nums; }
         .rc-single-root .rc-sp-story { margin:20px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2); }
+        /* StoryClamp — the booth keeps the stamping desk close: a long story folds */
+        .rc-single-root .rc-sc { --sc-max:9em; --sc-fade:var(--rc-receipt); }
+        .rc-single-root .rc-sc .sc__btn { color:var(--rc-accent-deep); font-family:var(--rc-fh); }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .rc-single-root .rc-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:6px; overflow:hidden; align-self:center;
           background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center; }

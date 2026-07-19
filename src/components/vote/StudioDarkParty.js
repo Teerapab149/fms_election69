@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StudioDarkShell from "./StudioDarkShell";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -121,7 +122,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
               <figcaption className="sdp-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
             </figure>
           )}
-          {story && <div className="sdp-vision__story"><p>{story}</p></div>}
+          {story && <div className="sdp-vision__story"><StoryClamp className="sdp-sc"><p>{story}</p></StoryClamp></div>}
 
           {/* missions — their own always-visible ledger below the story/photo */}
           {missions.length > 0 && (
@@ -250,6 +251,10 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-vision__photo:hover img { transform:scale(1.015); }
         .sdp-vision__story { max-width:840px; }
         .sdp-vision__story p { font-size:16px; line-height:1.75; color:var(--sd-ink); font-weight:300; margin:0; }
+        /* StoryClamp — long manifesto folds behind a panel fade */
+        .sdp-sc { --sc-max:9em; --sc-fade:var(--sd-bg); }
+        .sdp-sc .sc__btn { color:var(--sd-accent); font-family:var(--sd-mono); font-size:11px;
+          letter-spacing:.16em; text-transform:uppercase; }
         .sdp-story__cap {
           position:absolute; left:12px; bottom:12px; font-family:var(--sd-mono); font-size:9px;
           letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2);

@@ -40,8 +40,14 @@ export const MISSIONS = [
 export const mkParty = (i, name, slogan, color) => ({
   id: i, number: i, name, slogan, color,
   logoUrl: PARTY_LOGOS[(i - 1) % PARTY_LOGOS.length], groupImageUrls: ["/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg"], officialImageUrl: null, mobileHeroImage: null,
+  // Long on purpose: real admins type a full essay here (the live record is ~1,500
+  // characters). The preview must show what a real story does to the page — that is
+  // what the StoryClamp collapse exists for.
   logoMeaning:
-    "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ",
+    "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ\n" +
+    "Unity คือ ความสามัคคี หมายถึงความสัมพันธ์ที่ทุกคนในหมู่คณะร่วมมือกันอย่างเข้าใจ ไม่ว่าจะมาจากสาขาใด ชั้นปีใด ทุกเสียงมีความหมายเท่ากันในการกำหนดทิศทางของสโมสรนักศึกษา\n" +
+    "Concord คือ ความกลมเกลียว สื่อถึงการทำงานที่ประสานกันอย่างราบรื่น รับฟังความเห็นต่างและหาข้อสรุปร่วมกันได้ โดยยึดประโยชน์ของนักศึกษาทั้งคณะเป็นที่ตั้ง\n" +
+    "สัญลักษณ์เรือใบสื่อถึงการเดินทางไปข้างหน้าด้วยกัน แม้ลมจะเปลี่ยนทิศ แต่หากทุกคนช่วยกันถือหางเสือ เราจะไปถึงจุดหมายเดียวกันได้เสมอ",
   missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
 });
 
