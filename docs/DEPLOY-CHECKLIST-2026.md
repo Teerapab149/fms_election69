@@ -32,6 +32,12 @@
 > ของ prod ต้อง**สุ่มใหม่ทั้งหมด** และเครื่อง dev ควรเปลี่ยนรหัส Postgres ท้องถิ่นด้วย
 > (compose ปัจจุบันอ่าน `POSTGRES_PASSWORD` จาก `.env` แล้ว ไม่มี secret ในไฟล์อีก)
 
+> ✅ **Docker ผ่านการทดสอบจริงแล้ว (2026-07-19,** `docker-compose.local.yml`**):**
+> build โดยไม่มี `.env` ใน image → `migrate deploy` ทั้ง 7 migrations ลง DB container
+> เปล่า → seed → เว็บขึ้น :3000 — ตรวจแล้ว: static/รูปครบจาก standalone image,
+> image optimizer (sharp) ทำงาน, mock login ไม่โผล่ใน prod image, สถานะเลือกตั้ง
+> คำนวณเวลาไทยถูกบน container UTC, smoke 15/15 ยิงใส่ container ผ่านหมด
+
 ตั้งบน **server env** (Docker env / `.env` ที่ gitignored) — **ห้าม commit ลง git**:
 
 | ตัวแปร | ค่า / หมายเหตุ |
