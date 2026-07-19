@@ -53,7 +53,11 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
   );
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
 
@@ -147,7 +151,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
               {policies.map((p, i) => (
                 <div className="gp-policy" key={i}>
                   <span className="gp-policy__no">{String(i + 1).padStart(2, "0")}</span>
-                  <p>{p}</p>
+                  <p className="gp-policy__t">{p.title}</p>
+                  {p.desc && <p className="gp-policy__d">{p.desc}</p>}
                 </div>
               ))}
             </div>
@@ -296,7 +301,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-policies{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px; }
         .gp-policy{ position:relative; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:18px; padding:18px; box-shadow:var(--sh-sm); }
         .gp-policy__no{ position:absolute; top:-14px; left:14px; background:var(--pop-deep); color:#fff; font-family:var(--fd); font-size:14px; padding:4px 12px; border-radius:999px; letter-spacing:.1em; border:2px solid var(--ink); }
-        .gp-policy p{ font-size:14px; line-height:1.5; margin:8px 0 0; }
+        .gp-policy__t{ font-size:15px; line-height:1.45; margin:8px 0 0; font-weight:800; }
+        .gp-policy__d{ font-size:13px; line-height:1.55; margin:6px 0 0; color:var(--ink2); }
 
         .gp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }

@@ -31,7 +31,11 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
   const [lightboxSrc, setLightboxSrc] = useState(null);
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
   const gallery = useMemo(() => (galleryImages || []).map((g) => resolveSrc(g?.imageUrl || g)).filter(Boolean), [galleryImages]);
@@ -116,7 +120,8 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
                 <div className="vd-policy" key={i}>
                   <div className="vd-policy__no">{i + 1}</div>
                   <div className="vd-policy__tag">POLICY {pad2(i + 1)}</div>
-                  <p>{p}</p>
+                  <p className="vd-policy__t">{p.title}</p>
+                  {p.desc && <p className="vd-policy__d">{p.desc}</p>}
                 </div>
               ))}
             </div>
@@ -212,6 +217,8 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-policy__no { position:absolute; top:-22px; left:26px; width:52px; height:52px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; box-shadow:0 8px 18px -8px rgba(var(--terra-rgb),.6); }
         .vd-policy__tag { display:inline-block; font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra); margin:10px 0 14px; }
         .vd-policy p { font-family:var(--ft); font-size:16px; line-height:1.6; color:var(--moss); margin:0; }
+        .vd-policy p.vd-policy__t { font-weight:600; }
+        .vd-policy p.vd-policy__d { font-size:14px; line-height:1.65; color:var(--moss); opacity:.72; margin-top:8px; font-weight:400; }
 
         .vd-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
         .vd-rtile { background:var(--cream-2); border:1px solid var(--rule); border-radius:20px; padding:18px 16px 22px; text-align:center; transition:all .25s; cursor:pointer; font:inherit; color:inherit; display:block; width:100%; }

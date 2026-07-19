@@ -42,7 +42,11 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
   const [lightboxSrc, setLightboxSrc] = useState(null); // click the team photo → fullscreen
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
 
@@ -147,7 +151,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             {policies.map((p, i) => (
               <div className="sdp-policy" key={i}>
                 <div className="sdp-policy__no">{pad2(i + 1)}</div>
-                <div className="sdp-policy__body"><p>{p}</p></div>
+                <div className="sdp-policy__body"><p>{p.title}</p>{p.desc && <p className="sdp-policy__desc">{p.desc}</p>}</div>
                 <span className="sdp-policy__tag">POLICY {pad2(i + 1)}</span>
               </div>
             ))}
@@ -284,6 +288,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-policy__no { font-family:var(--sd-sans); font-weight:400; font-size:48px; letter-spacing:-.04em; color:var(--sd-ink-4); line-height:.9; transition:color .2s; }
         .sdp-policy:hover .sdp-policy__no { color:var(--sd-accent); }
         .sdp-policy__body p { font-size:16px; line-height:1.6; color:var(--sd-ink); margin:0; font-weight:300; max-width:720px; }
+        .sdp-policy__body p.sdp-policy__desc { font-size:14px; line-height:1.65; color:var(--sd-ink-3); margin-top:6px; font-weight:300; max-width:720px; }
         .sdp-policy__tag { font-family:var(--sd-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); opacity:0; transition:opacity .25s; white-space:nowrap; }
         .sdp-policy:hover .sdp-policy__tag { opacity:1; }
 

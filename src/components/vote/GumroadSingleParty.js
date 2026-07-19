@@ -55,7 +55,11 @@ export default function GumroadSingleParty({
   const [confirmOpen, setConfirmOpen] = useState(false);  // double-check before submitting the vote
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim(); // optional — not every year has one
 
@@ -152,7 +156,10 @@ export default function GumroadSingleParty({
               {policies.map((p, i) => (
                 <div className="gsp-policy" key={i}>
                   <span className="gsp-policy__no">{String(i + 1).padStart(2, "0")}</span>
-                  <p>{p}</p>
+                  <div className="gsp-policy__body">
+                    <p className="gsp-policy__t">{p.title}</p>
+                    {p.desc && <p className="gsp-policy__d">{p.desc}</p>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -332,10 +339,12 @@ export default function GumroadSingleParty({
         .gsp-m__no{ flex-shrink:0; width:30px; height:30px; border-radius:999px; background:var(--lime); color:var(--ink); font-family:var(--fd); font-size:13px; display:grid; place-items:center; box-shadow:2px 2px 0 rgba(0,0,0,.45); }
         .gsp-m__tx{ margin:0; font-size:14.5px; line-height:1.55; padding-top:3px; }
 
-        .gsp-policies{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px; }
-        .gsp-policy{ position:relative; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:18px; padding:18px; box-shadow:var(--sh-sm); }
-        .gsp-policy__no{ position:absolute; top:-14px; left:14px; background:var(--ink); color:var(--cream); font-family:var(--fd); font-size:14px; padding:4px 12px; border-radius:999px; letter-spacing:.1em; }
-        .gsp-policy p{ font-size:14px; line-height:1.5; margin:4px 0 0; }
+        .gsp-policies{ display:flex; flex-direction:column; gap:12px; margin-top:18px; }
+        .gsp-policy{ display:flex; gap:16px; align-items:flex-start; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:16px; padding:16px 18px; box-shadow:var(--sh-sm); }
+        .gsp-policy__no{ flex-shrink:0; background:var(--ink); color:var(--cream); font-family:var(--fd); font-size:14px; padding:4px 12px; border-radius:999px; letter-spacing:.1em; }
+        .gsp-policy__body{ flex:1; min-width:0; }
+        .gsp-policy__t{ font-size:15px; line-height:1.45; margin:0; font-weight:800; }
+        .gsp-policy__d{ font-size:13px; line-height:1.55; margin:6px 0 0; color:var(--ink2); }
 
         .gsp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gsp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }

@@ -87,7 +87,11 @@ export default function StudioDarkSingleParty({
   const [lightboxSrc, setLightboxSrc] = useState(null);   // click the team photo → fullscreen
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
   const heroImg = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
@@ -215,7 +219,7 @@ export default function StudioDarkSingleParty({
             {policies.map((p, i) => (
               <div className="sds-policy" key={i}>
                 <div className="sds-policy__no">{pad2(i + 1)}</div>
-                <div className="sds-policy__body"><p>{p}</p></div>
+                <div className="sds-policy__body"><p>{p.title}</p>{p.desc && <p className="sds-policy__desc">{p.desc}</p>}</div>
                 <span className="sds-policy__tag">POLICY {pad2(i + 1)}</span>
               </div>
             ))}
@@ -471,6 +475,7 @@ export default function StudioDarkSingleParty({
         .sds-policy__no { font-family:var(--sd-sans); font-weight:400; font-size:48px; letter-spacing:-.04em; color:var(--sd-ink-4); line-height:.9; transition:color .2s; }
         .sds-policy:hover .sds-policy__no { color:var(--sd-accent); }
         .sds-policy__body p { font-size:16px; line-height:1.6; color:var(--sd-ink); margin:0; font-weight:300; max-width:720px; }
+        .sds-policy__body p.sds-policy__desc { font-size:14px; line-height:1.7; color:var(--sd-ink-3); margin-top:8px; padding-left:14px; border-left:1px solid var(--sd-line-strong); font-weight:300; max-width:660px; }
         .sds-policy__tag { font-family:var(--sd-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-2); opacity:0; transition:opacity .25s; white-space:nowrap; }
         .sds-policy:hover .sds-policy__tag { opacity:1; }
 

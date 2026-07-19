@@ -90,7 +90,10 @@ export default function BlossomSingleParty({
   const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
   // keep the placeholder defaults preparePartyData injects out of the printed pages
   const missions = (party?.missions || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
-  const policies = (party?.policies || []).map(asText).filter(Boolean);
+  const policies = (party?.policies || []).filter((p) => {
+    const t = asText(p);
+    return t && !t.startsWith("ยังไม่มีข้อมูล");
+  });
   const members = sortMembersByPosition(party?.members || []);
   const no = party?.number;
 
@@ -200,9 +203,13 @@ export default function BlossomSingleParty({
               <span className="bl-sp-sec__count">{pad2(policies.length)} ข้อ</span>
             </div>
             <ol className="bl-sp-plist">
-              {policies.map((p, i) => (
-                <li key={i}><span className="n">{pad2(i + 1)}</span><span className="t">{p}</span></li>
-              ))}
+              {policies.map((p, i) => {
+                const title = typeof p === "object" ? (p.title || p.text || p.name || "") : p;
+                const desc = typeof p === "object" ? (p.desc || p.description || p.detail || "") : "";
+                return (
+                  <li key={i}><span className="n">{pad2(i + 1)}</span><span className="bl-sp-pbody"><span className="t">{title}</span>{desc && <span className="d">{desc}</span>}</span></li>
+                );
+              })}
             </ol>
           </section>
         )}
@@ -518,13 +525,16 @@ export default function BlossomSingleParty({
 
         /* policies — index rows */
         .bl-single-root .bl-sp-plist { list-style:none; margin:14px 0 0; padding:0; }
-        .bl-single-root .bl-sp-plist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:baseline;
+        .bl-single-root .bl-sp-plist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:start;
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-sp-plist li:last-child { border-bottom:none; }
         .bl-single-root .bl-sp-plist .n { font-family:var(--bl-fd); font-weight:800; font-size:clamp(22px,5vw,34px); line-height:1;
           font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-deep); }
-        .bl-single-root .bl-sp-plist .t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.6;
+        .bl-single-root .bl-sp-plist .bl-sp-pbody { display:block; }
+        .bl-single-root .bl-sp-plist .t { display:block; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.6;
           color:var(--bl-ink); }
+        .bl-single-root .bl-sp-plist .d { display:block; font-family:var(--bl-fb, var(--bl-fd)); font-weight:400; font-size:clamp(13px,3.2vw,14.5px); line-height:1.62;
+          color:var(--bl-ink-soft, var(--bl-ink)); opacity:.75; margin-top:5px; }
 
         /* team — portrait grid */
         .bl-single-root .bl-sp-team { margin-top:22px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }

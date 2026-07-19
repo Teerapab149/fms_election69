@@ -105,7 +105,11 @@ export default function VerdureSingleParty({
   // editor/preview skip the cinematic intro — unless forceIntro (the dev-only intro demo)
   const [introDone, setIntroDone] = useState(editorMode && !forceIntro);
 
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
   const heroImg = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
@@ -165,7 +169,7 @@ export default function VerdureSingleParty({
             <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Key policies</span><h2>นโยบายเด่น</h2></div><span className="vd-booth__count">{policies.length} ข้อ</span></div>
             <ol className="vd-plist">
               {policies.map((p, i) => (
-                <li key={i}><span className="n">{pad2(i + 1)}</span><span className="t">{p}</span></li>
+                <li key={i}><span className="n">{pad2(i + 1)}</span><span className="vd-pbody"><span className="t">{p.title}</span>{p.desc && <span className="d">{p.desc}</span>}</span></li>
               ))}
             </ol>
           </div>
@@ -322,11 +326,12 @@ export default function VerdureSingleParty({
         .vd-cand__role { font-family:var(--fm); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--terra-2); }
 
         .vd-plist { list-style:none; margin:0; padding:0; }
-        .vd-plist li { display:grid; grid-template-columns:46px 1fr; gap:20px; align-items:center; padding:18px 8px; border-top:1px solid var(--rule); border-radius:12px; transition:padding-left .22s, background .22s; }
+        .vd-plist li { display:grid; grid-template-columns:46px 1fr; gap:20px; align-items:start; padding:18px 8px; border-top:1px solid var(--rule); border-radius:12px; transition:padding-left .22s, background .22s; }
         .vd-plist li:first-child { border-top:0; }
         .vd-plist li:hover { padding-left:16px; background:rgba(var(--cream-2-rgb),.7); }
         .vd-plist .n { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; color:var(--terra); }
-        .vd-plist .t { font-family:var(--ft); font-size:16px; line-height:1.66; color:rgba(var(--moss-rgb),.9); }
+        .vd-plist .t { display:block; font-family:var(--ft); font-size:16px; line-height:1.66; color:rgba(var(--moss-rgb),.9); }
+        .vd-plist .d { display:block; font-family:var(--ft); font-size:14px; line-height:1.62; color:rgba(var(--moss-rgb),.62); margin-top:5px; }
 
         /* THE DECISION — the ballot moment */
         .vd-decision { margin-top:66px; padding-top:46px; border-top:2px solid rgba(var(--moss-rgb),.16); position:relative; scroll-margin-top:96px; }
