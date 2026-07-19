@@ -490,6 +490,21 @@ export default function ReceiptHome({
                 </span>
               </a>
             </div>
+
+            {/* ENDED — the manila note moves OUT of the rail and into the desk column.
+                Two reasons: the ended calendar leaf is the tallest clock of any state,
+                so leaving the note under it overhung the hero column by half a card;
+                and the left column otherwise dead-ends at the CTA row with a void
+                beside the leaf. The note's copy changes with it — the live text
+                ("เข้าลงคะแนนได้ทันทีที่เปิดโหวต") is a lie once the poll has closed. */}
+            {isEnded && (
+              <div className="rc-note rc-note--desk">
+                <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
+                <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
+                <div className="rc-note-h">ปิดหีบเรียบร้อย</div>
+                <p className="rc-note-b">การลงคะแนนสิ้นสุดแล้ว ยอดผู้มาใช้สิทธิ์ทั้งหมดอยู่ในรายงานด้านล่าง</p>
+              </div>
+            )}
           </section>
 
           {/* ===== RIGHT RAIL (sticky on desktop) — the CLOCK, then a short manila
@@ -554,8 +569,13 @@ export default function ReceiptHome({
                       <div className="rc-endsheet-day">{endDayNum}</div>
                       <span className="rc-slip-stamp rc-endsheet-stamp"><span>ปิดโหวตแล้ว</span></span>
                     </div>
-                    <div className="rc-endsheet-weekday">วันเลือกตั้ง</div>
-                    <div className="rc-close-line">เวลาปิด {formatThaiTime(ELECTION_END)}</div>
+                    {/* one meta line, not two stacked ones — the day leaf reads denser
+                        and the sheet loses ~30px of dead air (v2-R16 balance pass) */}
+                    <div className="rc-endsheet-weekday">
+                      <span>วันเลือกตั้ง</span>
+                      <span className="rc-endsheet-sep" aria-hidden="true">·</span>
+                      <span className="rc-endsheet-close">ปิด {formatThaiTime(ELECTION_END)}</span>
+                    </div>
                   </div>
                 )}
 
@@ -587,12 +607,14 @@ export default function ReceiptHome({
             {/* manila note — the turnout register moved to its own slip and the CTA
                 ladder moved under the hero card, so the note now carries only the
                 "ลงคะแนน" head + a short verify-rights line. The rail ends here. */}
-            <div className="rc-note">
-              <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
-              <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
-              <div className="rc-note-h">ลงคะแนน</div>
-              <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่เปิดโหวต</p>
-            </div>
+            {!isEnded && (
+              <div className="rc-note">
+                <span className="rc-note-pin rc-note-pin--l" aria-hidden="true" />
+                <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
+                <div className="rc-note-h">ลงคะแนน</div>
+                <p className="rc-note-b">ตรวจสอบสิทธิ์แล้วเข้าลงคะแนนได้ทันทีที่เปิดโหวต</p>
+              </div>
+            )}
           </div>{/* /rc-rail */}
 
           {/* ===== PERFORATION TRACK (v2-R5c) — a full-width punched separator that
@@ -969,8 +991,6 @@ export default function ReceiptHome({
             radial-gradient(58% 42% at 18% 28%, color-mix(in srgb, var(--rc-receipt) 34%, transparent), transparent 62%),
             radial-gradient(42% 52% at 78% 66%, color-mix(in srgb, var(--rc-receipt) 26%, transparent), transparent 58%),
             radial-gradient(30% 34% at 54% 18%, color-mix(in srgb, var(--rc-receipt) 22%, transparent), transparent 52%); }
-        .rc-home-root .rc-close-line { margin-top:12px; text-align:center; font-family:var(--rc-fr); font-size:13px; color:var(--rc-ink);
-          font-variant-numeric:tabular-nums; }
 
         /* ---- PAUSE — a calm centred waiting line (no digits, no stamp) ---- */
         .rc-home-root .rc-pause-line { margin-top:22px; margin-bottom:8px; text-align:center; font-family:var(--rc-fr);
@@ -982,11 +1002,13 @@ export default function ReceiptHome({
            year above, "วันเลือกตั้ง" below, the red "ปิดโหวตแล้ว" stamp pressed diagonally
            over the number's corner, and the close time printed under it. Dense enough to
            read as well-composed as the live countdown, never a bare slip. */
-        .rc-home-root .rc-endsheet { position:relative; margin-top:14px; text-align:center; }
+        .rc-home-root .rc-endsheet { position:relative; margin-top:10px; text-align:center; }
         .rc-home-root .rc-endsheet-month { font-family:var(--rc-fr); font-size:14px; font-weight:600; letter-spacing:.04em;
           color:var(--rc-accent-deep); }
-        .rc-home-root .rc-endsheet-daywrap { position:relative; display:inline-block; margin:2px auto 0; }
-        .rc-home-root .rc-endsheet-day { font-family:var(--rc-fr); font-weight:700; font-size:clamp(78px, 26vw, 118px); line-height:1;
+        /* the day number sits on its own optical baseline — line-height .92 crops the
+           font's built-in leading, which is where most of the leaf's dead air lived. */
+        .rc-home-root .rc-endsheet-daywrap { position:relative; display:inline-block; margin:0 auto; }
+        .rc-home-root .rc-endsheet-day { font-family:var(--rc-fr); font-weight:700; font-size:clamp(72px, 23vw, 100px); line-height:.92;
           letter-spacing:-.02em; color:var(--rc-ink); font-variant-numeric:tabular-nums; }
         /* the red stamp pressed diagonally over the number's corner — one line, never
            wrapped (an absolutely-positioned stamp would otherwise wrap inside the
@@ -994,20 +1016,29 @@ export default function ReceiptHome({
         .rc-home-root .rc-endsheet-stamp { position:absolute; z-index:2; top:14px; right:-14px; transform:rotate(-11deg);
           transform-origin:center; white-space:nowrap; }
         .rc-home-root .rc-endsheet-stamp span { font-size:19px; }
-        .rc-home-root .rc-endsheet-weekday { margin-top:6px; font-family:var(--rc-fr); font-size:13px; letter-spacing:.06em;
-          color:var(--rc-ink2); }
+        /* single meta row: "วันเลือกตั้ง · ปิด 22.00 น." — the close time keeps tabular
+           digits so it stays a printed fact, not a caption. */
+        .rc-home-root .rc-endsheet-weekday { display:flex; align-items:baseline; justify-content:center; gap:7px;
+          margin-top:8px; font-family:var(--rc-fr); font-size:13px; letter-spacing:.06em; color:var(--rc-ink2); }
+        .rc-home-root .rc-endsheet-sep { color:var(--rc-faint); }
+        .rc-home-root .rc-endsheet-close { color:var(--rc-ink); font-variant-numeric:tabular-nums; }
 
         /* ---- T2 "เจอกันปีหน้า" — a live countdown to next year's election, printed under
            the election-day leaf. A dashed perforation rule (never a torn edge) separates
            it; the tiles are sized DOWN from the hero countdown so the day group can carry
            3 digits without wrapping off the sheet at 390px. ---- */
-        .rc-home-root .rc-nextyear { margin-top:20px; padding-top:16px; border-top:1px dashed var(--rc-line); }
-        .rc-home-root .rc-nextyear-cap { display:flex; flex-direction:column; align-items:center; gap:3px; }
+        .rc-home-root .rc-nextyear { margin-top:16px; padding-top:14px; border-top:1px dashed var(--rc-line); }
+        .rc-home-root .rc-nextyear-cap { display:flex; flex-direction:column; align-items:center; gap:2px; }
         .rc-home-root .rc-nextyear-cap span { font-family:var(--rc-fr); font-size:15px; letter-spacing:.01em;
           color:var(--rc-accent-deep); font-weight:700; }
         .rc-home-root .rc-nextyear-cap small { font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--rc-faint); }
-        .rc-home-root .rc-cal .rc-nextyear-digits { margin-top:12px; gap:8px; flex-wrap:nowrap; }
+        .rc-home-root .rc-cal .rc-nextyear-digits { margin-top:10px; gap:8px; flex-wrap:nowrap; }
         .rc-home-root .rc-cal .rc-nextyear-digits .rc-cd-n { font-size:clamp(20px, 6.2vw, 28px); }
+        /* the ended leaf stacks two blocks (day + next-year) where the live states carry
+           one, so it closes tighter at the foot — otherwise the rail overhangs the hero
+           column by half a card on desktop (v2-R16 balance pass). */
+        .rc-home-root .rc-cal-sheet.is-ended { padding-bottom:16px; }
+        .rc-home-root .rc-cal-sheet.is-ended .rc-cal-ref { margin-top:12px; }
 
         /* ---- T3 turnout register ---- */
         /* rows given more vertical air (v2-R5b) so the left slip's bottom lands ~level
@@ -1127,6 +1158,10 @@ export default function ReceiptHome({
         .rc-home-root .rc-note-pin--l { left:12px; } .rc-home-root .rc-note-pin--r { right:12px; }
         .rc-home-root .rc-note-h { font-family:var(--rc-fh); font-weight:700; font-size:16px; color:var(--rc-ink); }
         .rc-home-root .rc-note-b { margin:6px 0 0; font-family:var(--rc-fr); font-size:13px; line-height:1.6; color:var(--rc-ink2); }
+        /* ENDED variant — the same note, sat on the desk under the CTA row instead of in
+           the rail. Aligns to the action row's 12px gutter and tilts the OTHER way so it
+           doesn't read as a copy of the hero stack's lean. */
+        .rc-home-root .rc-note--desk { margin:22px 12px 0; transform:rotate(.9deg); }
 
         /* ---- action row — primary CTA (die-cut desk tag) + secondary stub, sat
            directly under the hero card. mobile-first: a full-width column with the CTA
@@ -1254,6 +1289,10 @@ export default function ReceiptHome({
           .rc-home-root .rc-rail { grid-column:2; grid-row:1; position:sticky; top:84px;
             margin:6px 0 0 -28px; gap:clamp(20px, 3vh, 34px); }
           .rc-home-root .rc-note { max-width:none; }
+          /* the desk note follows the hero card's 480px measure, not the full column —
+             a note stretched to 555px reads as a banner (declared AFTER the rule above
+             so it wins at equal specificity — see feedback-styledjsx-media-order). */
+          .rc-home-root .rc-note--desk { max-width:480px; margin-left:0; margin-right:0; }
           /* the perforation track takes its OWN full-width row between the bands, with
              the holes punched through + a mono desk-tag clipped on the line. */
           .rc-home-root .rc-perf-track { grid-column:1 / -1; grid-row:2; height:20px; margin:0 4px; }
