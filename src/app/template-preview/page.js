@@ -83,12 +83,18 @@ import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../uti
 
 const noop = () => {};
 
-// receipt CLOSED preview copy — reason-aware, mirrors closed/page.js getMessage()
-// semantics (waiting / ended / paused). Drive via ?variant=ended|closed|waiting.
-function receiptClosedCopy(variant) {
+// CLOSED preview copy — mirrors closed/page.js getMessage() semantics (waiting /
+// ended / paused). Drive via ?variant=ended|closed|waiting; absent/unknown value →
+// waiting (each family's original default), so pre-existing URLs render unchanged.
+function closedPreviewCopy(variant) {
   if (variant === 'ended') return { variant: 'ended', title: 'สิ้นสุดระยะเวลาลงคะแนน', desc: 'การเลือกตั้งได้สิ้นสุดลงแล้ว ขอบคุณทุกท่านที่เข้ามาใช้สิทธิ' };
   if (variant === 'closed' || variant === 'paused') return { variant: 'closed', title: 'ระบบปิดรับลงคะแนน', desc: 'ระบบเลือกตั้งถูกปิดชั่วคราว หรือหมดเวลาการลงคะแนนแล้ว กรุณาติดต่อเจ้าหน้าที่หากมีข้อสงสัย' };
-  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดโหวต' };
+  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง' };
+}
+// receipt variant of the same copy — only its waiting desc is longer (unchanged).
+function receiptClosedCopy(variant) {
+  const c = closedPreviewCopy(variant);
+  return c.variant === 'waiting' ? { ...c, desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดโหวต' } : c;
 }
 
 function PreviewBody() {
@@ -344,7 +350,8 @@ function PreviewBody() {
       }
       if (page === 'closed') {
         const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
-        return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />);
+        const cc = closedPreviewCopy(variant);
+        return frame(<Cl title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />);
       }
     }
 
@@ -602,7 +609,7 @@ function PreviewBody() {
         );
       }
       if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
-      if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />;
+      if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />; }
     }
 
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
@@ -737,7 +744,8 @@ function PreviewBody() {
     }
     if (page === 'closed') {
       const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
-      return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} />);
+      const cc = closedPreviewCopy(variant);
+      return frame(<Cl title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} />);
     }
   }
 
@@ -781,7 +789,7 @@ function PreviewBody() {
       );
     }
     if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
-    if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode />;
+    if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />; }
   }
 
   // ── receipt family — static "printer moment" Success slide (R1). editorMode →
@@ -841,7 +849,9 @@ function PreviewBody() {
     return <VoteEditorPreview simMode="multi" pageLayout={null} elementConfigs={{}} />;
   }
   if (page === 'results') return <ResultsEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} revealed={variant !== 'locked'} />;
-  if (page === 'closed') return <ClosedEditorPreview simMode="waiting" />;
+  // classic closed — same ?variant= contract; ClosedEditorPreview speaks simMode
+  // (paused == the live page's "closed"); absent/unknown → waiting as before
+  if (page === 'closed') return <ClosedEditorPreview simMode={variant === 'ended' ? 'ended' : (variant === 'closed' || variant === 'paused') ? 'paused' : 'waiting'} />;
   if (page === 'party') return <ClassicPartyPreview party={parties[0]} />;
   if (page === 'success') return <SuccessPage editorMode pageLayout={null} elementConfigs={{}} />;
 
