@@ -2051,6 +2051,24 @@ including comments. Quote CSS identifiers with 'single quotes' or nothing.
 
 ---
 
+### P-LOG-105: [2026-07-19] A stale `existing*ImageUrl` from the client silently reverts image paths to files that no longer exist
+**Context:** Owner reported broken member photos. Two members' `modalImageUrl`
+pointed at `Modal/8.jpg` while the file on disk was `Modal/8_6810517021.jpg` —
+exactly the name the uploader writes (`${positionNum}_${studentId}.jpg`). Cause:
+`processMemberImage`/`processMemberModalImage` preferred the CLIENT-sent
+`existingImageUrl` over the DB value, so an admin form loaded before an earlier
+upload re-saved the OLD path over the new one. A party `officialImageUrl` was
+dead the same way.
+**Lesson:** When no new file is uploaded, the DB is the source of truth for
+"what image does this record have" — read the current value first and treat any
+client-sent path as a fallback only. Separately: every surface handled a MISSING
+url but none handled a PRESENT-but-404 url, so the broken-file icon leaked to
+voters. `ImageErrorGuard` (capture-phase window `error` listener) is the app-wide
+net; the real repair is still fixing the record.
+**Tags:** `#admin` `#uploads` `#data-integrity`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero

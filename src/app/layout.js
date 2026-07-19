@@ -1,5 +1,6 @@
 import './globals.css';
 import Providers from "../components/Providers";
+import ImageErrorGuard from "../components/ImageErrorGuard";
 import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
@@ -242,6 +243,9 @@ export default async function RootLayout({ children }) {
 
         {/* 4. ส่ง Session + globalConfig เข้าไป */}
         <Providers session={session} globalConfig={globalConfig} activeTemplateId={activeTemplateId}>
+          {/* app-wide net: a DB path whose file is gone must never render the
+              browser's broken-image icon (see ImageErrorGuard) */}
+          <ImageErrorGuard />
           <div className="fms-app">{children}</div>
         </Providers>
 

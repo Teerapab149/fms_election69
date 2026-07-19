@@ -220,12 +220,16 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
     return `/images/members/${folderName}/${fileName}`;
   }
 
+  // No new file → keep whatever the DB currently holds. The DB wins over the
+  // client's `existingImageUrl`: a form loaded before an earlier upload carries a
+  // STALE path, and trusting it silently reverted members to a filename that no
+  // longer exists on disk (broken images, 2026-07-19). The client value is only a
+  // fallback for records the map does not know (e.g. a changed studentId).
+  const dbUrl = existingImagesMap.get(memberData.studentId);
+  if (dbUrl) return dbUrl;
+
   if (memberData.existingImageUrl && memberData.existingImageUrl !== "") {
     return memberData.existingImageUrl;
-  }
-
-  if (existingImagesMap.has(memberData.studentId)) {
-    return existingImagesMap.get(memberData.studentId);
   }
 
   return "";
@@ -252,12 +256,12 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
     return `/images/members/${folderName}/Modal/${fileName}`;
   }
 
+  // Same rule as processMemberImage: the DB wins over a possibly-stale client value.
+  const dbUrl = existingImagesMap.get(memberData.studentId);
+  if (dbUrl) return dbUrl;
+
   if (memberData.existingModalImageUrl && memberData.existingModalImageUrl !== "") {
     return memberData.existingModalImageUrl;
-  }
-
-  if (existingImagesMap.has(memberData.studentId)) {
-    return existingImagesMap.get(memberData.studentId);
   }
 
   return "";
