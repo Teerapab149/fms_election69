@@ -10,7 +10,7 @@
 // The embargo logic is ported verbatim — hidden results must never leak a score
 // or ordering. Pure presentation; results/page.js owns access + data.
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import VerdureShell from "./VerdureShell";
@@ -19,6 +19,42 @@ import { verdureMeta } from "../home/VerdureChrome";
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
 const LOCK_WIDTHS = [56, 44, 28, 36, 22];
+
+// ── reveal ceremony: count-up (vd-B1B) ───────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server
+// HTML + no-JS + pre-hydration paint all show the real number. Only after
+// hydration does the effect restart the number from 0 and ease it up (~1s).
+// prefers-reduced-motion → snap to final, no animation. Used ONLY inside
+// revealed branches — embargoed numbers stay the literal "??.?%" string.
+function useCountUp(target, duration = 1000) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+// row percent (revealed only) — counts 0→pct after hydration, final value otherwise
+function RevealPct({ value }) {
+  const v = useCountUp(value);
+  return <>{v.toFixed(1)}%</>;
+}
+
+// winner-disc score line (revealed only) — votes + share count up together
+function RevealScoreLine({ score, pct, suffix = "" }) {
+  const s = useCountUp(score);
+  const p = useCountUp(pct);
+  return <>{fmt(Math.round(s))} เสียง · {p.toFixed(1)}%{suffix}</>;
+}
 
 export default function VerdureResults({
   candidates = [], totalVotes = 0, demographics = {}, finalStatus = "WAITING",
@@ -76,10 +112,10 @@ export default function VerdureResults({
                 <div className="vd-rdisc__name">
                   {singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—")}
                 </div>
-                <div className="vd-rdisc__pct">
+                <div className="vd-rdisc__pct vd-tabular">
                   {singleParty
-                    ? <>{fmt((approveWins ? parties[0] : disapprove)?.score || 0)} เสียง · {pctOf(approveWins ? parties[0] : disapprove).toFixed(1)}%</>
-                    : (winner ? <>{fmt(winner.score || 0)} เสียง · {pctOf(winner).toFixed(1)}% ของคะแนน</> : "")}
+                    ? <RevealScoreLine score={(approveWins ? parties[0] : disapprove)?.score || 0} pct={pctOf(approveWins ? parties[0] : disapprove)} />
+                    : (winner ? <RevealScoreLine score={winner.score || 0} pct={pctOf(winner)} suffix=" ของคะแนน" /> : "")}
                 </div>
               </>
             ) : (
@@ -117,8 +153,9 @@ export default function VerdureResults({
                     onClick={() => { if (revealed && parseInt(c.number) > 0) onSelectParty(c); }}
                     style={revealed && parseInt(c.number) > 0 ? { cursor: "pointer" } : undefined}>
                     <div className="vd-race__name">{labelOf(c)}{isWin && <span className="vd-race__tag">WINNER</span>}<small>{subOf(c)}</small></div>
-                    <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={{ width: `${w}%` }} /></div>
-                    <div className="vd-race__pct">{revealed ? `${pctOf(c).toFixed(1)}%` : "??.?%"}</div>
+                    {/* stagger delay ONLY on revealed fills — embargoed placeholder bars keep the static LOCK_WIDTHS render, no animation */}
+                    <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={revealed ? { width: `${w}%`, animationDelay: `${i * 100}ms` } : { width: `${w}%` }} /></div>
+                    <div className="vd-race__pct vd-tabular">{revealed ? <RevealPct value={pctOf(c)} /> : "??.?%"}</div>
                   </div>
                 );
               })}
@@ -221,12 +258,29 @@ export default function VerdureResults({
         .vd-race__head h3 em { color:var(--terra); }
         .vd-race__bars { display:grid; gap:22px; padding-top:4px; }
         .vd-race__row { display:grid; grid-template-columns:260px 1fr 80px; gap:24px; align-items:center; }
+        /* reveal ceremony (vd-B1B): the winner row reads at a glance — gentle
+           terra-on-cream tint, negative margins so the 3-col grid stays aligned
+           with the untinted rows */
+        .vd-race__row.is-win { background:color-mix(in srgb, var(--terra) 9%, var(--cream-2)); border-radius:16px; padding:10px 14px; margin:-10px -14px; }
         .vd-race__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:20px; letter-spacing:-.005em; color:var(--moss); }
         .vd-race__name small { display:block; font-family:var(--fm); font-style:normal; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.7; margin-top:2px; }
-        .vd-race__tag { margin-left:10px; font-family:var(--fm); font-size:9px; letter-spacing:.14em; background:var(--terra); color:var(--cream); border-radius:999px; padding:3px 9px; vertical-align:middle; text-transform:uppercase; }
+        /* WINNER medallion-stamp — terra seal with an inner dashed cream ring
+           (the vd-rdisc dashed-ring motif at pill scale) + one-shot scale-settle
+           after the bars land. \`backwards\` holds the from-state during the
+           delay, so the stamp is visible at every moment (never opacity-hidden) */
+        .vd-race__tag { display:inline-block; margin-left:10px; font-family:var(--fm); font-size:9px; letter-spacing:.14em; background:var(--terra); color:var(--cream); border-radius:999px; padding:4px 10px; vertical-align:middle; text-transform:uppercase; border:1px dashed rgba(var(--cream-rgb),.6); box-shadow:0 0 0 2px var(--terra), 0 8px 16px -8px rgba(var(--terra-rgb),.6); animation:vdStampIn .5s cubic-bezier(.34,1.56,.64,1) .5s backwards; }
         .vd-race__track { height:10px; background:var(--cream-3); border:1px solid var(--rule); border-radius:999px; overflow:hidden; }
         .vd-race__fill { height:100%; background:var(--terra); opacity:.4; background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0) 0 6px, rgba(255,255,255,.18) 6px 7px); transition:width .6s ease-out; }
-        .vd-race__fill.real { opacity:1; }
+        /* revealed bars grow 0→final with a per-row stagger (animationDelay set
+           inline). Pure CSS keyframe: without JS the animation still ends at the
+           specified width, so the final bars are never gated behind hydration.
+           Scoped to .real ONLY — embargoed placeholder bars never animate. */
+        .vd-race__fill.real { opacity:1; animation:vdBarGrow .7s cubic-bezier(.22,1,.36,1) backwards; }
+        @keyframes vdBarGrow { from { width:0; } }
+        @keyframes vdStampIn { from { transform:scale(1.15); } }
+        @media (prefers-reduced-motion: reduce) {
+          .vd-race__fill.real, .vd-race__tag { animation:none; }
+        }
         .vd-race__pct { font-family:var(--fm); font-size:14px; color:var(--moss); opacity:.72; text-align:right; }
         /* veil covers exactly the bars wrapper (not a fixed offset) so it never
            overlaps the taller two-tier head, at any breakpoint */
