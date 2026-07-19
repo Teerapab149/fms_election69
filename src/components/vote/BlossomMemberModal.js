@@ -49,11 +49,45 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
 
   if (!member) return null;
 
+  // v2-R13 — CUTOUT MODE when the member has a transparent-PNG portrait
+  // (modalImageUrl); otherwise the original framed look on imageUrl.
+  const hasCutout = !!member.modalImageUrl;
   const src = resolveSrc(member.modalImageUrl || member.imageUrl);
+
+  const idBlock = (
+    <div className="blm__id">
+      <span className="blm__kick">{prefix} {number} · CANDIDATE PROFILE</span>
+      <h3 className="blm__name">{member.name}</h3>
+      {(member.position || member.major) && (
+        <p className="blm__role">{[member.position, member.major].filter(Boolean).join(" · ")}</p>
+      )}
+
+      <dl className="blm__reg">
+        {member.studentId && (
+          <div>
+            <dt><span className="bl-th">รหัสนักศึกษา</span> · STUDENT ID</dt>
+            <dd className="blm__mono">{member.studentId}</dd>
+          </div>
+        )}
+        {member.position && (
+          <div>
+            <dt><span className="bl-th">ตำแหน่ง</span> · POSITION</dt>
+            <dd>{member.position}</dd>
+          </div>
+        )}
+        {member.major && (
+          <div>
+            <dt><span className="bl-th">สาขาวิชา</span> · MAJOR</dt>
+            <dd>{member.major}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
 
   return (
     <div className="bl-root blm" role="dialog" aria-modal="true" aria-label={member.name || "ประวัติผู้สมัคร"} onClick={onClose}>
-      <div className="blm__card" onClick={(e) => e.stopPropagation()}>
+      <div className={`blm__card${hasCutout ? " is-cutout" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* eyebrow + member-number pill */}
         <div className="blm__top">
           <span className="blm__eyebrow"><i className="blm__tick" aria-hidden="true" />CANDIDATE FILE · <span className="bl-th">ผู้สมัคร</span></span>
@@ -65,49 +99,41 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
 
         <div className="blm__hair" aria-hidden="true" />
 
-        <div className="blm__body">
-          {/* large portrait — click opens its own lightbox */}
-          <button
-            type="button"
-            className={`blm__photo${src ? "" : " is-empty"}`}
-            onClick={() => src && setLightboxOpen(true)}
-            aria-label={src ? "ขยายรูป" : undefined}
-            disabled={!src}
-          >
-            {src
-              ? <img src={src} alt={member.name || ""} />
-              : <span className="blm__photo-ph" aria-hidden="true">{(member.name || "?").trim().charAt(0)}</span>}
-          </button>
-
-          <div className="blm__id">
-            <span className="blm__kick">{prefix} {number} · CANDIDATE PROFILE</span>
-            <h3 className="blm__name">{member.name}</h3>
-            {(member.position || member.major) && (
-              <p className="blm__role">{[member.position, member.major].filter(Boolean).join(" · ")}</p>
-            )}
-
-            <dl className="blm__reg">
-              {member.studentId && (
-                <div>
-                  <dt><span className="bl-th">รหัสนักศึกษา</span> · STUDENT ID</dt>
-                  <dd className="blm__mono">{member.studentId}</dd>
-                </div>
-              )}
-              {member.position && (
-                <div>
-                  <dt><span className="bl-th">ตำแหน่ง</span> · POSITION</dt>
-                  <dd>{member.position}</dd>
-                </div>
-              )}
-              {member.major && (
-                <div>
-                  <dt><span className="bl-th">สาขาวิชา</span> · MAJOR</dt>
-                  <dd>{member.major}</dd>
-                </div>
-              )}
-            </dl>
+        {hasCutout ? (
+          /* CUTOUT MODE — editorial cutout standing on a candy colour block */
+          <div className="blm__body blm__body--hero">
+            <div className="blm__stage">
+              <span className="blm__blob" aria-hidden="true" />
+              <span className="blm__ground" aria-hidden="true" />
+              <button
+                type="button"
+                className="blm__hero"
+                onClick={() => setLightboxOpen(true)}
+                aria-label="ขยายรูป"
+              >
+                <img src={src} alt={member.name || ""} />
+              </button>
+            </div>
+            {idBlock}
           </div>
-        </div>
+        ) : (
+          /* FALLBACK MODE — the original framed portrait */
+          <div className="blm__body">
+            <button
+              type="button"
+              className={`blm__photo${src ? "" : " is-empty"}`}
+              onClick={() => src && setLightboxOpen(true)}
+              aria-label={src ? "ขยายรูป" : undefined}
+              disabled={!src}
+            >
+              {src
+                ? <img src={src} alt={member.name || ""} />
+                : <span className="blm__photo-ph" aria-hidden="true">{(member.name || "?").trim().charAt(0)}</span>}
+            </button>
+
+            {idBlock}
+          </div>
+        )}
       </div>
 
       {/* the portrait's OWN lightbox */}
@@ -160,6 +186,38 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
 
         .blm__body { display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:start; padding-top:20px; }
 
+        /* ===== v2-R13 CUTOUT MODE — magazine cutout on a candy colour block ===== */
+        .blm__card.is-cutout { width:min(760px,100%); }
+        .blm__body--hero { grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr); gap:26px; align-items:stretch; }
+
+        .blm__stage { position:relative; min-width:0; display:flex; align-items:flex-end; justify-content:center;
+          padding:14px 10px 0; border-radius:20px; overflow:hidden;
+          background:color-mix(in srgb, var(--bl-primary-soft) 60%, var(--bl-card)); }
+        /* the candy blob the person is cut out against */
+        .blm__blob { position:absolute; left:50%; bottom:-12%; transform:translateX(-50%);
+          width:104%; aspect-ratio:1; pointer-events:none;
+          background:color-mix(in srgb, var(--bl-primary) 26%, var(--bl-card));
+          border-radius:52% 48% 60% 40%/55% 60% 40% 45%; }
+        /* soft ground shadow so the cutout is standing, not floating */
+        .blm__ground { position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+          width:60%; height:16px; border-radius:50%; pointer-events:none;
+          background:radial-gradient(closest-side, color-mix(in srgb, var(--bl-ink) 26%, transparent), transparent 78%);
+          filter:blur(1px); }
+
+        .blm__hero { position:relative; z-index:2; display:block; width:100%; height:clamp(320px,46vh,470px);
+          padding:0; border:none; background:none; cursor:zoom-in;
+          transition:transform .25s cubic-bezier(.16,1,.3,1); animation:blmStand .5s cubic-bezier(.16,1,.3,1) both .06s; }
+        @keyframes blmStand { from { opacity:0; transform:translateY(14px); } }
+        .blm__hero:hover { transform:translateY(-3px); }
+        /* width:auto hugs the image — no letterbox for an opaque studio photo, and a
+           transparent PNG still stands free on the candy block */
+        .blm__hero img { display:block; width:auto; max-width:100%; height:100%; margin:0 auto;
+          object-fit:contain; object-position:bottom center; border-radius:12px;
+          filter:drop-shadow(0 12px 16px color-mix(in srgb, var(--bl-ink) 22%, transparent)); }
+
+        .blm__body--hero .blm__id { align-self:center; }
+        .blm__body--hero .blm__name { font-size:clamp(26px,6vw,38px); }
+
         /* large editorial portrait */
         .blm__photo { position:relative; width:150px; aspect-ratio:4/5; flex:none; padding:0; cursor:zoom-in; overflow:hidden;
           border-radius:14px; background:color-mix(in srgb, var(--bl-primary-soft) 60%, var(--bl-card));
@@ -196,6 +254,14 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
 
         .bl-root.blm a:focus-visible, .bl-root.blm button:focus-visible {
           outline:2px solid var(--bl-primary-deep); outline-offset:3px; }
+
+        /* phones — cutout stacks on top and stays BIG (the person is the point) */
+        @media (max-width:560px) {
+          .blm__body--hero { grid-template-columns:1fr; gap:16px; }
+          .blm__stage { padding:10px 8px 0; }
+          .blm__hero { height:min(56vh,420px); }
+          .blm__body--hero .blm__name { font-size:clamp(24px,7vw,32px); }
+        }
 
         /* small phones (<=420) — stack the portrait above the record */
         @media (max-width:420px) {

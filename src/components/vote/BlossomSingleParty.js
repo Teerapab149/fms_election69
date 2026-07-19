@@ -141,7 +141,7 @@ export default function BlossomSingleParty({
             </span>
             <div className="bl-sp-title">
               <span className="bl-sp-num">พรรคหมายเลข <b>{no}</b></span>
-              <h1 className="bl-sp-word">{party?.name || "พรรค"}</h1>
+              <h1 className="bl-sp-word"><span className="bl-sp-word__in">{party?.name || "พรรค"}</span></h1>
               {party?.slogan && <p className="bl-sp-slogan">“{party.slogan}”</p>}
             </div>
           </div>
@@ -457,9 +457,15 @@ export default function BlossomSingleParty({
         /* display word — SOLID (the party name), calm ink; not hollow (action page). */
         /* party name wraps up to ~3 lines (masthead grows with content); ellipsis only
            caps an extreme name at line 3. line-clamp:2 clipped long names to "…" at 390 */
-        .bl-single-root .bl-sp-word { margin:6px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:.98;
+        .bl-single-root .bl-sp-word { margin:6px 0 0; overflow:hidden; }
+        /* the name text lives in an inner block that slides up out of the .bl-sp-word
+           window (blSuccUp — same idiom as BlossomSuccess). line-clamp lives here so
+           the reveal survives 1–3 line names. base state (no anim) = translateY(0). */
+        .bl-single-root .bl-sp-word__in { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+          overflow:hidden; font-family:var(--bl-fd); font-weight:800; line-height:.98;
           font-size:clamp(34px,8vw,66px); letter-spacing:-.02em; color:var(--bl-ink); overflow-wrap:break-word;
-          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+          text-overflow:ellipsis; animation:blSuccUp .62s cubic-bezier(.22,1,.36,1) both .18s; }
+        @keyframes blSuccUp { from { transform:translateY(108%); } }
         .bl-single-root .bl-sp-slogan { margin:12px 0 0; font-family:var(--bl-fd); font-weight:500; font-style:italic;
           font-size:clamp(15px,3.6vw,18px); line-height:1.6; color:var(--bl-ink2); }
 
@@ -651,6 +657,19 @@ export default function BlossomSingleParty({
         @keyframes blSRise { from { opacity:0; transform:translateY(16px); } }
         @keyframes blSFade { from { opacity:0; } }
         @keyframes blSPop { from { opacity:0; transform:translateY(18px) scale(.96); } }
+
+        /* ===== v2-R12 booth enrichment =====
+           slogan pull-quote settles a beat AFTER the name reveal (transform-only, so
+           it never re-flickers the opacity the header container already brought up). */
+        .bl-single-root .bl-sp-slogan { animation:blSSloganUp .6s cubic-bezier(.16,1,.3,1) both .34s; }
+        @keyframes blSSloganUp { from { transform:translateY(10px); } }
+        /* group cover — a slow editorial pan (ambient; object-fit:cover, never crops
+           past the frame). Frozen by the scoped reduced-motion guard below. */
+        .bl-single-root .bl-sp-cover img { animation:blCoverPan 26s ease-in-out infinite alternate; }
+        @keyframes blCoverPan { from { transform:scale(1.03) translate(0,0); } to { transform:scale(1.07) translate(-1.6%,-1.1%); } }
+        /* the confirm diamond gives a soft heartbeat once a choice is locked in */
+        .bl-single-root .bl-vconfirm.is-ready .bl-vconfirm__dia { animation:blDiaPulse 1.9s ease-in-out infinite; }
+        @keyframes blDiaPulse { 0%,100% { transform:rotate(45deg) scale(1); } 50% { transform:rotate(45deg) scale(1.22); } }
 
         /* ================= TABLET+ : inline nav + roomier layout ================= */
         @media (min-width:768px) {

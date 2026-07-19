@@ -550,7 +550,9 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-single-wrap { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:0 20px 210px; }
         .rc-single-root .rc-issue { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:14px 0;
           border-bottom:1px dotted var(--rc-line); font-family:var(--rc-fm); font-size:10px; letter-spacing:.18em;
-          text-transform:uppercase; color:var(--rc-faint); }
+          text-transform:uppercase; color:var(--rc-faint);
+          /* the serial line prints out left→right like a thermal head (stepped clip) */
+          animation:rcThermal .85s steps(28) both .02s; }
 
         /* ---- party feature masthead ---- */
         .rc-single-root .rc-sp-head { margin-top:32px; padding-bottom:24px; border-bottom:1.5px solid var(--rc-stamp-line);
@@ -567,7 +569,9 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sp-title { min-width:0; }
         .rc-single-root .rc-sp-num { font-family:var(--rc-fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--rc-ink2); }
-        .rc-single-root .rc-sp-num b { color:var(--rc-accent-deep); font-weight:700; }
+        /* the party numeral presses down like an ink stamp (over-scale + tilt settle) */
+        .rc-single-root .rc-sp-num b { color:var(--rc-accent-deep); font-weight:700;
+          display:inline-block; animation:rcInkStamp .5s cubic-bezier(.34,1.56,.64,1) both .3s; }
         .rc-single-root .rc-sp-word { margin:6px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.04;
           font-size:clamp(30px,7vw,52px); letter-spacing:-.01em; color:var(--rc-ink); overflow-wrap:break-word;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
@@ -583,12 +587,16 @@ export default function ReceiptSingleParty({
         /* group cover — a print framed on the desk (soft down-right lift) */
         .rc-single-root .rc-sp-cover { margin:32px 0 0; position:relative; background:var(--rc-receipt);
           border:1px solid var(--rc-line); border-radius:4px; padding:10px 10px 12px; overflow:hidden;
-          animation:rcVRise .55s ease both .16s;
+          /* the group print is LAID onto the desk — drops from a hair above with a
+             slight tilt, then settles flat (transform/opacity only) */
+          animation:rcDrop .6s cubic-bezier(.22,1,.36,1) both .16s;
           box-shadow:3px 20px 44px -24px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
         .rc-single-root .rc-sp-cover img { width:100%; height:clamp(220px,40vw,420px); object-fit:cover; display:block; border-radius:3px; }
         .rc-single-root .rc-sp-cover figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--rc-fm); font-size:10px;
           letter-spacing:.16em; text-transform:uppercase; color:var(--rc-receipt);
-          background:color-mix(in srgb, var(--rc-ink) 82%, transparent); padding:6px 13px; border-radius:3px; }
+          background:color-mix(in srgb, var(--rc-ink) 82%, transparent); padding:6px 13px; border-radius:3px;
+          /* the caption chip is pressed on right after the print lands (tape follows) */
+          transform-origin:left bottom; animation:rcPress .42s cubic-bezier(.34,1.56,.64,1) both .54s; }
 
         /* ---- generic section (about / policies / team) ---- */
         .rc-single-root .rc-sp-sec { margin-top:48px; }
@@ -857,6 +865,11 @@ export default function ReceiptSingleParty({
         @keyframes rcVRise { from { opacity:0; transform:translateY(14px); } }
         @keyframes rcScmFade { from { opacity:0; } }
         @keyframes rcScmPop { from { opacity:0; transform:translateY(18px) scale(.96); } }
+        /* v2-R12 desk choreography — "things laid on the table" */
+        @keyframes rcDrop { from { opacity:0; transform:translateY(-12px) rotate(-1.4deg); } 55% { opacity:1; } to { transform:translateY(0) rotate(0); } }
+        @keyframes rcPress { from { opacity:0; transform:scale(.82); } }
+        @keyframes rcInkStamp { 0% { opacity:0; transform:scale(1.45) rotate(-9deg); } 55% { opacity:1; } to { transform:scale(1) rotate(0); } }
+        @keyframes rcThermal { from { clip-path:inset(0 100% 0 0); } }
 
         /* ---- footer ---- */
         .rc-single-root .rc-single-footer { position:relative; z-index:1; margin-top:8px; padding:22px 0; border-top:1px dotted var(--rc-line);

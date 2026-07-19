@@ -4,11 +4,21 @@
 // replacing the shared (dark, classic) CandidateModal on ReceiptParty. The concept
 // is a CANDIDATE FILE CARD pulled from the party file: receipt-stock cardstock
 // (grain + a cut corner + a perforated stub edge + a one-directional press shadow)
-// laid on an opaque ink scrim (A3 / ruling #4: NO backdrop-filter). The card carries
-// a mono file header, an ink-stamp-framed portrait (click → its OWN lightbox), the
-// name / role, a file-tape dl of the record, and a faint faculty ship mark in the
-// corner (the system seal). Latin/digits ONLY ever wear the mono face (A10.3); Thai
-// UI sentences never end with "." .
+// laid on an opaque ink scrim (A3 / ruling #4: NO backdrop-filter). Latin/digits
+// ONLY ever wear the mono face (A10.3); Thai UI sentences never end with "." .
+//
+// v2-R13 — TWO presentation modes, chosen from the data:
+//   • CUTOUT MODE (member.modalImageUrl present) — the record becomes a wide (760px)
+//     two-column FILE with the person presented BIG: a full-height "desk stage" on
+//     the left (faint press-ring + a ghost faculty ship + a mono number stamp) with
+//     the portrait standing frameless on it (object-fit:contain, feet on an ellipse
+//     contact shadow), and the name / role / record on the right. Built for a clean
+//     transparent-PNG cutout (owner's intent) but degrades gracefully for an opaque
+//     studio JPG (a portrait ~2:3 nearly fills the stage; letterbox is negligible).
+//   • FALLBACK MODE (no modalImageUrl) — the original ink-stamp-framed portrait card
+//     (unchanged look/behaviour) using imageUrl.
+// Both modes: click the portrait → its OWN lightbox; a faint faculty ship mark seals
+// the corner (the system seal).
 //
 // Colours flow ONLY through var(--rc-*). The overlay carries the `rc-root` class so
 // the global .rc-root custom-property declarations (emitted once by ReceiptBaseStyles
@@ -50,12 +60,45 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
 
   if (!member) return null;
 
+  const hasCutout = !!member.modalImageUrl;
   const src = resolveSrc(member.modalImageUrl || member.imageUrl);
   const idSuffix = member.studentId ? String(member.studentId).slice(-3) : pad2(member.number ?? 0);
 
+  // the record column — shared by both modes (frame + cutout)
+  const idBlock = (
+    <div className="rcm__id">
+      <span className="rcm__kick rc-mono">CANDIDATE · <span className="rc-th">ผู้สมัคร</span></span>
+      <h3 className="rcm__name">{member.name}</h3>
+      {(member.position || member.major) && (
+        <p className="rcm__role">{[member.position, member.major].filter(Boolean).join(" · ")}</p>
+      )}
+
+      <dl className="rcm__reg">
+        {member.studentId && (
+          <div>
+            <dt><span className="rc-mono">STUDENT ID</span> <span className="rc-th">· รหัสนักศึกษา</span></dt>
+            <dd className="rc-mono">{member.studentId}</dd>
+          </div>
+        )}
+        {member.position && (
+          <div>
+            <dt><span className="rc-mono">POSITION</span> <span className="rc-th">· ตำแหน่ง</span></dt>
+            <dd>{member.position}</dd>
+          </div>
+        )}
+        {member.major && (
+          <div>
+            <dt><span className="rc-mono">MAJOR</span> <span className="rc-th">· สาขาวิชา</span></dt>
+            <dd>{member.major}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+
   return (
     <div className="rc-root rcm" role="dialog" aria-modal="true" aria-label={member.name || "แฟ้มผู้สมัคร"} onClick={onClose}>
-      <div className="rcm__card rc-grain" onClick={(e) => e.stopPropagation()}>
+      <div className={`rcm__card rc-grain${hasCutout ? " is-cutout" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* faint faculty ship mark pressed into the corner — the system seal */}
         <ReceiptShipMark className="rcm__ship" strokeWidth={3} />
 
@@ -69,50 +112,45 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
         {/* close stub */}
         <button type="button" ref={closeRef} className="rcm__x rc-mono" onClick={onClose} aria-label="ปิด">✕</button>
 
-        <div className="rcm__body">
-          {/* portrait in an ink-stamp double-ring frame — click opens its own lightbox */}
-          <button
-            type="button"
-            className={`rcm__photo${src ? "" : " is-empty"}`}
-            onClick={() => src && setLightboxOpen(true)}
-            aria-label={src ? "ขยายรูป" : undefined}
-            disabled={!src}
-          >
-            {src
-              ? <img src={src} alt={member.name || ""} />
-              : <span className="rcm__photo-ph" aria-hidden="true">{(member.name || "?").trim().charAt(0)}</span>}
-            <span className="rcm__photo-no rc-mono" aria-hidden="true">{idSuffix}</span>
-          </button>
-
-          <div className="rcm__id">
-            <span className="rcm__kick rc-mono">CANDIDATE · <span className="rc-th">ผู้สมัคร</span></span>
-            <h3 className="rcm__name">{member.name}</h3>
-            {(member.position || member.major) && (
-              <p className="rcm__role">{[member.position, member.major].filter(Boolean).join(" · ")}</p>
-            )}
-
-            <dl className="rcm__reg">
-              {member.studentId && (
-                <div>
-                  <dt><span className="rc-mono">STUDENT ID</span> <span className="rc-th">· รหัสนักศึกษา</span></dt>
-                  <dd className="rc-mono">{member.studentId}</dd>
-                </div>
-              )}
-              {member.position && (
-                <div>
-                  <dt><span className="rc-mono">POSITION</span> <span className="rc-th">· ตำแหน่ง</span></dt>
-                  <dd>{member.position}</dd>
-                </div>
-              )}
-              {member.major && (
-                <div>
-                  <dt><span className="rc-mono">MAJOR</span> <span className="rc-th">· สาขาวิชา</span></dt>
-                  <dd>{member.major}</dd>
-                </div>
-              )}
-            </dl>
+        {hasCutout ? (
+          /* CUTOUT MODE — the person presented big, standing on a desk stage */
+          <div className="rcm__body rcm__body--hero">
+            <div className="rcm__stage">
+              <ReceiptShipMark className="rcm__stage-ship" strokeWidth={3} />
+              <span className="rcm__stage-ring" aria-hidden="true" />
+              <span className="rcm__contact" aria-hidden="true" />
+              <button
+                type="button"
+                className="rcm__hero"
+                onClick={() => setLightboxOpen(true)}
+                aria-label="ขยายรูป"
+              >
+                <img src={src} alt={member.name || ""} />
+              </button>
+              <span className="rcm__hero-no rc-mono" aria-hidden="true">No.{pad2(member.number ?? 0)} · {idSuffix}</span>
+            </div>
+            {idBlock}
           </div>
-        </div>
+        ) : (
+          /* FALLBACK MODE — the original ink-stamp-framed portrait card */
+          <div className="rcm__body">
+            {/* portrait in an ink-stamp double-ring frame — click opens its own lightbox */}
+            <button
+              type="button"
+              className={`rcm__photo${src ? "" : " is-empty"}`}
+              onClick={() => src && setLightboxOpen(true)}
+              aria-label={src ? "ขยายรูป" : undefined}
+              disabled={!src}
+            >
+              {src
+                ? <img src={src} alt={member.name || ""} />
+                : <span className="rcm__photo-ph" aria-hidden="true">{(member.name || "?").trim().charAt(0)}</span>}
+              <span className="rcm__photo-no rc-mono" aria-hidden="true">{idSuffix}</span>
+            </button>
+
+            {idBlock}
+          </div>
+        )}
       </div>
 
       {/* the portrait's OWN lightbox — solid ink scrim, NO backdrop-filter */}
@@ -165,6 +203,49 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
         .rcm__body { position:relative; z-index:2; display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:start;
           padding-top:20px; }
 
+        /* ===== v2-R13 CUTOUT MODE — the person presented BIG on a desk stage ===== */
+        .rcm__card.is-cutout { width:min(760px,100%); }
+        .rcm__body--hero { grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr); gap:26px; align-items:stretch; }
+
+        /* the stage: a pressed paper panel the cutout stands on */
+        .rcm__stage { position:relative; min-width:0; display:flex; align-items:flex-end; justify-content:center;
+          padding:12px 8px 0; border-radius:3px;
+          background:linear-gradient(180deg, color-mix(in srgb, var(--rc-desk) 55%, var(--rc-receipt)) 0%, var(--rc-receipt) 100%); }
+        /* a faint press-ring behind the person (the file's stamp impression) */
+        .rcm__stage-ring { position:absolute; left:50%; top:46%; transform:translate(-50%,-50%);
+          width:78%; aspect-ratio:1; border-radius:50%; pointer-events:none;
+          border:1.5px dashed color-mix(in srgb, var(--rc-accent-deep) 22%, transparent);
+          box-shadow:inset 0 0 0 7px color-mix(in srgb, var(--rc-accent) 6%, transparent); }
+        .rcm__stage-ship { position:absolute; left:50%; top:52%; transform:translate(-50%,-50%) rotate(-6deg);
+          width:60%; height:auto; color:var(--rc-ink); opacity:.06; pointer-events:none; }
+        /* contact shadow — the ellipse under the feet that lands the cutout on paper */
+        .rcm__contact { position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+          width:62%; height:16px; border-radius:50%; pointer-events:none;
+          background:radial-gradient(closest-side, color-mix(in srgb, var(--rc-ink) 34%, transparent), transparent 78%);
+          filter:blur(1px); }
+
+        /* the cutout itself — FRAMELESS, tall, feet on the contact shadow */
+        .rcm__hero { position:relative; z-index:2; display:block; width:100%; height:clamp(320px,46vh,470px);
+          padding:0; border:none; background:none; cursor:zoom-in;
+          transition:transform .25s cubic-bezier(.16,1,.3,1); animation:rcmStand .5s cubic-bezier(.16,1,.3,1) both .06s; }
+        @keyframes rcmStand { from { opacity:0; transform:translateY(14px); } }
+        .rcm__hero:hover { transform:translateY(-3px); }
+        /* width:auto keeps the plate hugging the image — no letterbox gap for an
+           opaque studio photo, and a transparent PNG still stands free. The soft
+           corner + drop-shadow read as a photo plate on paper for opaque files and
+           are invisible on a true cutout. */
+        .rcm__hero img { display:block; width:auto; max-width:100%; height:100%; margin:0 auto;
+          object-fit:contain; object-position:bottom center; border-radius:3px;
+          filter:drop-shadow(2px 10px 12px color-mix(in srgb, var(--rc-ink) 28%, transparent)); }
+        /* mono number stamped on the stage, bottom-left */
+        .rcm__hero-no { position:absolute; left:10px; bottom:10px; z-index:3; padding:3px 8px; font-size:9.5px;
+          letter-spacing:.12em; color:var(--rc-receipt); border-radius:3px; font-variant-numeric:tabular-nums;
+          background:color-mix(in srgb, var(--rc-ink) 76%, transparent); }
+
+        /* cutout mode gives the record a bit more air + a bigger name */
+        .rcm__body--hero .rcm__id { align-self:center; }
+        .rcm__body--hero .rcm__name { font-size:clamp(24px,5.6vw,34px); }
+
         /* portrait in an ink-stamp double-ring frame (mirrors rc-folder__logo) */
         .rcm__photo { position:relative; width:132px; height:158px; flex:none; padding:0; cursor:zoom-in; overflow:hidden;
           border-radius:6px; background:var(--rc-desk); border:2px solid var(--rc-stamp-line); display:grid; place-items:center;
@@ -205,13 +286,24 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
         .rc-root.rcm a:focus-visible, .rc-root.rcm button:focus-visible {
           outline:2px solid var(--rc-accent); outline-offset:3px; }
 
-        /* small phones (<=420) — stack the portrait above the record */
+        /* phones — cutout stacks ON TOP and stays BIG (owner: ต้องเห็นตัวคนชัด),
+           the record scrolls beneath it inside the card */
+        @media (max-width:560px) {
+          .rcm__body--hero { grid-template-columns:1fr; gap:16px; }
+          .rcm__stage { padding:10px 8px 0; min-height:0; }
+          .rcm__hero { height:min(56vh,420px); }
+          .rcm__body--hero .rcm__name { font-size:clamp(22px,6.4vw,30px); }
+        }
+
+        /* small phones (<=420) — stack the framed portrait above the record */
         @media (max-width:420px) {
           .rcm__card { padding:0 18px 22px; }
           .rcm__body { grid-template-columns:1fr; gap:16px; justify-items:center; text-align:center; }
           .rcm__photo { width:150px; height:180px; }
           .rcm__id { width:100%; text-align:left; }
           .rcm__reg > div { align-items:flex-start; }
+          /* cutout mode keeps its own left-aligned record (never centered) */
+          .rcm__body--hero { justify-items:stretch; text-align:left; }
         }
 
         @media (prefers-reduced-motion:reduce) {
