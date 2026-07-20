@@ -150,6 +150,12 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
 
   const pad = (n) => String(n).padStart(2, "0");
   const isAuthed = !editorMode && status === "authenticated" && !!session?.user;
+  // back-pill label split (vd-B2B): head = first word ("BACK"), tail = the rest
+  // ("TO CANDIDATES" / "TO BALLOT"). Desktop shows all of it; ≤1100px hides the
+  // tail ("← BACK"); ≤560px hides the text entirely (round icon-only chip, the
+  // full label lives on in aria-label). Label-agnostic — works for any string.
+  const [backHead = "", ...backRestArr] = String(backLabel || "").trim().split(/\s+/);
+  const backTail = backRestArr.join(" ");
   const userName = (session?.user?.name || "").trim();
   const userId = session?.user?.studentId || "";
   const avatarChar = (userName || "T").charAt(0).toUpperCase();
@@ -163,7 +169,11 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
   return (
     <div className="vd-cornerstatus">
       {backHref ? (
-        <a href={editorMode ? undefined : getPath(backHref)} className="vd-chip-live vd-chip-live--back">← {backLabel}</a>
+        <a href={editorMode ? undefined : getPath(backHref)} className="vd-chip-live vd-chip-live--back" aria-label={backLabel}>
+          {/* single wrapper span = ONE flex item, so the chip's gap never applies
+              inside the label and desktop spacing stays the plain text spaces */}
+          <span className="vd-back-inner">←<span className="vd-back-txt"> {backHead}{backTail ? <span className="vd-back-tail"> {backTail}</span> : null}</span></span>
+        </a>
       ) : (statusChip || defaultChip)}
       {isAuthed && active !== "home" && (
         <div className={`vd-user ${userOpen ? "is-open" : ""}`}>
@@ -323,6 +333,8 @@ export function VerdureBaseStyles() {
         .vd-cornermark__logo-img { height:24px; }
         .vd-cornerstatus { top:16px; right:16px; gap:8px; }
         .vd-cornerstatus .vd-chip-live:not(.vd-chip-live--back) { display:none; }
+        /* back pill (vd-B2B): tablets drop the label tail → "← BACK" */
+        .vd-chip-live--back .vd-back-tail { display:none; }
         .vd-dock { padding:5px; bottom:16px; max-width:calc(100vw - 16px); }
         .vd-dock__link { padding:7px 16px; }
       }
@@ -339,6 +351,11 @@ export function VerdureBaseStyles() {
         .vd-cornermark__txt { display:none; }
         .vd-user { padding:5px; gap:6px; }
         .vd-user__meta { display:none; }
+        /* back pill (vd-B2B): phones collapse to a round icon-only chip — the ←
+           glyph centred in a 44px circle (≥44px hit target), same chip material;
+           the full label stays readable via the anchor's aria-label */
+        .vd-chip-live--back { width:44px; height:44px; padding:0; justify-content:center; letter-spacing:0; font-size:16px; }
+        .vd-chip-live--back .vd-back-txt { display:none; }
         .vd-user.is-open .vd-user__meta { display:block; position:absolute; top:calc(100% + 8px); right:0; background:var(--cream-2); border:1px solid var(--rule); border-radius:14px; padding:10px 14px; box-shadow:0 18px 38px -18px rgba(var(--moss-rgb),.4); white-space:nowrap; text-align:right; z-index:40; }
         .vd-moss .vd-user.is-open .vd-user__meta { background:var(--moss-2); border-color:var(--rule-moss); }
       }
