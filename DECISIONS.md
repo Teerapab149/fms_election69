@@ -1945,6 +1945,66 @@ legend/label map and update it in lockstep; verify by comparing computed legend
 background to cell fill.
 **Tags:** `#recharts` `#receipt` `#verify`
 
+### P-LOG-107: [2026-07-20] Latin mono kickers with tracking silently break Thai across every template
+**Context:** Batch-3 typography sweep — every non-classic family set tracked uppercase mono
+(Space Mono / Space Grotesk / JetBrains Mono, none with Thai glyphs) directly on mixed
+"EN · ไทย" labels. Thai fell back to a system font (misaligned sara/tone marks), tracking
+stretched it, and phrases wrapped mid-word ("ผลอย่างเป็น / ทางการ"). 21 defects, one cause.
+**Lesson:** Any mixed-language label needs the Thai run in a family reset span
+(`.rc-th`/`.vd-thai`/`.sd-thai`/`.gm-thai`/`.bl-thai`: real Thai font, ls .04em, nowrap on
+short tokens) with `·` as the only break point. New templates must budget this from day 1.
+**Tags:** `#typography` `#thai` `#fonts` `#mobile`
+
+---
+
+### P-LOG-108: [2026-07-20] Thai-reset utility must live on a NESTED span — and tag-descendant selectors beat it anyway
+**Context:** sd-T1/gm-T1/bl-T1 — putting `.sd-thai` on the same element as a class that
+sets font-family loses on source order; and rules like `.gr-donut__center span` (0,1,1)
+outrank a bare utility (0,1,0) even on a nested span.
+**Lesson:** Always nest the reset span inside the styled element; where the family styles
+children via tag selectors (`.x span`, `.x em`), the utility needs `!important` on
+font-family (receipt's `.rc-th` precedent) — verify with computed font, not by eye.
+**Tags:** `#css` `#specificity` `#thai`
+
+---
+
+### P-LOG-109: [2026-07-20] `white-space:nowrap` in the Thai reset is for short tokens only
+**Context:** vd-B2C/bl-T1 — full Thai sentences (closed-page date window, blossom date
+pill) must keep natural wrapping; baking nowrap into the reset would trade a font bug for
+mobile overflow. Verdure grew `.vd-thai-flow`, blossom split `.bl-thai` / `.bl-thai--nw`.
+**Lesson:** Two tiers: font-fix-only for sentences, +nowrap modifier for kicker tokens.
+**Tags:** `#css` `#thai` `#mobile`
+
+---
+
+### P-LOG-110: [2026-07-20] Backticks inside styled-jsx CSS comments are load-bearing
+**Context:** bl-T1 — a CSS comment citing `` `.bl-panel__cap span` `` inside a
+`<style jsx global>{`...`}` template literal terminated the string early; real build break
+for a couple of HMR cycles.
+**Lesson:** Never put backticks in comments inside styled-jsx template literals.
+**Tags:** `#styled-jsx` `#syntax`
+
+---
+
+### P-LOG-111: [2026-07-20] Browser-pane screenshots time out on pages with infinite framer-motion loops
+**Context:** vd-B1E/gm-T1 — pages with `repeat: Infinity` animations (verdure seal rings)
+keep rAF busy; `computer{screenshot}` waits for idle and times out.
+**Lesson:** On animated pages, verify with `getBoundingClientRect`/`getComputedStyle`/
+`read_page` evidence instead of screenshots; it's also the stronger proof for font/wrap claims.
+**Tags:** `#verification` `#browser` `#framer-motion`
+
+---
+
+### P-LOG-112: [2026-07-20] Corner labels with dynamic text need self-sizing stacks, not reserved padding
+**Context:** vd-B2A — reserving fixed padding for an absolutely-positioned `§ OFFICIAL`
+smallcaps collided when the alternate state rendered the ~2× wider `§ PARTICIPATION`;
+only measuring the SECOND head caught it.
+**Lesson:** Position dynamic-width decorative labels with flex `order`/own-row stacking so
+they self-size; measure every state variant of a fixed label, not just the first.
+**Tags:** `#css` `#layout` `#mobile`
+
+---
+
 ### P-LOG-106: [2026-07-19] A stray unclosed declaration block silently swallows adjacent styled-jsx rules
 **Context:** v2-R14 — the StoryClamp `.rc-sc` variable rules in ReceiptParty were
 accidentally nested inside the `.rc-letter__body {}` declaration block, so
