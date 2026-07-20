@@ -491,14 +491,20 @@ export default function SinglePartyView({
                     })()}
                   </Reveal>
 
-                  <Reveal delay={320}>
-                    {/* Slogan - White text for maximum readability */}
-                    <p className="text-base md:text-xl lg:text-2xl text-white font-semibold leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
-                      {candidate?.slogan || "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"}
-                    </p>
-                  </Reveal>
+                  {/* SLG-1: slogan is optional — absent = slot disappears entirely (no
+                      placeholder, no substitute text; owner rule). Name's own mb-4/mb-6
+                      then hands the rhythm straight to the CTA pair, which also takes
+                      over the slogan's reveal beat so the stagger stays tight. */}
+                  {candidate?.slogan && (
+                    <Reveal delay={320}>
+                      {/* Slogan - White text for maximum readability */}
+                      <p className="text-base md:text-xl lg:text-2xl text-white font-semibold leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                        {candidate.slogan}
+                      </p>
+                    </Reveal>
+                  )}
 
-                  <Reveal delay={440}>
+                  <Reveal delay={candidate?.slogan ? 440 : 320}>
                     {/* Action Buttons — the pair rises together, a beat after the slogan */}
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
                       {/* Discover: Magenta Gradient */}

@@ -130,7 +130,13 @@ function PlaygroundBody() {
     const raw = parseInt(sp.get('parties'), 10);
     return Number.isFinite(raw) && raw >= 2 && raw <= 6 ? raw : 2;
   })();
-  const parties = useMemo(() => makeParties(partiesN), [partiesN]);
+  // ?noslogan=1 — SLG-1 absence harness, same contract as /template-preview: strips
+  // slogans (and ONLY slogans) from the mocks. Param absent → byte-identical roster.
+  const noSlogan = sp.get('noslogan') === '1';
+  const parties = useMemo(() => {
+    const base = makeParties(partiesN);
+    return noSlogan ? base.map((p) => ({ ...p, slogan: null })) : base;
+  }, [partiesN, noSlogan]);
 
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'verdure';
   const map = COMPONENTS[family] || COMPONENTS.verdure;

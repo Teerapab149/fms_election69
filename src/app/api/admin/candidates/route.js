@@ -282,7 +282,10 @@ export async function PUT(req) {
 
     if (formData.has("name")) dataToUpdate.name = formData.get("name");
     if (formData.has("number")) dataToUpdate.number = parseInt(formData.get("number"));
-    if (formData.has("slogan")) dataToUpdate.slogan = formData.get("slogan");
+    // SLG-1: slogan is optional — normalize empty/whitespace-only → null so the
+    // render-site `party?.slogan &&` guards collapse the slot (a stray " " is truthy
+    // and would render an empty quoted slogan). Trim also drops incidental padding.
+    if (formData.has("slogan")) dataToUpdate.slogan = (formData.get("slogan") || "").trim() || null;
     if (formData.has("color")) dataToUpdate.color = formData.get("color") || null;
     if (formData.has("logoMeaning")) dataToUpdate.logoMeaning = formData.get("logoMeaning");
 
@@ -475,7 +478,8 @@ export async function POST(req) {
     const formData = await req.formData();
     const name = formData.get("name");
     const number = parseInt(formData.get("number"));
-    const slogan = formData.get("slogan");
+    // SLG-1: optional slogan — empty/whitespace-only → null (see PUT handler note).
+    const slogan = (formData.get("slogan") || "").trim() || null;
     const color = formData.get("color") || null;
     const logoMeaning = formData.get("logoMeaning");
     const file = formData.get("file");

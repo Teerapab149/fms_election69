@@ -518,16 +518,16 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน <span className="text-red-500">*</span></label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
                                     <textarea
                                         type="text"
                                         name="slogan"
                                         value={formData.slogan}
                                         onChange={handleChange}
                                         rows="4"
-                                        required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่างได้ — ระบบจะจัดหน้าให้พอดีเอง</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">สีประจำพรรค <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>

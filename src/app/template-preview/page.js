@@ -146,7 +146,14 @@ function PreviewBody() {
     const raw = parseInt(sp.get('parties'), 10);
     return Number.isFinite(raw) && raw >= 2 && raw <= 6 ? raw : 2;
   })();
-  const parties = useMemo(() => makeParties(partiesN), [partiesN]);
+  // ?noslogan=1 — SLG-1 absence harness: strips slogans (and ONLY slogans) from the mock
+  // parties so every surface can be compared with/without. Param absent → byte-identical
+  // roster (map branch never runs). Combine freely with ?parties=N.
+  const noSlogan = sp.get('noslogan') === '1';
+  const parties = useMemo(() => {
+    const base = makeParties(partiesN);
+    return noSlogan ? base.map((p) => ({ ...p, slogan: null })) : base;
+  }, [partiesN, noSlogan]);
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [partyNumber, setPartyNumber] = useState(parties[0]?.number ?? 1);
   // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
