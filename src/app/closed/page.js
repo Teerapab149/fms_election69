@@ -44,13 +44,14 @@ export default function ClosedPage() {
     }, []);
 
     const getMessage = () => {
-        if (!statusData) return { title: "ระบบปิดรับลงคะแนน", desc: "กำลังตรวจสอบสถานะ...", variant: "closed" };
+        if (!statusData) return { title: "ระบบปิดรับลงคะแนน", desc: "กำลังตรวจสอบสถานะ...", variant: "closed", systemMode: null };
         const { electionStatus, systemMode } = statusData;
 
         if (electionStatus === "WAITING") {
             const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
             return {
                 variant: "waiting",
+                systemMode,
                 title: "ยังไม่เปิดรับลงคะแนน",
                 desc: (
                     <>
@@ -63,6 +64,7 @@ export default function ClosedPage() {
         if (electionStatus === "ENDED" || systemMode === "ENDED") {
             return {
                 variant: "ended",
+                systemMode,
                 title: "สิ้นสุดระยะเวลาลงคะแนน",
                 desc: (
                     <>
@@ -74,6 +76,7 @@ export default function ClosedPage() {
         }
         return {
             variant: "closed",
+            systemMode,
             title: "ระบบปิดรับลงคะแนน",
             desc: "ระบบเลือกตั้งถูกปิดชั่วคราว หรือหมดเวลาการลงคะแนนแล้ว กรุณาติดต่อเจ้าหน้าที่หากมีข้อสงสัย"
         };
@@ -108,7 +111,7 @@ export default function ClosedPage() {
         }
     };
 
-    const { title, desc, variant } = getMessage();
+    const { title, desc, variant, systemMode } = getMessage();
 
     if (!templateReady) return null;
 
@@ -136,6 +139,7 @@ export default function ClosedPage() {
                     title={title}
                     desc={desc}
                     variant={variant}
+                    systemMode={systemMode}
                     session={session}
                     onLogout={handleLogout}
                 />
