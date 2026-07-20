@@ -32,7 +32,7 @@ function VerdureBallotIntro({ party, no, onDone }) {
       <motion.div className="vd-bintro__inner"
         initial={{ opacity: 1 }} animate={{ opacity: [1, 1, 0] }} transition={{ delay: 3.2, duration: 0.5 }}>
         <motion.div className="vd-bintro__eyebrow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.5 }}>
-          ★ THE ONLY PARTY · พรรคเดียวที่ลงสมัคร ★
+          ★ <span className="vd-nw">THE ONLY PARTY</span> · <span className="vd-thai">พรรคเดียวที่ลงสมัคร</span> ★
         </motion.div>
         <motion.div className="vd-bintro__no" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.26, duration: 0.5 }}>
           PARTY No. {no}
@@ -62,7 +62,7 @@ function VerdureBallotIntro({ party, no, onDone }) {
           การเลือกตั้งคณะกรรมการบริหารสโมสรนักศึกษา
         </motion.div>
         <motion.div className="vd-bintro__hint" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 1, 0.45, 1] }} transition={{ delay: 2.5, duration: 1.8, repeat: Infinity, repeatDelay: 0.2 }}>
-          แตะเพื่อเริ่ม · ENTER
+          <span className="vd-thai">แตะเพื่อเริ่ม</span> · ENTER
         </motion.div>
       </motion.div>
     </motion.div>
@@ -141,7 +141,7 @@ export default function VerdureSingleParty({
       <div className="vd-booth-bg" aria-hidden />
       <div className={`vd-booth${introDone ? " is-live" : ""}`}>
         <div className="vd-booth__head">
-          <div className="vd-booth__eyebrow">★ THE ONLY PARTY · พรรคเดียวที่ลงสมัคร ★</div>
+          <div className="vd-booth__eyebrow">★ <span className="vd-nw">THE ONLY PARTY</span> · <span className="vd-thai">พรรคเดียวที่ลงสมัคร</span> ★</div>
           <div className="vd-seal">
             <span className="vd-seal__glow" />
             <span className="vd-seal__ring" />
@@ -161,20 +161,20 @@ export default function VerdureSingleParty({
         {heroImg && (
           <figure className="vd-booth__cover" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
             <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption>ภาพหมู่พรรค · คลิกเพื่อขยาย</figcaption>
+            <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
         {story && (
           <div className="vd-booth__brief">
-            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">About the party</span><h2>เกี่ยวกับพรรค</h2></div>{userName && <span className="vd-booth__count">สวัสดี {userName}</span>}</div>
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">About the party</span><h2>เกี่ยวกับพรรค</h2></div>{userName && <span className="vd-booth__count"><span className="vd-thai">สวัสดี {userName}</span></span>}</div>
             <div className="vd-booth__scroll"><p>{story}</p></div>
           </div>
         )}
 
         {missions.length > 0 && (
           <div className="vd-booth__section">
-            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Missions</span><h2>พันธกิจ</h2></div><span className="vd-booth__count">{missions.length} ข้อ</span></div>
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Missions</span><h2>พันธกิจ</h2></div><span className="vd-booth__count">{missions.length} <span className="vd-thai">ข้อ</span></span></div>
             <div className="vd-mgrid">
               {missions.map((m, i) => (
                 <div className="vd-mcard" key={i}>
@@ -189,7 +189,7 @@ export default function VerdureSingleParty({
 
         {policies.length > 0 && (
           <div className="vd-booth__section">
-            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Key policies</span><h2>นโยบายเด่น</h2></div><span className="vd-booth__count">{policies.length} ข้อ</span></div>
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Key policies</span><h2>นโยบายเด่น</h2></div><span className="vd-booth__count">{policies.length} <span className="vd-thai">ข้อ</span></span></div>
             <ol className="vd-plist">
               {policies.map((p, i) => (
                 <li key={i}><span className="n">{pad2(i + 1)}</span><span className="vd-pbody"><span className="t">{p.title}</span>{p.desc && <span className="d">{p.desc}</span>}</span></li>
@@ -200,7 +200,7 @@ export default function VerdureSingleParty({
 
         {members.length > 0 && (
           <div className="vd-booth__section">
-            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">The team</span><h2>ทีมผู้สมัคร</h2></div><span className="vd-booth__count">{members.length} คน</span></div>
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">The team</span><h2>ทีมผู้สมัคร</h2></div><span className="vd-booth__count">{members.length} <span className="vd-thai">คน</span></span></div>
             <div className="vd-cands">
               {members.map((m, i) => {
                 const img = resolveSrc(m?.imageUrl);
@@ -209,7 +209,7 @@ export default function VerdureSingleParty({
                     <div className="vd-cand__photo">{img ? <img src={img} alt={m.name} /> : <span className="ph">{(m.name || "?").trim().charAt(0)}</span>}</div>
                     <div className="vd-cand__body">
                       <div className="vd-cand__name">{m.name}</div>
-                      {(m.position || m.major) && <div className="vd-cand__role">{m.position || m.major}</div>}
+                      {(m.position || m.major) && <div className="vd-cand__role"><span className="vd-thai-flow">{m.position || m.major}</span></div>}
                     </div>
                   </button>
                 );
@@ -220,7 +220,7 @@ export default function VerdureSingleParty({
 
         <section id="vd-decision" className="vd-decision">
           <div className="vd-decision__head">
-            <span className="vd-decision__kicker">★ Cast your vote · ลงคะแนน ★</span>
+            <span className="vd-decision__kicker">★ <span className="vd-nw">Cast your vote</span> · <span className="vd-thai">ลงคะแนน</span> ★</span>
             <h2>การตัดสินใจของคุณ</h2>
             <p>เลือกหนึ่งตัวเลือก แล้วกดยืนยัน · ลงคะแนนได้เพียงครั้งเดียว</p>
           </div>
@@ -241,7 +241,7 @@ export default function VerdureSingleParty({
       {confirmOpen && (
         <motion.div className="vd-cm" onClick={() => !isSubmitting && setConfirmOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
           <motion.div className="vd-cm__card" onClick={(e) => e.stopPropagation()} initial={{ opacity: 0, scale: 0.94, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="vd-cm__eyebrow">FINAL CONFIRMATION · ยืนยันครั้งสุดท้าย</div>
+            <div className="vd-cm__eyebrow"><span className="vd-nw">FINAL CONFIRMATION</span> · <span className="vd-thai">ยืนยันครั้งสุดท้าย</span></div>
             <h3 className="vd-cm__title">ยืนยันการลงคะแนน?</h3>
             <p className="vd-cm__sub">เลือกแล้ว<strong>เปลี่ยนไม่ได้</strong> — กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className="vd-cm__pick"><span className="lbl">YOUR SELECTION</span><span className="val">{selectionLabel || "—"}</span></div>
@@ -347,6 +347,11 @@ export default function VerdureSingleParty({
         .vd-cand__body::before { content:""; position:absolute; left:15px; top:0; width:26px; height:2px; background:var(--terra); }
         .vd-cand__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:16px; line-height:1.2; color:var(--moss); margin:7px 0 4px; }
         .vd-cand__role { font-family:var(--fm); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--terra-2); }
+        /* role/major is always a Thai data run inside the mono label (no EN part) —
+           reset it to the Thai stack (P-LOG-107). It is a phrase that can be long
+           in a narrow portrait card, so this is the font-only tier that keeps
+           natural wrapping (P-LOG-109), not the nowrap .vd-thai kicker tier. */
+        .vd-cand__role .vd-thai-flow { font-family:var(--ft); letter-spacing:.02em; text-transform:none; white-space:normal; }
 
         /* missions — CARD grid (vd-B1C), deliberately distinct from the vd-plist
            rows below it: each mission is a cream card in the vd-opt voice
