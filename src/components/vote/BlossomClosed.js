@@ -15,11 +15,25 @@
 // var(--bl-*), emitted by BlossomBaseStyles on .bl-root — a theme swap re-tints the
 // whole page in place. Chrome mirrors BlossomHome (carried locally — one Blossom
 // page renders at a time).
+//
+// State theatre (bl-B1A): the state is spoken in Blossom's own editorial voice
+// instead of a bare eyebrow/title swap. On the ink band `waiting` carries a LIVE
+// countdown to ELECTION_START (canvas Kanit digits, mono unit ledger — the home
+// bl-count band's grammar at notice scale) + a factual open-window caption; `ended`
+// carries the close-time caption + a PRIMARY "ดูผลคะแนน" pill (the home/logout button
+// demotes to a ghost outline on the ink); `closed`/paused stays the quiet single
+// affordance. Every added string is a real date/time — no narrative copy. The
+// TopBar chrome carries NO schedule-derived state (no countdown/rail), so unlike
+// studio-dark's rail there is nothing that can go stale on ended/paused — the
+// reason-aware `variant` from closed/page.js is the single source, so no systemMode
+// thread is needed here.
 
+import { useState, useEffect } from "react";
 import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 
 // reason eyebrow (bilingual). Copy stays reason-aware while the accent stays token-
 // only (var(--bl-*)) — the family has one accent identity, so all variants share it.
@@ -31,6 +45,10 @@ const EYEBROW = {
   closed: { th: "พักระบบชั่วคราว", en: "MAINTENANCE" },
 };
 
+// Countdown segments — [key, EN unit, TH unit]. days shown as-is (can exceed 2
+// digits); hh/mm/ss zero-padded. Mirrors the home bl-count DAYS/HRS/MIN/SEC ledger.
+const CD_UNITS = [["d", "DAYS", "วัน"], ["hh", "HRS", "ชม."], ["mm", "MIN", "นาที"], ["ss", "SEC", "วินาที"]];
+
 export default function BlossomClosed({
   title, desc, variant = "closed", session = null, onLogout = () => {}, editorMode = false,
 }) {
@@ -39,6 +57,44 @@ export default function BlossomClosed({
   const number = gc.electionNumber ?? "";
   const copyrightYear = gc.copyrightYear ?? "";
   const eyebrow = EYEBROW[variant] || EYEBROW.closed;
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(gc);
+
+  // Live countdown to ELECTION_START — waiting variant only. Null when the target
+  // has passed or the dates are invalid (so no stuck 00:00:00 or negative ever
+  // shows). editorMode computes ONCE (no interval) so the admin preview never ticks.
+  const [cd, setCd] = useState(null);
+  useEffect(() => {
+    if (variant !== "waiting") { setCd(null); return; }
+    const target = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
+    const compute = () => {
+      const diff = target - Date.now();
+      if (isNaN(diff) || diff <= 0) { setCd(null); return; }
+      setCd({
+        d: Math.floor(diff / 86400000),
+        hh: Math.floor((diff / 3600000) % 24),
+        mm: Math.floor((diff / 60000) % 60),
+        ss: Math.floor((diff / 1000) % 60),
+      });
+    };
+    compute();
+    if (editorMode) return;
+    const id = setInterval(compute, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, editorMode, gc?.electionStartAt]);
+
+  // Factual caption — a real open/close window derived from the resolved schedule
+  // (empty-guarded so an invalid date renders nothing rather than "เปิดโหวต ").
+  // Single-date + time window is the system's own convention (closed/page.js + the
+  // other families) — the production election is same-day.
+  let factual = null;
+  if (variant === "waiting") {
+    const d = formatThaiDate(ELECTION_START);
+    if (d) factual = `เปิดโหวต ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+  } else if (variant === "ended") {
+    const d = formatThaiDate(ELECTION_END);
+    if (d) factual = `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}`;
+  }
 
   return (
     <div className="fms-app bl-root bl-closed-root">
@@ -63,8 +119,44 @@ export default function BlossomClosed({
             <div className="bl-closed-cap"><span className="bl-closed-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{eyebrow.th}</span> · <span className="bl-nw">{eyebrow.en}</span></div>
             <h1 className="bl-closed-head">{title}</h1>
             <p className="bl-closed-desc">{desc}</p>
+
+            {/* live countdown to open (waiting only) — canvas Kanit digits on the
+                ink, mono unit ledger; null when the target has passed → renders
+                nothing (no stuck 00:00), never gated behind opacity */}
+            {cd && (
+              <div className="bl-closed-cd" role="timer" aria-label="เวลาที่เหลือก่อนเปิดลงคะแนน">
+                {CD_UNITS.map(([k, en, th]) => (
+                  <div className="bl-closed-cd__seg" key={en}>
+                    <span className="bl-closed-cd__n">{k === "d" ? cd.d : String(cd[k]).padStart(2, "0")}</span>
+                    <span className="bl-closed-cd__u"><span className="bl-thai bl-thai--nw">{th}</span> / {en}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {factual && <div className="bl-closed-fact"><span className="bl-thai">{factual}</span></div>}
+
             <div className="bl-closed-cta">
-              {session ? (
+              {variant === "ended" ? (
+                <>
+                  {/* ended → results is the primary act; home/logout demotes to a
+                      ghost outline pill on the ink so the notice still reads as one block */}
+                  <a href={editorMode ? undefined : getPath("/results")} className="bl-closed-btn">
+                    ดูผลคะแนน
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6" /></svg>
+                  </a>
+                  {session ? (
+                    <button type="button" className="bl-closed-btn bl-closed-btn--ghost" onClick={() => !editorMode && onLogout()} aria-label="ออกจากระบบ">
+                      ออกจากระบบ
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+                    </button>
+                  ) : (
+                    <a href={editorMode ? undefined : getPath("/")} className="bl-closed-btn bl-closed-btn--ghost">
+                      กลับหน้าแรก
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                    </a>
+                  )}
+                </>
+              ) : session ? (
                 <button type="button" className="bl-closed-btn" onClick={() => !editorMode && onLogout()} aria-label="ออกจากระบบ">
                   ออกจากระบบ
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
@@ -214,17 +306,45 @@ export default function BlossomClosed({
           animation:blClosedRise .6s ease both .16s; }
         @keyframes blClosedRise { from { opacity:0; transform:translateY(16px); } }
 
-        .bl-closed-root .bl-closed-cta { margin-top:38px; animation:blClosedRise .6s ease both .26s; }
-        /* light pill on the ink — the only affordance, so the notice reads as one block */
+        /* ---- state theatre (bl-B1A) ---- */
+        /* live countdown — canvas Kanit digits + mono unit ledger, echoing the home
+           bl-count band at notice scale. tabular digits keep the ticker from
+           reflowing as seconds roll; the DAYS seg is accented primary (the family's
+           one candy accent) so the notice keeps a pastel pop on the ink. */
+        .bl-closed-root .bl-closed-cd { margin:32px 0 0; display:flex; align-items:flex-start;
+          gap:clamp(16px,4vw,34px); flex-wrap:wrap; animation:blClosedRise .6s ease both .2s; }
+        .bl-closed-root .bl-closed-cd__seg { display:flex; flex-direction:column; }
+        .bl-closed-root .bl-closed-cd__n { font-family:var(--bl-fd); font-weight:800; line-height:.95;
+          font-size:clamp(40px,9vw,74px); letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:var(--bl-canvas); }
+        .bl-closed-root .bl-closed-cd__seg:first-child .bl-closed-cd__n { color:var(--bl-primary); }
+        .bl-closed-root .bl-closed-cd__u { font-family:var(--bl-fm); font-size:10px; letter-spacing:.2em;
+          text-transform:uppercase; color:color-mix(in srgb, var(--bl-canvas) 50%, transparent); margin-top:9px; }
+
+        /* factual caption — a real open/close window. The run is a full Thai sentence
+           (date + time), so it uses the Thai body font (--bl-fb, via .bl-thai) and
+           wraps naturally rather than the tracked mono ledger above. */
+        .bl-closed-root .bl-closed-fact { margin:26px 0 0; font-size:13px; line-height:1.65;
+          color:color-mix(in srgb, var(--bl-canvas) 66%, transparent); animation:blClosedRise .6s ease both .22s; }
+
+        .bl-closed-root .bl-closed-cta { margin-top:38px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+          animation:blClosedRise .6s ease both .26s; }
+        /* light pill on the ink — the primary affordance, so the notice reads as one block */
         .bl-closed-root .bl-closed-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:52px;
           padding:15px 30px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:16px;
           color:var(--bl-ink); background:var(--bl-canvas); border:none; cursor:pointer;
-          transition:transform .2s ease, background .25s ease, color .25s ease; }
+          transition:transform .2s ease, background .25s ease, color .25s ease, box-shadow .25s ease; }
         .bl-closed-root .bl-closed-btn:hover { transform:translateY(-3px); color:var(--bl-ink);
           background:color-mix(in srgb, var(--bl-primary) 16%, var(--bl-canvas)); }
         .bl-closed-root .bl-closed-btn:active { transform:scale(.97); }
         .bl-closed-root .bl-closed-btn svg { flex:none; transition:transform .25s ease; }
         .bl-closed-root .bl-closed-btn:hover svg { transform:translateX(4px); }
+        /* ghost secondary (ended only) — outline-on-ink so the results pill stays the
+           lead act; canvas ring via inset shadow (no layout shift vs the solid pill) */
+        .bl-closed-root .bl-closed-btn--ghost { background:transparent; color:var(--bl-canvas);
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--bl-canvas) 58%, transparent); }
+        .bl-closed-root .bl-closed-btn--ghost:hover { color:var(--bl-canvas);
+          background:color-mix(in srgb, var(--bl-canvas) 12%, transparent);
+          box-shadow:inset 0 0 0 2px var(--bl-canvas); }
 
         /* ================= TABLET+ : inline nav replaces burger/sheet ================= */
         @media (min-width:768px) {
@@ -239,6 +359,7 @@ export default function BlossomClosed({
         @media (max-width:560px) {
           .bl-closed-root .bl-closed-band { padding:64px 20px 72px; }
           .bl-closed-root .bl-closed-btn { width:100%; }
+          .bl-closed-root .bl-closed-cd { gap:16px; }
         }
 
         /* reduced motion — scope to .bl-closed-root, keep transitions */
