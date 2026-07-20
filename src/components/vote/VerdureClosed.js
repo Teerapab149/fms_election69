@@ -21,9 +21,9 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 
 const VARIANTS = {
-  waiting: { Icon: Clock,      kicker: "OPENS SOON · ยังไม่เปิดโหวต", head: (<>Not yet<br /><em>open.</em></>), edge: "Status" },
-  ended:   { Icon: CheckCheck, kicker: "POLLS CLOSED · ปิดโหวตแล้ว",  head: (<>That&rsquo;s<br />a <em>wrap.</em></>), edge: "Status" },
-  closed:  { Icon: Lock,       kicker: "ON HOLD · ปิดชั่วคราว",      head: (<>Ballot<br />on <em>hold.</em></>),  edge: "Status" },
+  waiting: { Icon: Clock,      kickerEn: "OPENS SOON", kickerTh: "ยังไม่เปิดโหวต", head: (<>Not yet<br /><em>open.</em></>), edge: "Status" },
+  ended:   { Icon: CheckCheck, kickerEn: "POLLS CLOSED", kickerTh: "ปิดโหวตแล้ว",  head: (<>That&rsquo;s<br />a <em>wrap.</em></>), edge: "Status" },
+  closed:  { Icon: Lock,       kickerEn: "ON HOLD", kickerTh: "ปิดชั่วคราว",      head: (<>Ballot<br />on <em>hold.</em></>),  edge: "Status" },
 };
 
 // Countdown segments — days shown as-is (can exceed 2 digits), the rest padded.
@@ -73,15 +73,15 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
   return (
     <VerdureShell active="vote" editorMode={editorMode}
       edge={{ num: "✕", label: "Status", th: "สถานะการลงคะแนน" }}
-      cornermarkTitle="Status" cornermarkSub="ระบบการลงคะแนน"
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {v.kicker.split(" · ")[0]}</div>}>
+      cornermarkTitle="Status" cornermarkSub={<span className="vd-thai">ระบบการลงคะแนน</span>}
+      statusChip={<div className="vd-chip-live"><span className="dot" /> {v.kickerEn}</div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-closed">
         <div className="vd-closed__disc">
           <motion.span className="ring" animate={{ rotate: 360 }} transition={{ duration: 40, ease: "linear", repeat: Infinity }} />
           <Icon size={48} strokeWidth={1.8} />
         </div>
-        <div className="vd-closed__kicker">{v.kicker}</div>
+        <div className="vd-closed__kicker"><span className="vd-nw">{v.kickerEn}</span> · <span className="vd-thai">{v.kickerTh}</span></div>
         <h1 className="vd-closed__head">{v.head}</h1>
         <div className="vd-closed__accent" aria-hidden />
 
@@ -95,7 +95,7 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
             ))}
           </div>
         )}
-        {factual && <div className="vd-closed__fact">{factual}</div>}
+        {factual && <div className="vd-closed__fact"><span className="vd-thai-flow">{factual}</span></div>}
 
         <h2 className="vd-closed__title">{title}</h2>
         <p className="vd-closed__desc">{desc}</p>
@@ -144,6 +144,11 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
         .vd-closed__cd .u { font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-2); margin-top:9px; }
 
         .vd-closed__fact { font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(var(--moss-rgb),.62); margin:0 0 30px; }
+        /* vd-B2C deviation: this run is a full Thai sentence (date + time window),
+           not a short kicker token — .vd-thai's white-space:nowrap would risk
+           mobile overflow here, so this local variant carries the same font-family
+           + gentle letter-spacing fix but allows normal wrapping */
+        .vd-closed__fact .vd-thai-flow { font-family:var(--ft); letter-spacing:.04em; white-space:normal; }
 
         .vd-closed__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(20px,2.4vw,26px); margin:0 0 12px; color:var(--moss); }
         .vd-closed__desc { font-family:var(--ft); font-size:16px; color:rgba(var(--moss-rgb),.85); line-height:1.6; max-width:460px; margin:0 0 36px; }

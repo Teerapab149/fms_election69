@@ -89,7 +89,7 @@ export default function VerdureHome({
   // Phase-aware countdown: before open → count to START ("OPENS IN"); during →
   // count to END ("CLOSES IN"); after → "ปิดแล้ว". A day segment prefixes the
   // clock when >0 day remains so a multi-day gap doesn't render as "946:12:33".
-  const [cd, setCd] = useState({ label: "CLOSES IN · ปิดใน", value: "--:--:--" });
+  const [cd, setCd] = useState({ labelEn: "CLOSES IN", labelTh: "ปิดใน", value: "--:--:--" });
   useEffect(() => {
     const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
     const fmt = (diff) => {
@@ -103,9 +103,9 @@ export default function VerdureHome({
       const now = Date.now();
       const start = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
       const end = ELECTION_END instanceof Date ? ELECTION_END.getTime() : NaN;
-      if (!isNaN(start) && now < start) { setCd({ label: "OPENS IN · เปิดใน", value: fmt(start - now) }); return; }
-      if (!isNaN(end) && now < end) { setCd({ label: "CLOSES IN · ปิดใน", value: fmt(end - now) }); return; }
-      setCd({ label: "CLOSES IN · ปิดใน", value: "ปิดแล้ว" });
+      if (!isNaN(start) && now < start) { setCd({ labelEn: "OPENS IN", labelTh: "เปิดใน", value: fmt(start - now) }); return; }
+      if (!isNaN(end) && now < end) { setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", value: fmt(end - now) }); return; }
+      setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", value: "ปิดแล้ว" });
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -197,7 +197,7 @@ export default function VerdureHome({
               <span className="vd-home__cta-sub">{CTA.sub}</span>
             </a>
           </Wrap>
-          <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary">ดูรายชื่อผู้สมัคร <span aria-hidden>↗</span></a>
+          <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary"><span className="vd-thai">ดูรายชื่อผู้สมัคร</span> <span aria-hidden>↗</span></a>
         </div>
 
         <Wrap id="hero-subtitle">
@@ -205,13 +205,13 @@ export default function VerdureHome({
         </Wrap>
 
         <div className="vd-home__ledger">
-          <div className="vd-home__stat"><div className="lbl">VOTED · ใช้สิทธิ์</div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">TURNOUT · สัดส่วน</div><div className="val vd-tabular">{pct}<small>%</small></div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">{cd.label}</div><div className="val vd-tabular">{cd.value}</div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.value}</div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">PARTIES · พรรค</div><div className="val vd-tabular">{partyCount}</div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
         </div>
       </div>
 

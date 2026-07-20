@@ -38,7 +38,7 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
               <path id="vdArchTop" d="M 30 180 A 150 150 0 0 1 330 180" />
               <path id="vdArchBot" d="M 30 180 A 150 150 0 0 0 330 180" />
             </defs>
-            <text><textPath href="#vdArchTop" startOffset="50%" textAnchor="middle">★ BALLOT RECORDED · บันทึกแล้ว ★</textPath></text>
+            <text><textPath href="#vdArchTop" startOffset="50%" textAnchor="middle">★ BALLOT RECORDED · <tspan className="vd-thai">บันทึกแล้ว</tspan> ★</textPath></text>
             <text><textPath href="#vdArchBot" startOffset="50%" textAnchor="middle">{meta.faculty} · {meta.prefix} · {meta.num} · {meta.cy} · CONFIRMED</textPath></text>
           </svg>
           <div className="vd-orn__disc"><Check size={52} strokeWidth={2.5} /></div>
@@ -52,7 +52,7 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         </div>
 
         <div className="vd-receipt">
-          <div className="vd-receipt__h"><span>RECEIPT · ใบรับรอง</span><span><span className="ac">●</span> CONFIRMED</span></div>
+          <div className="vd-receipt__h"><span><span className="vd-nw">RECEIPT</span> · <span className="vd-thai">ใบรับรอง</span></span><span><span className="ac">●</span> CONFIRMED</span></div>
           <div className="vd-receipt__row"><span className="lbl">BALLOT No.</span><span className="val"><span className="ac">{ballotNo}</span></span></div>
           <div className="vd-receipt__row"><span className="lbl">RECORDED AT</span><span className="val">{recordedAt}</span></div>
           <div className="vd-receipt__row"><span className="lbl">VOTER ID</span><span className="val">No. {sid}</span></div>

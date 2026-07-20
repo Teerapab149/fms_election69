@@ -79,7 +79,7 @@ const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 export function VerdureEdge({ num = "01", label = "Index", th = "", right = false, wordmark = "", year = "" }) {
   return (
     <div className={`vd-edge ${right ? "vd-edge--right" : ""}`}>
-      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; {th}</> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
+      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; <span className="vd-thai">{th}</span></> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
     </div>
   );
 }
@@ -250,6 +250,10 @@ export function VerdureBaseStyles() {
          never breaks mid-word (breaks are forced onto the "·" separators). Thai
          has no case, so any inherited text-transform:uppercase is a no-op. */
       .vd-thai { font-family:var(--ft); letter-spacing:.04em; white-space:nowrap; }
+      /* English-run nowrap partner to .vd-thai (promoted from VerdureResults.js's
+         local copy, vd-B2A, now that the idiom is rolled out to multiple pages —
+         see vd-B2C): keeps multi-word EN phrases whole so a kicker only breaks at "·" */
+      .vd-nw { white-space:nowrap; }
 
       /* moss page variant */
       .vd-root.vd-moss { background:var(--moss); color:var(--cream); }

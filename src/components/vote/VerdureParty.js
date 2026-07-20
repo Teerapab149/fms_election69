@@ -74,7 +74,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         {heroImg && (
           <figure className="vd-groupphoto" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
             <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption>ภาพหมู่พรรค · คลิกเพื่อขยาย</figcaption>
+            <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -82,7 +82,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("vision")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("vision")} · วิสัยทัศน์</span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("vision")}</span> · <span className="vd-thai">วิสัยทัศน์</span></span>
               <h2>Vision &amp; <em>identity.</em></h2>
             </div>
             <div className="vd-vision__body">
@@ -97,7 +97,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("mission")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("mission")} · พันธกิจ</span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("mission")}</span> · <span className="vd-thai">พันธกิจ</span></span>
               <h2>Our <em>mission.</em></h2>
             </div>
             <div className="vd-missions">
@@ -112,7 +112,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("policies")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("policies")} · {policies.length} นโยบาย</span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("policies")}</span> · <span className="vd-thai">{policies.length} นโยบาย</span></span>
               <h2>Our <em>policies.</em></h2>
             </div>
             <div className="vd-policies">
