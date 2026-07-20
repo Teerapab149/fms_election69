@@ -13,10 +13,11 @@
 
 import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import SiteFooter from "../elements/site-footer/gumroad";
 import ResultsHead from "../elements/results-head/gumroad";
@@ -45,6 +46,84 @@ function GrTooltip({ active, payload, label }) {
   );
 }
 
+// ── reveal ceremony: count-up (gm-B1B) ───────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server HTML,
+// no-JS, and pre-hydration paint all show the real number. Only after hydration
+// does the effect restart the number from 0 and ease it up (~1s). reduced-motion
+// or editorMode (enabled=false) → snap to final, no rAF. Used ONLY inside the
+// revealed branch — embargoed numbers keep their literal "??.?%" string.
+function useCountUp(target, { duration = 1000, enabled = true } = {}) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (!enabled || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, enabled]);
+  return val;
+}
+// revealed-only value renderers — count 0→value after hydration, final otherwise
+function RevealPct({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(1)}%</>; }
+function RevealInt({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{Math.round(v).toLocaleString()}</>; }
+function RevealFixed({ value, digits = 2, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(digits)}</>; }
+
+// ── waiting state (gm-B1B): real "polls open soon" ink card with a live countdown
+// to ELECTION_START + a factual open/close window caption, derived from the resolved
+// schedule (same recipe as VerdureClosed's waiting variant). editorMode → compute
+// once, no interval (admin preview never ticks); interval cleared on unmount.
+const GR_CD_UNITS = [["d", "วัน"], ["hh", "ชม."], ["mm", "นาที"], ["ss", "วินาที"]];
+function GrWaiting({ globalConfig, editorMode }) {
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+  const [cd, setCd] = useState(null);
+  useEffect(() => {
+    const target = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
+    const compute = () => {
+      const diff = target - Date.now();
+      if (isNaN(diff) || diff <= 0) { setCd(null); return; }
+      setCd({
+        d: Math.floor(diff / 86400000),
+        hh: Math.floor((diff / 3600000) % 24),
+        mm: Math.floor((diff / 60000) % 60),
+        ss: Math.floor((diff / 1000) % 60),
+      });
+    };
+    compute();
+    if (editorMode) return undefined;
+    const id = setInterval(compute, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalConfig?.electionStartAt, editorMode]);
+
+  let factual = null;
+  const d = formatThaiDate(ELECTION_START);
+  if (d) factual = `เปิดโหวต ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+
+  return (
+    <div className="gr-waiting">
+      <div className="gr-waiting__kicker"><span className="gr-dot" /> UPCOMING · <span className="gm-thai">ยังไม่เปิดโหวต</span></div>
+      <h2 className="gr-waiting__title">POLLS<br />OPEN <em>SOON</em></h2>
+      <p className="gr-waiting__deck">ผลการเลือกตั้งจะแสดงที่นี่แบบเรียลไทม์เมื่อเปิดหีบเลือกตั้ง</p>
+      {cd && (
+        <div className="gr-waiting__cd" role="timer" aria-label="เวลาที่เหลือก่อนเปิดโหวต">
+          {GR_CD_UNITS.map(([k, u]) => (
+            <div className="gr-cd__seg" key={u}>
+              <span className="gr-cd__num tabular">{k === "d" ? cd.d : String(cd[k]).padStart(2, "0")}</span>
+              <span className="gr-cd__u gm-thai">{u}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {factual && <div className="gr-waiting__fact">{factual}</div>}
+    </div>
+  );
+}
+
 export default function GumroadResults({
   candidates = [],
   totalVotes = 0,
@@ -54,8 +133,10 @@ export default function GumroadResults({
   isNotStarted = false,
   countdownText = "",
   onSelectParty = () => {},
+  editorMode = false,
 }) {
   const globalConfig = useGlobalConfig();
+  const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
   const ended = finalStatus === "ENDED";
   const revealed = !!isRevealed;
   const counting = !isNotStarted && !revealed;       // active/ended but scores still locked
@@ -100,11 +181,7 @@ export default function GumroadResults({
         />
 
         {isNotStarted ? (
-          <div className="gr-waiting">
-            <div className="gr-waiting__icon">⏳</div>
-            <h2>ยังไม่เปิดรับลงคะแนน</h2>
-            <p>ผลการเลือกตั้งจะแสดงที่นี่เมื่อเริ่มการลงคะแนน</p>
-          </div>
+          <GrWaiting globalConfig={globalConfig} editorMode={editorMode} />
         ) : (
           <>
             {/* LOCKED headline (while counting) */}
@@ -144,9 +221,11 @@ export default function GumroadResults({
 
             {/* STAT CARDS — stat-card composites (Layer 2) */}
             <div className="gr-stats">
-              <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span> · TOTAL</>} value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
-              <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span> · ELIGIBLE</>} value={totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span> · TURNOUT</>} value={turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
+              {/* revealed → the three tallies count up (reveal ceremony); embargoed/live
+                  stays a plain string so the counting state is byte-identical to before */}
+              <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span> · TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
+              <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span> · ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span> · TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}
@@ -171,8 +250,8 @@ export default function GumroadResults({
                           {winner.slogan ? <p className="gr-winner__slogan">&ldquo;{winner.slogan}&rdquo;</p> : null}
                         </div>
                         <div className="gr-winner__score">
-                          <div className="gr-winner__pct">{pctOf(winner).toFixed(1)}<span>%</span></div>
-                          <div className="gr-winner__votes">{(winner.score || 0).toLocaleString()} <span className="gm-thai">คะแนน</span></div>
+                          <div className="gr-winner__pct tabular"><RevealFixed value={pctOf(winner)} digits={1} enabled={anim} /><span>%</span></div>
+                          <div className="gr-winner__votes"><span className="tabular"><RevealInt value={winner.score || 0} enabled={anim} /></span> <span className="gm-thai">คะแนน</span></div>
                         </div>
                       </div>
                     </div>
@@ -185,8 +264,10 @@ export default function GumroadResults({
                         return (
                           <button type="button" className="gr-rank" key={c.id} onClick={() => onSelectParty(c)}>
                             <div className="gr-rank__name">{c.name}<small>{labelOf(c)}</small></div>
-                            <div className="gr-rank__track"><div className="gr-rank__fill" style={{ width: `${Math.max(pctOf(c), 2)}%`, background: color }} /></div>
-                            <div className="gr-rank__pct">{pctOf(c).toFixed(1)}%</div>
+                            {/* fill carries its REAL width inline (no-JS/reduced-motion safe);
+                                --real only staggers a 0→width grow via animationDelay */}
+                            <div className="gr-rank__track"><div className={`gr-rank__fill${anim ? " gr-rank__fill--real" : ""}`} style={{ width: `${Math.max(pctOf(c), 2)}%`, background: color, animationDelay: `${i * 90}ms` }} /></div>
+                            <div className="gr-rank__pct tabular"><RevealPct value={pctOf(c)} enabled={anim} /></div>
                           </button>
                         );
                       })}
@@ -320,8 +401,19 @@ export default function GumroadResults({
         .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:grPulse 1.6s ease-out infinite; }
         @keyframes grPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
 
-        .gr-waiting{ text-align:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); padding:56px 28px; }
-        .gr-waiting__icon{ font-size:48px; } .gr-waiting h2{ font-family:var(--fd); font-size:28px; text-transform:uppercase; margin:12px 0 6px; } .gr-waiting p{ color:var(--ink2); margin:0; }
+        /* waiting state — "polls open soon" ink hero + live countdown chips */
+        .gr-waiting{ position:relative; overflow:hidden; text-align:center; background:var(--ink); color:var(--cream); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-xl); padding:64px 40px; }
+        .gr-waiting::after{ content:""; position:absolute; inset:-42% -12% auto auto; width:340px; height:340px; background:var(--pink); border-radius:999px; opacity:.22; filter:blur(24px); pointer-events:none; }
+        .gr-waiting > *{ position:relative; z-index:1; }
+        .gr-waiting__kicker{ display:inline-flex; align-items:center; gap:10px; font-family:var(--fm); font-size:13px; text-transform:uppercase; letter-spacing:.2em; color:var(--lime); margin-bottom:16px; }
+        .gr-waiting__title{ font-family:var(--fd); font-size:clamp(40px,7cqw,72px); line-height:.92; letter-spacing:-.03em; text-transform:uppercase; margin:0 0 14px; }
+        .gr-waiting__title em{ font-style:normal; color:var(--pink); }
+        .gr-waiting__deck{ color:rgba(255,241,229,.78); font-size:16px; line-height:1.55; margin:0 auto; max-width:460px; }
+        .gr-waiting__cd{ display:inline-flex; gap:12px; margin-top:32px; flex-wrap:wrap; justify-content:center; }
+        .gr-cd__seg{ min-width:78px; background:var(--paper); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 12px; display:flex; flex-direction:column; align-items:center; gap:5px; }
+        .gr-cd__num{ font-family:var(--fd); font-size:clamp(28px,4cqw,40px); line-height:1; }
+        .gr-cd__u{ font-size:11px; letter-spacing:.06em; color:var(--ink2); }
+        .gr-waiting__fact{ margin-top:28px; display:inline-block; font-size:14px; font-weight:600; background:var(--yellow); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:999px; box-shadow:var(--sh-sm); padding:10px 20px; }
 
         /* locked headline */
         .gr-locked{ display:grid; grid-template-columns:1.1fr 1fr; gap:28px; margin-bottom:30px; align-items:stretch; }
@@ -377,6 +469,12 @@ export default function GumroadResults({
         .gr-rank__name{ font-weight:700; font-size:15px; } .gr-rank__name small{ display:block; font-family:var(--fm); font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; font-weight:600; }
         .gr-rank__track{ height:24px; background:var(--cream2); border:2px solid var(--ink); border-radius:999px; overflow:hidden; }
         .gr-rank__fill{ height:100%; border-right:2px solid var(--ink); background-image:repeating-linear-gradient(45deg,transparent 0 8px,rgba(255,255,255,.4) 8px 10px); }
+        /* reveal ceremony: fills grow 0→real width with a per-row stagger (animationDelay
+           set inline). Pure CSS keyframe — without JS the bar still ends at its inline
+           width, so a fill is NEVER gated behind hydration. Scoped to --real only. */
+        .gr-rank__fill--real{ animation:grFillGrow .7s cubic-bezier(.22,1,.36,1) backwards; }
+        @keyframes grFillGrow{ from{ width:0; } }
+        @media (prefers-reduced-motion: reduce){ .gr-rank__fill--real{ animation:none; } }
         .gr-rank__pct{ font-family:var(--fd); font-size:16px; text-align:right; }
 
         /* demographics */
@@ -412,6 +510,7 @@ export default function GumroadResults({
         }
         @container gr (max-width:520px){
           .gr-page{ padding:28px 16px 52px; }
+          .gr-waiting{ padding:44px 22px; } .gr-cd__seg{ min-width:66px; padding:12px 10px; }
           .gr-rrow{ grid-template-columns:90px 1fr 46px; } .gr-rrow__name{ font-size:13px; }
           .gr-rank{ grid-template-columns:1fr auto; gap:8px 12px; }
           .gr-rank__track{ grid-column:1 / -1; order:3; }
