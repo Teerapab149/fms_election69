@@ -38,7 +38,7 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
   const cells = [{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }];
   return (
     <div className="gh-cd" data-element="hero-countdown" data-variant="gumroad">
-      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · {t.sub}</div>
+      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · <span className="gm-thai">{t.sub}</span></div>
       <div className="gh-cd__grid">
         {cells.map((c, i) => (
           <div key={i} className="gh-cd__cell">
@@ -51,6 +51,9 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
         .gh-cd{ height:100%; background:var(--cd-bg, var(--ink, #26271c)); color:var(--cd-text, var(--cream, #FFF6EC)); border:2.5px solid var(--cd-border, var(--ink, #26271c)); border-radius:22px; box-shadow:8px 8px 0 var(--cd-border, var(--ink, #26271c));
           padding:clamp(20px,2.2cqw,30px); display:flex; flex-direction:column; justify-content:space-between; gap:clamp(14px,2cqw,22px); }
         .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-weight:600; font-size:clamp(12px,1.4cqw,14px); text-transform:uppercase; letter-spacing:.15em; color:var(--cd-accent, var(--pink, #FF9CE9)); }
+        /* Space Grotesk has no Thai glyphs — pin the Thai run to the family's real
+           Thai body font so vowel/tone marks render correctly. */
+        .gm-thai{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif !important; letter-spacing:.04em; white-space:nowrap; }
         .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(10px,1.4cqw,16px); margin-top:0; }
         .gh-cd__cell{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; padding:clamp(12px,1.8cqw,20px) 8px; text-align:center; border:2px solid var(--ink, #26271c); }
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }

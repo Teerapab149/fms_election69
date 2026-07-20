@@ -29,7 +29,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 export default function StoryClamp({
   children,
   className = "",
-  hint = "เลื่อนอ่านต่อในกรอบ",
+  hint = <span className="sc__hint-th">เลื่อนอ่านต่อในกรอบ</span>,
 }) {
   const bodyRef = useRef(null);
   const [overflows, setOverflows] = useState(false);
@@ -89,6 +89,13 @@ export default function StoryClamp({
 
         .sc__hint { display:inline-flex; align-items:center; gap:6px; margin-top:9px;
           font-size:11px; letter-spacing:.1em; opacity:.6; transition:opacity .25s ease; }
+        /* Thai hint text — several consumer pages set their own (often Thai-less
+           mono) font-family on the ambient .sc__hint element via a page-scoped
+           rule like ".xx-sc .sc__hint{font-family:var(--xx-mono)}". Pin the Thai
+           run to a real Thai-capable stack directly on ITSELF (not .sc__hint) so
+           the explicit declaration always wins over whatever font-family the host
+           page inherits down — no specificity fight, no per-consumer edit needed. */
+        .sc__hint-th { font-family:var(--font-anuphan),'Anuphan','Kanit','IBM Plex Sans Thai',system-ui,sans-serif; letter-spacing:.04em; }
         .sc.is-end .sc__hint { opacity:0; }
         .sc__caret { display:inline-block; animation:scNudge 1.8s ease-in-out infinite; }
         @keyframes scNudge { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(3px); } }

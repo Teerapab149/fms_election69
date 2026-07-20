@@ -38,7 +38,7 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
 
           {user && (
             <div className="gsx-user">
-              <span className="gsx-user__lbl">ผู้ลงคะแนน</span>
+              <span className="gsx-user__lbl"><span className="gm-thai">ผู้ลงคะแนน</span></span>
               <strong>{user.name}</strong>
               {/* show id only if the name doesn't already contain it (avoids the
                   "Mock Student 6610510148 · 6610510148" double-id look) */}
@@ -105,6 +105,11 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
           background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gsx-root *{ box-sizing:border-box; } .gsx-root a{ text-decoration:none; color:inherit; } .gsx-root img{ display:block; max-width:100%; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks). Pin Thai runs to the family's real Thai
+           body font instead. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
         /* topbar = shared <SiteNavbar> element */
 

@@ -40,7 +40,7 @@ function GrTooltip({ active, payload, label }) {
   return (
     <div className="gr-tip">
       <span className="gr-tip__name">{name}</span>
-      <span className="gr-tip__val">{(p?.value || 0).toLocaleString()} คน</span>
+      <span className="gr-tip__val">{(p?.value || 0).toLocaleString()} <span className="gm-thai">คน</span></span>
     </div>
   );
 }
@@ -76,7 +76,11 @@ export default function GumroadResults({
   const restCards = winner ? candidates.filter((c) => c !== winner) : candidates;
   const pctOf = (c) => (totalVotes > 0 ? ((c.score || 0) / totalVotes * 100) : 0);
   const logoSrc = (c) => (c?.logoUrl ? (String(c.logoUrl).startsWith("http") ? c.logoUrl : getPath(c.logoUrl)) : null);
-  const labelOf = (c) => (parseInt(c.number) > 0 ? `NO. ${c.number}` : (parseInt(c.number) === 0 ? "งดออกเสียง" : "ไม่รับรอง"));
+  const labelOf = (c) => {
+    const n = parseInt(c.number);
+    if (n > 0) return `NO. ${n}`;
+    return <span className="gm-thai">{n === 0 ? "งดออกเสียง" : "ไม่รับรอง"}</span>;
+  };
 
   const statusLabel = ended ? (revealed ? "FINAL RESULT" : "COUNTING IN PROGRESS")
     : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : "UPCOMING";
@@ -107,7 +111,7 @@ export default function GumroadResults({
             {counting && (
               <div className="gr-locked">
                 <div className="gr-headline">
-                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING · กำลังนับคะแนน</span>
+                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING · <span className="gm-thai">กำลังนับคะแนน</span></span>
                   {/* single party = approve/disapprove, not a multi-party race */}
                   <h2 className="gr-headline__title">
                     {singleParty ? <>YES<br />OR<br />NO<em>?</em></> : <>WHO<br />WILL<br />WIN<em>?</em></>}
@@ -127,16 +131,22 @@ export default function GumroadResults({
                       ? "เพื่อความโปร่งใส ผลการรับรองจะถูกเปิดเผยเมื่อปิดโหวตแล้วเท่านั้น"
                       : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะถูกเปิดเผยพร้อมกันเมื่อปิดโหวตแล้วเท่านั้น"}
                   </p>
-                  {countdownText ? <div className="gr-lock__cd">{ended ? "ปิดโหวตแล้ว · รอประกาศผล" : `ปิดใน ${countdownText}`}</div> : null}
+                  {countdownText ? (
+                    <div className="gr-lock__cd">
+                      {ended
+                        ? <><span className="gm-thai">ปิดโหวตแล้ว</span> · <span className="gm-thai">รอประกาศผล</span></>
+                        : <><span className="gm-thai">ปิดใน</span> {countdownText}</>}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
 
             {/* STAT CARDS — stat-card composites (Layer 2) */}
             <div className="gr-stats">
-              <StatCard tone="pink" lbl="★ คะแนนเสียงรวม · TOTAL" value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
-              <StatCard lbl="ผู้มีสิทธิ์ · ELIGIBLE" value={totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl="ความคืบหน้า · TURNOUT" value={turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
+              <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span> · TOTAL</>} value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
+              <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span> · ELIGIBLE</>} value={totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span> · TURNOUT</>} value={turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}
@@ -152,7 +162,7 @@ export default function GumroadResults({
                 <div className="gr-reveal">
                   {winner && (
                     <div className="gr-winner" style={{ background: getPartyColor(winner, winner.number - 1) }}>
-                      <span className="gr-winner__badge">👑 ผู้ชนะ · WINNER</span>
+                      <span className="gr-winner__badge">👑 <span className="gm-thai">ผู้ชนะ</span> · WINNER</span>
                       <div className="gr-winner__main">
                         {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
                         <div className="gr-winner__id">
@@ -162,7 +172,7 @@ export default function GumroadResults({
                         </div>
                         <div className="gr-winner__score">
                           <div className="gr-winner__pct">{pctOf(winner).toFixed(1)}<span>%</span></div>
-                          <div className="gr-winner__votes">{(winner.score || 0).toLocaleString()} คะแนน</div>
+                          <div className="gr-winner__votes">{(winner.score || 0).toLocaleString()} <span className="gm-thai">คะแนน</span></div>
                         </div>
                       </div>
                     </div>
@@ -227,7 +237,7 @@ export default function GumroadResults({
                             <Tooltip content={<GrTooltip />} />
                           </PieChart>
                         </ResponsiveContainer>
-                        <div className="gr-donut__center"><strong>{genderTotal.toLocaleString()}</strong><span>คน</span></div>
+                        <div className="gr-donut__center"><strong>{genderTotal.toLocaleString()}</strong><span><span className="gm-thai">คน</span></span></div>
                       </div>
                       <div className="gr-legend">
                         {byGender.map((g, i) => (
@@ -296,6 +306,11 @@ export default function GumroadResults({
         }
         .gr-root *{ box-sizing:border-box; } .gr-root a{ text-decoration:none; color:inherit; } .gr-root img{ display:block; max-width:100%; }
         .tabular{ font-variant-numeric:tabular-nums; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks, wider metrics → wraps). Pin Thai runs to
+           the family's real Thai body font instead; keep "·" as the only break point. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
         .gr-page{ flex:1; width:100%; max-width:1100px; margin:0 auto; padding:36px 28px 64px; }
         /* head = <ResultsHead> element (own scoped styles) */

@@ -128,7 +128,7 @@ export default function GumroadSingleParty({
                 <div className="gsp-story">
                   <StoryClamp className="gsp-sc"><p className="gsp-card__p">{story}</p></StoryClamp>
                 </div>
-                <span className="gsp-story__hint">เลื่อนเพื่ออ่านต่อ ↓</span>
+                <span className="gsp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> ↓</span>
               </article>
             ) : null}
             {missions.length > 0 && (
@@ -237,12 +237,12 @@ export default function GumroadSingleParty({
                   {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
                 </div>
                 <div className="gsp-modal__info">
-                  <span className="gsp-modal__eyebrow">★ ผู้สมัคร · CANDIDATE</span>
+                  <span className="gsp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span> · CANDIDATE</span>
                   <h3 className="gsp-modal__name">{modalMember.name}</h3>
                   <dl className="gsp-modal__rows">
-                    <div><dt>รหัสนักศึกษา</dt><dd>{modalMember.studentId || "—"}</dd></div>
-                    <div><dt>ตำแหน่ง</dt><dd>{modalMember.position || "—"}</dd></div>
-                    <div><dt>สาขาวิชา</dt><dd>{modalMember.major || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "—"}</dd></div>
                   </dl>
                 </div>
               </motion.div>
@@ -263,7 +263,7 @@ export default function GumroadSingleParty({
               <h3 className="gsp-cm__title">ยืนยันการลงคะแนน?</h3>
               <p className="gsp-cm__sub">เลือกแล้ว <strong>เปลี่ยนไม่ได้</strong> — ตรวจสอบให้แน่ใจก่อนนะ</p>
               <div className="gsp-cm__pick">
-                <span className="gsp-cm__pick-lbl">ตัวเลือกของคุณ</span>
+                <span className="gsp-cm__pick-lbl"><span className="gm-thai">ตัวเลือกของคุณ</span></span>
                 <span className="gsp-cm__pick-val">{selectionLabel || "—"}</span>
               </div>
               <div className="gsp-cm__actions">
@@ -290,6 +290,11 @@ export default function GumroadSingleParty({
           background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gsp-root *{ box-sizing:border-box; } .gsp-root a{ text-decoration:none; color:inherit; } .gsp-root img{ display:block; max-width:100%; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks). Pin Thai runs to the family's real Thai
+           body font instead. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
         /* topbar = shared <SiteNavbar> element */
 

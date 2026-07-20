@@ -123,7 +123,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                 <div className="gp-story">
                   <StoryClamp className="gp-sc"><p className="gp-card__p">{story}</p></StoryClamp>
                 </div>
-                <span className="gp-story__hint">เลื่อนเพื่ออ่านต่อ ↓</span>
+                <span className="gp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> ↓</span>
               </article>
             ) : null}
             {missions.length > 0 && (
@@ -185,7 +185,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
       {/* BACK TO VOTE BAR (only when arriving from the vote flow) */}
       {showBackToVote && (
         <div className="gp-votebar">
-          <span className="gp-votebar__lbl">มาจากหน้าลงคะแนน?</span>
+          <span className="gp-votebar__lbl"><span className="gm-thai">มาจากหน้าลงคะแนน</span>?</span>
           <a href={getPath("/vote")} className="gp-votebar__btn"><ArrowLeft size={18} strokeWidth={3} /> กลับไปลงคะแนน</a>
         </div>
       )}
@@ -205,12 +205,12 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                   {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
                 </div>
                 <div className="gp-modal__info">
-                  <span className="gp-modal__eyebrow">★ ผู้สมัคร · CANDIDATE</span>
+                  <span className="gp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span> · CANDIDATE</span>
                   <h3 className="gp-modal__name">{modalMember.name}</h3>
                   <dl className="gp-modal__rows">
-                    <div><dt>รหัสนักศึกษา</dt><dd>{modalMember.studentId || "—"}</dd></div>
-                    <div><dt>ตำแหน่ง</dt><dd>{modalMember.position || "—"}</dd></div>
-                    <div><dt>สาขาวิชา</dt><dd>{modalMember.major || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "—"}</dd></div>
                   </dl>
                 </div>
               </motion.div>
@@ -251,6 +251,11 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gp-root *{ box-sizing:border-box; } .gp-root a{ text-decoration:none; color:inherit; } .gp-root img{ display:block; max-width:100%; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks). Pin Thai runs to the family's real Thai
+           body font instead. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
 
         .gp-page{ flex:1; width:100%; max-width:1040px; margin:0 auto; padding:32px 28px 56px; }
