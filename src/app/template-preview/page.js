@@ -10,7 +10,11 @@
 //
 // slug    = template slug (classic family slugs all render the classic layout)
 // page    = home | candidates | party | vote | results | success | closed
-// variant = results: locked|revealed · vote: multi|single  (optional)
+// variant = results: locked|counting|revealed · vote: multi|single  (optional)
+//   results "counting" is gumroad-only (gm-B2 T3): reaches the ONGOING/embargo
+//   lock card (isNotStarted=false, finalStatus="ONGOING") the same way blossom/
+//   receipt's default (non-"revealed") results state already does. studio-dark
+//   and verdure are unaffected — they keep locked(default)|revealed only.
 //
 // NOTE: not the editor and not the live site — pure presentation with dummy
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
@@ -290,11 +294,17 @@ function PreviewBody() {
   // eslint-disable-next-line no-inner-declarations
   function renderInteractive() {
     if (page === 'home') {
+      // gm-B2 T2 verification seam: gumroad-only, reuses the closed page's existing
+      // ?variant=ended|paused tokens so hero-countdown/gumroad's ENDED/PAUSE dead-grid
+      // replacement is reachable here too. Other families keep AUTO (unchanged).
+      const homeSystemMode = family === 'gumroad'
+        ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
+        : 'AUTO';
       return (
         <HomeRenderer
           onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
           resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-          initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
+          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
         />
       );
     }
@@ -337,6 +347,11 @@ function PreviewBody() {
       }
       if (page === 'results') {
         const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
+        // gm-B2 T3: gumroad-only counting/embargo lock state, reachable via
+        // ?variant=counting (isNotStarted={!revealed} otherwise pins WAITING for
+        // every non-revealed load — the "COUNTING · WHO WILL WIN?" lock card was
+        // unreachable). studio-dark/verdure untouched — still locked(default)|revealed.
+        const gumroadCounting = family === 'gumroad' && variant === 'counting';
         // vd-B1D: mirror production results (app/results/page.js) — clicking a party
         // opens the PartyDetailModal in place, it does NOT navigate to the party page.
         // Reuses the shared detailParty/detailOpen state (results + vote never render
@@ -345,11 +360,11 @@ function PreviewBody() {
           <>
             <R
               candidates={resultsCandidates(revealed, parties)}
-              totalVotes={revealed ? 625 : 0}
+              totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
               demographics={DEMOGRAPHICS}
-              finalStatus={revealed ? 'ENDED' : 'WAITING'}
+              finalStatus={revealed ? 'ENDED' : gumroadCounting ? 'ONGOING' : 'WAITING'}
               isRevealed={revealed}
-              isNotStarted={!revealed}
+              isNotStarted={!revealed && !gumroadCounting}
               countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
               onSelectParty={(p) => { setDetailParty(p); setDetailOpen(true); }}
               editorMode={false}
@@ -682,12 +697,16 @@ function PreviewBody() {
   function renderPage() {
   // ── HOME — HomeRenderer dispatches by template slug for every family ──
   if (page === 'home') {
+    // gm-B2 T2 verification seam — same gumroad-only ended|paused reach as above.
+    const homeSystemMode = family === 'gumroad'
+      ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
+      : 'AUTO';
     return (
       <HomeRenderer
         editorMode
         editorData={DUMMY_ELECTION}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-        initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
+        initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
       />
     );
   }
@@ -744,14 +763,16 @@ function PreviewBody() {
     }
     if (page === 'results') {
       const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
+      // gm-B2 T3: same gumroad-only counting reach as the interactive path above.
+      const gumroadCounting = family === 'gumroad' && variant === 'counting';
       return frame(
         <R
           candidates={resultsCandidates(revealed, parties)}
-          totalVotes={revealed ? 625 : 0}
+          totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
           demographics={DEMOGRAPHICS}
-          finalStatus={revealed ? 'ENDED' : 'WAITING'}
+          finalStatus={revealed ? 'ENDED' : gumroadCounting ? 'ONGOING' : 'WAITING'}
           isRevealed={revealed}
-          isNotStarted={!revealed}
+          isNotStarted={!revealed && !gumroadCounting}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
           onSelectParty={noop}
         />
