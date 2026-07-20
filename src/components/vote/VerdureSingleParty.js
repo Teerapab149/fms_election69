@@ -110,6 +110,14 @@ export default function VerdureSingleParty({
       ? { title: it, desc: "" }
       : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
   )).filter((p) => p.title), [party?.policies]);
+  // missions (vd-B1C) — same two-shape tolerance as policies above: the live DB
+  // stores plain strings (seed.js), but admin edits may save {title, desc}
+  // objects. Placeholder guard mirrors Receipt/BlossomSingleParty.
+  const missions = useMemo(() => (party?.missions || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((m) => m.title && !m.title.startsWith("ยังไม่มีข้อมูล")), [party?.missions]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
   const heroImg = resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
@@ -161,6 +169,21 @@ export default function VerdureSingleParty({
           <div className="vd-booth__brief">
             <div className="vd-booth__shead"><div><span className="vd-booth__kicker">About the party</span><h2>เกี่ยวกับพรรค</h2></div>{userName && <span className="vd-booth__count">สวัสดี {userName}</span>}</div>
             <div className="vd-booth__scroll"><p>{story}</p></div>
+          </div>
+        )}
+
+        {missions.length > 0 && (
+          <div className="vd-booth__section">
+            <div className="vd-booth__shead"><div><span className="vd-booth__kicker">Missions</span><h2>พันธกิจ</h2></div><span className="vd-booth__count">{missions.length} ข้อ</span></div>
+            <div className="vd-mgrid">
+              {missions.map((m, i) => (
+                <div className="vd-mcard" key={i}>
+                  <span className="vd-mcard__n">{pad2(i + 1)}</span>
+                  <p className="vd-mcard__t">{m.title}</p>
+                  {m.desc && <p className="vd-mcard__d">{m.desc}</p>}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -325,6 +348,22 @@ export default function VerdureSingleParty({
         .vd-cand__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:16px; line-height:1.2; color:var(--moss); margin:7px 0 4px; }
         .vd-cand__role { font-family:var(--fm); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--terra-2); }
 
+        /* missions — CARD grid (vd-B1C), deliberately distinct from the vd-plist
+           rows below it: each mission is a cream card in the vd-opt voice
+           (cream-2, rule border, big radius), a large terra serif numeral with a
+           terra underline, the mission itself in the serif display voice. 2-up on
+           desktop, 1-up on phones; an odd last card spans the full row so the
+           grid never ends ragged. Content fully visible without JS (no entrance
+           gating). */
+        .vd-mgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+        .vd-mcard { position:relative; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; padding:24px 26px 26px; box-shadow:0 14px 30px -24px rgba(var(--moss-rgb),.38); transition:transform .25s, box-shadow .25s, border-color .25s; }
+        .vd-mcard:hover { transform:translateY(-3px); border-color:var(--terra-soft); box-shadow:0 24px 44px -26px rgba(var(--moss-rgb),.45); }
+        .vd-mcard:last-child:nth-child(odd) { grid-column:1 / -1; }
+        .vd-mcard__n { display:block; position:relative; font-family:var(--fd); font-style:italic; font-weight:400; font-size:40px; line-height:1; color:var(--terra); padding-bottom:12px; margin-bottom:14px; }
+        .vd-mcard__n::after { content:""; position:absolute; left:1px; bottom:0; width:26px; height:2px; background:var(--terra); }
+        .vd-mcard__t { font-family:var(--fd); font-style:italic; font-weight:400; font-size:19px; line-height:1.55; letter-spacing:-.005em; color:var(--moss); margin:0; }
+        .vd-mcard__d { font-family:var(--ft); font-size:14px; line-height:1.62; color:rgba(var(--moss-rgb),.62); margin:8px 0 0; }
+
         .vd-plist { list-style:none; margin:0; padding:0; }
         .vd-plist li { display:grid; grid-template-columns:46px 1fr; gap:20px; align-items:start; padding:18px 8px; border-top:1px solid var(--rule); border-radius:12px; transition:padding-left .22s, background .22s; }
         .vd-plist li:first-child { border-top:0; }
@@ -411,6 +450,10 @@ export default function VerdureSingleParty({
         }
         @media (max-width:560px) {
           .vd-booth { padding:84px 16px 128px; }
+          .vd-mgrid { grid-template-columns:1fr; gap:12px; }
+          .vd-mcard { padding:20px 20px 22px; }
+          .vd-mcard__n { font-size:32px; padding-bottom:10px; margin-bottom:12px; }
+          .vd-mcard__t { font-size:17px; }
           /* tighten the long bilingual eyebrow so it stops wrapping with a lone ★
              dangling on a second line */
           .vd-booth__eyebrow { font-size:9.5px; letter-spacing:.1em; margin-bottom:24px; }
