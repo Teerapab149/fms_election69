@@ -51,7 +51,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
       </div>
 
       {parties.length > 0 ? (
-        <div className="sdc-split" data-count={parties.length}>
+        <div className={`sdc-split${editorMode ? "" : " sdc-enter"}`} data-count={parties.length}>
           {parties.map((p, i) => {
             const no = pad2(p.number);
             const media = resolveSrc(firstImage(p.groupImageUrls) || firstImage(p.officialImageUrl)) ;
@@ -61,6 +61,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
                 key={p.id || i}
                 href={editorMode ? undefined : getPath(`/party?id=${p.number}`)}
                 className="sdc-panel"
+                style={{ "--sdc-i": i }}
               >
                 <div className="sdc-panel__head">
                   <h2 className="sdc-panel__no">{no.slice(0, -1)}<em>{no.slice(-1)}</em></h2>
@@ -98,7 +99,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
             );
           })}
           {parties.length % 2 === 1 && (
-            <div className="sdc-panel sdc-filler" aria-hidden="true">
+            <div className="sdc-panel sdc-filler" aria-hidden="true" style={{ "--sdc-i": parties.length }}>
               <span className="sdc-filler__mark">✦</span>
               <span className="sdc-filler__note"><span className="sd-nw">ABSTAIN IS A RIGHT</span> · <span className="sd-thai">งดออกเสียงคือสิทธิ์</span></span>
             </div>
@@ -113,6 +114,19 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
 
       <style jsx global>{`
         .sdc-accent { color:var(--sd-accent); }
+
+        /* ENTRANCE MOTION — reuse the family rise (v2-R12 sdsRise): candidate
+           panels settle up in a subtle cascade on mount. Pure CSS + backwards
+           fill so the base (visible) state is what SSR / no-JS render; gated on
+           .sdc-enter (dropped in editorMode → snap) and prefers-reduced-motion
+           (rule absent → no animation, stays visible). */
+        @media (prefers-reduced-motion:no-preference) {
+          .sdc-enter .sdc-panel {
+            animation:sdsRise .6s cubic-bezier(.16,1,.3,1) both;
+            animation-delay:calc(var(--sdc-i, 0) * 70ms + .06s);
+          }
+        }
+        @keyframes sdsRise { from { opacity:0; transform:translateY(18px); } }
 
         .sdc-split { display:grid; grid-template-columns:repeat(2,1fr); flex:1; }
         .sdc-split[data-count="1"] { grid-template-columns:1fr; }
