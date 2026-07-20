@@ -157,12 +157,15 @@ export default function StudioDarkSuccess({
           .sds-right .sds-receipt { order:3; }
         }
         @media (max-width:560px) {
-          /* tighten the thank-you hero on phones so the reordered CTA clears 844 */
-          .sds-left { padding:36px 20px; }
+          /* tighten the thank-you hero on phones so the reordered evaluate CTA
+             clears the fold on Pixel-class devices (412×915) once the browser
+             URL bar is accounted for — a ~16px padding reclaim on the already-
+             passed thank-you hero, no CTA shrink, no relayout. */
+          .sds-left { padding:30px 20px 26px; }
           .sds-mark { width:60px; height:60px; margin-bottom:20px; }
           .sds-chapter { margin-bottom:18px; }
           .sds-title { font-size:clamp(44px,12vw,108px); margin-bottom:18px; }
-          .sds-right { padding:28px 20px 52px; gap:18px; }
+          .sds-right { padding:24px 20px 52px; gap:18px; }
         }
       `}</style>
     </StudioDarkShell>
