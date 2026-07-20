@@ -1945,6 +1945,30 @@ legend/label map and update it in lockstep; verify by comparing computed legend
 background to cell fill.
 **Tags:** `#recharts` `#receipt` `#verify`
 
+### P-LOG-113: [2026-07-20] Backgrounded Browser-pane tabs freeze CSS timelines and throttle timers
+**Context:** gm-B1B — count-up ramps and ticking countdowns could not be captured
+mid-flight: the pane throttles setInterval/rAF to ~1 tick/sec and freezes CSS
+animation timelines at the from-state, and screenshots time out entirely on pages
+with infinite framer loops.
+**Lesson:** Verify animations by deterministic DOM-state assertions — exact final
+values, animation-cancel → fallback-width checks, presence of animationDelay,
+reduced-motion paths — not timed frame capture.
+**Tags:** `#verification` `#browser` `#animation`
+
+---
+
+### P-LOG-114: [2026-07-20] getComputedStyle lies during an active transition
+**Context:** gm-B1A — `boxShadow` read as fully transparent on elements carrying
+`transition: box-shadow`, even at rest, sending the worker chasing a phantom
+missing shadow. Setting `el.style.transition='none'` before reading returned the
+true settled value.
+**Lesson:** When asserting a computed style that participates in a transition,
+disable the transition for the read (or screenshot) — raw getComputedStyle during
+a transition window is not evidence.
+**Tags:** `#verification` `#css` `#browser`
+
+---
+
 ### P-LOG-107: [2026-07-20] Latin mono kickers with tracking silently break Thai across every template
 **Context:** Batch-3 typography sweep — every non-classic family set tracked uppercase mono
 (Space Mono / Space Grotesk / JetBrains Mono, none with Thai glyphs) directly on mixed
