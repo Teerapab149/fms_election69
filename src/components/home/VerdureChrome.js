@@ -233,6 +233,13 @@ export function VerdureBaseStyles() {
       .vd-root ::selection { background:var(--terra); color:var(--cream); }
       .vd-tabular { font-variant-numeric:tabular-nums lining-nums; }
       .vd-smallcaps { font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
+      /* Thai run reset inside tracked/uppercase mono kickers: Space Mono has no
+         Thai glyphs, so Thai in a --fm/letter-spaced context falls back to a
+         system font with mis-set marks + unnatural tracking. This span pins Thai
+         back to the Plex-Thai stack with gentle spacing, and nowrap so a phrase
+         never breaks mid-word (breaks are forced onto the "·" separators). Thai
+         has no case, so any inherited text-transform:uppercase is a no-op. */
+      .vd-thai { font-family:var(--ft); letter-spacing:.04em; white-space:nowrap; }
 
       /* moss page variant */
       .vd-root.vd-moss { background:var(--moss); color:var(--cream); }

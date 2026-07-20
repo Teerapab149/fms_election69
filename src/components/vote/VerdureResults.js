@@ -53,7 +53,16 @@ function RevealPct({ value }) {
 function RevealScoreLine({ score, pct, suffix = "" }) {
   const s = useCountUp(score);
   const p = useCountUp(pct);
-  return <>{fmt(Math.round(s))} เสียง · {p.toFixed(1)}%{suffix}</>;
+  // segments are each nowrap so the ONLY break point is the "·" separator (two
+  // centred lines if the disc is too narrow — never an orphaned Thai word); the
+  // Thai runs get the Plex reset so "เสียง"/"ของคะแนน" render with correct marks
+  return (
+    <>
+      <span className="vd-nw">{fmt(Math.round(s))} <span className="vd-thai">เสียง</span></span>
+      {" · "}
+      <span className="vd-nw">{p.toFixed(1)}%{suffix ? <> <span className="vd-thai">{suffix.trim()}</span></> : null}</span>
+    </>
+  );
 }
 
 export default function VerdureResults({
@@ -84,9 +93,9 @@ export default function VerdureResults({
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const demoGroups = [
-    { title: "BY YEAR · ชั้นปี", rows: clean(demographics?.byYear) },
-    { title: "BY GENDER · เพศ", rows: clean(demographics?.byGender) },
-    { title: "BY MAJOR · สาขา", rows: clean(demographics?.byMajor) },
+    { en: "BY YEAR", th: "ชั้นปี", rows: clean(demographics?.byYear) },
+    { en: "BY GENDER", th: "เพศ", rows: clean(demographics?.byGender) },
+    { en: "BY MAJOR", th: "สาขา", rows: clean(demographics?.byMajor) },
   ].filter((g) => g.rows.length > 0);
 
   const statusTxt = isNotStarted ? "POLLS NOT OPEN" : ended ? (revealed ? "FINAL" : "COUNTING") : "LIVE";
@@ -99,7 +108,11 @@ export default function VerdureResults({
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">
-          <div className="vd-returns__kicker">NO. 05 · {revealed ? "FINAL RESULT · ผลอย่างเป็นทางการ" : "LIVE RETURNS · กำลังนับคะแนน"}</div>
+          <div className="vd-returns__kicker">
+            <span className="vd-nw">NO. 05</span> · {revealed
+              ? <><span className="vd-nw">FINAL RESULT</span> · <span className="vd-thai">ผลอย่างเป็นทางการ</span></>
+              : <><span className="vd-nw">LIVE RETURNS</span> · <span className="vd-thai">กำลังนับคะแนน</span></>}
+          </div>
           <h1 className="vd-returns__title">The <em>Returns.</em></h1>
           <div className="vd-returns__accent" aria-hidden />
         </div>
@@ -108,7 +121,9 @@ export default function VerdureResults({
           <div className="vd-rdisc">
             {revealed ? (
               <>
-                <div className="vd-rdisc__kicker">{singleParty ? "OFFICIAL VERDICT · ผลรับรอง" : "THE WINNER · ผู้ชนะ"}</div>
+                <div className="vd-rdisc__kicker">{singleParty
+                  ? <><span className="vd-nw">OFFICIAL VERDICT</span> · <span className="vd-thai">ผลรับรอง</span></>
+                  : <><span className="vd-nw">THE WINNER</span> · <span className="vd-thai">ผู้ชนะ</span></>}</div>
                 <div className="vd-rdisc__name">
                   {singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—")}
                 </div>
@@ -130,15 +145,15 @@ export default function VerdureResults({
         </div>
 
         <div className="vd-rstats">
-          <div className="vd-rstat"><div className="lbl">TOTAL VOTES · คะแนนรวม</div><div className="val vd-tabular"><em>{fmt(totalVotes)}</em></div></div>
-          <div className="vd-rstat"><div className="lbl">TURNOUT · สัดส่วน</div><div className="val vd-tabular">{turnout.toFixed(2)}<small>%</small></div></div>
-          <div className="vd-rstat"><div className="lbl">ELIGIBLE · ผู้มีสิทธิ์</div><div className="val vd-tabular">{fmt(totalEligible)}<small>คน</small></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TOTAL VOTES</span> · <span className="vd-thai">คะแนนรวม</span></div><div className="val vd-tabular"><em>{fmt(totalVotes)}</em></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{turnout.toFixed(2)}<small>%</small></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">ELIGIBLE</span> · <span className="vd-thai">ผู้มีสิทธิ์</span></div><div className="val vd-tabular">{fmt(totalEligible)}<small>คน</small></div></div>
         </div>
 
         <div className="vd-race">
           <div className="vd-race__head">
             <div className="vd-race__lead">
-              <span className="vd-race__kicker">{revealed ? "Official tally" : "Embargoed"} · {singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span>
+              <span className="vd-race__kicker"><span className="vd-nw">{revealed ? "Official tally" : "Embargoed"}</span> · <span className="vd-thai">{singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span></span>
               <h3>Vote distribution <em>{singleParty ? "yes / no." : "by party."}</em></h3>
             </div>
             <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ OFFICIAL" : "§ EMBARGOED"}</span>
@@ -175,7 +190,7 @@ export default function VerdureResults({
           <div className="vd-demo">
             <div className="vd-race__head">
               <div className="vd-race__lead">
-                <span className="vd-race__kicker">Turnout · สถิติผู้ใช้สิทธิ์</span>
+                <span className="vd-race__kicker"><span className="vd-nw">Turnout</span> · <span className="vd-thai">สถิติผู้ใช้สิทธิ์</span></span>
                 <h3>Turnout <em>demographics.</em></h3>
               </div>
               <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ PARTICIPATION" : "§ EMBARGOED"}</span>
@@ -185,8 +200,8 @@ export default function VerdureResults({
                 {demoGroups.map((g) => {
                   const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
                   return (
-                    <div className="vd-demo__col" key={g.title}>
-                      <div className="vd-demo__title">{g.title}</div>
+                    <div className="vd-demo__col" key={g.en}>
+                      <div className="vd-demo__title"><span className="vd-nw">{g.en}</span> · <span className="vd-thai">{g.th}</span></div>
                       {g.rows.map((r, i) => (
                         <div className="vd-demo__row" key={i}>
                           <div className="vd-demo__name">{r.name}</div>
@@ -229,7 +244,10 @@ export default function VerdureResults({
         .vd-rdisc::before { content:""; position:absolute; inset:14px; border:1px dashed rgba(var(--cream-rgb),.22); border-radius:50%; }
         .vd-rdisc::after { content:""; position:absolute; inset:-26px; border:1px dashed rgba(var(--terra-rgb),.4); border-radius:50%; }
         .vd-rdisc__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }
-        .vd-rdisc__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,3.6vw,50px); line-height:1.04; letter-spacing:-.02em; color:var(--cream); }
+        .vd-rdisc__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,3.6vw,50px); line-height:1.04; letter-spacing:-.02em; color:var(--cream); text-wrap:balance; }
+        /* English-run nowrap partner to .vd-thai: keeps multi-word EN phrases
+           ("FINAL RESULT", "TOTAL VOTES") whole so a kicker can only break at "·" */
+        .vd-nw { white-space:nowrap; }
         .vd-rdisc__pct { font-family:var(--fm); font-size:12px; letter-spacing:.12em; color:var(--terra-soft); margin-top:16px; }
         .vd-rdisc__lock { width:54px; height:54px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; margin-bottom:20px; }
         .vd-rdisc__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(44px,6vw,84px); line-height:.92; letter-spacing:-.03em; color:var(--cream); margin:0; }
@@ -308,6 +326,16 @@ export default function VerdureResults({
         }
         @media (max-width:640px) {
           .vd-rstats { grid-template-columns:1fr; }
+        }
+        /* phones — the two-tier section head stacks into a column so the big serif
+           headline gets the FULL width instead of being crowded by the "§" smallcaps.
+           The smallcaps floats to the TOP of the column, right-aligned on its own row
+           (order:-1) — robust for any label length ("§ OFFICIAL" .. "§ PARTICIPATION"),
+           no collision with the kicker or headline. Desktop (≥561px) is untouched. */
+        @media (max-width:560px) {
+          .vd-race__head { flex-direction:column; align-items:stretch; gap:0; }
+          .vd-race__head .vd-smallcaps { order:-1; align-self:flex-end; margin-bottom:14px; }
+          .vd-race__head h3 { font-size:24px; }
         }
       `}</style>
     </VerdureShell>
