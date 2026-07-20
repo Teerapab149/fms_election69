@@ -24,19 +24,22 @@ import StudioDarkShell from "./StudioDarkShell";
 const VARIANTS = {
   waiting: {
     Icon: Clock,
-    kicker: "OPENS SOON · ยังไม่เปิดโหวต",
+    kickerEn: "OPENS SOON",
+    kickerTh: "ยังไม่เปิดโหวต",
     headline: (<>Not yet<br /><em>open.</em></>),
     live: false,
   },
   ended: {
     Icon: CheckCheck,
-    kicker: "POLLS CLOSED · ปิดโหวตแล้ว",
+    kickerEn: "POLLS CLOSED",
+    kickerTh: "ปิดโหวตแล้ว",
     headline: (<>That&rsquo;s<br />a <em>wrap.</em></>),
     live: false,
   },
   closed: {
     Icon: Lock,
-    kicker: "ON HOLD · ปิดชั่วคราว",
+    kickerEn: "ON HOLD",
+    kickerTh: "ปิดชั่วคราว",
     headline: (<>Ballot<br />on <em>hold.</em></>),
     live: false,
   },
@@ -60,12 +63,12 @@ export default function StudioDarkClosed({
       label="Status"
       labelTh="สถานะการลงคะแนน"
       editorMode={editorMode}
-      right={<span>{v.kicker.split(" · ")[0]}</span>}
+      right={<span>{v.kickerEn}</span>}
     >
       <div className="sdcl-scene">
         <div className="sdcl-card">
           <div className="sdcl-mark"><Icon size={28} strokeWidth={2} /></div>
-          <div className="sdcl-kicker">{v.kicker}</div>
+          <div className="sdcl-kicker"><span className="sd-nw">{v.kickerEn}</span> · <span className="sd-thai">{v.kickerTh}</span></div>
           <h1 className="sdcl-headline">{v.headline}</h1>
           <h2 className="sdcl-title">{title}</h2>
           <p className="sdcl-desc">{desc}</p>

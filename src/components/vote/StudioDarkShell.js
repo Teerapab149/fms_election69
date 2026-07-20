@@ -61,7 +61,7 @@ export default function StudioDarkShell({
             )}
             <span className="sep">/</span>
             <span className="here">{label}</span>
-            {labelTh && (<><span className="sep">·</span><span>{labelTh}</span></>)}
+            {labelTh && (<><span className="sep">·</span><span className="sd-thai">{labelTh}</span></>)}
           </div>
           <div className="sd-scenebar__right">{right}</div>
         </div>
@@ -175,6 +175,19 @@ export default function StudioDarkShell({
         .sd-textlink .arr { color:var(--sd-accent); }
 
         .sd-smallcaps { font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3); }
+
+        /* Thai run reset inside tracked/uppercase mono kickers: JetBrains Mono has
+           no Thai glyphs, so Thai in a --sd-mono/letter-spaced context falls back to
+           a system font with mis-set marks + unnatural tracking, and mixed EN·TH
+           labels wrap ugly on phones. --font-anuphan is already the family's loaded
+           Thai body font (site-wide fallback target of --sd-sans); this span pins
+           Thai back to it with gentle spacing, and nowrap so a phrase never breaks
+           mid-word (breaks are forced onto the "·" separators). Thai has no case,
+           so any inherited text-transform:uppercase is a no-op. .sd-nw is the
+           English-run nowrap partner so multi-word EN phrases stay whole too.
+           (sd-T1, mirrors verdure's .vd-thai / .vd-nw — edd12f4.) */
+        .sd-thai { font-family:var(--font-anuphan),'Anuphan',system-ui,sans-serif; letter-spacing:.04em; white-space:nowrap; }
+        .sd-nw { white-space:nowrap; }
 
         /* media placeholder (hatched, like the prototype's faint lime hatching) */
         .sd-media-ph {

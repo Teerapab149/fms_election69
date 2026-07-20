@@ -100,7 +100,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
           {parties.length % 2 === 1 && (
             <div className="sdc-panel sdc-filler" aria-hidden="true">
               <span className="sdc-filler__mark">✦</span>
-              <span className="sdc-filler__note">ABSTAIN IS A RIGHT · งดออกเสียงคือสิทธิ์</span>
+              <span className="sdc-filler__note"><span className="sd-nw">ABSTAIN IS A RIGHT</span> · <span className="sd-thai">งดออกเสียงคือสิทธิ์</span></span>
             </div>
           )}
         </div>

@@ -40,7 +40,7 @@ export default function StudioDarkSuccess({
         {/* LEFT — thank you */}
         <div className="sds-left">
           <div className="sds-mark"><Check size={30} strokeWidth={2.5} /></div>
-          <div className="sds-chapter"><span className="sd-dot" /> BALLOT RECORDED · บันทึกแล้ว</div>
+          <div className="sds-chapter"><span className="sd-dot" /> <span className="sd-nw">BALLOT RECORDED</span> · <span className="sd-thai">บันทึกแล้ว</span></div>
           <h1 className="sds-title">Thank<br />you for<br /><em>voting.</em></h1>
           <p className="sds-deck">
             บันทึกคะแนนเรียบร้อยแล้ว ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา คณะวิทยาการจัดการ
@@ -56,7 +56,7 @@ export default function StudioDarkSuccess({
             </div>
             <div className="sds-row"><div className="sds-row__lbl">VOTER</div><div className="sds-row__val">{name}</div></div>
             <div className="sds-row"><div className="sds-row__lbl">VOTER ID</div><div className="sds-row__val">№ {sid}</div></div>
-            <div className="sds-row"><div className="sds-row__lbl">STATUS</div><div className="sds-row__val">บันทึกคะแนนแล้ว · 1 VOTE</div></div>
+            <div className="sds-row"><div className="sds-row__lbl">STATUS</div><div className="sds-row__val"><span className="sd-thai">บันทึกคะแนนแล้ว</span> · <span className="sd-nw">1 VOTE</span></div></div>
             <div className="sds-row"><div className="sds-row__lbl">SECURED BY</div><div className="sds-row__val">PSU Passport · OAuth</div></div>
           </div>
 

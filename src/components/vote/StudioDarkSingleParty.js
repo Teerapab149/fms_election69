@@ -135,7 +135,7 @@ export default function StudioDarkSingleParty({
       <div className="sds-h" data-element="vote-party-card">
         <div className="sds-h__no" aria-hidden="true">{no.slice(0, -1)}<em>{no.slice(-1)}</em></div>
         <div>
-          <div className="sds-h__kicker"><span className="sds-accent">●</span> THE ONLY PARTY · พรรคเดียวที่ลงสมัคร</div>
+          <div className="sds-h__kicker"><span className="sds-accent">●</span> <span className="sd-nw">THE ONLY PARTY</span> · <span className="sd-thai">พรรคเดียวที่ลงสมัคร</span></div>
           <h1 className="sds-h__title" data-element="vote-header-title">{party?.name}</h1>
           {party?.slogan && <p className="sds-h__slogan">{party.slogan}</p>}
         </div>
@@ -177,7 +177,7 @@ export default function StudioDarkSingleParty({
                   <div className="sds-story__scroll">
                     <p>{story}</p>
                   </div>
-                  <span className="sds-story__hint">SCROLL · เลื่อนอ่านต่อในกรอบ ↓</span>
+                  <span className="sds-story__hint"><span className="sd-nw">SCROLL</span> · <span className="sd-thai">เลื่อนอ่านต่อในกรอบ</span> ↓</span>
                 </>
               )}
             </div>
@@ -190,7 +190,7 @@ export default function StudioDarkSingleParty({
                 onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
               >
                 <img src={heroImg} alt={party?.name} />
-                <figcaption className="sds-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
+                <figcaption className="sds-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
               </figure>
             )}
           </div>
@@ -199,7 +199,7 @@ export default function StudioDarkSingleParty({
               were buried at the bottom of the story scroll card) */}
           {missions.length > 0 && (
             <div className="sds-missions">
-              <div className="sds-missions__lbl"><span className="sds-accent">●</span> MISSIONS · พันธกิจ</div>
+              <div className="sds-missions__lbl"><span className="sds-accent">●</span> <span className="sd-nw">MISSIONS</span> · <span className="sd-thai">พันธกิจ</span></div>
               {missions.map((m, i) => (
                 <div className="sds-mission" key={i}>
                   <span className="sds-mission__no">{pad2(i + 1)}</span>
@@ -268,7 +268,7 @@ export default function StudioDarkSingleParty({
         >
           {Array.from({ length: 2 }, (_, k) => (
             <span key={k}>
-              CAST YOUR VOTE — ลงคะแนนเสียงของคุณ — № {no} {party?.name} — ONE VOTE ONLY — รับรอง / ไม่รับรอง / งดออกเสียง —&nbsp;
+              CAST YOUR VOTE — <span className="sd-thai">ลงคะแนนเสียงของคุณ</span> — № {no} {party?.name} — ONE VOTE ONLY — <span className="sd-thai">รับรอง / ไม่รับรอง / งดออกเสียง</span> —&nbsp;
             </span>
           ))}
         </motion.div>
@@ -278,13 +278,13 @@ export default function StudioDarkSingleParty({
       <section className="sds-section sds-section--ballot" data-ghost="iv.">
         <h2><span className="num">{ROMAN[sec++]}</span>Your <em>decision.</em></h2>
         <div className="sds-ballot-intro">
-          <span>SINGLE-PARTY VOTE · รับรอง / ไม่รับรอง / งดออกเสียง</span>
+          <span><span className="sd-nw">SINGLE-PARTY VOTE</span> · <span className="sd-thai">รับรอง / ไม่รับรอง / งดออกเสียง</span></span>
           <span>ONE VOTE ONLY</span>
         </div>
 
         <ChoiceStrip
           no={<span className="sds-yes">✓</span>}
-          kicker={<>APPROVE · เห็นชอบ · <span className="sds-accent">№ {no}</span></>}
+          kicker={<><span className="sd-nw">APPROVE</span> · <span className="sd-thai">เห็นชอบ</span> · <span className="sds-accent">№ {no}</span></>}
           name="รับรอง"
           slogan={`เห็นชอบให้ ${party?.name || ""} ดำรงตำแหน่ง`}
           selected={kind === "approve"}
@@ -296,7 +296,7 @@ export default function StudioDarkSingleParty({
           <ChoiceStrip
             no="×"
             noClass="sds-strip__no--sm"
-            kicker="DISAPPROVE · ไม่เห็นชอบ"
+            kicker={<><span className="sd-nw">DISAPPROVE</span> · <span className="sd-thai">ไม่เห็นชอบ</span></>}
             name="ไม่รับรอง"
             slogan="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
             selected={kind === "disapprove"}
@@ -310,7 +310,7 @@ export default function StudioDarkSingleParty({
           <ChoiceStrip
             no="×"
             noClass="sds-strip__no--sm"
-            kicker="ABSTAIN · งดออกเสียง"
+            kicker={<><span className="sd-nw">ABSTAIN</span> · <span className="sd-thai">งดออกเสียง</span></>}
             name="งดออกเสียง"
             slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
             selected={kind === "abstain"}
@@ -349,7 +349,7 @@ export default function StudioDarkSingleParty({
             <motion.div className="sds-cm__card" onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.94, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
-              <div className="sds-cm__eyebrow">FINAL CONFIRMATION · ยืนยันครั้งสุดท้าย</div>
+              <div className="sds-cm__eyebrow"><span className="sd-nw">FINAL CONFIRMATION</span> · <span className="sd-thai">ยืนยันครั้งสุดท้าย</span></div>
               <h3 className="sds-cm__title">ยืนยันการลงคะแนน?</h3>
               <p className="sds-cm__sub">เลือกแล้ว<strong>เปลี่ยนไม่ได้</strong> — กรุณาตรวจสอบตัวเลือกของคุณ</p>
               <div className="sds-cm__pick">

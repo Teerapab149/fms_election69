@@ -73,9 +73,9 @@ export default function StudioDarkResults({
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const demoGroups = [
-    { title: "BY YEAR · ชั้นปี", rows: clean(demographics?.byYear) },
-    { title: "BY GENDER · เพศ", rows: clean(demographics?.byGender) },
-    { title: "BY MAJOR · สาขา", rows: clean(demographics?.byMajor) },
+    { en: "BY YEAR", th: "ชั้นปี", rows: clean(demographics?.byYear) },
+    { en: "BY GENDER", th: "เพศ", rows: clean(demographics?.byGender) },
+    { en: "BY MAJOR", th: "สาขา", rows: clean(demographics?.byMajor) },
   ].filter((g) => g.rows.length > 0);
 
   const samo = `${globalConfig?.electionNamePrefix || "SAMO"} ${globalConfig?.electionNumber ?? ""}`.trim();
@@ -96,7 +96,11 @@ export default function StudioDarkResults({
           <h1 className="sdr-title">The <em>Returns,</em><br />{samo}.</h1>
           <div className={`sdr-pill ${revealed ? "sdr-pill--final" : ""}`}>
             {!revealed && <span className="sd-dot" />}
-            {revealed ? "FINAL · ผลอย่างเป็นทางการ" : isNotStarted ? "WAITING · ยังไม่เปิดโหวต" : "LIVE TALLY · กำลังนับ"}
+            {revealed
+              ? <><span className="sd-nw">FINAL</span> · <span className="sd-thai">ผลอย่างเป็นทางการ</span></>
+              : isNotStarted
+                ? <><span className="sd-nw">WAITING</span> · <span className="sd-thai">ยังไม่เปิดโหวต</span></>
+                : <><span className="sd-nw">LIVE TALLY</span> · <span className="sd-thai">กำลังนับ</span></>}
           </div>
         </div>
 
@@ -105,7 +109,11 @@ export default function StudioDarkResults({
           <div className="sdr-board__hero">
             <div className="sdr-kicker">
               <span className="dot" />
-              {revealed ? "OFFICIAL RESULT · ผลการเลือกตั้ง" : isNotStarted ? "POLLS NOT OPEN · ยังไม่เปิดลงคะแนน" : "COUNTING IN PROGRESS · กำลังนับคะแนน"}
+              {revealed
+                ? <><span className="sd-nw">OFFICIAL RESULT</span> · <span className="sd-thai">ผลการเลือกตั้ง</span></>
+                : isNotStarted
+                  ? <><span className="sd-nw">POLLS NOT OPEN</span> · <span className="sd-thai">ยังไม่เปิดลงคะแนน</span></>
+                  : <><span className="sd-nw">COUNTING IN PROGRESS</span> · <span className="sd-thai">กำลังนับคะแนน</span></>}
             </div>
 
             {revealed ? (
@@ -233,8 +241,8 @@ export default function StudioDarkResults({
                 {demoGroups.map((g) => {
                   const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
                   return (
-                    <div className="sdr-demo__col" key={g.title}>
-                      <div className="sdr-demo__title">{g.title}</div>
+                    <div className="sdr-demo__col" key={g.en}>
+                      <div className="sdr-demo__title"><span className="sd-nw">{g.en}</span> · <span className="sd-thai">{g.th}</span></div>
                       {g.rows.map((r, i) => (
                         <div className="sdr-demo__row" key={i}>
                           <div className="sdr-demo__name">{r.name}</div>
@@ -267,8 +275,8 @@ export default function StudioDarkResults({
         .sdr-title { font-family:var(--sd-sans); font-weight:400; font-size:clamp(44px,6vw,88px); letter-spacing:-.04em; line-height:.95; margin:0; }
         .sdr-pill {
           font-family:var(--sd-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-accent);
-          display:flex; align-items:center; gap:10px; padding:10px 18px;
-          border:1px solid rgba(213,255,63,.3); border-radius:999px; background:rgba(213,255,63,.06); white-space:nowrap;
+          display:flex; align-items:center; gap:10px; padding:10px 18px; flex-wrap:wrap; row-gap:2px;
+          border:1px solid rgba(213,255,63,.3); border-radius:999px; background:rgba(213,255,63,.06);
         }
         .sdr-pill--final { color:var(--sd-bg); background:var(--sd-accent); border-color:var(--sd-accent); }
 
@@ -280,7 +288,7 @@ export default function StudioDarkResults({
         .sdr-board__hero { padding:48px; border-right:1px solid var(--sd-line); }
         .sdr-kicker {
           font-family:var(--sd-mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3);
-          display:flex; align-items:center; gap:10px; margin-bottom:26px;
+          display:flex; align-items:center; gap:10px; margin-bottom:26px; flex-wrap:wrap; row-gap:2px;
         }
         .sdr-kicker .dot { width:8px; height:8px; border-radius:999px; background:var(--sd-accent); animation:sdDotPulse 1.8s ease-out infinite; }
         .sdr-board__title { font-family:var(--sd-sans); font-weight:400; font-size:clamp(52px,7vw,110px); line-height:.9; letter-spacing:-.05em; margin:0 0 22px; }

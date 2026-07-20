@@ -102,7 +102,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             </button>
           ))}
           <div className="sdp-tabs__spacer" />
-          <a href={getPath("/vote")} className="sdp-tabs__action">ลงคะแนน · Vote →</a>
+          <a href={getPath("/vote")} className="sdp-tabs__action"><span className="sd-thai">ลงคะแนน</span> · Vote →</a>
         </nav>
       )}
 
@@ -123,7 +123,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
               onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
             >
               <img src={heroImg} alt={party?.name} />
-              <figcaption className="sdp-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
+              <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
             </figure>
           )}
           {story && <div className="sdp-vision__story"><StoryClamp className="sdp-sc"><p>{story}</p></StoryClamp></div>}
@@ -131,7 +131,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           {/* missions — their own always-visible ledger below the story/photo */}
           {missions.length > 0 && (
             <div className="sdp-missions">
-              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> MISSIONS · พันธกิจ</div>
+              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> <span className="sd-nw">MISSIONS</span> · <span className="sd-thai">พันธกิจ</span></div>
               {missions.map((m, i) => (
                 <div className="sdp-mission" key={i}>
                   <span className="sdp-mission__no">{pad2(i + 1)}</span>
