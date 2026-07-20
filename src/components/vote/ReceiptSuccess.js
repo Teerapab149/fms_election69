@@ -576,11 +576,19 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
            machine + receipt right, ephemera on the desk between them) ---- */
         @media (min-width:900px) {
           .rc-suc-root { padding:48px 40px 60px; }
+          /* rc-SF form-first: the left column packs headline + actions to the TOP so
+             the evaluate CTA lands in the first viewport (the printing receipt is a
+             tall object; with 1fr 1fr rows its height stretched both left rows and
+             pushed the CTA past centre). Row 1 sizes to the headline (min-content),
+             the flexible row 2 (1fr) absorbs the stage's extra height, and the tail
+             sits directly under the headline (align-self:start, unchanged). The stage
+             stays vertically centred against the full column height. The leftover
+             space now falls BELOW the actions as dignified desk whitespace. */
           .rc-suc-root .rc-suc-wrap { max-width:960px; display:grid; align-items:stretch;
             grid-template-columns:minmax(0, 1fr) minmax(340px, 400px);
-            grid-template-rows:1fr 1fr; column-gap:clamp(32px, 5vw, 72px);
+            grid-template-rows:min-content 1fr; column-gap:clamp(32px, 5vw, 72px);
             grid-template-areas:"headline stage" "tail stage"; }
-          .rc-suc-root .rc-suc-headline { grid-area:headline; align-self:end; text-align:left; margin-bottom:0; }
+          .rc-suc-root .rc-suc-headline { grid-area:headline; align-self:start; text-align:left; margin-bottom:0; }
           .rc-suc-root .rc-suc-display { align-items:flex-start; font-size:clamp(34px, 3.6vw, 52px); }
           .rc-suc-root .rc-suc-deck { margin-left:0; margin-right:0; }
           .rc-suc-root .rc-suc-stage { grid-area:stage; align-self:center; }
