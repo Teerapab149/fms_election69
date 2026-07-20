@@ -372,8 +372,15 @@ export default function BlossomHome({
       : cd.label === "ปิดโหวตใน"
         ? "CLOSES IN"
         : "LOADING";
-  const cdClosedEn = cd.label === "ระบบพักชั่วคราว" ? "SYSTEM PAUSED" : "VOTING CLOSED";
-  const cdClosedTh = cd.label === "ระบบพักชั่วคราว" ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : "ดูผลได้ที่หน้าผลการเลือกตั้ง";
+  const cdPaused = cd.label === "ระบบพักชั่วคราว";
+  const cdClosedEn = cdPaused ? "SYSTEM PAUSED" : "VOTING CLOSED";
+  const cdClosedTh = cdPaused ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : "ดูผลได้ที่หน้าผลการเลือกตั้ง";
+  // ENDED-only factual close line (bl-B1B) — real close date/time from the resolved
+  // schedule, empty-guarded so an invalid date renders nothing. PAUSE has no real
+  // "resumes at" instant, so it keeps the plain hold copy (no fabricated time).
+  const cdCloseFact = cd.done && !cdPaused
+    ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}` : ""; })()
+    : "";
 
   return (
     <div className="fms-app bl-root">
@@ -482,7 +489,17 @@ export default function BlossomHome({
               <span className="bl-colon">:</span>
               <span className="bl-seg"><BlCdDigits value={pad2(cd.s)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วินาที</span> / SEC</span></span>
             </div>
-            <div className="bl-count-closed">{cd.label}<small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small></div>
+            <div className="bl-count-closed">
+              {cd.label}
+              <small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small>
+              {cdCloseFact && <span className="bl-count-closed__fact"><span className="bl-thai">{cdCloseFact}</span></span>}
+              {!cdPaused && (
+                <a className="bl-count-closed__link" href={editorMode ? undefined : getPath("/results")}>
+                  ดูผลคะแนน
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </a>
+              )}
+            </div>
           </div>
         </section>
 
@@ -814,6 +831,22 @@ export default function BlossomHome({
           letter-spacing:-.02em; line-height:1.05; margin-top:10px; color:var(--bl-canvas); }
         .bl-count-closed small { display:block; font-family:var(--bl-fm); font-weight:400; font-size:11px;
           letter-spacing:.24em; text-transform:uppercase; color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); margin-top:12px; }
+        /* ENDED close-time line (bl-B1B) — real schedule in the Thai body font, wraps
+           naturally (not the tracked mono small above); muted on the ink */
+        .bl-count-closed__fact { display:block; font-family:var(--bl-fb); font-weight:500; font-size:13px;
+          letter-spacing:.01em; line-height:1.6; color:color-mix(in srgb, var(--bl-canvas) 62%, transparent); margin-top:16px; }
+        /* results link — a quiet outline pill on the ink (canvas ring via inset shadow,
+           no layout shift), so it reinforces the "ดูผลได้..." line without competing
+           with the hero CTA that already leads to results on ended */
+        .bl-count-closed__link { display:inline-flex; align-items:center; gap:8px; margin-top:24px; min-height:44px;
+          padding:11px 22px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:15px;
+          color:var(--bl-canvas); background:transparent;
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--bl-canvas) 55%, transparent);
+          transition:background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease; }
+        .bl-count-closed__link:hover { background:var(--bl-canvas); color:var(--bl-ink); transform:translateY(-2px); }
+        .bl-count-closed__link:active { transform:scale(.97); }
+        .bl-count-closed__link svg { transition:transform .25s ease; }
+        .bl-count-closed__link:hover svg { transform:translateX(4px); }
         .bl-count.is-closed .bl-count-line { display:none; }
         .bl-count.is-closed .bl-count-closed { display:block; }
 

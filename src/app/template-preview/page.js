@@ -294,10 +294,11 @@ function PreviewBody() {
   // eslint-disable-next-line no-inner-declarations
   function renderInteractive() {
     if (page === 'home') {
-      // gm-B2 T2 verification seam: gumroad-only, reuses the closed page's existing
-      // ?variant=ended|paused tokens so hero-countdown/gumroad's ENDED/PAUSE dead-grid
-      // replacement is reachable here too. Other families keep AUTO (unchanged).
-      const homeSystemMode = family === 'gumroad'
+      // gm-B2 T2 / bl-B1B verification seam: gumroad + blossom reuse the closed page's
+      // existing ?variant=ended|paused tokens so the home countdown's ENDED/PAUSE
+      // dead-state (hero-countdown/gumroad's grid swap · BlossomHome's is-closed band)
+      // is reachable here too. Other families keep AUTO (unchanged).
+      const homeSystemMode = (family === 'gumroad' || family === 'blossom')
         ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
         : 'AUTO';
       return (
@@ -697,8 +698,8 @@ function PreviewBody() {
   function renderPage() {
   // ── HOME — HomeRenderer dispatches by template slug for every family ──
   if (page === 'home') {
-    // gm-B2 T2 verification seam — same gumroad-only ended|paused reach as above.
-    const homeSystemMode = family === 'gumroad'
+    // gm-B2 T2 / bl-B1B verification seam — same gumroad+blossom ended|paused reach as above.
+    const homeSystemMode = (family === 'gumroad' || family === 'blossom')
       ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
       : 'AUTO';
     return (
