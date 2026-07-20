@@ -47,7 +47,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
       <div className="bl-page">
         {/* ===== issue line (masthead — success variant) ===== */}
         <div className="bl-issue-line">
-          <span>สำเร็จ <b>·</b> BALLOT RECORDED</span>
+          <span><span className="bl-thai bl-thai--nw">สำเร็จ</span> <b>·</b> BALLOT RECORDED</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -63,7 +63,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           </span>
 
           <div className="bl-succ-band__in">
-            <div className="bl-succ-cap"><span className="bl-succ-cap__dia" aria-hidden="true" />บันทึกคะแนนแล้ว / BALLOT RECORDED</div>
+            <div className="bl-succ-cap"><span className="bl-succ-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">บันทึกคะแนนแล้ว</span> / <span className="bl-nw">BALLOT RECORDED</span></div>
             <h1 className="bl-succ-head">
               <span className="bl-succ-reveal"><span className="bl-succ-reveal__in bl-succ-solid">ลงคะแนน</span></span>
               <span className="bl-succ-reveal"><span className="bl-succ-reveal__in bl-succ-hollow">เรียบร้อย</span></span>
@@ -73,7 +73,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
             {/* receipt line — mono, editorial */}
             <div className="bl-succ-receipt">
               <span className="bl-succ-receipt__row"><b>VOTER ID</b>{sid}</span>
-              {name && <span className="bl-succ-receipt__row"><b>NAME</b>{name}</span>}
+              {name && <span className="bl-succ-receipt__row"><b>NAME</b><span className="bl-thai">{name}</span></span>}
               <span className="bl-succ-receipt__row bl-succ-receipt__row--sec"><b>SECURED BY</b>PSU Passport</span>
             </div>
 
@@ -81,7 +81,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
                 the climax, so it lands in the first viewport (v2-R8 T1). onOpenForm +
                 isUnlocked gating are unchanged from the former next-section button. */}
             <div className="bl-succ-cta">
-              <span className="bl-succ-cta__kick">ขั้นตอนสุดท้าย · 2 นาที · รับชั่วโมงกิจกรรม 2 ชม.</span>
+              <span className="bl-succ-cta__kick bl-thai">ขั้นตอนสุดท้าย · 2 นาที · รับชั่วโมงกิจกรรม 2 ชม.</span>
               {isUnlocked && !editorMode ? (
                 <div className="bl-succ-cta__done">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
@@ -102,14 +102,14 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           <header className="bl-succ-next__head">
             <span className="bl-succ-next__idx">04</span>
             <div>
-              <span className="bl-succ-next__kick">ขั้นตอนถัดไป <b>·</b> NEXT STEP</span>
+              <span className="bl-succ-next__kick"><span className="bl-thai bl-thai--nw">ขั้นตอนถัดไป</span> <b>·</b> NEXT STEP</span>
               <h2 className="bl-succ-next__title">ทำแบบประเมินเพื่อรับสิทธิ์</h2>
               <p className="bl-succ-next__desc">
                 กรอกแบบประเมินให้ครบถ้วนเพื่อรับชั่วโมงกิจกรรม 2 ชั่วโมง และปลดล็อกหน้าสรุปผลคะแนนเสียง
               </p>
               <div className="bl-succ-tags">
-                <span className="bl-succ-tag">ชั่วโมงกิจกรรม 2 ชม.</span>
-                <span className="bl-succ-tag bl-succ-tag--alt">ประเภทเลือกเข้าร่วม</span>
+                <span className="bl-succ-tag bl-thai bl-thai--nw">ชั่วโมงกิจกรรม 2 ชม.</span>
+                <span className="bl-succ-tag bl-succ-tag--alt bl-thai bl-thai--nw">ประเภทเลือกเข้าร่วม</span>
               </div>
             </div>
           </header>
@@ -135,7 +135,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
               )}
             </a>
 
-            <a href={editorMode ? undefined : getPath("/")} className="bl-succ-home">← กลับหน้าแรก</a>
+            <a href={editorMode ? undefined : getPath("/")} className="bl-succ-home">← <span className="bl-thai bl-thai--nw">กลับหน้าแรก</span></a>
           </div>
         </section>
       </div>

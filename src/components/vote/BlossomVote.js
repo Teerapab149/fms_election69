@@ -152,13 +152,13 @@ export default function BlossomVote({
       <div className="bl-page">
         {/* ===== issue line (masthead — vote variant) ===== */}
         <div className="bl-issue-line">
-          <span>ลงคะแนน <b>·</b> CAST YOUR VOTE</span>
+          <span><span className="bl-thai bl-thai--nw">ลงคะแนน</span> <b>·</b> CAST YOUR VOTE</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial masthead: mono kick + hollow display word ===== */}
         <header className="bl-vote-head">
-          <span className="bl-vote-kick"><span className="bl-vote-dot" aria-hidden="true" />ลงคะแนนเสียง · ONE VOTE ONLY</span>
+          <span className="bl-vote-kick"><span className="bl-vote-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ลงคะแนนเสียง</span> · <span className="bl-nw">ONE VOTE ONLY</span></span>
           <h1 className="bl-vote-word">เลือก<span>พรรค</span></h1>
         </header>
         <p className="bl-vote-deck">
@@ -167,7 +167,7 @@ export default function BlossomVote({
 
         {/* voter receipt — mono, editorial (mirrors BlossomSuccess receipt) */}
         <div className="bl-vote-voter">
-          <span className="bl-vote-voter__row"><b>VOTER</b>{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
+          <span className="bl-vote-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-vote-voter__row"><b>ID</b>{sid}</span>
           <span className="bl-vote-voter__row"><b>BALLOT</b>{count} {count === 1 ? "PARTY" : "PARTIES"}</span>
         </div>
@@ -175,7 +175,7 @@ export default function BlossomVote({
         {/* ===== ballot paper — the hero object: choices sit on a clean card so the
                dotted canvas never runs under dense text ===== */}
         <section className="bl-vpaper" aria-label="บัตรลงคะแนน">
-        <div className="bl-vpaper__cap"><span>บัตรลงคะแนน · BALLOT PAPER</span><em>1 คน · 1 เสียง</em></div>
+        <div className="bl-vpaper__cap"><span><span className="bl-thai bl-thai--nw">บัตรลงคะแนน</span> · <span className="bl-nw">BALLOT PAPER</span></span><em>1 <span className="bl-thai bl-thai--nw">คน</span> · 1 <span className="bl-thai bl-thai--nw">เสียง</span></em></div>
         <ul className="bl-vballot">
           {parties.map((p, i) => (
             <VoteRow
@@ -183,10 +183,10 @@ export default function BlossomVote({
               index={pad2(p.number)}
               number={p.number}
               logoUrl={p.logoUrl}
-              kick={<>พรรคหมายเลข <b>{p.number}</b></>}
+              kick={<><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{p.number}</b></>}
               name={p.name}
               slogan={p.slogan || null}
-              stat={p.members?.length ? `ทีมงาน ${p.members.length} คน` : null}
+              stat={p.members?.length ? <><span className="bl-thai bl-thai--nw">ทีมงาน</span> {p.members.length} <span className="bl-thai bl-thai--nw">คน</span></> : null}
               selected={selectedPartyId === p.id}
               onSelect={() => onSelect(p.id)}
               onDetails={() => onViewDetails(p)}
@@ -198,7 +198,7 @@ export default function BlossomVote({
               index={null}
               number={0}
               abstain
-              kick="งดออกเสียง · ABSTAIN"
+              kick={<><span className="bl-thai bl-thai--nw">งดออกเสียง</span> · <span className="bl-nw">ABSTAIN</span></>}
               name="ไม่ประสงค์ลงคะแนน"
               slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
               selected={abstain.id === selectedPartyId}
@@ -213,7 +213,7 @@ export default function BlossomVote({
       <div className={`bl-vconfirm${canConfirm ? " is-ready" : ""}`}>
         <div className="bl-vconfirm__in">
           <div className="bl-vconfirm__sel">
-            <span className="bl-vconfirm__lab">การเลือกของคุณ · YOUR SELECTION</span>
+            <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
             {selection ? (
               <span className={`bl-vconfirm__val${selection.abstain ? " is-abstain" : ""}`}>
                 <span className="bl-vconfirm__dia" aria-hidden="true" />{selection.name}

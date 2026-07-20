@@ -23,10 +23,12 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // reason eyebrow (bilingual). Copy stays reason-aware while the accent stays token-
 // only (var(--bl-*)) — the family has one accent identity, so all variants share it.
+// {th, en} so the render side can pin the Thai run to the real Thai font (Space Mono
+// has no Thai glyphs) while keeping the "·" separator between the two runs.
 const EYEBROW = {
-  waiting: "ใกล้เปิดลงคะแนน · UPCOMING",
-  ended: "ปิดลงคะแนนแล้ว · CLOSED",
-  closed: "พักระบบชั่วคราว · MAINTENANCE",
+  waiting: { th: "ใกล้เปิดลงคะแนน", en: "UPCOMING" },
+  ended: { th: "ปิดลงคะแนนแล้ว", en: "CLOSED" },
+  closed: { th: "พักระบบชั่วคราว", en: "MAINTENANCE" },
 };
 
 export default function BlossomClosed({
@@ -51,14 +53,14 @@ export default function BlossomClosed({
       <div className="bl-page">
         {/* ===== issue line (masthead — closed variant) ===== */}
         <div className="bl-issue-line">
-          <span>สถานะระบบ <b>·</b> SYSTEM STATUS</span>
+          <span><span className="bl-thai bl-thai--nw">สถานะระบบ</span> <b>·</b> SYSTEM STATUS</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== ink band — quiet editorial notice (mirrors home closed grammar) ===== */}
         <section className="bl-closed-band">
           <div className="bl-closed-band__in">
-            <div className="bl-closed-cap"><span className="bl-closed-cap__dia" aria-hidden="true" />{eyebrow}</div>
+            <div className="bl-closed-cap"><span className="bl-closed-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{eyebrow.th}</span> · <span className="bl-nw">{eyebrow.en}</span></div>
             <h1 className="bl-closed-head">{title}</h1>
             <p className="bl-closed-desc">{desc}</p>
             <div className="bl-closed-cta">

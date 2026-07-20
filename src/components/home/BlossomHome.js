@@ -27,6 +27,10 @@ import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../util
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
 
+// Thai-run detector — used to pin only the Thai segments of the spinning ring
+// textPath to the family's real Thai font (Space Mono has no Thai glyphs).
+const THAI_RE = /[฀-๿]/;
+
 // sign-in helper (same seam as the other families)
 function blossomSignIn() {
   signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" });
@@ -101,7 +105,7 @@ export function BlossomTopBar({ editorMode, onSignIn, active = "/" }) {
 
       <nav className="bl-nav">
         {NAV.map((n) => (
-          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className={n.href === active ? "bl-nav__link on" : "bl-nav__link"}>{n.th}</a>
+          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className={n.href === active ? "bl-nav__link on" : "bl-nav__link"}><span className="bl-thai bl-thai--nw">{n.th}</span></a>
         ))}
       </nav>
 
@@ -137,7 +141,7 @@ export function BlossomTopBar({ editorMode, onSignIn, active = "/" }) {
       {/* mobile slide-down sheet (editorial mono links) */}
       <div className={`bl-sheet ${menuOpen ? "is-open" : ""}`}>
         {NAV.map((n) => (
-          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className="bl-sheet__link" onClick={() => setMenuOpen(false)}>{n.th}</a>
+          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className="bl-sheet__link" onClick={() => setMenuOpen(false)}><span className="bl-thai bl-thai--nw">{n.th}</span></a>
         ))}
       </div>
       </div>
@@ -329,7 +333,6 @@ export default function BlossomHome({
   const ringSegs = [`${meta.faculty} ELECTION${meta.calYear !== "" ? ` ${meta.calYear}` : ""}`];
   if (String(meta.number) !== "" || meta.prefix) ringSegs.push(`${meta.prefix} ${meta.number}`.trim());
   if (meta.academicYear !== "") ringSegs.push(`ปีการศึกษา ${meta.academicYear}`);
-  const ringText = ringSegs.join(" · ") + " · ";
 
   // ── headline (config-safe split): the ORG is the star (owner call 2026-07-11 —
   //    students identify with the union, not the project title). Split org on
@@ -355,16 +358,22 @@ export default function BlossomHome({
   const ctaHref = editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/");
 
   // ── countdown caption + closed-block copy (driven by cd) ──
-  const cdCap = cd.done
-    ? "สถานะ / STATUS"
+  const cdCapTh = cd.done
+    ? "สถานะ"
     : cd.label === "เปิดโหวตใน"
-      ? "เปิดโหวตในอีก / STARTS IN"
+      ? "เปิดโหวตในอีก"
       : cd.label === "ปิดโหวตใน"
-        ? "ปิดโหวตในอีก / CLOSES IN"
-        : "กำลังโหลด / LOADING";
-  const cdClosedSmall = cd.label === "ระบบพักชั่วคราว"
-    ? "SYSTEM PAUSED · กลับมาเปิดอีกครั้งเร็ว ๆ นี้"
-    : "VOTING CLOSED · ดูผลได้ที่หน้าผลการเลือกตั้ง";
+        ? "ปิดโหวตในอีก"
+        : "กำลังโหลด";
+  const cdCapEn = cd.done
+    ? "STATUS"
+    : cd.label === "เปิดโหวตใน"
+      ? "STARTS IN"
+      : cd.label === "ปิดโหวตใน"
+        ? "CLOSES IN"
+        : "LOADING";
+  const cdClosedEn = cd.label === "ระบบพักชั่วคราว" ? "SYSTEM PAUSED" : "VOTING CLOSED";
+  const cdClosedTh = cd.label === "ระบบพักชั่วคราว" ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : "ดูผลได้ที่หน้าผลการเลือกตั้ง";
 
   return (
     <div className="fms-app bl-root">
@@ -381,7 +390,7 @@ export default function BlossomHome({
         {/* ===== issue line ===== */}
         <div className="bl-issue-line">
           <span>{meta.faculty} ELECTION{meta.calYear !== "" ? <> <b>·</b> {meta.calYear}</> : null}</span>
-          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <b>·</b> ปีการศึกษา {meta.academicYear}</> : null}</span>
+          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <b>·</b> <span className="bl-thai bl-thai--nw">ปีการศึกษา {meta.academicYear}</span></> : null}</span>
         </div>
 
         {/* ===== hero ===== */}
@@ -389,7 +398,11 @@ export default function BlossomHome({
           <div className="bl-ring" role="img" aria-label={`${meta.prefix} ${meta.number} — ${meta.faculty} Election ${meta.calYear}`}>
             <svg viewBox="0 0 200 200">
               <defs><path id="blRingPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
-              <text><textPath href="#blRingPath">{ringText}</textPath></text>
+              <text><textPath href="#blRingPath">
+                {ringSegs.map((seg, i) => (
+                  <tspan key={i} className={THAI_RE.test(seg) ? "bl-thai" : undefined}>{seg} · </tspan>
+                ))}
+              </textPath></text>
             </svg>
             <div className="bl-ring__core"><div><b>{meta.number}</b><span>{meta.prefix}</span></div></div>
           </div>
@@ -399,7 +412,7 @@ export default function BlossomHome({
 
           {ELECTION_START && (
             <div className="bl-daterow">
-              <span className="bl-daterow__pill">เปิดโหวต {formatThaiDate(ELECTION_START)}</span>
+              <span className="bl-daterow__pill bl-thai">เปิดโหวต {formatThaiDate(ELECTION_START)}</span>
               <span>{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
             </div>
           )}
@@ -423,7 +436,7 @@ export default function BlossomHome({
               <span className="bl-poster__tape bl-poster__tape--r" aria-hidden="true" />
               <img src={bannerSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="bl-poster__img" />
             </figure>
-            <div className="bl-poster-cap">{meta.prefix} {meta.number} · โปสเตอร์ประชาสัมพันธ์</div>
+            <div className="bl-poster-cap"><span className="bl-nw">{meta.prefix} {meta.number}</span> · <span className="bl-thai bl-thai--nw">โปสเตอร์ประชาสัมพันธ์</span></div>
           </div>
           <div className="bl-feature-copy">
             <h2>รู้จัก<em>ผู้สมัคร</em>ของคุณหรือยัง</h2>
@@ -440,36 +453,36 @@ export default function BlossomHome({
           <div className="bl-fig bl-fig-1">
             <span className="bl-idx">01</span>
             <span className="bl-fig-n">{fmtInt(displayCounts ? displayCounts.voted : rawStats.totalVoted)}<small>คน</small></span>
-            <span className="bl-lab"><span className="bl-live-dot" aria-hidden />ใช้สิทธิ์แล้ว<br />REAL-TIME</span>
+            <span className="bl-lab"><span className="bl-live-dot" aria-hidden /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span><br />REAL-TIME</span>
           </div>
           <div className="bl-fig bl-fig-2">
             <span className="bl-idx">02</span>
             <span className="bl-fig-n">{displayCounts ? displayCounts.pct : pct}<small>%</small></span>
-            <span className="bl-lab">อัตราการใช้สิทธิ์<br />TURNOUT</span>
+            <span className="bl-lab"><span className="bl-thai bl-thai--nw">อัตราการใช้สิทธิ์</span><br />TURNOUT</span>
             {/* hairline turnout track — the % made visible */}
             <span className="bl-figbar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></span>
           </div>
           <div className="bl-fig bl-fig-3">
             <span className="bl-idx">03</span>
             <span className="bl-fig-n">{displayCounts ? displayCounts.parties : partyCount}<small>พรรค</small></span>
-            <span className="bl-lab">ผู้ลงสมัคร<br />PARTIES</span>
+            <span className="bl-lab"><span className="bl-thai bl-thai--nw">ผู้ลงสมัคร</span><br />PARTIES</span>
           </div>
         </section>
 
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
           <div className="bl-count__in">
-            <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" />{cdCap}</div>
+            <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{cdCapTh}</span> / <span className="bl-nw">{cdCapEn}</span></div>
             <div className="bl-count-line">
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u">วัน / DAYS</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วัน</span> / DAYS</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u">ชม. / HRS</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">ชม.</span> / HRS</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.m)} /><span className="bl-u">นาที / MIN</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.m)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">นาที</span> / MIN</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.s)} /><span className="bl-u">วินาที / SEC</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.s)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วินาที</span> / SEC</span></span>
             </div>
-            <div className="bl-count-closed">{cd.label}<small>{cdClosedSmall}</small></div>
+            <div className="bl-count-closed">{cd.label}<small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small></div>
           </div>
         </section>
 

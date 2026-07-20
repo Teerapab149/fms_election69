@@ -128,13 +128,13 @@ export default function BlossomSingleParty({
       <div className="bl-page">
         {/* ===== issue line (masthead — single-ballot variant) ===== */}
         <div className="bl-issue-line">
-          <span>ลงคะแนน <b>·</b> SINGLE BALLOT</span>
+          <span><span className="bl-thai bl-thai--nw">ลงคะแนน</span> <b>·</b> SINGLE BALLOT</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== party feature masthead ===== */}
         <header className="bl-sp-head">
-          <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" />พรรคเดียวที่ลงสมัคร · THE ONLY PARTY</span>
+          <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">พรรคเดียวที่ลงสมัคร</span> · <span className="bl-nw">THE ONLY PARTY</span></span>
           <div className="bl-sp-hero">
             <span className="bl-sp-logo">
               {logo ? (
@@ -144,7 +144,7 @@ export default function BlossomSingleParty({
               )}
             </span>
             <div className="bl-sp-title">
-              <span className="bl-sp-num">พรรคหมายเลข <b>{no}</b></span>
+              <span className="bl-sp-num"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{no}</b></span>
               <h1 className="bl-sp-word"><span className="bl-sp-word__in">{party?.name || "พรรค"}</span></h1>
               {party?.slogan && <p className="bl-sp-slogan">“{party.slogan}”</p>}
             </div>
@@ -153,7 +153,7 @@ export default function BlossomSingleParty({
 
         {/* voter receipt — mono, editorial (mirrors BlossomVote / BlossomSuccess) */}
         <div className="bl-sp-voter">
-          <span className="bl-sp-voter__row"><b>VOTER</b>{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
+          <span className="bl-sp-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-sp-voter__row"><b>ID</b>{sid}</span>
           <span className="bl-sp-voter__row"><b>BALLOT</b>1 PARTY</span>
         </div>
@@ -162,7 +162,7 @@ export default function BlossomSingleParty({
         {cover && (
           <figure className="bl-sp-cover">
             <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption>ภาพหมู่พรรค · GROUP PHOTO</figcaption>
+            <figcaption><span className="bl-thai bl-thai--nw">ภาพหมู่พรรค</span> · <span className="bl-nw">GROUP PHOTO</span></figcaption>
           </figure>
         )}
 
@@ -184,7 +184,7 @@ export default function BlossomSingleParty({
             <div className="bl-sp-sec__head">
               <span className="bl-sp-sec__kick">MISSION</span>
               <h2 className="bl-sp-sec__title">พันธกิจ</h2>
-              <span className="bl-sp-sec__count">{pad2(missions.length)} ข้อ</span>
+              <span className="bl-sp-sec__count">{pad2(missions.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-sp-mlist">
               {missions.map((m, i) => (
@@ -200,7 +200,7 @@ export default function BlossomSingleParty({
             <div className="bl-sp-sec__head">
               <span className="bl-sp-sec__kick">KEY POLICIES</span>
               <h2 className="bl-sp-sec__title">นโยบายเด่น</h2>
-              <span className="bl-sp-sec__count">{pad2(policies.length)} ข้อ</span>
+              <span className="bl-sp-sec__count">{pad2(policies.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-sp-plist">
               {policies.map((p, i) => {
@@ -220,7 +220,7 @@ export default function BlossomSingleParty({
             <div className="bl-sp-sec__head">
               <span className="bl-sp-sec__kick">THE TEAM</span>
               <h2 className="bl-sp-sec__title">ทีมผู้สมัคร</h2>
-              <span className="bl-sp-sec__count">{pad2(members.length)} คน</span>
+              <span className="bl-sp-sec__count">{pad2(members.length)} <span className="bl-thai bl-thai--nw">คน</span></span>
             </div>
             <div className="bl-sp-team">
               {members.map((m, i) => {
@@ -232,7 +232,7 @@ export default function BlossomSingleParty({
                     </span>
                     <figcaption className="bl-sp-cand__body">
                       <span className="bl-sp-cand__name">{m.name}</span>
-                      {(m.position || m.major) && <span className="bl-sp-cand__role">{m.position || m.major}</span>}
+                      {(m.position || m.major) && <span className="bl-sp-cand__role bl-thai">{m.position || m.major}</span>}
                     </figcaption>
                   </figure>
                 );
@@ -243,11 +243,11 @@ export default function BlossomSingleParty({
 
         {/* ===== the decision — ballot paper card (semantic 3-choice) ===== */}
         <section className="bl-vpaper" id="bl-sp-decision" aria-label="การตัดสินใจของคุณ">
-          <div className="bl-vpaper__cap"><span>การตัดสินใจ · YOUR DECISION</span><em>1 คน · 1 เสียง</em></div>
+          <div className="bl-vpaper__cap"><span><span className="bl-thai bl-thai--nw">การตัดสินใจ</span> · <span className="bl-nw">YOUR DECISION</span></span><em>1 <span className="bl-thai bl-thai--nw">คน</span> · 1 <span className="bl-thai bl-thai--nw">เสียง</span></em></div>
           <ul className="bl-sballot">
             <ChoiceRow
               tone="approve"
-              kick="เห็นชอบ · APPROVE"
+              kick={<><span className="bl-thai bl-thai--nw">เห็นชอบ</span> · <span className="bl-nw">APPROVE</span></>}
               name="รับรอง"
               note={`เห็นชอบให้ ${party?.name || "พรรคนี้"} ดำรงตำแหน่ง`}
               selected={kind === "approve"}
@@ -256,7 +256,7 @@ export default function BlossomSingleParty({
             {disapprove && (
               <ChoiceRow
                 tone="disapprove"
-                kick="ไม่เห็นชอบ · DISAPPROVE"
+                kick={<><span className="bl-thai bl-thai--nw">ไม่เห็นชอบ</span> · <span className="bl-nw">DISAPPROVE</span></>}
                 name="ไม่รับรอง"
                 note="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
                 selected={kind === "disapprove"}
@@ -266,7 +266,7 @@ export default function BlossomSingleParty({
             {abstain && (
               <ChoiceRow
                 tone="abstain"
-                kick="งดออกเสียง · ABSTAIN"
+                kick={<><span className="bl-thai bl-thai--nw">งดออกเสียง</span> · <span className="bl-nw">ABSTAIN</span></>}
                 name="งดออกเสียง"
                 note="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                 selected={kind === "abstain"}
@@ -281,7 +281,7 @@ export default function BlossomSingleParty({
       <div className={`bl-vconfirm${canConfirm ? " is-ready" : ""}`}>
         <div className="bl-vconfirm__in">
           <div className="bl-vconfirm__sel">
-            <span className="bl-vconfirm__lab">การเลือกของคุณ · YOUR SELECTION</span>
+            <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
             {selectionLabel ? (
               <span className={`bl-vconfirm__val bl-vconfirm__val--${kind}`}>
                 <span className="bl-vconfirm__dia" aria-hidden="true" />{selectionLabel}
@@ -306,11 +306,11 @@ export default function BlossomSingleParty({
       {confirmOpen && (
         <div className="bl-scm" onClick={() => !isSubmitting && setConfirmOpen(false)} role="dialog" aria-modal="true">
           <div className="bl-scm__card" onClick={(e) => e.stopPropagation()}>
-            <span className="bl-scm__eyebrow">ยืนยันครั้งสุดท้าย · FINAL CONFIRMATION</span>
+            <span className="bl-scm__eyebrow"><span className="bl-thai bl-thai--nw">ยืนยันครั้งสุดท้าย</span> · <span className="bl-nw">FINAL CONFIRMATION</span></span>
             <h3 className="bl-scm__title">ยืนยันการลงคะแนน</h3>
             <p className="bl-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`bl-scm__pick bl-scm__pick--${kind}`}>
-              <span className="bl-scm__pick-lab">การเลือกของคุณ</span>
+              <span className="bl-scm__pick-lab bl-thai bl-thai--nw">การเลือกของคุณ</span>
               <span className="bl-scm__pick-val">{selectionLabel || "—"}</span>
             </div>
             <div className="bl-scm__actions">

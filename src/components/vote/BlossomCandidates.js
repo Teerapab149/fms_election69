@@ -49,7 +49,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
       <div className="bl-page">
         {/* ===== issue line (masthead — candidates variant) ===== */}
         <div className="bl-issue-line">
-          <span>ผู้สมัคร <b>·</b> CANDIDATES</span>
+          <span><span className="bl-thai bl-thai--nw">ผู้สมัคร</span> <b>·</b> CANDIDATES</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -58,7 +58,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
           <h1 className="bl-cand-word">ผู้สมัคร</h1>
           <div className="bl-cand-meta">
             <span className="bl-cand-count">{pad2(count)}</span>
-            <span className="bl-cand-count-lab">พรรค<br />PARTIES</span>
+            <span className="bl-cand-count-lab"><span className="bl-thai bl-thai--nw">พรรค</span><br />PARTIES</span>
           </div>
         </header>
         <p className="bl-cand-deck">
@@ -86,11 +86,11 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
                       )}
                     </span>
                     <span className="bl-crow__body">
-                      <span className="bl-crow__kick">พรรคหมายเลข <b>{p.number}</b></span>
+                      <span className="bl-crow__kick"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{p.number}</b></span>
                       <span className="bl-crow__name">{p.name}</span>
                       {p.slogan && <span className="bl-crow__slogan">{p.slogan}</span>}
                       <span className="bl-crow__stat">
-                        {memberCount > 0 ? <>ทีมงาน {memberCount} คน</> : "ทีมงานกำลังปรับปรุงข้อมูล"}
+                        {memberCount > 0 ? <><span className="bl-thai bl-thai--nw">ทีมงาน</span> {memberCount} <span className="bl-thai bl-thai--nw">คน</span></> : <span className="bl-thai bl-thai--nw">ทีมงานกำลังปรับปรุงข้อมูล</span>}
                       </span>
                     </span>
                     <span className="bl-crow__cta">

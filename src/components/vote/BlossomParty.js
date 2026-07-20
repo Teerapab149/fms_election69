@@ -93,13 +93,13 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
       <div className="bl-page">
         {/* ===== issue line (masthead — party variant) ===== */}
         <div className="bl-issue-line">
-          <span>พรรค <b>·</b> PARTY FILE</span>
+          <span><span className="bl-thai bl-thai--nw">พรรค</span> <b>·</b> PARTY FILE</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial party masthead — giant hollow numeral + logo + name ===== */}
         <header className="bl-pty-head">
-          <span className="bl-pty-kick"><span className="bl-pty-dot" aria-hidden="true" />บทความฉบับพิเศษ · PARTY FEATURE</span>
+          <span className="bl-pty-kick"><span className="bl-pty-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">บทความฉบับพิเศษ</span> · <span className="bl-nw">PARTY FEATURE</span></span>
           <div className="bl-pty-hero">
             <span className="bl-pty-no" aria-hidden="true">{pad2(no)}</span>
             <div className="bl-pty-id">
@@ -111,7 +111,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
                 )}
               </span>
               <div className="bl-pty-title">
-                <span className="bl-pty-num">พรรคหมายเลข <b>{no}</b></span>
+                <span className="bl-pty-num"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{no}</b></span>
                 <h1 className="bl-pty-word">{party?.name || "พรรค"}</h1>
                 {party?.slogan && <p className="bl-pty-deck">“{party.slogan}”</p>}
               </div>
@@ -143,7 +143,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">MISSION</span>
               <h2 className="bl-psec__title">พันธกิจ</h2>
-              <span className="bl-psec__count">{pad2(missions.length)} ข้อ</span>
+              <span className="bl-psec__count">{pad2(missions.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-mlist">
               {missions.map((m, i) => (
@@ -159,7 +159,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">POLICIES</span>
               <h2 className="bl-psec__title">นโยบายเด่น</h2>
-              <span className="bl-psec__count">{pad2(policies.length)} ข้อ</span>
+              <span className="bl-psec__count">{pad2(policies.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-plist">
               {policies.map((p, i) => {
@@ -185,7 +185,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">THE TEAM</span>
               <h2 className="bl-psec__title">ทีมผู้สมัคร</h2>
-              <span className="bl-psec__count">{pad2(members.length)} คน</span>
+              <span className="bl-psec__count">{pad2(members.length)} <span className="bl-thai bl-thai--nw">คน</span></span>
             </div>
             <ul className="bl-team">
               {members.map((m, i) => {
@@ -199,7 +199,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
                       </span>
                       <span className="bl-cand__body">
                         <span className="bl-cand__name">{m.name}</span>
-                        {(m.position || m.major) && <span className="bl-cand__role">{m.position || m.major}</span>}
+                        {(m.position || m.major) && <span className="bl-cand__role bl-thai">{m.position || m.major}</span>}
                       </span>
                     </button>
                   </li>
@@ -215,7 +215,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">GALLERY</span>
               <h2 className="bl-psec__title">ภาพกิจกรรม</h2>
-              <span className="bl-psec__count">{pad2(gallery.length)} ภาพ</span>
+              <span className="bl-psec__count">{pad2(gallery.length)} <span className="bl-thai bl-thai--nw">ภาพ</span></span>
             </div>
             <div className="bl-strip">
               {gallery.map((src, i) => (
