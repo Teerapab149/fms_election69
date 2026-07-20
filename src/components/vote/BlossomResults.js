@@ -41,6 +41,33 @@ const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
 const CHART_FONT = "var(--font-kanit),'Kanit',var(--font-anuphan),'Anuphan',system-ui,sans-serif";
 
+// ── reveal ceremony: count-up (bl-B1B) ──────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server HTML,
+// no-JS, and pre-hydration paint all show the real number. Only AFTER hydration
+// does the effect restart the number from 0 and ease it up (~1s). reduced-motion
+// or editorMode (enabled=false) → snap to final, no rAF. Used ONLY inside the
+// revealed branch — the EMBARGOED figures keep their literal fmt()/toFixed(1)
+// strings, and the locked ink band never renders a Reveal* node at all.
+function useCountUp(target, { duration = 1000, enabled = true } = {}) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (!enabled || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, enabled]);
+  return val;
+}
+// revealed-only value renderers — count 0→value after hydration, final otherwise
+function RevealInt({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{Math.round(v).toLocaleString("en-US")}</>; }
+function RevealFixed({ value, digits = 1, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(digits)}</>; }
+
 // Blossom-styled recharts tooltip (paper card, hairline, mono value).
 function BlTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -77,6 +104,7 @@ export default function BlossomResults({
 
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
 
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? (totalVotes / totalEligible) * 100 : 0;
@@ -172,18 +200,18 @@ export default function BlossomResults({
             <section className="bl-res-figs" aria-label="สรุปยอดผู้ใช้สิทธิ์">
               <div className="bl-rfig bl-rfig-1">
                 <span className="bl-rfig__idx">01</span>
-                <span className="bl-rfig__n">{fmt(totalVotes)}<small>เสียง</small></span>
+                <span className="bl-rfig__n">{revealed ? <RevealInt value={totalVotes} enabled={anim} /> : fmt(totalVotes)}<small>เสียง</small></span>
                 <span className="bl-rfig__lab"><span className="bl-res-live" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span> · <span className="bl-nw">TOTAL VOTES</span></span>
               </div>
               <div className="bl-rfig bl-rfig-2">
                 <span className="bl-rfig__idx">02</span>
-                <span className="bl-rfig__n">{turnout.toFixed(1)}<small>%</small></span>
+                <span className="bl-rfig__n">{revealed ? <RevealFixed value={turnout} digits={1} enabled={anim} /> : turnout.toFixed(1)}<small>%</small></span>
                 <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">อัตราการใช้สิทธิ์</span> · <span className="bl-nw">TURNOUT</span></span>
                 <span className="bl-rfig__bar" aria-hidden="true"><span style={{ width: `${Math.min(100, turnout)}%` }} /></span>
               </div>
               <div className="bl-rfig bl-rfig-3">
                 <span className="bl-rfig__idx">03</span>
-                <span className="bl-rfig__n">{fmt(totalEligible)}<small>คน</small></span>
+                <span className="bl-rfig__n">{revealed ? <RevealInt value={totalEligible} enabled={anim} /> : fmt(totalEligible)}<small>คน</small></span>
                 <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">ผู้มีสิทธิ์</span> · <span className="bl-nw">ELIGIBLE</span></span>
               </div>
             </section>
@@ -217,9 +245,12 @@ export default function BlossomResults({
                             </span>
                           </span>
                           <span className="bl-rrow__data">
-                            <span className="bl-rrow__num">{fmt(c.score || 0)}<small>เสียง</small></span>
-                            <span className="bl-rrow__track"><span style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%` }} /></span>
-                            <span className="bl-rrow__pct">{pct.toFixed(1)}%</span>
+                            <span className="bl-rrow__num"><RevealInt value={c.score || 0} enabled={anim} /><small>เสียง</small></span>
+                            {/* fill carries its REAL width inline (no-JS / reduced-motion
+                                fallback lands final); "is-grow" only staggers a 0→width CSS
+                                grow via animationDelay, skipped in editorMode */}
+                            <span className="bl-rrow__track"><span className={anim ? "is-grow" : undefined} style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%`, ...(anim ? { animationDelay: `${i * 90}ms` } : {}) }} /></span>
+                            <span className="bl-rrow__pct"><RevealFixed value={pct} digits={1} enabled={anim} />%</span>
                           </span>
                         </>
                       );
@@ -537,9 +568,22 @@ export default function BlossomResults({
           background:color-mix(in srgb, var(--bl-line) 60%, var(--bl-card)); }
         .bl-res-root .bl-rrow__track > span { display:block; height:100%; border-radius:3px;
           background:linear-gradient(90deg, var(--bl-primary), var(--bl-primary-deep)); transition:width .7s cubic-bezier(.16,1,.3,1); }
-        .bl-res-root .bl-rrow.is-win .bl-rrow__track > span { background:var(--bl-primary-deep); }
+        /* reveal ceremony: fills grow 0→real width with a per-row stagger (animationDelay
+           set inline). Pure CSS keyframe — without JS / under reduced-motion the bar still
+           ends at its inline width, so a fill is NEVER gated behind hydration. Scoped to
+           .is-grow only (absent in editorMode). The blanket reduced-motion rule below
+           nukes this animation, leaving the inline width. */
+        .bl-res-root .bl-rrow__track > span.is-grow { animation:blRBar .7s cubic-bezier(.16,1,.3,1) backwards; }
+        @keyframes blRBar { from { width:0; } }
+        .bl-res-root .bl-rrow.is-win .bl-rrow__track > span { background:var(--bl-primary-deep);
+          box-shadow:0 0 10px color-mix(in srgb, var(--bl-primary) 45%, transparent); }
         .bl-res-root .bl-rrow.is-pseudo .bl-rrow__track > span { background:var(--bl-faint); }
-        .bl-res-root .bl-rrow__pct { font-family:var(--bl-fm); font-size:12px; letter-spacing:.06em; color:var(--bl-ink2); }
+        .bl-res-root .bl-rrow__pct { font-family:var(--bl-fm); font-size:12px; letter-spacing:.06em; color:var(--bl-ink2);
+          font-variant-numeric:tabular-nums; }
+        /* winner row — gentle candy wash + an inset ink accent so the win reads at a
+           glance beyond the diamond/tag/tinted numeral (bl-B1B, color-mix only) */
+        .bl-res-root .bl-rrow.is-win { background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-canvas));
+          box-shadow:inset 3px 0 0 var(--bl-primary-deep); }
 
         /* ---- demographics panels (frame restyled; recharts internals untouched) ---- */
         .bl-res-root .bl-demo-grid { display:grid; grid-template-columns:1fr; gap:20px; margin-top:28px; }
