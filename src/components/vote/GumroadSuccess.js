@@ -31,6 +31,12 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
 
       <main className="gsx-main">
         <div className="gsx-card">
+          {/* gm-B1C form-first: two logical columns. On mobile both wrappers are
+              display:contents (invisible) so the stack is byte-identical to before;
+              on desktop (>=900px) the card becomes a two-panel receipt desk —
+              identity left, action stack right — so the evaluate CTA lands in the
+              first viewport instead of below a tall single column. */}
+          <div className="gsx-col gsx-col--identity">
           <div className="gsx-icon"><Check size={42} strokeWidth={3.5} /></div>
           <span className="gsx-eyebrow">★ VOTE RECORDED</span>
           <h1 className="gsx-title">บันทึกคะแนนสำเร็จ!</h1>
@@ -46,7 +52,9 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
                 ? <span className="gsx-user__id">{user.studentId}</span> : null}
             </div>
           )}
+          </div>
 
+          <div className="gsx-col gsx-col--action">
           {/* Announcement — activity transcript + results unlock */}
           <div className="gsx-note">
             <div className="gsx-note__head">
@@ -86,6 +94,7 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
 
             <a href={getPath("/")} className="gsx-home">กลับหน้าหลัก</a>
           </div>
+          </div>
         </div>
       </main>
 
@@ -116,6 +125,10 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
         .gsx-main{ flex:1; display:grid; place-items:center; padding:44px 24px; }
         .gsx-card{ width:100%; max-width:560px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px;
           box-shadow:var(--sh-lg); padding:40px 36px 36px; text-align:center; }
+        /* gm-B1C: on mobile/tablet the two column wrappers are invisible so the
+           card stays a single stack (byte-identical to pre-B1C). Desktop turns
+           them into real flex columns — see the min-width:900px block below. */
+        .gsx-col{ display:contents; }
         .gsx-icon{ width:90px; height:90px; margin:0 auto 20px; display:grid; place-items:center; color:var(--ink); background:var(--lime);
           border:var(--bw) solid var(--ink); border-radius:50%; box-shadow:var(--sh); }
         .gsx-eyebrow{ display:inline-block; font-family:var(--fm); font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--ink2); }
@@ -152,6 +165,32 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
         .gsx-home:hover{ color:var(--ink); }
 
         /* footer = <SiteFooter> element (own scoped styles) */
+
+        /* gm-B1C form-first: on desktop the tall single card becomes a two-panel
+           receipt desk — identity (seal + headline + voter chip) on the left,
+           action stack (transcript note + evaluate/results/home) on the right,
+           split by a dashed rule. Both panels are vertically centred against the
+           full card height, so the evaluate CTA lands in the first viewport at
+           1280x720 / 1440x800 instead of below a ~775px stack. CSS-only recompose
+           of the two wrappers that are display:contents on mobile. */
+        @media (min-width:900px){
+          .gsx-card{
+            max-width:900px;
+            display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+            align-items:stretch; column-gap:clamp(28px,4vw,48px);
+            padding:40px 40px 36px; text-align:left;
+          }
+          .gsx-col{ display:flex; flex-direction:column; justify-content:center; min-width:0; }
+          .gsx-col--identity{ align-items:center; text-align:center; }
+          .gsx-col--action{
+            border-left:var(--bw) dashed var(--ink);
+            padding-left:clamp(28px,4vw,48px);
+          }
+          .gsx-col--action .gsx-note{ margin-top:0; }
+          .gsx-col--identity .gsx-icon{ margin-bottom:16px; }
+          .gsx-col--identity .gsx-title{ font-size:clamp(30px,3.4vw,40px); }
+        }
+
         @container gsx (max-width:560px){
           .gsx-card{ padding:34px 22px 30px; }
         }
