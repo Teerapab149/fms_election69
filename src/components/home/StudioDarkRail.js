@@ -116,7 +116,12 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           <span className={mini ? "sd-mininav__num" : "sd-rail__link-num"}>{n.num}</span>
           <span className={mini ? "sd-mininav__label" : "sd-rail__link-label"}>
             {n.label}
-            {!mini && <small>{n.th}</small>}
+            {/* Thai sub-label escapes JetBrains Mono via .sd-thai (sd-T1b) — on a
+                NESTED span, because `.sd-rail__link-label small` (0,1,1) outranks
+                the bare `.sd-thai` class (0,1,0) if put on <small> itself. The
+                class is defined by both rail consumers: StudioDarkShell (inner
+                pages) and StudioDarkHome (home) — cf7bb24. */}
+            {!mini && <small><span className="sd-thai">{n.th}</span></small>}
           </span>
           {!mini && <span className={`sd-rail__link-status${on ? " on" : ""}`} />}
         </a>
