@@ -18,7 +18,7 @@
 //
 // Pure presentation: results/page.js owns access control + data fetching.
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import StudioDarkShell from "./StudioDarkShell";
@@ -27,6 +27,34 @@ const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
 // deterministic locked-state widths — same for every party order, no leak
 const LOCK_WIDTHS = [56, 44, 28, 36, 22];
+
+// ── reveal ceremony: count-up (sd-B1B) ───────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server HTML,
+// no-JS, and pre-hydration paint all show the real number. Only after hydration
+// does the effect restart the number from 0 and ease it up (~1s). reduced-motion
+// or editorMode (enabled=false) → snap to final, no rAF. Used ONLY inside the
+// revealed branch — embargoed numbers keep their literal "??.?%" string / the
+// existing LOCK_WIDTHS placeholder bars, untouched.
+function useCountUp(target, { duration = 1000, enabled = true } = {}) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (!enabled || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, enabled]);
+  return val;
+}
+// revealed-only value renderers — count 0→value after hydration, final otherwise
+function RevealPct({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(1)}%</>; }
+function RevealInt({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{Math.round(v).toLocaleString("en-US")}</>; }
+function RevealFixed({ value, digits = 2, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(digits)}</>; }
 
 export default function StudioDarkResults({
   candidates = [],
@@ -42,6 +70,7 @@ export default function StudioDarkResults({
   const globalConfig = useGlobalConfig();
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
 
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? ((totalVotes / totalEligible) * 100) : 0;
@@ -122,15 +151,15 @@ export default function StudioDarkResults({
                   <h2 className="sdr-board__title">{approveWins ? <>It&rsquo;s a <em>yes.</em></> : <>It&rsquo;s a <em>no.</em></>}</h2>
                   <p className="sdr-board__deck">
                     {approveWins
-                      ? <>ผลการลงคะแนน <strong className="sdr-strong">รับรอง</strong> {parties[0]?.name} ด้วยคะแนน {fmt(parties[0]?.score || 0)} เสียง ({pctOf(parties[0]).toFixed(1)}%)</>
-                      : <>ผลการลงคะแนน <strong className="sdr-strong">ไม่รับรอง</strong> ด้วยคะแนน {fmt(disapprove?.score || 0)} เสียง ({pctOf(disapprove).toFixed(1)}%)</>}
+                      ? <>ผลการลงคะแนน <strong className="sdr-strong">รับรอง</strong> {parties[0]?.name} ด้วยคะแนน <span className="sd-tabular"><RevealInt value={parties[0]?.score || 0} enabled={anim} /></span> เสียง (<span className="sd-tabular"><RevealPct value={pctOf(parties[0])} enabled={anim} /></span>)</>
+                      : <>ผลการลงคะแนน <strong className="sdr-strong">ไม่รับรอง</strong> ด้วยคะแนน <span className="sd-tabular"><RevealInt value={disapprove?.score || 0} enabled={anim} /></span> เสียง (<span className="sd-tabular"><RevealPct value={pctOf(disapprove)} enabled={anim} /></span>)</>}
                   </p>
                 </>
               ) : winner ? (
                 <>
                   <h2 className="sdr-board__title sdr-board__title--name">{winner.name}<em>.</em></h2>
                   <p className="sdr-board__deck">
-                    ชนะการเลือกตั้งด้วยคะแนน {fmt(winner.score || 0)} เสียง — <strong className="sdr-strong">{pctOf(winner).toFixed(1)}%</strong> ของผู้ลงคะแนนทั้งหมด
+                    ชนะการเลือกตั้งด้วยคะแนน <span className="sd-tabular"><RevealInt value={winner.score || 0} enabled={anim} /></span> เสียง — <strong className="sdr-strong sd-tabular"><RevealPct value={pctOf(winner)} enabled={anim} /></strong> ของผู้ลงคะแนนทั้งหมด
                   </p>
                 </>
               ) : (
@@ -171,17 +200,17 @@ export default function StudioDarkResults({
         <div className="sdr-stats">
           <div className="sdr-stat">
             <div className="sdr-stat__lbl">TOTAL VOTES <em>i.</em></div>
-            <div className="sdr-stat__val">{fmt(totalVotes)}</div>
+            <div className="sdr-stat__val">{revealed ? <RevealInt value={totalVotes} enabled={anim} /> : fmt(totalVotes)}</div>
             <div className="sdr-stat__sub">นับสะสมตั้งแต่เปิดโหวต</div>
           </div>
           <div className="sdr-stat">
             <div className="sdr-stat__lbl">ELIGIBLE <em>ii.</em></div>
-            <div className="sdr-stat__val">{fmt(totalEligible)}</div>
+            <div className="sdr-stat__val">{revealed ? <RevealInt value={totalEligible} enabled={anim} /> : fmt(totalEligible)}</div>
             <div className="sdr-stat__sub">นักศึกษาผู้มีสิทธิ์เลือกตั้ง</div>
           </div>
           <div className="sdr-stat">
             <div className="sdr-stat__lbl">TURNOUT <em>iii.</em></div>
-            <div className="sdr-stat__val">{turnout.toFixed(2)}<small>%</small></div>
+            <div className="sdr-stat__val">{revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)}<small>%</small></div>
             <div className="sdr-stat__sub">สัดส่วนผู้ใช้สิทธิ์ · อัปเดตเรียลไทม์</div>
           </div>
         </div>
@@ -196,6 +225,10 @@ export default function StudioDarkResults({
             {raceRows.map((c, i) => {
               const isWin = revealed && (winner ? c === winner : (singleParty && approveWins != null && (approveWins ? c === parties[0] : c === disapprove)));
               const w = revealed ? Math.max(pctOf(c), c.score > 0 ? 2 : 0) : LOCK_WIDTHS[i % LOCK_WIDTHS.length];
+              // reveal ceremony: fill carries its REAL width inline (no-JS/reduced-motion
+              // fallback); "is-grow" only staggers a 0→width CSS grow via animationDelay,
+              // and is skipped in editorMode (admin preview snaps straight to final)
+              const fillCls = revealed ? `sdr-race__fill is-real${anim ? " is-grow" : ""}` : "sdr-race__fill ";
               return (
                 <div
                   className={`sdr-race__row ${isWin ? "is-winner" : ""}`}
@@ -207,8 +240,8 @@ export default function StudioDarkResults({
                     {labelOf(c)}{isWin && <span className="sdr-win-tag">WINNER</span>}
                     <small>{subOf(c)}</small>
                   </div>
-                  <div className="sdr-race__track"><div className={`sdr-race__fill ${revealed ? "is-real" : ""}`} style={{ width: `${w}%` }} /></div>
-                  <div className="sdr-race__pct">{revealed ? `${pctOf(c).toFixed(1)}%` : "??.?%"}</div>
+                  <div className="sdr-race__track"><div className={fillCls} style={{ width: `${w}%`, ...(revealed && anim ? { animationDelay: `${i * 90}ms` } : {}) }} /></div>
+                  <div className="sdr-race__pct">{revealed ? <RevealPct value={pctOf(c)} enabled={anim} /> : "??.?%"}</div>
                 </div>
               );
             })}
@@ -266,6 +299,7 @@ export default function StudioDarkResults({
 
       <style jsx global>{`
         .sdr-strong { color:var(--sd-accent); font-weight:500; }
+        .sd-tabular { font-variant-numeric:tabular-nums; }
 
         .sdr-ledger { padding:40px 48px 64px; flex:1; }
         .sdr-h {
@@ -329,6 +363,13 @@ export default function StudioDarkResults({
         .sdr-race__track { height:10px; background:var(--sd-bg); border:1px solid var(--sd-line); border-radius:999px; overflow:hidden; }
         .sdr-race__fill { height:100%; background:var(--sd-accent); opacity:.35; transition:width .6s ease-out; }
         .sdr-race__fill.is-real { opacity:1; }
+        /* reveal ceremony: fills grow 0→real width with a per-row stagger (animationDelay
+           set inline). Pure CSS keyframe — without JS the bar still ends at its inline
+           width, so a fill is NEVER gated behind hydration. Scoped to .is-grow only
+           (skipped in editorMode / when reduced-motion is requested). */
+        .sdr-race__fill.is-grow { animation:sdFillGrow .7s cubic-bezier(.22,1,.36,1) backwards; }
+        @keyframes sdFillGrow { from { width:0; } }
+        @media (prefers-reduced-motion: reduce) { .sdr-race__fill.is-grow { animation:none; } }
         .sdr-race__row.is-winner .sdr-race__fill { box-shadow:0 0 12px rgba(213,255,63,.5); }
         .sdr-race__pct { font-family:var(--sd-mono); font-size:14px; color:var(--sd-ink-2); text-align:right; font-variant-numeric:tabular-nums; }
 
