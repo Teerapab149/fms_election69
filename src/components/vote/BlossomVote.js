@@ -34,14 +34,27 @@
 // dot-grid) mirrors BlossomHome byte-for-byte (only one Blossom page renders at a
 // time, so the CSS is carried locally).
 
+import { useEffect, useMemo, useState } from "react";
 import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates } from "../../utils/electionConfig";
 import BlossomSingleParty from "./BlossomSingleParty";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
+
+// remaining time to ELECTION_END for the ballot meta strip — { d, hms } so the
+// Thai "วัน" segment renders in the body font (--bl-fb) while HH:MM:SS stays in
+// mono tabular. null once the end has passed (the ballot page is only reachable
+// while polls are open — no closed state is invented here).
+const fmtCloseIn = (end) => {
+  const ms = (end instanceof Date ? end.getTime() : NaN) - Date.now();
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  const s = Math.floor(ms / 1000);
+  return { d: Math.floor(s / 86400), hms: `${pad2(Math.floor((s / 3600) % 24))}:${pad2(Math.floor((s / 60) % 60))}:${pad2(s % 60)}` };
+};
 
 // one editorial ballot row (party or abstain). role=radio, keyboard-operable.
 function VoteRow({
@@ -99,6 +112,21 @@ export default function BlossomVote({
   // hook must run before any early return (Rules of Hooks) — the single booth reads
   // its own config, so gc is only consumed by the multi branch below.
   const gc = useGlobalConfig() || {};
+
+  // live close-clock — hooks sit ABOVE the single-party dispatch so the hook order
+  // is stable. editorMode: compute once, no interval (the editor preview must not
+  // tick); single-party: the interval is skipped (the booth owns its own chrome).
+  const { ELECTION_END } = useMemo(
+    () => resolveElectionDates(gc),
+    [gc?.campaignStartAt, gc?.electionStartAt, gc?.electionEndAt]
+  );
+  const [closeIn, setCloseIn] = useState(() => fmtCloseIn(ELECTION_END));
+  useEffect(() => {
+    if (editorMode || isSingleParty) { setCloseIn(fmtCloseIn(ELECTION_END)); return undefined; }
+    setCloseIn(fmtCloseIn(ELECTION_END));
+    const id = setInterval(() => setCloseIn(fmtCloseIn(ELECTION_END)), 1000);
+    return () => clearInterval(id);
+  }, [editorMode, isSingleParty, ELECTION_END]);
 
   // SINGLE-PARTY booth (T3.3) — dispatch the calm Candy Editorial booth, the same
   // recipe as VerdureVote -> VerdureSingleParty. onConfirm is the direct submit.
@@ -170,6 +198,23 @@ export default function BlossomVote({
           <span className="bl-vote-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-vote-voter__row"><b>ID</b>{sid}</span>
           <span className="bl-vote-voter__row"><b>BALLOT</b>{count} {count === 1 ? "PARTY" : "PARTIES"}</span>
+          {/* live close-clock — pushed to the right as a status. The Thai runs use
+              --bl-fb (bl-thai); only the HH:MM:SS digits stay mono tabular. Each
+              ticking text node's DIRECT owner carries suppressHydrationWarning (SSR
+              + first client render land a second apart by nature). */}
+          {closeIn && (
+            <span className="bl-vote-voter__row bl-vote-cd">
+              <span className="bl-vote-cd__dot" aria-hidden="true" />
+              <span className="bl-thai bl-thai--nw">ปิดรับใน</span>
+              {closeIn.d > 0 && (
+                <>
+                  <strong className="bl-vote-cd__t" suppressHydrationWarning>{closeIn.d}</strong>
+                  <span className="bl-thai bl-thai--nw">วัน</span>
+                </>
+              )}
+              <strong className="bl-vote-cd__t" suppressHydrationWarning>{closeIn.hms}</strong>
+            </span>
+          )}
         </div>
 
         {/* ===== ballot paper — the hero object: choices sit on a clean card so the
@@ -384,6 +429,13 @@ export default function BlossomVote({
         .bl-vote-root .bl-vote-voter__row { display:inline-flex; align-items:baseline; gap:9px;
           font-family:var(--bl-fm); font-size:12px; letter-spacing:.04em; color:var(--bl-ink); min-width:0; }
         .bl-vote-root .bl-vote-voter__row b { font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-faint); }
+        /* live close-clock — reads as a status: candy blip dot + a primary-deep
+           ticking numeral, pushed to the right of the mono meta strip */
+        .bl-vote-root .bl-vote-cd { margin-left:auto; gap:7px; }
+        .bl-vote-root .bl-vote-cd__dot { width:6px; height:6px; flex:none; border-radius:50%; background:var(--bl-primary);
+          animation:blVBlip 1.6s infinite; }
+        .bl-vote-root .bl-vote-cd__t { font-weight:700; color:var(--bl-primary-deep); letter-spacing:.06em;
+          font-variant-numeric:tabular-nums; }
 
         /* ---- ballot paper card (the hero object on the page) ---- */
         .bl-vote-root .bl-vpaper { margin-top:36px; background:var(--bl-card); border:1.5px solid var(--bl-ink);
