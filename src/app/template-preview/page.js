@@ -353,25 +353,19 @@ function PreviewBody() {
         // every non-revealed load — the "COUNTING · WHO WILL WIN?" lock card was
         // unreachable). studio-dark/verdure untouched — still locked(default)|revealed.
         const gumroadCounting = family === 'gumroad' && variant === 'counting';
-        // vd-B1D: mirror production results (app/results/page.js) — clicking a party
-        // opens the PartyDetailModal in place, it does NOT navigate to the party page.
-        // Reuses the shared detailParty/detailOpen state (results + vote never render
-        // at once). showVoteButton={false}: results is a read surface, not a ballot.
+        // RES-1: production results (app/results/page.js) is a read-only tally board —
+        // party rows are NOT links (no modal, no navigation). Mirror that here.
         return frame(
-          <>
-            <R
-              candidates={resultsCandidates(revealed, parties)}
-              totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
-              demographics={DEMOGRAPHICS}
-              finalStatus={revealed ? 'ENDED' : gumroadCounting ? 'ONGOING' : 'WAITING'}
-              isRevealed={revealed}
-              isNotStarted={!revealed && !gumroadCounting}
-              countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-              onSelectParty={(p) => { setDetailParty(p); setDetailOpen(true); }}
-              editorMode={false}
-            />
-            <PartyDetailModal party={detailParty} isOpen={detailOpen} onClose={() => setDetailOpen(false)} showVoteButton={false} />
-          </>
+          <R
+            candidates={resultsCandidates(revealed, parties)}
+            totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
+            demographics={DEMOGRAPHICS}
+            finalStatus={revealed ? 'ENDED' : gumroadCounting ? 'ONGOING' : 'WAITING'}
+            isRevealed={revealed}
+            isNotStarted={!revealed && !gumroadCounting}
+            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            editorMode={false}
+          />
         );
       }
       if (page === 'success') {
@@ -624,23 +618,19 @@ function PreviewBody() {
         // revealed → ranking + demographics; otherwise the LOCKED embargo band (the
         // real election-day state: polls open, scores sealed, turnout public).
         const revealed = variant === 'revealed';
-        // vd-B1D: same as the other families — a party click opens PartyDetailModal
-        // in place (production parity), never navigates to the party page.
+        // RES-1: results is a read-only tally board — party rows are NOT links
+        // (no modal, no navigation), matching production app/results/page.js.
         return (
-          <>
-            <BlossomResults
-              candidates={resultsCandidates(revealed, parties)}
-              totalVotes={revealed ? 625 : 418}
-              demographics={DEMOGRAPHICS}
-              finalStatus={revealed ? 'ENDED' : 'ONGOING'}
-              isRevealed={revealed}
-              isNotStarted={false}
-              countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-              onSelectParty={(p) => { setDetailParty(p); setDetailOpen(true); }}
-              editorMode={false}
-            />
-            <PartyDetailModal party={detailParty} isOpen={detailOpen} onClose={() => setDetailOpen(false)} showVoteButton={false} />
-          </>
+          <BlossomResults
+            candidates={resultsCandidates(revealed, parties)}
+            totalVotes={revealed ? 625 : 418}
+            demographics={DEMOGRAPHICS}
+            finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+            isRevealed={revealed}
+            isNotStarted={false}
+            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            editorMode={false}
+          />
         );
       }
       if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
@@ -775,7 +765,6 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={!revealed && !gumroadCounting}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-          onSelectParty={noop}
         />
       );
     }
@@ -824,7 +813,6 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-          onSelectParty={noop}
           editorMode
         />
       );

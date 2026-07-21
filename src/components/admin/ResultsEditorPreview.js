@@ -54,7 +54,6 @@ export default function ResultsEditorPreview({
         isRevealed={isRevealed}
         isNotStarted={isNotStarted}
         countdownText=""
-        onSelectParty={() => {}}
       />
     );
   }
@@ -127,7 +126,6 @@ export default function ResultsEditorPreview({
               totalVotes={totalVotes}
               status={status}
               isRevealed={isRevealed}
-              onClick={() => {}}
             />
           ))}
         </div>

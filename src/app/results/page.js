@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import ResultCard from "../../components/ResultCard";
-import PartyDetailModal from "../../components/PartyDetailModal";
 import ResultsStatsBar from "../../components/ResultsStatsBar";
 import ResultsDemographics from "../../components/ResultsDemographics";
 import SiteFooter from "../../components/SiteFooter";
@@ -55,7 +54,6 @@ export default function ResultsPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedParty, setSelectedParty] = useState(null);
   const [isRevealed, setIsRevealed] = useState(false); // ✅ สถานะบังคับเปิดเผยข้อมูล
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
@@ -395,7 +393,6 @@ export default function ResultsPage() {
           isRevealed={isRevealed}
           isNotStarted={isNotStarted}
           countdownText={mounted ? countdownText : ""}
-          onSelectParty={(c) => setSelectedParty(c)}
         />
       )}
 
@@ -409,7 +406,6 @@ export default function ResultsPage() {
           isRevealed={isRevealed}
           isNotStarted={isNotStarted}
           countdownText={mounted ? countdownText : ""}
-          onSelectParty={(c) => setSelectedParty(c)}
         />
       )}
 
@@ -437,7 +433,6 @@ export default function ResultsPage() {
           isRevealed={isRevealed}
           isNotStarted={isNotStarted}
           countdownText={mounted ? countdownText : ""}
-          onSelectParty={(c) => setSelectedParty(c)}
         />
       )}
 
@@ -451,7 +446,6 @@ export default function ResultsPage() {
           isRevealed={isRevealed}
           isNotStarted={isNotStarted}
           countdownText={mounted ? countdownText : ""}
-          onSelectParty={(c) => setSelectedParty(c)}
         />
       )}
 
@@ -461,13 +455,6 @@ export default function ResultsPage() {
         <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
-      )}
-
-      {selectedParty && (
-        <PartyDetailModal
-          party={selectedParty}
-          onClose={() => setSelectedParty(null)}
-        />
       )}
 
       {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
@@ -563,7 +550,6 @@ export default function ResultsPage() {
                       totalVotes={totalVotes}
                       status={finalStatus}
                       isRevealed={isRevealed} // ✅ ส่งสถานะเปิดเผยไปที่การ์ด
-                      onClick={() => setSelectedParty(candidate)}
                     />
                   ))}
                 </div>

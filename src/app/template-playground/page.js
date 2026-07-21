@@ -66,7 +66,6 @@ import ReceiptClosed from '../../components/vote/ReceiptClosed';
 // shared confirm popup for the blossom MULTI ballot (owned by the parent, exactly
 // as /template-preview interact + the real vote/page.js compose it).
 import VoteConfirmationModal from '../../components/VoteConfirmationModal';
-import PartyDetailModal from '../../components/PartyDetailModal';
 
 import { DUMMY_USER } from '../../utils/editorDummyData';
 import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
@@ -121,7 +120,6 @@ function PlaygroundBody() {
   const [single, setSingle] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false); // blossom MULTI shared popup
-  const [detailParty, setDetailParty] = useState(null); // vd-B1D: results party-detail modal
   const [barOpen, setBarOpen] = useState(true);
 
   // ?parties=N — DB-free multi-party harness (v2-R9), same contract as /template-preview.
@@ -220,17 +218,14 @@ function PlaygroundBody() {
     // blossom/receipt LOCKED = the election-day embargo band (polls open, scores
     // sealed, turnout public) — not the "not started" empty state. Mirror /template-preview.
     const embargo = family === 'blossom' || family === 'receipt';
-    // vd-B1D: production results (app/results/page.js) opens PartyDetailModal in place
-    // on a party click — it does NOT navigate to the party page. Mirror that here.
+    // RES-1: production results (app/results/page.js) is a read-only tally board —
+    // party rows are NOT links (no modal, no navigation). Mirror that here.
     content = (
-      <>
-        <R candidates={resultsCandidates(revealed, parties)}
-          totalVotes={revealed ? 625 : (embargo ? 418 : 0)} demographics={DEMOGRAPHICS}
-          finalStatus={revealed ? 'ENDED' : (embargo ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
-          isNotStarted={embargo ? false : !revealed}
-          countdownText={revealed ? '' : 'เหลืออีก 02:14:33'} onSelectParty={(p) => setDetailParty(p)} editorMode={false} />
-        <PartyDetailModal party={detailParty} isOpen={!!detailParty} onClose={() => setDetailParty(null)} showVoteButton={false} />
-      </>
+      <R candidates={resultsCandidates(revealed, parties)}
+        totalVotes={revealed ? 625 : (embargo ? 418 : 0)} demographics={DEMOGRAPHICS}
+        finalStatus={revealed ? 'ENDED' : (embargo ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
+        isNotStarted={embargo ? false : !revealed}
+        countdownText={revealed ? '' : 'เหลืออีก 02:14:33'} editorMode={false} />
     );
   } else if (page === 'success') {
     const S = map.success;

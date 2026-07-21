@@ -83,7 +83,7 @@ function BlTooltip({ active, payload, label }) {
 
 export default function BlossomResults({
   candidates = [], totalVotes = 0, demographics = {}, finalStatus = "WAITING",
-  isRevealed = false, isNotStarted = false, countdownText = "", onSelectParty = () => {}, editorMode = false,
+  isRevealed = false, isNotStarted = false, countdownText = "", editorMode = false,
 }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
@@ -256,11 +256,9 @@ export default function BlossomResults({
                       );
                       return (
                         <li key={c.id || i} className={cls}>
-                          {n > 0 ? (
-                            <button type="button" className="bl-rrow__link" onClick={() => onSelectParty(c)}>{inner}</button>
-                          ) : (
-                            <div className="bl-rrow__link bl-rrow__link--static">{inner}</div>
-                          )}
+                          {/* RES-1: standings are a read-only tally board — no party
+                              row is a link (owner decision, mirrors ReceiptResults) */}
+                          <div className="bl-rrow__link bl-rrow__link--static">{inner}</div>
                         </li>
                       );
                     })}
@@ -545,16 +543,12 @@ export default function BlossomResults({
         .bl-res-root .bl-rrow__link { width:100%; display:grid; grid-template-columns:auto 1fr; gap:8px 18px; align-items:center;
           padding:22px 8px; background:none; border:0; text-align:left; color:var(--bl-ink); font-family:inherit;
           transition:background .25s ease, padding-left .25s ease; }
-        .bl-res-root button.bl-rrow__link { cursor:pointer; }
-        .bl-res-root button.bl-rrow__link:hover { background:color-mix(in srgb, var(--bl-primary) 7%, var(--bl-canvas)); padding-left:16px; }
-        .bl-res-root button.bl-rrow__link:active { background:color-mix(in srgb, var(--bl-primary) 11%, var(--bl-canvas)); }
         .bl-res-root .bl-rrow__idx { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,20px);
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--bl-faint); width:38px; flex:none; align-self:start; padding-top:4px; }
         .bl-res-root .bl-rrow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .bl-res-root .bl-rrow__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-ink2); }
         .bl-res-root .bl-rrow__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        .bl-res-root button.bl-rrow__link:hover .bl-rrow__name { color:var(--bl-primary-deep); }
         .bl-res-root .bl-rrow__dia { width:14px; height:14px; flex:none; background:var(--bl-primary-deep); transform:rotate(45deg); }
         .bl-res-root .bl-rrow__tag { font-family:var(--bl-fm); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
           background:var(--bl-primary-deep); color:var(--bl-on-primary, var(--bl-card)); border-radius:999px; padding:4px 10px; }
@@ -648,7 +642,6 @@ export default function BlossomResults({
         /* ================= MOBILE (<=560): tighten ================= */
         @media (max-width:560px) {
           .bl-res-root .bl-rrow__link { padding:20px 6px; }
-          .bl-res-root button.bl-rrow__link:hover { padding-left:6px; }
           .bl-res-root .bl-res-lock { padding:56px 20px 60px; }
         }
 

@@ -67,7 +67,7 @@ function RevealScoreLine({ score, pct, suffix = "" }) {
 
 export default function VerdureResults({
   candidates = [], totalVotes = 0, demographics = {}, finalStatus = "WAITING",
-  isRevealed = false, isNotStarted = false, countdownText = "", onSelectParty = () => {}, editorMode = false,
+  isRevealed = false, isNotStarted = false, countdownText = "", editorMode = false,
 }) {
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
@@ -164,9 +164,7 @@ export default function VerdureResults({
                 const isWin = revealed && (winner ? c === winner : (singleParty && approveWins != null && (approveWins ? c === parties[0] : c === disapprove)));
                 const w = revealed ? Math.max(pctOf(c), c.score > 0 ? 2 : 0) : LOCK_WIDTHS[i % LOCK_WIDTHS.length];
                 return (
-                  <div className={`vd-race__row ${isWin ? "is-win" : ""}`} key={c.id || i}
-                    onClick={() => { if (revealed && parseInt(c.number) > 0) onSelectParty(c); }}
-                    style={revealed && parseInt(c.number) > 0 ? { cursor: "pointer" } : undefined}>
+                  <div className={`vd-race__row ${isWin ? "is-win" : ""}`} key={c.id || i}>
                     <div className="vd-race__name">{labelOf(c)}{isWin && <span className="vd-race__tag">WINNER</span>}<small>{subOf(c)}</small></div>
                     {/* stagger delay ONLY on revealed fills — embargoed placeholder bars keep the static LOCK_WIDTHS render, no animation */}
                     <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={revealed ? { width: `${w}%`, animationDelay: `${i * 100}ms` } : { width: `${w}%` }} /></div>

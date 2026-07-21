@@ -64,7 +64,6 @@ export default function StudioDarkResults({
   isRevealed = false,
   isNotStarted = false,
   countdownText = "",
-  onSelectParty = () => {},
   editorMode = false,
 }) {
   const globalConfig = useGlobalConfig();
@@ -233,8 +232,6 @@ export default function StudioDarkResults({
                 <div
                   className={`sdr-race__row ${isWin ? "is-winner" : ""}`}
                   key={c.id || i}
-                  onClick={() => { if (revealed && parseInt(c.number) > 0) onSelectParty(c); }}
-                  style={revealed && parseInt(c.number) > 0 ? { cursor: "pointer" } : undefined}
                 >
                   <div className="sdr-race__name">
                     {labelOf(c)}{isWin && <span className="sdr-win-tag">WINNER</span>}

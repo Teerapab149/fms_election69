@@ -132,7 +132,6 @@ export default function GumroadResults({
   isRevealed = false,
   isNotStarted = false,
   countdownText = "",
-  onSelectParty = () => {},
   editorMode = false,
 }) {
   const globalConfig = useGlobalConfig();
@@ -261,14 +260,16 @@ export default function GumroadResults({
                       {restCards.map((c, i) => {
                         const isParty = parseInt(c.number) > 0;
                         const color = isParty ? getPartyColor(c, c.number - 1) : "#C9C4BE";
+                        // RES-1: read-only tally board — standings rows are not
+                        // links (owner decision, mirrors ReceiptResults)
                         return (
-                          <button type="button" className="gr-rank" key={c.id} onClick={() => onSelectParty(c)}>
+                          <div className="gr-rank" key={c.id}>
                             <div className="gr-rank__name">{c.name}<small>{labelOf(c)}</small></div>
                             {/* fill carries its REAL width inline (no-JS/reduced-motion safe);
                                 --real only staggers a 0→width grow via animationDelay */}
                             <div className="gr-rank__track"><div className={`gr-rank__fill${anim ? " gr-rank__fill--real" : ""}`} style={{ width: `${Math.max(pctOf(c), 2)}%`, background: color, animationDelay: `${i * 90}ms` }} /></div>
                             <div className="gr-rank__pct tabular"><RevealPct value={pctOf(c)} enabled={anim} /></div>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -464,8 +465,7 @@ export default function GumroadResults({
         .gr-winner__votes{ font-family:var(--fm); font-size:13px; font-weight:600; color:var(--ink2); margin-top:2px; }
 
         .gr-ranks{ display:flex; flex-direction:column; gap:12px; }
-        .gr-rank{ display:grid; grid-template-columns:200px 1fr 64px; gap:16px; align-items:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 18px; cursor:pointer; font-family:inherit; color:inherit; text-align:left; transition:transform .12s ease-out, box-shadow .12s ease-out; }
-        .gr-rank:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
+        .gr-rank{ display:grid; grid-template-columns:200px 1fr 64px; gap:16px; align-items:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 18px; font-family:inherit; color:inherit; text-align:left; }
         .gr-rank__name{ font-weight:700; font-size:15px; } .gr-rank__name small{ display:block; font-family:var(--fm); font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; font-weight:600; }
         .gr-rank__track{ height:24px; background:var(--cream2); border:2px solid var(--ink); border-radius:999px; overflow:hidden; }
         .gr-rank__fill{ height:100%; border-right:2px solid var(--ink); background-image:repeating-linear-gradient(45deg,transparent 0 8px,rgba(255,255,255,.4) 8px 10px); }

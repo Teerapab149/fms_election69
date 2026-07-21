@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trophy, Users, Ban, UserX, Activity, Lock, Clock } from "lucide-react";
 import { getPath } from "../utils/basePath";
 
-export default function ResultCard({ candidate, rank, totalVotes, status, isRevealed, onClick }) {
+export default function ResultCard({ candidate, rank, totalVotes, status, isRevealed }) {
   const [imageError, setImageError] = useState(false);
 
   // ✅ 1. แยกสถานะ (รับค่า status ที่คำนวณมาจาก Config ในหน้า Page)
@@ -48,7 +48,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
       <img
         src={imageSrc}
         alt={candidate.name}
-        className="object-contain w-full h-full bg-white p-1 group-hover:scale-105 transition-transform duration-500"
+        className="object-contain w-full h-full bg-white p-1"
         onError={() => setImageError(true)}
       />
     );
@@ -68,19 +68,18 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
 
   return (
     <div
-      onClick={onClick}
       className={`
-        group relative cursor-pointer overflow-hidden bg-white transition-all duration-300
-        
+        group relative overflow-hidden bg-white transition-all duration-300
+
         /* Layout Mobile: แนวนอน */
         flex ${isWinner ? 'flex-col rounded-2xl border shadow-sm mb-2' : 'flex-row items-center border-b border-slate-100 last:border-0 rounded-none py-2'}
-        
+
         /* Layout Desktop: แนวตั้ง (Card) */
         lg:flex-col lg:items-stretch lg:rounded-2xl lg:border lg:shadow-none lg:py-0 lg:mb-0
-        
+
         ${isWinner
           ? 'border-yellow-400 ring-2 ring-yellow-400/20 shadow-yellow-100 z-10'
-          : 'hover:bg-slate-50 lg:hover:border-[color-mix(in_srgb,var(--color-primary)_22%,white)]'
+          : ''
         }
       `}
     >
@@ -119,7 +118,7 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
       `}>
         <div className="flex justify-between items-start mb-1 lg:mb-3 gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className={`font-bold text-slate-800 truncate leading-tight group-hover:text-[var(--color-primary,#8A2680)] transition-colors ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
+            <h3 className={`font-bold text-slate-800 truncate leading-tight ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
               {candidate.name || "ไม่ระบุชื่อพรรค"}
             </h3>
             <div className="flex items-center gap-2 mt-0.5 text-slate-500">
