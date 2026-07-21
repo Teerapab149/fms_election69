@@ -30,47 +30,64 @@ export const GLOBAL_CONFIG_DEFAULTS = {
 
 /**
  * Field metadata for admin form. Groups + labels.
+ *
+ * Optional UI-only keys (read defensively by GlobalConfigTab — absence is safe,
+ * never affects saved data): `icon` (lucide name for the section header),
+ * `desc` (one-line section subtitle), `preview` (id → live composed-output chip
+ * row rendered by the tab), and per-field `col` ("full" spans both grid columns;
+ * default "half" pairs short fields side by side).
  */
 export const GLOBAL_CONFIG_FIELDS = [
   {
     group: "ข้อมูลการเลือกตั้ง",
+    icon: "Vote",
+    desc: "ชื่อและปีของการเลือกตั้งครั้งนี้",
+    preview: "election",
     fields: [
-      { key: "electionName", label: "ชื่อการเลือกตั้ง (เต็ม)", type: "text", hint: "เช่น SAMO 49" },
-      { key: "electionNamePrefix", label: "ชื่อย่อ", type: "text", hint: "เช่น SAMO (ส่วนหน้า)" },
-      { key: "electionNumber", label: "เลขครั้งที่", type: "number", hint: "เช่น 49" },
-      { key: "academicYearTh", label: "ปีการศึกษา (พ.ศ.)", type: "number", hint: "เช่น 2569" },
-      { key: "electionCalendarYear", label: "ปีการเลือกตั้ง (ค.ศ.)", type: "number", hint: "เช่น 2026" },
+      { key: "electionName", label: "ชื่อการเลือกตั้ง (เต็ม)", type: "text", col: "full", hint: "ชื่อที่โชว์เป็นหัวเรื่องหลัก เช่น SAMO 50" },
+      { key: "electionNamePrefix", label: "ชื่อย่อ", type: "text", col: "half", hint: "ตัวอักษรนำหน้า เช่น SAMO" },
+      { key: "electionNumber", label: "เลขครั้งที่", type: "number", col: "half", hint: "ครั้งที่จัด เช่น 50 — รวมกับชื่อย่อเป็นป้าย “SAMO 50”" },
+      { key: "academicYearTh", label: "ปีการศึกษา (พ.ศ.)", type: "number", col: "half", hint: "แบบ พ.ศ. เช่น 2570" },
+      { key: "electionCalendarYear", label: "ปีการเลือกตั้ง (ค.ศ.)", type: "number", col: "half", hint: "แบบ ค.ศ. เช่น 2027" },
     ],
   },
   {
     group: "ข้อมูลโครงการ",
+    icon: "FolderOpen",
+    desc: "ชื่อโครงการและคณะกรรมการที่จัดการเลือกตั้ง",
     fields: [
-      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", multiline: true, hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร · กด Enter เพื่อขึ้นบรรทัดใหม่เอง" },
-      { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", hint: "เช่น คณะกรรมการบริหาร" },
+      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", multiline: true, col: "full", hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร · กด Enter เพื่อขึ้นบรรทัดใหม่เอง" },
+      { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", col: "full", hint: "เช่น คณะกรรมการบริหาร" },
     ],
   },
   {
     group: "ข้อมูลองค์กร",
+    icon: "Building2",
+    desc: "ชื่อสโมสร คณะ และมหาวิทยาลัย",
     fields: [
-      { key: "organizationName", label: "ชื่อองค์กร (เต็ม)", type: "text", hint: "เช่น สโมสรนักศึกษาคณะวิทยาการจัดการ" },
-      { key: "organizationShort", label: "ชื่อย่อ", type: "text", hint: "เช่น สโมสรนักศึกษา" },
-      { key: "facultyName", label: "ชื่อคณะ", type: "text", hint: "เช่น คณะวิทยาการจัดการ" },
-      { key: "facultyShortEn", label: "ชื่อคณะ (อักษรย่อ EN)", type: "text", hint: "เช่น FMS" },
-      { key: "university", label: "มหาวิทยาลัย", type: "text", hint: "เช่น PSU" },
+      { key: "organizationName", label: "ชื่อองค์กร (เต็ม)", type: "text", col: "full", hint: "เช่น สโมสรนักศึกษาคณะวิทยาการจัดการ" },
+      { key: "organizationShort", label: "ชื่อย่อ", type: "text", col: "half", hint: "เช่น สโมสรนักศึกษา" },
+      { key: "facultyName", label: "ชื่อคณะ", type: "text", col: "half", hint: "เช่น คณะวิทยาการจัดการ" },
+      { key: "facultyShortEn", label: "ชื่อคณะ (อักษรย่อ EN)", type: "text", col: "half", hint: "เช่น FMS" },
+      { key: "university", label: "มหาวิทยาลัย", type: "text", col: "half", hint: "เช่น PSU" },
     ],
   },
   {
-    group: "ช่วงเวลาเลือกตั้ง (Election Schedule)",
+    group: "ช่วงเวลาเลือกตั้ง",
+    icon: "CalendarClock",
+    desc: "วันเวลาเปิด-ปิด · ใช้เฉพาะโหมด AUTO (เว้นว่าง = ใช้ค่าในโค้ด)",
     fields: [
-      { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร (Campaign)", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
-      { key: "electionStartAt", label: "เปิดหีบ / เริ่มลงคะแนน", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
-      { key: "electionEndAt", label: "ปิดหีบ / สิ้นสุดลงคะแนน", type: "datetime", hint: "ว่าง = ใช้ค่าเริ่มต้นในโค้ด · ใช้เฉพาะโหมด AUTO" },
+      { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร", type: "datetime", col: "half", hint: "วันเวลาเริ่มเผยแพร่ผู้สมัคร" },
+      { key: "electionStartAt", label: "เปิดหีบ / เริ่มลงคะแนน", type: "datetime", col: "half", hint: "วันเวลาเริ่มโหวต" },
+      { key: "electionEndAt", label: "ปิดหีบ / สิ้นสุดลงคะแนน", type: "datetime", col: "half", hint: "วันเวลาปิดโหวต" },
     ],
   },
   {
     group: "ลิขสิทธิ์",
+    icon: "Copyright",
+    desc: "ปีสำหรับข้อความลิขสิทธิ์ท้ายเว็บ",
     fields: [
-      { key: "copyrightYear", label: "ปีลิขสิทธิ์ (ค.ศ.)", type: "number", hint: "เช่น 2026 (สำหรับ © FMS@PSU 2026)" },
+      { key: "copyrightYear", label: "ปีลิขสิทธิ์ (ค.ศ.)", type: "number", col: "half", hint: "เช่น 2027 (สำหรับ © FMS@PSU 2027)" },
     ],
   },
 ];
