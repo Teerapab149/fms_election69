@@ -825,8 +825,9 @@ const SettingsTab = () => {
             <p className="text-xs text-slate-500 mt-1">
               คะแนนจะเปิดให้ดูในหน้าผลคะแนนก็ต่อเมื่อเปิดสวิตช์นี้เท่านั้น · ปิดหีบอย่างเดียวยังไม่แสดงผล
             </p>
-            <p className="text-[11px] font-bold text-purple-600 mt-1">
-              เปิดระหว่างช่วงโหวตได้ ถ้าต้องการโชว์ผลแบบ Real-time
+            <p className="text-[11px] font-bold text-amber-600 mt-1.5 flex items-start gap-1 leading-relaxed break-words">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              ไม่ควรเปิดระหว่างที่ยังเปิดให้ลงคะแนน เพราะคะแนนที่เห็นระหว่างทางอาจชี้นำคนที่ยังไม่ได้โหวต ทำให้การเลือกตั้งไม่ยุติธรรม · ปลอดภัยเมื่อเปิดหลังปิดหีบแล้ว
             </p>
           </div>
 
