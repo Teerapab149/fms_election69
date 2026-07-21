@@ -14,7 +14,7 @@ import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -542,19 +542,35 @@ const ReadinessCard = () => {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-start justify-between gap-3">
+          <span className="min-w-0">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            title="ปิดข้อความนี้"
+            className="shrink-0 text-red-400 hover:text-red-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {result && (
         <div>
-          {/* สรุปหัว */}
+          {/* สรุปหัว + ปุ่มปิดผลการตรวจ (ผลยาว ไม่ควรค้างเต็มหน้าจอ) */}
           <div className="flex flex-wrap items-center gap-3 mb-4 text-sm font-bold">
             <span className="flex items-center gap-1.5 text-emerald-600"><CheckCircle2 className="w-4 h-4" /> ผ่าน {result.summary.pass}</span>
             <span className="flex items-center gap-1.5 text-amber-600"><AlertTriangle className="w-4 h-4" /> เตือน {result.summary.warn}</span>
             <span className="flex items-center gap-1.5 text-red-600"><XCircle className="w-4 h-4" /> ไม่ผ่าน {result.summary.fail}</span>
+            <button
+              onClick={() => setResult(null)}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+              ปิดผลการตรวจ
+            </button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[26rem] overflow-y-auto pr-1">
             {result.checks.map((c) => {
               const lv = READINESS_LEVEL[c.level] || READINESS_LEVEL.warn;
               const Icon = lv.Icon;
@@ -579,9 +595,63 @@ const ReadinessCard = () => {
   );
 };
 
+// ── ADM-SETTINGS · โหมดระบบ 4 แบบ ────────────────────────────────────────────
+// แหล่งเดียวของทั้งปุ่มเลือกโหมดและการ์ดคำอธิบาย เพื่อไม่ให้ข้อความสองที่หลุดจากกัน.
+// คำอธิบายอิงพฤติกรรมจริง: SET_MODE เขียน SystemConfig.systemMode แล้ว
+// resolveElectionDates()/check-status เอาไปตัดสินว่าหีบเปิดหรือปิด.
+const SYSTEM_MODES = [
+  {
+    id: 'AUTO',
+    label: 'AUTO (อัตโนมัติ)',
+    color: 'bg-green-500',
+    dot: 'bg-green-500',
+    ring: 'border-green-300 bg-green-50',
+    text: 'text-green-700',
+    Icon: CalendarDays,
+    status: 'ระบบทำงานอัตโนมัติตามกำหนดเวลา',
+    when: 'ใช้เมื่อกำหนดการแน่นอนแล้ว — ระบบดูวันเวลาใน “ตั้งค่าทั่วไป” แล้วเปิด-ปิดหีบเอง (โหมดปกติ)',
+    students: 'หน้านับถอยหลังก่อนถึงเวลา แล้วโหวตได้เองเมื่อถึงเวลาเปิดหีบ',
+  },
+  {
+    id: 'MANUAL_OPEN',
+    label: 'OPEN (เปิดระบบ)',
+    color: 'bg-blue-600',
+    dot: 'bg-blue-600',
+    ring: 'border-blue-300 bg-blue-50',
+    text: 'text-blue-700',
+    Icon: Zap,
+    status: 'เปิดรับคะแนนด้วยตนเอง (Force Open)',
+    when: 'ใช้เมื่อต้องเปิดก่อนกำหนดหรือนอกเวลาที่ตั้งไว้ หรือใช้ทดสอบระบบ — บังคับเปิดรับคะแนนทันที ไม่สนวันเวลาที่ตั้งไว้',
+    students: 'หน้าลงคะแนนทันที แม้ยังไม่ถึงเวลาเปิดหีบตามกำหนด',
+  },
+  {
+    id: 'PAUSE',
+    label: 'PAUSE (ระงับ)',
+    color: 'bg-orange-500',
+    dot: 'bg-orange-500',
+    ring: 'border-orange-300 bg-orange-50',
+    text: 'text-orange-700',
+    Icon: Hourglass,
+    status: 'ระงับการโหวตชั่วคราว (maintenance)',
+    when: 'ใช้เมื่อต้องแก้ข้อมูลกลางคันหรือระบบมีปัญหา แล้วจะกลับมาเปิดต่อ — หยุดรับคะแนนชั่วคราว',
+    students: 'หน้าพักระบบ โหวตไม่ได้จนกว่าจะเปลี่ยนโหมดกลับ',
+  },
+  {
+    id: 'ENDED',
+    label: 'ENDED (ปิดระบบ)',
+    color: 'bg-red-500',
+    dot: 'bg-red-500',
+    ring: 'border-red-300 bg-red-50',
+    text: 'text-red-700',
+    Icon: Power,
+    status: 'ปิดการเลือกตั้งอย่างเป็นทางการ',
+    when: 'ใช้เมื่อการเลือกตั้งจบแล้ว — ปิดหีบอย่างเป็นทางการ ไม่รับคะแนนอีก',
+    students: 'หน้าปิดหีบ และดูผลคะแนนได้เมื่อเปิดการแสดงผล',
+  },
+];
+
 const SettingsTab = () => {
   const [systemMode, setSystemMode] = useState("AUTO");
-  const [googleFormUrl, setGoogleFormUrl] = useState("");
   const [isShowResult, setIsShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -602,7 +672,6 @@ const SettingsTab = () => {
         const data = await res.json();
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
-          setGoogleFormUrl(data.stats.googleFormUrl || "");
           setIsShowResult(data.stats.showResult);
         }
       } catch (error) {
@@ -626,10 +695,6 @@ const SettingsTab = () => {
         body.mode = pendingMode;
       }
 
-      if (action === 'SET_GOOGLE_FORM') {
-        body.url = googleFormUrl;
-      }
-
       const res = await fetch(getPath('/api/admin/dashboard'), {
         method: 'POST',
         credentials: 'include',
@@ -643,8 +708,6 @@ const SettingsTab = () => {
         if (action === 'SET_MODE') {
           setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${pendingMode} เรียบร้อยแล้ว` });
           setSystemMode(pendingMode);
-        } else if (action === 'SET_GOOGLE_FORM') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'อัปเดตลิงก์ Google Form เรียบร้อยแล้ว' });
         } else if (action === 'TOGGLE_SHOW_RESULT') {
           setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
           setIsShowResult(!isShowResult);
@@ -674,6 +737,9 @@ const SettingsTab = () => {
     setActiveModal('SET_MODE');
   };
 
+  // โหมดที่ใช้อยู่ (fallback = AUTO ให้ตรงกับ default ฝั่ง API)
+  const activeMode = SYSTEM_MODES.find((m) => m.id === systemMode) || SYSTEM_MODES[0];
+
   return (
     <div className="space-y-6">
     <ReadinessCard />
@@ -693,12 +759,7 @@ const SettingsTab = () => {
             </div>
 
             <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200">
-              {[
-                { id: 'AUTO', label: 'AUTO (อัตโนมัติ)', color: 'bg-green-500', icon: <CalendarDays className="w-4 h-4" /> },
-                { id: 'MANUAL_OPEN', label: 'OPEN (เปิดระบบ)', color: 'bg-blue-600', icon: <Zap className="w-4 h-4" /> },
-                { id: 'PAUSE', label: 'PAUSE (ระงับ)', color: 'bg-orange-500', icon: <Hourglass className="w-4 h-4" /> },
-                { id: 'ENDED', label: 'ENDED (ปิดระบบ)', color: 'bg-red-500', icon: <Power className="w-4 h-4" /> }
-              ].map((m) => (
+              {SYSTEM_MODES.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => handleModeChange(m.id)}
@@ -708,7 +769,7 @@ const SettingsTab = () => {
                     : 'text-slate-500 hover:bg-slate-300 disabled:opacity-50'
                     }`}
                 >
-                  {m.icon}
+                  <m.Icon className="w-4 h-4" />
                   {m.label}
                 </button>
               ))}
@@ -716,44 +777,43 @@ const SettingsTab = () => {
           </div>
 
           {/* Current Status Badge */}
-          <div className="mt-6 flex items-center gap-3 py-3 px-4 bg-white/60 rounded-xl border border-dashed border-slate-200">
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 py-3 px-4 bg-white/60 rounded-xl border border-dashed border-slate-200">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status:</span>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${systemMode === 'AUTO' ? 'bg-green-500' :
-                systemMode === 'MANUAL_OPEN' ? 'bg-blue-600' :
-                  systemMode === 'PAUSE' ? 'bg-orange-500' : 'bg-red-500'
-                }`} />
-              <span className="text-sm font-black text-slate-700">
-                {systemMode === "AUTO" ? "ระบบทำงานอัตโนมัติตามกำหนดเวลา" :
-                  systemMode === "MANUAL_OPEN" ? "เปิดรับคะแนนด้วยตนเอง (Force Open)" :
-                    systemMode === "PAUSE" ? "ระงับการโหวตชั่วคราว ( maintenance )" : "ปิดการเลือกตั้งอย่างเป็นทางการ"}
-              </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`w-2 h-2 shrink-0 rounded-full animate-pulse ${activeMode.dot}`} />
+              <span className="text-sm font-black text-slate-700 break-words">{activeMode.status}</span>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-3 p-6 bg-slate-50 rounded-xl border border-slate-100">
-          <div className="w-full">
-            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
-              <LinkIcon className="w-5 h-5 text-indigo-600" />
-              Link Google Form
-            </h4>
-            <p className="text-xs text-slate-500 mb-2">ลิงก์สำหรับหน้าประเมินผล (Success Page)</p>
-            <input
-              type="text"
-              value={googleFormUrl}
-              onChange={(e) => setGoogleFormUrl(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              placeholder="https://docs.google.com/forms/..."
-            />
+          {/* ── คู่มือเลือกโหมด — โหมดไหนใช้กรณีไหน ─────────────────────────── */}
+          <div className="mt-5">
+            <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">แต่ละโหมดใช้ตอนไหน</h5>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {SYSTEM_MODES.map((m) => {
+                const isActive = systemMode === m.id;
+                return (
+                  <div
+                    key={m.id}
+                    className={`p-4 rounded-xl border transition-colors ${isActive ? `${m.ring} shadow-sm` : 'border-slate-200 bg-white'}`}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`w-2.5 h-2.5 shrink-0 rounded-full ${m.dot}`} />
+                      <span className={`text-sm font-black ${isActive ? m.text : 'text-slate-700'}`}>{m.label}</span>
+                      {isActive && (
+                        <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/80 border border-slate-200 text-slate-500 uppercase tracking-wider">
+                          ใช้อยู่ตอนนี้
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-600 mt-2 leading-relaxed break-words">{m.when}</p>
+                    <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed break-words">
+                      นักศึกษาเห็น {m.students}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <button
-            onClick={() => setActiveModal('SET_GOOGLE_FORM')}
-            className="shrink-0 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm shadow-md hover:bg-indigo-700 transition-all flex items-center gap-2"
-          >
-            <Save size={16} />
-            Save
-          </button>
         </div>
 
         <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
@@ -785,67 +845,111 @@ const SettingsTab = () => {
 
         <div className='p-3' />
 
-        <div className="flex items-center justify-between p-6 bg-red-50 rounded-xl border border-red-100 transition-colors hover:border-red-300">
-          <div>
-            <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              ล้างคะแนนโหวตทั้งหมด
-            </h4>
+        {/* ── โซนอันตราย — สามปุ่มที่ลบข้อมูลจริง รวมไว้กล่องเดียวพร้อมคำอธิบาย ──
+            คำอธิบายทุกบรรทัดอิงพฤติกรรมจริงใน /api/admin/dashboard (POST) ตรง ๆ
+            — ห้ามแก้ถ้อยคำให้หลุดจากสิ่งที่ route ทำจริง */}
+        <div className="rounded-2xl border-2 border-red-200 bg-red-50/40 overflow-hidden">
+          <div className="flex items-start gap-3 px-5 py-4 bg-red-50 border-b border-red-200">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
+            <div className="min-w-0">
+              <h4 className="text-base sm:text-lg font-black text-red-800 break-words">
+                โซนอันตราย · การกระทำที่กู้คืนไม่ได้
+              </h4>
+              <p className="text-xs text-red-700/70 mt-0.5 leading-relaxed break-words">
+                ทุกปุ่มในกล่องนี้เปลี่ยนข้อมูลจริงอย่างถาวร ไม่มีปุ่มย้อนกลับ อ่านคำอธิบายให้ครบก่อนกด
+              </p>
+            </div>
           </div>
 
-          <button
-            onClick={() => setActiveModal('RESET_VOTES')}
-            disabled={processing}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-          >
-            <Trash2 className="w-4 h-4" />
-            Reset
-          </button>
-        </div>
+          <div className="p-4 sm:p-5 space-y-3">
+            {/* RESET_VOTES — user.isVoted/votedAt reset (ปี 1-4), candidate.score = 0,
+                ballot.deleteMany, chainHead → GENESIS, ปลดธง ballotsAnonymized */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 sm:p-5 bg-white rounded-xl border border-red-100 transition-colors hover:border-red-300">
+              <div className="min-w-0">
+                <h5 className="text-base font-bold text-red-800 flex items-center gap-2 break-words">
+                  <Trash2 className="w-4 h-4 shrink-0" />
+                  ล้างคะแนนโหวตทั้งหมด
+                </h5>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
+                  ตั้งคะแนนทุกพรรคกลับเป็น 0 · คืนสิทธิ์โหวตให้นักศึกษาปี 1-4 ทุกคน (กลับไปโหวตใหม่ได้) · ล้างบัตรทั้งหมดในกล่องบัตรและรีเซ็ตโซ่ตรวจสอบกลับจุดเริ่มต้น · รายชื่อพรรคและสมาชิกยังอยู่ครบ
+                </p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
+                  ใช้เมื่อ ซ้อมระบบเสร็จแล้วต้องการล้างคะแนนทดสอบก่อนวันเลือกตั้งจริง
+                </p>
+                <p className="text-[11px] font-bold text-red-600 mt-1.5 leading-relaxed break-words">
+                  กู้คืนไม่ได้ · ต้องสั่งโหมด PAUSE หรือ ENDED ก่อน ระบบไม่ยอมให้ล้างขณะหีบเปิดอยู่
+                </p>
+              </div>
 
-        <div className='p-3' />
+              <button
+                onClick={() => setActiveModal('RESET_VOTES')}
+                disabled={processing}
+                className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+              >
+                <Trash2 className="w-4 h-4" />
+                Reset
+              </button>
+            </div>
 
-        <div className="flex items-center justify-between p-6 bg-red-50 rounded-xl border border-red-100 transition-colors hover:border-red-300">
-          <div>
-            <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              ล้างพรรคและสมาชิกทั้งหมด
-            </h4>
+            {/* RESET_CANDIDATES — member.deleteMany + candidate.deleteMany แล้วสร้าง
+                "งดออกเสียง" (number 0) ใหม่ + ล้างคะแนน/สิทธิ์/กล่องบัตรเหมือน RESET_VOTES */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 sm:p-5 bg-white rounded-xl border border-red-100 transition-colors hover:border-red-300">
+              <div className="min-w-0">
+                <h5 className="text-base font-bold text-red-800 flex items-center gap-2 break-words">
+                  <Trash2 className="w-4 h-4 shrink-0" />
+                  ล้างพรรคและสมาชิกทั้งหมด
+                </h5>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
+                  ลบพรรคและสมาชิกพรรคทุกรายการออกจากฐานข้อมูล แล้วสร้างตัวเลือก “งดออกเสียง” ขึ้นใหม่หนึ่งรายการ · คะแนน สิทธิ์โหวตของนักศึกษา และบัตรในกล่องบัตร ถูกล้างไปพร้อมกัน
+                </p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
+                  ใช้เมื่อ ขึ้นปีการศึกษาใหม่และต้องเริ่มกรอกรายชื่อพรรคชุดใหม่ทั้งหมด
+                </p>
+                <p className="text-[11px] font-bold text-red-600 mt-1.5 leading-relaxed break-words">
+                  กู้คืนไม่ได้ · รูปภาพ นโยบาย และข้อมูลสมาชิกที่กรอกไว้จะหายทั้งหมด · ต้องสั่งโหมด PAUSE หรือ ENDED ก่อน
+                </p>
+              </div>
+
+              <button
+                onClick={() => setActiveModal('RESET_CANDIDATES')}
+                disabled={processing}
+                className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+              >
+                <Trash2 className="w-4 h-4" />
+                Reset
+              </button>
+            </div>
+
+            {/* ANONYMIZE_BALLOTS (v2-SEC = ปักธงรับรองผล) — ต้อง ENDED/พ้นเวลาปิดหีบ
+                + showResult จึงจะผ่าน guard; ตั้ง globalConfig.ballotsAnonymized = true */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 sm:p-5 bg-white rounded-xl border border-indigo-100 transition-colors hover:border-indigo-300">
+              <div className="min-w-0">
+                <h5 className="text-base font-bold text-indigo-800 flex items-center gap-2 break-words">
+                  <Power className="w-4 h-4 shrink-0" />
+                  ลบข้อมูลการลงคะแนนรายบุคคล (รับรองผล)
+                </h5>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
+                  ปิดผลอย่างเป็นทางการ — ปักธงว่าคะแนนถูกล็อกแล้ว เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก · คะแนนรวมของทุกพรรคยังอยู่ครบ และบัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลว่า “ใครเลือกพรรคใด” เหลือให้ลบ
+                </p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
+                  ใช้เมื่อ ปิดหีบและเผยแพร่ผลเรียบร้อยแล้ว ต้องการรับรองผลเป็นครั้งสุดท้าย
+                </p>
+                <p className="text-[11px] font-bold text-indigo-600 mt-1.5 leading-relaxed break-words">
+                  กู้คืนไม่ได้ · กดได้เฉพาะหลังปิดหีบและเปิดการแสดงผลคะแนนแล้วเท่านั้น
+                </p>
+              </div>
+
+              <button
+                onClick={() => setActiveModal('ANONYMIZE_BALLOTS')}
+                disabled={processing || !isShowResult}
+                title={!isShowResult ? 'ต้องเผยแพร่ผลก่อน' : ''}
+                className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
+              >
+                <Power className="w-4 h-4" />
+                Anonymize
+              </button>
+            </div>
           </div>
-
-          <button
-            onClick={() => setActiveModal('RESET_CANDIDATES')}
-            disabled={processing}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-          >
-            <Trash2 className="w-4 h-4" />
-            Reset
-          </button>
-        </div>
-
-        <div className='p-3' />
-
-        {/* Ballot secrecy — anonymize after results are certified (irreversible) */}
-        <div className="flex items-center justify-between gap-4 p-6 bg-indigo-50 rounded-xl border border-indigo-100 transition-colors hover:border-indigo-300">
-          <div className="min-w-0">
-            <h4 className="text-lg font-bold text-indigo-800 flex items-center gap-2">
-              <Power className="w-5 h-5" />
-              ลบข้อมูลการลงคะแนนรายบุคคล
-            </h4>
-            <p className="text-xs text-indigo-500 mt-1">
-              ลบความเชื่อมโยง “ใครเลือกพรรคใด” อย่างถาวร (คะแนนรวมยังอยู่ครบ) — ทำได้หลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น
-            </p>
-          </div>
-
-          <button
-            onClick={() => setActiveModal('ANONYMIZE_BALLOTS')}
-            disabled={processing || !isShowResult}
-            title={!isShowResult ? 'ต้องเผยแพร่ผลก่อน' : ''}
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
-          >
-            <Power className="w-4 h-4" />
-            Anonymize
-          </button>
         </div>
       </div>
 
@@ -915,15 +1019,6 @@ const SettingsTab = () => {
         isLoading={processing}
       />
 
-      <ConfirmModal
-        isOpen={activeModal === 'SET_GOOGLE_FORM'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title="บันทึกลิงก์ Google Form?"
-        message={`ต้องการอัปเดตลิงก์ Google Form ใช่หรือไม่?`}
-        variant="primary"
-        isLoading={processing}
-      />
     </div >
     </div>
   )

@@ -26,6 +26,11 @@ export const GLOBAL_CONFIG_DEFAULTS = {
   // Calendar years
   electionCalendarYear: 2026,
   copyrightYear: 2026,
+
+  // Success-page evaluation form (stored in the SystemConfig.googleFormUrl
+  // COLUMN, not this JSON blob — bridged through the global-config API so it
+  // shows up as a general-settings field while readers keep reading the column)
+  googleFormUrl: "",
 };
 
 /**
@@ -74,6 +79,15 @@ export const GLOBAL_CONFIG_FIELDS = [
       { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร", type: "datetime", col: "half", hint: "วันเวลาเริ่มเผยแพร่ผู้สมัคร" },
       { key: "electionStartAt", label: "เปิดหีบ / เริ่มลงคะแนน", type: "datetime", col: "half", hint: "วันเวลาเริ่มโหวต" },
       { key: "electionEndAt", label: "ปิดหีบ / สิ้นสุดลงคะแนน", type: "datetime", col: "half", hint: "วันเวลาปิดโหวต" },
+    ],
+  },
+  {
+    group: "หน้าประเมินผล · แบบฟอร์ม",
+    icon: "Link",
+    desc: "ลิงก์ Google Form ที่แสดงบนหน้าขอบคุณหลังลงคะแนน — ตั้งครั้งเดียว",
+    preview: "form",
+    fields: [
+      { key: "googleFormUrl", label: "ลิงก์ Google Form", type: "text", col: "full", hint: "แบบประเมินที่นักศึกษาเห็นบนหน้าขอบคุณหลังโหวตเสร็จ · เว้นว่าง = ไม่แสดงปุ่มประเมิน" },
     ],
   },
   {

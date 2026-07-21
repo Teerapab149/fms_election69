@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Save, Loader2, CheckCircle2, RotateCcw, Eye,
-  Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2,
+  Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2, Link,
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { getPath } from "../../utils/basePath";
@@ -12,7 +12,7 @@ import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../util
 
 // section-header icons (metadata carries the NAME so the data module stays
 // component-free); falls back to a neutral glyph if a group has none.
-const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright };
+const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright, Link };
 
 // electionName is no longer an editable field — it is auto-derived from the
 // prefix + number on save so it can never drift from the "SAMO 50" badge.
@@ -200,6 +200,16 @@ export default function GlobalConfigTab() {
             );
           })}
         </div>
+      );
+    } else if (id === "form") {
+      const url = String(config.googleFormUrl ?? "").trim();
+      body = url ? (
+        <div className="text-xs text-slate-600 break-all leading-relaxed">
+          ปุ่มบนหน้าขอบคุณจะพาไปที่{" "}
+          <span className="font-semibold text-[#8A2680]">{url}</span>
+        </div>
+      ) : (
+        <div className="text-xs text-slate-400">(ยังไม่ตั้ง) — หน้าขอบคุณจะไม่แสดงปุ่มประเมิน</div>
       );
     } else if (id === "copyright") {
       const t = (v) => String(v ?? "").trim() || "—";
