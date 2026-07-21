@@ -563,7 +563,7 @@ const ReadinessCard = () => {
             <span className="flex items-center gap-1.5 text-red-600"><XCircle className="w-4 h-4" /> ไม่ผ่าน {result.summary.fail}</span>
             <button
               onClick={() => setResult(null)}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-colors max-md:min-h-[40px] max-md:px-4"
             >
               <X className="w-3.5 h-3.5" />
               ปิดผลการตรวจ
@@ -758,13 +758,16 @@ const SettingsTab = () => {
               <p className="text-sm text-slate-500">เลือกโหมดการทำงานของระบบให้เหมาะสมกับสถานการณ์ปัจจุบัน</p>
             </div>
 
-            <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200">
+            {/* ADM-MOBILE: <768px the four buttons become a full-width stack (1 col
+                <640, 2 cols 640-767) so each stays a comfortable tap target instead
+                of a ragged left-aligned pile. max-md: only → desktop CSS untouched. */}
+            <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200 max-md:grid max-md:grid-cols-1 sm:max-md:grid-cols-2">
               {SYSTEM_MODES.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => handleModeChange(m.id)}
                   disabled={systemMode === m.id || processing} // ✅ Disable if same mode or processing
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${systemMode === m.id
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all max-md:justify-center ${systemMode === m.id
                     ? `${m.color} text-white shadow-lg cursor-default`
                     : 'text-slate-500 hover:bg-slate-300 disabled:opacity-50'
                     }`}
@@ -816,7 +819,9 @@ const SettingsTab = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
+        {/* ADM-MOBILE: <768px this stacks — the row layout squeezed the copy into a
+            ~113px column and shrank the 64px toggle track to 45px (knob spilled out). */}
+        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100 max-md:flex-col max-md:items-start max-md:gap-5">
           <div>
             <h4 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <PieIcon className="w-5 h-5 text-purple-600" />
@@ -831,7 +836,7 @@ const SettingsTab = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 max-md:w-full max-md:justify-between">
             <span className={`text-sm font-bold transition-colors ${isShowResult ? 'text-green-600' : 'text-red-500'}`}>
               {loading ? '' : (isShowResult ? '🟢 แสดงผล' : '🔴 ซ่อนผล')}
             </span>
@@ -840,7 +845,7 @@ const SettingsTab = () => {
               <button
                 onClick={() => setActiveModal('TOGGLE_SHOW_RESULT')}
                 disabled={loading || processing}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isShowResult ? 'bg-green-500' : 'bg-gray-300'
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shrink-0 max-md:before:absolute max-md:before:-inset-1.5 max-md:before:content-[''] ${isShowResult ? 'bg-green-500' : 'bg-gray-300'
                   } ${processing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
               >
                 <span className={`${isShowResult ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
@@ -1116,7 +1121,7 @@ export default function AdminDashboard() {
           {/* mobile close */}
           <button
             onClick={() => setMobileNavOpen(false)}
-            className="md:hidden ml-auto flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="md:hidden ml-auto shrink-0 flex items-center justify-center w-10 h-10 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1161,7 +1166,7 @@ export default function AdminDashboard() {
             {/* mobile hamburger */}
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 hover:bg-slate-100"
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-slate-600 hover:bg-slate-100"
             >
               <Menu className="w-5 h-5" />
             </button>
