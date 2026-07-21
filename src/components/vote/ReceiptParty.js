@@ -274,7 +274,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-party-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 

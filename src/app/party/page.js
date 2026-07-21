@@ -761,7 +761,7 @@ function PartyContent() {
       {source === 'vote' && <BackToVoteBar />}
 
       <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
-        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU {copyrightYear}. All Rights Reserved.</p>
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© {globalConfig?.facultyShortEn || "FMS"}@{globalConfig?.university || "PSU"} {copyrightYear}. All Rights Reserved.</p>
       </footer>
     </div>
   );
@@ -813,7 +813,7 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
       )}
       <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} themeColor={theme.main} />
       <footer className="absolute bottom-0 w-full py-8 bg-transparent text-center z-50 mix-blend-difference text-white pointer-events-none">
-        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© FMS@PSU {copyrightYear}. All Rights Reserved.</p>
+        <p className="text-xs font-medium tracking-widest uppercase opacity-90">© {globalConfig?.facultyShortEn || "FMS"}@{globalConfig?.university || "PSU"} {copyrightYear}. All Rights Reserved.</p>
       </footer>
     </div>
   );

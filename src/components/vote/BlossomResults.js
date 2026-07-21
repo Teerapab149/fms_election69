@@ -361,7 +361,7 @@ export default function BlossomResults({
 
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`

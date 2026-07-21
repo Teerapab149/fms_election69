@@ -272,7 +272,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span> · <span className="rc-th">การลงคะแนนของคุณเป็นความลับ</span> · barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
           </div>
 
-          <footer className="rc-suc-copy">© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>
+          <footer className="rc-suc-copy">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>
         </div>
       </div>
 

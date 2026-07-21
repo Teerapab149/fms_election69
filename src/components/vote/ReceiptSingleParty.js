@@ -461,7 +461,7 @@ export default function ReceiptSingleParty({
 
       {/* ===== footer — classic single centered line ===== */}
       <footer className="rc-single-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`

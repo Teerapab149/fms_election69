@@ -56,6 +56,7 @@ function receiptMeta(gc = {}) {
     academicYear: gc.academicYearTh ?? "",
     copyrightYear: gc.copyrightYear ?? "",
     faculty: gc.facultyShortEn || "FMS",
+    university: gc.university || "PSU",
     campaign: gc.campaignTitle || "โครงการเลือกตั้งคณะกรรมการบริหาร",
     org: gc.organizationName || "สโมสรนักศึกษาคณะวิทยาการจัดการ",
   };
@@ -685,7 +686,7 @@ export default function ReceiptHome({
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-home-footer">
-          <p>© FMS@PSU{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {meta.faculty}@{meta.university}{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 

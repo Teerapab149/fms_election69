@@ -165,7 +165,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-cand-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 

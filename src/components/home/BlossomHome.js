@@ -47,6 +47,7 @@ function blossomMeta(gc = {}) {
     academicYear: gc.academicYearTh ?? "",
     copyrightYear: gc.copyrightYear ?? "",
     faculty: gc.facultyShortEn || "FMS",
+    university: gc.university || "PSU",
     campaign: gc.campaignTitle || "โครงการเลือกตั้งคณะกรรมการบริหาร",
     org: gc.organizationName || "สโมสรนักศึกษาคณะวิทยาการจัดการ",
   };
@@ -505,7 +506,7 @@ export default function BlossomHome({
 
         {/* ===== footer — plain classic line (owner 2026-07-11: แบบเดิมที่เคยใช้) ===== */}
         <footer className="bl-footer">
-          <p>© FMS@PSU{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {meta.faculty}@{meta.university}{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 import { getPath } from "../../utils/basePath";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -52,6 +53,8 @@ export default function SinglePartyView({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
+  const gc = useGlobalConfig() || {};
+  const copyrightYear = gc.copyrightYear ?? gc.electionCalendarYear ?? 2026;
   const [portalContainer, setPortalContainer] = useState(null);
   const [bannerImages, setBannerImages] = useState([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -867,7 +870,7 @@ export default function SinglePartyView({
           </section>
 
           <footer className="py-4 bg-black text-white text-center border-t border-white/10">
-            <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p></div>
+            <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"} {copyrightYear}. All Rights Reserved.</p></div>
           </footer>
         </div>
       </div>

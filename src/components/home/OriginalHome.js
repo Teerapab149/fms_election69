@@ -428,7 +428,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
 
             {/* Footer */}
             <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
-                <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU {elCopyrightYear}. All Rights Reserved.</p>
+                <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"} {elCopyrightYear}. All Rights Reserved.</p>
             </footer>
 
             {/* Styles */}
