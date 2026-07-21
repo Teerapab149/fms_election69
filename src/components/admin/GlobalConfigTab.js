@@ -202,6 +202,9 @@ export default function GlobalConfigTab() {
         </div>
       );
     } else if (id === "form") {
+      // ปุ่มแบบประเมินบนหน้าขอบคุณ "แสดงเสมอ" — success/page.js ส่ง onOpenForm ให้ทุก
+      // ตระกูลแบบไม่มีเงื่อนไข ค่านี้จึงไม่ได้คุมการมี/ไม่มีปุ่ม เว้นว่าง = กดแล้วเจอ
+      // "ไม่พบลิงก์แบบประเมิน" ไม่ใช่ปุ่มหายไป (ข้อความเดิมเขียนผิด)
       const url = String(config.googleFormUrl ?? "").trim();
       body = url ? (
         <div className="text-xs text-slate-600 break-all leading-relaxed">
@@ -209,7 +212,7 @@ export default function GlobalConfigTab() {
           <span className="font-semibold text-[#8A2680]">{url}</span>
         </div>
       ) : (
-        <div className="text-xs text-slate-400">(ยังไม่ตั้ง) — หน้าขอบคุณจะไม่แสดงปุ่มประเมิน</div>
+        <div className="text-xs text-amber-600">(ยังไม่ตั้ง) — ปุ่มแบบประเมินยังแสดงบนหน้าขอบคุณ แต่กดแล้วจะขึ้นว่าไม่พบลิงก์</div>
       );
     } else if (id === "copyright") {
       const t = (v) => String(v ?? "").trim() || "—";
