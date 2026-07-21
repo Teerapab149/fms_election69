@@ -2,16 +2,35 @@
 
 import { useState, useEffect } from "react";
 import {
-  Save, Loader2, CheckCircle2, RotateCcw,
+  Save, Loader2, CheckCircle2, RotateCcw, Eye,
   Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2,
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { getPath } from "../../utils/basePath";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 
 // section-header icons (metadata carries the NAME so the data module stays
 // component-free); falls back to a neutral glyph if a group has none.
 const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright };
+
+// electionName is no longer an editable field — it is auto-derived from the
+// prefix + number on save so it can never drift from the "SAMO 50" badge.
+// The KEY is kept in the payload because many surfaces read it (hero-title
+// default, results title, layout metadata, VerdureChrome number fallback).
+function deriveElectionName(cfg) {
+  return [cfg?.electionNamePrefix, cfg?.electionNumber]
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+// year-ish display: numeric fields coerce blank → 0, which is never a real
+// year, so show an em-dash instead of a bare "0" in previews.
+function yearText(v) {
+  const s = String(v ?? "").trim();
+  return s && s !== "0" ? s : "—";
+}
 
 /**
  * GlobalConfigTab — admin form to edit globalConfig.
@@ -75,14 +94,18 @@ export default function GlobalConfigTab() {
     setSaving(true);
     setError(null);
     try {
+      // auto-derive electionName so it always mirrors the "SAMO 50" badge;
+      // keep the KEY (many pages read it) but never edit it directly.
+      const payload = { ...config, electionName: deriveElectionName(config) };
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ globalConfig: config }),
+        body: JSON.stringify({ globalConfig: payload }),
       });
       if (!res.ok) throw new Error("Save failed");
-      replaceConfig(config);
+      replaceConfig(payload);
+      setConfig(payload);
       setSavedAt(new Date());
     } catch (e) {
       console.error(e);
@@ -106,30 +129,99 @@ export default function GlobalConfigTab() {
   }
 
   // live composed-output preview per section (id set in field metadata) — shows
-  // the admin what their inputs BECOME, so the several name/year fields stop
-  // reading as redundant. Pure display; reads config, never writes.
+  // the admin what their inputs BECOME on the real site, so the several
+  // name/year/date fields stop reading as redundant and you can see how they
+  // assemble. Pure display; reads config, never writes.
   function renderPreview(id) {
-    if (id !== "election") return null;
-    const prefix = String(config.electionNamePrefix ?? "").trim();
-    const number = config.electionNumber ?? "";
-    const badge = [prefix, number].filter((v) => v !== "" && v != null).join(" ") || "—";
-    const th = config.academicYearTh ?? "—";
-    const ce = config.electionCalendarYear ?? "—";
-    return (
-      <div className="mt-5 pt-4 border-t border-dashed border-slate-200">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-          ตัวอย่างผลลัพธ์
-        </div>
+    let body = null;
+
+    if (id === "election") {
+      const badge = deriveElectionName(config) || "—";
+      body = (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#8A2680]/10 text-[#8A2680] text-sm font-black">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#8A2680]/10 text-[#8A2680] text-sm font-black tabular-nums">
             {badge}
           </span>
           <span className="text-xs text-slate-500">
-            ปีการศึกษา <b className="text-slate-700 tabular-nums">{th}</b>
+            ประจำปีการศึกษา <b className="text-slate-700 tabular-nums">{yearText(config.academicYearTh)}</b>
             <span className="mx-1.5 text-slate-300">·</span>
-            ปีปฏิทิน <b className="text-slate-700 tabular-nums">{ce}</b>
+            ปีปฏิทิน <b className="text-slate-700 tabular-nums">{yearText(config.electionCalendarYear)}</b>
           </span>
         </div>
+      );
+    } else if (id === "org") {
+      const t = (v) => String(v ?? "").trim() || "—";
+      body = (
+        <>
+          {/* stacked identity block — mirrors how the fields land on the hero */}
+          <div className="space-y-0.5">
+            <div className="text-sm font-black text-slate-800 whitespace-pre-line break-words leading-snug">
+              {t(config.campaignTitle)}
+            </div>
+            <div className="text-sm font-semibold text-slate-600 break-words">
+              {t(config.organizationName)}
+            </div>
+            <div className="text-xs text-slate-500 break-words">
+              {t(config.facultyName)}
+              <span className="mx-1 text-slate-300">·</span>
+              {t(config.university)}
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-dashed border-slate-200 text-[11px] text-slate-400 leading-relaxed break-words">
+            ย่อ {t(config.organizationShort)}
+            <span className="mx-1 text-slate-300">·</span>
+            {t(config.facultyShortEn)}@{t(config.university)}
+            <span className="mx-1.5 text-slate-300">|</span>
+            โครงการเลือกตั้ง{t(config.committeeName)}
+          </div>
+        </>
+      );
+    } else if (id === "schedule") {
+      const d = resolveElectionDates(config);
+      const rows = [
+        { label: "เปิดตัวผู้สมัคร", date: d.CAMPAIGN_START, isDefault: !String(config.campaignStartAt ?? "").trim() },
+        { label: "เปิดโหวต", date: d.ELECTION_START, isDefault: !String(config.electionStartAt ?? "").trim() },
+        { label: "ปิดโหวต", date: d.ELECTION_END, isDefault: !String(config.electionEndAt ?? "").trim() },
+      ];
+      body = (
+        <div className="space-y-1.5">
+          {rows.map((r) => {
+            const ds = formatThaiDate(r.date);
+            if (!ds) return null; // invalid date → hide the line (never "Invalid Date")
+            const ts = formatThaiTime(r.date);
+            return (
+              <div key={r.label} className="text-xs leading-relaxed break-words">
+                <span className="text-slate-400">{r.label} </span>
+                <span className="text-slate-700 tabular-nums">{ds} {ts}</span>
+                {r.isDefault && (
+                  <span className="ml-1.5 text-[10px] text-amber-500 whitespace-nowrap">· ค่าเริ่มต้น</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    } else if (id === "copyright") {
+      const t = (v) => String(v ?? "").trim() || "—";
+      body = (
+        <div className="text-xs text-slate-600 break-words">
+          © {t(config.facultyShortEn)}@{t(config.university)}{" "}
+          <span className="tabular-nums">{yearText(config.copyrightYear)}</span> · All Rights Reserved
+        </div>
+      );
+    } else {
+      return null;
+    }
+
+    return (
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <Eye className="w-3.5 h-3.5 text-[#8A2680]" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A2680]">
+            ตัวอย่างที่จะแสดงจริง
+          </span>
+        </div>
+        {body}
       </div>
     );
   }
