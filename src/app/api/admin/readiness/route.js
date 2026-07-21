@@ -8,6 +8,7 @@ import {
   formatThaiTime,
 } from "../../../../utils/electionConfig";
 import { isBuiltInSlug } from "../../../../components/admin/editor/templates";
+import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 
 /**
  * GET /api/admin/readiness — ADM-1 election readiness check (read-only).
@@ -286,21 +287,35 @@ export async function GET(request) {
     };
   });
 
-  // 12) env.mock — mock-login เปิดอยู่หรือไม่
+  // 12) env.mock — เส้นทาง mock-login เปิดอยู่หรือไม่
+  // SEC-MOCK2: ตรวจจาก "ตัวกั้นจริง" คือการ register provider (isMockLoginProviderRegistered)
+  // ไม่ใช่ NEXT_PUBLIC_ENABLE_MOCK_LOGIN ซึ่งคุมแค่ปุ่มบนหน้า login. ของเดิมดูแต่ค่า
+  // ปุ่มจึงตอบ pass ได้ทั้งที่ provider ยังเปิดอยู่ (รัน dev โดยปิดปุ่ม)
   await run("env.mock", "env", "การเข้าสู่ระบบจำลอง (Mock Login)", async () => {
-    const mockOn = process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true";
-    if (!mockOn) {
-      return { level: "pass", detail: "ปิดการเข้าสู่ระบบจำลองแล้ว (ใช้ PSU SSO จริง)" };
-    }
-    if (process.env.NODE_ENV === "production") {
+    const providerLive = isMockLoginProviderRegistered();
+    const buttonOn = process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true";
+
+    if (providerLive) {
       return {
         level: "fail",
-        detail: "ปุ่มเข้าสู่ระบบจำลองยังแสดงบนหน้า login ทั้งที่รันในโหมด production — ระบบบล็อกเส้นทางนี้อยู่แล้วเพราะ mock-login provider ไม่ถูกลงทะเบียนใน production แต่ปุ่มที่กดแล้วไม่ทำงานทำให้นักศึกษาสับสนและส่งสัญญาณว่า deploy ตั้งค่าไม่ถูกต้อง ควรปิด NEXT_PUBLIC_ENABLE_MOCK_LOGIN ก่อนใช้งานจริง",
+        detail:
+          "เส้นทางเข้าสู่ระบบจำลองยังเปิดอยู่บนเซิร์ฟเวอร์นี้ (mock-login provider ถูกลงทะเบียนจริง) — ใครก็ตามที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน ยอมรับได้เฉพาะบนเครื่องนักพัฒนาเท่านั้น ถ้านี่คือเซิร์ฟเวอร์ที่จะใช้ในวันเลือกตั้งจริง ต้องรันเป็น production build (NODE_ENV=production) ก่อนเปิดให้นักศึกษาใช้" +
+          (buttonOn ? " และปุ่มเข้าสู่ระบบจำลองก็ยังแสดงบนหน้า login ด้วย" : ""),
       };
     }
+
+    if (buttonOn) {
+      return {
+        level: "fail",
+        detail:
+          "ปุ่มเข้าสู่ระบบจำลองยังแสดงบนหน้า login ทั้งที่ mock-login provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ — เส้นทางนี้ถูกบล็อกอยู่แล้ว แต่ปุ่มที่กดแล้วไม่ทำงานทำให้นักศึกษาสับสนและส่งสัญญาณว่า deploy ตั้งค่าไม่ถูกต้อง ควรปิด NEXT_PUBLIC_ENABLE_MOCK_LOGIN ก่อนใช้งานจริง",
+      };
+    }
+
     return {
-      level: "warn",
-      detail: "เปิดการเข้าสู่ระบบจำลองอยู่ในโหมด dev (มี mock-login provider จริงในโหมดนี้) — ปกติสำหรับการพัฒนา แต่ต้องปิด (NEXT_PUBLIC_ENABLE_MOCK_LOGIN) ก่อน deploy production",
+      level: "pass",
+      detail:
+        "ปิดการเข้าสู่ระบบจำลองสนิท — provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ และปุ่มบนหน้า login ก็ไม่แสดง (ใช้ PSU SSO จริง)",
     };
   });
 

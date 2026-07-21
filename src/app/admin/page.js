@@ -464,30 +464,66 @@ const CandidatesTab = () => {
   )
 };
 
-// ── SEC-MOCK · สถานะปุ่มเข้าสู่ระบบจำลอง (read-only) ─────────────────────────
-// แสดงให้แอดมินเห็นทันทีโดยไม่ต้องกด "ตรวจตอนนี้" — อ่านค่าเดียวกับที่คุมปุ่ม
-// mock-login บนหน้า login จริง (NEXT_PUBLIC_ENABLE_MOCK_LOGIN, inline ตอน build)
+// ── SEC-MOCK2 · สถานะการเข้าสู่ระบบจำลอง (read-only) ─────────────────────────
+// แสดงให้แอดมินเห็นทันทีโดยไม่ต้องกด "ตรวจตอนนี้". ค่าที่ใช้มาจาก GET
+// /api/admin/dashboard ซึ่งอ่านฝั่ง server ตอน runtime — ห้ามอ่าน
+// NEXT_PUBLIC_ENABLE_MOCK_LOGIN ตรงนี้ เพราะถูก inline ตอน build จึงรายงานสถานะ
+// ของเครื่องที่ build ไม่ใช่เซิร์ฟเวอร์ที่กำลังรัน (บั๊กชนิดเดียวกับ ade160e)
+// ตัวที่ "ให้สิทธิ์" จริงคือ providerRegistered ส่วน buttonVisible คุมแค่ปุ่มบนหน้า login
 // ⛔ ห้ามมีปุ่ม/สวิตช์เปิด-ปิดตรงนี้ — เป็นการตัดสินใจของเจ้าของระบบ (ดู DECISIONS.md)
-const MockLoginStatusBadge = () => {
-  const mockOn = process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true";
+const MockLoginStatusBadge = ({ status }) => {
+  // ยังไม่รู้สถานะ (ก่อน fetch เสร็จ) — ต้องเป็นกลาง ห้ามโชว์สีเขียว "ปลอดภัย" ไปก่อน
+  if (!status) {
+    return (
+      <div className="flex items-start gap-3 p-4 rounded-2xl border bg-slate-50 border-slate-200">
+        <Loader2 className="w-5 h-5 shrink-0 mt-0.5 text-slate-400 animate-spin" />
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-500">การเข้าสู่ระบบจำลอง · กำลังตรวจสอบสถานะ</p>
+          <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+            กำลังอ่านค่าจากเซิร์ฟเวอร์ที่กำลังรันอยู่
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const { providerRegistered, buttonVisible } = status;
+
+  // เส้นทาง auth เปิดอยู่จริง = อันตรายที่สุด (ไม่ใช่แค่ปุ่มโชว์)
+  const tone = providerRegistered ? "danger" : buttonVisible ? "warn" : "safe";
+  const TONES = {
+    danger: { box: "bg-rose-50 border-rose-200", icon: "text-rose-600", title: "text-rose-700" },
+    warn: { box: "bg-amber-50 border-amber-100", icon: "text-amber-600", title: "text-amber-700" },
+    safe: { box: "bg-emerald-50 border-emerald-100", icon: "text-emerald-600", title: "text-emerald-700" },
+  };
+  const t = TONES[tone];
+
+  const title =
+    tone === "danger"
+      ? "การเข้าสู่ระบบจำลอง · เส้นทางเปิดอยู่บนเซิร์ฟเวอร์นี้"
+      : tone === "warn"
+      ? "การเข้าสู่ระบบจำลอง · เส้นทางปิดแล้ว แต่ปุ่มยังโชว์บนหน้าเข้าสู่ระบบ"
+      : "การเข้าสู่ระบบจำลอง · ปิดสนิท";
+
+  const detail =
+    tone === "danger"
+      ? `mock-login provider ถูกลงทะเบียนอยู่ ใครที่รู้ URL callback ของ NextAuth เข้าระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน — ยอมรับได้เฉพาะบนเครื่องนักพัฒนา ถ้าเป็นเซิร์ฟเวอร์ที่จะใช้จริงต้องรันเป็น production build ก่อน${
+          buttonVisible ? " (ปุ่มบนหน้า login ก็ยังแสดงด้วย)" : ""
+        }`
+      : tone === "warn"
+      ? "กดปุ่มแล้วเข้าไม่ได้เพราะ provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ แต่ควรปิด NEXT_PUBLIC_ENABLE_MOCK_LOGIN เพื่อไม่ให้นักศึกษาสับสน"
+      : "provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ และปุ่มบนหน้า login ก็ไม่แสดง — เข้าระบบได้ทางเดียวคือ PSU SSO จริง";
+
   return (
-    <div
-      className={`flex items-start gap-3 p-4 rounded-2xl border ${
-        mockOn ? "bg-amber-50 border-amber-100" : "bg-emerald-50 border-emerald-100"
-      }`}
-    >
-      {mockOn ? (
-        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+    <div className={`flex items-start gap-3 p-4 rounded-2xl border ${t.box}`}>
+      {tone === "safe" ? (
+        <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${t.icon}`} />
       ) : (
-        <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
+        <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${t.icon}`} />
       )}
       <div className="min-w-0">
-        <p className={`text-sm font-bold ${mockOn ? "text-amber-700" : "text-emerald-700"}`}>
-          {mockOn ? "การเข้าสู่ระบบจำลอง · เปิดอยู่ — ปุ่มยังโชว์บนหน้าเข้าสู่ระบบ" : "การเข้าสู่ระบบจำลอง · ปิดอยู่"}
-        </p>
-        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-          ระบบบล็อกเส้นทางนี้อยู่แล้วในโหมด production ไม่ว่าค่านี้จะเป็นอย่างไร เพราะ mock-login provider ไม่ถูกลงทะเบียนบน production
-        </p>
+        <p className={`text-sm font-bold ${t.title}`}>{title}</p>
+        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{detail}</p>
       </div>
     </div>
   );
@@ -684,6 +720,8 @@ const SettingsTab = () => {
   const [isShowResult, setIsShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  // SEC-MOCK2 · null = ยังไม่รู้ (badge แสดงสถานะเป็นกลางจนกว่าจะรู้จริง)
+  const [mockLoginStatus, setMockLoginStatus] = useState(null);
 
   const [activeModal, setActiveModal] = useState(null);
   const [pendingMode, setPendingMode] = useState(null);
@@ -702,6 +740,12 @@ const SettingsTab = () => {
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
           setIsShowResult(data.stats.showResult);
+          if (typeof data.stats.mockLoginProviderRegistered === "boolean") {
+            setMockLoginStatus({
+              providerRegistered: data.stats.mockLoginProviderRegistered,
+              buttonVisible: data.stats.mockLoginButtonVisible === true,
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch config", error);
@@ -771,7 +815,7 @@ const SettingsTab = () => {
 
   return (
     <div className="space-y-6">
-    <MockLoginStatusBadge />
+    <MockLoginStatusBadge status={mockLoginStatus} />
     <ReadinessCard />
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-8">

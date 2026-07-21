@@ -8,6 +8,18 @@ const CLIENT_ID = process.env.AUTHENTIK_CLIENT_ID;
 const CLIENT_SECRET = process.env.AUTHENTIK_CLIENT_SECRET;
 const REDIRECT_URI = process.env.AUTHENTIK_REDIRECT_URI;
 
+// ─── SEC-MOCK2 · แหล่งความจริงเดียวของ "mock-login provider ถูก register หรือยัง" ───
+// เงื่อนไขนี้คือสิ่งที่ "ให้สิทธิ์เข้าระบบ" จริง (ไม่ใช่ NEXT_PUBLIC_ENABLE_MOCK_LOGIN
+// ซึ่งคุมแค่การแสดงปุ่มบนหน้า login). readiness check และ badge ในหน้า settings
+// ต้องอ่านจากฟังก์ชันนี้เท่านั้น เพื่อไม่ให้ "ตัวตรวจ" มองคนละตัวแปรกับ "ตัวกั้น"
+export function isMockLoginProviderRegistered() {
+  return (
+    process.env.NODE_ENV !== "production" ||
+    (process.env.E2E_MOCK_LOGIN === "true" &&
+      /_e2e(\?|$)/.test(process.env.DATABASE_URL || ""))
+  );
+}
+
 export const authOptions = {
   // 🔇 Disable client-side logging to prevent 404 errors on /api/auth/_log
   logger: {
@@ -115,9 +127,8 @@ export const authOptions = {
     // เงื่อนไขครบ "ทั้งสอง": runner ตั้ง E2E_MOCK_LOGIN=true อย่างชัดเจน และ
     // DATABASE_URL ชี้ database ที่ชื่อลงท้าย _e2e จริง. deployment จริงไม่มีทาง
     // ผ่านทั้งคู่ (ไม่ตั้ง flag + DB ชื่อจริง) — mock login จึงยังปิดตายบน prod.
-    ...(process.env.NODE_ENV !== "production" ||
-        (process.env.E2E_MOCK_LOGIN === "true" &&
-         /_e2e(\?|$)/.test(process.env.DATABASE_URL || "")) ? [
+    // เงื่อนไขเดียวกันนี้ถูกยกไปเป็น isMockLoginProviderRegistered() ด้านบน (SEC-MOCK2)
+    ...(isMockLoginProviderRegistered() ? [
       CredentialsProvider({
         id: "mock-login",
         name: "Mock Login",

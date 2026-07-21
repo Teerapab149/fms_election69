@@ -1,6 +1,7 @@
 import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
+import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
 export async function GET(req) {
@@ -31,7 +32,12 @@ export async function GET(req) {
         turnout: totalVoters > 0 ? ((votedCount / totalVoters) * 100).toFixed(2) : 0,
         showResult: config.showResult,
         systemMode: config.systemMode || "AUTO",
-        googleFormUrl: config.googleFormUrl || ""
+        googleFormUrl: config.googleFormUrl || "",
+        // SEC-MOCK2 · สถานะ mock-login อ่านฝั่ง server ตอน runtime (read-only)
+        // badge ในแท็บ settings ต้องใช้ค่านี้ ห้ามอ่าน NEXT_PUBLIC_* ฝั่ง client
+        // เพราะค่านั้นถูก inline ตอน build จึงเป็นสถานะของ "เครื่องที่ build" ไม่ใช่เครื่องที่รันอยู่
+        mockLoginProviderRegistered: isMockLoginProviderRegistered(),
+        mockLoginButtonVisible: process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true"
       },
       candidates
     });
