@@ -3,6 +3,17 @@ import { db } from "../../../../lib/db";
 import { hasVariant } from "../../../../components/elements/registry.js";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
 
+// E2E-DIAG: GET below takes no `request` and reads only the DB, so Next 14's App
+// Router classified this route as STATIC and prerendered its body at BUILD time
+// (`○ /api/admin/page-layout` — the only ○ in the whole app; every other route is
+// ƒ because it touches cookies/headers). The baked payload froze whatever
+// activeTemplateId the *build machine's* DB happened to hold, so at runtime every
+// page that dispatches its template off this endpoint rendered the build-time
+// template forever — an admin template switch could never take effect, and a
+// Docker build with no DB reachable would bake the `classic` catch-branch.
+// force-dynamic restores a per-request DB read. Do NOT remove.
+export const dynamic = "force-dynamic";
+
 // Day 11: allow-list of the 15 Layer 1 theme tokens (ADR-001 / VISION D9).
 // Unknown keys are rejected so a typo can't poison the live token scope.
 const VALID_TOKEN_KEYS = new Set([
