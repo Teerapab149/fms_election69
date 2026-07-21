@@ -14,7 +14,8 @@ import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import ManualTab from "../../components/admin/ManualTab";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck, BookOpen } from "lucide-react";
 import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -1127,7 +1128,7 @@ export default function AdminDashboard() {
       // Deep-link a starting tab (e.g. the preview's "Exit" returns to ?tab=pageDesign,
       // the template selector — never the overview). Ignore unknown values.
       const tab = sp.get('tab');
-      if (tab && ['overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
+      if (tab && ['manual', 'overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
         setActiveTab(tab);
       }
     }
@@ -1145,6 +1146,11 @@ export default function AdminDashboard() {
   };
 
   const menuItems = [
+    // ADM-MANUAL: first in the rail on purpose — a committee member opening the
+    // console for the first time meets the "what do I do, in what order" page
+    // before anything else. Daily users are unaffected: the DEFAULT tab is still
+    // 'overview' (useState above), so this only changes discovery, not landing.
+    { id: 'manual', label: 'คู่มือใช้งาน', icon: <BookOpen className="h-5 w-5" /> },
     { id: 'overview', label: 'ภาพรวม', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
     { id: 'globalConfig', label: 'ตั้งค่าทั่วไป', icon: <Settings className="h-5 w-5" /> },
     { id: 'candidates', label: 'จัดการผู้สมัคร', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
@@ -1258,6 +1264,7 @@ export default function AdminDashboard() {
         </header>
 
         <main className="flex-1 p-6 md:p-8 bg-gray-50">
+          {activeTab === 'manual' && <ManualTab onGoTab={setActiveTab} />}
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'globalConfig' && <GlobalConfigTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
