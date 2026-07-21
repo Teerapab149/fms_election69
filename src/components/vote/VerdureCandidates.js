@@ -33,6 +33,18 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
           <div className="vd-cand__kicker"><span className="rule" /> NO. 02 · CANDIDATES <span className="rule" /></div>
           <h1 className="vd-cand__title">Meet the parties<br /><em>running this year.</em></h1>
           <p className="vd-cand__deck">เลือกพรรคใดพรรคหนึ่งเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด ก่อนตัดสินใจลงคะแนน</p>
+          {/* CND-1 — the statusChip count lives in the chrome and is hidden on
+              phones, where one panel fills the viewport; this is the body-visible
+              statement of the same fact. Last child of the header, so the title
+              and deck rects are untouched on desktop. Thai run keeps var(--ft)
+              through a nested .vd-thai span (recipe 6a1b2b9). */}
+          {parties.length > 1 && (
+            <div className="vd-cand__count">
+              <span className="vd-nw">PARTIES</span>
+              <b className="vd-tabular">{parties.length}</b>
+              <span className="vd-thai">พรรคที่ลงสมัคร</span>
+            </div>
+          )}
         </div>
 
         {parties.length > 0 ? parties.map((p, i) => {
@@ -74,6 +86,20 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
         .vd-cand__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,96px); line-height:.96; letter-spacing:-.015em; margin:0; color:var(--cream); }
         .vd-cand__title em { color:var(--terra-soft); }
         .vd-cand__deck { font-family:var(--ft); font-size:17px; color:rgba(var(--cream-rgb),.7); line-height:1.55; max-width:580px; margin:20px auto 0; }
+
+        /* CND-1 party-count line — cream hairline pill on the moss screen */
+        .vd-cand__count {
+          display:inline-flex; align-items:baseline; gap:12px; margin:24px auto 0;
+          padding:10px 22px; border:1px solid rgba(var(--cream-rgb),.28); border-radius:999px;
+          font-family:var(--fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+          color:rgba(var(--cream-rgb),.65);
+        }
+        .vd-cand__count b {
+          font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px;
+          letter-spacing:-.01em; color:var(--terra-soft);
+        }
+        /* no font-family here — .vd-thai keeps supplying var(--ft) to this span */
+        .vd-cand__count .vd-thai { font-size:13px; text-transform:none; letter-spacing:.02em; color:rgba(var(--cream-rgb),.8); }
 
         .vd-ppanel { display:grid; grid-template-columns:auto 1fr auto; gap:48px; align-items:center; padding:48px 56px; background:var(--cream); color:var(--moss); border-radius:32px; margin-bottom:24px; cursor:pointer; transition:transform .3s, box-shadow .3s; position:relative; overflow:hidden; }
         .vd-ppanel:hover { transform:translateY(-4px); box-shadow:0 30px 60px -20px rgba(var(--moss-rgb),.35); }

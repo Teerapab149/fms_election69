@@ -47,7 +47,23 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
           <span className="sd-scene-h__num"><span className="accent">№ 02</span> &nbsp;/&nbsp; THE CANDIDATES</span>
           <h1 className="sd-scene-h__title">Meet the parties<br />running this year.</h1>
         </div>
-        <p className="sd-scene-h__deck">เลือกพรรคเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด</p>
+        {/* CND-1 — the party count must be readable in the BODY on mobile: the
+            shell's `right` chrome slot count is hidden <1100px, so a single tall
+            panel could read as "there is one party". Sits ABOVE the deck inside
+            a fit-content wrapper: .sd-scene-h is align-items:end, so keeping the
+            deck as the wrapper's LAST child pins its rect exactly where it was
+            on desktop. Thai run escapes the mono stack via a nested .sd-thai
+            span (P-LOG-107..112) — this rule never sets font-family. */}
+        <div className="sdc-deck">
+          {parties.length > 1 && (
+            <p className="sdc-count">
+              <span className="sd-nw">PARTIES</span>
+              <b className="sdc-count__n">{pad2(parties.length)}</b>
+              <span className="sd-thai">พรรคที่ลงสมัคร</span>
+            </p>
+          )}
+          <p className="sd-scene-h__deck">เลือกพรรคเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด</p>
+        </div>
       </div>
 
       {parties.length > 0 ? (
@@ -114,6 +130,22 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
 
       <style jsx global>{`
         .sdc-accent { color:var(--sd-accent); }
+
+        /* CND-1 party-count ledger line (see markup note above) */
+        .sdc-deck { justify-self:end; }
+        .sdc-count {
+          display:flex; align-items:baseline; flex-wrap:wrap; gap:12px;
+          font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em;
+          text-transform:uppercase; color:var(--sd-ink-3);
+          margin:0 0 16px; padding-bottom:14px; border-bottom:1px solid var(--sd-line);
+        }
+        .sdc-count__n {
+          font-family:var(--sd-sans); font-weight:400; font-size:22px;
+          letter-spacing:-.02em; color:var(--sd-accent); font-variant-numeric:tabular-nums;
+        }
+        /* NOTE: no font-family here — .sd-thai (0,1,0) must keep supplying Anuphan
+           to this nested span; only tier-level sizing/colour is adjusted. */
+        .sdc-count .sd-thai { font-size:13px; text-transform:none; color:var(--sd-ink-2); }
 
         /* ENTRANCE MOTION — reuse the family rise (v2-R12 sdsRise): candidate
            panels settle up in a subtle cascade on mount. Pure CSS + backwards
@@ -184,6 +216,9 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
         .sdc-empty p { color:var(--sd-ink-2); font-size:15px; margin:0; }
 
         @media (max-width:1100px) {
+          /* mirrors the shell's .sd-scene-h__deck { justify-self:start } at this
+             breakpoint — the wrapper is the grid item now, so it carries it */
+          .sdc-deck { justify-self:start; }
           .sdc-split { grid-template-columns:1fr; }
           .sdc-panel { border-right:0; min-height:0; padding:32px 24px; }
           .sdc-panel::after { right:24px; top:32px; }
