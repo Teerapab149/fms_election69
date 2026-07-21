@@ -464,6 +464,35 @@ const CandidatesTab = () => {
   )
 };
 
+// ── SEC-MOCK · สถานะปุ่มเข้าสู่ระบบจำลอง (read-only) ─────────────────────────
+// แสดงให้แอดมินเห็นทันทีโดยไม่ต้องกด "ตรวจตอนนี้" — อ่านค่าเดียวกับที่คุมปุ่ม
+// mock-login บนหน้า login จริง (NEXT_PUBLIC_ENABLE_MOCK_LOGIN, inline ตอน build)
+// ⛔ ห้ามมีปุ่ม/สวิตช์เปิด-ปิดตรงนี้ — เป็นการตัดสินใจของเจ้าของระบบ (ดู DECISIONS.md)
+const MockLoginStatusBadge = () => {
+  const mockOn = process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true";
+  return (
+    <div
+      className={`flex items-start gap-3 p-4 rounded-2xl border ${
+        mockOn ? "bg-amber-50 border-amber-100" : "bg-emerald-50 border-emerald-100"
+      }`}
+    >
+      {mockOn ? (
+        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+      ) : (
+        <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
+      )}
+      <div className="min-w-0">
+        <p className={`text-sm font-bold ${mockOn ? "text-amber-700" : "text-emerald-700"}`}>
+          {mockOn ? "การเข้าสู่ระบบจำลอง · เปิดอยู่ — ปุ่มยังโชว์บนหน้าเข้าสู่ระบบ" : "การเข้าสู่ระบบจำลอง · ปิดอยู่"}
+        </p>
+        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+          ระบบบล็อกเส้นทางนี้อยู่แล้วในโหมด production ไม่ว่าค่านี้จะเป็นอย่างไร เพราะ mock-login provider ไม่ถูกลงทะเบียนบน production
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ── ADM-1 · Election readiness check ────────────────────────────────────────
 // ปุ่มเดียวที่กรรมการกดก่อนวันจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม. read-only ล้วน —
 // เรียก GET /api/admin/readiness แล้วแสดงผลตาม level (pass/warn/fail).
@@ -742,6 +771,7 @@ const SettingsTab = () => {
 
   return (
     <div className="space-y-6">
+    <MockLoginStatusBadge />
     <ReadinessCard />
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-8">

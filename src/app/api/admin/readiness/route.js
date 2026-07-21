@@ -295,12 +295,12 @@ export async function GET(request) {
     if (process.env.NODE_ENV === "production") {
       return {
         level: "fail",
-        detail: "เปิดการเข้าสู่ระบบจำลอง (mock-login) อยู่ในโหมด production — อันตราย ใครก็เข้าระบบได้ ต้องปิดก่อนใช้งานจริง",
+        detail: "ปุ่มเข้าสู่ระบบจำลองยังแสดงบนหน้า login ทั้งที่รันในโหมด production — ระบบบล็อกเส้นทางนี้อยู่แล้วเพราะ mock-login provider ไม่ถูกลงทะเบียนใน production แต่ปุ่มที่กดแล้วไม่ทำงานทำให้นักศึกษาสับสนและส่งสัญญาณว่า deploy ตั้งค่าไม่ถูกต้อง ควรปิด NEXT_PUBLIC_ENABLE_MOCK_LOGIN ก่อนใช้งานจริง",
       };
     }
     return {
       level: "warn",
-      detail: "เปิดการเข้าสู่ระบบจำลอง (mock-login) อยู่ในโหมด dev — ปกติสำหรับการพัฒนา แต่ต้องปิด (NEXT_PUBLIC_ENABLE_MOCK_LOGIN) ก่อน deploy production",
+      detail: "เปิดการเข้าสู่ระบบจำลองอยู่ในโหมด dev (มี mock-login provider จริงในโหมดนี้) — ปกติสำหรับการพัฒนา แต่ต้องปิด (NEXT_PUBLIC_ENABLE_MOCK_LOGIN) ก่อน deploy production",
     };
   });
 
