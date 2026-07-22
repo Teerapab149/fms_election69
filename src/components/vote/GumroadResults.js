@@ -22,7 +22,7 @@ import SiteNavbar from "../elements/site-navbar/gumroad";
 import SiteFooter from "../elements/site-footer/gumroad";
 import ResultsHead from "../elements/results-head/gumroad";
 import StatCard from "../composites/stat-card/gumroad";
-import { getPartyColor } from "../../utils/partyColors";
+import { getPartyColor, prefersDarkText } from "../../utils/partyColors";
 
 const POPS = ["#FF9CE9", "#B6E6FF", "#C2F47E", "#FFD24D", "#FF8A8A"];
 const CHART_FONT = "'Anuphan','Kanit',system-ui,sans-serif";
@@ -238,8 +238,25 @@ export default function GumroadResults({
               </div>
               {revealed ? (
                 <div className="gr-reveal">
+                  {/* the winner card is painted with the party's own colour, which an
+                      admin types in — so the text colour has to follow it. On a mid-tone
+                      signature the fixed --ink2 secondary text measured 2.03:1. */}
                   {winner && (
-                    <div className="gr-winner" style={{ background: getPartyColor(winner, winner.number - 1) }}>
+                    <div
+                      className="gr-winner"
+                      style={(() => {
+                        const c = getPartyColor(winner, winner.number - 1);
+                        const dark = prefersDarkText(c);
+                        return {
+                          background: c,
+                          "--won-ink": dark ? "var(--ink)" : "var(--cream)",
+                          // full strength, not a faded ink: on a mid-tone party colour
+                          // even 78% alpha drops the small mono text to 3.2:1. Hierarchy
+                          // here is carried by size and font, not by opacity.
+                          "--won-ink2": dark ? "var(--ink)" : "var(--cream)",
+                        };
+                      })()}
+                    >
                       <span className="gr-winner__badge">👑 <span className="gm-thai">ผู้ชนะ</span> · WINNER</span>
                       <div className="gr-winner__main">
                         {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
@@ -451,18 +468,18 @@ export default function GumroadResults({
 
         /* revealed: winner spotlight + ranked cards */
         .gr-reveal{ display:flex; flex-direction:column; gap:18px; }
-        .gr-winner{ position:relative; background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; }
+        .gr-winner{ position:relative; color:var(--won-ink,var(--ink)); background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; }
         .gr-winner__badge{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--cream); font-family:var(--fm); font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 14px; border-radius:999px; }
         .gr-winner__main{ display:flex; align-items:center; gap:22px; margin-top:16px; flex-wrap:wrap; }
         .gr-winner__logo{ width:88px; height:88px; flex-shrink:0; border:var(--bw) solid var(--ink); border-radius:20px; background:var(--paper); overflow:hidden; box-shadow:var(--sh-sm); }
         .gr-winner__logo img{ width:100%; height:100%; object-fit:contain; }
         .gr-winner__id{ min-width:0; flex:1; }
-        .gr-winner__no{ font-family:var(--fm); font-size:12px; font-weight:600; letter-spacing:.14em; color:var(--ink2); }
+        .gr-winner__no{ font-family:var(--fm); font-size:12px; font-weight:600; letter-spacing:.14em; color:var(--won-ink2,var(--ink2)); }
         .gr-winner__name{ font-family:var(--fd); font-size:clamp(26px,4.5cqw,46px); line-height:.98; letter-spacing:-.02em; margin:4px 0 0; text-transform:uppercase; text-wrap:balance; }
-        .gr-winner__slogan{ font-style:italic; font-size:14px; color:var(--ink2); margin:8px 0 0; }
+        .gr-winner__slogan{ font-style:italic; font-size:14px; color:var(--won-ink2,var(--ink2)); margin:8px 0 0; }
         .gr-winner__score{ margin-left:auto; text-align:right; }
         .gr-winner__pct{ font-family:var(--fd); font-size:clamp(48px,9cqw,84px); line-height:.9; } .gr-winner__pct span{ font-size:.5em; }
-        .gr-winner__votes{ font-family:var(--fm); font-size:13px; font-weight:600; color:var(--ink2); margin-top:2px; }
+        .gr-winner__votes{ font-family:var(--fm); font-size:13px; font-weight:600; color:var(--won-ink2,var(--ink2)); margin-top:2px; }
 
         .gr-ranks{ display:flex; flex-direction:column; gap:12px; }
         .gr-rank{ display:grid; grid-template-columns:200px 1fr 64px; gap:16px; align-items:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 18px; font-family:inherit; color:inherit; text-align:left; }

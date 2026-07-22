@@ -20,7 +20,7 @@ import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { sortMembersByPosition } from "../../utils/memberSort";
-import { buildPartyTheme } from "../../utils/partyColors";
+import { buildPartyTheme, prefersDarkText } from "../../utils/partyColors";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
 import StoryClamp from "./StoryClamp";
@@ -77,7 +77,13 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
   return (
     <div
       className="fms-app gp-root gum-root"
-      style={{ "--pop": theme.soft, "--pop-deep": theme.main, "--pop-ink": theme.textOnLight }}
+      style={{
+        "--pop": theme.soft, "--pop-deep": theme.main, "--pop-ink": theme.textOnLight,
+        // --pop is the party's own colour, so anything printed ON it has to follow it
+        // (the pop stickers were fixed --ink and landed at 4.4:1 on the mock colour;
+        // a darker signature would go lower)
+        "--pop-text": prefersDarkText(theme.soft) ? "var(--ink)" : "var(--cream)",
+      }}
     >
       <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
@@ -263,7 +269,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-back{ display:inline-flex; align-items:center; gap:7px; padding:8px 16px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gp-back:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gp-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
-        .gp-sticker--pop{ background:var(--pop); } .gp-sticker--lime{ background:var(--lime); } .gp-sticker--ink{ background:var(--ink); color:var(--cream); }
+        .gp-sticker--pop{ background:var(--pop); color:var(--pop-text,var(--ink)); } .gp-sticker--lime{ background:var(--lime); } .gp-sticker--ink{ background:var(--ink); color:var(--cream); }
 
         /* HERO */
         .gp-hero{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); overflow:hidden; margin-bottom:28px; }
@@ -274,8 +280,17 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-hero__gallery{ position:absolute; bottom:14px; right:14px; z-index:2; display:inline-flex; align-items:center; gap:7px; padding:9px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-family:var(--fb); font-weight:800; font-size:13px; box-shadow:var(--sh-sm); cursor:pointer; transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gp-hero__gallery:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gp-hero__body{ padding:28px 32px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-        .gp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:grid; place-items:center; box-shadow:var(--sh); overflow:hidden; }
-        .gp-hero__logo img{ width:100%; height:100%; object-fit:contain; } .gp-hero__logo span{ font-family:var(--fd); font-size:34px; }
+        /* flex, not grid: a percentage max-height on a GRID item does not resolve here
+           (Chrome leaves the item at its aspect-ratio height), which is why the
+           portrait logo stayed 132px tall inside the 106px box. Flex centring resolves
+           it, so the mark scales to fit whatever shape it is. */
+        .gp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:6px; box-shadow:var(--sh); overflow:hidden; }
+        /* max-* rather than width/height:100% — a portrait logo (the real records are
+           3375x4219) was being sized 106px wide by its own aspect ratio, i.e. 132px
+           tall inside a 106px box, and the bottom of the artwork was cut off by the
+           box's overflow:hidden. Constraining instead of forcing keeps the whole mark
+           visible whatever shape the admin uploads. */
+        .gp-hero__logo img{ width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; } .gp-hero__logo span{ font-family:var(--fd); font-size:34px; }
         .gp-hero__txt{ min-width:0; flex:1; }
         .gp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }

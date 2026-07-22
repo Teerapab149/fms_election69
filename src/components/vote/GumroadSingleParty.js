@@ -313,8 +313,12 @@ export default function GumroadSingleParty({
         .gsp-hero__media img{ width:100%; height:100%; object-fit:cover; }
         .gsp-hero__ph{ background:var(--paper); border:2px solid var(--ink); padding:12px 18px; border-radius:999px; font-family:var(--fm); font-weight:600; font-size:13px; }
         .gsp-hero__body{ padding:28px 32px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-        .gsp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:grid; place-items:center; box-shadow:var(--sh); overflow:hidden; }
-        .gsp-hero__logo img{ width:100%; height:100%; object-fit:contain; } .gsp-hero__logo span{ font-family:var(--fd); font-size:34px; }
+        /* flex, not grid — see GumroadParty: percentage max-height does not resolve on
+           a grid item, so a portrait logo overflowed the box and got clipped */
+        .gsp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:6px; box-shadow:var(--sh); overflow:hidden; }
+        /* same fix as GumroadParty: forcing 100%/100% sized a portrait logo by its own
+           aspect ratio and the box's overflow:hidden cut the bottom off */
+        .gsp-hero__logo img{ width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; } .gsp-hero__logo span{ font-family:var(--fd); font-size:34px; }
         .gsp-hero__txt{ min-width:0; flex:1; }
         .gsp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gsp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }
