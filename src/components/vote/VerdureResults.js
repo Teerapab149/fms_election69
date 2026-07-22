@@ -89,6 +89,19 @@ export default function VerdureResults({
   const winner = revealed && !singleParty && topScore > 0 ? parties.find((p) => (p.score || 0) === topScore) : null;
   const approveWins = revealed && singleParty ? (parties[0]?.score || 0) >= (disapprove?.score || 0) : null;
 
+  // Winner label + a LENGTH-TIERED type size for it. Party names are admin-typed and
+  // unbounded — the live 2569 roster has a 43-character one — so a single fixed size
+  // cannot serve both "พรรคก้าวหน้า" and "พรรคพลังนักศึกษาวิทยาการจัดการเพื่อการพัฒนา"
+  // inside a circle. Derived from the string (no measurement, no effect) so SSR, the
+  // pre-hydration paint and the client all agree, and names up to 27 characters keep
+  // the ORIGINAL clamp untouched — the disc is byte-identical for every name that
+  // already fit. Longer names step down one/two notches so the whole label still lands
+  // inside the inner dashed ring.
+  const winnerLabel = singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—");
+  const winnerNameSize = winnerLabel.length >= 40 ? "clamp(23px,2.6vw,33px)"
+    : winnerLabel.length >= 28 ? "clamp(26px,3.0vw,38px)"
+    : null;
+
   const raceRows = useMemo(() => { const r = [...candidates]; if (revealed) r.sort((a, b) => (b.score || 0) - (a.score || 0)); return r; }, [candidates, revealed]);
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
@@ -124,8 +137,8 @@ export default function VerdureResults({
                 <div className="vd-rdisc__kicker">{singleParty
                   ? <><span className="vd-nw">OFFICIAL VERDICT</span> · <span className="vd-thai">ผลรับรอง</span></>
                   : <><span className="vd-nw">THE WINNER</span> · <span className="vd-thai">ผู้ชนะ</span></>}</div>
-                <div className="vd-rdisc__name">
-                  {singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—")}
+                <div className="vd-rdisc__name" style={winnerNameSize ? { fontSize: winnerNameSize } : undefined}>
+                  {winnerLabel}
                 </div>
                 <div className="vd-rdisc__pct vd-tabular">
                   {singleParty
@@ -238,7 +251,17 @@ export default function VerdureResults({
         /* result seal — moderate size, content fits inside; clean centred stat row
            below it (no more scattered/tilted orbital cards) */
         .vd-stage { display:grid; place-items:center; margin:4px 0 0; }
-        .vd-rdisc { width:clamp(300px,40vw,430px); height:clamp(300px,40vw,430px); border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:0 13%; box-shadow:0 50px 70px -40px rgba(var(--moss-rgb),.5), inset 0 3px 12px rgba(var(--cream-rgb),.06); }
+        /* --rd is the ONE source of the disc diameter: width, height AND the side
+           padding all derive from it. The padding used to be \`0 13%\` — a percentage
+           padding resolves against the CONTAINING BLOCK's width, not the element's,
+           so on a 1280 desktop it became 13% of the ~1120px stage = ~146px per side
+           and left a 138px text column inside a 430px disc (a 12-char party name
+           broke into two lines; the real 43-char name broke into SEVEN and pushed
+           the kicker + score line off the moss circle onto the cream). Phones were
+           barely affected (13% of the 327px stage ≈ 42px ≈ the intended 39px), which
+           is why it never showed there. calc(var(--rd) * .13) is the geometry the
+           design always meant: 13% OF THE DISC. */
+        .vd-rdisc { --rd:clamp(300px,40vw,430px); width:var(--rd); height:var(--rd); border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:0 calc(var(--rd) * .13); box-shadow:0 50px 70px -40px rgba(var(--moss-rgb),.5), inset 0 3px 12px rgba(var(--cream-rgb),.06); }
         .vd-rdisc::before { content:""; position:absolute; inset:14px; border:1px dashed rgba(var(--cream-rgb),.22); border-radius:50%; }
         .vd-rdisc::after { content:""; position:absolute; inset:-26px; border:1px dashed rgba(var(--terra-rgb),.4); border-radius:50%; }
         .vd-rdisc__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }

@@ -118,7 +118,10 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
       `}>
         <div className="flex justify-between items-start mb-1 lg:mb-3 gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className={`font-bold text-slate-800 truncate leading-tight ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
+            {/* wraps to two lines instead of truncating — a real party name runs 43
+                characters and `truncate` cut the winner's name mid-word on the
+                results announcement */}
+            <h3 className={`font-bold text-slate-800 leading-tight line-clamp-2 ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
               {candidate.name || "ไม่ระบุชื่อพรรค"}
             </h3>
             <div className="flex items-center gap-2 mt-0.5 text-slate-500">
