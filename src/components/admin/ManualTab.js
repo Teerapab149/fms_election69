@@ -369,9 +369,13 @@ export default function ManualTab({ onGoTab }) {
               เหมาะกับตอนขึ้นปีการศึกษาใหม่และต้องกรอกรายชื่อพรรคชุดใหม่ทั้งหมด
             </li>
           </ul>
+          {/* AUD-COPY · guard จริงใน dashboard/route.js บล็อกเฉพาะตอนหีบ "เปิดรับคะแนนอยู่"
+              (MANUAL_OPEN เสมอ หรือ AUTO ที่อยู่ในช่วงเวลาเลือกตั้ง) — AUTO นอกช่วงเวลา
+              ล้างได้เลยโดยไม่ต้องเปลี่ยนโหมด ห้ามเขียนกลับเป็น "ต้อง PAUSE/ENDED ก่อน" เสมอ */}
           <Note tone="red">
-            ทั้งสองอย่าง <span className="font-bold">กู้คืนไม่ได้</span> · และระบบจะไม่ยอมให้ล้างขณะหีบยังเปิดอยู่
-            ต้องสั่งโหมด <span className="font-bold">PAUSE</span> หรือ <span className="font-bold">ENDED</span> ก่อน ไม่อย่างนั้นจะขึ้นข้อความเตือนและไม่ทำงาน
+            ทั้งสองอย่าง <span className="font-bold">กู้คืนไม่ได้</span> · และระบบจะไม่ยอมให้ล้างขณะหีบยังเปิดรับคะแนนอยู่
+            ถ้ายังเปิดอยู่ต้องสั่งโหมด <span className="font-bold">PAUSE</span> หรือ <span className="font-bold">ENDED</span> ก่อน ไม่อย่างนั้นจะขึ้นข้อความเตือนและไม่ทำงาน ·
+            ถ้าอยู่ในโหมด <span className="font-bold">AUTO</span> นอกช่วงเวลาเลือกตั้ง (ก่อนเปิดหีบหรือหลังปิดหีบแล้ว) ล้างได้เลยโดยไม่ต้องเปลี่ยนโหมด
           </Note>
         </Step>
 
