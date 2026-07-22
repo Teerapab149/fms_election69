@@ -2163,6 +2163,138 @@ net; the real repair is still fixing the record.
 
 ---
 
+### P-LOG-115: [2026-07-21] An App Router `GET()` that takes no `request` is a build-time constant
+**Context:** E2E-DIAG — the admin template switcher had no effect in a deployed image, and
+two e2e tests failed with the page rendering a different template than the seeded one.
+`/api/admin/page-layout`'s `GET()` read only the DB and took no `request` arg, so Next 14
+classified it STATIC and executed the DB read at build time, freezing `activeTemplateId`
+into the build; a Docker build with no DB reachable would bake the fallback permanently.
+It was the only `○` row among the app's `/api/*` lines in the build output.
+**Lesson:** Any `○` on an `/api/*` line of the `next build` route table is a bug — add
+`export const dynamic = "force-dynamic"` to routes that must read per-request state.
+**Tags:** `#nextjs` `#app-router` `#deploy` `#build`
+
+---
+
+### P-LOG-116: [2026-07-22] A safety check must assert on the same expression the guard evaluates
+**Context:** SEC-MOCK2 — the readiness check reported mock-login "closed, using real SSO"
+on a server where the mock provider was live. The check read
+`NEXT_PUBLIC_ENABLE_MOCK_LOGIN` (only controls whether the login button renders) while the
+actual gate is the provider-registration condition in `lib/auth.js` (`NODE_ENV`-based).
+Checker and guard reading different variables means the checker returns PASS in exactly
+the configurations it exists to catch.
+**Fix:** Extracted the guard's condition into `isMockLoginProviderRegistered()`; readiness
+and the settings badge both call it now (commit `c33b37e`).
+**Lesson:** A readiness/safety check must call the same predicate the real guard uses, not
+re-derive an equivalent-looking expression from a different signal.
+**Tags:** `#security` `#readiness` `#auth`
+
+---
+
+### P-LOG-117: [2026-07-22] `NEXT_PUBLIC_*` is build-time state, not runtime state
+**Context:** Same SEC-MOCK2 investigation (P-LOG-116) — any admin surface reporting the
+status of the *running* server must read it server-side per request, not from an inlined
+client constant. Same bug class as P-LOG-115 (a value baked in at build time silently
+stops reflecting reality on the deployed instance).
+**Lesson:** Never let an admin status badge or safety check source from `NEXT_PUBLIC_*`;
+feed it from a server-side API read instead.
+**Tags:** `#nextjs` `#security` `#deploy` (commit `c33b37e`)
+
+---
+
+### P-LOG-118: [2026-07-21] Responsive audits must sample the middle, not just the two ends
+**Context:** ADM-MOBILE — a toggle's knob rendered outside its own track. A fixed-width
+control with a hardcoded `translate-x-*` offset was allowed to flex-shrink; the squeeze
+was worst at 768–1300px (where the 256px sidebar narrows the column), not on phones, so
+testing only 375px and 1440px missed it.
+**Fix:** `shrink-0` made unconditional on the control, not gated to a mobile breakpoint
+(commit `3c49531`).
+**Lesson:** Sweep intermediate widths in a responsive audit, and give fixed-size controls
+carrying hardcoded transform offsets `shrink-0` at every width, not just under a mobile
+breakpoint.
+**Tags:** `#css` `#responsive` `#verification`
+
+---
+
+### P-LOG-119: [2026-07-21] `read_console_messages` returns the historical buffer, not current state
+**Context:** A stale compile error misled three separate investigations into working
+around a file that was actually fine — the console tool kept surfacing an error from
+before an intervening fix.
+**Lesson:** Confirm a module's real state by requesting the page (`curl` for HTTP status +
+expected markup) rather than trusting console history.
+**Tags:** `#verification` `#browser` `#debugging`
+
+---
+
+### P-LOG-120: [2026-07-21] A JSX comment cannot be a sibling before the single root element inside a parenthesized `return`
+**Context:** A `{/* ... */}` comment placed before the root element inside `return ( ... )`
+became a second top-level node and failed to parse.
+**Lesson:** Put the note as a `//` comment above the `return`, or move it inside the root
+element — never as a sibling before it.
+**Tags:** `#react` `#jsx` `#syntax`
+
+---
+
+### P-LOG-121: [2026-07-21] When several readers depend on a DB column, bridge through the API instead of migrating the column
+**Context:** ADM-SETTINGS — the Google Form URL needed to surface in a different admin tab.
+Migrating the column would have touched every existing reader.
+**Fix:** The global-config API merges the column in on GET and splits it back out on PUT
+(writing the column only when the key is present, so an older client cannot wipe it) — no
+migration, and `success` / `check-status` / `readiness` / `dashboard` readers were
+untouched (commit `bc4b4be`).
+**Lesson:** Prefer an API-level bridge over a schema migration when the only goal is
+relocating a field's UI surface and multiple readers already depend on the column.
+**Tags:** `#api` `#prisma` `#migrations`
+
+---
+
+### P-LOG-122: [2026-07-22] Derive danger-button copy from the route, not the button's name
+**Context:** AUD-COPY — a button labelled "delete individual voting data" only sets a
+certification flag; since v2-SEC no voter→choice link is stored at all. Copy written from
+the label misinformed admins about their own privacy guarantees.
+**Fix:** Corrected as part of the 6 false-claim sweep (commit `0fcb747`).
+**Lesson:** Write destructive-action copy from what the route handler actually does, not
+from the button's label — verify against the handler before shipping the sentence.
+**Tags:** `#admin` `#copy` `#security`
+
+---
+
+### P-LOG-123: [2026-07-21] A "last family still missing X" ticket must first verify the target actually lacks X
+**Context:** A ticket assumed one template family still had a bug another family had
+already fixed; the assumption was wrong — that family had already solved it.
+**Lesson:** Before porting a fix to a "last remaining" target, confirm the target still
+exhibits the symptom; porting a already-fixed target is redundant work at best.
+**Tags:** `#workflow` `#verification`
+
+---
+
+### P-LOG-124: [2026-07-22] UI copy propagates like code
+**Context:** AUD-COPY — a false field hint ("leaving the URL blank hides the evaluation
+button" — it does not; the button always renders and an empty URL yields an error dialog)
+was copied verbatim into two other surfaces before anyone checked it against behaviour. A
+later audit of ~100 admin claims found 6 false ones.
+**Fix:** Corrected at the source and both copies (commits `1488121`, `0fcb747`).
+**Lesson:** Copy that describes behaviour must cite the code when written, not when
+audited — a false claim gets copy-pasted forward faster than it gets caught.
+**Tags:** `#admin` `#copy` `#docs`
+
+---
+
+### P-LOG-125: [2026-07-22] An e2e harness that health-probes a port can silently test the wrong application
+**Context:** E2E-GUARD — `global.setup` spawned `next start` then polled `/api/health`
+until 200, with no way to tell its own child from a foreign process already holding the
+port. Any stale instance answers that route just as validly, so the suite could report
+green while testing a different app/DB/build — this happened for real during the first
+gate run.
+**Fix:** Raw-TCP port-occupancy check before any DB work (actionable error naming
+`PW_TEST_PORT`) plus a child-liveness assertion in the health loop; verified blocking on
+all four occupied ports, still 7/7 on a free one (commit `c12c361`).
+**Lesson:** Assert the port is free before spawning, and assert the responding server is
+the child you started — a health check alone does not prove which process answered.
+**Tags:** `#e2e` `#testing` `#verification`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
