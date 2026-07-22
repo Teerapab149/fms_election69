@@ -220,7 +220,7 @@ export default function SuccessPage({
   const handleConfirmSubmit = async () => {
     if (!canConfirm) return;
     try {
-      const res = await fetch(getPath("/api/complete-form"), { method: "GET" });
+      const res = await fetch(getPath("/api/complete-form"), { method: "POST" });
       if (!res.ok) throw new Error("Failed to update status");
 
       await update({ isFormCompleted: true });
