@@ -9,7 +9,6 @@ import EditCandidateModal from "../../components/EditCandidateModal";
 import EditCandidateMember from "../../components/EditCandidateMember";
 import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
-import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
@@ -296,8 +295,6 @@ const CandidatesTab = () => {
 
   const [focusMemberId, setFocusMemberId] = useState(null);
 
-  const [processing, setProcessing] = useState(false);
-  const [activeModal, setActiveModal] = useState(null);
 
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
@@ -399,15 +396,6 @@ const CandidatesTab = () => {
           onClose={() => setIsSuccessOpen(false)}
           title={successMessage.title}
           message={successMessage.msg}
-        />
-
-        <ConfirmModal
-          isOpen={activeModal === 'DELETE'}
-          onClose={() => setActiveModal(null)}
-          title="Confirmation"
-          message="ต้องการจะลบผู้สมัครนี้ใช่หรือไม่"
-          variant="danger"
-          isLoading={processing}
         />
 
         <EditCandidateModal
