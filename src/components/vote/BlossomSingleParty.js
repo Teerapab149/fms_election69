@@ -454,9 +454,10 @@ export default function BlossomSingleParty({
         @keyframes blSBlip { 50%{opacity:.3} }
         .bl-single-root .bl-sp-hero { display:flex; align-items:center; gap:26px; margin-top:22px; }
         .bl-single-root .bl-sp-logo { width:112px; height:112px; flex:none; border-radius:26px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center;
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:9px;
           box-shadow:0 20px 44px -30px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
-        .bl-single-root .bl-sp-logo img { width:100%; height:100%; object-fit:cover; }
+        /* contain — see BlossomCandidates: cover cropped the party mark */
+        .bl-single-root .bl-sp-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-single-root .bl-sp-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:40px;
           font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
         .bl-single-root .bl-sp-title { min-width:0; }
@@ -517,8 +518,8 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-sc .sc__hint { color:var(--bl-primary-deep); font-family:var(--bl-fm); text-transform:uppercase; }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
-        .bl-single-root .bl-sp-sec__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:3px; }
+        .bl-single-root .bl-sp-sec__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         /* missions — mono numerals + list (mirrors the ballot family voice) */
         .bl-single-root .bl-sp-mlist { list-style:none; margin:20px 0 0; padding:0; }
         .bl-single-root .bl-sp-mlist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:baseline;

@@ -400,9 +400,10 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         }
         .bl-party-root .bl-pty-id { display:flex; align-items:flex-end; gap:20px; min-width:0; flex:1; }
         .bl-party-root .bl-pty-logo { width:96px; height:96px; flex:none; border-radius:24px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center;
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:8px;
           box-shadow:0 20px 44px -30px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
-        .bl-party-root .bl-pty-logo img { width:100%; height:100%; object-fit:cover; }
+        /* contain — a logo is a mark with its own margins; cover cropped it */
+        .bl-party-root .bl-pty-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-party-root .bl-pty-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:34px;
           font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
         .bl-party-root .bl-pty-title { min-width:0; }
@@ -423,8 +424,8 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           color:var(--bl-faint); align-self:center; padding-bottom:2px; }
         /* small logo chip on the LOGO MEANING head — ties the pull-quote to the mark */
         .bl-party-root .bl-psec__logo { width:38px; height:38px; flex:none; border-radius:11px; overflow:hidden; align-self:center;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
-        .bl-party-root .bl-psec__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:3px; }
+        .bl-party-root .bl-psec__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-party-root .bl-psec__title { margin:0; font-family:var(--bl-fd); font-weight:800; font-size:clamp(24px,6vw,40px);
           line-height:.95; letter-spacing:-.02em; color:var(--bl-ink); }
         .bl-party-root .bl-psec__count { margin-left:auto; font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em;

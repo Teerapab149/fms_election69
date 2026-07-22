@@ -44,7 +44,11 @@ const SUP_BUTTER = { bg: "#FFF4DC", ink: "#7E5417" };
 // constants shared by every theme
 const INK   = "#2B2230"; // deep plum near-black — page text
 const INK2  = "#7A6B74"; // muted plum-grey — labels / subtitles
-const FAINT = "#B08CA0"; // faintest mauve — mono eyebrows
+// faintest mauve — mono eyebrows / meta. Was #B08CA0, which measured 2.8:1 on the
+// card and canvas: below AA for any size, and it carries real information (party
+// index, "ทีมงาน N คน", the ID/position/major rows in the member modal), not just
+// decoration. Same hue, deep enough to pass — ~5:1 on white.
+const FAINT = "#8A6478";
 const CARD  = "#FFFFFF"; // surface — always white
 
 function makeTheme({ canvas, line, primary, primaryDeep, primarySoft, onPrimary = "#FFFFFF", sups }) {

@@ -266,8 +266,12 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-crow__idx { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,20px);
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--bl-faint); width:38px; flex:none; }
         .bl-cand-root .bl-crow__logo { width:62px; height:62px; flex:none; border-radius:16px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-line); display:grid; place-items:center; }
-        .bl-cand-root .bl-crow__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-line); display:flex; align-items:center; justify-content:center; padding:5px; }
+        /* contain, not cover: this is a party MARK, not a photo — cover cropped the
+           artwork (a real 3375x4219 logo rendered 75px tall in a 62px box and lost its
+           bottom). Flex centring because a percentage max-height does not resolve on a
+           grid item. */
+        .bl-cand-root .bl-crow__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-cand-root .bl-crow__logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:20px;
           font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
         .bl-cand-root .bl-crow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
