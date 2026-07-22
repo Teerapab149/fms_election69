@@ -9,7 +9,7 @@
  * ⚠️ Every claim here is sourced from real code. Do NOT edit the copy without
  * re-reading the source it describes:
  *   • field names/groups          → src/utils/globalConfigDefaults.js (GLOBAL_CONFIG_FIELDS)
- *   • mode meanings               → src/app/admin/page.js (SYSTEM_MODES)
+ *   • mode meanings               → src/components/admin/SettingsTab.js (SYSTEM_MODES)
  *   • action guards               → src/app/api/admin/dashboard/route.js (POST)
  *   • readiness coverage          → src/app/api/admin/readiness/route.js
  *   • single-party redirect       → src/app/candidates/page.js (realParties.length === 1)
