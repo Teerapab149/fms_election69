@@ -88,14 +88,20 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
       <style jsx global>{`
         .vd-success { flex:1; display:grid; place-items:center; padding:110px 24px 150px; position:relative; z-index:1; }
         .vd-orn { position:relative; width:360px; height:360px; margin:0 auto 44px; display:grid; place-items:center; }
-        .vd-orn__disc { width:220px; height:220px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; position:relative; z-index:2; box-shadow:0 0 0 1px var(--terra-soft); }
+        /* the seal is the focal point of the page, but a dark plum disc on dark moss
+           separates at 1.4:1 - it read as a dim shape. A 3px light-accent ring plus a
+           lift shadow give it an edge without inverting the medallion's colour. */
+        .vd-orn__disc { width:220px; height:220px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; position:relative; z-index:2; box-shadow:0 0 0 3px var(--terra-soft), 0 26px 60px -28px rgba(0,0,0,.55); }
         .vd-orn__ring { position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.4); }
         .vd-orn__ring--2 { inset:30px; border-style:solid; border-color:var(--rule-moss); }
         .vd-orn__arch { position:absolute; inset:0; pointer-events:none; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; fill:var(--cream); opacity:.65; }
         .vd-success__head { text-align:center; max-width:720px; margin:0 auto 44px; }
         .vd-success__head .kicker { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }
         .vd-success__head h1 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,92px); line-height:.96; letter-spacing:-.02em; margin:0 0 6px; color:var(--cream); }
-        .vd-success__head h1 em { color:var(--terra); }
+        /* light plum, not --terra: this page is a moss surface, and dark plum on dark
+           moss measured 1.4:1 - the 90px word "ลงคะแนน" sank into the background.
+           Same hue, one step up (the kicker above already uses --terra-soft here). */
+        .vd-success__head h1 em { color:var(--terra-soft); }
         .vd-success__accent { width:72px; height:2px; background:var(--terra); margin:6px auto 20px; }
         .vd-success__head p { font-family:var(--ft); font-size:17px; color:rgba(var(--cream-rgb),.82); line-height:1.55; margin:0 auto; max-width:480px; }
 

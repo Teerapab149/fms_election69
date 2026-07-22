@@ -285,6 +285,12 @@ export function VerdureBaseStyles() {
       .vd-moss .vd-chip-live { background:var(--moss-2); border-color:var(--rule-moss); color:var(--cream); }
       .vd-chip-live .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55); animation:vdDot 1.8s ease-out infinite; }
       .vd-chip-live strong { color:var(--terra); font-weight:700; }
+      /* on the dark surfaces the accent has to be the LIGHT plum: --terra on --moss-2
+         measures 1.05:1, i.e. the value inside the chip ("29 CANDIDATES", "CONFIRMED")
+         was invisible. --terra-soft is the same hue one step up and gives ~7:1, and it
+         is per-theme so every verdure theme gets the readable pairing. */
+      .vd-moss .vd-chip-live strong { color:var(--terra-soft); }
+      .vd-moss .vd-chip-live .dot { background:var(--terra-soft); }
       @keyframes vdDot { 0%{box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55)} 70%{box-shadow:0 0 0 10px rgba(var(--terra-rgb),0)} }
       .vd-user { position:relative; display:flex; align-items:center; gap:10px; padding:6px 12px 6px 6px; border-radius:16px; background:rgba(var(--cream-2-rgb),.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(var(--moss-rgb),.4); border:0; }
       .vd-moss .vd-user { background:rgba(var(--moss-2-rgb),.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
@@ -319,6 +325,11 @@ export function VerdureBaseStyles() {
       .vd-btn:hover { background:var(--terra); border-color:var(--terra); }
       .vd-btn--terra { background:var(--cta); border-color:var(--cta); color:var(--cta-text); }
       .vd-btn--terra:hover { background:var(--moss); border-color:var(--moss); color:var(--cream); }
+      /* on a moss surface the dark CTA fill sits at 1.4:1 against the page and stops
+         reading as the primary action — the light accent carries it instead, dark
+         label on top. Per-theme (--terra-soft / --moss), so every theme stays itself. */
+      .vd-moss .vd-btn--terra { background:var(--terra-soft); border-color:var(--terra-soft); color:var(--moss); }
+      .vd-moss .vd-btn--terra:hover { background:var(--cream); border-color:var(--cream); color:var(--moss); }
       .vd-btn--ghost { background:transparent; border-color:var(--rule); color:var(--moss); }
       .vd-btn--ghost:hover { background:var(--moss); border-color:var(--moss); color:var(--cream); }
       .vd-moss .vd-btn--ghost { border-color:var(--rule-moss); color:var(--cream); }
