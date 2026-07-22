@@ -244,7 +244,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-rail__logo--sm { width:auto; padding:7px 11px; }
         .sd-rail__logo--sm .sd-rail__logo-img { height:24px; }
 
-        .sd-rail__section { padding:22px 24px 12px; font-family:var(--sd-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-4); }
+        .sd-rail__section { padding:22px 24px 12px; font-family:var(--sd-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3); }
         .sd-rail__nav { display:flex; flex-direction:column; padding:0 12px; gap:2px; }
         .sd-rail__link {
           display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:12px;
@@ -257,7 +257,12 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-rail__link-num { font-family:var(--sd-serif); font-style:italic; font-size:18px; color:var(--sd-ink-3); line-height:1; }
         .sd-rail__link.is-active .sd-rail__link-num { color:var(--sd-accent); }
         .sd-rail__link-label { font-family:var(--sd-sans); font-size:14px; font-weight:500; letter-spacing:-.005em; }
-        .sd-rail__link-label small { display:block; font-family:var(--sd-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-4); font-weight:400; margin-top:2px; }
+        /* ink-2, not ink-4: this line is the Thai name of the nav item (หน้าหลัก /
+           ผู้สมัคร / ลงคะแนน / ผลคะแนน) — for a Thai reader it IS the label, and
+           ink-4 is the family's "faintest / disabled" token, which measured 2.2:1
+           on the rail at 10px. ink-2 gives ~8.6:1 and still sits below the English
+           line in weight. */
+        .sd-rail__link-label small { display:block; font-family:var(--sd-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-2); font-weight:400; margin-top:2px; }
         .sd-rail__link-status { width:6px; height:6px; border-radius:999px; background:var(--sd-ink-4); }
         .sd-rail__link-status.on { background:var(--sd-accent); box-shadow:0 0 0 2px rgba(213,255,63,.15); }
 
