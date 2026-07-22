@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Save, Loader2, CheckCircle2, RotateCcw, Eye,
   Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2, Link,
@@ -18,6 +18,15 @@ const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright, Lin
 // prefix + number on save so it can never drift from the "SAMO 50" badge.
 // The KEY is kept in the payload because many surfaces read it (hero-title
 // default, results title, layout metadata, VerdureChrome number fallback).
+//
+// ⚠️ CFG-DUAL — this is NOT the only writer of globalConfig.electionName.
+// The element editor's `hero-title` instance is bound to it
+// (src/components/admin/editor/elementInstances.js → boundTo: "electionName")
+// and PropertyPanel writes it straight through updateField(). Deriving on
+// EVERY save used to clobber that author's custom title silently, even when
+// the admin had only touched an unrelated field. handleSave() below therefore
+// re-derives only when prefix/number actually changed (see the comment there).
+// If you change either side, change both.
 function deriveElectionName(cfg) {
   return [cfg?.electionNamePrefix, cfg?.electionNumber]
     .map((v) => String(v ?? "").trim())
@@ -52,6 +61,14 @@ export default function GlobalConfigTab() {
   const [savedAt, setSavedAt] = useState(null);
   const [error, setError] = useState(null);
 
+  // CFG-DUAL: prefix/number as they stood the last time this form took a value
+  // from the server/Context. handleSave compares against this to tell "the admin
+  // renamed the election" apart from "the admin saved something else".
+  const derivedFromRef = useRef({
+    prefix: ctxConfig?.electionNamePrefix,
+    number: ctxConfig?.electionNumber,
+  });
+
   // Refresh from server once on mount, then keep tracking Context updates so the
   // form mirrors changes made elsewhere (e.g., bound element editor).
   useEffect(() => {
@@ -83,6 +100,10 @@ export default function GlobalConfigTab() {
   // mirror it locally so the user sees the synced value.
   useEffect(() => {
     setConfig(ctxConfig);
+    derivedFromRef.current = {
+      prefix: ctxConfig?.electionNamePrefix,
+      number: ctxConfig?.electionNumber,
+    };
   }, [ctxConfig]);
 
   function handleChange(key, value) {
@@ -96,7 +117,20 @@ export default function GlobalConfigTab() {
     try {
       // auto-derive electionName so it always mirrors the "SAMO 50" badge;
       // keep the KEY (many pages read it) but never edit it directly.
-      const payload = { ...config, electionName: deriveElectionName(config) };
+      //
+      // CFG-DUAL: only re-derive when the source fields moved. electionName has
+      // a second writer (the bound `hero-title` element editor — see the note on
+      // deriveElectionName above), and rewriting on every save silently threw
+      // that value away. Renaming the election still wins, so CFG-1 holds where
+      // it matters; a save that never touched prefix/number now leaves the name
+      // alone. A blank stored name is still healed — nothing to lose there.
+      const base = derivedFromRef.current;
+      const nameSourceChanged =
+        String(config.electionNamePrefix ?? "") !== String(base.prefix ?? "") ||
+        String(config.electionNumber ?? "") !== String(base.number ?? "");
+      const payload = (nameSourceChanged || !String(config.electionName ?? "").trim())
+        ? { ...config, electionName: deriveElectionName(config) }
+        : { ...config };
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
         credentials: "include",
@@ -106,6 +140,10 @@ export default function GlobalConfigTab() {
       if (!res.ok) throw new Error("Save failed");
       replaceConfig(payload);
       setConfig(payload);
+      derivedFromRef.current = {
+        prefix: payload.electionNamePrefix,
+        number: payload.electionNumber,
+      };
       setSavedAt(new Date());
     } catch (e) {
       console.error(e);

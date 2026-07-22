@@ -82,6 +82,15 @@ export const ELEMENT_INSTANCES = {
     name: "ชื่อหลัก",
     pages: ["home"],
     section: "hero",
+    // ⚠️ CFG-DUAL — this binding makes PropertyPanel write globalConfig.electionName
+    // directly (PropertyPanel.js → updateField(binding, ...)), and the general-settings
+    // form (src/components/admin/GlobalConfigTab.js) derives the SAME key from
+    // electionNamePrefix + electionNumber. Two writers, one value. The settings form
+    // now re-derives ONLY when prefix/number changed, so a custom hero title set here
+    // survives unrelated saves — but renaming the election still overwrites it, by
+    // design (the "SAMO 50" badge and the hero title must not drift apart).
+    // Keep the binding: home templates resolve hero-title through globalConfig, so
+    // dropping it would silently strand the hero on the preset literal "SAMO 49".
     boundTo: "electionName",
     isStateful: false,
     stateResolverKey: null,
