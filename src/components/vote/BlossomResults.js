@@ -100,7 +100,11 @@ export default function BlossomResults({
     if (s && s.startsWith("blossom")) setPreviewSlug(s);
   }, []);
   const t = blossomTheme(previewSlug || activeSlug);
-  const CHART = [t.primary, t.sup1Ink, t.sup2Ink, t.sup3Ink];
+  // five entries, not four: the by-major chart renders 5 bars (the live faculty has
+  // 5 majors), and with a 4-colour ring the 5th wrapped back to t.primary — two
+  // different majors in the same chart drawn in the same pink. primaryDeep comes
+  // from the same palette, so this still introduces no new colour const.
+  const CHART = [t.primary, t.sup1Ink, t.sup2Ink, t.sup3Ink, t.primaryDeep];
 
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
