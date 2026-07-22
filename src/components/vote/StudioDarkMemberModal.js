@@ -50,12 +50,15 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
               <span className="sdm-photo__tag">CANDIDATE</span>
             </div>
             <div className="sdm-info">
-              <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE · ผู้สมัคร</div>
+              {/* Thai runs escape the mono stack via .sd-thai — same rule as the rest
+                  of the family (this file was the only one still setting Thai in
+                  JetBrains Mono at 9-11px with .2em tracking) */}
+              <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE · <span className="sd-thai">ผู้สมัคร</span></div>
               <h3 className="sdm-name">{member.name}</h3>
               <dl className="sdm-rows">
-                <div><dt>STUDENT ID · รหัสนักศึกษา</dt><dd>{member.studentId || "—"}</dd></div>
-                <div><dt>POSITION · ตำแหน่ง</dt><dd>{member.position || "—"}</dd></div>
-                <div><dt>MAJOR · สาขาวิชา</dt><dd>{member.major || "—"}</dd></div>
+                <div><dt>STUDENT ID · <span className="sd-thai">รหัสนักศึกษา</span></dt><dd>{member.studentId || "—"}</dd></div>
+                <div><dt>POSITION · <span className="sd-thai">ตำแหน่ง</span></dt><dd>{member.position || "—"}</dd></div>
+                <div><dt>MAJOR · <span className="sd-thai">สาขาวิชา</span></dt><dd>{member.major || "—"}</dd></div>
               </dl>
             </div>
           </motion.div>
@@ -138,6 +141,9 @@ export function StudioDarkLightbox({ src = null, caption = "", onClose = () => {
               font-family:var(--sd-mono, monospace); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
               color:var(--sd-ink-2, #B5B0A2); background:rgba(20,20,15,.8); border:1px solid var(--sd-line, #2E2E22);
               padding:6px 16px; border-radius:999px; white-space:nowrap;
+              /* a real party name runs 43 chars — without a cap the pill grows past
+                 both screen edges (it is centred with translateX(-50%)) at 375px */
+              max-width:min(86vw, 520px); overflow:hidden; text-overflow:ellipsis;
             }
           `}</style>
         </motion.div>

@@ -70,13 +70,21 @@ function formatVotedAt(votedAt) {
   if (!votedAt) return null;
   const d = new Date(votedAt);
   if (isNaN(d.getTime())) return null;
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mon = TH_MONTHS[d.getMonth()];
-  const yy = d.getFullYear() + 543; // Buddhist era
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-  return { date: `${dd} ${mon} ${yy}`, time: `${hh}:${mm}:${ss}` };
+  // ADM-2: election time is Asia/Bangkok, never the host clock. getDate()/getHours()
+  // read the viewer's timezone — identical on a Thai device, but an hour/day off for
+  // anyone voting abroad (and on a UTC server render), which is not something a
+  // receipt stamped "เวลาใช้สิทธิ์" may get wrong. Seconds are kept, so this formats
+  // its own parts instead of using formatThaiTime (minute precision).
+  const p = {};
+  for (const part of new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(d)) p[part.type] = part.value;
+  const dd = p.day;
+  const mon = TH_MONTHS[Number(p.month) - 1];
+  const yy = Number(p.year) + 543; // Buddhist era
+  return { date: `${dd} ${mon} ${yy}`, time: `${p.hour}:${p.minute}:${p.second}` };
 }
 
 export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false }) {

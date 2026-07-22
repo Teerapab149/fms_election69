@@ -22,7 +22,21 @@ export function buildVotePartyCard({ party, pop, isSel, onSelect, onViewDetails,
   return {
     kind: "frame", as: "article",
     className: `gv-card ${isSel ? "is-selected" : ""}`,
-    attrs: { onClick: () => !editorMode && onSelect(party.id), ...(dataElement ? { "data-element": dataElement } : {}), "data-component": "vote-party-card" },
+    // keyboard/AT parity with the other families (Verdure/StudioDark/Receipt all
+    // expose the ballot option as a focusable radio) — without this the gumroad
+    // ballot could only be filled with a pointer
+    attrs: {
+      onClick: () => !editorMode && onSelect(party.id),
+      role: "radio",
+      "aria-checked": !!isSel,
+      tabIndex: editorMode ? -1 : 0,
+      onKeyDown: (e) => {
+        if (editorMode) return;
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(party.id); }
+      },
+      ...(dataElement ? { "data-element": dataElement } : {}),
+      "data-component": "vote-party-card",
+    },
     children: [
       { kind: "node", render: <span className="gv-card__no">NO. {party.number}</span> },
       { kind: "node", render: <div className="gv-card__check"><Check size={20} strokeWidth={3.5} /></div> },

@@ -127,7 +127,9 @@ export default function StudioDarkVote({
       <div className={`sdv-ballot${editorMode ? "" : " sdv-enter"}`}>
         <div className="sdv-intro">
           <span><span className="sdv-accent">●</span> VOTE OPEN</span>
-          <span className="sdv-intro__mid">{`${regularParties.length} PARTIES + ABSTAIN`}</span>
+          {/* the abstain tile below is conditional (line ~155) — the header must not
+              promise an option the ballot does not actually render */}
+          <span className="sdv-intro__mid">{`${regularParties.length} PARTIES${abstain ? " + ABSTAIN" : ""}`}</span>
           <span>ONE VOTE ONLY</span>
         </div>
 

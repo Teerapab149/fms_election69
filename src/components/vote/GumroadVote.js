@@ -168,6 +168,13 @@ export default function GumroadVote({
             data-element={specialElementId}
             className={`gv-special ${selectedPartyId === specialId ? "is-selected" : ""}`}
             onClick={() => !editorMode && specialId != null && onSelect(specialId)}
+            role="radio"
+            aria-checked={selectedPartyId === specialId}
+            tabIndex={editorMode ? -1 : 0}
+            onKeyDown={(e) => {
+              if (editorMode || specialId == null) return;
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(specialId); }
+            }}
           >
             <div className="gv-special__icon"><Ban size={22} strokeWidth={2.5} /></div>
             <div>

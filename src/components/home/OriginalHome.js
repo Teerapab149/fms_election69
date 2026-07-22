@@ -12,6 +12,7 @@ import MeetCandidatesCard from './OriginalMeetCandidatesCard';
 import { OriginalBaseStyles } from './OriginalTheme';
 import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 
 export default function OriginalHome({ initialData, onSignIn = null }) {
 
@@ -19,9 +20,12 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
     // election meta from admin globalConfig (ee059dc predated it — was hardcoded SAMO 49)
     const gc = useGlobalConfig() || {};
     const elPrefix = gc.electionNamePrefix || "SAMO";
-    const elNumber = gc.electionNumber ?? 50;
-    const elAcademicYear = gc.academicYearTh ?? 2570;
-    const elCopyrightYear = gc.copyrightYear ?? gc.electionCalendarYear ?? 2027;
+    // fall back to the shared defaults, not to loose literals — these were 50/2570/2027
+    // while GLOBAL_CONFIG_DEFAULTS says 49/2569/2026, so an empty config made the home
+    // page announce the wrong election
+    const elNumber = gc.electionNumber ?? GLOBAL_CONFIG_DEFAULTS.electionNumber;
+    const elAcademicYear = gc.academicYearTh ?? GLOBAL_CONFIG_DEFAULTS.academicYearTh;
+    const elCopyrightYear = gc.copyrightYear ?? gc.electionCalendarYear ?? GLOBAL_CONFIG_DEFAULTS.copyrightYear;
     // ✅ ใช้ข้อมูลที่ Server ส่งมาเป็นค่าเริ่มต้นทันที (ไม่ต้องรอโหลด)
     const [stats, setStats] = useState({
         totalEligible: initialData?.stats?.totalEligible || 0,

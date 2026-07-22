@@ -65,7 +65,9 @@ export default function SinglePartyView({
   const [isMobileDockOpen, setIsMobileDockOpen] = useState(true);
 
   // --- 1. DATA ---
-  const partyName = candidate?.name || "The Unity Concord";
+  // no invented party name here — this renders on the live ballot, so an absent
+  // name must read as missing data, not as a plausible-looking party
+  const partyName = candidate?.name || "ไม่พบชื่อพรรค";
   const partyNumber = candidate?.number || 1;
   const placeholderPath = getPath("/images/logo/party-placeholder.svg");
   const partyLogo = candidate?.logoUrl ? getPath(candidate.logoUrl) : placeholderPath;
@@ -588,7 +590,7 @@ export default function SinglePartyView({
                       {/* SCROLLABLE TEXT BOX */}
                       <div className="max-h-[280px] lg:max-h-[360px] overflow-y-auto pr-6 custom-scrollbar hover:scroll-auto relative z-10">
                         <p className="text-lg lg:text-xl font-sans font-light leading-[1.8] text-gray-700 whitespace-pre-line">
-                          {candidate?.logoMeaning || "ความหมายสัญลักษณ์ The Unity Concord of FMS สะท้อนถึงความสำคัญของการรวมตัวกันเป็นหนึ่งเดียว เพื่อขับเคลื่อนคณะวิทยาการจัดการไปข้างหน้า..."}
+                          {candidate?.logoMeaning || "พรรคยังไม่ได้ระบุความหมายของสัญลักษณ์"}
                         </p>
                       </div>
 

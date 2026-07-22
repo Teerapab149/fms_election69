@@ -261,7 +261,8 @@ export default function BlossomVote({
             <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
             {selection ? (
               <span className={`bl-vconfirm__val${selection.abstain ? " is-abstain" : ""}`}>
-                <span className="bl-vconfirm__dia" aria-hidden="true" />{selection.name}
+                <span className="bl-vconfirm__dia" aria-hidden="true" />
+                <span className="bl-vconfirm__nm">{selection.name}</span>
               </span>
             ) : (
               <span className="bl-vconfirm__val bl-vconfirm__val--empty">ยังไม่ได้เลือก · No selection</span>
@@ -528,7 +529,11 @@ export default function BlossomVote({
           color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
         .bl-vote-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; }
+        /* the party name is its own flex item so text-overflow has a box to act on —
+           on an inline-flex parent the bare text node became an anonymous flex item
+           and ellipsis never rendered (a 43-char party name just got cut mid-word) */
+        .bl-vote-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis; }
         .bl-vote-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
         .bl-vote-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
         /* abstain on the ink band — lighter semantic orange for contrast on dark */

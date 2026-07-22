@@ -20,8 +20,19 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
   const sid = user?.studentId || (editorMode ? "6610510149" : "—");
-  const d = new Date();
-  const recordedAt = `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`; // Arabic digits
+  // RECORDED AT must be the moment the ballot was cast (User.votedAt), read in
+  // Asia/Bangkok per ADM-2 — it used `new Date()`, so re-opening this page the next
+  // day stamped the receipt with the day it was viewed. Falls back to now only in
+  // the editor preview, where there is no real vote.
+  const stampSource = user?.votedAt ? new Date(user.votedAt) : (editorMode ? new Date() : null);
+  const recordedAt = (() => {
+    if (!stampSource || isNaN(stampSource.getTime())) return null;
+    const p = {};
+    for (const part of new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(stampSource)) p[part.type] = part.value;
+    return `${Number(p.day)} ${TH_MONTHS[Number(p.month) - 1]} ${Number(p.year) + 543}`; // Arabic digits
+  })();
   const ballotNo = `${meta.faculty}-${meta.cy}-${String(sid).slice(-4).padStart(4, "0")}`;
 
   return (
@@ -54,7 +65,9 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         <div className="vd-receipt">
           <div className="vd-receipt__h"><span><span className="vd-nw">RECEIPT</span> · <span className="vd-thai">ใบรับรอง</span></span><span><span className="ac">●</span> CONFIRMED</span></div>
           <div className="vd-receipt__row"><span className="lbl">BALLOT No.</span><span className="val"><span className="ac">{ballotNo}</span></span></div>
-          <div className="vd-receipt__row"><span className="lbl">RECORDED AT</span><span className="val">{recordedAt}</span></div>
+          {recordedAt && (
+            <div className="vd-receipt__row"><span className="lbl">RECORDED AT</span><span className="val">{recordedAt}</span></div>
+          )}
           <div className="vd-receipt__row"><span className="lbl">VOTER ID</span><span className="val">No. {sid}</span></div>
           <div className="vd-receipt__row"><span className="lbl">SECURED BY</span><span className="val">PSU Passport</span></div>
           <div className="vd-receipt__cta">

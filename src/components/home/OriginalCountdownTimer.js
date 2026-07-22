@@ -1,15 +1,27 @@
 // components/CountdownTimer.js
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Zap, Clock, CalendarDays, Hourglass, Flag } from 'lucide-react';
-import { ELECTION_CONFIG } from '../../utils/electionConfig';
+import { resolveElectionDates } from '../../utils/electionConfig';
+import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
 export default function CountdownTimer({ compact = false, systemMode = "AUTO" }) {
 
-  const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
-  // Fallback for next year logic if needed, or just standard behavior
-  const ELECTION_NEXT_YEAR = new Date(ELECTION_START);
-  ELECTION_NEXT_YEAR.setFullYear(ELECTION_NEXT_YEAR.getFullYear() + 1);
+  // Dates come from the admin's globalConfig (same source as the shared
+  // CountdownTimer), falling back to the code constants when unset. Reading
+  // ELECTION_CONFIG directly meant moving the election in the admin left this
+  // clock counting to the old date on the original template's home page.
+  const globalConfig = useGlobalConfig();
+  const { ELECTION_START, ELECTION_END } = useMemo(
+    () => resolveElectionDates(globalConfig),
+    [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
+  );
+  // memoized so the interval effect below does not tear down every render
+  const ELECTION_NEXT_YEAR = useMemo(() => {
+    const d = new Date(ELECTION_START);
+    d.setFullYear(d.getFullYear() + 1);
+    return d;
+  }, [ELECTION_START]);
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING');

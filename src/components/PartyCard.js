@@ -51,6 +51,8 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
   if (variant === 'compact') {
     return (
       <div onClick={() => onSelect(party.id)}
+        role="radio" aria-checked={!!isSelected} tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(party.id); } }}
         className="relative group cursor-pointer select-none transition-all duration-400 ease-out rounded-2xl overflow-hidden flex"
         style={{
           background: isSelected ? T.soft : '#ffffff',
@@ -79,6 +81,8 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
   // ── grid variant (default) ──────────────────────────────────────────────────
   return (
     <div onClick={() => onSelect(party.id)}
+      role="radio" aria-checked={!!isSelected} tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(party.id); } }}
       className="group relative cursor-pointer select-none rounded-[26px] overflow-hidden h-full flex flex-col transition-all duration-500 ease-out"
       style={{
         background: '#ffffff',

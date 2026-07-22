@@ -284,7 +284,8 @@ export default function BlossomSingleParty({
             <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
             {selectionLabel ? (
               <span className={`bl-vconfirm__val bl-vconfirm__val--${kind}`}>
-                <span className="bl-vconfirm__dia" aria-hidden="true" />{selectionLabel}
+                <span className="bl-vconfirm__dia" aria-hidden="true" />
+                <span className="bl-vconfirm__nm">{selectionLabel}</span>
               </span>
             ) : (
               <span className="bl-vconfirm__val bl-vconfirm__val--empty">ยังไม่ได้เลือก · No selection</span>
@@ -505,10 +506,15 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-sp-sec__count { margin-left:auto; font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--bl-ink2); white-space:nowrap; padding-bottom:3px; }
         .bl-single-root .bl-sp-story { margin:22px 0 0; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px);
-        /* StoryClamp — the booth keeps the decision zone close: a long story folds */
+          line-height:1.85; color:var(--bl-ink2); }
+        /* StoryClamp — the booth keeps the decision zone close: a long story folds.
+           These bl-sc rules were written INSIDE the bl-sp-story block (a stray nested
+           declaration — .bl-sc is the PARENT of .bl-sp-story, so the nested selector
+           matched nothing), leaving --sc-max / --sc-fade on the StoryClamp defaults
+           (11em, transparent) so the fold + fade never appeared. Same bug as the
+           receipt party letter (P-LOG-106); pulled out to the top level. */
         .bl-single-root .bl-sc { --sc-max:8em; --sc-fade:var(--bl-card); }
         .bl-single-root .bl-sc .sc__hint { color:var(--bl-primary-deep); font-family:var(--bl-fm); text-transform:uppercase; }
-          line-height:1.85; color:var(--bl-ink2); }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;
           background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
@@ -608,7 +614,11 @@ export default function BlossomSingleParty({
           color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
         .bl-single-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; }
+        /* choice label is its own flex item so text-overflow has a box to act on —
+           see the same fix in BlossomVote (bare text node on an inline-flex parent
+           becomes an anonymous flex item and never gets an ellipsis) */
+        .bl-single-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis; }
         .bl-single-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
         .bl-single-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
         /* semantic choice colours LIGHTENED for contrast on the dark ink band */
