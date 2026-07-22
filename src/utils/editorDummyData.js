@@ -27,8 +27,8 @@ export const DUMMY_PARTIES = [
   {
     id: 2,
     number: 2,
-    name: "อะไรไม่รู้ครับ",
-    slogan: "หกด",
+    name: "พรรคก้าวไกลวิทยาการจัดการ",
+    slogan: "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS",
     logoUrl: "/images/logo/fms_logo50_color.png",
     groupImageUrl: "/images/logo/fms_logo50_color.png",
     voteCount: 187,
@@ -102,8 +102,8 @@ export const DUMMY_PARTIES_MULTI = [
   {
     id: 2,
     number: 2,
-    name: "อะไรไม่รู้ครับ",
-    slogan: "หกด",
+    name: "พรรคก้าวไกลวิทยาการจัดการ",
+    slogan: "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS",
     logoUrl: "/images/logo/fms_logo50_color.png",
     groupImageUrl: "/images/logo/fms_logo50_color.png",
     voteCount: 187,
@@ -135,7 +135,7 @@ export const DUMMY_RESULTS_MULTI = [
   },
   {
     id: 2,
-    name: "อะไรไม่รู้ครับ",
+    name: "พรรคก้าวไกลวิทยาการจัดการ",
     number: 2,
     score: 187,
     image: null,

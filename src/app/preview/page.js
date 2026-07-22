@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import HomeContent from '../../components/HomeContent';
 import PagePreviewRenderer from '../../components/admin/previews/PagePreviewRenderer';
+import { makeParties } from '../../utils/templatePreviewMocks';
 import SuccessPage from '../../app/success/page';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
@@ -66,10 +67,10 @@ function PreviewContent() {
         );
     }
 
-    const mockParties = DUMMY_ELECTION?.parties || DUMMY_ELECTION?.candidates || [
-        { id: '1', number: 1, name: 'The Unity Concord Of FMS 2', slogan: 'หลากหลายเพื่อรวมเป็นหนึ่ง' },
-        { id: '2', number: 2, name: 'อะไรไม่รู้ครับ', slogan: 'ทดสอบ' }
-    ];
+    // fall back to the shared mock roster rather than a hand-written pair whose
+    // second party read "อะไรไม่รู้ครับ / ทดสอบ" — placeholder copy on a surface an
+    // admin looks at
+    const mockParties = DUMMY_ELECTION?.parties || DUMMY_ELECTION?.candidates || makeParties(2);
     const mockSpecial = { abstain: { id: 'abstain', name: 'งดออกเสียง' } };
 
     return (
