@@ -156,6 +156,22 @@ export default function StudioDarkSuccess({
           .sds-right .sds-actions { order:2; }
           .sds-right .sds-receipt { order:3; }
         }
+        /* SHORT single-column viewports — the laptop class (1024×760), which the
+           width-only rules above missed. That band gets the widest 1-col title
+           (clamp 7vw = 71.7px at 1024, three lines) on the shortest viewport, so
+           BOTH actions fell past the fold: measured "เปิดแบบประเมิน" at y=851 and
+           "ดูผลคะแนน · Results" at y=919 in a 760px viewport, while PC (2-col),
+           tablet 768×1024 and mobile 412×880 all showed them in the first screen.
+           Same reclaim the phone rule below makes, keyed on height instead of
+           width. Declared BEFORE the 560 block on purpose: where both match (a
+           short, narrow phone) the phone tuning should still win. */
+        @media (max-width:1100px) and (max-height:820px) {
+          .sds-left { padding:30px 24px 26px; }
+          .sds-mark { width:60px; height:60px; margin-bottom:20px; }
+          .sds-chapter { margin-bottom:18px; }
+          .sds-title { font-size:clamp(44px,5vw,64px); margin-bottom:18px; }
+          .sds-right { padding:26px 24px 48px; gap:18px; }
+        }
         @media (max-width:560px) {
           /* tighten the thank-you hero on phones so the reordered evaluate CTA
              clears the fold on Pixel-class devices (412×915) once the browser
