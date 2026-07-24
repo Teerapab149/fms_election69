@@ -189,7 +189,10 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                             gradientHover: "from-orange-600 via-orange-700 to-orange-800",
                                             glowColor: "from-orange-400 to-orange-600",
                                             shadow: "shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)]",
-                                            icon: <Vote className="w-5 h-5 text-white animate-spin-slow" />,
+                                            // `animate-spin-slow` has no definition in tailwind.config.js
+                                            // (only blob / fade-in-up / shine) → the maintenance icon
+                                            // never moved. Arbitrary-value spin keeps the intended pace.
+                                            icon: <Vote className="w-5 h-5 text-white animate-[spin_3s_linear_infinite] motion-reduce:animate-none" />,
                                             animation: ""
                                         };
                                     } else if (sysMode === "ENDED" || (sysMode === "AUTO" && electionStatus === "ENDED")) {
@@ -343,7 +346,9 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                             <h3 className="text-sm lg:text-base font-bold text-slate-800 leading-tight">
                                                 สถิติผู้เข้าร่วมลงคะแนนโหวต
                                             </h3>
-                                            <span className="text-[10px] text-slate-400 font-medium tracking-wide">
+                                            {/* slate-400 at 10px measured 2.44:1 on the page wash
+                                                (AA needs 4.5); slate-600 reads 6.4:1 */}
+                                            <span className="text-[10px] text-slate-600 font-medium tracking-wide">
                                                 อัปเดตข้อมูลแบบ Real-time
                                             </span>
                                         </div>
@@ -372,12 +377,15 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         {/* Sub Card: Progress */}
                                         <div className="col-span-1 rounded-[24px] bg-white border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
                                             <div className="flex justify-between items-start mb-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ความคืบหน้า</span>
+                                                {/* the three stats-card captions below were all
+                                                    slate-400 on white = 2.56:1 (AA needs 4.5) →
+                                                    slate-500 lands at 4.76:1 and stays a caption */}
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">ความคืบหน้า</span>
                                                 <PieChart className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
                                             </div>
                                             <div>
                                                 <div className="text-2xl font-black text-[var(--o-brand)] tabular-nums leading-none transition-colors duration-300">
-                                                    {stats.percentage}<span className="text-sm text-slate-400 ml-0.5">%</span>
+                                                    {stats.percentage}<span className="text-sm text-slate-500 ml-0.5">%</span>
                                                 </div>
                                                 <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                                                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${Math.min(parseFloat(stats.percentage) || 0, 100)}%` }}></div>
@@ -388,14 +396,14 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         {/* Sub Card: Eligible */}
                                         <div className="col-span-1 rounded-[24px] bg-white border-2 border-slate-100 p-4 shadow-sm flex flex-col justify-between group hover:border-[var(--o-line)] hover:shadow-md transition-all">
                                             <div className="flex justify-between items-start mb-2">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-[var(--o-mid)]">ผู้มีสิทธิรวม</span>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide group-hover:text-[var(--o-mid)]">ผู้มีสิทธิรวม</span>
                                                 <Users className="w-4 h-4 text-slate-300 group-hover:text-[var(--o-mid)] transition-colors" />
                                             </div>
                                             <div className="flex items-baseline gap-1">
                                                 <span className="text-2xl font-black text-slate-700 group-hover:text-[var(--o-deep)] transition-colors tabular-nums leading-none">
                                                     {stats.totalEligible.toLocaleString()}
                                                 </span>
-                                                <span className="text-xs font-bold text-slate-400">คน</span>
+                                                <span className="text-xs font-bold text-slate-500">คน</span>
                                             </div>
                                         </div>
                                     </div>
@@ -432,7 +440,8 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
 
             {/* Footer */}
             <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
-                <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"} {elCopyrightYear}. All Rights Reserved.</p>
+                {/* slate-400 over the translucent footer measured 2.5:1 (AA 4.5) */}
+                <p className="text-[10px] md:text-xs text-slate-600 font-medium tracking-widest uppercase">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"} {elCopyrightYear}. All Rights Reserved.</p>
             </footer>
 
             {/* Styles */}

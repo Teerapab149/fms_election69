@@ -34,13 +34,17 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
   const SpecialIcon = isDisapprove ? UserX : Ban;
   const label = isVoteNo ? 'งดออกเสียง' : isDisapprove ? 'ไม่รับรอง' : `NO. ${party.number}`;
 
-  const LogoInner = () => (
+  // `pad` is the logo inset. The grid card's stage is ~200px+ so it can afford
+  // p-4/md:p-6; the compact row's stage is a fixed 48px box, where that same
+  // inset leaves a 16px (mobile) / 0px (md+) content box — i.e. the party logo
+  // was invisible on desktop whenever >5 parties flipped the ballot to compact.
+  const LogoInner = ({ pad = 'p-4 md:p-6' }) => (
     isSpecialOption ? (
       <SpecialIcon className="w-1/3 h-1/3 transition-all duration-500 group-hover:scale-110"
         style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.22)' }} />
     ) : (party.logoUrl && !imageError) ? (
       <img src={getPath(party.logoUrl)} alt={party.name}
-        className={`w-full h-full object-contain p-4 md:p-6 transition-transform duration-700 ease-out group-hover:scale-105 ${isSelected ? 'scale-105' : ''}`}
+        className={`w-full h-full object-contain ${pad} transition-transform duration-700 ease-out group-hover:scale-105 ${isSelected ? 'scale-105' : ''}`}
         onError={() => setImageError(true)} />
     ) : (
       <Users className="w-1/3 h-1/3 transition-all duration-500 group-hover:scale-110" style={{ color: 'rgba(30,23,45,0.18)' }} />
@@ -62,11 +66,17 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
         <div className="flex items-center gap-3 p-3 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden transition-all duration-300"
             style={{ background: `radial-gradient(120% 120% at 50% 0%, ${T.soft}, #fff 72%)`, boxShadow: `inset 0 0 0 1px ${T.ring}` }}>
-            <LogoInner />
+            <LogoInner pad="p-1.5" />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.42)' }}>{label}</span>
-            <h3 className="font-bold text-[13px] leading-snug truncate" style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.82)' }}>{party.name}</h3>
+            {/* 0.42 alpha put this 9px ballot label at 2.65:1 on the white row —
+                well under AA's 4.5. 0.66 composites to 5.57:1 and still reads as a
+                quiet caption next to the party name */}
+            <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.66)' }}>{label}</span>
+            {/* two lines, not `truncate`: a 53-character party name lost 132px of
+                itself (desktop) / 61px (mobile) to the single-line ellipsis, and
+                parties sharing a prefix became indistinguishable on the ballot */}
+            <h3 className="font-bold text-[13px] leading-snug line-clamp-2" style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.82)' }}>{party.name}</h3>
           </div>
           {isSelected && (
             <div className="flex-shrink-0 p-1.5 rounded-xl text-white" style={{ background: T.grad, boxShadow: `0 6px 16px -4px ${T.solid}` }}>
@@ -130,7 +140,10 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
         </div>
 
         {/* Name */}
-        <h3 className={`mt-3.5 font-bold leading-tight line-clamp-2 px-0.5 text-center transition-colors duration-300 ${isHero ? 'text-base md:text-xl' : 'text-[15px] md:text-base'}`}
+        {/* three lines: at 5 parties the mobile grid is 2-up (~139px of name
+            width) and the longest real party name needs 3 lines — clamp-2 cut
+            the last line off entirely */}
+        <h3 className={`mt-3.5 font-bold leading-tight line-clamp-3 px-0.5 text-center transition-colors duration-300 ${isHero ? 'text-base md:text-xl' : 'text-[15px] md:text-base'}`}
           style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.85)' }}>
           {party.name}
         </h3>

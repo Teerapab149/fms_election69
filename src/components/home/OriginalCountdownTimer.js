@@ -59,7 +59,7 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
       }
     };
 
-    const timer = setInterval(() => {
+    const tick = () => {
       const diff = calculate();
       if (diff > 0) {
         setTimeLeft({
@@ -71,7 +71,13 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
-    }, 1000);
+    };
+
+    // run once BEFORE the interval: the tick only ever fired inside setInterval, so
+    // `phase` stayed 'LOADING' for a full 1000ms and the home hero opened with a
+    // grey 192x48 skeleton pill on every single load
+    tick();
+    const timer = setInterval(tick, 1000);
 
     return () => clearInterval(timer);
   }, [ELECTION_START, ELECTION_END, ELECTION_NEXT_YEAR, systemMode]);
@@ -125,7 +131,10 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
           icon: <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-[var(--o-brand,#9D3292)]",
           textMain: "text-[var(--o-brand,#9D3292)]",
-          textSub: "text-[var(--o-mid)]",
+          // --o-mid on the flagship purple theme is #A855F7 → 3.96:1 on white for
+          // the 16px d/h/m/s markers (AA needs 4.5). An 80% brand/white mix reads
+          // 5.03:1 and still sits visibly lighter than the numerals (7.87:1).
+          textSub: "text-[color-mix(in_srgb,var(--o-brand,#9D3292)_80%,white)]",
           border: "border-[var(--o-soft2)]",
           shadow: "shadow-[0_2px_10px_color-mix(in_srgb,var(--o-brand,#9D3292)_15%,transparent)]"
         };

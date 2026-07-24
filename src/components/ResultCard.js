@@ -118,10 +118,12 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
       `}>
         <div className="flex justify-between items-start mb-1 lg:mb-3 gap-2">
           <div className="min-w-0 flex-1">
-            {/* wraps to two lines instead of truncating — a real party name runs 43
-                characters and `truncate` cut the winner's name mid-word on the
-                results announcement */}
-            <h3 className={`font-bold text-slate-800 leading-tight line-clamp-2 ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
+            {/* wraps instead of truncating — a real party name runs 43 characters
+                and `truncate` cut the winner's name mid-word on the results
+                announcement. Three lines, not two: in the lg card layout the name
+                column is only ~184-214px wide, where a 53-character name needs a
+                third line (clamp-2 cut 28px off every card). */}
+            <h3 className={`font-bold text-slate-800 leading-tight line-clamp-3 ${isWinner ? 'text-lg' : 'text-base'} lg:text-lg`}>
               {candidate.name || "ไม่ระบุชื่อพรรค"}
             </h3>
             <div className="flex items-center gap-2 mt-0.5 text-slate-500">
