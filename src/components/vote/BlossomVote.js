@@ -294,7 +294,7 @@ export default function BlossomVote({
         .bl-vote-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-vote-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-vote-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-vote-root) a:hover { color:var(--bl-ink); }
 
         /* blobs — faded toward the canvas on this page (owner: full-strength candy
@@ -365,7 +365,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-vote-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-vote-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-vote-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -393,7 +393,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-vote-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-vote-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-vote-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -418,7 +418,7 @@ export default function BlossomVote({
            and this is the action page, so legibility wins here. */
         .bl-vote-root .bl-vote-word { margin:12px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:.9;
           font-size:clamp(52px,13.5vw,120px); letter-spacing:-.02em; color:var(--bl-ink); }
-        .bl-vote-root .bl-vote-word span { color:var(--bl-primary-deep); }
+        .bl-vote-root .bl-vote-word span { color:var(--bl-primary-ink); }
         .bl-vote-root .bl-vote-deck { margin:20px 0 0; max-width:620px; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(15px,3.6vw,18px); line-height:1.7; color:var(--bl-ink2);
           animation:blVRise .6s ease both .14s; }
@@ -435,7 +435,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-vote-cd { margin-left:auto; gap:7px; }
         .bl-vote-root .bl-vote-cd__dot { width:6px; height:6px; flex:none; border-radius:50%; background:var(--bl-primary);
           animation:blVBlip 1.6s infinite; }
-        .bl-vote-root .bl-vote-cd__t { font-weight:700; color:var(--bl-primary-deep); letter-spacing:.06em;
+        .bl-vote-root .bl-vote-cd__t { font-weight:700; color:var(--bl-primary-ink); letter-spacing:.06em;
           font-variant-numeric:tabular-nums; }
 
         /* ---- ballot paper card (the hero object on the page) ---- */
@@ -448,7 +448,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
         .bl-vote-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
-          letter-spacing:.14em; color:var(--bl-primary-deep); white-space:nowrap; }
+          letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- ballot rows (candidates index grammar, made selectable) ---- */
         .bl-vote-root .bl-vballot { list-style:none; margin:0; padding:0; }
@@ -478,16 +478,21 @@ export default function BlossomVote({
         .bl-vote-root .bl-vopt.is-selected .bl-vopt__tick { transform:scale(1); }
 
         .bl-vote-root .bl-vopt__idx { font-family:var(--bl-fd); font-weight:800; font-size:clamp(22px,5.4vw,40px);
-          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-deep); width:auto; flex:none; }
+          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-ink); width:auto; flex:none; }
         .bl-vote-root .bl-vopt__logo { width:62px; height:62px; flex:none; border-radius:16px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-line); display:grid; place-items:center; }
-        .bl-vote-root .bl-vopt__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-line); display:flex; align-items:center; justify-content:center; padding:5px; }
+        /* contain, not cover — same reason as .bl-crow__logo on the candidates page:
+           this is a party MARK, not a photo. cover rendered a real 3375x4219 logo
+           75px tall inside the 60px box and clipped 15px off its bottom, on the
+           BALLOT of all places. Flex centring because a percentage max-height does
+           not resolve on a grid item. */
+        .bl-vote-root .bl-vopt__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-vote-root .bl-vopt__logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:20px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-vote-root .bl-vopt__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .bl-vote-root .bl-vopt__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-vote-root .bl-vopt__kick b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-vote-root .bl-vopt__kick b { color:var(--bl-primary-ink); font-weight:700; }
         .bl-vote-root .bl-vopt__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
@@ -498,7 +503,7 @@ export default function BlossomVote({
           text-transform:uppercase; color:var(--bl-faint); }
         .bl-vote-root .bl-vopt__more { display:inline-flex; align-items:center; gap:7px; flex:none; min-height:44px;
           padding:11px 18px; border-radius:999px; background:var(--bl-primary-soft); border:none; cursor:pointer;
-          font-family:var(--bl-fd); font-weight:600; font-size:13.5px; color:var(--bl-primary-deep);
+          font-family:var(--bl-fd); font-weight:600; font-size:13.5px; color:var(--bl-primary-ink);
           transition:background .25s ease; }
         .bl-vote-root .bl-vopt__more:hover { background:color-mix(in srgb, var(--bl-primary) 20%, var(--bl-card)); }
         .bl-vote-root .bl-vopt__more svg { transition:transform .25s ease; }

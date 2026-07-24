@@ -375,7 +375,7 @@ export default function BlossomResults({
         .bl-res-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-res-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-res-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-res-root) a:hover { color:var(--bl-ink); }
 
         .bl-res-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
@@ -444,7 +444,7 @@ export default function BlossomResults({
         .bl-res-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-res-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-res-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-res-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -471,7 +471,7 @@ export default function BlossomResults({
         .bl-res-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-res-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-res-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-res-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -492,7 +492,7 @@ export default function BlossomResults({
           font-size:clamp(56px,15vw,132px); letter-spacing:-.02em; color:transparent;
           -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-res-root .bl-res-word { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-res-root .bl-res-word { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-res-root .bl-res-deck { margin:20px 0 0; max-width:600px; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(15px,3.6vw,18px); line-height:1.7; color:var(--bl-ink2);
@@ -518,10 +518,10 @@ export default function BlossomResults({
         .bl-res-root .bl-rfig__lab { margin-left:auto; text-align:right; font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em;
           color:var(--bl-ink2); line-height:1.9; }
         .bl-res-root .bl-rfig-1 .bl-rfig__n { color:var(--bl-sup1-ink); }
-        .bl-res-root .bl-rfig-2 .bl-rfig__n { color:var(--bl-primary-deep); }
+        .bl-res-root .bl-rfig-2 .bl-rfig__n { color:var(--bl-primary-ink); }
         .bl-res-root .bl-rfig-3 .bl-rfig__n { color:var(--bl-sup2-ink); }
         .bl-res-root .bl-rfig-1 .bl-rfig__idx { color:var(--bl-sup1-ink); }
-        .bl-res-root .bl-rfig-2 .bl-rfig__idx { color:var(--bl-primary-deep); }
+        .bl-res-root .bl-rfig-2 .bl-rfig__idx { color:var(--bl-primary-ink); }
         .bl-res-root .bl-rfig-3 .bl-rfig__idx { color:var(--bl-sup2-ink); }
         .bl-res-root .bl-rfig__bar { flex:0 0 100%; height:3px; border-radius:2px; margin-top:12px; overflow:hidden;
           background:color-mix(in srgb, var(--bl-line) 60%, var(--bl-card)); }
@@ -560,7 +560,7 @@ export default function BlossomResults({
         .bl-res-root .bl-rrow__num { font-family:var(--bl-fd); font-weight:800; font-size:clamp(34px,8vw,56px); line-height:1;
           font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-ink); }
         .bl-res-root .bl-rrow__num small { font-size:.32em; font-weight:600; color:var(--bl-ink2); margin-left:6px; letter-spacing:0; }
-        .bl-res-root .bl-rrow.is-win .bl-rrow__num { color:var(--bl-primary-deep); }
+        .bl-res-root .bl-rrow.is-win .bl-rrow__num { color:var(--bl-primary-ink); }
         .bl-res-root .bl-rrow.is-pseudo .bl-rrow__num { color:var(--bl-faint); }
         .bl-res-root .bl-rrow__track { height:6px; border-radius:3px; overflow:hidden;
           background:color-mix(in srgb, var(--bl-line) 60%, var(--bl-card)); }
@@ -590,7 +590,7 @@ export default function BlossomResults({
         .bl-res-root .bl-panel__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--bl-line); }
         .bl-res-root .bl-panel__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--bl-ink); }
-        .bl-res-root .bl-panel__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10px; letter-spacing:.14em; color:var(--bl-primary-deep); }
+        .bl-res-root .bl-panel__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10px; letter-spacing:.14em; color:var(--bl-primary-ink); }
         .bl-res-root .bl-donut { position:relative; }
         .bl-res-root .bl-donut__c { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
         .bl-res-root .bl-donut__c strong { font-family:var(--bl-fd); font-weight:800; font-size:32px; line-height:1; color:var(--bl-ink); }

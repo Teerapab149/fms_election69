@@ -31,7 +31,10 @@ export function BlossomBaseStyles() {
         --bl-canvas:${t.canvas}; --bl-card:${t.card}; --bl-ink:${t.ink}; --bl-ink2:${t.ink2};
         --bl-faint:${t.faint}; --bl-line:${t.line};
         --bl-primary:${t.primary}; --bl-primary-deep:${t.primaryDeep}; --bl-primary-soft:${t.primarySoft};
-        --bl-on-primary:${t.onPrimary};
+        /* --bl-primary-ink = accent TEXT; --bl-primary-deep = accent FILL. Splitting
+           them is what lets the candy fills stay candy while accent type still
+           reaches AA — see the primaryInk note in utils/blossomPalettes.js. */
+        --bl-primary-ink:${t.primaryInk}; --bl-on-primary:${t.onPrimary};
         --bl-sup1:${t.sup1}; --bl-sup1-ink:${t.sup1Ink};
         --bl-sup2:${t.sup2}; --bl-sup2-ink:${t.sup2Ink};
         --bl-sup3:${t.sup3}; --bl-sup3-ink:${t.sup3Ink};

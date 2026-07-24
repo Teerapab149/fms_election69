@@ -276,7 +276,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-party-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-party-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-party-root) a:hover { color:var(--bl-ink); }
 
         /* blobs — faded toward the canvas (calm) */
@@ -347,7 +347,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-party-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-party-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-party-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -374,7 +374,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-party-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-party-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-party-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -396,7 +396,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           font-size:clamp(88px,22vw,208px); letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:transparent;
           -webkit-text-stroke:2.5px var(--bl-primary-deep); text-stroke:2.5px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-party-root .bl-pty-no { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-party-root .bl-pty-no { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-party-root .bl-pty-id { display:flex; align-items:flex-end; gap:20px; min-width:0; flex:1; }
         .bl-party-root .bl-pty-logo { width:96px; height:96px; flex:none; border-radius:24px; overflow:hidden;
@@ -405,11 +405,11 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         /* contain — a logo is a mark with its own margins; cover cropped it */
         .bl-party-root .bl-pty-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-party-root .bl-pty-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:34px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-party-root .bl-pty-title { min-width:0; }
         .bl-party-root .bl-pty-num { font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-party-root .bl-pty-num b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-party-root .bl-pty-num b { color:var(--bl-primary-ink); font-weight:700; }
         /* party name — SOLID display, calm ink (the star of the feature) */
         .bl-party-root .bl-pty-word { margin:6px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:1;
           font-size:clamp(30px,7vw,60px); letter-spacing:-.02em; color:var(--bl-ink); overflow-wrap:break-word; }
@@ -441,7 +441,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         /* StoryClamp — a long logo-meaning collapses behind a canvas fade so the
            sections below stay reachable; the toggle wears the candy accent */
         .bl-party-root .bl-sc { --sc-max:9.6em; --sc-fade:var(--bl-canvas); }
-        .bl-party-root .bl-sc .sc__hint { color:var(--bl-primary-deep); font-family:var(--bl-fm); text-transform:uppercase; }
+        .bl-party-root .bl-sc .sc__hint { color:var(--bl-primary-ink); font-family:var(--bl-fm); text-transform:uppercase; }
 
         /* ---- 2. พันธกิจ — mono numerals + list ---- */
         .bl-party-root .bl-mlist { list-style:none; margin:20px 0 0; padding:0; }
@@ -449,7 +449,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-party-root .bl-mlist li:last-child { border-bottom:none; }
         .bl-party-root .bl-mlist__n { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,18px); line-height:1.4;
-          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-ink); }
         .bl-party-root .bl-mlist__t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.7;
           color:var(--bl-ink); }
 
@@ -464,7 +464,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           font-variant-numeric:tabular-nums; letter-spacing:-.03em; color:var(--bl-primary-soft);
           -webkit-text-stroke:1.5px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-party-root .bl-pcard__n { color:var(--bl-primary-deep); -webkit-text-stroke:0; }
+          .bl-party-root .bl-pcard__n { color:var(--bl-primary-ink); -webkit-text-stroke:0; }
         }
         .bl-party-root .bl-pcard__body { display:flex; flex-direction:column; gap:6px; min-width:0; }
         .bl-party-root .bl-pcard__title { font-family:var(--bl-fd); font-weight:700; font-size:clamp(16px,4vw,19px); line-height:1.45;
@@ -485,7 +485,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           transition:transform .4s ease; }
         .bl-party-root .bl-cand__btn:hover .bl-cand__photo img { transform:scale(1.04); }
         .bl-party-root .bl-cand__ph { position:absolute; inset:0; display:grid; place-items:center;
-          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-deep); }
+          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-ink); }
         .bl-party-root .bl-cand__no { position:absolute; left:10px; top:10px; padding:3px 9px; border-radius:999px;
           font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.08em; font-variant-numeric:tabular-nums;
           color:var(--bl-ink); background:color-mix(in srgb, var(--bl-card) 82%, transparent);
@@ -493,7 +493,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root .bl-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
         .bl-party-root .bl-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .bl-party-root .bl-cand__btn:hover .bl-cand__name { color:var(--bl-primary-deep); }
+        .bl-party-root .bl-cand__btn:hover .bl-cand__name { color:var(--bl-primary-ink); }
         .bl-party-root .bl-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
           color:var(--bl-ink2); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
 
@@ -517,7 +517,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           border-radius:999px; border:2px solid var(--bl-ink); background:transparent;
           font-family:var(--bl-fd); font-weight:600; font-size:15px; color:var(--bl-ink);
           transition:color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
-        .bl-party-root .bl-pty-back:hover { color:var(--bl-primary-deep); border-color:var(--bl-primary-deep);
+        .bl-party-root .bl-pty-back:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep);
           background:var(--bl-card); transform:translateY(-2px); }
         .bl-party-root .bl-pty-back:active { transform:scale(.97); }
         .bl-party-root .bl-pty-back svg { transition:transform .25s ease; }

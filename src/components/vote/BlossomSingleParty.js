@@ -337,7 +337,7 @@ export default function BlossomSingleParty({
         .bl-single-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-single-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-single-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-single-root) a:hover { color:var(--bl-ink); }
 
         /* blobs — faded toward the canvas (calm) */
@@ -407,7 +407,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-single-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-single-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-single-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -435,7 +435,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-single-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-single-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-single-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -459,11 +459,11 @@ export default function BlossomSingleParty({
         /* contain — see BlossomCandidates: cover cropped the party mark */
         .bl-single-root .bl-sp-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-single-root .bl-sp-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:40px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-title { min-width:0; }
         .bl-single-root .bl-sp-num { font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-single-root .bl-sp-num b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-single-root .bl-sp-num b { color:var(--bl-primary-ink); font-weight:700; }
         /* display word — SOLID (the party name), calm ink; not hollow (action page). */
         /* party name wraps up to ~3 lines (masthead grows with content); ellipsis only
            caps an extreme name at line 3. line-clamp:2 clipped long names to "…" at 390 */
@@ -515,7 +515,7 @@ export default function BlossomSingleParty({
            (11em, transparent) so the fold + fade never appeared. Same bug as the
            receipt party letter (P-LOG-106); pulled out to the top level. */
         .bl-single-root .bl-sc { --sc-max:8em; --sc-fade:var(--bl-card); }
-        .bl-single-root .bl-sc .sc__hint { color:var(--bl-primary-deep); font-family:var(--bl-fm); text-transform:uppercase; }
+        .bl-single-root .bl-sc .sc__hint { color:var(--bl-primary-ink); font-family:var(--bl-fm); text-transform:uppercase; }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;
           background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:3px; }
@@ -526,7 +526,7 @@ export default function BlossomSingleParty({
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-sp-mlist li:last-child { border-bottom:none; }
         .bl-single-root .bl-sp-mlist__n { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,18px); line-height:1.4;
-          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-mlist__t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.7;
           color:var(--bl-ink); }
 
@@ -536,7 +536,7 @@ export default function BlossomSingleParty({
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-sp-plist li:last-child { border-bottom:none; }
         .bl-single-root .bl-sp-plist .n { font-family:var(--bl-fd); font-weight:800; font-size:clamp(22px,5vw,34px); line-height:1;
-          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-plist .bl-sp-pbody { display:block; }
         .bl-single-root .bl-sp-plist .t { display:block; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.6;
           color:var(--bl-ink); }
@@ -553,7 +553,7 @@ export default function BlossomSingleParty({
           background:color-mix(in srgb, var(--bl-primary-soft) 60%, var(--bl-card)); position:relative; }
         .bl-single-root .bl-sp-cand__photo img { width:100%; height:100%; object-fit:cover; display:block; }
         .bl-single-root .bl-sp-cand__ph { position:absolute; inset:0; display:grid; place-items:center;
-          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-deep); }
+          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
         .bl-single-root .bl-sp-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink); }
         .bl-single-root .bl-sp-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
@@ -569,7 +569,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
         .bl-single-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
-          letter-spacing:.14em; color:var(--bl-primary-deep); white-space:nowrap; }
+          letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- decision rows (SEMANTIC colours — FIXED per choice, never candy) ---- */
         .bl-single-root .bl-sballot { list-style:none; margin:0; padding:0; }

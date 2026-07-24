@@ -20,10 +20,26 @@
 //   faint        — faintest label ink (mono eyebrows, CONSTANT)
 //   line         — hairline on card / canvas (per-theme tint of primary)
 //   primary      — the candy brand hue (title, CTA, avatar, primary chip identity)
-//   primaryDeep  — deeper primary (the soft-3D button shadow + pressed state)
-//   onPrimary    — text ink ON primaryDeep surfaces (CTA label, avatar initial):
-//                  white where primaryDeep is dark enough (pink/sky), constant INK
-//                  where it is light (mint/butter) — keeps ≥3:1 on the CTA in every theme
+//   primaryDeep  — deeper primary (FILL only: the soft-3D button shadow, the
+//                  pressed state, the selected radio dot). NOT a text colour —
+//                  see primaryInk.
+//   primaryInk   — accent TEXT ink. primaryDeep is a candy fill, and reading it
+//                  back as type on the paper canvas / on a primarySoft chip fails
+//                  AA in every theme: measured on the real pages, the "ดูรายละเอียด"
+//                  pill read 1.82:1 in butter, 2.21:1 in mint, 2.60:1 in sky and
+//                  2.94:1 in pink (need 4.5), and the 84px hero accent word read
+//                  1.98:1 / 2.48:1 in butter / mint (need 3). Same hue, deep enough
+//                  to carry type — these ARE the SUP_* inks, which the palette
+//                  already validates at ≥4.5:1 on their own light chip.
+//   onPrimary    — text ink ON primary / primaryDeep surfaces (CTA label, confirm
+//                  button, avatar initial). Constant INK in EVERY theme: these are
+//                  all light candy fills, and white never reached AA on any of them.
+//                  (The old rule said "white where primaryDeep is dark enough
+//                  (pink/sky)" — but the biggest buttons, including the vote-confirm
+//                  bar, are filled with `primary`, not `primaryDeep`. Measured on the
+//                  real page, white on the confirm button read 2.54:1 in pink and
+//                  2.18:1 in sky — below AA, and below the ≥3:1 this comment itself
+//                  promised. Ink reads 6.0:1 and 7.0:1 on those same fills.)
 //   primarySoft  — lightest primary tint (the "voted" stat chip background)
 //   sup1/sup1Ink — support chip pair #1 (bg + readable ink ≥4.5:1)
 //   sup2/sup2Ink — support chip pair #2
@@ -51,10 +67,10 @@ const INK2  = "#7A6B74"; // muted plum-grey — labels / subtitles
 const FAINT = "#8A6478";
 const CARD  = "#FFFFFF"; // surface — always white
 
-function makeTheme({ canvas, line, primary, primaryDeep, primarySoft, onPrimary = "#FFFFFF", sups }) {
+function makeTheme({ canvas, line, primary, primaryDeep, primaryInk, primarySoft, onPrimary = INK, sups }) {
   return {
     canvas, card: CARD, ink: INK, ink2: INK2, faint: FAINT, line,
-    primary, primaryDeep, primarySoft, onPrimary,
+    primary, primaryDeep, primaryInk, primarySoft, onPrimary,
     sup1: sups[0].bg, sup1Ink: sups[0].ink,
     sup2: sups[1].bg, sup2Ink: sups[1].ink,
     sup3: sups[2].bg, sup3Ink: sups[2].ink,
@@ -66,18 +82,21 @@ export const BLOSSOM_THEMES = {
   "blossom": makeTheme({
     canvas: "#FCF9FA", line: "#EDE2E8",
     primary: "#FF6FBF", primaryDeep: "#E24FA3", primarySoft: "#FFE1F0",
+    primaryInk: SUP_PINK.ink,   // #B02E7A — 5.98:1 on card, 4.92:1 on #FFE1F0
     sups: [SUP_MINT, SUP_SKY, SUP_BUTTER],
   }),
   // ฟ้า — friendly sky blue.
   "blossom-sky": makeTheme({
     canvas: "#F9FBFD", line: "#E1E8F0",
     primary: "#6FB4FF", primaryDeep: "#4A94E8", primarySoft: "#DCEBFF",
+    primaryInk: SUP_SKY.ink,    // #2668B8 — 5.63:1 on card, 4.65:1 on #DCEBFF
     sups: [SUP_PINK, SUP_MINT, SUP_BUTTER],
   }),
   // มินต์ — fresh mint green.
   "blossom-mint": makeTheme({
     canvas: "#F8FBF9", line: "#DFEAE3",
     primary: "#5BD6A0", primaryDeep: "#3BB584", primarySoft: "#D3F5E6",
+    primaryInk: SUP_MINT.ink,   // #1E7A55 — 5.34:1 on card, 4.57:1 on #D3F5E6
     onPrimary: INK, // white on #3BB584 ≈ 2.6:1 — ink reads 6:1
     sups: [SUP_PINK, SUP_SKY, SUP_BUTTER],
   }),
@@ -85,6 +104,7 @@ export const BLOSSOM_THEMES = {
   "blossom-butter": makeTheme({
     canvas: "#FCFAF5", line: "#EDE6D6",
     primary: "#FFC85C", primaryDeep: "#E8A93B", primarySoft: "#FFEFCC",
+    primaryInk: SUP_BUTTER.ink, // #7E5417 — 6.73:1 on card, 5.92:1 on #FFEFCC
     onPrimary: INK, // white on #E8A93B ≈ 2.1:1 — ink reads 7.5:1
     sups: [SUP_PINK, SUP_SKY, SUP_MINT],
   }),

@@ -152,7 +152,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-succ-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-succ-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-succ-root) a:hover { color:var(--bl-ink); }
 
         .bl-succ-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
@@ -221,7 +221,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-succ-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-succ-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-succ-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -248,7 +248,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-succ-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-succ-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-succ-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -337,7 +337,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--bl-faint); padding-top:6px; }
         .bl-succ-root .bl-succ-next__kick { display:block; font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-succ-root .bl-succ-next__kick b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-succ-root .bl-succ-next__kick b { color:var(--bl-primary-ink); font-weight:700; }
         .bl-succ-root .bl-succ-next__title { margin:6px 0 0; font-family:var(--bl-fd); font-weight:800;
           font-size:clamp(24px,6vw,40px); line-height:1.12; letter-spacing:-.01em; color:var(--bl-ink); }
         .bl-succ-root .bl-succ-next__desc { margin:12px 0 0; max-width:560px; font-family:var(--bl-fd); font-weight:500;
@@ -345,7 +345,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-succ-tags { margin-top:16px; display:flex; flex-wrap:wrap; gap:9px; }
         .bl-succ-root .bl-succ-tag { display:inline-flex; align-items:center; padding:7px 14px; border-radius:999px;
           font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
-          color:var(--bl-primary-deep); background:var(--bl-primary-soft); }
+          color:var(--bl-primary-ink); background:var(--bl-primary-soft); }
         .bl-succ-root .bl-succ-tag--alt { color:var(--bl-sup2-ink); background:var(--bl-sup2); }
 
         .bl-succ-root .bl-succ-actions { display:flex; flex-direction:column; gap:12px; max-width:520px; }
@@ -359,7 +359,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-succ-btn--primary:hover svg { transform:translate(2px,-2px); }
         .bl-succ-root .bl-succ-btn--primary:active { transform:scale(.97); }
         .bl-succ-root .bl-succ-btn--results { color:var(--bl-ink); background:var(--bl-card); border:2px solid var(--bl-ink); }
-        .bl-succ-root .bl-succ-btn--results:hover { color:var(--bl-primary-deep); border-color:var(--bl-primary-deep);
+        .bl-succ-root .bl-succ-btn--results:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep);
           transform:translateY(-2px); }
         .bl-succ-root .bl-succ-btn--results:hover svg { transform:translateX(4px); }
         .bl-succ-root .bl-succ-btn--results:active { transform:scale(.97); }
@@ -368,7 +368,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           cursor:not-allowed; box-shadow:none; pointer-events:none; }
         .bl-succ-root .bl-succ-done { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:52px;
           padding:15px 26px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:15px;
-          color:var(--bl-primary-deep); background:var(--bl-primary-soft);
+          color:var(--bl-primary-ink); background:var(--bl-primary-soft);
           border:1.5px solid color-mix(in srgb, var(--bl-primary) 30%, var(--bl-card)); }
         .bl-succ-root .bl-succ-home { align-self:flex-start; margin-top:6px; min-height:44px; display:inline-flex; align-items:center;
           font-family:var(--bl-fm); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--bl-ink2);

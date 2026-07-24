@@ -519,7 +519,7 @@ export default function BlossomHome({
           background-size:28px 28px; }
         /* :where() keeps this default at zero specificity (mockup used bare "a{}")
            so per-link classes (.bl-cta, .bl-nav__link, ...) always win */
-        :where(.bl-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-root) a:hover { color:var(--bl-ink); }
 
         /* organic candy blobs — absolute within .bl-root (root is relative) */
@@ -596,7 +596,7 @@ export default function BlossomHome({
         .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         /* burger (mobile only) — 44px tap target, mono editorial bars */
@@ -625,7 +625,7 @@ export default function BlossomHome({
         .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- hero ---- */
         .bl-hero { position:relative; padding-top:34px; }
@@ -639,10 +639,12 @@ export default function BlossomHome({
           position:absolute; top:6px; right:-14px; z-index:1; pointer-events:none;
           animation:blRingIn .9s cubic-bezier(.22,1,.36,1) both; }
         .bl-ring svg { width:100%; height:100%; animation:blSpin 26s linear infinite; overflow:visible; }
-        .bl-ring text { font-family:var(--bl-fm); font-size:10.2px; letter-spacing:.32em; fill:var(--bl-primary-deep); text-transform:uppercase; }
+        /* SVG type takes the accent INK too (10.2px mono read 1.98:1 in butter when
+           it was painted in the fill colour --bl-primary-deep) */
+        .bl-ring text { font-family:var(--bl-fm); font-size:10.2px; letter-spacing:.32em; fill:var(--bl-primary-ink); text-transform:uppercase; }
         .bl-ring__core { position:absolute; inset:0; display:grid; place-items:center; text-align:center;
           font-family:var(--bl-fd); font-weight:800; color:var(--bl-ink); }
-        .bl-ring__core b { font-size:clamp(30px,7vw,46px); line-height:1; display:block; color:var(--bl-primary-deep); }
+        .bl-ring__core b { font-size:clamp(30px,7vw,46px); line-height:1; display:block; color:var(--bl-primary-ink); }
         .bl-ring__core span { font-family:var(--bl-fm); font-size:9px; letter-spacing:.22em; color:var(--bl-ink2); }
         @keyframes blSpin { to { transform:rotate(360deg); } }
 
@@ -668,17 +670,17 @@ export default function BlossomHome({
         .bl-hollow { font-weight:800; color:transparent;
           -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-hollow { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-hollow { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-solid { font-weight:800; }
-        .bl-accent { color:var(--bl-primary-deep); }
+        .bl-accent { color:var(--bl-primary-ink); }
         .bl-subline { margin-top:18px; font-family:var(--bl-fd); font-weight:500; font-size:clamp(16px,4vw,24px);
           color:var(--bl-ink); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
         .bl-subline::before { content:""; width:52px; height:2px; background:var(--bl-ink); flex:none; }
 
         .bl-daterow { margin-top:22px; display:inline-flex; align-items:center; gap:10px; flex-wrap:wrap;
           font-family:var(--bl-fm); font-size:11.5px; letter-spacing:.1em; color:var(--bl-ink2); }
-        .bl-daterow__pill { background:var(--bl-primary-soft); color:var(--bl-primary-deep); padding:6px 14px;
+        .bl-daterow__pill { background:var(--bl-primary-soft); color:var(--bl-primary-ink); padding:6px 14px;
           border-radius:999px; font-weight:700; }
 
         /* ---- CTA editorial ---- */
@@ -704,7 +706,7 @@ export default function BlossomHome({
           font-family:var(--bl-fd); font-weight:600; font-size:16px; color:var(--bl-ink);
           padding:13px 28px; border-radius:999px; border:2px solid var(--bl-ink); background:transparent;
           transition:color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
-        .bl-cta2:hover { color:var(--bl-primary-deep); border-color:var(--bl-primary-deep);
+        .bl-cta2:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep);
           background:var(--bl-card); transform:translateY(-2px); }
         .bl-cta2:active { transform:scale(.97); }
 
@@ -760,15 +762,15 @@ export default function BlossomHome({
           letter-spacing:.16em; color:var(--bl-ink2); }
         .bl-feature-copy { margin-top:34px; max-width:560px; }
         .bl-feature-copy h2 { font-family:var(--bl-fd); font-weight:700; font-size:clamp(24px,6vw,38px); line-height:1.2; margin:0; }
-        .bl-feature-copy h2 em { font-style:normal; color:var(--bl-primary-deep); }
+        .bl-feature-copy h2 em { font-style:normal; color:var(--bl-primary-ink); }
         .bl-feature-copy p { margin-top:12px; font-size:15px; line-height:1.8; color:var(--bl-ink2); }
         /* go-link = soft pill button */
         .bl-go { display:inline-flex; align-items:center; gap:8px; margin-top:18px; min-height:44px;
           padding:11px 20px; border-radius:999px; background:var(--bl-primary-soft);
-          font-family:var(--bl-fd); font-weight:600; font-size:15px; color:var(--bl-primary-deep);
+          font-family:var(--bl-fd); font-weight:600; font-size:15px; color:var(--bl-primary-ink);
           transition:background .2s ease, color .2s ease, transform .2s ease; }
         .bl-go:hover { background:color-mix(in srgb, var(--bl-primary) 20%, var(--bl-card));
-          color:var(--bl-primary-deep); transform:translateY(-2px); }
+          color:var(--bl-primary-ink); transform:translateY(-2px); }
         .bl-go:active { transform:scale(.97); }
         .bl-go svg { transition:transform .25s ease; }
         .bl-go:hover svg { transform:translateX(4px); }
@@ -789,11 +791,11 @@ export default function BlossomHome({
         .bl-lab { margin-left:auto; text-align:right; font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em;
           color:var(--bl-ink2); line-height:1.9; }
         .bl-fig-1 .bl-fig-n { color:var(--bl-sup1-ink); }
-        .bl-fig-2 .bl-fig-n { color:var(--bl-primary-deep); }
+        .bl-fig-2 .bl-fig-n { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-fig-n { color:var(--bl-sup2-ink); }
         /* candy: index numbers echo their row's figure colour */
         .bl-fig-1 .bl-idx { color:var(--bl-sup1-ink); }
-        .bl-fig-2 .bl-idx { color:var(--bl-primary-deep); }
+        .bl-fig-2 .bl-idx { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-idx { color:var(--bl-sup2-ink); }
         .bl-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--bl-primary);
           margin-right:5px; animation:blBlip 1.6s infinite; }

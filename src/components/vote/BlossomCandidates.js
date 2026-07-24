@@ -122,7 +122,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-cand-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-cand-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-cand-root) a:hover { color:var(--bl-ink); }
 
         .bl-cand-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
@@ -191,7 +191,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-cand-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-cand-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-cand-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -218,7 +218,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-cand-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-cand-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-cand-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -237,7 +237,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
           font-size:clamp(56px,15vw,140px); letter-spacing:-.02em; color:transparent;
           -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-cand-root .bl-cand-word { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-cand-root .bl-cand-word { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-cand-root .bl-cand-meta { display:flex; align-items:flex-end; gap:12px; padding-bottom:8px; }
         .bl-cand-root .bl-cand-count { font-family:var(--bl-fd); font-weight:800; font-size:clamp(44px,11vw,88px); line-height:.8;
@@ -273,15 +273,15 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
            grid item. */
         .bl-cand-root .bl-crow__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-cand-root .bl-crow__logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:20px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-cand-root .bl-crow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .bl-cand-root .bl-crow__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-cand-root .bl-crow__kick b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-cand-root .bl-crow__kick b { color:var(--bl-primary-ink); font-weight:700; }
         .bl-cand-root .bl-crow__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,32px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .bl-cand-root .bl-crow__link:hover .bl-crow__name { color:var(--bl-primary-deep); }
+        .bl-cand-root .bl-crow__link:hover .bl-crow__name { color:var(--bl-primary-ink); }
         .bl-cand-root .bl-crow__slogan { margin-top:2px; font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
           color:var(--bl-ink2); font-style:italic;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
@@ -290,7 +290,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         /* CTA: soft pill with an accent arrow that slides on row hover */
         .bl-cand-root .bl-crow__cta { display:inline-flex; align-items:center; gap:7px; flex:none; min-height:44px;
           padding:11px 20px; border-radius:999px; background:var(--bl-primary-soft);
-          font-family:var(--bl-fd); font-weight:600; font-size:14px; color:var(--bl-primary-deep);
+          font-family:var(--bl-fd); font-weight:600; font-size:14px; color:var(--bl-primary-ink);
           transition:background .25s ease, transform .2s ease; }
         .bl-cand-root .bl-crow__link:hover .bl-crow__cta { background:color-mix(in srgb, var(--bl-primary) 20%, var(--bl-card)); }
         .bl-cand-root .bl-crow__cta svg { transition:transform .25s ease; }
