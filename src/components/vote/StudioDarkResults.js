@@ -181,7 +181,9 @@ export default function StudioDarkResults({
             {revealed ? (
               <>
                 <div className="sdr-aside__kicker">§ THE NUMBERS</div>
-                <h3>นับครบ <em>ทุกเสียง.</em></h3>
+                {/* no trailing "." — the family's editorial full stop is an
+                    ENGLISH-headline device; an all-Thai line must not take it */}
+                <h3>นับครบ <em>ทุกเสียง</em></h3>
                 <p>คะแนนทั้งหมด {fmt(totalVotes)} เสียง จากผู้มีสิทธิ์ {fmt(totalEligible)} คน คิดเป็นสัดส่วนผู้ใช้สิทธิ์ {turnout.toFixed(2)}%</p>
               </>
             ) : (
@@ -343,7 +345,11 @@ export default function StudioDarkResults({
         .sdr-stat__lbl em { font-size:17px; letter-spacing:0; text-transform:none; }
         .sdr-stat__val { font-family:var(--sd-sans); font-weight:400; font-size:clamp(40px,4.6vw,60px); letter-spacing:-.04em; line-height:1; margin:16px 0 8px; font-variant-numeric:tabular-nums; color:var(--sd-ink); }
         .sdr-stat__val small { font-size:18px; color:var(--sd-ink-3); margin-left:4px; }
-        .sdr-stat__sub { font-size:13px; color:var(--sd-ink-3); font-weight:300; }
+        /* ink-2, not ink-3: these three lines are the only place the page says
+           in words WHAT each big number is ("นับสะสมตั้งแต่เปิดโหวต" etc.) —
+           running Thai content, not a decorative kicker. ink-3 measured
+           4.05:1 at 13px on --sd-bg-2 (below the 4.5 AA floor). */
+        .sdr-stat__sub { font-size:13px; color:var(--sd-ink-2); font-weight:300; }
 
         /* race */
         .sdr-race { background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:22px; padding:32px; position:relative; overflow:hidden; }

@@ -151,27 +151,39 @@ export default function StudioDarkShell({
         .sd-scene-h__title { font-family:var(--sd-sans); font-weight:400; font-size:clamp(40px,5vw,76px); line-height:.95; letter-spacing:-.035em; margin:0; }
         .sd-scene-h__deck { font-size:15px; color:var(--sd-ink-2); line-height:1.6; font-weight:300; margin:0; max-width:540px; justify-self:end; }
 
-        /* buttons (pill) */
+        /* buttons (pill)
+           NOTE — every colour rule below doubles its own class
+           (.sd-btn.sd-btn / .sd-btn.sd-btn--accent, specificity 0,2,0) ON
+           PURPOSE. The family resets anchors with ".sd-root a{color:inherit}"
+           (0,1,1), which OUT-RANKED a plain ".sd-btn--accent{color:...}"
+           (0,1,0). Buttons rendered as <button> were fine, but the two
+           rendered as <a> (StudioDarkParty's "ลงคะแนนให้พรรคนี้" CTA and
+           StudioDarkClosed's "กลับหน้าหลัก") inherited --sd-ink instead —
+           cream on the lime accent, measured 1.01:1, i.e. an unreadable
+           primary CTA. Doubling the class beats the anchor reset regardless of
+           styled-jsx mount order. Keep it doubled. */
         .sd-btn {
           display:inline-flex; align-items:center; justify-content:center; gap:12px;
           padding:14px 22px; border:1px solid var(--sd-line-strong); border-radius:999px;
-          background:transparent; color:var(--sd-ink);
+          background:transparent;
           font-family:var(--sd-sans); font-size:14px; font-weight:500; cursor:pointer;
           transition:background .2s, color .2s, border-color .2s, opacity .2s;
         }
-        .sd-btn:hover { background:var(--sd-ink); color:var(--sd-bg); border-color:var(--sd-ink); }
-        .sd-btn--accent { background:var(--sd-accent); color:var(--sd-bg); border-color:var(--sd-accent); font-weight:600; }
-        .sd-btn--accent:hover { background:var(--sd-ink); border-color:var(--sd-ink); color:var(--sd-bg); }
+        .sd-btn.sd-btn { color:var(--sd-ink); }
+        .sd-btn.sd-btn:hover { background:var(--sd-ink); color:var(--sd-bg); border-color:var(--sd-ink); }
+        .sd-btn.sd-btn--accent { background:var(--sd-accent); color:var(--sd-bg); border-color:var(--sd-accent); font-weight:600; }
+        .sd-btn.sd-btn--accent:hover { background:var(--sd-ink); border-color:var(--sd-ink); color:var(--sd-bg); }
         .sd-btn--lg { padding:17px 28px; font-size:15px; }
         .sd-btn--block { width:100%; }
         .sd-btn[disabled], .sd-btn.is-disabled { opacity:.3; cursor:not-allowed; pointer-events:none; }
         .sd-textlink {
-          display:inline-flex; align-items:center; gap:8px; color:var(--sd-ink-2);
+          display:inline-flex; align-items:center; gap:8px;
           font-family:var(--sd-sans); font-size:14px; font-weight:500;
           border-bottom:1px solid transparent; padding-bottom:2px; cursor:pointer;
           transition:color .2s, border-color .2s; background:none; border-top:0; border-left:0; border-right:0;
         }
-        .sd-textlink:hover { color:var(--sd-ink); border-bottom-color:var(--sd-line-strong); }
+        .sd-textlink.sd-textlink { color:var(--sd-ink-2); }
+        .sd-textlink.sd-textlink:hover { color:var(--sd-ink); border-bottom-color:var(--sd-line-strong); }
         .sd-textlink .arr { color:var(--sd-accent); }
 
         .sd-smallcaps { font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3); }

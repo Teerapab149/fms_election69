@@ -475,7 +475,10 @@ export default function StudioDarkSingleParty({
         .sds-policy__no { font-family:var(--sd-sans); font-weight:400; font-size:48px; letter-spacing:-.04em; color:var(--sd-ink-4); line-height:.9; transition:color .2s; }
         .sds-policy:hover .sds-policy__no { color:var(--sd-accent); }
         .sds-policy__body p { font-size:16px; line-height:1.6; color:var(--sd-ink); margin:0; font-weight:300; max-width:720px; }
-        .sds-policy__body p.sds-policy__desc { font-size:14px; line-height:1.7; color:var(--sd-ink-3); margin-top:8px; padding-left:14px; border-left:1px solid var(--sd-line-strong); font-weight:300; max-width:660px; }
+        /* ink-2, not ink-3: this is the party's actual policy text (the thing a
+           voter reads before deciding), not a label. ink-3 measured 4.32:1 at
+           14px on --sd-bg — under the 4.5 AA floor. */
+        .sds-policy__body p.sds-policy__desc { font-size:14px; line-height:1.7; color:var(--sd-ink-2); margin-top:8px; padding-left:14px; border-left:1px solid var(--sd-line-strong); font-weight:300; max-width:660px; }
         .sds-policy__tag { font-family:var(--sd-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-2); opacity:0; transition:opacity .25s; white-space:nowrap; }
         .sds-policy:hover .sds-policy__tag { opacity:1; }
 

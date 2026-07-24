@@ -236,7 +236,10 @@ export default function StudioDarkClosed({
            but allows normal wrapping (mirrors verdure's vd-thai-flow / gumroad's
            gcl-fact__txt deviation — nowrap here would overflow the card on
            mobile). Scoped to this component only. */
-        .sdcl-fact { font-family:var(--sd-mono); font-size:11px; letter-spacing:.1em; color:var(--sd-ink-3); text-align:center; margin:0 0 30px; }
+        /* ink-2, not ink-3: the run carries the REAL schedule (open/close date +
+           time window) — the single most useful sentence on a closed page.
+           ink-3 measured 4.32:1 at 11px on --sd-bg, under the AA floor. */
+        .sdcl-fact { font-family:var(--sd-mono); font-size:11px; letter-spacing:.1em; color:var(--sd-ink-2); text-align:center; margin:0 0 30px; }
         .sdcl-fact__txt { font-family:var(--font-anuphan),'Anuphan',system-ui,sans-serif; letter-spacing:.03em; white-space:normal; line-height:1.6; }
 
         @media (max-width:1100px) {

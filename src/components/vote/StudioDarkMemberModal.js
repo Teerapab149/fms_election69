@@ -12,7 +12,7 @@
 // AnimatePresence internally, so call sites stay one-liners.
 
 import { getPath } from "../../utils/basePath";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -32,8 +32,44 @@ function useEscape(active, onClose) {
   }, [active, onClose]);
 }
 
+// Focus management for the two aria-modal overlays below. Escape already closed
+// them, but focus stayed on whatever opened the modal (measured: activeElement
+// was still the .sdp-tile button behind the scrim) and Tab walked the PAGE
+// underneath — a keyboard/screen-reader user could not reach the close button
+// and never left the page behind an aria-modal="true" dialog. Moves focus in on
+// open, cycles Tab inside, restores it to the opener on close.
+const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+function useFocusTrap(active, ref) {
+  useEffect(() => {
+    if (!active) return undefined;
+    const root = ref.current;
+    if (!root) return undefined;
+    const opener = document.activeElement;
+    const first = root.querySelector(FOCUSABLE);
+    (first || root).focus?.({ preventScroll: true });
+
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(root.querySelectorAll(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
+      if (!items.length) { e.preventDefault(); return; }
+      const i = items.indexOf(document.activeElement);
+      const next = e.shiftKey ? (i <= 0 ? items[items.length - 1] : items[i - 1])
+                              : (i === -1 || i === items.length - 1 ? items[0] : items[i + 1]);
+      e.preventDefault();
+      next.focus({ preventScroll: true });
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      if (opener && typeof opener.focus === "function" && document.contains(opener)) opener.focus({ preventScroll: true });
+    };
+  }, [active, ref]);
+}
+
 export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
+  const cardRef = useRef(null);
   useEscape(!!member, onClose);
+  useFocusTrap(!!member, cardRef);
   const src = member ? resolveSrc(member.modalImageUrl || member.imageUrl) : null;
 
   if (!member) return null;
@@ -41,7 +77,7 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
   return (
         <motion.div className="sdm-overlay" onClick={onClose} role="dialog" aria-modal="true"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>
-          <motion.div className="sdm-card" onClick={(e) => e.stopPropagation()}
+          <motion.div className="sdm-card" ref={cardRef} onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
             <button type="button" className="sdm-x" onClick={onClose} aria-label="ปิด"><X size={18} strokeWidth={2.5} /></button>
@@ -107,12 +143,14 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
 }
 
 export function StudioDarkLightbox({ src = null, caption = "", onClose = () => {} }) {
+  const boxRef = useRef(null);
   useEscape(!!src, onClose);
+  useFocusTrap(!!src, boxRef);
 
   if (!src) return null;
 
   return (
-        <motion.div className="sdl-overlay" onClick={onClose} role="dialog" aria-modal="true"
+        <motion.div className="sdl-overlay" ref={boxRef} onClick={onClose} role="dialog" aria-modal="true"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>
           <button type="button" className="sdl-x" onClick={onClose} aria-label="ปิด"><X size={20} strokeWidth={2.5} /></button>
           <motion.img src={src} alt={caption || "image"} className="sdl-img" onClick={(e) => e.stopPropagation()}
