@@ -49,14 +49,17 @@ const PRIMARY_STYLES = {
     boxShadow: "none",
   },
   voted: {
+    // quieter than notVoted (the vote is already cast) but still a live control:
+    // its copy is "ดูผลคะแนน / Results" and hrefForState('voted') is /results.
+    // It used to carry cursor:not-allowed + opacity .75 to pair with a
+    // `disabled` button — that combination made the results link unreachable,
+    // see the isDisabled note below.
     backgroundColor: "transparent",
     color: "var(--color-text-muted, #64748b)",
     borderColor: "var(--color-text-muted, #cbd5e1)",
     borderWidth: "1.5px",
     borderStyle: "solid",
     boxShadow: "none",
-    cursor: "not-allowed",
-    opacity: 0.75,
   },
   ended: {
     backgroundColor: "transparent",
@@ -118,7 +121,14 @@ export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedCon
   };
 
   const text = stateConfig.text || "Vote Now";
-  const isDisabled = visualState === "voted";
+  // every state is actionable (vote / results / closed / sign-in) — same call
+  // chunky-stamp.jsx already made. `voted` used to be `disabled`, which took the
+  // isDisabled branch below: a bare <button disabled> with NO <Link> wrapper. So
+  // the button that reads "ดูผลคะแนน / Results" and whose hrefForState is
+  // "/results" could not be clicked at all — measured on studio-dark home:
+  // disabled=true, cursor=not-allowed, no anchor ancestor. The results page was
+  // unreachable from the home CTA for anyone who had already voted.
+  const isDisabled = false;
   const isLoginAction = currentState === "login";
   const href = hrefForState(currentState);
 
