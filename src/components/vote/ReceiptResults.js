@@ -601,8 +601,11 @@ export default function ReceiptResults({
         /* 3 lines, not 2 — the standings must name the party in full. The 53-char name
            overflowed by exactly one line at 2 (scrollHeight 80 vs 51 clientHeight) and
            the ellipsis landed mid-word. */
+        /* ink gutter — 5.19px of Thai upper-vowel+tone ink sat above the clamp's clip
+           edge at 21px/1.22 (heading font box = 1.654em). padding-top only; a
+           padding-bottom would let the clamped-away 4th line bleed through. */
         .rc-res-root .rc-srow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(16px,4vw,21px); line-height:1.22;
-          letter-spacing:-.01em; color:var(--rc-ink);
+          letter-spacing:-.01em; color:var(--rc-ink); padding-top:.32em; margin-top:-.32em;
           display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
         .rc-res-root .rc-srow__data { grid-column:2; display:grid; grid-template-columns:1fr; gap:6px; margin-top:5px; }
         .rc-res-root .rc-srow__num { font-family:var(--rc-fr); font-weight:700; font-size:clamp(20px,5vw,28px); line-height:1;

@@ -593,7 +593,13 @@ export default function ReceiptSingleParty({
         /* the party numeral presses down like an ink stamp (over-scale + tilt settle) */
         .rc-single-root .rc-sp-num b { color:var(--rc-accent-deep); font-weight:700;
           display:inline-block; animation:rcInkStamp .5s cubic-bezier(.34,1.56,.64,1) both .3s; }
-        .rc-single-root .rc-sp-word { margin:6px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.04;
+        /* ink gutter — worst case in the family: the party's own name at 52px on a
+           1.04 line-height, against a heading face whose font box is 1.654em. Measured
+           15.96px of ink above the clamp's clip edge — "พรรคชี้นำ" rendered with the
+           tone mark simply gone. .32em padding-top, cancelled by the negative
+           margin-top (folded into the existing 6px top margin), so nothing moves. */
+        .rc-single-root .rc-sp-word { margin:calc(6px - .32em) 0 0; padding-top:.32em;
+          font-family:var(--rc-fh); font-weight:700; line-height:1.04;
           font-size:clamp(30px,7vw,52px); letter-spacing:-.01em; color:var(--rc-ink); overflow-wrap:break-word;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .rc-single-root .rc-sp-slogan { margin:12px 0 0; font-family:var(--rc-fr); font-size:15px; line-height:1.6; color:var(--rc-ink2); }
@@ -822,8 +828,11 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-vbar__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .rc-single-root .rc-vbar__lab { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase;
           color:var(--rc-faint); }
+        /* ink gutter — mirrors ReceiptVote: 4.85px of Thai tone-mark ink was landing
+           above the ellipsis box at 22px/1.15 */
         .rc-single-root .rc-vbar__val { display:inline-flex; align-items:center; gap:9px; min-width:0; font-family:var(--rc-fh);
           font-weight:700; font-size:clamp(16px,4.2vw,22px); line-height:1.15; color:var(--rc-ink);
+          padding-top:.32em; margin-top:-.32em;
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .rc-single-root .rc-vbar__val--empty { color:var(--rc-faint); font-weight:600; }
         .rc-single-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); border-radius:50%; }

@@ -311,7 +311,17 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
            (53 Thai chars) needed a third line in the 260px column — at 2 it ended
            "…เพื่อการ…" (scrollHeight 61 vs 38 clientHeight). Rows are already
            variable-height, so nothing else moves. */
+        /* INK GUTTER — the heading face (IBM Plex Sans Thai) has a 1.654em font box,
+           so ANY line-height under that lets the line-clamp's own overflow:hidden cut
+           real glyph ink off the top: at 16px/1.2 the tallest Thai stack (upper vowel +
+           tone, e.g. "ที่") overshot the box by 3.90px and the tone mark vanished
+           outright ("คนที่" printed as "คนที"). .32em of padding-top, pulled straight
+           back out with a matching negative margin-top, gives the marks room without
+           moving a single pixel of layout. padding-BOTTOM is deliberately NOT used —
+           Chrome paints the clamped-away next line into it (measured: a 4th line
+           bled through on a 3-line clamp). Descenders already fit (cutBot −1.1px). */
         .rc-cand-root .rc-index-name { font-family:var(--rc-fh); font-weight:700; font-size:16px; line-height:1.2; color:var(--rc-ink);
+          padding-top:.32em; margin-top:-.32em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .rc-cand-root .rc-index-link:hover .rc-index-name { color:var(--rc-accent-deep); }
         .rc-cand-root .rc-index-team { font-size:9px; letter-spacing:.14em; color:var(--rc-faint); }
@@ -380,8 +390,10 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
         /* 3 lines: in the 2-column masonry the 53-char name needs a third line at 30px
            (scrollHeight 108 vs 67 clientHeight → the headline of the card was cut).
            On phones the same name already fits in 2, so nothing moves there. */
+        /* ink gutter — see .rc-index-name. Tighter here (1.12) so the overshoot is
+           worse: 8.70px at the 30px size. */
         .rc-cand-root .rc-flyer__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(21px,5vw,30px); line-height:1.12;
-          letter-spacing:-.01em; color:var(--rc-ink);
+          letter-spacing:-.01em; color:var(--rc-ink); padding-top:.32em; margin-top:-.32em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .rc-cand-root .rc-flyer__link:hover .rc-flyer__name { color:var(--rc-accent-deep); }
         .rc-cand-root .rc-flyer__slogan { margin-top:4px; font-family:var(--rc-fr); font-size:14px; line-height:1.5; color:var(--rc-ink2);

@@ -32,7 +32,7 @@
 // no interaction fires (P-LOG-002). Base state is fully visible — nothing is gated on
 // JS/animation, so JS-off / reduced-motion render the full file instantly.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
@@ -70,6 +70,25 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
   // only after mount so `document` is defined.
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+
+  // The gallery lightbox declares role="dialog" aria-modal="true" but was neither
+  // dismissible nor focus-receiving: measured with it open — Escape left it open
+  // (lbStillOpen=true), document.activeElement was still the .rc-strip__cell behind
+  // the scrim, and body overflow stayed "visible" so the page scrolled underneath.
+  // ReceiptMemberModal already does all three; mirror it here.
+  const lbCloseRef = useRef(null);
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const onKey = (e) => { if (e.key === "Escape") setLightboxSrc(null); };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    lbCloseRef.current?.focus();
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxSrc]);
 
   const no = party?.number;
   const logo = resolveSrc(party?.logoUrl);
@@ -299,7 +318,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
       {/* gallery lightbox — this component's OWN (no shared lightbox) */}
       {lightboxSrc && (
         <div className="rc-lightbox" onClick={() => setLightboxSrc(null)} role="dialog" aria-modal="true" aria-label="ภาพขยาย">
-          <button type="button" className="rc-lightbox__close" onClick={() => setLightboxSrc(null)} aria-label="ปิด">✕</button>
+          <button type="button" ref={lbCloseRef} className="rc-lightbox__close" onClick={() => setLightboxSrc(null)} aria-label="ปิด">✕</button>
           <img src={lightboxSrc} alt="ภาพกิจกรรมพรรค" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
@@ -585,7 +604,13 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           letter-spacing:.08em; color:var(--rc-receipt); background:color-mix(in srgb, var(--rc-ink) 72%, transparent);
           font-variant-numeric:tabular-nums; }
         .rc-party-root .rc-lany__body { min-width:0; display:flex; flex-direction:column; gap:3px; padding:12px 14px 14px; }
+        /* ink gutter — the heading face's font box is 1.654em, so at 16px/1.2 the
+           clamp's overflow:hidden clipped 3.90px off the top and ate the tone mark:
+           "สมาชิกพรรค คนที่ 1" printed as "…คนที 1". padding-top + matching negative
+           margin-top = room for the marks, zero layout movement. No padding-bottom:
+           Chrome bleeds the clamped-away line into it. */
         .rc-party-root .rc-lany__name { font-family:var(--rc-fh); font-weight:700; font-size:16px; line-height:1.2; color:var(--rc-ink);
+          padding-top:.32em; margin-top:-.32em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .rc-party-root .rc-lany__btn:hover .rc-lany__name { color:var(--rc-accent-deep); }
         .rc-party-root .rc-lany__role { font-family:var(--rc-fr); font-size:12.5px; line-height:1.35; color:var(--rc-ink2);

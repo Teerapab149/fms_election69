@@ -755,8 +755,12 @@ export default function ReceiptVote({
         .rc-vote-root .rc-vrow__kick { font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--rc-ink2); }
         .rc-vote-root .rc-vrow__kick b { color:var(--rc-accent-deep); font-weight:700; }
+        /* ink gutter — the clamp's overflow:hidden cut 6.42px off the top of the FIRST
+           ballot line at 26px/1.16 (heading font box = 1.654em), so a name like
+           "พรรคชี้นำ" lost its tone mark on the ballot itself. padding-top only —
+           padding-bottom would let Chrome bleed the clamped-away line through. */
         .rc-vote-root .rc-vrow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(19px,4.6vw,26px); line-height:1.16;
-          letter-spacing:-.01em; color:var(--rc-ink);
+          letter-spacing:-.01em; color:var(--rc-ink); padding-top:.32em; margin-top:-.32em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .rc-vote-root .rc-vrow__slogan { margin-top:2px; font-family:var(--rc-fr); font-size:13.5px; line-height:1.5; color:var(--rc-ink2);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
@@ -808,8 +812,13 @@ export default function ReceiptVote({
         .rc-vote-root .rc-vbar__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .rc-vote-root .rc-vbar__lab { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase;
           color:var(--rc-faint); }
+        /* ink gutter — the ellipsis needs overflow:hidden, and at 22px/1.15 that box is
+           4.85px shorter than the heading face's ink for a Thai upper-vowel+tone stack,
+           so the tone mark on the CHOSEN PARTY NAME was being shaved off in the one
+           place the voter re-reads their choice. Padding pulled back out by margin. */
         .rc-vote-root .rc-vbar__val { display:inline-flex; align-items:center; gap:9px; min-width:0; font-family:var(--rc-fh);
           font-weight:700; font-size:clamp(16px,4.2vw,22px); line-height:1.15; color:var(--rc-ink);
+          padding-top:.32em; margin-top:-.32em;
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .rc-vote-root .rc-vbar__val--empty { color:var(--rc-faint); font-weight:600; }
         .rc-vote-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); border-radius:50%; }
