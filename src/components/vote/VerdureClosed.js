@@ -143,7 +143,11 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
         .vd-closed__cd .seg:first-child .num { color:var(--terra); }
         .vd-closed__cd .u { font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-2); margin-top:9px; }
 
-        .vd-closed__fact { font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(var(--moss-rgb),.62); margin:0 0 30px; }
+        /* .68 alpha, not .62: this run carries the REAL schedule (open/close date
+           + the time window) — the one line on a closed page a voter needs. At
+           .62 it measured 3.98:1 on the cream panel at 11px, under the 4.5 AA
+           floor; .68 measures 4.73:1 and still reads as a quiet kicker. */
+        .vd-closed__fact { font-family:var(--fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(var(--moss-rgb),.68); margin:0 0 30px; }
         /* vd-B2C deviation: this run is a full Thai sentence (date + time window),
            not a short kicker token — .vd-thai's white-space:nowrap would risk
            mobile overflow here, so this local variant carries the same font-family

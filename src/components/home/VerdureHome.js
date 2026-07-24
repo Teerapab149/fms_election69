@@ -89,23 +89,27 @@ export default function VerdureHome({
   // Phase-aware countdown: before open → count to START ("OPENS IN"); during →
   // count to END ("CLOSES IN"); after → "ปิดแล้ว". A day segment prefixes the
   // clock when >0 day remains so a multi-day gap doesn't render as "946:12:33".
-  const [cd, setCd] = useState({ labelEn: "CLOSES IN", labelTh: "ปิดใน", value: "--:--:--" });
+  // `days` is kept OUT of `value` on purpose: as one string the ledger rendered
+  // "26 วัน10:32:34" — the ink gap between the Thai "น" and the clock's "1"
+  // collapsed (the plain space advances only 6.8px at 34px, and the display
+  // face's -.02em tracking eats what is left). Separate spans let CSS own the
+  // separation instead of a glyph. See `.vd-home__stat .val .d` below.
+  const [cd, setCd] = useState({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "--:--:--" });
   useEffect(() => {
     const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
     const fmt = (diff) => {
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff / 3600000) % 24), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
       const p = (n) => String(n).padStart(2, "0");
-      const hms = `${p(h)}:${p(m)}:${p(s)}`;
-      return d > 0 ? `${d} วัน ${hms}` : hms;
+      return { days: d, value: `${p(h)}:${p(m)}:${p(s)}` };
     };
     const tick = () => {
       const now = Date.now();
       const start = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
       const end = ELECTION_END instanceof Date ? ELECTION_END.getTime() : NaN;
-      if (!isNaN(start) && now < start) { setCd({ labelEn: "OPENS IN", labelTh: "เปิดใน", value: fmt(start - now) }); return; }
-      if (!isNaN(end) && now < end) { setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", value: fmt(end - now) }); return; }
-      setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", value: "ปิดแล้ว" });
+      if (!isNaN(start) && now < start) { setCd({ labelEn: "OPENS IN", labelTh: "เปิดใน", ...fmt(start - now) }); return; }
+      if (!isNaN(end) && now < end) { setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", ...fmt(end - now) }); return; }
+      setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "ปิดแล้ว" });
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -209,7 +213,7 @@ export default function VerdureHome({
           <span className="vd-home__ledger-sep" />
           <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.value}</div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
           <span className="vd-home__ledger-sep" />
           <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
         </div>
@@ -263,6 +267,10 @@ export default function VerdureHome({
         .vd-home__stat .val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; letter-spacing:-.02em; color:var(--moss); }
         .vd-home__stat .val em { color:var(--terra); font-style:italic; }
         .vd-home__stat .val small { font-family:var(--fs); font-style:normal; font-size:13px; font-weight:500; color:var(--moss); opacity:.55; margin-left:5px; letter-spacing:0; }
+        /* day segment of the countdown — a plain space between "วัน" and the clock
+           advanced 6.8px but left almost no INK gap (Thai bowl ends flush, the
+           display "1" starts flush), reading as "26 วัน10:32:34". Own margin. */
+        .vd-home__stat .val .d { margin-right:.36em; }
         .vd-home__ledger-sep { width:1px; height:38px; background:var(--rule); }
 
         @media (max-width:1100px) {
