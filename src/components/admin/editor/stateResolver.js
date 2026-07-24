@@ -6,7 +6,9 @@
  * Context shape:
  *   {
  *     session: NextAuth session | null,
- *     electionPhase: "upcoming" | "active" | "ended",
+ *     electionPhase: "before" | "running" | "ended",   // resolver vocabulary —
+ *       translated from the server's WAITING/ONGOING/CLOSED/ENDED by
+ *       PHASE_FROM_STATUS in buildRuntimeContext below
  *     systemMode: "AUTO" | "MANUAL" | "PAUSE" | "ENDED" | "CLOSED",
  *     isSystemOpen: boolean,
  *     isVoted: boolean,
@@ -74,6 +76,25 @@ export function resolveElementState(elementId, context) {
  * Build runtime context from raw data sources.
  * Call this once per page render and pass the result to resolveElementState.
  */
+// The server speaks a different vocabulary than the resolvers do: page.js and
+// api/home-info emit WAITING/ONGOING/CLOSED/ENDED, while STATE_RESOLVERS.countdown
+// compares before/running/ended. Passing the raw status straight through matched
+// nothing, so the countdown fell to its `return "before"` default for EVERY
+// payload — including AUTO/ONGOING (during voting) and AUTO/ENDED (after close),
+// i.e. the home page announced "ยังไม่เปิดรับลงคะแนน" on election day itself.
+// Translating at this seam (rather than changing the API) keeps the server as the
+// source of truth for the phase: it derives status from resolveElectionDates(
+// config.globalConfig) — the dates in the DB — whereas computedPhase below reads
+// the dates compiled into ELECTION_CONFIG. When those disagree, the API is right.
+// CLOSED only ever accompanies systemMode PAUSE, which countdown/voteCTA both
+// short-circuit before reading the phase, so its mapping is unobservable today.
+const PHASE_FROM_STATUS = {
+  WAITING: "before",
+  ONGOING: "running",
+  CLOSED: "ended",
+  ENDED: "ended",
+};
+
 export function buildRuntimeContext({ session, systemConfig, electionStatus, userData }) {
   // Compute electionPhase from real time vs ELECTION_CONFIG dates
   const now = new Date();
@@ -87,7 +108,7 @@ export function buildRuntimeContext({ session, systemConfig, electionStatus, use
 
   return {
     session: session || null,
-    electionPhase: electionStatus || computedPhase,
+    electionPhase: PHASE_FROM_STATUS[electionStatus] || electionStatus || computedPhase,
     systemMode: systemConfig?.systemMode || "AUTO",
     isSystemOpen: systemConfig?.isSystemOpen !== false,
     isVoted: userData?.isVoted || session?.user?.isVoted || false,
