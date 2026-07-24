@@ -213,7 +213,11 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
   const isSelected = themes.some((t) => t.slug === selectedSlug);
   const isActive = themes.some((t) => t.slug === activeSlug);
   return (
-    <div className={`rounded-2xl border p-4 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}>
+    // p-3.5 (was p-4) + a tighter swatch gutter: at 130px per card six families
+    // overflowed a 900px-tall screen by 131px. The reclaim gets the whole list
+    // onto one screen at that height, so the common case needs no scrolling at
+    // all and the box above only kicks in on shorter windows.
+    <div className={`rounded-2xl border p-3.5 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}>
       <button type="button" onClick={() => onSelect(rep.slug)} className="w-full text-left">
         <div className="flex items-center gap-2">
           {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
@@ -222,7 +226,7 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
         </div>
         <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{rep.description}</p>
       </button>
-      <div className="flex items-center gap-1.5 mt-2.5">
+      <div className="flex items-center gap-1.5 mt-2">
         {themes.map((t) => {
           const on = t.slug === selectedSlug;
           const c = t.colorSwatch?.primary || "#8A2680";
@@ -355,10 +359,21 @@ export default function TemplateChooserTab() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6 items-start">
-          {/* ── MASTER: sidebar ── */}
+          {/* ── MASTER: sidebar ──
+              The list is its OWN scroll box, not part of the page scroll. Six
+              families ran 840px tall against a 900px viewport, so the last card
+              sat at y=1031 — unreachable without scrolling the page, which
+              carried the preview stage away with it (the stage is the whole
+              point of the tab). Bounding it to the viewport keeps picking a
+              theme and watching it side by side. */}
           <div className="lg:sticky lg:top-[72px]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">ธีมทั้งหมด ({families.length})</p>
-            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
+            {/* 216px = where the list starts on an unscrolled page (192, under
+                the tab's title block) + 24 of breathing room. Bounding it there
+                — rather than to the sticky offset — is what removes the PAGE
+                scroll: with the list inside the first screen there is nothing
+                left to scroll past, so the preview can never drift away. */}
+            <div className="tc-list flex lg:flex-col gap-2 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto lg:max-h-[calc(100vh-216px)] pb-1 lg:pb-0 lg:p-1.5 lg:rounded-2xl lg:border lg:border-slate-200/70 lg:bg-white/50">
               {families.map((fam) => (
                 <div key={fam.family} className="min-w-[220px] lg:min-w-0">
                   <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
@@ -398,6 +413,24 @@ export default function TemplateChooserTab() {
       <p className="text-[11px] text-slate-400 mt-6">
         แต่ละธีมรองรับครบทุกหน้า · เนื้อหา (ชื่อ/ปี/ผู้สมัคร) แก้ที่แท็บ “ตั้งค่าทั่วไป” และ “จัดการผู้สมัคร”
       </p>
+
+      {/* the theme list's own scrollbar — slim and always drawn, so a short
+          window shows that there is more below instead of hiding it behind the
+          page scroll. Overlay scrollbars (macOS default) would vanish here. */}
+      <style jsx>{`
+        /* NOTE: no \`scrollbar-width\` here on purpose. Declaring the standards
+           property makes Chromium ignore the ::-webkit-scrollbar rules and fall
+           back to an OVERLAY scrollbar — measured as a 0px layout gutter, i.e.
+           nothing visible until you already know to scroll, which is the exact
+           opposite of the ask. Letting the webkit pseudo-elements win gives a
+           classic bar that is always drawn; scrollbar-gutter keeps the cards
+           from shifting when it appears. */
+        .tc-list { scrollbar-gutter: stable; }
+        .tc-list::-webkit-scrollbar { width: 8px; height: 6px; }
+        .tc-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
+        .tc-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        .tc-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      `}</style>
 
       {/* confirm */}
       {pending && (
