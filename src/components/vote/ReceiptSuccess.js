@@ -363,8 +363,11 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-led { position:absolute; top:14px; right:16px; width:8px; height:8px; border-radius:50%;
           background:var(--rc-holo-4); box-shadow:0 0 8px var(--rc-holo-4); animation:rcLed 2.4s ease-in-out infinite; }
         @keyframes rcLed { 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+        /* LIGHT text on the DARK printer body — mixed off the paper side, not off
+           --rc-faint (that token is tuned for ink-on-paper AA; using it here made the
+           brand plate 4.4:1 instead of 6.4:1). */
         .rc-suc-root .rc-suc-brand { font-family:var(--rc-fm); font-size:9px; letter-spacing:.22em;
-          color:color-mix(in srgb, var(--rc-faint) 78%, var(--rc-receipt)); text-align:center; }
+          color:color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-receipt)); text-align:center; }
         .rc-suc-root .rc-suc-slot { margin-top:14px; height:14px; border-radius:8px; background:var(--rc-ink);
           box-shadow:inset 0 2px 5px color-mix(in srgb, var(--rc-ink) 80%, transparent); position:relative; }
         .rc-suc-root .rc-suc-slot::after { content:""; position:absolute; left:8px; right:8px; top:5px; height:3px;

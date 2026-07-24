@@ -345,7 +345,11 @@ export default function ReceiptResults({
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
                       <div className="rc-panel__cap"><span><span className="rc-th">ชั้นปี</span> · BY YEAR</span><em>§ 02</em></div>
                       <ResponsiveContainer width="100%" height={230}>
-                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+                        {/* left:0, not -18 — the negative margin pushed the Y axis off the
+                            SVG's left edge, and an <svg> clips: the 3-digit ticks painted at
+                            x 682.5 inside a wrapper starting at x 689.1, so "120"/"160" read
+                            as ":0" on screen. width:34 already reserves room for them. */}
+                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke={t.line} />
                           <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                           <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: t.ink2 }} tickLine={false} axisLine={false} />
@@ -594,9 +598,12 @@ export default function ReceiptResults({
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--rc-faint); width:32px; flex:none; align-self:start; padding-top:4px; }
         .rc-res-root .rc-srow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .rc-res-root .rc-srow__kick { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--rc-ink2); }
+        /* 3 lines, not 2 — the standings must name the party in full. The 53-char name
+           overflowed by exactly one line at 2 (scrollHeight 80 vs 51 clientHeight) and
+           the ellipsis landed mid-word. */
         .rc-res-root .rc-srow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(16px,4vw,21px); line-height:1.22;
           letter-spacing:-.01em; color:var(--rc-ink);
-          display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+          display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
         .rc-res-root .rc-srow__data { grid-column:2; display:grid; grid-template-columns:1fr; gap:6px; margin-top:5px; }
         .rc-res-root .rc-srow__num { font-family:var(--rc-fr); font-weight:700; font-size:clamp(20px,5vw,28px); line-height:1;
           font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--rc-ink); }

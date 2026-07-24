@@ -576,10 +576,15 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sp-kick { font-family:var(--rc-fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
           color:var(--rc-ink2); }
         .rc-single-root .rc-sp-hero { display:flex; align-items:center; gap:22px; margin-top:20px; }
+        /* FLEX centring, not grid — max-height:100% does not resolve on a grid item, so
+           the mark kept its intrinsic ratio height (128px in a 102px content box → 26px
+           cut off the bottom). See the same note in ReceiptCandidates. */
         .rc-single-root .rc-sp-logo { width:104px; height:104px; flex:none; border-radius:8px; overflow:hidden;
-          background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center;
+          background:var(--rc-receipt); border:1px solid var(--rc-line);
+          display:flex; align-items:center; justify-content:center; padding:5px;
           box-shadow:2px 14px 30px -18px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
-        .rc-single-root .rc-sp-logo img { width:100%; height:100%; object-fit:cover; }
+        /* party LOGO — letterbox, never crop (see ReceiptCandidates note) */
+        .rc-single-root .rc-sp-logo img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; }
         .rc-single-root .rc-sp-logo-ph { font-family:var(--rc-fh); font-weight:700; font-size:40px;
           font-variant-numeric:tabular-nums; color:var(--rc-accent-deep); }
         .rc-single-root .rc-sp-title { min-width:0; }
@@ -630,8 +635,9 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-sc .sc__hint { color:var(--rc-accent-deep); font-family:var(--rc-fm); text-transform:uppercase; }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .rc-single-root .rc-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:6px; overflow:hidden; align-self:center;
-          background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center; }
-        .rc-single-root .rc-sp-sec__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--rc-receipt); border:1px solid var(--rc-line);
+          display:flex; align-items:center; justify-content:center; padding:2px; }
+        .rc-single-root .rc-sp-sec__logo img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; }
         /* missions — numbered lines in the receipt voice (mono numeral, Chakra text) */
         .rc-single-root .rc-sp-mlist { list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
         .rc-single-root .rc-sp-mlist li { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
@@ -675,7 +681,12 @@ export default function ReceiptSingleParty({
           font-family:var(--rc-fh); font-weight:700; font-size:44px; color:var(--rc-accent-deep); }
         .rc-single-root .rc-sp-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
         .rc-single-root .rc-sp-cand__name { font-family:var(--rc-fh); font-weight:700; font-size:15px; line-height:1.2; color:var(--rc-ink); }
-        .rc-single-root .rc-sp-cand__role { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+        /* position/major is Thai in real data, so it cannot wear the mono face (Space
+           Mono has no Thai glyphs → it fell through to the system monospace, and
+           text-transform:uppercase does nothing to Thai anyway). Same treatment its two
+           siblings already get: .rc-lany__role in ReceiptParty and .rcm__role in the
+           member modal both use --rc-fr. Size 9.5px → 11.5px to match them. */
+        .rc-single-root .rc-sp-cand__role { font-family:var(--rc-fr); font-size:11.5px; line-height:1.35;
           color:var(--rc-ink2); }
 
         /* ---- the decision: receipt-stock ballot sheet (mirrors ReceiptVote) ---- */
@@ -703,7 +714,12 @@ export default function ReceiptSingleParty({
         /* house semantic system: approve=green · disapprove=red · abstain=orange.
            --rc-tone / --rc-tone-deep are the ONLY non-var(--rc-*) colours here and are
            deliberately fixed so a choice means the same thing in every Receipt theme. */
-        .rc-single-root .rc-sopt--approve { --rc-tone:#16A34A; --rc-tone-deep:#15803D; }
+        /* approve's deep tone was #15803D: 4.89:1 on receipt stock, but the row's own
+           selected tint (tone 8%) pulls it to 4.48:1 and the carbon roll to 4.40:1 —
+           i.e. the 10px "APPROVE · เห็นชอบ" kick failed AA exactly when the voter had
+           picked it. One step deeper in the same green ramp → 6.26:1 worst case. The
+           bright --rc-tone stays for fills/rings where contrast is not a text concern. */
+        .rc-single-root .rc-sopt--approve { --rc-tone:#16A34A; --rc-tone-deep:#166534; }
         .rc-single-root .rc-sopt--disapprove { --rc-tone:#DC2626; --rc-tone-deep:#B91C1C; }
         .rc-single-root .rc-sopt--abstain { --rc-tone:#EA580C; --rc-tone-deep:#C2410C; }
         .rc-single-root .rc-sopt { border-bottom:1px dotted var(--rc-line); }
@@ -812,7 +828,7 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-vbar__val--empty { color:var(--rc-faint); font-weight:600; }
         .rc-single-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); border-radius:50%; }
         /* selection tint follows the SEMANTIC tone of the chosen stamp (fixed colours) */
-        .rc-single-root .rc-vbar__val--approve { color:#15803D; }
+        .rc-single-root .rc-vbar__val--approve { color:#166534; } /* same green as the stamp row */
         .rc-single-root .rc-vbar__val--approve .rc-vbar__dot { background:#16A34A; }
         .rc-single-root .rc-vbar__val--disapprove { color:#B91C1C; }
         .rc-single-root .rc-vbar__val--disapprove .rc-vbar__dot { background:#DC2626; }
@@ -833,7 +849,10 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-vbar__btn:active { transform:scale(.98); }
         .rc-single-root .rc-vbar__btn:disabled { cursor:not-allowed; }
         .rc-single-root .rc-vbar__btn:disabled::before { background:color-mix(in srgb, var(--rc-ink2) 22%, var(--rc-line)); }
-        .rc-single-root .rc-vbar__btn:disabled .rc-vbar__btn-in { color:color-mix(in srgb, var(--rc-receipt) 88%, var(--rc-ink)); }
+        /* disabled label was near-white (#E2E1DE) on the grey fill (#C8C1B7) = 1.36:1 —
+           the page's primary CTA arrived looking like a blank pill. Muted ink instead:
+           4.70:1, still obviously inert next to the accent-filled ready state. */
+        .rc-single-root .rc-vbar__btn:disabled .rc-vbar__btn-in { color:color-mix(in srgb, var(--rc-ink2) 70%, var(--rc-ink)); }
 
         /* ---- confirm dialog (Receipt paper card) — NO backdrop-filter (A7.1): a solid
            ink scrim instead of a blur ---- */
@@ -859,7 +878,10 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-scm__pick--approve { border-color:#16A34A; background:color-mix(in srgb, #16A34A 7%, var(--rc-receipt)); }
         .rc-single-root .rc-scm__pick--disapprove { border-color:#DC2626; background:color-mix(in srgb, #DC2626 7%, var(--rc-receipt)); }
         .rc-single-root .rc-scm__pick--abstain { border-color:#EA580C; background:color-mix(in srgb, #EA580C 7%, var(--rc-receipt)); }
-        .rc-single-root .rc-scm__pick-lab { font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+        /* "การเลือกของคุณ" is all-Thai — mono here meant a system-font fallback in the
+           last frame before the vote is cast. Chakra, like every other Thai label in
+           the family (cf. .rc-cslip__pick-lab .rc-th). uppercase is a no-op for Thai. */
+        .rc-single-root .rc-scm__pick-lab { font-family:var(--rc-fr); font-size:10.5px; letter-spacing:.1em;
           color:var(--rc-ink2); }
         .rc-single-root .rc-scm__pick-val { font-family:var(--rc-fh); font-weight:700; font-size:18px; color:var(--rc-ink); }
         .rc-single-root .rc-scm__actions { display:flex; gap:12px; }

@@ -465,10 +465,16 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           font-variant-numeric:tabular-nums; }
         .rc-party-root .rc-folder__stamp .rc-mono { font-size:7.5px; letter-spacing:.18em; text-transform:uppercase; opacity:.8; }
         /* logo tile in an ink-stamp frame (double ring) */
+        /* FLEX centring, not grid — max-height:100% does not resolve on a grid item, so
+           the mark kept its intrinsic ratio height (103px in an 82px content box → 21px
+           cut off the bottom). See the same note in ReceiptCandidates. */
         .rc-party-root .rc-folder__logo { position:relative; width:86px; height:86px; flex:none; border-radius:6px; overflow:hidden;
-          background:var(--rc-desk); border:2px solid var(--rc-stamp-line); display:grid; place-items:center;
+          background:var(--rc-desk); border:2px solid var(--rc-stamp-line);
+          display:flex; align-items:center; justify-content:center; padding:4px;
           box-shadow:inset 0 0 0 4px var(--rc-receipt), inset 0 0 0 5px color-mix(in srgb, var(--rc-stamp-line) 55%, transparent); }
-        .rc-party-root .rc-folder__logo img { width:100%; height:100%; object-fit:cover; border-radius:2px; }
+        /* party LOGO — letterbox, never crop (see ReceiptCandidates note) */
+        .rc-party-root .rc-folder__logo img { max-width:100%; max-height:100%; width:auto; height:auto;
+          object-fit:contain; border-radius:2px; }
         .rc-party-root .rc-folder__logo-ph { font-family:var(--rc-fr); font-weight:700; font-size:30px; font-variant-numeric:tabular-nums;
           color:var(--rc-accent-deep); }
 
@@ -484,10 +490,11 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           border:1px solid var(--rc-line); border-radius:4px; padding:26px clamp(20px,4vw,34px) 30px;
           box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
         .rc-party-root .rc-letter__head { display:flex; align-items:center; gap:14px; }
-        .rc-party-root .rc-letter__logo { width:44px; height:44px; flex:none; border-radius:6px; overflow:hidden; display:grid; place-items:center;
+        .rc-party-root .rc-letter__logo { width:44px; height:44px; flex:none; border-radius:6px; overflow:hidden;
+          display:flex; align-items:center; justify-content:center; padding:3px;
           background:var(--rc-desk); border:1px solid var(--rc-stamp-line); font-family:var(--rc-fr); font-weight:700; font-size:15px;
           color:var(--rc-accent-deep); }
-        .rc-party-root .rc-letter__logo img { width:100%; height:100%; object-fit:cover; }
+        .rc-party-root .rc-letter__logo img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; }
         /* enlarged letterhead logo — the LOGO MEANING letter shows the mark it explains */
         .rc-party-root .rc-letter__logo--lg { width:56px; height:56px; font-size:19px; }
         .rc-party-root .rc-letter__id { display:flex; flex-direction:column; gap:2px; min-width:0; }

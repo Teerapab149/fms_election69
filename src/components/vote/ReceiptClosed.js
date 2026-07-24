@@ -268,8 +268,12 @@ export default function ReceiptClosed({
         .rc-closed-root .rc-disp-body { display:flex; align-items:center; justify-content:space-between; gap:12px;
           padding:11px 16px 13px; border-radius:12px 12px 3px 3px;
           background:linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 84%, var(--rc-faint)), var(--rc-ink)); }
+        /* the one place a label is LIGHT text on a DARK body, so it must not be mixed
+           out of --rc-faint: deepening that token for AA on paper would have dragged
+           this the wrong way (6.37:1 → 4.27:1 on the dispenser). Mixed off the paper
+           side instead — same painted grey rgb(172,168,162), 6.37:1 on the body. */
         .rc-closed-root .rc-disp-label { font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
-          color:color-mix(in srgb, var(--rc-faint) 80%, var(--rc-receipt)); }
+          color:color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-receipt)); }
         .rc-closed-root .rc-disp-led { width:9px; height:9px; border-radius:50%; flex-shrink:0;
           background:var(--rc-led-wait); box-shadow:0 0 9px var(--rc-led-wait); animation:rcLed 2.4s ease-in-out infinite; }
         .rc-closed-root .rc-disp.led-open .rc-disp-led { background:var(--rc-led-open); box-shadow:0 0 9px var(--rc-led-open); }
