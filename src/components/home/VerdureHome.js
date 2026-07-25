@@ -243,18 +243,29 @@ export default function VerdureHome({
 
         /* ── the interactive seal ── */
         .vd-seal-wrap { display:grid; place-items:center; }
-        /* 400 rather than 440 at the top end. The seal still dominates the page, but
-           the 40px it gives back is what lets the identity line and the candidates
-           link finish ABOVE the floating dock instead of resting behind it. */
-        .vd-seal { position:relative; width:clamp(290px,35vw,388px); height:clamp(290px,35vw,388px); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
+        /* ONE variable drives the whole medallion. The numeral used to carry its own
+           clamp(150px,20vw,230px), so shrinking the seal left it at 230 regardless:
+           at a 310px disc it measured 71% of the diameter and at 1366 (248px disc)
+           88% — wider than the inner ring, clipped by the disc's own overflow. That
+           is the cramped look. Everything inside now scales from --seal, so the
+           proportion cannot drift again the next time the seal is resized. */
+        .vd-seal { --seal:clamp(290px,35vw,388px);
+          position:relative; width:var(--seal); height:var(--seal); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
         .vd-seal__ring { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
         .vd-seal__ringtext { font-family:var(--fm); font-size:13px; letter-spacing:.3em; fill:var(--terra); opacity:.7; text-transform:uppercase; }
         .vd-seal__dash { position:absolute; inset:9%; border-radius:50%; border:1px dashed rgba(var(--terra-rgb),.45); pointer-events:none; }
         .vd-seal__disc { position:relative; width:80%; height:80%; border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:grid; place-items:center; overflow:hidden; box-shadow:0 50px 70px -38px rgba(var(--moss-rgb),.55), inset 0 3px 12px rgba(var(--cream-rgb),.07), inset 0 -10px 30px rgba(0,0,0,.18); }
         .vd-seal__disc::before { content:""; position:absolute; inset:14px; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.22); pointer-events:none; }
         .vd-seal__sheen { position:absolute; inset:0; border-radius:50%; pointer-events:none; mix-blend-mode:screen; }
-        .vd-home__disc-50 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(150px,20vw,230px); line-height:.86; letter-spacing:-.04em; color:var(--cream); position:relative; }
-        .vd-home__disc-ord { position:absolute; top:20%; right:17%; font-family:var(--fm); font-size:11px; letter-spacing:.22em; color:var(--terra-soft); text-transform:uppercase; transform:rotate(18deg); }
+        /* .5 of the seal = .625 of the disc, the proportion this medallion shipped
+           with (230 inside a 352 disc) and the one the seal was designed around.
+           Tied to --seal so it holds at every size. */
+        .vd-home__disc-50 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:calc(var(--seal) * .5); line-height:.86; letter-spacing:-.04em; color:var(--cream); position:relative; }
+        /* the edition tag rode at right:17%, which put it ON the numeral once the
+           numeral filled the disc (measured overlapping at every width). Pushed out
+           to the quiet band between the numeral and the inner dashed ring, and
+           scaled with the seal so it stays there. */
+        .vd-home__disc-ord { position:absolute; top:17%; right:9%; font-family:var(--fm); font-size:calc(var(--seal) * .028); letter-spacing:.22em; color:var(--terra-soft); text-transform:uppercase; transform:rotate(18deg); }
 
         /* PRIMARY ACTION — readable on hover (darker terracotta, NOT moss, so it never
            merges into the moss seal behind it) */
@@ -302,7 +313,7 @@ export default function VerdureHome({
            about the composition changes. */
         @media (min-width:901px) and (max-height:820px) {
           .vd-home__above { margin-bottom:12px; }
-          .vd-seal { width:clamp(280px,28vw,310px); height:clamp(280px,28vw,310px); }
+          .vd-seal { --seal:clamp(280px,28vw,310px); }
           .vd-home__deck { margin-top:18px; }
         }
 
@@ -320,7 +331,7 @@ export default function VerdureHome({
           /* the base clamp bottoms out at 290px here, which is most of a phone's
              width; 62vw keeps the seal dominant while giving the second stat row
              the ~40px it needs to finish above the dock */
-          .vd-seal { width:clamp(230px,62vw,290px); height:clamp(230px,62vw,290px); }
+          .vd-seal { --seal:clamp(230px,62vw,290px); }
           .vd-home__stat { flex:0 0 50%; padding:0 8px; }
           .vd-home__ledger-sep { display:none; }
           .vd-home__cta { padding:15px 30px; }
