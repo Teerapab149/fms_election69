@@ -85,7 +85,7 @@ export default function StudioDarkSuccess({
             </a>
 
             <a href={editorMode ? undefined : getPath("/")} className="sd-textlink sds-home">
-              ← กลับหน้าหลัก <span className="sd-smallcaps">Index</span>
+              ← กลับหน้าหลัก <span className="sd-smallcaps">Home</span>
             </a>
           </div>
         </div>

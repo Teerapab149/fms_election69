@@ -76,7 +76,7 @@ const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 // `wordmark` (e.g. "SAMO 49") + `year` (calendar year) come from verdureMeta —
 // the tail must never be hardcoded (mirrors cornermark/cornerstatus). Each is
 // rendered only when present so the dots don't dangle on empty values.
-export function VerdureEdge({ num = "01", label = "Index", th = "", right = false, wordmark = "", year = "" }) {
+export function VerdureEdge({ num = "01", label = "Home", th = "", right = false, wordmark = "", year = "" }) {
   return (
     <div className={`vd-edge ${right ? "vd-edge--right" : ""}`}>
       <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; <span className="vd-thai">{th}</span></> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
@@ -385,7 +385,7 @@ export function VerdureBaseStyles() {
 
 export default function VerdureChrome({
   active = "home", moss = false, editorMode = false, systemMode = "AUTO",
-  edge = { num: "01", label: "Index", th: "" }, cornermarkTitle = null,
+  edge = { num: "01", label: "Home", th: "" }, cornermarkTitle = null,
   cornermarkSub = null, statusChip = null, backHref = null, backLabel = "",
 }) {
   const gc = useGlobalConfig();

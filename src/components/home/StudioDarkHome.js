@@ -181,7 +181,7 @@ export default function StudioDarkHome({
         <div className="sd-scenebar">
           <div className="sd-scenebar__crumbs">
             <span className="num">01</span><span className="sep">/</span>
-            <span className="here">Index</span><span className="sep">·</span>
+            <span className="here">Home</span><span className="sep">·</span>
             <span className="sd-thai">หน้าหลัก</span>
           </div>
           <div className="sd-scenebar__right">

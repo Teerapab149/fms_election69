@@ -180,7 +180,7 @@ export default function VerdureHome({
       {!editorMode && <style>{`html,body{background:${themeT.cream};color-scheme:light}`}</style>}
 
       <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode}
-        edge={{ num: "01", label: "Index", th: "หน้าหลัก" }} />
+        edge={{ num: "01", label: "Home", th: "หน้าหลัก" }} />
 
       <div className="vd-home">
         <div className="vd-home__above">

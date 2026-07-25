@@ -31,7 +31,7 @@ const NAV = [
   // THROUGH Candidates (pick a party → its profile; single-party → auto-redirect),
   // so it's a sub-page, not a top-level section. StudioDarkParty highlights
   // Candidates (or Vote) in the rail instead of being its own entry.
-  { key: "home",       num: "01", label: "Index",      th: "หน้าหลัก",   href: "/" },
+  { key: "home",       num: "01", label: "Home",       th: "หน้าหลัก",   href: "/" },
   { key: "candidates", num: "02", label: "Candidates", th: "ผู้สมัคร",    href: "/candidates" },
   { key: "vote",       num: "03", label: "Vote",       th: "ลงคะแนน",     href: "/vote" },
   { key: "results",    num: "04", label: "Returns",    th: "ผลคะแนน",     href: "/results" },

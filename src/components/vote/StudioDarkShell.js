@@ -26,7 +26,7 @@ import StudioDarkRail from "../home/StudioDarkRail";
 export default function StudioDarkShell({
   active = "home",        // rail nav key: home|candidates|party|vote|results
   num = "01",             // scene-bar crumb number
-  label = "Index",        // scene-bar crumb (EN)
+  label = "Home",        // scene-bar crumb (EN)
   labelTh = "",           // scene-bar crumb (TH)
   backHref = null,        // optional: replaces the num crumb with a ← link
   backLabel = "",
