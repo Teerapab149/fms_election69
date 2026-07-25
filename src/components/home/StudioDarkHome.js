@@ -378,7 +378,15 @@ export default function StudioDarkHome({
         /* ── RESPONSIVE ── */
         @media (max-width:1100px) {
           .sd-main { margin-left:0; }
-          .sd-scenebar { padding:16px 24px; }
+          /* un-pin below 1100px: this is exactly where the rail collapses into
+             .sd-topbar (StudioDarkRail.js:311), which is ALSO sticky top:0 and
+             sits at z-index 40 against this bar's 30. Both pinned at top:0 meant
+             the topbar (h=111) swallowed this bar (h=50) whole the moment the
+             page moved — measured overlap 50/50px at 1024/768/412, with all
+             seven of its children ("01 / Home · หน้าหลัก", "POLLS OPEN", the
+             clock) reading 17px of vertical overlap and failing elementFromPoint.
+             Static lets it scroll away in the open instead of hiding. */
+          .sd-scenebar { padding:16px 24px; position:static; }
           .sd-home__scene { grid-template-columns:1fr; }
           .sd-home__left { border-right:0; border-bottom:1px solid var(--sd-line); min-height:0; padding:48px 24px; gap:32px; }
           .sd-home__right { padding:48px 24px; }
