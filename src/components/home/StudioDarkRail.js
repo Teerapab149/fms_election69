@@ -269,7 +269,13 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-rail__spacer { flex:1; }
 
         .sd-rail__cd { margin:0 16px 16px; padding:15px 16px; border:1px solid var(--sd-line); border-radius:14px; background:var(--sd-bg-2); }
-        .sd-rail__cd-lbl { font-family:var(--sd-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3); display:flex; align-items:center; gap:8px; }
+        /* ink-2, not ink-3 — same call as the rail's Thai nav labels (d49b231).
+           ink-3 on the RAISED panel (--sd-bg-2, not the page ground) measured
+           4.05:1 at 10px, the worst reading in the family and the only ink-3 left
+           inside this box: .sd-rail__cd-unit right below it is the same 10px mono
+           and is already ink-2 (7.89:1). This line names WHICH clock is running
+           ("POLLS OPEN IN" / "POLLS CLOSE IN") — losing it loses the numbers' meaning. */
+        .sd-rail__cd-lbl { font-family:var(--sd-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2); display:flex; align-items:center; gap:8px; }
         .sd-rail__cd-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:13px; }
         .sd-rail__cd-cell { text-align:center; }
         .sd-rail__cd-num { font-family:var(--sd-sans); font-weight:500; font-size:23px; line-height:1; letter-spacing:-.02em; color:var(--sd-ink); font-variant-numeric:tabular-nums; }

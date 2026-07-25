@@ -334,7 +334,18 @@ export default function StudioDarkResults({
         .sdr-board__aside p { color:var(--sd-ink-2); font-size:14px; line-height:1.55; margin:0; font-weight:300; }
         .sdr-aside__cd {
           margin-top:24px; padding-top:16px; border-top:1px solid var(--sd-line);
-          font-family:var(--sd-mono); font-size:13px; letter-spacing:.08em; color:var(--sd-ink); font-variant-numeric:tabular-nums;
+          /* countdownText is Thai in production ('3 วัน 5 ชม. 12 น.', results/page.js
+             :351-355) and in preview ('เหลืออีก 02:14:33'), but --sd-mono is JetBrains
+             Mono + ui-monospace + monospace — no Thai anywhere in it, so the Thai run
+             fell through to whatever the system happened to hand back.
+             Anuphan sits BEFORE the generics, exactly as --sd-sans does; putting it
+             after ui-monospace would leave the outcome machine-dependent (any box whose
+             ui-monospace face carries Thai would win the run instead of Anuphan).
+             measured 13px 'วัน': stack 14.56/asc11/desc1 == Anuphan-only 14.56/11/1,
+             vs ui-monospace-only 14.257/10/0 — and Latin '0123' stays 31.2 == the
+             mono's own 31.2, so the digits are untouched. */
+          font-family:var(--font-studio-mono),'JetBrains Mono',var(--font-anuphan),'Anuphan',ui-monospace,monospace;
+          font-size:13px; letter-spacing:.08em; color:var(--sd-ink); font-variant-numeric:tabular-nums;
         }
 
         /* stats */
