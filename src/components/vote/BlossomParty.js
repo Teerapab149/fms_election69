@@ -491,7 +491,11 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           color:var(--bl-ink); background:color-mix(in srgb, var(--bl-card) 82%, transparent);
           -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
         .bl-party-root .bl-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
+        /* ink gutter — lh 1.2 is still under Kanit's font box, so a member name with a
+           tone mark over an upper vowel (คนที่, ชี้) lost 1.5px off the top. padding-top
+           opens the clamp's clip box; the negative margin keeps the card height identical. */
         .bl-party-root .bl-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink);
+          padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .bl-party-root .bl-cand__btn:hover .bl-cand__name { color:var(--bl-primary-ink); }
         .bl-party-root .bl-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;

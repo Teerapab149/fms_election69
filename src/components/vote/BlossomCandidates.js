@@ -278,8 +278,14 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-crow__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
         .bl-cand-root .bl-crow__kick b { color:var(--bl-primary-ink); font-weight:700; }
+        /* ink gutter: Kanit's font box is taller than lh 1.12, so the overflow:hidden
+           that -webkit-line-clamp forces sliced the top off Thai tone-over-vowel marks
+           (measured cutTop 3.1px on the real "พรรคพลังนักศึกษาฯ", 4.08px worst case at
+           32px). padding-top opens the clip box, the negative margin puts the text back
+           where it was — layout is byte-identical. padding-BOTTOM is banned here: Chrome
+           spills the line the clamp dropped into it. */
         .bl-cand-root .bl-crow__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,32px); line-height:1.12;
-          letter-spacing:-.01em; color:var(--bl-ink);
+          letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .bl-cand-root .bl-crow__link:hover .bl-crow__name { color:var(--bl-primary-ink); }
         .bl-cand-root .bl-crow__slogan { margin-top:2px; font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;

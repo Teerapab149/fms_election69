@@ -467,12 +467,22 @@ export default function BlossomSingleParty({
         /* display word — SOLID (the party name), calm ink; not hollow (action page). */
         /* party name wraps up to ~3 lines (masthead grows with content); ellipsis only
            caps an extreme name at line 3. line-clamp:2 clipped long names to "…" at 390 */
-        .bl-single-root .bl-sp-word { margin:6px 0 0; overflow:hidden; }
+        /* ink gutter on BOTH boxes: the reveal window clips at the same edge the inner
+           clamp does, so a gutter on only one of them still lost the ink. At lh .98 the
+           tallest legal Thai stack (ฟื๊/ปื๋) reaches .1994em above the content-box top —
+           13.16px at 66px. .2em left 0.04px of headroom, so the gutter is .22em (14.52px
+           at 66px → 1.36px spare, same margin the other blossom gutters carry).
+           font-size is restated here purely so .22em resolves against the display size.
+           padding-BOTTOM is banned: the window is a reveal, an open bottom would show the
+           text before it slides in. */
+        .bl-single-root .bl-sp-word { font-size:clamp(34px,8vw,66px); padding-top:.22em;
+          margin:calc(6px - .22em) 0 0; overflow:hidden; }
         /* the name text lives in an inner block that slides up out of the .bl-sp-word
            window (blSuccUp — same idiom as BlossomSuccess). line-clamp lives here so
            the reveal survives 1–3 line names. base state (no anim) = translateY(0). */
         .bl-single-root .bl-sp-word__in { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
           overflow:hidden; font-family:var(--bl-fd); font-weight:800; line-height:.98;
+          padding-top:.22em; margin-top:-.22em;
           font-size:clamp(34px,8vw,66px); letter-spacing:-.02em; color:var(--bl-ink); overflow-wrap:break-word;
           text-overflow:ellipsis; animation:blSuccUp .62s cubic-bezier(.22,1,.36,1) both .18s; }
         @keyframes blSuccUp { from { transform:translateY(108%); } }
@@ -613,13 +623,16 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-vconfirm__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .bl-single-root .bl-vconfirm__lab { font-family:var(--bl-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
           color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
+        /* ink gutter — identical to BlossomVote's band: lh 1.1 clipped 3.3px off Thai
+           upper marks; padding-top opens the clip box, negative margin restores layout */
         .bl-single-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; padding-top:.2em; margin-top:-.2em; }
         /* choice label is its own flex item so text-overflow has a box to act on —
            see the same fix in BlossomVote (bare text node on an inline-flex parent
            becomes an anonymous flex item and never gets an ellipsis) */
-        .bl-single-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+        .bl-single-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis;
+          padding-top:.2em; margin-top:-.2em; }
         .bl-single-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
         .bl-single-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
         /* semantic choice colours LIGHTENED for contrast on the dark ink band */

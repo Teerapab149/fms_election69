@@ -493,8 +493,11 @@ export default function BlossomVote({
         .bl-vote-root .bl-vopt__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
         .bl-vote-root .bl-vopt__kick b { color:var(--bl-primary-ink); font-weight:700; }
+        /* ink gutter — same Kanit-vs-lh1.12 clipping as .bl-crow__name (measured
+           cutTop 2.7px on the real ballot row, 3.06px worst case at 30px). padding-top
+           only; padding-bottom would let the clamped 3rd line bleed back in. */
         .bl-vote-root .bl-vopt__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
-          letter-spacing:-.01em; color:var(--bl-ink);
+          letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .bl-vote-root .bl-vopt__slogan { margin-top:2px; font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
           color:var(--bl-ink2); font-style:italic;
@@ -532,13 +535,17 @@ export default function BlossomVote({
         .bl-vote-root .bl-vconfirm__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .bl-vote-root .bl-vconfirm__lab { font-family:var(--bl-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
           color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
+        /* ink gutter — lh 1.1 at 24px cut 3.3px off the top of Thai upper marks inside
+           the band's overflow:hidden. padding-top + equal negative margin = same layout,
+           taller clip box (see .bl-vopt__name above). */
         .bl-vote-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; padding-top:.2em; margin-top:-.2em; }
         /* the party name is its own flex item so text-overflow has a box to act on —
            on an inline-flex parent the bare text node became an anonymous flex item
            and ellipsis never rendered (a 43-char party name just got cut mid-word) */
-        .bl-vote-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+        .bl-vote-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis;
+          padding-top:.2em; margin-top:-.2em; }
         .bl-vote-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
         .bl-vote-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
         /* abstain on the ink band — lighter semantic orange for contrast on dark */
