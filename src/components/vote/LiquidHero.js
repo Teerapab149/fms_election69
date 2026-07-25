@@ -352,7 +352,14 @@ function DesktopFloatingMember({ member, springX, springY }) {
                     )}
                     <div className="absolute bottom-0 inset-x-0 bg-black/80 backdrop-blur-md py-2 px-3 border-t border-white/10">
                         <p className="text-[8px] text-[var(--spv-member-gold)] font-mono leading-none tracking-widest mb-1">{member.position}</p>
-                        <p className="text-[10px] text-white font-bold leading-none truncate">{member.name}</p>
+                        {/* ink gutter: `truncate` sets overflow:hidden, and leading-none
+                            makes the clip box exactly 1em tall against Anuphan's 1.3em
+                            font box — the tone mark of "คนที่ 1" sits 2.5px (0.25em) above
+                            the edge, worst case 0.35em. .41em is that plus the 0.05em
+                            cushion used across the family (at exactly 0.35em the headroom
+                            measured 0.00px, which sub-pixel rounding can still eat).
+                            pt/-mt cancel in layout */}
+                        <p className="text-[10px] text-white font-bold leading-none truncate pt-[.41em] -mt-[.41em]">{member.name}</p>
                     </div>
                 </div>
             </div>

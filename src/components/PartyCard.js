@@ -75,8 +75,20 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
             <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.66)' }}>{label}</span>
             {/* two lines, not `truncate`: a 53-character party name lost 132px of
                 itself (desktop) / 61px (mobile) to the single-line ellipsis, and
-                parties sharing a prefix became indistinguishable on the ballot */}
-            <h3 className="font-bold text-[13px] leading-snug line-clamp-2" style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.82)' }}>{party.name}</h3>
+                parties sharing a prefix became indistinguishable on the ballot.
+                THREE lines, not two: at 768px the >5-party ballot is still 3 columns
+                (grid-cols-1 sm:grid-cols-3), which leaves the row 235px wide and the
+                name column ~145px — clamp-2 measured scrollHeight−clientHeight = 18px,
+                i.e. a whole third line of the longest real name silently dropped. */}
+            {/* ink gutter: `line-clamp` forces overflow:hidden, which clips at the
+                PADDING box. leading-snug (1.375) is under Anuphan's font box once a
+                Thai tone-over-vowel is in play — the tallest legitimate stack
+                (ปื๋ ฟื๊ ที่ ชี้ เพื่อ; names are admin-typed free text) puts 0.1202em
+                of ink above the clip edge. .18em = that plus a 0.05em cushion, so
+                sub-pixel rounding cannot eat it. pt/-mt cancel in layout: the clip box
+                grows, the glyphs do not move. No padding-BOTTOM — Chrome paints the
+                line that the clamp dropped into bottom padding (receipt, 2026-07-23) */}
+            <h3 className="font-bold text-[13px] leading-snug line-clamp-3 pt-[.18em] -mt-[.18em]" style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.82)' }}>{party.name}</h3>
           </div>
           {isSelected && (
             <div className="flex-shrink-0 p-1.5 rounded-xl text-white" style={{ background: T.grad, boxShadow: `0 6px 16px -4px ${T.solid}` }}>
@@ -143,7 +155,11 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
         {/* three lines: at 5 parties the mobile grid is 2-up (~139px of name
             width) and the longest real party name needs 3 lines — clamp-2 cut
             the last line off entirely */}
-        <h3 className={`mt-3.5 font-bold leading-tight line-clamp-3 px-0.5 text-center transition-colors duration-300 ${isHero ? 'text-base md:text-xl' : 'text-[15px] md:text-base'}`}
+        {/* ink gutter (see the compact row above): leading-tight = 1.25 sits under
+            Anuphan's font box, so a Thai tone-over-vowel crosses the clip edge. Sized
+            off the same worst-case stack, + a 0.05em cushion. Folded into the existing
+            mt-3.5 (0.875rem) so the name does not shift down */}
+        <h3 className={`pt-[.24em] mt-[calc(0.875rem-.24em)] font-bold leading-tight line-clamp-3 px-0.5 text-center transition-colors duration-300 ${isHero ? 'text-base md:text-xl' : 'text-[15px] md:text-base'}`}
           style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.85)' }}>
           {party.name}
         </h3>

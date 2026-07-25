@@ -81,7 +81,11 @@ export default function ResultsDemographics({
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend verticalAlign={isMobile ? "bottom" : "middle"} align={isMobile ? "center" : "right"} layout={isMobile ? "horizontal" : "vertical"} iconType="circle" wrapperStyle={{ fontSize: isMobile ? '10px' : '14px' }} />
+                    {/* recharts paints the legend LABEL in the slice colour, so
+                        "Male"/"Female" landed at 3.68:1 / 3.53:1 on white (AA 4.5 at
+                        14px). Swatch keeps the hue, label moves to slate-600 = 6.4:1 */}
+                    <Legend verticalAlign={isMobile ? "bottom" : "middle"} align={isMobile ? "center" : "right"} layout={isMobile ? "horizontal" : "vertical"} iconType="circle" wrapperStyle={{ fontSize: isMobile ? '10px' : '14px' }}
+                      formatter={(value) => <span style={{ color: '#475569' }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -111,7 +115,9 @@ export default function ResultsDemographics({
         <BarChart3 className="text-slate-400" size={32} />
       </div>
       <h3 className="text-lg font-bold text-slate-600">สถิติยังไม่เปิดเผย</h3>
-      <p className="text-slate-400 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดโหวตแล้วเท่านั้น</p>
+      {/* 2.56:1 at 14px — this line is the only explanation a voter gets for the
+          empty panel, so it has to clear AA. slate-500 = 4.76:1 */}
+      <p className="text-slate-500 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดโหวตแล้วเท่านั้น</p>
     </div>
   );
 }

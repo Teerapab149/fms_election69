@@ -33,7 +33,8 @@ export default function ResultsStatsBar({
 
       <div className="col-span-1 bg-white/80 backdrop-blur-sm p-4 lg:p-8 rounded-2xl lg:rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">ผู้มีสิทธิ์</p>
+          {/* 2.56:1 on white at 12px — the label of a turnout figure, not decoration */}
+          <p className="text-[10px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">ผู้มีสิทธิ์</p>
           <p className="text-xl lg:text-3xl font-black text-slate-700">{totalEligible.toLocaleString()}</p>
         </div>
         <div className="bg-slate-100 p-2 lg:p-4 rounded-xl text-slate-400 hidden lg:block">
@@ -43,7 +44,8 @@ export default function ResultsStatsBar({
 
       <div className="col-span-1 bg-white/80 backdrop-blur-sm p-4 lg:p-8 rounded-2xl lg:rounded-3xl border border-green-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] lg:text-xs font-bold text-green-600 uppercase tracking-wider mb-1">ร้อยละ</p>
+          {/* green-600 on white is 3.29:1 at 12px (AA needs 4.5); green-700 = 4.66:1 */}
+          <p className="text-[10px] lg:text-xs font-bold text-green-700 uppercase tracking-wider mb-1">ร้อยละ</p>
           <p className="text-xl lg:text-3xl font-black text-green-600">
             {!isNotStarted && totalEligible > 0
               ? ((totalVotes / totalEligible) * 100).toFixed(2) + "%"

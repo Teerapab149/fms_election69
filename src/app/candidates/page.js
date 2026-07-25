@@ -358,7 +358,14 @@ function PartyCard({ party, cfg }) {
 
             <div className="flex-1 pt-1 md:pt-2">
               <h3
-                className="text-lg sm:text-xl md:text-3xl font-black leading-tight transition-colors duration-300 line-clamp-2"
+                // ink gutter: line-clamp-2 clips at the padding box, and leading-tight
+                // (1.25) / lh 1.2 at md sits under Anuphan's font box. A Thai
+                // tone-over-vowel lost 5.5px at 30px and 3.25px at the 18px mobile size
+                // — 'พรรคชี้นำ' rendered its ไม้โท as a flat bar. .24em = the worst-case
+                // stack (ปื๋ ฟื๊ ที่ ชี้ เพื่อ, 0.1833em) plus a 0.05em cushion so
+                // sub-pixel rounding cannot eat it. pt/-mt cancel in layout.
+                // No padding-bottom (it would reveal the clamped 3rd line).
+                className="text-lg sm:text-xl md:text-3xl font-black leading-tight transition-colors duration-300 line-clamp-2 pt-[.24em] -mt-[.24em]"
                 style={{ color: theme.textOnLight }}
               >
                 {party.name}
@@ -366,7 +373,11 @@ function PartyCard({ party, cfg }) {
               <div className="flex items-center gap-2 mt-2">
                 <span
                   className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 md:py-1 rounded-full border transition-colors"
-                  style={{ borderColor: `${theme.main}33`, color: theme.main, backgroundColor: `${theme.main}08` }}
+                  // `theme.main` is the party's fill hue, not its text tone: on the
+                  // 8%-tint pill it measured 3.43:1 at 10px for party 2 (#EA580C).
+                  // `textOnLight` is the token PartyTheme already ships for exactly
+                  // this — the same one the party name above uses — and clears AA.
+                  style={{ borderColor: `${theme.main}33`, color: theme.textOnLight, backgroundColor: `${theme.main}08` }}
                 >
                   NO.{party.number}
                 </span>
