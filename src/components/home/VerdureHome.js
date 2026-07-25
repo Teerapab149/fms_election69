@@ -189,42 +189,24 @@ export default function VerdureHome({
           <span className="side side--r">VOL. {numberPart} / {meta.cy}</span>
         </div>
 
-        {/* Two columns from 1080px up: the words on the left, the seal on the right.
-            Stacked, the seal (clamp up to 440px) ate the whole first screen — the deck
-            landed BEHIND the fixed dock and the entire ledger fell below the fold, so
-            the page opened without a single number visible. Side by side the block is
-            as tall as the seal alone, which brings both back above the dock and puts
-            the 1440px page's empty side margins to work. Below 1080 the hero returns
-            to the centred stack (see the media query). */}
-        {/* Three PLAIN divs, and every layout rule keys off them — never off the
-            classes inside. Wrap resolves to an EditorElement wrapper whenever this
-            page renders in the editor/chooser, so a rule aimed at .vd-home__samo or
-            .vd-home__cta silently stops matching there (it did: the seal ended up
-            below the button in the chooser while production was fine). */}
         <div className="vd-home__hero">
-          <div className="vd-home__title">
-            <Wrap id="hero-title"><div className="vd-home__samo">{meta.samoSpaced}</div></Wrap>
-          </div>
+          <Wrap id="hero-title"><div className="vd-home__samo">{meta.samoSpaced}</div></Wrap>
 
-          <div className="vd-home__sealcol">
-            <VerdureSeal num={numberPart} ordSuffix={meta.ordSuffix} faculty={meta.faculty} cy={meta.cy} prefix={meta.prefix} />
-          </div>
+          <VerdureSeal num={numberPart} ordSuffix={meta.ordSuffix} faculty={meta.faculty} cy={meta.cy} prefix={meta.prefix} />
 
-          <div className="vd-home__lede">
-            <Wrap id="hero-subtitle">
-              <p className="vd-home__deck">{deckText} <em>{meta.org}</em> ประจำปีการศึกษา {meta.ay}</p>
-            </Wrap>
-
-            <Wrap id="voteCTA-button">
-              <a href={editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/login")}
-                onClick={onCta} className={`vd-home__cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">
-                <span className="vd-home__cta-label">{CTA.label}</span>
-                <span className="vd-home__cta-sub">{CTA.sub}</span>
-              </a>
-            </Wrap>
-            <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary"><span className="vd-thai">ดูรายชื่อผู้สมัคร</span> <span aria-hidden>↗</span></a>
-          </div>
+          <Wrap id="voteCTA-button">
+            <a href={editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/login")}
+              onClick={onCta} className={`vd-home__cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">
+              <span className="vd-home__cta-label">{CTA.label}</span>
+              <span className="vd-home__cta-sub">{CTA.sub}</span>
+            </a>
+          </Wrap>
+          <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary"><span className="vd-thai">ดูรายชื่อผู้สมัคร</span> <span aria-hidden>↗</span></a>
         </div>
+
+        <Wrap id="hero-subtitle">
+          <p className="vd-home__deck">{deckText} <em>{meta.org}</em> ประจำปีการศึกษา {meta.ay}</p>
+        </Wrap>
 
         <div className="vd-home__ledger">
           <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
@@ -238,33 +220,33 @@ export default function VerdureHome({
       </div>
 
       <style jsx global>{`
+        /* padding-top 82 is NOT slack: the cornermark chip and the status pill are
+           fixed at the top corners and end at y70, and this row's side labels sit
+           just inside their horizontal span. Trimming it to 64 put "EST. 1978"
+           straight through the logo — measured 1px of overlap at 1440 and 17px at
+           1366, where the right label hit the status pill too. Take height from the
+           seal instead; never from here. */
         .vd-home { flex:1; display:flex; flex-direction:column; align-items:center; padding:82px 40px 128px; max-width:1100px; margin:0 auto; width:100%; position:relative; z-index:1; }
 
         /* above-line — 3 equal columns so the centre line is DEAD centre regardless of side widths */
-        .vd-home__above { width:100%; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:22px; padding:0 8px; }
+        .vd-home__above { width:100%; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:16px; padding:0 8px; }
         .vd-home__above .side { font-family:var(--fm); font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--moss); opacity:.6; white-space:nowrap; }
         .vd-home__above .side--l { justify-self:start; }
         .vd-home__above .side--r { justify-self:end; }
         .vd-home__above .mid { justify-self:center; font-family:var(--fd); font-style:italic; font-size:18px; color:var(--terra); text-align:center; white-space:nowrap; }
 
-        /* ≥1080: words | seal. Auto-placement, no grid-area — the editor wraps some
-           of these children in an EditorElement, so anything keyed to a child class
-           would silently stop matching in that mode. Two plain divs always land as
-           the two grid items. */
-        .vd-home__hero { display:grid; grid-template-columns:minmax(0,1fr) auto;
-          grid-template-areas:"title seal" "lede seal";
-          align-items:center; column-gap:clamp(28px,4vw,64px); width:100%; text-align:left; perspective:1100px; }
-        .vd-home__title { grid-area:title; align-self:end; }
-        .vd-home__lede { grid-area:lede; align-self:start; display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
-        .vd-home__sealcol { grid-area:seal; display:grid; place-items:center; }
-        /* the seal's own 40vw would take 409px of a 1024px screen and starve the
-           measure beside it; 32vw still reaches the same 440px cap at 1440 */
-        .vd-home__sealcol .vd-seal { width:clamp(260px,32vw,440px); height:clamp(260px,32vw,440px); }
-        .vd-home__samo { font-family:var(--fs); font-weight:800; font-size:clamp(24px,2.6vw,38px); letter-spacing:.32em; color:var(--moss); margin-bottom:14px; }
+        .vd-home__hero { display:flex; flex-direction:column; align-items:center; text-align:center; perspective:1100px; }
+        /* the tracking is what makes this read as a stamped wordmark, but it also
+           pushes the whole line right by one full space — nudge it back so the
+           optical centre matches the seal's geometric centre below it */
+        .vd-home__samo { font-family:var(--fs); font-weight:800; font-size:clamp(24px,2.6vw,38px); letter-spacing:.32em; text-indent:.32em; color:var(--moss); margin-bottom:10px; }
 
         /* ── the interactive seal ── */
         .vd-seal-wrap { display:grid; place-items:center; }
-        .vd-seal { position:relative; width:clamp(290px,40vw,440px); height:clamp(290px,40vw,440px); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
+        /* 400 rather than 440 at the top end. The seal still dominates the page, but
+           the 40px it gives back is what lets the identity line and the candidates
+           link finish ABOVE the floating dock instead of resting behind it. */
+        .vd-seal { position:relative; width:clamp(290px,35vw,388px); height:clamp(290px,35vw,388px); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
         .vd-seal__ring { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
         .vd-seal__ringtext { font-family:var(--fm); font-size:13px; letter-spacing:.3em; fill:var(--terra); opacity:.7; text-transform:uppercase; }
         .vd-seal__dash { position:absolute; inset:9%; border-radius:50%; border:1px dashed rgba(var(--terra-rgb),.45); pointer-events:none; }
@@ -276,10 +258,7 @@ export default function VerdureHome({
 
         /* PRIMARY ACTION — readable on hover (darker terracotta, NOT moss, so it never
            merges into the moss seal behind it) */
-        /* the -20px tuck belongs to the STACKED layout, where the CTA overlaps the
-           seal's lower edge on purpose. Side by side there is nothing to tuck under,
-           so it is restored to a normal rhythm and re-applied in the media query. */
-        .vd-home__cta { display:inline-flex; flex-direction:column; align-items:center; gap:2px; margin-top:26px; position:relative; z-index:3; padding:17px 44px; border-radius:999px; background:var(--cta); color:var(--cta-text); border:1px solid var(--cta); box-shadow:0 16px 34px -14px rgba(var(--terra-rgb),.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
+        .vd-home__cta { display:inline-flex; flex-direction:column; align-items:center; gap:2px; margin-top:-20px; position:relative; z-index:3; padding:17px 44px; border-radius:999px; background:var(--cta); color:var(--cta-text); border:1px solid var(--cta); box-shadow:0 16px 34px -14px rgba(var(--terra-rgb),.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
         .vd-home__cta:hover { background:var(--cta-2); border-color:var(--cta-2); transform:translateY(-2px); box-shadow:0 20px 40px -14px rgba(var(--terra-rgb),.6); }
         .vd-home__cta-label { font-family:var(--fs); font-weight:700; font-size:18px; letter-spacing:.01em; color:var(--cta-text); display:inline-flex; align-items:center; gap:11px; }
         .vd-home__cta-label::after { content:"→"; font-size:18px; }
@@ -291,10 +270,20 @@ export default function VerdureHome({
         .vd-home__secondary { margin-top:16px; font-family:var(--fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--moss); opacity:.7; border-bottom:1px solid var(--rule); padding-bottom:2px; transition:opacity .2s, color .2s; }
         .vd-home__secondary:hover { opacity:1; color:var(--terra); }
 
-        .vd-home__deck { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(19px,2vw,26px); line-height:1.3; color:var(--moss); margin:20px 0 0; max-width:30ch; text-align:left; }
+        /* balanced wrapping at a slightly tighter measure: at the old 680px this
+           sentence ran one full line and left a short stub under it, which is what
+           made the block read loose. 620 + balance gives two near-equal lines — and
+           two lines, not three, is what keeps it clear of the dock. */
+        .vd-home__deck { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(19px,2vw,26px); line-height:1.26; color:var(--moss); margin:22px auto 0; max-width:620px; text-align:center; text-wrap:balance; }
         .vd-home__deck em { color:var(--terra); }
 
-        .vd-home__ledger { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0 8px; margin-top:34px; padding-top:26px; border-top:1px solid var(--rule); width:100%; }
+        /* The break before the ledger scales with the viewport on purpose. The dock is
+           a centred pill, so a ledger that lands in its band loses exactly the two
+           middle figures (TURNOUT, OPENS IN) while the outer two stay readable — a
+           half-covered row reads like a bug. Pushing the rule below the fold instead
+           makes the first screen resolve as the seal alone and turns the ledger into
+           something you scroll to, which is what the rest of the page already does. */
+        .vd-home__ledger { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0 8px; margin-top:clamp(34px,11vh,110px); padding-top:26px; border-top:1px solid var(--rule); width:100%; }
         .vd-home__stat { text-align:center; padding:0 22px; }
         .vd-home__stat .lbl { font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.6; margin-bottom:6px; }
         .vd-home__stat .val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; letter-spacing:-.02em; color:var(--moss); }
@@ -306,53 +295,17 @@ export default function VerdureHome({
         .vd-home__stat .val .d { margin-right:.36em; }
         .vd-home__ledger-sep { width:1px; height:38px; background:var(--rule); }
 
-        /* Below 1080 the seal no longer has room beside a readable measure, so the
-           hero returns to the centred stack it has always been. 'display:contents'
-           dissolves the lede so its children become flex items of the hero again and
-           'order' puts the seal back between the wordmark and the CTA — the reading
-           order this page shipped with, minus the deck, which now sits under the seal
-           instead of under the buttons (it says what the page IS; it belongs before
-           the call to act). In the editor the wrapped children keep source order,
-           which is close enough for a preview surface. */
-        /* SHORT laptops (1366x768 and friends). Width-only rules cannot see this:
-           at 1440x860 the two-column page already ends exactly at the fold, but at
-           768px of height it ran 813 and the last two ledger figures came to rest
-           inside the dock's band. Tightening the vertical rhythm — not the type —
-           brings the whole page back inside the viewport, so nothing needs scrolling
-           to be read at all. */
-        @media (min-width:900px) and (max-height:820px) {
-          .vd-home { padding-top:54px; padding-bottom:104px; }
-          .vd-home__above { margin-bottom:14px; }
-          .vd-home__sealcol .vd-seal { width:clamp(240px,27vw,380px); height:clamp(240px,27vw,380px); }
-          .vd-home__deck { margin-top:16px; }
-          .vd-home__cta { margin-top:20px; }
-          .vd-home__ledger { margin-top:22px; padding-top:20px; }
+        /* SHORT viewports — the laptop class (1366x768, 1024x760). Width-only rules
+           cannot see these: at 1440x860 the composition already resolves above the
+           floating dock, but with ~90px less height the identity line came to rest
+           inside the dock's band. The seal gives back the difference; nothing else
+           about the composition changes. */
+        @media (min-width:901px) and (max-height:820px) {
+          .vd-home__above { margin-bottom:12px; }
+          .vd-seal { width:clamp(280px,28vw,310px); height:clamp(280px,28vw,310px); }
+          .vd-home__deck { margin-top:18px; }
         }
 
-        /* Below 900 the seal has no room beside a readable measure, so the hero
-           returns to the centred stack: source order is already title → seal → lede,
-           which is the reading order this page shipped with (the deck simply moved
-           from below the buttons to above them — it says what the page IS, so it
-           belongs before the call to act). No 'order' tricks, nothing keyed to a
-           wrapped child, so the chooser and production agree. */
-        @media (max-width:899px) {
-          .vd-home__hero { display:flex; flex-direction:column; align-items:center; text-align:center; }
-          /* align-self:end/start are CROSS-axis in the grid (vertical, to sit the
-             wordmark and the lede against the seal's middle) — the same declarations
-             in a flex COLUMN mean horizontal, which threw the wordmark against the
-             right edge. Reset both here. */
-          .vd-home__title, .vd-home__lede, .vd-home__sealcol { grid-area:auto; align-self:auto; }
-          .vd-home__lede { align-items:center; }
-          .vd-home__sealcol .vd-seal { width:clamp(250px,64vw,340px); height:clamp(250px,64vw,340px); }
-          /* balanced wrapping instead of a hard measure — Thai breaks by dictionary,
-             so a fixed max-width either ran the full width and left a stub line, or
-             (at 22ch) chopped the sentence into five. */
-          .vd-home__deck { margin:24px auto 0; max-width:34ch; text-align:center; text-wrap:balance; }
-          /* NO negative tuck here. The -20px exists so the CTA can ride up over the
-             seal's lower edge — but in this stack the CTA now follows the DECK, and
-             the tuck ate its last line ("ปีการศึกษา 2570" simply vanished). */
-          .vd-home__cta { margin-top:22px; }
-        }
         @media (max-width:1100px) {
           .vd-home { padding:76px 20px 116px; }
           .vd-home__above { grid-template-columns:1fr; justify-items:center; gap:4px; margin-bottom:16px; }
@@ -360,13 +313,14 @@ export default function VerdureHome({
           .vd-home__deck { font-size:18px; }
         }
         @media (max-width:640px) {
-          /* A phone scrolls; that is normal and not worth crushing the page for.
-             What matters here is only that nothing comes to REST behind the dock —
-             the ledger clears it, and padding-bottom stays well above the dock's
-             56px footprint at this size. An earlier pass squeezed the seal and the
-             rhythm to force the whole page into 880px and it read as cramped. */
-          .vd-home { padding:64px 20px 104px; }
-          .vd-home__ledger { gap:22px 0; margin-top:30px; padding-top:24px; }
+          /* fixed break again on phones: the dock is nearly full-width here, so a
+             viewport-scaled gap pushed the figures INTO its band instead of past it.
+             Held tight, the whole ledger sits above the dock at rest. */
+          .vd-home__ledger { gap:18px 0; margin-top:28px; }
+          /* the base clamp bottoms out at 290px here, which is most of a phone's
+             width; 62vw keeps the seal dominant while giving the second stat row
+             the ~40px it needs to finish above the dock */
+          .vd-seal { width:clamp(230px,62vw,290px); height:clamp(230px,62vw,290px); }
           .vd-home__stat { flex:0 0 50%; padding:0 8px; }
           .vd-home__ledger-sep { display:none; }
           .vd-home__cta { padding:15px 30px; }
