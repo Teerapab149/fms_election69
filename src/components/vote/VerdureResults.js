@@ -332,7 +332,13 @@ export default function VerdureResults({
         .vd-demo__grid { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; }
         .vd-demo__title { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--terra-2); margin-bottom:16px; }
         .vd-demo__row { display:grid; grid-template-columns:minmax(60px,auto) 1fr auto; gap:12px; align-items:center; margin-bottom:12px; }
-        .vd-demo__name { font-family:var(--ft); font-size:13px; color:var(--moss); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        /* the ellipsis needs overflow:hidden, which also clips VERTICALLY at the
+           padding box — and these names are admin/DB free text (สาขา), so a tone
+           mark over a Thai upper vowel gets shaved: measured needEm .019 at every
+           breakpoint (-.25px of ink). .07em = .019 + .05 cushion. Equal negative
+           margin so the margin box stays 19.5px and the centred grid row does not
+           move. Never padding-bottom here. */
+        .vd-demo__name { font-family:var(--ft); font-size:13px; color:var(--moss); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-top:.07em; margin-top:-.07em; }
         .vd-demo__track { height:7px; background:var(--cream-3); border:1px solid var(--rule); border-radius:999px; overflow:hidden; }
         .vd-demo__fill { height:100%; background:var(--terra); opacity:.65; }
         .vd-demo__val { font-family:var(--fm); font-size:12px; color:var(--moss); opacity:.72; }

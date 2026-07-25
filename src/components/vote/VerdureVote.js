@@ -196,7 +196,15 @@ export default function VerdureVote({
         /* slogan restored on desktop tiles (vd-B1B) — clamped to 2 lines so tile
            heights stay balanced; VIEW PROFILE keeps its margin-top:auto anchor so
            a party without a slogan still bottom-aligns with its neighbours */
-        .vd-parties .vd-opt__slogan { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:13px; line-height:1.45; margin:0 0 4px; }
+        /* the clamp forces overflow:hidden, which cuts at the PADDING box, and the
+           Thai face (IBM Plex Sans Thai via --ft) draws its tone marks ABOVE the
+           1.45 content box: measured needEm .044 for the worst admin-typed string
+           (ปื๋ ฟื๊ ที่ ชี้ เพื่อ) and the live slogan already lost .1px off the top at
+           1440/1024/768. .1em = .044 worst + .05 cushion; the equal negative margin
+           keeps the margin box — and therefore the tile's flow — byte-identical.
+           No padding-BOTTOM: the clamp cuts at that edge, so a bottom gutter would
+           let the clamped-away third line back in. */
+        .vd-parties .vd-opt__slogan { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:13px; line-height:1.45; margin:0 0 4px; padding-top:.1em; margin-top:-.1em; }
         .vd-parties .vd-opt__main { display:flex; flex-direction:column; flex:1; min-width:0; }
         .vd-parties .vd-opt__name { font-size:22px; margin-bottom:6px; }
         .vd-parties .vd-opt__more { margin-top:auto; align-self:flex-start; }
