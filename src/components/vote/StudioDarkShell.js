@@ -215,7 +215,16 @@ export default function StudioDarkShell({
         /* ── responsive ── */
         @media (max-width:1100px) {
           .sd-main { margin-left:0; }
-          .sd-scenebar { padding:16px 24px; }
+          /* un-pin below 1100px: this is exactly where the rail collapses into
+             .sd-topbar (StudioDarkRail.js:311), which is ALSO sticky top:0 and
+             sits at z-index 40 against this bar's 30. Both pinned at top:0 meant
+             the topbar (h=111) swallowed this bar (h=51) whole the moment the
+             page moved — measured overlap 51/51px on all 8 shell pages at
+             1024/768/412, with every one of its 5-6 children failing
+             elementFromPoint (the hit came back as .sd-rail__logo-img /
+             .sd-signin, i.e. topbar content). Static lets it scroll away in the
+             open instead of hiding. Same fix as 8ac9929 did for the home page. */
+          .sd-scenebar { padding:16px 24px; position:static; }
           .sd-scene-h { grid-template-columns:1fr; gap:24px; padding:32px 24px 28px; }
           .sd-scene-h__deck { justify-self:start; }
         }
