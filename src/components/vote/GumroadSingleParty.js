@@ -301,7 +301,11 @@ export default function GumroadSingleParty({
         .gsp-page{ flex:1; width:100%; max-width:1040px; margin:0 auto; padding:32px 28px 40px; }
         .gsp-eyebrow{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
         .gsp-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
-        .gsp-sticker--lime{ background:var(--lime); } .gsp-sticker--pink{ background:var(--pink); } .gsp-sticker--ink{ background:var(--ink); color:var(--cream); }
+        /* the pop variants must pin the INK colour, not just the fill: .gsp-card--ink
+           sets color:var(--cream) on its subtree, so the pink sticker inside the
+           missions card inherited cream and printed cream-on-pink = 1.76:1.
+           GumroadParty's .gp-sticker--pop already pins its colour — this pair did not. */
+        .gsp-sticker--lime{ background:var(--lime); color:var(--ink); } .gsp-sticker--pink{ background:var(--pink); color:var(--ink); } .gsp-sticker--ink{ background:var(--ink); color:var(--cream); }
         .gsp-sticker--rotate{ transform:rotate(-3deg); }
         .gsp-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:gspPulse 1.6s ease-out infinite; }
         @keyframes gspPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
@@ -387,7 +391,13 @@ export default function GumroadSingleParty({
         .gsp-footer__lbl{ font-family:var(--fm); font-size:11px; color:var(--lime); text-transform:uppercase; letter-spacing:.15em; }
         .gsp-footer__sel{ font-size:17px; font-weight:700; }
         .gsp-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:var(--fb); font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
-        .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); } .gsp-confirm:disabled{ background:var(--paper); color:color-mix(in srgb, var(--ink) 40%, var(--paper)); border-color:color-mix(in srgb, var(--ink) 22%, var(--paper)); box-shadow:none; cursor:not-allowed; }
+        .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); }
+        /* the disabled label is not decoration — it says WHY the button is off
+           ("เลือกตัวเลือกก่อน"), so it has to be readable. 40% ink on paper measured
+           2.37:1 at 16px; 66% lands at 4.9:1 and still reads as inactive next to the
+           full-ink enabled state (14:1). The border stays at 22% so the button
+           silhouette is unchanged. */
+        .gsp-confirm:disabled{ background:var(--paper); color:color-mix(in srgb, var(--ink) 66%, var(--paper)); border-color:color-mix(in srgb, var(--ink) 22%, var(--paper)); box-shadow:none; cursor:not-allowed; }
 
         /* MEMBER PROFILE MODAL */
         .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }

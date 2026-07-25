@@ -94,6 +94,17 @@ export default function PartyCardGumroad({ party, pop, editorMode = false }) {
         .el-card__head{ display:flex; align-items:center; gap:14px; }
         .el-card__logo{ width:58px; height:58px; flex-shrink:0; border:2.5px solid var(--ink, #26271c); border-radius:14px; background:var(--cream, #FFF6EC); overflow:hidden; box-shadow:3px 3px 0 var(--ink, #26271c); }
         .el-card__id{ min-width:0; }
+        /* ink gutter — this is the ONE place the atom's -webkit-line-clamp:2 really
+           clamps, and the clamp forces overflow:hidden, which clips at the PADDING
+           box. Thai renders in Anuphan here (Archivo Black is latin-only), whose font
+           box is taller than the atom's line-height 1.2, so a tone-over-vowel stack
+           crossed the clip edge: worst legitimate case "ปื๋ ฟื๊ ที่ ชี้ เพื่อ" measured
+           -4.6px at 1440/1024, -3.94px at 768 (18.43px font), -3.7px at 412.
+           needEm peaks at .214 (768) → .27em = needEm + a .05em cushion, matched by a
+           negative margin so the card geometry does not move. NEVER padding-bottom:
+           the clamp clips at the padding-box edge, so bottom padding lets the line the
+           clamp dropped bleed back into view. */
+        .el-card__id .el-title{ padding-top:.27em; margin-top:-.27em; }
         .el-card:hover .el-btn{ box-shadow:5px 5px 0 var(--ink, #26271c); transform:translate(-1px,-1px); }
       `}</style>
     </>

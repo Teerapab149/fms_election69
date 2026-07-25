@@ -32,7 +32,13 @@ export default function InfoCardGumroad(props) {
         .el-infocard__icon{ width:88px; height:88px; margin:0 auto 22px; display:grid; place-items:center; color:var(--ink, #26271c);
           border:2.5px solid var(--ink, #26271c); border-radius:22px; box-shadow:5px 5px 0 var(--ink, #26271c); }
         .el-infocard .el-meta{ display:inline-block; font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--ink2, #5c5a4b); }
-        .el-infocard .el-title{ font-size:clamp(28px,6cqw,44px); font-weight:400; line-height:1.05; letter-spacing:-.02em; margin:12px 0 0; -webkit-line-clamp:unset; text-transform:none; }
+        /* overflow:visible is deliberate: -webkit-line-clamp is unset here, so the
+           atom's overflow:hidden clamps nothing — it only clips glyph ink. At lh 1.05
+           against Anuphan's font box that cut the live headline: "สิ้นสุดระยะเวลาลงคะแนน"
+           lost 1.66px off the top and ไม้โท on สิ้ printed as a flat bar (-0.4px on
+           "ยังไม่เปิดรับลงคะแนน", -5.4px worst case; -1.42/-3.8px at 412). Reopening the
+           box is the whole fix — no gutter needed, so nothing in the layout moves. */
+        .el-infocard .el-title{ font-size:clamp(28px,6cqw,44px); font-weight:400; line-height:1.05; letter-spacing:-.02em; margin:12px 0 0; -webkit-line-clamp:unset; overflow:visible; text-transform:none; }
         .el-infocard .el-plain{ margin:16px auto 0; font-size:clamp(14px,2.4cqw,16px); font-weight:500; line-height:1.7; color:var(--ink2, #5c5a4b); max-width:400px; }
         .el-infocard__actions{ margin-top:30px; }
         @container (max-width:560px){ .el-infocard{ padding:36px 22px 32px; } }
