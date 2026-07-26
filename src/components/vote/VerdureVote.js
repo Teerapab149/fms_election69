@@ -24,12 +24,16 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 // "ปิดใน 3 วัน 08:47:07" — remaining time to ELECTION_END for the meta strip.
 // Day segment only when d > 0; null when the end has passed (the ballot page is
 // only reachable while polls are open — no closed state is invented here).
+// Returns {d, hms} instead of one string: "วัน" has to render in --ft (the
+// family's mono face --fm carries zero Thai glyphs, unlike --fd/--fs which fold
+// var(--font-plex-thai) into their own stack), so the day count needs its own
+// span. hms stays the single ticking text node under suppressHydrationWarning.
 const fmtCloseIn = (end) => {
   const ms = (end instanceof Date ? end.getTime() : NaN) - Date.now();
   if (!Number.isFinite(ms) || ms <= 0) return null;
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
-  return `${d > 0 ? `${d} วัน ` : ""}${pad2(Math.floor((s / 3600) % 24))}:${pad2(Math.floor((s / 60) % 60))}:${pad2(s % 60)}`;
+  return { d, hms: `${pad2(Math.floor((s / 3600) % 24))}:${pad2(Math.floor((s / 60) % 60))}:${pad2(s % 60)}` };
 };
 
 function Opt({ disc, discSm = false, logoUrl = null, num = null, kicker, name, slogan, more = null, selected, onClick, abstain = false }) {
@@ -104,7 +108,7 @@ export default function VerdureVote({
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-ballot">
         <div className="vd-ballot__h">
-          <div className="vd-ballot__kicker"><span className="rule" /> {meta.wordmark} · เลือกตั้งประจำปี {meta.ay} <span className="rule" /></div>
+          <div className="vd-ballot__kicker"><span className="rule" /> {meta.wordmark} · <span className="vd-thai">เลือกตั้งประจำปี</span> {meta.ay} <span className="rule" /></div>
           <h1 className="vd-ballot__title">Choose <em>one.</em></h1>
           <div className="vd-ballot__accent" aria-hidden />
           <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
@@ -114,7 +118,7 @@ export default function VerdureVote({
           <span><span className="ac">●</span> BALLOT OPEN</span>
           {/* suppressHydrationWarning on the element that OWNS the ticking text
               node — SSR + client render the clock a second apart by nature */}
-          {closeIn && <span className="vd-ballot__cd">ปิดใน <strong className="vd-tabular" suppressHydrationWarning>{closeIn}</strong></span>}
+          {closeIn && <span className="vd-ballot__cd"><span className="vd-thai">ปิดใน</span> {closeIn.d > 0 && <span className="vd-thai">{closeIn.d} วัน </span>}<strong className="vd-tabular" suppressHydrationWarning>{closeIn.hms}</strong></span>}
           <span>{regularParties.length} {regularParties.length === 1 ? "PARTY" : "PARTIES"}</span>
           <span>ONE VOTE ONLY</span>
         </div>
