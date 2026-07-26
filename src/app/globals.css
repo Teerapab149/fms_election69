@@ -38,6 +38,40 @@ body {
     animation: fade-in-up 0.8s ease-out forwards;
 }
 
+/* ── Touch feedback, site-wide ────────────────────────────────────────────────
+   Every template root carries .fms-app, so one rule reaches all six families
+   instead of ~40 per-component edits.
+
+   Why it was needed: audited across the families, verdure had NO :active state
+   in any of its 11 files, gumroad had one in 2 of 10, and not a single file in
+   the project suppressed the browser's default tap highlight. On the dark
+   templates that highlight is a grey wash the near-black ground swallows, so a
+   tap produced no feedback at all until the next route painted — which reads as
+   lag even when the navigation is fast.
+
+   Deliberately conservative so it cannot fight a template's own press state:
+   - touch-action:manipulation drops the ~300ms double-tap-zoom wait. No visual
+     effect, so it is safe everywhere.
+   - the default highlight is replaced by an opacity dip. Opacity is used rather
+     than a transform because it costs no layout and reads on both the cream and
+     the near-black grounds; where a family already defines its own :active the
+     two simply stack.
+   - the extra scale is limited to real buttons. Anchors are excluded because
+     several of them wrap whole cards and full-width rows, where a scale would
+     be a bigger gesture than a press.
+   Single-class specificity, so any family rule still wins.                    */
+.fms-app :is(button, [role="button"], a, summary, select) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.fms-app :is(button, [role="button"], a, summary):active:not(:disabled):not([aria-disabled="true"]) {
+  opacity: 0.82;
+  transition: opacity 90ms ease-out;
+}
+.fms-app :is(button, [role="button"]):active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(0.975);
+}
+
 /* ใส่ต่อท้ายไฟล์ globals.css */
 @keyframes heartbeat {
   0%, 100% { transform: scale(1); }
