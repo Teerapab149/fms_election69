@@ -446,7 +446,16 @@ export default function HomeContent({
         </div>
         <main className="flex-grow py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
           <div className="container mx-auto max-w-[1400px] w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(480px,45%)] gap-6 lg:gap-8 items-start">
+            {/* right-column floor was 480px — at lg: (1024px) the hero h1's
+                whitespace-nowrap min-content (~490px, measured) plus this floor
+                plus the gap needed 1002px against only 832px available, so the
+                LEFT column got pushed past its 1fr share and the page overflowed
+                horizontally by 74px (measured xo=74 @1024x760, QA-original-
+                firstscreen-2026-07-26.md). 350px still comfortably fits the
+                stats card (verified no new internal clipping vs the old 480px
+                at this width) and is narrower than the 45% cap everywhere the
+                45% cap was already winning, so nothing shifts at >=1280px */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(350px,45%)] gap-6 lg:gap-8 items-start">
               {/* LEFT COLUMN */}
               <div className="space-y-4 lg:space-y-6">
                 {renderColumn(["hero", "meetCandidates", "voteCTA"])}
@@ -480,7 +489,9 @@ export default function HomeContent({
       </div>
       <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
         <div className="container mx-auto max-w-[1400px] w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(480px,45%)] gap-6 lg:gap-8 items-start">
+          {/* same 480px→350px floor fix as the editor-mode branch above — see the
+              comment there for the xo=74 measurement this removes */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(350px,45%)] gap-6 lg:gap-8 items-start">
             <div className="space-y-4 lg:space-y-6">
               {renderColumn(["hero", "meetCandidates", "voteCTA"])}
             </div>
