@@ -235,7 +235,10 @@ export default function StudioDarkShell({
              elementFromPoint (the hit came back as .sd-rail__logo-img /
              .sd-signin, i.e. topbar content). Static lets it scroll away in the
              open instead of hiding. Same fix as 8ac9929 did for the home page. */
-          .sd-scenebar { padding:16px 24px; position:static; }
+          /* also drops the backdrop-filter: once static this bar no longer needs
+             to blur anything moving behind it, and on a phone that per-frame GPU
+             pass is pure cost. Solid fill, same colour the .92 alpha resolved to. */
+          .sd-scenebar { padding:16px 24px; position:static; background:#14140F; backdrop-filter:none; }
           .sd-scene-h { grid-template-columns:1fr; gap:24px; padding:32px 24px 28px; }
           .sd-scene-h__deck { justify-self:start; }
         }

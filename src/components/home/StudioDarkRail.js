@@ -355,7 +355,13 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           .sd-rail__cd-live { margin-top:0; font-size:13px; }
           .sd-topbar {
             display:block; position:sticky; top:0; z-index:40;
-            background:rgba(17,17,8,.92); backdrop-filter:blur(10px);
+            /* solid, not blurred. This bar is sticky, so a backdrop-filter makes
+               the GPU re-blur whatever passes behind it on every scroll frame —
+               the single most expensive thing on this page on a phone. At .92
+               opacity the blur was contributing almost nothing visually, so the
+               fill is simply opaque here and the blur stays on desktop, where it
+               is affordable and actually reads. */
+            background:#111108;
             border-bottom:1px solid var(--sd-line); color:var(--sd-ink);
           }
           .sd-topbar a { text-decoration:none; color:inherit; }
@@ -364,7 +370,16 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           .sd-topbar__brand strong { font-family:var(--sd-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink); }
           .sd-signin--compact { width:auto; padding:9px 16px; }
           .sd-auth-pill { display:flex; align-items:center; gap:10px; }
-          .sd-mininav { display:flex; gap:6px; overflow-x:auto; padding:0 16px 12px; -webkit-overflow-scrolling:touch; }
+          /* THE mobile-nav delay. This strip overflowed by just 20px at 412
+             (scrollWidth 413 vs clientWidth 393), which made it a horizontal
+             scroll container — and inside one, a touch has to be disambiguated
+             as tap-or-drag before the click is dispatched. That wait is the lag,
+             and it is unique to this family: no other mobile nav is a scroller.
+             Overflowing by 20px bought nothing and cost the delay on every item.
+             Tighter gutters and gaps make all four fit, so the strip stops being
+             a scroller; overflow-x stays auto purely as a fallback for very
+             narrow phones, where it only engages if it genuinely overflows. */
+          .sd-mininav { display:flex; gap:4px; overflow-x:auto; padding:0 12px 12px; -webkit-overflow-scrolling:touch; }
           .sd-mininav::-webkit-scrollbar { display:none; }
           /* The mini nav had no pressed state at all: no :active, no transition,
              and the browser's default tap highlight is a grey wash that the dark
@@ -374,7 +389,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
              highlight is replaced by a state we control. */
           .sd-mininav__link {
             display:inline-flex; align-items:center; gap:7px; flex-shrink:0;
-            padding:7px 13px; border:1px solid var(--sd-line); border-radius:999px;
+            padding:9px 11px; border:1px solid var(--sd-line); border-radius:999px;
             font-family:var(--sd-sans); font-size:13px; color:var(--sd-ink-2);
             touch-action:manipulation; -webkit-tap-highlight-color:transparent;
             transition:background .12s ease, border-color .12s ease, color .12s ease, transform .12s ease;
@@ -384,6 +399,15 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
             color:var(--sd-ink); transform:scale(.96);
           }
           .sd-mininav__link.is-active { border-color:var(--sd-accent); color:var(--sd-ink); }
+          /* At 360 the strip still ran 383 against 360 and stayed a scroller — so
+             the smallest phones kept the tap-vs-drag delay the tighter gutters
+             fixed everywhere else. The numeral is decorative (the label carries
+             the meaning), and dropping it below 380 reclaims ~20px per item, far
+             more than the 23 needed. It stays on every other width. */
+          @media (max-width:380px) {
+            .sd-mininav__num { display:none; }
+            .sd-mininav__link { gap:0; }
+          }
           .sd-mininav__num { font-family:var(--sd-serif); font-style:italic; font-size:13px; color:var(--sd-ink-3); }
           .sd-mininav__link.is-active .sd-mininav__num { color:var(--sd-accent); }
         }
