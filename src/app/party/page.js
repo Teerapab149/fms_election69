@@ -554,7 +554,15 @@ const MemberCard = React.memo(({ member, theme, onClick, index, compact }) => (
     </div>
 
     <div className="min-w-0 flex-1 z-10">
-      <h4 className="font-black text-white text-xl truncate group-hover:text-cyan-200 transition-colors mb-2">{member.name}</h4>
+      {/* ink gutter: Anuphan's font box (1.35em) is taller than this 20px/lh28 line box,
+          truncate forces overflow:hidden which clips at the padding box — measured
+          needEmTop=0.075 constant across parties(2/3/5/6) x viewports(1440/1024/412)
+          with the worst Thai stack "ปื๋ ฟื๊ ที่ ชี้ เพื่อ" (og-need.js) so the tone
+          mark on names like "ชี้" was sitting right on the clip edge. cushion .05em
+          -> .125em. padding-top opens the box, margin-top absorbs the same amount so
+          layout doesn't move; padding-BOTTOM stays banned (Chrome spills truncated
+          text back in) */}
+      <h4 className="font-black text-white text-xl truncate group-hover:text-cyan-200 transition-colors mb-2 pt-[.125em] -mt-[.125em]">{member.name}</h4>
       <p className="font-bold truncate opacity-80 text-slate-300 text-sm uppercase mb-3">
         {member.position}
       </p>
