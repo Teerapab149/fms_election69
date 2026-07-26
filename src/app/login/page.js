@@ -12,6 +12,8 @@ import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import StudioDarkLogin from "../../components/login/StudioDarkLogin";
 import VerdureLogin from "../../components/login/VerdureLogin";
 import GumroadLogin from "../../components/login/GumroadLogin";
+import BlossomLogin from "../../components/login/BlossomLogin";
+import ReceiptLogin from "../../components/login/ReceiptLogin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -118,6 +120,12 @@ export default function LoginPage() {
   if (activeTemplateId?.startsWith("studio-dark")) return <StudioDarkLogin {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("gumroad")) return <GumroadLogin {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("verdure")) return <VerdureLogin {...templateLoginProps} />;
+  // blossom + receipt used to fall through to the classic PSU-blue card below, so a
+  // voter who typed /login on either of those templates landed on a page from a
+  // different site. The fallback is now only what it actually looks like — the
+  // classic/original card.
+  if (activeTemplateId?.startsWith("blossom")) return <BlossomLogin {...templateLoginProps} />;
+  if (activeTemplateId?.startsWith("receipt")) return <ReceiptLogin {...templateLoginProps} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">
