@@ -131,19 +131,25 @@ export default function SuccessPage({
     if (status === "authenticated" && session) {
       (async () => {
         try {
-          // Shared cached status — fresh here because the vote flow invalidates
-          // the cache on success (and the vote→success redirect is a hard nav).
-          const statusData = await fetchVoteStatus();
+          // force:true — this is a GATE, and every other gate in the flow already
+          // forces (useVoteSystem's ballot gate does). The old un-forced read
+          // relied on two assumptions that do not both hold: that the vote always
+          // invalidates the cache, and that vote→success is always a hard nav.
+          // Receipt reaches this page with a SOFT router.push, so the 15s cache
+          // survives the transition — any warm "isVoted:false" entry sent the
+          // just-voted user back to /vote, whose own forced gate saw the true
+          // "voted" and threw them at /success again. That ping-pong is what the
+          // flow looked like from the outside.
+          const statusData = await fetchVoteStatus({ force: true });
           const voted = !!statusData?.isVoted;
           setIsVoted(voted);
 
           if (statusData.googleFormUrl) setGoogleFormUrl(statusData.googleFormUrl);
 
-          if (!voted) {
-            router.replace("/vote");
-            return;
-          }
-
+          // one branch, not two: this block used to be duplicated, so the silent
+          // redirect always won and the explanatory modal below it was dead code.
+          // Landing on /success without a ballot is a real state (someone opens
+          // the URL directly) and deserves the sentence, not a silent bounce.
           if (!voted) {
             setAlertConfig({
               title: "คุณยังไม่ได้ลงคะแนนเสียง",
