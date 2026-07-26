@@ -161,8 +161,17 @@ export default function GumroadSuccess({ user = null, isUnlocked = false, onOpen
         .gsx-btn--locked{ background:color-mix(in srgb, var(--ink2) 12%, var(--paper)); color:color-mix(in srgb, var(--ink2) 80%, var(--paper)); border-color:color-mix(in srgb, var(--ink2) 80%, var(--paper)); box-shadow:none; cursor:not-allowed; }
         .gsx-livedot{ width:9px; height:9px; border-radius:999px; background:var(--coral); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:gsxPulse 1.6s ease-out infinite; }
         @keyframes gsxPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 9px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
-        .gsx-home{ margin-top:4px; font-size:13px; font-weight:700; color:var(--ink2); padding:6px; }
-        .gsx-home:hover{ color:var(--ink); }
+        /* was a bare 13px text line under two hard-edged buttons — in a family whose whole
+           language is the chunky bordered block, a text link reads as fine print rather
+           than as the way out. Same block, dashed rule + paper fill so it stays clearly
+           tertiary to the ink and pink buttons above it. */
+        .gsx-home{ width:100%; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+          margin-top:2px; padding:13px 22px; background:var(--paper);
+          border:var(--bw) dashed color-mix(in srgb, var(--ink2) 70%, var(--paper)); border-radius:15px;
+          font-family:var(--fb); font-weight:800; font-size:14px; color:var(--ink);
+          transition:transform .12s ease-out, border-color .15s ease-out; }
+        .gsx-home:hover{ color:var(--ink); border-color:var(--ink); transform:translate(-2px,-2px); }
+        .gsx-home:active{ transform:translate(2px,2px); }
 
         /* footer = <SiteFooter> element (own scoped styles) */
 

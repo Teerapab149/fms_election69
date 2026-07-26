@@ -373,10 +373,19 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           padding:15px 26px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:15px;
           color:var(--bl-primary-ink); background:var(--bl-primary-soft);
           border:1.5px solid color-mix(in srgb, var(--bl-primary) 30%, var(--bl-card)); }
-        .bl-succ-root .bl-succ-home { align-self:flex-start; margin-top:6px; min-height:44px; display:inline-flex; align-items:center;
-          font-family:var(--bl-fm); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--bl-ink2);
-          transition:color .2s ease; }
-        .bl-succ-root .bl-succ-home:hover { color:var(--bl-ink); }
+        /* Was a 12px mono line in --bl-ink2 (4.8:1). On a page whose other exit can be
+           locked, the way back to the site should be a shape, not a caption — this takes
+           the same pill as the results button, dashed and one weight lighter so it reads
+           as the tertiary action it is. */
+        .bl-succ-root .bl-succ-home { align-self:stretch; margin-top:2px; min-height:48px;
+          display:flex; align-items:center; justify-content:center; gap:9px;
+          padding:12px 24px; border-radius:999px;
+          font-family:var(--bl-fd); font-weight:700; font-size:15px; letter-spacing:0; text-transform:none;
+          color:var(--bl-ink); background:var(--bl-card);
+          border:2px dashed color-mix(in srgb, var(--bl-ink2) 55%, var(--bl-card));
+          transition:color .2s ease, border-color .2s ease, transform .2s ease; }
+        .bl-succ-root .bl-succ-home:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep); transform:translateY(-2px); }
+        .bl-succ-root .bl-succ-home:active { transform:scale(.97); }
 
         /* ================= TABLET+ : inline nav replaces burger/sheet ================= */
         @media (min-width:768px) {

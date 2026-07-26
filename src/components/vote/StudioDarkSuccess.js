@@ -84,7 +84,11 @@ export default function StudioDarkSuccess({
                 : <><Lock size={14} /> ล็อค — ทำแบบประเมินก่อน</>}
             </a>
 
-            <a href={editorMode ? undefined : getPath("/")} className="sd-textlink sds-home">
+            {/* was .sd-textlink — a 14px underline-on-hover line stacked under two full
+                pills, so the only unlocked exit on the page was the one thing that did
+                not look pressable. Same pill as the results button, dashed to stay a
+                step below it. */}
+            <a href={editorMode ? undefined : getPath("/")} className="sd-btn sd-btn--block sds-home">
               ← กลับหน้าหลัก <span className="sd-smallcaps">Home</span>
             </a>
           </div>
@@ -143,7 +147,8 @@ export default function StudioDarkSuccess({
           padding:15px 22px; border:1px solid rgba(213,255,63,.4); border-radius:999px;
           background:rgba(213,255,63,.08); color:var(--sd-accent); font-family:var(--sd-sans); font-size:14px; font-weight:500;
         }
-        .sds-home { justify-self:center; margin-top:8px; }
+        .sds-home { margin-top:2px; border-style:dashed; border-color:var(--sd-ink-2); }
+        .sds-home:hover { border-color:var(--sd-ink); }
 
         @media (max-width:1100px) {
           .sds-scene { grid-template-columns:1fr; min-height:0; }
