@@ -580,6 +580,10 @@ function PartyContent() {
   const copyrightYear = globalConfig?.copyrightYear ?? globalConfig?.electionCalendarYear ?? 2026;
 
   const [activeParty, setActiveParty] = useState(null);
+  // single-real-party election → /candidates redirects straight back here
+  // (candidates/page.js:92-95), so every family's back button must skip it
+  // and go home instead of bouncing candidates↔party forever
+  const [isSingleParty, setIsSingleParty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
@@ -603,6 +607,9 @@ function PartyContent() {
         if (res.ok) {
           const allParties = await res.json();
           const validParties = allParties.filter(p => parseInt(p.number) > 0);
+          // remember it in state — every family reads this to send its back
+          // button home instead of /candidates (which would just redirect here again)
+          setIsSingleParty(validParties.length === 1);
           let targetParty = null;
 
           if (validParties.length === 1) {
@@ -628,10 +635,19 @@ function PartyContent() {
 
             setActiveParty(enrichedParty);
           } else {
-            router.push("/candidates");
+            // same loop risk as the back button: single real party but lookup
+            // still failed (bad id) → /candidates would just redirect here again
+            router.push(validParties.length === 1 ? "/" : "/candidates");
           }
         } else {
-          router.push("/candidates");
+          // fetch itself failed (res.ok false) — we never got as far as reading
+          // validParties this render, so we have zero idea how many real parties
+          // exist right now. `isSingleParty` state here is just whatever the LAST
+          // successful fetch left behind (stale closure), not a fact about this
+          // attempt — using it read as if we knew the count when we don't.
+          // Home is always a safe landing; /candidates risks bouncing straight
+          // back here if the election genuinely does have one real party.
+          router.push("/");
         }
       } catch (error) {
         console.error("Error:", error);
@@ -667,7 +683,7 @@ function PartyContent() {
     return (
       <>
         <PageThemeOverrides page="party" />
-        <GumroadParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+        <GumroadParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
       </>
     );
   }
@@ -677,7 +693,7 @@ function PartyContent() {
     return (
       <>
         <PageThemeOverrides page="party" />
-        <StudioDarkParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+        <StudioDarkParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
       </>
     );
   }
@@ -687,7 +703,7 @@ function PartyContent() {
     return (
       <>
         <PageThemeOverrides page="party" />
-        <VerdureParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+        <VerdureParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
       </>
     );
   }
@@ -697,7 +713,7 @@ function PartyContent() {
     return (
       <>
         <PageThemeOverrides page="party" />
-        <ReceiptParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+        <ReceiptParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
       </>
     );
   }
@@ -707,7 +723,7 @@ function PartyContent() {
     return (
       <>
         <PageThemeOverrides page="party" />
-        <BlossomParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} />
+        <BlossomParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
       </>
     );
   }

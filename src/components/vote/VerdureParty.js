@@ -26,7 +26,7 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const ROMAN = ["I", "II", "III", "IV", "V"];
 
-export default function VerdureParty({ party = {}, galleryImages = [], showBackToVote = false }) {
+export default function VerdureParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [modalMember, setModalMember] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
 
@@ -56,8 +56,9 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
       active={showBackToVote ? "vote" : "candidates"} editorMode={false}
       edge={{ num: "03", label: "Profile", th: `พรรคที่ ${no}` }}
       cornermarkSub={`Profile · No. ${no}`}
-      backHref={showBackToVote ? "/vote" : "/candidates"}
-      backLabel={showBackToVote ? "BACK TO BALLOT" : "BACK TO CANDIDATES"}
+      // single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead
+      backHref={showBackToVote ? "/vote" : (isSingleParty ? "/" : "/candidates")}
+      backLabel={showBackToVote ? "BACK TO BALLOT" : (isSingleParty ? "BACK TO HOME" : "BACK TO CANDIDATES")}
     >
       <div className="vd-profile">
         <div className="vd-ribbon">

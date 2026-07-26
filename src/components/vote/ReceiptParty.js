@@ -55,7 +55,7 @@ const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? i
 // keep the placeholder defaults preparePartyData injects out of the printed pages
 const REAL = (arr) => (arr || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
 
-export default function ReceiptParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false }) {
+export default function ReceiptParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false, isSingleParty = false }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -281,8 +281,9 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         {/* ===== foot band — ticket-stub CTAs ===== */}
         <div className="rc-party-foot">
           <div className="rc-party-stubs">
-            <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
-              <span aria-hidden="true">← </span><span className="rc-th">กลับสารบบผู้สมัคร</span>
+            {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
+            <a href={editorMode ? undefined : getPath(isSingleParty ? "/" : "/candidates")} className="rc-stubcta">
+              <span aria-hidden="true">← </span><span className="rc-th">{isSingleParty ? "กลับหน้าแรก" : "กลับสารบบผู้สมัคร"}</span>
             </a>
             <a href={editorMode ? undefined : getPath("/vote")} className="rc-stubcta rc-stubcta--go">
               <span className="rc-th">ไปลงคะแนน</span><span className="rc-stubcta__arrow" aria-hidden="true"> →</span>

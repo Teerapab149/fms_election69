@@ -41,7 +41,7 @@ const firstImage = (val) => {
 };
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 
-export default function GumroadParty({ party = {}, galleryImages = [], showBackToVote = false }) {
+export default function GumroadParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
   const [lightbox, setLightbox] = useState(-1);           // gallery lightbox index (-1 = closed)
 
@@ -92,7 +92,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
       <main className="gp-page" style={showBackToVote ? { paddingBottom: 96 } : undefined}>
         {/* eyebrow */}
         <div className="gp-eyebrow">
-          <a href={getPath("/candidates")} className="gp-back"><ArrowLeft size={16} strokeWidth={2.5} /> ผู้สมัครทั้งหมด</a>
+          {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
+          <a href={getPath(isSingleParty ? "/" : "/candidates")} className="gp-back"><ArrowLeft size={16} strokeWidth={2.5} /> {isSingleParty ? "กลับหน้าแรก" : "ผู้สมัครทั้งหมด"}</a>
           <span className="gp-sticker gp-sticker--pop">★ OFFICIAL PARTY</span>
         </div>
 

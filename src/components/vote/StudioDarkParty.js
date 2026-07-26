@@ -36,7 +36,7 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const ROMAN = ["i.", "ii.", "iii."];
 
-export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false }) {
+export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [tab, setTab] = useState("vision");
   const [modalMember, setModalMember] = useState(null); // click a member → profile modal
   const [lightboxSrc, setLightboxSrc] = useState(null); // click the team photo → fullscreen
@@ -68,8 +68,9 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
   return (
     <StudioDarkShell
       active={showBackToVote ? "vote" : "candidates"}
-      backHref={showBackToVote ? "/vote" : "/candidates"}
-      backLabel={showBackToVote ? "Vote" : "Candidates"}
+      // single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead
+      backHref={showBackToVote ? "/vote" : (isSingleParty ? "/" : "/candidates")}
+      backLabel={showBackToVote ? "Vote" : (isSingleParty ? "Home" : "Candidates")}
       label="Profile"
       labelTh={`Party № ${no}`}
       right={<span>{members.length > 0 && <>{members.length} CANDIDATES&nbsp;·&nbsp;</>}{policies.length} POLICIES</span>}

@@ -50,7 +50,7 @@ const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? i
 // keep the placeholder defaults preparePartyData injects out of the printed articles
 const REAL = (arr) => (arr || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
 
-export default function BlossomParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false }) {
+export default function BlossomParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false, isSingleParty = false }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -230,9 +230,10 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
         {/* ===== foot band — editorial CTAs ===== */}
         <div className="bl-pty-foot">
-          <a href={editorMode ? undefined : getPath("/candidates")} className="bl-pty-back">
+          {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
+          <a href={editorMode ? undefined : getPath(isSingleParty ? "/" : "/candidates")} className="bl-pty-back">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-            กลับหน้าผู้สมัคร
+            {isSingleParty ? "กลับหน้าแรก" : "กลับหน้าผู้สมัคร"}
           </a>
           <a href={editorMode ? undefined : getPath("/vote")} className="bl-pty-go">
             ไปลงคะแนน
