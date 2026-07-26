@@ -609,53 +609,76 @@ function PartyContent() {
   const listSectionRef = useRef(null);
 
   useEffect(() => {
+    // A single failed /api/party call used to bounce the user straight to "/"
+    // (the HTTP-not-ok branch) with zero way back in, or strand them on the
+    // loading spinner forever (the network-error catch did nothing but log) —
+    // reported 2026-07-27 as "เข้าหน้า party ไม่ได้ พอเข้า candidates แล้วมันไม่
+    // redirect". A transient blip (network hiccup, a dev-server mid-deploy
+    // chunk race) is not the same fact as "no parties exist", so retry the
+    // fetch ONCE (600ms backoff) before treating it as real — covers both the
+    // !res.ok path and the thrown-error path, since both used to give up
+    // instantly with no second chance.
+    const fetchPartyOnce = () => fetch(getPath('/api/party'), { cache: 'no-store' });
+
     const fetchData = async () => {
+      let res;
       try {
-        const res = await fetch(getPath('/api/party'), { cache: 'no-store' });
-        if (res.ok) {
-          const allParties = await res.json();
-          const validParties = allParties.filter(p => parseInt(p.number) > 0);
-          // remember it in state — every family reads this to send its back
-          // button home instead of /candidates (which would just redirect here again)
-          setIsSingleParty(validParties.length === 1);
-          let targetParty = null;
-
-          if (validParties.length === 1) {
-            targetParty = validParties[0];
-          } else if (partyIdFromUrl) {
-            targetParty = validParties.find(p => p.number == partyIdFromUrl || p.id == partyIdFromUrl);
-          }
-
-          if (targetParty) {
-            if (partyIdFromUrl !== String(targetParty.number)) {
-              const newParams = new URLSearchParams(searchParams.toString());
-              newParams.set('id', targetParty.number);
-              router.replace(`?${newParams.toString()}`, { scroll: false });
-            }
-
-            // ✅ จัดการข้อมูลสมาชิก (Sort ตามเบอร์ 1-21)
-            const enrichedParty = preparePartyData(targetParty);
-
-            if (enrichedParty.members) {
-              enrichedParty.members.sort((a, b) => (a.number || 999) - (b.number || 999));
-            }
-            enrichedParty.chartMembers = enrichedParty.members || [];
-
-            setActiveParty(enrichedParty);
-          } else {
-            // same loop risk as the back button: single real party but lookup
-            // still failed (bad id) → /candidates would just redirect here again
-            router.push(validParties.length === 1 ? "/" : "/candidates");
-          }
-        } else {
-          // fetch itself failed (res.ok false) — we never got as far as reading
+        res = await fetchPartyOnce();
+        if (!res.ok) throw new Error(`party fetch failed: HTTP ${res.status}`);
+      } catch (firstErr) {
+        await new Promise((r) => setTimeout(r, 600));
+        try {
+          res = await fetchPartyOnce();
+          if (!res.ok) throw new Error(`party fetch retry failed: HTTP ${res.status}`);
+        } catch (secondErr) {
+          // fetch failed twice in a row — we never got as far as reading
           // validParties this render, so we have zero idea how many real parties
           // exist right now. `isSingleParty` state here is just whatever the LAST
           // successful fetch left behind (stale closure), not a fact about this
           // attempt — using it read as if we knew the count when we don't.
           // Home is always a safe landing; /candidates risks bouncing straight
           // back here if the election genuinely does have one real party.
+          console.error("Error (after 1 retry):", secondErr);
           router.push("/");
+          setLoading(false);
+          return;
+        }
+      }
+
+      try {
+        const allParties = await res.json();
+        const validParties = allParties.filter(p => parseInt(p.number) > 0);
+        // remember it in state — every family reads this to send its back
+        // button home instead of /candidates (which would just redirect here again)
+        setIsSingleParty(validParties.length === 1);
+        let targetParty = null;
+
+        if (validParties.length === 1) {
+          targetParty = validParties[0];
+        } else if (partyIdFromUrl) {
+          targetParty = validParties.find(p => p.number == partyIdFromUrl || p.id == partyIdFromUrl);
+        }
+
+        if (targetParty) {
+          if (partyIdFromUrl !== String(targetParty.number)) {
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.set('id', targetParty.number);
+            router.replace(`?${newParams.toString()}`, { scroll: false });
+          }
+
+          // ✅ จัดการข้อมูลสมาชิก (Sort ตามเบอร์ 1-21)
+          const enrichedParty = preparePartyData(targetParty);
+
+          if (enrichedParty.members) {
+            enrichedParty.members.sort((a, b) => (a.number || 999) - (b.number || 999));
+          }
+          enrichedParty.chartMembers = enrichedParty.members || [];
+
+          setActiveParty(enrichedParty);
+        } else {
+          // same loop risk as the back button: single real party but lookup
+          // still failed (bad id) → /candidates would just redirect here again
+          router.push(validParties.length === 1 ? "/" : "/candidates");
         }
       } catch (error) {
         console.error("Error:", error);
