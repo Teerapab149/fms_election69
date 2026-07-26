@@ -57,3 +57,4 @@ e2e/test-results.json
 
 # local Claude skill bundles (owner 2026-07-11)
 claude skill/
+.next-qa*/
