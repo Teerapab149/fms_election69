@@ -10,6 +10,11 @@ import {
 import { isBuiltInSlug } from "../../../../components/admin/editor/templates";
 import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 
+// Never statically rendered: this route reads headers/request.url per call. Without
+// this Next tries to prerender it at build time, the read throws DynamicServerError,
+// and the catch blocks log it — build noise that reads like a real auth failure.
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/admin/readiness — ADM-1 election readiness check (read-only).
  *

@@ -57,4 +57,7 @@ e2e/test-results.json
 
 # local Claude skill bundles (owner 2026-07-11)
 claude skill/
-.next-qa*/
+# any NEXT_DIST_DIR side-build (QA servers, build gates, standalone smoke runs) —
+# .next-qa*/ only covered the QA servers, so a `NEXT_DIST_DIR=.next-prod npm run build`
+# left 400MB of build output showing up as untracked
+.next-*/

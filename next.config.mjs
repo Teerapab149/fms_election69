@@ -44,7 +44,13 @@ const nextConfig = {
         ];
     },
     compiler: {
-        removeConsole: process.env.NODE_ENV === "production",
+        // removeConsole:true strips EVERY console.* call, console.error included — so the
+        // production build shipped with all 80 of them gone, 26 of those in API routes.
+        // Proven on the standalone build: /api/health returned 503 with a dead DB and the
+        // container log stayed empty, because its own console.error had been compiled out.
+        // On election day that is the difference between "the vote API is throwing X" and
+        // silence. Keep stripping log/debug noise; keep the two levels an operator needs.
+        removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
     },
 };
 

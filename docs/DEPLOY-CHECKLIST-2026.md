@@ -54,7 +54,7 @@
 | `ADMIN_STUDENT_IDS` | รหัส นศ. ที่เป็นแอดมิน คั่นด้วย `,` (ดู RUNBOOK §10) |
 | `ELECTION_BALLOT_PUBLIC_KEY` | **ตั้งใน §2** — public key เข้ารหัสบัตร (PEM, `\n`-escaped) |
 | `BALLOT_CHAIN_SECRET` | **ตั้งใน §2** — secret ของ HMAC hash-chain บัตร |
-| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | **ต้องไม่ตั้ง / ตั้ง ≠ `true`** บน production (mock-login = ใครก็เข้าได้) |
+| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ~~ต้องไม่ตั้งบน production~~ — **เลิกมีผลแล้ว (SEC-MOCK3, 2026-07-27)** ไม่ต้องตั้งและไม่ต้องกังวลว่าจะตั้งค้าง: ตัวกั้นจริงคือ `NODE_ENV=production` ซึ่งทำให้ NextAuth ไม่ register provider `mock-login` เลย และปุ่มบนหน้า login อ่านรายการ provider จาก `/api/auth/providers` ตอน runtime จึงหายตามไปเอง |
 
 > ⛔ **เลิกใช้แล้ว (P0-1)** — ห้ามตั้ง: `ADMIN_PRIVATE_KEY`, `ADMIN_AUTH_SECRET`,
 > `NEXT_PUBLIC_ADMIN_PUBLIC_KEY`, `NEXT_PUBLIC_ADMIN_AUTH_SECRET`. ระบบ admin auth เก่า
@@ -196,9 +196,13 @@ npm run build            # ต้องผ่านครบทุก route ก�
   | voters | รายชื่อผู้มีสิทธิ์ (ปี 1–4) > 0 |
   | tally | ความสอดคล้องคะแนน (`sum(score) == #บัตร == #isVoted`) |
   | config | ลิงก์ Google Form · การรั่วของผลก่อนปิดหีบ · ธีมที่ใช้งานมีจริง |
-  | env | **mock-login ต้องปิดใน production (ไม่งั้น = fail)** |
+  | env | mock-login ปิดอยู่ (production build ปิดให้เอง — ดูหมายเหตุใต้ตาราง) |
 
-- [ ] ยืนยัน `env.mock` = pass (mock-login ปิด) — ข้อนี้จะเป็น **fail** ถ้า `NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true` บน prod
+- [ ] ยืนยัน `env.mock` = pass (mock-login ปิด) — บน production build ข้อนี้ **เขียวเอง**
+  เพราะ `NODE_ENV=production` ทำให้ provider ไม่ถูก register · ถ้าเจอ fail แปลว่า
+  เซิร์ฟเวอร์นั้นไม่ได้รันเป็น production build จริง (เช่น `npm run dev`) ไม่ใช่เรื่อง env
+  ตัวใดตัวหนึ่งตั้งค้าง — ยืนยันแล้วบน production build ที่จงใจ build ตอน
+  `NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true` ก็ยังได้ pass (SEC-MOCK3)
 
 ---
 

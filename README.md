@@ -44,10 +44,14 @@ npm run dev        # http://localhost:3000/fms-ovs
 | `NEXTAUTH_SECRET` | เข้ารหัส session |
 | `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD_AUTH_EXTRA`, `ADMIN_STUDENT_IDS` | ระบบ admin |
 | `ELECTION_BALLOT_PUBLIC_KEY`, `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน (ดูหัวข้อความปลอดภัย) |
-| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | `true` เฉพาะตอน dev — ห้ามเปิดบน production |
+| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่ได้ใช้แล้ว — เก็บไว้เฉย ๆ ก็ได้ ไม่มีผลกับหน้า login |
 
 ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ใช้
 `node scripts/dev-admin-login.js`
+
+Mock Login เปิดให้เองเมื่อรัน dev และปิดเองบน production build — ปุ่มอ่านรายการ
+provider จาก `/api/auth/providers` ตอน runtime จึงเป็นเงาของตัวกั้นจริง
+(`NODE_ENV=production` ⇒ NextAuth ไม่ register provider นี้) ไม่มี env ให้ตั้งค้าง
 
 กติกาการแก้โค้ด (basePath, ระบบสี token, ข้อห้ามต่างๆ) อยู่ใน [CLAUDE.md](CLAUDE.md)
 และบทเรียนที่เคยเจ็บมาแล้วทั้งหมดอยู่ใน [DECISIONS.md](DECISIONS.md)
