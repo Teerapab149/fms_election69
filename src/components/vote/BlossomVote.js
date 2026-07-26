@@ -503,8 +503,14 @@ export default function BlossomVote({
         .bl-vote-root .bl-vopt__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .bl-vote-root .bl-vopt__slogan { margin-top:2px; font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
-          color:var(--bl-ink2); font-style:italic;
+        /* ink gutter: same Kanit-vs-lh clipping as .bl-vopt__name above, just far
+           smaller here because lh 1.5 is generous — measured needEm 0.01 constant
+           at every breakpoint and every party count (2/3/5/6). cushion .05em -> .06em.
+           padding-top opens the clip box, margin-top absorbs the same amount so
+           layout is byte-identical. padding-BOTTOM banned: Chrome spills the
+           clamped 2nd line back in. */
+        .bl-vote-root .bl-vopt__slogan { margin-top:calc(2px - .06em); font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
+          color:var(--bl-ink2); font-style:italic; padding-top:.06em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
         .bl-vote-root .bl-vopt__stat { margin-top:6px; font-family:var(--bl-fm); font-size:10px; letter-spacing:.14em;
           text-transform:uppercase; color:var(--bl-faint); }
