@@ -198,8 +198,15 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
           <span className="vd-back-inner">←<span className="vd-back-txt"> {backHead}{backTail ? <span className="vd-back-tail"> {backTail}</span> : null}</span></span>
         </a>
       ) : (statusChip || defaultChip)}
-      {isAuthed && active !== "home" && (
-        <div className={`vd-user ${userOpen ? "is-open" : ""}`}>
+      {/* HOME used to be the one page with no user pill: on desktop the live
+          countdown chip owns the top-right and the pair would crowd the corner.
+          But ≤1100px that chip is hidden, so home's corner was simply empty and
+          a signed-in voter had no way to see WHOSE session they were in — the
+          only page in the template where that was true. Home therefore renders
+          the same pill, marked --home so CSS keeps it to the widths where the
+          corner is free (see .vd-user--home below). Every other page: unchanged. */}
+      {isAuthed && (
+        <div className={`vd-user ${userOpen ? "is-open" : ""} ${active === "home" ? "vd-user--home" : ""}`}>
           <button type="button" className="vd-user__av" onClick={() => setUserOpen((o) => !o)} aria-label="ดูข้อมูลผู้ใช้" aria-expanded={userOpen}>{avatarChar}</button>
           <div className="vd-user__meta">
             <div className="vd-user__name">{userName.split(" ")[0] || userName}</div>
@@ -326,6 +333,10 @@ export function VerdureBaseStyles() {
       .vd-user__out { margin-left:0; width:32px; height:32px; border-radius:50%; border:1px solid var(--rule); background:transparent; color:var(--moss); cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; flex-shrink:0; }
       .vd-user__out:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
       .vd-moss .vd-user__out { color:var(--cream); border-color:var(--rule-moss); }
+      /* home only — the pill takes the corner exactly where the live chip gives it
+         up (the same 1100px breakpoint that hides the chip below). Above that the
+         chip is back and home stays the composition it was designed as. */
+      @media (min-width:1101px) { .vd-user--home { display:none; } }
 
       /* dock — clean labeled pill; active = cream fill + a terra index dot. No
          numbered discs (that read as a studio-dark echo); plain Thai labels so
