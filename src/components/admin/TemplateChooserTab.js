@@ -32,7 +32,7 @@ const DEVICES = [
 
 const PAGES = [
   { page: "home", label: "หน้าแรก" },
-  { page: "candidates", label: "ผู้สมัคร" },
+  { page: "candidates", label: "ผู้สมัคร · หลายพรรค" },
   { page: "party", label: "ข้อมูลพรรค" },
   { page: "vote", variant: "multi", label: "ลงคะแนน · หลายพรรค" },
   { page: "vote", variant: "single", label: "ลงคะแนน · พรรคเดียว" },
