@@ -14,7 +14,8 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 // /api/admin/dashboard ซึ่งอ่านฝั่ง server ตอน runtime — ห้ามอ่าน
 // NEXT_PUBLIC_ENABLE_MOCK_LOGIN ตรงนี้ เพราะถูก inline ตอน build จึงรายงานสถานะ
 // ของเครื่องที่ build ไม่ใช่เซิร์ฟเวอร์ที่กำลังรัน (บั๊กชนิดเดียวกับ ade160e)
-// ตัวที่ "ให้สิทธิ์" จริงคือ providerRegistered ส่วน buttonVisible คุมแค่ปุ่มบนหน้า login
+// ตัวที่ "ให้สิทธิ์" จริงคือ providerRegistered — SEC-MOCK3 ตัด buttonVisible ทิ้งแล้ว
+// เพราะปุ่มบนหน้า login อ่าน /api/auth/providers ตอน runtime จึงเป็นเงาของค่านี้เสมอ
 // ⛔ ห้ามมีปุ่ม/สวิตช์เปิด-ปิดตรงนี้ — เป็นการตัดสินใจของเจ้าของระบบ (ดู DECISIONS.md)
 const MockLoginStatusBadge = ({ status }) => {
   // ยังไม่รู้สถานะ (ก่อน fetch เสร็จ) — ต้องเป็นกลาง ห้ามโชว์สีเขียว "ปลอดภัย" ไปก่อน
@@ -32,13 +33,14 @@ const MockLoginStatusBadge = ({ status }) => {
     );
   }
 
-  const { providerRegistered, buttonVisible } = status;
+  const { providerRegistered } = status;
 
-  // เส้นทาง auth เปิดอยู่จริง = อันตรายที่สุด (ไม่ใช่แค่ปุ่มโชว์)
-  const tone = providerRegistered ? "danger" : buttonVisible ? "warn" : "safe";
+  // SEC-MOCK3: มีสองสถานะพอ ไม่มี "warn" อีกแล้ว — ปุ่มบนหน้า login อ่านจาก
+  // /api/auth/providers ตอน runtime จึงเป็นเงาของ provider เสมอ สถานะ "ปิดแล้วแต่ปุ่ม
+  // ยังโชว์" เกิดขึ้นไม่ได้ในทางโค้ดอีกต่อไป
+  const tone = providerRegistered ? "danger" : "safe";
   const TONES = {
     danger: { box: "bg-rose-50 border-rose-200", icon: "text-rose-600", title: "text-rose-700" },
-    warn: { box: "bg-amber-50 border-amber-100", icon: "text-amber-600", title: "text-amber-700" },
     safe: { box: "bg-emerald-50 border-emerald-100", icon: "text-emerald-600", title: "text-emerald-700" },
   };
   const t = TONES[tone];
@@ -46,18 +48,12 @@ const MockLoginStatusBadge = ({ status }) => {
   const title =
     tone === "danger"
       ? "การเข้าสู่ระบบจำลอง · เส้นทางเปิดอยู่บนเซิร์ฟเวอร์นี้"
-      : tone === "warn"
-      ? "การเข้าสู่ระบบจำลอง · เส้นทางปิดแล้ว แต่ปุ่มยังโชว์บนหน้าเข้าสู่ระบบ"
       : "การเข้าสู่ระบบจำลอง · ปิดสนิท";
 
   const detail =
     tone === "danger"
-      ? `mock-login provider ถูกลงทะเบียนอยู่ ใครที่รู้ URL callback ของ NextAuth เข้าระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน — ยอมรับได้เฉพาะบนเครื่องนักพัฒนา ถ้าเป็นเซิร์ฟเวอร์ที่จะใช้จริงต้องรันเป็น production build ก่อน${
-          buttonVisible ? " (ปุ่มบนหน้า login ก็ยังแสดงด้วย)" : ""
-        }`
-      : tone === "warn"
-      ? "กดปุ่มแล้วเข้าไม่ได้เพราะ provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ แต่ควรปิด NEXT_PUBLIC_ENABLE_MOCK_LOGIN เพื่อไม่ให้นักศึกษาสับสน"
-      : "provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ และปุ่มบนหน้า login ก็ไม่แสดง — เข้าระบบได้ทางเดียวคือ PSU SSO จริง";
+      ? "mock-login provider ถูกลงทะเบียนอยู่ ใครที่รู้ URL callback ของ NextAuth เข้าระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน — เป็นเรื่องปกติของเครื่องนักพัฒนา และปิดเองอัตโนมัติเมื่อรันเป็น production build จึงไม่มีสวิตช์ให้กดตรงนี้"
+      : "provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ และปุ่มบนหน้า login ก็ไม่แสดงตามไปด้วย — เข้าระบบได้ทางเดียวคือ PSU SSO จริง";
 
   return (
     <div className={`flex items-start gap-3 p-4 rounded-2xl border ${t.box}`}>
@@ -286,10 +282,7 @@ const SettingsTab = () => {
           setSystemMode(data.stats.systemMode || "AUTO");
           setIsShowResult(data.stats.showResult);
           if (typeof data.stats.mockLoginProviderRegistered === "boolean") {
-            setMockLoginStatus({
-              providerRegistered: data.stats.mockLoginProviderRegistered,
-              buttonVisible: data.stats.mockLoginButtonVisible === true,
-            });
+            setMockLoginStatus({ providerRegistered: data.stats.mockLoginProviderRegistered });
           }
         }
       } catch (error) {

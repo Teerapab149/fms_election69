@@ -22,9 +22,28 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Mock login state — ใช้เฉพาะ dev (NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true)
+  // Mock login state — ใช้เฉพาะ dev
   const [mockStudentId, setMockStudentId] = useState("");
   const [mockLoading, setMockLoading] = useState(false);
+
+  // SEC-MOCK3 — the mock form is shown if and ONLY if NextAuth actually registered
+  // the "mock-login" provider on this server. It used to key off
+  // NEXT_PUBLIC_ENABLE_MOCK_LOGIN, which Next inlines at BUILD time: an image built
+  // on a machine where that flag was set shipped the dev form to production and no
+  // runtime env could take it back, while an image built without it could never show
+  // the form even in dev. /api/auth/providers is the runtime truth — it lists exactly
+  // what authOptions registered, so the button can no longer disagree with the gate.
+  // In production isMockLoginProviderRegistered() is false, so this list never
+  // contains mock-login and the form cannot render however the image was built.
+  const [mockAvailable, setMockAvailable] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetch(getPath("/api/auth/providers"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => { if (alive && p && p["mock-login"]) setMockAvailable(true); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   // ✅ เช็ค Error ที่เด้งกลับมาจาก NextAuth (เช่น กด Cancel หรือ Login ไม่ผ่าน)
   useEffect(() => {
@@ -88,7 +107,7 @@ export default function LoginPage() {
     error,
     loading,
     onLogin: handleLogin,
-    showMock: process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true",
+    showMock: mockAvailable,
     mockStudentId,
     setMockStudentId,
     mockLoading,
@@ -168,10 +187,11 @@ export default function LoginPage() {
             </p>
 
             {/* ─── Mock Login — DEV ONLY ─────────────────────────────────────
-                แสดงเฉพาะเมื่อ NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true ใน .env.local
-                ห้ามใช้ใน production — Provider "mock-login" ไม่ถูก register ใน production
+                แสดงเมื่อ NextAuth ลงทะเบียน provider "mock-login" จริงบนเซิร์ฟเวอร์นี้
+                เท่านั้น (อ่านจาก /api/auth/providers ตอน runtime — ดู SEC-MOCK3 ด้านบน)
+                production ไม่เคย register จึงไม่มีทางแสดงไม่ว่า build มาแบบไหน
             ─────────────────────────────────────────────────────────────── */}
-            {process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true" && (
+            {mockAvailable && (
               <div className="mt-6 pt-5 border-t-2 border-dashed border-red-200">
                 <div className="flex items-center justify-center gap-1.5 mb-4">
                   <FlaskConical className="w-3.5 h-3.5 text-red-500" />

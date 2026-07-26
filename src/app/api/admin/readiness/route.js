@@ -289,33 +289,28 @@ export async function GET(request) {
 
   // 12) env.mock — เส้นทาง mock-login เปิดอยู่หรือไม่
   // SEC-MOCK2: ตรวจจาก "ตัวกั้นจริง" คือการ register provider (isMockLoginProviderRegistered)
-  // ไม่ใช่ NEXT_PUBLIC_ENABLE_MOCK_LOGIN ซึ่งคุมแค่ปุ่มบนหน้า login. ของเดิมดูแต่ค่า
-  // ปุ่มจึงตอบ pass ได้ทั้งที่ provider ยังเปิดอยู่ (รัน dev โดยปิดปุ่ม)
+  //
+  // SEC-MOCK3 (2026-07-27): เดิมมีอีกเงื่อนไขคือ NEXT_PUBLIC_ENABLE_MOCK_LOGIN (ปุ่มบน
+  // หน้า login) และมันทำให้ผลตรวจ "ค้างแดงถาวร" ได้จริง — Next inline ค่า NEXT_PUBLIC_*
+  // ตอน build ทั้งฝั่ง server ด้วย ถ้า build ตอนที่ flag เป็น true ตัว minifier จะพิสูจน์ได้
+  // ว่าสาขา pass เข้าไม่ถึงแล้วลบทิ้ง เหลือ `providerLive ? fail : fail` ในไบนารี — ตั้ง env
+  // ตอน runtime ยังไงก็ไม่เขียว (พิสูจน์จาก .next/server/.../readiness/route.js ทั้งสองแบบ build)
+  // ตอนนี้ปุ่มบนหน้า login อ่านจาก /api/auth/providers แล้ว (ดู app/login/page.js) ปุ่มกับ
+  // ตัวกั้นจึงเป็นตัวเดียวกัน เงื่อนไขนี้จึงเหลือตัวเดียวและอ่านตอน runtime ล้วน
   await run("env.mock", "env", "การเข้าสู่ระบบจำลอง (Mock Login)", async () => {
-    const providerLive = isMockLoginProviderRegistered();
-    const buttonOn = process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true";
-
-    if (providerLive) {
+    if (isMockLoginProviderRegistered()) {
       return {
         level: "fail",
         detail:
-          "เส้นทางเข้าสู่ระบบจำลองยังเปิดอยู่บนเซิร์ฟเวอร์นี้ (mock-login provider ถูกลงทะเบียนจริง) — ใครก็ตามที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน ยอมรับได้เฉพาะบนเครื่องนักพัฒนาเท่านั้น ถ้านี่คือเซิร์ฟเวอร์ที่จะใช้ในวันเลือกตั้งจริง ต้องรันเป็น production build (NODE_ENV=production) ก่อนเปิดให้นักศึกษาใช้" +
-          (buttonOn ? " และปุ่มเข้าสู่ระบบจำลองก็ยังแสดงบนหน้า login ด้วย" : ""),
+          "เซิร์ฟเวอร์นี้ยังเปิดเส้นทางเข้าสู่ระบบจำลองอยู่ (mock-login provider ถูกลงทะเบียนจริง) — ใครที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน" +
+          " · ปกติของเครื่องนักพัฒนา (dev server) และไม่ต้องแก้อะไรถ้านี่คือเครื่องพัฒนา" +
+          " · เส้นทางนี้ปิดเองอัตโนมัติเมื่อรันเป็น production build (NODE_ENV=production) จึงไม่มีสวิตช์ให้กดปิดในหน้านี้ ถ้าเครื่องนี้คือเซิร์ฟเวอร์ที่จะใช้วันเลือกตั้งจริง ให้ deploy ด้วย production build ก่อนเปิดให้นักศึกษาใช้ แล้วผลตรวจข้อนี้จะเขียวเอง",
       };
     }
-
-    if (buttonOn) {
-      return {
-        level: "fail",
-        detail:
-          "ปุ่มเข้าสู่ระบบจำลองยังแสดงบนหน้า login ทั้งที่ mock-login provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ — เส้นทางนี้ถูกบล็อกอยู่แล้ว แต่ปุ่มที่กดแล้วไม่ทำงานทำให้นักศึกษาสับสนและส่งสัญญาณว่า deploy ตั้งค่าไม่ถูกต้อง ควรปิด NEXT_PUBLIC_ENABLE_MOCK_LOGIN ก่อนใช้งานจริง",
-      };
-    }
-
     return {
       level: "pass",
       detail:
-        "ปิดการเข้าสู่ระบบจำลองสนิท — provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ และปุ่มบนหน้า login ก็ไม่แสดง (ใช้ PSU SSO จริง)",
+        "ปิดการเข้าสู่ระบบจำลองสนิท — provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ ปุ่มบนหน้า login จึงไม่แสดงตามไปด้วย (ใช้ PSU SSO จริงเท่านั้น)",
     };
   });
 

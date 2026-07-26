@@ -36,8 +36,9 @@ export async function GET(req) {
         // SEC-MOCK2 · สถานะ mock-login อ่านฝั่ง server ตอน runtime (read-only)
         // badge ในแท็บ settings ต้องใช้ค่านี้ ห้ามอ่าน NEXT_PUBLIC_* ฝั่ง client
         // เพราะค่านั้นถูก inline ตอน build จึงเป็นสถานะของ "เครื่องที่ build" ไม่ใช่เครื่องที่รันอยู่
-        mockLoginProviderRegistered: isMockLoginProviderRegistered(),
-        mockLoginButtonVisible: process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true"
+        // SEC-MOCK3: เลิกส่ง mockLoginButtonVisible แล้ว — ปุ่มบนหน้า login อ่านจาก
+        // /api/auth/providers ตอน runtime จึงเป็นเงาของค่านี้เสมอ ไม่ใช่สถานะแยกอีกต่อไป
+        mockLoginProviderRegistered: isMockLoginProviderRegistered()
       },
       candidates
     });
