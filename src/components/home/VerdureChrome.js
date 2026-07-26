@@ -102,7 +102,7 @@ export function VerdureFooter() {
   const g = useGlobalConfig() || {};
   return (
     <footer className="vd-footer">
-      © {g.facultyShortEn || "FMS"}@{g.university || "PSU"} {g.copyrightYear || new Date().getFullYear()}
+      © {g.facultyShortEn || "FMS"}@{g.university || "PSU"} {g.copyrightYear || new Date().getFullYear()}. All Rights Reserved.
     </footer>
   );
 }

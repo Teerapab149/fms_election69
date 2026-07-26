@@ -213,7 +213,7 @@ export default function VerdureHome({
           <span className="vd-home__ledger-sep" />
           <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
+          <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
           <span className="vd-home__ledger-sep" />
           <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
         </div>
@@ -335,6 +335,13 @@ export default function VerdureHome({
              the ~40px it needs to finish above the dock */
           .vd-seal { --seal:clamp(230px,62vw,290px); }
           .vd-home__stat { flex:0 0 50%; padding:0 8px; }
+          /* the countdown is the one figure that cannot live in a half-width cell:
+             "22 วัน 18:33:10" runs ~280px at 34px while the cell is ~170, so it
+             wrapped mid-value and broke as "22" / "วัน 18:33:10" — the day count
+             orphaned from its own unit. Its own full-width row gives it 372px and
+             nowrap guarantees it stays one line even at the longest reading. */
+          .vd-home__stat--cd { flex:0 0 100%; }
+          .vd-home__stat--cd .val { white-space:nowrap; }
           .vd-home__ledger-sep { display:none; }
           .vd-home__cta { padding:15px 30px; }
           .vd-home__cta-label { font-size:16px; }
