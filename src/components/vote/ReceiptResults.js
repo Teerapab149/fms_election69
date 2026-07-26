@@ -434,7 +434,10 @@ export default function ReceiptResults({
         /* laid-paper ::after + desk vignette ::before + emboss seals + holo foil come
            from the SHARED .rc-desk classes in ReceiptBaseStyles (R3 T1) — this root
            opts in via the rc-desk class, matching the home reference language. */
-        .rc-res-root { --rc-stamp-red:#B91C1C; --rc-win-green:#15803D; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .rc-topbar's sticky pins to it instead of the viewport.
+           xo=0 measured on every viewport, so no horizontal scroll is lost. */
+        .rc-res-root { --rc-stamp-red:#B91C1C; --rc-win-green:#15803D; overflow-x:clip; }
 
         :where(.rc-res-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-res-root a:focus-visible, .rc-res-root button:focus-visible {

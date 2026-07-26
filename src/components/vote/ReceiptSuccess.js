@@ -293,7 +293,11 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
            in via rc-desk so the printer moment rests on the SAME desk as home/vote
            (was a bespoke dot-grid + vignette). The machine/receipt/ephemera below are
            untouched. */
-        .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; padding:26px 18px 44px; }
+        /* clip not hidden — same reason as every other receipt root: hidden makes
+           overflow-y compute to auto and turns the root into a scroll container that
+           kills any sticky inside it. This page has no sticky today; kept uniform so the
+           next sticky added here works. xo=0 on every viewport. */
+        .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:clip; padding:26px 18px 44px; }
 
         /* MOBILE (default): the wrap is a single-column grid so the evaluate ACTIONS
            ride UP directly under the headline — above the printer stage — so the

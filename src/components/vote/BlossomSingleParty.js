@@ -332,7 +332,10 @@ export default function BlossomSingleParty({
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomVote) ================= */
-        .bl-single-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400 on a 4892px page). xo=0. */
+        .bl-single-root { overflow-x:clip; }
         /* dot-grid paper texture — calm 8%/28px (owner 2026-07-12) */
         .bl-single-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);

@@ -154,7 +154,10 @@ export default function ReceiptClosed({
         .rc-closed-root { --rc-stamp-red:#B91C1C;
           /* SEMANTIC dispenser-LED colours — locked across every theme (A8.1) */
           --rc-led-open:#16A34A; --rc-led-wait:#E0A200; --rc-led-closed:#C0403A;
-          overflow-x:hidden; }
+          /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes
+             the scroll container, and .rc-topbar's sticky pins to it instead of the
+             viewport. xo=0 on every viewport, so no horizontal scroll is lost. */
+          overflow-x:clip; }
 
         :where(.rc-closed-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-closed-root a:focus-visible, .rc-closed-root button:focus-visible {

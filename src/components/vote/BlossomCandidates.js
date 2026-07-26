@@ -117,7 +117,10 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-cand-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -348 at scrollY 348). xo=0 here, so no scroll is lost. */
+        .bl-cand-root { overflow-x:clip; }
         /* dot-grid paper texture — above the blobs, under content */
         .bl-cand-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);

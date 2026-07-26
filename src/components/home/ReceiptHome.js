@@ -698,7 +698,12 @@ export default function ReceiptHome({
         .rc-home-root { --rc-stamp-red:#B91C1C;
           /* SEMANTIC dispenser-LED colours — locked across every theme (A8.1) */
           --rc-led-open:#16A34A; --rc-led-wait:#E0A200; --rc-led-closed:#C0403A;
-          overflow-x:hidden; }
+          /* clip, NOT hidden: hidden forces overflow-y to auto → this root becomes the
+             scroll container and every sticky child pins to it instead of the viewport.
+             Measured with hidden @1440x860: .rc-topbar 0→-248 and .rc-rail 96→-152 at
+             scrollY 248 — neither ever pinned. clip clips identically without making a
+             scroll container; xo measured 0 on every receipt page × 4 viewports × 4 themes. */
+          overflow-x:clip; }
 
         :where(.rc-home-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-home-root a:focus-visible, .rc-home-root button:focus-visible {

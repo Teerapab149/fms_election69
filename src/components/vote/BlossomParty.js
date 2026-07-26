@@ -271,7 +271,12 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome / BlossomCandidates) ================= */
-        .bl-party-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400 on a 4021px page). xo=0, and the
+           .bl-strip member rail keeps its OWN overflow-x:auto — inner scrollers are
+           unaffected by a clip on the root. */
+        .bl-party-root { overflow-x:clip; }
         /* dot-grid paper texture — calm 8%/28px */
         .bl-party-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);

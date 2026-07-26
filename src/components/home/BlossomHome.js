@@ -512,7 +512,14 @@ export default function BlossomHome({
 
       <style jsx global>{`
         /* ========== BASE (mobile-first, editorial magazine skeleton) ========== */
-        .bl-root { overflow-x:hidden; }
+        /* clip, NOT hidden. overflow-x:hidden forces overflow-y to compute to auto, which
+           turns this root into a scroll container — and a sticky child pins to its scroll
+           container, not the viewport. Measured with hidden: .bl-topbar sat at y=0 at
+           scroll 0 but at y=-400 at scrollY 400, i.e. it never pinned once on a 2006px
+           page. clip does the same clipping without creating a scroll container.
+           Safe because xo (scrollWidth-clientWidth) measured 0 on every blossom page ×
+           4 viewports × 4 themes before the switch — there was no horizontal scroll to lose. */
+        .bl-root { overflow-x:clip; }
         /* dot-grid paper texture — sits above the blobs (paint order), under content */
         .bl-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);

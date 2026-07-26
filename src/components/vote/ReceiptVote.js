@@ -545,7 +545,11 @@ export default function ReceiptVote({
         /* laid-paper ::after + desk vignette ::before + blind-emboss seals come from
            the SHARED .rc-desk classes in ReceiptBaseStyles (T1) — this root opts in
            via the rc-desk class, matching the home reference language. */
-        .rc-vote-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .rc-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400). xo=0, and the fixed .rc-vbar bottom
+           bar is unaffected — clip does not create a containing block for fixed. */
+        .rc-vote-root { --rc-stamp-red:#B91C1C; overflow-x:clip; }
 
         :where(.rc-vote-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-vote-root a:focus-visible, .rc-vote-root button:focus-visible,

@@ -328,7 +328,12 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         /* laid-paper ::after + desk vignette ::before + emboss seals + holo foil come
            from the SHARED .rc-desk classes in ReceiptBaseStyles — this root opts in via
            the rc-desk class, matching the home/candidates reference language. */
-        .rc-party-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .rc-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400 on a 4925px page). xo=0, and the
+           .rc-strip member rail keeps its OWN overflow-x:auto — inner scrollers are
+           unaffected by a clip on the root. */
+        .rc-party-root { --rc-stamp-red:#B91C1C; overflow-x:clip; }
 
         :where(.rc-party-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-party-root a:focus-visible, .rc-party-root button:focus-visible {

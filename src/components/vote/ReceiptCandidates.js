@@ -174,7 +174,10 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
         /* laid-paper ::after + desk vignette ::before + emboss seals + holo foil come
            from the SHARED .rc-desk classes in ReceiptBaseStyles (R3 T1) — this root
            opts in via the rc-desk class, matching the home reference language. */
-        .rc-cand-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and every sticky child (.rc-topbar, .rc-index) pins to it
+           instead of the viewport, i.e. never pins at all. xo=0 on every viewport. */
+        .rc-cand-root { --rc-stamp-red:#B91C1C; overflow-x:clip; }
 
         :where(.rc-cand-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-cand-root a:focus-visible, .rc-cand-root button:focus-visible {

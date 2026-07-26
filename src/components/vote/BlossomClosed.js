@@ -179,7 +179,10 @@ export default function BlossomClosed({
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-closed-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport.
+           xo=0 measured on every viewport, so no horizontal scroll is lost. */
+        .bl-closed-root { overflow-x:clip; }
         /* dot-grid paper texture — above the blobs, under content */
         .bl-closed-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);

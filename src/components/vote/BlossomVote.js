@@ -287,7 +287,11 @@ export default function BlossomVote({
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-vote-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400). xo=0, and the fixed .bl-vconfirm
+           bottom bar is unaffected — clip does not create a containing block for fixed. */
+        .bl-vote-root { overflow-x:clip; }
         /* dot-grid paper texture — softened on the ballot page (owner: 15%/24px reads
            as visual noise under dense selectable rows); the ballot itself sits on a
            solid paper card so text never runs over the dots */
