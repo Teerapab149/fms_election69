@@ -167,12 +167,23 @@ export default function StudioDarkShell({
           padding:14px 22px; border:1px solid var(--sd-line-strong); border-radius:999px;
           background:transparent;
           font-family:var(--sd-sans); font-size:14px; font-weight:500; cursor:pointer;
-          transition:background .2s, color .2s, border-color .2s, opacity .2s;
+          touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+          transition:background .15s ease, color .15s ease, border-color .15s ease, opacity .2s, transform .1s ease;
         }
         .sd-btn.sd-btn { color:var(--sd-ink); }
-        .sd-btn.sd-btn:hover { background:var(--sd-ink); color:var(--sd-bg); border-color:var(--sd-ink); }
+        /* :hover is gated on a real pointer. On a touch screen the hover state
+           latches after the tap and the button stays inverted until something
+           else is touched — it looks stuck, and it also masks whether the press
+           registered. The :active state is the touch feedback instead, and it
+           has to be doubled-class like the rest of this block to clear the
+           .sd-root anchor reset (see the note above). */
+        @media (hover:hover) {
+          .sd-btn.sd-btn:hover { background:var(--sd-ink); color:var(--sd-bg); border-color:var(--sd-ink); }
+          .sd-btn.sd-btn--accent:hover { background:var(--sd-ink); border-color:var(--sd-ink); color:var(--sd-bg); }
+        }
+        .sd-btn.sd-btn:active { background:var(--sd-ink); color:var(--sd-bg); border-color:var(--sd-ink); transform:scale(.975); }
         .sd-btn.sd-btn--accent { background:var(--sd-accent); color:var(--sd-bg); border-color:var(--sd-accent); font-weight:600; }
-        .sd-btn.sd-btn--accent:hover { background:var(--sd-ink); border-color:var(--sd-ink); color:var(--sd-bg); }
+        .sd-btn.sd-btn--accent:active { background:var(--sd-ink); border-color:var(--sd-ink); color:var(--sd-bg); transform:scale(.975); }
         .sd-btn--lg { padding:17px 28px; font-size:15px; }
         .sd-btn--block { width:100%; }
         .sd-btn[disabled], .sd-btn.is-disabled { opacity:.3; cursor:not-allowed; pointer-events:none; }

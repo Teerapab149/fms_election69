@@ -307,9 +307,15 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-signin {
           width:100%; display:flex; justify-content:center; align-items:center; gap:10px;
           padding:12px 14px; background:var(--sd-accent); color:var(--sd-bg); border:0; border-radius:10px;
-          font-family:var(--sd-sans); font-weight:600; font-size:13px; cursor:pointer; transition:background .2s;
+          font-family:var(--sd-sans); font-weight:600; font-size:13px; cursor:pointer;
+          touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+          transition:background .15s ease, transform .12s ease;
         }
-        .sd-signin:hover { background:var(--sd-ink); }
+        /* hover only where a pointer can actually hover — on a touch screen the
+           :hover state latches after a tap and the button stays inverted until
+           something else is touched, which reads as a stuck/broken control */
+        @media (hover:hover) { .sd-signin:hover { background:var(--sd-ink); } }
+        .sd-signin:active { background:var(--sd-ink); transform:scale(.97); }
 
         /* ===== MOBILE TOP BAR (hidden on desktop) ===== */
         .sd-topbar { display:none; }
@@ -360,10 +366,22 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           .sd-auth-pill { display:flex; align-items:center; gap:10px; }
           .sd-mininav { display:flex; gap:6px; overflow-x:auto; padding:0 16px 12px; -webkit-overflow-scrolling:touch; }
           .sd-mininav::-webkit-scrollbar { display:none; }
+          /* The mini nav had no pressed state at all: no :active, no transition,
+             and the browser's default tap highlight is a grey wash that the dark
+             ground swallows. Tapping therefore looked like nothing happened until
+             the next route painted — which reads as lag even when it is not.
+             touch-action:manipulation drops the double-tap-zoom wait; the tap
+             highlight is replaced by a state we control. */
           .sd-mininav__link {
             display:inline-flex; align-items:center; gap:7px; flex-shrink:0;
             padding:7px 13px; border:1px solid var(--sd-line); border-radius:999px;
             font-family:var(--sd-sans); font-size:13px; color:var(--sd-ink-2);
+            touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+            transition:background .12s ease, border-color .12s ease, color .12s ease, transform .12s ease;
+          }
+          .sd-mininav__link:active {
+            background:var(--sd-bg-3); border-color:var(--sd-line-strong);
+            color:var(--sd-ink); transform:scale(.96);
           }
           .sd-mininav__link.is-active { border-color:var(--sd-accent); color:var(--sd-ink); }
           .sd-mininav__num { font-family:var(--sd-serif); font-style:italic; font-size:13px; color:var(--sd-ink-3); }
