@@ -166,6 +166,28 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
       {!editorMode && <style>{"html,body{background:var(--sd-bg,#14140F);color-scheme:dark}"}</style>}
       <StudioDarkBaseStyles />
 
+      {/* ── MOBILE TOP BAR (rail hidden <1100px) ── */}
+      {/* Source order: the top bar comes FIRST so that below 1100px — where the
+          rail collapses to the countdown-only strip (see the media query) — the
+          strip lands under the bar instead of above it. Desktop is unaffected by
+          the order: there .sd-rail is position:fixed (out of flow) and
+          .sd-topbar is display:none, so neither one lays the other out.
+          Verified: at 1440x860 docH stayed 860, leaf count 138, and every
+          landmark rect identical before/after. */}
+      <header className="sd-topbar">
+        <div className="sd-topbar__row">
+          <a href={linkHref("/")} className="sd-topbar__brand">
+            <span className="sd-rail__logo sd-rail__logo--sm">
+              <Image src={logoSrc} alt="FMS PSU" width={1200} height={384} className="sd-rail__logo-img" priority />
+            </span>
+          </a>
+          <AuthBlock compact />
+        </div>
+        <nav className="sd-mininav">
+          <NavLinks mini />
+        </nav>
+      </header>
+
       {/* ── DESKTOP LEFT RAIL ── */}
       <aside className="sd-rail">
         <a href={linkHref("/")} className="sd-rail__brand">
@@ -201,21 +223,6 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           <AuthBlock />
         </div>
       </aside>
-
-      {/* ── MOBILE TOP BAR (rail hidden <1100px) ── */}
-      <header className="sd-topbar">
-        <div className="sd-topbar__row">
-          <a href={linkHref("/")} className="sd-topbar__brand">
-            <span className="sd-rail__logo sd-rail__logo--sm">
-              <Image src={logoSrc} alt="FMS PSU" width={1200} height={384} className="sd-rail__logo-img" priority />
-            </span>
-          </a>
-          <AuthBlock compact />
-        </div>
-        <nav className="sd-mininav">
-          <NavLinks mini />
-        </nav>
-      </header>
 
       <style jsx global>{`
         .sd-rail, .sd-topbar {
@@ -307,7 +314,39 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         /* ===== MOBILE TOP BAR (hidden on desktop) ===== */
         .sd-topbar { display:none; }
         @media (max-width:1100px) {
-          .sd-rail { display:none; }
+          /* The countdown exists ONCE in the whole family — here, in the rail
+             (.sd-rail__cd) — so hiding the whole rail below 1100px left phones,
+             tablets and 1024 laptops with NO clock anywhere, on any page, at any
+             scroll position: body.innerText read DAYS=false HRS=false SEC=false
+             at 1024/768/412 while 1440 read "POLLS OPEN IN 23 DAYS 09 HRS".
+             Duplicating the markup into .sd-topbar would mean two DOM copies (a
+             screen reader announcing the clock twice) and a second setInterval,
+             so the rail instead COLLAPSES into a countdown-only strip: the same
+             single node, siblings hidden, relaid as one 36px row under the top
+             bar. Cost, measured on home at 412x880: docH 1315 -> 1351, so
+             everything below shifts down 35-36px — the sign-in CTA (y 467 ->
+             502) and the "ดูรายชื่อพรรค" link (y 562 -> 597) both stay well
+             inside the first screen. Desktop is untouched at 1101/1280/1366/
+             1440: same docH, same leaf count, and every rect identical (the
+             inner pages diff to ZERO changed rows; home differs only in the
+             marquee's x, which is a framer animation phase, not layout). */
+          .sd-rail {
+            display:block; position:static; width:auto; height:auto;
+            padding:0; background:transparent; border-right:0;
+          }
+          .sd-rail__brand, .sd-rail__section, .sd-rail__nav,
+          .sd-rail__spacer, .sd-rail__footer { display:none; }
+          .sd-rail__cd {
+            margin:0; padding:8px 20px; border:0; border-radius:0;
+            border-bottom:1px solid var(--sd-line);
+            display:flex; align-items:center; justify-content:space-between; gap:12px;
+          }
+          .sd-rail__cd-lbl { font-size:9px; letter-spacing:.14em; gap:6px; flex-shrink:0; }
+          .sd-rail__cd-grid { display:flex; gap:12px; margin-top:0; }
+          .sd-rail__cd-cell { display:flex; align-items:baseline; gap:4px; }
+          .sd-rail__cd-num { font-size:16px; }
+          .sd-rail__cd-unit { font-size:9px; letter-spacing:.06em; margin-top:0; }
+          .sd-rail__cd-live { margin-top:0; font-size:13px; }
           .sd-topbar {
             display:block; position:sticky; top:0; z-index:40;
             background:rgba(17,17,8,.92); backdrop-filter:blur(10px);
