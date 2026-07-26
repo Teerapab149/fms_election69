@@ -84,6 +84,29 @@ export function VerdureEdge({ num = "01", label = "Home", th = "", right = false
   );
 }
 
+// ── footer ──
+// Verdure was the only family with no copyright line anywhere (0 of 11 files, against
+// 8 of 10 in blossom / receipt / gumroad). This is one site that swaps templates, so a
+// line that disappears when the admin picks verdure is an inconsistency, not a design
+// choice — and this is a real faculty election, where "who published this, for which
+// year" belongs on the page.
+//
+// Deliberately NOT the shared SiteFooter: that one is a full-width white bar with a
+// slate border, which would read as a foreign object on the cream paper, and it would
+// land underneath verdure's floating dock. This is a single quiet mono line in the same
+// voice as the edge rails, with its own clearance below so the dock never covers it.
+//
+// Year and names come from globalConfig — the same copyrightYear the admin edits under
+// "ปีลิขสิทธิ์ (ค.ศ.)" — so it follows the setting instead of hardcoding a year.
+export function VerdureFooter() {
+  const g = useGlobalConfig() || {};
+  return (
+    <footer className="vd-footer">
+      © {g.facultyShortEn || "FMS"}@{g.university || "PSU"} {g.copyrightYear || new Date().getFullYear()}
+    </footer>
+  );
+}
+
 // ── top-left cornermark — real FMS logo on a cream chip + serif wordmark ──
 export function VerdureCornermark({ title = "SAMO 50", sub = "FMS Election · 2570", editorMode = false }) {
   return (
@@ -307,6 +330,16 @@ export function VerdureBaseStyles() {
       /* dock — clean labeled pill; active = cream fill + a terra index dot. No
          numbered discs (that read as a studio-dark echo); plain Thai labels so
          it's instantly understandable. */
+      /* the dock is fixed at bottom:24 and stands ~65px tall, so the last line of
+         the document needs ~89px of clearance or it comes to rest underneath it.
+         112 gives the line air of its own on top of that. Mono + faint moss so it
+         reads as the same class of mark as the edge rails, not as a slab. */
+      .vd-footer { text-align:center; padding:44px 20px 112px; font-family:var(--fm);
+        font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+        color:rgba(var(--moss-rgb),.55); }
+      .vd-moss .vd-footer { color:rgba(var(--cream-rgb),.5); }
+      @media (max-width:640px) { .vd-footer { padding:32px 16px 84px; } }
+
       .vd-dock { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:stretch; gap:2px; padding:6px; background:var(--moss); border-radius:999px; box-shadow:0 22px 60px -12px rgba(var(--moss-rgb),.55), 0 0 0 1px rgba(var(--cream-rgb),.08); }
       .vd-dock__link { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; padding:8px 22px; border-radius:999px; transition:background .25s, color .25s; }
       .vd-dock__dot { width:5px; height:5px; border-radius:50%; background:transparent; margin-bottom:3px; transition:background .25s, transform .25s; }

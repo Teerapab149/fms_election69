@@ -6,7 +6,7 @@
 // children. Same idea as StudioDarkShell; props match the Verdure design's
 // per-screen specifics (edge number/label, status chip, back link).
 
-import VerdureChrome, { verdureTheme } from "../home/VerdureChrome";
+import VerdureChrome, { verdureTheme, VerdureFooter } from "../home/VerdureChrome";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 
 export default function VerdureShell({
@@ -51,6 +51,8 @@ export default function VerdureShell({
       />
 
       {children}
+
+      <VerdureFooter />
     </div>
   );
 }

@@ -15,7 +15,7 @@ import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useSession } from "next-auth/react";
-import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme } from "./VerdureChrome";
+import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme, VerdureFooter } from "./VerdureChrome";
 import EditorElement from "../admin/editor/EditorElement";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { getBinding } from "../admin/editor/elementCatalog";
@@ -218,6 +218,8 @@ export default function VerdureHome({
           <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
         </div>
       </div>
+
+      <VerdureFooter />
 
       <style jsx global>{`
         /* padding-top 82 is NOT slack: the cornermark chip and the status pill are
