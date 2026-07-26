@@ -319,7 +319,7 @@ export default function ReceiptResults({
                       <div className="rc-panel__cap"><span><span className="rc-th">เพศ</span> · BY GENDER</span><em>§ 01</em></div>
                       <div className="rc-donut">
                         <ResponsiveContainer width="100%" height={230}>
-                          <PieChart>
+                          <PieChart accessibilityLayer={false}>
                             <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                               innerRadius={58} outerRadius={86} paddingAngle={3} stroke={t.receipt} strokeWidth={3}
                               startAngle={90} endAngle={-270} isAnimationActive={false}>
@@ -349,7 +349,7 @@ export default function ReceiptResults({
                             SVG's left edge, and an <svg> clips: the 3-digit ticks painted at
                             x 682.5 inside a wrapper starting at x 689.1, so "120"/"160" read
                             as ":0" on screen. width:34 already reserves room for them. */}
-                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+                        <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke={t.line} />
                           <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                           <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: t.ink2 }} tickLine={false} axisLine={false} />
@@ -367,7 +367,7 @@ export default function ReceiptResults({
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
                       <div className="rc-panel__cap"><span><span className="rc-th">สาขา</span> · BY MAJOR</span><em>§ 03</em></div>
                       <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                        <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                           <CartesianGrid horizontal={false} stroke={t.line} />
                           <XAxis type="number" hide allowDecimals={false} />
                           <YAxis type="category" dataKey="name" width={140} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />

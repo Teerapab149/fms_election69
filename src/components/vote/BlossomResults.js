@@ -282,7 +282,7 @@ export default function BlossomResults({
                           <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">เพศ</span> · <span className="bl-nw">BY GENDER</span></span><em>§ 01</em></div>
                           <div className="bl-donut">
                             <ResponsiveContainer width="100%" height={230}>
-                              <PieChart>
+                              <PieChart accessibilityLayer={false}>
                                 <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                                   innerRadius={58} outerRadius={86} paddingAngle={3} stroke={t.card} strokeWidth={3}
                                   startAngle={90} endAngle={-270} isAnimationActive={false}>
@@ -307,7 +307,7 @@ export default function BlossomResults({
                         <div className="bl-panel">
                           <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">ชั้นปี</span> · <span className="bl-nw">BY YEAR</span></span><em>§ 02</em></div>
                           <ResponsiveContainer width="100%" height={230}>
-                            <BarChart data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+                            <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
                               <CartesianGrid vertical={false} stroke={t.line} />
                               <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                               <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: t.ink2 }} tickLine={false} axisLine={false} />
@@ -324,7 +324,7 @@ export default function BlossomResults({
                         <div className="bl-panel bl-panel--wide">
                           <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">สาขา</span> · <span className="bl-nw">BY MAJOR</span></span><em>§ 03</em></div>
                           <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                            <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                            <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                               <CartesianGrid horizontal={false} stroke={t.line} />
                               <XAxis type="number" hide allowDecimals={false} />
                               <YAxis type="category" dataKey="name" width={140} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />

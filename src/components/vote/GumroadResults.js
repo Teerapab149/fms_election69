@@ -24,6 +24,15 @@ import ResultsHead from "../elements/results-head/gumroad";
 import StatCard from "../composites/stat-card/gumroad";
 import { getPartyColor, prefersDarkText } from "../../utils/partyColors";
 
+// accessibilityLayer={false} on every chart below. Recharts 3 flipped this default
+// to true (it was false in 2.x), which puts tabIndex="0" + role="application" on
+// .recharts-surface — so tapping a chart focuses it and the browser paints a focus
+// ring around the whole plot area, on desktop and on phones. These charts are
+// decorative summaries whose every number is already on the page as text (the donut
+// centre + legend, the bar value labels), so the layer buys nothing here and costs a
+// rectangle nobody asked for. Turning it off removes the tabindex outright rather
+// than hiding the ring with CSS, which would leave a focusable element with no
+// visible focus — worse than either.
 const POPS = ["#FF9CE9", "#B6E6FF", "#C2F47E", "#FFD24D", "#FF8A8A"];
 const CHART_FONT = "'Anuphan','Kanit',system-ui,sans-serif";
 const genderColor = (n) => {
@@ -327,7 +336,7 @@ export default function GumroadResults({
                       <h4>แยกตามเพศ</h4>
                       <div className="gr-donut">
                         <ResponsiveContainer width="100%" height={230}>
-                          <PieChart>
+                          <PieChart accessibilityLayer={false}>
                             <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                               innerRadius={58} outerRadius={88} paddingAngle={3} stroke="#1A1A1A" strokeWidth={2.5}
                               startAngle={90} endAngle={-270} isAnimationActive={false}>
@@ -351,7 +360,7 @@ export default function GumroadResults({
                     <div className="gr-card">
                       <h4>แยกตามชั้นปี</h4>
                       <ResponsiveContainer width="100%" height={230}>
-                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+                        <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke="rgba(26,26,26,.08)" />
                           <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
                           <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: "#4A4A4A" }} tickLine={false} axisLine={false} />
@@ -367,7 +376,7 @@ export default function GumroadResults({
                     <div className="gr-card gr-card--wide">
                       <h4>แยกตามสาขา</h4>
                       <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 0, bottom: 4 }}>
+                        <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 0, bottom: 4 }}>
                           <CartesianGrid horizontal={false} stroke="rgba(26,26,26,.08)" />
                           <XAxis type="number" hide allowDecimals={false} />
                           {/* width was a fixed 210px reserved for the longest major name a

@@ -37,7 +37,7 @@ export default function ResultsDemographics({
             </div>
             <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
+                <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={isMobile ? 96 : 120} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
@@ -56,7 +56,7 @@ export default function ResultsDemographics({
               </div>
               <div className="h-[160px] lg:h-[250px] w-full text-xs font-medium">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                  <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: isMobile ? 10 : 14 }} interval={0} />
                     <YAxis hide />
@@ -74,7 +74,7 @@ export default function ResultsDemographics({
               </div>
               <div className="h-[160px] lg:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart accessibilityLayer={false}>
                     <Pie data={byGender} cx="50%" cy="50%" innerRadius={isMobile ? 30 : 60} outerRadius={isMobile ? 50 : 90} paddingAngle={5} dataKey="value" stroke="none">
                       {byGender.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={getGenderColor(entry.name)} />
