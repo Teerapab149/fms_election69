@@ -367,10 +367,18 @@ export default function GumroadResults({
                     <div className="gr-card gr-card--wide">
                       <h4>แยกตามสาขา</h4>
                       <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 0, bottom: 4 }}>
                           <CartesianGrid horizontal={false} stroke="rgba(26,26,26,.08)" />
                           <XAxis type="number" hide allowDecimals={false} />
-                          <YAxis type="category" dataKey="name" width={210} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
+                          {/* width was a fixed 210px reserved for the longest major name a
+                              deployment might have. Real majors here are 2-4 letter codes
+                              (ACC, BBA, MICE), so the axis parked the whole chart ~170px in
+                              from the left edge — dead space on a laptop, and on a phone it
+                              took more than half the card before a single bar could start.
+                              "auto" (recharts 3) sizes the axis to the labels actually
+                              rendered, so short codes hug the left and a long Thai name
+                              still gets the room it needs. */}
+                          <YAxis type="category" dataKey="name" width="auto" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
                           <Tooltip content={<GrTooltip />} cursor={{ fill: "rgba(26,26,26,.05)" }} />
                           <Bar dataKey="value" stroke="#1A1A1A" strokeWidth={2.5} radius={[0, 8, 8, 0]} maxBarSize={28} isAnimationActive={false}
                             label={{ position: "right", fontFamily: CHART_FONT, fontSize: 12, fontWeight: 700, fill: "#1A1A1A", formatter: (v) => (v || 0).toLocaleString() }}>
