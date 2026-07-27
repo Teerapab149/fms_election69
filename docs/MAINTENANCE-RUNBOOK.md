@@ -86,6 +86,10 @@ NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (sessi
 NEXT_PUBLIC_BASE_PATH     # subpath ตอน deploy (ค่า: /fms-ovs)
 ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (auth แอดมิน — P0-1)
 ADMIN_PASSWORD_AUTH_EXTRA # bootstrap password แอดมิน (ครั้งแรก) — ดู /api/admin/login
+                          # ⚠️ รหัสที่กรอกตอน login ไม่ใช่ค่านี้ตรง ๆ แต่เป็น
+                          #    "<email ของแอดมินใน DB>+<ค่านี้>"  (ต่อด้วย + ไม่มีเว้นวรรค)
+                          #    เช่น 6610510129@email.psu.ac.th+xxxxx — ดู login/route.js
+                          #    (บรรทัด `const expected = \`${dbEmail}+${bootstrapSecret}\``)
 ADMIN_STUDENT_IDS         # รหัส นศ. ที่เป็นแอดมิน (คั่นด้วย ,) — ดู §10
 ELECTION_BALLOT_PUBLIC_KEY # v2-SEC: public key เข้ารหัสบัตร (PEM, \n-escaped) — ดู §11 + DEPLOY-CHECKLIST
 BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain ของบัตร — ดู §11 + DEPLOY-CHECKLIST
@@ -219,7 +223,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 |---|---|---|
 | **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
-| **admin เข้าไม่ได้** | `ADMIN_JWT_SECRET` เปลี่ยน/หาย หรือลืมรหัส bootstrap | ตรวจ `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA`; ถ้าจะรีเซ็ตรหัส ให้เซ็ต `passwordHash=null` ของ user admin ใน DB แล้ว login ด้วย bootstrap password ใหม่ (ดู §2) |
+| **admin เข้าไม่ได้** | `ADMIN_JWT_SECRET` เปลี่ยน/หาย หรือลืมรหัส bootstrap | ตรวจ `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA`; ถ้าจะรีเซ็ตรหัส ให้เซ็ต `passwordHash=null` ของ user admin ใน DB แล้ว login ด้วย **`<email>+<ADMIN_PASSWORD_AUTH_EXTRA>`** (ดู §2 — ไม่ใช่ค่า secret เปล่า ๆ) · ⚠️ **การเปลี่ยนค่า `ADMIN_PASSWORD_AUTH_EXTRA` เฉย ๆ ไม่มีผล** ถ้า `passwordHash` ถูกตั้งไปแล้ว เพราะ login จะ `bcrypt.compare` กับ hash เดิม — ต้องล้าง `passwordHash` ก่อนเสมอ |
 | **ลิงก์/รูปพังหลัง deploy** | path ไม่ผ่าน `getPath()` หรือ `NEXT_PUBLIC_BASE_PATH` ผิด | ตั้ง base path = `/fms-ovs`; หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
