@@ -232,11 +232,10 @@ const CATEGORY_META = {
     hint: "โดดเด่นกว่า เหมาะกับการสื่อสารกับนักศึกษา",
   },
 };
-// Provenance worth showing a committee. Data-driven so a future template can carry
-// its own note without touching the markup.
-const FAMILY_NOTE = {
-  original: "ผ่านการพิจารณาของคณะ ปีการศึกษา 2568 โดยไม่มีการขอแก้ไข",
-};
+// Deliberately no "approved by the faculty" note here. It was written as
+// provenance, but nobody ever formally approved anything — the template was simply
+// used for a real election and drew compliments. Putting a committee's endorsement
+// in the UI would be speaking for people who never said it.
 
 // ── Sidebar card (master) — one per family; colour themes = clickable swatches ──
 function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
@@ -256,11 +255,6 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
           <span className={`font-bold text-[15px] leading-tight ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
           <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{rep.layoutFamily || rep.slug}</span>
         </div>
-        {FAMILY_NOTE[fam.family] && (
-          <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold leading-tight">
-            <Check className="w-2.5 h-2.5" strokeWidth={3} /> เคยผ่านการพิจารณา
-          </span>
-        )}
         <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{rep.description}</p>
       </button>
       <div className="flex items-center gap-1.5 mt-2">
@@ -458,12 +452,6 @@ export default function TemplateChooserTab() {
                       )}
                     </div>
                     <p className="text-sm text-slate-500 mt-1 max-w-xl">{selected.description}</p>
-                    {selectedFamily && FAMILY_NOTE[selectedFamily.family] && (
-                      <p className="mt-2 inline-flex items-start gap-1.5 text-[12px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 max-w-xl">
-                        <Check className="w-3.5 h-3.5 mt-[1px] shrink-0" strokeWidth={3} />
-                        {FAMILY_NOTE[selectedFamily.family]}
-                      </p>
-                    )}
                   </div>
                   {isSelectedActive ? (
                     <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 cursor-default select-none">

@@ -36,7 +36,10 @@ function buildOriginalTemplate(slug, name, description, p) {
 }
 
 export const originalTemplate = buildOriginalTemplate(
-  "original", "ออริจินัล · ม่วง FMS", "ดีไซน์ต้นฉบับ SAMO (ม่วง-ขาว) — อัตลักษณ์แบรนด์คณะ · เลือกโทนพรีเมียมได้อีก 4 แบบ",
+  // No "เลือกโทนพรีเมียมได้อีก 4 แบบ" here: the field-colour variants are built in
+  // this file but deliberately not registered (see templates/index.js), so the
+  // description was advertising tones an admin could not select.
+  "original", "ออริจินัล · ม่วง FMS", "ดีไซน์ต้นฉบับ SAMO (ม่วง-ขาว) — อัตลักษณ์แบรนด์คณะ",
   ORIGINAL_THEMES["original"]);
 export const originalNavyTemplate = buildOriginalTemplate(
   "original-navy", "ออริจินัล · กรมท่า-ทอง", "โทนกรมท่าเข้ม + ทองแมตต์ — ทางการ น่าเชื่อถือ หรูสุขุม",
