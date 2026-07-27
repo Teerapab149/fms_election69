@@ -248,16 +248,18 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
     // overflowed a 900px-tall screen by 131px. The reclaim gets the whole list
     // onto one screen at that height, so the common case needs no scrolling at
     // all and the box above only kicks in on shorter windows.
-    <div className={`rounded-2xl border p-3.5 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}>
+    <div className={`rounded-xl border p-2.5 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-sm" : "border-transparent bg-white/70 hover:bg-white"}`}>
+      {/* The card used to carry a two-line description as well, which is what made a
+          column of six read as a wall of text — and it was the same sentence the
+          detail panel shows in full the moment you click. The list now answers only
+          "which one and what colours"; the reading happens on the right. */}
       <button type="button" onClick={() => onSelect(rep.slug)} className="w-full text-left">
         <div className="flex items-center gap-2">
           {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
-          <span className={`font-bold text-[15px] leading-tight ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
-          <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{rep.layoutFamily || rep.slug}</span>
+          <span className={`font-bold text-[15px] leading-tight truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
         </div>
-        <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{rep.description}</p>
       </button>
-      <div className="flex items-center gap-1.5 mt-2">
+      <div className="flex items-center gap-1.5 mt-1.5">
         {themes.map((t) => {
           const on = t.slug === selectedSlug;
           const c = t.colorSwatch?.primary || "#8A2680";
@@ -434,10 +436,13 @@ export default function TemplateChooserTab() {
                 const holdsActive = inCat.some((f) => f.themes.some((t) => t.slug === activeSlug));
                 const holdsSelected = inCat.some((f) => f.themes.some((t) => t.slug === selectedSlug));
                 return (
-                  <section key={cat}>
+                  // an open drawer becomes a tinted block so the two groups read as two
+                  // blocks, not one run of cards with labels in it. (Comment lives here,
+                  // not as a JSX sibling above the root — P-LOG-120.)
+                  <section key={cat} className={`rounded-2xl transition-colors ${open ? "bg-slate-100/70 p-1" : ""}`}>
                     <button type="button" aria-expanded={open}
                       onClick={() => setOpenCats((o) => ({ ...o, [cat]: !o[cat] }))}
-                      className={`w-full flex items-start gap-2 text-left px-2 py-2 rounded-xl transition-colors ${open ? "bg-white" : "hover:bg-white/70"}`}>
+                      className={`w-full flex items-start gap-2 text-left px-2 py-2 rounded-xl transition-colors ${open ? "" : "hover:bg-white/70"}`}>
                       <ChevronRight className={`w-3.5 h-3.5 mt-[3px] shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-90" : ""}`} strokeWidth={3} />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5">

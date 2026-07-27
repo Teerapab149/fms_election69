@@ -55,7 +55,7 @@ function buildVerdureTemplate(slug, name, palette) {
   id: slug,
   slug,
   name,
-  description: "เลย์เอาต์เอดิทอเรียลเซริฟ — เส้นขอบตั้งด้านข้าง เหรียญตรา/วงกลมเป็นหัวใจ และด็อกเมนูลอยด้านล่าง เลือกโทนสีได้ 4 แบบ (คลาสสิก/อะคาเดมิก/ครีเอทีฟ/มินิมอล)",
+  description: "จัดหน้าแบบนิตยสาร ตัวอักษรมีเชิง มีตราวงกลมเป็นจุดเด่นกลางหน้า และแถบเมนูลอยอยู่ด้านล่าง ให้ความรู้สึกประณีตและพรีเมียม เลือกโทนสีได้ 4 แบบ",
   layoutFamily: "verdure", // real template — own page layouts (edge rail + dock + discs)
 
   colorSwatch: {
@@ -161,9 +161,9 @@ function buildVerdureTemplate(slug, name, palette) {
 // preview exactly. layoutFamily stays "verdure" → one chooser card with swatches;
 // colorSwatch derives from the palette (primary = cta so the chip shows the theme's
 // signature button colour; the chooser groups by family).
-export const verdureTemplate      = buildVerdureTemplate("verdure", "เวอร์เดอร์ · คลาสสิก พรีเมียม", VERDURE_THEMES["verdure"]);
-export const verdureHoneyTemplate = buildVerdureTemplate("verdure-honey", "เวอร์เดอร์ · โมเดิร์น อะคาเดมิก", VERDURE_THEMES["verdure-honey"]);
-export const verdureTealTemplate  = buildVerdureTemplate("verdure-teal", "เวอร์เดอร์ · คอนเทมโพรารี ครีเอทีฟ", VERDURE_THEMES["verdure-teal"]);
-export const verdureBerryTemplate = buildVerdureTemplate("verdure-berry", "เวอร์เดอร์ · มินิมอล เทค", VERDURE_THEMES["verdure-berry"]);
+export const verdureTemplate      = buildVerdureTemplate("verdure", "Verdure", VERDURE_THEMES["verdure"]);
+export const verdureHoneyTemplate = buildVerdureTemplate("verdure-honey", "Verdure · Honey", VERDURE_THEMES["verdure-honey"]);
+export const verdureTealTemplate  = buildVerdureTemplate("verdure-teal", "Verdure · Teal", VERDURE_THEMES["verdure-teal"]);
+export const verdureBerryTemplate = buildVerdureTemplate("verdure-berry", "Verdure · Berry", VERDURE_THEMES["verdure-berry"]);
 
 export default verdureTemplate;

@@ -39,19 +39,19 @@ export const originalTemplate = buildOriginalTemplate(
   // No "เลือกโทนพรีเมียมได้อีก 4 แบบ" here: the field-colour variants are built in
   // this file but deliberately not registered (see templates/index.js), so the
   // description was advertising tones an admin could not select.
-  "original", "ออริจินัล · ม่วง FMS", "ดีไซน์ต้นฉบับ SAMO (ม่วง-ขาว) — อัตลักษณ์แบรนด์คณะ",
+  "original", "Original", "ดีไซน์ที่ใช้จริงมาแล้วในการเลือกตั้งจริง โทนม่วง-ขาวตามสีคณะ เรียบและเป็นทางการที่สุดในบรรดาธีมทั้งหมด",
   ORIGINAL_THEMES["original"]);
 export const originalNavyTemplate = buildOriginalTemplate(
-  "original-navy", "ออริจินัล · กรมท่า-ทอง", "โทนกรมท่าเข้ม + ทองแมตต์ — ทางการ น่าเชื่อถือ หรูสุขุม",
+  "original-navy", "Original · Navy Gold", "โทนกรมท่าเข้ม + ทองแมตต์ — ทางการ น่าเชื่อถือ หรูสุขุม",
   ORIGINAL_THEMES["original-navy"]);
 export const originalEmeraldTemplate = buildOriginalTemplate(
-  "original-emerald", "ออริจินัล · มรกต-แชมเปญ", "โทนเขียวมรกต + แชมเปญทอง — ลึก ประณีต สง่างาม",
+  "original-emerald", "Original · Emerald", "โทนเขียวมรกต + แชมเปญทอง — ลึก ประณีต สง่างาม",
   ORIGINAL_THEMES["original-emerald"]);
 export const originalCrimsonTemplate = buildOriginalTemplate(
-  "original-crimson", "ออริจินัล · เลือดหมู-แพลทินัม", "โทนแดงเข้ม + เทาแพลทินัม — โมเดิร์น หนักแน่น ทรงพลัง",
+  "original-crimson", "Original · Crimson", "โทนแดงเข้ม + เทาแพลทินัม — โมเดิร์น หนักแน่น ทรงพลัง",
   ORIGINAL_THEMES["original-crimson"]);
 export const originalAubergineTemplate = buildOriginalTemplate(
-  "original-aubergine", "ออริจินัล · ม่วงมะเขือ-ทองแดง", "โทนม่วงมะเขือ + ทองแดงเผา — โมเดิร์น มีพลัง คอนทราสต์สูง",
+  "original-aubergine", "Original · Aubergine", "โทนม่วงมะเขือ + ทองแดงเผา — โมเดิร์น มีพลัง คอนทราสต์สูง",
   ORIGINAL_THEMES["original-aubergine"]);
 
 export default originalTemplate;

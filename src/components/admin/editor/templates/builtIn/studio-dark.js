@@ -246,19 +246,19 @@ function buildStudioTemplate(slug, name, description, p) {
 }
 
 export const studioDarkTemplate = buildStudioTemplate(
-  "studio-dark", "สตูดิโอ ดาร์ก",
-  "สไตล์ดาร์กพรีเมียม — พื้นดำอุ่น เส้นบางคม แอ็กเซนต์ไลม์ ฟอนต์เรียบ + แถบเมนูซ้ายถาวร",
+  "studio-dark", "Dark",
+  "พื้นดำอุ่น เส้นบางคม ตัวอักษรเรียบ มีแถบเมนูอยู่ซ้ายมือตลอด ดูสงบและพรีเมียม สีเน้นเริ่มต้นเป็นเขียวไลม์ เลือกได้ 4 แบบ",
   STUDIO_THEMES["studio-dark"]);
 export const studioDarkCyberTemplate = buildStudioTemplate(
-  "studio-dark-cyber", "สตูดิโอ ดาร์ก · ไซเบอร์ฟ้า",
+  "studio-dark-cyber", "Dark · Cyber Blue",
   "โทนดำน้ำเงินเย็น + ฟ้าไซเบอร์ — คมกริบ เทคนิคัล ทันสมัย",
   STUDIO_THEMES["studio-dark-cyber"]);
 export const studioDarkMagentaTemplate = buildStudioTemplate(
-  "studio-dark-magenta", "สตูดิโอ ดาร์ก · แมเจนต้า",
+  "studio-dark-magenta", "Dark · Magenta",
   "โทนดำอมพลัม + ชมพูแมเจนต้า — จัดจ้าน มีพลัง กล้าแสดงออก",
   STUDIO_THEMES["studio-dark-magenta"]);
 export const studioDarkAmberTemplate = buildStudioTemplate(
-  "studio-dark-amber", "สตูดิโอ ดาร์ก · ทองอำพัน",
+  "studio-dark-amber", "Dark · Amber",
   "โทนดำอุ่นอำพัน + ทองเหลว — ภูมิฐาน อบอุ่น พรีเมียม",
   STUDIO_THEMES["studio-dark-amber"]);
 
