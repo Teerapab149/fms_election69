@@ -504,8 +504,12 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .bl-party-root .bl-cand__btn:hover .bl-cand__name { color:var(--bl-primary-ink); }
+        /* two lines, not one: at 9.5px in a 145px card the one-line clamp cut a real
+           role — "ประธานฝ่ายเทคโนโลยีสารสนเทศ" lost 15px of itself on a phone, so the
+           voter could not tell which department the member leads. The name above it
+           already clamps at 2; matching that keeps the card rhythm. */
         .bl-party-root .bl-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
-          color:var(--bl-ink2); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
+          color:var(--bl-ink2); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 
         /* ---- 5. ภาพกิจกรรม — horizontal photo-strip ---- */
         .bl-party-root .bl-strip { margin-top:22px; display:flex; gap:14px; overflow-x:auto; padding:6px 2px 12px;

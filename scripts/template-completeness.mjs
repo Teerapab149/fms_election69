@@ -21,11 +21,7 @@
 // design, so preview mode reports "no chrome" and "no exit" on pages that have
 // both. Preview mode is still the fast way to check clipping and overflow.
 //
-// Known-good exceptions as of 2026-07-28 (REAL mode, 69/72):
-//   gumroad @412 results/closed  the nav labels live behind the hamburger, which
-//                                this gate cannot see. Real page, real exit.
-//   blossom @412 candidates      member role labels are line-clamp-1 at 9.5px by
-//                                design; long titles clip by ~15px.
+// REAL=1 currently reports 72/72 across six families x six pages x two viewports.
 // REAL=1 drives the actual routes instead of /template-preview: it switches
 // activeTemplateId in the database per family (restoring it at the end) and carries
 // a minted session. Needed because the preview deliberately renders chrome-less and
@@ -70,10 +66,17 @@ const AUDIT = () => {
   // every link here has a null href by design. Checking href reported all six
   // families as having no exit anywhere, which was the harness measuring the
   // preview harness. The label is what a voter actually reads.
+  // A hamburger counts. On a phone gumroad collapses its nav behind a control
+  // labelled "เมนู" and that is the exit — refusing to count it marked working
+  // pages as dead ends. Matched on the label or the aria the control exposes,
+  // never on a class name.
   const exits = [...document.querySelectorAll("a,button,[role='button']")]
     .filter(vis)
-    .filter((e) => /กลับ|หน้าแรก|หน้าหลัก|ผู้สมัคร|ผลคะแนน|ลงคะแนน|Home|Results|Candidates|Vote/i.test((e.innerText || "").trim()))
-    .length;
+    .filter((e) => {
+      const label = `${(e.innerText || "").trim()} ${e.getAttribute("aria-label") || ""}`;
+      const isMenuToggle = /เมนู|menu|navigation/i.test(label) || e.hasAttribute("aria-expanded");
+      return isMenuToggle || /กลับ|หน้าแรก|หน้าหลัก|ผู้สมัคร|ผลคะแนน|ลงคะแนน|Home|Results|Candidates|Vote/i.test(label);
+    }).length;
 
   // readable
   const clipped = [];
