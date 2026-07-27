@@ -175,6 +175,51 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         animation: ""
                                     };
 
+                                    // ── the two SIGNED-IN states, defined once ───────────────────
+                                    // These used to be written twice (once under MANUAL_OPEN, once
+                                    // under the scheduled branch) with hardcoded emerald / sky-teal
+                                    // gradients, which is why a colour theme never worked on this
+                                    // template: the loudest element on the page stayed green while
+                                    // everything around it followed the palette. They now read from
+                                    // the same --o-* slots the login button already used — and the
+                                    // palette was documented for exactly this ("deep — button base,
+                                    // gradient start" / "bright — gradient end of the primary button").
+                                    //
+                                    // Only these two are brand-tinted. The PAUSE (orange) and
+                                    // ENDED/closed (slate) states stay put: those are status colours,
+                                    // not brand ones, and they have to read the same in every theme.
+                                    // The ballot's own รับรอง/ไม่รับรอง/งดออกเสียง buttons live in
+                                    // components/vote/ and are untouched by any of this.
+                                    const CTA_VOTE = {
+                                        isLoginAction: false,
+                                        href: "/vote",
+                                        text: "ลงคะแนน / Vote Now",
+                                        gradientBase: "from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)]",
+                                        gradientHover: "from-[var(--o-brand)] via-[var(--o-bright)] to-[var(--o-glow)]",
+                                        glowColor: "from-[var(--o-brand)] to-[var(--o-glow)]",
+                                        shadow: "shadow-[0_15px_30px_-8px_color-mix(in_srgb,var(--o-brand)_45%,transparent)]",
+                                        icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
+                                        animation: "animate-pulse"
+                                    };
+                                    // Results is the quieter of the two: same family, but it stops at
+                                    // `brand` instead of running up to `bright`, so the primary action
+                                    // stays the brighter of the pair whichever theme is active. Both
+                                    // stops are dark ends of the ramp, so the white label keeps its
+                                    // contrast on every palette (glow is accent-light on some themes —
+                                    // gold on navy — so it is used only for the blurred halo, never
+                                    // as a fill behind text).
+                                    const CTA_RESULTS = {
+                                        isLoginAction: false,
+                                        href: "/results",
+                                        text: "ดูผลคะแนน / Results",
+                                        gradientBase: "from-[var(--o-deep)] via-[var(--o-deep)] to-[var(--o-brand)]",
+                                        gradientHover: "from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)]",
+                                        glowColor: "from-[var(--o-deep)] to-[var(--o-brand)]",
+                                        shadow: "shadow-[0_10px_20px_-5px_color-mix(in_srgb,var(--o-deep)_40%,transparent)]",
+                                        icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
+                                        animation: ""
+                                    };
+
                                     // 2. เช็ค Session เพื่อเปลี่ยน config (ใช้ isVotedReal จาก DB แทน session)
                                     const sysMode = initialData?.systemMode || "AUTO";
                                     const electionStatus = initialData?.electionStatus;
@@ -224,60 +269,11 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                     } else if (sysMode === "MANUAL_OPEN") {
                                         // Case: Forced Open
                                         if (session) {
-                                            if (isVotedReal) {
-                                                btnConfig = {
-                                                    isLoginAction: false,
-                                                    href: "/results",
-                                                    text: "ดูผลคะแนน / Results",
-                                                    gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
-                                                    gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
-                                                    glowColor: "from-[#0ea5e9] to-[#14b8a6]",
-                                                    shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
-                                                    icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
-                                                    animation: ""
-                                                };
-                                            } else {
-                                                btnConfig = {
-                                                    isLoginAction: false,
-                                                    href: "/vote",
-                                                    text: "ลงคะแนน / Vote Now",
-                                                    gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
-                                                    gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
-                                                    glowColor: "from-[#34D399] to-[#059669]",
-                                                    shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
-                                                    icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
-                                                    animation: "animate-pulse"
-                                                };
-                                            }
+                                            btnConfig = isVotedReal ? CTA_RESULTS : CTA_VOTE;
                                         }
                                     } else if (session) {
-                                        if (isVotedReal) {
-                                            // เคส: โหวตแล้ว -> ไปหน้า Results
-                                            btnConfig = {
-                                                isLoginAction: false, // ไม่ใช่ปุ่ม Login แล้ว เป็น Link
-                                                href: "/results",
-                                                text: "ดูผลคะแนน / Results",
-                                                gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
-                                                gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
-                                                glowColor: "from-[#0ea5e9] to-[#14b8a6]",
-                                                shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
-                                                icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
-                                                animation: ""
-                                            };
-                                        } else {
-                                            // เคส: ยังไม่โหวต -> ไปหน้า Vote
-                                            btnConfig = {
-                                                isLoginAction: false, // ไม่ใช่ปุ่ม Login แล้ว เป็น Link
-                                                href: "/vote",
-                                                text: "ลงคะแนน / Vote Now",
-                                                gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
-                                                gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
-                                                glowColor: "from-[#34D399] to-[#059669]",
-                                                shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
-                                                icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
-                                                animation: "animate-pulse"
-                                            };
-                                        }
+                                        // โหวตแล้ว -> ผลคะแนน · ยังไม่โหวต -> ลงคะแนน (นิยามไว้ที่เดียวด้านบน)
+                                        btnConfig = isVotedReal ? CTA_RESULTS : CTA_VOTE;
                                     }
 
                                     // 3. สร้างไส้ในปุ่ม (เพื่อลดโค้ดซ้ำ เพราะหน้าตาเหมือนกันเป๊ะ)

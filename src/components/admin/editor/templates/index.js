@@ -16,12 +16,14 @@ import { minimalTemplate }    from "./builtIn/minimal";
 import { gumroadTemplate, gumroadCyberTemplate, gumroadRetroTemplate, gumroadAcidTemplate, gumroadPremiumTemplate, gumroadBubblegumTemplate } from "./builtIn/gumroad";
 import { studioDarkTemplate, studioDarkCyberTemplate, studioDarkMagentaTemplate, studioDarkAmberTemplate } from "./builtIn/studio-dark";
 import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerryTemplate } from "./builtIn/verdure";
-// Original is intentionally purple-only in the chooser: it's a hand-crafted
-// single-palette design, so the field-colour variants (navy/emerald/crimson/
-// aubergine) never matched the flagship's craft (owner call 2026-07-08). The
-// builder + palettes are KEPT in builtIn/original.js + originalPalettes.js so
-// re-enabling is just re-importing + re-registering them below.
-import { originalTemplate } from "./builtIn/original";
+// Original's colour variants were pulled on 2026-07-08 because they "never matched
+// the flagship's craft" — and they didn't, for a findable reason: the home page's
+// main CTA carried hardcoded emerald / sky-teal gradients, so on any non-purple
+// palette the largest, most saturated element on the page stayed green while
+// everything around it re-tinted. The CTA now reads the same --o-* slots the login
+// state always used (OriginalHome, 2026-07-28), which is what the palette was
+// documented for, so the variants can stand next to the flagship again.
+import { originalTemplate, originalNavyTemplate, originalEmeraldTemplate, originalCrimsonTemplate, originalAubergineTemplate } from "./builtIn/original";
 import { blossomTemplate, blossomSkyTemplate, blossomMintTemplate, blossomButterTemplate } from "./builtIn/blossom";
 import { receiptTemplate, receiptInkBlueTemplate, receiptTealTemplate, receiptCarbonTemplate } from "./builtIn/receipt";
 
@@ -45,6 +47,10 @@ const BUILT_IN_TEMPLATES = {
   "verdure-teal":  verdureTealTemplate,
   "verdure-berry": verdureBerryTemplate,
   original:            originalTemplate,
+  "original-navy":      originalNavyTemplate,
+  "original-emerald":   originalEmeraldTemplate,
+  "original-crimson":   originalCrimsonTemplate,
+  "original-aubergine": originalAubergineTemplate,
   // field-colour variants un-registered (purple-only) — see import note above
   blossom:             blossomTemplate,
   "blossom-sky":       blossomSkyTemplate,
