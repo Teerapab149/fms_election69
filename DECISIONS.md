@@ -2293,6 +2293,78 @@ all four occupied ports, still 7/7 on a free one (commit `c12c361`).
 the child you started — a health check alone does not prove which process answered.
 **Tags:** `#e2e` `#testing` `#verification`
 
+### P-LOG-126: [2026-07-27] A `NEXT_PUBLIC_*` read inside server code can be compiled into a permanent verdict
+**Context:** The readiness check for mock-login tested two things: whether NextAuth had
+registered the provider (runtime, correct) and whether `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` was
+set. Next inlines `NEXT_PUBLIC_*` at build time on the server side too, so with the flag on
+at build the minifier could prove the pass branch unreachable and deleted it. Two builds of
+the same file, compared: flag true → `(cond)?fail:fail`; flag unset → `(cond)?fail:pass`.
+An image built on a machine where that flag was visible would report the election server as
+unsafe forever, and no runtime environment variable could clear it — the green branch was
+not in the binary. Today's Dockerfile only escapes this because `.dockerignore` excludes
+`.env*`, i.e. by accident.
+**Fix:** The login button now reads `/api/auth/providers`, which lists what the running
+server actually registered, so it is a shadow of the gate rather than a second opinion; the
+readiness check dropped to the single runtime condition (`954d8ea`).
+**Lesson:** This is stronger than P-LOG-117. It is not only "reads the build machine's
+value" — a build-time constant can delete the code path you need at runtime. Anything that
+reports live state must not read `NEXT_PUBLIC_*`, even in a file that only runs on the server.
+**Tags:** `#nextjs` `#build` `#security` `#verification`
+
+### P-LOG-127: [2026-07-27] `compiler.removeConsole: true` strips `console.error` as well
+**Context:** Production builds carried `removeConsole: true`, which removes every
+`console.*` — all 80 in src, 26 of them in API routes. Found the direct way: the standalone
+build returned 503 from `/api/health` with an unreachable database and the container log
+stayed empty, because the route's own `console.error` was no longer in the binary. On
+election day that is the difference between reading why the vote API is failing and having
+nothing to read.
+**Fix:** `{ exclude: ["error", "warn"] }` (`4d4e8b6`); verified on the compiled route that
+`console.error` survives and `console.log` still does not, then end to end in the container
+by stopping the database and watching `[health] DB check failed` appear.
+**Lesson:** Check what a production build actually kept by grepping your own log strings in
+`.next/server/app/**/route.js` — do not assume "strip console noise" spared the errors.
+**Tags:** `#nextjs` `#build` `#observability`
+
+### P-LOG-128: [2026-07-27] Restoring error logs surfaces DynamicServerError from routes with no `force-dynamic`
+**Context:** With `console.error` alive again, `npm run build` began printing
+`[requireAdmin] session check failed` and DynamicServerError from five routes. Nothing was
+broken: Next probes routes for static rendering, the `headers()`/`request.url` read throws,
+and our own catch blocks logged it. But an auth-sounding error in build output reads like a
+real failure and would send the next person chasing it.
+**Fix:** `export const dynamic = "force-dynamic"` on the five runtime-only routes; build
+output clean again, route table unchanged (all still `ƒ`).
+**Lesson:** A route that reads headers or the request URL should declare itself dynamic even
+when it already behaves dynamically — otherwise the build narrates a failure that isn't one.
+**Tags:** `#nextjs` `#build`
+
+### P-LOG-129: [2026-07-27] Do not write shared app state while the owner is using the app
+**Context:** Verifying per-template work meant switching `activeTemplateId` in the dev
+database ~6 times. The owner was clicking through the admin in parallel, so the live theme
+changed under them mid-session. Worse in the other direction: their own `POST
+/api/admin/templates/*/apply` calls changed it under the measurements, and the first
+conclusion drawn was that `/template-preview` mutates the database — it does not.
+**Fix:** Use `/template-preview?slug=…`, which is database-free, for anything that only
+needs to render a family; reserve real writes for checks that genuinely need the live route,
+and restore in a `finally`.
+**Lesson:** Before concluding that shared state changed because of you, read the server log
+for requests you did not make. And prefer the read-only surface when one exists.
+**Tags:** `#process` `#verification` `#collaboration`
+
+### P-LOG-130: [2026-07-28] A UI audit harness must be checked against itself before its output is believed
+**Context:** The new template-completeness gate reported all six families as having no exit
+on any page, and every clamped party name in three families as truncated. Both were the
+harness: `/template-preview` renders with `editorMode` on, which nulls every `href` by
+design, and a `line-clamp` box routinely rounds a few pixels past its own height, so a >3px
+clip threshold fires on healthy markup. Same session, the same shape of mistake appeared
+three times — UTC timestamps fed to a parser that reads naive strings as `+07:00`, one
+student ID reused until the 15/min vote limiter answered 429, and locators written for
+labels one family does not use.
+**Fix:** Match exits on the label a voter reads, raise the clip threshold to 8px, and add a
+`REAL=1` mode that drives the real routes for anything about chrome or exits (`ac3d9a0`).
+**Lesson:** When a sweep reports a whole category as broken, suspect the sweep first. Prove
+one finding by hand before acting on a hundred.
+**Tags:** `#verification` `#testing` `#process`
+
 ---
 
 ## 🚫 Rejected Approaches
