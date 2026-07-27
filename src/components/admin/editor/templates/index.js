@@ -9,7 +9,6 @@
  * Built-ins take priority if slug collision.
  */
 
-import { classicTemplate }    from "./builtIn/classic";
 import { modernDarkTemplate } from "./builtIn/modern-dark";
 import { playfulTemplate }    from "./builtIn/playful";
 import { minimalTemplate }    from "./builtIn/minimal";
@@ -26,7 +25,18 @@ import { blossomTemplate, blossomSkyTemplate, blossomMintTemplate, blossomButter
 import { receiptTemplate, receiptInkBlueTemplate, receiptTealTemplate, receiptCarbonTemplate } from "./builtIn/receipt";
 
 const BUILT_IN_TEMPLATES = {
-  classic:        classicTemplate,
+  // "classic" and "original" were never two designs. Original IS the classic layout
+  // — it was born from an attempt to give classic colour themes, the attempt was
+  // abandoned, and the revert left the rebuilt home/navbar/countdown behind as a
+  // second family. Since then classic has been hidden from the chooser, so admins
+  // already saw one template while the code carried two.
+  //
+  // The slug cannot simply be deleted: schema.prisma defaults activeTemplateId to
+  // "classic", 27 places in src fall back to it, and any existing database still
+  // holding that value would resolve to nothing. So it stays as an ALIAS — every
+  // one of those paths now lands on the original template, a fresh install boots
+  // into it, and there is exactly one official design in the system.
+  classic:        originalTemplate,
   "modern-dark":  modernDarkTemplate,
   playful:        playfulTemplate,
   minimal:        minimalTemplate,
@@ -95,7 +105,13 @@ export async function listTemplates(prisma, filters = {}) {
   const results = [];
 
   if (filters.isBuiltIn !== false) {
+    // dedupe by slug: "classic" is an ALIAS onto the original template (see the map
+    // above), so iterating the values yields that one template twice and the chooser
+    // would draw it as two identical swatches.
+    const seen = new Set();
     for (const tpl of Object.values(BUILT_IN_TEMPLATES)) {
+      if (seen.has(tpl.slug)) continue;
+      seen.add(tpl.slug);
       results.push({
         slug: tpl.slug,
         name: tpl.name,
