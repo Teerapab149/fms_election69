@@ -327,7 +327,7 @@ export default function BlossomResults({
                             <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                               <CartesianGrid horizontal={false} stroke={t.line} />
                               <XAxis type="number" hide allowDecimals={false} />
-                              <YAxis type="category" dataKey="name" width={140} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
+                              <YAxis type="category" dataKey="name" width="auto" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                               <Tooltip content={<BlTooltip />} cursor={{ fill: t.primarySoft }} />
                               <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={26} isAnimationActive={false}
                                 label={{ position: "right", fontFamily: CHART_FONT, fontSize: 12, fontWeight: 700, fill: t.ink, formatter: (v) => (v || 0).toLocaleString() }}>
