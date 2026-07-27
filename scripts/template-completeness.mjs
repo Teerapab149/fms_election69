@@ -10,7 +10,7 @@
 //   readable    no clipped text, no horizontal overflow
 //   sane        no NaN/undefined leaking into the page
 //
-// Runs against /template-preview, so it needs no database writes and no session.
+// Two modes: preview (no database, no session) and REAL=1 (the actual routes).
 //
 //   npm run template-gate                 preview mode — clipping/overflow/junk only
 //   REAL=1 npm run template-gate          the real routes — adds chrome + exit
