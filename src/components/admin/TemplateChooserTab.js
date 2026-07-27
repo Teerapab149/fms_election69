@@ -280,6 +280,10 @@ export default function TemplateChooserTab() {
   const [loading, setLoading] = useState(true);
   const [activeSlug, setActiveSlug] = useState(null);
   const [selectedSlug, setSelectedSlug] = useState(null);
+  // which category drawers are open. Both shut until the list loads, then the one
+  // holding the theme being previewed opens itself (see the effect below) — so you
+  // land on your own theme without the other group in the way.
+  const [openCats, setOpenCats] = useState({ official: false, expressive: false });
   const [pending, setPending] = useState(null);
   const [applying, setApplying] = useState(false);
   const [toast, setToast] = useState(null);
@@ -344,6 +348,14 @@ export default function TemplateChooserTab() {
 
   const selected = useMemo(() => templates.find((t) => t.slug === selectedSlug) || null, [templates, selectedSlug]);
   const selectedFamily = useMemo(() => families.find((f) => f.themes.some((t) => t.slug === selectedSlug)) || null, [families, selectedSlug]);
+
+  // Open the drawer holding whatever is being previewed — once. Guarded on "no
+  // drawer is open yet" rather than on selectedFamily so that closing the drawer
+  // you are looking at stays closed instead of springing back open.
+  useEffect(() => {
+    if (!selectedFamily) return;
+    setOpenCats((o) => (o.official || o.expressive ? o : { ...o, [selectedFamily.category]: true }));
+  }, [selectedFamily]);
   const isSelectedActive = selected && selected.slug === activeSlug;
   const accent = selected?.colorSwatch?.primary || "#8A2680";
 
@@ -408,28 +420,46 @@ export default function TemplateChooserTab() {
                 — rather than to the sticky offset — is what removes the PAGE
                 scroll: with the list inside the first screen there is nothing
                 left to scroll past, so the preview can never drift away. */}
-            <div className="tc-list flex lg:flex-col gap-2 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto lg:max-h-[calc(100vh-216px)] pb-1 lg:pb-0 lg:p-1.5 lg:rounded-2xl lg:border lg:border-slate-200/70 lg:bg-white/50">
+            {/* Two drawers rather than one long run. Six cards stacked under two
+                headings still read as one cluttered column — you had to scan the
+                whole thing to find the official one. Collapsed, the split is the
+                first thing you see; the section holding the theme you are looking
+                at opens itself, the other stays shut until you ask for it. */}
+            <div className="tc-list flex flex-col gap-1.5 overflow-y-auto lg:max-h-[calc(100vh-216px)] p-1.5 rounded-2xl border border-slate-200/70 bg-white/50">
               {["official", "expressive"].map((cat) => {
                 const inCat = families.filter((f) => f.category === cat);
                 if (!inCat.length) return null;
                 const meta = CATEGORY_META[cat];
+                const open = openCats[cat];
+                const holdsActive = inCat.some((f) => f.themes.some((t) => t.slug === activeSlug));
+                const holdsSelected = inCat.some((f) => f.themes.some((t) => t.slug === selectedSlug));
                 return (
-                  <div key={cat} className="contents lg:block">
-                    {/* the divider is horizontal on the phone's scrolling row and a
-                        heading on the desktop column, so the split reads either way */}
-                    <div className="hidden lg:block px-2 pt-2 pb-1.5 first:pt-0.5">
-                      <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">{meta.label} <span className="text-slate-300 font-mono">({inCat.length})</span></p>
-                      <p className="text-[10.5px] text-slate-400 leading-snug mt-0.5">{meta.hint}</p>
-                    </div>
-                    <div className="lg:hidden shrink-0 self-center px-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">{meta.label}</span>
-                    </div>
-                    {inCat.map((fam) => (
-                      <div key={fam.family} className="min-w-[220px] lg:min-w-0">
-                        <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
+                  <section key={cat}>
+                    <button type="button" aria-expanded={open}
+                      onClick={() => setOpenCats((o) => ({ ...o, [cat]: !o[cat] }))}
+                      className={`w-full flex items-start gap-2 text-left px-2 py-2 rounded-xl transition-colors ${open ? "bg-white" : "hover:bg-white/70"}`}>
+                      <ChevronRight className={`w-3.5 h-3.5 mt-[3px] shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-90" : ""}`} strokeWidth={3} />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">{meta.label}</span>
+                          <span className="text-[10px] font-mono text-slate-300">({inCat.length})</span>
+                          {/* a shut drawer still has to say whether the live theme is inside it */}
+                          {holdsActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="ธีมที่ใช้อยู่อยู่ในกลุ่มนี้" />}
+                          {!open && holdsSelected && !holdsActive && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" title="ธีมที่กำลังดูอยู่ในกลุ่มนี้" />}
+                        </span>
+                        <span className="block text-[10.5px] text-slate-400 leading-snug mt-0.5">{meta.hint}</span>
+                      </span>
+                    </button>
+                    {open && (
+                      <div className="flex lg:flex-col gap-2 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible pb-1 lg:pb-0 pt-1">
+                        {inCat.map((fam) => (
+                          <div key={fam.family} className="min-w-[220px] lg:min-w-0">
+                            <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </section>
                 );
               })}
             </div>
