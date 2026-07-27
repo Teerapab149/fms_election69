@@ -223,7 +223,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 |---|---|---|
 | **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
-| **admin เข้าไม่ได้** | `ADMIN_JWT_SECRET` เปลี่ยน/หาย หรือลืมรหัส bootstrap | ตรวจ `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA`; ถ้าจะรีเซ็ตรหัส ให้เซ็ต `passwordHash=null` ของ user admin ใน DB แล้ว login ด้วย **`<email>+<ADMIN_PASSWORD_AUTH_EXTRA>`** (ดู §2 — ไม่ใช่ค่า secret เปล่า ๆ) · ⚠️ **การเปลี่ยนค่า `ADMIN_PASSWORD_AUTH_EXTRA` เฉย ๆ ไม่มีผล** ถ้า `passwordHash` ถูกตั้งไปแล้ว เพราะ login จะ `bcrypt.compare` กับ hash เดิม — ต้องล้าง `passwordHash` ก่อนเสมอ |
+| **admin เข้าไม่ได้** | ลืมรหัส หรือ `ADMIN_JWT_SECRET` เปลี่ยน/หาย | **ทางที่แนะนำ:** `node scripts/create-admin.js --rotate` — ออกรหัสใหม่ให้บัญชีเดียวนั้น แสดงครั้งเดียว เก็บเป็น bcrypt hash (ไม่มีที่ไหนเก็บตัวจริง) · ดูว่าใครเป็นแอดมินอยู่: `--list` · อยากให้เหลือบัญชีเดียวจริง ๆ: `--only` · ตรวจ `ADMIN_JWT_SECRET` ด้วยถ้ายัง login ไม่ได้ · *(ทางเก่า bootstrap `<email>+<ADMIN_PASSWORD_AUTH_EXTRA>` ยังใช้ได้เฉพาะบัญชีที่ยังไม่มี passwordHash — ดู §2)* |
 | **ลิงก์/รูปพังหลัง deploy** | path ไม่ผ่าน `getPath()` หรือ `NEXT_PUBLIC_BASE_PATH` ผิด | ตั้ง base path = `/fms-ovs`; หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
