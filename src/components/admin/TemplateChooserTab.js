@@ -206,6 +206,38 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
   );
 }
 
+// ── Template categories ───────────────────────────────────────────────────────
+// The list used to be one flat run ordered newest-first, which put the two most
+// expressive families at the top and left the ONE family that a faculty committee
+// has already approved sitting third, looking like just another option. That is a
+// presentation problem, not a missing-template problem: whoever has to hand this to
+// a committee needs to see at a glance which themes are the safe, plain ones.
+//
+// Adding more plain templates would not have solved it — every family costs 11-14
+// page components and, more expensively, has to be revisited on every cross-cutting
+// change (the missing /login pages and the chrome-less success page were both "the
+// fix landed on some families and silently missed others"). So: label what exists.
+const FAMILY_CATEGORY = {
+  original: "official",
+  classic: "official",
+  // everything else is expressive by default
+};
+const CATEGORY_META = {
+  official: {
+    label: "ทางการ · เรียบ",
+    hint: "โทนสุภาพ เหมาะกับการเสนอคณะกรรมการ",
+  },
+  expressive: {
+    label: "งานออกแบบ",
+    hint: "โดดเด่นกว่า เหมาะกับการสื่อสารกับนักศึกษา",
+  },
+};
+// Provenance worth showing a committee. Data-driven so a future template can carry
+// its own note without touching the markup.
+const FAMILY_NOTE = {
+  original: "ผ่านการพิจารณาของคณะ ปีการศึกษา 2568 โดยไม่มีการขอแก้ไข",
+};
+
 // ── Sidebar card (master) — one per family; colour themes = clickable swatches ──
 function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
   const { rep, themes } = fam;
@@ -224,6 +256,11 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
           <span className={`font-bold text-[15px] leading-tight ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
           <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{rep.layoutFamily || rep.slug}</span>
         </div>
+        {FAMILY_NOTE[fam.family] && (
+          <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold leading-tight">
+            <Check className="w-2.5 h-2.5" strokeWidth={3} /> เคยผ่านการพิจารณา
+          </span>
+        )}
         <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{rep.description}</p>
       </button>
       <div className="flex items-center gap-1.5 mt-2">
@@ -292,9 +329,12 @@ export default function TemplateChooserTab() {
     return Object.entries(groups)
       .map(([fam, list]) => {
         const rep = list.find((t) => t.slug === (REP[fam] || fam)) || list[0];
-        return { family: fam, rep, themes: [rep, ...list.filter((t) => t !== rep)] };
+        return { family: fam, rep, themes: [rep, ...list.filter((t) => t !== rep)], category: FAMILY_CATEGORY[fam] || "expressive" };
       })
       .sort((a, b) => {
+        // official first — the safe choice should be the one you see, not the one
+        // you scroll to. Within a category the old newest-first order stands.
+        if (a.category !== b.category) return a.category === "official" ? -1 : 1;
         const ai = ORDER.indexOf(a.family), bi = ORDER.indexOf(b.family);
         return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
       });
@@ -343,7 +383,7 @@ export default function TemplateChooserTab() {
         </div>
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight text-slate-800">เลือกธีมเว็บไซต์</h2>
-          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที</p>
+          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที · แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
         </div>
       </div>
 
@@ -368,17 +408,36 @@ export default function TemplateChooserTab() {
               theme and watching it side by side. */}
           <div className="lg:sticky lg:top-[72px]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">ธีมทั้งหมด ({families.length})</p>
+            {/* sectioned by category — see FAMILY_CATEGORY above for why */}
             {/* 216px = where the list starts on an unscrolled page (192, under
                 the tab's title block) + 24 of breathing room. Bounding it there
                 — rather than to the sticky offset — is what removes the PAGE
                 scroll: with the list inside the first screen there is nothing
                 left to scroll past, so the preview can never drift away. */}
             <div className="tc-list flex lg:flex-col gap-2 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto lg:max-h-[calc(100vh-216px)] pb-1 lg:pb-0 lg:p-1.5 lg:rounded-2xl lg:border lg:border-slate-200/70 lg:bg-white/50">
-              {families.map((fam) => (
-                <div key={fam.family} className="min-w-[220px] lg:min-w-0">
-                  <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
-                </div>
-              ))}
+              {["official", "expressive"].map((cat) => {
+                const inCat = families.filter((f) => f.category === cat);
+                if (!inCat.length) return null;
+                const meta = CATEGORY_META[cat];
+                return (
+                  <div key={cat} className="contents lg:block">
+                    {/* the divider is horizontal on the phone's scrolling row and a
+                        heading on the desktop column, so the split reads either way */}
+                    <div className="hidden lg:block px-2 pt-2 pb-1.5 first:pt-0.5">
+                      <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">{meta.label} <span className="text-slate-300 font-mono">({inCat.length})</span></p>
+                      <p className="text-[10.5px] text-slate-400 leading-snug mt-0.5">{meta.hint}</p>
+                    </div>
+                    <div className="lg:hidden shrink-0 self-center px-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">{meta.label}</span>
+                    </div>
+                    {inCat.map((fam) => (
+                      <div key={fam.family} className="min-w-[220px] lg:min-w-0">
+                        <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -388,8 +447,23 @@ export default function TemplateChooserTab() {
               <>
                 <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
                   <div className="min-w-0">
-                    <h3 className="text-2xl font-bold tracking-tight text-slate-900">{selected.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">{selected.name}</h3>
+                      {selectedFamily && (
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${selectedFamily.category === "official"
+                          ? "bg-slate-100 text-slate-600 border-slate-200"
+                          : "bg-purple-50 text-[#8A2680] border-purple-100"}`}>
+                          {CATEGORY_META[selectedFamily.category].label}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-slate-500 mt-1 max-w-xl">{selected.description}</p>
+                    {selectedFamily && FAMILY_NOTE[selectedFamily.family] && (
+                      <p className="mt-2 inline-flex items-start gap-1.5 text-[12px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 max-w-xl">
+                        <Check className="w-3.5 h-3.5 mt-[1px] shrink-0" strokeWidth={3} />
+                        {FAMILY_NOTE[selectedFamily.family]}
+                      </p>
+                    )}
                   </div>
                   {isSelectedActive ? (
                     <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 cursor-default select-none">
