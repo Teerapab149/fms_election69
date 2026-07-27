@@ -365,7 +365,14 @@ function PartyCard({ party, cfg }) {
                 // stack (ปื๋ ฟื๊ ที่ ชี้ เพื่อ, 0.1833em) plus a 0.05em cushion so
                 // sub-pixel rounding cannot eat it. pt/-mt cancel in layout.
                 // No padding-bottom (it would reveal the clamped 3rd line).
-                className="text-lg sm:text-xl md:text-3xl font-black leading-tight transition-colors duration-300 line-clamp-2 pt-[.24em] -mt-[.24em]"
+                // Type scale and column width were fighting: md:text-3xl put 30px type in
+                // at 768px, which is exactly where the two-column grid squeezes this text
+                // box down — measured 118px wide at 768 and 198px at 1024, against 326px
+                // from 1280 up. A 26-character party name needed 5 lines at 768 and 3 at
+                // 1024 while the clamp showed 2, so the name was cut mid-word on every
+                // laptop. The big size now waits for the width that can hold it (xl), and
+                // below that the clamp is allowed a third line.
+                className="text-lg sm:text-xl xl:text-3xl font-black leading-tight transition-colors duration-300 line-clamp-3 xl:line-clamp-2 pt-[.24em] -mt-[.24em]"
                 style={{ color: theme.textOnLight }}
               >
                 {party.name}
