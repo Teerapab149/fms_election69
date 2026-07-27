@@ -110,7 +110,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                 <div className="bg-noise"></div>
             </div>
 
-            <div className="relative z-50 shrink-0">
+            <div className="sticky top-0 z-50 shrink-0">
                 <Navbar />
             </div>
 

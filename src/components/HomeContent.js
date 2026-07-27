@@ -441,7 +441,7 @@ export default function HomeContent({
         {tokenStylesCss && (
           <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />
         )}
-        <div className="relative z-50 shrink-0">
+        <div className="sticky top-0 z-50 shrink-0">
           <Navbar />
         </div>
         <main className="flex-grow py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
@@ -484,7 +484,7 @@ export default function HomeContent({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]" />
         <div className="bg-noise" />
       </div>
-      <div className="relative z-50 shrink-0">
+      <div className="sticky top-0 z-50 shrink-0">
         <Navbar />
       </div>
       <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
