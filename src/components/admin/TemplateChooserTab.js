@@ -248,23 +248,34 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
     // overflowed a 900px-tall screen by 131px. The reclaim gets the whole list
     // onto one screen at that height, so the common case needs no scrolling at
     // all and the box above only kicks in on shorter windows.
-    <div className={`rounded-xl border p-2.5 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-sm" : "border-transparent bg-white/70 hover:bg-white"}`}>
+    // The whole card is the hit target. It used to be only the name row, so the
+    // padding, the strip to the right of a short name like "Dark", and the gap in the
+    // swatch row were all dead — clicks there did nothing, which read as the button
+    // not registering. A div with role/tabIndex rather than a <button> because the
+    // colour swatches are buttons themselves and cannot be nested inside one; their
+    // handlers stopPropagation so picking a colour does not also re-pick the family.
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`เลือกธีม ${rep.name}`}
+      onClick={() => onSelect(rep.slug)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(rep.slug); } }}
+      className={`rounded-xl border p-2.5 cursor-pointer transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A2680] ${isSelected ? "border-slate-300 bg-white shadow-sm" : "border-transparent bg-white/70 hover:bg-white"}`}>
       {/* The card used to carry a two-line description as well, which is what made a
           column of six read as a wall of text — and it was the same sentence the
           detail panel shows in full the moment you click. The list now answers only
           "which one and what colours"; the reading happens on the right. */}
-      <button type="button" onClick={() => onSelect(rep.slug)} className="w-full text-left">
-        <div className="flex items-center gap-2">
-          {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
-          <span className={`font-bold text-[15px] leading-tight truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
-        </div>
-      </button>
+      <div className="flex items-center gap-2">
+        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
+        <span className={`font-bold text-[15px] leading-tight truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
+      </div>
       <div className="flex items-center gap-1.5 mt-1.5">
         {themes.map((t) => {
           const on = t.slug === selectedSlug;
           const c = t.colorSwatch?.primary || "#8A2680";
           return (
-            <button key={t.slug} type="button" title={t.name} aria-label={`เลือก ${t.name}`} onClick={() => onSelect(t.slug)}
+            <button key={t.slug} type="button" title={t.name} aria-label={`เลือก ${t.name}`}
+              onClick={(e) => { e.stopPropagation(); onSelect(t.slug); }}
               className={`w-5 h-5 rounded-full border-2 grid place-items-center transition-transform ${on ? "scale-110" : "hover:scale-105"}`}
               style={{ background: c, borderColor: on ? "#0f172a" : "#fff", boxShadow: on ? "0 0 0 2px rgba(15,23,42,.18)" : "0 1px 2px rgba(15,23,42,.18)" }}>
               {t.slug === activeSlug && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
