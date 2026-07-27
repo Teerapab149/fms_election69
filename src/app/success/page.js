@@ -20,7 +20,7 @@ import {
   Tag,
   AlertCircle,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // ✅ นำเข้าระบบแก้ไขจาก Editor
 import EditorElement from '../../components/admin/editor/EditorElement';
@@ -60,6 +60,8 @@ export default function SuccessPage({
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: "", message: "", action: null });
   const [isVoted, setIsVoted] = useState(false);
+  // which voter the arrival gate has already run for (see the effect below)
+  const gateRanFor = useRef(null);
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
@@ -130,6 +132,17 @@ export default function SuccessPage({
     }
 
     if (status === "authenticated" && session) {
+      // Run the gate once per signed-in voter, not once per effect run. The effect
+      // depends on the whole `session` object, so anything that hands back a new
+      // identity re-runs the body — /api/check-form fired three times on a single
+      // mount of this page. It went unnoticed because the other call in here,
+      // fetchVoteStatus, dedupes through a module-level cache and so showed up
+      // once; check-form is a bare fetch and showed up three times. A ref, not a
+      // state flag: it must survive the double-invoke React does in development
+      // without adding a render.
+      const sid = session.user?.studentId || session.user?.id;
+      if (gateRanFor.current === sid) return;
+      gateRanFor.current = sid;
       (async () => {
         try {
           // force:true — this is a GATE, and every other gate in the flow already
