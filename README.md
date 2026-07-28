@@ -95,8 +95,9 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 ขั้นตอน deploy จริงไล่ทีละข้อใน [docs/DEPLOY-CHECKLIST-2026.md](docs/DEPLOY-CHECKLIST-2026.md)
 (key ceremony, migrate, grants, env production, ปุ่มตรวจความพร้อมเป็นด่านสุดท้าย)
-ฝั่งเจ้าหน้าที่ใช้ไฟล์เดียวคือ [docs/STAFF-HANDBOOK.md](docs/STAFF-HANDBOOK.md)
-(ติดตั้งด้วย `sh scripts/setup.sh` คำสั่งเดียว · จัดการแอดมิน · งานประจำปี · ใบขอ DB สำหรับ IT)
+คู่มือแยกตามคนใช้ คนละไฟล์: [docs/STAFF-IT-GUIDE.md](docs/STAFF-IT-GUIDE.md) สำหรับ IT คณะ
+(เซิร์ฟเวอร์ ฐานข้อมูล ติดตั้งด้วย `sh scripts/setup.sh` คำสั่งเดียว บัญชีแอดมิน) และ
+[docs/ADMIN-GUIDE.md](docs/ADMIN-GUIDE.md) สำหรับสโมสรนักศึกษา (หน้าแอดมิน ไม่มีคำสั่งให้พิมพ์เลย)
 
 เปลี่ยนปีการศึกษา: `npm run preflight` → `npm run archive-year` →
 `npm run import-students -- <ไฟล์รายชื่อ>` → ตั้งวันและเลือก template ในหน้า admin
@@ -106,7 +107,8 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 | เรื่อง | ไฟล์ |
 |---|---|
-| **คู่มือเจ้าหน้าที่ — ไฟล์เดียวจบ (ส่งมอบงาน)** | `docs/STAFF-HANDBOOK.md` |
+| **คู่มือ IT คณะ — เซิร์ฟเวอร์/ฐานข้อมูล (ส่งมอบงาน)** | `docs/STAFF-IT-GUIDE.md` |
+| **คู่มือสโมสรนักศึกษา — หน้าแอดมิน (ส่งมอบงาน)** | `docs/ADMIN-GUIDE.md` |
 | สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
 | กติกาแก้โค้ด | `CLAUDE.md` |
