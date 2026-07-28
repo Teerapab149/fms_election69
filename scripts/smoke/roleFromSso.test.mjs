@@ -1,11 +1,19 @@
-// Pure unit tests for the SSO → privilege rule (src/lib/auth/roleFromSso.mjs).
+// Pure unit tests for the SSO → role mapping (src/lib/auth/roleFromSso.mjs).
 // No server needed — runs in the same `npm run smoke` pass as election.test.mjs.
 //
-// THE invariant these protect (runbook §10): a PSU account that is in neither
-// the "staff"/"faculty" SSO group nor ADMIN_STUDENT_IDS must NOT get admin.
+// THE invariant these protect (runbook §10): signing in with PSU SSO decides
+// nothing about admin. `role` is a label for which group the account came from;
+// the only thing that grants admin is User.isAdmin, written by scripts/admin.js,
+// and using it still needs the shared password at /admin/login.
+//
+// Until 2026-07-28 this file asserted the opposite ("staff/faculty groups grant
+// isAdmin without the allowlist") — that was the hole: PSU controls who is in
+// the staff group, so PSU effectively controlled who could drive our admin API.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { roleFromSsoGroups, resolveSsoPrivileges } from '../../src/lib/auth/roleFromSso.mjs';
+import * as mod from '../../src/lib/auth/roleFromSso.mjs';
+
+const { roleFromSsoGroups } = mod;
 
 test('role: staff group → ADMIN, anywhere in the array, any case', () => {
   assert.equal(roleFromSsoGroups(['staff']), 'ADMIN');
@@ -18,7 +26,7 @@ test('role: faculty group → STAFF; staff beats faculty when both present', () 
   assert.equal(roleFromSsoGroups(['faculty', 'staff']), 'ADMIN');
 });
 
-test('role: plain/missing/garbage groups → student (never admin)', () => {
+test('role: plain/missing/garbage groups → student', () => {
   assert.equal(roleFromSsoGroups(['student']), 'student');
   assert.equal(roleFromSsoGroups([]), 'student');
   assert.equal(roleFromSsoGroups(undefined), 'student');
@@ -26,38 +34,14 @@ test('role: plain/missing/garbage groups → student (never admin)', () => {
   assert.equal(roleFromSsoGroups([null, 42, 'staffing']), 'student'); // no substring match
 });
 
-test('privileges: non-staff, non-allowlisted account gets NO admin (the invariant)', () => {
-  const p = resolveSsoPrivileges({
-    groups: ['student'],
-    studentId: '6699999999',
-    adminIdsEnv: '6610510149,6610510129',
-  });
-  assert.deepEqual(p, { role: 'student', isAdmin: false });
+test('the module hands out no privilege at all — role is the only export', () => {
+  // If something ever adds an isAdmin/privilege export here again, this fails and
+  // whoever added it has to come read the header above first.
+  assert.deepEqual(Object.keys(mod).sort(), ['roleFromSsoGroups']);
 });
 
-test('privileges: allowlisted student keeps role=student but gets isAdmin', () => {
-  const p = resolveSsoPrivileges({
-    groups: ['student'],
-    studentId: '6610510149',
-    adminIdsEnv: ' 6610510149 , 6610510129 ', // whitespace tolerated
-  });
-  assert.deepEqual(p, { role: 'student', isAdmin: true });
-});
-
-test('privileges: staff/faculty groups grant isAdmin without the allowlist', () => {
-  assert.deepEqual(
-    resolveSsoPrivileges({ groups: ['staff'], studentId: '6699999999', adminIdsEnv: '' }),
-    { role: 'ADMIN', isAdmin: true }
-  );
-  assert.deepEqual(
-    resolveSsoPrivileges({ groups: ['faculty'], studentId: '6699999999', adminIdsEnv: '' }),
-    { role: 'STAFF', isAdmin: true }
-  );
-});
-
-test('privileges: unset env falls back to the legacy admin pair', () => {
-  const legacy = resolveSsoPrivileges({ groups: [], studentId: '6610510129' });
-  assert.equal(legacy.isAdmin, true);
-  const stranger = resolveSsoPrivileges({ groups: [], studentId: '6600000000' });
-  assert.equal(stranger.isAdmin, false);
+test('a staff-group sign-in returns a role string, never a grant object', () => {
+  const r = roleFromSsoGroups(['staff']);
+  assert.equal(typeof r, 'string');
+  assert.ok(!('isAdmin' in Object(r)), 'no isAdmin rides along with the role');
 });

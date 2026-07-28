@@ -134,6 +134,12 @@ model SystemConfig {
   updatedAt     DateTime @updatedAt
 
   activeTemplateId String? @default("classic")
+
+  // Shared admin password — bcrypt hash, one for the whole committee.
+  // Identity comes from the studentId typed at login + User.isAdmin; this hash
+  // only proves "I was given the committee password". Written by
+  // scripts/admin.js --rotate-password; the plaintext is never stored anywhere.
+  adminPasswordHash String?
 }
 
 // ============================================================

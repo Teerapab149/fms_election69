@@ -315,12 +315,16 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
   // 7. สร้าง Admin Users
   console.log('✨ Creating Admins...');
 
-  // สร้าง Admin Password Hash (ตาม Pattern ที่กำหนด)
-  const adminRawPassword1 = "6610510149@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL";
-  const adminPasswordHash1 = await bcrypt.hash(adminRawPassword1, 12);
-
-  const adminRawPassword2 = "6610510129@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL";
-  const adminPasswordHash2 = await bcrypt.hash(adminRawPassword2, 12);
+  // รหัสผ่านแอดมินเป็น "รหัสกลาง" ตัวเดียวใน SystemConfig — ตัวตนมาจาก
+  // รหัส นศ. ที่พิมพ์ตอนล็อกอิน + isAdmin ของแถวนั้น (ดู scripts/admin.js)
+  // สุ่มใหม่ทุกครั้งที่ seed แล้วพิมพ์ออกมาครั้งเดียว: ก่อนหน้านี้ไฟล์นี้ฝังรหัส dev
+  // ไว้เป็น literal ซึ่งแปลว่ามันอยู่ใน git ของ repo สาธารณะตลอดมา
+  const { generatePassword } = require('../scripts/lib/password');
+  const seedAdminPassword = generatePassword();
+  await prisma.systemConfig.update({
+    where: { id: 1 },
+    data: { adminPasswordHash: await bcrypt.hash(seedAdminPassword, 12) },
+  });
 
   // ลบออกก่อนถ้ามี (เพื่อความชัวร์)
   await prisma.user.deleteMany({
@@ -338,7 +342,6 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
         isVoted: false,
         role: 'ADMIN',
         isAdmin: true,
-        passwordHash: adminPasswordHash1,
       },
       {
         studentId: '6610510129',
@@ -349,12 +352,14 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
         isVoted: false,
         role: 'ADMIN',
         isAdmin: true,
-        passwordHash: adminPasswordHash2,
       }
     ]
   });
 
   console.log(`✅ Seeded complete!`);
+  console.log(`\n   แอดมิน 2 คน: ${reservedAdminIds.join(', ')}`);
+  console.log(`   รหัสกลาง (แสดงครั้งเดียว): ${seedAdminPassword}`);
+  console.log(`   เปลี่ยนใหม่: node scripts/admin.js --rotate-password\n`);
 }
 
 main()

@@ -175,23 +175,24 @@ function readEnvFile(file) {
 }
 
 /** Log in as the seeded admin and return the `admin_token=<jwt>` cookie string.
- *  Secret comes from .env (never hardcoded). */
+ *  Uses the same two things a real admin needs: a studentId flagged isAdmin in
+ *  the DB, plus the shared committee password (seeded into SystemConfig). */
 async function adminLogin() {
-  const env = { ...readEnvFile('.env'), ...readEnvFile('.env.local') };
-  const secret = process.env.ADMIN_PASSWORD_AUTH_EXTRA || env.ADMIN_PASSWORD_AUTH_EXTRA;
-  if (!secret) throw new Error('ADMIN_PASSWORD_AUTH_EXTRA not in .env — cannot mint admin cookie');
+  const { E2E_ADMIN_PASSWORD } = require('./seed');
 
   const admin = await prisma().user.findFirst({
-    where: { isAdmin: true, email: { not: null } },
+    where: { isAdmin: true },
     select: { studentId: true, email: true },
   });
-  if (!admin) throw new Error('no isAdmin user with an email in the test DB (seed it)');
+  if (!admin) throw new Error('no isAdmin user in the test DB (seed it)');
 
-  const email = String(admin.email).toLowerCase();
   const res = await fetch(API('/api/admin/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: admin.studentId || email, password: `${email}+${secret}` }),
+    body: JSON.stringify({
+      username: admin.studentId || String(admin.email).toLowerCase(),
+      password: E2E_ADMIN_PASSWORD,
+    }),
   });
   if (res.status === 429) throw new Error('admin login rate-limited (429) — retry after the window');
   if (!res.ok) throw new Error(`admin login → ${res.status}`);

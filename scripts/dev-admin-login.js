@@ -2,13 +2,18 @@
  * scripts/dev-admin-login.js — DEV-ONLY admin login helper.
  *
  * Why: every session the assistant used to ask the human to log into /admin by
- * hand. Everything needed is already on disk in .env (gitignored), so there is
- * no reason to ask. This script reads the bootstrap secret from .env, finds an
- * admin user in the DB, performs the real /api/admin/login call against the dev
- * server, and prints the result.
+ * hand. Everything needed is already on disk in .env.local (gitignored), so
+ * there is no reason to ask. This script finds an admin user in the DB, performs
+ * the real /api/admin/login call against the dev server, and prints the result.
  *
- * NO SECRET IS HARDCODED HERE — it is read from .env at runtime, so this file is
- * safe to commit. Never paste the secret value into a committed file.
+ * Needs ADMIN_DEV_PASSWORD in .env.local = the shared password this dev database
+ * currently holds. Get one with:
+ *     node scripts/admin.js --rotate-password
+ * then paste it in as ADMIN_DEV_PASSWORD. That file is gitignored; the real
+ * deployment's password must never be put there.
+ *
+ * NO SECRET IS HARDCODED HERE — it is read from .env.local at runtime, so this
+ * file is safe to commit. Never paste a password value into a committed file.
  *
  * Usage:
  *   node scripts/dev-admin-login.js                # log in, confirm, save cookie
@@ -39,9 +44,11 @@ function readEnv(file) {
 
 (async () => {
   const env = { ...readEnv(".env"), ...readEnv(".env.local") };
-  const secret = env.ADMIN_PASSWORD_AUTH_EXTRA;
-  if (!secret) {
-    console.error("ERROR: ADMIN_PASSWORD_AUTH_EXTRA not found in .env");
+  const password = process.env.ADMIN_DEV_PASSWORD || env.ADMIN_DEV_PASSWORD;
+  if (!password) {
+    console.error("ERROR: ADMIN_DEV_PASSWORD not found in .env.local");
+    console.error("  run:  node scripts/admin.js --rotate-password");
+    console.error("  then: add ADMIN_DEV_PASSWORD=<the password it printed> to .env.local");
     process.exit(1);
   }
   const basePath = env.NEXT_PUBLIC_BASE_PATH || env.BASE_PATH || "/fms-ovs";
@@ -61,8 +68,6 @@ function readEnv(file) {
     }
     const email = String(admin.email).toLowerCase();
     const username = admin.studentId || email;
-    // Bootstrap password shape per src/app/api/admin/login/route.js
-    const password = `${email}+${secret}`;
 
     const res = await fetch(`${base}/api/admin/login`, {
       method: "POST",

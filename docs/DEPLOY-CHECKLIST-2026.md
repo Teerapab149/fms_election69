@@ -50,16 +50,23 @@
 | `AUTHENTIK_CLIENT_SECRET` | PSU SSO client secret |
 | `AUTHENTIK_REDIRECT_URI` | callback URL ที่ลงทะเบียนไว้กับ PSU SSO |
 | `ADMIN_JWT_SECRET` | สุ่มใหม่ (`openssl rand -hex 32`) — เซ็น/ตรวจ `admin_token` cookie |
-| `ADMIN_PASSWORD_AUTH_EXTRA` | bootstrap password แอดมินครั้งแรก (ดู `/api/admin/login`) |
-| `ADMIN_STUDENT_IDS` | รหัส นศ. ที่เป็นแอดมิน คั่นด้วย `,` (ดู RUNBOOK §10) |
 | `ELECTION_BALLOT_PUBLIC_KEY` | **ตั้งใน §2** — public key เข้ารหัสบัตร (PEM, `\n`-escaped) |
 | `BALLOT_CHAIN_SECRET` | **ตั้งใน §2** — secret ของ HMAC hash-chain บัตร |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ~~ต้องไม่ตั้งบน production~~ — **เลิกมีผลแล้ว (SEC-MOCK3, 2026-07-27)** ไม่ต้องตั้งและไม่ต้องกังวลว่าจะตั้งค้าง: ตัวกั้นจริงคือ `NODE_ENV=production` ซึ่งทำให้ NextAuth ไม่ register provider `mock-login` เลย และปุ่มบนหน้า login อ่านรายการ provider จาก `/api/auth/providers` ตอน runtime จึงหายตามไปเอง |
 
 > ⛔ **เลิกใช้แล้ว (P0-1)** — ห้ามตั้ง: `ADMIN_PRIVATE_KEY`, `ADMIN_AUTH_SECRET`,
 > `NEXT_PUBLIC_ADMIN_PUBLIC_KEY`, `NEXT_PUBLIC_ADMIN_AUTH_SECRET`. ระบบ admin auth เก่า
-> ฝัง secret ใน client bundle จึงถูกถอดออก. ถ้าย้ายมาจากปีก่อน ให้ **rotate**
-> `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA` ใหม่ แล้วตั้ง admin user `passwordHash=null`.
+> ฝัง secret ใน client bundle จึงถูกถอดออก. ถ้าย้ายมาจากปีก่อน ให้ **rotate `ADMIN_JWT_SECRET`**.
+>
+> ⛔ **เลิกใช้แล้ว (2026-07-28)** — ไม่ต้องตั้ง `ADMIN_PASSWORD_AUTH_EXTRA` และ
+> `ADMIN_STUDENT_IDS` โค้ดไม่อ่านแล้วทั้งคู่. **รหัสผ่านแอดมินไม่อยู่ใน env อีกต่อไป** —
+> หลัง deploy ให้รันบนเซิร์ฟเวอร์:
+> ```bash
+> node scripts/admin.js --grant <รหัส นศ. ของกรรมการแต่ละคน>
+> node scripts/admin.js --rotate-password   # แสดงรหัสกลางครั้งเดียว แจกให้กรรมการ
+> node scripts/admin.js --list              # ยืนยันว่ามีเฉพาะคนที่ตั้งใจ
+> ```
+> ดูเหตุผลและกฎเต็มที่ RUNBOOK §10.
 
 ---
 

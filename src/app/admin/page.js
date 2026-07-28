@@ -479,6 +479,28 @@ export default function AdminDashboard() {
   useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign' && advancedEditor); }, [activeTab, advancedEditor]);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
+  // Who is holding this session — asked of the server, not read off the token.
+  // A 401/403 means the cookie is gone or the admin flag was taken away since
+  // login, and the console has no business staying open: back to the form.
+  const [adminUser, setAdminUser] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(getPath('/api/admin/me'), { credentials: 'include', cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = getPath('/admin/login');
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled && data.user) setAdminUser(data.user);
+      } catch (e) {
+        console.error('admin identity check failed:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const handleLogout = async () => {
     try {
       await fetch(getPath('/api/admin/logout'), { method: 'POST' });
@@ -597,10 +619,20 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-bold text-gray-700">Administrator</p>
-              <p className="text-xs text-green-600 flex items-center justify-end gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                Online
+              <p className="text-sm font-bold text-gray-700">
+                {adminUser ? (adminUser.name || adminUser.studentId) : 'กำลังตรวจสิทธิ์…'}
+              </p>
+              <p className="text-xs flex items-center justify-end gap-1.5">
+                {adminUser ? (
+                  <>
+                    <span className="font-semibold text-[#8A2680] bg-purple-50 border border-purple-100 rounded px-1.5 py-px">
+                      ผู้ดูแลระบบ
+                    </span>
+                    <span className="text-slate-400 font-mono">{adminUser.studentId}</span>
+                  </>
+                ) : (
+                  <span className="text-slate-400">รอการยืนยันจากเซิร์ฟเวอร์</span>
+                )}
               </p>
             </div>
           </div>

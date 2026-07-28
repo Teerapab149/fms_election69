@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma as db } from "../lib/prisma";
-import { resolveSsoPrivileges } from "./auth/roleFromSso.mjs";
+import { roleFromSsoGroups } from "./auth/roleFromSso.mjs";
 
 const AUTHENTIK_BASE_URL = "https://psusso.psu.ac.th";
 const CLIENT_ID = process.env.AUTHENTIK_CLIENT_ID;
@@ -196,15 +196,14 @@ export const authOptions = {
 
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
-          // SSO group + ADMIN_STUDENT_IDS allowlist → privilege. The rule lives
-          // in roleFromSso.mjs (pure, covered by scripts/smoke/roleFromSso.test.mjs)
-          // and is documented in runbook §10. Invariant: a PSU account in neither
-          // "staff"/"faculty" group nor the allowlist gets role=student, no admin.
-          const { role: newRole, isAdmin: setAdmin } = resolveSsoPrivileges({
-            groups: user.groups,
-            studentId: user.studentId,
-            adminIdsEnv: process.env.ADMIN_STUDENT_IDS,
-          });
+          // `role` records which PSU group signed in and grants NOTHING — see the
+          // header of roleFromSso.mjs. `isAdmin` is deliberately absent from both
+          // branches below: signing in through SSO must never make anyone an
+          // admin, and must never un-make one either (that would fight with
+          // scripts/admin.js --grant, the single source of truth). New rows start
+          // isAdmin=false via the schema default; existing rows keep whatever the
+          // script last set.
+          const newRole = roleFromSsoGroups(user.groups);
 
           const dbUser = await db.user.upsert({
             where: { studentId: user.studentId },
@@ -215,8 +214,7 @@ export const authOptions = {
               departmentId: user.departmentId,
               // ไม่ update year, major, gender หากมีค่าจาก dump file แล้ว
               // จะถูก merge ใน logic ด้านล่าง
-              role: newRole,
-              isAdmin: setAdmin
+              role: newRole
             },
             create: {
               studentId: user.studentId,
@@ -227,8 +225,8 @@ export const authOptions = {
               role: newRole,
               year: user.year,
               isVoted: false,
-              isFormCompleted: false,
-              isAdmin: setAdmin
+              isFormCompleted: false
+              // isAdmin: omitted on purpose → schema default false
             }
           });
 
