@@ -32,8 +32,16 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
    จัด Sections หน้า Home (เปิด/ปิด/ลำดับ), สลับ variant ของ element (คลัง 47 ชนิด).
 4. **โหมดระบบ + แสดงผล + Google Form** — แท็บ **"ตั้งค่าระบบ"**: `AUTO` (ใช้เวลาจาก electionConfig) /
    `MANUAL_OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
-5. **รีเซ็ตเริ่มปีใหม่** — แท็บ **"ตั้งค่าระบบ"**: ปุ่ม **"ล้างคะแนนโหวตทั้งหมด"** + **"ล้างพรรคและสมาชิกทั้งหมด"**.
-   ⚠️ **สำรอง DB ก่อนเสมอ** (ดู §5). (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
+5. **รีเซ็ตเริ่มปีใหม่** — **ทำที่ฐานข้อมูล ไม่ใช่หน้า admin** (ถอดปุ่มออก 2026-07-28):
+   ```bash
+   sh scripts/backup.sh                                    # สำรองก่อนเสมอ
+   psql "<connection string ของ fms_migrate>" -f scripts/sql/annual-reset.sql
+   npm run preflight                                       # ยืนยันว่าเป็นศูนย์จริง
+   ```
+   เหตุผลที่ไม่มีปุ่ม: role `fms_app` ที่เว็บใช้ **ไม่มีสิทธิ์ DELETE บน `Ballot`** โดยตั้งใจ
+   (`scripts/sql/ballot-grants.sql`) ปุ่มจึงทำงานได้แค่บน dev และจะพังบน production
+   ผลพลอยได้: ไม่มี API เส้นไหนลบบัตรได้ ต่อให้ session แอดมินหลุดก็ล้างผลไม่ได้.
+   (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
 6. ✅ **วันเวลาเลือกตั้ง (เปิด/ปิดหีบ/เปิดตัวผู้สมัคร)** — **ทำใน admin ได้แล้ว (2026-06-09)**:
    แท็บ **"ตั้งค่าทั่วไป" → กลุ่ม "ช่วงเวลาเลือกตั้ง"** มี date-time picker 3 ช่อง. ใช้เฉพาะโหมด `AUTO`.
    **ปล่อยว่าง = ใช้ค่า default ในโค้ด** (`src/utils/electionConfig.js`, ยังเป็น fallback กันพลาด)
@@ -70,7 +78,8 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 (ระบบกันทำกลางคัน). คะแนนรวมอยู่ที่ `Candidate.score` (atomic increment ตอนโหวต) = บันทึกสุดท้ายอยู่แล้ว.
 
 **C. ตั้งปีใหม่ (admin UI):** ตามข้อ 1–6 ด้านบน — ตั้งชื่อ/ปี/วันเวลา, `systemMode=AUTO`, seed พรรคจริง,
-ลบพรรคทดสอบ, **"ล้างคะแนนโหวตทั้งหมด"** (RESET_VOTES), `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่.
+ลบพรรคทดสอบ, `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่ · ส่วนการล้างคะแนน/บัตร
+ทำที่ฐานข้อมูลด้วย `scripts/sql/annual-reset.sql` (ไม่มีปุ่มในหน้า admin แล้ว — ดูข้อ 5).
 
 **D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```

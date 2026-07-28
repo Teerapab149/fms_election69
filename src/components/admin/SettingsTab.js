@@ -322,10 +322,6 @@ const SettingsTab = () => {
         } else if (action === 'TOGGLE_SHOW_RESULT') {
           setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
           setIsShowResult(!isShowResult);
-        } else if (action === 'RESET_VOTES') {
-          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
-        } else if (action === 'RESET_CANDIDATES') {
-          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
         } else if (action === 'ANONYMIZE_BALLOTS') {
           // ⚠️ AUD-COPY · v2-SEC: action นี้ "ไม่ได้ลบ" อะไรเลย — มันตั้งธง
           // globalConfig.ballotsAnonymized = true (ธงรับรองผล) เท่านั้น
@@ -473,9 +469,13 @@ const SettingsTab = () => {
 
         <div className='p-3' />
 
-        {/* ── โซนอันตราย — สามปุ่มที่ลบข้อมูลจริง รวมไว้กล่องเดียวพร้อมคำอธิบาย ──
-            คำอธิบายทุกบรรทัดอิงพฤติกรรมจริงใน /api/admin/dashboard (POST) ตรง ๆ
-            — ห้ามแก้ถ้อยคำให้หลุดจากสิ่งที่ route ทำจริง */}
+        {/* ── โซนอันตราย — คำอธิบายทุกบรรทัดอิงพฤติกรรมจริงใน /api/admin/dashboard
+            (POST) ตรง ๆ ห้ามแก้ถ้อยคำให้หลุดจากสิ่งที่ route ทำจริง
+            2026-07-28: ปุ่ม "ล้างคะแนน" กับ "ล้างพรรคและสมาชิก" ถูกถอดออก (ทั้ง UI และ
+            action ฝั่ง server) — บน production บัญชี fms_app ไม่มีสิทธิ์ DELETE บนตาราง
+            Ballot โดยตั้งใจ (scripts/sql/ballot-grants.sql) ปุ่มจึงพังแน่นอนวันที่กด
+            และการล้างข้อมูลขึ้นปีใหม่เป็นงานที่เจ้าหน้าที่ทำที่ฐานข้อมูลอยู่แล้ว
+            → scripts/sql/annual-reset.sql */}
         <div className="rounded-2xl border-2 border-red-200 bg-red-50/40 overflow-hidden">
           <div className="flex items-start gap-3 px-5 py-4 bg-red-50 border-b border-red-200">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
@@ -484,72 +484,28 @@ const SettingsTab = () => {
                 โซนอันตราย · การกระทำที่กู้คืนไม่ได้
               </h4>
               <p className="text-xs text-red-700/70 mt-0.5 leading-relaxed break-words">
-                ทุกปุ่มในกล่องนี้เปลี่ยนข้อมูลจริงอย่างถาวร ไม่มีปุ่มย้อนกลับ อ่านคำอธิบายให้ครบก่อนกด
+                ปุ่มในกล่องนี้เปลี่ยนข้อมูลจริงอย่างถาวร ไม่มีปุ่มย้อนกลับ อ่านคำอธิบายให้ครบก่อนกด
               </p>
             </div>
           </div>
 
           <div className="p-4 sm:p-5 space-y-3">
-            {/* RESET_VOTES — user.isVoted/votedAt reset (ปี 1-4), candidate.score = 0,
-                ballot.deleteMany, chainHead → GENESIS, ปลดธง ballotsAnonymized */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 sm:p-5 bg-white rounded-xl border border-red-100 transition-colors hover:border-red-300">
-              <div className="min-w-0">
-                <h5 className="text-base font-bold text-red-800 flex items-center gap-2 break-words">
-                  <Trash2 className="w-4 h-4 shrink-0" />
-                  ล้างคะแนนโหวตทั้งหมด
-                </h5>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
-                  ตั้งคะแนนทุกพรรคกลับเป็น 0 · คืนสิทธิ์โหวตให้นักศึกษาปี 1-4 ทุกคน (กลับไปโหวตใหม่ได้) · ล้างบัตรทั้งหมดในกล่องบัตรและรีเซ็ตโซ่ตรวจสอบกลับจุดเริ่มต้น · รายชื่อพรรคและสมาชิกยังอยู่ครบ
-                </p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
-                  ใช้เมื่อ ซ้อมระบบเสร็จแล้วต้องการล้างคะแนนทดสอบก่อนวันเลือกตั้งจริง
-                </p>
-                <p className="text-[11px] font-bold text-red-600 mt-1.5 leading-relaxed break-words">
-                  {/* AUD-COPY · guard จริง = บล็อกเฉพาะตอนหีบ "เปิดรับคะแนนอยู่" คือ MANUAL_OPEN
-                      หรือ AUTO ที่อยู่ในช่วงเวลาเลือกตั้ง — ถ้าเป็น AUTO นอกช่วงเวลา ล้างได้เลย
-                      ไม่ต้องเปลี่ยนโหมด (ของเดิมเขียนว่า "ต้องสั่ง PAUSE หรือ ENDED ก่อน" เสมอ) */}
-                  กู้คืนไม่ได้ · ระบบไม่ยอมให้ล้างขณะหีบเปิดรับคะแนนอยู่ — ถ้ายังเปิดอยู่ต้องสั่งโหมด PAUSE หรือ ENDED ก่อน (โหมด AUTO นอกช่วงเวลาเลือกตั้ง ล้างได้เลย)
-                </p>
-              </div>
-
-              <button
-                onClick={() => setActiveModal('RESET_VOTES')}
-                disabled={processing}
-                className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-              >
-                <Trash2 className="w-4 h-4" />
-                Reset
-              </button>
-            </div>
-
-            {/* RESET_CANDIDATES — member.deleteMany + candidate.deleteMany แล้วสร้าง
-                "งดออกเสียง" (number 0) ใหม่ + ล้างคะแนน/สิทธิ์/กล่องบัตรเหมือน RESET_VOTES */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 sm:p-5 bg-white rounded-xl border border-red-100 transition-colors hover:border-red-300">
-              <div className="min-w-0">
-                <h5 className="text-base font-bold text-red-800 flex items-center gap-2 break-words">
-                  <Trash2 className="w-4 h-4 shrink-0" />
-                  ล้างพรรคและสมาชิกทั้งหมด
-                </h5>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
-                  ลบพรรคและสมาชิกพรรคทุกรายการออกจากฐานข้อมูล แล้วสร้างตัวเลือก “งดออกเสียง” ขึ้นใหม่หนึ่งรายการ · คะแนน สิทธิ์โหวตของนักศึกษา และบัตรในกล่องบัตร ถูกล้างไปพร้อมกัน
-                </p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
-                  ใช้เมื่อ ขึ้นปีการศึกษาใหม่และต้องเริ่มกรอกรายชื่อพรรคชุดใหม่ทั้งหมด
-                </p>
-                <p className="text-[11px] font-bold text-red-600 mt-1.5 leading-relaxed break-words">
-                  {/* AUD-COPY · guard เดียวกับ RESET_VOTES — บล็อกเฉพาะตอนหีบเปิดรับคะแนนอยู่ */}
-                  กู้คืนไม่ได้ · รูปภาพ นโยบาย และข้อมูลสมาชิกที่กรอกไว้จะหายทั้งหมด · ล้างไม่ได้ขณะหีบเปิดรับคะแนนอยู่ ต้องสั่งโหมด PAUSE หรือ ENDED ก่อน
-                </p>
-              </div>
-
-              <button
-                onClick={() => setActiveModal('RESET_CANDIDATES')}
-                disabled={processing}
-                className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-              >
-                <Trash2 className="w-4 h-4" />
-                Reset
-              </button>
+            {/* การล้างข้อมูลขึ้นปีใหม่ไม่มีปุ่มแล้ว — อธิบายว่าไปทำที่ไหนแทน ไม่ปล่อยให้
+                เจ้าหน้าที่หาปุ่มที่เคยเห็นเมื่อปีก่อนแล้วไม่เจอ */}
+            <div className="p-4 sm:p-5 bg-white rounded-xl border border-slate-200">
+              <h5 className="text-base font-bold text-slate-700 flex items-center gap-2 break-words">
+                <Trash2 className="w-4 h-4 shrink-0" />
+                ล้างข้อมูลขึ้นปีใหม่ — ทำที่ฐานข้อมูล ไม่ใช่ที่หน้านี้
+              </h5>
+              <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
+                การล้างคะแนน บัตร และรายชื่อพรรค ทำโดยเจ้าหน้าที่ที่ดูแลฐานข้อมูลด้วย
+                <code className="mx-1 px-1 py-0.5 bg-slate-100 rounded text-[11px]">scripts/sql/annual-reset.sql</code>
+                หลังสำรองข้อมูลปีเก่าแล้ว
+              </p>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
+                ทำไมไม่มีปุ่ม: บัญชีฐานข้อมูลที่เว็บใช้ถูกตั้งให้ <strong>เพิ่มบัตรได้แต่ลบบัตรไม่ได้</strong>
+                โดยตั้งใจ — เป็นหลักประกันว่าผลเลือกตั้งที่ลงไปแล้วแก้ไม่ได้ แม้แต่จากหน้าแอดมิน
+              </p>
             </div>
 
             {/* ANONYMIZE_BALLOTS (v2-SEC = ปักธงรับรองผล) — ต้อง ENDED/พ้นเวลาปิดหีบ
@@ -622,35 +578,6 @@ const SettingsTab = () => {
           ? "เมื่อซ่อนผลคะแนน คะแนนของแต่ละพรรคจะถูกปิดจากทุกคนรวมถึงแอดมินเอง · ความคืบหน้าการใช้สิทธิ์ในแท็บภาพรวมยังดูได้ตามปกติ"
           : "เมื่อแสดงผลคะแนน ทุกคนจะสามารถเข้าดูผลโหวตได้ทันที แม้ระบบโหวตจะปิดอยู่"}
         variant="primary"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'RESET_VOTES'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        /* ⚠️ AUD-COPY · ตามพฤติกรรมจริงของ RESET_VOTES (dashboard/route.js): คืนสิทธิ์
-           เฉพาะผู้ใช้ที่ year อยู่ใน ปี 1-4 (ไม่ใช่ "ผู้ใช้ทุกคน") และล้างกล่องบัตร +
-           รีเซ็ตโซ่กลับ GENESIS ด้วย ซึ่งข้อความเดิมไม่ได้บอกไว้เลย */
-        title="⚠️ ยืนยันการล้างระบบ?"
-        message={`คะแนนทุกพรรคกลับเป็น 0 · นักศึกษาปี 1-4 ทุกคนได้สิทธิ์โหวตคืนและโหวตใหม่ได้ · บัตรทั้งหมดในกล่องบัตรถูกล้างและโซ่ตรวจสอบถูกรีเซ็ตกลับจุดเริ่มต้น · รายชื่อพรรคและสมาชิกยังอยู่ครบ`}
-        variant="danger"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'RESET_CANDIDATES'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        /* ⚠️ AUD-COPY · RESET_CANDIDATES ไม่ได้ลบแค่พรรค/สมาชิก — มันล้างคะแนน
-           คืนสิทธิ์โหวตปี 1-4 ล้างกล่องบัตร แล้วสร้าง "งดออกเสียง" (เบอร์ 0) ใหม่ด้วย
-           ข้อความเดิมพูดถึงแค่พรรคและสมาชิก ทำให้เข้าใจได้ว่าคะแนนยังอยู่ */
-        title="⚠️ ยืนยันการล้างระบบ?"
-        message={`พรรคและสมาชิกพรรคทุกรายการจะถูกลบ แล้วสร้างตัวเลือก “งดออกเสียง” ขึ้นใหม่หนึ่งรายการ · คะแนน สิทธิ์โหวตของนักศึกษาปี 1-4 และบัตรในกล่องบัตร ถูกล้างไปพร้อมกันทั้งหมด`}
-        variant="danger"
-        /* ADM-TYPECONFIRM · ปุ่มนี้ลบชื่อพรรค รูป นโยบาย และสมาชิกทิ้งถาวร กดพลาดครั้งเดียว
-           คือกรอกใหม่ทั้งหมด จึงบังคับให้พิมพ์ยืนยันก่อน (ปุ่มล้างคะแนน/รับรองผล ไม่ใส่ด่านนี้) */
-        requireTyped="ล้างพรรค"
         isLoading={processing}
       />
 
