@@ -2402,6 +2402,27 @@ a 401 that means five different things.
 
 ---
 
+### P-LOG-133: [2026-07-28] A setup script reported all-green on a site with no database
+**Context:** First real run of `scripts/setup.sh` against Docker printed `ผ่าน 16 · ไม่ผ่าน 0`
+and "เว็บตอบ 200". The site was dead: `/api/health` 503, `/api/home-info` 500,
+`/api/results` 403. The check fetched the homepage, which renders without touching the
+database, so it proved only that a web server was listening. The outage underneath was
+`docker-compose.yml` passing `${DATABASE_URL}` from `.env` into the container, where
+`localhost` means the container itself. Two more faults hid behind the false green: the
+script migrated before starting the bundled `db` service, and its admin listing read the
+dev database while the container talked to another one.
+**Fix:** Probe `/api/health` (the only route running `SELECT 1`) and treat a non-200 as a
+FAIL with the last 10 container log lines; refuse to start when `.env`'s DATABASE_URL says
+localhost and the compose file does not override it; bring `db` up and wait for
+`pg_isready` before migrating; run `admin.js` against `MIGRATE_DATABASE_URL` (`f1864be`).
+**Lesson:** A health check must exercise the dependency it claims to verify. "The page
+loaded" is not "the system works" — pick the endpoint that fails when the thing you care
+about is broken. And a checker that can only report success is worse than no checker,
+because someone will hand over a dead system believing it was checked.
+**Tags:** `#verification` `#ops` `#deploy`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
