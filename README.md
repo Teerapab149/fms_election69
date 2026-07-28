@@ -42,12 +42,16 @@ npm run dev        # http://localhost:3000/fms-ovs
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXTAUTH_SECRET` | เข้ารหัส session |
-| `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD_AUTH_EXTRA`, `ADMIN_STUDENT_IDS` | ระบบ admin |
+| `ADMIN_JWT_SECRET` | เซ็น cookie ของ admin (รหัสผ่าน admin อยู่ใน DB ไม่ใช่ env — ดู `scripts/admin.js`) |
 | `ELECTION_BALLOT_PUBLIC_KEY`, `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน (ดูหัวข้อความปลอดภัย) |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่ได้ใช้แล้ว — เก็บไว้เฉย ๆ ก็ได้ ไม่มีผลกับหน้า login |
 
-ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ใช้
-`node scripts/dev-admin-login.js`
+ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ตั้งรหัสด้วย
+`node scripts/admin.js --rotate-password` แล้วใส่ค่าที่ได้เป็น `ADMIN_DEV_PASSWORD`
+ใน `.env.local` จากนั้น `node scripts/dev-admin-login.js` จะล็อกอินให้อัตโนมัติ
+
+เข้าหน้า admin ด้วย **รหัส นศ. ที่ถูก `--grant` + รหัสกลาง** (ไม่ใช่รหัสประจำตัวใครคนใดคนหนึ่ง)
+— กติกาเต็มอยู่ใน `docs/MAINTENANCE-RUNBOOK.md` §10
 
 Mock Login เปิดให้เองเมื่อรัน dev และปิดเองบน production build — ปุ่มอ่านรายการ
 provider จาก `/api/auth/providers` ตอน runtime จึงเป็นเงาของตัวกั้นจริง
@@ -101,6 +105,8 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 | เรื่อง | ไฟล์ |
 |---|---|
+| **คู่มือเจ้าหน้าที่ (ส่งมอบงาน)** | `docs/STAFF-HANDBOOK.md` |
+| งานประจำปีหนึ่งรอบเลือกตั้ง | `docs/STAFF-ANNUAL-CARD.md` |
 | สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
 | กติกาแก้โค้ด | `CLAUDE.md` |
