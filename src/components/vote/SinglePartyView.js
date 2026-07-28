@@ -1,5 +1,6 @@
 "use client";
 import { getPath } from "../../utils/basePath";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -52,6 +53,8 @@ export default function SinglePartyView({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
+  const gc = useGlobalConfig() || {};
+  const copyrightYear = gc.copyrightYear ?? gc.electionCalendarYear ?? 2026;
   const [portalContainer, setPortalContainer] = useState(null);
   const [bannerImages, setBannerImages] = useState([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -62,7 +65,9 @@ export default function SinglePartyView({
   const [isMobileDockOpen, setIsMobileDockOpen] = useState(true);
 
   // --- 1. DATA ---
-  const partyName = candidate?.name || "The Unity Concord";
+  // no invented party name here — this renders on the live ballot, so an absent
+  // name must read as missing data, not as a plausible-looking party
+  const partyName = candidate?.name || "ไม่พบชื่อพรรค";
   const partyNumber = candidate?.number || 1;
   const placeholderPath = getPath("/images/logo/party-placeholder.svg");
   const partyLogo = candidate?.logoUrl ? getPath(candidate.logoUrl) : placeholderPath;
@@ -491,14 +496,20 @@ export default function SinglePartyView({
                     })()}
                   </Reveal>
 
-                  <Reveal delay={320}>
-                    {/* Slogan - White text for maximum readability */}
-                    <p className="text-base md:text-xl lg:text-2xl text-white font-semibold leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
-                      {candidate?.slogan || "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน"}
-                    </p>
-                  </Reveal>
+                  {/* SLG-1: slogan is optional — absent = slot disappears entirely (no
+                      placeholder, no substitute text; owner rule). Name's own mb-4/mb-6
+                      then hands the rhythm straight to the CTA pair, which also takes
+                      over the slogan's reveal beat so the stagger stays tight. */}
+                  {candidate?.slogan && (
+                    <Reveal delay={320}>
+                      {/* Slogan - White text for maximum readability */}
+                      <p className="text-base md:text-xl lg:text-2xl text-white font-semibold leading-relaxed mb-8 lg:mb-12 max-w-xl lg:max-w-3xl mx-auto" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}>
+                        {candidate.slogan}
+                      </p>
+                    </Reveal>
+                  )}
 
-                  <Reveal delay={440}>
+                  <Reveal delay={candidate?.slogan ? 440 : 320}>
                     {/* Action Buttons — the pair rises together, a beat after the slogan */}
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-6 w-full px-8">
                       {/* Discover: Magenta Gradient */}
@@ -579,7 +590,7 @@ export default function SinglePartyView({
                       {/* SCROLLABLE TEXT BOX */}
                       <div className="max-h-[280px] lg:max-h-[360px] overflow-y-auto pr-6 custom-scrollbar hover:scroll-auto relative z-10">
                         <p className="text-lg lg:text-xl font-sans font-light leading-[1.8] text-gray-700 whitespace-pre-line">
-                          {candidate?.logoMeaning || "ความหมายสัญลักษณ์ The Unity Concord of FMS สะท้อนถึงความสำคัญของการรวมตัวกันเป็นหนึ่งเดียว เพื่อขับเคลื่อนคณะวิทยาการจัดการไปข้างหน้า..."}
+                          {candidate?.logoMeaning || "พรรคยังไม่ได้ระบุความหมายของสัญลักษณ์"}
                         </p>
                       </div>
 
@@ -861,7 +872,7 @@ export default function SinglePartyView({
           </section>
 
           <footer className="py-4 bg-black text-white text-center border-t border-white/10">
-            <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p></div>
+            <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"} {copyrightYear}. All Rights Reserved.</p></div>
           </footer>
         </div>
       </div>

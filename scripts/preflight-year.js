@@ -120,8 +120,19 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
     if (!env.ADMIN_JWT_SECRET) add("WARN", "ADMIN_JWT_SECRET not in .env", "admin cookie auth needs it (may be set in deploy env)");
     else add("PASS", "ADMIN_JWT_SECRET present", "");
 
-    if (!env.ADMIN_STUDENT_IDS) add("WARN", "ADMIN_STUDENT_IDS unset", "falls back to the legacy admin pair — set it explicitly for prod");
-    else add("PASS", "ADMIN_STUDENT_IDS set", "");
+    // Admin access = a flagged row + the shared password (RUNBOOK §10). Both live
+    // in the DB now, so check the DB, not the env.
+    const cfgRow = await prisma.systemConfig.findFirst({ where: { id: 1 }, select: { adminPasswordHash: true } });
+    const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { studentId: true, passwordHash: true } });
+    if (!cfgRow?.adminPasswordHash) add("FAIL", "no shared admin password set", "run: node scripts/admin.js --rotate-password");
+    else add("PASS", "shared admin password set", "bcrypt hash in SystemConfig");
+
+    if (!admins.length) add("FAIL", "nobody has admin", "run: node scripts/admin.js --grant <studentId>");
+    else add("PASS", `${admins.length} admin account(s)`, admins.map((a) => a.studentId).join(", "));
+
+    const personal = admins.filter((a) => a.passwordHash);
+    if (personal.length) add("WARN", `${personal.length} admin(s) still have a personal password`, `only a break-glass account should — clear with --clear-personal: ${personal.map((a) => a.studentId).join(", ")}`);
+    else add("PASS", "no leftover personal admin passwords", "");
 
     if (env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true") add("FAIL", "mock-login is ENABLED", "NEXT_PUBLIC_ENABLE_MOCK_LOGIN must be off in production");
     else add("PASS", "mock-login disabled", "");

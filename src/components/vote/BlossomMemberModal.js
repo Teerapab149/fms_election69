@@ -32,6 +32,46 @@ function useEscape(active, onClose) {
   }, [active, onClose]);
 }
 
+// Hold the page still behind an open overlay. Without it the wheel/trackpad scrolls
+// the party page underneath the scrim, so closing the modal drops the reader
+// somewhere else on the page than where they opened it.
+export function useScrollLock(active) {
+  useEffect(() => {
+    if (!active) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [active]);
+}
+
+// Keep Tab inside the dialog. `aria-modal` is a promise to assistive tech that the
+// rest of the page is inert — but it does not move focus on its own, and measured on
+// the real page focus left this card after 2 Tab presses and then walked the whole
+// party page behind the scrim with nothing visible to follow.
+export function useFocusTrap(active, ref) {
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const root = ref.current;
+      if (!root) return;
+      const items = Array.from(
+        root.querySelectorAll('a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])')
+      ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !root.contains(document.activeElement))) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [active, ref]);
+}
+
 export default function BlossomMemberModal({ member = null, onClose = () => {} }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
@@ -39,8 +79,11 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const closeRef = useRef(null);
+  const overlayRef = useRef(null);
 
   useEscape(!!member, () => { lightboxOpen ? setLightboxOpen(false) : onClose(); });
+  useScrollLock(!!member);
+  useFocusTrap(!!member, overlayRef);
 
   // focus the close button when the card opens (a11y — focus enters the dialog)
   useEffect(() => {
@@ -86,7 +129,7 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
   );
 
   return (
-    <div className="bl-root blm" role="dialog" aria-modal="true" aria-label={member.name || "ประวัติผู้สมัคร"} onClick={onClose}>
+    <div ref={overlayRef} className="bl-root blm" role="dialog" aria-modal="true" aria-label={member.name || "ประวัติผู้สมัคร"} onClick={onClose}>
       <div className={`blm__card${hasCutout ? " is-cutout" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* eyebrow + member-number pill */}
         <div className="blm__top">
@@ -171,7 +214,7 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
           white-space:nowrap; }
         .blm__tick { width:8px; height:8px; flex:none; background:var(--bl-primary); transform:rotate(45deg); border-radius:1.5px; }
         .blm__no { display:inline-flex; align-items:baseline; gap:6px; flex:none; padding:5px 12px; border-radius:999px;
-          background:var(--bl-primary-soft); color:var(--bl-primary-deep);
+          background:var(--bl-primary-soft); color:var(--bl-primary-ink);
           font-family:var(--bl-fm); font-size:12px; font-weight:700; letter-spacing:.06em; font-variant-numeric:tabular-nums; }
         .blm__no-l { font-family:var(--bl-fd); font-size:10px; font-weight:600; letter-spacing:.04em; opacity:.85; }
 
@@ -226,7 +269,7 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
         .blm__photo:hover { transform:translateY(-2px); border-color:var(--bl-primary); }
         .blm__photo.is-empty { cursor:default; }
         .blm__photo img { width:100%; height:100%; object-fit:cover; }
-        .blm__photo-ph { font-family:var(--bl-fd); font-weight:800; font-size:48px; color:var(--bl-primary-deep); }
+        .blm__photo-ph { font-family:var(--bl-fd); font-weight:800; font-size:48px; color:var(--bl-primary-ink); }
 
         .blm__id { min-width:0; }
         .blm__kick { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-faint); }

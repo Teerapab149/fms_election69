@@ -131,19 +131,19 @@ function buildBlossomTemplate(slug, name, description, p) {
 // layoutFamily stays "blossom" → one chooser card with swatches. All 4 marked
 // "(ทดลอง)" — experimental phase (home done, inner pages classic fallback).
 export const blossomTemplate       = buildBlossomTemplate(
-  "blossom", "บลอสซัม · ชมพู (ทดลอง)",
-  "ซอฟต์ป็อปสดใส — เรขาคณิตมนใหญ่ ป้ายมินิมอล ปุ่มกดยุบสปริง โทนชมพูลูกกวาด · เลือกโทนได้ 4 แบบ",
+  "blossom", "Blossom",
+  "สดใส มนกลม ปุ่มกดแล้วยุบเหมือนสปริง โทนชมพูลูกกวาดเป็นค่าเริ่มต้น เหมาะกับการดึงความสนใจนักศึกษา เลือกโทนสีได้ 4 แบบ",
   BLOSSOM_THEMES["blossom"]);
 export const blossomSkyTemplate    = buildBlossomTemplate(
-  "blossom-sky", "บลอสซัม · ฟ้า (ทดลอง)",
+  "blossom-sky", "Blossom · Sky",
   "ซอฟต์ป็อปสดใส โทนฟ้าละมุน — สดชื่น เป็นมิตร อ่านง่าย",
   BLOSSOM_THEMES["blossom-sky"]);
 export const blossomMintTemplate   = buildBlossomTemplate(
-  "blossom-mint", "บลอสซัม · มินต์ (ทดลอง)",
+  "blossom-mint", "Blossom · Mint",
   "ซอฟต์ป็อปสดใส โทนมินต์เขียว — สะอาดตา สดชื่น มีชีวิตชีวา",
   BLOSSOM_THEMES["blossom-mint"]);
 export const blossomButterTemplate = buildBlossomTemplate(
-  "blossom-butter", "บลอสซัม · บัตเตอร์ (ทดลอง)",
+  "blossom-butter", "Blossom · Butter",
   "ซอฟต์ป็อปสดใส โทนเหลืองบัตเตอร์ — อบอุ่น สดใส ชวนยิ้ม",
   BLOSSOM_THEMES["blossom-butter"]);
 

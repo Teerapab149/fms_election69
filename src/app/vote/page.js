@@ -144,8 +144,14 @@ export default function VotePage() {
     if (success) {
       setIsRedirecting(true); // 🔒 Lock UI
       setIsConfirmModalOpen(false)
-      // Every non-receipt family keeps its hard-nav redirect.
-      window.location.href = getPath("/success");
+      // Soft push, like receipt already did. The hard nav here dated from when
+      // /success had to be re-rendered from scratch for ballot secrecy; since
+      // v2-R4a it shows only the voter's own identity and never the choice, so
+      // the reload buys nothing and costs a full document load plus a fresh
+      // /api/auth/session round trip — a blank screen between confirming and
+      // being told it worked. submitVote() has already invalidated the shared
+      // status cache, and the success gate forces its own read.
+      router.push("/success");
     };
   };
 

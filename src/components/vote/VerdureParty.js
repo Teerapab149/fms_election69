@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import VerdureShell from "./VerdureShell";
 import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
 const firstImage = (val) => {
@@ -25,12 +26,16 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const ROMAN = ["I", "II", "III", "IV", "V"];
 
-export default function VerdureParty({ party = {}, galleryImages = [], showBackToVote = false }) {
+export default function VerdureParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [modalMember, setModalMember] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
   const gallery = useMemo(() => (galleryImages || []).map((g) => resolveSrc(g?.imageUrl || g)).filter(Boolean), [galleryImages]);
@@ -51,8 +56,9 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
       active={showBackToVote ? "vote" : "candidates"} editorMode={false}
       edge={{ num: "03", label: "Profile", th: `พรรคที่ ${no}` }}
       cornermarkSub={`Profile · No. ${no}`}
-      backHref={showBackToVote ? "/vote" : "/candidates"}
-      backLabel={showBackToVote ? "BACK TO BALLOT" : "BACK TO CANDIDATES"}
+      // single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead
+      backHref={showBackToVote ? "/vote" : (isSingleParty ? "/" : "/candidates")}
+      backLabel={showBackToVote ? "BACK TO BALLOT" : (isSingleParty ? "BACK TO HOME" : "BACK TO CANDIDATES")}
     >
       <div className="vd-profile">
         <div className="vd-ribbon">
@@ -69,7 +75,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         {heroImg && (
           <figure className="vd-groupphoto" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
             <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption>ภาพหมู่พรรค · คลิกเพื่อขยาย</figcaption>
+            <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -77,11 +83,13 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("vision")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("vision")} · วิสัยทัศน์</span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("vision")}</span> · <span className="vd-thai">วิสัยทัศน์</span></span>
               <h2>Vision &amp; <em>identity.</em></h2>
             </div>
             <div className="vd-vision__body">
-              {story ? <p>{story}</p> : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ</p>}
+              {story
+                ? <StoryClamp className="vd-sc"><p>{story}</p></StoryClamp>
+                : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ</p>}
             </div>
           </section>
         )}
@@ -90,7 +98,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("mission")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("mission")} · พันธกิจ</span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("mission")}</span> · <span className="vd-thai">พันธกิจ</span></span>
               <h2>Our <em>mission.</em></h2>
             </div>
             <div className="vd-missions">
@@ -105,7 +113,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("policies")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("policies")} · {policies.length} นโยบาย</span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("policies")}</span> · <span className="vd-thai">{policies.length} นโยบาย</span></span>
               <h2>Our <em>policies.</em></h2>
             </div>
             <div className="vd-policies">
@@ -113,7 +121,8 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
                 <div className="vd-policy" key={i}>
                   <div className="vd-policy__no">{i + 1}</div>
                   <div className="vd-policy__tag">POLICY {pad2(i + 1)}</div>
-                  <p>{p}</p>
+                  <p className="vd-policy__t">{p.title}</p>
+                  {p.desc && <p className="vd-policy__d">{p.desc}</p>}
                 </div>
               ))}
             </div>
@@ -186,6 +195,10 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-crest img { width:100%; height:100%; object-fit:contain; display:block; }
         .vd-vision__body p { font-family:var(--ft); font-size:19px; line-height:1.75; color:var(--moss); margin:0; max-width:680px; }
         .vd-vision__body .vd-muted { opacity:.7; }
+        /* StoryClamp — a long story folds behind a cream fade so the sections
+           below stay in reach */
+        .vd-sc { --sc-max:9em; --sc-fade:var(--cream); max-width:680px; }
+        .vd-sc .sc__hint { color:var(--moss); font-family:var(--ft); font-style:italic; }
         .vd-chapter__photo { margin:0; cursor:zoom-in; position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--rule); }
         .vd-chapter__photo img { width:100%; max-height:420px; object-fit:cover; display:block; transition:transform .4s; }
         .vd-chapter__photo:hover img { transform:scale(1.02); }
@@ -205,6 +218,8 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-policy__no { position:absolute; top:-22px; left:26px; width:52px; height:52px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; box-shadow:0 8px 18px -8px rgba(var(--terra-rgb),.6); }
         .vd-policy__tag { display:inline-block; font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--terra); margin:10px 0 14px; }
         .vd-policy p { font-family:var(--ft); font-size:16px; line-height:1.6; color:var(--moss); margin:0; }
+        .vd-policy p.vd-policy__t { font-weight:600; }
+        .vd-policy p.vd-policy__d { font-size:14px; line-height:1.65; color:var(--moss); opacity:.72; margin-top:8px; font-weight:400; }
 
         .vd-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
         .vd-rtile { background:var(--cream-2); border:1px solid var(--rule); border-radius:20px; padding:18px 16px 22px; text-align:center; transition:all .25s; cursor:pointer; font:inherit; color:inherit; display:block; width:100%; }

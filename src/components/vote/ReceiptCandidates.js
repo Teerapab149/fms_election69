@@ -165,7 +165,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-cand-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
@@ -174,7 +174,10 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
         /* laid-paper ::after + desk vignette ::before + emboss seals + holo foil come
            from the SHARED .rc-desk classes in ReceiptBaseStyles (R3 T1) — this root
            opts in via the rc-desk class, matching the home reference language. */
-        .rc-cand-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and every sticky child (.rc-topbar, .rc-index) pins to it
+           instead of the viewport, i.e. never pins at all. xo=0 on every viewport. */
+        .rc-cand-root { --rc-stamp-red:#B91C1C; overflow-x:clip; }
 
         :where(.rc-cand-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-cand-root a:focus-visible, .rc-cand-root button:focus-visible {
@@ -307,8 +310,22 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
         .rc-cand-root .rc-index-num { font-family:var(--rc-fr); font-weight:700; font-size:20px; font-variant-numeric:tabular-nums;
           letter-spacing:.02em; color:var(--rc-accent-deep); width:34px; flex:none; }
         .rc-cand-root .rc-index-body { min-width:0; display:flex; flex-direction:column; gap:2px; }
+        /* 3 lines, not 2: this rail IS the party directory, and the longest real name
+           (53 Thai chars) needed a third line in the 260px column — at 2 it ended
+           "…เพื่อการ…" (scrollHeight 61 vs 38 clientHeight). Rows are already
+           variable-height, so nothing else moves. */
+        /* INK GUTTER — the heading face (IBM Plex Sans Thai) has a 1.654em font box,
+           so ANY line-height under that lets the line-clamp's own overflow:hidden cut
+           real glyph ink off the top: at 16px/1.2 the tallest Thai stack (upper vowel +
+           tone, e.g. "ที่") overshot the box by 3.90px and the tone mark vanished
+           outright ("คนที่" printed as "คนที"). .32em of padding-top, pulled straight
+           back out with a matching negative margin-top, gives the marks room without
+           moving a single pixel of layout. padding-BOTTOM is deliberately NOT used —
+           Chrome paints the clamped-away next line into it (measured: a 4th line
+           bled through on a 3-line clamp). Descenders already fit (cutBot −1.1px). */
         .rc-cand-root .rc-index-name { font-family:var(--rc-fh); font-weight:700; font-size:16px; line-height:1.2; color:var(--rc-ink);
-          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+          padding-top:.32em; margin-top:-.32em;
+          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .rc-cand-root .rc-index-link:hover .rc-index-name { color:var(--rc-accent-deep); }
         .rc-cand-root .rc-index-team { font-size:9px; letter-spacing:.14em; color:var(--rc-faint); }
         .rc-cand-root .rc-index-arrow { font-family:var(--rc-fr); font-size:15px; color:var(--rc-ink2); transition:transform .2s ease; }
@@ -352,10 +369,19 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
 
         .rc-cand-root .rc-flyer__head { position:relative; z-index:1; display:flex; align-items:center; gap:14px; }
         /* logo 64px in an INK-STAMP frame (double ink ring) */
+        /* FLEX centring, not grid: a percentage max-height does not resolve against a
+           grid area, so the img below kept its intrinsic ratio height (76px in a 60px
+           content box → the bottom 16px of every portrait mark was cut). Flex gives the
+           item a definite container height and max-height:100% finally applies. */
         .rc-cand-root .rc-flyer__logo { position:relative; width:64px; height:64px; flex:none; border-radius:5px; overflow:hidden;
-          background:var(--rc-desk); border:2px solid var(--rc-stamp-line); display:grid; place-items:center;
+          background:var(--rc-desk); border:2px solid var(--rc-stamp-line);
+          display:flex; align-items:center; justify-content:center; padding:3px;
           box-shadow:inset 0 0 0 3px var(--rc-receipt), inset 0 0 0 4px color-mix(in srgb, var(--rc-stamp-line) 60%, transparent); }
-        .rc-cand-root .rc-flyer__logo img { width:100%; height:100%; object-fit:cover; border-radius:2px; }
+        /* a party LOGO must never be cropped — letterbox it inside the stamp frame.
+           (width/height:100% + object-fit:cover cut ~20% off the bottom of every
+           portrait logo.) */
+        .rc-cand-root .rc-flyer__logo img { max-width:100%; max-height:100%; width:auto; height:auto;
+          object-fit:contain; border-radius:2px; }
         .rc-cand-root .rc-flyer__logo-ph { font-family:var(--rc-fr); font-weight:700; font-size:22px; font-variant-numeric:tabular-nums;
           color:var(--rc-accent-deep); }
         .rc-cand-root .rc-flyer__no { display:inline-flex; align-items:baseline; gap:6px; font-size:9.5px; letter-spacing:.14em;
@@ -364,9 +390,14 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
           font-variant-numeric:tabular-nums; letter-spacing:0; }
 
         .rc-cand-root .rc-flyer__body { position:relative; z-index:1; display:flex; flex-direction:column; gap:3px; margin-top:16px; }
+        /* 3 lines: in the 2-column masonry the 53-char name needs a third line at 30px
+           (scrollHeight 108 vs 67 clientHeight → the headline of the card was cut).
+           On phones the same name already fits in 2, so nothing moves there. */
+        /* ink gutter — see .rc-index-name. Tighter here (1.12) so the overshoot is
+           worse: 8.70px at the 30px size. */
         .rc-cand-root .rc-flyer__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(21px,5vw,30px); line-height:1.12;
-          letter-spacing:-.01em; color:var(--rc-ink);
-          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+          letter-spacing:-.01em; color:var(--rc-ink); padding-top:.32em; margin-top:-.32em;
+          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .rc-cand-root .rc-flyer__link:hover .rc-flyer__name { color:var(--rc-accent-deep); }
         .rc-cand-root .rc-flyer__slogan { margin-top:4px; font-family:var(--rc-fr); font-size:14px; line-height:1.5; color:var(--rc-ink2);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }

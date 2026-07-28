@@ -35,7 +35,9 @@ services:
       # no longer used by the app; remove from .env after rotating (see runbook).
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
-      - ADMIN_PASSWORD_AUTH_EXTRA=${ADMIN_PASSWORD_AUTH_EXTRA}
+      # The admin password is NOT an env var — it lives in the database as one
+      # bcrypt hash, set with `node scripts/admin.js --rotate-password`.
+      # ADMIN_PASSWORD_AUTH_EXTRA was removed 2026-07-28 (see RUNBOOK §10).
 
     # NOTE: the old `--security-revert=CVE-2023-46809` flag was removed — it
     # re-enabled Node's vulnerable PKCS#1 v1.5 decryption for the RETIRED admin
@@ -53,6 +55,13 @@ services:
       # Set POSTGRES_PASSWORD in .env — never commit a real password here
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: fms_election
+    # No published port on purpose: the app reaches this over the compose network,
+    # and a production database has no business listening on the host interface.
+    # If you use THIS bundled database rather than the faculty's, migrations and
+    # scripts/admin.js run from the host and need a way in — publish it to
+    # loopback only and point MIGRATE_DATABASE_URL at it:
+    #   ports: ["127.0.0.1:5433:5432"]
+    #   MIGRATE_DATABASE_URL=postgresql://postgres:<pw>@localhost:5433/fms_election
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
 

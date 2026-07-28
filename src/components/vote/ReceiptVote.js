@@ -537,7 +537,7 @@ export default function ReceiptVote({
 
       {/* ===== footer — classic single centered line ===== */}
       <footer className="rc-vote-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`
@@ -545,7 +545,11 @@ export default function ReceiptVote({
         /* laid-paper ::after + desk vignette ::before + blind-emboss seals come from
            the SHARED .rc-desk classes in ReceiptBaseStyles (T1) — this root opts in
            via the rc-desk class, matching the home reference language. */
-        .rc-vote-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .rc-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400). xo=0, and the fixed .rc-vbar bottom
+           bar is unaffected — clip does not create a containing block for fixed. */
+        .rc-vote-root { --rc-stamp-red:#B91C1C; overflow-x:clip; }
 
         :where(.rc-vote-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-vote-root a:focus-visible, .rc-vote-root button:focus-visible,
@@ -741,17 +745,26 @@ export default function ReceiptVote({
           box-shadow:inset 0 0 0 2px color-mix(in srgb, #ea580c 22%, transparent); }
         .rc-vote-root .rc-vrow--abstain .rc-vrow__stamp::before { border-color:color-mix(in srgb, #c2410c 40%, transparent); }
         .rc-vote-root .rc-vrow--abstain .rc-vrow__stamp-n { color:#c2410c; }
+        /* FLEX centring, not grid — max-height:100% does not resolve on a grid item, so
+           the mark kept its intrinsic ratio height (68px in a 54px content box → 14px cut
+           off the bottom of every portrait logo). See the note in ReceiptCandidates. */
         .rc-vote-root .rc-vrow__logo { width:56px; height:56px; flex:none; border-radius:8px; overflow:hidden;
-          background:var(--rc-receipt); border:1px solid var(--rc-line); display:grid; place-items:center; }
-        .rc-vote-root .rc-vrow__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--rc-receipt); border:1px solid var(--rc-line);
+          display:flex; align-items:center; justify-content:center; padding:3px; }
+        /* party LOGO — letterbox, never crop (see ReceiptCandidates note) */
+        .rc-vote-root .rc-vrow__logo img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; }
         .rc-vote-root .rc-vrow__logo-ph { font-family:var(--rc-fh); font-weight:700; font-size:18px; font-variant-numeric:tabular-nums;
           color:var(--rc-accent-deep); }
         .rc-vote-root .rc-vrow__body { min-width:0; display:flex; flex-direction:column; gap:2px; }
         .rc-vote-root .rc-vrow__kick { font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--rc-ink2); }
         .rc-vote-root .rc-vrow__kick b { color:var(--rc-accent-deep); font-weight:700; }
+        /* ink gutter — the clamp's overflow:hidden cut 6.42px off the top of the FIRST
+           ballot line at 26px/1.16 (heading font box = 1.654em), so a name like
+           "พรรคชี้นำ" lost its tone mark on the ballot itself. padding-top only —
+           padding-bottom would let Chrome bleed the clamped-away line through. */
         .rc-vote-root .rc-vrow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(19px,4.6vw,26px); line-height:1.16;
-          letter-spacing:-.01em; color:var(--rc-ink);
+          letter-spacing:-.01em; color:var(--rc-ink); padding-top:.32em; margin-top:-.32em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .rc-vote-root .rc-vrow__slogan { margin-top:2px; font-family:var(--rc-fr); font-size:13.5px; line-height:1.5; color:var(--rc-ink2);
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
@@ -778,9 +791,12 @@ export default function ReceiptVote({
         .rc-vote-root .rc-vrow--abstain .rc-vrow__chosen { color:#c2410c; border-color:#c2410c; }
 
         /* งดออกเสียง — quieter row, KEEPS semantic ORANGE (ส้ม family; NOT var(--rc-*)) */
+        /* the glyphs that are TEXT on paper use the darker step of the same ส้ม family
+           (#ea580c measured 3.47:1 on receipt stock, #c2410c = 5.05:1); #ea580c stays
+           on fills/borders where contrast is not a text concern. */
         .rc-vote-root .rc-vrow--abstain .rc-vrow__idx,
         .rc-vote-root .rc-vrow--abstain .rc-vrow__logo-ph,
-        .rc-vote-root .rc-vrow--abstain .rc-vrow__mark { color:#ea580c; }
+        .rc-vote-root .rc-vrow--abstain .rc-vrow__mark { color:#c2410c; }
         .rc-vote-root .rc-vrow--abstain .rc-vrow__kick { color:#c2410c; }
         .rc-vote-root .rc-vrow--abstain .rc-vrow__hit:hover { background:color-mix(in srgb, #ea580c 5%, transparent); }
         .rc-vote-root .rc-vrow--abstain .rc-vrow__hit:hover .rc-vrow__box { border-color:#ea580c; }
@@ -800,8 +816,13 @@ export default function ReceiptVote({
         .rc-vote-root .rc-vbar__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .rc-vote-root .rc-vbar__lab { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase;
           color:var(--rc-faint); }
+        /* ink gutter — the ellipsis needs overflow:hidden, and at 22px/1.15 that box is
+           4.85px shorter than the heading face's ink for a Thai upper-vowel+tone stack,
+           so the tone mark on the CHOSEN PARTY NAME was being shaved off in the one
+           place the voter re-reads their choice. Padding pulled back out by margin. */
         .rc-vote-root .rc-vbar__val { display:inline-flex; align-items:center; gap:9px; min-width:0; font-family:var(--rc-fh);
           font-weight:700; font-size:clamp(16px,4.2vw,22px); line-height:1.15; color:var(--rc-ink);
+          padding-top:.32em; margin-top:-.32em;
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .rc-vote-root .rc-vbar__val--empty { color:var(--rc-faint); font-weight:600; }
         .rc-vote-root .rc-vbar__dot { width:10px; height:10px; flex:none; background:var(--rc-accent); border-radius:50%; }
@@ -823,7 +844,10 @@ export default function ReceiptVote({
         .rc-vote-root .rc-vbar__btn:active { transform:scale(.98); }
         .rc-vote-root .rc-vbar__btn:disabled { cursor:not-allowed; }
         .rc-vote-root .rc-vbar__btn:disabled::before { background:color-mix(in srgb, var(--rc-ink2) 22%, var(--rc-line)); }
-        .rc-vote-root .rc-vbar__btn:disabled .rc-vbar__btn-in { color:color-mix(in srgb, var(--rc-receipt) 88%, var(--rc-ink)); }
+        /* disabled label was near-white (#E2E1DE) on the grey fill (#C8C1B7) = 1.36:1 —
+           the ballot's primary CTA arrived looking like a blank pill. Muted ink instead:
+           4.70:1, still obviously inert next to the accent-filled ready state. */
+        .rc-vote-root .rc-vbar__btn:disabled .rc-vbar__btn-in { color:color-mix(in srgb, var(--rc-ink2) 70%, var(--rc-ink)); }
 
         /* ---- footer ---- */
         .rc-vote-root .rc-vote-footer { position:relative; z-index:1; margin-top:8px; padding:22px 0; border-top:1px dotted var(--rc-line);
@@ -859,6 +883,9 @@ export default function ReceiptVote({
              and both live one tap away in the details stub / party page. The NAME gets
              the full column at its 2-line clamp (ballot names must stay readable). */
           .rc-vote-root .rc-vrow__slogan, .rc-vote-root .rc-vrow__stat { display:none; }
+          /* …and with them gone the NAME can take a third line. At 2 the 53-char name
+             was cut mid-word on the ballot itself (scrollHeight 70 vs 44). */
+          .rc-vote-root .rc-vrow__name { -webkit-line-clamp:3; }
           .rc-vote-root .rc-vrow__box { grid-area:box; align-self:center; }
           .rc-vote-root .rc-vrow__stamp { grid-area:idx; align-self:center; width:44px; height:44px; }
           .rc-vote-root .rc-vrow__stamp-n { font-size:18px; }

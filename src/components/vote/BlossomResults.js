@@ -41,6 +41,33 @@ const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
 const CHART_FONT = "var(--font-kanit),'Kanit',var(--font-anuphan),'Anuphan',system-ui,sans-serif";
 
+// ── reveal ceremony: count-up (bl-B1B) ──────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server HTML,
+// no-JS, and pre-hydration paint all show the real number. Only AFTER hydration
+// does the effect restart the number from 0 and ease it up (~1s). reduced-motion
+// or editorMode (enabled=false) → snap to final, no rAF. Used ONLY inside the
+// revealed branch — the EMBARGOED figures keep their literal fmt()/toFixed(1)
+// strings, and the locked ink band never renders a Reveal* node at all.
+function useCountUp(target, { duration = 1000, enabled = true } = {}) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (!enabled || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, enabled]);
+  return val;
+}
+// revealed-only value renderers — count 0→value after hydration, final otherwise
+function RevealInt({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{Math.round(v).toLocaleString("en-US")}</>; }
+function RevealFixed({ value, digits = 1, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(digits)}</>; }
+
 // Blossom-styled recharts tooltip (paper card, hairline, mono value).
 function BlTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -49,14 +76,14 @@ function BlTooltip({ active, payload, label }) {
   return (
     <div className="bl-tip">
       <span className="bl-tip__name">{name}</span>
-      <span className="bl-tip__val">{(p?.value || 0).toLocaleString()} คน</span>
+      <span className="bl-tip__val">{(p?.value || 0).toLocaleString()} <span className="bl-thai bl-thai--nw">คน</span></span>
     </div>
   );
 }
 
 export default function BlossomResults({
   candidates = [], totalVotes = 0, demographics = {}, finalStatus = "WAITING",
-  isRevealed = false, isNotStarted = false, countdownText = "", onSelectParty = () => {}, editorMode = false,
+  isRevealed = false, isNotStarted = false, countdownText = "", editorMode = false,
 }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
@@ -73,10 +100,15 @@ export default function BlossomResults({
     if (s && s.startsWith("blossom")) setPreviewSlug(s);
   }, []);
   const t = blossomTheme(previewSlug || activeSlug);
-  const CHART = [t.primary, t.sup1Ink, t.sup2Ink, t.sup3Ink];
+  // five entries, not four: the by-major chart renders 5 bars (the live faculty has
+  // 5 majors), and with a 4-colour ring the 5th wrapped back to t.primary — two
+  // different majors in the same chart drawn in the same pink. primaryDeep comes
+  // from the same palette, so this still introduces no new colour const.
+  const CHART = [t.primary, t.sup1Ink, t.sup2Ink, t.sup3Ink, t.primaryDeep];
 
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
 
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? (totalVotes / totalEligible) * 100 : 0;
@@ -87,7 +119,10 @@ export default function BlossomResults({
   const pctOf = (c) => (totalVotes > 0 ? ((c?.score || 0) / totalVotes) * 100 : 0);
   const subOf = (c) => {
     const n = parseInt(c.number);
-    return n > 0 ? `PARTY NO. ${pad2(c.number)}` : (n === 0 ? "ABSTAIN · งดออกเสียง" : "DISAPPROVE · ไม่รับรอง");
+    if (n > 0) return `PARTY NO. ${pad2(c.number)}`;
+    return n === 0
+      ? <><span className="bl-nw">ABSTAIN</span> · <span className="bl-thai bl-thai--nw">งดออกเสียง</span></>
+      : <><span className="bl-nw">DISAPPROVE</span> · <span className="bl-thai bl-thai--nw">ไม่รับรอง</span></>;
   };
 
   // winner = highest score in the eligible pool (parties, plus DISAPPROVE only in a
@@ -109,11 +144,16 @@ export default function BlossomResults({
   const byMajor = clean(demographics?.byMajor);
   const genderTotal = byGender.reduce((a, b) => a + (b.value || 0), 0);
 
-  const statusMono = isNotStarted
-    ? "ยังไม่เปิด · POLLS NOT OPEN"
+  const statusTh = isNotStarted
+    ? "ยังไม่เปิด"
     : revealed
-      ? (ended ? "ผลอย่างเป็นทางการ · FINAL RESULT" : "เรียลไทม์ · LIVE RESULT")
-      : (ended ? "รอประกาศผล · AWAITING" : "กำลังนับคะแนน · COUNTING");
+      ? (ended ? "ผลอย่างเป็นทางการ" : "เรียลไทม์")
+      : (ended ? "รอประกาศผล" : "กำลังนับคะแนน");
+  const statusEn = isNotStarted
+    ? "POLLS NOT OPEN"
+    : revealed
+      ? (ended ? "FINAL RESULT" : "LIVE RESULT")
+      : (ended ? "AWAITING" : "COUNTING");
 
   const deckCopy = revealed
     ? "สรุปคะแนนเสียงการเลือกตั้ง เรียงลำดับตามจำนวนคะแนนที่แต่ละพรรคได้รับ พร้อมสถิติผู้ใช้สิทธิ์"
@@ -140,13 +180,13 @@ export default function BlossomResults({
       <div className="bl-page">
         {/* ===== issue line (masthead — results variant) ===== */}
         <div className="bl-issue-line">
-          <span>ผลคะแนน <b>·</b> RESULTS</span>
+          <span><span className="bl-thai bl-thai--nw">ผลคะแนน</span> <b>·</b> RESULTS</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial masthead: mono status line + hollow display word ===== */}
         <header className="bl-res-head">
-          <span className="bl-res-kick"><span className="bl-res-dot" aria-hidden="true" />{statusMono}</span>
+          <span className="bl-res-kick"><span className="bl-res-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{statusTh}</span> · <span className="bl-nw">{statusEn}</span></span>
           <h1 className="bl-res-word">ผลคะแนน</h1>
         </header>
         <p className="bl-res-deck">{deckCopy}</p>
@@ -164,19 +204,19 @@ export default function BlossomResults({
             <section className="bl-res-figs" aria-label="สรุปยอดผู้ใช้สิทธิ์">
               <div className="bl-rfig bl-rfig-1">
                 <span className="bl-rfig__idx">01</span>
-                <span className="bl-rfig__n">{fmt(totalVotes)}<small>เสียง</small></span>
-                <span className="bl-rfig__lab"><span className="bl-res-live" aria-hidden="true" />ใช้สิทธิ์แล้ว<br />TOTAL VOTES</span>
+                <span className="bl-rfig__n">{revealed ? <RevealInt value={totalVotes} enabled={anim} /> : fmt(totalVotes)}<small>เสียง</small></span>
+                <span className="bl-rfig__lab"><span className="bl-res-live" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span> · <span className="bl-nw">TOTAL VOTES</span></span>
               </div>
               <div className="bl-rfig bl-rfig-2">
                 <span className="bl-rfig__idx">02</span>
-                <span className="bl-rfig__n">{turnout.toFixed(1)}<small>%</small></span>
-                <span className="bl-rfig__lab">อัตราการใช้สิทธิ์<br />TURNOUT</span>
+                <span className="bl-rfig__n">{revealed ? <RevealFixed value={turnout} digits={1} enabled={anim} /> : turnout.toFixed(1)}<small>%</small></span>
+                <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">อัตราการใช้สิทธิ์</span> · <span className="bl-nw">TURNOUT</span></span>
                 <span className="bl-rfig__bar" aria-hidden="true"><span style={{ width: `${Math.min(100, turnout)}%` }} /></span>
               </div>
               <div className="bl-rfig bl-rfig-3">
                 <span className="bl-rfig__idx">03</span>
-                <span className="bl-rfig__n">{fmt(totalEligible)}<small>คน</small></span>
-                <span className="bl-rfig__lab">ผู้มีสิทธิ์<br />ELIGIBLE</span>
+                <span className="bl-rfig__n">{revealed ? <RevealInt value={totalEligible} enabled={anim} /> : fmt(totalEligible)}<small>คน</small></span>
+                <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">ผู้มีสิทธิ์</span> · <span className="bl-nw">ELIGIBLE</span></span>
               </div>
             </section>
 
@@ -185,7 +225,9 @@ export default function BlossomResults({
                 {/* ===== ranking rows ===== */}
                 <section className="bl-res-rank">
                   <div className="bl-res-sechead">
-                    <span className="bl-res-sechead__kick">{singleParty ? "ผลการรับรอง · VERDICT" : "อันดับคะแนน · STANDINGS"}</span>
+                    <span className="bl-res-sechead__kick">{singleParty
+                      ? <><span className="bl-thai bl-thai--nw">ผลการรับรอง</span> · <span className="bl-nw">VERDICT</span></>
+                      : <><span className="bl-thai bl-thai--nw">อันดับคะแนน</span> · <span className="bl-nw">STANDINGS</span></>}</span>
                     <h2 className="bl-res-sechead__h">{singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h2>
                   </div>
                   <ol className="bl-rrows">
@@ -203,23 +245,24 @@ export default function BlossomResults({
                             <span className="bl-rrow__name">
                               {c.name}
                               {isWin && <span className="bl-rrow__dia" aria-hidden="true" />}
-                              {isWin && <span className="bl-rrow__tag">ผู้ชนะ · WINNER</span>}
+                              {isWin && <span className="bl-rrow__tag"><span className="bl-thai bl-thai--nw">ผู้ชนะ</span> · <span className="bl-nw">WINNER</span></span>}
                             </span>
                           </span>
                           <span className="bl-rrow__data">
-                            <span className="bl-rrow__num">{fmt(c.score || 0)}<small>เสียง</small></span>
-                            <span className="bl-rrow__track"><span style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%` }} /></span>
-                            <span className="bl-rrow__pct">{pct.toFixed(1)}%</span>
+                            <span className="bl-rrow__num"><RevealInt value={c.score || 0} enabled={anim} /><small>เสียง</small></span>
+                            {/* fill carries its REAL width inline (no-JS / reduced-motion
+                                fallback lands final); "is-grow" only staggers a 0→width CSS
+                                grow via animationDelay, skipped in editorMode */}
+                            <span className="bl-rrow__track"><span className={anim ? "is-grow" : undefined} style={{ width: `${Math.max(pct, c.score > 0 ? 2 : 0)}%`, ...(anim ? { animationDelay: `${i * 90}ms` } : {}) }} /></span>
+                            <span className="bl-rrow__pct"><RevealFixed value={pct} digits={1} enabled={anim} />%</span>
                           </span>
                         </>
                       );
                       return (
                         <li key={c.id || i} className={cls}>
-                          {n > 0 ? (
-                            <button type="button" className="bl-rrow__link" onClick={() => onSelectParty(c)}>{inner}</button>
-                          ) : (
-                            <div className="bl-rrow__link bl-rrow__link--static">{inner}</div>
-                          )}
+                          {/* RES-1: standings are a read-only tally board — no party
+                              row is a link (owner decision, mirrors ReceiptResults) */}
+                          <div className="bl-rrow__link bl-rrow__link--static">{inner}</div>
                         </li>
                       );
                     })}
@@ -230,16 +273,16 @@ export default function BlossomResults({
                 {hasDemo && (
                   <section className="bl-res-demo">
                     <div className="bl-res-sechead">
-                      <span className="bl-res-sechead__kick">สถิติผู้ใช้สิทธิ์ · TURNOUT</span>
+                      <span className="bl-res-sechead__kick"><span className="bl-thai bl-thai--nw">สถิติผู้ใช้สิทธิ์</span> · <span className="bl-nw">TURNOUT</span></span>
                       <h2 className="bl-res-sechead__h">ประชากรผู้มาใช้สิทธิ์</h2>
                     </div>
                     <div className="bl-demo-grid">
                       {byGender.length > 0 && (
                         <div className="bl-panel">
-                          <div className="bl-panel__cap"><span>เพศ · BY GENDER</span><em>§ 01</em></div>
+                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">เพศ</span> · <span className="bl-nw">BY GENDER</span></span><em>§ 01</em></div>
                           <div className="bl-donut">
                             <ResponsiveContainer width="100%" height={230}>
-                              <PieChart>
+                              <PieChart accessibilityLayer={false}>
                                 <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                                   innerRadius={58} outerRadius={86} paddingAngle={3} stroke={t.card} strokeWidth={3}
                                   startAngle={90} endAngle={-270} isAnimationActive={false}>
@@ -248,7 +291,7 @@ export default function BlossomResults({
                                 <Tooltip content={<BlTooltip />} />
                               </PieChart>
                             </ResponsiveContainer>
-                            <div className="bl-donut__c"><strong>{genderTotal.toLocaleString()}</strong><span>คน</span></div>
+                            <div className="bl-donut__c"><strong>{genderTotal.toLocaleString()}</strong><span className="bl-thai bl-thai--nw">คน</span></div>
                           </div>
                           <div className="bl-legend">
                             {byGender.map((g, i) => (
@@ -262,9 +305,9 @@ export default function BlossomResults({
 
                       {byYear.length > 0 && (
                         <div className="bl-panel">
-                          <div className="bl-panel__cap"><span>ชั้นปี · BY YEAR</span><em>§ 02</em></div>
+                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">ชั้นปี</span> · <span className="bl-nw">BY YEAR</span></span><em>§ 02</em></div>
                           <ResponsiveContainer width="100%" height={230}>
-                            <BarChart data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+                            <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
                               <CartesianGrid vertical={false} stroke={t.line} />
                               <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                               <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: t.ink2 }} tickLine={false} axisLine={false} />
@@ -279,12 +322,12 @@ export default function BlossomResults({
 
                       {byMajor.length > 0 && (
                         <div className="bl-panel bl-panel--wide">
-                          <div className="bl-panel__cap"><span>สาขา · BY MAJOR</span><em>§ 03</em></div>
+                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">สาขา</span> · <span className="bl-nw">BY MAJOR</span></span><em>§ 03</em></div>
                           <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                            <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                            <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                               <CartesianGrid horizontal={false} stroke={t.line} />
                               <XAxis type="number" hide allowDecimals={false} />
-                              <YAxis type="category" dataKey="name" width={140} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
+                              <YAxis type="category" dataKey="name" width="auto" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                               <Tooltip content={<BlTooltip />} cursor={{ fill: t.primarySoft }} />
                               <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={26} isAnimationActive={false}
                                 label={{ position: "right", fontFamily: CHART_FONT, fontSize: 12, fontWeight: 700, fill: t.ink, formatter: (v) => (v || 0).toLocaleString() }}>
@@ -302,7 +345,7 @@ export default function BlossomResults({
               /* ===== LOCKED moment — full-bleed ink band (closed-page grammar) ===== */
               <section className="bl-res-lock">
                 <div className="bl-res-lock__in">
-                  <div className="bl-res-lock__cap"><span className="bl-res-lock__dia" aria-hidden="true" />ปิดผนึกไว้ · EMBARGOED</div>
+                  <div className="bl-res-lock__cap"><span className="bl-res-lock__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ปิดผนึกไว้</span> · <span className="bl-nw">EMBARGOED</span></div>
                   <h2 className="bl-res-lock__head">
                     <span className="bl-res-lock__l1">ปิดผนึก</span>
                     <span className="bl-res-lock__l2">ผลคะแนน</span>
@@ -312,7 +355,7 @@ export default function BlossomResults({
                       ? "ผลการรับรองและสถิติผู้ใช้สิทธิ์จะเปิดเผยเมื่อปิดโหวต เพื่อความโปร่งใสและเป็นธรรม"
                       : "ผลคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์จะเปิดเผยพร้อมกันเมื่อปิดโหวต เพื่อความเป็นธรรมกับทุกพรรค"}
                   </p>
-                  <div className="bl-res-lock__note">{lockNote}</div>
+                  <div className="bl-res-lock__note"><span className="bl-thai">{lockNote}</span></div>
                 </div>
               </section>
             )}
@@ -322,17 +365,20 @@ export default function BlossomResults({
 
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-res-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport.
+           xo=0 measured on every viewport, so no horizontal scroll is lost. */
+        .bl-res-root { overflow-x:clip; }
         /* dot-grid paper texture — above the blobs, under content */
         .bl-res-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-res-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-res-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-res-root) a:hover { color:var(--bl-ink); }
 
         .bl-res-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
@@ -401,7 +447,7 @@ export default function BlossomResults({
         .bl-res-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-res-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-res-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-res-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -428,7 +474,7 @@ export default function BlossomResults({
         .bl-res-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-res-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-res-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-res-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -449,7 +495,7 @@ export default function BlossomResults({
           font-size:clamp(56px,15vw,132px); letter-spacing:-.02em; color:transparent;
           -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-res-root .bl-res-word { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-res-root .bl-res-word { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-res-root .bl-res-deck { margin:20px 0 0; max-width:600px; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(15px,3.6vw,18px); line-height:1.7; color:var(--bl-ink2);
@@ -475,10 +521,10 @@ export default function BlossomResults({
         .bl-res-root .bl-rfig__lab { margin-left:auto; text-align:right; font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em;
           color:var(--bl-ink2); line-height:1.9; }
         .bl-res-root .bl-rfig-1 .bl-rfig__n { color:var(--bl-sup1-ink); }
-        .bl-res-root .bl-rfig-2 .bl-rfig__n { color:var(--bl-primary-deep); }
+        .bl-res-root .bl-rfig-2 .bl-rfig__n { color:var(--bl-primary-ink); }
         .bl-res-root .bl-rfig-3 .bl-rfig__n { color:var(--bl-sup2-ink); }
         .bl-res-root .bl-rfig-1 .bl-rfig__idx { color:var(--bl-sup1-ink); }
-        .bl-res-root .bl-rfig-2 .bl-rfig__idx { color:var(--bl-primary-deep); }
+        .bl-res-root .bl-rfig-2 .bl-rfig__idx { color:var(--bl-primary-ink); }
         .bl-res-root .bl-rfig-3 .bl-rfig__idx { color:var(--bl-sup2-ink); }
         .bl-res-root .bl-rfig__bar { flex:0 0 100%; height:3px; border-radius:2px; margin-top:12px; overflow:hidden;
           background:color-mix(in srgb, var(--bl-line) 60%, var(--bl-card)); }
@@ -504,16 +550,12 @@ export default function BlossomResults({
         .bl-res-root .bl-rrow__link { width:100%; display:grid; grid-template-columns:auto 1fr; gap:8px 18px; align-items:center;
           padding:22px 8px; background:none; border:0; text-align:left; color:var(--bl-ink); font-family:inherit;
           transition:background .25s ease, padding-left .25s ease; }
-        .bl-res-root button.bl-rrow__link { cursor:pointer; }
-        .bl-res-root button.bl-rrow__link:hover { background:color-mix(in srgb, var(--bl-primary) 7%, var(--bl-canvas)); padding-left:16px; }
-        .bl-res-root button.bl-rrow__link:active { background:color-mix(in srgb, var(--bl-primary) 11%, var(--bl-canvas)); }
         .bl-res-root .bl-rrow__idx { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,20px);
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--bl-faint); width:38px; flex:none; align-self:start; padding-top:4px; }
         .bl-res-root .bl-rrow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .bl-res-root .bl-rrow__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-ink2); }
         .bl-res-root .bl-rrow__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        .bl-res-root button.bl-rrow__link:hover .bl-rrow__name { color:var(--bl-primary-deep); }
         .bl-res-root .bl-rrow__dia { width:14px; height:14px; flex:none; background:var(--bl-primary-deep); transform:rotate(45deg); }
         .bl-res-root .bl-rrow__tag { font-family:var(--bl-fm); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
           background:var(--bl-primary-deep); color:var(--bl-on-primary, var(--bl-card)); border-radius:999px; padding:4px 10px; }
@@ -521,15 +563,28 @@ export default function BlossomResults({
         .bl-res-root .bl-rrow__num { font-family:var(--bl-fd); font-weight:800; font-size:clamp(34px,8vw,56px); line-height:1;
           font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-ink); }
         .bl-res-root .bl-rrow__num small { font-size:.32em; font-weight:600; color:var(--bl-ink2); margin-left:6px; letter-spacing:0; }
-        .bl-res-root .bl-rrow.is-win .bl-rrow__num { color:var(--bl-primary-deep); }
+        .bl-res-root .bl-rrow.is-win .bl-rrow__num { color:var(--bl-primary-ink); }
         .bl-res-root .bl-rrow.is-pseudo .bl-rrow__num { color:var(--bl-faint); }
         .bl-res-root .bl-rrow__track { height:6px; border-radius:3px; overflow:hidden;
           background:color-mix(in srgb, var(--bl-line) 60%, var(--bl-card)); }
         .bl-res-root .bl-rrow__track > span { display:block; height:100%; border-radius:3px;
           background:linear-gradient(90deg, var(--bl-primary), var(--bl-primary-deep)); transition:width .7s cubic-bezier(.16,1,.3,1); }
-        .bl-res-root .bl-rrow.is-win .bl-rrow__track > span { background:var(--bl-primary-deep); }
+        /* reveal ceremony: fills grow 0→real width with a per-row stagger (animationDelay
+           set inline). Pure CSS keyframe — without JS / under reduced-motion the bar still
+           ends at its inline width, so a fill is NEVER gated behind hydration. Scoped to
+           .is-grow only (absent in editorMode). The blanket reduced-motion rule below
+           nukes this animation, leaving the inline width. */
+        .bl-res-root .bl-rrow__track > span.is-grow { animation:blRBar .7s cubic-bezier(.16,1,.3,1) backwards; }
+        @keyframes blRBar { from { width:0; } }
+        .bl-res-root .bl-rrow.is-win .bl-rrow__track > span { background:var(--bl-primary-deep);
+          box-shadow:0 0 10px color-mix(in srgb, var(--bl-primary) 45%, transparent); }
         .bl-res-root .bl-rrow.is-pseudo .bl-rrow__track > span { background:var(--bl-faint); }
-        .bl-res-root .bl-rrow__pct { font-family:var(--bl-fm); font-size:12px; letter-spacing:.06em; color:var(--bl-ink2); }
+        .bl-res-root .bl-rrow__pct { font-family:var(--bl-fm); font-size:12px; letter-spacing:.06em; color:var(--bl-ink2);
+          font-variant-numeric:tabular-nums; }
+        /* winner row — gentle candy wash + an inset ink accent so the win reads at a
+           glance beyond the diamond/tag/tinted numeral (bl-B1B, color-mix only) */
+        .bl-res-root .bl-rrow.is-win { background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-canvas));
+          box-shadow:inset 3px 0 0 var(--bl-primary-deep); }
 
         /* ---- demographics panels (frame restyled; recharts internals untouched) ---- */
         .bl-res-root .bl-demo-grid { display:grid; grid-template-columns:1fr; gap:20px; margin-top:28px; }
@@ -538,7 +593,7 @@ export default function BlossomResults({
         .bl-res-root .bl-panel__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--bl-line); }
         .bl-res-root .bl-panel__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--bl-ink); }
-        .bl-res-root .bl-panel__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10px; letter-spacing:.14em; color:var(--bl-primary-deep); }
+        .bl-res-root .bl-panel__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10px; letter-spacing:.14em; color:var(--bl-primary-ink); }
         .bl-res-root .bl-donut { position:relative; }
         .bl-res-root .bl-donut__c { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
         .bl-res-root .bl-donut__c strong { font-family:var(--bl-fd); font-weight:800; font-size:32px; line-height:1; color:var(--bl-ink); }
@@ -594,7 +649,6 @@ export default function BlossomResults({
         /* ================= MOBILE (<=560): tighten ================= */
         @media (max-width:560px) {
           .bl-res-root .bl-rrow__link { padding:20px 6px; }
-          .bl-res-root button.bl-rrow__link:hover { padding-left:6px; }
           .bl-res-root .bl-res-lock { padding:56px 20px 60px; }
         }
 

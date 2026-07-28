@@ -26,10 +26,11 @@ import StudioDarkSingleParty from "./StudioDarkSingleParty";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
-function Strip({ no, noClass = "", kicker, name, slogan, meta = null, selected, onClick, dashedTop = false }) {
+function Strip({ no, noClass = "", kicker, name, slogan, meta = null, selected, onClick, dashedTop = false, i = 0 }) {
   return (
     <article
       className={`sdv-strip ${selected ? "is-selected" : ""} ${dashedTop ? "sdv-strip--dashed" : ""}`}
+      style={{ "--sdv-i": i }}
       onClick={onClick}
       role="radio"
       aria-checked={selected}
@@ -123,20 +124,23 @@ export default function StudioDarkVote({
         </p>
       </div>
 
-      <div className="sdv-ballot">
+      <div className={`sdv-ballot${editorMode ? "" : " sdv-enter"}`}>
         <div className="sdv-intro">
           <span><span className="sdv-accent">●</span> VOTE OPEN</span>
-          <span className="sdv-intro__mid">{`${regularParties.length} PARTIES + ABSTAIN`}</span>
+          {/* the abstain tile below is conditional (line ~155) — the header must not
+              promise an option the ballot does not actually render */}
+          <span className="sdv-intro__mid">{`${regularParties.length} PARTIES${abstain ? " + ABSTAIN" : ""}`}</span>
           <span>ONE VOTE ONLY</span>
         </div>
 
         {/* PARTY TILES — grid so every party is visible at once (no top-bias) */}
         <div className="sdv-parties">
-        {regularParties.map((p) => {
+        {regularParties.map((p, i) => {
           const no = pad2(p.number);
           return (
             <Strip
               key={p.id}
+              i={i}
               no={<>{no.slice(0, -1)}<em>{no.slice(-1)}</em></>}
               kicker={<>PARTY <span className="sdv-accent">№ {no}</span></>}
               name={p.name}
@@ -159,6 +163,7 @@ export default function StudioDarkVote({
             slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
             selected={selectedPartyId === abstain.id}
             onClick={() => onSelect(abstain.id)}
+            i={regularParties.length}
             dashedTop
           />
         )}
@@ -183,6 +188,19 @@ export default function StudioDarkVote({
       <style jsx global>{`
         .sdv-accent { color:var(--sd-accent); }
         .sdv-uname { color:var(--sd-ink); font-weight:500; }
+
+        /* ENTRANCE MOTION — reuse the family rise (v2-R12 sdsRise): the ballot
+           option rows settle up in a subtle top-to-bottom cascade on mount.
+           Pure CSS + backwards fill so the base (visible) state is what SSR /
+           no-JS render; gated on .sdv-enter (dropped in editorMode → snap) and
+           prefers-reduced-motion (rule absent → no animation, stays visible). */
+        @media (prefers-reduced-motion:no-preference) {
+          .sdv-enter .sdv-strip {
+            animation:sdsRise .55s cubic-bezier(.16,1,.3,1) both;
+            animation-delay:calc(var(--sdv-i, 0) * 55ms + .05s);
+          }
+        }
+        @keyframes sdsRise { from { opacity:0; transform:translateY(16px); } }
 
         .sdv-ballot { padding:40px 48px 32px; flex:1; display:flex; flex-direction:column; }
         .sdv-intro {

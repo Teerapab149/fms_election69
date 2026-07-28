@@ -19,7 +19,8 @@
 //   note        — note-card stock — the turnout/headline card (per-theme)
 //   ink         — print ink (warm near-black, NOT pitch #000, CONSTANT)
 //   ink2        — faded print / muted labels (CONSTANT, ≥4.5:1 on every paper)
-//   faint       — faintest mono eyebrows / register-tape print (CONSTANT)
+//   faint       — faintest mono eyebrows / register-tape print (CONSTANT, ≥4.5:1 on
+//                 every paper — it carries real meta text, not only decoration)
 //   line        — hairline / perforation dot line (per-theme)
 //   stampLine   — heavier stamp/border tooth (per-theme)
 //   holo1..5    — the shared color-shifting foil ramp (CONSTANT; only holoShift rotates)
@@ -53,7 +54,14 @@
 // ── constants shared by EVERY theme (ink + faint + holo ramp never shift) ──
 const INK         = "#1C1815"; // print ink — warm near-black (NOT pitch #000)
 const INK2        = "#6B635B"; // faded print / muted labels (≥4.5:1 on every paper)
-const FAINT       = "#A79E93"; // faintest mono eyebrows / register-tape print
+// faintest mono eyebrows / register-tape print. Was #A79E93, which measured
+// 2.57:1 on receipt stock and 2.40:1 on the desk — below AA at ANY size, and it is
+// not decoration: it carries "17 MEMBERS" / "ทีมงาน N คน", the ballot bar's
+// "การเลือกของคุณ · YOUR SELECTION" + "ยังไม่ได้เลือก" status, the results rank
+// numbers, the register field labels and the success secrecy notes. Same warm-grey
+// hue, deep enough to pass on every one of the 4 paper rolls (worst case = carbon
+// desk 4.67:1; receipt stock 5.19:1). Still a clear step lighter than ink.
+const FAINT       = "#726A5F";
 
 // holo-foil ramp — shared across every theme; only holoShift (a hue offset) rotates.
 const HOLO_1 = "#8AD7FF"; // cyan

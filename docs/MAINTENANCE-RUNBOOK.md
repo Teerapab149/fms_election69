@@ -32,12 +32,29 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
    จัด Sections หน้า Home (เปิด/ปิด/ลำดับ), สลับ variant ของ element (คลัง 47 ชนิด).
 4. **โหมดระบบ + แสดงผล + Google Form** — แท็บ **"ตั้งค่าระบบ"**: `AUTO` (ใช้เวลาจาก electionConfig) /
    `MANUAL_OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
-5. **รีเซ็ตเริ่มปีใหม่** — แท็บ **"ตั้งค่าระบบ"**: ปุ่ม **"ล้างคะแนนโหวตทั้งหมด"** + **"ล้างพรรคและสมาชิกทั้งหมด"**.
-   ⚠️ **สำรอง DB ก่อนเสมอ** (ดู §5). (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
+5. **รีเซ็ตเริ่มปีใหม่** — **ทำที่ฐานข้อมูล ไม่ใช่หน้า admin** (ถอดปุ่มออก 2026-07-28):
+   ```bash
+   sh scripts/backup.sh                                    # สำรองก่อนเสมอ
+   psql "<connection string ของ fms_migrate>" -f scripts/sql/annual-reset.sql
+   npm run preflight                                       # ยืนยันว่าเป็นศูนย์จริง
+   ```
+   เหตุผลที่ไม่มีปุ่ม: role `fms_app` ที่เว็บใช้ **ไม่มีสิทธิ์ DELETE บน `Ballot`** โดยตั้งใจ
+   (`scripts/sql/ballot-grants.sql`) ปุ่มจึงทำงานได้แค่บน dev และจะพังบน production
+   ผลพลอยได้: ไม่มี API เส้นไหนลบบัตรได้ ต่อให้ session แอดมินหลุดก็ล้างผลไม่ได้.
+   (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
 6. ✅ **วันเวลาเลือกตั้ง (เปิด/ปิดหีบ/เปิดตัวผู้สมัคร)** — **ทำใน admin ได้แล้ว (2026-06-09)**:
    แท็บ **"ตั้งค่าทั่วไป" → กลุ่ม "ช่วงเวลาเลือกตั้ง"** มี date-time picker 3 ช่อง. ใช้เฉพาะโหมด `AUTO`.
    **ปล่อยว่าง = ใช้ค่า default ในโค้ด** (`src/utils/electionConfig.js`, ยังเป็น fallback กันพลาด)
    → ไม่ต้องแก้โค้ด/redeploy เพื่อเปลี่ยนวันอีกแล้ว.
+7. **ส่งมอบสิทธิ์แอดมินให้กรรมการชุดใหม่** — ต้องรันบนเซิร์ฟเวอร์ (ไม่มีปุ่มในหน้า admin โดยตั้งใจ):
+   ```bash
+   node scripts/admin.js --list                   # ชุดเก่ามีใครบ้าง
+   node scripts/admin.js --revoke <รหัส นศ. เดิม>  # ทีละคน จนหมดชุดเก่า
+   node scripts/admin.js --grant  <รหัส นศ. ใหม่>  # ทีละคน
+   node scripts/admin.js --rotate-password         # รหัสกลางใหม่ แจกเฉพาะชุดใหม่
+   ```
+   ⚠️ **ทำทุกครั้งที่ปิดหีบ/เปลี่ยนชุดกรรมการ** — คนที่พ้นวาระยังจำรหัสกลางเดิมได้ ต้องตัดทั้ง
+   สิทธิ์และรหัส (ดู §10). แอดมินที่เป็นนักศึกษายังลงคะแนนด้วยบัญชีตัวเองได้ตามปกติ
 
 > เลขพรรคพิเศษ: `number = 0` → งดออกเสียง, `number = -1` → ไม่รับรอง (ใช้ตอนมีพรรคเดียว), `> 0` → พรรคจริง.
 > ปีผู้มีสิทธิ์ที่ valid: `ปี 1`–`ปี 4` เท่านั้น.
@@ -61,7 +78,8 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 (ระบบกันทำกลางคัน). คะแนนรวมอยู่ที่ `Candidate.score` (atomic increment ตอนโหวต) = บันทึกสุดท้ายอยู่แล้ว.
 
 **C. ตั้งปีใหม่ (admin UI):** ตามข้อ 1–6 ด้านบน — ตั้งชื่อ/ปี/วันเวลา, `systemMode=AUTO`, seed พรรคจริง,
-ลบพรรคทดสอบ, **"ล้างคะแนนโหวตทั้งหมด"** (RESET_VOTES), `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่.
+ลบพรรคทดสอบ, `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่ · ส่วนการล้างคะแนน/บัตร
+ทำที่ฐานข้อมูลด้วย `scripts/sql/annual-reset.sql` (ไม่มีปุ่มในหน้า admin แล้ว — ดูข้อ 5).
 
 **D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```
@@ -85,8 +103,8 @@ DATABASE_URL              # PostgreSQL connection string
 NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา)
 NEXT_PUBLIC_BASE_PATH     # subpath ตอน deploy (ค่า: /fms-ovs)
 ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (auth แอดมิน — P0-1)
-ADMIN_PASSWORD_AUTH_EXTRA # bootstrap password แอดมิน (ครั้งแรก) — ดู /api/admin/login
-ADMIN_STUDENT_IDS         # รหัส นศ. ที่เป็นแอดมิน (คั่นด้วย ,) — ดู §10
+                          # ⚠️ รหัสผ่านแอดมิน "ไม่ได้" อยู่ใน env — อยู่ใน DB เป็น bcrypt hash
+                          #    ตั้ง/เปลี่ยนด้วย  node scripts/admin.js --rotate-password  (ดู §10)
 ELECTION_BALLOT_PUBLIC_KEY # v2-SEC: public key เข้ารหัสบัตร (PEM, \n-escaped) — ดู §11 + DEPLOY-CHECKLIST
 BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain ของบัตร — ดู §11 + DEPLOY-CHECKLIST
 ```
@@ -97,8 +115,11 @@ BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain �
 > ⚠️ **เลิกใช้แล้ว (P0-1, 2026-06-10):** `ADMIN_PRIVATE_KEY` / `ADMIN_AUTH_SECRET` /
 > `NEXT_PUBLIC_ADMIN_PUBLIC_KEY` / `NEXT_PUBLIC_ADMIN_AUTH_SECRET` — ระบบ admin auth เก่า
 > ฝัง secret ใน client bundle (ใครก็ปลอม token ได้) จึงถูกถอดออก. ลบตัวแปรพวกนี้ทิ้งได้.
-> **ต้อง ROTATE** `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA` ใหม่ (ของเก่าถือว่ารั่ว)
-> แล้วตั้ง admin user `passwordHash=null` เพื่อให้ bootstrap password ใหม่มีผล.
+> **ต้อง ROTATE `ADMIN_JWT_SECRET`** ใหม่ (ของเก่าถือว่ารั่ว).
+>
+> ⚠️ **เลิกใช้แล้ว (2026-07-28):** `ADMIN_PASSWORD_AUTH_EXTRA` (bootstrap `<email>+<secret>`)
+> และ `ADMIN_STUDENT_IDS` (allowlist ตอน SSO) — โค้ดไม่อ่านทั้งคู่แล้ว ลบทิ้งได้.
+> แทนที่ด้วย: สิทธิ์ = `User.isAdmin` ที่ตั้งด้วย `scripts/admin.js` + รหัสกลางใน DB (§10).
 
 ---
 
@@ -219,7 +240,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 |---|---|---|
 | **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
-| **admin เข้าไม่ได้** | `ADMIN_JWT_SECRET` เปลี่ยน/หาย หรือลืมรหัส bootstrap | ตรวจ `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA`; ถ้าจะรีเซ็ตรหัส ให้เซ็ต `passwordHash=null` ของ user admin ใน DB แล้ว login ด้วย bootstrap password ใหม่ (ดู §2) |
+| **admin เข้าไม่ได้** | ลืมรหัสกลาง · ไม่ได้ถูก `--grant` · `ADMIN_JWT_SECRET` เปลี่ยน/หาย | `node scripts/admin.js --list` ก่อน (บอกทั้งรายชื่อและว่ารหัสกลางตั้งหรือยัง) · ลืมรหัส → `--rotate-password` ออกใหม่ แสดงครั้งเดียว บอกกรรมการทุกคน · ไม่มีชื่อในรายการ → `--grant <รหัส นศ.>` · ยังไม่ได้ → ตรวจ `ADMIN_JWT_SECRET` · ทุกคนล็อกอินไม่ได้พร้อมกันตอนวันจริง → `--break-glass` (§10) |
 | **ลิงก์/รูปพังหลัง deploy** | path ไม่ผ่าน `getPath()` หรือ `NEXT_PUBLIC_BASE_PATH` ผิด | ตั้ง base path = `/fms-ovs`; หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
@@ -270,27 +291,52 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 ---
 
-## 10. ใครได้สิทธิ์ admin (กฎการให้สิทธิ์ — ตั้งใจไว้แบบนี้)
+## 10. ใครได้สิทธิ์ admin (แก้ใหม่ 2026-07-28 — อ่านทั้งข้อก่อนแตะอะไร)
 
-โค้ดอยู่ที่ `src/lib/auth.js` (jwt callback) + ตรวจสิทธิ์ที่ `src/lib/auth/adminCheck.js`.
-**มี 3 ทางที่ทำให้ผู้ใช้ได้สิทธิ์ admin** (ทางใดทางหนึ่งก็พอ):
+**เข้าแอดมินต้องมีครบสองอย่าง** ขาดอย่างใดอย่างหนึ่งเข้าไม่ได้:
 
-| ทาง | เงื่อนไข | ได้ระดับ |
+| | คืออะไร | ใครแก้ได้ |
 |---|---|---|
-| **1. SSO group `staff`** | บัญชี PSU อยู่ในกลุ่ม `staff` (กลุ่มไหนก็ได้ใน `groups` ไม่จำเป็นต้องตัวแรก) | `role=ADMIN` → admin เต็ม |
-| **2. SSO group `faculty`** | บัญชี PSU อยู่ในกลุ่ม `faculty` | `role=STAFF` → นับเป็น admin (ผ่าน `adminCheck`) |
-| **3. รหัส นศ. ใน `ADMIN_STUDENT_IDS`** | studentId ตรงกับค่าใน env (คั่นด้วย `,`) | `isAdmin=true` → admin เต็ม (role ยังเป็น student) |
+| **ตัวตน** | แถวใน `User` ที่ `isAdmin=true` — พิมพ์รหัส นศ. ตัวเองตอนล็อกอิน | `scripts/admin.js --grant/--revoke` เท่านั้น |
+| **ความลับ** | "รหัสกลาง" ตัวเดียวที่กรรมการใช้ร่วมกัน เก็บเป็น bcrypt hash แถวเดียวใน `SystemConfig.adminPasswordHash` | `scripts/admin.js --rotate-password` |
 
-**กฎที่ตั้งใจ:** บัญชี PSU ที่ **ไม่ได้** อยู่กลุ่ม `staff`/`faculty` และ **ไม่ได้** อยู่ใน
-`ADMIN_STUDENT_IDS` → ได้แค่ `role=student` (โหวตได้ ไม่มีสิทธิ์ admin).
-ดังนั้น **ความปลอดภัยของ admin ขึ้นกับว่าใครคุมสมาชิกกลุ่ม `staff`/`faculty` ใน PSU SSO** —
-กลุ่มนี้ต้องเป็นกลุ่มเล็ก/คณะคุมเอง. ถ้ากลุ่มกว้างขึ้น (เช่น PSU เปลี่ยนนิยาม `staff` =
-พนักงานทุกคน) ให้ย้ายไปใช้ allowlist แทน: เพิ่ม `STAFF_STUDENT_IDS` (โครงสร้างเดียวกับ
-`ADMIN_STUDENT_IDS`) แล้วตัด `groups.includes("faculty"/"staff")` ออกจาก `auth.js`.
+```bash
+node scripts/admin.js --list                 # ใครเป็นแอดมิน + รหัสกลางตั้งหรือยัง
+node scripts/admin.js --grant 6610510149     # ให้สิทธิ์ (ต้องมีแถวใน DB อยู่ก่อน)
+node scripts/admin.js --revoke 6610510149    # ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
+node scripts/admin.js --rotate-password      # ออกรหัสกลางใหม่ แสดงครั้งเดียว
+node scripts/admin.js --break-glass          # บัญชีสำรองที่มีรหัสของตัวเอง
+```
 
-**หมายเหตุ (แก้ 2026-06-12):** เดิมโค้ดดูแค่ `groups[0]` (กลุ่มแรกเท่านั้น) → ถ้า IdP
-ส่งลำดับกลุ่มไม่ตรง admin จริงอาจตกเป็น student เงียบ ๆ. แก้ให้สแกนทั้ง array แล้ว.
-ถ้าจะตั้ง admin **โดยไม่ผ่านกลุ่ม SSO** ให้ใช้ทาง 3 (`ADMIN_STUDENT_IDS`) — ไม่ต้องแตะกลุ่ม.
+**สิ่งที่เปลี่ยนไปจากเดิม และเหตุผล**
+
+- **SSO ไม่ให้สิทธิ์แอดมินอีกแล้ว** เดิมกลุ่ม `staff` → `role=ADMIN` และกลุ่ม `faculty` →
+  `role=STAFF` ซึ่ง `adminCheck` รับทั้งคู่ **โดยไม่ต้องใช้รหัสผ่าน** และ `middleware.js`
+  จับแค่ `/admin/:path*` ไม่ครอบ `/api/admin/*` เท่ากับใครที่ PSU ใส่ไว้ในกลุ่ม `staff`
+  ยิง API แอดมินได้ตรง ๆ จากเบราว์เซอร์ · ตอนนี้ `role` เหลือเป็นแค่ป้ายบอกว่ามาจากกลุ่มไหน
+  ไม่ให้อำนาจอะไร — ห้ามเอา `role === "ADMIN"` กลับมาเป็นเงื่อนไขตรวจสิทธิ์
+- **`ADMIN_STUDENT_IDS` เลิกใช้** พร้อมกับ allowlist ที่ hardcode รหัส นศ. สองคนไว้ในโค้ด
+  ถ้ายังตั้ง env ตัวนี้อยู่ก็ไม่มีผลอะไร ลบทิ้งได้
+- **`ADMIN_PASSWORD_AUTH_EXTRA` เลิกใช้** ทางเดิมรับรหัสรูปแบบ `<email>+<secret>` และตั้ง
+  hash ให้บัญชีที่ยังไม่มีอัตโนมัติ — มองจากข้างนอกไม่ออกทั้งสองข้อ (ล็อกเจ้าของออกจาก
+  ระบบมาแล้วหนึ่งครั้ง) และมันเปิดให้ทุกแถวที่ `isAdmin=true` แต่ไม่มี hash ซึ่งรวมแถวที่ SSO
+  เคยตั้งให้เอง · ลบ env ตัวนี้ทิ้งได้เลย
+- **ถอดสิทธิ์แล้วมีผลทันที** `requireAdmin` อ่าน `isAdmin` จาก DB ใหม่ทุก request ไม่ได้เชื่อ
+  ค่าที่ฝังอยู่ใน token — คนที่เพิ่งโดน `--revoke` จะได้ 403 และ cookie ถูกล้างในคำขอถัดไป
+  ไม่ต้องรอ token หมดอายุ 2 ชั่วโมง
+
+**สิ่งที่ยอมรับร่วมกัน:** รหัสกลางที่กรรมการรู้ทั้งชุด แปลว่าคนที่พ้นวาระยังจำรหัสได้
+กันด้วยขั้นตอน ไม่ใช่โค้ด — **ปิดหีบเสร็จให้ `--revoke` ทุกคนแล้ว `--rotate-password`**
+(อยู่ในเช็คลิสต์ §1 แล้ว) · รหัสกลางอย่างเดียวเปิดอะไรไม่ได้ ต้องมีรหัส นศ. ที่ถูก grant ด้วย
+
+**บัญชีสำรอง (`--break-glass`)** มีรหัสของตัวเองแยกจากรหัสกลาง ไว้ใช้ตอน SSO ล่มหรือรหัส
+กลางหาย · บัญชีนี้ตั้งใจให้ `year=null` ด่านตรวจสิทธิ์ ปี 1-4 ใน `/api/vote` เลยปฏิเสธ
+ลงคะแนนไม่ได้ · ส่วนแอดมินที่เป็นนักศึกษายังใช้สิทธิ์เลือกตั้งด้วยบัญชีตัวเองได้ตามปกติ
+· รหัสประจำบัญชีไม่ควรมีอยู่บนแถวนักศึกษา ถ้า `--list` ขึ้นว่า "มีรหัสของตัวเอง"
+ให้ล้างด้วย `--clear-personal` (ของเก่าจาก seed ซึ่งรหัสตัวจริงเคยอยู่ใน git สาธารณะ)
+
+**หมายเหตุ (แก้ 2026-06-12):** เดิมโค้ดดูแค่ `groups[0]` (กลุ่มแรกเท่านั้น) → แก้ให้สแกน
+ทั้ง array แล้ว ตอนนี้ `roleFromSsoGroups` ยังสแกนทั้ง array เหมือนเดิม แต่ผลลัพธ์เป็นแค่ป้าย
 
 ---
 
@@ -307,7 +353,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 ```
 node scripts/generate-election-keys.js    # พิมพ์ keypair + chain secret ออก stdout เท่านั้น (ไม่เขียนดิสก์)
 ```
-- **private key** → พิมพ์กระดาษ แบ่งเก็บ (เจ้าหน้าที่ผู้ดูแลระบบ + อจ.ที่ปรึกษา) **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo**
+- **private key** → ไฟล์เข้ารหัสจาก `generate-election-keys.js --out` เก็บ 2 ที่ที่คณะคุมเอง (จะแยกไฟล์กับรหัสผ่านให้คนละคนก็ได้) **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo/ในชุดสำรองเดียวกับฐานข้อมูล**
 - **public key** → env `ELECTION_BALLOT_PUBLIC_KEY` · **chain secret** → env `BALLOT_CHAIN_SECRET` + สำเนานอกเครื่อง
 
 **ระหว่าง/หลังเลือกตั้ง:**

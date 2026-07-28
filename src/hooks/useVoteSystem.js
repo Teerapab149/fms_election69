@@ -54,14 +54,20 @@ export function useVoteSystem() {
       const statusData = await fetchVoteStatus({ force: true });
       setIsVoted(statusData.isVoted);
 
-      // 🛑 Strict Redirect if System Closed
+      // router.replace, not window.location.href. These are GATES — the voter
+      // never chose to come here — so they must not leave a back-stack entry, and
+      // a hard nav costs a full document load plus a fresh /api/auth/session round
+      // trip before the destination can even decide what to render. Chained (vote
+      // gate -> success gate) that is two blank loading screens for something the
+      // app already knows. Every consumer of the vote status now forces its own
+      // read, so nothing here depends on the reload to refresh state.
       if (statusData.isSystemOpen === false) {
-        window.location.href = getPath("/closed");
+        router.replace("/closed");
         return;
       }
 
       if (statusData.isVoted) {
-        window.location.href = getPath("/success");
+        router.replace("/success");
         return;
       }
 

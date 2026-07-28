@@ -181,8 +181,8 @@ export default function StudioDarkHome({
         <div className="sd-scenebar">
           <div className="sd-scenebar__crumbs">
             <span className="num">01</span><span className="sep">/</span>
-            <span className="here">Index</span><span className="sep">·</span>
-            <span>หน้าหลัก</span>
+            <span className="here">Home</span><span className="sep">·</span>
+            <span className="sd-thai">หน้าหลัก</span>
           </div>
           <div className="sd-scenebar__right">
             <span className={statusLabel.live ? "live" : ""}>{statusLabel.live && <span className="sd-dot" />}{statusLabel.txt}</span>
@@ -209,7 +209,7 @@ export default function StudioDarkHome({
                         / year) so the long Thai string never wraps mid-word */}
                     <span className="sd-home__deck-line">{deckText}</span>
                     {orgName && <span className="sd-home__deck-line">{orgName}</span>}
-                    {academicYear && <span className="sd-home__deck-year">ประจำปีการศึกษา {academicYear}</span>}
+                    {academicYear && <span className="sd-home__deck-year"><span className="sd-thai">ประจำปีการศึกษา {academicYear}</span></span>}
                   </p>
                 </Wrap>
                 <div className="sd-home__cta">
@@ -232,20 +232,20 @@ export default function StudioDarkHome({
               <div className="sd-home__numbers">
                 <div className="sd-num-row">
                   <div>
-                    <div className="sd-num-lbl">VOTED · ใช้สิทธิ์แล้ว</div>
+                    <div className="sd-num-lbl"><span className="sd-nw">VOTED</span> · <span className="sd-thai">ใช้สิทธิ์แล้ว</span></div>
                     <div className="sd-num-val"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div>
                   </div>
                   <div className="sd-num-bar"><div className="sd-num-bar-fill" style={{ width: `${Math.max(Number(pct), 0.5)}%` }} /></div>
                 </div>
                 <div className="sd-num-row">
                   <div>
-                    <div className="sd-num-lbl">PARTIES · พรรคที่ลงสมัคร</div>
+                    <div className="sd-num-lbl"><span className="sd-nw">PARTIES</span> · <span className="sd-thai">พรรคที่ลงสมัคร</span></div>
                     <div className="sd-num-val">{partyCount}</div>
                   </div>
                 </div>
                 <div className="sd-num-row">
                   <div>
-                    <div className="sd-num-lbl">TURNOUT · ความคืบหน้า</div>
+                    <div className="sd-num-lbl"><span className="sd-nw">TURNOUT</span> · <span className="sd-thai">ความคืบหน้า</span></div>
                     <div className="sd-num-val">{pct}<small>%</small></div>
                   </div>
                 </div>
@@ -291,6 +291,12 @@ export default function StudioDarkHome({
         }
         .sd-root * { box-sizing:border-box; }
         .sd-root a { text-decoration:none; color:inherit; }
+
+        /* Thai run reset for tracked/uppercase mono kickers (sd-T1, mirrors
+           StudioDarkShell.js .sd-thai / .sd-nw — this page doesn't mount the
+           Shell, so it needs its own copy; see that file for the full note). */
+        .sd-thai { font-family:var(--font-anuphan),'Anuphan',system-ui,sans-serif; letter-spacing:.04em; white-space:nowrap; }
+        .sd-nw { white-space:nowrap; }
 
         /* main — offset for the fixed 240px rail */
         .sd-main { margin-left:240px; min-height:100vh; display:flex; flex-direction:column; min-width:0; }
@@ -372,7 +378,15 @@ export default function StudioDarkHome({
         /* ── RESPONSIVE ── */
         @media (max-width:1100px) {
           .sd-main { margin-left:0; }
-          .sd-scenebar { padding:16px 24px; }
+          /* un-pin below 1100px: this is exactly where the rail collapses into
+             .sd-topbar (StudioDarkRail.js:311), which is ALSO sticky top:0 and
+             sits at z-index 40 against this bar's 30. Both pinned at top:0 meant
+             the topbar (h=111) swallowed this bar (h=50) whole the moment the
+             page moved — measured overlap 50/50px at 1024/768/412, with all
+             seven of its children ("01 / Home · หน้าหลัก", "POLLS OPEN", the
+             clock) reading 17px of vertical overlap and failing elementFromPoint.
+             Static lets it scroll away in the open instead of hiding. */
+          .sd-scenebar { padding:16px 24px; position:static; }
           .sd-home__scene { grid-template-columns:1fr; }
           .sd-home__left { border-right:0; border-bottom:1px solid var(--sd-line); min-height:0; padding:48px 24px; gap:32px; }
           .sd-home__right { padding:48px 24px; }

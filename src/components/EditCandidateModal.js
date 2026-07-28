@@ -518,16 +518,16 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน <span className="text-red-500">*</span></label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
                                     <textarea
                                         type="text"
                                         name="slogan"
                                         value={formData.slogan}
                                         onChange={handleChange}
                                         rows="4"
-                                        required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่างได้ — ระบบจะจัดหน้าให้พอดีเอง</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">สีประจำพรรค <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
@@ -558,7 +558,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             </button>
                                         ) : null}
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติตามลำดับพรรค (พรรค 1 ฟ้า · 2 แดง · 3 เขียว · …) · สีที่เลือกจะถูกปรับให้เข้ากับโทนเว็บโดยอัตโนมัติ</p>
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติตามลำดับพรรค · <b>ระบบจะใช้เฉพาะ “เฉดสี” ที่เลือก แล้วปรับความสว่างให้เข้าโทนเว็บเสมอ</b> (เลือกน้ำเงินกรมท่า จะได้ฟ้าพาสเทลเฉดเดียวกัน) เพราะสีนี้ถูกใช้เป็นพื้นหลังของตัวหนังสือและเป็นแท่งกราฟบนพื้นครีม ถ้าเข้มหรือจางเกินไปจะอ่านไม่ออก · ดูสีจริงที่จะใช้ได้ด้านล่าง</p>
 
                                     {/* Live preview — the full colour SET the site derives from this one pick */}
                                     {(() => {
@@ -578,7 +578,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                                         ชุดสีที่ระบบจะใช้กับพรรคนี้
                                                     </span>
                                                     <span className="text-[10px] text-gray-400">
-                                                        {formData.color ? 'จากสีที่เลือก' : 'อัตโนมัติ'}
+                                                        {formData.color ? 'เฉดที่เลือก · โทนของระบบ' : 'อัตโนมัติตามลำดับพรรค'}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-stretch gap-2">

@@ -10,7 +10,7 @@
 // The embargo logic is ported verbatim — hidden results must never leak a score
 // or ordering. Pure presentation; results/page.js owns access + data.
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import VerdureShell from "./VerdureShell";
@@ -20,9 +20,54 @@ const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
 const LOCK_WIDTHS = [56, 44, 28, 36, 22];
 
+// ── reveal ceremony: count-up (vd-B1B) ───────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server
+// HTML + no-JS + pre-hydration paint all show the real number. Only after
+// hydration does the effect restart the number from 0 and ease it up (~1s).
+// prefers-reduced-motion → snap to final, no animation. Used ONLY inside
+// revealed branches — embargoed numbers stay the literal "??.?%" string.
+function useCountUp(target, duration = 1000) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+// row percent (revealed only) — counts 0→pct after hydration, final value otherwise
+function RevealPct({ value }) {
+  const v = useCountUp(value);
+  return <>{v.toFixed(1)}%</>;
+}
+
+// winner-disc score line (revealed only) — votes + share count up together
+function RevealScoreLine({ score, pct, suffix = "" }) {
+  const s = useCountUp(score);
+  const p = useCountUp(pct);
+  // segments are each nowrap so the ONLY break point is the "·" separator (two
+  // centred lines if the disc is too narrow — never an orphaned Thai word); the
+  // Thai runs get the Plex reset so "เสียง"/"ของคะแนน" render with correct marks
+  return (
+    <>
+      <span className="vd-nw">{fmt(Math.round(s))} <span className="vd-thai">เสียง</span></span>
+      {" · "}
+      <span className="vd-nw">{p.toFixed(1)}%{suffix ? <> <span className="vd-thai">{suffix.trim()}</span></> : null}</span>
+    </>
+  );
+}
+
 export default function VerdureResults({
   candidates = [], totalVotes = 0, demographics = {}, finalStatus = "WAITING",
-  isRevealed = false, isNotStarted = false, countdownText = "", onSelectParty = () => {}, editorMode = false,
+  isRevealed = false, isNotStarted = false, countdownText = "", editorMode = false,
 }) {
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
@@ -44,13 +89,26 @@ export default function VerdureResults({
   const winner = revealed && !singleParty && topScore > 0 ? parties.find((p) => (p.score || 0) === topScore) : null;
   const approveWins = revealed && singleParty ? (parties[0]?.score || 0) >= (disapprove?.score || 0) : null;
 
+  // Winner label + a LENGTH-TIERED type size for it. Party names are admin-typed and
+  // unbounded — the live 2569 roster has a 43-character one — so a single fixed size
+  // cannot serve both "พรรคก้าวหน้า" and "พรรคพลังนักศึกษาวิทยาการจัดการเพื่อการพัฒนา"
+  // inside a circle. Derived from the string (no measurement, no effect) so SSR, the
+  // pre-hydration paint and the client all agree, and names up to 27 characters keep
+  // the ORIGINAL clamp untouched — the disc is byte-identical for every name that
+  // already fit. Longer names step down one/two notches so the whole label still lands
+  // inside the inner dashed ring.
+  const winnerLabel = singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—");
+  const winnerNameSize = winnerLabel.length >= 40 ? "clamp(23px,2.6vw,33px)"
+    : winnerLabel.length >= 28 ? "clamp(26px,3.0vw,38px)"
+    : null;
+
   const raceRows = useMemo(() => { const r = [...candidates]; if (revealed) r.sort((a, b) => (b.score || 0) - (a.score || 0)); return r; }, [candidates, revealed]);
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const demoGroups = [
-    { title: "BY YEAR · ชั้นปี", rows: clean(demographics?.byYear) },
-    { title: "BY GENDER · เพศ", rows: clean(demographics?.byGender) },
-    { title: "BY MAJOR · สาขา", rows: clean(demographics?.byMajor) },
+    { en: "BY YEAR", th: "ชั้นปี", rows: clean(demographics?.byYear) },
+    { en: "BY GENDER", th: "เพศ", rows: clean(demographics?.byGender) },
+    { en: "BY MAJOR", th: "สาขา", rows: clean(demographics?.byMajor) },
   ].filter((g) => g.rows.length > 0);
 
   const statusTxt = isNotStarted ? "POLLS NOT OPEN" : ended ? (revealed ? "FINAL" : "COUNTING") : "LIVE";
@@ -63,7 +121,11 @@ export default function VerdureResults({
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">
-          <div className="vd-returns__kicker">NO. 05 · {revealed ? "FINAL RESULT · ผลอย่างเป็นทางการ" : "LIVE RETURNS · กำลังนับคะแนน"}</div>
+          <div className="vd-returns__kicker">
+            <span className="vd-nw">NO. 05</span> · {revealed
+              ? <><span className="vd-nw">FINAL RESULT</span> · <span className="vd-thai">ผลอย่างเป็นทางการ</span></>
+              : <><span className="vd-nw">LIVE RETURNS</span> · <span className="vd-thai">กำลังนับคะแนน</span></>}
+          </div>
           <h1 className="vd-returns__title">The <em>Returns.</em></h1>
           <div className="vd-returns__accent" aria-hidden />
         </div>
@@ -72,14 +134,16 @@ export default function VerdureResults({
           <div className="vd-rdisc">
             {revealed ? (
               <>
-                <div className="vd-rdisc__kicker">{singleParty ? "OFFICIAL VERDICT · ผลรับรอง" : "THE WINNER · ผู้ชนะ"}</div>
-                <div className="vd-rdisc__name">
-                  {singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—")}
+                <div className="vd-rdisc__kicker">{singleParty
+                  ? <><span className="vd-nw">OFFICIAL VERDICT</span> · <span className="vd-thai">ผลรับรอง</span></>
+                  : <><span className="vd-nw">THE WINNER</span> · <span className="vd-thai">ผู้ชนะ</span></>}</div>
+                <div className="vd-rdisc__name" style={winnerNameSize ? { fontSize: winnerNameSize } : undefined}>
+                  {winnerLabel}
                 </div>
-                <div className="vd-rdisc__pct">
+                <div className="vd-rdisc__pct vd-tabular">
                   {singleParty
-                    ? <>{fmt((approveWins ? parties[0] : disapprove)?.score || 0)} เสียง · {pctOf(approveWins ? parties[0] : disapprove).toFixed(1)}%</>
-                    : (winner ? <>{fmt(winner.score || 0)} เสียง · {pctOf(winner).toFixed(1)}% ของคะแนน</> : "")}
+                    ? <RevealScoreLine score={(approveWins ? parties[0] : disapprove)?.score || 0} pct={pctOf(approveWins ? parties[0] : disapprove)} />
+                    : (winner ? <RevealScoreLine score={winner.score || 0} pct={pctOf(winner)} suffix=" ของคะแนน" /> : "")}
                 </div>
               </>
             ) : (
@@ -94,15 +158,15 @@ export default function VerdureResults({
         </div>
 
         <div className="vd-rstats">
-          <div className="vd-rstat"><div className="lbl">TOTAL VOTES · คะแนนรวม</div><div className="val vd-tabular"><em>{fmt(totalVotes)}</em></div></div>
-          <div className="vd-rstat"><div className="lbl">TURNOUT · สัดส่วน</div><div className="val vd-tabular">{turnout.toFixed(2)}<small>%</small></div></div>
-          <div className="vd-rstat"><div className="lbl">ELIGIBLE · ผู้มีสิทธิ์</div><div className="val vd-tabular">{fmt(totalEligible)}<small>คน</small></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TOTAL VOTES</span> · <span className="vd-thai">คะแนนรวม</span></div><div className="val vd-tabular"><em>{fmt(totalVotes)}</em></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{turnout.toFixed(2)}<small>%</small></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">ELIGIBLE</span> · <span className="vd-thai">ผู้มีสิทธิ์</span></div><div className="val vd-tabular">{fmt(totalEligible)}<small>คน</small></div></div>
         </div>
 
         <div className="vd-race">
           <div className="vd-race__head">
             <div className="vd-race__lead">
-              <span className="vd-race__kicker">{revealed ? "Official tally" : "Embargoed"} · {singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span>
+              <span className="vd-race__kicker"><span className="vd-nw">{revealed ? "Official tally" : "Embargoed"}</span> · <span className="vd-thai">{singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span></span>
               <h3>Vote distribution <em>{singleParty ? "yes / no." : "by party."}</em></h3>
             </div>
             <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ OFFICIAL" : "§ EMBARGOED"}</span>
@@ -113,12 +177,11 @@ export default function VerdureResults({
                 const isWin = revealed && (winner ? c === winner : (singleParty && approveWins != null && (approveWins ? c === parties[0] : c === disapprove)));
                 const w = revealed ? Math.max(pctOf(c), c.score > 0 ? 2 : 0) : LOCK_WIDTHS[i % LOCK_WIDTHS.length];
                 return (
-                  <div className={`vd-race__row ${isWin ? "is-win" : ""}`} key={c.id || i}
-                    onClick={() => { if (revealed && parseInt(c.number) > 0) onSelectParty(c); }}
-                    style={revealed && parseInt(c.number) > 0 ? { cursor: "pointer" } : undefined}>
+                  <div className={`vd-race__row ${isWin ? "is-win" : ""}`} key={c.id || i}>
                     <div className="vd-race__name">{labelOf(c)}{isWin && <span className="vd-race__tag">WINNER</span>}<small>{subOf(c)}</small></div>
-                    <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={{ width: `${w}%` }} /></div>
-                    <div className="vd-race__pct">{revealed ? `${pctOf(c).toFixed(1)}%` : "??.?%"}</div>
+                    {/* stagger delay ONLY on revealed fills — embargoed placeholder bars keep the static LOCK_WIDTHS render, no animation */}
+                    <div className="vd-race__track"><div className={`vd-race__fill ${revealed ? "real" : ""}`} style={revealed ? { width: `${w}%`, animationDelay: `${i * 100}ms` } : { width: `${w}%` }} /></div>
+                    <div className="vd-race__pct vd-tabular">{revealed ? <RevealPct value={pctOf(c)} /> : "??.?%"}</div>
                   </div>
                 );
               })}
@@ -138,7 +201,7 @@ export default function VerdureResults({
           <div className="vd-demo">
             <div className="vd-race__head">
               <div className="vd-race__lead">
-                <span className="vd-race__kicker">Turnout · สถิติผู้ใช้สิทธิ์</span>
+                <span className="vd-race__kicker"><span className="vd-nw">Turnout</span> · <span className="vd-thai">สถิติผู้ใช้สิทธิ์</span></span>
                 <h3>Turnout <em>demographics.</em></h3>
               </div>
               <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ PARTICIPATION" : "§ EMBARGOED"}</span>
@@ -148,8 +211,8 @@ export default function VerdureResults({
                 {demoGroups.map((g) => {
                   const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
                   return (
-                    <div className="vd-demo__col" key={g.title}>
-                      <div className="vd-demo__title">{g.title}</div>
+                    <div className="vd-demo__col" key={g.en}>
+                      <div className="vd-demo__title"><span className="vd-nw">{g.en}</span> · <span className="vd-thai">{g.th}</span></div>
                       {g.rows.map((r, i) => (
                         <div className="vd-demo__row" key={i}>
                           <div className="vd-demo__name">{r.name}</div>
@@ -188,11 +251,24 @@ export default function VerdureResults({
         /* result seal — moderate size, content fits inside; clean centred stat row
            below it (no more scattered/tilted orbital cards) */
         .vd-stage { display:grid; place-items:center; margin:4px 0 0; }
-        .vd-rdisc { width:clamp(300px,40vw,430px); height:clamp(300px,40vw,430px); border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:0 13%; box-shadow:0 50px 70px -40px rgba(var(--moss-rgb),.5), inset 0 3px 12px rgba(var(--cream-rgb),.06); }
+        /* --rd is the ONE source of the disc diameter: width, height AND the side
+           padding all derive from it. The padding used to be \`0 13%\` — a percentage
+           padding resolves against the CONTAINING BLOCK's width, not the element's,
+           so on a 1280 desktop it became 13% of the ~1120px stage = ~146px per side
+           and left a 138px text column inside a 430px disc (a 12-char party name
+           broke into two lines; the real 43-char name broke into SEVEN and pushed
+           the kicker + score line off the moss circle onto the cream). Phones were
+           barely affected (13% of the 327px stage ≈ 42px ≈ the intended 39px), which
+           is why it never showed there. calc(var(--rd) * .13) is the geometry the
+           design always meant: 13% OF THE DISC. */
+        .vd-rdisc { --rd:clamp(300px,40vw,430px); width:var(--rd); height:var(--rd); border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; text-align:center; padding:0 calc(var(--rd) * .13); box-shadow:0 50px 70px -40px rgba(var(--moss-rgb),.5), inset 0 3px 12px rgba(var(--cream-rgb),.06); }
         .vd-rdisc::before { content:""; position:absolute; inset:14px; border:1px dashed rgba(var(--cream-rgb),.22); border-radius:50%; }
         .vd-rdisc::after { content:""; position:absolute; inset:-26px; border:1px dashed rgba(var(--terra-rgb),.4); border-radius:50%; }
         .vd-rdisc__kicker { font-family:var(--fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }
-        .vd-rdisc__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,3.6vw,50px); line-height:1.04; letter-spacing:-.02em; color:var(--cream); }
+        .vd-rdisc__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(30px,3.6vw,50px); line-height:1.04; letter-spacing:-.02em; color:var(--cream); text-wrap:balance; }
+        /* English-run nowrap partner to .vd-thai: keeps multi-word EN phrases
+           ("FINAL RESULT", "TOTAL VOTES") whole so a kicker can only break at "·" */
+        .vd-nw { white-space:nowrap; }
         .vd-rdisc__pct { font-family:var(--fm); font-size:12px; letter-spacing:.12em; color:var(--terra-soft); margin-top:16px; }
         .vd-rdisc__lock { width:54px; height:54px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; margin-bottom:20px; }
         .vd-rdisc__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(44px,6vw,84px); line-height:.92; letter-spacing:-.03em; color:var(--cream); margin:0; }
@@ -221,12 +297,29 @@ export default function VerdureResults({
         .vd-race__head h3 em { color:var(--terra); }
         .vd-race__bars { display:grid; gap:22px; padding-top:4px; }
         .vd-race__row { display:grid; grid-template-columns:260px 1fr 80px; gap:24px; align-items:center; }
+        /* reveal ceremony (vd-B1B): the winner row reads at a glance — gentle
+           terra-on-cream tint, negative margins so the 3-col grid stays aligned
+           with the untinted rows */
+        .vd-race__row.is-win { background:color-mix(in srgb, var(--terra) 9%, var(--cream-2)); border-radius:16px; padding:10px 14px; margin:-10px -14px; }
         .vd-race__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:20px; letter-spacing:-.005em; color:var(--moss); }
         .vd-race__name small { display:block; font-family:var(--fm); font-style:normal; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.7; margin-top:2px; }
-        .vd-race__tag { margin-left:10px; font-family:var(--fm); font-size:9px; letter-spacing:.14em; background:var(--terra); color:var(--cream); border-radius:999px; padding:3px 9px; vertical-align:middle; text-transform:uppercase; }
+        /* WINNER medallion-stamp — terra seal with an inner dashed cream ring
+           (the vd-rdisc dashed-ring motif at pill scale) + one-shot scale-settle
+           after the bars land. \`backwards\` holds the from-state during the
+           delay, so the stamp is visible at every moment (never opacity-hidden) */
+        .vd-race__tag { display:inline-block; margin-left:10px; font-family:var(--fm); font-size:9px; letter-spacing:.14em; background:var(--terra); color:var(--cream); border-radius:999px; padding:4px 10px; vertical-align:middle; text-transform:uppercase; border:1px dashed rgba(var(--cream-rgb),.6); box-shadow:0 0 0 2px var(--terra), 0 8px 16px -8px rgba(var(--terra-rgb),.6); animation:vdStampIn .5s cubic-bezier(.34,1.56,.64,1) .5s backwards; }
         .vd-race__track { height:10px; background:var(--cream-3); border:1px solid var(--rule); border-radius:999px; overflow:hidden; }
         .vd-race__fill { height:100%; background:var(--terra); opacity:.4; background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0) 0 6px, rgba(255,255,255,.18) 6px 7px); transition:width .6s ease-out; }
-        .vd-race__fill.real { opacity:1; }
+        /* revealed bars grow 0→final with a per-row stagger (animationDelay set
+           inline). Pure CSS keyframe: without JS the animation still ends at the
+           specified width, so the final bars are never gated behind hydration.
+           Scoped to .real ONLY — embargoed placeholder bars never animate. */
+        .vd-race__fill.real { opacity:1; animation:vdBarGrow .7s cubic-bezier(.22,1,.36,1) backwards; }
+        @keyframes vdBarGrow { from { width:0; } }
+        @keyframes vdStampIn { from { transform:scale(1.15); } }
+        @media (prefers-reduced-motion: reduce) {
+          .vd-race__fill.real, .vd-race__tag { animation:none; }
+        }
         .vd-race__pct { font-family:var(--fm); font-size:14px; color:var(--moss); opacity:.72; text-align:right; }
         /* veil covers exactly the bars wrapper (not a fixed offset) so it never
            overlaps the taller two-tier head, at any breakpoint */
@@ -239,7 +332,13 @@ export default function VerdureResults({
         .vd-demo__grid { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; }
         .vd-demo__title { font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--terra-2); margin-bottom:16px; }
         .vd-demo__row { display:grid; grid-template-columns:minmax(60px,auto) 1fr auto; gap:12px; align-items:center; margin-bottom:12px; }
-        .vd-demo__name { font-family:var(--ft); font-size:13px; color:var(--moss); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        /* the ellipsis needs overflow:hidden, which also clips VERTICALLY at the
+           padding box — and these names are admin/DB free text (สาขา), so a tone
+           mark over a Thai upper vowel gets shaved: measured needEm .019 at every
+           breakpoint (-.25px of ink). .07em = .019 + .05 cushion. Equal negative
+           margin so the margin box stays 19.5px and the centred grid row does not
+           move. Never padding-bottom here. */
+        .vd-demo__name { font-family:var(--ft); font-size:13px; color:var(--moss); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-top:.07em; margin-top:-.07em; }
         .vd-demo__track { height:7px; background:var(--cream-3); border:1px solid var(--rule); border-radius:999px; overflow:hidden; }
         .vd-demo__fill { height:100%; background:var(--terra); opacity:.65; }
         .vd-demo__val { font-family:var(--fm); font-size:12px; color:var(--moss); opacity:.72; }
@@ -254,6 +353,16 @@ export default function VerdureResults({
         }
         @media (max-width:640px) {
           .vd-rstats { grid-template-columns:1fr; }
+        }
+        /* phones — the two-tier section head stacks into a column so the big serif
+           headline gets the FULL width instead of being crowded by the "§" smallcaps.
+           The smallcaps floats to the TOP of the column, right-aligned on its own row
+           (order:-1) — robust for any label length ("§ OFFICIAL" .. "§ PARTICIPATION"),
+           no collision with the kicker or headline. Desktop (≥561px) is untouched. */
+        @media (max-width:560px) {
+          .vd-race__head { flex-direction:column; align-items:stretch; gap:0; }
+          .vd-race__head .vd-smallcaps { order:-1; align-self:flex-end; margin-bottom:14px; }
+          .vd-race__head h3 { font-size:24px; }
         }
       `}</style>
     </VerdureShell>

@@ -47,6 +47,7 @@
 import { useState, useEffect } from "react";
 import { getPath } from "../../utils/basePath";
 import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
+import { ReceiptTopBar } from "../home/ReceiptHome";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const TH_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -70,13 +71,21 @@ function formatVotedAt(votedAt) {
   if (!votedAt) return null;
   const d = new Date(votedAt);
   if (isNaN(d.getTime())) return null;
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mon = TH_MONTHS[d.getMonth()];
-  const yy = d.getFullYear() + 543; // Buddhist era
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-  return { date: `${dd} ${mon} ${yy}`, time: `${hh}:${mm}:${ss}` };
+  // ADM-2: election time is Asia/Bangkok, never the host clock. getDate()/getHours()
+  // read the viewer's timezone — identical on a Thai device, but an hour/day off for
+  // anyone voting abroad (and on a UTC server render), which is not something a
+  // receipt stamped "เวลาใช้สิทธิ์" may get wrong. Seconds are kept, so this formats
+  // its own parts instead of using formatThaiTime (minute precision).
+  const p = {};
+  for (const part of new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(d)) p[part.type] = part.value;
+  const dd = p.day;
+  const mon = TH_MONTHS[Number(p.month) - 1];
+  const yy = Number(p.year) + 543; // Buddhist era
+  return { date: `${dd} ${mon} ${yy}`, time: `${p.hour}:${p.minute}:${p.second}` };
 }
 
 export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false }) {
@@ -113,6 +122,14 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
   return (
     <div className={`fms-app rc-root rc-suc-root rc-desk${editorMode ? "" : " rc-printing"}`}>
       <ReceiptBaseStyles />
+
+      {/* The family's own chrome. Receipt carries rc-topbar on home, candidates, party,
+          single-party, vote, results and closed — success was the one page that dropped
+          it, which is why arriving here read as landing on a different site rather than
+          finishing a flow. The printer moment below is untouched; this only restores the
+          head of the desk. active="" so no nav stub is marked current (success is not a
+          destination in the nav). */}
+      <ReceiptTopBar editorMode={editorMode} active="" />
 
       {/* blind-emboss seals on the desk behind the receipt — faint, shared .rc-desk
           language (matches home/vote), pure decoration (aria-hidden) */}
@@ -272,7 +289,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span> · <span className="rc-th">การลงคะแนนของคุณเป็นความลับ</span> · barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
           </div>
 
-          <footer className="rc-suc-copy">© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>
+          <footer className="rc-suc-copy">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>
         </div>
       </div>
 
@@ -285,7 +302,88 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
            in via rc-desk so the printer moment rests on the SAME desk as home/vote
            (was a bespoke dot-grid + vignette). The machine/receipt/ephemera below are
            untouched. */
-        .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; padding:26px 18px 44px; }
+        /* clip not hidden — same reason as every other receipt root: hidden makes
+           overflow-y compute to auto and turns the root into a scroll container that
+           kills any sticky inside it. This page has no sticky today; kept uniform so the
+           next sticky added here works. xo=0 on every viewport. */
+        .rc-suc-root { --rc-stamp-red:#B91C1C; overflow-x:clip; padding:26px 18px 44px; }
+
+        /* ---- topbar "head of the desk" — the same skin every other receipt page wears
+           (ported from ReceiptResults; DOM comes from the shared <ReceiptTopBar>). The
+           negative margin cancels this root's own padding so the bar runs full-bleed
+           like it does elsewhere, instead of floating inset by 18/40px. Any change to
+           the root padding must be mirrored here. ---- */
+        .rc-suc-root .rc-topbar { position:sticky; top:0; z-index:40; margin:-26px -18px 22px;
+          background:color-mix(in srgb, var(--rc-desk) 96%, var(--rc-receipt)); }
+        .rc-suc-root .rc-topbar::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1.5px;
+          background:repeating-linear-gradient(90deg, var(--rc-stamp-line) 0 6px, transparent 6px 12px); }
+        .rc-suc-root .rc-topbar__in { max-width:1120px; margin:0 auto; padding:10px 20px;
+          display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        .rc-suc-root .rc-logo { position:relative; display:inline-flex; align-items:center; flex-shrink:0;
+          padding:6px 12px 6px 14px; background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+          box-shadow:1px 3px 8px -5px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        .rc-suc-root .rc-logo::before { content:""; position:absolute; left:-3px; top:8px; width:10px; height:18px;
+          border:2px solid var(--rc-faint); border-right:none; border-radius:6px 0 0 6px; background:transparent; transform:rotate(-4deg); }
+        .rc-suc-root .rc-logo__img { height:28px; width:auto; object-fit:contain; display:block; }
+        .rc-suc-root .rc-nav { display:none; gap:8px; margin-left:auto; align-items:center; }
+        .rc-suc-root .rc-nav__link { position:relative; display:inline-flex; align-items:center; min-height:40px;
+          font-family:var(--rc-fr); font-weight:600; font-size:12.5px; letter-spacing:.01em; color:var(--rc-ink2);
+          padding:0 13px 0 16px; background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+          transition:transform .15s ease, color .2s ease, background .2s ease, border-color .2s ease; }
+        .rc-suc-root .rc-nav__link::before { content:""; position:absolute; left:4px; top:7px; bottom:7px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 2px, transparent 2px 5px); }
+        .rc-suc-root .rc-nav__link:hover { transform:translateY(-1px); color:var(--rc-ink); border-color:var(--rc-accent); }
+        .rc-suc-root .rc-userwrap { position:relative; margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+        .rc-suc-root .rc-loginbtn { display:inline-flex; align-items:center; min-height:44px; font-family:var(--rc-fh);
+          font-weight:600; font-size:13px; color:var(--rc-on-accent); background:var(--rc-accent); border:none; cursor:pointer;
+          padding:9px 20px; border-radius:var(--rc-radius-button, 8px); transition:background .2s ease, transform .15s ease; }
+        .rc-suc-root .rc-loginbtn:hover { background:var(--rc-accent-deep); transform:translateY(-1px); }
+        .rc-suc-root .rc-loginbtn--skel { pointer-events:none; background:color-mix(in srgb, var(--rc-line) 70%, var(--rc-receipt)); }
+        .rc-suc-root .rc-skelbar { display:block; width:58px; height:12px; border-radius:3px;
+          background:color-mix(in srgb, var(--rc-ink2) 30%, var(--rc-receipt)); animation:rcSucPulse 1.3s ease-in-out infinite; }
+        @keyframes rcSucPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+        .rc-suc-root .rc-userchip { position:relative; }
+        .rc-suc-root .rc-userchip__btn { position:relative; display:inline-flex; align-items:center; gap:9px; min-height:44px;
+          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); padding:5px 14px 5px 5px; cursor:pointer;
+          font-family:inherit; clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+          transition:transform .15s ease, border-color .2s ease; }
+        .rc-suc-root .rc-userchip__btn::after { content:""; position:absolute; top:5px; right:12px; width:9px; height:9px;
+          border-radius:50%; background:var(--rc-desk);
+          box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--rc-faint) 62%, var(--rc-ink2)); }
+        .rc-suc-root .rc-userchip__btn:hover { border-color:var(--rc-accent); }
+        .rc-suc-root .rc-userchip__av { width:30px; height:30px; border-radius:50%; flex-shrink:0; display:grid; place-items:center;
+          background:var(--rc-accent); color:var(--rc-on-accent); font-family:var(--rc-fh); font-weight:700; font-size:14px; line-height:1; }
+        .rc-suc-root .rc-userchip__name { font-family:var(--rc-fh); font-weight:600; font-size:13px; color:var(--rc-ink);
+          max-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .rc-suc-root .rc-userchip__caret { color:var(--rc-ink2); font-size:11px; }
+        .rc-suc-root .rc-usermenu { position:absolute; top:calc(100% + 8px); right:0; width:220px; background:var(--rc-receipt);
+          border:1.5px solid var(--rc-stamp-line); border-radius:10px; overflow:hidden; z-index:50;
+          box-shadow:2px 20px 42px -20px color-mix(in srgb, var(--rc-ink) 22%, transparent); }
+        .rc-suc-root .rc-usermenu__head { padding:14px 16px; border-bottom:1px dotted var(--rc-line); }
+        .rc-suc-root .rc-usermenu__name { font-family:var(--rc-fh); font-weight:700; font-size:14px; color:var(--rc-ink);
+          white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .rc-suc-root .rc-usermenu__id { font-family:var(--rc-fm); font-size:10.5px; letter-spacing:.04em; color:var(--rc-ink2);
+          margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .rc-suc-root .rc-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
+          cursor:pointer; font-family:var(--rc-fh); font-weight:600; font-size:13px; color:var(--rc-accent-deep); }
+        .rc-suc-root .rc-usermenu__out:hover { background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); }
+        .rc-suc-root .rc-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
+          padding:0 11px; border-radius:8px; background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); cursor:pointer;
+          transition:transform .15s ease, border-color .2s ease; }
+        .rc-suc-root .rc-burger:hover { border-color:var(--rc-accent); }
+        .rc-suc-root .rc-burger span { display:block; height:2.5px; border-radius:2px; background:var(--rc-ink); }
+        .rc-suc-root .rc-sheet { flex:0 0 100%; display:flex; flex-direction:column; gap:6px; overflow:hidden; max-height:0; opacity:0;
+          transition:max-height .28s ease, opacity .28s ease, padding .28s ease; }
+        .rc-suc-root .rc-sheet.is-open { max-height:280px; opacity:1; padding:12px 0 4px; }
+        .rc-suc-root .rc-sheet__link { position:relative; display:flex; align-items:center; min-height:48px; padding:0 16px 0 20px;
+          font-family:var(--rc-fr); font-weight:600; font-size:14px; color:var(--rc-ink);
+          background:var(--rc-receipt); border:1px solid var(--rc-stamp-line);
+          clip-path:polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px); transition:border-color .2s ease; }
+        .rc-suc-root .rc-sheet__link::before { content:""; position:absolute; left:5px; top:9px; bottom:9px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-stamp-line) 0 2px, transparent 2px 5px); }
+        .rc-suc-root .rc-sheet__link:hover { border-color:var(--rc-accent); }
 
         /* MOBILE (default): the wrap is a single-column grid so the evaluate ACTIONS
            ride UP directly under the headline — above the printer stage — so the
@@ -355,8 +453,11 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         .rc-suc-root .rc-suc-led { position:absolute; top:14px; right:16px; width:8px; height:8px; border-radius:50%;
           background:var(--rc-holo-4); box-shadow:0 0 8px var(--rc-holo-4); animation:rcLed 2.4s ease-in-out infinite; }
         @keyframes rcLed { 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+        /* LIGHT text on the DARK printer body — mixed off the paper side, not off
+           --rc-faint (that token is tuned for ink-on-paper AA; using it here made the
+           brand plate 4.4:1 instead of 6.4:1). */
         .rc-suc-root .rc-suc-brand { font-family:var(--rc-fm); font-size:9px; letter-spacing:.22em;
-          color:color-mix(in srgb, var(--rc-faint) 78%, var(--rc-receipt)); text-align:center; }
+          color:color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-receipt)); text-align:center; }
         .rc-suc-root .rc-suc-slot { margin-top:14px; height:14px; border-radius:8px; background:var(--rc-ink);
           box-shadow:inset 0 2px 5px color-mix(in srgb, var(--rc-ink) 80%, transparent); position:relative; }
         .rc-suc-root .rc-suc-slot::after { content:""; position:absolute; left:8px; right:8px; top:5px; height:3px;
@@ -534,10 +635,22 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
           color:var(--rc-accent-deep); background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt));
           border:1.5px solid color-mix(in srgb, var(--rc-accent) 30%, var(--rc-receipt)); }
 
-        .rc-suc-root .rc-suc-home { align-self:center; margin-top:6px; min-height:44px; display:inline-flex; align-items:center;
-          font-family:var(--rc-fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--rc-ink2);
-          transition:color .2s ease; }
-        .rc-suc-root .rc-suc-home:hover { color:var(--rc-ink); }
+        /* Was an 11px mono line in --rc-ink2 — the smallest type on the site, sitting at
+           the very bottom of a page whose only other exits are locked. On a phone the
+           voter who did not want the evaluation form had to hunt for a way out. It now
+           wears the family's own outline-button language (the same ticket stub as the
+           results button, one weight quieter: dotted perforation, ink2 rule) and spans
+           the actions column, so "how do I leave" is answered by a shape, not by text. */
+        .rc-suc-root .rc-suc-home { position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
+          margin-top:2px; min-height:46px; padding:0 16px 0 24px;
+          font-family:var(--rc-fh); font-weight:600; font-size:14px; letter-spacing:0; text-transform:none;
+          color:var(--rc-ink); background:var(--rc-receipt);
+          border:1.5px dashed color-mix(in srgb, var(--rc-ink2) 62%, var(--rc-receipt));
+          clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+          transition:transform .18s ease, border-color .2s ease, color .2s ease; }
+        .rc-suc-root .rc-suc-home::before { content:""; position:absolute; left:6px; top:9px; bottom:9px; width:2px;
+          background:repeating-linear-gradient(180deg, var(--rc-ink2) 0 2px, transparent 2px 5px); }
+        .rc-suc-root .rc-suc-home:hover { color:var(--rc-accent-deep); border-color:var(--rc-accent-deep); transform:translateY(-2px); }
 
         .rc-suc-root .rc-suc-foot { margin-top:16px; font-family:var(--rc-fm); font-size:9px; letter-spacing:.06em;
           color:var(--rc-faint); text-align:center; line-height:1.6; }
@@ -570,17 +683,32 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
         /* ---- TABLET+ : a touch more air ---- */
         @media (min-width:768px) {
           .rc-suc-root .rc-suc-wrap { max-width:420px; }
+          /* topbar: inline nav replaces burger/sheet (same 768 switch as every other page) */
+          .rc-suc-root .rc-topbar__in { gap:22px; }
+          .rc-suc-root .rc-nav { display:flex; }
+          .rc-suc-root .rc-userwrap { margin-left:0; }
+          .rc-suc-root .rc-burger, .rc-suc-root .rc-sheet { display:none; }
         }
 
         /* ---- DESKTOP : asymmetric two-column collage (headline + actions left,
            machine + receipt right, ephemera on the desk between them) ---- */
         @media (min-width:900px) {
           .rc-suc-root { padding:48px 40px 60px; }
+          /* keep the bar full-bleed against the desktop padding (see the topbar block) */
+          .rc-suc-root .rc-topbar { margin:-48px -40px 28px; }
+          /* rc-SF form-first: the left column packs headline + actions to the TOP so
+             the evaluate CTA lands in the first viewport (the printing receipt is a
+             tall object; with 1fr 1fr rows its height stretched both left rows and
+             pushed the CTA past centre). Row 1 sizes to the headline (min-content),
+             the flexible row 2 (1fr) absorbs the stage's extra height, and the tail
+             sits directly under the headline (align-self:start, unchanged). The stage
+             stays vertically centred against the full column height. The leftover
+             space now falls BELOW the actions as dignified desk whitespace. */
           .rc-suc-root .rc-suc-wrap { max-width:960px; display:grid; align-items:stretch;
             grid-template-columns:minmax(0, 1fr) minmax(340px, 400px);
-            grid-template-rows:1fr 1fr; column-gap:clamp(32px, 5vw, 72px);
+            grid-template-rows:min-content 1fr; column-gap:clamp(32px, 5vw, 72px);
             grid-template-areas:"headline stage" "tail stage"; }
-          .rc-suc-root .rc-suc-headline { grid-area:headline; align-self:end; text-align:left; margin-bottom:0; }
+          .rc-suc-root .rc-suc-headline { grid-area:headline; align-self:start; text-align:left; margin-bottom:0; }
           .rc-suc-root .rc-suc-display { align-items:flex-start; font-size:clamp(34px, 3.6vw, 52px); }
           .rc-suc-root .rc-suc-deck { margin-left:0; margin-right:0; }
           .rc-suc-root .rc-suc-stage { grid-area:stage; align-self:center; }

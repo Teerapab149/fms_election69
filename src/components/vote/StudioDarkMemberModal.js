@@ -12,7 +12,7 @@
 // AnimatePresence internally, so call sites stay one-liners.
 
 import { getPath } from "../../utils/basePath";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -32,8 +32,44 @@ function useEscape(active, onClose) {
   }, [active, onClose]);
 }
 
+// Focus management for the two aria-modal overlays below. Escape already closed
+// them, but focus stayed on whatever opened the modal (measured: activeElement
+// was still the .sdp-tile button behind the scrim) and Tab walked the PAGE
+// underneath — a keyboard/screen-reader user could not reach the close button
+// and never left the page behind an aria-modal="true" dialog. Moves focus in on
+// open, cycles Tab inside, restores it to the opener on close.
+const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+function useFocusTrap(active, ref) {
+  useEffect(() => {
+    if (!active) return undefined;
+    const root = ref.current;
+    if (!root) return undefined;
+    const opener = document.activeElement;
+    const first = root.querySelector(FOCUSABLE);
+    (first || root).focus?.({ preventScroll: true });
+
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(root.querySelectorAll(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
+      if (!items.length) { e.preventDefault(); return; }
+      const i = items.indexOf(document.activeElement);
+      const next = e.shiftKey ? (i <= 0 ? items[items.length - 1] : items[i - 1])
+                              : (i === -1 || i === items.length - 1 ? items[0] : items[i + 1]);
+      e.preventDefault();
+      next.focus({ preventScroll: true });
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      if (opener && typeof opener.focus === "function" && document.contains(opener)) opener.focus({ preventScroll: true });
+    };
+  }, [active, ref]);
+}
+
 export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
+  const cardRef = useRef(null);
   useEscape(!!member, onClose);
+  useFocusTrap(!!member, cardRef);
   const src = member ? resolveSrc(member.modalImageUrl || member.imageUrl) : null;
 
   if (!member) return null;
@@ -41,7 +77,7 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
   return (
         <motion.div className="sdm-overlay" onClick={onClose} role="dialog" aria-modal="true"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>
-          <motion.div className="sdm-card" onClick={(e) => e.stopPropagation()}
+          <motion.div className="sdm-card" ref={cardRef} onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
             <button type="button" className="sdm-x" onClick={onClose} aria-label="ปิด"><X size={18} strokeWidth={2.5} /></button>
@@ -50,12 +86,15 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
               <span className="sdm-photo__tag">CANDIDATE</span>
             </div>
             <div className="sdm-info">
-              <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE · ผู้สมัคร</div>
+              {/* Thai runs escape the mono stack via .sd-thai — same rule as the rest
+                  of the family (this file was the only one still setting Thai in
+                  JetBrains Mono at 9-11px with .2em tracking) */}
+              <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE · <span className="sd-thai">ผู้สมัคร</span></div>
               <h3 className="sdm-name">{member.name}</h3>
               <dl className="sdm-rows">
-                <div><dt>STUDENT ID · รหัสนักศึกษา</dt><dd>{member.studentId || "—"}</dd></div>
-                <div><dt>POSITION · ตำแหน่ง</dt><dd>{member.position || "—"}</dd></div>
-                <div><dt>MAJOR · สาขาวิชา</dt><dd>{member.major || "—"}</dd></div>
+                <div><dt>STUDENT ID · <span className="sd-thai">รหัสนักศึกษา</span></dt><dd>{member.studentId || "—"}</dd></div>
+                <div><dt>POSITION · <span className="sd-thai">ตำแหน่ง</span></dt><dd>{member.position || "—"}</dd></div>
+                <div><dt>MAJOR · <span className="sd-thai">สาขาวิชา</span></dt><dd>{member.major || "—"}</dd></div>
               </dl>
             </div>
           </motion.div>
@@ -104,12 +143,14 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
 }
 
 export function StudioDarkLightbox({ src = null, caption = "", onClose = () => {} }) {
+  const boxRef = useRef(null);
   useEscape(!!src, onClose);
+  useFocusTrap(!!src, boxRef);
 
   if (!src) return null;
 
   return (
-        <motion.div className="sdl-overlay" onClick={onClose} role="dialog" aria-modal="true"
+        <motion.div className="sdl-overlay" ref={boxRef} onClick={onClose} role="dialog" aria-modal="true"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>
           <button type="button" className="sdl-x" onClick={onClose} aria-label="ปิด"><X size={20} strokeWidth={2.5} /></button>
           <motion.img src={src} alt={caption || "image"} className="sdl-img" onClick={(e) => e.stopPropagation()}
@@ -138,6 +179,9 @@ export function StudioDarkLightbox({ src = null, caption = "", onClose = () => {
               font-family:var(--sd-mono, monospace); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
               color:var(--sd-ink-2, #B5B0A2); background:rgba(20,20,15,.8); border:1px solid var(--sd-line, #2E2E22);
               padding:6px 16px; border-radius:999px; white-space:nowrap;
+              /* a real party name runs 43 chars — without a cap the pill grows past
+                 both screen edges (it is centred with translateX(-50%)) at 375px */
+              max-width:min(86vw, 520px); overflow:hidden; text-overflow:ellipsis;
             }
           `}</style>
         </motion.div>

@@ -31,6 +31,7 @@ import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import StoryClamp from "./StoryClamp";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -89,7 +90,10 @@ export default function BlossomSingleParty({
   const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
   // keep the placeholder defaults preparePartyData injects out of the printed pages
   const missions = (party?.missions || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
-  const policies = (party?.policies || []).map(asText).filter(Boolean);
+  const policies = (party?.policies || []).filter((p) => {
+    const t = asText(p);
+    return t && !t.startsWith("ยังไม่มีข้อมูล");
+  });
   const members = sortMembersByPosition(party?.members || []);
   const no = party?.number;
 
@@ -124,13 +128,13 @@ export default function BlossomSingleParty({
       <div className="bl-page">
         {/* ===== issue line (masthead — single-ballot variant) ===== */}
         <div className="bl-issue-line">
-          <span>ลงคะแนน <b>·</b> SINGLE BALLOT</span>
+          <span><span className="bl-thai bl-thai--nw">ลงคะแนน</span> <b>·</b> SINGLE BALLOT</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== party feature masthead ===== */}
         <header className="bl-sp-head">
-          <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" />พรรคเดียวที่ลงสมัคร · THE ONLY PARTY</span>
+          <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">พรรคเดียวที่ลงสมัคร</span> · <span className="bl-nw">THE ONLY PARTY</span></span>
           <div className="bl-sp-hero">
             <span className="bl-sp-logo">
               {logo ? (
@@ -140,7 +144,7 @@ export default function BlossomSingleParty({
               )}
             </span>
             <div className="bl-sp-title">
-              <span className="bl-sp-num">พรรคหมายเลข <b>{no}</b></span>
+              <span className="bl-sp-num"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{no}</b></span>
               <h1 className="bl-sp-word"><span className="bl-sp-word__in">{party?.name || "พรรค"}</span></h1>
               {party?.slogan && <p className="bl-sp-slogan">“{party.slogan}”</p>}
             </div>
@@ -149,7 +153,7 @@ export default function BlossomSingleParty({
 
         {/* voter receipt — mono, editorial (mirrors BlossomVote / BlossomSuccess) */}
         <div className="bl-sp-voter">
-          <span className="bl-sp-voter__row"><b>VOTER</b>{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
+          <span className="bl-sp-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-sp-voter__row"><b>ID</b>{sid}</span>
           <span className="bl-sp-voter__row"><b>BALLOT</b>1 PARTY</span>
         </div>
@@ -158,7 +162,7 @@ export default function BlossomSingleParty({
         {cover && (
           <figure className="bl-sp-cover">
             <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption>ภาพหมู่พรรค · GROUP PHOTO</figcaption>
+            <figcaption><span className="bl-thai bl-thai--nw">ภาพหมู่พรรค</span> · <span className="bl-nw">GROUP PHOTO</span></figcaption>
           </figure>
         )}
 
@@ -170,7 +174,7 @@ export default function BlossomSingleParty({
               <span className="bl-sp-sec__kick">LOGO MEANING</span>
               <h2 className="bl-sp-sec__title">ความหมายสัญลักษณ์</h2>
             </div>
-            <p className="bl-sp-story">{story}</p>
+            <StoryClamp className="bl-sc"><p className="bl-sp-story">{story}</p></StoryClamp>
           </section>
         )}
 
@@ -180,7 +184,7 @@ export default function BlossomSingleParty({
             <div className="bl-sp-sec__head">
               <span className="bl-sp-sec__kick">MISSION</span>
               <h2 className="bl-sp-sec__title">พันธกิจ</h2>
-              <span className="bl-sp-sec__count">{pad2(missions.length)} ข้อ</span>
+              <span className="bl-sp-sec__count">{pad2(missions.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-sp-mlist">
               {missions.map((m, i) => (
@@ -196,12 +200,16 @@ export default function BlossomSingleParty({
             <div className="bl-sp-sec__head">
               <span className="bl-sp-sec__kick">KEY POLICIES</span>
               <h2 className="bl-sp-sec__title">นโยบายเด่น</h2>
-              <span className="bl-sp-sec__count">{pad2(policies.length)} ข้อ</span>
+              <span className="bl-sp-sec__count">{pad2(policies.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-sp-plist">
-              {policies.map((p, i) => (
-                <li key={i}><span className="n">{pad2(i + 1)}</span><span className="t">{p}</span></li>
-              ))}
+              {policies.map((p, i) => {
+                const title = typeof p === "object" ? (p.title || p.text || p.name || "") : p;
+                const desc = typeof p === "object" ? (p.desc || p.description || p.detail || "") : "";
+                return (
+                  <li key={i}><span className="n">{pad2(i + 1)}</span><span className="bl-sp-pbody"><span className="t">{title}</span>{desc && <span className="d">{desc}</span>}</span></li>
+                );
+              })}
             </ol>
           </section>
         )}
@@ -212,7 +220,7 @@ export default function BlossomSingleParty({
             <div className="bl-sp-sec__head">
               <span className="bl-sp-sec__kick">THE TEAM</span>
               <h2 className="bl-sp-sec__title">ทีมผู้สมัคร</h2>
-              <span className="bl-sp-sec__count">{pad2(members.length)} คน</span>
+              <span className="bl-sp-sec__count">{pad2(members.length)} <span className="bl-thai bl-thai--nw">คน</span></span>
             </div>
             <div className="bl-sp-team">
               {members.map((m, i) => {
@@ -224,7 +232,7 @@ export default function BlossomSingleParty({
                     </span>
                     <figcaption className="bl-sp-cand__body">
                       <span className="bl-sp-cand__name">{m.name}</span>
-                      {(m.position || m.major) && <span className="bl-sp-cand__role">{m.position || m.major}</span>}
+                      {(m.position || m.major) && <span className="bl-sp-cand__role bl-thai">{m.position || m.major}</span>}
                     </figcaption>
                   </figure>
                 );
@@ -235,11 +243,11 @@ export default function BlossomSingleParty({
 
         {/* ===== the decision — ballot paper card (semantic 3-choice) ===== */}
         <section className="bl-vpaper" id="bl-sp-decision" aria-label="การตัดสินใจของคุณ">
-          <div className="bl-vpaper__cap"><span>การตัดสินใจ · YOUR DECISION</span><em>1 คน · 1 เสียง</em></div>
+          <div className="bl-vpaper__cap"><span><span className="bl-thai bl-thai--nw">การตัดสินใจ</span> · <span className="bl-nw">YOUR DECISION</span></span><em>1 <span className="bl-thai bl-thai--nw">คน</span> · 1 <span className="bl-thai bl-thai--nw">เสียง</span></em></div>
           <ul className="bl-sballot">
             <ChoiceRow
               tone="approve"
-              kick="เห็นชอบ · APPROVE"
+              kick={<><span className="bl-thai bl-thai--nw">เห็นชอบ</span> · <span className="bl-nw">APPROVE</span></>}
               name="รับรอง"
               note={`เห็นชอบให้ ${party?.name || "พรรคนี้"} ดำรงตำแหน่ง`}
               selected={kind === "approve"}
@@ -248,7 +256,7 @@ export default function BlossomSingleParty({
             {disapprove && (
               <ChoiceRow
                 tone="disapprove"
-                kick="ไม่เห็นชอบ · DISAPPROVE"
+                kick={<><span className="bl-thai bl-thai--nw">ไม่เห็นชอบ</span> · <span className="bl-nw">DISAPPROVE</span></>}
                 name="ไม่รับรอง"
                 note="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
                 selected={kind === "disapprove"}
@@ -258,7 +266,7 @@ export default function BlossomSingleParty({
             {abstain && (
               <ChoiceRow
                 tone="abstain"
-                kick="งดออกเสียง · ABSTAIN"
+                kick={<><span className="bl-thai bl-thai--nw">งดออกเสียง</span> · <span className="bl-nw">ABSTAIN</span></>}
                 name="งดออกเสียง"
                 note="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                 selected={kind === "abstain"}
@@ -273,10 +281,11 @@ export default function BlossomSingleParty({
       <div className={`bl-vconfirm${canConfirm ? " is-ready" : ""}`}>
         <div className="bl-vconfirm__in">
           <div className="bl-vconfirm__sel">
-            <span className="bl-vconfirm__lab">การเลือกของคุณ · YOUR SELECTION</span>
+            <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
             {selectionLabel ? (
               <span className={`bl-vconfirm__val bl-vconfirm__val--${kind}`}>
-                <span className="bl-vconfirm__dia" aria-hidden="true" />{selectionLabel}
+                <span className="bl-vconfirm__dia" aria-hidden="true" />
+                <span className="bl-vconfirm__nm">{selectionLabel}</span>
               </span>
             ) : (
               <span className="bl-vconfirm__val bl-vconfirm__val--empty">ยังไม่ได้เลือก · No selection</span>
@@ -298,11 +307,11 @@ export default function BlossomSingleParty({
       {confirmOpen && (
         <div className="bl-scm" onClick={() => !isSubmitting && setConfirmOpen(false)} role="dialog" aria-modal="true">
           <div className="bl-scm__card" onClick={(e) => e.stopPropagation()}>
-            <span className="bl-scm__eyebrow">ยืนยันครั้งสุดท้าย · FINAL CONFIRMATION</span>
+            <span className="bl-scm__eyebrow"><span className="bl-thai bl-thai--nw">ยืนยันครั้งสุดท้าย</span> · <span className="bl-nw">FINAL CONFIRMATION</span></span>
             <h3 className="bl-scm__title">ยืนยันการลงคะแนน</h3>
             <p className="bl-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`bl-scm__pick bl-scm__pick--${kind}`}>
-              <span className="bl-scm__pick-lab">การเลือกของคุณ</span>
+              <span className="bl-scm__pick-lab bl-thai bl-thai--nw">การเลือกของคุณ</span>
               <span className="bl-scm__pick-val">{selectionLabel || "—"}</span>
             </div>
             <div className="bl-scm__actions">
@@ -318,17 +327,20 @@ export default function BlossomSingleParty({
 
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomVote) ================= */
-        .bl-single-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400 on a 4892px page). xo=0. */
+        .bl-single-root { overflow-x:clip; }
         /* dot-grid paper texture — calm 8%/28px (owner 2026-07-12) */
         .bl-single-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-single-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-single-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-single-root) a:hover { color:var(--bl-ink); }
 
         /* blobs — faded toward the canvas (calm) */
@@ -398,7 +410,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-single-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-single-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-single-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -426,7 +438,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-single-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-single-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-single-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -445,24 +457,35 @@ export default function BlossomSingleParty({
         @keyframes blSBlip { 50%{opacity:.3} }
         .bl-single-root .bl-sp-hero { display:flex; align-items:center; gap:26px; margin-top:22px; }
         .bl-single-root .bl-sp-logo { width:112px; height:112px; flex:none; border-radius:26px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center;
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:9px;
           box-shadow:0 20px 44px -30px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
-        .bl-single-root .bl-sp-logo img { width:100%; height:100%; object-fit:cover; }
+        /* contain — see BlossomCandidates: cover cropped the party mark */
+        .bl-single-root .bl-sp-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-single-root .bl-sp-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:40px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-title { min-width:0; }
         .bl-single-root .bl-sp-num { font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-single-root .bl-sp-num b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-single-root .bl-sp-num b { color:var(--bl-primary-ink); font-weight:700; }
         /* display word — SOLID (the party name), calm ink; not hollow (action page). */
         /* party name wraps up to ~3 lines (masthead grows with content); ellipsis only
            caps an extreme name at line 3. line-clamp:2 clipped long names to "…" at 390 */
-        .bl-single-root .bl-sp-word { margin:6px 0 0; overflow:hidden; }
+        /* ink gutter on BOTH boxes: the reveal window clips at the same edge the inner
+           clamp does, so a gutter on only one of them still lost the ink. At lh .98 the
+           tallest legal Thai stack (ฟื๊/ปื๋) reaches .1994em above the content-box top —
+           13.16px at 66px. .2em left 0.04px of headroom, so the gutter is .22em (14.52px
+           at 66px → 1.36px spare, same margin the other blossom gutters carry).
+           font-size is restated here purely so .22em resolves against the display size.
+           padding-BOTTOM is banned: the window is a reveal, an open bottom would show the
+           text before it slides in. */
+        .bl-single-root .bl-sp-word { font-size:clamp(34px,8vw,66px); padding-top:.22em;
+          margin:calc(6px - .22em) 0 0; overflow:hidden; }
         /* the name text lives in an inner block that slides up out of the .bl-sp-word
            window (blSuccUp — same idiom as BlossomSuccess). line-clamp lives here so
            the reveal survives 1–3 line names. base state (no anim) = translateY(0). */
         .bl-single-root .bl-sp-word__in { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
           overflow:hidden; font-family:var(--bl-fd); font-weight:800; line-height:.98;
+          padding-top:.22em; margin-top:-.22em;
           font-size:clamp(34px,8vw,66px); letter-spacing:-.02em; color:var(--bl-ink); overflow-wrap:break-word;
           text-overflow:ellipsis; animation:blSuccUp .62s cubic-bezier(.22,1,.36,1) both .18s; }
         @keyframes blSuccUp { from { transform:translateY(108%); } }
@@ -498,29 +521,40 @@ export default function BlossomSingleParty({
           text-transform:uppercase; color:var(--bl-ink2); white-space:nowrap; padding-bottom:3px; }
         .bl-single-root .bl-sp-story { margin:22px 0 0; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px);
           line-height:1.85; color:var(--bl-ink2); }
+        /* StoryClamp — the booth keeps the decision zone close: a long story folds.
+           These bl-sc rules were written INSIDE the bl-sp-story block (a stray nested
+           declaration — .bl-sc is the PARENT of .bl-sp-story, so the nested selector
+           matched nothing), leaving --sc-max / --sc-fade on the StoryClamp defaults
+           (11em, transparent) so the fold + fade never appeared. Same bug as the
+           receipt party letter (P-LOG-106); pulled out to the top level. */
+        .bl-single-root .bl-sc { --sc-max:8em; --sc-fade:var(--bl-card); }
+        .bl-single-root .bl-sc .sc__hint { color:var(--bl-primary-ink); font-family:var(--bl-fm); text-transform:uppercase; }
         /* small logo chip on the LOGO MEANING head — ties the story to the mark */
         .bl-single-root .bl-sp-sec__logo { width:40px; height:40px; flex:none; border-radius:12px; overflow:hidden; align-self:center;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
-        .bl-single-root .bl-sp-sec__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:3px; }
+        .bl-single-root .bl-sp-sec__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         /* missions — mono numerals + list (mirrors the ballot family voice) */
         .bl-single-root .bl-sp-mlist { list-style:none; margin:20px 0 0; padding:0; }
         .bl-single-root .bl-sp-mlist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:baseline;
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-sp-mlist li:last-child { border-bottom:none; }
         .bl-single-root .bl-sp-mlist__n { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,18px); line-height:1.4;
-          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-mlist__t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.7;
           color:var(--bl-ink); }
 
         /* policies — index rows */
         .bl-single-root .bl-sp-plist { list-style:none; margin:14px 0 0; padding:0; }
-        .bl-single-root .bl-sp-plist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:baseline;
+        .bl-single-root .bl-sp-plist li { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:start;
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-sp-plist li:last-child { border-bottom:none; }
         .bl-single-root .bl-sp-plist .n { font-family:var(--bl-fd); font-weight:800; font-size:clamp(22px,5vw,34px); line-height:1;
-          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-deep); }
-        .bl-single-root .bl-sp-plist .t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.6;
+          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-ink); }
+        .bl-single-root .bl-sp-plist .bl-sp-pbody { display:block; }
+        .bl-single-root .bl-sp-plist .t { display:block; font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.6;
           color:var(--bl-ink); }
+        .bl-single-root .bl-sp-plist .d { display:block; font-family:var(--bl-fb, var(--bl-fd)); font-weight:400; font-size:clamp(13px,3.2vw,14.5px); line-height:1.62;
+          color:var(--bl-ink-soft, var(--bl-ink)); opacity:.75; margin-top:5px; }
 
         /* team — portrait grid */
         .bl-single-root .bl-sp-team { margin-top:22px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
@@ -532,7 +566,7 @@ export default function BlossomSingleParty({
           background:color-mix(in srgb, var(--bl-primary-soft) 60%, var(--bl-card)); position:relative; }
         .bl-single-root .bl-sp-cand__photo img { width:100%; height:100%; object-fit:cover; display:block; }
         .bl-single-root .bl-sp-cand__ph { position:absolute; inset:0; display:grid; place-items:center;
-          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-deep); }
+          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
         .bl-single-root .bl-sp-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink); }
         .bl-single-root .bl-sp-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
@@ -548,7 +582,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
         .bl-single-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
-          letter-spacing:.14em; color:var(--bl-primary-deep); white-space:nowrap; }
+          letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- decision rows (SEMANTIC colours — FIXED per choice, never candy) ---- */
         .bl-single-root .bl-sballot { list-style:none; margin:0; padding:0; }
@@ -592,9 +626,16 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-vconfirm__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .bl-single-root .bl-vconfirm__lab { font-family:var(--bl-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
           color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
+        /* ink gutter — identical to BlossomVote's band: lh 1.1 clipped 3.3px off Thai
+           upper marks; padding-top opens the clip box, negative margin restores layout */
         .bl-single-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; padding-top:.2em; margin-top:-.2em; }
+        /* choice label is its own flex item so text-overflow has a box to act on —
+           see the same fix in BlossomVote (bare text node on an inline-flex parent
+           becomes an anonymous flex item and never gets an ellipsis) */
+        .bl-single-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis;
+          padding-top:.2em; margin-top:-.2em; }
         .bl-single-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
         .bl-single-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
         /* semantic choice colours LIGHTENED for contrast on the dark ink band */

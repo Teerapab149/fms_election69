@@ -10,7 +10,11 @@
 //
 // slug    = template slug (classic family slugs all render the classic layout)
 // page    = home | candidates | party | vote | results | success | closed
-// variant = results: locked|revealed · vote: multi|single  (optional)
+// variant = results: locked|counting|revealed · vote: multi|single  (optional)
+//   results "counting" is gumroad-only (gm-B2 T3): reaches the ONGOING/embargo
+//   lock card (isNotStarted=false, finalStatus="ONGOING") the same way blossom/
+//   receipt's default (non-"revealed") results state already does. studio-dark
+//   and verdure are unaffected — they keep locked(default)|revealed only.
 //
 // NOTE: not the editor and not the live site — pure presentation with dummy
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
@@ -83,12 +87,18 @@ import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../uti
 
 const noop = () => {};
 
-// receipt CLOSED preview copy — reason-aware, mirrors closed/page.js getMessage()
-// semantics (waiting / ended / paused). Drive via ?variant=ended|closed|waiting.
-function receiptClosedCopy(variant) {
+// CLOSED preview copy — mirrors closed/page.js getMessage() semantics (waiting /
+// ended / paused). Drive via ?variant=ended|closed|waiting; absent/unknown value →
+// waiting (each family's original default), so pre-existing URLs render unchanged.
+function closedPreviewCopy(variant) {
   if (variant === 'ended') return { variant: 'ended', title: 'สิ้นสุดระยะเวลาลงคะแนน', desc: 'การเลือกตั้งได้สิ้นสุดลงแล้ว ขอบคุณทุกท่านที่เข้ามาใช้สิทธิ' };
   if (variant === 'closed' || variant === 'paused') return { variant: 'closed', title: 'ระบบปิดรับลงคะแนน', desc: 'ระบบเลือกตั้งถูกปิดชั่วคราว หรือหมดเวลาการลงคะแนนแล้ว กรุณาติดต่อเจ้าหน้าที่หากมีข้อสงสัย' };
-  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดโหวต' };
+  return { variant: 'waiting', title: 'ยังไม่เปิดรับลงคะแนน', desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง' };
+}
+// receipt variant of the same copy — only its waiting desc is longer (unchanged).
+function receiptClosedCopy(variant) {
+  const c = closedPreviewCopy(variant);
+  return c.variant === 'waiting' ? { ...c, desc: 'ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง กรุณากลับมาอีกครั้งเมื่อถึงกำหนดเปิดโหวต' } : c;
 }
 
 function PreviewBody() {
@@ -140,7 +150,14 @@ function PreviewBody() {
     const raw = parseInt(sp.get('parties'), 10);
     return Number.isFinite(raw) && raw >= 2 && raw <= 6 ? raw : 2;
   })();
-  const parties = useMemo(() => makeParties(partiesN), [partiesN]);
+  // ?noslogan=1 — SLG-1 absence harness: strips slogans (and ONLY slogans) from the mock
+  // parties so every surface can be compared with/without. Param absent → byte-identical
+  // roster (map branch never runs). Combine freely with ?parties=N.
+  const noSlogan = sp.get('noslogan') === '1';
+  const parties = useMemo(() => {
+    const base = makeParties(partiesN);
+    return noSlogan ? base.map((p) => ({ ...p, slogan: null })) : base;
+  }, [partiesN, noSlogan]);
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [partyNumber, setPartyNumber] = useState(parties[0]?.number ?? 1);
   // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
@@ -277,11 +294,18 @@ function PreviewBody() {
   // eslint-disable-next-line no-inner-declarations
   function renderInteractive() {
     if (page === 'home') {
+      // gm-B2 T2 / bl-B1B verification seam: gumroad + blossom reuse the closed page's
+      // existing ?variant=ended|paused tokens so the home countdown's ENDED/PAUSE
+      // dead-state (hero-countdown/gumroad's grid swap · BlossomHome's is-closed band)
+      // is reachable here too. Other families keep AUTO (unchanged).
+      const homeSystemMode = (family === 'gumroad' || family === 'blossom')
+        ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
+        : 'AUTO';
       return (
         <HomeRenderer
           onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
           resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-          initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
+          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
         />
       );
     }
@@ -324,16 +348,22 @@ function PreviewBody() {
       }
       if (page === 'results') {
         const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
+        // gm-B2 T3: gumroad-only counting/embargo lock state, reachable via
+        // ?variant=counting (isNotStarted={!revealed} otherwise pins WAITING for
+        // every non-revealed load — the "COUNTING · WHO WILL WIN?" lock card was
+        // unreachable). studio-dark/verdure untouched — still locked(default)|revealed.
+        const gumroadCounting = family === 'gumroad' && variant === 'counting';
+        // RES-1: production results (app/results/page.js) is a read-only tally board —
+        // party rows are NOT links (no modal, no navigation). Mirror that here.
         return frame(
           <R
             candidates={resultsCandidates(revealed, parties)}
-            totalVotes={revealed ? 625 : 0}
+            totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
             demographics={DEMOGRAPHICS}
-            finalStatus={revealed ? 'ENDED' : 'WAITING'}
+            finalStatus={revealed ? 'ENDED' : gumroadCounting ? 'ONGOING' : 'WAITING'}
             isRevealed={revealed}
-            isNotStarted={!revealed}
+            isNotStarted={!revealed && !gumroadCounting}
             countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-            onSelectParty={(p) => navTo('party', p?.number ?? 1)}
             editorMode={false}
           />
         );
@@ -344,7 +374,8 @@ function PreviewBody() {
       }
       if (page === 'closed') {
         const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
-        return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />);
+        const cc = closedPreviewCopy(variant);
+        return frame(<Cl title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />);
       }
     }
 
@@ -587,6 +618,8 @@ function PreviewBody() {
         // revealed → ranking + demographics; otherwise the LOCKED embargo band (the
         // real election-day state: polls open, scores sealed, turnout public).
         const revealed = variant === 'revealed';
+        // RES-1: results is a read-only tally board — party rows are NOT links
+        // (no modal, no navigation), matching production app/results/page.js.
         return (
           <BlossomResults
             candidates={resultsCandidates(revealed, parties)}
@@ -596,13 +629,12 @@ function PreviewBody() {
             isRevealed={revealed}
             isNotStarted={false}
             countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-            onSelectParty={(p) => navTo('party', p?.number ?? 1)}
             editorMode={false}
           />
         );
       }
       if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
-      if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode={false} />;
+      if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />; }
     }
 
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
@@ -656,12 +688,16 @@ function PreviewBody() {
   function renderPage() {
   // ── HOME — HomeRenderer dispatches by template slug for every family ──
   if (page === 'home') {
+    // gm-B2 T2 / bl-B1B verification seam — same gumroad+blossom ended|paused reach as above.
+    const homeSystemMode = (family === 'gumroad' || family === 'blossom')
+      ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
+      : 'AUTO';
     return (
       <HomeRenderer
         editorMode
         editorData={DUMMY_ELECTION}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-        initialData={{ systemMode: 'AUTO', electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
+        initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
       />
     );
   }
@@ -718,16 +754,17 @@ function PreviewBody() {
     }
     if (page === 'results') {
       const R = byFamily(StudioDarkResults, GumroadResults, VerdureResults);
+      // gm-B2 T3: same gumroad-only counting reach as the interactive path above.
+      const gumroadCounting = family === 'gumroad' && variant === 'counting';
       return frame(
         <R
           candidates={resultsCandidates(revealed, parties)}
-          totalVotes={revealed ? 625 : 0}
+          totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
           demographics={DEMOGRAPHICS}
-          finalStatus={revealed ? 'ENDED' : 'WAITING'}
+          finalStatus={revealed ? 'ENDED' : gumroadCounting ? 'ONGOING' : 'WAITING'}
           isRevealed={revealed}
-          isNotStarted={!revealed}
+          isNotStarted={!revealed && !gumroadCounting}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-          onSelectParty={noop}
         />
       );
     }
@@ -737,7 +774,8 @@ function PreviewBody() {
     }
     if (page === 'closed') {
       const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
-      return frame(<Cl title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} />);
+      const cc = closedPreviewCopy(variant);
+      return frame(<Cl title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} />);
     }
   }
 
@@ -775,13 +813,12 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-          onSelectParty={noop}
           editorMode
         />
       );
     }
     if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
-    if (page === 'closed') return <BlossomClosed title="ยังไม่เปิดรับลงคะแนน" desc="ขณะนี้ยังไม่ถึงเวลาเริ่มการเลือกตั้ง" variant="waiting" session={null} onLogout={noop} editorMode />;
+    if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />; }
   }
 
   // ── receipt family — static "printer moment" Success slide (R1). editorMode →
@@ -841,7 +878,9 @@ function PreviewBody() {
     return <VoteEditorPreview simMode="multi" pageLayout={null} elementConfigs={{}} />;
   }
   if (page === 'results') return <ResultsEditorPreview simMode={variant === 'single' ? 'single' : 'multi'} revealed={variant !== 'locked'} />;
-  if (page === 'closed') return <ClosedEditorPreview simMode="waiting" />;
+  // classic closed — same ?variant= contract; ClosedEditorPreview speaks simMode
+  // (paused == the live page's "closed"); absent/unknown → waiting as before
+  if (page === 'closed') return <ClosedEditorPreview simMode={variant === 'ended' ? 'ended' : (variant === 'closed' || variant === 'paused') ? 'paused' : 'waiting'} />;
   if (page === 'party') return <ClassicPartyPreview party={parties[0]} />;
   if (page === 'success') return <SuccessPage editorMode pageLayout={null} elementConfigs={{}} />;
 

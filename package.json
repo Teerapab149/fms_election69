@@ -14,7 +14,8 @@
     "e2e:setup": "node e2e/global.setup.js",
     "verify": "bash scripts/verify.sh",
     "preflight": "node scripts/preflight-year.js",
-    "archive-year": "node scripts/archive-year.js"
+    "archive-year": "node scripts/archive-year.js",
+    "template-gate": "node scripts/template-completeness.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

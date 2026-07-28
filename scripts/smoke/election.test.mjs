@@ -3,17 +3,23 @@
 //   npm run dev        # in one terminal (or point BASE at staging)
 //   node --test scripts/smoke/election.test.mjs
 //
-// Env: BASE (default http://localhost:3000/fms-ovs), ADMIN_USER, ADMIN_PASS
-// (defaults to the dev bootstrap creds). These assert security INVARIANTS that
-// must hold no matter the election state — so they double as a pre-deploy gate
-// after dependency bumps. NOTE: the rate-limit test trips the login limiter
-// (10/5min/IP); if you re-run within 5 min the login test may 429 — wait it out.
+// Env: BASE (default http://localhost:3000/fms-ovs), ADMIN_USER (a studentId
+// flagged isAdmin), ADMIN_PASS (the shared committee password — no default, and
+// never a literal in this file: it used to carry one, which put a working dev
+// password in a public repo). Get one with `node scripts/admin.js --list` /
+// `--rotate-password`. The admin-login tests skip when ADMIN_PASS is unset; the
+// no-auth invariants below always run.
+// These assert security INVARIANTS that must hold no matter the election state —
+// so they double as a pre-deploy gate after dependency bumps. NOTE: the
+// rate-limit test trips the login limiter (10/5min/IP); if you re-run within
+// 5 min the login test may 429 — wait it out.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 
 const BASE = process.env.BASE || 'http://localhost:3000/fms-ovs';
 const ADMIN_USER = process.env.ADMIN_USER || '6610510149';
-const ADMIN_PASS = process.env.ADMIN_PASS || '6610510149@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL';
+const ADMIN_PASS = process.env.ADMIN_PASS || '';
+const noPass = { skip: ADMIN_PASS ? false : 'ADMIN_PASS not set — export the shared admin password to run the login tests' };
 
 let adminCookie = '';
 
@@ -53,7 +59,7 @@ test('admin login: wrong password → 401', async () => {
   assert.equal(r.status, 401);
 });
 
-test('admin login: correct password → 200 + httpOnly admin_token cookie', async () => {
+test('admin login: correct password → 200 + httpOnly admin_token cookie', noPass, async () => {
   const r = await fetch(`${BASE}/api/admin/login`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username: ADMIN_USER, password: ADMIN_PASS }),
@@ -65,7 +71,7 @@ test('admin login: correct password → 200 + httpOnly admin_token cookie', asyn
   adminCookie = setCookie.split(';')[0]; // admin_token=<jwt>
 });
 
-test('admin API accepts the valid cookie (200)', async () => {
+test('admin API accepts the valid cookie (200)', noPass, async () => {
   assert.ok(adminCookie, 'need cookie from login test');
   const r = await fetch(`${BASE}/api/admin/dashboard`, { headers: { cookie: adminCookie } });
   assert.equal(r.status, 200);

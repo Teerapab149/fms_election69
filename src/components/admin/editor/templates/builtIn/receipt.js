@@ -135,19 +135,19 @@ function buildReceiptTemplate(slug, name, description, p) {
 // = a DIFFERENT ROLL OF PAPER (warm-white / cool-white / carbonless-blue / gray),
 // each with its own accent + foil hue. Default (ม่วง FMS) is byte-frozen from R2.5.
 export const receiptTemplate        = buildReceiptTemplate(
-  "receipt", "ใบเสร็จ · ม่วง FMS",
-  "กระดาษใบเสร็จอุ่นบนโต๊ะนับคะแนน ขอบหยักฉีก ตราปั๊ม โฮโลแกรมกันปลอม หมึกม่วง FMS · เลือกได้ 4 ม้วนกระดาษ",
+  "receipt", "Receipt Paper",
+  "หน้าตาเหมือนกระดาษใบเสร็จวางบนโต๊ะนับคะแนน มีขอบหยักฉีก ตราปั๊ม และแถบโฮโลแกรมกันปลอม สีหมึกเริ่มต้นเป็นม่วงคณะ เลือกสีหมึกได้ 4 แบบ",
   RECEIPT_THEMES["receipt"]);
 export const receiptInkBlueTemplate = buildReceiptTemplate(
-  "receipt-ink-blue", "ใบเสร็จ · หมึกน้ำเงิน",
+  "receipt-ink-blue", "Receipt Paper · Ink Blue",
   "ม้วนกระดาษขาวเย็น หมึกน้ำเงินเข้ม คมสะอาด อ่านง่าย",
   RECEIPT_THEMES["receipt-ink-blue"]);
 export const receiptTealTemplate    = buildReceiptTemplate(
-  "receipt-teal", "ใบเสร็จ · ครามทะเล",
+  "receipt-teal", "Receipt Paper · Teal",
   "สำเนากระดาษก๊อปปี้ฟ้า หมึกครามทะเลเย็นตา ดูเป็นเอกสารจริง",
   RECEIPT_THEMES["receipt-teal"]);
 export const receiptCarbonTemplate  = buildReceiptTemplate(
-  "receipt-carbon", "ใบเสร็จ · สำเนาถ่านดำ",
+  "receipt-carbon", "Receipt Paper · Carbon",
   "สำเนากระดาษถ่านสีเทา หมึกเทาเข้มไร้สี เรียบนิ่ง เท่แบบเอกสาร",
   RECEIPT_THEMES["receipt-carbon"]);
 

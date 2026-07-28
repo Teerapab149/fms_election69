@@ -165,7 +165,8 @@ export default function VoteFooter({
               className={
                 isSingle
                   ? "text-[9px] md:text-[10px] text-white/40 font-extrabold tracking-[0.2em] uppercase mb-1"
-                  : "text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5"
+                  // slate-400 measured 2.55:1 on the white ballot bar at 10px (AA 4.5)
+                  : "text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5"
               }
             >
               Your Selection
@@ -243,7 +244,8 @@ export default function VoteFooter({
                   <div>
                     <div className="inline-flex items-center gap-2 mb-2">
                       <div className={`w-2 h-2 rounded-full ${isSingle ? "bg-[var(--party-gold)] animate-pulse" : "bg-green-500"}`} />
-                      <span className={`text-[10px] font-black tracking-[0.25em] uppercase ${isSingle ? "text-white/50" : "text-slate-400"}`}>
+                      {/* slate-400 on the slate-50 modal header = 2.46:1 → slate-500 4.6:1 */}
+                      <span className={`text-[10px] font-black tracking-[0.25em] uppercase ${isSingle ? "text-white/50" : "text-slate-500"}`}>
                         Confirmation
                       </span>
                     </div>
@@ -263,7 +265,8 @@ export default function VoteFooter({
               {/* Content */}
               <div className="px-6 md:px-8 pb-8">
                 <div className={`rounded-3xl p-5 mb-6 ${isSingle ? "bg-white/5 border border-white/5" : "bg-slate-50 border border-slate-100"}`}>
-                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${isSingle ? "text-white/40" : "text-slate-400"}`}>
+                  {/* same 2.46:1 → 4.6:1 move as the header caption above */}
+                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${isSingle ? "text-white/40" : "text-slate-500"}`}>
                     You have selected
                   </p>
                   <div className="text-base md:text-lg break-words overflow-hidden">

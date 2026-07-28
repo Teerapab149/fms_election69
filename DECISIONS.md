@@ -1945,6 +1945,100 @@ legend/label map and update it in lockstep; verify by comparing computed legend
 background to cell fill.
 **Tags:** `#recharts` `#receipt` `#verify`
 
+### P-LOG-113: [2026-07-20] Backgrounded Browser-pane tabs freeze CSS timelines and throttle timers
+**Context:** gm-B1B — count-up ramps and ticking countdowns could not be captured
+mid-flight: the pane throttles setInterval/rAF to ~1 tick/sec and freezes CSS
+animation timelines at the from-state, and screenshots time out entirely on pages
+with infinite framer loops.
+**Lesson:** Verify animations by deterministic DOM-state assertions — exact final
+values, animation-cancel → fallback-width checks, presence of animationDelay,
+reduced-motion paths — not timed frame capture.
+**Tags:** `#verification` `#browser` `#animation`
+
+---
+
+### P-LOG-114: [2026-07-20] getComputedStyle lies during an active transition
+**Context:** gm-B1A — `boxShadow` read as fully transparent on elements carrying
+`transition: box-shadow`, even at rest, sending the worker chasing a phantom
+missing shadow. Setting `el.style.transition='none'` before reading returned the
+true settled value.
+**Lesson:** When asserting a computed style that participates in a transition,
+disable the transition for the read (or screenshot) — raw getComputedStyle during
+a transition window is not evidence.
+**Tags:** `#verification` `#css` `#browser`
+
+---
+
+### P-LOG-107: [2026-07-20] Latin mono kickers with tracking silently break Thai across every template
+**Context:** Batch-3 typography sweep — every non-classic family set tracked uppercase mono
+(Space Mono / Space Grotesk / JetBrains Mono, none with Thai glyphs) directly on mixed
+"EN · ไทย" labels. Thai fell back to a system font (misaligned sara/tone marks), tracking
+stretched it, and phrases wrapped mid-word ("ผลอย่างเป็น / ทางการ"). 21 defects, one cause.
+**Lesson:** Any mixed-language label needs the Thai run in a family reset span
+(`.rc-th`/`.vd-thai`/`.sd-thai`/`.gm-thai`/`.bl-thai`: real Thai font, ls .04em, nowrap on
+short tokens) with `·` as the only break point. New templates must budget this from day 1.
+**Tags:** `#typography` `#thai` `#fonts` `#mobile`
+
+---
+
+### P-LOG-108: [2026-07-20] Thai-reset utility must live on a NESTED span — and tag-descendant selectors beat it anyway
+**Context:** sd-T1/gm-T1/bl-T1 — putting `.sd-thai` on the same element as a class that
+sets font-family loses on source order; and rules like `.gr-donut__center span` (0,1,1)
+outrank a bare utility (0,1,0) even on a nested span.
+**Lesson:** Always nest the reset span inside the styled element; where the family styles
+children via tag selectors (`.x span`, `.x em`), the utility needs `!important` on
+font-family (receipt's `.rc-th` precedent) — verify with computed font, not by eye.
+**Tags:** `#css` `#specificity` `#thai`
+
+---
+
+### P-LOG-109: [2026-07-20] `white-space:nowrap` in the Thai reset is for short tokens only
+**Context:** vd-B2C/bl-T1 — full Thai sentences (closed-page date window, blossom date
+pill) must keep natural wrapping; baking nowrap into the reset would trade a font bug for
+mobile overflow. Verdure grew `.vd-thai-flow`, blossom split `.bl-thai` / `.bl-thai--nw`.
+**Lesson:** Two tiers: font-fix-only for sentences, +nowrap modifier for kicker tokens.
+**Tags:** `#css` `#thai` `#mobile`
+
+---
+
+### P-LOG-110: [2026-07-20] Backticks inside styled-jsx CSS comments are load-bearing
+**Context:** bl-T1 — a CSS comment citing `` `.bl-panel__cap span` `` inside a
+`<style jsx global>{`...`}` template literal terminated the string early; real build break
+for a couple of HMR cycles.
+**Lesson:** Never put backticks in comments inside styled-jsx template literals.
+**Tags:** `#styled-jsx` `#syntax`
+
+---
+
+### P-LOG-111: [2026-07-20] Browser-pane screenshots time out on pages with infinite framer-motion loops
+**Context:** vd-B1E/gm-T1 — pages with `repeat: Infinity` animations (verdure seal rings)
+keep rAF busy; `computer{screenshot}` waits for idle and times out.
+**Lesson:** On animated pages, verify with `getBoundingClientRect`/`getComputedStyle`/
+`read_page` evidence instead of screenshots; it's also the stronger proof for font/wrap claims.
+**Tags:** `#verification` `#browser` `#framer-motion`
+
+---
+
+### P-LOG-112: [2026-07-20] Corner labels with dynamic text need self-sizing stacks, not reserved padding
+**Context:** vd-B2A — reserving fixed padding for an absolutely-positioned `§ OFFICIAL`
+smallcaps collided when the alternate state rendered the ~2× wider `§ PARTICIPATION`;
+only measuring the SECOND head caught it.
+**Lesson:** Position dynamic-width decorative labels with flex `order`/own-row stacking so
+they self-size; measure every state variant of a fixed label, not just the first.
+**Tags:** `#css` `#layout` `#mobile`
+
+---
+
+### P-LOG-106: [2026-07-19] A stray unclosed declaration block silently swallows adjacent styled-jsx rules
+**Context:** v2-R14 — the StoryClamp `.rc-sc` variable rules in ReceiptParty were
+accidentally nested inside the `.rc-letter__body {}` declaration block, so
+`--sc-max`/`--sc-fade` fell back to defaults and the party-letter fade never
+rendered — with zero errors anywhere.
+**Lesson:** when inserting CSS rules adjacent to an existing block in a large
+styled-jsx template, confirm the prior block is closed; a runtime probe of the
+intended computed value (not just "page renders") is the only reliable catch.
+**Tags:** `#styled-jsx` `#css` `#receipt` `#verify`
+
 ---
 
 ### P-LOG-096: [2026-07-17] TZ correctness must be proven on epochs — rendered strings can hide a compensating parse bug
@@ -2048,6 +2142,284 @@ mid-style → `Expected '}', got 'from'` → 500 on every route sharing the chun
 **Lesson:** Never type a backtick anywhere inside a styled-jsx template literal,
 including comments. Quote CSS identifiers with 'single quotes' or nothing.
 **Tags:** `#styled-jsx` `#syntax` `#template`
+
+---
+
+### P-LOG-105: [2026-07-19] A stale `existing*ImageUrl` from the client silently reverts image paths to files that no longer exist
+**Context:** Owner reported broken member photos. Two members' `modalImageUrl`
+pointed at `Modal/8.jpg` while the file on disk was `Modal/8_6810517021.jpg` —
+exactly the name the uploader writes (`${positionNum}_${studentId}.jpg`). Cause:
+`processMemberImage`/`processMemberModalImage` preferred the CLIENT-sent
+`existingImageUrl` over the DB value, so an admin form loaded before an earlier
+upload re-saved the OLD path over the new one. A party `officialImageUrl` was
+dead the same way.
+**Lesson:** When no new file is uploaded, the DB is the source of truth for
+"what image does this record have" — read the current value first and treat any
+client-sent path as a fallback only. Separately: every surface handled a MISSING
+url but none handled a PRESENT-but-404 url, so the broken-file icon leaked to
+voters. `ImageErrorGuard` (capture-phase window `error` listener) is the app-wide
+net; the real repair is still fixing the record.
+**Tags:** `#admin` `#uploads` `#data-integrity`
+
+---
+
+### P-LOG-115: [2026-07-21] An App Router `GET()` that takes no `request` is a build-time constant
+**Context:** E2E-DIAG — the admin template switcher had no effect in a deployed image, and
+two e2e tests failed with the page rendering a different template than the seeded one.
+`/api/admin/page-layout`'s `GET()` read only the DB and took no `request` arg, so Next 14
+classified it STATIC and executed the DB read at build time, freezing `activeTemplateId`
+into the build; a Docker build with no DB reachable would bake the fallback permanently.
+It was the only `○` row among the app's `/api/*` lines in the build output.
+**Lesson:** Any `○` on an `/api/*` line of the `next build` route table is a bug — add
+`export const dynamic = "force-dynamic"` to routes that must read per-request state.
+**Tags:** `#nextjs` `#app-router` `#deploy` `#build`
+
+---
+
+### P-LOG-116: [2026-07-22] A safety check must assert on the same expression the guard evaluates
+**Context:** SEC-MOCK2 — the readiness check reported mock-login "closed, using real SSO"
+on a server where the mock provider was live. The check read
+`NEXT_PUBLIC_ENABLE_MOCK_LOGIN` (only controls whether the login button renders) while the
+actual gate is the provider-registration condition in `lib/auth.js` (`NODE_ENV`-based).
+Checker and guard reading different variables means the checker returns PASS in exactly
+the configurations it exists to catch.
+**Fix:** Extracted the guard's condition into `isMockLoginProviderRegistered()`; readiness
+and the settings badge both call it now (commit `c33b37e`).
+**Lesson:** A readiness/safety check must call the same predicate the real guard uses, not
+re-derive an equivalent-looking expression from a different signal.
+**Tags:** `#security` `#readiness` `#auth`
+
+---
+
+### P-LOG-117: [2026-07-22] `NEXT_PUBLIC_*` is build-time state, not runtime state
+**Context:** Same SEC-MOCK2 investigation (P-LOG-116) — any admin surface reporting the
+status of the *running* server must read it server-side per request, not from an inlined
+client constant. Same bug class as P-LOG-115 (a value baked in at build time silently
+stops reflecting reality on the deployed instance).
+**Lesson:** Never let an admin status badge or safety check source from `NEXT_PUBLIC_*`;
+feed it from a server-side API read instead.
+**Tags:** `#nextjs` `#security` `#deploy` (commit `c33b37e`)
+
+---
+
+### P-LOG-118: [2026-07-21] Responsive audits must sample the middle, not just the two ends
+**Context:** ADM-MOBILE — a toggle's knob rendered outside its own track. A fixed-width
+control with a hardcoded `translate-x-*` offset was allowed to flex-shrink; the squeeze
+was worst at 768–1300px (where the 256px sidebar narrows the column), not on phones, so
+testing only 375px and 1440px missed it.
+**Fix:** `shrink-0` made unconditional on the control, not gated to a mobile breakpoint
+(commit `3c49531`).
+**Lesson:** Sweep intermediate widths in a responsive audit, and give fixed-size controls
+carrying hardcoded transform offsets `shrink-0` at every width, not just under a mobile
+breakpoint.
+**Tags:** `#css` `#responsive` `#verification`
+
+---
+
+### P-LOG-119: [2026-07-21] `read_console_messages` returns the historical buffer, not current state
+**Context:** A stale compile error misled three separate investigations into working
+around a file that was actually fine — the console tool kept surfacing an error from
+before an intervening fix.
+**Lesson:** Confirm a module's real state by requesting the page (`curl` for HTTP status +
+expected markup) rather than trusting console history.
+**Tags:** `#verification` `#browser` `#debugging`
+
+---
+
+### P-LOG-120: [2026-07-21] A JSX comment cannot be a sibling before the single root element inside a parenthesized `return`
+**Context:** A `{/* ... */}` comment placed before the root element inside `return ( ... )`
+became a second top-level node and failed to parse.
+**Lesson:** Put the note as a `//` comment above the `return`, or move it inside the root
+element — never as a sibling before it.
+**Tags:** `#react` `#jsx` `#syntax`
+
+---
+
+### P-LOG-121: [2026-07-21] When several readers depend on a DB column, bridge through the API instead of migrating the column
+**Context:** ADM-SETTINGS — the Google Form URL needed to surface in a different admin tab.
+Migrating the column would have touched every existing reader.
+**Fix:** The global-config API merges the column in on GET and splits it back out on PUT
+(writing the column only when the key is present, so an older client cannot wipe it) — no
+migration, and `success` / `check-status` / `readiness` / `dashboard` readers were
+untouched (commit `bc4b4be`).
+**Lesson:** Prefer an API-level bridge over a schema migration when the only goal is
+relocating a field's UI surface and multiple readers already depend on the column.
+**Tags:** `#api` `#prisma` `#migrations`
+
+---
+
+### P-LOG-122: [2026-07-22] Derive danger-button copy from the route, not the button's name
+**Context:** AUD-COPY — a button labelled "delete individual voting data" only sets a
+certification flag; since v2-SEC no voter→choice link is stored at all. Copy written from
+the label misinformed admins about their own privacy guarantees.
+**Fix:** Corrected as part of the 6 false-claim sweep (commit `0fcb747`).
+**Lesson:** Write destructive-action copy from what the route handler actually does, not
+from the button's label — verify against the handler before shipping the sentence.
+**Tags:** `#admin` `#copy` `#security`
+
+---
+
+### P-LOG-123: [2026-07-21] A "last family still missing X" ticket must first verify the target actually lacks X
+**Context:** A ticket assumed one template family still had a bug another family had
+already fixed; the assumption was wrong — that family had already solved it.
+**Lesson:** Before porting a fix to a "last remaining" target, confirm the target still
+exhibits the symptom; porting a already-fixed target is redundant work at best.
+**Tags:** `#workflow` `#verification`
+
+---
+
+### P-LOG-124: [2026-07-22] UI copy propagates like code
+**Context:** AUD-COPY — a false field hint ("leaving the URL blank hides the evaluation
+button" — it does not; the button always renders and an empty URL yields an error dialog)
+was copied verbatim into two other surfaces before anyone checked it against behaviour. A
+later audit of ~100 admin claims found 6 false ones.
+**Fix:** Corrected at the source and both copies (commits `1488121`, `0fcb747`).
+**Lesson:** Copy that describes behaviour must cite the code when written, not when
+audited — a false claim gets copy-pasted forward faster than it gets caught.
+**Tags:** `#admin` `#copy` `#docs`
+
+---
+
+### P-LOG-125: [2026-07-22] An e2e harness that health-probes a port can silently test the wrong application
+**Context:** E2E-GUARD — `global.setup` spawned `next start` then polled `/api/health`
+until 200, with no way to tell its own child from a foreign process already holding the
+port. Any stale instance answers that route just as validly, so the suite could report
+green while testing a different app/DB/build — this happened for real during the first
+gate run.
+**Fix:** Raw-TCP port-occupancy check before any DB work (actionable error naming
+`PW_TEST_PORT`) plus a child-liveness assertion in the health loop; verified blocking on
+all four occupied ports, still 7/7 on a free one (commit `c12c361`).
+**Lesson:** Assert the port is free before spawning, and assert the responding server is
+the child you started — a health check alone does not prove which process answered.
+**Tags:** `#e2e` `#testing` `#verification`
+
+### P-LOG-126: [2026-07-27] A `NEXT_PUBLIC_*` read inside server code can be compiled into a permanent verdict
+**Context:** The readiness check for mock-login tested two things: whether NextAuth had
+registered the provider (runtime, correct) and whether `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` was
+set. Next inlines `NEXT_PUBLIC_*` at build time on the server side too, so with the flag on
+at build the minifier could prove the pass branch unreachable and deleted it. Two builds of
+the same file, compared: flag true → `(cond)?fail:fail`; flag unset → `(cond)?fail:pass`.
+An image built on a machine where that flag was visible would report the election server as
+unsafe forever, and no runtime environment variable could clear it — the green branch was
+not in the binary. Today's Dockerfile only escapes this because `.dockerignore` excludes
+`.env*`, i.e. by accident.
+**Fix:** The login button now reads `/api/auth/providers`, which lists what the running
+server actually registered, so it is a shadow of the gate rather than a second opinion; the
+readiness check dropped to the single runtime condition (`954d8ea`).
+**Lesson:** This is stronger than P-LOG-117. It is not only "reads the build machine's
+value" — a build-time constant can delete the code path you need at runtime. Anything that
+reports live state must not read `NEXT_PUBLIC_*`, even in a file that only runs on the server.
+**Tags:** `#nextjs` `#build` `#security` `#verification`
+
+### P-LOG-127: [2026-07-27] `compiler.removeConsole: true` strips `console.error` as well
+**Context:** Production builds carried `removeConsole: true`, which removes every
+`console.*` — all 80 in src, 26 of them in API routes. Found the direct way: the standalone
+build returned 503 from `/api/health` with an unreachable database and the container log
+stayed empty, because the route's own `console.error` was no longer in the binary. On
+election day that is the difference between reading why the vote API is failing and having
+nothing to read.
+**Fix:** `{ exclude: ["error", "warn"] }` (`4d4e8b6`); verified on the compiled route that
+`console.error` survives and `console.log` still does not, then end to end in the container
+by stopping the database and watching `[health] DB check failed` appear.
+**Lesson:** Check what a production build actually kept by grepping your own log strings in
+`.next/server/app/**/route.js` — do not assume "strip console noise" spared the errors.
+**Tags:** `#nextjs` `#build` `#observability`
+
+### P-LOG-128: [2026-07-27] Restoring error logs surfaces DynamicServerError from routes with no `force-dynamic`
+**Context:** With `console.error` alive again, `npm run build` began printing
+`[requireAdmin] session check failed` and DynamicServerError from five routes. Nothing was
+broken: Next probes routes for static rendering, the `headers()`/`request.url` read throws,
+and our own catch blocks logged it. But an auth-sounding error in build output reads like a
+real failure and would send the next person chasing it.
+**Fix:** `export const dynamic = "force-dynamic"` on the five runtime-only routes; build
+output clean again, route table unchanged (all still `ƒ`).
+**Lesson:** A route that reads headers or the request URL should declare itself dynamic even
+when it already behaves dynamically — otherwise the build narrates a failure that isn't one.
+**Tags:** `#nextjs` `#build`
+
+### P-LOG-129: [2026-07-27] Do not write shared app state while the owner is using the app
+**Context:** Verifying per-template work meant switching `activeTemplateId` in the dev
+database ~6 times. The owner was clicking through the admin in parallel, so the live theme
+changed under them mid-session. Worse in the other direction: their own `POST
+/api/admin/templates/*/apply` calls changed it under the measurements, and the first
+conclusion drawn was that `/template-preview` mutates the database — it does not.
+**Fix:** Use `/template-preview?slug=…`, which is database-free, for anything that only
+needs to render a family; reserve real writes for checks that genuinely need the live route,
+and restore in a `finally`.
+**Lesson:** Before concluding that shared state changed because of you, read the server log
+for requests you did not make. And prefer the read-only surface when one exists.
+**Tags:** `#process` `#verification` `#collaboration`
+
+### P-LOG-130: [2026-07-28] A UI audit harness must be checked against itself before its output is believed
+**Context:** The new template-completeness gate reported all six families as having no exit
+on any page, and every clamped party name in three families as truncated. Both were the
+harness: `/template-preview` renders with `editorMode` on, which nulls every `href` by
+design, and a `line-clamp` box routinely rounds a few pixels past its own height, so a >3px
+clip threshold fires on healthy markup. Same session, the same shape of mistake appeared
+three times — UTC timestamps fed to a parser that reads naive strings as `+07:00`, one
+student ID reused until the 15/min vote limiter answered 429, and locators written for
+labels one family does not use.
+**Fix:** Match exits on the label a voter reads, raise the clip threshold to 8px, and add a
+`REAL=1` mode that drives the real routes for anything about chrome or exits (`ac3d9a0`).
+**Lesson:** When a sweep reports a whole category as broken, suspect the sweep first. Prove
+one finding by hand before acting on a hundred.
+**Tags:** `#verification` `#testing` `#process`
+
+---
+
+### P-LOG-131: [2026-07-28] An SSO group we do not control was a password-free admin login
+**Context:** `requireAdmin` accepted a NextAuth session whose DB role was ADMIN/STAFF before
+it ever looked at the admin cookie, and `roleFromSso` handed `role=ADMIN` to anyone in PSU's
+`staff` group and `STAFF` to `faculty`. `middleware.js` matches `/admin/:path*`, which does
+not cover `/api/admin/*`, so the console UI was gated by the password while the entire admin
+API was gated by group membership PSU controls. A staff account signing in normally could
+`SET_MODE: PAUSE` and then `RESET_VOTES` from the browser console. It was never exploited —
+PSU's Authentik binding happens to exclude staff from this application — but that is a
+defence owned by someone else, invisible from our code, and one settings change from gone.
+**Fix:** One way in (`946b65f`..): the admin cookie only, minted from a studentId flagged
+`isAdmin` in the DB plus one shared committee password (bcrypt hash in `SystemConfig`), with
+`isAdmin` re-read from the DB on every request so `--revoke` lands immediately instead of at
+token expiry. SSO writes neither `isAdmin` nor privilege; `role` is now a label.
+**Lesson:** Authentication answers "who", authorisation must answer "may they, right now".
+Two guards for one resource means the weaker one is the real one — and a guard that only
+matches page routes does not protect the API behind them.
+**Tags:** `#security` `#auth` `#architecture`
+
+---
+
+### P-LOG-132: [2026-07-28] Credentials shaped by concatenation cannot be discovered from outside
+**Context:** The retired bootstrap accepted `<email>+<secret>`, not the secret, and stopped
+working the moment an account had a `passwordHash`. Both facts were invisible from the login
+form, from the env var's name, and from the error message; the owner locked themselves out
+and it took an hour to rediscover — from source, not from docs.
+**Fix:** The password is generated by `scripts/admin.js`, shown once, verified with a plain
+`bcrypt.compare` against what the user typed. No shape to remember, no state that silently
+turns it off. `--list` reports whether a password exists at all.
+**Lesson:** If explaining how to type a credential takes more than one sentence, the
+credential is wrong. Make the failure legible: "no admin password is set — run this" beats
+a 401 that means five different things.
+**Tags:** `#security` `#dx` `#ops`
+
+---
+
+### P-LOG-133: [2026-07-28] A setup script reported all-green on a site with no database
+**Context:** First real run of `scripts/setup.sh` against Docker printed `ผ่าน 16 · ไม่ผ่าน 0`
+and "เว็บตอบ 200". The site was dead: `/api/health` 503, `/api/home-info` 500,
+`/api/results` 403. The check fetched the homepage, which renders without touching the
+database, so it proved only that a web server was listening. The outage underneath was
+`docker-compose.yml` passing `${DATABASE_URL}` from `.env` into the container, where
+`localhost` means the container itself. Two more faults hid behind the false green: the
+script migrated before starting the bundled `db` service, and its admin listing read the
+dev database while the container talked to another one.
+**Fix:** Probe `/api/health` (the only route running `SELECT 1`) and treat a non-200 as a
+FAIL with the last 10 container log lines; refuse to start when `.env`'s DATABASE_URL says
+localhost and the compose file does not override it; bring `db` up and wait for
+`pg_isready` before migrating; run `admin.js` against `MIGRATE_DATABASE_URL` (`f1864be`).
+**Lesson:** A health check must exercise the dependency it claims to verify. "The page
+loaded" is not "the system works" — pick the endpoint that fails when the thing you care
+about is broken. And a checker that can only report success is worse than no checker,
+because someone will hand over a dead system believing it was checked.
+**Tags:** `#verification` `#ops` `#deploy`
 
 ---
 

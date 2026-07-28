@@ -20,9 +20,10 @@ import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { sortMembersByPosition } from "../../utils/memberSort";
-import { buildPartyTheme } from "../../utils/partyColors";
+import { buildPartyTheme, prefersDarkText } from "../../utils/partyColors";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
+import StoryClamp from "./StoryClamp";
 
 // --- data helpers (party fields are loose JSON from the admin) ---
 const asText = (it) =>
@@ -40,7 +41,7 @@ const firstImage = (val) => {
 };
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 
-export default function GumroadParty({ party = {}, galleryImages = [], showBackToVote = false }) {
+export default function GumroadParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
   const [lightbox, setLightbox] = useState(-1);           // gallery lightbox index (-1 = closed)
 
@@ -52,7 +53,11 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
   );
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
 
@@ -72,7 +77,13 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
   return (
     <div
       className="fms-app gp-root gum-root"
-      style={{ "--pop": theme.soft, "--pop-deep": theme.main, "--pop-ink": theme.textOnLight }}
+      style={{
+        "--pop": theme.soft, "--pop-deep": theme.main, "--pop-ink": theme.textOnLight,
+        // --pop is the party's own colour, so anything printed ON it has to follow it
+        // (the pop stickers were fixed --ink and landed at 4.4:1 on the mock colour;
+        // a darker signature would go lower)
+        "--pop-text": prefersDarkText(theme.soft) ? "var(--ink)" : "var(--cream)",
+      }}
     >
       <GumroadBaseStyles />
       {/* TOPBAR — shared gumroad navbar element */}
@@ -81,7 +92,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
       <main className="gp-page" style={showBackToVote ? { paddingBottom: 96 } : undefined}>
         {/* eyebrow */}
         <div className="gp-eyebrow">
-          <a href={getPath("/candidates")} className="gp-back"><ArrowLeft size={16} strokeWidth={2.5} /> ผู้สมัครทั้งหมด</a>
+          {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
+          <a href={getPath(isSingleParty ? "/" : "/candidates")} className="gp-back"><ArrowLeft size={16} strokeWidth={2.5} /> {isSingleParty ? "กลับหน้าแรก" : "ผู้สมัครทั้งหมด"}</a>
           <span className="gp-sticker gp-sticker--pop">★ OFFICIAL PARTY</span>
         </div>
 
@@ -116,9 +128,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                 <span className="gp-sticker gp-sticker--pop">💡 เรื่องราวของพรรค</span>
                 <h2 className="gp-card__h">แนวคิด & ที่มา</h2>
                 <div className="gp-story">
-                  <p className="gp-card__p">{story}</p>
+                  <StoryClamp className="gp-sc"><p className="gp-card__p">{story}</p></StoryClamp>
                 </div>
-                <span className="gp-story__hint">เลื่อนเพื่ออ่านต่อ ↓</span>
+                <span className="gp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> ↓</span>
               </article>
             ) : null}
             {missions.length > 0 && (
@@ -146,7 +158,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
               {policies.map((p, i) => (
                 <div className="gp-policy" key={i}>
                   <span className="gp-policy__no">{String(i + 1).padStart(2, "0")}</span>
-                  <p>{p}</p>
+                  <p className="gp-policy__t">{p.title}</p>
+                  {p.desc && <p className="gp-policy__d">{p.desc}</p>}
                 </div>
               ))}
             </div>
@@ -179,7 +192,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
       {/* BACK TO VOTE BAR (only when arriving from the vote flow) */}
       {showBackToVote && (
         <div className="gp-votebar">
-          <span className="gp-votebar__lbl">มาจากหน้าลงคะแนน?</span>
+          <span className="gp-votebar__lbl"><span className="gm-thai">มาจากหน้าลงคะแนน</span>?</span>
           <a href={getPath("/vote")} className="gp-votebar__btn"><ArrowLeft size={18} strokeWidth={3} /> กลับไปลงคะแนน</a>
         </div>
       )}
@@ -199,12 +212,12 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                   {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
                 </div>
                 <div className="gp-modal__info">
-                  <span className="gp-modal__eyebrow">★ ผู้สมัคร · CANDIDATE</span>
+                  <span className="gp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span> · CANDIDATE</span>
                   <h3 className="gp-modal__name">{modalMember.name}</h3>
                   <dl className="gp-modal__rows">
-                    <div><dt>รหัสนักศึกษา</dt><dd>{modalMember.studentId || "—"}</dd></div>
-                    <div><dt>ตำแหน่ง</dt><dd>{modalMember.position || "—"}</dd></div>
-                    <div><dt>สาขาวิชา</dt><dd>{modalMember.major || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "—"}</dd></div>
                   </dl>
                 </div>
               </motion.div>
@@ -245,6 +258,11 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gp-root *{ box-sizing:border-box; } .gp-root a{ text-decoration:none; color:inherit; } .gp-root img{ display:block; max-width:100%; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks). Pin Thai runs to the family's real Thai
+           body font instead. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
 
         .gp-page{ flex:1; width:100%; max-width:1040px; margin:0 auto; padding:32px 28px 56px; }
@@ -252,7 +270,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-back{ display:inline-flex; align-items:center; gap:7px; padding:8px 16px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gp-back:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gp-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
-        .gp-sticker--pop{ background:var(--pop); } .gp-sticker--lime{ background:var(--lime); } .gp-sticker--ink{ background:var(--ink); color:var(--cream); }
+        .gp-sticker--pop{ background:var(--pop); color:var(--pop-text,var(--ink)); } .gp-sticker--lime{ background:var(--lime); } .gp-sticker--ink{ background:var(--ink); color:var(--cream); }
 
         /* HERO */
         .gp-hero{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); overflow:hidden; margin-bottom:28px; }
@@ -263,8 +281,17 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-hero__gallery{ position:absolute; bottom:14px; right:14px; z-index:2; display:inline-flex; align-items:center; gap:7px; padding:9px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-family:var(--fb); font-weight:800; font-size:13px; box-shadow:var(--sh-sm); cursor:pointer; transition:transform .12s ease-out, box-shadow .12s ease-out; }
         .gp-hero__gallery:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
         .gp-hero__body{ padding:28px 32px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-        .gp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:grid; place-items:center; box-shadow:var(--sh); overflow:hidden; }
-        .gp-hero__logo img{ width:100%; height:100%; object-fit:contain; } .gp-hero__logo span{ font-family:var(--fd); font-size:34px; }
+        /* flex, not grid: a percentage max-height on a GRID item does not resolve here
+           (Chrome leaves the item at its aspect-ratio height), which is why the
+           portrait logo stayed 132px tall inside the 106px box. Flex centring resolves
+           it, so the mark scales to fit whatever shape it is. */
+        .gp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:6px; box-shadow:var(--sh); overflow:hidden; }
+        /* max-* rather than width/height:100% — a portrait logo (the real records are
+           3375x4219) was being sized 106px wide by its own aspect ratio, i.e. 132px
+           tall inside a 106px box, and the bottom of the artwork was cut off by the
+           box's overflow:hidden. Constraining instead of forcing keeps the whole mark
+           visible whatever shape the admin uploads. */
+        .gp-hero__logo img{ width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; } .gp-hero__logo span{ font-family:var(--fd); font-size:34px; }
         .gp-hero__txt{ min-width:0; flex:1; }
         .gp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }
@@ -279,6 +306,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-block{ margin-bottom:24px; }
         .gp-card__h{ font-family:var(--fd); font-size:22px; margin:12px 0 12px; letter-spacing:-.01em; text-transform:uppercase; }
         .gp-card__p{ font-size:15px; line-height:1.65; color:var(--ink2); margin:0; }
+        /* StoryClamp — long story folds behind a paper fade */
+        .gp-sc{ --sc-max:8.2em; --sc-fade:var(--paper); }
+        .gp-sc .sc__hint{ color:var(--ink2); font-family:var(--fm, inherit); text-transform:uppercase; }
         .gp-story{ max-height:190px; overflow-y:auto; margin-top:2px; padding-right:10px;
           -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent); mask-image:linear-gradient(180deg,#000 80%,transparent); }
         .gp-story::-webkit-scrollbar{ width:8px; } .gp-story::-webkit-scrollbar-thumb{ background:var(--ink); border-radius:999px; } .gp-story::-webkit-scrollbar-track{ background:transparent; }
@@ -292,7 +322,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-policies{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px; }
         .gp-policy{ position:relative; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:18px; padding:18px; box-shadow:var(--sh-sm); }
         .gp-policy__no{ position:absolute; top:-14px; left:14px; background:var(--pop-deep); color:#fff; font-family:var(--fd); font-size:14px; padding:4px 12px; border-radius:999px; letter-spacing:.1em; border:2px solid var(--ink); }
-        .gp-policy p{ font-size:14px; line-height:1.5; margin:8px 0 0; }
+        .gp-policy__t{ font-size:15px; line-height:1.45; margin:8px 0 0; font-weight:800; }
+        .gp-policy__d{ font-size:13px; line-height:1.55; margin:6px 0 0; color:var(--ink2); }
 
         .gp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }

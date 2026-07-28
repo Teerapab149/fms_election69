@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth"; // เช็ค Path ให้ถูก
 import { db } from "../../../lib/db";
 
-export async function GET() {
+// POST, not GET: this writes to the DB, and a GET that mutates state is reachable
+// cross-site from a plain <img src> with the user's session cookie attached.
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

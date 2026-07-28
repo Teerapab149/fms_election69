@@ -25,11 +25,15 @@ export const mkMembers = (n) =>
     modalImageUrl: (i + 1) % 5 === 0 ? null : `/images/members/party_1/Modal/${(i % 6) + 1}.jpg`,
   }));
 
+// Shaped like the REAL record: each policy is a { title, desc } object (the live DB
+// stores policies this way — see candidate 1). Families that only show a headline read
+// the title via asText(); party/single surfaces that present the full policy render the
+// desc too. Kept as objects so the preview exercises the same render path as production.
 export const POLICIES = [
-  "ยกระดับโครงการรับน้องและกิจกรรมเปิดใหม่ ให้สะท้อนความหลากหลายของนักศึกษาในศตวรรษที่ 21",
-  "ส่งเสริมกิจกรรมความหลากหลาย เปิดโอกาสให้นักศึกษามีส่วนร่วม และเสริมสร้างศักยภาพผ่านชมรม",
-  "เปิดพื้นที่พบปะแลกเปลี่ยน เพื่อนำพาเยาวชนสู่อนาคตที่สดใสและเข้าใจซึ่งกันและกัน",
-  "สร้างเวทีสำหรับคนรุ่นใหม่ เพื่อความหลากหลายทางความคิด ให้เกิดการพัฒนาในทุกกิจกรรม",
+  { title: "ยกระดับและพัฒนาโครงการ", desc: "ยกระดับโครงการรับน้องและกิจกรรมเปิดใหม่ ให้สะท้อนความหลากหลายของนักศึกษาในศตวรรษที่ 21 และเปิดพื้นที่การเรียนรู้ที่ทันสมัย" },
+  { title: "ส่งเสริมความหลากหลาย", desc: "ส่งเสริมกิจกรรมความหลากหลาย เปิดโอกาสให้นักศึกษามีส่วนร่วม และเสริมสร้างศักยภาพผ่านชมรมและเครือข่ายกิจกรรมของคณะ" },
+  { title: "พื้นที่พบปะแลกเปลี่ยน", desc: "เปิดพื้นที่พบปะแลกเปลี่ยนความคิด เพื่อนำพาเยาวชนสู่อนาคตที่สดใส เข้าใจซึ่งกันและกัน และต่อยอดความร่วมมือระหว่างสาขา" },
+  { title: "เวทีของคนรุ่นใหม่", desc: "สร้างเวทีสำหรับคนรุ่นใหม่ เพื่อความหลากหลายทางความคิด ให้เกิดการพัฒนาในทุกกิจกรรมอย่างต่อเนื่องและยั่งยืน" },
 ];
 
 export const MISSIONS = [
@@ -40,8 +44,14 @@ export const MISSIONS = [
 export const mkParty = (i, name, slogan, color) => ({
   id: i, number: i, name, slogan, color,
   logoUrl: PARTY_LOGOS[(i - 1) % PARTY_LOGOS.length], groupImageUrls: ["/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg"], officialImageUrl: null, mobileHeroImage: null,
+  // Long on purpose: real admins type a full essay here (the live record is ~1,500
+  // characters). The preview must show what a real story does to the page — that is
+  // what the StoryClamp collapse exists for.
   logoMeaning:
-    "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ",
+    "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ\n" +
+    "Unity คือ ความสามัคคี หมายถึงความสัมพันธ์ที่ทุกคนในหมู่คณะร่วมมือกันอย่างเข้าใจ ไม่ว่าจะมาจากสาขาใด ชั้นปีใด ทุกเสียงมีความหมายเท่ากันในการกำหนดทิศทางของสโมสรนักศึกษา\n" +
+    "Concord คือ ความกลมเกลียว สื่อถึงการทำงานที่ประสานกันอย่างราบรื่น รับฟังความเห็นต่างและหาข้อสรุปร่วมกันได้ โดยยึดประโยชน์ของนักศึกษาทั้งคณะเป็นที่ตั้ง\n" +
+    "สัญลักษณ์เรือใบสื่อถึงการเดินทางไปข้างหน้าด้วยกัน แม้ลมจะเปลี่ยนทิศ แต่หากทุกคนช่วยกันถือหางเสือ เราจะไปถึงจุดหมายเดียวกันได้เสมอ",
   missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
 });
 

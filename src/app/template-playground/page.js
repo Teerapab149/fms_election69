@@ -128,7 +128,13 @@ function PlaygroundBody() {
     const raw = parseInt(sp.get('parties'), 10);
     return Number.isFinite(raw) && raw >= 2 && raw <= 6 ? raw : 2;
   })();
-  const parties = useMemo(() => makeParties(partiesN), [partiesN]);
+  // ?noslogan=1 — SLG-1 absence harness, same contract as /template-preview: strips
+  // slogans (and ONLY slogans) from the mocks. Param absent → byte-identical roster.
+  const noSlogan = sp.get('noslogan') === '1';
+  const parties = useMemo(() => {
+    const base = makeParties(partiesN);
+    return noSlogan ? base.map((p) => ({ ...p, slogan: null })) : base;
+  }, [partiesN, noSlogan]);
 
   const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'verdure';
   const map = COMPONENTS[family] || COMPONENTS.verdure;
@@ -212,12 +218,14 @@ function PlaygroundBody() {
     // blossom/receipt LOCKED = the election-day embargo band (polls open, scores
     // sealed, turnout public) — not the "not started" empty state. Mirror /template-preview.
     const embargo = family === 'blossom' || family === 'receipt';
+    // RES-1: production results (app/results/page.js) is a read-only tally board —
+    // party rows are NOT links (no modal, no navigation). Mirror that here.
     content = (
       <R candidates={resultsCandidates(revealed, parties)}
         totalVotes={revealed ? 625 : (embargo ? 418 : 0)} demographics={DEMOGRAPHICS}
         finalStatus={revealed ? 'ENDED' : (embargo ? 'ONGOING' : 'WAITING')} isRevealed={revealed}
         isNotStarted={embargo ? false : !revealed}
-        countdownText={revealed ? '' : 'เหลืออีก 02:14:33'} onSelectParty={(p) => go('party', { partyNumber: p?.number ?? 1 })} editorMode={false} />
+        countdownText={revealed ? '' : 'เหลืออีก 02:14:33'} editorMode={false} />
     );
   } else if (page === 'success') {
     const S = map.success;

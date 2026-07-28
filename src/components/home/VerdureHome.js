@@ -15,7 +15,7 @@ import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useSession } from "next-auth/react";
-import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme } from "./VerdureChrome";
+import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme, VerdureFooter } from "./VerdureChrome";
 import EditorElement from "../admin/editor/EditorElement";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { getBinding } from "../admin/editor/elementCatalog";
@@ -86,15 +86,30 @@ export default function VerdureHome({
 
   useEffect(() => { setMounted(true); }, []);
 
-  const [cd, setCd] = useState("--:--:--");
+  // Phase-aware countdown: before open → count to START ("OPENS IN"); during →
+  // count to END ("CLOSES IN"); after → "ปิดแล้ว". A day segment prefixes the
+  // clock when >0 day remains so a multi-day gap doesn't render as "946:12:33".
+  // `days` is kept OUT of `value` on purpose: as one string the ledger rendered
+  // "26 วัน10:32:34" — the ink gap between the Thai "น" and the clock's "1"
+  // collapsed (the plain space advances only 6.8px at 34px, and the display
+  // face's -.02em tracking eats what is left). Separate spans let CSS own the
+  // separation instead of a glyph. See `.vd-home__stat .val .d` below.
+  const [cd, setCd] = useState({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "--:--:--" });
   useEffect(() => {
-    const { ELECTION_END } = resolveElectionDates(globalConfig);
-    const tick = () => {
-      const diff = ELECTION_END - Date.now();
-      if (diff <= 0) { setCd("ปิดแล้ว"); return; }
-      const h = Math.floor(diff / 3600000), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+    const fmt = (diff) => {
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff / 3600000) % 24), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
       const p = (n) => String(n).padStart(2, "0");
-      setCd(`${p(h)}:${p(m)}:${p(s)}`);
+      return { days: d, value: `${p(h)}:${p(m)}:${p(s)}` };
+    };
+    const tick = () => {
+      const now = Date.now();
+      const start = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
+      const end = ELECTION_END instanceof Date ? ELECTION_END.getTime() : NaN;
+      if (!isNaN(start) && now < start) { setCd({ labelEn: "OPENS IN", labelTh: "เปิดใน", ...fmt(start - now) }); return; }
+      if (!isNaN(end) && now < end) { setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", ...fmt(end - now) }); return; }
+      setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "ปิดแล้ว" });
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -165,7 +180,7 @@ export default function VerdureHome({
       {!editorMode && <style>{`html,body{background:${themeT.cream};color-scheme:light}`}</style>}
 
       <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode}
-        edge={{ num: "01", label: "Index", th: "หน้าหลัก" }} />
+        edge={{ num: "01", label: "Home", th: "หน้าหลัก" }} />
 
       <div className="vd-home">
         <div className="vd-home__above">
@@ -186,7 +201,7 @@ export default function VerdureHome({
               <span className="vd-home__cta-sub">{CTA.sub}</span>
             </a>
           </Wrap>
-          <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary">ดูรายชื่อผู้สมัคร <span aria-hidden>↗</span></a>
+          <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary"><span className="vd-thai">ดูรายชื่อผู้สมัคร</span> <span aria-hidden>↗</span></a>
         </div>
 
         <Wrap id="hero-subtitle">
@@ -194,40 +209,65 @@ export default function VerdureHome({
         </Wrap>
 
         <div className="vd-home__ledger">
-          <div className="vd-home__stat"><div className="lbl">VOTED · ใช้สิทธิ์</div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">TURNOUT · สัดส่วน</div><div className="val vd-tabular">{pct}<small>%</small></div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">CLOSES IN · ปิดใน</div><div className="val vd-tabular">{cd}</div></div>
+          <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
           <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl">PARTIES · พรรค</div><div className="val vd-tabular">{partyCount}</div></div>
+          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
         </div>
       </div>
 
+      <VerdureFooter />
+
       <style jsx global>{`
+        /* padding-top 82 is NOT slack: the cornermark chip and the status pill are
+           fixed at the top corners and end at y70, and this row's side labels sit
+           just inside their horizontal span. Trimming it to 64 put "EST. 1978"
+           straight through the logo — measured 1px of overlap at 1440 and 17px at
+           1366, where the right label hit the status pill too. Take height from the
+           seal instead; never from here. */
         .vd-home { flex:1; display:flex; flex-direction:column; align-items:center; padding:82px 40px 128px; max-width:1100px; margin:0 auto; width:100%; position:relative; z-index:1; }
 
         /* above-line — 3 equal columns so the centre line is DEAD centre regardless of side widths */
-        .vd-home__above { width:100%; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:22px; padding:0 8px; }
+        .vd-home__above { width:100%; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:16px; padding:0 8px; }
         .vd-home__above .side { font-family:var(--fm); font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--moss); opacity:.6; white-space:nowrap; }
         .vd-home__above .side--l { justify-self:start; }
         .vd-home__above .side--r { justify-self:end; }
         .vd-home__above .mid { justify-self:center; font-family:var(--fd); font-style:italic; font-size:18px; color:var(--terra); text-align:center; white-space:nowrap; }
 
         .vd-home__hero { display:flex; flex-direction:column; align-items:center; text-align:center; perspective:1100px; }
-        .vd-home__samo { font-family:var(--fs); font-weight:800; font-size:clamp(24px,2.6vw,38px); letter-spacing:.32em; color:var(--moss); margin-bottom:14px; }
+        /* the tracking is what makes this read as a stamped wordmark, but it also
+           pushes the whole line right by one full space — nudge it back so the
+           optical centre matches the seal's geometric centre below it */
+        .vd-home__samo { font-family:var(--fs); font-weight:800; font-size:clamp(24px,2.6vw,38px); letter-spacing:.32em; text-indent:.32em; color:var(--moss); margin-bottom:10px; }
 
         /* ── the interactive seal ── */
         .vd-seal-wrap { display:grid; place-items:center; }
-        .vd-seal { position:relative; width:clamp(290px,40vw,440px); height:clamp(290px,40vw,440px); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
+        /* ONE variable drives the whole medallion. The numeral used to carry its own
+           clamp(150px,20vw,230px), so shrinking the seal left it at 230 regardless:
+           at a 310px disc it measured 71% of the diameter and at 1366 (248px disc)
+           88% — wider than the inner ring, clipped by the disc's own overflow. That
+           is the cramped look. Everything inside now scales from --seal, so the
+           proportion cannot drift again the next time the seal is resized. */
+        .vd-seal { --seal:clamp(290px,35vw,388px);
+          position:relative; width:var(--seal); height:var(--seal); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
         .vd-seal__ring { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
         .vd-seal__ringtext { font-family:var(--fm); font-size:13px; letter-spacing:.3em; fill:var(--terra); opacity:.7; text-transform:uppercase; }
         .vd-seal__dash { position:absolute; inset:9%; border-radius:50%; border:1px dashed rgba(var(--terra-rgb),.45); pointer-events:none; }
         .vd-seal__disc { position:relative; width:80%; height:80%; border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:grid; place-items:center; overflow:hidden; box-shadow:0 50px 70px -38px rgba(var(--moss-rgb),.55), inset 0 3px 12px rgba(var(--cream-rgb),.07), inset 0 -10px 30px rgba(0,0,0,.18); }
         .vd-seal__disc::before { content:""; position:absolute; inset:14px; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.22); pointer-events:none; }
         .vd-seal__sheen { position:absolute; inset:0; border-radius:50%; pointer-events:none; mix-blend-mode:screen; }
-        .vd-home__disc-50 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(150px,20vw,230px); line-height:.86; letter-spacing:-.04em; color:var(--cream); position:relative; }
-        .vd-home__disc-ord { position:absolute; top:20%; right:17%; font-family:var(--fm); font-size:11px; letter-spacing:.22em; color:var(--terra-soft); text-transform:uppercase; transform:rotate(18deg); }
+        /* .5 of the seal = .625 of the disc, the proportion this medallion shipped
+           with (230 inside a 352 disc) and the one the seal was designed around.
+           Tied to --seal so it holds at every size. */
+        .vd-home__disc-50 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:calc(var(--seal) * .5); line-height:.86; letter-spacing:-.04em; color:var(--cream); position:relative; }
+        /* the edition tag rode at right:17%, which put it ON the numeral once the
+           numeral filled the disc (measured overlapping at every width). Pushed out
+           to the quiet band between the numeral and the inner dashed ring, and
+           scaled with the seal so it stays there. */
+        .vd-home__disc-ord { position:absolute; top:17%; right:9%; font-family:var(--fm); font-size:calc(var(--seal) * .028); letter-spacing:.22em; color:var(--terra-soft); text-transform:uppercase; transform:rotate(18deg); }
 
         /* PRIMARY ACTION — readable on hover (darker terracotta, NOT moss, so it never
            merges into the moss seal behind it) */
@@ -243,16 +283,41 @@ export default function VerdureHome({
         .vd-home__secondary { margin-top:16px; font-family:var(--fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--moss); opacity:.7; border-bottom:1px solid var(--rule); padding-bottom:2px; transition:opacity .2s, color .2s; }
         .vd-home__secondary:hover { opacity:1; color:var(--terra); }
 
-        .vd-home__deck { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(19px,2vw,26px); line-height:1.3; color:var(--moss); margin:38px auto 0; max-width:680px; text-align:center; }
+        /* balanced wrapping at a slightly tighter measure: at the old 680px this
+           sentence ran one full line and left a short stub under it, which is what
+           made the block read loose. 620 + balance gives two near-equal lines — and
+           two lines, not three, is what keeps it clear of the dock. */
+        .vd-home__deck { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(19px,2vw,26px); line-height:1.26; color:var(--moss); margin:22px auto 0; max-width:620px; text-align:center; text-wrap:balance; }
         .vd-home__deck em { color:var(--terra); }
 
-        .vd-home__ledger { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0 8px; margin-top:34px; padding-top:26px; border-top:1px solid var(--rule); width:100%; }
+        /* The break before the ledger scales with the viewport on purpose. The dock is
+           a centred pill, so a ledger that lands in its band loses exactly the two
+           middle figures (TURNOUT, OPENS IN) while the outer two stay readable — a
+           half-covered row reads like a bug. Pushing the rule below the fold instead
+           makes the first screen resolve as the seal alone and turns the ledger into
+           something you scroll to, which is what the rest of the page already does. */
+        .vd-home__ledger { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0 8px; margin-top:clamp(34px,11vh,110px); padding-top:26px; border-top:1px solid var(--rule); width:100%; }
         .vd-home__stat { text-align:center; padding:0 22px; }
         .vd-home__stat .lbl { font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.6; margin-bottom:6px; }
         .vd-home__stat .val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; letter-spacing:-.02em; color:var(--moss); }
         .vd-home__stat .val em { color:var(--terra); font-style:italic; }
         .vd-home__stat .val small { font-family:var(--fs); font-style:normal; font-size:13px; font-weight:500; color:var(--moss); opacity:.55; margin-left:5px; letter-spacing:0; }
+        /* day segment of the countdown — a plain space between "วัน" and the clock
+           advanced 6.8px but left almost no INK gap (Thai bowl ends flush, the
+           display "1" starts flush), reading as "26 วัน10:32:34". Own margin. */
+        .vd-home__stat .val .d { margin-right:.36em; }
         .vd-home__ledger-sep { width:1px; height:38px; background:var(--rule); }
+
+        /* SHORT viewports — the laptop class (1366x768, 1024x760). Width-only rules
+           cannot see these: at 1440x860 the composition already resolves above the
+           floating dock, but with ~90px less height the identity line came to rest
+           inside the dock's band. The seal gives back the difference; nothing else
+           about the composition changes. */
+        @media (min-width:901px) and (max-height:820px) {
+          .vd-home__above { margin-bottom:12px; }
+          .vd-seal { --seal:clamp(280px,28vw,310px); }
+          .vd-home__deck { margin-top:18px; }
+        }
 
         @media (max-width:1100px) {
           .vd-home { padding:76px 20px 116px; }
@@ -261,8 +326,22 @@ export default function VerdureHome({
           .vd-home__deck { font-size:18px; }
         }
         @media (max-width:640px) {
-          .vd-home__ledger { gap:18px 0; }
+          /* fixed break again on phones: the dock is nearly full-width here, so a
+             viewport-scaled gap pushed the figures INTO its band instead of past it.
+             Held tight, the whole ledger sits above the dock at rest. */
+          .vd-home__ledger { gap:18px 0; margin-top:28px; }
+          /* the base clamp bottoms out at 290px here, which is most of a phone's
+             width; 62vw keeps the seal dominant while giving the second stat row
+             the ~40px it needs to finish above the dock */
+          .vd-seal { --seal:clamp(230px,62vw,290px); }
           .vd-home__stat { flex:0 0 50%; padding:0 8px; }
+          /* the countdown is the one figure that cannot live in a half-width cell:
+             "22 วัน 18:33:10" runs ~280px at 34px while the cell is ~170, so it
+             wrapped mid-value and broke as "22" / "วัน 18:33:10" — the day count
+             orphaned from its own unit. Its own full-width row gives it 372px and
+             nowrap guarantees it stays one line even at the longest reading. */
+          .vd-home__stat--cd { flex:0 0 100%; }
+          .vd-home__stat--cd .val { white-space:nowrap; }
           .vd-home__ledger-sep { display:none; }
           .vd-home__cta { padding:15px 30px; }
           .vd-home__cta-label { font-size:16px; }

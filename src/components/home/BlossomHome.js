@@ -27,6 +27,10 @@ import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../util
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
 
+// Thai-run detector — used to pin only the Thai segments of the spinning ring
+// textPath to the family's real Thai font (Space Mono has no Thai glyphs).
+const THAI_RE = /[฀-๿]/;
+
 // sign-in helper (same seam as the other families)
 function blossomSignIn() {
   signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" });
@@ -43,6 +47,7 @@ function blossomMeta(gc = {}) {
     academicYear: gc.academicYearTh ?? "",
     copyrightYear: gc.copyrightYear ?? "",
     faculty: gc.facultyShortEn || "FMS",
+    university: gc.university || "PSU",
     campaign: gc.campaignTitle || "โครงการเลือกตั้งคณะกรรมการบริหาร",
     org: gc.organizationName || "สโมสรนักศึกษาคณะวิทยาการจัดการ",
   };
@@ -101,7 +106,7 @@ export function BlossomTopBar({ editorMode, onSignIn, active = "/" }) {
 
       <nav className="bl-nav">
         {NAV.map((n) => (
-          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className={n.href === active ? "bl-nav__link on" : "bl-nav__link"}>{n.th}</a>
+          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className={n.href === active ? "bl-nav__link on" : "bl-nav__link"}><span className="bl-thai bl-thai--nw">{n.th}</span></a>
         ))}
       </nav>
 
@@ -137,7 +142,7 @@ export function BlossomTopBar({ editorMode, onSignIn, active = "/" }) {
       {/* mobile slide-down sheet (editorial mono links) */}
       <div className={`bl-sheet ${menuOpen ? "is-open" : ""}`}>
         {NAV.map((n) => (
-          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className="bl-sheet__link" onClick={() => setMenuOpen(false)}>{n.th}</a>
+          <a key={n.href} href={editorMode ? undefined : getPath(n.href)} className="bl-sheet__link" onClick={() => setMenuOpen(false)}><span className="bl-thai bl-thai--nw">{n.th}</span></a>
         ))}
       </div>
       </div>
@@ -329,7 +334,6 @@ export default function BlossomHome({
   const ringSegs = [`${meta.faculty} ELECTION${meta.calYear !== "" ? ` ${meta.calYear}` : ""}`];
   if (String(meta.number) !== "" || meta.prefix) ringSegs.push(`${meta.prefix} ${meta.number}`.trim());
   if (meta.academicYear !== "") ringSegs.push(`ปีการศึกษา ${meta.academicYear}`);
-  const ringText = ringSegs.join(" · ") + " · ";
 
   // ── headline (config-safe split): the ORG is the star (owner call 2026-07-11 —
   //    students identify with the union, not the project title). Split org on
@@ -355,16 +359,29 @@ export default function BlossomHome({
   const ctaHref = editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/");
 
   // ── countdown caption + closed-block copy (driven by cd) ──
-  const cdCap = cd.done
-    ? "สถานะ / STATUS"
+  const cdCapTh = cd.done
+    ? "สถานะ"
     : cd.label === "เปิดโหวตใน"
-      ? "เปิดโหวตในอีก / STARTS IN"
+      ? "เปิดโหวตในอีก"
       : cd.label === "ปิดโหวตใน"
-        ? "ปิดโหวตในอีก / CLOSES IN"
-        : "กำลังโหลด / LOADING";
-  const cdClosedSmall = cd.label === "ระบบพักชั่วคราว"
-    ? "SYSTEM PAUSED · กลับมาเปิดอีกครั้งเร็ว ๆ นี้"
-    : "VOTING CLOSED · ดูผลได้ที่หน้าผลการเลือกตั้ง";
+        ? "ปิดโหวตในอีก"
+        : "กำลังโหลด";
+  const cdCapEn = cd.done
+    ? "STATUS"
+    : cd.label === "เปิดโหวตใน"
+      ? "STARTS IN"
+      : cd.label === "ปิดโหวตใน"
+        ? "CLOSES IN"
+        : "LOADING";
+  const cdPaused = cd.label === "ระบบพักชั่วคราว";
+  const cdClosedEn = cdPaused ? "SYSTEM PAUSED" : "VOTING CLOSED";
+  const cdClosedTh = cdPaused ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : "ดูผลได้ที่หน้าผลการเลือกตั้ง";
+  // ENDED-only factual close line (bl-B1B) — real close date/time from the resolved
+  // schedule, empty-guarded so an invalid date renders nothing. PAUSE has no real
+  // "resumes at" instant, so it keeps the plain hold copy (no fabricated time).
+  const cdCloseFact = cd.done && !cdPaused
+    ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}` : ""; })()
+    : "";
 
   return (
     <div className="fms-app bl-root">
@@ -381,7 +398,7 @@ export default function BlossomHome({
         {/* ===== issue line ===== */}
         <div className="bl-issue-line">
           <span>{meta.faculty} ELECTION{meta.calYear !== "" ? <> <b>·</b> {meta.calYear}</> : null}</span>
-          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <b>·</b> ปีการศึกษา {meta.academicYear}</> : null}</span>
+          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <b>·</b> <span className="bl-thai bl-thai--nw">ปีการศึกษา {meta.academicYear}</span></> : null}</span>
         </div>
 
         {/* ===== hero ===== */}
@@ -389,7 +406,11 @@ export default function BlossomHome({
           <div className="bl-ring" role="img" aria-label={`${meta.prefix} ${meta.number} — ${meta.faculty} Election ${meta.calYear}`}>
             <svg viewBox="0 0 200 200">
               <defs><path id="blRingPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
-              <text><textPath href="#blRingPath">{ringText}</textPath></text>
+              <text><textPath href="#blRingPath">
+                {ringSegs.map((seg, i) => (
+                  <tspan key={i} className={THAI_RE.test(seg) ? "bl-thai" : undefined}>{seg} · </tspan>
+                ))}
+              </textPath></text>
             </svg>
             <div className="bl-ring__core"><div><b>{meta.number}</b><span>{meta.prefix}</span></div></div>
           </div>
@@ -399,7 +420,7 @@ export default function BlossomHome({
 
           {ELECTION_START && (
             <div className="bl-daterow">
-              <span className="bl-daterow__pill">เปิดโหวต {formatThaiDate(ELECTION_START)}</span>
+              <span className="bl-daterow__pill bl-thai">เปิดโหวต {formatThaiDate(ELECTION_START)}</span>
               <span>{formatThaiTime(ELECTION_START)}–{formatThaiTime(ELECTION_END)}</span>
             </div>
           )}
@@ -423,7 +444,7 @@ export default function BlossomHome({
               <span className="bl-poster__tape bl-poster__tape--r" aria-hidden="true" />
               <img src={bannerSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="bl-poster__img" />
             </figure>
-            <div className="bl-poster-cap">{meta.prefix} {meta.number} · โปสเตอร์ประชาสัมพันธ์</div>
+            <div className="bl-poster-cap"><span className="bl-nw">{meta.prefix} {meta.number}</span> · <span className="bl-thai bl-thai--nw">โปสเตอร์ประชาสัมพันธ์</span></div>
           </div>
           <div className="bl-feature-copy">
             <h2>รู้จัก<em>ผู้สมัคร</em>ของคุณหรือยัง</h2>
@@ -440,55 +461,72 @@ export default function BlossomHome({
           <div className="bl-fig bl-fig-1">
             <span className="bl-idx">01</span>
             <span className="bl-fig-n">{fmtInt(displayCounts ? displayCounts.voted : rawStats.totalVoted)}<small>คน</small></span>
-            <span className="bl-lab"><span className="bl-live-dot" aria-hidden />ใช้สิทธิ์แล้ว<br />REAL-TIME</span>
+            <span className="bl-lab"><span className="bl-live-dot" aria-hidden /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span><br />REAL-TIME</span>
           </div>
           <div className="bl-fig bl-fig-2">
             <span className="bl-idx">02</span>
             <span className="bl-fig-n">{displayCounts ? displayCounts.pct : pct}<small>%</small></span>
-            <span className="bl-lab">อัตราการใช้สิทธิ์<br />TURNOUT</span>
+            <span className="bl-lab"><span className="bl-thai bl-thai--nw">อัตราการใช้สิทธิ์</span><br />TURNOUT</span>
             {/* hairline turnout track — the % made visible */}
             <span className="bl-figbar" aria-hidden="true"><span style={{ width: `${Math.min(100, parseFloat(pct))}%` }} /></span>
           </div>
           <div className="bl-fig bl-fig-3">
             <span className="bl-idx">03</span>
             <span className="bl-fig-n">{displayCounts ? displayCounts.parties : partyCount}<small>พรรค</small></span>
-            <span className="bl-lab">ผู้ลงสมัคร<br />PARTIES</span>
+            <span className="bl-lab"><span className="bl-thai bl-thai--nw">ผู้ลงสมัคร</span><br />PARTIES</span>
           </div>
         </section>
 
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
           <div className="bl-count__in">
-            <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" />{cdCap}</div>
+            <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{cdCapTh}</span> / <span className="bl-nw">{cdCapEn}</span></div>
             <div className="bl-count-line">
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u">วัน / DAYS</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วัน</span> / DAYS</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u">ชม. / HRS</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">ชม.</span> / HRS</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.m)} /><span className="bl-u">นาที / MIN</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.m)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">นาที</span> / MIN</span></span>
               <span className="bl-colon">:</span>
-              <span className="bl-seg"><BlCdDigits value={pad2(cd.s)} /><span className="bl-u">วินาที / SEC</span></span>
+              <span className="bl-seg"><BlCdDigits value={pad2(cd.s)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วินาที</span> / SEC</span></span>
             </div>
-            <div className="bl-count-closed">{cd.label}<small>{cdClosedSmall}</small></div>
+            <div className="bl-count-closed">
+              {cd.label}
+              <small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small>
+              {cdCloseFact && <span className="bl-count-closed__fact"><span className="bl-thai">{cdCloseFact}</span></span>}
+              {!cdPaused && (
+                <a className="bl-count-closed__link" href={editorMode ? undefined : getPath("/results")}>
+                  ดูผลคะแนน
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </a>
+              )}
+            </div>
           </div>
         </section>
 
         {/* ===== footer — plain classic line (owner 2026-07-11: แบบเดิมที่เคยใช้) ===== */}
         <footer className="bl-footer">
-          <p>© FMS@PSU{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {meta.faculty}@{meta.university}{meta.copyrightYear !== "" ? ` ${meta.copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
       <style jsx global>{`
         /* ========== BASE (mobile-first, editorial magazine skeleton) ========== */
-        .bl-root { overflow-x:hidden; }
+        /* clip, NOT hidden. overflow-x:hidden forces overflow-y to compute to auto, which
+           turns this root into a scroll container — and a sticky child pins to its scroll
+           container, not the viewport. Measured with hidden: .bl-topbar sat at y=0 at
+           scroll 0 but at y=-400 at scrollY 400, i.e. it never pinned once on a 2006px
+           page. clip does the same clipping without creating a scroll container.
+           Safe because xo (scrollWidth-clientWidth) measured 0 on every blossom page ×
+           4 viewports × 4 themes before the switch — there was no horizontal scroll to lose. */
+        .bl-root { overflow-x:clip; }
         /* dot-grid paper texture — sits above the blobs (paint order), under content */
         .bl-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
         /* :where() keeps this default at zero specificity (mockup used bare "a{}")
            so per-link classes (.bl-cta, .bl-nav__link, ...) always win */
-        :where(.bl-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-root) a:hover { color:var(--bl-ink); }
 
         /* organic candy blobs — absolute within .bl-root (root is relative) */
@@ -565,7 +603,7 @@ export default function BlossomHome({
         .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         /* burger (mobile only) — 44px tap target, mono editorial bars */
@@ -594,7 +632,7 @@ export default function BlossomHome({
         .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- hero ---- */
         .bl-hero { position:relative; padding-top:34px; }
@@ -608,10 +646,12 @@ export default function BlossomHome({
           position:absolute; top:6px; right:-14px; z-index:1; pointer-events:none;
           animation:blRingIn .9s cubic-bezier(.22,1,.36,1) both; }
         .bl-ring svg { width:100%; height:100%; animation:blSpin 26s linear infinite; overflow:visible; }
-        .bl-ring text { font-family:var(--bl-fm); font-size:10.2px; letter-spacing:.32em; fill:var(--bl-primary-deep); text-transform:uppercase; }
+        /* SVG type takes the accent INK too (10.2px mono read 1.98:1 in butter when
+           it was painted in the fill colour --bl-primary-deep) */
+        .bl-ring text { font-family:var(--bl-fm); font-size:10.2px; letter-spacing:.32em; fill:var(--bl-primary-ink); text-transform:uppercase; }
         .bl-ring__core { position:absolute; inset:0; display:grid; place-items:center; text-align:center;
           font-family:var(--bl-fd); font-weight:800; color:var(--bl-ink); }
-        .bl-ring__core b { font-size:clamp(30px,7vw,46px); line-height:1; display:block; color:var(--bl-primary-deep); }
+        .bl-ring__core b { font-size:clamp(30px,7vw,46px); line-height:1; display:block; color:var(--bl-primary-ink); }
         .bl-ring__core span { font-family:var(--bl-fm); font-size:9px; letter-spacing:.22em; color:var(--bl-ink2); }
         @keyframes blSpin { to { transform:rotate(360deg); } }
 
@@ -637,17 +677,17 @@ export default function BlossomHome({
         .bl-hollow { font-weight:800; color:transparent;
           -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-hollow { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-hollow { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-solid { font-weight:800; }
-        .bl-accent { color:var(--bl-primary-deep); }
+        .bl-accent { color:var(--bl-primary-ink); }
         .bl-subline { margin-top:18px; font-family:var(--bl-fd); font-weight:500; font-size:clamp(16px,4vw,24px);
           color:var(--bl-ink); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
         .bl-subline::before { content:""; width:52px; height:2px; background:var(--bl-ink); flex:none; }
 
         .bl-daterow { margin-top:22px; display:inline-flex; align-items:center; gap:10px; flex-wrap:wrap;
           font-family:var(--bl-fm); font-size:11.5px; letter-spacing:.1em; color:var(--bl-ink2); }
-        .bl-daterow__pill { background:var(--bl-primary-soft); color:var(--bl-primary-deep); padding:6px 14px;
+        .bl-daterow__pill { background:var(--bl-primary-soft); color:var(--bl-primary-ink); padding:6px 14px;
           border-radius:999px; font-weight:700; }
 
         /* ---- CTA editorial ---- */
@@ -673,7 +713,7 @@ export default function BlossomHome({
           font-family:var(--bl-fd); font-weight:600; font-size:16px; color:var(--bl-ink);
           padding:13px 28px; border-radius:999px; border:2px solid var(--bl-ink); background:transparent;
           transition:color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
-        .bl-cta2:hover { color:var(--bl-primary-deep); border-color:var(--bl-primary-deep);
+        .bl-cta2:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep);
           background:var(--bl-card); transform:translateY(-2px); }
         .bl-cta2:active { transform:scale(.97); }
 
@@ -729,15 +769,15 @@ export default function BlossomHome({
           letter-spacing:.16em; color:var(--bl-ink2); }
         .bl-feature-copy { margin-top:34px; max-width:560px; }
         .bl-feature-copy h2 { font-family:var(--bl-fd); font-weight:700; font-size:clamp(24px,6vw,38px); line-height:1.2; margin:0; }
-        .bl-feature-copy h2 em { font-style:normal; color:var(--bl-primary-deep); }
+        .bl-feature-copy h2 em { font-style:normal; color:var(--bl-primary-ink); }
         .bl-feature-copy p { margin-top:12px; font-size:15px; line-height:1.8; color:var(--bl-ink2); }
         /* go-link = soft pill button */
         .bl-go { display:inline-flex; align-items:center; gap:8px; margin-top:18px; min-height:44px;
           padding:11px 20px; border-radius:999px; background:var(--bl-primary-soft);
-          font-family:var(--bl-fd); font-weight:600; font-size:15px; color:var(--bl-primary-deep);
+          font-family:var(--bl-fd); font-weight:600; font-size:15px; color:var(--bl-primary-ink);
           transition:background .2s ease, color .2s ease, transform .2s ease; }
         .bl-go:hover { background:color-mix(in srgb, var(--bl-primary) 20%, var(--bl-card));
-          color:var(--bl-primary-deep); transform:translateY(-2px); }
+          color:var(--bl-primary-ink); transform:translateY(-2px); }
         .bl-go:active { transform:scale(.97); }
         .bl-go svg { transition:transform .25s ease; }
         .bl-go:hover svg { transform:translateX(4px); }
@@ -758,11 +798,11 @@ export default function BlossomHome({
         .bl-lab { margin-left:auto; text-align:right; font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em;
           color:var(--bl-ink2); line-height:1.9; }
         .bl-fig-1 .bl-fig-n { color:var(--bl-sup1-ink); }
-        .bl-fig-2 .bl-fig-n { color:var(--bl-primary-deep); }
+        .bl-fig-2 .bl-fig-n { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-fig-n { color:var(--bl-sup2-ink); }
         /* candy: index numbers echo their row's figure colour */
         .bl-fig-1 .bl-idx { color:var(--bl-sup1-ink); }
-        .bl-fig-2 .bl-idx { color:var(--bl-primary-deep); }
+        .bl-fig-2 .bl-idx { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-idx { color:var(--bl-sup2-ink); }
         .bl-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--bl-primary);
           margin-right:5px; animation:blBlip 1.6s infinite; }
@@ -801,6 +841,22 @@ export default function BlossomHome({
           letter-spacing:-.02em; line-height:1.05; margin-top:10px; color:var(--bl-canvas); }
         .bl-count-closed small { display:block; font-family:var(--bl-fm); font-weight:400; font-size:11px;
           letter-spacing:.24em; text-transform:uppercase; color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); margin-top:12px; }
+        /* ENDED close-time line (bl-B1B) — real schedule in the Thai body font, wraps
+           naturally (not the tracked mono small above); muted on the ink */
+        .bl-count-closed__fact { display:block; font-family:var(--bl-fb); font-weight:500; font-size:13px;
+          letter-spacing:.01em; line-height:1.6; color:color-mix(in srgb, var(--bl-canvas) 62%, transparent); margin-top:16px; }
+        /* results link — a quiet outline pill on the ink (canvas ring via inset shadow,
+           no layout shift), so it reinforces the "ดูผลได้..." line without competing
+           with the hero CTA that already leads to results on ended */
+        .bl-count-closed__link { display:inline-flex; align-items:center; gap:8px; margin-top:24px; min-height:44px;
+          padding:11px 22px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:15px;
+          color:var(--bl-canvas); background:transparent;
+          box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--bl-canvas) 55%, transparent);
+          transition:background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease; }
+        .bl-count-closed__link:hover { background:var(--bl-canvas); color:var(--bl-ink); transform:translateY(-2px); }
+        .bl-count-closed__link:active { transform:scale(.97); }
+        .bl-count-closed__link svg { transition:transform .25s ease; }
+        .bl-count-closed__link:hover svg { transform:translateX(4px); }
         .bl-count.is-closed .bl-count-line { display:none; }
         .bl-count.is-closed .bl-count-closed { display:block; }
 

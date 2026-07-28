@@ -5,7 +5,7 @@
 // own scoped styles. The host layout owns the grid-area; this owns the tile.
 
 import { useState, useEffect, useMemo } from "react";
-import { resolveElectionDates } from "../../../utils/electionConfig";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../../utils/electionConfig";
 import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
 
 export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
@@ -36,23 +36,52 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
     return () => clearInterval(id);
   }, [ELECTION_START, ELECTION_END, systemMode]);
   const cells = [{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }];
+  // gm-B2 T2 — ENDED/PAUSE render a dead 00:00:00:00 grid (no time is actually
+  // counting down/up). Swap the grid for a real-copy status statement in those two
+  // modes ONLY; live/pre-start/manual-open keep the ticking grid untouched. Close
+  // caption is real-schedule (formatThaiDate/Time), guarded for an unresolved date.
+  const isDead = t.label === "ENDED" || t.label === "PAUSED";
+  const closeCaption = t.label === "ENDED" ? (() => {
+    const d = formatThaiDate(ELECTION_END);
+    return d ? `${d} · ${formatThaiTime(ELECTION_END)}` : "";
+  })() : "";
   return (
     <div className="gh-cd" data-element="hero-countdown" data-variant="gumroad">
-      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · {t.sub}</div>
-      <div className="gh-cd__grid">
-        {cells.map((c, i) => (
-          <div key={i} className="gh-cd__cell">
-            <div className="gh-cd__num">{String(c.n).padStart(2, "0")}</div>
-            <div className="gh-cd__unit">{c.u}</div>
+      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · <span className="gm-thai">{t.sub}</span></div>
+      {isDead ? (
+        <div className="gh-cd__status">
+          <div className="gh-cd__status-txt">{t.label === "PAUSED" ? "พักระบบชั่วคราว" : "ปิดรับลงคะแนนแล้ว"}</div>
+          {/* PAUSE has no close caption (no real schedule for "resumes at") — render
+              an invisible spacer line so the tile keeps ENDED's 2-line height instead
+              of shrinking (no reflow of the bento row). Not real copy: aria-hidden. */}
+          <div className="gh-cd__status-cap" aria-hidden={closeCaption ? undefined : "true"} style={closeCaption ? undefined : { visibility: "hidden" }}>
+            {closeCaption || " "}
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="gh-cd__grid">
+          {cells.map((c, i) => (
+            <div key={i} className="gh-cd__cell">
+              <div className="gh-cd__num">{String(c.n).padStart(2, "0")}</div>
+              <div className="gh-cd__unit">{c.u}</div>
+            </div>
+          ))}
+        </div>
+      )}
       <style jsx global>{`
         .gh-cd{ height:100%; background:var(--cd-bg, var(--ink, #26271c)); color:var(--cd-text, var(--cream, #FFF6EC)); border:2.5px solid var(--cd-border, var(--ink, #26271c)); border-radius:22px; box-shadow:8px 8px 0 var(--cd-border, var(--ink, #26271c));
           padding:clamp(20px,2.2cqw,30px); display:flex; flex-direction:column; justify-content:space-between; gap:clamp(14px,2cqw,22px); }
         .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-weight:600; font-size:clamp(12px,1.4cqw,14px); text-transform:uppercase; letter-spacing:.15em; color:var(--cd-accent, var(--pink, #FF9CE9)); }
+        /* Space Grotesk has no Thai glyphs — pin the Thai run to the family's real
+           Thai body font so vowel/tone marks render correctly. */
+        .gm-thai{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif !important; letter-spacing:.04em; white-space:nowrap; }
         .gh-cd__grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(10px,1.4cqw,16px); margin-top:0; }
         .gh-cd__cell{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; padding:clamp(12px,1.8cqw,20px) 8px; text-align:center; border:2px solid var(--ink, #26271c); }
+        /* dead-grid replacement (ENDED/PAUSE) — same cell material as .gh-cd__cell,
+           one card instead of four, so the tile keeps its box/material identity. */
+        .gh-cd__status{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; border:2px solid var(--ink, #26271c); padding:clamp(16px,2.2cqw,22px) clamp(12px,1.8cqw,18px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; }
+        .gh-cd__status-txt{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:800; font-size:clamp(15px,2.1cqw,20px); line-height:1.25; }
+        .gh-cd__status-cap{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:600; font-size:clamp(11px,1.3cqw,13px); color:var(--cd-accent, var(--pink, #FF9CE9)); letter-spacing:.02em; }
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }
         .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:var(--ink2, #5c5a4b); margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
         .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:ghCdPulse 1.6s ease-out infinite; }

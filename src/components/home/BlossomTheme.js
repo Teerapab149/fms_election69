@@ -31,7 +31,10 @@ export function BlossomBaseStyles() {
         --bl-canvas:${t.canvas}; --bl-card:${t.card}; --bl-ink:${t.ink}; --bl-ink2:${t.ink2};
         --bl-faint:${t.faint}; --bl-line:${t.line};
         --bl-primary:${t.primary}; --bl-primary-deep:${t.primaryDeep}; --bl-primary-soft:${t.primarySoft};
-        --bl-on-primary:${t.onPrimary};
+        /* --bl-primary-ink = accent TEXT; --bl-primary-deep = accent FILL. Splitting
+           them is what lets the candy fills stay candy while accent type still
+           reaches AA — see the primaryInk note in utils/blossomPalettes.js. */
+        --bl-primary-ink:${t.primaryInk}; --bl-on-primary:${t.onPrimary};
         --bl-sup1:${t.sup1}; --bl-sup1-ink:${t.sup1Ink};
         --bl-sup2:${t.sup2}; --bl-sup2-ink:${t.sup2Ink};
         --bl-sup3:${t.sup3}; --bl-sup3-ink:${t.sup3Ink};
@@ -42,6 +45,22 @@ export function BlossomBaseStyles() {
         background:var(--bl-canvas); color:var(--bl-ink); font-family:var(--bl-fb);
       }
       .bl-root * { box-sizing:border-box; }
+      /* Thai run reset inside tracked/uppercase mono kickers: Space Mono (--bl-fm)
+         has no Thai glyphs, so Thai text set in a --bl-fm context falls back to a
+         system font with mis-set marks + unnatural tracking. This span pins Thai
+         back to the family's real Thai body stack (--bl-fb — Anuphan/Kanit, already
+         loaded via next/font in layout.js) with gentle spacing. Font fix ONLY — long
+         Thai sentences still wrap naturally. Add --nw on SHORT labels so a phrase
+         never breaks mid-word (pair with .bl-nw on an adjoining English run so a
+         kicker like "TOTAL VOTES · คะแนนรวม" only breaks at the "·"). Thai has no
+         case, so any inherited text-transform:uppercase is a no-op.
+         !important (same idiom as receipt's .rc-th): several Blossom rules target
+         children by tag (.bl-panel__cap span, etc), which outranks a bare single
+         class on specificity — this is the ONLY font-family declaration on the page
+         allowed to fight that, and only for the Thai reset. */
+      .bl-thai { font-family:var(--bl-fb) !important; letter-spacing:.04em; }
+      .bl-thai--nw { white-space:nowrap; }
+      .bl-nw { white-space:nowrap; }
       /* colour-theme morph — eased for ~0.5s while .bl-theming is on (set by the
          preview injector on a swatch switch) so every surface eases from the old
          palette to the new instead of snapping. Off otherwise → hover/press keep

@@ -19,6 +19,7 @@ import { Check, X, Ban } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import GumroadPartyIntro from "./GumroadPartyIntro";
+import StoryClamp from "./StoryClamp";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
 
@@ -54,7 +55,11 @@ export default function GumroadSingleParty({
   const [confirmOpen, setConfirmOpen] = useState(false);  // double-check before submitting the vote
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim(); // optional — not every year has one
 
@@ -121,9 +126,9 @@ export default function GumroadSingleParty({
                 <span className="gsp-sticker gsp-sticker--pink">💡 เรื่องราวของพรรค</span>
                 <h2 className="gsp-card__h">แนวคิด & ที่มา</h2>
                 <div className="gsp-story">
-                  <p className="gsp-card__p">{story}</p>
+                  <StoryClamp className="gsp-sc"><p className="gsp-card__p">{story}</p></StoryClamp>
                 </div>
-                <span className="gsp-story__hint">เลื่อนเพื่ออ่านต่อ ↓</span>
+                <span className="gsp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> ↓</span>
               </article>
             ) : null}
             {missions.length > 0 && (
@@ -151,7 +156,10 @@ export default function GumroadSingleParty({
               {policies.map((p, i) => (
                 <div className="gsp-policy" key={i}>
                   <span className="gsp-policy__no">{String(i + 1).padStart(2, "0")}</span>
-                  <p>{p}</p>
+                  <div className="gsp-policy__body">
+                    <p className="gsp-policy__t">{p.title}</p>
+                    {p.desc && <p className="gsp-policy__d">{p.desc}</p>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -229,12 +237,12 @@ export default function GumroadSingleParty({
                   {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
                 </div>
                 <div className="gsp-modal__info">
-                  <span className="gsp-modal__eyebrow">★ ผู้สมัคร · CANDIDATE</span>
+                  <span className="gsp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span> · CANDIDATE</span>
                   <h3 className="gsp-modal__name">{modalMember.name}</h3>
                   <dl className="gsp-modal__rows">
-                    <div><dt>รหัสนักศึกษา</dt><dd>{modalMember.studentId || "—"}</dd></div>
-                    <div><dt>ตำแหน่ง</dt><dd>{modalMember.position || "—"}</dd></div>
-                    <div><dt>สาขาวิชา</dt><dd>{modalMember.major || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "—"}</dd></div>
                   </dl>
                 </div>
               </motion.div>
@@ -255,7 +263,7 @@ export default function GumroadSingleParty({
               <h3 className="gsp-cm__title">ยืนยันการลงคะแนน?</h3>
               <p className="gsp-cm__sub">เลือกแล้ว <strong>เปลี่ยนไม่ได้</strong> — ตรวจสอบให้แน่ใจก่อนนะ</p>
               <div className="gsp-cm__pick">
-                <span className="gsp-cm__pick-lbl">ตัวเลือกของคุณ</span>
+                <span className="gsp-cm__pick-lbl"><span className="gm-thai">ตัวเลือกของคุณ</span></span>
                 <span className="gsp-cm__pick-val">{selectionLabel || "—"}</span>
               </div>
               <div className="gsp-cm__actions">
@@ -282,13 +290,22 @@ export default function GumroadSingleParty({
           background:linear-gradient(135deg, var(--gw1, #FFE6F2) 0%, var(--gw2, #FFF7EE) 46%, var(--gw3, #EEF7DB) 100%) fixed;
         }
         .gsp-root *{ box-sizing:border-box; } .gsp-root a{ text-decoration:none; color:inherit; } .gsp-root img{ display:block; max-width:100%; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks). Pin Thai runs to the family's real Thai
+           body font instead. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
         /* topbar = shared <SiteNavbar> element */
 
         .gsp-page{ flex:1; width:100%; max-width:1040px; margin:0 auto; padding:32px 28px 40px; }
         .gsp-eyebrow{ display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
         .gsp-sticker{ display:inline-flex; align-items:center; gap:8px; padding:6px 15px; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:999px; font-weight:700; font-size:13px; box-shadow:var(--sh-sm); }
-        .gsp-sticker--lime{ background:var(--lime); } .gsp-sticker--pink{ background:var(--pink); } .gsp-sticker--ink{ background:var(--ink); color:var(--cream); }
+        /* the pop variants must pin the INK colour, not just the fill: .gsp-card--ink
+           sets color:var(--cream) on its subtree, so the pink sticker inside the
+           missions card inherited cream and printed cream-on-pink = 1.76:1.
+           GumroadParty's .gp-sticker--pop already pins its colour — this pair did not. */
+        .gsp-sticker--lime{ background:var(--lime); color:var(--ink); } .gsp-sticker--pink{ background:var(--pink); color:var(--ink); } .gsp-sticker--ink{ background:var(--ink); color:var(--cream); }
         .gsp-sticker--rotate{ transform:rotate(-3deg); }
         .gsp-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:gspPulse 1.6s ease-out infinite; }
         @keyframes gspPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
@@ -300,8 +317,12 @@ export default function GumroadSingleParty({
         .gsp-hero__media img{ width:100%; height:100%; object-fit:cover; }
         .gsp-hero__ph{ background:var(--paper); border:2px solid var(--ink); padding:12px 18px; border-radius:999px; font-family:var(--fm); font-weight:600; font-size:13px; }
         .gsp-hero__body{ padding:28px 32px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-        .gsp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:grid; place-items:center; box-shadow:var(--sh); overflow:hidden; }
-        .gsp-hero__logo img{ width:100%; height:100%; object-fit:contain; } .gsp-hero__logo span{ font-family:var(--fd); font-size:34px; }
+        /* flex, not grid — see GumroadParty: percentage max-height does not resolve on
+           a grid item, so a portrait logo overflowed the box and got clipped */
+        .gsp-hero__logo{ width:110px; height:110px; border-radius:24px; border:var(--bw) solid var(--ink); background:var(--cream); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:6px; box-shadow:var(--sh); overflow:hidden; }
+        /* same fix as GumroadParty: forcing 100%/100% sized a portrait logo by its own
+           aspect ratio and the box's overflow:hidden cut the bottom off */
+        .gsp-hero__logo img{ width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; } .gsp-hero__logo span{ font-family:var(--fd); font-size:34px; }
         .gsp-hero__txt{ min-width:0; flex:1; }
         .gsp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gsp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }
@@ -316,6 +337,9 @@ export default function GumroadSingleParty({
         .gsp-block{ margin-bottom:24px; }
         .gsp-card__h{ font-family:var(--fd); font-size:22px; margin:12px 0 12px; letter-spacing:-.01em; text-transform:uppercase; }
         .gsp-card__p{ font-size:15px; line-height:1.65; color:var(--ink2); margin:0; }
+        /* StoryClamp — long story folds behind a paper fade */
+        .gsp-sc{ --sc-max:8.2em; --sc-fade:var(--paper); }
+        .gsp-sc .sc__hint{ color:var(--ink2); font-family:var(--fm, inherit); text-transform:uppercase; }
         /* story — capped + scrollable so a long write-up never bloats the row */
         .gsp-story{ max-height:190px; overflow-y:auto; margin-top:2px; padding-right:10px;
           -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent); mask-image:linear-gradient(180deg,#000 80%,transparent); }
@@ -328,10 +352,12 @@ export default function GumroadSingleParty({
         .gsp-m__no{ flex-shrink:0; width:30px; height:30px; border-radius:999px; background:var(--lime); color:var(--ink); font-family:var(--fd); font-size:13px; display:grid; place-items:center; box-shadow:2px 2px 0 rgba(0,0,0,.45); }
         .gsp-m__tx{ margin:0; font-size:14.5px; line-height:1.55; padding-top:3px; }
 
-        .gsp-policies{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px; }
-        .gsp-policy{ position:relative; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:18px; padding:18px; box-shadow:var(--sh-sm); }
-        .gsp-policy__no{ position:absolute; top:-14px; left:14px; background:var(--ink); color:var(--cream); font-family:var(--fd); font-size:14px; padding:4px 12px; border-radius:999px; letter-spacing:.1em; }
-        .gsp-policy p{ font-size:14px; line-height:1.5; margin:4px 0 0; }
+        .gsp-policies{ display:flex; flex-direction:column; gap:12px; margin-top:18px; }
+        .gsp-policy{ display:flex; gap:16px; align-items:flex-start; background:var(--cream); border:var(--bw) solid var(--ink); border-radius:16px; padding:16px 18px; box-shadow:var(--sh-sm); }
+        .gsp-policy__no{ flex-shrink:0; background:var(--ink); color:var(--cream); font-family:var(--fd); font-size:14px; padding:4px 12px; border-radius:999px; letter-spacing:.1em; }
+        .gsp-policy__body{ flex:1; min-width:0; }
+        .gsp-policy__t{ font-size:15px; line-height:1.45; margin:0; font-weight:800; }
+        .gsp-policy__d{ font-size:13px; line-height:1.55; margin:6px 0 0; color:var(--ink2); }
 
         .gsp-members__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .gsp-members__count{ font-family:var(--fm); font-size:13px; color:var(--ink2); }
@@ -365,7 +391,13 @@ export default function GumroadSingleParty({
         .gsp-footer__lbl{ font-family:var(--fm); font-size:11px; color:var(--lime); text-transform:uppercase; letter-spacing:.15em; }
         .gsp-footer__sel{ font-size:17px; font-weight:700; }
         .gsp-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:var(--fb); font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
-        .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); } .gsp-confirm:disabled{ background:var(--paper); color:color-mix(in srgb, var(--ink) 40%, var(--paper)); border-color:color-mix(in srgb, var(--ink) 22%, var(--paper)); box-shadow:none; cursor:not-allowed; }
+        .gsp-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); }
+        /* the disabled label is not decoration — it says WHY the button is off
+           ("เลือกตัวเลือกก่อน"), so it has to be readable. 40% ink on paper measured
+           2.37:1 at 16px; 66% lands at 4.9:1 and still reads as inactive next to the
+           full-ink enabled state (14:1). The border stays at 22% so the button
+           silhouette is unchanged. */
+        .gsp-confirm:disabled{ background:var(--paper); color:color-mix(in srgb, var(--ink) 66%, var(--paper)); border-color:color-mix(in srgb, var(--ink) 22%, var(--paper)); box-shadow:none; cursor:not-allowed; }
 
         /* MEMBER PROFILE MODAL */
         .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }

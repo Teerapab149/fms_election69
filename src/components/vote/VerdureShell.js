@@ -6,7 +6,7 @@
 // children. Same idea as StudioDarkShell; props match the Verdure design's
 // per-screen specifics (edge number/label, status chip, back link).
 
-import VerdureChrome, { verdureTheme } from "../home/VerdureChrome";
+import VerdureChrome, { verdureTheme, VerdureFooter } from "../home/VerdureChrome";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 
 export default function VerdureShell({
@@ -14,7 +14,7 @@ export default function VerdureShell({
   moss = false,
   editorMode = false,
   systemMode = "AUTO",
-  edge = { num: "01", label: "Index", th: "" },
+  edge = { num: "01", label: "Home", th: "" },
   // null (not a literal string) so VerdureChrome's `cornermarkTitle || meta.wordmark`
   // falls through to the live globalConfig-derived value when a page doesn't
   // override it (see VerdureChrome.js meta / VerdureCandidates usage).
@@ -51,6 +51,8 @@ export default function VerdureShell({
       />
 
       {children}
+
+      <VerdureFooter />
     </div>
   );
 }

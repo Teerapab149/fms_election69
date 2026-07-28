@@ -61,47 +61,38 @@ export async function POST(request) {
             );
         }
 
-        const dbEmail = String(user.email || "").toLowerCase();
-        if (!dbEmail) {
+        // 3) รหัสผ่าน — สองทาง ทางหลักคือ "รหัสกลาง" ที่กรรมการใช้ร่วมกัน
+        //    (SystemConfig.adminPasswordHash) ตัวตนมาจาก username ที่พิมพ์
+        //    ส่วนรหัสประจำบัญชี (User.passwordHash) เหลือไว้ให้บัญชีทางหนีไฟ
+        //    ที่ไม่ควรใช้รหัสร่วมกับใคร — ดู scripts/admin.js --break-glass
+        //
+        //    ⛔ ทางเดิม ADMIN_PASSWORD_AUTH_EXTRA ("<email>+<secret>") ถูกถอดออก
+        //    2026-07-28: มันสร้างรหัสให้บัญชีที่ยังไม่มี hash โดยอัตโนมัติ ซึ่งรวม
+        //    บัญชีที่ SSO เคยตั้ง isAdmin ให้เอง และรูปร่างรหัสของมันมองจากข้างนอก
+        //    ไม่ออก (ล็อกเจ้าของออกจากระบบมาแล้วหนึ่งครั้ง)
+        const cfg = await db.systemConfig.findFirst({
+            where: { id: 1 },
+            select: { adminPasswordHash: true },
+        });
+        const sharedHash = cfg?.adminPasswordHash || null;
+
+        if (!sharedHash && !user.passwordHash) {
+            console.error("[admin/login] no admin password is set — run: node scripts/admin.js --rotate-password");
             return NextResponse.json(
-                { success: false, message: "บัญชีนี้ไม่มี email ในระบบ" },
+                { success: false, message: "ระบบยังไม่ได้ตั้งรหัสผ่านแอดมิน — ติดต่อผู้ดูแลเซิร์ฟเวอร์" },
                 { status: 500 }
             );
         }
 
-        if (!user.passwordHash) {
-            const bootstrapSecret = process.env.ADMIN_PASSWORD_AUTH_EXTRA;
-            if (!bootstrapSecret) {
-                return NextResponse.json(
-                    { success: false, message: "Server misconfig" },
-                    { status: 500 }
-                );
-            }
+        let ok = false;
+        if (sharedHash) ok = await bcrypt.compare(String(password), sharedHash);
+        if (!ok && user.passwordHash) ok = await bcrypt.compare(String(password), user.passwordHash);
 
-            const expected = `${dbEmail}+${bootstrapSecret}`;
-
-            if (String(password) !== expected) {
-                return NextResponse.json(
-                    { success: false, message: "รหัสผ่านไม่ถูกต้อง (ยังไม่ได้ตั้งรหัสแอดมิน)" },
-                    { status: 401 }
-                );
-            }
-
-            const newHash = await bcrypt.hash(String(password), 12);
-
-            await db.user.update({
-                where: { id: user.id },
-                data: { passwordHash: newHash },
-            });
-        } else {
-            // 4) มี hash แล้ว -> compare ปกติ
-            const ok = await bcrypt.compare(String(password), user.passwordHash);
-            if (!ok) {
-                return NextResponse.json(
-                    { success: false, message: "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง" },
-                    { status: 401 }
-                );
-            }
+        if (!ok) {
+            return NextResponse.json(
+                { success: false, message: "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง" },
+                { status: 401 }
+            );
         }
 
         // 5) ออก JWT

@@ -34,13 +34,17 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
   const SpecialIcon = isDisapprove ? UserX : Ban;
   const label = isVoteNo ? 'งดออกเสียง' : isDisapprove ? 'ไม่รับรอง' : `NO. ${party.number}`;
 
-  const LogoInner = () => (
+  // `pad` is the logo inset. The grid card's stage is ~200px+ so it can afford
+  // p-4/md:p-6; the compact row's stage is a fixed 48px box, where that same
+  // inset leaves a 16px (mobile) / 0px (md+) content box — i.e. the party logo
+  // was invisible on desktop whenever >5 parties flipped the ballot to compact.
+  const LogoInner = ({ pad = 'p-4 md:p-6' }) => (
     isSpecialOption ? (
       <SpecialIcon className="w-1/3 h-1/3 transition-all duration-500 group-hover:scale-110"
         style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.22)' }} />
     ) : (party.logoUrl && !imageError) ? (
       <img src={getPath(party.logoUrl)} alt={party.name}
-        className={`w-full h-full object-contain p-4 md:p-6 transition-transform duration-700 ease-out group-hover:scale-105 ${isSelected ? 'scale-105' : ''}`}
+        className={`w-full h-full object-contain ${pad} transition-transform duration-700 ease-out group-hover:scale-105 ${isSelected ? 'scale-105' : ''}`}
         onError={() => setImageError(true)} />
     ) : (
       <Users className="w-1/3 h-1/3 transition-all duration-500 group-hover:scale-110" style={{ color: 'rgba(30,23,45,0.18)' }} />
@@ -51,6 +55,8 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
   if (variant === 'compact') {
     return (
       <div onClick={() => onSelect(party.id)}
+        role="radio" aria-checked={!!isSelected} tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(party.id); } }}
         className="relative group cursor-pointer select-none transition-all duration-400 ease-out rounded-2xl overflow-hidden flex"
         style={{
           background: isSelected ? T.soft : '#ffffff',
@@ -60,11 +66,29 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
         <div className="flex items-center gap-3 p-3 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden transition-all duration-300"
             style={{ background: `radial-gradient(120% 120% at 50% 0%, ${T.soft}, #fff 72%)`, boxShadow: `inset 0 0 0 1px ${T.ring}` }}>
-            <LogoInner />
+            <LogoInner pad="p-1.5" />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.42)' }}>{label}</span>
-            <h3 className="font-bold text-[13px] leading-snug truncate" style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.82)' }}>{party.name}</h3>
+            {/* 0.42 alpha put this 9px ballot label at 2.65:1 on the white row —
+                well under AA's 4.5. 0.66 composites to 5.57:1 and still reads as a
+                quiet caption next to the party name */}
+            <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: isSelected ? T.solid : 'rgba(30,23,45,0.66)' }}>{label}</span>
+            {/* two lines, not `truncate`: a 53-character party name lost 132px of
+                itself (desktop) / 61px (mobile) to the single-line ellipsis, and
+                parties sharing a prefix became indistinguishable on the ballot.
+                THREE lines, not two: at 768px the >5-party ballot is still 3 columns
+                (grid-cols-1 sm:grid-cols-3), which leaves the row 235px wide and the
+                name column ~145px — clamp-2 measured scrollHeight−clientHeight = 18px,
+                i.e. a whole third line of the longest real name silently dropped. */}
+            {/* ink gutter: `line-clamp` forces overflow:hidden, which clips at the
+                PADDING box. leading-snug (1.375) is under Anuphan's font box once a
+                Thai tone-over-vowel is in play — the tallest legitimate stack
+                (ปื๋ ฟื๊ ที่ ชี้ เพื่อ; names are admin-typed free text) puts 0.1202em
+                of ink above the clip edge. .18em = that plus a 0.05em cushion, so
+                sub-pixel rounding cannot eat it. pt/-mt cancel in layout: the clip box
+                grows, the glyphs do not move. No padding-BOTTOM — Chrome paints the
+                line that the clamp dropped into bottom padding (receipt, 2026-07-23) */}
+            <h3 className="font-bold text-[13px] leading-snug line-clamp-3 pt-[.18em] -mt-[.18em]" style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.82)' }}>{party.name}</h3>
           </div>
           {isSelected && (
             <div className="flex-shrink-0 p-1.5 rounded-xl text-white" style={{ background: T.grad, boxShadow: `0 6px 16px -4px ${T.solid}` }}>
@@ -79,6 +103,8 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
   // ── grid variant (default) ──────────────────────────────────────────────────
   return (
     <div onClick={() => onSelect(party.id)}
+      role="radio" aria-checked={!!isSelected} tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(party.id); } }}
       className="group relative cursor-pointer select-none rounded-[26px] overflow-hidden h-full flex flex-col transition-all duration-500 ease-out"
       style={{
         background: '#ffffff',
@@ -126,7 +152,14 @@ export default function PartyCard({ party, isSelected, onSelect, onViewDetails, 
         </div>
 
         {/* Name */}
-        <h3 className={`mt-3.5 font-bold leading-tight line-clamp-2 px-0.5 text-center transition-colors duration-300 ${isHero ? 'text-base md:text-xl' : 'text-[15px] md:text-base'}`}
+        {/* three lines: at 5 parties the mobile grid is 2-up (~139px of name
+            width) and the longest real party name needs 3 lines — clamp-2 cut
+            the last line off entirely */}
+        {/* ink gutter (see the compact row above): leading-tight = 1.25 sits under
+            Anuphan's font box, so a Thai tone-over-vowel crosses the clip edge. Sized
+            off the same worst-case stack, + a 0.05em cushion. Folded into the existing
+            mt-3.5 (0.875rem) so the name does not shift down */}
+        <h3 className={`pt-[.24em] mt-[calc(0.875rem-.24em)] font-bold leading-tight line-clamp-3 px-0.5 text-center transition-colors duration-300 ${isHero ? 'text-base md:text-xl' : 'text-[15px] md:text-base'}`}
           style={{ color: isSelected ? '#1e172d' : 'rgba(30,23,45,0.85)' }}>
           {party.name}
         </h3>

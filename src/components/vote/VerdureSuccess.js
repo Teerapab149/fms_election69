@@ -20,8 +20,24 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
   const sid = user?.studentId || (editorMode ? "6610510149" : "—");
-  const d = new Date();
-  const recordedAt = `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`; // Arabic digits
+  // RECORDED AT must be the moment the ballot was cast (User.votedAt), read in
+  // Asia/Bangkok per ADM-2 — it used `new Date()`, so re-opening this page the next
+  // day stamped the receipt with the day it was viewed. Falls back to now only in
+  // the editor preview, where there is no real vote.
+  const stampSource = user?.votedAt ? new Date(user.votedAt) : (editorMode ? new Date() : null);
+  // {day, month, year} instead of one string: TH_MONTHS is Thai text and this
+  // row sits under .vd-receipt__row's --fm (Space Mono has zero Thai glyphs,
+  // unlike --fd/--fs which fold var(--font-plex-thai) into their own stack) —
+  // only the month abbreviation needs the .vd-thai escape hatch, day/year stay
+  // on the row's mono digits like the rest of the receipt.
+  const recordedAt = (() => {
+    if (!stampSource || isNaN(stampSource.getTime())) return null;
+    const p = {};
+    for (const part of new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(stampSource)) p[part.type] = part.value;
+    return { day: Number(p.day), month: TH_MONTHS[Number(p.month) - 1], year: Number(p.year) + 543 }; // Arabic digits
+  })();
   const ballotNo = `${meta.faculty}-${meta.cy}-${String(sid).slice(-4).padStart(4, "0")}`;
 
   return (
@@ -38,7 +54,7 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
               <path id="vdArchTop" d="M 30 180 A 150 150 0 0 1 330 180" />
               <path id="vdArchBot" d="M 30 180 A 150 150 0 0 0 330 180" />
             </defs>
-            <text><textPath href="#vdArchTop" startOffset="50%" textAnchor="middle">★ BALLOT RECORDED · บันทึกแล้ว ★</textPath></text>
+            <text><textPath href="#vdArchTop" startOffset="50%" textAnchor="middle">★ BALLOT RECORDED · <tspan className="vd-thai">บันทึกแล้ว</tspan> ★</textPath></text>
             <text><textPath href="#vdArchBot" startOffset="50%" textAnchor="middle">{meta.faculty} · {meta.prefix} · {meta.num} · {meta.cy} · CONFIRMED</textPath></text>
           </svg>
           <div className="vd-orn__disc"><Check size={52} strokeWidth={2.5} /></div>
@@ -52,9 +68,11 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         </div>
 
         <div className="vd-receipt">
-          <div className="vd-receipt__h"><span>RECEIPT · ใบรับรอง</span><span><span className="ac">●</span> CONFIRMED</span></div>
+          <div className="vd-receipt__h"><span><span className="vd-nw">RECEIPT</span> · <span className="vd-thai">ใบรับรอง</span></span><span><span className="ac">●</span> CONFIRMED</span></div>
           <div className="vd-receipt__row"><span className="lbl">BALLOT No.</span><span className="val"><span className="ac">{ballotNo}</span></span></div>
-          <div className="vd-receipt__row"><span className="lbl">RECORDED AT</span><span className="val">{recordedAt}</span></div>
+          {recordedAt && (
+            <div className="vd-receipt__row"><span className="lbl">RECORDED AT</span><span className="val vd-tabular">{recordedAt.day} <span className="vd-thai">{recordedAt.month}</span> {recordedAt.year}</span></div>
+          )}
           <div className="vd-receipt__row"><span className="lbl">VOTER ID</span><span className="val">No. {sid}</span></div>
           <div className="vd-receipt__row"><span className="lbl">SECURED BY</span><span className="val">PSU Passport</span></div>
           <div className="vd-receipt__cta">
@@ -75,14 +93,20 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
       <style jsx global>{`
         .vd-success { flex:1; display:grid; place-items:center; padding:110px 24px 150px; position:relative; z-index:1; }
         .vd-orn { position:relative; width:360px; height:360px; margin:0 auto 44px; display:grid; place-items:center; }
-        .vd-orn__disc { width:220px; height:220px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; position:relative; z-index:2; box-shadow:0 0 0 1px var(--terra-soft); }
+        /* the seal is the focal point of the page, but a dark plum disc on dark moss
+           separates at 1.4:1 - it read as a dim shape. A 3px light-accent ring plus a
+           lift shadow give it an edge without inverting the medallion's colour. */
+        .vd-orn__disc { width:220px; height:220px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; position:relative; z-index:2; box-shadow:0 0 0 3px var(--terra-soft), 0 26px 60px -28px rgba(0,0,0,.55); }
         .vd-orn__ring { position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.4); }
         .vd-orn__ring--2 { inset:30px; border-style:solid; border-color:var(--rule-moss); }
         .vd-orn__arch { position:absolute; inset:0; pointer-events:none; font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; fill:var(--cream); opacity:.65; }
         .vd-success__head { text-align:center; max-width:720px; margin:0 auto 44px; }
         .vd-success__head .kicker { font-family:var(--fm); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:16px; }
         .vd-success__head h1 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(52px,7vw,92px); line-height:.96; letter-spacing:-.02em; margin:0 0 6px; color:var(--cream); }
-        .vd-success__head h1 em { color:var(--terra); }
+        /* light plum, not --terra: this page is a moss surface, and dark plum on dark
+           moss measured 1.4:1 - the 90px word "ลงคะแนน" sank into the background.
+           Same hue, one step up (the kicker above already uses --terra-soft here). */
+        .vd-success__head h1 em { color:var(--terra-soft); }
         .vd-success__accent { width:72px; height:2px; background:var(--terra); margin:6px auto 20px; }
         .vd-success__head p { font-family:var(--ft); font-size:17px; color:rgba(var(--cream-rgb),.82); line-height:1.55; margin:0 auto; max-width:480px; }
 
@@ -97,7 +121,38 @@ export default function VerdureSuccess({ user = null, isUnlocked = false, onOpen
         .vd-receipt__cta { padding:20px 24px; border-top:1px dashed var(--rule-moss); display:grid; gap:10px; }
         .vd-receipt__done { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px; border:1px solid rgba(var(--terra-rgb),.4); border-radius:999px; background:rgba(var(--terra-rgb),.12); color:var(--terra-soft); font-family:var(--fs); font-size:14px; font-weight:600; }
 
-        @media (max-width:1100px) { .vd-success { padding:96px 20px 130px; } }
+        /* vd-B1E: desktop two-column desk — seal + headline on the left, receipt
+           card on the right, both vertically centred, so the evaluate CTA lands in
+           the first viewport on wide screens (and the wasted whitespace is dignified
+           into a composition). CSS-only recompose of the three existing siblings. */
+        @media (min-width:1101px) {
+          .vd-success {
+            place-items:stretch;
+            grid-template-columns:minmax(0,1fr) minmax(0,480px);
+            grid-template-areas:"orn receipt" "head receipt";
+            column-gap:clamp(64px,6vw,96px);
+            align-content:center;
+            max-width:1160px;
+            margin:0 auto;
+            padding:56px 40px 112px;
+          }
+          .vd-orn { grid-area:orn; width:min(360px,40vh); height:min(360px,40vh); margin:0 0 24px; justify-self:center; align-self:end; }
+          .vd-orn__disc { width:61%; height:61%; }
+          .vd-orn__ring--2 { inset:8.3%; }
+          .vd-success__head { grid-area:head; max-width:none; margin:0; justify-self:stretch; align-self:start; }
+          .vd-receipt { grid-area:receipt; margin:0; justify-self:center; align-self:center; }
+        }
+        /* vd-B1E: tablet 561–1100 keeps the single centred column but squeezes the
+           top padding + seal + headline so the evaluate CTA reaches the fold. */
+        @media (max-width:1100px) {
+          .vd-success { padding:36px 20px 126px; }
+          .vd-orn { width:min(200px,26vh); height:min(200px,26vh); margin-bottom:16px; }
+          .vd-orn__disc { width:61%; height:61%; }
+          .vd-orn__ring--2 { inset:8.3%; }
+          .vd-success__head { margin-bottom:18px; }
+          .vd-success__head h1 { font-size:clamp(40px,5vw,58px); }
+          .vd-success__head p { font-size:15px; }
+        }
         @media (max-width:560px) {
           /* v2-R8 T4: squeeze the ornament hero + top padding so the evaluate CTA
              lands in the first viewport (form-first). Lightest touch in the Verdure

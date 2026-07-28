@@ -15,6 +15,8 @@ import MultiPartyView from '../../vote/MultiPartyView';
 import CandidatesPage from '../../../app/candidates/page';
 import SuccessPage from '../../../app/success/page';
 import { DUMMY_ELECTION } from '../../../utils/editorDummyData';
+import { makeParties, resultsCandidates } from '../../../utils/templatePreviewMocks';
+import { getPartyColor } from '../../../utils/partyColors';
 
 const HOME_BLOCK_MAP = {
   hero:           HeroBlock,
@@ -34,16 +36,16 @@ const HOME_BLOCK_LABEL = {
 
 // ─── Dummy data ────────────────────────────────────────────────
 
-const DUMMY_PARTIES = [
-  { id: 1, number: 1, name: 'The Unity Concord Of FMS 2', slogan: 'หลากเอกลักษณ์ รวมเป็นหนึ่ง', logoUrl: null },
-  { id: 2, number: 2, name: 'อะไรไม่รู้ครับ',              slogan: 'ทดสอบ',                     logoUrl: null },
-];
-
-const DUMMY_RESULTS = [
-  { name: 'The Unity Concord', number: 1, score: 245, color: '#8A2680' },
-  { name: 'อะไรไม่รู้ครับ',      number: 2, score: 187, color: '#2563EB' },
-  { name: 'งดออกเสียง',          number: 0, score: 68,  color: '#F59E0B' },
-];
+// Same mock roster the template gallery and the playground use, instead of a
+// second hand-written set. The old one carried placeholder copy an admin could
+// actually read in the page-design preview ("อะไรไม่รู้ครับ" / "ทดสอบ"), and it
+// never contained a realistic long party name, so this surface was never checked
+// against the one the live roster actually has.
+const DUMMY_PARTIES = makeParties(2);
+const DUMMY_RESULTS = resultsCandidates(true, DUMMY_PARTIES).map((r, i) => ({
+  ...r,
+  color: r.color || getPartyColor(r, i),
+}));
 
 const DUMMY_HOME_DATA = {
   session: null,

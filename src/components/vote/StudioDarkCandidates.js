@@ -47,11 +47,27 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
           <span className="sd-scene-h__num"><span className="accent">№ 02</span> &nbsp;/&nbsp; THE CANDIDATES</span>
           <h1 className="sd-scene-h__title">Meet the parties<br />running this year.</h1>
         </div>
-        <p className="sd-scene-h__deck">เลือกพรรคเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด</p>
+        {/* CND-1 — the party count must be readable in the BODY on mobile: the
+            shell's `right` chrome slot count is hidden <1100px, so a single tall
+            panel could read as "there is one party". Sits ABOVE the deck inside
+            a fit-content wrapper: .sd-scene-h is align-items:end, so keeping the
+            deck as the wrapper's LAST child pins its rect exactly where it was
+            on desktop. Thai run escapes the mono stack via a nested .sd-thai
+            span (P-LOG-107..112) — this rule never sets font-family. */}
+        <div className="sdc-deck">
+          {parties.length > 1 && (
+            <p className="sdc-count">
+              <span className="sd-nw">PARTIES</span>
+              <b className="sdc-count__n">{pad2(parties.length)}</b>
+              <span className="sd-thai">พรรคที่ลงสมัคร</span>
+            </p>
+          )}
+          <p className="sd-scene-h__deck">เลือกพรรคเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด</p>
+        </div>
       </div>
 
       {parties.length > 0 ? (
-        <div className="sdc-split" data-count={parties.length}>
+        <div className={`sdc-split${editorMode ? "" : " sdc-enter"}`} data-count={parties.length}>
           {parties.map((p, i) => {
             const no = pad2(p.number);
             const media = resolveSrc(firstImage(p.groupImageUrls) || firstImage(p.officialImageUrl)) ;
@@ -61,6 +77,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
                 key={p.id || i}
                 href={editorMode ? undefined : getPath(`/party?id=${p.number}`)}
                 className="sdc-panel"
+                style={{ "--sdc-i": i }}
               >
                 <div className="sdc-panel__head">
                   <h2 className="sdc-panel__no">{no.slice(0, -1)}<em>{no.slice(-1)}</em></h2>
@@ -98,9 +115,9 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
             );
           })}
           {parties.length % 2 === 1 && (
-            <div className="sdc-panel sdc-filler" aria-hidden="true">
+            <div className="sdc-panel sdc-filler" aria-hidden="true" style={{ "--sdc-i": parties.length }}>
               <span className="sdc-filler__mark">✦</span>
-              <span className="sdc-filler__note">ABSTAIN IS A RIGHT · งดออกเสียงคือสิทธิ์</span>
+              <span className="sdc-filler__note"><span className="sd-nw">ABSTAIN IS A RIGHT</span> · <span className="sd-thai">งดออกเสียงคือสิทธิ์</span></span>
             </div>
           )}
         </div>
@@ -113,6 +130,35 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
 
       <style jsx global>{`
         .sdc-accent { color:var(--sd-accent); }
+
+        /* CND-1 party-count ledger line (see markup note above) */
+        .sdc-deck { justify-self:end; }
+        .sdc-count {
+          display:flex; align-items:baseline; flex-wrap:wrap; gap:12px;
+          font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em;
+          text-transform:uppercase; color:var(--sd-ink-3);
+          margin:0 0 16px; padding-bottom:14px; border-bottom:1px solid var(--sd-line);
+        }
+        .sdc-count__n {
+          font-family:var(--sd-sans); font-weight:400; font-size:22px;
+          letter-spacing:-.02em; color:var(--sd-accent); font-variant-numeric:tabular-nums;
+        }
+        /* NOTE: no font-family here — .sd-thai (0,1,0) must keep supplying Anuphan
+           to this nested span; only tier-level sizing/colour is adjusted. */
+        .sdc-count .sd-thai { font-size:13px; text-transform:none; color:var(--sd-ink-2); }
+
+        /* ENTRANCE MOTION — reuse the family rise (v2-R12 sdsRise): candidate
+           panels settle up in a subtle cascade on mount. Pure CSS + backwards
+           fill so the base (visible) state is what SSR / no-JS render; gated on
+           .sdc-enter (dropped in editorMode → snap) and prefers-reduced-motion
+           (rule absent → no animation, stays visible). */
+        @media (prefers-reduced-motion:no-preference) {
+          .sdc-enter .sdc-panel {
+            animation:sdsRise .6s cubic-bezier(.16,1,.3,1) both;
+            animation-delay:calc(var(--sdc-i, 0) * 70ms + .06s);
+          }
+        }
+        @keyframes sdsRise { from { opacity:0; transform:translateY(18px); } }
 
         .sdc-split { display:grid; grid-template-columns:repeat(2,1fr); flex:1; }
         .sdc-split[data-count="1"] { grid-template-columns:1fr; }
@@ -170,6 +216,9 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
         .sdc-empty p { color:var(--sd-ink-2); font-size:15px; margin:0; }
 
         @media (max-width:1100px) {
+          /* mirrors the shell's .sd-scene-h__deck { justify-self:start } at this
+             breakpoint — the wrapper is the grid item now, so it carries it */
+          .sdc-deck { justify-self:start; }
           .sdc-split { grid-template-columns:1fr; }
           .sdc-panel { border-right:0; min-height:0; padding:32px 24px; }
           .sdc-panel::after { right:24px; top:32px; }

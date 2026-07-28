@@ -47,7 +47,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
       <div className="bl-page">
         {/* ===== issue line (masthead — success variant) ===== */}
         <div className="bl-issue-line">
-          <span>สำเร็จ <b>·</b> BALLOT RECORDED</span>
+          <span><span className="bl-thai bl-thai--nw">สำเร็จ</span> <b>·</b> BALLOT RECORDED</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -63,7 +63,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           </span>
 
           <div className="bl-succ-band__in">
-            <div className="bl-succ-cap"><span className="bl-succ-cap__dia" aria-hidden="true" />บันทึกคะแนนแล้ว / BALLOT RECORDED</div>
+            <div className="bl-succ-cap"><span className="bl-succ-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">บันทึกคะแนนแล้ว</span> / <span className="bl-nw">BALLOT RECORDED</span></div>
             <h1 className="bl-succ-head">
               <span className="bl-succ-reveal"><span className="bl-succ-reveal__in bl-succ-solid">ลงคะแนน</span></span>
               <span className="bl-succ-reveal"><span className="bl-succ-reveal__in bl-succ-hollow">เรียบร้อย</span></span>
@@ -73,7 +73,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
             {/* receipt line — mono, editorial */}
             <div className="bl-succ-receipt">
               <span className="bl-succ-receipt__row"><b>VOTER ID</b>{sid}</span>
-              {name && <span className="bl-succ-receipt__row"><b>NAME</b>{name}</span>}
+              {name && <span className="bl-succ-receipt__row"><b>NAME</b><span className="bl-thai">{name}</span></span>}
               <span className="bl-succ-receipt__row bl-succ-receipt__row--sec"><b>SECURED BY</b>PSU Passport</span>
             </div>
 
@@ -81,7 +81,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
                 the climax, so it lands in the first viewport (v2-R8 T1). onOpenForm +
                 isUnlocked gating are unchanged from the former next-section button. */}
             <div className="bl-succ-cta">
-              <span className="bl-succ-cta__kick">ขั้นตอนสุดท้าย · 2 นาที · รับชั่วโมงกิจกรรม 2 ชม.</span>
+              <span className="bl-succ-cta__kick bl-thai">ขั้นตอนสุดท้าย · 2 นาที · รับชั่วโมงกิจกรรม 2 ชม.</span>
               {isUnlocked && !editorMode ? (
                 <div className="bl-succ-cta__done">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
@@ -102,14 +102,14 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           <header className="bl-succ-next__head">
             <span className="bl-succ-next__idx">04</span>
             <div>
-              <span className="bl-succ-next__kick">ขั้นตอนถัดไป <b>·</b> NEXT STEP</span>
+              <span className="bl-succ-next__kick"><span className="bl-thai bl-thai--nw">ขั้นตอนถัดไป</span> <b>·</b> NEXT STEP</span>
               <h2 className="bl-succ-next__title">ทำแบบประเมินเพื่อรับสิทธิ์</h2>
               <p className="bl-succ-next__desc">
                 กรอกแบบประเมินให้ครบถ้วนเพื่อรับชั่วโมงกิจกรรม 2 ชั่วโมง และปลดล็อกหน้าสรุปผลคะแนนเสียง
               </p>
               <div className="bl-succ-tags">
-                <span className="bl-succ-tag">ชั่วโมงกิจกรรม 2 ชม.</span>
-                <span className="bl-succ-tag bl-succ-tag--alt">ประเภทเลือกเข้าร่วม</span>
+                <span className="bl-succ-tag bl-thai bl-thai--nw">ชั่วโมงกิจกรรม 2 ชม.</span>
+                <span className="bl-succ-tag bl-succ-tag--alt bl-thai bl-thai--nw">ประเภทเลือกเข้าร่วม</span>
               </div>
             </div>
           </header>
@@ -135,24 +135,27 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
               )}
             </a>
 
-            <a href={editorMode ? undefined : getPath("/")} className="bl-succ-home">← กลับหน้าแรก</a>
+            <a href={editorMode ? undefined : getPath("/")} className="bl-succ-home">← <span className="bl-thai bl-thai--nw">กลับหน้าแรก</span></a>
           </div>
         </section>
       </div>
 
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-succ-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport.
+           xo=0 measured on every viewport, so no horizontal scroll is lost. */
+        .bl-succ-root { overflow-x:clip; }
         /* dot-grid paper texture — above the blobs, under content */
         .bl-succ-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-succ-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-succ-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-succ-root) a:hover { color:var(--bl-ink); }
 
         .bl-succ-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
@@ -221,7 +224,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-succ-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-succ-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-succ-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -248,7 +251,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-succ-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-succ-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-succ-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -337,7 +340,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--bl-faint); padding-top:6px; }
         .bl-succ-root .bl-succ-next__kick { display:block; font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-succ-root .bl-succ-next__kick b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-succ-root .bl-succ-next__kick b { color:var(--bl-primary-ink); font-weight:700; }
         .bl-succ-root .bl-succ-next__title { margin:6px 0 0; font-family:var(--bl-fd); font-weight:800;
           font-size:clamp(24px,6vw,40px); line-height:1.12; letter-spacing:-.01em; color:var(--bl-ink); }
         .bl-succ-root .bl-succ-next__desc { margin:12px 0 0; max-width:560px; font-family:var(--bl-fd); font-weight:500;
@@ -345,7 +348,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-succ-tags { margin-top:16px; display:flex; flex-wrap:wrap; gap:9px; }
         .bl-succ-root .bl-succ-tag { display:inline-flex; align-items:center; padding:7px 14px; border-radius:999px;
           font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
-          color:var(--bl-primary-deep); background:var(--bl-primary-soft); }
+          color:var(--bl-primary-ink); background:var(--bl-primary-soft); }
         .bl-succ-root .bl-succ-tag--alt { color:var(--bl-sup2-ink); background:var(--bl-sup2); }
 
         .bl-succ-root .bl-succ-actions { display:flex; flex-direction:column; gap:12px; max-width:520px; }
@@ -359,7 +362,7 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
         .bl-succ-root .bl-succ-btn--primary:hover svg { transform:translate(2px,-2px); }
         .bl-succ-root .bl-succ-btn--primary:active { transform:scale(.97); }
         .bl-succ-root .bl-succ-btn--results { color:var(--bl-ink); background:var(--bl-card); border:2px solid var(--bl-ink); }
-        .bl-succ-root .bl-succ-btn--results:hover { color:var(--bl-primary-deep); border-color:var(--bl-primary-deep);
+        .bl-succ-root .bl-succ-btn--results:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep);
           transform:translateY(-2px); }
         .bl-succ-root .bl-succ-btn--results:hover svg { transform:translateX(4px); }
         .bl-succ-root .bl-succ-btn--results:active { transform:scale(.97); }
@@ -368,12 +371,21 @@ export default function BlossomSuccess({ user = null, isUnlocked = false, onOpen
           cursor:not-allowed; box-shadow:none; pointer-events:none; }
         .bl-succ-root .bl-succ-done { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:52px;
           padding:15px 26px; border-radius:999px; font-family:var(--bl-fd); font-weight:700; font-size:15px;
-          color:var(--bl-primary-deep); background:var(--bl-primary-soft);
+          color:var(--bl-primary-ink); background:var(--bl-primary-soft);
           border:1.5px solid color-mix(in srgb, var(--bl-primary) 30%, var(--bl-card)); }
-        .bl-succ-root .bl-succ-home { align-self:flex-start; margin-top:6px; min-height:44px; display:inline-flex; align-items:center;
-          font-family:var(--bl-fm); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--bl-ink2);
-          transition:color .2s ease; }
-        .bl-succ-root .bl-succ-home:hover { color:var(--bl-ink); }
+        /* Was a 12px mono line in --bl-ink2 (4.8:1). On a page whose other exit can be
+           locked, the way back to the site should be a shape, not a caption — this takes
+           the same pill as the results button, dashed and one weight lighter so it reads
+           as the tertiary action it is. */
+        .bl-succ-root .bl-succ-home { align-self:stretch; margin-top:2px; min-height:48px;
+          display:flex; align-items:center; justify-content:center; gap:9px;
+          padding:12px 24px; border-radius:999px;
+          font-family:var(--bl-fd); font-weight:700; font-size:15px; letter-spacing:0; text-transform:none;
+          color:var(--bl-ink); background:var(--bl-card);
+          border:2px dashed color-mix(in srgb, var(--bl-ink2) 55%, var(--bl-card));
+          transition:color .2s ease, border-color .2s ease, transform .2s ease; }
+        .bl-succ-root .bl-succ-home:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep); transform:translateY(-2px); }
+        .bl-succ-root .bl-succ-home:active { transform:scale(.97); }
 
         /* ================= TABLET+ : inline nav replaces burger/sheet ================= */
         @media (min-width:768px) {

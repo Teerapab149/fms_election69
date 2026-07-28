@@ -22,7 +22,21 @@ export function buildVotePartyCard({ party, pop, isSel, onSelect, onViewDetails,
   return {
     kind: "frame", as: "article",
     className: `gv-card ${isSel ? "is-selected" : ""}`,
-    attrs: { onClick: () => !editorMode && onSelect(party.id), ...(dataElement ? { "data-element": dataElement } : {}), "data-component": "vote-party-card" },
+    // keyboard/AT parity with the other families (Verdure/StudioDark/Receipt all
+    // expose the ballot option as a focusable radio) — without this the gumroad
+    // ballot could only be filled with a pointer
+    attrs: {
+      onClick: () => !editorMode && onSelect(party.id),
+      role: "radio",
+      "aria-checked": !!isSel,
+      tabIndex: editorMode ? -1 : 0,
+      onKeyDown: (e) => {
+        if (editorMode) return;
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(party.id); }
+      },
+      ...(dataElement ? { "data-element": dataElement } : {}),
+      "data-component": "vote-party-card",
+    },
     children: [
       { kind: "node", render: <span className="gv-card__no">NO. {party.number}</span> },
       { kind: "node", render: <div className="gv-card__check"><Check size={20} strokeWidth={3.5} /></div> },
@@ -66,10 +80,18 @@ export default function VotePartyCardGumroad(props) {
            fixed 220px box reliably (percentage max-height on a grid item doesn't resolve →
            tall/portrait logos were overflowing + getting clipped). padding keeps it off the edges. */
         .gv-card__media .el-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:22px; box-sizing:border-box; }
-        .gv-card__ph{ font-family:var(--font-archivo),'Archivo Black',system-ui,sans-serif; font-size:18px; text-transform:uppercase; padding:6px 14px; border:2px solid var(--ink, #26271c); border-radius:999px; }
+        /* same reason as .el-title below — this placeholder prints the party NAME when
+           the party has no logo, so its stack needs the Thai face too */
+        .gv-card__ph{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:18px; text-transform:uppercase; padding:6px 14px; border:2px solid var(--ink, #26271c); border-radius:999px; }
         .gv-card__body{ padding:20px 22px; flex:1; display:flex; flex-direction:column; }
         .gv-card__cta{ margin-top:auto; align-self:flex-start; }
-        .gv-card__body .el-title{ font-family:var(--font-archivo),'Archivo Black',system-ui,sans-serif; font-size:24px; font-weight:400; letter-spacing:-.02em; margin:0 0 6px; text-transform:uppercase; -webkit-line-clamp:unset; }
+        /* font stack mirrors --fd (Archivo Black is latin-only, so Thai MUST fall to
+           Anuphan like every other gumroad surface — before this it fell to system-ui
+           and the party name was set in a different face from the rest of the page).
+           overflow:visible: -webkit-line-clamp is unset here, so the atom's
+           overflow:hidden clamps nothing and only clipped glyph ink — worst legitimate
+           Thai stack measured -1.77px at 24px and -1.23px at 15px (412). */
+        .gv-card__body .el-title{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:24px; font-weight:400; letter-spacing:-.02em; margin:0 0 6px; text-transform:uppercase; -webkit-line-clamp:unset; overflow:visible; }
         .gv-card__body .el-body{ display:none; }
         .gv-card__cta{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:2px solid var(--ink, #26271c); border-radius:999px; background:var(--paper, #FFFDFA); font-weight:700; font-size:13px; cursor:pointer; font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; }
         .gv-card.is-selected .gv-card__cta{ background:var(--ink, #26271c); color:var(--cream, #FFF6EC); }

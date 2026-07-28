@@ -6,6 +6,7 @@ import { Ban, Check, CalendarDays } from "lucide-react";
 import EditorElement from '../admin/editor/EditorElement';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
+import { GLOBAL_CONFIG_DEFAULTS } from '../../utils/globalConfigDefaults';
 
 export default function MultiPartyView({
   regularParties,
@@ -54,8 +55,10 @@ export default function MultiPartyView({
   // Election meta for the header (same source as the home hero).
   const gc = useGlobalConfig() || {};
   const elPrefix = gc.electionNamePrefix || "SAMO";
-  const elNumber = gc.electionNumber ?? 50;
-  const elAcademicYear = gc.academicYearTh ?? 2570;
+  // shared defaults, not loose literals (these read 50/2570 while the defaults say
+  // 49/2569 — an empty config put the wrong election number on the ballot header)
+  const elNumber = gc.electionNumber ?? GLOBAL_CONFIG_DEFAULTS.electionNumber;
+  const elAcademicYear = gc.academicYearTh ?? GLOBAL_CONFIG_DEFAULTS.academicYearTh;
 
   const {
     gridCols = "auto",

@@ -34,14 +34,27 @@
 // dot-grid) mirrors BlossomHome byte-for-byte (only one Blossom page renders at a
 // time, so the CSS is carried locally).
 
+import { useEffect, useMemo, useState } from "react";
 import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates } from "../../utils/electionConfig";
 import BlossomSingleParty from "./BlossomSingleParty";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
+
+// remaining time to ELECTION_END for the ballot meta strip — { d, hms } so the
+// Thai "วัน" segment renders in the body font (--bl-fb) while HH:MM:SS stays in
+// mono tabular. null once the end has passed (the ballot page is only reachable
+// while polls are open — no closed state is invented here).
+const fmtCloseIn = (end) => {
+  const ms = (end instanceof Date ? end.getTime() : NaN) - Date.now();
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  const s = Math.floor(ms / 1000);
+  return { d: Math.floor(s / 86400), hms: `${pad2(Math.floor((s / 3600) % 24))}:${pad2(Math.floor((s / 60) % 60))}:${pad2(s % 60)}` };
+};
 
 // one editorial ballot row (party or abstain). role=radio, keyboard-operable.
 function VoteRow({
@@ -100,6 +113,21 @@ export default function BlossomVote({
   // its own config, so gc is only consumed by the multi branch below.
   const gc = useGlobalConfig() || {};
 
+  // live close-clock — hooks sit ABOVE the single-party dispatch so the hook order
+  // is stable. editorMode: compute once, no interval (the editor preview must not
+  // tick); single-party: the interval is skipped (the booth owns its own chrome).
+  const { ELECTION_END } = useMemo(
+    () => resolveElectionDates(gc),
+    [gc?.campaignStartAt, gc?.electionStartAt, gc?.electionEndAt]
+  );
+  const [closeIn, setCloseIn] = useState(() => fmtCloseIn(ELECTION_END));
+  useEffect(() => {
+    if (editorMode || isSingleParty) { setCloseIn(fmtCloseIn(ELECTION_END)); return undefined; }
+    setCloseIn(fmtCloseIn(ELECTION_END));
+    const id = setInterval(() => setCloseIn(fmtCloseIn(ELECTION_END)), 1000);
+    return () => clearInterval(id);
+  }, [editorMode, isSingleParty, ELECTION_END]);
+
   // SINGLE-PARTY booth (T3.3) — dispatch the calm Candy Editorial booth, the same
   // recipe as VerdureVote -> VerdureSingleParty. onConfirm is the direct submit.
   if (isSingleParty) {
@@ -152,13 +180,13 @@ export default function BlossomVote({
       <div className="bl-page">
         {/* ===== issue line (masthead — vote variant) ===== */}
         <div className="bl-issue-line">
-          <span>ลงคะแนน <b>·</b> CAST YOUR VOTE</span>
+          <span><span className="bl-thai bl-thai--nw">ลงคะแนน</span> <b>·</b> CAST YOUR VOTE</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial masthead: mono kick + hollow display word ===== */}
         <header className="bl-vote-head">
-          <span className="bl-vote-kick"><span className="bl-vote-dot" aria-hidden="true" />ลงคะแนนเสียง · ONE VOTE ONLY</span>
+          <span className="bl-vote-kick"><span className="bl-vote-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ลงคะแนนเสียง</span> · <span className="bl-nw">ONE VOTE ONLY</span></span>
           <h1 className="bl-vote-word">เลือก<span>พรรค</span></h1>
         </header>
         <p className="bl-vote-deck">
@@ -167,15 +195,32 @@ export default function BlossomVote({
 
         {/* voter receipt — mono, editorial (mirrors BlossomSuccess receipt) */}
         <div className="bl-vote-voter">
-          <span className="bl-vote-voter__row"><b>VOTER</b>{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
+          <span className="bl-vote-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-vote-voter__row"><b>ID</b>{sid}</span>
           <span className="bl-vote-voter__row"><b>BALLOT</b>{count} {count === 1 ? "PARTY" : "PARTIES"}</span>
+          {/* live close-clock — pushed to the right as a status. The Thai runs use
+              --bl-fb (bl-thai); only the HH:MM:SS digits stay mono tabular. Each
+              ticking text node's DIRECT owner carries suppressHydrationWarning (SSR
+              + first client render land a second apart by nature). */}
+          {closeIn && (
+            <span className="bl-vote-voter__row bl-vote-cd">
+              <span className="bl-vote-cd__dot" aria-hidden="true" />
+              <span className="bl-thai bl-thai--nw">ปิดรับใน</span>
+              {closeIn.d > 0 && (
+                <>
+                  <strong className="bl-vote-cd__t" suppressHydrationWarning>{closeIn.d}</strong>
+                  <span className="bl-thai bl-thai--nw">วัน</span>
+                </>
+              )}
+              <strong className="bl-vote-cd__t" suppressHydrationWarning>{closeIn.hms}</strong>
+            </span>
+          )}
         </div>
 
         {/* ===== ballot paper — the hero object: choices sit on a clean card so the
                dotted canvas never runs under dense text ===== */}
         <section className="bl-vpaper" aria-label="บัตรลงคะแนน">
-        <div className="bl-vpaper__cap"><span>บัตรลงคะแนน · BALLOT PAPER</span><em>1 คน · 1 เสียง</em></div>
+        <div className="bl-vpaper__cap"><span><span className="bl-thai bl-thai--nw">บัตรลงคะแนน</span> · <span className="bl-nw">BALLOT PAPER</span></span><em>1 <span className="bl-thai bl-thai--nw">คน</span> · 1 <span className="bl-thai bl-thai--nw">เสียง</span></em></div>
         <ul className="bl-vballot">
           {parties.map((p, i) => (
             <VoteRow
@@ -183,10 +228,10 @@ export default function BlossomVote({
               index={pad2(p.number)}
               number={p.number}
               logoUrl={p.logoUrl}
-              kick={<>พรรคหมายเลข <b>{p.number}</b></>}
+              kick={<><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{p.number}</b></>}
               name={p.name}
               slogan={p.slogan || null}
-              stat={p.members?.length ? `ทีมงาน ${p.members.length} คน` : null}
+              stat={p.members?.length ? <><span className="bl-thai bl-thai--nw">ทีมงาน</span> {p.members.length} <span className="bl-thai bl-thai--nw">คน</span></> : null}
               selected={selectedPartyId === p.id}
               onSelect={() => onSelect(p.id)}
               onDetails={() => onViewDetails(p)}
@@ -198,7 +243,7 @@ export default function BlossomVote({
               index={null}
               number={0}
               abstain
-              kick="งดออกเสียง · ABSTAIN"
+              kick={<><span className="bl-thai bl-thai--nw">งดออกเสียง</span> · <span className="bl-nw">ABSTAIN</span></>}
               name="ไม่ประสงค์ลงคะแนน"
               slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
               selected={abstain.id === selectedPartyId}
@@ -213,10 +258,11 @@ export default function BlossomVote({
       <div className={`bl-vconfirm${canConfirm ? " is-ready" : ""}`}>
         <div className="bl-vconfirm__in">
           <div className="bl-vconfirm__sel">
-            <span className="bl-vconfirm__lab">การเลือกของคุณ · YOUR SELECTION</span>
+            <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
             {selection ? (
               <span className={`bl-vconfirm__val${selection.abstain ? " is-abstain" : ""}`}>
-                <span className="bl-vconfirm__dia" aria-hidden="true" />{selection.name}
+                <span className="bl-vconfirm__dia" aria-hidden="true" />
+                <span className="bl-vconfirm__nm">{selection.name}</span>
               </span>
             ) : (
               <span className="bl-vconfirm__val bl-vconfirm__val--empty">ยังไม่ได้เลือก · No selection</span>
@@ -236,19 +282,23 @@ export default function BlossomVote({
 
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-vote-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400). xo=0, and the fixed .bl-vconfirm
+           bottom bar is unaffected — clip does not create a containing block for fixed. */
+        .bl-vote-root { overflow-x:clip; }
         /* dot-grid paper texture — softened on the ballot page (owner: 15%/24px reads
            as visual noise under dense selectable rows); the ballot itself sits on a
            solid paper card so text never runs over the dots */
         .bl-vote-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-vote-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-vote-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-vote-root) a:hover { color:var(--bl-ink); }
 
         /* blobs — faded toward the canvas on this page (owner: full-strength candy
@@ -319,7 +369,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-vote-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-vote-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-vote-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -347,7 +397,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-vote-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-vote-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-vote-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -372,7 +422,7 @@ export default function BlossomVote({
            and this is the action page, so legibility wins here. */
         .bl-vote-root .bl-vote-word { margin:12px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:.9;
           font-size:clamp(52px,13.5vw,120px); letter-spacing:-.02em; color:var(--bl-ink); }
-        .bl-vote-root .bl-vote-word span { color:var(--bl-primary-deep); }
+        .bl-vote-root .bl-vote-word span { color:var(--bl-primary-ink); }
         .bl-vote-root .bl-vote-deck { margin:20px 0 0; max-width:620px; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(15px,3.6vw,18px); line-height:1.7; color:var(--bl-ink2);
           animation:blVRise .6s ease both .14s; }
@@ -384,6 +434,13 @@ export default function BlossomVote({
         .bl-vote-root .bl-vote-voter__row { display:inline-flex; align-items:baseline; gap:9px;
           font-family:var(--bl-fm); font-size:12px; letter-spacing:.04em; color:var(--bl-ink); min-width:0; }
         .bl-vote-root .bl-vote-voter__row b { font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-faint); }
+        /* live close-clock — reads as a status: candy blip dot + a primary-deep
+           ticking numeral, pushed to the right of the mono meta strip */
+        .bl-vote-root .bl-vote-cd { margin-left:auto; gap:7px; }
+        .bl-vote-root .bl-vote-cd__dot { width:6px; height:6px; flex:none; border-radius:50%; background:var(--bl-primary);
+          animation:blVBlip 1.6s infinite; }
+        .bl-vote-root .bl-vote-cd__t { font-weight:700; color:var(--bl-primary-ink); letter-spacing:.06em;
+          font-variant-numeric:tabular-nums; }
 
         /* ---- ballot paper card (the hero object on the page) ---- */
         .bl-vote-root .bl-vpaper { margin-top:36px; background:var(--bl-card); border:1.5px solid var(--bl-ink);
@@ -395,7 +452,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
         .bl-vote-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
-          letter-spacing:.14em; color:var(--bl-primary-deep); white-space:nowrap; }
+          letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- ballot rows (candidates index grammar, made selectable) ---- */
         .bl-vote-root .bl-vballot { list-style:none; margin:0; padding:0; }
@@ -425,27 +482,41 @@ export default function BlossomVote({
         .bl-vote-root .bl-vopt.is-selected .bl-vopt__tick { transform:scale(1); }
 
         .bl-vote-root .bl-vopt__idx { font-family:var(--bl-fd); font-weight:800; font-size:clamp(22px,5.4vw,40px);
-          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-deep); width:auto; flex:none; }
+          font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--bl-primary-ink); width:auto; flex:none; }
         .bl-vote-root .bl-vopt__logo { width:62px; height:62px; flex:none; border-radius:16px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-line); display:grid; place-items:center; }
-        .bl-vote-root .bl-vopt__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-line); display:flex; align-items:center; justify-content:center; padding:5px; }
+        /* contain, not cover — same reason as .bl-crow__logo on the candidates page:
+           this is a party MARK, not a photo. cover rendered a real 3375x4219 logo
+           75px tall inside the 60px box and clipped 15px off its bottom, on the
+           BALLOT of all places. Flex centring because a percentage max-height does
+           not resolve on a grid item. */
+        .bl-vote-root .bl-vopt__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-vote-root .bl-vopt__logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:20px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-vote-root .bl-vopt__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .bl-vote-root .bl-vopt__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-vote-root .bl-vopt__kick b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-vote-root .bl-vopt__kick b { color:var(--bl-primary-ink); font-weight:700; }
+        /* ink gutter — same Kanit-vs-lh1.12 clipping as .bl-crow__name (measured
+           cutTop 2.7px on the real ballot row, 3.06px worst case at 30px). padding-top
+           only; padding-bottom would let the clamped 3rd line bleed back in. */
         .bl-vote-root .bl-vopt__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
-          letter-spacing:-.01em; color:var(--bl-ink);
+          letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .bl-vote-root .bl-vopt__slogan { margin-top:2px; font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
-          color:var(--bl-ink2); font-style:italic;
+        /* ink gutter: same Kanit-vs-lh clipping as .bl-vopt__name above, just far
+           smaller here because lh 1.5 is generous — measured needEm 0.01 constant
+           at every breakpoint and every party count (2/3/5/6). cushion .05em -> .06em.
+           padding-top opens the clip box, margin-top absorbs the same amount so
+           layout is byte-identical. padding-BOTTOM banned: Chrome spills the
+           clamped 2nd line back in. */
+        .bl-vote-root .bl-vopt__slogan { margin-top:calc(2px - .06em); font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
+          color:var(--bl-ink2); font-style:italic; padding-top:.06em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
         .bl-vote-root .bl-vopt__stat { margin-top:6px; font-family:var(--bl-fm); font-size:10px; letter-spacing:.14em;
           text-transform:uppercase; color:var(--bl-faint); }
         .bl-vote-root .bl-vopt__more { display:inline-flex; align-items:center; gap:7px; flex:none; min-height:44px;
           padding:11px 18px; border-radius:999px; background:var(--bl-primary-soft); border:none; cursor:pointer;
-          font-family:var(--bl-fd); font-weight:600; font-size:13.5px; color:var(--bl-primary-deep);
+          font-family:var(--bl-fd); font-weight:600; font-size:13.5px; color:var(--bl-primary-ink);
           transition:background .25s ease; }
         .bl-vote-root .bl-vopt__more:hover { background:color-mix(in srgb, var(--bl-primary) 20%, var(--bl-card)); }
         .bl-vote-root .bl-vopt__more svg { transition:transform .25s ease; }
@@ -474,9 +545,17 @@ export default function BlossomVote({
         .bl-vote-root .bl-vconfirm__sel { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
         .bl-vote-root .bl-vconfirm__lab { font-family:var(--bl-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
           color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); }
+        /* ink gutter — lh 1.1 at 24px cut 3.3px off the top of Thai upper marks inside
+           the band's overflow:hidden. padding-top + equal negative margin = same layout,
+           taller clip box (see .bl-vopt__name above). */
         .bl-vote-root .bl-vconfirm__val { display:inline-flex; align-items:center; gap:10px; min-width:0;
           font-family:var(--bl-fd); font-weight:800; font-size:clamp(17px,4.4vw,24px); line-height:1.1; letter-spacing:-.01em;
-          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+          color:var(--bl-canvas); white-space:nowrap; overflow:hidden; padding-top:.2em; margin-top:-.2em; }
+        /* the party name is its own flex item so text-overflow has a box to act on —
+           on an inline-flex parent the bare text node became an anonymous flex item
+           and ellipsis never rendered (a 43-char party name just got cut mid-word) */
+        .bl-vote-root .bl-vconfirm__nm { min-width:0; overflow:hidden; text-overflow:ellipsis;
+          padding-top:.2em; margin-top:-.2em; }
         .bl-vote-root .bl-vconfirm__val--empty { color:color-mix(in srgb, var(--bl-canvas) 55%, transparent); font-weight:600; }
         .bl-vote-root .bl-vconfirm__dia { width:12px; height:12px; flex:none; background:var(--bl-primary); transform:rotate(45deg); }
         /* abstain on the ink band — lighter semantic orange for contrast on dark */

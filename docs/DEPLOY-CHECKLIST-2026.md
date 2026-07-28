@@ -15,7 +15,7 @@
 ## 0. ก่อนเริ่ม — ต้องมีอะไรพร้อม
 
 - [ ] เครื่อง **offline ที่เชื่อถือได้** (ไม่ต่อเน็ต) สำหรับพิธี gen กุญแจ (§2)
-- [ ] เครื่องพิมพ์ + ซองทึบ สำหรับพิมพ์ private key แบ่งเก็บ
+- [ ] ที่เก็บไฟล์กุญแจ 2 ที่ที่คณะคุมเอง (เช่น USB + ตัวจัดการรหัสผ่าน) — ไม่ต้องใช้เครื่องพิมพ์แล้ว
 - [ ] เข้าถึง production DB (PostgreSQL) ในฐานะ role ที่ทำ DDL ได้ (`fms_migrate`/superuser)
 - [ ] ค่า PSU SSO (Authentik) ปีนี้: client id / secret / redirect uri / issuer
 - [ ] รายชื่อผู้มีสิทธิ์เลือกตั้งปีใหม่ (ปี 1–4) เป็นไฟล์พร้อม import
@@ -50,16 +50,23 @@
 | `AUTHENTIK_CLIENT_SECRET` | PSU SSO client secret |
 | `AUTHENTIK_REDIRECT_URI` | callback URL ที่ลงทะเบียนไว้กับ PSU SSO |
 | `ADMIN_JWT_SECRET` | สุ่มใหม่ (`openssl rand -hex 32`) — เซ็น/ตรวจ `admin_token` cookie |
-| `ADMIN_PASSWORD_AUTH_EXTRA` | bootstrap password แอดมินครั้งแรก (ดู `/api/admin/login`) |
-| `ADMIN_STUDENT_IDS` | รหัส นศ. ที่เป็นแอดมิน คั่นด้วย `,` (ดู RUNBOOK §10) |
 | `ELECTION_BALLOT_PUBLIC_KEY` | **ตั้งใน §2** — public key เข้ารหัสบัตร (PEM, `\n`-escaped) |
 | `BALLOT_CHAIN_SECRET` | **ตั้งใน §2** — secret ของ HMAC hash-chain บัตร |
-| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | **ต้องไม่ตั้ง / ตั้ง ≠ `true`** บน production (mock-login = ใครก็เข้าได้) |
+| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ~~ต้องไม่ตั้งบน production~~ — **เลิกมีผลแล้ว (SEC-MOCK3, 2026-07-27)** ไม่ต้องตั้งและไม่ต้องกังวลว่าจะตั้งค้าง: ตัวกั้นจริงคือ `NODE_ENV=production` ซึ่งทำให้ NextAuth ไม่ register provider `mock-login` เลย และปุ่มบนหน้า login อ่านรายการ provider จาก `/api/auth/providers` ตอน runtime จึงหายตามไปเอง |
 
 > ⛔ **เลิกใช้แล้ว (P0-1)** — ห้ามตั้ง: `ADMIN_PRIVATE_KEY`, `ADMIN_AUTH_SECRET`,
 > `NEXT_PUBLIC_ADMIN_PUBLIC_KEY`, `NEXT_PUBLIC_ADMIN_AUTH_SECRET`. ระบบ admin auth เก่า
-> ฝัง secret ใน client bundle จึงถูกถอดออก. ถ้าย้ายมาจากปีก่อน ให้ **rotate**
-> `ADMIN_JWT_SECRET` + `ADMIN_PASSWORD_AUTH_EXTRA` ใหม่ แล้วตั้ง admin user `passwordHash=null`.
+> ฝัง secret ใน client bundle จึงถูกถอดออก. ถ้าย้ายมาจากปีก่อน ให้ **rotate `ADMIN_JWT_SECRET`**.
+>
+> ⛔ **เลิกใช้แล้ว (2026-07-28)** — ไม่ต้องตั้ง `ADMIN_PASSWORD_AUTH_EXTRA` และ
+> `ADMIN_STUDENT_IDS` โค้ดไม่อ่านแล้วทั้งคู่. **รหัสผ่านแอดมินไม่อยู่ใน env อีกต่อไป** —
+> หลัง deploy ให้รันบนเซิร์ฟเวอร์:
+> ```bash
+> node scripts/admin.js --grant <รหัส นศ. ของกรรมการแต่ละคน>
+> node scripts/admin.js --rotate-password   # แสดงรหัสกลางครั้งเดียว แจกให้กรรมการ
+> node scripts/admin.js --list              # ยืนยันว่ามีเฉพาะคนที่ตั้งใจ
+> ```
+> ดูเหตุผลและกฎเต็มที่ RUNBOOK §10.
 
 ---
 
@@ -72,23 +79,34 @@
 
 1. [ ] คัดลอกไฟล์ `scripts/generate-election-keys.js` ไปเครื่อง offline (ไม่ต้อง DB/เน็ต) แล้วรัน:
    ```bash
-   node scripts/generate-election-keys.js
+   node scripts/generate-election-keys.js --out key-2569.enc
    ```
-   สคริปต์ **พิมพ์ออก stdout เท่านั้น — ไม่เขียนไฟล์ใดๆ ลงดิสก์ ไม่แตะ repo** (ยืนยันจากโค้ด:
-   ไม่มี `fs.write`). ผลลัพธ์มี 3 ส่วน: PRIVATE KEY, PUBLIC KEY, และ 2 บรรทัด `.env`-ready.
+   `--out` เขียน **ไฟล์เดียวที่เข้ารหัสด้วยรหัสผ่านที่คุณตั้ง** (AES-256-GCM + scrypt)
+   ข้างในมี PRIVATE KEY + CHAIN SECRET · เปิดคืนได้ด้วย
+   `node scripts/generate-election-keys.js --decrypt key-2569.enc`
+   (ไม่ใส่ `--out` = พฤติกรรมเดิม พิมพ์ออกจอเฉย ๆ ไม่เขียนไฟล์)
 
-2. [ ] **PRIVATE KEY → พิมพ์ลงกระดาษ แบ่งเก็บ (split-custody)** ระหว่างผู้ดูแลฝั่งคณะ 2 คน
-   (เจ้าหน้าที่ผู้ดูแลระบบ + อจ.ที่ปรึกษา — ระบบนี้ดำเนินการโดยสตาฟคณะ ไม่ใช่สโมสร)
-   - **ห้าม**เก็บ private key เป็นไฟล์บนเซิร์ฟเวอร์ / ในคลาวด์ / ใน git / ในอีเมล
+2. [ ] **PRIVATE KEY → เก็บเป็นไฟล์เข้ารหัส ไม่ต้องพิมพ์กระดาษ**
+   - ก๊อปไฟล์ไปเก็บ **2 ที่ที่คณะคุมเอง** (เช่น USB + ตัวจัดการรหัสผ่านของเจ้าหน้าที่)
+   - **ห้าม**เก็บบนเซิร์ฟเวอร์เลือกตั้ง ใน git ในอีเมล หรือ**ในชุดสำรองเดียวกับฐานข้อมูล**
+   - อยากได้ split-custody แบบไม่ใช้กระดาษ: **ให้ไฟล์คนหนึ่ง บอกรหัสผ่านอีกคนหนึ่ง**
+     คนเดียวเปิดไม่ได้ ได้ผลเท่าซองปิดผนึกสองซอง
+   - ลบไฟล์ต้นทางออกจากเครื่องที่ใช้สร้างเมื่อก๊อปครบแล้ว
    - ใช้เฉพาะตอนมีข้อพิพาท (offline `decrypt-recount` — §9)
    - กุญแจหาย = เสียแค่ dispute-recount **ไม่เสียผลเลือกตั้ง** (tally จริง = `Candidate.score`)
+
+   > **ทำไมห้ามอยู่บนเซิร์ฟเวอร์** ตาราง `Ballot` ไม่มี id ผู้ลงคะแนน ถอดบัตรอย่างเดียว
+   > จึงได้แค่ "กองตัวเลือก" ซึ่งก็คือผลที่ประกาศอยู่แล้ว · อันตรายอยู่ที่**การจับคู่**:
+   > บัตรเรียงตามเวลา (`seq`) และ `User.votedAt` เก็บเวลาของแต่ละคนไว้ ใครที่ถือ
+   > **ทั้งสำเนาฐานข้อมูลและ private key** จะเรียงสองอย่างนี้ทาบกันแล้วรู้ว่าใครเลือกอะไรได้
+   > การแยกกุญแจออกจากเซิร์ฟเวอร์คือสิ่งเดียวที่กันเรื่องนี้
 
 3. [ ] **PUBLIC KEY → env `ELECTION_BALLOT_PUBLIC_KEY`** บนเซิร์ฟเวอร์ (ใช้บรรทัด `\n`-escaped ที่สคริปต์ให้)
 
 4. [ ] **CHAIN SECRET → env `BALLOT_CHAIN_SECRET`** บนเซิร์ฟเวอร์ + **เก็บสำเนานอกเครื่อง**
    (ใช้ตอน verify โซ่ + export ปลายโซ่ — จำเป็นต่อการตรวจจับการแก้บัตร)
 
-5. [ ] ล้าง scrollback / ปิดเทอร์มินัลบนเครื่อง offline หลังจดค่าครบ
+5. [ ] ก๊อปไฟล์กุญแจไปเก็บให้ครบ 2 ที่ แล้วลบไฟล์ต้นทาง · ล้าง scrollback / ปิดเทอร์มินัล
 
 > ✅ **เช็ค:** เซิร์ฟเวอร์ต้องมีแค่ **public key + chain secret** เท่านั้น. ถ้า 2 ตัวนี้ไม่ครบ
 > → `/api/vote` **fail closed** (คืน 503, โหวตไม่ได้, ไม่มีการเก็บ plaintext) — ทดสอบใน §7.
@@ -177,8 +195,9 @@ npm run build            # ต้องผ่านครบทุก route ก�
   — เวลาถูก pin เป็น **Asia/Bangkok** end-to-end (ADM-2)
 - [ ] แท็บ **"ตั้งค่าระบบ"**: `systemMode = AUTO`, `showResult = false` (ซ่อนผลจนกว่าปิดหีบ)
 - [ ] แท็บ **"จัดการผู้สมัคร"**: พรรคจริงครบ + สมาชิก + รูป + สีพรรค (พรรคเดียวต้องมี −1 และ 0)
-- [ ] แท็บ **"ตั้งค่าระบบ"** → **"ล้างคะแนนโหวตทั้งหมด"** (RESET_VOTES) → score=0, ล้างกล่องบัตร,
-  โซ่กลับ genesis, ปลดธง `ballotsAnonymized`
+- [ ] ล้างคะแนน/บัตรทดสอบก่อนเปิดจริง — **ไม่มีปุ่มในหน้า admin แล้ว (2026-07-28)**
+  รันที่ฐานข้อมูลด้วยบัญชี `fms_migrate`: `psql ... -f scripts/sql/annual-reset.sql`
+  → score=0, กล่องบัตรว่าง, โซ่กลับ genesis, คืนสิทธิ์โหวตปี 1-4, ปลดธง `ballotsAnonymized`
 - [ ] ตั้งลิงก์ Google Form (หน้า success) ถ้ามี
 
 ---
@@ -196,9 +215,13 @@ npm run build            # ต้องผ่านครบทุก route ก�
   | voters | รายชื่อผู้มีสิทธิ์ (ปี 1–4) > 0 |
   | tally | ความสอดคล้องคะแนน (`sum(score) == #บัตร == #isVoted`) |
   | config | ลิงก์ Google Form · การรั่วของผลก่อนปิดหีบ · ธีมที่ใช้งานมีจริง |
-  | env | **mock-login ต้องปิดใน production (ไม่งั้น = fail)** |
+  | env | mock-login ปิดอยู่ (production build ปิดให้เอง — ดูหมายเหตุใต้ตาราง) |
 
-- [ ] ยืนยัน `env.mock` = pass (mock-login ปิด) — ข้อนี้จะเป็น **fail** ถ้า `NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true` บน prod
+- [ ] ยืนยัน `env.mock` = pass (mock-login ปิด) — บน production build ข้อนี้ **เขียวเอง**
+  เพราะ `NODE_ENV=production` ทำให้ provider ไม่ถูก register · ถ้าเจอ fail แปลว่า
+  เซิร์ฟเวอร์นั้นไม่ได้รันเป็น production build จริง (เช่น `npm run dev`) ไม่ใช่เรื่อง env
+  ตัวใดตัวหนึ่งตั้งค้าง — ยืนยันแล้วบน production build ที่จงใจ build ตอน
+  `NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true` ก็ยังได้ pass (SEC-MOCK3)
 
 ---
 

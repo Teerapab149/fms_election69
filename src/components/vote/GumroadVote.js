@@ -16,12 +16,13 @@
 // Confirm calls onConfirm (parent owns submit + VoteConfirmationModal). editorMode:
 // key elements carry data-element + the stable Wrap → selectable in the editor.
 
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useMemo } from "react";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import { Check, Ban } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates, formatThaiTime } from "../../utils/electionConfig";
 import GumroadSingleParty from "./GumroadSingleParty";
 import VotePartyCard from "../composites/vote-party-card/gumroad";
 
@@ -79,6 +80,15 @@ export default function GumroadVote({
   const globalConfig = useGlobalConfig();
   const orgShort = globalConfig?.organizationShort || "สโมสรนักศึกษา";
 
+  // real close-time meta (gm-B2 T1) — static per resolved schedule, no interval
+  // (a ticking clock isn't needed to answer "when does this close"). Guarded so an
+  // unresolved/invalid schedule renders nothing rather than a blank "ปิดโหวต" pill.
+  const { ELECTION_END } = useMemo(
+    () => resolveElectionDates(globalConfig),
+    [globalConfig?.campaignStartAt, globalConfig?.electionStartAt, globalConfig?.electionEndAt]
+  );
+  const closeTime = formatThaiTime(ELECTION_END);
+
   const userName = user?.name || (editorMode ? "Teerapab Boonsri" : "");
 
   const POPS = [PINK, LIME, YELLOW, "#A8E1FF"];
@@ -120,6 +130,13 @@ export default function GumroadVote({
               {userName ? <>สวัสดีคุณ <strong>{userName}</strong> · </> : null}คลิกพรรคที่คุณต้องการ{isSingleParty ? " หรือเลือกไม่รับรอง" : " หรือเลือกงดออกเสียง"}
             </p>
           </Wrap>
+          {closeTime && (
+            <Wrap id="vote-header-meta">
+              <div className="gv-meta" data-element="vote-header-meta">
+                <span className="gv-meta__dot" /> <span className="gm-thai">ปิดโหวต</span> <span className="gv-meta__time">{closeTime}</span>
+              </div>
+            </Wrap>
+          )}
         </div>
 
         {/* PARTY GRID */}
@@ -151,6 +168,13 @@ export default function GumroadVote({
             data-element={specialElementId}
             className={`gv-special ${selectedPartyId === specialId ? "is-selected" : ""}`}
             onClick={() => !editorMode && specialId != null && onSelect(specialId)}
+            role="radio"
+            aria-checked={selectedPartyId === specialId}
+            tabIndex={editorMode ? -1 : 0}
+            onKeyDown={(e) => {
+              if (editorMode || specialId == null) return;
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(specialId); }
+            }}
           >
             <div className="gv-special__icon"><Ban size={22} strokeWidth={2.5} /></div>
             <div>
@@ -201,6 +225,18 @@ export default function GumroadVote({
         .gv-title{ font-family:var(--fd); font-size:clamp(40px,8cqw,82px); letter-spacing:-.03em; line-height:.95; margin:0; text-transform:uppercase; }
         .gv-title em{ font-style:normal; background:var(--pink); border:var(--bw) solid var(--ink); padding:0 12px; display:inline-block; box-shadow:var(--sh); }
         .gv-subtitle{ font-size:clamp(14px,2cqw,18px); color:#4A4A4A; font-weight:500; max-width:620px; margin:0; }
+        .gv-meta{ display:inline-flex; align-items:center; gap:7px; padding:5px 14px; background:var(--paper); border:2px solid var(--ink); border-radius:999px; box-shadow:var(--sh-sm); font-family:var(--fm); font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); }
+        .gv-meta__dot{ width:6px; height:6px; border-radius:999px; background:var(--coral, #FF6E6E); flex-shrink:0; }
+        /* closeTime is "22.00 น." — the Thai abbreviation rode the --fm stack, whose
+           only fallback after Space Grotesk is ui-monospace, so it printed in the
+           system mono face beside Space Grotesk digits. Anuphan inserted BEFORE the
+           mono fallbacks: digits still come from Space Grotesk (tabular-nums intact),
+           the Thai run comes from the family's own Thai face. */
+        .gv-meta__time{ font-family:var(--font-space-grotesk),'Space Grotesk',var(--font-anuphan),'Anuphan',ui-monospace,monospace;
+          font-variant-numeric:tabular-nums; color:var(--ink); }
+        /* Space Grotesk (--fm) has no Thai glyphs — pin Thai runs to the family's
+           real Thai body font so vowel/tone marks render correctly. */
+        .gv-root .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
         .gv-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:20px; }
         .gv-grid--single{ grid-template-columns:1fr; max-width:460px; margin:0 auto; }
         /* party tiles = <VotePartyCard> composites (own scoped styles) */
@@ -217,7 +253,11 @@ export default function GumroadVote({
         .gv-footer__sel{ font-size:17px; font-weight:700; }
         .gv-confirm{ display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border:var(--bw) solid var(--ink); border-radius:16px; background:var(--lime); color:var(--ink); font-family:var(--fb); font-weight:800; font-size:16px; box-shadow:5px 5px 0 rgba(255,241,229,.35); cursor:pointer; transition:transform .12s ease-out; white-space:nowrap; }
         .gv-confirm:not(:disabled):hover{ transform:translate(-2px,-2px); }
-        .gv-confirm:disabled{ opacity:.45; cursor:not-allowed; }
+        /* .45 faded the lime fill into the ink footer until the label sat at 3.63:1
+           (measured off real pixels, .specs/gm-px.js — the DOM-walking audit cannot
+           see element opacity, so this one hid from it). .58 measures 5.06:1 and the
+           button still reads clearly inactive beside the full-strength enabled state. */
+        .gv-confirm:disabled{ opacity:.58; cursor:not-allowed; }
 
         @container gv (max-width:780px){
           .gv-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }

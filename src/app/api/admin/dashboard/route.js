@@ -1,6 +1,7 @@
 import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
+import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
 export async function GET(req) {
@@ -31,7 +32,13 @@ export async function GET(req) {
         turnout: totalVoters > 0 ? ((votedCount / totalVoters) * 100).toFixed(2) : 0,
         showResult: config.showResult,
         systemMode: config.systemMode || "AUTO",
-        googleFormUrl: config.googleFormUrl || ""
+        googleFormUrl: config.googleFormUrl || "",
+        // SEC-MOCK2 · สถานะ mock-login อ่านฝั่ง server ตอน runtime (read-only)
+        // badge ในแท็บ settings ต้องใช้ค่านี้ ห้ามอ่าน NEXT_PUBLIC_* ฝั่ง client
+        // เพราะค่านั้นถูก inline ตอน build จึงเป็นสถานะของ "เครื่องที่ build" ไม่ใช่เครื่องที่รันอยู่
+        // SEC-MOCK3: เลิกส่ง mockLoginButtonVisible แล้ว — ปุ่มบนหน้า login อ่านจาก
+        // /api/auth/providers ตอน runtime จึงเป็นเงาของค่านี้เสมอ ไม่ใช่สถานะแยกอีกต่อไป
+        mockLoginProviderRegistered: isMockLoginProviderRegistered()
       },
       candidates
     });
@@ -113,59 +120,16 @@ export async function POST(req) {
       return NextResponse.json({ message: "Success" });
     }
 
-    // 🛑 v2-R10 guard — both destructive resets below wipe the live ballot box;
-    // while voting is effectively OPEN a mis-click would destroy a running
-    // election. Require the box to be closed first: PAUSE / ENDED, or AUTO
-    // outside the voting window. (MANUAL_OPEN = force-open → always blocked.)
-    if (action === 'RESET_VOTES' || action === 'RESET_CANDIDATES') {
-      const cfg0 = await db.systemConfig.findFirst({ where: { id: 1 } });
-      const m0 = cfg0?.systemMode || "AUTO";
-      let votingOpen = m0 === "MANUAL_OPEN";
-      if (m0 === "AUTO") {
-        const { resolveElectionDates } = await import("../../../../utils/electionConfig");
-        const { ELECTION_START, ELECTION_END } = resolveElectionDates(cfg0?.globalConfig);
-        const now = Date.now();
-        votingOpen = now >= new Date(ELECTION_START).getTime() && now < new Date(ELECTION_END).getTime();
-      }
-      if (votingOpen) {
-        return NextResponse.json(
-          { error: "ระบบโหวตกำลังเปิดอยู่ — สั่งพักระบบ (PAUSE) หรือปิดระบบ (ENDED) ก่อน จึงจะรีเซ็ตข้อมูลได้" },
-          { status: 400 }
-        );
-      }
-    }
-
-    // กรณี: ล้างคะแนนทั้งหมด (Reset) — pre-election / dev reset only.
-    // NOTE (v2-SEC): this also empties the append-only ballot box + resets the
-    // hash chain to genesis so score/ballots/chain stay consistent. That delete
-    // needs DELETE on "Ballot", which the INSERT-only production app role does
-    // NOT have (scripts/sql/ballot-grants.sql) — by design a CERTIFIED election
-    // is not resettable through the app. In dev (grants not applied) it works.
-    if (action === 'RESET_VOTES') {
-      const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
-      // 1. รีเซ็ต User ให้กลับเป็นยังไม่โหวต (เฉพาะนักศึกษาปี 1-4)
-      await db.user.updateMany({
-        where: { year: { in: validYears } },
-        data: { isVoted: false, votedAt: null }
-      });
-      // 2. รีเซ็ตคะแนนผู้สมัครเป็น 0
-      await db.candidate.updateMany({
-        data: { score: 0 }
-      });
-      // 3. เคลียร์กล่องบัตร + รีเซ็ตโซ่กลับ genesis (ให้ reconcile/verify ตรงกัน)
-      await db.ballot.deleteMany({});
-      await db.chainHead.upsert({
-        where: { id: 1 },
-        update: { head: 'GENESIS', seq: 0 },
-        create: { id: 1, head: 'GENESIS', seq: 0 },
-      });
-      // 4. ปลดธง anonymized (กลับไปสถานะนับคะแนนสดตามปกติ)
-      const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
-      if (cfg?.globalConfig?.ballotsAnonymized) {
-        await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...cfg.globalConfig, ballotsAnonymized: false } } });
-      }
-      return NextResponse.json({ success: true, message: "Reset votes successfully for eligible students (Year 1-4)" });
-    }
+    // ⛔ RESET_VOTES / RESET_CANDIDATES ถูกถอดออก 2026-07-28
+    //
+    // ทั้งสอง action ล้างกล่องบัตร (`ballot.deleteMany`) ซึ่งต้องมีสิทธิ์ DELETE บนตาราง
+    // "Ballot" — สิทธิ์ที่ production ตั้งใจไม่ให้ role ของแอป (ballot-grants.sql:28-30)
+    // แปลว่าบนเครื่องจริงปุ่มพังแน่นอน ทั้งที่บน dev (ไม่ได้ลง grants) กดผ่าน — บั๊กที่จะ
+    // โผล่เอาตอนขึ้นปีใหม่ · การล้างข้อมูลรายปีเป็นงานของเจ้าหน้าที่ฐานข้อมูลอยู่แล้ว
+    // (เจ้าของยืนยัน 2026-07-28) → scripts/sql/annual-reset.sql
+    //
+    // ผลพลอยได้ด้านความปลอดภัย: ไม่มี API เส้นไหนที่ลบบัตรได้อีกเลย ต่อให้มีคนได้ session
+    // แอดมินไป ก็ล้างผลเลือกตั้งที่กำลังเดินอยู่ไม่ได้
 
     // กรณี: รับรอง/ปิดผลอย่างเป็นทางการ (Certify — v2-SEC re-semantics of ANONYMIZE_BALLOTS)
     //
@@ -199,32 +163,6 @@ export async function POST(req) {
       await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...(cfg.globalConfig || {}), ballotsAnonymized: true } } });
 
       return NextResponse.json({ success: true, message: "รับรองผลเรียบร้อย — บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้ว และคะแนนรวมถูกบันทึกไว้ครบ" });
-    }
-
-    // กรณี: ล้างข้อมูลพรรคทั้งหมด (Reset Candidates)
-    if (action === 'RESET_CANDIDATES') {
-      const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
-      await db.candidate.updateMany({
-        data: { score: 0 }
-      });
-      // Also reset each voter's cast flag (no candidateId link exists anymore)
-      await db.user.updateMany({
-        where: { year: { in: validYears } },
-        data: { isVoted: false, votedAt: null }
-      });
-      // Empty the ballot box + reset the chain so a rebuilt party list starts clean
-      await db.ballot.deleteMany({});
-      await db.chainHead.upsert({
-        where: { id: 1 },
-        update: { head: 'GENESIS', seq: 0 },
-        create: { id: 1, head: 'GENESIS', seq: 0 },
-      });
-      await db.member.deleteMany({});
-      await db.candidate.deleteMany({});
-      const newCandidate = await db.candidate.create({
-        data: { name: "งดออกเสียง", number: 0, slogan: null, logoUrl: null, groupImageUrls: null }
-      });
-      return NextResponse.json({ message: "Database Reset Successful" });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

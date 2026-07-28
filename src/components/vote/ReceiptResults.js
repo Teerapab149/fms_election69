@@ -319,7 +319,7 @@ export default function ReceiptResults({
                       <div className="rc-panel__cap"><span><span className="rc-th">เพศ</span> · BY GENDER</span><em>§ 01</em></div>
                       <div className="rc-donut">
                         <ResponsiveContainer width="100%" height={230}>
-                          <PieChart>
+                          <PieChart accessibilityLayer={false}>
                             <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                               innerRadius={58} outerRadius={86} paddingAngle={3} stroke={t.receipt} strokeWidth={3}
                               startAngle={90} endAngle={-270} isAnimationActive={false}>
@@ -345,7 +345,11 @@ export default function ReceiptResults({
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
                       <div className="rc-panel__cap"><span><span className="rc-th">ชั้นปี</span> · BY YEAR</span><em>§ 02</em></div>
                       <ResponsiveContainer width="100%" height={230}>
-                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+                        {/* left:0, not -18 — the negative margin pushed the Y axis off the
+                            SVG's left edge, and an <svg> clips: the 3-digit ticks painted at
+                            x 682.5 inside a wrapper starting at x 689.1, so "120"/"160" read
+                            as ":0" on screen. width:34 already reserves room for them. */}
+                        <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke={t.line} />
                           <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                           <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: t.ink2 }} tickLine={false} axisLine={false} />
@@ -363,10 +367,10 @@ export default function ReceiptResults({
                       <span className="rc-report__tape" aria-hidden="true"><span className="rc-foil" /></span>
                       <div className="rc-panel__cap"><span><span className="rc-th">สาขา</span> · BY MAJOR</span><em>§ 03</em></div>
                       <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                        <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                           <CartesianGrid horizontal={false} stroke={t.line} />
                           <XAxis type="number" hide allowDecimals={false} />
-                          <YAxis type="category" dataKey="name" width={140} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
+                          <YAxis type="category" dataKey="name" width="auto" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: t.ink }} tickLine={false} axisLine={{ stroke: t.ink }} />
                           <Tooltip content={<RcTooltip />} cursor={{ fill: `color-mix(in srgb, ${t.accent} 10%, transparent)` }} />
                           <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={26} isAnimationActive={false}
                             label={{ position: "right", fontFamily: CHART_FONT, fontSize: 12, fontWeight: 700, fill: t.ink, formatter: (v) => (v || 0).toLocaleString() }}>
@@ -421,7 +425,7 @@ export default function ReceiptResults({
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-res-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
@@ -430,7 +434,10 @@ export default function ReceiptResults({
         /* laid-paper ::after + desk vignette ::before + emboss seals + holo foil come
            from the SHARED .rc-desk classes in ReceiptBaseStyles (R3 T1) — this root
            opts in via the rc-desk class, matching the home reference language. */
-        .rc-res-root { --rc-stamp-red:#B91C1C; --rc-win-green:#15803D; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .rc-topbar's sticky pins to it instead of the viewport.
+           xo=0 measured on every viewport, so no horizontal scroll is lost. */
+        .rc-res-root { --rc-stamp-red:#B91C1C; --rc-win-green:#15803D; overflow-x:clip; }
 
         :where(.rc-res-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-res-root a:focus-visible, .rc-res-root button:focus-visible {
@@ -594,9 +601,15 @@ export default function ReceiptResults({
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--rc-faint); width:32px; flex:none; align-self:start; padding-top:4px; }
         .rc-res-root .rc-srow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .rc-res-root .rc-srow__kick { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--rc-ink2); }
+        /* 3 lines, not 2 — the standings must name the party in full. The 53-char name
+           overflowed by exactly one line at 2 (scrollHeight 80 vs 51 clientHeight) and
+           the ellipsis landed mid-word. */
+        /* ink gutter — 5.19px of Thai upper-vowel+tone ink sat above the clamp's clip
+           edge at 21px/1.22 (heading font box = 1.654em). padding-top only; a
+           padding-bottom would let the clamped-away 4th line bleed through. */
         .rc-res-root .rc-srow__name { font-family:var(--rc-fh); font-weight:700; font-size:clamp(16px,4vw,21px); line-height:1.22;
-          letter-spacing:-.01em; color:var(--rc-ink);
-          display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+          letter-spacing:-.01em; color:var(--rc-ink); padding-top:.32em; margin-top:-.32em;
+          display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
         .rc-res-root .rc-srow__data { grid-column:2; display:grid; grid-template-columns:1fr; gap:6px; margin-top:5px; }
         .rc-res-root .rc-srow__num { font-family:var(--rc-fr); font-weight:700; font-size:clamp(20px,5vw,28px); line-height:1;
           font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--rc-ink); }

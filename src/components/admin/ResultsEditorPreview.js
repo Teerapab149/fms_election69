@@ -54,7 +54,6 @@ export default function ResultsEditorPreview({
         isRevealed={isRevealed}
         isNotStarted={isNotStarted}
         countdownText=""
-        onSelectParty={() => {}}
       />
     );
   }
@@ -90,7 +89,9 @@ export default function ResultsEditorPreview({
           <div className="text-center mb-8 lg:mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 mb-3">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-bold text-red-600">REAL-TIME UPDATE</span>
+              {/* red-600 on the tinted pill measured 4.41:1 at 12px — just under AA;
+                  red-700 clears it without changing the "live" read */}
+              <span className="text-xs font-bold text-red-700">REAL-TIME UPDATE</span>
             </div>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-800">
               ผลการเลือกตั้ง <span className="text-[#8A2680]">{globalConfig.electionName}</span>
@@ -127,7 +128,6 @@ export default function ResultsEditorPreview({
               totalVotes={totalVotes}
               status={status}
               isRevealed={isRevealed}
-              onClick={() => {}}
             />
           ))}
         </div>

@@ -76,11 +76,34 @@ const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 // `wordmark` (e.g. "SAMO 49") + `year` (calendar year) come from verdureMeta —
 // the tail must never be hardcoded (mirrors cornermark/cornerstatus). Each is
 // rendered only when present so the dots don't dangle on empty values.
-export function VerdureEdge({ num = "01", label = "Index", th = "", right = false, wordmark = "", year = "" }) {
+export function VerdureEdge({ num = "01", label = "Home", th = "", right = false, wordmark = "", year = "" }) {
   return (
     <div className={`vd-edge ${right ? "vd-edge--right" : ""}`}>
-      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; {th}</> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
+      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; <span className="vd-thai">{th}</span></> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
     </div>
+  );
+}
+
+// ── footer ──
+// Verdure was the only family with no copyright line anywhere (0 of 11 files, against
+// 8 of 10 in blossom / receipt / gumroad). This is one site that swaps templates, so a
+// line that disappears when the admin picks verdure is an inconsistency, not a design
+// choice — and this is a real faculty election, where "who published this, for which
+// year" belongs on the page.
+//
+// Deliberately NOT the shared SiteFooter: that one is a full-width white bar with a
+// slate border, which would read as a foreign object on the cream paper, and it would
+// land underneath verdure's floating dock. This is a single quiet mono line in the same
+// voice as the edge rails, with its own clearance below so the dock never covers it.
+//
+// Year and names come from globalConfig — the same copyrightYear the admin edits under
+// "ปีลิขสิทธิ์ (ค.ศ.)" — so it follows the setting instead of hardcoding a year.
+export function VerdureFooter() {
+  const g = useGlobalConfig() || {};
+  return (
+    <footer className="vd-footer">
+      © {g.facultyShortEn || "FMS"}@{g.university || "PSU"} {g.copyrightYear || new Date().getFullYear()}. All Rights Reserved.
+    </footer>
   );
 }
 
@@ -150,6 +173,12 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
 
   const pad = (n) => String(n).padStart(2, "0");
   const isAuthed = !editorMode && status === "authenticated" && !!session?.user;
+  // back-pill label split (vd-B2B): head = first word ("BACK"), tail = the rest
+  // ("TO CANDIDATES" / "TO BALLOT"). Desktop shows all of it; ≤1100px hides the
+  // tail ("← BACK"); ≤560px hides the text entirely (round icon-only chip, the
+  // full label lives on in aria-label). Label-agnostic — works for any string.
+  const [backHead = "", ...backRestArr] = String(backLabel || "").trim().split(/\s+/);
+  const backTail = backRestArr.join(" ");
   const userName = (session?.user?.name || "").trim();
   const userId = session?.user?.studentId || "";
   const avatarChar = (userName || "T").charAt(0).toUpperCase();
@@ -163,10 +192,21 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
   return (
     <div className="vd-cornerstatus">
       {backHref ? (
-        <a href={editorMode ? undefined : getPath(backHref)} className="vd-chip-live vd-chip-live--back">← {backLabel}</a>
+        <a href={editorMode ? undefined : getPath(backHref)} className="vd-chip-live vd-chip-live--back" aria-label={backLabel}>
+          {/* single wrapper span = ONE flex item, so the chip's gap never applies
+              inside the label and desktop spacing stays the plain text spaces */}
+          <span className="vd-back-inner">←<span className="vd-back-txt"> {backHead}{backTail ? <span className="vd-back-tail"> {backTail}</span> : null}</span></span>
+        </a>
       ) : (statusChip || defaultChip)}
-      {isAuthed && active !== "home" && (
-        <div className={`vd-user ${userOpen ? "is-open" : ""}`}>
+      {/* HOME used to be the one page with no user pill: on desktop the live
+          countdown chip owns the top-right and the pair would crowd the corner.
+          But ≤1100px that chip is hidden, so home's corner was simply empty and
+          a signed-in voter had no way to see WHOSE session they were in — the
+          only page in the template where that was true. Home therefore renders
+          the same pill, marked --home so CSS keeps it to the widths where the
+          corner is free (see .vd-user--home below). Every other page: unchanged. */}
+      {isAuthed && (
+        <div className={`vd-user ${userOpen ? "is-open" : ""} ${active === "home" ? "vd-user--home" : ""}`}>
           <button type="button" className="vd-user__av" onClick={() => setUserOpen((o) => !o)} aria-label="ดูข้อมูลผู้ใช้" aria-expanded={userOpen}>{avatarChar}</button>
           <div className="vd-user__meta">
             <div className="vd-user__name">{userName.split(" ")[0] || userName}</div>
@@ -233,6 +273,17 @@ export function VerdureBaseStyles() {
       .vd-root ::selection { background:var(--terra); color:var(--cream); }
       .vd-tabular { font-variant-numeric:tabular-nums lining-nums; }
       .vd-smallcaps { font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
+      /* Thai run reset inside tracked/uppercase mono kickers: Space Mono has no
+         Thai glyphs, so Thai in a --fm/letter-spaced context falls back to a
+         system font with mis-set marks + unnatural tracking. This span pins Thai
+         back to the Plex-Thai stack with gentle spacing, and nowrap so a phrase
+         never breaks mid-word (breaks are forced onto the "·" separators). Thai
+         has no case, so any inherited text-transform:uppercase is a no-op. */
+      .vd-thai { font-family:var(--ft); letter-spacing:.04em; white-space:nowrap; }
+      /* English-run nowrap partner to .vd-thai (promoted from VerdureResults.js's
+         local copy, vd-B2A, now that the idiom is rolled out to multiple pages —
+         see vd-B2C): keeps multi-word EN phrases whole so a kicker only breaks at "·" */
+      .vd-nw { white-space:nowrap; }
 
       /* moss page variant */
       .vd-root.vd-moss { background:var(--moss); color:var(--cream); }
@@ -264,6 +315,12 @@ export function VerdureBaseStyles() {
       .vd-moss .vd-chip-live { background:var(--moss-2); border-color:var(--rule-moss); color:var(--cream); }
       .vd-chip-live .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55); animation:vdDot 1.8s ease-out infinite; }
       .vd-chip-live strong { color:var(--terra); font-weight:700; }
+      /* on the dark surfaces the accent has to be the LIGHT plum: --terra on --moss-2
+         measures 1.05:1, i.e. the value inside the chip ("29 CANDIDATES", "CONFIRMED")
+         was invisible. --terra-soft is the same hue one step up and gives ~7:1, and it
+         is per-theme so every verdure theme gets the readable pairing. */
+      .vd-moss .vd-chip-live strong { color:var(--terra-soft); }
+      .vd-moss .vd-chip-live .dot { background:var(--terra-soft); }
       @keyframes vdDot { 0%{box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55)} 70%{box-shadow:0 0 0 10px rgba(var(--terra-rgb),0)} }
       .vd-user { position:relative; display:flex; align-items:center; gap:10px; padding:6px 12px 6px 6px; border-radius:16px; background:rgba(var(--cream-2-rgb),.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 12px 32px -20px rgba(var(--moss-rgb),.4); border:0; }
       .vd-moss .vd-user { background:rgba(var(--moss-2-rgb),.82); box-shadow:0 12px 32px -20px rgba(0,0,0,.5); }
@@ -276,10 +333,24 @@ export function VerdureBaseStyles() {
       .vd-user__out { margin-left:0; width:32px; height:32px; border-radius:50%; border:1px solid var(--rule); background:transparent; color:var(--moss); cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; flex-shrink:0; }
       .vd-user__out:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
       .vd-moss .vd-user__out { color:var(--cream); border-color:var(--rule-moss); }
+      /* home only — the pill takes the corner exactly where the live chip gives it
+         up (the same 1100px breakpoint that hides the chip below). Above that the
+         chip is back and home stays the composition it was designed as. */
+      @media (min-width:1101px) { .vd-user--home { display:none; } }
 
       /* dock — clean labeled pill; active = cream fill + a terra index dot. No
          numbered discs (that read as a studio-dark echo); plain Thai labels so
          it's instantly understandable. */
+      /* the dock is fixed at bottom:24 and stands ~65px tall, so the last line of
+         the document needs ~89px of clearance or it comes to rest underneath it.
+         112 gives the line air of its own on top of that. Mono + faint moss so it
+         reads as the same class of mark as the edge rails, not as a slab. */
+      .vd-footer { text-align:center; padding:44px 20px 112px; font-family:var(--fm);
+        font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+        color:rgba(var(--moss-rgb),.55); }
+      .vd-moss .vd-footer { color:rgba(var(--cream-rgb),.5); }
+      @media (max-width:640px) { .vd-footer { padding:32px 16px 84px; } }
+
       .vd-dock { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:stretch; gap:2px; padding:6px; background:var(--moss); border-radius:999px; box-shadow:0 22px 60px -12px rgba(var(--moss-rgb),.55), 0 0 0 1px rgba(var(--cream-rgb),.08); }
       .vd-dock__link { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; padding:8px 22px; border-radius:999px; transition:background .25s, color .25s; }
       .vd-dock__dot { width:5px; height:5px; border-radius:50%; background:transparent; margin-bottom:3px; transition:background .25s, transform .25s; }
@@ -298,6 +369,11 @@ export function VerdureBaseStyles() {
       .vd-btn:hover { background:var(--terra); border-color:var(--terra); }
       .vd-btn--terra { background:var(--cta); border-color:var(--cta); color:var(--cta-text); }
       .vd-btn--terra:hover { background:var(--moss); border-color:var(--moss); color:var(--cream); }
+      /* on a moss surface the dark CTA fill sits at 1.4:1 against the page and stops
+         reading as the primary action — the light accent carries it instead, dark
+         label on top. Per-theme (--terra-soft / --moss), so every theme stays itself. */
+      .vd-moss .vd-btn--terra { background:var(--terra-soft); border-color:var(--terra-soft); color:var(--moss); }
+      .vd-moss .vd-btn--terra:hover { background:var(--cream); border-color:var(--cream); color:var(--moss); }
       .vd-btn--ghost { background:transparent; border-color:var(--rule); color:var(--moss); }
       .vd-btn--ghost:hover { background:var(--moss); border-color:var(--moss); color:var(--cream); }
       .vd-moss .vd-btn--ghost { border-color:var(--rule-moss); color:var(--cream); }
@@ -316,6 +392,8 @@ export function VerdureBaseStyles() {
         .vd-cornermark__logo-img { height:24px; }
         .vd-cornerstatus { top:16px; right:16px; gap:8px; }
         .vd-cornerstatus .vd-chip-live:not(.vd-chip-live--back) { display:none; }
+        /* back pill (vd-B2B): tablets drop the label tail → "← BACK" */
+        .vd-chip-live--back .vd-back-tail { display:none; }
         .vd-dock { padding:5px; bottom:16px; max-width:calc(100vw - 16px); }
         .vd-dock__link { padding:7px 16px; }
       }
@@ -332,6 +410,11 @@ export function VerdureBaseStyles() {
         .vd-cornermark__txt { display:none; }
         .vd-user { padding:5px; gap:6px; }
         .vd-user__meta { display:none; }
+        /* back pill (vd-B2B): phones collapse to a round icon-only chip — the ←
+           glyph centred in a 44px circle (≥44px hit target), same chip material;
+           the full label stays readable via the anchor's aria-label */
+        .vd-chip-live--back { width:44px; height:44px; padding:0; justify-content:center; letter-spacing:0; font-size:16px; }
+        .vd-chip-live--back .vd-back-txt { display:none; }
         .vd-user.is-open .vd-user__meta { display:block; position:absolute; top:calc(100% + 8px); right:0; background:var(--cream-2); border:1px solid var(--rule); border-radius:14px; padding:10px 14px; box-shadow:0 18px 38px -18px rgba(var(--moss-rgb),.4); white-space:nowrap; text-align:right; z-index:40; }
         .vd-moss .vd-user.is-open .vd-user__meta { background:var(--moss-2); border-color:var(--rule-moss); }
       }
@@ -346,7 +429,7 @@ export function VerdureBaseStyles() {
 
 export default function VerdureChrome({
   active = "home", moss = false, editorMode = false, systemMode = "AUTO",
-  edge = { num: "01", label: "Index", th: "" }, cornermarkTitle = null,
+  edge = { num: "01", label: "Home", th: "" }, cornermarkTitle = null,
   cornermarkSub = null, statusChip = null, backHref = null, backLabel = "",
 }) {
   const gc = useGlobalConfig();

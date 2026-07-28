@@ -13,16 +13,26 @@
 
 import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import SiteFooter from "../elements/site-footer/gumroad";
 import ResultsHead from "../elements/results-head/gumroad";
 import StatCard from "../composites/stat-card/gumroad";
-import { getPartyColor } from "../../utils/partyColors";
+import { getPartyColor, prefersDarkText } from "../../utils/partyColors";
 
+// accessibilityLayer={false} on every chart below. Recharts 3 flipped this default
+// to true (it was false in 2.x), which puts tabIndex="0" + role="application" on
+// .recharts-surface — so tapping a chart focuses it and the browser paints a focus
+// ring around the whole plot area, on desktop and on phones. These charts are
+// decorative summaries whose every number is already on the page as text (the donut
+// centre + legend, the bar value labels), so the layer buys nothing here and costs a
+// rectangle nobody asked for. Turning it off removes the tabindex outright rather
+// than hiding the ring with CSS, which would leave a focusable element with no
+// visible focus — worse than either.
 const POPS = ["#FF9CE9", "#B6E6FF", "#C2F47E", "#FFD24D", "#FF8A8A"];
 const CHART_FONT = "'Anuphan','Kanit',system-ui,sans-serif";
 const genderColor = (n) => {
@@ -40,7 +50,85 @@ function GrTooltip({ active, payload, label }) {
   return (
     <div className="gr-tip">
       <span className="gr-tip__name">{name}</span>
-      <span className="gr-tip__val">{(p?.value || 0).toLocaleString()} คน</span>
+      <span className="gr-tip__val">{(p?.value || 0).toLocaleString()} <span className="gm-thai">คน</span></span>
+    </div>
+  );
+}
+
+// ── reveal ceremony: count-up (gm-B1B) ───────────────────────────────────────
+// SSR-safe by construction: the INITIAL state is the FINAL value, so server HTML,
+// no-JS, and pre-hydration paint all show the real number. Only after hydration
+// does the effect restart the number from 0 and ease it up (~1s). reduced-motion
+// or editorMode (enabled=false) → snap to final, no rAF. Used ONLY inside the
+// revealed branch — embargoed numbers keep their literal "??.?%" string.
+function useCountUp(target, { duration = 1000, enabled = true } = {}) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    if (!enabled || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) { setVal(target); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, enabled]);
+  return val;
+}
+// revealed-only value renderers — count 0→value after hydration, final otherwise
+function RevealPct({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(1)}%</>; }
+function RevealInt({ value, enabled }) { const v = useCountUp(value, { enabled }); return <>{Math.round(v).toLocaleString()}</>; }
+function RevealFixed({ value, digits = 2, enabled }) { const v = useCountUp(value, { enabled }); return <>{v.toFixed(digits)}</>; }
+
+// ── waiting state (gm-B1B): real "polls open soon" ink card with a live countdown
+// to ELECTION_START + a factual open/close window caption, derived from the resolved
+// schedule (same recipe as VerdureClosed's waiting variant). editorMode → compute
+// once, no interval (admin preview never ticks); interval cleared on unmount.
+const GR_CD_UNITS = [["d", "วัน"], ["hh", "ชม."], ["mm", "นาที"], ["ss", "วินาที"]];
+function GrWaiting({ globalConfig, editorMode }) {
+  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
+  const [cd, setCd] = useState(null);
+  useEffect(() => {
+    const target = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
+    const compute = () => {
+      const diff = target - Date.now();
+      if (isNaN(diff) || diff <= 0) { setCd(null); return; }
+      setCd({
+        d: Math.floor(diff / 86400000),
+        hh: Math.floor((diff / 3600000) % 24),
+        mm: Math.floor((diff / 60000) % 60),
+        ss: Math.floor((diff / 1000) % 60),
+      });
+    };
+    compute();
+    if (editorMode) return undefined;
+    const id = setInterval(compute, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalConfig?.electionStartAt, editorMode]);
+
+  let factual = null;
+  const d = formatThaiDate(ELECTION_START);
+  if (d) factual = `เปิดโหวต ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+
+  return (
+    <div className="gr-waiting">
+      <div className="gr-waiting__kicker"><span className="gr-dot" /> UPCOMING · <span className="gm-thai">ยังไม่เปิดโหวต</span></div>
+      <h2 className="gr-waiting__title">POLLS<br />OPEN <em>SOON</em></h2>
+      <p className="gr-waiting__deck">ผลการเลือกตั้งจะแสดงที่นี่แบบเรียลไทม์เมื่อเปิดหีบเลือกตั้ง</p>
+      {cd && (
+        <div className="gr-waiting__cd" role="timer" aria-label="เวลาที่เหลือก่อนเปิดโหวต">
+          {GR_CD_UNITS.map(([k, u]) => (
+            <div className="gr-cd__seg" key={u}>
+              <span className="gr-cd__num tabular">{k === "d" ? cd.d : String(cd[k]).padStart(2, "0")}</span>
+              <span className="gr-cd__u gm-thai">{u}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {factual && <div className="gr-waiting__fact">{factual}</div>}
     </div>
   );
 }
@@ -53,9 +141,10 @@ export default function GumroadResults({
   isRevealed = false,
   isNotStarted = false,
   countdownText = "",
-  onSelectParty = () => {},
+  editorMode = false,
 }) {
   const globalConfig = useGlobalConfig();
+  const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
   const ended = finalStatus === "ENDED";
   const revealed = !!isRevealed;
   const counting = !isNotStarted && !revealed;       // active/ended but scores still locked
@@ -76,7 +165,11 @@ export default function GumroadResults({
   const restCards = winner ? candidates.filter((c) => c !== winner) : candidates;
   const pctOf = (c) => (totalVotes > 0 ? ((c.score || 0) / totalVotes * 100) : 0);
   const logoSrc = (c) => (c?.logoUrl ? (String(c.logoUrl).startsWith("http") ? c.logoUrl : getPath(c.logoUrl)) : null);
-  const labelOf = (c) => (parseInt(c.number) > 0 ? `NO. ${c.number}` : (parseInt(c.number) === 0 ? "งดออกเสียง" : "ไม่รับรอง"));
+  const labelOf = (c) => {
+    const n = parseInt(c.number);
+    if (n > 0) return `NO. ${n}`;
+    return <span className="gm-thai">{n === 0 ? "งดออกเสียง" : "ไม่รับรอง"}</span>;
+  };
 
   const statusLabel = ended ? (revealed ? "FINAL RESULT" : "COUNTING IN PROGRESS")
     : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : "UPCOMING";
@@ -96,18 +189,14 @@ export default function GumroadResults({
         />
 
         {isNotStarted ? (
-          <div className="gr-waiting">
-            <div className="gr-waiting__icon">⏳</div>
-            <h2>ยังไม่เปิดรับลงคะแนน</h2>
-            <p>ผลการเลือกตั้งจะแสดงที่นี่เมื่อเริ่มการลงคะแนน</p>
-          </div>
+          <GrWaiting globalConfig={globalConfig} editorMode={editorMode} />
         ) : (
           <>
             {/* LOCKED headline (while counting) */}
             {counting && (
               <div className="gr-locked">
                 <div className="gr-headline">
-                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING · กำลังนับคะแนน</span>
+                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING · <span className="gm-thai">กำลังนับคะแนน</span></span>
                   {/* single party = approve/disapprove, not a multi-party race */}
                   <h2 className="gr-headline__title">
                     {singleParty ? <>YES<br />OR<br />NO<em>?</em></> : <>WHO<br />WILL<br />WIN<em>?</em></>}
@@ -127,16 +216,24 @@ export default function GumroadResults({
                       ? "เพื่อความโปร่งใส ผลการรับรองจะถูกเปิดเผยเมื่อปิดโหวตแล้วเท่านั้น"
                       : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะถูกเปิดเผยพร้อมกันเมื่อปิดโหวตแล้วเท่านั้น"}
                   </p>
-                  {countdownText ? <div className="gr-lock__cd">{ended ? "ปิดโหวตแล้ว · รอประกาศผล" : `ปิดใน ${countdownText}`}</div> : null}
+                  {countdownText ? (
+                    <div className="gr-lock__cd">
+                      {ended
+                        ? <><span className="gm-thai">ปิดโหวตแล้ว</span> · <span className="gm-thai">รอประกาศผล</span></>
+                        : <><span className="gm-thai">ปิดใน</span> {countdownText}</>}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
 
             {/* STAT CARDS — stat-card composites (Layer 2) */}
             <div className="gr-stats">
-              <StatCard tone="pink" lbl="★ คะแนนเสียงรวม · TOTAL" value={totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
-              <StatCard lbl="ผู้มีสิทธิ์ · ELIGIBLE" value={totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl="ความคืบหน้า · TURNOUT" value={turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
+              {/* revealed → the three tallies count up (reveal ceremony); embargoed/live
+                  stays a plain string so the counting state is byte-identical to before */}
+              <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span> · TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
+              <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span> · ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span> · TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}
@@ -150,9 +247,26 @@ export default function GumroadResults({
               </div>
               {revealed ? (
                 <div className="gr-reveal">
+                  {/* the winner card is painted with the party's own colour, which an
+                      admin types in — so the text colour has to follow it. On a mid-tone
+                      signature the fixed --ink2 secondary text measured 2.03:1. */}
                   {winner && (
-                    <div className="gr-winner" style={{ background: getPartyColor(winner, winner.number - 1) }}>
-                      <span className="gr-winner__badge">👑 ผู้ชนะ · WINNER</span>
+                    <div
+                      className="gr-winner"
+                      style={(() => {
+                        const c = getPartyColor(winner, winner.number - 1);
+                        const dark = prefersDarkText(c);
+                        return {
+                          background: c,
+                          "--won-ink": dark ? "var(--ink)" : "var(--cream)",
+                          // full strength, not a faded ink: on a mid-tone party colour
+                          // even 78% alpha drops the small mono text to 3.2:1. Hierarchy
+                          // here is carried by size and font, not by opacity.
+                          "--won-ink2": dark ? "var(--ink)" : "var(--cream)",
+                        };
+                      })()}
+                    >
+                      <span className="gr-winner__badge">👑 <span className="gm-thai">ผู้ชนะ</span> · WINNER</span>
                       <div className="gr-winner__main">
                         {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
                         <div className="gr-winner__id">
@@ -161,8 +275,8 @@ export default function GumroadResults({
                           {winner.slogan ? <p className="gr-winner__slogan">&ldquo;{winner.slogan}&rdquo;</p> : null}
                         </div>
                         <div className="gr-winner__score">
-                          <div className="gr-winner__pct">{pctOf(winner).toFixed(1)}<span>%</span></div>
-                          <div className="gr-winner__votes">{(winner.score || 0).toLocaleString()} คะแนน</div>
+                          <div className="gr-winner__pct tabular"><RevealFixed value={pctOf(winner)} digits={1} enabled={anim} /><span>%</span></div>
+                          <div className="gr-winner__votes"><span className="tabular"><RevealInt value={winner.score || 0} enabled={anim} /></span> <span className="gm-thai">คะแนน</span></div>
                         </div>
                       </div>
                     </div>
@@ -172,12 +286,16 @@ export default function GumroadResults({
                       {restCards.map((c, i) => {
                         const isParty = parseInt(c.number) > 0;
                         const color = isParty ? getPartyColor(c, c.number - 1) : "#C9C4BE";
+                        // RES-1: read-only tally board — standings rows are not
+                        // links (owner decision, mirrors ReceiptResults)
                         return (
-                          <button type="button" className="gr-rank" key={c.id} onClick={() => onSelectParty(c)}>
+                          <div className="gr-rank" key={c.id}>
                             <div className="gr-rank__name">{c.name}<small>{labelOf(c)}</small></div>
-                            <div className="gr-rank__track"><div className="gr-rank__fill" style={{ width: `${Math.max(pctOf(c), 2)}%`, background: color }} /></div>
-                            <div className="gr-rank__pct">{pctOf(c).toFixed(1)}%</div>
-                          </button>
+                            {/* fill carries its REAL width inline (no-JS/reduced-motion safe);
+                                --real only staggers a 0→width grow via animationDelay */}
+                            <div className="gr-rank__track"><div className={`gr-rank__fill${anim ? " gr-rank__fill--real" : ""}`} style={{ width: `${Math.max(pctOf(c), 2)}%`, background: color, animationDelay: `${i * 90}ms` }} /></div>
+                            <div className="gr-rank__pct tabular"><RevealPct value={pctOf(c)} enabled={anim} /></div>
+                          </div>
                         );
                       })}
                     </div>
@@ -218,7 +336,7 @@ export default function GumroadResults({
                       <h4>แยกตามเพศ</h4>
                       <div className="gr-donut">
                         <ResponsiveContainer width="100%" height={230}>
-                          <PieChart>
+                          <PieChart accessibilityLayer={false}>
                             <Pie data={byGender} dataKey="value" nameKey="name" cx="50%" cy="50%"
                               innerRadius={58} outerRadius={88} paddingAngle={3} stroke="#1A1A1A" strokeWidth={2.5}
                               startAngle={90} endAngle={-270} isAnimationActive={false}>
@@ -227,7 +345,7 @@ export default function GumroadResults({
                             <Tooltip content={<GrTooltip />} />
                           </PieChart>
                         </ResponsiveContainer>
-                        <div className="gr-donut__center"><strong>{genderTotal.toLocaleString()}</strong><span>คน</span></div>
+                        <div className="gr-donut__center"><strong>{genderTotal.toLocaleString()}</strong><span><span className="gm-thai">คน</span></span></div>
                       </div>
                       <div className="gr-legend">
                         {byGender.map((g, i) => (
@@ -242,7 +360,7 @@ export default function GumroadResults({
                     <div className="gr-card">
                       <h4>แยกตามชั้นปี</h4>
                       <ResponsiveContainer width="100%" height={230}>
-                        <BarChart data={byYear} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+                        <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke="rgba(26,26,26,.08)" />
                           <XAxis dataKey="name" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
                           <YAxis allowDecimals={false} width={34} tick={{ fontFamily: CHART_FONT, fontSize: 11, fill: "#4A4A4A" }} tickLine={false} axisLine={false} />
@@ -258,10 +376,18 @@ export default function GumroadResults({
                     <div className="gr-card gr-card--wide">
                       <h4>แยกตามสาขา</h4>
                       <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
-                        <BarChart data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
+                        <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 0, bottom: 4 }}>
                           <CartesianGrid horizontal={false} stroke="rgba(26,26,26,.08)" />
                           <XAxis type="number" hide allowDecimals={false} />
-                          <YAxis type="category" dataKey="name" width={210} tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
+                          {/* width was a fixed 210px reserved for the longest major name a
+                              deployment might have. Real majors here are 2-4 letter codes
+                              (ACC, BBA, MICE), so the axis parked the whole chart ~170px in
+                              from the left edge — dead space on a laptop, and on a phone it
+                              took more than half the card before a single bar could start.
+                              "auto" (recharts 3) sizes the axis to the labels actually
+                              rendered, so short codes hug the left and a long Thai name
+                              still gets the room it needs. */}
+                          <YAxis type="category" dataKey="name" width="auto" tick={{ fontFamily: CHART_FONT, fontSize: 12, fontWeight: 600, fill: "#1A1A1A" }} tickLine={false} axisLine={{ stroke: "#1A1A1A", strokeWidth: 2 }} />
                           <Tooltip content={<GrTooltip />} cursor={{ fill: "rgba(26,26,26,.05)" }} />
                           <Bar dataKey="value" stroke="#1A1A1A" strokeWidth={2.5} radius={[0, 8, 8, 0]} maxBarSize={28} isAnimationActive={false}
                             label={{ position: "right", fontFamily: CHART_FONT, fontSize: 12, fontWeight: 700, fill: "#1A1A1A", formatter: (v) => (v || 0).toLocaleString() }}>
@@ -296,6 +422,11 @@ export default function GumroadResults({
         }
         .gr-root *{ box-sizing:border-box; } .gr-root a{ text-decoration:none; color:inherit; } .gr-root img{ display:block; max-width:100%; }
         .tabular{ font-variant-numeric:tabular-nums; }
+        /* Thai runs inside mono (--fm/Space Grotesk) kickers/labels — that stack has
+           no Thai glyphs so Thai text falls back to a mismatched system font
+           (misaligned vowel/tone marks, wider metrics → wraps). Pin Thai runs to
+           the family's real Thai body font instead; keep "·" as the only break point. */
+        .gm-thai{ font-family:var(--fb) !important; letter-spacing:.04em; white-space:nowrap; }
 
         .gr-page{ flex:1; width:100%; max-width:1100px; margin:0 auto; padding:36px 28px 64px; }
         /* head = <ResultsHead> element (own scoped styles) */
@@ -305,8 +436,19 @@ export default function GumroadResults({
         .gr-dot{ width:9px; height:9px; border-radius:999px; background:var(--coral); box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent); animation:grPulse 1.6s ease-out infinite; }
         @keyframes grPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
 
-        .gr-waiting{ text-align:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); padding:56px 28px; }
-        .gr-waiting__icon{ font-size:48px; } .gr-waiting h2{ font-family:var(--fd); font-size:28px; text-transform:uppercase; margin:12px 0 6px; } .gr-waiting p{ color:var(--ink2); margin:0; }
+        /* waiting state — "polls open soon" ink hero + live countdown chips */
+        .gr-waiting{ position:relative; overflow:hidden; text-align:center; background:var(--ink); color:var(--cream); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-xl); padding:64px 40px; }
+        .gr-waiting::after{ content:""; position:absolute; inset:-42% -12% auto auto; width:340px; height:340px; background:var(--pink); border-radius:999px; opacity:.22; filter:blur(24px); pointer-events:none; }
+        .gr-waiting > *{ position:relative; z-index:1; }
+        .gr-waiting__kicker{ display:inline-flex; align-items:center; gap:10px; font-family:var(--fm); font-size:13px; text-transform:uppercase; letter-spacing:.2em; color:var(--lime); margin-bottom:16px; }
+        .gr-waiting__title{ font-family:var(--fd); font-size:clamp(40px,7cqw,72px); line-height:.92; letter-spacing:-.03em; text-transform:uppercase; margin:0 0 14px; }
+        .gr-waiting__title em{ font-style:normal; color:var(--pink); }
+        .gr-waiting__deck{ color:rgba(255,241,229,.78); font-size:16px; line-height:1.55; margin:0 auto; max-width:460px; }
+        .gr-waiting__cd{ display:inline-flex; gap:12px; margin-top:32px; flex-wrap:wrap; justify-content:center; }
+        .gr-cd__seg{ min-width:78px; background:var(--paper); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 12px; display:flex; flex-direction:column; align-items:center; gap:5px; }
+        .gr-cd__num{ font-family:var(--fd); font-size:clamp(28px,4cqw,40px); line-height:1; }
+        .gr-cd__u{ font-size:11px; letter-spacing:.06em; color:var(--ink2); }
+        .gr-waiting__fact{ margin-top:28px; display:inline-block; font-size:14px; font-weight:600; background:var(--yellow); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:999px; box-shadow:var(--sh-sm); padding:10px 20px; }
 
         /* locked headline */
         .gr-locked{ display:grid; grid-template-columns:1.1fr 1fr; gap:28px; margin-bottom:30px; align-items:stretch; }
@@ -343,25 +485,30 @@ export default function GumroadResults({
 
         /* revealed: winner spotlight + ranked cards */
         .gr-reveal{ display:flex; flex-direction:column; gap:18px; }
-        .gr-winner{ position:relative; background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; }
+        .gr-winner{ position:relative; color:var(--won-ink,var(--ink)); background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; }
         .gr-winner__badge{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--cream); font-family:var(--fm); font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 14px; border-radius:999px; }
         .gr-winner__main{ display:flex; align-items:center; gap:22px; margin-top:16px; flex-wrap:wrap; }
         .gr-winner__logo{ width:88px; height:88px; flex-shrink:0; border:var(--bw) solid var(--ink); border-radius:20px; background:var(--paper); overflow:hidden; box-shadow:var(--sh-sm); }
         .gr-winner__logo img{ width:100%; height:100%; object-fit:contain; }
         .gr-winner__id{ min-width:0; flex:1; }
-        .gr-winner__no{ font-family:var(--fm); font-size:12px; font-weight:600; letter-spacing:.14em; color:var(--ink2); }
+        .gr-winner__no{ font-family:var(--fm); font-size:12px; font-weight:600; letter-spacing:.14em; color:var(--won-ink2,var(--ink2)); }
         .gr-winner__name{ font-family:var(--fd); font-size:clamp(26px,4.5cqw,46px); line-height:.98; letter-spacing:-.02em; margin:4px 0 0; text-transform:uppercase; text-wrap:balance; }
-        .gr-winner__slogan{ font-style:italic; font-size:14px; color:var(--ink2); margin:8px 0 0; }
+        .gr-winner__slogan{ font-style:italic; font-size:14px; color:var(--won-ink2,var(--ink2)); margin:8px 0 0; }
         .gr-winner__score{ margin-left:auto; text-align:right; }
         .gr-winner__pct{ font-family:var(--fd); font-size:clamp(48px,9cqw,84px); line-height:.9; } .gr-winner__pct span{ font-size:.5em; }
-        .gr-winner__votes{ font-family:var(--fm); font-size:13px; font-weight:600; color:var(--ink2); margin-top:2px; }
+        .gr-winner__votes{ font-family:var(--fm); font-size:13px; font-weight:600; color:var(--won-ink2,var(--ink2)); margin-top:2px; }
 
         .gr-ranks{ display:flex; flex-direction:column; gap:12px; }
-        .gr-rank{ display:grid; grid-template-columns:200px 1fr 64px; gap:16px; align-items:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 18px; cursor:pointer; font-family:inherit; color:inherit; text-align:left; transition:transform .12s ease-out, box-shadow .12s ease-out; }
-        .gr-rank:hover{ transform:translate(-2px,-2px); box-shadow:var(--sh); }
+        .gr-rank{ display:grid; grid-template-columns:200px 1fr 64px; gap:16px; align-items:center; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh-sm); padding:14px 18px; font-family:inherit; color:inherit; text-align:left; }
         .gr-rank__name{ font-weight:700; font-size:15px; } .gr-rank__name small{ display:block; font-family:var(--fm); font-size:11px; color:var(--ink2); text-transform:uppercase; letter-spacing:.12em; font-weight:600; }
         .gr-rank__track{ height:24px; background:var(--cream2); border:2px solid var(--ink); border-radius:999px; overflow:hidden; }
         .gr-rank__fill{ height:100%; border-right:2px solid var(--ink); background-image:repeating-linear-gradient(45deg,transparent 0 8px,rgba(255,255,255,.4) 8px 10px); }
+        /* reveal ceremony: fills grow 0→real width with a per-row stagger (animationDelay
+           set inline). Pure CSS keyframe — without JS the bar still ends at its inline
+           width, so a fill is NEVER gated behind hydration. Scoped to --real only. */
+        .gr-rank__fill--real{ animation:grFillGrow .7s cubic-bezier(.22,1,.36,1) backwards; }
+        @keyframes grFillGrow{ from{ width:0; } }
+        @media (prefers-reduced-motion: reduce){ .gr-rank__fill--real{ animation:none; } }
         .gr-rank__pct{ font-family:var(--fd); font-size:16px; text-align:right; }
 
         /* demographics */
@@ -397,6 +544,7 @@ export default function GumroadResults({
         }
         @container gr (max-width:520px){
           .gr-page{ padding:28px 16px 52px; }
+          .gr-waiting{ padding:44px 22px; } .gr-cd__seg{ min-width:66px; padding:12px 10px; }
           .gr-rrow{ grid-template-columns:90px 1fr 46px; } .gr-rrow__name{ font-size:13px; }
           .gr-rank{ grid-template-columns:1fr auto; gap:8px 12px; }
           .gr-rank__track{ grid-column:1 / -1; order:3; }

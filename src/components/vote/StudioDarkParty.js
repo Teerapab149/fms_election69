@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StudioDarkShell from "./StudioDarkShell";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -35,13 +36,17 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const ROMAN = ["i.", "ii.", "iii."];
 
-export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false }) {
+export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [tab, setTab] = useState("vision");
   const [modalMember, setModalMember] = useState(null); // click a member → profile modal
   const [lightboxSrc, setLightboxSrc] = useState(null); // click the team photo → fullscreen
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map(asText).filter(Boolean), [party?.policies]);
+  const policies = useMemo(() => (party?.policies || []).map((it) => (
+    typeof it === "string"
+      ? { title: it, desc: "" }
+      : { title: asText(it), desc: it?.desc ?? it?.description ?? it?.detail ?? "" }
+  )).filter((p) => p.title), [party?.policies]);
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
   const story = (party?.logoMeaning || "").trim();
 
@@ -63,8 +68,9 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
   return (
     <StudioDarkShell
       active={showBackToVote ? "vote" : "candidates"}
-      backHref={showBackToVote ? "/vote" : "/candidates"}
-      backLabel={showBackToVote ? "Vote" : "Candidates"}
+      // single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead
+      backHref={showBackToVote ? "/vote" : (isSingleParty ? "/" : "/candidates")}
+      backLabel={showBackToVote ? "Vote" : (isSingleParty ? "Home" : "Candidates")}
       label="Profile"
       labelTh={`Party № ${no}`}
       right={<span>{members.length > 0 && <>{members.length} CANDIDATES&nbsp;·&nbsp;</>}{policies.length} POLICIES</span>}
@@ -97,7 +103,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             </button>
           ))}
           <div className="sdp-tabs__spacer" />
-          <a href={getPath("/vote")} className="sdp-tabs__action">ลงคะแนน · Vote →</a>
+          <a href={getPath("/vote")} className="sdp-tabs__action"><span className="sd-thai">ลงคะแนน</span> · Vote →</a>
         </nav>
       )}
 
@@ -118,15 +124,15 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
               onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
             >
               <img src={heroImg} alt={party?.name} />
-              <figcaption className="sdp-story__cap">TEAM PHOTO · คลิกเพื่อขยาย ⌕</figcaption>
+              <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
             </figure>
           )}
-          {story && <div className="sdp-vision__story"><p>{story}</p></div>}
+          {story && <div className="sdp-vision__story"><StoryClamp className="sdp-sc"><p>{story}</p></StoryClamp></div>}
 
           {/* missions — their own always-visible ledger below the story/photo */}
           {missions.length > 0 && (
             <div className="sdp-missions">
-              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> MISSIONS · พันธกิจ</div>
+              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> <span className="sd-nw">MISSIONS</span> · <span className="sd-thai">พันธกิจ</span></div>
               {missions.map((m, i) => (
                 <div className="sdp-mission" key={i}>
                   <span className="sdp-mission__no">{pad2(i + 1)}</span>
@@ -146,7 +152,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             {policies.map((p, i) => (
               <div className="sdp-policy" key={i}>
                 <div className="sdp-policy__no">{pad2(i + 1)}</div>
-                <div className="sdp-policy__body"><p>{p}</p></div>
+                <div className="sdp-policy__body"><p>{p.title}</p>{p.desc && <p className="sdp-policy__desc">{p.desc}</p>}</div>
                 <span className="sdp-policy__tag">POLICY {pad2(i + 1)}</span>
               </div>
             ))}
@@ -250,6 +256,9 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-vision__photo:hover img { transform:scale(1.015); }
         .sdp-vision__story { max-width:840px; }
         .sdp-vision__story p { font-size:16px; line-height:1.75; color:var(--sd-ink); font-weight:300; margin:0; }
+        /* StoryClamp — long manifesto folds behind a panel fade */
+        .sdp-sc { --sc-max:9em; --sc-fade:var(--sd-bg); }
+        .sdp-sc .sc__hint { color:var(--sd-accent); font-family:var(--sd-mono); text-transform:uppercase; }
         .sdp-story__cap {
           position:absolute; left:12px; bottom:12px; font-family:var(--sd-mono); font-size:9px;
           letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2);
@@ -280,6 +289,9 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-policy__no { font-family:var(--sd-sans); font-weight:400; font-size:48px; letter-spacing:-.04em; color:var(--sd-ink-4); line-height:.9; transition:color .2s; }
         .sdp-policy:hover .sdp-policy__no { color:var(--sd-accent); }
         .sdp-policy__body p { font-size:16px; line-height:1.6; color:var(--sd-ink); margin:0; font-weight:300; max-width:720px; }
+        /* ink-2, not ink-3 — same call as .sds-policy__desc on the single-party
+           page: real policy prose, measured 4.32:1 at 14px under ink-3. */
+        .sdp-policy__body p.sdp-policy__desc { font-size:14px; line-height:1.65; color:var(--sd-ink-2); margin-top:6px; font-weight:300; max-width:720px; }
         .sdp-policy__tag { font-family:var(--sd-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); opacity:0; transition:opacity .25s; white-space:nowrap; }
         .sdp-policy:hover .sdp-policy__tag { opacity:1; }
 

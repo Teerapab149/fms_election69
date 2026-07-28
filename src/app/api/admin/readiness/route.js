@@ -8,6 +8,12 @@ import {
   formatThaiTime,
 } from "../../../../utils/electionConfig";
 import { isBuiltInSlug } from "../../../../components/admin/editor/templates";
+import { isMockLoginProviderRegistered } from "../../../../lib/auth";
+
+// Never statically rendered: this route reads headers/request.url per call. Without
+// this Next tries to prerender it at build time, the read throws DynamicServerError,
+// and the catch blocks log it — build noise that reads like a real auth failure.
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/readiness — ADM-1 election readiness check (read-only).
@@ -286,21 +292,30 @@ export async function GET(request) {
     };
   });
 
-  // 12) env.mock — mock-login เปิดอยู่หรือไม่
+  // 12) env.mock — เส้นทาง mock-login เปิดอยู่หรือไม่
+  // SEC-MOCK2: ตรวจจาก "ตัวกั้นจริง" คือการ register provider (isMockLoginProviderRegistered)
+  //
+  // SEC-MOCK3 (2026-07-27): เดิมมีอีกเงื่อนไขคือ NEXT_PUBLIC_ENABLE_MOCK_LOGIN (ปุ่มบน
+  // หน้า login) และมันทำให้ผลตรวจ "ค้างแดงถาวร" ได้จริง — Next inline ค่า NEXT_PUBLIC_*
+  // ตอน build ทั้งฝั่ง server ด้วย ถ้า build ตอนที่ flag เป็น true ตัว minifier จะพิสูจน์ได้
+  // ว่าสาขา pass เข้าไม่ถึงแล้วลบทิ้ง เหลือ `providerLive ? fail : fail` ในไบนารี — ตั้ง env
+  // ตอน runtime ยังไงก็ไม่เขียว (พิสูจน์จาก .next/server/.../readiness/route.js ทั้งสองแบบ build)
+  // ตอนนี้ปุ่มบนหน้า login อ่านจาก /api/auth/providers แล้ว (ดู app/login/page.js) ปุ่มกับ
+  // ตัวกั้นจึงเป็นตัวเดียวกัน เงื่อนไขนี้จึงเหลือตัวเดียวและอ่านตอน runtime ล้วน
   await run("env.mock", "env", "การเข้าสู่ระบบจำลอง (Mock Login)", async () => {
-    const mockOn = process.env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true";
-    if (!mockOn) {
-      return { level: "pass", detail: "ปิดการเข้าสู่ระบบจำลองแล้ว (ใช้ PSU SSO จริง)" };
-    }
-    if (process.env.NODE_ENV === "production") {
+    if (isMockLoginProviderRegistered()) {
       return {
         level: "fail",
-        detail: "เปิดการเข้าสู่ระบบจำลอง (mock-login) อยู่ในโหมด production — อันตราย ใครก็เข้าระบบได้ ต้องปิดก่อนใช้งานจริง",
+        detail:
+          "เซิร์ฟเวอร์นี้ยังเปิดเส้นทางเข้าสู่ระบบจำลองอยู่ (mock-login provider ถูกลงทะเบียนจริง) — ใครที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน" +
+          " · ปกติของเครื่องนักพัฒนา (dev server) และไม่ต้องแก้อะไรถ้านี่คือเครื่องพัฒนา" +
+          " · เส้นทางนี้ปิดเองอัตโนมัติเมื่อรันเป็น production build (NODE_ENV=production) จึงไม่มีสวิตช์ให้กดปิดในหน้านี้ ถ้าเครื่องนี้คือเซิร์ฟเวอร์ที่จะใช้วันเลือกตั้งจริง ให้ deploy ด้วย production build ก่อนเปิดให้นักศึกษาใช้ แล้วผลตรวจข้อนี้จะเขียวเอง",
       };
     }
     return {
-      level: "warn",
-      detail: "เปิดการเข้าสู่ระบบจำลอง (mock-login) อยู่ในโหมด dev — ปกติสำหรับการพัฒนา แต่ต้องปิด (NEXT_PUBLIC_ENABLE_MOCK_LOGIN) ก่อน deploy production",
+      level: "pass",
+      detail:
+        "ปิดการเข้าสู่ระบบจำลองสนิท — provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ ปุ่มบนหน้า login จึงไม่แสดงตามไปด้วย (ใช้ PSU SSO จริงเท่านั้น)",
     };
   });
 

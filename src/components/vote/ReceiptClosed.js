@@ -142,7 +142,7 @@ export default function ReceiptClosed({
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-closed-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
@@ -154,7 +154,10 @@ export default function ReceiptClosed({
         .rc-closed-root { --rc-stamp-red:#B91C1C;
           /* SEMANTIC dispenser-LED colours — locked across every theme (A8.1) */
           --rc-led-open:#16A34A; --rc-led-wait:#E0A200; --rc-led-closed:#C0403A;
-          overflow-x:hidden; }
+          /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes
+             the scroll container, and .rc-topbar's sticky pins to it instead of the
+             viewport. xo=0 on every viewport, so no horizontal scroll is lost. */
+          overflow-x:clip; }
 
         :where(.rc-closed-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-closed-root a:focus-visible, .rc-closed-root button:focus-visible {
@@ -268,8 +271,12 @@ export default function ReceiptClosed({
         .rc-closed-root .rc-disp-body { display:flex; align-items:center; justify-content:space-between; gap:12px;
           padding:11px 16px 13px; border-radius:12px 12px 3px 3px;
           background:linear-gradient(180deg, color-mix(in srgb, var(--rc-ink) 84%, var(--rc-faint)), var(--rc-ink)); }
+        /* the one place a label is LIGHT text on a DARK body, so it must not be mixed
+           out of --rc-faint: deepening that token for AA on paper would have dragged
+           this the wrong way (6.37:1 → 4.27:1 on the dispenser). Mixed off the paper
+           side instead — same painted grey rgb(172,168,162), 6.37:1 on the body. */
         .rc-closed-root .rc-disp-label { font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
-          color:color-mix(in srgb, var(--rc-faint) 80%, var(--rc-receipt)); }
+          color:color-mix(in srgb, var(--rc-ink2) 55%, var(--rc-receipt)); }
         .rc-closed-root .rc-disp-led { width:9px; height:9px; border-radius:50%; flex-shrink:0;
           background:var(--rc-led-wait); box-shadow:0 0 9px var(--rc-led-wait); animation:rcLed 2.4s ease-in-out infinite; }
         .rc-closed-root .rc-disp.led-open .rc-disp-led { background:var(--rc-led-open); box-shadow:0 0 9px var(--rc-led-open); }

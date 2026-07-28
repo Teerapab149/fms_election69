@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
 
+// Never statically rendered: this route reads headers/request.url per call. Without
+// this Next tries to prerender it at build time, the read throws DynamicServerError,
+// and the catch blocks log it — build noise that reads like a real auth failure.
+export const dynamic = "force-dynamic";
+
 export async function GET(request) {
   const authError = await adminGuard(request);
   if (authError) return authError;

@@ -32,7 +32,7 @@ const DEVICES = [
 
 const PAGES = [
   { page: "home", label: "หน้าแรก" },
-  { page: "candidates", label: "ผู้สมัคร" },
+  { page: "candidates", label: "ผู้สมัคร · หลายพรรค" },
   { page: "party", label: "ข้อมูลพรรค" },
   { page: "vote", variant: "multi", label: "ลงคะแนน · หลายพรรค" },
   { page: "vote", variant: "single", label: "ลงคะแนน · พรรคเดียว" },
@@ -206,6 +206,37 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
   );
 }
 
+// ── Template categories ───────────────────────────────────────────────────────
+// The list used to be one flat run ordered newest-first, which put the two most
+// expressive families at the top and left the ONE family that a faculty committee
+// has already approved sitting third, looking like just another option. That is a
+// presentation problem, not a missing-template problem: whoever has to hand this to
+// a committee needs to see at a glance which themes are the safe, plain ones.
+//
+// Adding more plain templates would not have solved it — every family costs 11-14
+// page components and, more expensively, has to be revisited on every cross-cutting
+// change (the missing /login pages and the chrome-less success page were both "the
+// fix landed on some families and silently missed others"). So: label what exists.
+const FAMILY_CATEGORY = {
+  original: "official",
+  classic: "official",
+  // everything else is expressive by default
+};
+const CATEGORY_META = {
+  official: {
+    label: "ทางการ · เรียบ",
+    hint: "โทนสุภาพ เหมาะกับการเสนอคณะกรรมการ",
+  },
+  expressive: {
+    label: "งานออกแบบ",
+    hint: "โดดเด่นกว่า เหมาะกับการสื่อสารกับนักศึกษา",
+  },
+};
+// Deliberately no "approved by the faculty" note here. It was written as
+// provenance, but nobody ever formally approved anything — the template was simply
+// used for a real election and drew compliments. Putting a committee's endorsement
+// in the UI would be speaking for people who never said it.
+
 // ── Sidebar card (master) — one per family; colour themes = clickable swatches ──
 function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
   const { rep, themes } = fam;
@@ -213,21 +244,38 @@ function SidebarCard({ fam, selectedSlug, activeSlug, onSelect }) {
   const isSelected = themes.some((t) => t.slug === selectedSlug);
   const isActive = themes.some((t) => t.slug === activeSlug);
   return (
-    <div className={`rounded-2xl border p-4 transition-all duration-200 ${isSelected ? "border-slate-300 bg-white shadow-md" : "border-transparent bg-white/60 hover:bg-white hover:shadow-sm"}`}>
-      <button type="button" onClick={() => onSelect(rep.slug)} className="w-full text-left">
-        <div className="flex items-center gap-2">
-          {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
-          <span className={`font-bold text-[15px] leading-tight ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
-          <span className="ml-auto text-[9px] font-mono uppercase tracking-wide text-slate-300">{rep.layoutFamily || rep.slug}</span>
-        </div>
-        <p className="text-[11.5px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{rep.description}</p>
-      </button>
-      <div className="flex items-center gap-1.5 mt-2.5">
+    // p-3.5 (was p-4) + a tighter swatch gutter: at 130px per card six families
+    // overflowed a 900px-tall screen by 131px. The reclaim gets the whole list
+    // onto one screen at that height, so the common case needs no scrolling at
+    // all and the box above only kicks in on shorter windows.
+    // The whole card is the hit target. It used to be only the name row, so the
+    // padding, the strip to the right of a short name like "Dark", and the gap in the
+    // swatch row were all dead — clicks there did nothing, which read as the button
+    // not registering. A div with role/tabIndex rather than a <button> because the
+    // colour swatches are buttons themselves and cannot be nested inside one; their
+    // handlers stopPropagation so picking a colour does not also re-pick the family.
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`เลือกธีม ${rep.name}`}
+      onClick={() => onSelect(rep.slug)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(rep.slug); } }}
+      className={`rounded-xl border p-2.5 cursor-pointer transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8A2680] ${isSelected ? "border-slate-300 bg-white shadow-sm" : "border-transparent bg-white/70 hover:bg-white"}`}>
+      {/* The card used to carry a two-line description as well, which is what made a
+          column of six read as a wall of text — and it was the same sentence the
+          detail panel shows in full the moment you click. The list now answers only
+          "which one and what colours"; the reading happens on the right. */}
+      <div className="flex items-center gap-2">
+        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="กำลังใช้อยู่" />}
+        <span className={`font-bold text-[15px] leading-tight truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{rep.name}</span>
+      </div>
+      <div className="flex items-center gap-1.5 mt-1.5">
         {themes.map((t) => {
           const on = t.slug === selectedSlug;
           const c = t.colorSwatch?.primary || "#8A2680";
           return (
-            <button key={t.slug} type="button" title={t.name} aria-label={`เลือก ${t.name}`} onClick={() => onSelect(t.slug)}
+            <button key={t.slug} type="button" title={t.name} aria-label={`เลือก ${t.name}`}
+              onClick={(e) => { e.stopPropagation(); onSelect(t.slug); }}
               className={`w-5 h-5 rounded-full border-2 grid place-items-center transition-transform ${on ? "scale-110" : "hover:scale-105"}`}
               style={{ background: c, borderColor: on ? "#0f172a" : "#fff", boxShadow: on ? "0 0 0 2px rgba(15,23,42,.18)" : "0 1px 2px rgba(15,23,42,.18)" }}>
               {t.slug === activeSlug && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
@@ -245,6 +293,10 @@ export default function TemplateChooserTab() {
   const [loading, setLoading] = useState(true);
   const [activeSlug, setActiveSlug] = useState(null);
   const [selectedSlug, setSelectedSlug] = useState(null);
+  // which category drawers are open. Both shut until the list loads, then the one
+  // holding the theme being previewed opens itself (see the effect below) — so you
+  // land on your own theme without the other group in the way.
+  const [openCats, setOpenCats] = useState({ official: false, expressive: false });
   const [pending, setPending] = useState(null);
   const [applying, setApplying] = useState(false);
   const [toast, setToast] = useState(null);
@@ -288,9 +340,12 @@ export default function TemplateChooserTab() {
     return Object.entries(groups)
       .map(([fam, list]) => {
         const rep = list.find((t) => t.slug === (REP[fam] || fam)) || list[0];
-        return { family: fam, rep, themes: [rep, ...list.filter((t) => t !== rep)] };
+        return { family: fam, rep, themes: [rep, ...list.filter((t) => t !== rep)], category: FAMILY_CATEGORY[fam] || "expressive" };
       })
       .sort((a, b) => {
+        // official first — the safe choice should be the one you see, not the one
+        // you scroll to. Within a category the old newest-first order stands.
+        if (a.category !== b.category) return a.category === "official" ? -1 : 1;
         const ai = ORDER.indexOf(a.family), bi = ORDER.indexOf(b.family);
         return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
       });
@@ -306,6 +361,14 @@ export default function TemplateChooserTab() {
 
   const selected = useMemo(() => templates.find((t) => t.slug === selectedSlug) || null, [templates, selectedSlug]);
   const selectedFamily = useMemo(() => families.find((f) => f.themes.some((t) => t.slug === selectedSlug)) || null, [families, selectedSlug]);
+
+  // Open the drawer holding whatever is being previewed — once. Guarded on "no
+  // drawer is open yet" rather than on selectedFamily so that closing the drawer
+  // you are looking at stays closed instead of springing back open.
+  useEffect(() => {
+    if (!selectedFamily) return;
+    setOpenCats((o) => (o.official || o.expressive ? o : { ...o, [selectedFamily.category]: true }));
+  }, [selectedFamily]);
   const isSelectedActive = selected && selected.slug === activeSlug;
   const accent = selected?.colorSwatch?.primary || "#8A2680";
 
@@ -339,7 +402,7 @@ export default function TemplateChooserTab() {
         </div>
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight text-slate-800">เลือกธีมเว็บไซต์</h2>
-          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที</p>
+          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที · แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
         </div>
       </div>
 
@@ -355,15 +418,66 @@ export default function TemplateChooserTab() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6 items-start">
-          {/* ── MASTER: sidebar ── */}
+          {/* ── MASTER: sidebar ──
+              The list is its OWN scroll box, not part of the page scroll. Six
+              families ran 840px tall against a 900px viewport, so the last card
+              sat at y=1031 — unreachable without scrolling the page, which
+              carried the preview stage away with it (the stage is the whole
+              point of the tab). Bounding it to the viewport keeps picking a
+              theme and watching it side by side. */}
           <div className="lg:sticky lg:top-[72px]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">ธีมทั้งหมด ({families.length})</p>
-            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
-              {families.map((fam) => (
-                <div key={fam.family} className="min-w-[220px] lg:min-w-0">
-                  <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
-                </div>
-              ))}
+            {/* sectioned by category — see FAMILY_CATEGORY above for why */}
+            {/* 216px = where the list starts on an unscrolled page (192, under
+                the tab's title block) + 24 of breathing room. Bounding it there
+                — rather than to the sticky offset — is what removes the PAGE
+                scroll: with the list inside the first screen there is nothing
+                left to scroll past, so the preview can never drift away. */}
+            {/* Two drawers rather than one long run. Six cards stacked under two
+                headings still read as one cluttered column — you had to scan the
+                whole thing to find the official one. Collapsed, the split is the
+                first thing you see; the section holding the theme you are looking
+                at opens itself, the other stays shut until you ask for it. */}
+            <div className="tc-list flex flex-col gap-1.5 overflow-y-auto lg:max-h-[calc(100vh-216px)] p-1.5 rounded-2xl border border-slate-200/70 bg-white/50">
+              {["official", "expressive"].map((cat) => {
+                const inCat = families.filter((f) => f.category === cat);
+                if (!inCat.length) return null;
+                const meta = CATEGORY_META[cat];
+                const open = openCats[cat];
+                const holdsActive = inCat.some((f) => f.themes.some((t) => t.slug === activeSlug));
+                const holdsSelected = inCat.some((f) => f.themes.some((t) => t.slug === selectedSlug));
+                return (
+                  // an open drawer becomes a tinted block so the two groups read as two
+                  // blocks, not one run of cards with labels in it. (Comment lives here,
+                  // not as a JSX sibling above the root — P-LOG-120.)
+                  <section key={cat} className={`rounded-2xl transition-colors ${open ? "bg-slate-100/70 p-1" : ""}`}>
+                    <button type="button" aria-expanded={open}
+                      onClick={() => setOpenCats((o) => ({ ...o, [cat]: !o[cat] }))}
+                      className={`w-full flex items-start gap-2 text-left px-2 py-2 rounded-xl transition-colors ${open ? "" : "hover:bg-white/70"}`}>
+                      <ChevronRight className={`w-3.5 h-3.5 mt-[3px] shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-90" : ""}`} strokeWidth={3} />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">{meta.label}</span>
+                          <span className="text-[10px] font-mono text-slate-300">({inCat.length})</span>
+                          {/* a shut drawer still has to say whether the live theme is inside it */}
+                          {holdsActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="ธีมที่ใช้อยู่อยู่ในกลุ่มนี้" />}
+                          {!open && holdsSelected && !holdsActive && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" title="ธีมที่กำลังดูอยู่ในกลุ่มนี้" />}
+                        </span>
+                        <span className="block text-[10.5px] text-slate-400 leading-snug mt-0.5">{meta.hint}</span>
+                      </span>
+                    </button>
+                    {open && (
+                      <div className="flex lg:flex-col gap-2 lg:gap-1.5 overflow-x-auto lg:overflow-x-visible pb-1 lg:pb-0 pt-1">
+                        {inCat.map((fam) => (
+                          <div key={fam.family} className="min-w-[220px] lg:min-w-0">
+                            <SidebarCard fam={fam} selectedSlug={selectedSlug} activeSlug={activeSlug} onSelect={setSelectedSlug} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
             </div>
           </div>
 
@@ -373,7 +487,16 @@ export default function TemplateChooserTab() {
               <>
                 <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
                   <div className="min-w-0">
-                    <h3 className="text-2xl font-bold tracking-tight text-slate-900">{selected.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">{selected.name}</h3>
+                      {selectedFamily && (
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${selectedFamily.category === "official"
+                          ? "bg-slate-100 text-slate-600 border-slate-200"
+                          : "bg-purple-50 text-[#8A2680] border-purple-100"}`}>
+                          {CATEGORY_META[selectedFamily.category].label}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-slate-500 mt-1 max-w-xl">{selected.description}</p>
                   </div>
                   {isSelectedActive ? (
@@ -398,6 +521,24 @@ export default function TemplateChooserTab() {
       <p className="text-[11px] text-slate-400 mt-6">
         แต่ละธีมรองรับครบทุกหน้า · เนื้อหา (ชื่อ/ปี/ผู้สมัคร) แก้ที่แท็บ “ตั้งค่าทั่วไป” และ “จัดการผู้สมัคร”
       </p>
+
+      {/* the theme list's own scrollbar — slim and always drawn, so a short
+          window shows that there is more below instead of hiding it behind the
+          page scroll. Overlay scrollbars (macOS default) would vanish here. */}
+      <style jsx>{`
+        /* NOTE: no \`scrollbar-width\` here on purpose. Declaring the standards
+           property makes Chromium ignore the ::-webkit-scrollbar rules and fall
+           back to an OVERLAY scrollbar — measured as a 0px layout gutter, i.e.
+           nothing visible until you already know to scroll, which is the exact
+           opposite of the ask. Letting the webkit pseudo-elements win gives a
+           classic bar that is always drawn; scrollbar-gutter keeps the cards
+           from shifting when it appears. */
+        .tc-list { scrollbar-gutter: stable; }
+        .tc-list::-webkit-scrollbar { width: 8px; height: 6px; }
+        .tc-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
+        .tc-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        .tc-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      `}</style>
 
       {/* confirm */}
       {pending && (

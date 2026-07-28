@@ -49,7 +49,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
       <div className="bl-page">
         {/* ===== issue line (masthead — candidates variant) ===== */}
         <div className="bl-issue-line">
-          <span>ผู้สมัคร <b>·</b> CANDIDATES</span>
+          <span><span className="bl-thai bl-thai--nw">ผู้สมัคร</span> <b>·</b> CANDIDATES</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -58,7 +58,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
           <h1 className="bl-cand-word">ผู้สมัคร</h1>
           <div className="bl-cand-meta">
             <span className="bl-cand-count">{pad2(count)}</span>
-            <span className="bl-cand-count-lab">พรรค<br />PARTIES</span>
+            <span className="bl-cand-count-lab"><span className="bl-thai bl-thai--nw">พรรค</span><br />PARTIES</span>
           </div>
         </header>
         <p className="bl-cand-deck">
@@ -86,11 +86,11 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
                       )}
                     </span>
                     <span className="bl-crow__body">
-                      <span className="bl-crow__kick">พรรคหมายเลข <b>{p.number}</b></span>
+                      <span className="bl-crow__kick"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{p.number}</b></span>
                       <span className="bl-crow__name">{p.name}</span>
                       {p.slogan && <span className="bl-crow__slogan">{p.slogan}</span>}
                       <span className="bl-crow__stat">
-                        {memberCount > 0 ? <>ทีมงาน {memberCount} คน</> : "ทีมงานกำลังปรับปรุงข้อมูล"}
+                        {memberCount > 0 ? <><span className="bl-thai bl-thai--nw">ทีมงาน</span> {memberCount} <span className="bl-thai bl-thai--nw">คน</span></> : <span className="bl-thai bl-thai--nw">ทีมงานกำลังปรับปรุงข้อมูล</span>}
                       </span>
                     </span>
                     <span className="bl-crow__cta">
@@ -112,17 +112,20 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
 
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
-        <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
       </footer>
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome) ================= */
-        .bl-cand-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -348 at scrollY 348). xo=0 here, so no scroll is lost. */
+        .bl-cand-root { overflow-x:clip; }
         /* dot-grid paper texture — above the blobs, under content */
         .bl-cand-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-cand-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-cand-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-cand-root) a:hover { color:var(--bl-ink); }
 
         .bl-cand-root .bl-blob { position:absolute; pointer-events:none; z-index:0; }
@@ -191,7 +194,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-cand-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-cand-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-cand-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -218,7 +221,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-cand-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-cand-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-cand-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -237,7 +240,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
           font-size:clamp(56px,15vw,140px); letter-spacing:-.02em; color:transparent;
           -webkit-text-stroke:2px var(--bl-primary-deep); text-stroke:2px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-cand-root .bl-cand-word { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-cand-root .bl-cand-word { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-cand-root .bl-cand-meta { display:flex; align-items:flex-end; gap:12px; padding-bottom:8px; }
         .bl-cand-root .bl-cand-count { font-family:var(--bl-fd); font-weight:800; font-size:clamp(44px,11vw,88px); line-height:.8;
@@ -266,27 +269,43 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
         .bl-cand-root .bl-crow__idx { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,20px);
           font-variant-numeric:tabular-nums; letter-spacing:.08em; color:var(--bl-faint); width:38px; flex:none; }
         .bl-cand-root .bl-crow__logo { width:62px; height:62px; flex:none; border-radius:16px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-line); display:grid; place-items:center; }
-        .bl-cand-root .bl-crow__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-line); display:flex; align-items:center; justify-content:center; padding:5px; }
+        /* contain, not cover: this is a party MARK, not a photo — cover cropped the
+           artwork (a real 3375x4219 logo rendered 75px tall in a 62px box and lost its
+           bottom). Flex centring because a percentage max-height does not resolve on a
+           grid item. */
+        .bl-cand-root .bl-crow__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-cand-root .bl-crow__logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:20px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-cand-root .bl-crow__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
         .bl-cand-root .bl-crow__kick { font-family:var(--bl-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-cand-root .bl-crow__kick b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-cand-root .bl-crow__kick b { color:var(--bl-primary-ink); font-weight:700; }
+        /* ink gutter: Kanit's font box is taller than lh 1.12, so the overflow:hidden
+           that -webkit-line-clamp forces sliced the top off Thai tone-over-vowel marks
+           (measured cutTop 3.1px on the real "พรรคพลังนักศึกษาฯ", 4.08px worst case at
+           32px). padding-top opens the clip box, the negative margin puts the text back
+           where it was — layout is byte-identical. padding-BOTTOM is banned here: Chrome
+           spills the line the clamp dropped into it. */
         .bl-cand-root .bl-crow__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,32px); line-height:1.12;
-          letter-spacing:-.01em; color:var(--bl-ink);
+          letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .bl-cand-root .bl-crow__link:hover .bl-crow__name { color:var(--bl-primary-deep); }
-        .bl-cand-root .bl-crow__slogan { margin-top:2px; font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
-          color:var(--bl-ink2); font-style:italic;
+        .bl-cand-root .bl-crow__link:hover .bl-crow__name { color:var(--bl-primary-ink); }
+        /* ink gutter: same Kanit-vs-lh clipping as .bl-crow__name above, just far
+           smaller here because lh 1.5 is generous — measured needEm 0.01 constant
+           at every breakpoint and every party count (2/3/5/6). cushion .05em -> .06em.
+           padding-top opens the clip box, margin-top absorbs the same amount so
+           layout is byte-identical. padding-BOTTOM banned: Chrome spills the
+           clamped 2nd line back in. */
+        .bl-cand-root .bl-crow__slogan { margin-top:calc(2px - .06em); font-family:var(--bl-fd); font-weight:500; font-size:14px; line-height:1.5;
+          color:var(--bl-ink2); font-style:italic; padding-top:.06em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
         .bl-cand-root .bl-crow__stat { margin-top:6px; font-family:var(--bl-fm); font-size:10px; letter-spacing:.14em;
           text-transform:uppercase; color:var(--bl-faint); }
         /* CTA: soft pill with an accent arrow that slides on row hover */
         .bl-cand-root .bl-crow__cta { display:inline-flex; align-items:center; gap:7px; flex:none; min-height:44px;
           padding:11px 20px; border-radius:999px; background:var(--bl-primary-soft);
-          font-family:var(--bl-fd); font-weight:600; font-size:14px; color:var(--bl-primary-deep);
+          font-family:var(--bl-fd); font-weight:600; font-size:14px; color:var(--bl-primary-ink);
           transition:background .25s ease, transform .2s ease; }
         .bl-cand-root .bl-crow__link:hover .bl-crow__cta { background:color-mix(in srgb, var(--bl-primary) 20%, var(--bl-card)); }
         .bl-cand-root .bl-crow__cta svg { transition:transform .25s ease; }

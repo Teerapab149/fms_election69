@@ -41,6 +41,7 @@ import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import BlossomMemberModal from "./BlossomMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -49,7 +50,7 @@ const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? i
 // keep the placeholder defaults preparePartyData injects out of the printed articles
 const REAL = (arr) => (arr || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
 
-export default function BlossomParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false }) {
+export default function BlossomParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false, isSingleParty = false }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -92,13 +93,13 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
       <div className="bl-page">
         {/* ===== issue line (masthead — party variant) ===== */}
         <div className="bl-issue-line">
-          <span>พรรค <b>·</b> PARTY FILE</span>
+          <span><span className="bl-thai bl-thai--nw">พรรค</span> <b>·</b> PARTY FILE</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial party masthead — giant hollow numeral + logo + name ===== */}
         <header className="bl-pty-head">
-          <span className="bl-pty-kick"><span className="bl-pty-dot" aria-hidden="true" />บทความฉบับพิเศษ · PARTY FEATURE</span>
+          <span className="bl-pty-kick"><span className="bl-pty-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">บทความฉบับพิเศษ</span> · <span className="bl-nw">PARTY FEATURE</span></span>
           <div className="bl-pty-hero">
             <span className="bl-pty-no" aria-hidden="true">{pad2(no)}</span>
             <div className="bl-pty-id">
@@ -110,7 +111,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
                 )}
               </span>
               <div className="bl-pty-title">
-                <span className="bl-pty-num">พรรคหมายเลข <b>{no}</b></span>
+                <span className="bl-pty-num"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{no}</b></span>
                 <h1 className="bl-pty-word">{party?.name || "พรรค"}</h1>
                 {party?.slogan && <p className="bl-pty-deck">“{party.slogan}”</p>}
               </div>
@@ -129,7 +130,9 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             </div>
             <blockquote className="bl-pquote">
               <span className="bl-pquote__mark" aria-hidden="true">“</span>
-              <p className="bl-pquote__body">{story}</p>
+              <StoryClamp className="bl-sc">
+                <p className="bl-pquote__body">{story}</p>
+              </StoryClamp>
             </blockquote>
           </section>
         )}
@@ -140,7 +143,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">MISSION</span>
               <h2 className="bl-psec__title">พันธกิจ</h2>
-              <span className="bl-psec__count">{pad2(missions.length)} ข้อ</span>
+              <span className="bl-psec__count">{pad2(missions.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-mlist">
               {missions.map((m, i) => (
@@ -156,7 +159,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">POLICIES</span>
               <h2 className="bl-psec__title">นโยบายเด่น</h2>
-              <span className="bl-psec__count">{pad2(policies.length)} ข้อ</span>
+              <span className="bl-psec__count">{pad2(policies.length)} <span className="bl-thai bl-thai--nw">ข้อ</span></span>
             </div>
             <ol className="bl-plist">
               {policies.map((p, i) => {
@@ -182,7 +185,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">THE TEAM</span>
               <h2 className="bl-psec__title">ทีมผู้สมัคร</h2>
-              <span className="bl-psec__count">{pad2(members.length)} คน</span>
+              <span className="bl-psec__count">{pad2(members.length)} <span className="bl-thai bl-thai--nw">คน</span></span>
             </div>
             <ul className="bl-team">
               {members.map((m, i) => {
@@ -196,7 +199,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
                       </span>
                       <span className="bl-cand__body">
                         <span className="bl-cand__name">{m.name}</span>
-                        {(m.position || m.major) && <span className="bl-cand__role">{m.position || m.major}</span>}
+                        {(m.position || m.major) && <span className="bl-cand__role bl-thai">{m.position || m.major}</span>}
                       </span>
                     </button>
                   </li>
@@ -212,7 +215,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
             <div className="bl-psec__head">
               <span className="bl-psec__kick">GALLERY</span>
               <h2 className="bl-psec__title">ภาพกิจกรรม</h2>
-              <span className="bl-psec__count">{pad2(gallery.length)} ภาพ</span>
+              <span className="bl-psec__count">{pad2(gallery.length)} <span className="bl-thai bl-thai--nw">ภาพ</span></span>
             </div>
             <div className="bl-strip">
               {gallery.map((src, i) => (
@@ -227,9 +230,10 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
         {/* ===== foot band — editorial CTAs ===== */}
         <div className="bl-pty-foot">
-          <a href={editorMode ? undefined : getPath("/candidates")} className="bl-pty-back">
+          {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
+          <a href={editorMode ? undefined : getPath(isSingleParty ? "/" : "/candidates")} className="bl-pty-back">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-            กลับหน้าผู้สมัคร
+            {isSingleParty ? "กลับหน้าแรก" : "กลับหน้าผู้สมัคร"}
           </a>
           <a href={editorMode ? undefined : getPath("/vote")} className="bl-pty-go">
             ไปลงคะแนน
@@ -239,7 +243,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
         {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
         <footer className="bl-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
@@ -268,12 +272,17 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
 
       <style jsx global>{`
         /* ================= SHARED CHROME (mirrors BlossomHome / BlossomCandidates) ================= */
-        .bl-party-root { overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .bl-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400 on a 4021px page). xo=0, and the
+           .bl-strip member rail keeps its OWN overflow-x:auto — inner scrollers are
+           unaffected by a clip on the root. */
+        .bl-party-root { overflow-x:clip; }
         /* dot-grid paper texture — calm 8%/28px */
         .bl-party-root::after { content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image:radial-gradient(color-mix(in srgb, var(--bl-ink) 8%, transparent) 1px, transparent 1.4px);
           background-size:28px 28px; }
-        :where(.bl-party-root) a { color:var(--bl-primary-deep); text-decoration:none; }
+        :where(.bl-party-root) a { color:var(--bl-primary-ink); text-decoration:none; }
         :where(.bl-party-root) a:hover { color:var(--bl-ink); }
 
         /* blobs — faded toward the canvas (calm) */
@@ -344,7 +353,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-party-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
-          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-deep); }
+          cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
         .bl-party-root .bl-usermenu__out:hover { background:color-mix(in srgb, var(--bl-primary) 10%, var(--bl-card)); }
 
         .bl-party-root .bl-burger { display:inline-flex; flex-direction:column; justify-content:center; gap:4px; width:44px; height:44px;
@@ -371,7 +380,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
           border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
-        .bl-party-root .bl-issue-line b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-party-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
         /* ---- footer: plain classic single line, centered ---- */
         .bl-party-root .bl-footer { margin-top:0; padding:24px 0; border-top:1px solid var(--bl-line); text-align:center;
@@ -393,19 +402,20 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           font-size:clamp(88px,22vw,208px); letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:transparent;
           -webkit-text-stroke:2.5px var(--bl-primary-deep); text-stroke:2.5px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-party-root .bl-pty-no { color:var(--bl-primary-deep); -webkit-text-stroke:0; text-stroke:0; }
+          .bl-party-root .bl-pty-no { color:var(--bl-primary-ink); -webkit-text-stroke:0; text-stroke:0; }
         }
         .bl-party-root .bl-pty-id { display:flex; align-items:flex-end; gap:20px; min-width:0; flex:1; }
         .bl-party-root .bl-pty-logo { width:96px; height:96px; flex:none; border-radius:24px; overflow:hidden;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center;
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:8px;
           box-shadow:0 20px 44px -30px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
-        .bl-party-root .bl-pty-logo img { width:100%; height:100%; object-fit:cover; }
+        /* contain — a logo is a mark with its own margins; cover cropped it */
+        .bl-party-root .bl-pty-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-party-root .bl-pty-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:34px;
-          font-variant-numeric:tabular-nums; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-party-root .bl-pty-title { min-width:0; }
         .bl-party-root .bl-pty-num { font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
           color:var(--bl-ink2); }
-        .bl-party-root .bl-pty-num b { color:var(--bl-primary-deep); font-weight:700; }
+        .bl-party-root .bl-pty-num b { color:var(--bl-primary-ink); font-weight:700; }
         /* party name — SOLID display, calm ink (the star of the feature) */
         .bl-party-root .bl-pty-word { margin:6px 0 0; font-family:var(--bl-fd); font-weight:800; line-height:1;
           font-size:clamp(30px,7vw,60px); letter-spacing:-.02em; color:var(--bl-ink); overflow-wrap:break-word; }
@@ -420,8 +430,8 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           color:var(--bl-faint); align-self:center; padding-bottom:2px; }
         /* small logo chip on the LOGO MEANING head — ties the pull-quote to the mark */
         .bl-party-root .bl-psec__logo { width:38px; height:38px; flex:none; border-radius:11px; overflow:hidden; align-self:center;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:grid; place-items:center; }
-        .bl-party-root .bl-psec__logo img { width:100%; height:100%; object-fit:cover; }
+          background:var(--bl-card); border:1.5px solid var(--bl-ink); display:flex; align-items:center; justify-content:center; padding:3px; }
+        .bl-party-root .bl-psec__logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
         .bl-party-root .bl-psec__title { margin:0; font-family:var(--bl-fd); font-weight:800; font-size:clamp(24px,6vw,40px);
           line-height:.95; letter-spacing:-.02em; color:var(--bl-ink); }
         .bl-party-root .bl-psec__count { margin-left:auto; font-family:var(--bl-fm); font-size:11px; letter-spacing:.16em;
@@ -434,6 +444,10 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           font-size:76px; line-height:1; color:var(--bl-primary-soft); pointer-events:none; user-select:none; }
         .bl-party-root .bl-pquote__body { position:relative; margin:0; font-family:var(--bl-fd); font-weight:500;
           font-size:clamp(18px,4.4vw,26px); line-height:1.6; letter-spacing:-.01em; color:var(--bl-ink); white-space:pre-line; }
+        /* StoryClamp — a long logo-meaning collapses behind a canvas fade so the
+           sections below stay reachable; the toggle wears the candy accent */
+        .bl-party-root .bl-sc { --sc-max:9.6em; --sc-fade:var(--bl-canvas); }
+        .bl-party-root .bl-sc .sc__hint { color:var(--bl-primary-ink); font-family:var(--bl-fm); text-transform:uppercase; }
 
         /* ---- 2. พันธกิจ — mono numerals + list ---- */
         .bl-party-root .bl-mlist { list-style:none; margin:20px 0 0; padding:0; }
@@ -441,7 +455,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           padding:18px 6px; border-bottom:1px solid var(--bl-line); }
         .bl-party-root .bl-mlist li:last-child { border-bottom:none; }
         .bl-party-root .bl-mlist__n { font-family:var(--bl-fm); font-weight:700; font-size:clamp(15px,3.4vw,18px); line-height:1.4;
-          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-deep); }
+          font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--bl-primary-ink); }
         .bl-party-root .bl-mlist__t { font-family:var(--bl-fd); font-weight:500; font-size:clamp(15px,3.6vw,17px); line-height:1.7;
           color:var(--bl-ink); }
 
@@ -456,7 +470,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           font-variant-numeric:tabular-nums; letter-spacing:-.03em; color:var(--bl-primary-soft);
           -webkit-text-stroke:1.5px var(--bl-primary-deep); }
         @supports not (-webkit-text-stroke: 1px #000) {
-          .bl-party-root .bl-pcard__n { color:var(--bl-primary-deep); -webkit-text-stroke:0; }
+          .bl-party-root .bl-pcard__n { color:var(--bl-primary-ink); -webkit-text-stroke:0; }
         }
         .bl-party-root .bl-pcard__body { display:flex; flex-direction:column; gap:6px; min-width:0; }
         .bl-party-root .bl-pcard__title { font-family:var(--bl-fd); font-weight:700; font-size:clamp(16px,4vw,19px); line-height:1.45;
@@ -477,17 +491,25 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           transition:transform .4s ease; }
         .bl-party-root .bl-cand__btn:hover .bl-cand__photo img { transform:scale(1.04); }
         .bl-party-root .bl-cand__ph { position:absolute; inset:0; display:grid; place-items:center;
-          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-deep); }
+          font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-ink); }
         .bl-party-root .bl-cand__no { position:absolute; left:10px; top:10px; padding:3px 9px; border-radius:999px;
           font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.08em; font-variant-numeric:tabular-nums;
           color:var(--bl-ink); background:color-mix(in srgb, var(--bl-card) 82%, transparent);
           -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
         .bl-party-root .bl-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
+        /* ink gutter — lh 1.2 is still under Kanit's font box, so a member name with a
+           tone mark over an upper vowel (คนที่, ชี้) lost 1.5px off the top. padding-top
+           opens the clamp's clip box; the negative margin keeps the card height identical. */
         .bl-party-root .bl-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink);
+          padding-top:.2em; margin-top:-.2em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .bl-party-root .bl-cand__btn:hover .bl-cand__name { color:var(--bl-primary-deep); }
+        .bl-party-root .bl-cand__btn:hover .bl-cand__name { color:var(--bl-primary-ink); }
+        /* two lines, not one: at 9.5px in a 145px card the one-line clamp cut a real
+           role — "ประธานฝ่ายเทคโนโลยีสารสนเทศ" lost 15px of itself on a phone, so the
+           voter could not tell which department the member leads. The name above it
+           already clamps at 2; matching that keeps the card rhythm. */
         .bl-party-root .bl-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
-          color:var(--bl-ink2); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
+          color:var(--bl-ink2); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 
         /* ---- 5. ภาพกิจกรรม — horizontal photo-strip ---- */
         .bl-party-root .bl-strip { margin-top:22px; display:flex; gap:14px; overflow-x:auto; padding:6px 2px 12px;
@@ -509,7 +531,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           border-radius:999px; border:2px solid var(--bl-ink); background:transparent;
           font-family:var(--bl-fd); font-weight:600; font-size:15px; color:var(--bl-ink);
           transition:color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
-        .bl-party-root .bl-pty-back:hover { color:var(--bl-primary-deep); border-color:var(--bl-primary-deep);
+        .bl-party-root .bl-pty-back:hover { color:var(--bl-primary-ink); border-color:var(--bl-primary-deep);
           background:var(--bl-card); transform:translateY(-2px); }
         .bl-party-root .bl-pty-back:active { transform:scale(.97); }
         .bl-party-root .bl-pty-back svg { transition:transform .25s ease; }

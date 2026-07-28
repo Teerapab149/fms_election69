@@ -20,7 +20,10 @@ const LINKS = [
   { key: "results", href: "/results", label: "ผลการลงคะแนนเสียง" },
 ];
 
-export default function GumroadMobileMenu({ active = "", onSignIn = null }) {
+// `editorMode` — the gumroad navbar element already passes this (site-navbar/gumroad.jsx),
+// but it was never accepted here, so the auth buttons inside the admin editor preview
+// still ran the real signIn/signOut and logged the author out (P-LOG-002 class).
+export default function GumroadMobileMenu({ active = "", onSignIn = null, editorMode = false }) {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const loggedIn = status === "authenticated" && !!session?.user;
@@ -28,8 +31,14 @@ export default function GumroadMobileMenu({ active = "", onSignIn = null }) {
   const navId = session?.user?.studentId || "";
   const BP = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
   // Optional sign-in override (playground): call it instead of next-auth signIn().
-  const doSignIn = () =>
-    onSignIn ? onSignIn() : signIn("authentik", { callbackUrl: BP + "/vote" });
+  const doSignIn = () => {
+    if (editorMode) return;
+    return onSignIn ? onSignIn() : signIn("authentik", { callbackUrl: BP + "/vote" });
+  };
+  const doSignOut = () => {
+    if (editorMode) return;
+    signOut({ callbackUrl: BP + "/" });
+  };
 
   return (
     <>

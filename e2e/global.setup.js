@@ -25,6 +25,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const net = require('net');
 const { spawn, execSync } = require('child_process');
 const {
   TEST_DB_URL,
@@ -42,6 +43,58 @@ const READY_TIMEOUT_MS = 90_000;
 function log(msg) {
   // eslint-disable-next-line no-console
   console.log(`[e2e setup] ${msg}`);
+}
+
+// Guard against the false-positive gate: if something is ALREADY listening on
+// PORT before we spawn anything, a later fetch to HEALTH_URL can succeed
+// against that foreign server (e.g. a stale dev server or a leftover run from
+// another worktree/port) instead of the server this run builds+seeds. That
+// makes the suite report green while testing the wrong app/DB/build — this
+// happened for real and cost a long debugging session before the cause was
+// understood (see ticket E2E-GUARD). A raw TCP connect is used instead of an
+// HTTP probe so it doesn't matter whether the foreign process even speaks
+// this app's routes — anything answering on the port is disqualifying.
+function isPortOccupied(port, host = '127.0.0.1', timeoutMs = 1500) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let settled = false;
+    const finish = (occupied) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(occupied);
+    };
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => finish(true));
+    socket.once('timeout', () => finish(false));
+    socket.once('error', () => finish(false)); // ECONNREFUSED etc → nothing listening
+    socket.connect(port, host);
+  });
+}
+
+async function assertPortFree(port) {
+  const occupied = await isPortOccupied(port);
+  if (!occupied) return;
+  throw new Error(
+    '\n' +
+    '──────────────────────────────────────────────────────────────────────\n' +
+    `  e2e is BLOCKED: port ${port} is already in use by another process.\n` +
+    '\n' +
+    '  global.setup.js refuses to spawn the test server on an occupied port.\n' +
+    '  Probing a health endpoint on a port something else already holds can\n' +
+    '  succeed against that FOREIGN server (a stale dev server, a leftover\n' +
+    '  run on another worktree, etc.) instead of the build+DB this run just\n' +
+    '  prepared — the suite would then report green while testing the wrong\n' +
+    '  app. This exact failure mode happened once already and cost a long\n' +
+    '  debugging session before it was understood.\n' +
+    '\n' +
+    '  Fix: pick a free port and set PW_TEST_PORT (and matching PW_BASE_URL\n' +
+    '  when running tests), e.g.:\n' +
+    '\n' +
+    '      PW_TEST_PORT=3800 npm run e2e:setup\n' +
+    '      PW_TEST_PORT=3800 PW_BASE_URL=http://localhost:3800 npm run e2e:gate\n' +
+    '──────────────────────────────────────────────────────────────────────\n'
+  );
 }
 
 function assertBuildPresent() {
@@ -65,10 +118,25 @@ function assertBuildPresent() {
   }
 }
 
-async function waitForHealth(timeoutMs) {
+// `child` is the process THIS run spawned. We already proved (assertPortFree,
+// called before spawn) that nothing was listening on PORT beforehand, so a
+// health success here is trustworthy ONLY as long as our own child is still
+// alive to have produced it. If the child has already exited but something
+// still answers on PORT, that is not us — it is a new arrival that raced in
+// after our pre-flight check (or a symptom of a broken spawn) — fail loudly
+// instead of accepting the response as proof of our own server's health.
+async function waitForHealth(timeoutMs, child) {
   const deadline = Date.now() + timeoutMs;
   let lastErr = 'no attempt';
   while (Date.now() < deadline) {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(
+        `the spawned server (pid ${child.pid}) exited early ` +
+        `(code ${child.exitCode}, signal ${child.signalCode}) before answering ` +
+        `${HEALTH_URL} — see the inherited stdio output above for the real error. ` +
+        `Refusing to keep polling: any later response on :${PORT} would not be from this process.`
+      );
+    }
     try {
       const r = await fetch(HEALTH_URL);
       if (r.ok) return true;
@@ -84,6 +152,11 @@ async function waitForHealth(timeoutMs) {
 module.exports = async function globalSetup() {
   // 1. Build gate (fail-fast BEFORE any DB/server work).
   assertBuildPresent();
+
+  // 1b. Port gate (fail-fast BEFORE any DB/server work) — see assertPortFree
+  // for why this must run before we ever spawn+probe.
+  await assertPortFree(PORT);
+  log(`port :${PORT} is free`);
 
   if (!TEST_DB_URL || !TEST_DB_NAME) {
     throw new Error('DATABASE_URL missing — cannot derive the _e2e test DB');
@@ -135,9 +208,9 @@ module.exports = async function globalSetup() {
   );
   log(`server pid ${child.pid} (state → ${SERVER_STATE_FILE})`);
 
-  // 6. Wait until it answers /api/health.
-  await waitForHealth(READY_TIMEOUT_MS);
-  log(`server healthy on :${PORT}`);
+  // 6. Wait until it answers /api/health (and confirm it's still OUR child).
+  await waitForHealth(READY_TIMEOUT_MS, child);
+  log(`server healthy on :${PORT} (pid ${child.pid})`);
 };
 
 module.exports.SERVER_STATE_FILE = SERVER_STATE_FILE;

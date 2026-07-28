@@ -40,7 +40,7 @@ export default function StudioDarkSuccess({
         {/* LEFT — thank you */}
         <div className="sds-left">
           <div className="sds-mark"><Check size={30} strokeWidth={2.5} /></div>
-          <div className="sds-chapter"><span className="sd-dot" /> BALLOT RECORDED · บันทึกแล้ว</div>
+          <div className="sds-chapter"><span className="sd-dot" /> <span className="sd-nw">BALLOT RECORDED</span> · <span className="sd-thai">บันทึกแล้ว</span></div>
           <h1 className="sds-title">Thank<br />you for<br /><em>voting.</em></h1>
           <p className="sds-deck">
             บันทึกคะแนนเรียบร้อยแล้ว ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการขับเคลื่อนกิจกรรมนักศึกษา คณะวิทยาการจัดการ
@@ -56,7 +56,7 @@ export default function StudioDarkSuccess({
             </div>
             <div className="sds-row"><div className="sds-row__lbl">VOTER</div><div className="sds-row__val">{name}</div></div>
             <div className="sds-row"><div className="sds-row__lbl">VOTER ID</div><div className="sds-row__val">№ {sid}</div></div>
-            <div className="sds-row"><div className="sds-row__lbl">STATUS</div><div className="sds-row__val">บันทึกคะแนนแล้ว · 1 VOTE</div></div>
+            <div className="sds-row"><div className="sds-row__lbl">STATUS</div><div className="sds-row__val"><span className="sd-thai">บันทึกคะแนนแล้ว</span> · <span className="sd-nw">1 VOTE</span></div></div>
             <div className="sds-row"><div className="sds-row__lbl">SECURED BY</div><div className="sds-row__val">PSU Passport · OAuth</div></div>
           </div>
 
@@ -84,8 +84,12 @@ export default function StudioDarkSuccess({
                 : <><Lock size={14} /> ล็อค — ทำแบบประเมินก่อน</>}
             </a>
 
-            <a href={editorMode ? undefined : getPath("/")} className="sd-textlink sds-home">
-              ← กลับหน้าหลัก <span className="sd-smallcaps">Index</span>
+            {/* was .sd-textlink — a 14px underline-on-hover line stacked under two full
+                pills, so the only unlocked exit on the page was the one thing that did
+                not look pressable. Same pill as the results button, dashed to stay a
+                step below it. */}
+            <a href={editorMode ? undefined : getPath("/")} className="sd-btn sd-btn--block sds-home">
+              ← กลับหน้าหลัก <span className="sd-smallcaps">Home</span>
             </a>
           </div>
         </div>
@@ -143,7 +147,8 @@ export default function StudioDarkSuccess({
           padding:15px 22px; border:1px solid rgba(213,255,63,.4); border-radius:999px;
           background:rgba(213,255,63,.08); color:var(--sd-accent); font-family:var(--sd-sans); font-size:14px; font-weight:500;
         }
-        .sds-home { justify-self:center; margin-top:8px; }
+        .sds-home { margin-top:2px; border-style:dashed; border-color:var(--sd-ink-2); }
+        .sds-home:hover { border-color:var(--sd-ink); }
 
         @media (max-width:1100px) {
           .sds-scene { grid-template-columns:1fr; min-height:0; }
@@ -156,13 +161,32 @@ export default function StudioDarkSuccess({
           .sds-right .sds-actions { order:2; }
           .sds-right .sds-receipt { order:3; }
         }
+        /* SHORT single-column viewports — the laptop class (1024×760), which the
+           width-only rules above missed. That band gets the widest 1-col title
+           (clamp 7vw = 71.7px at 1024, three lines) on the shortest viewport, so
+           BOTH actions fell past the fold: measured "เปิดแบบประเมิน" at y=851 and
+           "ดูผลคะแนน · Results" at y=919 in a 760px viewport, while PC (2-col),
+           tablet 768×1024 and mobile 412×880 all showed them in the first screen.
+           Same reclaim the phone rule below makes, keyed on height instead of
+           width. Declared BEFORE the 560 block on purpose: where both match (a
+           short, narrow phone) the phone tuning should still win. */
+        @media (max-width:1100px) and (max-height:820px) {
+          .sds-left { padding:30px 24px 26px; }
+          .sds-mark { width:60px; height:60px; margin-bottom:20px; }
+          .sds-chapter { margin-bottom:18px; }
+          .sds-title { font-size:clamp(44px,5vw,64px); margin-bottom:18px; }
+          .sds-right { padding:26px 24px 48px; gap:18px; }
+        }
         @media (max-width:560px) {
-          /* tighten the thank-you hero on phones so the reordered CTA clears 844 */
-          .sds-left { padding:36px 20px; }
+          /* tighten the thank-you hero on phones so the reordered evaluate CTA
+             clears the fold on Pixel-class devices (412×915) once the browser
+             URL bar is accounted for — a ~16px padding reclaim on the already-
+             passed thank-you hero, no CTA shrink, no relayout. */
+          .sds-left { padding:30px 20px 26px; }
           .sds-mark { width:60px; height:60px; margin-bottom:20px; }
           .sds-chapter { margin-bottom:18px; }
           .sds-title { font-size:clamp(44px,12vw,108px); margin-bottom:18px; }
-          .sds-right { padding:28px 20px 52px; gap:18px; }
+          .sds-right { padding:24px 20px 52px; gap:18px; }
         }
       `}</style>
     </StudioDarkShell>

@@ -63,7 +63,7 @@ function buildGumroadTemplate(slug, name, palette, description) {
   id: slug,
   slug,
   name,
-  description: description || "สไตล์ Gumroad — ขอบดำหนา เงาคม (ไม่เบลอ) สีสันสดใส พื้นสว่าง เลือกโทนสีได้ 5 แบบ",
+  description: description || "ขอบดำหนา เงาคมไม่เบลอ สีจัดจ้านบนพื้นสว่าง สะดุดตาแต่ยังอ่านง่าย เลือกโทนสีได้ 6 แบบ",
   layoutFamily: "gumroad", // real template — own page layouts (poster-mosaic home ฯลฯ)
 
   colorSwatch: {
@@ -329,14 +329,14 @@ function buildGumroadTemplate(slug, name, palette, description) {
 // configs + page backgrounds all follow), so applying a variant live matches the
 // preview exactly. layoutFamily stays "gumroad" → one chooser card with swatches;
 // colorSwatch derives from the palette (primary = pink slot, secondary = lime slot).
-export const gumroadTemplate        = buildGumroadTemplate("gumroad", "แอ็กทีฟ พัลส์", GUMROAD_THEMES["gumroad"]);
-export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "แอ็กทีฟ พัลส์ · ไซเบอร์พังก์", GUMROAD_THEMES["gumroad-cyber"]);
-export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "แอ็กทีฟ พัลส์ · เรโทร อาร์เคด", GUMROAD_THEMES["gumroad-retro"]);
-export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "แอ็กทีฟ พัลส์ · แอซิด อินดัสเทรียล", GUMROAD_THEMES["gumroad-acid"]);
-export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "แอ็กทีฟ พัลส์ · ไซเบอร์ป๊อป พรีเมียม", GUMROAD_THEMES["gumroad-premium"]);
+export const gumroadTemplate        = buildGumroadTemplate("gumroad", "Gumroad", GUMROAD_THEMES["gumroad"]);
+export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "Gumroad · Cyberpunk", GUMROAD_THEMES["gumroad-cyber"]);
+export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "Gumroad · Retro", GUMROAD_THEMES["gumroad-retro"]);
+export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "Gumroad · Acid", GUMROAD_THEMES["gumroad-acid"]);
+export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "Gumroad · Premium", GUMROAD_THEMES["gumroad-premium"]);
 export const gumroadBubblegumTemplate = buildGumroadTemplate(
   "gumroad-bubblegum",
-  "แอ็กทีฟ พัลส์ · บับเบิ้ลกัม ป๊อป",
+  "Gumroad · Bubblegum",
   GUMROAD_THEMES["gumroad-bubblegum"],
   "สไตล์ Gumroad บับเบิ้ลกัม ป๊อป — ชมพูเป็นสีหลักทั้งบรรยากาศ ฟ้า-มินต์เป็นลูกคู่พาสเทล ขอบดำอมพลัม เงาคม (ไม่เบลอ)"
 );

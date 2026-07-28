@@ -17,6 +17,14 @@ import CustomCssEditor from "./CustomCssEditor.jsx";
 import { isStatefulElement, getBinding, getElement } from "./elementCatalog";
 import StatefulGallery from "./StatefulGallery";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../../contexts/GlobalConfigContext";
+import { GLOBAL_CONFIG_FIELDS } from "../../../utils/globalConfigDefaults";
+
+// คีย์ที่มีช่องกรอกจริงในแท็บ "ตั้งค่าทั่วไป" — คำนวณจากตารางเดียวกับที่แท็บนั้น
+// เรนเดอร์ ไม่ใช่ลิสต์เขียนมือ (ค่าอย่าง electionName ใช้ทั่วเว็บแต่ไม่มีช่องกรอก
+// ในตั้งค่าทั่วไปตั้งแต่ CFG-1 — โน้ตเดิมบอกว่า "sync เหมือนกัน" ซึ่งไม่จริง)
+const SETTINGS_TAB_KEYS = new Set(
+  GLOBAL_CONFIG_FIELDS.flatMap((g) => g.fields.map((f) => f.key))
+);
 
 const SECTION_LABELS = {
   hero: "Hero",
@@ -272,7 +280,9 @@ export default function PropertyPanel({
                   <span className="text-xs">🔗</span>
                   <p className="text-[10px] text-blue-700 leading-tight">
                     ข้อความนี้ใช้ทั่วเว็บ (field: <code className="text-blue-900 font-mono">{binding}</code>) —{" "}
-                    แก้ที่นี่หรือใน "ตั้งค่าทั่วไป" ก็ sync เหมือนกัน
+                    {SETTINGS_TAB_KEYS.has(binding)
+                      ? 'แก้ที่นี่หรือใน "ตั้งค่าทั่วไป" ก็ sync เหมือนกัน'
+                      : 'แก้ได้ที่นี่ที่เดียว (ไม่มีช่องกรอกในแท็บ "ตั้งค่าทั่วไป") — แต่ถ้าแก้ "ชื่อย่อ" หรือ "เลขครั้งที่" ในตั้งค่าทั่วไป ค่านี้จะถูกตั้งใหม่ตามนั้น'}
                   </p>
                 </div>
               </div>

@@ -374,6 +374,25 @@ export default function GumroadHome({
           .gh-cta .chunky-stamp-btn{ padding:13px 22px !important; font-size:16px !important; }
           .gh-footer{ flex-direction:column; gap:10px; text-align:center; }
         }
+        /* F1 (2026-07-27, owner-approved fix B) — short desktop/laptop screens
+           only: the CTA button cleared the fold at 1440x860 (IO ratio 1) but was
+           cut at 1366x768 (IO ratio 0.658, -25.6px past the fold) and almost gone
+           at 1280x720 (IO ratio 0.039, -72.7px past). Root cause measured with
+           .specs/gm-f1-diag.js: .gh-hero's padding-top + its 4 internal gaps
+           (sticker to title to subtitle to year-badge to CTA) are sized off
+           container WIDTH (cqw), not viewport height, so a short-but-wide window
+           carries the same vertical rhythm as a tall one and overflows. This
+           query only fires under 780px of viewport height (768/720/760 match,
+           860/1024/880 do not) and only tightens vertical spacing -- colours,
+           border, radius, shadow, block order and the tablet/phone layout below
+           are untouched. gap/padding-top sized a little past the login-state
+           minimum on purpose: the ended/closed/paused CTA labels wrap to a 2nd
+           line (~30px taller button) and needed the extra headroom too (measured
+           IO ratio 0.896 at gap:10/pad:20 -- 6/14 brings all 6 states to 1). */
+        @media (max-height:780px){
+          .gh-hero{ gap:6px; padding-top:14px; }
+          .gh-cta{ margin-top:0; }
+        }
       `}</style>
     </div>
   );

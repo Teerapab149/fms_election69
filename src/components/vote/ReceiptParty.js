@@ -32,7 +32,7 @@
 // no interaction fires (P-LOG-002). Base state is fully visible — nothing is gated on
 // JS/animation, so JS-off / reduced-motion render the full file instantly.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
@@ -40,6 +40,7 @@ import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import ReceiptMemberModal from "./ReceiptMemberModal";
+import StoryClamp from "./StoryClamp";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -54,7 +55,7 @@ const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? i
 // keep the placeholder defaults preparePartyData injects out of the printed pages
 const REAL = (arr) => (arr || []).map(asText).filter((t) => t && !t.startsWith("ยังไม่มีข้อมูล"));
 
-export default function ReceiptParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false }) {
+export default function ReceiptParty({ party = {}, galleryImages = [], showBackToVote = false, editorMode = false, isSingleParty = false }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -69,6 +70,25 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
   // only after mount so `document` is defined.
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+
+  // The gallery lightbox declares role="dialog" aria-modal="true" but was neither
+  // dismissible nor focus-receiving: measured with it open — Escape left it open
+  // (lbStillOpen=true), document.activeElement was still the .rc-strip__cell behind
+  // the scrim, and body overflow stayed "visible" so the page scrolled underneath.
+  // ReceiptMemberModal already does all three; mirror it here.
+  const lbCloseRef = useRef(null);
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const onKey = (e) => { if (e.key === "Escape") setLightboxSrc(null); };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    lbCloseRef.current?.focus();
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxSrc]);
 
   const no = party?.number;
   const logo = resolveSrc(party?.logoUrl);
@@ -118,7 +138,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
               <div><dt className="rc-mono"><span className="rc-th">จำนวนทีม</span> · TEAM</dt><dd>{teamCount > 0 ? <>{pad2(teamCount)} <span className="rc-th">คน</span></> : <span className="rc-th">รอข้อมูล</span>}</dd></div>
               {party?.slogan && <div className="rc-file-reg__slogan"><dt className="rc-mono"><span className="rc-th">คำขวัญ</span> · SLOGAN</dt><dd>“{party.slogan}”</dd></div>}
             </dl>
-            <div className="rc-file-tape__foot" aria-hidden="true">✶ ✶ ✶ <span className="rc-th">ปลายทะเบียน</span> ✶ ✶ ✶</div>
+            <div className="rc-file-tape__foot" aria-hidden="true">✶ ✶ ✶ ✶ ✶ ✶</div>
           </aside>
 
           {/* folder cover laid over the tape */}
@@ -161,7 +181,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
             </div>
             <div className="rc-letter__rule" aria-hidden="true" />
             <h2 className="rc-letter__title"><span className="rc-th">ความหมายสัญลักษณ์</span></h2>
-            <p className="rc-letter__body">{story}</p>
+            <StoryClamp className="rc-sc"><p className="rc-letter__body">{story}</p></StoryClamp>
           </section>
         )}
 
@@ -223,9 +243,9 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
                     <button type="button" className="rc-lany__btn" onClick={() => openMember(m)} aria-label={m.name}>
                       <span className="rc-lany__grommet" aria-hidden="true" />
                       <span className="rc-lany__clip" aria-hidden="true" />
-                      <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(m.number ?? i + 1)}</span>
                       <span className="rc-lany__photo">
                         {img ? <img src={img} alt={m.name} loading="lazy" /> : <span className="rc-lany__ph" aria-hidden="true">{(m.name || "?").trim().charAt(0)}</span>}
+                        <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(m.number ?? i + 1)}</span>
                       </span>
                       <span className="rc-lany__body">
                         <span className="rc-lany__name">{m.name}</span>
@@ -261,8 +281,9 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         {/* ===== foot band — ticket-stub CTAs ===== */}
         <div className="rc-party-foot">
           <div className="rc-party-stubs">
-            <a href={editorMode ? undefined : getPath("/candidates")} className="rc-stubcta">
-              <span aria-hidden="true">← </span><span className="rc-th">กลับสารบบผู้สมัคร</span>
+            {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
+            <a href={editorMode ? undefined : getPath(isSingleParty ? "/" : "/candidates")} className="rc-stubcta">
+              <span aria-hidden="true">← </span><span className="rc-th">{isSingleParty ? "กลับหน้าแรก" : "กลับสารบบผู้สมัคร"}</span>
             </a>
             <a href={editorMode ? undefined : getPath("/vote")} className="rc-stubcta rc-stubcta--go">
               <span className="rc-th">ไปลงคะแนน</span><span className="rc-stubcta__arrow" aria-hidden="true"> →</span>
@@ -273,7 +294,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-party-footer">
-          <p>© FMS@PSU{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+          <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
         </footer>
       </div>
 
@@ -298,7 +319,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
       {/* gallery lightbox — this component's OWN (no shared lightbox) */}
       {lightboxSrc && (
         <div className="rc-lightbox" onClick={() => setLightboxSrc(null)} role="dialog" aria-modal="true" aria-label="ภาพขยาย">
-          <button type="button" className="rc-lightbox__close" onClick={() => setLightboxSrc(null)} aria-label="ปิด">✕</button>
+          <button type="button" ref={lbCloseRef} className="rc-lightbox__close" onClick={() => setLightboxSrc(null)} aria-label="ปิด">✕</button>
           <img src={lightboxSrc} alt="ภาพกิจกรรมพรรค" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
@@ -308,7 +329,12 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         /* laid-paper ::after + desk vignette ::before + emboss seals + holo foil come
            from the SHARED .rc-desk classes in ReceiptBaseStyles — this root opts in via
            the rc-desk class, matching the home/candidates reference language. */
-        .rc-party-root { --rc-stamp-red:#B91C1C; overflow-x:hidden; }
+        /* clip not hidden — hidden makes overflow-y compute to auto, this root becomes the
+           scroll container, and .rc-topbar's sticky pins to it instead of the viewport
+           (measured: bar y 0 → -400 at scrollY 400 on a 4925px page). xo=0, and the
+           .rc-strip member rail keeps its OWN overflow-x:auto — inner scrollers are
+           unaffected by a clip on the root. */
+        .rc-party-root { --rc-stamp-red:#B91C1C; overflow-x:clip; }
 
         :where(.rc-party-root) a { text-decoration:none; color:var(--rc-ink); }
         .rc-party-root a:focus-visible, .rc-party-root button:focus-visible {
@@ -464,10 +490,16 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           font-variant-numeric:tabular-nums; }
         .rc-party-root .rc-folder__stamp .rc-mono { font-size:7.5px; letter-spacing:.18em; text-transform:uppercase; opacity:.8; }
         /* logo tile in an ink-stamp frame (double ring) */
+        /* FLEX centring, not grid — max-height:100% does not resolve on a grid item, so
+           the mark kept its intrinsic ratio height (103px in an 82px content box → 21px
+           cut off the bottom). See the same note in ReceiptCandidates. */
         .rc-party-root .rc-folder__logo { position:relative; width:86px; height:86px; flex:none; border-radius:6px; overflow:hidden;
-          background:var(--rc-desk); border:2px solid var(--rc-stamp-line); display:grid; place-items:center;
+          background:var(--rc-desk); border:2px solid var(--rc-stamp-line);
+          display:flex; align-items:center; justify-content:center; padding:4px;
           box-shadow:inset 0 0 0 4px var(--rc-receipt), inset 0 0 0 5px color-mix(in srgb, var(--rc-stamp-line) 55%, transparent); }
-        .rc-party-root .rc-folder__logo img { width:100%; height:100%; object-fit:cover; border-radius:2px; }
+        /* party LOGO — letterbox, never crop (see ReceiptCandidates note) */
+        .rc-party-root .rc-folder__logo img { max-width:100%; max-height:100%; width:auto; height:auto;
+          object-fit:contain; border-radius:2px; }
         .rc-party-root .rc-folder__logo-ph { font-family:var(--rc-fr); font-weight:700; font-size:30px; font-variant-numeric:tabular-nums;
           color:var(--rc-accent-deep); }
 
@@ -483,10 +515,11 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           border:1px solid var(--rc-line); border-radius:4px; padding:26px clamp(20px,4vw,34px) 30px;
           box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
         .rc-party-root .rc-letter__head { display:flex; align-items:center; gap:14px; }
-        .rc-party-root .rc-letter__logo { width:44px; height:44px; flex:none; border-radius:6px; overflow:hidden; display:grid; place-items:center;
+        .rc-party-root .rc-letter__logo { width:44px; height:44px; flex:none; border-radius:6px; overflow:hidden;
+          display:flex; align-items:center; justify-content:center; padding:3px;
           background:var(--rc-desk); border:1px solid var(--rc-stamp-line); font-family:var(--rc-fr); font-weight:700; font-size:15px;
           color:var(--rc-accent-deep); }
-        .rc-party-root .rc-letter__logo img { width:100%; height:100%; object-fit:cover; }
+        .rc-party-root .rc-letter__logo img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; }
         /* enlarged letterhead logo — the LOGO MEANING letter shows the mark it explains */
         .rc-party-root .rc-letter__logo--lg { width:56px; height:56px; font-size:19px; }
         .rc-party-root .rc-letter__id { display:flex; flex-direction:column; gap:2px; min-width:0; }
@@ -498,8 +531,20 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           border-top:1.5px solid var(--rc-stamp-line); border-bottom:1px solid var(--rc-line); }
         .rc-party-root .rc-letter__title { margin:22px 0 0; font-family:var(--rc-fh); font-weight:700; font-size:clamp(20px,4.5vw,28px);
           letter-spacing:-.01em; color:var(--rc-ink); }
-        .rc-party-root .rc-letter__body { margin:14px 0 0; font-family:var(--rc-fr); font-size:15.5px; line-height:1.85; color:var(--rc-ink2);
-          white-space:pre-line; }
+        /* the letter fills the content column; the reading measure is capped so long
+           lines stay comfortable (~70ch) on wide screens — v2-R14 roomier letter */
+        .rc-party-root .rc-letter__body { margin:14px 0 0; max-width:72ch; font-family:var(--rc-fr); font-size:15.5px;
+          line-height:1.85; color:var(--rc-ink2); white-space:pre-line; }
+        /* StoryClamp — a long letter scrolls INSIDE a fixed-height paper box so the
+           sections below (missions / policies / team) stay within reach. A roomier cap
+           on the party letter than the booth; fade + hint use the receipt paper tone.
+           v2-R14 fix: these rc-sc rules were previously written INSIDE the
+           rc-letter__body block (a stray nested declaration), so --sc-max / --sc-fade
+           silently fell back to the StoryClamp defaults (11em, transparent) and the
+           party-letter bottom fade never showed. Pulled out to the top level so they
+           apply again (P-LOG-106). */
+        .rc-party-root .rc-sc { --sc-max:15em; --sc-fade:var(--rc-receipt); }
+        .rc-party-root .rc-sc .sc__hint { color:var(--rc-accent-deep); font-family:var(--rc-fm); text-transform:uppercase; }
         /* missions — numbered lines in the receipt voice (mono numeral, Chakra text) */
         .rc-party-root .rc-mlist { list-style:none; margin:24px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; }
         .rc-party-root .rc-mlist li { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
@@ -536,29 +581,42 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         .rc-party-root .rc-coupon__title { font-family:var(--rc-fr); font-weight:700; font-size:15.5px; line-height:1.4; color:var(--rc-ink); }
         .rc-party-root .rc-coupon__desc { font-family:var(--rc-fr); font-size:13.5px; line-height:1.55; color:var(--rc-ink2); }
 
-        /* ================= TEAM — lanyard cards ================= */
-        .rc-party-root .rc-team { list-style:none; margin:22px 0 0; padding:0; display:grid; grid-template-columns:1fr; gap:14px; }
+        /* ================= TEAM — portrait lanyard cards (v2-R14: photo is the hero) =========
+           owner ruling: the old card showed a 64px thumbnail with the name dominating —
+           "เห็นชื่อซะส่วนใหญ่ ภาพไม่ชัด". The card is now PHOTO-FIRST: a large 4/5 portrait
+           fills the card top, name + role print on the paper strip below. Receipt language
+           kept — paper card, punched grommet + clip, mono number tag. */
+        .rc-party-root .rc-team { list-style:none; margin:22px 0 0; padding:0; display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
         .rc-party-root .rc-lany { position:relative; }
-        .rc-party-root .rc-lany__btn { position:relative; display:flex; align-items:center; gap:16px; width:100%; text-align:left;
-          padding:16px 18px 16px 16px; margin-top:8px; cursor:pointer; color:var(--rc-ink);
-          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); border-radius:4px 4px 6px 6px;
+        .rc-party-root .rc-lany__btn { position:relative; display:flex; flex-direction:column; width:100%; text-align:left;
+          padding:0; margin-top:10px; cursor:pointer; color:var(--rc-ink);
+          background:var(--rc-receipt); border:1.5px solid var(--rc-stamp-line); border-radius:5px 5px 6px 6px;
           box-shadow:1px 10px 24px -18px color-mix(in srgb, var(--rc-ink) 40%, transparent);
           transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
-        .rc-party-root .rc-lany__btn:hover { transform:translateY(-3px); border-color:var(--rc-accent);
-          box-shadow:2px 18px 30px -20px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
-        /* punched grommet hole on the top edge + the clip through it */
-        .rc-party-root .rc-lany__grommet { position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:26px; height:9px;
+        .rc-party-root .rc-lany__btn:hover { transform:translateY(-4px); border-color:var(--rc-accent);
+          box-shadow:2px 20px 34px -20px color-mix(in srgb, var(--rc-ink) 40%, transparent); }
+        /* punched grommet hole on the top edge + the clip through it (z above the photo) */
+        .rc-party-root .rc-lany__grommet { position:absolute; z-index:3; top:-4px; left:50%; transform:translateX(-50%); width:26px; height:9px;
           border-radius:9px; background:var(--rc-desk); border:1.5px solid var(--rc-stamp-line); }
-        .rc-party-root .rc-lany__clip { position:absolute; top:-11px; left:50%; transform:translateX(-50%); width:11px; height:16px;
+        .rc-party-root .rc-lany__clip { position:absolute; z-index:3; top:-11px; left:50%; transform:translateX(-50%); width:11px; height:16px;
           border:2px solid var(--rc-faint); border-bottom:none; border-radius:6px 6px 0 0; background:transparent; }
-        .rc-party-root .rc-lany__no { position:absolute; top:8px; right:10px; font-size:9px; letter-spacing:.08em; color:var(--rc-faint);
-          font-variant-numeric:tabular-nums; }
-        .rc-party-root .rc-lany__photo { position:relative; width:64px; height:64px; flex:none; border-radius:5px; overflow:hidden;
-          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); border:1px solid var(--rc-line); display:grid; place-items:center; }
+        /* the big portrait — full card width, 4/5 aspect so the face reads clearly */
+        .rc-party-root .rc-lany__photo { position:relative; width:100%; aspect-ratio:4/5; flex:none; border-radius:4px 4px 0 0; overflow:hidden;
+          background:color-mix(in srgb, var(--rc-accent) 8%, var(--rc-receipt)); border-bottom:1px solid var(--rc-line); display:grid; place-items:center; }
         .rc-party-root .rc-lany__photo img { width:100%; height:100%; object-fit:cover; }
-        .rc-party-root .rc-lany__ph { font-family:var(--rc-fh); font-weight:700; font-size:26px; color:var(--rc-accent-deep); }
-        .rc-party-root .rc-lany__body { min-width:0; display:flex; flex-direction:column; gap:3px; }
+        .rc-party-root .rc-lany__ph { font-family:var(--rc-fh); font-weight:700; font-size:clamp(44px,12vw,64px); color:var(--rc-accent-deep); }
+        /* mono number — a small tag pinned in the photo corner (readable over the image) */
+        .rc-party-root .rc-lany__no { position:absolute; z-index:2; top:8px; right:8px; padding:2px 7px; border-radius:3px; font-size:9.5px;
+          letter-spacing:.08em; color:var(--rc-receipt); background:color-mix(in srgb, var(--rc-ink) 72%, transparent);
+          font-variant-numeric:tabular-nums; }
+        .rc-party-root .rc-lany__body { min-width:0; display:flex; flex-direction:column; gap:3px; padding:12px 14px 14px; }
+        /* ink gutter — the heading face's font box is 1.654em, so at 16px/1.2 the
+           clamp's overflow:hidden clipped 3.90px off the top and ate the tone mark:
+           "สมาชิกพรรค คนที่ 1" printed as "…คนที 1". padding-top + matching negative
+           margin-top = room for the marks, zero layout movement. No padding-bottom:
+           Chrome bleeds the clamped-away line into it. */
         .rc-party-root .rc-lany__name { font-family:var(--rc-fh); font-weight:700; font-size:16px; line-height:1.2; color:var(--rc-ink);
+          padding-top:.32em; margin-top:-.32em;
           overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
         .rc-party-root .rc-lany__btn:hover .rc-lany__name { color:var(--rc-accent-deep); }
         .rc-party-root .rc-lany__role { font-family:var(--rc-fr); font-size:12.5px; line-height:1.35; color:var(--rc-ink2);

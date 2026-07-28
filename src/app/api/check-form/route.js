@@ -1,6 +1,11 @@
 import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
 
+// Never statically rendered: this route reads headers/request.url per call. Without
+// this Next tries to prerender it at build time, the read throws DynamicServerError,
+// and the catch blocks log it — build noise that reads like a real auth failure.
+export const dynamic = "force-dynamic";
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);

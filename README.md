@@ -42,12 +42,20 @@ npm run dev        # http://localhost:3000/fms-ovs
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `NEXTAUTH_SECRET` | เข้ารหัส session |
-| `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD_AUTH_EXTRA`, `ADMIN_STUDENT_IDS` | ระบบ admin |
+| `ADMIN_JWT_SECRET` | เซ็น cookie ของ admin (รหัสผ่าน admin อยู่ใน DB ไม่ใช่ env — ดู `scripts/admin.js`) |
 | `ELECTION_BALLOT_PUBLIC_KEY`, `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน (ดูหัวข้อความปลอดภัย) |
-| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | `true` เฉพาะตอน dev — ห้ามเปิดบน production |
+| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่ได้ใช้แล้ว — เก็บไว้เฉย ๆ ก็ได้ ไม่มีผลกับหน้า login |
 
-ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ใช้
-`node scripts/dev-admin-login.js`
+ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ตั้งรหัสด้วย
+`node scripts/admin.js --rotate-password` แล้วใส่ค่าที่ได้เป็น `ADMIN_DEV_PASSWORD`
+ใน `.env.local` จากนั้น `node scripts/dev-admin-login.js` จะล็อกอินให้อัตโนมัติ
+
+เข้าหน้า admin ด้วย **รหัส นศ. ที่ถูก `--grant` + รหัสกลาง** (ไม่ใช่รหัสประจำตัวใครคนใดคนหนึ่ง)
+— กติกาเต็มอยู่ใน `docs/MAINTENANCE-RUNBOOK.md` §10
+
+Mock Login เปิดให้เองเมื่อรัน dev และปิดเองบน production build — ปุ่มอ่านรายการ
+provider จาก `/api/auth/providers` ตอน runtime จึงเป็นเงาของตัวกั้นจริง
+(`NODE_ENV=production` ⇒ NextAuth ไม่ register provider นี้) ไม่มี env ให้ตั้งค้าง
 
 กติกาการแก้โค้ด (basePath, ระบบสี token, ข้อห้ามต่างๆ) อยู่ใน [CLAUDE.md](CLAUDE.md)
 และบทเรียนที่เคยเจ็บมาแล้วทั้งหมดอยู่ใน [DECISIONS.md](DECISIONS.md)
@@ -87,7 +95,9 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 ขั้นตอน deploy จริงไล่ทีละข้อใน [docs/DEPLOY-CHECKLIST-2026.md](docs/DEPLOY-CHECKLIST-2026.md)
 (key ceremony, migrate, grants, env production, ปุ่มตรวจความพร้อมเป็นด่านสุดท้าย)
-ใบขอ DB สำหรับหน่วยงาน IT อยู่ที่ `docs/STAFF-DB-BRIEF-2026.md`
+คู่มือแยกตามคนใช้ คนละไฟล์: [docs/STAFF-IT-GUIDE.md](docs/STAFF-IT-GUIDE.md) สำหรับ IT คณะ
+(เซิร์ฟเวอร์ ฐานข้อมูล ติดตั้งด้วย `sh scripts/setup.sh` คำสั่งเดียว บัญชีแอดมิน) และ
+[docs/ADMIN-GUIDE.md](docs/ADMIN-GUIDE.md) สำหรับสโมสรนักศึกษา (หน้าแอดมิน ไม่มีคำสั่งให้พิมพ์เลย)
 
 เปลี่ยนปีการศึกษา: `npm run preflight` → `npm run archive-year` →
 `npm run import-students -- <ไฟล์รายชื่อ>` → ตั้งวันและเลือก template ในหน้า admin
@@ -97,6 +107,8 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 | เรื่อง | ไฟล์ |
 |---|---|
+| **คู่มือ IT คณะ — เซิร์ฟเวอร์/ฐานข้อมูล (ส่งมอบงาน)** | `docs/STAFF-IT-GUIDE.md` |
+| **คู่มือสโมสรนักศึกษา — หน้าแอดมิน (ส่งมอบงาน)** | `docs/ADMIN-GUIDE.md` |
 | สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
 | กติกาแก้โค้ด | `CLAUDE.md` |

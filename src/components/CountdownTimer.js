@@ -97,7 +97,7 @@ export default function CountdownTimer({
       }
     };
 
-    const timer = setInterval(() => {
+    const tick = () => {
       const diff = calculate();
       if (diff > 0) {
         setTimeLeft({
@@ -109,7 +109,13 @@ export default function CountdownTimer({
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
-    }, 1000);
+    };
+
+    // run once BEFORE the interval — the tick only fired inside setInterval, so
+    // `phase` sat at 'LOADING' for a full second and every home load opened with
+    // the grey skeleton pill instead of the countdown
+    tick();
+    const timer = setInterval(tick, 1000);
 
     return () => clearInterval(timer);
   }, [ELECTION_START, ELECTION_END, ELECTION_NEXT_YEAR, systemMode, forceState]);

@@ -37,7 +37,7 @@ export default function ResultsDemographics({
             </div>
             <div className="h-[400px] lg:h-[600px] w-full text-xs font-medium">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
+                <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={isMobile ? 96 : 120} tick={{ fontSize: isMobile ? 11 : 14, fill: '#64748b' }} />
@@ -56,7 +56,7 @@ export default function ResultsDemographics({
               </div>
               <div className="h-[160px] lg:h-[250px] w-full text-xs font-medium">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                  <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: isMobile ? 10 : 14 }} interval={0} />
                     <YAxis hide />
@@ -74,14 +74,18 @@ export default function ResultsDemographics({
               </div>
               <div className="h-[160px] lg:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart accessibilityLayer={false}>
                     <Pie data={byGender} cx="50%" cy="50%" innerRadius={isMobile ? 30 : 60} outerRadius={isMobile ? 50 : 90} paddingAngle={5} dataKey="value" stroke="none">
                       {byGender.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={getGenderColor(entry.name)} />
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend verticalAlign={isMobile ? "bottom" : "middle"} align={isMobile ? "center" : "right"} layout={isMobile ? "horizontal" : "vertical"} iconType="circle" wrapperStyle={{ fontSize: isMobile ? '10px' : '14px' }} />
+                    {/* recharts paints the legend LABEL in the slice colour, so
+                        "Male"/"Female" landed at 3.68:1 / 3.53:1 on white (AA 4.5 at
+                        14px). Swatch keeps the hue, label moves to slate-600 = 6.4:1 */}
+                    <Legend verticalAlign={isMobile ? "bottom" : "middle"} align={isMobile ? "center" : "right"} layout={isMobile ? "horizontal" : "vertical"} iconType="circle" wrapperStyle={{ fontSize: isMobile ? '10px' : '14px' }}
+                      formatter={(value) => <span style={{ color: '#475569' }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -111,7 +115,9 @@ export default function ResultsDemographics({
         <BarChart3 className="text-slate-400" size={32} />
       </div>
       <h3 className="text-lg font-bold text-slate-600">สถิติยังไม่เปิดเผย</h3>
-      <p className="text-slate-400 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดโหวตแล้วเท่านั้น</p>
+      {/* 2.56:1 at 14px — this line is the only explanation a voter gets for the
+          empty panel, so it has to clear AA. slate-500 = 4.76:1 */}
+      <p className="text-slate-500 text-sm">ข้อมูลสถิติจะแสดงหลังจากปิดโหวตแล้วเท่านั้น</p>
     </div>
   );
 }

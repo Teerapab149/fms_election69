@@ -9,19 +9,19 @@ import EditCandidateModal from "../../components/EditCandidateModal";
 import EditCandidateMember from "../../components/EditCandidateMember";
 import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
-import ErrorActionModal from "../../components/ErrorActionModal";
-import ConfirmModal from "../../components/ConfirmModal";
 import PageDesignTab from "../../components/admin/PageDesignTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, BarChart3, Medal, Trash2, CalendarPlus2, Hourglass, Zap, Link as LinkIcon, Save, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import ManualTab from "../../components/admin/ManualTab";
+import SettingsTab from "../../components/admin/SettingsTab";
+import { BarChart3, Medal, CalendarPlus2, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen } from "lucide-react";
 import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-import { resolveElectionDates, parseBangkok, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // Live turnout (participation) breakdown for the admin overview — by ปี/สาขา/เพศ.
@@ -295,8 +295,6 @@ const CandidatesTab = () => {
 
   const [focusMemberId, setFocusMemberId] = useState(null);
 
-  const [processing, setProcessing] = useState(false);
-  const [activeModal, setActiveModal] = useState(null);
 
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
@@ -400,15 +398,6 @@ const CandidatesTab = () => {
           message={successMessage.msg}
         />
 
-        <ConfirmModal
-          isOpen={activeModal === 'DELETE'}
-          onClose={() => setActiveModal(null)}
-          title="Confirmation"
-          message="ต้องการจะลบผู้สมัครนี้ใช่หรือไม่"
-          variant="danger"
-          isLoading={processing}
-        />
-
         <EditCandidateModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
@@ -464,471 +453,6 @@ const CandidatesTab = () => {
   )
 };
 
-// ── ADM-1 · Election readiness check ────────────────────────────────────────
-// ปุ่มเดียวที่กรรมการกดก่อนวันจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม. read-only ล้วน —
-// เรียก GET /api/admin/readiness แล้วแสดงผลตาม level (pass/warn/fail).
-const READINESS_LEVEL = {
-  pass: { Icon: CheckCircle2, cls: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
-  warn: { Icon: AlertTriangle, cls: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" },
-  fail: { Icon: XCircle, cls: "text-red-600", bg: "bg-red-50", border: "border-red-100" },
-};
-
-const ReadinessCard = () => {
-  const globalConfig = useGlobalConfig();
-  const [running, setRunning] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-
-  const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
-  const scheduleRows = [
-    { label: "เปิดตัวผู้สมัคร", key: "campaignStartAt", date: CAMPAIGN_START },
-    { label: "เปิดหีบ", key: "electionStartAt", date: ELECTION_START },
-    { label: "ปิดหีบ", key: "electionEndAt", date: ELECTION_END },
-  ];
-
-  const runCheck = async () => {
-    setRunning(true);
-    setError(null);
-    try {
-      const res = await fetch(getPath("/api/admin/readiness"), { credentials: "include" });
-      if (!res.ok) throw new Error(`สถานะ ${res.status}`);
-      const data = await res.json();
-      setResult(data);
-    } catch (e) {
-      setError("ตรวจไม่สำเร็จ — " + e.message);
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#8A2680]/10 text-[#8A2680] p-2.5 rounded-xl"><ShieldCheck className="h-6 w-6" /></div>
-          <div>
-            <h3 className="text-xl font-bold text-slate-700">ตรวจความพร้อมระบบ · READINESS</h3>
-            <p className="text-sm text-slate-500">กดก่อนวันเลือกตั้งจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม</p>
-          </div>
-        </div>
-        <button
-          onClick={runCheck}
-          disabled={running}
-          className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#8A2680] text-white rounded-lg font-bold text-sm shadow-md hover:bg-[#7a2270] transition-all disabled:opacity-50"
-        >
-          {running ? <><Loader2 className="w-4 h-4 animate-spin" /> กำลังตรวจ</> : <><ShieldCheck className="w-4 h-4" /> ตรวจตอนนี้</>}
-        </button>
-      </div>
-
-      {/* สรุป schedule ปัจจุบัน (resolved จริง) */}
-      <div className="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-100">
-        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">กำหนดการปัจจุบัน</h4>
-        <div className="space-y-2">
-          {scheduleRows.map((r) => {
-            const fromDb = parseBangkok(globalConfig?.[r.key]) !== null;
-            return (
-              <div key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span className="font-bold text-slate-600">{r.label}</span>
-                <span className="flex items-center gap-2">
-                  <span className="text-slate-700">{formatThaiDate(r.date)} · {formatThaiTime(r.date)}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${fromDb ? "bg-[#8A2680]/10 text-[#8A2680]" : "bg-slate-200 text-slate-500"}`}>
-                    {fromDb ? "DB" : "ค่าเริ่มต้น"}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
-      )}
-
-      {result && (
-        <div>
-          {/* สรุปหัว */}
-          <div className="flex flex-wrap items-center gap-3 mb-4 text-sm font-bold">
-            <span className="flex items-center gap-1.5 text-emerald-600"><CheckCircle2 className="w-4 h-4" /> ผ่าน {result.summary.pass}</span>
-            <span className="flex items-center gap-1.5 text-amber-600"><AlertTriangle className="w-4 h-4" /> เตือน {result.summary.warn}</span>
-            <span className="flex items-center gap-1.5 text-red-600"><XCircle className="w-4 h-4" /> ไม่ผ่าน {result.summary.fail}</span>
-          </div>
-
-          <div className="space-y-2">
-            {result.checks.map((c) => {
-              const lv = READINESS_LEVEL[c.level] || READINESS_LEVEL.warn;
-              const Icon = lv.Icon;
-              return (
-                <div key={c.id} className={`flex items-start gap-3 p-3 rounded-xl border ${lv.bg} ${lv.border}`}>
-                  <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${lv.cls}`} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-700">{c.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{c.detail}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {!result && !error && (
-        <p className="text-sm text-slate-400 text-center py-4">กด “ตรวจตอนนี้” เพื่อเริ่มตรวจความพร้อม</p>
-      )}
-    </div>
-  );
-};
-
-const SettingsTab = () => {
-  const [systemMode, setSystemMode] = useState("AUTO");
-  const [googleFormUrl, setGoogleFormUrl] = useState("");
-  const [isShowResult, setIsShowResult] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
-
-  const [activeModal, setActiveModal] = useState(null);
-  const [pendingMode, setPendingMode] = useState(null);
-
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
-
-  const [isErrorOpen, setIsErrorOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState({ title: '', msg: '' });
-
-  useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const res = await fetch(getPath('/api/admin/dashboard'), { credentials: 'include' });
-        const data = await res.json();
-        if (data.stats) {
-          setSystemMode(data.stats.systemMode || "AUTO");
-          setGoogleFormUrl(data.stats.googleFormUrl || "");
-          setIsShowResult(data.stats.showResult);
-        }
-      } catch (error) {
-        console.error("Failed to fetch config", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchConfig();
-  }, []);
-
-  const handleConfirmAction = async () => {
-    if (!activeModal) return;
-
-    setProcessing(true);
-    try {
-      let action = activeModal;
-      let body = { action };
-
-      if (action === 'SET_MODE') {
-        body.mode = pendingMode;
-      }
-
-      if (action === 'SET_GOOGLE_FORM') {
-        body.url = googleFormUrl;
-      }
-
-      const res = await fetch(getPath('/api/admin/dashboard'), {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      setActiveModal(null);
-
-      if (res.ok) {
-        if (action === 'SET_MODE') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${pendingMode} เรียบร้อยแล้ว` });
-          setSystemMode(pendingMode);
-        } else if (action === 'SET_GOOGLE_FORM') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'อัปเดตลิงก์ Google Form เรียบร้อยแล้ว' });
-        } else if (action === 'TOGGLE_SHOW_RESULT') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
-          setIsShowResult(!isShowResult);
-        } else if (action === 'RESET_VOTES') {
-          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตคะแนนทั้งหมดเป็น 0 เรียบร้อยแล้ว' });
-        } else if (action === 'RESET_CANDIDATES') {
-          setSuccessMessage({ title: 'ล้างข้อมูลสำเร็จ!', msg: 'ระบบได้ทำการรีเซ็ตข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมด เรียบร้อยแล้ว' });
-        } else if (action === 'ANONYMIZE_BALLOTS') {
-          setSuccessMessage({ title: 'ลบข้อมูลรายบุคคลสำเร็จ!', msg: 'คะแนนรวมถูกบันทึกไว้ครบ และความเชื่อมโยงว่าใครเลือกพรรคใดถูกลบถาวรแล้ว' });
-        }
-        setIsSuccessOpen(true);
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        setErrorMessage({ title: `ดำเนินการไม่สำเร็จ (${res.status})`, msg: errData.error || res.statusText });
-        setIsErrorOpen(true);
-      }
-    } catch (error) {
-      console.error("Action failed!", error);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleModeChange = (newMode) => {
-    if (newMode === systemMode) return; // ✅ Prevent redundant actions
-    setPendingMode(newMode);
-    setActiveModal('SET_MODE');
-  };
-
-  return (
-    <div className="space-y-6">
-    <ReadinessCard />
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl"><Power className="h-6 w-6" /></div>
-        <h3 className="text-xl font-bold text-slate-700">ตั้งค่าระบบเลือกตั้ง (System Mode)</h3>
-      </div>
-
-      <div className='space-y-6'>
-        {/* --- 3-WAY MODE SELECTOR --- */}
-        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <h4 className="text-lg font-bold text-slate-800">ระบบการทำงาน</h4>
-              <p className="text-sm text-slate-500">เลือกโหมดการทำงานของระบบให้เหมาะสมกับสถานการณ์ปัจจุบัน</p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200">
-              {[
-                { id: 'AUTO', label: 'AUTO (อัตโนมัติ)', color: 'bg-green-500', icon: <CalendarDays className="w-4 h-4" /> },
-                { id: 'MANUAL_OPEN', label: 'OPEN (เปิดระบบ)', color: 'bg-blue-600', icon: <Zap className="w-4 h-4" /> },
-                { id: 'PAUSE', label: 'PAUSE (ระงับ)', color: 'bg-orange-500', icon: <Hourglass className="w-4 h-4" /> },
-                { id: 'ENDED', label: 'ENDED (ปิดระบบ)', color: 'bg-red-500', icon: <Power className="w-4 h-4" /> }
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => handleModeChange(m.id)}
-                  disabled={systemMode === m.id || processing} // ✅ Disable if same mode or processing
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${systemMode === m.id
-                    ? `${m.color} text-white shadow-lg cursor-default`
-                    : 'text-slate-500 hover:bg-slate-300 disabled:opacity-50'
-                    }`}
-                >
-                  {m.icon}
-                  {m.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Current Status Badge */}
-          <div className="mt-6 flex items-center gap-3 py-3 px-4 bg-white/60 rounded-xl border border-dashed border-slate-200">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status:</span>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${systemMode === 'AUTO' ? 'bg-green-500' :
-                systemMode === 'MANUAL_OPEN' ? 'bg-blue-600' :
-                  systemMode === 'PAUSE' ? 'bg-orange-500' : 'bg-red-500'
-                }`} />
-              <span className="text-sm font-black text-slate-700">
-                {systemMode === "AUTO" ? "ระบบทำงานอัตโนมัติตามกำหนดเวลา" :
-                  systemMode === "MANUAL_OPEN" ? "เปิดรับคะแนนด้วยตนเอง (Force Open)" :
-                    systemMode === "PAUSE" ? "ระงับการโหวตชั่วคราว ( maintenance )" : "ปิดการเลือกตั้งอย่างเป็นทางการ"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-3 p-6 bg-slate-50 rounded-xl border border-slate-100">
-          <div className="w-full">
-            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
-              <LinkIcon className="w-5 h-5 text-indigo-600" />
-              Link Google Form
-            </h4>
-            <p className="text-xs text-slate-500 mb-2">ลิงก์สำหรับหน้าประเมินผล (Success Page)</p>
-            <input
-              type="text"
-              value={googleFormUrl}
-              onChange={(e) => setGoogleFormUrl(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              placeholder="https://docs.google.com/forms/..."
-            />
-          </div>
-          <button
-            onClick={() => setActiveModal('SET_GOOGLE_FORM')}
-            className="shrink-0 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-bold text-sm shadow-md hover:bg-indigo-700 transition-all flex items-center gap-2"
-          >
-            <Save size={16} />
-            Save
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100">
-          <div>
-            <h4 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <PieIcon className="w-5 h-5 text-purple-600" />
-              การแสดงผลคะแนน
-            </h4>
-            <p className="text-xs text-slate-500 mt-1">บังคับโชว์ผลคะแนนแบบ Real-time แม้จะยังไม่ถึงเวลาปิดหีบ</p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className={`text-sm font-bold transition-colors ${isShowResult ? 'text-green-600' : 'text-red-500'}`}>
-              {loading ? '' : (isShowResult ? '🟢 แสดงผล' : '🔴 ซ่อนผล')}
-            </span>
-
-            {loading ? '' : (
-              <button
-                onClick={() => setActiveModal('TOGGLE_SHOW_RESULT')}
-                disabled={loading || processing}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${isShowResult ? 'bg-green-500' : 'bg-gray-300'
-                  } ${processing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
-              >
-                <span className={`${isShowResult ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className='p-3' />
-
-        <div className="flex items-center justify-between p-6 bg-red-50 rounded-xl border border-red-100 transition-colors hover:border-red-300">
-          <div>
-            <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              ล้างคะแนนโหวตทั้งหมด
-            </h4>
-          </div>
-
-          <button
-            onClick={() => setActiveModal('RESET_VOTES')}
-            disabled={processing}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-          >
-            <Trash2 className="w-4 h-4" />
-            Reset
-          </button>
-        </div>
-
-        <div className='p-3' />
-
-        <div className="flex items-center justify-between p-6 bg-red-50 rounded-xl border border-red-100 transition-colors hover:border-red-300">
-          <div>
-            <h4 className="text-lg font-bold text-red-800 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              ล้างพรรคและสมาชิกทั้งหมด
-            </h4>
-          </div>
-
-          <button
-            onClick={() => setActiveModal('RESET_CANDIDATES')}
-            disabled={processing}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-          >
-            <Trash2 className="w-4 h-4" />
-            Reset
-          </button>
-        </div>
-
-        <div className='p-3' />
-
-        {/* Ballot secrecy — anonymize after results are certified (irreversible) */}
-        <div className="flex items-center justify-between gap-4 p-6 bg-indigo-50 rounded-xl border border-indigo-100 transition-colors hover:border-indigo-300">
-          <div className="min-w-0">
-            <h4 className="text-lg font-bold text-indigo-800 flex items-center gap-2">
-              <Power className="w-5 h-5" />
-              ลบข้อมูลการลงคะแนนรายบุคคล
-            </h4>
-            <p className="text-xs text-indigo-500 mt-1">
-              ลบความเชื่อมโยง “ใครเลือกพรรคใด” อย่างถาวร (คะแนนรวมยังอยู่ครบ) — ทำได้หลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น
-            </p>
-          </div>
-
-          <button
-            onClick={() => setActiveModal('ANONYMIZE_BALLOTS')}
-            disabled={processing || !isShowResult}
-            title={!isShowResult ? 'ต้องเผยแพร่ผลก่อน' : ''}
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
-          >
-            <Power className="w-4 h-4" />
-            Anonymize
-          </button>
-        </div>
-      </div>
-
-      <CompletedActionModal
-        isOpen={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)}
-        title={successMessage.title}
-        message={successMessage.msg}
-      />
-
-      <ErrorActionModal
-        isOpen={isErrorOpen}
-        onClose={() => setIsErrorOpen(false)}
-        title={errorMessage.title}
-        message={errorMessage.msg}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'SET_MODE'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title="เปลี่ยนโหมดการทำงาน?"
-        message={`คุณกำลังจะเปลี่ยนโหมดระบบเป็น "${pendingMode}" ยืนยันการดำเนินการหรือไม่?`}
-        variant="primary"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'TOGGLE_SHOW_RESULT'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title={isShowResult ? "ซ่อนผลคะแนน?" : "แสดงผลคะแนน?"}
-        message={isShowResult
-          ? "เมื่อซ่อนผลคะแนน ข้อมูลสถิติและผลโหวตจะถูกปิดกั้น"
-          : "เมื่อแสดงผลคะแนน ทุกคนจะสามารถเข้าดูผลโหวตได้ทันที แม้ระบบโหวตจะปิดอยู่"}
-        variant="primary"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'RESET_VOTES'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title="⚠️ ยืนยันการล้างระบบ?"
-        message={`ผลคะแนนทั้งหมดและสิทธิ์การโหวตของผู้ใช้ทุกคนจะถูกรีเซ็ต`}
-        variant="danger"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'RESET_CANDIDATES'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title="⚠️ ยืนยันการล้างระบบ?"
-        message={`ข้อมูลพรรคผู้สมัครและสมาชิกพรรคทั้งหมดจะถูกลบ`}
-        variant="danger"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'ANONYMIZE_BALLOTS'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title="ลบข้อมูลการลงคะแนนรายบุคคล?"
-        message={`คะแนนรวมของแต่ละพรรคจะถูกบันทึกไว้ครบ แต่ความเชื่อมโยงว่า "ใครเลือกพรรคใด" จะถูกลบอย่างถาวร — กู้คืนไม่ได้ ควรทำหลังรับรองผลแล้วเท่านั้น`}
-        variant="danger"
-        isLoading={processing}
-      />
-
-      <ConfirmModal
-        isOpen={activeModal === 'SET_GOOGLE_FORM'}
-        onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        title="บันทึกลิงก์ Google Form?"
-        message={`ต้องการอัปเดตลิงก์ Google Form ใช่หรือไม่?`}
-        variant="primary"
-        isLoading={processing}
-      />
-    </div >
-    </div>
-  )
-};
-
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -947,13 +471,35 @@ export default function AdminDashboard() {
       // Deep-link a starting tab (e.g. the preview's "Exit" returns to ?tab=pageDesign,
       // the template selector — never the overview). Ignore unknown values.
       const tab = sp.get('tab');
-      if (tab && ['overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
+      if (tab && ['manual', 'overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
         setActiveTab(tab);
       }
     }
   }, []);
   useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign' && advancedEditor); }, [activeTab, advancedEditor]);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
+
+  // Who is holding this session — asked of the server, not read off the token.
+  // A 401/403 means the cookie is gone or the admin flag was taken away since
+  // login, and the console has no business staying open: back to the form.
+  const [adminUser, setAdminUser] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(getPath('/api/admin/me'), { credentials: 'include', cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = getPath('/admin/login');
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled && data.user) setAdminUser(data.user);
+      } catch (e) {
+        console.error('admin identity check failed:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -965,6 +511,11 @@ export default function AdminDashboard() {
   };
 
   const menuItems = [
+    // ADM-MANUAL: first in the rail on purpose — a committee member opening the
+    // console for the first time meets the "what do I do, in what order" page
+    // before anything else. Daily users are unaffected: the DEFAULT tab is still
+    // 'overview' (useState above), so this only changes discovery, not landing.
+    { id: 'manual', label: 'คู่มือใช้งาน', icon: <BookOpen className="h-5 w-5" /> },
     { id: 'overview', label: 'ภาพรวม', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
     { id: 'globalConfig', label: 'ตั้งค่าทั่วไป', icon: <Settings className="h-5 w-5" /> },
     { id: 'candidates', label: 'จัดการผู้สมัคร', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
@@ -1015,7 +566,7 @@ export default function AdminDashboard() {
           {/* mobile close */}
           <button
             onClick={() => setMobileNavOpen(false)}
-            className="md:hidden ml-auto flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="md:hidden ml-auto shrink-0 flex items-center justify-center w-10 h-10 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1060,7 +611,7 @@ export default function AdminDashboard() {
             {/* mobile hamburger */}
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 hover:bg-slate-100"
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-slate-600 hover:bg-slate-100"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -1068,16 +619,27 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-bold text-gray-700">Administrator</p>
-              <p className="text-xs text-green-600 flex items-center justify-end gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                Online
+              <p className="text-sm font-bold text-gray-700">
+                {adminUser ? (adminUser.name || adminUser.studentId) : 'กำลังตรวจสิทธิ์…'}
+              </p>
+              <p className="text-xs flex items-center justify-end gap-1.5">
+                {adminUser ? (
+                  <>
+                    <span className="font-semibold text-[#8A2680] bg-purple-50 border border-purple-100 rounded px-1.5 py-px">
+                      ผู้ดูแลระบบ
+                    </span>
+                    <span className="text-slate-400 font-mono">{adminUser.studentId}</span>
+                  </>
+                ) : (
+                  <span className="text-slate-400">รอการยืนยันจากเซิร์ฟเวอร์</span>
+                )}
               </p>
             </div>
           </div>
         </header>
 
         <main className="flex-1 p-6 md:p-8 bg-gray-50">
+          {activeTab === 'manual' && <ManualTab onGoTab={setActiveTab} />}
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'globalConfig' && <GlobalConfigTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
