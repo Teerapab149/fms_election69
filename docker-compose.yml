@@ -55,6 +55,13 @@ services:
       # Set POSTGRES_PASSWORD in .env — never commit a real password here
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: fms_election
+    # No published port on purpose: the app reaches this over the compose network,
+    # and a production database has no business listening on the host interface.
+    # If you use THIS bundled database rather than the faculty's, migrations and
+    # scripts/admin.js run from the host and need a way in — publish it to
+    # loopback only and point MIGRATE_DATABASE_URL at it:
+    #   ports: ["127.0.0.1:5433:5432"]
+    #   MIGRATE_DATABASE_URL=postgresql://postgres:<pw>@localhost:5433/fms_election
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
 

@@ -4,6 +4,7 @@
 #   sh scripts/setup.sh --check                 ตรวจอย่างเดียว ไม่แก้อะไรเลย (ปลอดภัย รันได้ตลอด)
 #   sh scripts/setup.sh                         ติดตั้ง/อัปเดตให้พร้อมใช้
 #   sh scripts/setup.sh --admin 6610510149      ติดตั้ง แล้วตั้งคนนี้เป็นแอดมิน + ออกรหัสกลาง
+#   sh scripts/setup.sh --compose <ไฟล์>        ใช้ compose ไฟล์อื่น (ปกติ docker-compose.yml)
 #
 # สคริปต์นี้ทำ 6 อย่างตามลำดับ หยุดทันทีที่เจอปัญหา พร้อมบอกวิธีแก้:
 #   1. ตรวจว่ามีเครื่องมือที่ต้องใช้ (node / npm / docker / psql)
@@ -22,11 +23,13 @@ set -u
 
 CHECK_ONLY=0
 ADMIN_ID=""
+COMPOSE_FILE="docker-compose.yml"
 while [ $# -gt 0 ]; do
   case "$1" in
     --check) CHECK_ONLY=1 ;;
     --admin) shift; ADMIN_ID="${1:-}" ;;
-    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+    --compose) shift; COMPOSE_FILE="${1:-docker-compose.yml}" ;;
+    -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
     *) echo "ไม่รู้จักตัวเลือก: $1  (ดูวิธีใช้: sh scripts/setup.sh --help)"; exit 1 ;;
   esac
   shift
@@ -75,11 +78,32 @@ need ELECTION_BALLOT_PUBLIC_KEY "ได้จากพิธีสร้าง�
 need BALLOT_CHAIN_SECRET        "ได้จากพิธีสร้างกุญแจเดียวกัน"
 [ "$FAIL" -gt 0 ] && die "เติมค่าที่ขาดใน .env ให้ครบก่อน (ถ้าไม่มีกุญแจสองตัวท้าย ระบบจะไม่รับโหวตเลย)"
 
+# สอง URL คนละหน้าที่ และมองฐานข้อมูลจากคนละที่:
+#   MIGRATE_DATABASE_URL — สคริปต์บนเครื่อง (migrate/admin) เรียกจาก "นอกคอนเทนเนอร์"
+#   DATABASE_URL         — ตัวเว็บเรียกจาก "ในคอนเทนเนอร์" (localhost ในนั้น = ตัวมันเอง)
 MIGRATE_URL="${MIGRATE_DATABASE_URL:-$(envval MIGRATE_DATABASE_URL)}"
 if [ -z "$MIGRATE_URL" ]; then
   MIGRATE_URL="$(envval DATABASE_URL)"
   warn "ไม่ได้ตั้ง MIGRATE_DATABASE_URL — จะใช้ DATABASE_URL แทน (ปกติสำหรับเครื่องทดสอบ)"
 fi
+
+# กับดักที่ทำให้เว็บขึ้นแต่ใช้งานไม่ได้: DATABASE_URL ชี้ localhost แล้วเอาไปรันในคอนเทนเนอร์
+# → หน้าแรกยังขึ้น 200 (ไม่ต้องใช้ฐานข้อมูล) แต่ /api/health = 503 ทั้งระบบใช้งานไม่ได้
+COMPOSE_OVERRIDES_DB_URL=0
+[ -f "$COMPOSE_FILE" ] && grep -qE '^\s*-?\s*DATABASE_URL=' "$COMPOSE_FILE" && COMPOSE_OVERRIDES_DB_URL=1
+case "$(envval DATABASE_URL)" in
+  *localhost*|*127.0.0.1*)
+    if [ "$COMPOSE_OVERRIDES_DB_URL" = "1" ]; then
+      ok "DATABASE_URL ของคอนเทนเนอร์ถูกกำหนดใน $COMPOSE_FILE (ไม่ใช้ค่าใน .env)"
+    elif [ "$HAS_DOCKER" = "1" ]; then
+      bad "DATABASE_URL ใน .env ชี้ไป localhost — ในคอนเทนเนอร์ localhost คือตัวคอนเทนเนอร์เอง ไม่ใช่เครื่องนี้
+           แก้เป็นชื่อ service ของฐานข้อมูล (เช่น db:5432) ถ้าใช้ฐานข้อมูลใน docker
+           หรือ host.docker.internal:5432 ถ้าฐานข้อมูลอยู่บนเครื่องนี้
+           แล้วตั้ง MIGRATE_DATABASE_URL เป็น URL ที่เรียกจากเครื่องนี้ได้ (localhost:...)"
+    fi
+    ;;
+esac
+[ "$FAIL" -gt 0 ] && die "แก้ DATABASE_URL ให้ถูกก่อน — ถ้าปล่อยไว้เว็บจะขึ้นได้แต่ต่อฐานข้อมูลไม่ได้"
 
 # ── 3. dependency ───────────────────────────────────────────────────────────
 step "3. Dependency"
@@ -95,6 +119,19 @@ fi
 
 # ── 4. ฐานข้อมูล ────────────────────────────────────────────────────────────
 step "4. ฐานข้อมูล"
+# ถ้าฐานข้อมูลอยู่ใน compose ด้วย ต้องเปิดมันก่อน migrate ไม่งั้นไม่มีอะไรให้ต่อ
+HAS_DB_SERVICE=0
+[ -f "$COMPOSE_FILE" ] && grep -qE '^\s{2}db:' "$COMPOSE_FILE" && HAS_DB_SERVICE=1
+if [ "$HAS_DB_SERVICE" = "1" ] && [ "$HAS_DOCKER" = "1" ] && [ "$CHECK_ONLY" = "0" ]; then
+  printf '  ฐานข้อมูลอยู่ใน docker — เปิดก่อนแล้วรอให้พร้อม...\n'
+  docker compose -f "$COMPOSE_FILE" up -d db >/dev/null 2>&1 || die "เปิด container ฐานข้อมูลไม่สำเร็จ"
+  i=0
+  while [ $i -lt 30 ]; do
+    docker compose -f "$COMPOSE_FILE" exec -T db pg_isready -U postgres >/dev/null 2>&1 && break
+    i=$((i+1)); sleep 2
+  done
+  [ $i -lt 30 ] && ok "ฐานข้อมูลพร้อมรับการเชื่อมต่อ" || warn "ฐานข้อมูลยังไม่ตอบ pg_isready — จะลอง migrate ต่อไป"
+fi
 if [ "$CHECK_ONLY" = "1" ]; then
   if DATABASE_URL="$MIGRATE_URL" npx prisma migrate status >/dev/null 2>&1; then
     ok "โครงสร้างฐานข้อมูลเป็นปัจจุบัน"
@@ -124,35 +161,53 @@ if [ "$CHECK_ONLY" = "1" ] || [ "$HAS_DOCKER" = "0" ]; then
   warn "ข้ามการเปิดระบบ"
 else
   printf '  กำลัง build + เปิด container (ครั้งแรกใช้เวลา 3-10 นาที)...\n'
-  if docker compose up -d --build; then ok "container ทำงานอยู่"; else die "docker compose ไม่สำเร็จ — ดู log ด้วย: docker compose logs web"; fi
+  if docker compose -f "$COMPOSE_FILE" up -d --build; then ok "container ทำงานอยู่"; else die "docker compose ไม่สำเร็จ — ดู log ด้วย: docker compose logs web"; fi
 fi
 
 # ── 6. ตรวจว่าเว็บตอบ ───────────────────────────────────────────────────────
-step "6. ตรวจว่าเว็บตอบจริง"
+step "6. ตรวจว่าเว็บใช้งานได้จริง"
 BASE_PATH_VAL="$(envval BASE_PATH)"; [ -n "$BASE_PATH_VAL" ] || BASE_PATH_VAL="/fms-ovs"
 URL="http://localhost:3000${BASE_PATH_VAL}"
 if command -v curl >/dev/null 2>&1; then
-  i=0; CODE=""
+  # หน้าแรกอย่างเดียวไม่พอ: มันขึ้น 200 ได้แม้ต่อฐานข้อมูลไม่ได้เลย (เคยหลอกให้คิดว่า
+  # ติดตั้งสำเร็จมาแล้วหนึ่งรอบ) /api/health คือเส้นเดียวที่ยิง SELECT 1 เข้าฐานข้อมูลจริง
+  i=0; HOME_CODE=""; HEALTH_CODE=""
   while [ $i -lt 20 ]; do
-    CODE="$(curl -s -o /dev/null -w '%{http_code}' "$URL" 2>/dev/null || true)"
-    [ "$CODE" = "200" ] && break
+    HOME_CODE="$(curl -s -o /dev/null -w '%{http_code}' "$URL" 2>/dev/null || true)"
+    HEALTH_CODE="$(curl -s -o /dev/null -w '%{http_code}' "$URL/api/health" 2>/dev/null || true)"
+    [ "$HEALTH_CODE" = "200" ] && break
     i=$((i+1)); sleep 3
   done
-  if [ "$CODE" = "200" ]; then ok "เว็บตอบ 200 ที่ $URL"; else warn "เว็บยังไม่ตอบ (ได้ $CODE) — ดู: docker compose logs web"; fi
+  [ "$HOME_CODE" = "200" ] && ok "หน้าแรกตอบ 200" || bad "หน้าแรกไม่ตอบ (ได้ $HOME_CODE)"
+  if [ "$HEALTH_CODE" = "200" ]; then
+    ok "เว็บต่อฐานข้อมูลได้ (/api/health = 200)"
+  else
+    bad "เว็บต่อฐานข้อมูลไม่ได้ (/api/health = $HEALTH_CODE) — หน้าแรกขึ้นก็จริงแต่ใช้งานไม่ได้"
+    printf '\n  10 บรรทัดสุดท้ายจาก log:\n'
+    docker compose -f "$COMPOSE_FILE" logs --tail 10 web 2>/dev/null | sed 's/^/    /'
+    printf '\n  สาเหตุที่พบบ่อยที่สุด: DATABASE_URL ที่คอนเทนเนอร์ได้รับ ชี้ไป localhost\n'
+    printf '  ดูค่าที่มันได้จริง: docker compose -f %s exec web sh -c '"'"'echo $DATABASE_URL'"'"'\n' "$COMPOSE_FILE"
+  fi
 else
-  warn "ไม่มี curl — เปิด $URL ในเบราว์เซอร์เพื่อตรวจเอง"
+  warn "ไม่มี curl — เปิด $URL/api/health ในเบราว์เซอร์ ต้องได้ {\"ok\":true,\"db\":true}"
 fi
 
 # ── 7. แอดมิน ───────────────────────────────────────────────────────────────
 step "7. แอดมิน"
+# ต้องยิงไปที่ฐานข้อมูล "ตัวเดียวกับที่เว็บใช้" — เมื่อฐานข้อมูลอยู่ในคอนเทนเนอร์
+# ค่า DATABASE_URL ใน .env เป็นของเครื่อง dev คนละตัวกัน (เคยรายงานรายชื่อแอดมิน
+# ของฐานข้อมูลผิดตัวมาแล้ว) MIGRATE_URL คือมุมมองจากเครื่องนี้ของฐานข้อมูลที่ deploy จริง
+admin_cli() { DATABASE_URL="$MIGRATE_URL" node scripts/admin.js "$@"; }
 if [ "$CHECK_ONLY" = "1" ]; then
-  node scripts/admin.js --list || warn "อ่านรายชื่อแอดมินไม่ได้ (ต่อฐานข้อมูลไม่ได้?)"
+  admin_cli --list || warn "อ่านรายชื่อแอดมินไม่ได้ (ต่อฐานข้อมูลไม่ได้?)"
 else
   if [ -n "$ADMIN_ID" ]; then
-    node scripts/admin.js --grant "$ADMIN_ID" || warn "ตั้งแอดมินไม่สำเร็จ — ตรวจว่ารหัส นศ. นี้มีข้อมูลในระบบแล้ว"
+    admin_cli --grant "$ADMIN_ID" || warn "ตั้งแอดมินไม่สำเร็จ — ตรวจว่ารหัส นศ. นี้มีข้อมูลในระบบแล้ว"
   fi
-  node scripts/admin.js --list
-  printf '\n  ถ้ายังไม่มีรหัสกลาง หรือจำไม่ได้ ให้ออกใหม่ด้วย:\n    node scripts/admin.js --rotate-password\n'
+  admin_cli --list
+  printf '\n  ถ้ายังไม่มีรหัสกลาง หรือจำไม่ได้ ให้ออกใหม่ด้วย:\n'
+  printf '    DATABASE_URL="$MIGRATE_DATABASE_URL" node scripts/admin.js --rotate-password\n'
+  printf '  (ถ้าฐานข้อมูลไม่ได้อยู่ใน docker ตัด DATABASE_URL= ข้างหน้าออกได้)\n'
 fi
 
 # ── สรุป ────────────────────────────────────────────────────────────────────
