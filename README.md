@@ -95,7 +95,8 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 ขั้นตอน deploy จริงไล่ทีละข้อใน [docs/DEPLOY-CHECKLIST-2026.md](docs/DEPLOY-CHECKLIST-2026.md)
 (key ceremony, migrate, grants, env production, ปุ่มตรวจความพร้อมเป็นด่านสุดท้าย)
-ใบขอ DB สำหรับหน่วยงาน IT อยู่ที่ `docs/STAFF-DB-BRIEF-2026.md`
+ฝั่งเจ้าหน้าที่ใช้ไฟล์เดียวคือ [docs/STAFF-HANDBOOK.md](docs/STAFF-HANDBOOK.md)
+(ติดตั้งด้วย `sh scripts/setup.sh` คำสั่งเดียว · จัดการแอดมิน · งานประจำปี · ใบขอ DB สำหรับ IT)
 
 เปลี่ยนปีการศึกษา: `npm run preflight` → `npm run archive-year` →
 `npm run import-students -- <ไฟล์รายชื่อ>` → ตั้งวันและเลือก template ในหน้า admin
@@ -105,8 +106,7 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 
 | เรื่อง | ไฟล์ |
 |---|---|
-| **คู่มือเจ้าหน้าที่ (ส่งมอบงาน)** | `docs/STAFF-HANDBOOK.md` |
-| งานประจำปีหนึ่งรอบเลือกตั้ง | `docs/STAFF-ANNUAL-CARD.md` |
+| **คู่มือเจ้าหน้าที่ — ไฟล์เดียวจบ (ส่งมอบงาน)** | `docs/STAFF-HANDBOOK.md` |
 | สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
 | กติกาแก้โค้ด | `CLAUDE.md` |
