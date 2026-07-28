@@ -61,3 +61,9 @@ claude skill/
 # .next-qa*/ only covered the QA servers, so a `NEXT_DIST_DIR=.next-prod npm run build`
 # left 400MB of build output showing up as untracked
 .next-*/
+
+# Portfolio material stays local (owner, 2026-07-28): the write-up, the 135MB of
+# PNGs, and the capture scripts that regenerate them. Nothing here belongs to the
+# election system itself.
+docs/PORTFOLIO.md
+docs/portfolio-shots/
