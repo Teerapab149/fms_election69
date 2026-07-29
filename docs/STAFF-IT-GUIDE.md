@@ -311,7 +311,129 @@ sh scripts/setup.sh
 **ใครเลือกพรรคไหน** — `User.isVoted` บอกแค่ว่ามาใช้สิทธิ์แล้ว ส่วน `Ballot` เก็บตัวเลือก
 ในรูปที่เข้ารหัสและไม่มีเส้นเชื่อมกลับไปหาคน แม้แต่ใน backup ก็ไม่มี
 
-### 8.2 เปลี่ยนอะไรไปแล้วบ้าง (ไล่ตามลำดับ)
+### 8.2 โครงสร้างจริงของแต่ละตาราง
+
+ดึงจากฐานข้อมูลที่ใช้อยู่จริง (`information_schema`) ไม่ใช่จากความจำ — ตรงกับ
+`prisma/schema.prisma` ในโค้ด ถ้าอยากดูของเครื่องตัวเองให้รัน:
+
+```bash
+psql "<fms_migrate>" -c "\d+ \"Ballot\""      # ดูทีละตาราง
+psql "<fms_migrate>" -c "\dt"                 # ดูรายชื่อตารางทั้งหมด
+```
+
+#### `User` — นักศึกษาผู้มีสิทธิ์ + แอดมิน
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | integer | NOT NULL | auto |
+| `studentId` | text | NOT NULL | — **UNIQUE** |
+| `name` `email` `facultyId` `departmentId` | text | NULL | |
+| `role` | text | NOT NULL | `student` |
+| `passwordHash` | text | NULL | — เฉพาะบัญชีสำรอง |
+| `gender` `major` `titleName` | text | NULL | |
+| `subKeyId` `subMajorId` `subMajorNameThai` | text | NULL | ข้อมูลสาขาจาก SSO |
+| `year` `yearStatus` | text | NULL | ชั้นปี (`ปี 1`–`ปี 4` เท่านั้นที่โหวตได้) |
+| `isVoted` | boolean | NOT NULL | `false` |
+| `votedAt` | timestamp | NULL | เวลาที่ตัวเองมาใช้สิทธิ์ (ไม่เชื่อมกับบัตร) |
+| `isFormCompleted` | boolean | NOT NULL | `false` |
+| `isAdmin` | boolean | NOT NULL | `false` |
+| `createdAt` | timestamp | NOT NULL | `now()` |
+
+#### `Candidate` — พรรค
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | integer | NOT NULL | auto |
+| `name` | text | NOT NULL | **UNIQUE** |
+| `number` | integer | NOT NULL | **UNIQUE** · `0`=งดออกเสียง `-1`=ไม่รับรอง |
+| `slogan` `logoUrl` `officialImageUrl` `logoMeaning` `color` | text | NULL | |
+| `groupImageUrls` `mobileHeroImage` `missions` `policies` | jsonb | NULL | |
+| `score` | integer | NOT NULL | `0` — **คะแนนจริง** |
+
+#### `Member` — สมาชิกพรรค
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | integer | NOT NULL | auto |
+| `studentId` | text | NOT NULL | **UNIQUE** |
+| `name` `imageUrl` | text | NOT NULL | |
+| `number` | integer | NOT NULL | `0` |
+| `modalImageUrl` `major` `position` | text | NULL | |
+| `candidateId` | integer | NOT NULL | → `Candidate.id` |
+
+#### `Ballot` — หีบบัตร (1 แถว = บัตร 1 ใบ)
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `seq` | integer | NOT NULL | auto — ลำดับในโซ่ |
+| `payload` | text | NOT NULL | ตัวเลือกที่เข้ารหัส RSA-OAEP แล้ว (base64) |
+| `hourBucket` | text | NULL | ช่วงเวลาหยาบระดับชั่วโมง เช่น `2569-02-06T09` |
+| `prevHash` | text | NOT NULL | `rowHash` ของแถวก่อนหน้า (แถวแรก = `GENESIS`) |
+| `rowHash` | text | NOT NULL | HMAC-SHA256 ของแถวนี้ |
+
+**ไม่มีคอลัมน์ `userId` และไม่มีเวลาละเอียด** — โดยเจตนา นี่คือเหตุผลที่ไม่มีใครสาวกลับได้ว่าใครเลือกอะไร
+
+#### `ChainHead` — ปลายโซ่ (มีแถวเดียวเสมอ id=1)
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | integer | NOT NULL | `1` |
+| `head` | text | NOT NULL | `GENESIS` |
+| `seq` | integer | NOT NULL | `0` |
+
+#### `SystemConfig` — ตั้งค่าระบบ (มีแถวเดียวเสมอ id=1)
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | integer | NOT NULL | `1` |
+| `systemMode` | text | NOT NULL | `AUTO` · `MANUAL_OPEN` `PAUSE` `ENDED` |
+| `showResult` | boolean | NOT NULL | `false` — สวิตช์เปิดเผยผล |
+| `isVoteOpen` | boolean | NOT NULL | `false` — ของเก่า ไม่ได้ใช้ตัดสินใจแล้ว |
+| `googleFormUrl` | text | NULL | |
+| `pageLayout` `themeConfig` `globalConfig` | jsonb | NULL | `globalConfig` เก็บวันเวลาเลือกตั้ง + ธงรับรองผล |
+| `activeTemplateId` | text | NULL | `classic` |
+| `adminPasswordHash` | text | NULL | **รหัสกลางแอดมิน (bcrypt)** |
+| `updatedAt` | timestamp | NOT NULL | |
+
+#### `AdminAuditLog` — บันทึกคำสั่งของแอดมิน
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | integer | NOT NULL | auto |
+| `action` | text | NOT NULL | เช่น `SET_MODE` |
+| `detail` | text | NULL | รายละเอียดของคำสั่ง (JSON) |
+| `actor` | text | NULL | รหัส นศ. ของคนที่สั่ง |
+| `createdAt` | timestamp | NOT NULL | `now()` — มี index |
+
+#### `Template` — ธีมหน้าเว็บ
+
+| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
+|---|---|---|---|
+| `id` | text | NOT NULL | |
+| `slug` | text | NOT NULL | **UNIQUE** |
+| `name` | text | NOT NULL | |
+| `description` `forkedFrom` `archivedYear` | text | NULL | |
+| `authorId` | integer | NULL | → `User.id` |
+| `isBuiltIn` `isLocked` | boolean | NOT NULL | `false` |
+| `visibility` | text | NOT NULL | `private` |
+| `pages` `elements` `theme` | jsonb | NOT NULL | |
+| `schemaVersion` | text | NOT NULL | `v1` |
+| `createdAt` `updatedAt` | timestamp | NOT NULL | |
+
+#### ความสัมพันธ์ระหว่างตาราง
+
+```
+Candidate 1 ──< Member          (Member.candidateId → Candidate.id)
+User      1 ──< Template        (Template.authorId  → User.id)
+
+Ballot / ChainHead              ไม่เชื่อมกับตารางไหนเลย  ← ตั้งใจ
+User / Candidate                ไม่มีเส้นเชื่อมถึงกัน     ← ตั้งใจ
+```
+
+สองบรรทัดล่างคือหัวใจของระบบ: **คะแนนอยู่ที่ `Candidate.score` · การมาใช้สิทธิ์อยู่ที่
+`User.isVoted` · ตัวเลือกอยู่ในบัตรที่เข้ารหัส และไม่มี foreign key ใดเชื่อมสามอย่างนี้เข้าหากัน**
+
+### 8.3 เปลี่ยนอะไรไปแล้วบ้าง (ไล่ตามลำดับ)
 
 | migration | เปลี่ยนอะไร | ทำไม |
 |---|---|---|
@@ -326,7 +448,7 @@ sh scripts/setup.sh
 **ตอนอัปเดตโค้ดที่มี migration ใหม่** — `setup.sh` รัน `migrate deploy` ให้อยู่แล้ว
 สิ่งที่คุณต้องทำคือ `sh scripts/backup.sh` ก่อนเสมอ เพราะ migration ย้อนกลับเองไม่ได้
 
-### 8.3 สิทธิ์ของสองบัญชี (ย้ำอีกครั้ง)
+### 8.4 สิทธิ์ของสองบัญชี (ย้ำอีกครั้ง)
 
 `scripts/sql/ballot-grants.sql` เป็นตัวกำหนดว่า `fms_app` ทำอะไรได้บ้าง สรุป:
 
