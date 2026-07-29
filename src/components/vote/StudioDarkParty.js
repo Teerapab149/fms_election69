@@ -34,7 +34,7 @@ const firstImage = (val) => {
 };
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
-const ROMAN = ["i.", "ii.", "iii."];
+const ROMAN = ["i.", "ii.", "iii.", "iv."];
 
 export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [tab, setTab] = useState("vision");
@@ -55,6 +55,9 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
     [galleryImages]
   );
   const heroImg = gallery[0] || resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl));
+  // ภาพแรกเป็นภาพหมู่บนแท็บ Vision อยู่แล้ว — ที่เหลือคือภาพกิจกรรม ให้มีที่ของตัวเอง
+  // เดิมอัปเพิ่มมากี่ใบก็ไม่มีที่แสดงเลยสักใบ (2026-07-30)
+  const extraShots = gallery.slice(1);
 
   const no = pad2(party?.number);
   const hasVision = !!story || missions.length > 0;
@@ -62,6 +65,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
     ...(hasVision ? [{ id: "vision", label: "Vision" }] : []),
     ...(policies.length ? [{ id: "policies", label: "Policies" }] : []),
     ...(members.length ? [{ id: "team", label: "The Team" }] : []),
+    ...(extraShots.length ? [{ id: "gallery", label: "Gallery" }] : []),
   ];
   const activeTab = TABS.find((t) => t.id === tab)?.id || TABS[0]?.id || null;
 
@@ -187,6 +191,27 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         </section>
       )}
 
+      {/* GALLERY — ภาพกิจกรรมที่เหลือจากภาพหมู่ ใช้ lightbox ตัวเดียวกับภาพหมู่ */}
+      {activeTab === "gallery" && extraShots.length > 0 && (
+        <section className="sdp-section">
+          <h2><span className="num">iv.</span>The <em>gallery.</em></h2>
+          <div className="sdp-gallery">
+            {extraShots.map((src, i) => (
+              <button
+                type="button"
+                className="sdp-shot"
+                key={src}
+                onClick={() => setLightboxSrc(src)}
+                aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
+              >
+                <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />
+                <span className="sdp-shot__no">{pad2(i + 1)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* CLOSING CTA */}
       <div className="sdp-cta">
         <p className="sdp-cta__line">Pick <em>№ {no}.</em>&nbsp; Pick the future.</p>
@@ -295,6 +320,17 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-policy__tag { font-family:var(--sd-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); opacity:0; transition:opacity .25s; white-space:nowrap; }
         .sdp-policy:hover .sdp-policy__tag { opacity:1; }
 
+        /* GALLERY — การ์ดกริดโทนเดียวกับ roster เส้นขอบบาง ขึ้น accent ตอน hover */
+        .sdp-gallery { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+        .sdp-shot { position:relative; display:block; width:100%; padding:0; overflow:hidden; cursor:zoom-in;
+          background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:16px;
+          transition:border-color .2s, transform .2s; }
+        .sdp-shot:hover, .sdp-shot:focus-visible { border-color:var(--sd-accent); transform:translateY(-3px); outline:none; }
+        .sdp-shot img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
+        .sdp-shot__no { position:absolute; left:10px; bottom:10px; font-family:var(--sd-mono); font-size:10px;
+          letter-spacing:.15em; color:var(--sd-ink); background:var(--sd-bg); border:1px solid var(--sd-line);
+          padding:3px 7px; border-radius:6px; }
+
         .sdp-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
         .sdp-tile {
           background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:16px; padding:14px;
@@ -320,10 +356,12 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           .sdp-policy { grid-template-columns:56px 1fr; }
           .sdp-policy__tag { display:none; }
           .sdp-roster { grid-template-columns:repeat(3,1fr); }
+          .sdp-gallery { grid-template-columns:repeat(2,1fr); }
           .sdp-cta { padding:36px 24px 56px; }
         }
         @media (max-width:560px) {
           .sdp-roster { grid-template-columns:repeat(2,1fr); }
+          .sdp-gallery { grid-template-columns:1fr; }
         }
       `}</style>
     </StudioDarkShell>
