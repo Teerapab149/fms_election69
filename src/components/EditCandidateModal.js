@@ -4,6 +4,7 @@ import { getPath } from "../utils/basePath";
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import FormSection from "./FormSection";
 import { buildPartyTheme } from "../utils/partyColors";
 
 export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdate }) {
@@ -417,78 +418,13 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                         </div>
                     )}
 
+                    {/* ลำดับของฟอร์มนี้เรียงตาม "อะไรจำเป็นก่อน" ไม่ใช่ตามที่โค้ดเคยเขียนไว้:
+                        เดิมเปิดมาเจอช่องอัปโหลดรูปสองช่องก่อนจะถามชื่อพรรคด้วยซ้ำ
+                        คนกรอกครั้งแรกจึงไม่รู้ว่าต้องมีอะไรบ้างถึงจะกดสร้างได้ */}
                     <form id="candidate-form" onSubmit={handleSubmit} className="space-y-6">
 
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="relative group">
-                                <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
-                                    {previewUrl ? (
-                                        <img src={previewUrl.startsWith('blob:') ? previewUrl : getPath(previewUrl)} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-10 h-10 text-gray-300" />
-                                    )}
-                                </div>
-                                <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-blue-600">
-                                    <Upload className="w-4 h-4" />
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                                </label>
-                            </div>
-                            <p className="text-xs text-gray-400">รูปภาพผู้สมัคร (Logo)</p>
-                        </div>
-
-
-
-                        <div className="w-full">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                รูปภาพรวมพรรค (เลือกได้หลายรูป)
-                            </label>
-
-                            <div className="grid grid-cols-3 gap-2">
-                                {existingImages.map((src, idx) => (
-                                    <div key={`old-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group">
-                                        <img src={src.startsWith('blob:') ? src : getPath(src)} className="w-full h-full object-cover" />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeExistingImage(idx)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {newGroupFiles.map((item, idx) => (
-                                    <div key={`new-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-green-200 group">
-                                        <img src={item.preview} className="w-full h-full object-cover" />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeNewImage(idx)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                <label className="aspect-video bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-                                    <div className="bg-white p-1.5 rounded-full shadow-sm mb-1">
-                                        <Plus className="w-4 h-4 text-gray-600" />
-                                    </div>
-                                    <span className="text-[10px] text-gray-500">เพิ่มรูป</span>
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleGroupFilesChange}
-                                    />
-                                </label>
-                            </div>
-                        </div>
-
-
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                        <FormSection n="1" title="ข้อมูลหลัก" hint="สามช่องนี้กรอกครบแล้วกดสร้างได้เลย · หัวข้อ 2-4 มาเติมทีหลังได้" required>
+                            <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">หมายเลข <span className="text-red-500">*</span></label>
                                     <div className="relative">
@@ -526,18 +462,75 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
+                                    <p className="text-xs text-gray-400 mt-1">อธิบายสั้น ๆ ว่าโลโก้สื่อถึงอะไร · แสดงในหน้าแนะนำพรรค</p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
-                                    <textarea
-                                        type="text"
-                                        name="slogan"
-                                        value={formData.slogan}
-                                        onChange={handleChange}
-                                        rows="4"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
-                                    />
-                                    <p className="text-xs text-gray-400 mt-1">เว้นว่างได้ — ระบบจะจัดหน้าให้พอดีเอง</p>
+                            </div>
+                        </FormSection>
+
+                        <FormSection n="2" title="โลโก้ ภาพ และสีของพรรค" hint="ข้ามได้ กลับมาใส่ทีหลังได้ทุกเมื่อ">
+                            <div className="space-y-4">
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
+                                            {previewUrl ? (
+                                                <img src={previewUrl.startsWith('blob:') ? previewUrl : getPath(previewUrl)} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-10 h-10 text-gray-300" />
+                                            )}
+                                        </div>
+                                        <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-[#8A2680]">
+                                            <Upload className="w-4 h-4" />
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-400">โลโก้พรรค · กดที่ปุ่มอัปโหลดมุมขวาล่าง</p>
+                                </div>
+
+                                <div className="w-full">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        รูปภาพรวมพรรค <span className="text-gray-400 font-normal">(เลือกได้หลายรูป)</span>
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {existingImages.map((src, idx) => (
+                                            <div key={`old-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group">
+                                                <img src={src.startsWith('blob:') ? src : getPath(src)} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeExistingImage(idx)}
+                                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {newGroupFiles.map((item, idx) => (
+                                            <div key={`new-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-green-200 group">
+                                                <img src={item.preview} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeNewImage(idx)}
+                                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        <label className="aspect-video bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+                                            <div className="bg-white p-1.5 rounded-full shadow-sm mb-1">
+                                                <Plus className="w-4 h-4 text-gray-600" />
+                                            </div>
+                                            <span className="text-[10px] text-gray-500">เพิ่มรูป</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={handleGroupFilesChange}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">สีประจำพรรค <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
@@ -605,6 +598,22 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         );
                                     })()}
                                 </div>
+                            </div>
+                        </FormSection>
+
+                        <FormSection n="3" title="เนื้อหาแนะนำพรรค" hint="ทั้งหมดไม่บังคับ · ใส่แล้วจะไปแสดงในหน้าแนะนำพรรคที่นักศึกษาเห็น">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน</label>
+                                    <textarea
+                                        name="slogan"
+                                        value={formData.slogan}
+                                        onChange={handleChange}
+                                        rows="2"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่างได้ — ระบบจะจัดหน้าให้พอดีเอง</p>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">พันธกิจ (Missions)</label>
                                     <textarea
@@ -628,11 +637,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     <p className="text-[10px] text-gray-400 mt-1">* ขึ้นบรรทัดใหม่เพื่อแยกข้อ</p>
                                 </div>
                             </div>
+                        </FormSection>
 
-                        </div>
-
-                        <div className="w-full">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">ข้อมูลพิเศษสำหรับ Mobile</label>
+                        <FormSection n="4" title="รูปสำหรับหน้าจอมือถือ" hint="ใส่เมื่อมีพรรคเดียว · หลายพรรคข้ามได้">
+                            <div className="w-full">
                             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-6">
                                 {/* Mobile Hero Cover */}
                                 <div className="flex flex-col items-center gap-3">
@@ -716,8 +724,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                 </div>
                             </div>
                         </div>
-
-
+                        </FormSection>
 
                     </form>
                 </div>

@@ -3,16 +3,15 @@
 import { useState } from 'react';
 import { User, ChevronDown, Plus, Users, Pencil } from "lucide-react";
 import { getPath } from "../utils/basePath";
+import { sortMembersByPosition } from "../utils/memberSort";
 
 export default function EditCandidateMember({ candidate, onClick, defaultExpanded = false }) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   if (!candidate) return null;
-  const members = (candidate.members || []).sort((a, b) => {
-    const numA = a.number ? parseInt(a.number) : 999;
-    const numB = b.number ? parseInt(b.number) : 999;
-    return numA - numB;
-  });
+  // เรียงด้วยกติกาเดียวกับหน้าพรรคที่นักศึกษาเห็น (utils/memberSort.js) — เดิมหน้านี้
+  // เรียงตาม member.number ทำให้แอดมินเห็นลำดับหนึ่ง แต่หน้าเว็บจริงแสดงอีกลำดับหนึ่ง
+  const members = sortMembersByPosition(candidate.members || []);
 
   return (
     <div className={`bg-white rounded-2xl shadow-sm border transition-all w-full duration-300 overflow-hidden ${isExpanded ? 'border-[#8A2680]/30 shadow-md' : 'border-gray-200 hover:shadow-md'}`}>
@@ -76,6 +75,11 @@ export default function EditCandidateMember({ candidate, onClick, defaultExpande
         className={`transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[520px] opacity-100 border-t border-gray-100' : 'max-h-0 opacity-0'}`}
       >
         <div className="p-4 bg-slate-50/60">
+          {members.length > 0 && (
+            <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+              เรียงตามที่แสดงจริงบนหน้าพรรค · ตำแหน่งหลักระบบเรียงให้เอง ส่วนประธานฝ่ายและตำแหน่งอื่นเรียงตามลำดับที่เพิ่ม
+            </p>
+          )}
           {members.length > 0 ? (
             <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
               {members.map((member) => (

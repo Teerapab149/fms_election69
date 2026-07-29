@@ -279,6 +279,26 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         </div>
                     )}
 
+                    {/* ลำดับการแสดงผลบนหน้าเว็บจริงขึ้นกับตำแหน่ง ไม่ใช่ลำดับที่กรอก — แต่ไม่ใช่
+                        ทุกตำแหน่ง (ดู utils/memberSort.js) คนกรอกต้องรู้ก่อนกรอก ไม่ใช่มารู้ตอน
+                        เห็นหน้าพรรคแล้วชื่อสลับกัน */}
+                    {!focusMemberId && (
+                        <div className="mb-4 flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                            <div className="text-xs leading-relaxed text-amber-800">
+                                <p className="font-bold">ลำดับที่เพิ่มมีผลกับการเรียงบนหน้าเว็บ</p>
+                                <p className="mt-1">
+                                    ตำแหน่งหลัก (นายก · อุปนายกฝ่ายกิจการภายนอก · อุปนายกฝ่ายกิจการภายใน · เลขานุการ · เหรัญญิก)
+                                    ระบบเรียงให้เองเสมอ ไม่ว่าจะเพิ่มก่อนหลัง
+                                </p>
+                                <p className="mt-1">
+                                    แต่ <b>ประธานฝ่ายต่าง ๆ และตำแหน่งอื่น ระบบเรียงตามลำดับที่เพิ่ม</b> —
+                                    ถ้าอยากให้เรียงแบบไหนบนหน้าพรรค ให้เพิ่มไล่ตามลำดับนั้น
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-5">
 
                         {/* 1. รูปโปรไฟล์ */}
