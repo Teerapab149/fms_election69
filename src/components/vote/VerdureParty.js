@@ -49,6 +49,10 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
   if (missions.length) chapterKeys.push("mission");
   if (policies.length) chapterKeys.push("policies");
   if (members.length) chapterKeys.push("team");
+  // ภาพแรกคือภาพหมู่ด้านบน · ที่เหลือได้เป็นบทของตัวเอง ต่อท้ายทีมผู้สมัคร
+  // เดิมภาพที่ 2 เป็นต้นไปไม่ถูกแสดงที่ไหนเลยบนหน้านี้ (2026-07-30)
+  const extraShots = gallery.slice(1);
+  if (extraShots.length) chapterKeys.push("gallery");
   const roman = (k) => ROMAN[chapterKeys.indexOf(k)] || "";
 
   return (
@@ -151,6 +155,29 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
 
+        {chapterKeys.includes("gallery") && (
+          <section className="vd-chapter">
+            <div className="vd-chapter__wm">{roman("gallery")}.</div>
+            <div className="vd-chapter__head">
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("gallery")}</span> · <span className="vd-thai">ภาพกิจกรรม</span></span>
+              <h2>The <em>gallery.</em></h2>
+            </div>
+            <div className="vd-gallery">
+              {extraShots.map((src, i) => (
+                <button
+                  type="button"
+                  className="vd-shot"
+                  key={src}
+                  onClick={() => setLightboxSrc(src)}
+                  aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
+                >
+                  <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="vd-profile__cta">
           <p className="vd-profile__cta-line">Pick <em>No. {no}.</em> &nbsp;Pick the future.</p>
           <a href={getPath("/vote")} className="vd-btn vd-btn--terra vd-btn--lg">ลงคะแนนให้พรรคนี้ <span className="arr">↗</span></a>
@@ -230,6 +257,15 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-rtile__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:19px; line-height:1.2; margin-bottom:6px; letter-spacing:-.01em; color:var(--moss); }
         .vd-rtile__role { font-family:var(--fs); font-weight:600; font-size:13px; letter-spacing:.02em; color:var(--terra); }
 
+        /* GALLERY — กรอบโค้งอบอุ่นแบบเดียวกับการ์ดสมาชิก ยกขึ้นตอน hover */
+        .vd-gallery { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+        .vd-shot { display:block; width:100%; padding:0; overflow:hidden; cursor:zoom-in;
+          background:var(--cream-2); border:1px solid var(--rule); border-radius:20px;
+          transition:all .25s; }
+        .vd-shot:hover, .vd-shot:focus-visible { transform:translateY(-5px); outline:none; border-color:var(--terra);
+          box-shadow:0 22px 44px -26px rgba(var(--moss-rgb),.34); }
+        .vd-shot img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
+
         .vd-profile__cta { margin-top:24px; padding-top:48px; display:flex; justify-content:space-between; align-items:center; gap:24px; flex-wrap:wrap; }
         .vd-profile__cta-line { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(22px,2.4vw,30px); color:var(--moss); margin:0; }
         .vd-profile__cta-line em { color:var(--terra); }
@@ -245,6 +281,10 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           .vd-vision__body p { text-align:left; }
           .vd-policies, .vd-roster { grid-template-columns:1fr; }
           .vd-roster { grid-template-columns:repeat(2,1fr); }
+          .vd-gallery { grid-template-columns:repeat(2,1fr); }
+        }
+        @media (max-width:560px) {
+          .vd-gallery { grid-template-columns:1fr; }
         }
       `}</style>
     </VerdureShell>

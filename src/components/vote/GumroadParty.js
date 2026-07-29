@@ -40,6 +40,7 @@ const firstImage = (val) => {
   return null;
 };
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
+const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
 export default function GumroadParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
@@ -70,6 +71,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
   // Hero cover: first gallery shot → wide team photo → poster → placeholder.
   const heroImg = gallery[0] || resolveSrc(firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage));
   const logoImg = resolveSrc(party?.logoUrl);
+
+  // ภาพหมู่ = ใบแรก (อยู่บน hero) · ที่เหลือคือภาพกิจกรรม ลงไปเป็นแกลเลอรีท้ายหน้า
+  const extraShots = gallery.slice(1);
 
   const closeLightbox = () => setLightbox(-1);
   const step = (dir) => setLightbox((i) => (gallery.length ? (i + dir + gallery.length) % gallery.length : -1));
@@ -178,6 +182,33 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
             <div className="gp-members">
               {members.map((m, i) => (
                 <MemberTile key={m?.id ?? i} member={m} photo={resolveSrc(m?.imageUrl)} index={i} onClick={() => setModalMember(m)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* GALLERY — ภาพที่ 2 เป็นต้นไป (ภาพแรกเป็น hero อยู่บนสุดแล้ว)
+            วางไว้ใต้ทีมผู้สมัครเหมือน blossom/receipt เพื่อให้ทุกตระกูลมีที่ทาง
+            ให้ภาพกิจกรรมที่แอดมินอัปเพิ่ม — ก่อนหน้านี้เข้าถึงได้ทางปุ่มเล็ก ๆ
+            บน hero ทางเดียว (2026-07-30) */}
+        {extraShots.length > 0 && (
+          <section className="gp-card gp-block">
+            <div className="gp-members__head">
+              <span className="gp-sticker gp-sticker--ink">★ ภาพกิจกรรม</span>
+              <span className="gp-members__count">{pad2(extraShots.length)} PHOTOS</span>
+            </div>
+            <div className="gp-gallery">
+              {extraShots.map((src, i) => (
+                <button
+                  type="button"
+                  key={src}
+                  className="gp-gallery__cell"
+                  onClick={() => setLightbox(i + 1)}
+                  aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
+                >
+                  <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />
+                  <span className="gp-gallery__no">{pad2(i + 1)}</span>
+                </button>
               ))}
             </div>
           </section>
@@ -332,6 +363,17 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-members{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px; }
         /* member tiles = <MemberTile> composites (own scoped styles) */
 
+        /* GALLERY — การ์ดขอบหนาเงาแข็งแบบเดียวกับทั้งตระกูล ไม่ใช่ grid เปล่า */
+        .gp-gallery{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:18px; }
+        .gp-gallery__cell{ position:relative; display:block; padding:0; overflow:hidden; cursor:zoom-in;
+          border:var(--bw) solid var(--ink); border-radius:14px; background:var(--cream);
+          box-shadow:4px 4px 0 var(--ink); transition:transform .18s ease, box-shadow .18s ease; }
+        .gp-gallery__cell:hover{ transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink); }
+        .gp-gallery__cell:active{ transform:translate(0,0); box-shadow:2px 2px 0 var(--ink); }
+        .gp-gallery__cell img{ display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
+        .gp-gallery__no{ position:absolute; left:8px; bottom:8px; font-family:var(--fm); font-size:11px; font-weight:700;
+          background:var(--ink); color:var(--cream); padding:3px 7px; border-radius:6px; letter-spacing:.06em; }
+
         /* FOOTER */
         .gp-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream);
           display:flex; align-items:center; justify-content:center; gap:14px; font-family:var(--fd); font-size:15px; text-transform:uppercase; letter-spacing:.04em; text-align:center; flex-wrap:wrap; }
@@ -371,8 +413,10 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         @container gp (max-width:880px){
           .gp-section[data-cols="2"]{ grid-template-columns:1fr; }
           .gp-policies{ grid-template-columns:1fr; } .gp-members{ grid-template-columns:repeat(3,1fr); }
+          .gp-gallery{ grid-template-columns:repeat(2,1fr); }
         }
         @container gp (max-width:640px){
+          .gp-gallery{ grid-template-columns:1fr; }
           .gp-hero__media{ height:clamp(160px,46cqw,230px); }
           .gp-hero__body{ flex-direction:column; align-items:flex-start; gap:14px; padding:22px; }
           .gp-hero__no{ order:-1; align-self:flex-end; margin:0; font-size:clamp(40px,12cqw,56px); padding:6px 18px; }
