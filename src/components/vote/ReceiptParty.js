@@ -260,12 +260,17 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         )}
 
         {/* ===== 5. GALLERY — a horizontal photo-strip (hidden when empty) ===== */}
+        {/* ตระกูลนี้ไม่มีภาพหมู่เป็น hero — ตารางนี้คือที่เดียวที่ภาพหมู่โผล่ จึงซ่อน
+            ตอนมีรูปเดียวไม่ได้ แต่เรียกว่า "ภาพกิจกรรม · 01 ภาพ" ก็ผิด เพราะรูปนั้น
+            คือภาพหมู่ ไม่ใช่ภาพกิจกรรม → เปลี่ยนหัวข้อตามจำนวนแทน (2026-07-30) */}
         {gallery.length > 0 && (
-          <section className="rc-sec rc-gal" aria-label="ภาพกิจกรรมพรรค">
+          <section className="rc-sec rc-gal" aria-label={gallery.length > 1 ? "ภาพกิจกรรมพรรค" : "ภาพหมู่พรรค"}>
             <div className="rc-sec__head">
-              <span className="rc-sec__kick rc-mono">GALLERY</span>
-              <h2 className="rc-sec__title"><span className="rc-th">ภาพกิจกรรม</span></h2>
-              <span className="rc-sec__count rc-mono">{pad2(gallery.length)} <span className="rc-th">ภาพ</span></span>
+              <span className="rc-sec__kick rc-mono">{gallery.length > 1 ? "GALLERY" : "GROUP PHOTO"}</span>
+              <h2 className="rc-sec__title"><span className="rc-th">{gallery.length > 1 ? "ภาพกิจกรรม" : "ภาพหมู่พรรค"}</span></h2>
+              {gallery.length > 1 && (
+                <span className="rc-sec__count rc-mono">{pad2(gallery.length)} <span className="rc-th">ภาพ</span></span>
+              )}
             </div>
             <div className="rc-strip">
               {gallery.map((src, i) => (
