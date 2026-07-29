@@ -7,6 +7,23 @@ import ConfirmModal from "./ConfirmModal";
 import FormSection from "./FormSection";
 import { buildPartyTheme } from "../utils/partyColors";
 
+/** [{title, desc}] → ข้อความบรรทัดละนโยบาย คั่นด้วย "::" (คู่กับ textToPolicyArray ฝั่ง API) */
+function policiesToText(policies) {
+    if (!policies) return '';
+    if (typeof policies === 'string') return policies;
+    if (!Array.isArray(policies)) return '';
+    return policies
+        .map((p) => {
+            if (typeof p === 'string') return p;
+            if (!p || typeof p !== 'object') return '';
+            const title = (p.title || '').trim();
+            const desc = (p.desc || p.description || '').trim();
+            return desc ? `${title} :: ${desc}` : title;
+        })
+        .filter(Boolean)
+        .join('\n');
+}
+
 export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdate }) {
     const [formData, setFormData] = useState({
         name: '',
@@ -99,7 +116,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 color: candidate.color || '',
                 logoMeaning: candidate.logoMeaning || '',
                 missions: Array.isArray(candidate.missions) ? candidate.missions.join('\n') : (candidate.missions || ''),
-                policies: Array.isArray(candidate.policies) ? candidate.policies.join('\n') : (candidate.policies || ''),
+                // นโยบายเก็บเป็น [{title, desc}] — .join('\n') เฉย ๆ ได้ "[object Object]"
+                // ออกมาเต็มช่อง และถ้ากดบันทึกต่อคือทับนโยบายจริงทิ้งทั้งหมด (แก้ 2026-07-28)
+                policies: policiesToText(candidate.policies),
             });
             setPreviewUrl(candidate.logoUrl || '');
             setSelectedFile(null);
@@ -278,7 +297,12 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         setShowPositionList(false);
     };
 
-    const isFormValid = formData.name.trim() !== '' && formData.number !== '';
+    // เบอร์ 0 = งดออกเสียง และ -1 = ไม่รับรอง เป็นตัวเลือกที่ระบบสร้างเอง และเบอร์เป็น
+    // unique ในฐานข้อมูล — ถ้าปล่อยให้กรอก 0/-1/ติดลบ จะไปชนของระบบแล้วเด้ง
+    // "เลขพรรคซ้ำ" ซึ่งไม่ได้บอกสาเหตุจริงเลย กันไว้ตั้งแต่ในฟอร์มดีกว่า
+    const partyNumber = parseInt(formData.number, 10);
+    const numberIsValid = Number.isInteger(partyNumber) && partyNumber >= 1;
+    const isFormValid = formData.name.trim() !== '' && formData.number !== '' && numberIsValid;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -294,7 +318,6 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             data.append('slogan', formData.slogan);
             data.append('color', formData.color || '');
             data.append('missions', formData.missions);
-            data.append('policies', formData.policies);
             data.append('policies', formData.policies);
             if (selectedFile) data.append('file', selectedFile);
             if (officialFile) data.append('officialImage', officialFile);
@@ -404,7 +427,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                         <User className="w-5 h-5 text-[#8A2680]" />
                         {candidate ? 'แก้ไขข้อมูลพรรค' : 'เพิ่มพรรคใหม่'}
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
+                    {/* type="button" — ไม่ระบุ = submit โดยปริยาย (ดูหมายเหตุเดียวกันใน
+                        EditCandidateMemberModal) */}
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -439,6 +464,13 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             placeholder="1"
                                         />
                                     </div>
+                                    {formData.number !== '' && !numberIsValid ? (
+                                        <p className="mt-1 text-xs font-medium text-red-500">
+                                            ต้องเป็นเลขจำนวนเต็มตั้งแต่ 1 ขึ้นไป · เบอร์ 0 และ -1 ระบบใช้สำหรับ &ldquo;งดออกเสียง&rdquo; และ &ldquo;ไม่รับรอง&rdquo;
+                                        </p>
+                                    ) : (
+                                        <p className="mt-1 text-xs text-gray-400">เบอร์ที่นักศึกษาจะเห็นบนบัตรเลือกตั้ง · สีอัตโนมัติของพรรคก็อิงเบอร์นี้</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อพรรค <span className="text-red-500">*</span></label>
@@ -561,7 +593,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             </button>
                                         ) : null}
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติตามลำดับพรรค · <b>ระบบจะใช้เฉพาะ “เฉดสี” ที่เลือก แล้วปรับความสว่างให้เข้าโทนเว็บเสมอ</b> (เลือกน้ำเงินกรมท่า จะได้ฟ้าพาสเทลเฉดเดียวกัน) เพราะสีนี้ถูกใช้เป็นพื้นหลังของตัวหนังสือและเป็นแท่งกราฟบนพื้นครีม ถ้าเข้มหรือจางเกินไปจะอ่านไม่ออก · ดูสีจริงที่จะใช้ได้ด้านล่าง</p>
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติ <b>จากเบอร์พรรค</b> (เบอร์ 1 ฟ้า · เบอร์ 2 ชมพู · เบอร์ 3 เขียว ไล่ไปเรื่อย ๆ ไม่ซ้ำกัน) ·<b>ระบบจะใช้เฉพาะ “เฉดสี” ที่เลือก แล้วปรับความสว่างให้เข้าโทนเว็บเสมอ</b> (เลือกน้ำเงินกรมท่า จะได้ฟ้าพาสเทลเฉดเดียวกัน) เพราะสีนี้ถูกใช้เป็นพื้นหลังของตัวหนังสือและเป็นแท่งกราฟบนพื้นครีม ถ้าเข้มหรือจางเกินไปจะอ่านไม่ออก · ดูสีจริงที่จะใช้ได้ด้านล่าง</p>
 
                                     {/* Live preview — the full colour SET the site derives from this one pick */}
                                     {(() => {
@@ -580,8 +612,15 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                                     <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
                                                         ชุดสีที่ระบบจะใช้กับพรรคนี้
                                                     </span>
+                                                    {/* เดิมเขียนว่า "อัตโนมัติตามลำดับพรรค" ทั้งที่ตอนยังไม่กรอกเบอร์
+                                                        มันโชว์สีของเบอร์ 1 อยู่ คนเปิดมาเพิ่มพรรคที่สองเลยเห็นฟ้า
+                                                        เหมือนพรรคแรกแล้วนึกว่าระบบไม่เปลี่ยนสีให้ */}
                                                     <span className="text-[10px] text-gray-400">
-                                                        {formData.color ? 'เฉดที่เลือก · โทนของระบบ' : 'อัตโนมัติตามลำดับพรรค'}
+                                                        {formData.color
+                                                            ? 'เฉดที่เลือก · โทนของระบบ'
+                                                            : numberIsValid
+                                                                ? `อัตโนมัติจากเบอร์ ${partyNumber}`
+                                                                : 'กรอกเบอร์พรรคก่อน'}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-stretch gap-2">
@@ -627,6 +666,11 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">นโยบาย (Policies)</label>
+                                    <p className="text-[11px] text-slate-500 mb-1.5 leading-relaxed">
+                                        หนึ่งบรรทัดต่อหนึ่งนโยบาย · คั่นหัวข้อกับรายละเอียดด้วย <code className="rounded bg-slate-100 px-1">::</code>
+                                        <br />
+                                        ตัวอย่าง <span className="text-slate-400">ยกระดับโครงการเดิม :: ปรับรูปแบบให้เข้ากับยุคสมัย</span>
+                                    </p>
                                     <textarea
                                         name="policies"
                                         value={formData.policies}

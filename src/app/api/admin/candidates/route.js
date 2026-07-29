@@ -118,6 +118,29 @@ function textToJsonArray(text) {
   return text.split('\n').map(line => line.trim()).filter(line => line !== "");
 }
 
+/**
+ * นโยบายไม่ใช่ข้อความเปล่าเหมือนพันธกิจ — หน้าพรรคแสดงเป็นการ์ด "หัวข้อ + รายละเอียด"
+ * ข้อมูลจริงจึงเป็น [{title, desc}] ไม่ใช่ [string]
+ *
+ * ก่อน 2026-07-28 ฝั่งแอดมินอ่านค่าออกมาด้วย .join('\n') ทำให้ช่องกรอกโชว์
+ * "[object Object]" และถ้ากดบันทึกจะเขียนข้อความนั้นทับนโยบายจริงทั้งหมด (ข้อมูลหาย)
+ * รูปแบบที่ตกลงกันคือหนึ่งบรรทัดต่อหนึ่งนโยบาย คั่นหัวข้อกับรายละเอียดด้วย "::"
+ *   ยกระดับโครงการเดิม :: ปรับรูปแบบให้เข้ากับยุคสมัย
+ * บรรทัดที่ไม่มี "::" ถือว่ามีแต่หัวข้อ — ไม่ทิ้งข้อมูลที่คนพิมพ์มา
+ */
+function textToPolicyArray(text) {
+  if (!text || String(text).trim() === "") return [];
+  return String(text)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => {
+      const i = line.indexOf('::');
+      if (i === -1) return { title: line, desc: "" };
+      return { title: line.slice(0, i).trim(), desc: line.slice(i + 2).trim() };
+    });
+}
+
 async function uploadLogo(file, candidateName) {
   if (file && typeof file !== "string") {
     const bytes = await file.arrayBuffer();
@@ -293,7 +316,7 @@ export async function PUT(req) {
       dataToUpdate.missions = textToJsonArray(formData.get("missions"));
     }
     if (formData.has("policies")) {
-      dataToUpdate.policies = textToJsonArray(formData.get("policies"));
+      dataToUpdate.policies = textToPolicyArray(formData.get("policies"));
     }
 
     const file = formData.get("file");
@@ -486,7 +509,7 @@ export async function POST(req) {
     const officialFile = formData.get("officialImage");
     const mobileHeroFile = formData.get("mobileHeroImage");
     const missions = textToJsonArray(formData.get("missions"));
-    const policies = textToJsonArray(formData.get("policies"));
+    const policies = textToPolicyArray(formData.get("policies"));
     const membersJson = formData.get("members");
     const rawMembers = membersJson ? JSON.parse(membersJson) : [];
 
