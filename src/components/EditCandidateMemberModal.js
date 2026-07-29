@@ -245,6 +245,14 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
         pos.toLowerCase().includes(currentMember.position.toLowerCase())
     );
 
+    // Esc ปิดหน้าต่าง — พฤติกรรมเดียวกับหน้าต่างแก้ไขพรรค
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     return (

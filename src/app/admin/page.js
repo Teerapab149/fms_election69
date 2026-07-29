@@ -14,7 +14,7 @@ import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
 import ManualTab from "../../components/admin/ManualTab";
 import SettingsTab from "../../components/admin/SettingsTab";
-import { BarChart3, Medal, CalendarPlus2, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen } from "lucide-react";
+import { BarChart3, Medal, CalendarPlus2, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen, Plus, Users, Flag, UserPlus } from "lucide-react";
 import Image from 'next/image';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -357,36 +357,79 @@ const CandidatesTab = () => {
     fetchResults();
   }, []);
 
+  // พรรคจริงเท่านั้น — เบอร์ 0 (งดออกเสียง) และ -1 (ไม่รับรอง) ระบบสร้างเอง
+  // ไม่ใช่สิ่งที่กรรมการต้องมาเพิ่ม/แก้ จึงไม่แสดงในหน้านี้
+  const parties = candidates.filter((e) => e.number > 0);
+  const memberTotal = parties.reduce((n, c) => n + (c.members?.length || 0), 0);
+
   return (
     <div>
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-100 hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="bg-purple-50 text-purple-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg></div>
+      <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
+        <div className="flex flex-wrap items-center gap-3 mb-1">
+          <div className="bg-purple-50 text-[#8A2680] p-2 rounded-lg shrink-0">
+            <Flag className="h-5 w-5" />
+          </div>
           <h3 className="text-base lg:text-xl font-bold text-slate-700">พรรคผู้สมัคร</h3>
+          {!loading && parties.length > 0 && (
+            <span className="text-xs font-bold text-[#8A2680] bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1">
+              {parties.length} พรรค
+            </span>
+          )}
           <button
             onClick={() => handleEditClick(null)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-green-200 text-green-600 hover:bg-green-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95" >
-            <CalendarPlus2 className="w-4 h-4" />
-            New
+            className="ml-auto flex items-center gap-2 px-4 py-2.5 bg-[#8A2680] text-white hover:bg-[#601A59] rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            เพิ่มพรรค
           </button>
         </div>
+        <p className="text-xs text-slate-400 mb-5 ml-1">
+          ชื่อพรรค เบอร์ โลโก้ สโลแกน และนโยบาย · คลิกที่การ์ดเพื่อแก้ไข
+        </p>
 
         <div>
           {/* Candidates */}
           {loading ? (
-            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200"><p className="text-slate-400">Loading...</p></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
+                  <div className="h-48 bg-slate-100" />
+                  <div className="p-5 space-y-2">
+                    <div className="h-4 bg-slate-100 rounded w-3/4" />
+                    <div className="h-3 bg-slate-100 rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : parties.length === 0 ? (
+            /* ปีใหม่เริ่มจากศูนย์เสมอ — หน้าว่างเปล่าไม่บอกอะไรเลยคือจุดที่คนใหม่ติด */
+            <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="w-12 h-12 mx-auto rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-300">
+                <Flag className="w-6 h-6" />
+              </div>
+              <p className="mt-4 text-base font-bold text-slate-600">ยังไม่มีพรรคผู้สมัคร</p>
+              <p className="mt-1 text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                เริ่มจากเพิ่มพรรคก่อน แล้วค่อยเพิ่มสมาชิกของแต่ละพรรคในหัวข้อด้านล่าง
+                <br className="hidden sm:block" />
+                ตัวเลือก &ldquo;งดออกเสียง&rdquo; และ &ldquo;ไม่รับรอง&rdquo; ระบบใส่ให้เองอัตโนมัติ ไม่ต้องเพิ่มเอง
+              </p>
+              <button
+                onClick={() => handleEditClick(null)}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[#8A2680] text-white hover:bg-[#601A59] rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                เพิ่มพรรคแรก
+              </button>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
-              {
-                candidates.filter(e => e.number > 0).map((candidate) => {
-                  return (
-                    <CandidateCard
-                      key={candidate.id}
-                      candidate={candidate}
-                      onClick={() => handleEditClick(candidate)}
-                    />
-                  );
-                })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+              {parties.map((candidate) => (
+                <CandidateCard
+                  key={candidate.id}
+                  candidate={candidate}
+                  onClick={() => handleEditClick(candidate)}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -417,37 +460,51 @@ const CandidatesTab = () => {
 
       <div className="p-3" />
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-100 hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="bg-purple-50 text-purple-600 p-2 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>
+      <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
+        <div className="flex flex-wrap items-center gap-3 mb-1">
+          <div className="bg-purple-50 text-[#8A2680] p-2 rounded-lg shrink-0">
+            <Users className="h-5 w-5" />
+          </div>
           <h3 className="text-base lg:text-xl font-bold text-slate-700">สมาชิกพรรค</h3>
+          {!loading && memberTotal > 0 && (
+            <span className="text-xs font-bold text-[#8A2680] bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1">
+              {memberTotal} คน
+            </span>
+          )}
         </div>
+        <p className="text-xs text-slate-400 mb-5 ml-1">
+          เปิดพรรคเพื่อดูรายชื่อ · คลิกที่ชื่อสมาชิกเพื่อแก้ไข หรือกดปุ่มเพิ่มสมาชิกในพรรคนั้น
+        </p>
 
         <div>
           {/* Members */}
           {loading ? (
-            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200"><p className="text-slate-400">Loading...</p></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6">
+              {[0, 1].map((i) => (
+                <div key={i} className="h-[88px] rounded-2xl border border-slate-100 bg-slate-50 animate-pulse" />
+              ))}
+            </div>
+          ) : parties.length === 0 ? (
+            <div className="text-center py-10 px-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+              <div className="w-12 h-12 mx-auto rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-300">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <p className="mt-4 text-sm font-bold text-slate-600">ยังไม่มีพรรคให้เพิ่มสมาชิก</p>
+              <p className="mt-1 text-sm text-slate-400">เพิ่มพรรคในหัวข้อด้านบนก่อน แล้วรายชื่อพรรคจะมาโผล่ตรงนี้</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 h-500 sm:grid-cols-2 lg:grid-cols-2 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
-              {
-                candidates.filter(e => e.number > 0).map((candidate, index) => {
-                  return (
-                    <div key={candidate.id}>
-                      <EditCandidateMember
-                        candidate={candidate}
-                        onClick={(memberId) => handleEditClickMember(candidate, memberId)}
-                      />
-                    </div>
-                  );
-                })}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6 items-start">
+              {parties.map((candidate) => (
+                <EditCandidateMember
+                  key={candidate.id}
+                  candidate={candidate}
+                  defaultExpanded={parties.length === 1}
+                  onClick={(memberId) => handleEditClickMember(candidate, memberId)}
+                />
+              ))}
             </div>
           )}
         </div>
-
-        <div>
-
-        </div>
-
       </div>
     </div>
   )
