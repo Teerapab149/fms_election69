@@ -210,12 +210,16 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         )}
 
         {/* ===== 5. ภาพกิจกรรม — horizontal photo-strip (hidden when empty) ===== */}
+        {/* เหมือน receipt: ไม่มีภาพหมู่เป็น hero ตารางนี้จึงซ่อนตอนรูปเดียวไม่ได้
+            แต่หัวข้อต้องตรงกับสิ่งที่อยู่ในนั้นจริง ๆ (2026-07-30) */}
         {gallery.length > 0 && (
-          <section className="bl-psec" aria-label="ภาพกิจกรรมพรรค">
+          <section className="bl-psec" aria-label={gallery.length > 1 ? "ภาพกิจกรรมพรรค" : "ภาพหมู่พรรค"}>
             <div className="bl-psec__head">
-              <span className="bl-psec__kick">GALLERY</span>
-              <h2 className="bl-psec__title">ภาพกิจกรรม</h2>
-              <span className="bl-psec__count">{pad2(gallery.length)} <span className="bl-thai bl-thai--nw">ภาพ</span></span>
+              <span className="bl-psec__kick">{gallery.length > 1 ? "GALLERY" : "GROUP PHOTO"}</span>
+              <h2 className="bl-psec__title">{gallery.length > 1 ? "ภาพกิจกรรม" : "ภาพหมู่พรรค"}</h2>
+              {gallery.length > 1 && (
+                <span className="bl-psec__count">{pad2(gallery.length)} <span className="bl-thai bl-thai--nw">ภาพ</span></span>
+              )}
             </div>
             <div className="bl-strip">
               {gallery.map((src, i) => (
@@ -443,7 +447,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         .bl-party-root .bl-pquote__mark { position:absolute; left:14px; top:-18px; font-family:var(--bl-fd); font-weight:800;
           font-size:76px; line-height:1; color:var(--bl-primary-soft); pointer-events:none; user-select:none; }
         .bl-party-root .bl-pquote__body { position:relative; margin:0; font-family:var(--bl-fd); font-weight:500;
-          font-size:clamp(18px,4.4vw,26px); line-height:1.6; letter-spacing:-.01em; color:var(--bl-ink); white-space:pre-line; }
+          font-size: clamp(16px, 2vw, 18px); line-height:1.6; letter-spacing:-.01em; color:var(--bl-ink); white-space:pre-line; }
         /* StoryClamp — a long logo-meaning collapses behind a canvas fade so the
            sections below stay reachable; the toggle wears the candy accent */
         .bl-party-root .bl-sc { --sc-max:9.6em; --sc-fade:var(--bl-canvas); }
