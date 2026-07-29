@@ -382,6 +382,14 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     };
 
 
+    // Esc ปิดหน้าต่าง — คนที่เปิดผิดใบมักกด Esc ก่อนหาปุ่มยกเลิกเสมอ
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     return (
@@ -389,9 +397,11 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-gray-100 flex flex-col">
 
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                    {/* หัวข้อต้องบอกว่ากำลังทำอะไรอยู่ — เดิมเขียน "แก้ไข" แม้ตอนสร้างพรรคใหม่
+                        ทั้งที่ปุ่มล่างเขียน "สร้าง" ทำให้คนกดเข้ามาครั้งแรกไม่แน่ใจว่ามาถูกที่ */}
                     <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <User className="w-5 h-5 text-purple-600" />
-                        แก้ไขข้อมูลผู้สมัคร
+                        <User className="w-5 h-5 text-[#8A2680]" />
+                        {candidate ? 'แก้ไขข้อมูลพรรค' : 'เพิ่มพรรคใหม่'}
                     </h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
                         <X className="w-5 h-5" />
