@@ -134,9 +134,16 @@ sh scripts/backup.sh                                     # สำรองขอ
 git pull
 sh scripts/setup.sh                                      # migrate + build + เปิดใหม่
 psql "<fms_migrate>" -f scripts/sql/ballot-grants.sql    # ล็อกสิทธิ์ตารางบัตร (ใหม่ปีนี้)
+npm run preflight                                        # ⭐ ต้องขึ้น "app can create parties/members"
 node scripts/admin.js --grant <รหัส นศ. ของกรรมการ>       # ทีละคน
 node scripts/admin.js --rotate-password                  # รหัสกลาง ส่งให้สโมสรฯ
 ```
+
+> ⚠️ **ปีที่แล้วติดตรงนี้** — เพิ่มข้อมูลพรรคจากหน้าแอดมินไม่ได้ แต่ลบได้ อาการนี้ไม่ใช่สิทธิ์
+> ตาราง แต่เป็นสิทธิ์ **sequence**: การ INSERT ต้องขอเลข id ตัวถัดไปจาก `Candidate_id_seq`
+> ส่วน DELETE ไม่ต้องใช้ เลยยังทำงานได้ ทำให้ดูเหมือนสิทธิ์ครบแล้ว
+> ไฟล์ `ballot-grants.sql` ปีนี้ให้สิทธิ์ sequence ครบแล้ว รวมถึงตารางที่จะสร้างในอนาคต
+> และ `npm run preflight` จะทดลอง insert จริงแล้ว rollback ให้ดูว่าผ่านหรือไม่ **อย่าข้ามข้อนี้**
 
 **สิ่งที่เปลี่ยนแล้วพี่ต้องรู้ แต่ไม่ต้องทำอะไร**
 
@@ -329,6 +336,7 @@ sh scripts/setup.sh
 |---|---|
 | เว็บเปิดไม่ขึ้น / 502 | `sh scripts/setup.sh --check` แล้วดูข้อที่ไม่ผ่าน |
 | เว็บค้าง ช้าผิดปกติ | `docker compose restart web` |
+| **เพิ่มพรรค/สมาชิกในหน้าแอดมินไม่ได้ แต่ลบได้** | สิทธิ์ **sequence** ขาด ไม่ใช่สิทธิ์ตาราง (เจอจริงตอนปี 2569) → `psql "<fms_migrate>" -f scripts/sql/ballot-grants.sql` แล้ว `npm run preflight` ต้องขึ้น "app can create parties/members" |
 | แอดมินล็อกอินไม่ได้ | `node scripts/admin.js --list` — มีชื่อไหม รหัสกลางตั้งหรือยัง |
 | นักศึกษาล็อกอินไม่ได้ทั้งระบบ | PSU SSO ฝั่งมหาวิทยาลัย — ติดต่อ IT ม.อ. ขอค่าใหม่ แล้วอัปเดต `.env` |
 | โหวตไม่ได้ ทั้งที่ยังไม่ถึงเวลาปิด | กุญแจบัตรใน `.env` ไม่ครบ → `sh scripts/setup.sh --check` |

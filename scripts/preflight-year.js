@@ -136,6 +136,35 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
 
     if (env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true") add("FAIL", "mock-login is ENABLED", "NEXT_PUBLIC_ENABLE_MOCK_LOGIN must be off in production");
     else add("PASS", "mock-login disabled", "");
+
+    // ── Can the app actually create a party? (the 2569 production failure) ──────
+    // Adding a party from the admin console died on the real server while deleting
+    // worked, because INSERT on a SERIAL id needs USAGE on the sequence and only
+    // the table grant had been given. Nothing in the UI or the logs said "sequence".
+    // Probe it for real, inside a transaction that always rolls back, so this is
+    // caught here instead of by a student the week before the election.
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.$executeRawUnsafe(
+          `INSERT INTO "Candidate" (name, number) VALUES ('__preflight probe__', -9999)`
+        );
+        throw new Error("__rollback__");
+      });
+    } catch (e) {
+      if (e.message === "__rollback__" || e.message?.includes("__rollback__")) {
+        add("PASS", "app can create parties/members", "insert probe succeeded (rolled back)");
+      } else if (/permission denied for sequence/i.test(e.message)) {
+        add("FAIL", "app CANNOT create parties — sequence grant missing",
+          "the admin console will fail to add a party while delete still works · fix: psql -f scripts/sql/ballot-grants.sql (GRANT USAGE, SELECT ON ALL SEQUENCES)");
+      } else if (/permission denied/i.test(e.message)) {
+        add("FAIL", "app CANNOT create parties — grant missing", `${e.message.split("\n")[0]} · fix: psql -f scripts/sql/ballot-grants.sql`);
+      } else {
+        add("WARN", "could not probe party creation", e.message.split("\n")[0]);
+      }
+    }
+
+    const leftover = await prisma.candidate.count({ where: { name: "__preflight probe__" } });
+    if (leftover > 0) add("FAIL", "preflight probe row was not rolled back", `delete it by hand: name = '__preflight probe__'`);
   } catch (e) {
     add("FAIL", "preflight crashed", e.message);
   } finally {

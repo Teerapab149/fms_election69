@@ -53,14 +53,39 @@ GRANT  SELECT, INSERT, UPDATE ON TABLE "User" TO fms_app;
 -- ── Everything else the app reads/writes normally (candidates, config, audit).
 --    Candidate.score is incremented at vote time → needs UPDATE. AdminAuditLog is
 --    append-only accountability → INSERT + SELECT, no UPDATE/DELETE.
-GRANT SELECT, INSERT, UPDATE ON TABLE "Candidate"    TO fms_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "Member" TO fms_app; -- admin CRUD
 GRANT SELECT, INSERT, UPDATE ON TABLE "SystemConfig" TO fms_app;
 GRANT SELECT, INSERT           ON TABLE "AdminAuditLog" TO fms_app; -- append-only
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "Candidate" TO fms_app; -- admin CRUD (see below)
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "Template" TO fms_app;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO fms_app;
 
--- ── Verify the lockdown took (run as fms_app or inspect information_schema):
+-- ── ⚠️ SEQUENCES — the line that bit us in 2569 ──────────────────────────────
+-- Adding a party from the admin console failed on the production server while
+-- DELETE worked, which reads like a table-privilege problem and is not: INSERT on
+-- a SERIAL id calls nextval() on "Candidate_id_seq", and a role holding INSERT on
+-- the TABLE but nothing on the SEQUENCE gets "permission denied for sequence".
+-- DELETE never touches the sequence, so it kept working — the exact asymmetry that
+-- makes this confusing to diagnose. Two grants are needed, not one:
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO fms_app;
+-- ...and the same for anything created later (a future migration adds a table →
+-- its sequence would otherwise arrive ungranted and break inserts all over again):
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO fms_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO fms_app;
+
+-- ── Verify (run these after applying — do not skip) ───────────────────────────
+--
+-- 1. the ballot box is append-only:
 --   SELECT privilege_type FROM information_schema.role_table_grants
 --   WHERE grantee='fms_app' AND table_name='Ballot';
 --   -- expect exactly: SELECT, INSERT   (no UPDATE / DELETE)
+--
+-- 2. the app can actually create a party (this is what broke last year).
+--    Run AS fms_app; it rolls back, so nothing is left behind:
+--   BEGIN;
+--     INSERT INTO "Candidate" (name, number) VALUES ('__grant probe__', 9999);
+--   ROLLBACK;
+--   -- expect: INSERT 0 1. "permission denied for sequence Candidate_id_seq"
+--   -- means the two sequence grants above did not apply.
+--
+--    `npm run preflight` runs this same probe automatically — see
+--    scripts/preflight-year.js. Prefer that; it needs no psql session.
