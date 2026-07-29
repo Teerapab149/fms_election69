@@ -127,8 +127,9 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
         )}
 
 
-        {/* Floating Play/Expand Button */}
-        {galleryImages.length > 0 && (
+        {/* Floating Play/Expand Button — ขึ้นเมื่อมีรูปตั้งแต่ 2 ใบขึ้นไปเท่านั้น
+            รูปเดียวคือรูปที่เป็นพื้นหลังอยู่แล้ว กดแล้วได้ดูรูปเดิมซ้ำ (2026-07-28) */}
+        {galleryImages.length > 1 && (
           <button
             onClick={() => onOpenLightbox()}
             className="absolute bottom-10 right-4 xl:top-10 xl:right-10 xl:bottom-auto z-30 px-5 py-2.5 bg-slate-900/40 hover:bg-slate-900/60 text-white rounded-full backdrop-blur-md text-xs font-bold flex items-center gap-2 transition-all border border-white/20 hover:scale-105 shadow-lg"

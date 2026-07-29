@@ -102,7 +102,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           <div className="gp-hero__media">
             {heroImg ? <img src={heroImg} alt={party?.name || "party"} /> :
               <span className="gp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>}
-            {gallery.length > 0 && (
+            {/* ภาพเดียว = ภาพนั้นโชว์เป็น hero อยู่แล้ว ปุ่มแกลเลอรีจะเปิด lightbox
+                มาให้ดูรูปเดิมซ้ำ — ขึ้นเมื่อมีรูปที่สองเป็นต้นไปเท่านั้น (2026-07-28) */}
+            {gallery.length > 1 && (
               <button type="button" className="gp-hero__gallery" onClick={() => setLightbox(0)}>
                 <Maximize2 size={15} strokeWidth={2.5} /> ดูแกลเลอรี · {gallery.length}
               </button>
