@@ -105,6 +105,11 @@ export default function GumroadSingleParty({
           <div className="gsp-hero__media">
             {heroImg ? <img src={heroImg} alt={party?.name || "party"} /> :
               <span className="gsp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>}
+            {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมที่พรรคอัปเพิ่มอยู่ในแกลเลอรีของหน้านั้น
+                source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
+            <a className="gsp-hero__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
+              ดูข้อมูลพรรคแบบเต็ม →
+            </a>
           </div>
           <div className="gsp-hero__body">
             <div className="gsp-hero__logo">
@@ -312,9 +317,15 @@ export default function GumroadSingleParty({
 
         /* HERO */
         .gsp-hero{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); overflow:hidden; margin-bottom:28px; }
-        .gsp-hero__media{ height:clamp(220px,38cqw,360px); display:grid; place-items:center; border-bottom:var(--bw) solid var(--ink); overflow:hidden;
+        .gsp-hero__media{ position:relative; height:clamp(220px,38cqw,360px); display:grid; place-items:center; border-bottom:var(--bw) solid var(--ink); overflow:hidden;
           background-image:repeating-linear-gradient(45deg,transparent 0 16px,rgba(0,0,0,.04) 16px 18px),linear-gradient(135deg,#FFD1F2,#E9D5FF); }
         .gsp-hero__media img{ width:100%; height:100%; object-fit:cover; }
+        /* ชิปมุมล่างขวาบนภาพหมู่ — idiom เดียวกับปุ่มแกลเลอรีของหน้า /party ตระกูลนี้ */
+        .gsp-hero__more{ position:absolute; right:12px; bottom:12px; z-index:2; display:inline-flex; align-items:center; gap:6px;
+          font-family:var(--fm); font-size:12px; font-weight:700; text-decoration:none; letter-spacing:.02em;
+          background:var(--cream); color:var(--ink); border:var(--bw) solid var(--ink); border-radius:999px;
+          padding:7px 14px; box-shadow:3px 3px 0 var(--ink); transition:transform .15s ease, box-shadow .15s ease; }
+        .gsp-hero__more:hover, .gsp-hero__more:focus-visible{ transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--ink); outline:none; }
         .gsp-hero__ph{ background:var(--paper); border:2px solid var(--ink); padding:12px 18px; border-radius:999px; font-family:var(--fm); font-weight:600; font-size:13px; }
         .gsp-hero__body{ padding:28px 32px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
         /* flex, not grid — see GumroadParty: percentage max-height does not resolve on

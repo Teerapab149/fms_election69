@@ -228,6 +228,13 @@ export default function ReceiptSingleParty({
           </figure>
         )}
 
+        {/* ทางไปหน้าแนะนำพรรคเต็ม — หน้านี้แสดงภาพหมู่ใบเดียว ภาพกิจกรรมที่พรรคอัปเพิ่ม
+            อยู่ในแกลเลอรีของหน้า /party · source=vote ทำให้หน้านั้นมีแถบกลับมาโหวต
+            จึงไม่ทำให้ผู้ลงคะแนนหลงทาง (2026-07-30) */}
+        <a className="rc-sp-more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
+          <span className="rc-th">ดูข้อมูลพรรคแบบเต็ม</span> · FULL PROFILE &amp; GALLERY →
+        </a>
+
         {/* logo meaning — the story explains the party mark (logo chip ties them) */}
         {showStory && (
           <section className="rc-sp-sec">
@@ -627,6 +634,14 @@ export default function ReceiptSingleParty({
           background:color-mix(in srgb, var(--rc-ink) 82%, transparent); padding:6px 13px; border-radius:3px;
           /* the caption chip is pressed on right after the print lands (tape follows) */
           transform-origin:left bottom; animation:rcPress .42s cubic-bezier(.34,1.56,.64,1) both .54s; }
+
+        /* ทางไปหน้าแนะนำพรรคเต็ม — แถบกระดาษบาง ๆ ใต้ภาพหมู่ ไม่แย่งสายตากับปุ่มลงคะแนน */
+        .rc-single-root .rc-sp-more { display:inline-flex; align-items:center; gap:8px; margin:14px 0 0;
+          font-family:var(--rc-fm); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+          color:var(--rc-faint); text-decoration:none; border-bottom:1px solid var(--rc-line); padding-bottom:3px;
+          transition:color .2s, border-color .2s; }
+        .rc-single-root .rc-sp-more:hover, .rc-single-root .rc-sp-more:focus-visible {
+          color:var(--rc-ink); border-color:var(--rc-ink); outline:none; }
 
         /* ---- generic section (about / policies / team) ---- */
         .rc-single-root .rc-sp-sec { margin-top:48px; }

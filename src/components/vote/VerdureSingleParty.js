@@ -165,6 +165,12 @@ export default function VerdureSingleParty({
           </figure>
         )}
 
+        {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมทั้งหมดอยู่ในแกลเลอรีของหน้านั้น
+            source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
+        <a className="vd-booth__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
+          <span className="vd-thai">ดูข้อมูลพรรคแบบเต็ม</span> · Full profile &amp; gallery <span className="arr">↗</span>
+        </a>
+
         {story && (
           <div className="vd-booth__brief">
             <div className="vd-booth__shead"><div><span className="vd-booth__kicker">About the party</span><h2>เกี่ยวกับพรรค</h2></div>{userName && <span className="vd-booth__count"><span className="vd-thai">สวัสดี {userName}</span></span>}</div>
@@ -315,6 +321,14 @@ export default function VerdureSingleParty({
         .vd-booth__cue:hover { transform:translateY(-1px); border-color:var(--terra); background:var(--cream); }
         .vd-booth__cue .cue-arr { font-size:15px; line-height:1; animation:vdCueBounce 1.6s ease-in-out infinite; }
         @keyframes vdCueBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+        /* ทางไปหน้าแนะนำพรรคเต็ม — ลิงก์เส้นบางใต้ภาพหมู่ โทนเดียวกับ eyebrow ของบท */
+        .vd-booth__more { display:inline-flex; align-items:center; gap:8px; margin:16px 0 0;
+          font-family:var(--fm); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+          color:var(--moss); opacity:.7; text-decoration:none; border-bottom:1px solid var(--rule);
+          padding-bottom:4px; transition:opacity .2s, color .2s, border-color .2s; }
+        .vd-booth__more:hover, .vd-booth__more:focus-visible { opacity:1; color:var(--terra); border-color:var(--terra); outline:none; }
+        .vd-booth__more .arr { font-size:13px; }
+
         .vd-booth__cover { display:block; margin:40px 0 0; cursor:zoom-in; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(var(--moss-rgb),.45); }
         .vd-booth__cover img { width:100%; height:clamp(260px,38vw,440px); object-fit:cover; display:block; transition:transform .6s; }
         .vd-booth__cover:hover img { transform:scale(1.03); }
