@@ -320,13 +320,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             data.append('missions', formData.missions);
             data.append('policies', formData.policies);
             if (selectedFile) data.append('file', selectedFile);
-            if (officialFile) data.append('officialImage', officialFile);
 
-            // Append Mobile Hero Images
-            data.append('existingMobileHeroImages', JSON.stringify(existingMobileHeroImages));
-            mobileHeroFiles.forEach((file) => {
-                data.append('mobileHeroFiles', file);
-            });
+            // ไม่ส่ง officialImage / mobileHero* อีกแล้ว (ถอดช่องกรอกออก 2026-07-28)
+            // API ทั้งสองฟิลด์นี้จะแตะก็ต่อเมื่อได้รับค่ามาเท่านั้น การไม่ส่งจึงแปลว่า
+            // "ไม่เปลี่ยน" — ภาพเก่าที่พรรคเคยอัปไว้ยังอยู่ครบและยังถูกใช้เป็นตัวสำรอง
 
             data.append('existingGroupImages', JSON.stringify(existingImages));
             newGroupFiles.forEach((item) => {
@@ -448,7 +445,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                         คนกรอกครั้งแรกจึงไม่รู้ว่าต้องมีอะไรบ้างถึงจะกดสร้างได้ */}
                     <form id="candidate-form" onSubmit={handleSubmit} className="space-y-6">
 
-                        <FormSection n="1" title="ข้อมูลหลัก" hint="สามช่องนี้กรอกครบแล้วกดสร้างได้เลย · หัวข้อ 2-4 มาเติมทีหลังได้" required>
+                        <FormSection n="1" title="ข้อมูลหลัก" hint="สามช่องนี้กรอกครบแล้วกดสร้างได้เลย · หัวข้อ 2-3 มาเติมทีหลังได้" required>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">หมายเลข <span className="text-red-500">*</span></label>
@@ -518,10 +515,20 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     <p className="text-xs text-gray-400">โลโก้พรรค · กดที่ปุ่มอัปโหลดมุมขวาล่าง</p>
                                 </div>
 
+                                {/* ช่องนี้คือช่องเดียวที่ใช้แล้ว — เดิมมีช่อง "รูปหมู่แนวตั้ง (Mobile SingleVote)"
+                                    กับ "รูปทีมแนวตั้งหลายรูป" แยกอยู่อีกหัวข้อ เพราะตอนนั้น original บนมือถือ
+                                    ใช้ภาพชุดเดียวกับจอใหญ่ไม่ได้ · ตอนนี้ทุกตระกูลใช้ภาพหมู่แนวนอนชุดเดียวกัน
+                                    หมดแล้ว สองช่องนั้นจึงถูกถอดออก (2026-07-28) ข้อมูลเก่าที่เคยอัปไว้ยังอยู่ใน
+                                    ฐานข้อมูลและถูกใช้เป็นตัวสำรองต่อไป แค่ไม่ต้องกรอกเพิ่มอีก */}
                                 <div className="w-full">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        รูปภาพรวมพรรค <span className="text-gray-400 font-normal">(เลือกได้หลายรูป)</span>
+                                        ภาพหมู่ / ภาพกิจกรรมพรรค <span className="text-gray-400 font-normal">(เลือกได้หลายรูป · ไม่ใส่ก็ได้)</span>
                                     </label>
+                                    <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
+                                        <b>ภาพแรก</b> = ภาพหมู่แนวนอนที่โชว์บนหน้าโหวตและหน้าแนะนำพรรค (แนะนำแนวนอน)
+                                        <br />
+                                        <b>ภาพที่เหลือ</b> = แกลเลอรีในหน้าแนะนำพรรค เช่น ภาพกิจกรรมหรือภาพหาเสียง
+                                    </p>
                                     <div className="grid grid-cols-3 gap-2">
                                         {existingImages.map((src, idx) => (
                                             <div key={`old-${idx}`} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group">
@@ -683,92 +690,6 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             </div>
                         </FormSection>
 
-                        <FormSection n="4" title="รูปสำหรับหน้าจอมือถือ" hint="ใส่เมื่อมีพรรคเดียว · หลายพรรคข้ามได้">
-                            <div className="w-full">
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-6">
-                                {/* Mobile Hero Cover */}
-                                <div className="flex flex-col items-center gap-3">
-                                    <p className="text-sm font-medium text-gray-600 w-full text-left">1. รูปหมู่แนวตั้ง (Mobile SingleVote Page)*ไม่ต้องใส่ถ้ามีมากกว่า 1 พรรค</p>
-                                    <div className="relative group w-full aspect-[3/4] bg-white rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center shadow-sm">
-                                        {officialPreview ? (
-                                            <img src={officialPreview.startsWith('blob:') ? officialPreview : getPath(officialPreview)} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="flex flex-col items-center text-gray-400">
-                                                <ImageIcon className="w-8 h-8 mb-1" />
-                                                <span className="text-xs">ยังไม่มีรูปภาพ</span>
-                                            </div>
-                                        )}
-                                        <label className="absolute bottom-2 right-2 bg-white border border-gray-200 p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-50 text-blue-600 transition-colors">
-                                            <Upload className="w-5 h-5" />
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleOfficialFileChange} />
-                                        </label>
-                                    </div>
-                                    <p className="text-xs text-gray-500 text-left w-full">แนะนำขนาด: 3:4 แนวตั้ง (ใช้สำหรับหน้าโหวตบนมือถือ - รูปใหญ่)</p>
-                                </div>
-
-                                <hr className="border-gray-200" />
-
-                                {/* Mobile Vertical Team (Multiple) */}
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex flex-col">
-                                            <p className="text-sm font-medium text-gray-600">2. รูปทีมแนวตั้ง (Mobile Vertical Team)</p>
-                                            <p className="text-xs text-gray-500">ใส่ได้หลายรูป (แนะนำอัตราส่วน 3:4)</p>
-                                        </div>
-                                        <label className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer shadow-sm transition-colors">
-                                            <Plus className="w-4 h-4" />
-                                            <span>เพิ่มรูปแนวตั้ง</span>
-                                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleMobileHeroFileChange} />
-                                        </label>
-                                    </div>
-
-                                    {/* Grid for Mobile Vertical Images */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2">
-                                        {/* Existing Images */}
-                                        {existingMobileHeroImages.map((url, index) => (
-                                            <div key={`existing-mh-${index}`} className="relative group aspect-[3/4] bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                                                <img src={url.startsWith('blob:') ? url : getPath(url)} alt={`Team Vertical ${index + 1}`} className="w-full h-full object-cover" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeExistingMobileHeroImage(index)}
-                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] p-1 text-center truncate">
-                                                    รูปเดิม
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {/* New Files */}
-                                        {mobileHeroPreviews.map((item, index) => (
-                                            <div key={`new-mh-${index}`} className="relative group aspect-[3/4] bg-white rounded-lg border border-blue-200 overflow-hidden shadow-sm ring-2 ring-blue-50">
-                                                <img src={item.url} alt={`New Vertical ${index + 1}`} className="w-full h-full object-cover" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeNewMobileHeroImage(index)}
-                                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                                <div className="absolute bottom-0 left-0 right-0 bg-blue-600 text-white text-[10px] p-1 text-center truncate">
-                                                    กำลังอัปโหลด
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {existingMobileHeroImages.length === 0 && mobileHeroPreviews.length === 0 && (
-                                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                            <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                                            <p className="text-sm text-gray-500">ยังไม่มีรูปทีมแนวตั้ง</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        </FormSection>
 
                     </form>
                 </div>

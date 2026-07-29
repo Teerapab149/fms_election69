@@ -140,8 +140,14 @@ export default function SinglePartyView({
   }, [candidate?.officialImageUrl]);
 
   // --- 2.3 IMAGE FALLBACK LOGIC ---
-  // A. Hero Section Image (Priority: Official -> Mobile -> Group -> Logo)
-  const finalHeroImage = officialImages[0] || mobileHeroImages[0] || carouselImages[0] || partyLogo;
+  // A. Hero Section Image — ภาพหมู่แนวนอน (groupImageUrls) มาก่อนเสมอ
+  //
+  // เดิมหน้านี้เอา officialImageUrl (โปสเตอร์แนวตั้ง) ขึ้นก่อน เพราะตอนสร้างคิดว่า
+  // single-vote บนมือถือของ original ใช้ภาพชุดเดียวกับจอใหญ่ไม่ได้ ปัจจุบันใช้ชุด
+  // เดียวกันแล้ว และทุกตระกูลอื่น (receipt/gumroad/verdure/studio-dark/blossom) ก็
+  // เอาภาพหมู่แนวนอนขึ้นก่อนทั้งหมด — original เป็นตัวเดียวที่ต่างออกไปโดยไม่มีเหตุผล
+  // เหลืออยู่ (2026-07-28) ลำดับนี้ทำให้ทั้ง 6 ตระกูลแสดงภาพเดียวกันจากข้อมูลชุดเดียวกัน
+  const finalHeroImage = carouselImages[0] || officialImages[0] || mobileHeroImages[0] || partyLogo;
 
   // B. Team Section Mobile Image (Priority: Mobile -> Official -> Group)
   const finalTeamMobileImage = mobileHeroImages[0] || officialImages[0] || carouselImages[0];
