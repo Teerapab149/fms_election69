@@ -311,116 +311,188 @@ sh scripts/setup.sh
 **ใครเลือกพรรคไหน** — `User.isVoted` บอกแค่ว่ามาใช้สิทธิ์แล้ว ส่วน `Ballot` เก็บตัวเลือก
 ในรูปที่เข้ารหัสและไม่มีเส้นเชื่อมกลับไปหาคน แม้แต่ใน backup ก็ไม่มี
 
-### 8.2 โครงสร้างจริงของแต่ละตาราง
+### 8.2 สร้างฐานข้อมูลจากศูนย์
 
-ดึงจากฐานข้อมูลที่ใช้อยู่จริง (`information_schema`) ไม่ใช่จากความจำ — ตรงกับ
-`prisma/schema.prisma` ในโค้ด ถ้าอยากดูของเครื่องตัวเองให้รัน:
+**ทางปกติ — ไม่ต้องแตะ SQL เลย** `sh scripts/setup.sh` ทำให้แล้ว (มันเรียก
+`prisma migrate deploy` ซึ่งรู้ว่าฐานข้อมูลอยู่รุ่นไหน และอัปเดตต่อได้ในปีถัดไป)
+
+**ถ้าอยากสร้างด้วย SQL ตรง ๆ** เช่น DBA ขอดูก่อนว่าจะสร้างอะไรบ้าง หรือเครื่องนั้นรัน node ไม่ได้:
 
 ```bash
-psql "<fms_migrate>" -c "\d+ \"Ballot\""      # ดูทีละตาราง
-psql "<fms_migrate>" -c "\dt"                 # ดูรายชื่อตารางทั้งหมด
+psql "<fms_migrate>" -f scripts/sql/schema.sql          # สร้างทุกตาราง + แถวเริ่มต้นของโซ่บัตร
+psql "<fms_migrate>" -f scripts/sql/ballot-grants.sql   # ล็อกสิทธิ์ตารางบัตร
 ```
 
-#### `User` — นักศึกษาผู้มีสิทธิ์ + แอดมิน
+`scripts/sql/schema.sql` คือคำสั่ง `CREATE TABLE` ทั้งหมดในไฟล์เดียว generate จาก schema จริง
+เปิดอ่านก่อนรันได้ (ทดสอบแล้วว่าสร้างฐานข้อมูลได้ครบเท่ากับทาง migrate ทุกคอลัมน์)
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | integer | NOT NULL | auto |
-| `studentId` | text | NOT NULL | — **UNIQUE** |
-| `name` `email` `facultyId` `departmentId` | text | NULL | |
-| `role` | text | NOT NULL | `student` |
-| `passwordHash` | text | NULL | — เฉพาะบัญชีสำรอง |
-| `gender` `major` `titleName` | text | NULL | |
-| `subKeyId` `subMajorId` `subMajorNameThai` | text | NULL | ข้อมูลสาขาจาก SSO |
-| `year` `yearStatus` | text | NULL | ชั้นปี (`ปี 1`–`ปี 4` เท่านั้นที่โหวตได้) |
-| `isVoted` | boolean | NOT NULL | `false` |
-| `votedAt` | timestamp | NULL | เวลาที่ตัวเองมาใช้สิทธิ์ (ไม่เชื่อมกับบัตร) |
-| `isFormCompleted` | boolean | NOT NULL | `false` |
-| `isAdmin` | boolean | NOT NULL | `false` |
-| `createdAt` | timestamp | NOT NULL | `now()` |
+> ⚠️ ถ้าใช้ทาง SQL ต้องบอก prisma ว่า migration ทั้งหมดถือว่าลงแล้ว ไม่งั้นการอัปเดตครั้งถัดไป
+> จะพยายามสร้างตารางซ้ำ — คำสั่งอยู่ในหัวไฟล์ `schema.sql`
 
-#### `Candidate` — พรรค
+### 8.3 schema ตามที่เขียนไว้ในไฟล์
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | integer | NOT NULL | auto |
-| `name` | text | NOT NULL | **UNIQUE** |
-| `number` | integer | NOT NULL | **UNIQUE** · `0`=งดออกเสียง `-1`=ไม่รับรอง |
-| `slogan` `logoUrl` `officialImageUrl` `logoMeaning` `color` | text | NULL | |
-| `groupImageUrls` `mobileHeroImage` `missions` `policies` | jsonb | NULL | |
-| `score` | integer | NOT NULL | `0` — **คะแนนจริง** |
+นี่คือ `prisma/schema.prisma` ในโค้ด ซึ่งเป็นต้นทางของทุกตาราง — แก้ที่นี่ที่เดียวแล้วสร้าง
+migration ตาม ห้ามไปแก้ตารางในฐานข้อมูลด้วยมือ เพราะรอบอัปเดตถัดไปจะไม่ตรงกัน
 
-#### `Member` — สมาชิกพรรค
+```prisma
+model User {
+  id               Int     @id @default(autoincrement())
+  studentId        String  @unique
+  name             String?
+  email            String?
+  facultyId        String?
+  departmentId     String?
+  role             String  @default("student")
+  passwordHash     String?
+  gender           String?
+  major            String?
+  titleName        String?
+  subKeyId         String?
+  subMajorId       String?
+  subMajorNameThai String?
+  year             String?
+  yearStatus       String?
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | integer | NOT NULL | auto |
-| `studentId` | text | NOT NULL | **UNIQUE** |
-| `name` `imageUrl` | text | NOT NULL | |
-| `number` | integer | NOT NULL | `0` |
-| `modalImageUrl` `major` `position` | text | NULL | |
-| `candidateId` | integer | NOT NULL | → `Candidate.id` |
+  isVoted         Boolean   @default(false)
+  votedAt         DateTime? // เวลาที่คนนี้มาใช้สิทธิ์ — ข้อมูลของตัวเอง ไม่ใช่ความลับ
+  //                           ไม่มีเส้นเชื่อมไปยังบัตรใบไหน: ตัวเลือกอยู่ในบัตรที่
+  //                           เข้ารหัสและสาวกลับไม่ได้ (v2-SEC)
+  isFormCompleted Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  isAdmin         Boolean   @default(false)
 
-#### `Ballot` — หีบบัตร (1 แถว = บัตร 1 ใบ)
+  authoredTemplates Template[] @relation("AuthoredTemplates")
+}
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `seq` | integer | NOT NULL | auto — ลำดับในโซ่ |
-| `payload` | text | NOT NULL | ตัวเลือกที่เข้ารหัส RSA-OAEP แล้ว (base64) |
-| `hourBucket` | text | NULL | ช่วงเวลาหยาบระดับชั่วโมง เช่น `2569-02-06T09` |
-| `prevHash` | text | NOT NULL | `rowHash` ของแถวก่อนหน้า (แถวแรก = `GENESIS`) |
-| `rowHash` | text | NOT NULL | HMAC-SHA256 ของแถวนี้ |
+model Member {
+  id        Int    @id @default(autoincrement())
+  studentId String @unique
+  name      String
+  number    Int    @default(0)
 
-**ไม่มีคอลัมน์ `userId` และไม่มีเวลาละเอียด** — โดยเจตนา นี่คือเหตุผลที่ไม่มีใครสาวกลับได้ว่าใครเลือกอะไร
+  imageUrl      String
+  modalImageUrl String?
 
-#### `ChainHead` — ปลายโซ่ (มีแถวเดียวเสมอ id=1)
+  major    String?
+  position String?
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | integer | NOT NULL | `1` |
-| `head` | text | NOT NULL | `GENESIS` |
-| `seq` | integer | NOT NULL | `0` |
+  candidateId Int
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+}
 
-#### `SystemConfig` — ตั้งค่าระบบ (มีแถวเดียวเสมอ id=1)
+model Candidate {
+  id      Int     @id @default(autoincrement())
+  name    String  @unique
+  number  Int     @unique
+  slogan  String?
+  logoUrl String?
+  color   String? // สีประจำพรรค (hex) แอดมินตั้งเอง
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | integer | NOT NULL | `1` |
-| `systemMode` | text | NOT NULL | `AUTO` · `MANUAL_OPEN` `PAUSE` `ENDED` |
-| `showResult` | boolean | NOT NULL | `false` — สวิตช์เปิดเผยผล |
-| `isVoteOpen` | boolean | NOT NULL | `false` — ของเก่า ไม่ได้ใช้ตัดสินใจแล้ว |
-| `googleFormUrl` | text | NULL | |
-| `pageLayout` `themeConfig` `globalConfig` | jsonb | NULL | `globalConfig` เก็บวันเวลาเลือกตั้ง + ธงรับรองผล |
-| `activeTemplateId` | text | NULL | `classic` |
-| `adminPasswordHash` | text | NULL | **รหัสกลางแอดมิน (bcrypt)** |
-| `updatedAt` | timestamp | NOT NULL | |
+  groupImageUrls   Json?
+  officialImageUrl String?
+  mobileHeroImage  Json?
 
-#### `AdminAuditLog` — บันทึกคำสั่งของแอดมิน
+  logoMeaning String?
+  missions    Json?
+  policies    Json?
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | integer | NOT NULL | auto |
-| `action` | text | NOT NULL | เช่น `SET_MODE` |
-| `detail` | text | NULL | รายละเอียดของคำสั่ง (JSON) |
-| `actor` | text | NULL | รหัส นศ. ของคนที่สั่ง |
-| `createdAt` | timestamp | NOT NULL | `now()` — มี index |
+  members Member[]
 
-#### `Template` — ธีมหน้าเว็บ
+  score Int @default(0)   // คะแนนจริง บวกทีละหนึ่งตอนลงคะแนน
+}
 
-| คอลัมน์ | ชนิด | null | ค่าเริ่มต้น |
-|---|---|---|---|
-| `id` | text | NOT NULL | |
-| `slug` | text | NOT NULL | **UNIQUE** |
-| `name` | text | NOT NULL | |
-| `description` `forkedFrom` `archivedYear` | text | NULL | |
-| `authorId` | integer | NULL | → `User.id` |
-| `isBuiltIn` `isLocked` | boolean | NOT NULL | `false` |
-| `visibility` | text | NOT NULL | `private` |
-| `pages` `elements` `theme` | jsonb | NOT NULL | |
-| `schemaVersion` | text | NOT NULL | `v1` |
-| `createdAt` `updatedAt` | timestamp | NOT NULL | |
+// ============================================================
+// v2-SEC — หีบบัตรนิรนาม เข้ารหัส และตรวจการแก้ไขได้
+// ============================================================
+//
+// บัตรหนึ่งใบไม่มี userId และไม่มีเวลาละเอียด — เชื่อมกลับไปหาผู้ลงคะแนนไม่ได้
+// เชิงโครงสร้าง `payload` คือ ciphertext RSA-OAEP ของ {c: candidateId, n: nonce}
+// เข้ารหัสด้วย public key ของการเลือกตั้ง ส่วน private key ไม่เคยอยู่บนเซิร์ฟเวอร์
+// (ใช้เฉพาะตอนมีข้อพิพาท แบบ offline) คะแนนที่ระบบแสดงคือ Candidate.score
+// ดังนั้นกุญแจส่วนตัวหาย = เสียแค่ความสามารถนับใหม่ ไม่เสียผลเลือกตั้ง
+//
+// ทุกแถวถูกร้อยด้วย HMAC (prevHash → rowHash) การแก้บัตรเก่าเงียบ ๆ จะทำให้โซ่ขาด
+// และตรวจเจอได้ด้วย scripts/verify-ballot-chain.js · บัญชีฐานข้อมูลของแอปมีสิทธิ์
+// INSERT อย่างเดียวบนตารางนี้ (scripts/sql/ballot-grants.sql) ตัวแอปจึงแก้บัตรไม่ได้
+model Ballot {
+  seq        Int    @id @default(autoincrement()) // ลำดับในโซ่
+  payload    String  // base64 RSA-OAEP(sha256) ของ JSON {c: candidateId, n: nonce}
+  hourBucket String? // หยาบระดับชั่วโมง เช่น "2569-02-06T09" — ไม่เคยเก็บเวลาละเอียด
+  prevHash   String  // rowHash ของแถว seq-1 (แถวแรก = "GENESIS")
+  rowHash    String  // HMAC-SHA256(BALLOT_CHAIN_SECRET, prevHash|payload|seq)
+}
 
-#### ความสัมพันธ์ระหว่างตาราง
+// ปลายโซ่ มีแถวเดียวเสมอ (id=1) — คำสั่ง UPDATE ... WHERE id=1 ในทรานแซกชันของการ
+// ลงคะแนนจะล็อกแถวนี้ ทำให้บัตรที่ลงพร้อมกันสองใบยังได้โซ่ที่ต่อเนื่องไม่ขาดตอน
+model ChainHead {
+  id   Int    @id @default(1)
+  head String @default("GENESIS")
+  seq  Int    @default(0)
+}
+
+// บันทึกคำสั่งของแอดมินแบบเขียนเพิ่มอย่างเดียว (เปลี่ยนโหมด รับรองผล ฯลฯ)
+model AdminAuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  detail    String?
+  actor     String?  // รหัส นศ. ของแอดมินที่สั่ง มาจาก cookie ที่ตรวจแล้ว
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model SystemConfig {
+  id            Int      @id @default(1)
+  isVoteOpen    Boolean  @default(false) // ของเก่า ไม่ได้ใช้ตัดสินใจแล้ว
+  showResult    Boolean  @default(false)
+  systemMode    String   @default("AUTO")
+  googleFormUrl String?
+  pageLayout    Json?
+  themeConfig   Json?
+  globalConfig  Json?    // วันเวลาเลือกตั้ง + ธงรับรองผล
+  updatedAt     DateTime @updatedAt
+
+  activeTemplateId String? @default("classic")
+
+  // รหัสกลางของแอดมิน เก็บเป็น bcrypt hash ตัวเดียวทั้งชุดกรรมการ
+  // ตัวตนมาจากรหัส นศ. ที่พิมพ์ตอนล็อกอิน + User.isAdmin
+  // เขียนด้วย scripts/admin.js --rotate-password · ไม่มีที่ไหนเก็บรหัสตัวจริง
+  adminPasswordHash String?
+}
+
+model Template {
+  id String @id @default(cuid())
+
+  slug        String  @unique
+  name        String
+  description String?
+
+  authorId Int?
+  author   User? @relation("AuthoredTemplates", fields: [authorId], references: [id])
+
+  isBuiltIn  Boolean @default(false)
+  isLocked   Boolean @default(false)
+  forkedFrom String?
+  visibility String  @default("private")
+
+  pages    Json
+  elements Json
+  theme    Json
+
+  schemaVersion String  @default("v1")
+  archivedYear  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([isBuiltIn])
+  @@index([isLocked])
+  @@index([forkedFrom])
+}
+```
+
+**ความสัมพันธ์ระหว่างตาราง**
 
 ```
 Candidate 1 ──< Member          (Member.candidateId → Candidate.id)
@@ -432,8 +504,14 @@ User / Candidate                ไม่มีเส้นเชื่อมถ
 
 สองบรรทัดล่างคือหัวใจของระบบ: **คะแนนอยู่ที่ `Candidate.score` · การมาใช้สิทธิ์อยู่ที่
 `User.isVoted` · ตัวเลือกอยู่ในบัตรที่เข้ารหัส และไม่มี foreign key ใดเชื่อมสามอย่างนี้เข้าหากัน**
+ตรวจเองได้บนเซิร์ฟเวอร์ของคุณ:
 
-### 8.3 เปลี่ยนอะไรไปแล้วบ้าง (ไล่ตามลำดับ)
+```bash
+psql "<fms_migrate>" -c "\d+ \"Ballot\""    # ไม่มีคอลัมน์ไหนชี้ไปหา User
+psql "<fms_migrate>" -c "\dt"               # รายชื่อตารางทั้งหมด
+```
+
+### 8.4 เปลี่ยนอะไรไปแล้วบ้าง (ไล่ตามลำดับ)
 
 | migration | เปลี่ยนอะไร | ทำไม |
 |---|---|---|
@@ -448,7 +526,7 @@ User / Candidate                ไม่มีเส้นเชื่อมถ
 **ตอนอัปเดตโค้ดที่มี migration ใหม่** — `setup.sh` รัน `migrate deploy` ให้อยู่แล้ว
 สิ่งที่คุณต้องทำคือ `sh scripts/backup.sh` ก่อนเสมอ เพราะ migration ย้อนกลับเองไม่ได้
 
-### 8.4 สิทธิ์ของสองบัญชี (ย้ำอีกครั้ง)
+### 8.5 สิทธิ์ของสองบัญชี (ย้ำอีกครั้ง)
 
 `scripts/sql/ballot-grants.sql` เป็นตัวกำหนดว่า `fms_app` ทำอะไรได้บ้าง สรุป:
 
