@@ -193,6 +193,11 @@ export default function StudioDarkSingleParty({
                 <figcaption className="sds-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
               </figure>
             )}
+            {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมอยู่ในแท็บ Gallery ของหน้านั้น
+                source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
+            <a className="sds-story__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
+              <span className="sd-thai">ดูข้อมูลพรรคแบบเต็ม</span> · FULL PROFILE →
+            </a>
           </div>
 
           {/* MISSIONS — their own always-visible ledger (owner feedback: they
@@ -455,6 +460,13 @@ export default function StudioDarkSingleParty({
         .sds-story__scroll::-webkit-scrollbar { width:5px; }
         .sds-story__scroll::-webkit-scrollbar-thumb { background:var(--sd-line-strong); border-radius:999px; }
         .sds-story__hint { display:inline-block; margin-top:12px; font-family:var(--sd-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--sd-ink-2); }
+
+        /* ทางไปหน้าแนะนำพรรคเต็ม — บรรทัด mono บาง ๆ ใต้ภาพทีม โทนเดียวกับ caption */
+        .sds-story__more { display:inline-flex; align-items:center; gap:8px; margin-top:12px;
+          font-family:var(--sd-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+          color:var(--sd-ink-3); text-decoration:none; border-bottom:1px solid var(--sd-line); padding-bottom:4px;
+          transition:color .2s, border-color .2s; }
+        .sds-story__more:hover, .sds-story__more:focus-visible { color:var(--sd-accent); border-color:var(--sd-accent); outline:none; }
 
         .sds-story__media { position:relative; border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2); max-height:420px; margin:0; cursor:zoom-in; }
         .sds-story__media img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s; }

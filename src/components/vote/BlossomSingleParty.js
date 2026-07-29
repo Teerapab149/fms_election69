@@ -166,6 +166,12 @@ export default function BlossomSingleParty({
           </figure>
         )}
 
+        {/* ทางไปหน้าแนะนำพรรคเต็ม (ภาพกิจกรรมทั้งหมดอยู่ที่นั่น) — source=vote
+            ทำให้หน้านั้นมีแถบกลับมาโหวต ผู้ลงคะแนนจึงไม่หลงทาง (2026-07-30) */}
+        <a className="bl-sp-more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
+          <span className="bl-thai">ดูข้อมูลพรรคแบบเต็ม</span> <span className="bl-nw">&amp; GALLERY →</span>
+        </a>
+
         {/* logo meaning — the story explains the party mark (logo chip ties them) */}
         {showStory && (
           <section className="bl-sp-sec">
@@ -499,6 +505,14 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-sp-voter__row { display:inline-flex; align-items:baseline; gap:9px;
           font-family:var(--bl-fm); font-size:12px; letter-spacing:.04em; color:var(--bl-ink); min-width:0; }
         .bl-single-root .bl-sp-voter__row b { font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--bl-faint); }
+
+        /* ทางไปหน้าแนะนำพรรคเต็ม — ชิปเส้นบางใต้ภาพหมู่ ไม่แข่งกับปุ่มลงคะแนน */
+        .bl-single-root .bl-sp-more { display:inline-flex; align-items:center; gap:7px; margin:14px 0 0;
+          font-family:var(--bl-fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+          color:var(--bl-faint); text-decoration:none; border:1px solid var(--bl-line, var(--bl-ink));
+          border-radius:999px; padding:7px 14px; transition:color .2s, border-color .2s, background .2s; }
+        .bl-single-root .bl-sp-more:hover, .bl-single-root .bl-sp-more:focus-visible {
+          color:var(--bl-ink); border-color:var(--bl-ink); background:var(--bl-card); outline:none; }
 
         /* group cover (poster grammar — full artwork, never cropped) */
         .bl-single-root .bl-sp-cover { margin:36px 0 0; position:relative; border:1.5px solid var(--bl-ink); border-radius:22px;
