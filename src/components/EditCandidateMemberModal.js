@@ -159,6 +159,16 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
             setError("กรุณากรอกชื่อและรหัสนักศึกษา");
             return;
         }
+        // รหัสนักศึกษาเป็น unique ทั้งตาราง — ถ้าซ้ำ ฝั่งเซิร์ฟเวอร์จะตอบ
+        // "เลขพรรคหรือรหัสนักศึกษาซ้ำ" ซึ่งไม่บอกว่าซ้ำกับใคร จับตั้งแต่ตรงนี้ชัดกว่า
+        const sid = String(currentMember.studentId).trim();
+        const clash = allMembers.find(
+            (m) => String(m.studentId).trim() === sid && m.id !== focusMemberId
+        );
+        if (clash) {
+            setError(`รหัสนักศึกษา ${sid} ถูกใช้กับ "${clash.name}" ในพรรคนี้แล้ว`);
+            return;
+        }
         setIsLoading(true);
 
         let updatedMembers = [...allMembers];
@@ -265,7 +275,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         <User className="w-5 h-5 text-purple-600" />
                         {focusMemberId ? 'แก้ไขข้อมูลสมาชิก' : 'เพิ่มสมาชิกใหม่'}
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
+                    {/* type="button" สำคัญ: <button> ที่ไม่ระบุ type จะเป็น submit โดยปริยาย
+                        ตอนนี้ปุ่มปิดอยู่นอก <form> เลยยังไม่พัง แต่ถ้าย้ายมาร์กอัปเมื่อไหร่
+                        การกดกากบาทจะกลายเป็นการบันทึกทันที */}
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
