@@ -11,6 +11,8 @@
 import { getPath } from "../../utils/basePath";
 import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { socialList } from "../../utils/socialLinks";
+import PartySocials from "./PartySocials";
 import VerdureShell from "./VerdureShell";
 import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
 import StoryClamp from "./StoryClamp";
@@ -52,6 +54,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
   // ภาพแรกคือภาพหมู่ด้านบน · ที่เหลือได้เป็นบทของตัวเอง ต่อท้ายทีมผู้สมัคร
   // เดิมภาพที่ 2 เป็นต้นไปไม่ถูกแสดงที่ไหนเลยบนหน้านี้ (2026-07-30)
   const extraShots = gallery.slice(1);
+  const socialCount = socialList(party?.socials).length;
   if (extraShots.length) chapterKeys.push("gallery");
   const roman = (k) => ROMAN[chapterKeys.indexOf(k)] || "";
 
@@ -178,6 +181,12 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
 
+        {socialCount > 0 && (
+          <div className="vd-socialwrap">
+            <PartySocials socials={party?.socials} prefix="vd" />
+          </div>
+        )}
+
         <div className="vd-profile__cta">
           <p className="vd-profile__cta-line">Pick <em>No. {no}.</em> &nbsp;Pick the future.</p>
           <a href={getPath("/vote")} className="vd-btn vd-btn--terra vd-btn--lg">ลงคะแนนให้พรรคนี้ <span className="arr">↗</span></a>
@@ -265,6 +274,17 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-shot:hover, .vd-shot:focus-visible { transform:translateY(-5px); outline:none; border-color:var(--terra);
           box-shadow:0 22px 44px -26px rgba(var(--moss-rgb),.34); }
         .vd-shot img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
+
+        /* SOCIALS — การ์ดโค้งอบอุ่น ยกขึ้นตอน hover เหมือนการ์ดอื่นในหน้า */
+        .vd-socialwrap { margin-top:28px; }
+        .vd-social { background:var(--cream-2); border:1px solid var(--rule); border-radius:20px; padding:20px 22px; }
+        .vd-social__label { display:block; font-family:var(--fm); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--moss); opacity:.7; margin-bottom:12px; }
+        .vd-social__row { display:flex; flex-wrap:wrap; gap:10px; }
+        .vd-social__link { display:inline-flex; align-items:baseline; gap:8px; text-decoration:none; background:var(--cream);
+          border:1px solid var(--rule); border-radius:999px; padding:9px 16px; color:var(--moss); transition:all .25s; }
+        .vd-social__link:hover { border-color:var(--terra); color:var(--terra); transform:translateY(-2px); }
+        .vd-social__name { font-family:var(--fs); font-weight:600; font-size:13px; }
+        .vd-social__handle { font-family:var(--fm); font-size:12px; opacity:.7; }
 
         .vd-profile__cta { margin-top:24px; padding-top:48px; display:flex; justify-content:space-between; align-items:center; gap:24px; flex-wrap:wrap; }
         .vd-profile__cta-line { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(22px,2.4vw,30px); color:var(--moss); margin:0; }

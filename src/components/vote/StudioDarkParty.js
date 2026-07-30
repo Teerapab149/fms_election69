@@ -16,6 +16,8 @@
 import { getPath } from "../../utils/basePath";
 import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { socialList } from "../../utils/socialLinks";
+import PartySocials from "./PartySocials";
 import StudioDarkShell from "./StudioDarkShell";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
 import StoryClamp from "./StoryClamp";
@@ -58,6 +60,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
   // ภาพแรกเป็นภาพหมู่บนแท็บ Vision อยู่แล้ว — ที่เหลือคือภาพกิจกรรม ให้มีที่ของตัวเอง
   // เดิมอัปเพิ่มมากี่ใบก็ไม่มีที่แสดงเลยสักใบ (2026-07-30)
   const extraShots = gallery.slice(1);
+  const socialCount = socialList(party?.socials).length;
 
   const no = pad2(party?.number);
   const hasVision = !!story || missions.length > 0;
@@ -212,6 +215,13 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         </section>
       )}
 
+      {/* SOCIALS — ช่องทางติดต่อของพรรค */}
+      {socialCount > 0 && (
+        <div className="sdp-socialwrap">
+          <PartySocials socials={party?.socials} prefix="sdp" />
+        </div>
+      )}
+
       {/* CLOSING CTA */}
       <div className="sdp-cta">
         <p className="sdp-cta__line">Pick <em>№ {no}.</em>&nbsp; Pick the future.</p>
@@ -330,6 +340,17 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         .sdp-shot__no { position:absolute; left:10px; bottom:10px; font-family:var(--sd-mono); font-size:10px;
           letter-spacing:.15em; color:var(--sd-ink); background:var(--sd-bg); border:1px solid var(--sd-line);
           padding:3px 7px; border-radius:6px; }
+
+        /* SOCIALS — แถบเส้นบางโทนมืด ขึ้น accent ตอน hover */
+        .sdp-socialwrap { padding:0 40px 40px; }
+        .sdp-social { border:1px solid var(--sd-line); border-radius:16px; background:var(--sd-bg-2); padding:18px 20px; }
+        .sdp-social__label { display:block; font-family:var(--sd-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); margin-bottom:12px; }
+        .sdp-social__row { display:flex; flex-wrap:wrap; gap:10px; }
+        .sdp-social__link { display:inline-flex; align-items:baseline; gap:8px; text-decoration:none; border:1px solid var(--sd-line);
+          border-radius:999px; padding:8px 15px; color:var(--sd-ink); transition:border-color .2s, color .2s; }
+        .sdp-social__link:hover { border-color:var(--sd-accent); color:var(--sd-accent); }
+        .sdp-social__name { font-family:var(--sd-sans); font-size:13px; font-weight:500; }
+        .sdp-social__handle { font-family:var(--sd-mono); font-size:11px; color:var(--sd-ink-3); }
 
         .sdp-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
         .sdp-tile {
