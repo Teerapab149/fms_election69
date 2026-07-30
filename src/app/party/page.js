@@ -10,6 +10,7 @@ import {
 import Navbar from "../../components/Navbar";
 import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
+import { socialList } from "../../utils/socialLinks";
 import BackToVoteBar from "../../components/BackToVoteBar";
 import CandidateModal from '../../components/CandidateModal';
 import GumroadParty from "../../components/vote/GumroadParty";
@@ -791,6 +792,31 @@ function PartyContent() {
           <CandidateList members={activeParty.members} theme={currentTheme} onSelectMember={setSelectedMember} />
         </div>
 
+        {/* 5. ช่องทางติดต่อของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น (2026-07-30) */}
+        {socialList(activeParty?.socials).length > 0 && (
+          <section className="w-full px-6 xl:px-12 pb-24 max-w-[90rem] mx-auto">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">ช่องทางติดต่อ</span>
+              <div className="flex flex-wrap gap-2.5">
+                {socialList(activeParty?.socials).map((s) => (
+                  <a
+                    key={s.key}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-baseline gap-2 rounded-full border border-slate-200 px-4 py-2 transition-colors hover:border-slate-800"
+                    style={{ color: currentTheme.textOnLight }}
+                    title={`${s.label} · ${s.handle || s.url}`}
+                  >
+                    <span className="text-sm font-bold">{s.label}</span>
+                    {s.handle && <span className="text-xs text-slate-400">{s.handle}</span>}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
       </main>
 
       {lightboxImage && (
@@ -852,6 +878,31 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
         <div ref={listSectionRef}>
           <CandidateList members={party.members} theme={theme} onSelectMember={setSelectedMember} />
         </div>
+        {/* ช่องทางติดต่อของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น
+            ลิงก์ออกนอกเว็บ ใช้ target=_blank + rel=noopener (2026-07-30) */}
+        {socialList(party?.socials).length > 0 && (
+          <section className="w-full px-6 xl:px-12 pb-24 max-w-[90rem] mx-auto">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">ช่องทางติดต่อ</span>
+              <div className="flex flex-wrap gap-2.5">
+                {socialList(party?.socials).map((s) => (
+                  <a
+                    key={s.key}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-baseline gap-2 rounded-full border border-slate-200 px-4 py-2 transition-colors hover:border-slate-800"
+                    style={{ color: theme.textOnLight }}
+                    title={`${s.label} · ${s.handle || s.url}`}
+                  >
+                    <span className="text-sm font-bold">{s.label}</span>
+                    {s.handle && <span className="text-xs text-slate-400">{s.handle}</span>}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
       {lightboxImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center" onClick={() => setLightboxImage(null)}>

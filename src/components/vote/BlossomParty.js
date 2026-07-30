@@ -40,6 +40,8 @@ import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { socialList } from "../../utils/socialLinks";
+import PartySocials from "./PartySocials";
 import BlossomMemberModal from "./BlossomMemberModal";
 import StoryClamp from "./StoryClamp";
 
@@ -76,6 +78,7 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
   });
   const members = sortMembersByPosition(party?.members || []);
   const gallery = (galleryImages || []).map((g) => resolveSrc(g?.imageUrl || g)).filter(Boolean);
+  const socialCount = socialList(party?.socials).length;
 
   const openMember = (m) => { if (!editorMode) setSelectedMember(m); };
   const openLightbox = (src) => { if (!editorMode) setLightboxSrc(src); };
@@ -233,6 +236,12 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
         )}
 
         {/* ===== foot band — editorial CTAs ===== */}
+        {socialCount > 0 && (
+          <div className="bl-socialwrap">
+            <PartySocials socials={party?.socials} prefix="bl" />
+          </div>
+        )}
+
         <div className="bl-pty-foot">
           {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
           <a href={editorMode ? undefined : getPath(isSingleParty ? "/" : "/candidates")} className="bl-pty-back">
@@ -529,6 +538,17 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           background:color-mix(in srgb, var(--bl-ink) 78%, transparent); }
 
         /* ---- foot band — editorial CTAs ---- */
+        /* SOCIALS — การ์ดลูกกวาดขอบหมึก ตาม idiom ของสเปรดนี้ */
+        .bl-party-root .bl-socialwrap { margin-top:44px; }
+        .bl-party-root .bl-social { border:1.5px solid var(--bl-ink); border-radius:22px; background:var(--bl-card); padding:20px 22px; }
+        .bl-party-root .bl-social__label { display:block; font-family:var(--bl-fm); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--bl-faint); margin-bottom:12px; }
+        .bl-party-root .bl-social__row { display:flex; flex-wrap:wrap; gap:10px; }
+        .bl-party-root .bl-social__link { display:inline-flex; align-items:baseline; gap:8px; text-decoration:none;
+          border:1.5px solid var(--bl-ink); border-radius:999px; padding:8px 16px; color:var(--bl-ink); background:var(--bl-canvas); transition:all .2s; }
+        .bl-party-root .bl-social__link:hover { background:var(--bl-primary-soft); transform:translateY(-2px); }
+        .bl-party-root .bl-social__name { font-family:var(--bl-fd); font-weight:600; font-size:13px; }
+        .bl-party-root .bl-social__handle { font-family:var(--bl-fm); font-size:12px; color:var(--bl-faint); }
+
         .bl-party-root .bl-pty-foot { margin-top:52px; padding-top:24px; border-top:1.5px solid var(--bl-ink);
           display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
         .bl-party-root .bl-pty-back { display:inline-flex; align-items:center; gap:8px; min-height:48px; padding:12px 24px;

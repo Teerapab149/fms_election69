@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 import FormSection from "./FormSection";
+import { SOCIAL_PLATFORMS, normalizeSocial } from "../utils/socialLinks";
 import { buildPartyTheme } from "../utils/partyColors";
 
 /** [{title, desc}] → ข้อความบรรทัดละนโยบาย คั่นด้วย "::" (คู่กับ textToPolicyArray ฝั่ง API) */
@@ -34,6 +35,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         missions: '',
         policies: ''
     });
+
+    // ช่องทางติดต่อ — เก็บเป็น "สิ่งที่แอดมินพิมพ์" ระหว่างแก้ไข แล้วค่อยแปลงเป็น URL
+    // เต็มตอนบันทึก (utils/socialLinks.js) เพื่อให้พิมพ์ @ชื่อ เฉย ๆ ได้
+    const [socials, setSocials] = useState({});
 
     const [error, setError] = useState(null);
 
@@ -120,6 +125,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 // ออกมาเต็มช่อง และถ้ากดบันทึกต่อคือทับนโยบายจริงทิ้งทั้งหมด (แก้ 2026-07-28)
                 policies: policiesToText(candidate.policies),
             });
+            setSocials(candidate.socials && typeof candidate.socials === 'object' ? { ...candidate.socials } : {});
             setPreviewUrl(candidate.logoUrl || '');
             setSelectedFile(null);
 
@@ -168,6 +174,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 missions: '',
                 policies: ''
             });
+            setSocials({});
             setPreviewUrl('');
             setSelectedFile(null);
 
@@ -319,6 +326,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             data.append('color', formData.color || '');
             data.append('missions', formData.missions);
             data.append('policies', formData.policies);
+            data.append('socials', JSON.stringify(socials));
             if (selectedFile) data.append('file', selectedFile);
 
             // ไม่ส่ง officialImage / mobileHero* อีกแล้ว (ถอดช่องกรอกออก 2026-07-28)
@@ -687,6 +695,37 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     />
                                     <p className="text-[10px] text-gray-400 mt-1">* ขึ้นบรรทัดใหม่เพื่อแยกข้อ</p>
                                 </div>
+                            </div>
+                        </FormSection>
+
+                        <FormSection n="4" title="ช่องทางติดต่อของพรรค" hint="ใส่ช่องไหนก็ได้ · ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรค">
+                            <div className="space-y-3">
+                                {SOCIAL_PLATFORMS.map((p) => {
+                                    const typed = socials[p.key] || '';
+                                    const preview = normalizeSocial(p.key, typed);
+                                    const invalid = typed.trim() !== '' && !preview;
+                                    return (
+                                        <div key={p.key}>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{p.label}</label>
+                                            <input
+                                                type="text"
+                                                value={typed}
+                                                onChange={(e) => setSocials((s) => ({ ...s, [p.key]: e.target.value }))}
+                                                placeholder={p.placeholder}
+                                                className={`w-full rounded-xl border px-4 py-2 text-gray-900 outline-none focus:ring-2 ${invalid ? 'border-red-400 focus:ring-red-200' : 'border-gray-300 focus:ring-purple-500'}`}
+                                            />
+                                            {invalid ? (
+                                                <p className="mt-1 text-xs font-medium text-red-500">ลิงก์นี้ใช้ไม่ได้ — ใส่ชื่อผู้ใช้ หรือลิงก์ที่ขึ้นต้นด้วย https://</p>
+                                            ) : preview ? (
+                                                <p className="mt-1 text-xs text-slate-400 break-all">จะบันทึกเป็น {preview}</p>
+                                            ) : null}
+                                        </div>
+                                    );
+                                })}
+                                <p className="text-[11px] leading-relaxed text-slate-400">
+                                    พิมพ์แค่ชื่อผู้ใช้ก็ได้ เช่น <code className="rounded bg-slate-100 px-1">@samofms</code> ระบบจะเติมลิงก์ให้เอง ·
+                                    ลบข้อความในช่องให้ว่าง = เอาช่องทางนั้นออกจากหน้าเว็บ
+                                </p>
                             </div>
                         </FormSection>
 

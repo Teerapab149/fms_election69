@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { optimizeImage } from "../../../../lib/imageOptimize";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
@@ -312,6 +313,14 @@ export async function PUT(req) {
     if (formData.has("color")) dataToUpdate.color = formData.get("color") || null;
     if (formData.has("logoMeaning")) dataToUpdate.logoMeaning = formData.get("logoMeaning");
 
+    // ช่องทางติดต่อ — ผ่านตัวกรองก่อนเสมอ ค่านี้จะไปอยู่ใน href บนหน้าที่นักศึกษาเปิด
+    // sanitizeSocials คืน null เมื่อไม่มีช่องทางไหนใช้ได้ = ล้างของเดิมทิ้งตามที่แอดมินตั้งใจ
+    if (formData.has("socials")) {
+      let parsed = null;
+      try { parsed = JSON.parse(formData.get("socials") || "null"); } catch { parsed = null; }
+      dataToUpdate.socials = sanitizeSocials(parsed);
+    }
+
     if (formData.has("missions")) {
       dataToUpdate.missions = textToJsonArray(formData.get("missions"));
     }
@@ -510,6 +519,8 @@ export async function POST(req) {
     const mobileHeroFile = formData.get("mobileHeroImage");
     const missions = textToJsonArray(formData.get("missions"));
     const policies = textToPolicyArray(formData.get("policies"));
+    let socials = null;
+    try { socials = sanitizeSocials(JSON.parse(formData.get("socials") || "null")); } catch { socials = null; }
     const membersJson = formData.get("members");
     const rawMembers = membersJson ? JSON.parse(membersJson) : [];
 
@@ -548,6 +559,7 @@ export async function POST(req) {
         logoMeaning,
         missions,
         policies,
+        socials,
         score: 0,
         members: {
           create: membersDataToCreate

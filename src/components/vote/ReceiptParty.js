@@ -39,6 +39,8 @@ import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { socialList } from "../../utils/socialLinks";
+import PartySocials from "./PartySocials";
 import ReceiptMemberModal from "./ReceiptMemberModal";
 import StoryClamp from "./StoryClamp";
 
@@ -100,6 +102,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
   });
   const members = sortMembersByPosition(party?.members || []);
   const gallery = (galleryImages || []).map((g) => resolveSrc(g?.imageUrl || g)).filter(Boolean);
+  const socialCount = socialList(party?.socials).length;
 
   const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
   const teamCount = members.length;
@@ -281,6 +284,12 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
               ))}
             </div>
           </section>
+        )}
+
+        {socialCount > 0 && (
+          <div className="rc-socialwrap">
+            <PartySocials socials={party?.socials} prefix="rc" />
+          </div>
         )}
 
         {/* ===== foot band — ticket-stub CTAs ===== */}
@@ -640,6 +649,17 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           color:var(--rc-receipt); background:color-mix(in srgb, var(--rc-ink) 78%, transparent); border-radius:3px; font-variant-numeric:tabular-nums; }
 
         /* ================= foot band — ticket-stub CTAs ================= */
+        /* SOCIALS — แผ่นกระดาษเส้นประ ตาม idiom ของแฟ้ม */
+        .rc-party-root .rc-socialwrap { margin-top:40px; }
+        .rc-party-root .rc-social { border:1px dashed var(--rc-line); border-radius:4px; background:var(--rc-receipt); padding:18px 20px; }
+        .rc-party-root .rc-social__label { display:block; font-family:var(--rc-fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--rc-faint); margin-bottom:12px; }
+        .rc-party-root .rc-social__row { display:flex; flex-wrap:wrap; gap:10px; }
+        .rc-party-root .rc-social__link { display:inline-flex; align-items:baseline; gap:8px; text-decoration:none;
+          border:1px solid var(--rc-line); border-radius:3px; padding:8px 14px; color:var(--rc-ink); background:var(--rc-paper); transition:border-color .2s, color .2s; }
+        .rc-party-root .rc-social__link:hover { border-color:var(--rc-ink); }
+        .rc-party-root .rc-social__name { font-size:13px; font-weight:600; }
+        .rc-party-root .rc-social__handle { font-family:var(--rc-fm); font-size:11px; color:var(--rc-faint); }
+
         .rc-party-root .rc-party-foot { margin-top:44px; padding-top:22px; border-top:1px dotted var(--rc-line);
           display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
         .rc-party-root .rc-party-stubs { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }

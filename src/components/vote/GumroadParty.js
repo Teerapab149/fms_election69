@@ -20,6 +20,8 @@ import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { socialList } from "../../utils/socialLinks";
+import PartySocials from "./PartySocials";
 import { buildPartyTheme, prefersDarkText } from "../../utils/partyColors";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
@@ -74,6 +76,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
 
   // ภาพหมู่ = ใบแรก (อยู่บน hero) · ที่เหลือคือภาพกิจกรรม ลงไปเป็นแกลเลอรีท้ายหน้า
   const extraShots = gallery.slice(1);
+  const socialCount = socialList(party?.socials).length;
 
   const closeLightbox = () => setLightbox(-1);
   const step = (dir) => setLightbox((i) => (gallery.length ? (i + dir + gallery.length) % gallery.length : -1));
@@ -214,6 +217,13 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           </section>
         )}
       </main>
+
+      {/* SOCIALS — ช่องทางติดต่อของพรรค (แสดงเมื่อแอดมินกรอกไว้เท่านั้น) */}
+      {socialCount > 0 && (
+        <div className="gp-socialwrap">
+          <PartySocials socials={party?.socials} prefix="gp" />
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="gp-footer">
@@ -373,6 +383,17 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         .gp-gallery__cell img{ display:block; width:100%; aspect-ratio:4/3; object-fit:cover; }
         .gp-gallery__no{ position:absolute; left:8px; bottom:8px; font-family:var(--fm); font-size:11px; font-weight:700;
           background:var(--ink); color:var(--cream); padding:3px 7px; border-radius:6px; letter-spacing:.06em; }
+
+        /* SOCIALS — ป้ายขอบหนาเงาแข็ง ตาม idiom ของตระกูล */
+        .gp-socialwrap{ padding:0 32px 26px; }
+        .gp-social{ border:var(--bw) solid var(--ink); border-radius:18px; background:var(--paper); padding:18px 20px; box-shadow:4px 4px 0 var(--ink); }
+        .gp-social__label{ display:block; font-family:var(--fm); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); margin-bottom:12px; }
+        .gp-social__row{ display:flex; flex-wrap:wrap; gap:10px; }
+        .gp-social__link{ display:inline-flex; align-items:baseline; gap:8px; text-decoration:none; border:var(--bw) solid var(--ink); border-radius:999px;
+          background:var(--cream); color:var(--ink); padding:8px 15px; box-shadow:3px 3px 0 var(--ink); transition:transform .15s ease, box-shadow .15s ease; }
+        .gp-social__link:hover{ transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--ink); }
+        .gp-social__name{ font-family:var(--fd); font-size:13px; font-weight:700; }
+        .gp-social__handle{ font-family:var(--fm); font-size:12px; color:var(--ink2); }
 
         /* FOOTER */
         .gp-footer{ margin-top:auto; border-top:var(--bw) solid var(--ink); padding:22px 32px; background:var(--ink); color:var(--cream);

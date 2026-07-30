@@ -74,6 +74,11 @@ model Candidate {
   members Member[]
 
   score Int @default(0)
+
+  // ช่องทางติดต่อของพรรค — {instagram, facebook, tiktok, website} เก็บเป็น Json
+  // ก้อนเดียวโดยตั้งใจ: ปีหน้าถ้าอยากเพิ่มช่องทางใหม่จะได้ไม่ต้อง migrate อีกรอบ
+  // ค่าที่เก็บเป็น URL เต็มที่ผ่านการตรวจแล้วเสมอ (utils/socialLinks.js)
+  socials Json?
 }
 
 // ============================================================
