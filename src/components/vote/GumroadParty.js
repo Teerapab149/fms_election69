@@ -218,7 +218,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         )}
       </main>
 
-      {/* SOCIALS — ช่องทางติดต่อของพรรค (แสดงเมื่อแอดมินกรอกไว้เท่านั้น) */}
+      {/* SOCIALS — Social media ของพรรค (แสดงเมื่อแอดมินกรอกไว้เท่านั้น) */}
       {socialCount > 0 && (
         <div className="gp-socialwrap">
           <PartySocials socials={party?.socials} prefix="gp" />

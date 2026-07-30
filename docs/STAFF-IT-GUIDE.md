@@ -593,26 +593,93 @@ psql "<fms_migrate>" -c "\dt"               # รายชื่อตารา�
 **ตอนอัปเดตโค้ดที่มี migration ใหม่** — `setup.sh` รัน `migrate deploy` ให้อยู่แล้ว
 สิ่งที่คุณต้องทำคือ `sh scripts/backup.sh` ก่อนเสมอ เพราะ migration ย้อนกลับเองไม่ได้
 
-### 8.5 สิทธิ์ของสองบัญชี (ย้ำอีกครั้ง)
+### 8.5 สิทธิ์ที่ต้องให้ — แยกตามงานจริงในหน้าแอดมิน
 
-`scripts/sql/ballot-grants.sql` เป็นตัวกำหนดว่า `fms_app` ทำอะไรได้บ้าง สรุป:
+หัวข้อนี้มีไว้ให้ตั้งสิทธิ์ได้ถูกตั้งแต่รอบแรก ระบบมหาวิทยาลัยมักให้สิทธิ์แบบรัดกุม
+ซึ่งเป็นเรื่องดี แต่ถ้าขาดไปข้อเดียวอาการที่โผล่มามักไม่ได้ชี้ไปที่สาเหตุเลย
+(ปีที่แล้วเสียเวลากับเรื่องนี้ทั้งวัน — ดู [§3.0](#30-อัปเกรดจากรุ่นปีที่แล้ว-ทำครั้งเดียว))
 
-| ตาราง | `fms_app` ทำได้ |
-|---|---|
-| `Ballot` | อ่าน + เพิ่ม (**ห้ามแก้ ห้ามลบ**) |
-| `ChainHead` | อ่าน + แก้ (ห้ามลบแถว) |
-| `User` | อ่าน + เพิ่ม + แก้ (ห้ามลบ) |
-| `AdminAuditLog` | อ่าน + เพิ่ม (ห้ามแก้ ห้ามลบ) |
-| `Candidate` `Member` `SystemConfig` `Template` | จัดการได้ตามปกติ |
+ทั้งหมดนี้ `scripts/sql/ballot-grants.sql` ให้ครบอยู่แล้ว ตารางข้างล่างคือ "ทำไมต้องมี"
+เผื่อต้องอธิบายกับฝ่ายความปลอดภัย หรือต้องตั้งเองทีละบรรทัด
 
-ตรวจว่าล็อกติดจริง:
+#### งานในหน้าแอดมิน → เขียนอะไรลงตารางไหน
 
-```bash
-psql "<fms_migrate>" -c "SELECT privilege_type FROM information_schema.role_table_grants WHERE grantee='fms_app' AND table_name='Ballot';"
+| งานที่กดในหน้าแอดมิน | ระบบทำอะไรกับฐานข้อมูลจริง | สิทธิ์ที่ขาดไม่ได้ |
+|---|---|---|
+| **เพิ่มพรรค** | `INSERT Candidate` → `INSERT Member` (ถ้ากรอกสมาชิกมาด้วย) → `UPDATE Candidate` (เติม path รูปหลังอัปโหลดเสร็จ) | `INSERT`,`UPDATE` บน `Candidate` · `INSERT` บน `Member` · **`USAGE`,`SELECT` บน `Candidate_id_seq` และ `Member_id_seq`** |
+| **แก้ไขพรรค** | `UPDATE Candidate` · แล้ว `DELETE Member` ทั้งพรรค + `INSERT Member` ใหม่ทั้งชุด | `UPDATE` บน `Candidate` · `DELETE`,`INSERT` บน `Member` + sequence |
+| **ลบพรรค** | `DELETE Member` ของพรรคนั้น → `DELETE Candidate` | `DELETE` บน `Member` **และ** `Candidate` |
+| **เพิ่ม / แก้ / ลบสมาชิกพรรค** | เส้นทางเดียวกับ "แก้ไขพรรค" — ระบบเขียนรายชื่อสมาชิกใหม่ทั้งชุดทุกครั้ง ไม่ได้แก้ทีละแถว | `DELETE`,`INSERT` บน `Member` + sequence |
+| **เปลี่ยนธีม (กด Apply) แล้วต้องบันทึกได้** | `UPDATE SystemConfig` (คอลัมน์ `activeTemplateId` + `pageLayout`) | `UPDATE` บน `SystemConfig` |
+| **แก้เลย์เอาต์/ลำดับ section หน้าแรก** | `UPDATE SystemConfig` (`pageLayout`) | `UPDATE` บน `SystemConfig` |
+| **สร้าง / แก้ / ลบ / คัดลอกธีมของตัวเอง** | `INSERT`,`UPDATE`,`DELETE Template` | ทั้งสามบน `Template` |
+| **เปลี่ยนโหมดระบบ · เปิดเผยผล · รับรองผล** | `UPDATE SystemConfig` (ครั้งแรกสุดถ้ายังไม่มีแถวจะ `INSERT`) | `UPDATE`,`INSERT` บน `SystemConfig` |
+| **ทุกคำสั่งของแอดมิน** | `INSERT AdminAuditLog` (บันทึกว่าใครสั่งอะไร) | `INSERT` บน `AdminAuditLog` + sequence |
+| **นักศึกษาลงคะแนน** | `UPDATE User` (`isVoted`) · `UPDATE Candidate` (`score`) · `INSERT Ballot` · `UPDATE ChainHead` | ตามซ้าย — **`Ballot` ต้องเป็น INSERT อย่างเดียว** |
+| **นำเข้ารายชื่อผู้มีสิทธิ์** (`import-students`) | `INSERT`/`UPDATE User` | `INSERT`,`UPDATE` บน `User` + sequence |
+| **ให้/ถอดสิทธิ์แอดมิน** (`admin.js --grant/--revoke`) | `UPDATE User` (`isAdmin`) | `UPDATE` บน `User` |
+| **ออกรหัสกลางใหม่** (`admin.js --rotate-password`) | `UPDATE SystemConfig` (`adminPasswordHash`) | `UPDATE` บน `SystemConfig` |
+| **ล็อกอินแอดมิน** | `SELECT User` + `SELECT SystemConfig` | `SELECT` |
+
+> **สคริปต์ `admin.js` / `import-students` ใช้ `DATABASE_URL` ตัวเดียวกับเว็บ** (บัญชี `fms_app`)
+> ไม่ได้ใช้บัญชี migrate — ถ้าตัดสิทธิ์ `UPDATE User` หรือ `UPDATE SystemConfig` ออก
+> สองสคริปต์นี้จะพังทันที ทั้งที่หน้าเว็บยังดูปกติ
+
+#### สรุปเป็นตารางสิทธิ์ต่อ table
+
+| ตาราง | SELECT | INSERT | UPDATE | DELETE | หมายเหตุ |
+|---|:--:|:--:|:--:|:--:|---|
+| `Candidate` | ✓ | ✓ | ✓ | ✓ | ลบพรรคต้องใช้ DELETE |
+| `Member` | ✓ | ✓ | ✓ | ✓ | ทุกการแก้สมาชิก = ลบทั้งชุดแล้วเขียนใหม่ |
+| `SystemConfig` | ✓ | ✓ | ✓ | ✗ | หัวใจของการบันทึกธีม/โหมด/รหัสกลาง |
+| `Template` | ✓ | ✓ | ✓ | ✓ | ธีมที่สร้างเอง |
+| `User` | ✓ | ✓ | ✓ | ✗ | ไม่ต้องให้ลบ — การลบผู้ใช้เป็นงาน DBA |
+| `AdminAuditLog` | ✓ | ✓ | ✗ | ✗ | เขียนเพิ่มอย่างเดียว ห้ามแก้ประวัติ |
+| `ChainHead` | ✓ | ✗ | ✓ | ✗ | แถวเดียว ล็อกตอนโหวต |
+| **`Ballot`** | ✓ | ✓ | **✗** | **✗** | **จุดสำคัญที่สุด — ห้ามให้ UPDATE/DELETE เด็ดขาด** |
+
+**และต้องมี sequence ด้วยเสมอ** — ทุกตารางที่ id เป็นเลขรันนิ่ง (`Candidate`, `Member`,
+`User`, `AdminAuditLog`, `Ballot`) เวลา `INSERT` จะไปขอเลขถัดไปจาก sequence ของตัวเอง
+ให้สิทธิ์ตารางอย่างเดียวไม่พอ:
+
+```sql
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO fms_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO fms_app;
 ```
 
-ต้องได้เฉพาะ `SELECT` กับ `INSERT` เท่านั้น ถ้าเห็น `UPDATE` หรือ `DELETE` แปลว่าล็อกไม่ติด
-ให้รัน `psql "<fms_migrate>" -f scripts/sql/ballot-grants.sql` ใหม่
+#### ถ้าขาดสิทธิ์ข้อไหน จะเจออาการอะไร
+
+ตารางนี้แปลอาการที่ผู้ใช้เห็น กลับเป็นสิทธิ์ที่หายไป — อาการส่วนใหญ่ไม่ได้บอกคำว่า
+"permission" ให้เลย
+
+| อาการที่ผู้ใช้เจอ | สิทธิ์ที่ขาด |
+|---|---|
+| เพิ่มพรรคไม่ได้ **แต่ลบได้** | `USAGE` บน `Candidate_id_seq` (ไม่ใช่สิทธิ์ตาราง) |
+| เพิ่มพรรคเปล่า ๆ ได้ แต่พอมีสมาชิกแล้วพัง | `INSERT` บน `Member` หรือ `Member_id_seq` |
+| แก้ไขพรรคแล้วสมาชิกหายหมด / เซฟไม่ผ่าน | `DELETE` หรือ `INSERT` บน `Member` |
+| ลบพรรคแล้วขึ้น error ทั้งที่สมาชิกหายไปแล้ว | `DELETE` บน `Candidate` |
+| กดเปลี่ยนธีมแล้วเด้งกลับธีมเดิมทุกครั้ง | `UPDATE` บน `SystemConfig` |
+| เปลี่ยนโหมด/เปิดผลไม่ติด | `UPDATE` บน `SystemConfig` |
+| นักศึกษากดลงคะแนนแล้ว error | `INSERT Ballot` / `UPDATE ChainHead` / `UPDATE Candidate` |
+| ทุกคำสั่งแอดมินพังพร้อมกัน | `INSERT` บน `AdminAuditLog` (ระบบบันทึกทุกคำสั่งก่อนทำงาน) |
+| `admin.js --grant` ไม่ขึ้นชื่อในรายการ | `UPDATE` บน `User` |
+| `import-students` ล้ม | `INSERT`/`UPDATE` บน `User` + sequence |
+
+#### ตรวจให้ครบก่อนส่งมอบ
+
+```bash
+# 1. ตัวตรวจอัตโนมัติ — ลอง INSERT จริงแล้ว rollback (ครอบคลุมทั้งตารางและ sequence)
+npm run preflight        # ต้องขึ้น "app can create parties/members"
+
+# 2. หีบบัตรถูกล็อกจริง — ต้องได้เฉพาะ SELECT, INSERT
+psql "<fms_migrate>" -c "SELECT privilege_type FROM information_schema.role_table_grants WHERE grantee='fms_app' AND table_name='Ballot';"
+
+# 3. ดูสิทธิ์ทั้งหมดของบัญชีเว็บในครั้งเดียว
+psql "<fms_migrate>" -c "SELECT table_name, string_agg(privilege_type, ', ' ORDER BY privilege_type) FROM information_schema.role_table_grants WHERE grantee='fms_app' GROUP BY table_name ORDER BY table_name;"
+```
+
+ผลของข้อ 3 ควรตรงกับตารางสิทธิ์ด้านบนทุกบรรทัด ถ้ามีตารางไหนหายไปทั้งแถว แปลว่า
+`ballot-grants.sql` ยังไม่ได้รัน หรือรันตอนที่ยังไม่มีตารางนั้น (ต้อง migrate ให้เสร็จก่อนเสมอ)
 
 ---
 

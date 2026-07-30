@@ -215,7 +215,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         </section>
       )}
 
-      {/* SOCIALS — ช่องทางติดต่อของพรรค */}
+      {/* SOCIALS — Social media ของพรรค */}
       {socialCount > 0 && (
         <div className="sdp-socialwrap">
           <PartySocials socials={party?.socials} prefix="sdp" />

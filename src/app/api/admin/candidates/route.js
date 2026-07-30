@@ -313,7 +313,7 @@ export async function PUT(req) {
     if (formData.has("color")) dataToUpdate.color = formData.get("color") || null;
     if (formData.has("logoMeaning")) dataToUpdate.logoMeaning = formData.get("logoMeaning");
 
-    // ช่องทางติดต่อ — ผ่านตัวกรองก่อนเสมอ ค่านี้จะไปอยู่ใน href บนหน้าที่นักศึกษาเปิด
+    // Social media ของพรรค — ผ่านตัวกรองก่อนเสมอ ค่านี้จะไปอยู่ใน href บนหน้าที่นักศึกษาเปิด
     // sanitizeSocials คืน null เมื่อไม่มีช่องทางไหนใช้ได้ = ล้างของเดิมทิ้งตามที่แอดมินตั้งใจ
     if (formData.has("socials")) {
       let parsed = null;
