@@ -16,9 +16,14 @@ hash chain ที่ตรวจย้อนหลังได้ — ไม่�
   ถ้ากุญแจบนเซิร์ฟเวอร์ไม่ครบ ระบบปิดรับโหวตทันที (fail closed)
 - รองรับ 2-6 พรรค — หลายพรรคเป็นบัตรเลือกพรรค พรรคเดียวเป็นหน้า showcase
   พร้อมตัวเลือก รับรอง / ไม่รับรอง / งดออกเสียง
-- template ทั้งระบบ 6 ตระกูล 23 แบบ (original, gumroad, studio-dark, verdure,
-  blossom, receipt) สลับได้จาก admin คลิกเดียว ดูตัวอย่างก่อนได้ที่
+- หน้าแนะนำพรรคกรอกได้จาก admin ทั้งนโยบาย ทีม รูป และช่องทางติดต่อของพรรคเอง
+  (IG / Facebook / TikTok ตรวจ URL ก่อนเก็บ)
+- template ทั้งระบบ 6 ตระกูล 23 แบบ (receipt, blossom, original, gumroad,
+  studio-dark, verdure) สลับได้จาก admin คลิกเดียว ดูตัวอย่างก่อนได้ที่
   `/template-preview` และ `/template-playground` โดยไม่แตะ DB
+  — ตัวธีมเป็นไฟล์โค้ดใน `src/components/admin/editor/templates/builtIn/`
+  หน้า admin มีแค่ "เลือกแล้ว Apply" ไม่มีตัวแก้แบบลากวาง เพิ่มธีมใหม่คือเขียนไฟล์
+  ธีมเพิ่มแล้ว deploy ไม่ใช่เพิ่มข้อมูลใน DB
 - ผลคะแนน + demographics แบบ real-time โดยคะแนนถูกปิด (embargo) ตั้งแต่ชั้น API
   จนกว่า admin จะสั่งเปิดเผย
 - ฝั่ง admin มีปุ่มตรวจความพร้อมก่อนเปิดระบบ (14 รายการ), audit log บันทึกทุกคำสั่ง
@@ -44,7 +49,7 @@ npm run dev        # http://localhost:3000/fms-ovs
 | `NEXTAUTH_SECRET` | เข้ารหัส session |
 | `ADMIN_JWT_SECRET` | เซ็น cookie ของ admin (รหัสผ่าน admin อยู่ใน DB ไม่ใช่ env — ดู `scripts/admin.js`) |
 | `ELECTION_BALLOT_PUBLIC_KEY`, `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน (ดูหัวข้อความปลอดภัย) |
-| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่ได้ใช้แล้ว — เก็บไว้เฉย ๆ ก็ได้ ไม่มีผลกับหน้า login |
+| `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่มีผลกับหน้า login แล้ว (ตัวกั้นจริงคือ `NODE_ENV`) แต่ถ้าตั้งเป็น `true` ค้างไว้ `npm run preflight` จะ FAIL — บน production ไม่ต้องมีบรรทัดนี้ |
 
 ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ตั้งรหัสด้วย
 `node scripts/admin.js --rotate-password` แล้วใส่ค่าที่ได้เป็น `ADMIN_DEV_PASSWORD`
@@ -83,7 +88,8 @@ private key พิมพ์ลงกระดาษแบ่งเก็บร�
 ```bash
 npm run build      # ต้องผ่านก่อน deploy เสมอ
 npm run smoke      # sanity 15 เคส (server ต้องรันอยู่)
-npm run e2e        # Playwright 9 เคส: โหวตครบวงจร, โหวตซ้ำ/แข่งกัน, embargo, ฯลฯ
+npm run e2e        # Playwright 35 เคส 5 ไฟล์: โหวตครบวงจร, งดออกเสียง, หน้าปิดหีบ,
+                   # invariant ของบัตร/คะแนน และหน้า admin ทั้งคอนโซล
 ```
 
 e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ DB>_e2e` สร้างเองอัตโนมัติ) กับ server แยกที่ :3100
@@ -108,6 +114,7 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 | เรื่อง | ไฟล์ |
 |---|---|
 | **คู่มือ IT คณะ — เซิร์ฟเวอร์/ฐานข้อมูล (ส่งมอบงาน)** | `docs/STAFF-IT-GUIDE.md` |
+| ขั้นตอน deploy จริงไล่ทีละข้อ | `docs/DEPLOY-CHECKLIST-2026.md` |
 | **คู่มือสโมสรนักศึกษา — หน้าแอดมิน (ส่งมอบงาน)** | `docs/ADMIN-GUIDE.md` |
 | สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
