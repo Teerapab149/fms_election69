@@ -792,11 +792,11 @@ function PartyContent() {
           <CandidateList members={activeParty.members} theme={currentTheme} onSelectMember={setSelectedMember} />
         </div>
 
-        {/* 5. ช่องทางติดต่อของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น (2026-07-30) */}
+        {/* 5. Social media ของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น (2026-07-30) */}
         {socialList(activeParty?.socials).length > 0 && (
           <section className="w-full px-6 xl:px-12 pb-24 max-w-[90rem] mx-auto">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">ช่องทางติดต่อ</span>
+              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Social media ของพรรค</span>
               <div className="flex flex-wrap gap-2.5">
                 {socialList(activeParty?.socials).map((s) => (
                   <a
@@ -878,12 +878,12 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
         <div ref={listSectionRef}>
           <CandidateList members={party.members} theme={theme} onSelectMember={setSelectedMember} />
         </div>
-        {/* ช่องทางติดต่อของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น
+        {/* Social media ของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น
             ลิงก์ออกนอกเว็บ ใช้ target=_blank + rel=noopener (2026-07-30) */}
         {socialList(party?.socials).length > 0 && (
           <section className="w-full px-6 xl:px-12 pb-24 max-w-[90rem] mx-auto">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">ช่องทางติดต่อ</span>
+              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Social media ของพรรค</span>
               <div className="flex flex-wrap gap-2.5">
                 {socialList(party?.socials).map((s) => (
                   <a

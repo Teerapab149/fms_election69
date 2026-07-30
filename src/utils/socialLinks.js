@@ -1,5 +1,5 @@
 /**
- * ช่องทางติดต่อของพรรค — ตัวแปลงและตัวตรวจ ใช้ร่วมกันทั้งฝั่งแอดมินและหน้าเว็บ
+ * Social media ของพรรค — ตัวแปลงและตัวตรวจ ใช้ร่วมกันทั้งฝั่งแอดมินและหน้าเว็บ
  *
  * แอดมินพิมพ์ได้หลายแบบ ทั้ง `@unityconcord.fms`, `unityconcord.fms`,
  * `instagram.com/unityconcord.fms`, `https://www.instagram.com/unityconcord.fms/`

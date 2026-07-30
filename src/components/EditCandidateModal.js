@@ -36,7 +36,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         policies: ''
     });
 
-    // ช่องทางติดต่อ — เก็บเป็น "สิ่งที่แอดมินพิมพ์" ระหว่างแก้ไข แล้วค่อยแปลงเป็น URL
+    // Social media ของพรรค — เก็บเป็น "สิ่งที่แอดมินพิมพ์" ระหว่างแก้ไข แล้วค่อยแปลงเป็น URL
     // เต็มตอนบันทึก (utils/socialLinks.js) เพื่อให้พิมพ์ @ชื่อ เฉย ๆ ได้
     const [socials, setSocials] = useState({});
 
@@ -698,7 +698,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             </div>
                         </FormSection>
 
-                        <FormSection n="4" title="ช่องทางติดต่อของพรรค" hint="ใส่ช่องไหนก็ได้ · ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรค">
+                        <FormSection n="4" title="Social media ของพรรค" hint="ใส่ช่องไหนก็ได้ · ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรคให้นักศึกษาตามข่าวพรรคต่อได้">
                             <div className="space-y-3">
                                 {SOCIAL_PLATFORMS.map((p) => {
                                     const typed = socials[p.key] || '';

@@ -3,7 +3,7 @@
 import { socialList } from "../../utils/socialLinks";
 
 /**
- * ช่องทางติดต่อของพรรค — มาร์กอัปกลาง สไตล์เป็นของแต่ละตระกูล
+ * Social media ของพรรค — มาร์กอัปกลาง สไตล์เป็นของแต่ละตระกูล
  *
  * ทุกตระกูลแสดงข้อมูลชุดเดียวกัน แต่หน้าตาต้องเป็นภาษาของตัวเอง จึงแยกเป็น
  * "โครงร่วม + คลาสตามตระกูล": ส่ง prefix มา แล้วไปเขียน CSS ของ
@@ -12,7 +12,7 @@ import { socialList } from "../../utils/socialLinks";
  * ลิงก์ออกนอกเว็บทุกอันต้องมี rel="noopener noreferrer" — ไม่งั้นหน้าปลายทาง
  * แตะ window.opener ของเราได้ และ referrer หลุดไปกับทุกคลิก
  */
-export default function PartySocials({ socials, prefix, heading = "ช่องทางติดต่อ" }) {
+export default function PartySocials({ socials, prefix, heading = "Social media ของพรรค" }) {
   const items = socialList(socials);
   if (!items.length) return null;
 
