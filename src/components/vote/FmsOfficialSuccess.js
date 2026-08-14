@@ -15,20 +15,35 @@
 // would put the very link the ballot design removes onto a screen that can be
 // shoulder-surfed or screenshotted.
 
-import { CheckCircle2, ShieldCheck, ClipboardList, BarChart3, Lock, Check } from "lucide-react";
+import { useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { CheckCircle2, ShieldCheck, ClipboardList, BarChart3, Lock, Check, CalendarClock } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import FmsOfficialShell from "./FmsOfficialShell";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { fmsMeta } from "../home/FmsOfficialChrome";
+import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 
 export default function FmsOfficialSuccess({
   user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false,
 }) {
   const globalConfig = useGlobalConfig();
   const meta = fmsMeta(globalConfig);
+  const reduce = useReducedMotion();
   const name = user?.name || "";
   // editorMode previews the unlocked end-state; live follows the real gate
   const resultsOpen = isUnlocked || editorMode;
+
+  // The two questions a voter actually has once the ballot is in: is that it,
+  // and when do we find out. The second had no answer on this page at all. The
+  // close time is already resolved from globalConfig everywhere else in the
+  // system, so it derives rather than being written down and drifting when an
+  // admin moves the schedule.
+  const closesAt = useMemo(() => {
+    const end = resolveElectionDates(globalConfig)?.ELECTION_END;
+    if (!end || isNaN(new Date(end).getTime())) return null;
+    return { date: formatThaiDate(end), time: formatThaiTime(end) };
+  }, [globalConfig]);
 
   return (
     <FmsOfficialShell active="vote" narrow plain editorMode={editorMode}>
@@ -41,8 +56,26 @@ export default function FmsOfficialSuccess({
               hanging tab belongs to the home page alone, and repeating it made
               the documents look stamped rather than designed. The frame and the
               head rule already say which family this is. */}
+          {/* The family's ghost sits on every other document it prints — the
+              home page's edition numeral, the party header's number, the
+              ballot's. This one had none, which is why it read as a card rather
+              than as the last page of the same set. */}
+          <span className="fo-notice__ghost fo-succ__ghost" aria-hidden>{meta.num}</span>
+
           <div className="fo-notice__body fo-succ__body">
-            <span className="fo-succ__ico"><CheckCircle2 size={26} aria-hidden /></span>
+            {/* The one moment in this template that is allowed to arrive rather
+                than just be there. It is a transform-and-opacity settle on an
+                element that is already painted and already says what it says —
+                never a reveal the content depends on, which is the failure this
+                project has actually shipped before. */}
+            <motion.span
+              className="fo-succ__ico"
+              initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <CheckCircle2 size={26} aria-hidden />
+            </motion.span>
             <h1 className="fo-succ__h1">บันทึกการลงคะแนนเรียบร้อย</h1>
             <span className="fo-rule" aria-hidden />
             <p className="fo-succ__desc">
@@ -65,6 +98,31 @@ export default function FmsOfficialSuccess({
               </p>
             </div>
           </div>
+
+          {/* Another compartment of the same receipt, on the same hairline. It
+              answers the question the page was silent on: the ballot is in, so
+              when is it counted. Renders only when the schedule resolves — a
+              "ประกาศผลวันที่ —" is worse than not raising the subject at all. */}
+          {closesAt && (
+            <div className="fo-succ__next">
+              <span className="fo-succ__next-ico"><CalendarClock size={18} aria-hidden /></span>
+              <div>
+                <b>ผลคะแนนประกาศหลังปิดหีบ</b>
+                {/* Both gates in one sentence. They used to be two: this block
+                    said results come after the close, and a separate line below
+                    the buttons said they come after the evaluation. Both true —
+                    the count needs the election over AND this voter's form in —
+                    but sitting 100px apart they read as two different answers to
+                    the same question. */}
+                <p>
+                  การลงคะแนนปิด{closesAt.date} เวลา {closesAt.time}
+                  {resultsOpen
+                    ? " จากนั้นระบบจะเปิดให้ดูผลคะแนนอย่างเป็นทางการ"
+                    : " และจะเปิดให้คุณดูได้เมื่อทำแบบประเมินเรียบร้อยแล้ว"}
+                </p>
+              </div>
+            </div>
+          )}
 
         {/* The actions live INSIDE the receipt on this page, unlike closed —
             they are its last compartment, the way a form ends in a submit row.
@@ -101,7 +159,10 @@ export default function FmsOfficialSuccess({
           <a href={editorMode ? undefined : getPath("/")} className="fo-btn fo-btn--ghost">กลับหน้าแรก</a>
         </div>
 
-          {!resultsOpen && (
+          {/* Only the fallback now: when the schedule cannot be resolved there is
+              no compartment above to carry the gate, and a voter must still be
+              told why the results button is not here. */}
+          {!resultsOpen && !closesAt && (
             <p className="fo-succ__lock">
               <Lock size={14} aria-hidden /> ผลคะแนนจะเปิดให้ดูหลังทำแบบประเมินเรียบร้อย
             </p>
@@ -139,6 +200,35 @@ export default function FmsOfficialSuccess({
         .fo-succ__panel b { display: block; font-size: 15px; font-weight: 500; color: var(--fo-ink); }
         .fo-succ__panel p { margin: 6px 0 0; font-size: 13.5px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
 
+        /* Same compartment shape as the anonymity note, on the surface rather
+           than the tint: the two are peers, and giving both the tint would have
+           made the receipt two-thirds coloured. */
+        .fo-succ__next {
+          position: relative; z-index: 1;
+          display: flex; gap: 14px; text-align: left;
+          border-top: 1px solid var(--fo-line); padding: 18px 26px 20px;
+        }
+        .fo-succ__next-ico {
+          flex: 0 0 auto; width: 34px; height: 34px; border-radius: 8px;
+          display: inline-flex; align-items: center; justify-content: center;
+          background: var(--fo-tint); color: var(--fo-brand); border: 1px solid var(--fo-line);
+        }
+        .fo-succ__next b { display: block; font-size: 14.5px; font-weight: 500; color: var(--fo-ink); }
+        .fo-succ__next p { margin: 5px 0 0; font-size: 13px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
+
+        /* Anchored to the TOP, unlike every other document's ghost. Theirs sit
+           bottom-right behind one continuous body; this receipt is compartments,
+           and two of them (the anonymity note's tint, the actions row) paint
+           their own ground — so a bottom-anchored numeral surfaced through some
+           and not others and read as a stain rather than a device. The head is
+           the one clean field on the page.
+           Weaker too: .07 behind centred text on a 620px card read as dirt under
+           the words rather than as watermark. */
+        .fo-succ__ghost {
+          top: -.3em; bottom: auto; right: -.04em;
+          font-size: clamp(150px, 20vw, 240px); opacity: .05;
+        }
+
         /* the submit row of the receipt: its own compartment, hairline-divided
            like every other one, so the document ends on the thing to do next */
         .fo-succ__actions {
@@ -169,7 +259,10 @@ export default function FmsOfficialSuccess({
           .fo-succ__body    { order: 1; }
           .fo-succ__actions { order: 2; flex-direction: column; padding: 18px 16px 16px; }
           .fo-succ__lock    { order: 3; padding: 0 16px 16px; }
-          .fo-succ__panel   { order: 4; flex-direction: column; gap: 12px; padding: 18px 16px; }
+          /* the schedule is a thing to DO something about (come back later), so
+             it stays above the anonymity note, which is a thing to read */
+          .fo-succ__next    { order: 4; padding: 16px; }
+          .fo-succ__panel   { order: 5; flex-direction: column; gap: 12px; padding: 18px 16px; }
           .fo-succ__actions .fo-btn { width: 100%; justify-content: center; }
           .fo-succ__actions .fo-btn { width: 100%; justify-content: center; }
           .fo-succ__ico { width: 56px; height: 56px; margin-bottom: 16px; }

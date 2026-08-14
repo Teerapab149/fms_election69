@@ -730,7 +730,10 @@ function PreviewBody() {
         );
       }
       if (page === 'success') {
-        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked onOpenForm={noop} editorMode={false} />;
+        // ?variant=locked previews the state a voter actually lands on first —
+        // results still gated behind the evaluation form. Default stays unlocked
+        // so the existing preview link is unchanged.
+        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant !== 'locked'} onOpenForm={noop} editorMode={false} />;
       }
       if (page === 'closed') {
         const c = receiptClosedCopy(variant);

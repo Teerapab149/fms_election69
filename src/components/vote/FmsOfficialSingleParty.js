@@ -151,7 +151,7 @@ export default function FmsOfficialSingleParty({
         <div className="fo-sb__case">
           {policies.length > 0 && (
             <section className="fo-sb__field">
-              <h2 className="fo-sb__flabel">ข้อเสนอต่อนักศึกษา</h2>
+              <h2 className="fo-sb__flabel">นโยบายพรรค</h2>
               <ol className="fo-sb__pol">
                 {policies.map((p, i) => (
                   <li key={i}>
