@@ -13,7 +13,7 @@
 // Sections render only when the party supplied content, but they never reorder.
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, Users, Target, ListChecks, ImageIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Users, Target } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import FmsOfficialShell from "./FmsOfficialShell";
@@ -58,18 +58,28 @@ export default function FmsOfficialParty({
         <ArrowLeft size={16} aria-hidden /> {backLabel}
       </a>
 
-      <header className="fo-party__head">
-        <span className="fo-party__num">{party?.number ?? "—"}</span>
-        <span className="fo-party__logo">
-          {logo
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
-            : <span className="fo-party__logo-fb" aria-hidden>{String(party?.name || "").trim().charAt(0)}</span>}
-        </span>
-        <div className="fo-party__id">
-          <span className="fo-party__kicker">หมายเลข {party?.number ?? "—"}</span>
-          <h1>{party?.name || "—"}</h1>
-          {party?.slogan && <p>{party.slogan}</p>}
+      {/* The header used to be a flat tinted bar — the same "no object, nothing
+          for the eye to hold" problem the home page had. It becomes the family's
+          notice, and the party's NUMBER takes the ghost slot that the edition
+          numeral occupies on the home page. Identical mechanism, and the number
+          is exactly the right thing to enlarge here: it is what a voter carries
+          to the ballot. */}
+      <header className="fo-notice fo-party__head">
+        {party?.number != null && (
+          <span className="fo-notice__ghost" aria-hidden>{party.number}</span>
+        )}
+        <div className="fo-notice__body fo-party__head-body">
+          <span className="fo-party__logo">
+            {logo
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
+              : <span className="fo-party__logo-fb" aria-hidden>{String(party?.name || "").trim().charAt(0)}</span>}
+          </span>
+          <div className="fo-party__id">
+            <span className="fo-party__kicker">หมายเลข {party?.number ?? "—"}</span>
+            <h1>{party?.name || "—"}</h1>
+            {party?.slogan && <p>{party.slogan}</p>}
+          </div>
         </div>
       </header>
 
@@ -167,6 +177,25 @@ export default function FmsOfficialParty({
         </section>
       )}
 
+      {/* The page runs ~3,800px on desktop and used to simply stop. A voter who
+          reaches the bottom of a party's dossier has one obvious next move, so
+          the family's plum panel closes it — the same device the home page uses
+          to send readers to the candidate list. */}
+      <section className="fo-party__sec">
+        <a href={editorMode ? undefined : getPath(backHref)} className="fo-meet fo-party__next">
+          <div className="fo-meet__txt">
+            <b>{showBackToVote || isSingleParty ? "กลับไปลงคะแนน" : "ดูผู้สมัครรายอื่น"}</b>
+            <span className="fo-meet__sub">
+              {showBackToVote || isSingleParty
+                ? "เมื่อศึกษาข้อมูลครบแล้ว กลับไปที่บัตรลงคะแนนเพื่อตัดสินใจ"
+                : "เปรียบเทียบนโยบายและทีมงานของพรรคอื่นก่อนตัดสินใจ"}
+            </span>
+            <span className="fo-meet__rule" aria-hidden />
+            <span className="fo-meet__go">{backLabel} <ArrowRight size={16} aria-hidden /></span>
+          </div>
+        </a>
+      </section>
+
       {lightbox && (
         <div className="fo-lightbox" role="dialog" aria-modal="true" onClick={() => setLightbox(null)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -176,16 +205,9 @@ export default function FmsOfficialParty({
       )}
 
       <style jsx global>{`
-        .fo-party__head {
-          display: grid; grid-template-columns: 66px 96px 1fr; align-items: center; gap: 20px;
-          padding: 24px 26px; border-radius: 14px; margin-bottom: 12px;
-          background: var(--fo-tint); border: 1px solid var(--fo-line);
-        }
-        .fo-party__num {
-          width: 66px; height: 66px; border-radius: 14px;
-          display: inline-flex; align-items: center; justify-content: center;
-          background: var(--fo-brand); color: #fff; font-size: 30px; font-weight: 600;
-          font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
+        .fo-party__head { margin-bottom: 12px; }
+        .fo-party__head-body {
+          display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 22px;
         }
         .fo-party__logo {
           width: 96px; height: 96px; border-radius: 12px; overflow: hidden;
@@ -200,7 +222,10 @@ export default function FmsOfficialParty({
         .fo-party__id p { margin: 8px 0 0; font-size: 15px; font-weight: 300; color: var(--fo-muted); }
 
         .fo-party__sec { margin-top: 42px; }
-        .fo-party__prose { margin: 0; font-size: 15px; font-weight: 300; line-height: 1.75; color: var(--fo-ink); max-width: 760px; }
+        /* 640px at 15px is about 68 Thai characters a line. It was 760, which
+           measured 97 — a third past the point where the eye reliably finds the
+           start of the next line, and this is the longest prose in the template. */
+        .fo-party__prose { margin: 0; font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--fo-ink); max-width: 600px; }
 
         .fo-party__missions { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; max-width: 820px; }
         .fo-party__missions li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; font-size: 15px; font-weight: 300; line-height: 1.7; color: var(--fo-ink); }
@@ -241,6 +266,10 @@ export default function FmsOfficialParty({
         .fo-member__name { margin-top: 12px; font-size: 15.5px; font-weight: 500; color: var(--fo-ink); }
         .fo-member__major { margin-top: 3px; font-size: 12.5px; font-weight: 300; color: var(--fo-muted); }
 
+        /* shorter than the home page panel: this one closes a long document
+           rather than opening a section */
+        .fo-party__next { min-height: 190px; padding: 34px 38px; }
+
         .fo-party__gallery { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
         .fo-party__gallery button { display: block; width: 100%; padding: 0; border: 1px solid var(--fo-line); border-radius: 12px; overflow: hidden; background: var(--fo-bg); cursor: pointer; transition: border-color .18s; }
         .fo-party__gallery button:hover { border-color: var(--fo-brand); }
@@ -251,12 +280,12 @@ export default function FmsOfficialParty({
         .fo-lightbox__x { position: absolute; top: 18px; right: 20px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff; font-size: 17px; cursor: pointer; }
 
         @media (max-width: 760px) {
-          /* the number badge moves onto the logo row rather than stacking three
-             deep — at 375 a three-row header pushed the party's own name below
-             the fold, which is the one thing this page exists to show */
-          .fo-party__head { grid-template-columns: 52px 68px 1fr; gap: 14px; padding: 18px; }
-          .fo-party__num { width: 52px; height: 52px; font-size: 24px; border-radius: 12px; }
-          .fo-party__logo { width: 68px; height: 68px; }
+          /* stacked, not side-by-side: at 360 a 96px logo left the party name
+             about 200px and pushed the header to 353px tall. Centred stack keeps
+             the name on full width and the header near its old height. */
+          .fo-party__head-body { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 14px; padding: 26px 18px 22px; }
+          .fo-party__next { min-height: 0; padding: 26px 20px; }
+          .fo-party__logo { width: 72px; height: 72px; }
           .fo-party__id h1 { font-size: 22px; }
           .fo-party__sec { margin-top: 34px; }
           .fo-party__team { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 22px 12px; }
