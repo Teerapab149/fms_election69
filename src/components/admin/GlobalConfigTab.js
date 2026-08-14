@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Save, Loader2, CheckCircle2, RotateCcw, Eye,
   Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2, Link,
+  Image as ImageIcon, Upload, Trash2, AlertCircle,
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { getPath } from "../../utils/basePath";
@@ -12,7 +13,82 @@ import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../util
 
 // section-header icons (metadata carries the NAME so the data module stays
 // component-free); falls back to a neutral glyph if a group has none.
-const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright, Link };
+const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright, Link, Image: ImageIcon };
+
+// ── image field ──
+// Uploads through /api/admin/global-config/banner and stores only the returned
+// path in the config value, so the poster follows the same save/undo flow as
+// every text field — the upload happens immediately, the VALUE still needs the
+// page's Save button, exactly like typing in a name does.
+function ImageField({ value, onChange }) {
+  const inputRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const pick = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";              // allow re-picking the same file after an error
+    if (!file) return;
+    setErr("");
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(getPath("/api/admin/global-config/banner"), {
+        method: "POST", body: fd, credentials: "include",
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "อัปโหลดไม่สำเร็จ");
+      onChange(json.url);
+    } catch (e2) {
+      setErr(e2.message || "อัปโหลดไม่สำเร็จ");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div>
+      {value ? (
+        <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={getPath(value)} alt="โปสเตอร์ประชาสัมพันธ์ที่ตั้งไว้" className="w-full h-auto block" />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+          <ImageIcon className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+          <p className="text-xs text-slate-500">ยังไม่ได้ตั้งโปสเตอร์ — หน้าแรกจะไม่แสดงส่วนประชาสัมพันธ์</p>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 mt-2">
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} className="hidden" />
+        <button
+          type="button" disabled={busy}
+          onClick={() => inputRef.current?.click()}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#8A2680] hover:bg-[#6E1F67] disabled:bg-slate-300 text-white text-xs font-bold transition-colors"
+        >
+          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+          {value ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
+        </button>
+        {value && (
+          <button
+            type="button" onClick={() => onChange("")}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:text-red-600 text-slate-500 text-xs font-bold transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> เอาออก
+          </button>
+        )}
+      </div>
+
+      {err && (
+        <p className="flex items-center gap-1.5 text-[11px] text-red-600 mt-2">
+          <AlertCircle className="w-3.5 h-3.5" /> {err}
+        </p>
+      )}
+    </div>
+  );
+}
 
 // electionName is no longer an editable field — it is auto-derived from the
 // prefix + number on save so it can never drift from the "SAMO 50" badge.
@@ -331,7 +407,12 @@ export default function GlobalConfigTab() {
                           <RotateCcw className="w-3 h-3" /> ค่าเริ่มต้น
                         </button>
                       </div>
-                      {field.multiline ? (
+                      {field.type === "image" ? (
+                        <ImageField
+                          value={config[field.key] ?? ""}
+                          onChange={(v) => handleChange(field.key, v)}
+                        />
+                      ) : field.multiline ? (
                         <textarea
                           rows={2}
                           value={config[field.key] ?? ""}

@@ -27,6 +27,13 @@ export const GLOBAL_CONFIG_DEFAULTS = {
   electionCalendarYear: 2026,
   copyrightYear: 2026,
 
+  // Election announcement poster shown on the home page. Empty = no poster
+  // section at all, which is the correct default: the alternative used to be a
+  // hardcoded image carrying LAST year's polling date, and a stale date on the
+  // faculty's own site is worse than no poster. Root-relative path (no basePath
+  // — readers add it via getPath).
+  electionBannerUrl: "",
+
   // Success-page evaluation form (stored in the SystemConfig.googleFormUrl
   // COLUMN, not this JSON blob — bridged through the global-config API so it
   // shows up as a general-settings field while readers keep reading the column)
@@ -94,6 +101,20 @@ export const GLOBAL_CONFIG_FIELDS = [
       // ส่ง onOpenForm ให้ทุกตระกูลแบบไม่มีเงื่อนไข) — ถ้าเว้นว่าง โมดัลจะขึ้นว่า
       // "ไม่พบลิงก์แบบประเมิน" hint เดิมเขียนว่า "เว้นว่าง = ไม่แสดงปุ่ม" ซึ่งผิด
       { key: "googleFormUrl", label: "ลิงก์ Google Form", type: "text", col: "full", hint: "แบบประเมินที่นักศึกษาเห็นบนหน้าขอบคุณหลังโหวตเสร็จ · ต้องใส่ให้ถูกต้อง ถ้าเว้นว่างไว้ ปุ่มยังแสดงอยู่แต่กดแล้วจะขึ้นว่าไม่พบลิงก์" },
+    ],
+  },
+  {
+    group: "ภาพประชาสัมพันธ์",
+    icon: "Image",
+    desc: "โปสเตอร์ประกาศการเลือกตั้งที่แสดงบนหน้าแรก — เปลี่ยนได้ทุกปีโดยไม่ต้องแก้โค้ด",
+    fields: [
+      {
+        key: "electionBannerUrl",
+        label: "โปสเตอร์ประชาสัมพันธ์",
+        type: "image",
+        col: "full",
+        hint: "อัปโหลดโปสเตอร์ประจำปีนี้ · เว้นว่าง = ไม่แสดงส่วนประชาสัมพันธ์บนหน้าแรก · โปรดตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง",
+      },
     ],
   },
   {

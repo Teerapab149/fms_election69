@@ -327,7 +327,11 @@ export default function BlossomHome({
   };
 
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
-  const bannerSrc = getPath("/images/prob/samo49_1.png");
+  // Admin-set poster wins; the checked-in file stays as the fallback so this
+  // change cannot alter what blossom renders today. (The fallback artwork is
+  // year-locked — set electionBannerUrl in the admin general settings to replace
+  // it rather than shipping a new file each year.)
+  const bannerSrc = getPath(globalConfig?.electionBannerUrl?.trim() || "/images/prob/samo49_1.png");
   const pad2 = (n) => String(n).padStart(2, "0");
 
   // ── ring textPath string (skip empty config parts) ──
