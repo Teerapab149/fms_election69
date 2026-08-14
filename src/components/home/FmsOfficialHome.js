@@ -494,8 +494,6 @@ export default function FmsOfficialHome({
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
         }
         .fo-stat__unit { font-size: 13px; font-weight: 300; color: var(--fo-muted); }
-        .fo-meter { margin-top: 14px; width: 100%; height: 6px; border-radius: 999px; background: var(--fo-tint-2); overflow: hidden; }
-        .fo-meter i { display: block; height: 100%; border-radius: 999px; background: var(--fo-brand); transition: width .8s ease-out; }
 
         /* ── banner ── */
         .fo-banner { margin: 0; border: 1px solid var(--fo-line); border-radius: 12px; overflow: hidden; background: var(--fo-bg); }
