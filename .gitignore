@@ -67,3 +67,11 @@ claude skill/
 # election system itself.
 docs/PORTFOLIO.md
 docs/portfolio-shots/
+
+# Local agent skill bundle (owner 2026-08-14). 94 files / 45,195 lines of SKILL.md
+# and reference docs for the assistant's own tooling — nothing the election system
+# runs on. Untracked it was still counted by the editor's branch diff, which read
+# "+49,293" for a branch whose actual change is +3,562; ignoring it makes the
+# number mean the work again. (AGENTS.md is deliberately NOT here — that one is
+# project documentation, the sibling of the committed CLAUDE.md.)
+.agents/
