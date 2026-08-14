@@ -16,6 +16,7 @@ import MultiPartyView from '../../components/vote/MultiPartyView';
 import GumroadVote from '../../components/vote/GumroadVote';
 import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VerdureVote from '../../components/vote/VerdureVote';
+import FmsOfficialVote from '../../components/vote/FmsOfficialVote';
 import BlossomVote from '../../components/vote/BlossomVote';
 import ReceiptVote, { useBallotDrop, ReceiptConfirmSlip } from '../../components/vote/ReceiptVote';
 import VoteFooter from '../../components/vote/VoteFooter';
@@ -94,6 +95,7 @@ export default function VotePage() {
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
   const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
   // Blossom Candy Editorial ballot — MULTI (T3.2) + SINGLE booth (T3.3). BlossomVote
   // dispatches internally to BlossomSingleParty when isSingleParty.
   const useBlossomVote = isBlossom;
@@ -166,7 +168,11 @@ export default function VotePage() {
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
       : isVerdure
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#E7F1E2]"
-      : useBlossomVote || useReceiptVote
+      : useBlossomVote || useReceiptVote || isFmsOfficial
+      /* fms-official owns its own footer, so it must join the families that opt
+         OUT of the classic wrapper. Left in the default branch it inherited
+         pb-32, and that 128px sat BELOW the rendered footer as dead page —
+         measured exactly 128px of gap under the copyright bar. */
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative"
       : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[var(--color-bg)]"}>
       <PageThemeOverrides page="vote" />
@@ -197,6 +203,18 @@ export default function VotePage() {
         />
       ) : isVerdure ? (
         <VerdureVote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting}
+          onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
+        />
+      ) : isFmsOfficial ? (
+        <FmsOfficialVote
           regularParties={regularParties}
           specialOptions={specialOptions}
           selectedPartyId={selectedPartyId}

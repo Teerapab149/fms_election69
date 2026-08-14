@@ -58,6 +58,12 @@ import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
 import ReceiptParty from '../../components/vote/ReceiptParty';
+import FmsOfficialCandidates from '../../components/vote/FmsOfficialCandidates';
+import FmsOfficialParty from '../../components/vote/FmsOfficialParty';
+import FmsOfficialVote from '../../components/vote/FmsOfficialVote';
+import FmsOfficialResults from '../../components/vote/FmsOfficialResults';
+import FmsOfficialSuccess from '../../components/vote/FmsOfficialSuccess';
+import FmsOfficialClosed from '../../components/vote/FmsOfficialClosed';
 import ReceiptVote from '../../components/vote/ReceiptVote';
 import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
@@ -87,9 +93,14 @@ const COMPONENTS = {
   // dispatches single→ReceiptSingleParty (internal confirm) / multi→shared modal, and
   // results renders the election-day embargo band when locked (same as blossom).
   receipt: { candidates: ReceiptCandidates, party: ReceiptParty, vote: ReceiptVote, results: ReceiptResults, success: ReceiptSuccess, closed: ReceiptClosed },
+  // fms-official owns all six inner pages on the uniform contract, so it needs no
+  // special-casing beyond the two family lists below (shared multi-confirm modal,
+  // and the sealed-count results state rather than the "not started" empty one).
+  'fms-official': { candidates: FmsOfficialCandidates, party: FmsOfficialParty, vote: FmsOfficialVote, results: FmsOfficialResults, success: FmsOfficialSuccess, closed: FmsOfficialClosed },
 };
 
 const TEMPLATES = [
+  { slug: 'fms-official', label: 'FMS Official' },
   { slug: 'verdure', label: 'Verdure' },
   { slug: 'studio-dark', label: 'Studio Dark' },
   { slug: 'gumroad', label: 'Gumroad' },
@@ -184,7 +195,7 @@ function PlaygroundBody() {
     content = <P party={partyForDetail} galleryImages={[]} showBackToVote />;
   } else if (page === 'vote') {
     const V = map.vote;
-    if ((family === 'blossom' || family === 'receipt') && !single) {
+    if ((family === 'blossom' || family === 'receipt' || family === 'fms-official') && !single) {
       // MULTI ballot — local selection → the SHARED confirm popup → success
       // (mirrors /template-preview interact + the real vote/page.js multi flow).
       const allSelectable = [...parties, SPECIAL.abstain, SPECIAL.disapprove];
@@ -217,7 +228,7 @@ function PlaygroundBody() {
     const R = map.results;
     // blossom/receipt LOCKED = the election-day embargo band (polls open, scores
     // sealed, turnout public) — not the "not started" empty state. Mirror /template-preview.
-    const embargo = family === 'blossom' || family === 'receipt';
+    const embargo = family === 'blossom' || family === 'receipt' || family === 'fms-official';
     // RES-1: production results (app/results/page.js) is a read-only tally board —
     // party rows are NOT links (no modal, no navigation). Mirror that here.
     content = (

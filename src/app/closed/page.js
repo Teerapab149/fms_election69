@@ -11,6 +11,7 @@ import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadClosed from "../../components/vote/GumroadClosed";
 import StudioDarkClosed from "../../components/vote/StudioDarkClosed";
 import VerdureClosed from "../../components/vote/VerdureClosed";
+import FmsOfficialClosed from "../../components/vote/FmsOfficialClosed";
 import BlossomClosed from "../../components/vote/BlossomClosed";
 import ReceiptClosed from "../../components/vote/ReceiptClosed";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
@@ -33,6 +34,7 @@ export default function ClosedPage() {
     const isVerdure = activeTemplateId?.startsWith('verdure');
     const isBlossom = activeTemplateId?.startsWith('blossom');
     const isReceipt = activeTemplateId?.startsWith('receipt');
+    const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
 
     useEffect(() => {
         fetchVoteStatus().then(setStatusData).catch(() => {});
@@ -185,6 +187,22 @@ export default function ClosedPage() {
             <>
                 <PageThemeOverrides page="closed" />
                 <VerdureClosed
+                    title={title}
+                    desc={desc}
+                    variant={variant}
+                    session={session}
+                    onLogout={handleLogout}
+                />
+            </>
+        );
+    }
+
+    // FMS OFFICIAL layout (faculty chrome) — replaces the classic page entirely.
+    if (isFmsOfficial) {
+        return (
+            <>
+                <PageThemeOverrides page="closed" />
+                <FmsOfficialClosed
                     title={title}
                     desc={desc}
                     variant={variant}

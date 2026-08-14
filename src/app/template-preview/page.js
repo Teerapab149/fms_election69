@@ -67,6 +67,12 @@ import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptClosed from '../../components/vote/ReceiptClosed';
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
 import ReceiptParty from '../../components/vote/ReceiptParty';
+import FmsOfficialCandidates from '../../components/vote/FmsOfficialCandidates';
+import FmsOfficialParty from '../../components/vote/FmsOfficialParty';
+import FmsOfficialVote from '../../components/vote/FmsOfficialVote';
+import FmsOfficialResults from '../../components/vote/FmsOfficialResults';
+import FmsOfficialSuccess from '../../components/vote/FmsOfficialSuccess';
+import FmsOfficialClosed from '../../components/vote/FmsOfficialClosed';
 
 import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPreview';
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
@@ -679,6 +685,59 @@ function PreviewBody() {
       return <ReceiptClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
     }
 
+    // ── fms-official family — all six inner pages. Unlike the older families this
+    //    one landed complete, so it gets one block rather than page-by-page tickets.
+    //    ?variant= drives the states worth previewing: vote single, results
+    //    revealed/sealed, closed ended|closed|waiting. ──
+    if (family === 'fms-official') {
+      if (page === 'candidates') {
+        return <FmsOfficialCandidates candidates={parties} editorMode={false} />;
+      }
+      if (page === 'party') {
+        const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
+        return <FmsOfficialParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
+      }
+      if (page === 'vote') {
+        const single = variant === 'single';
+        return (
+          <FmsOfficialVote
+            regularParties={single ? parties.slice(0, 1) : parties}
+            specialOptions={SPECIAL}
+            selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId}
+            onViewDetails={noop}
+            isSingleParty={single}
+            user={DUMMY_USER}
+            isSubmitting={false}
+            onConfirm={noop}
+            editorMode={false}
+          />
+        );
+      }
+      if (page === 'results') {
+        const revealed = variant !== 'sealed';
+        return (
+          <FmsOfficialResults
+            candidates={resultsCandidates(revealed, parties)}
+            totalVotes={revealed ? 625 : 418}
+            demographics={DEMOGRAPHICS}
+            finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+            isRevealed={revealed}
+            isNotStarted={false}
+            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            editorMode={false}
+          />
+        );
+      }
+      if (page === 'success') {
+        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked onOpenForm={noop} editorMode={false} />;
+      }
+      if (page === 'closed') {
+        const c = receiptClosedCopy(variant);
+        return <FmsOfficialClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
+      }
+    }
+
     // other classic/original inner pages (candidates/results/closed/party): keep the
     // static EditorPreview renders (out of scope). The click seam contains their links.
     return renderPage();
@@ -700,6 +759,51 @@ function PreviewBody() {
         initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
       />
     );
+  }
+
+  // ── fms-official — the faculty template's six inner pages. Its own block rather
+  //    than joining the byFamily trio above: those three share a signature shape
+  //    (frame + identical prop lists) that this family's closed/success do not.
+  if (family === 'fms-official') {
+    const single = variant === 'single';
+    const revealed = variant !== 'sealed';
+    if (page === 'candidates') return <FmsOfficialCandidates candidates={parties} editorMode />;
+    if (page === 'party') return <FmsOfficialParty party={parties[0]} galleryImages={[]} showBackToVote={false} editorMode />;
+    if (page === 'vote') {
+      return (
+        <FmsOfficialVote
+          regularParties={single ? [parties[0]] : parties}
+          specialOptions={SPECIAL}
+          selectedPartyId={selectedPartyId}
+          onSelect={setSelectedPartyId}
+          onViewDetails={noop}
+          isSingleParty={single}
+          user={DUMMY_USER}
+          isSubmitting={false}
+          onConfirm={noop}
+          editorMode={false}
+        />
+      );
+    }
+    if (page === 'results') {
+      return (
+        <FmsOfficialResults
+          candidates={resultsCandidates(revealed, parties)}
+          totalVotes={revealed ? 625 : 418}
+          demographics={DEMOGRAPHICS}
+          finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+          isRevealed={revealed}
+          isNotStarted={false}
+          countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          editorMode
+        />
+      );
+    }
+    if (page === 'success') return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked onOpenForm={noop} editorMode />;
+    if (page === 'closed') {
+      const cc = closedPreviewCopy(variant);
+      return <FmsOfficialClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />;
+    }
   }
 
   // ── studio-dark / gumroad / verdure — render the real layout component w/ mock props ──

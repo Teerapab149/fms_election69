@@ -373,7 +373,7 @@ function TemplateGallery({ slug }) {
 
       {/* interactive playground — clickable, DB-free; only for the distinct
           (non-classic) layout families the playground supports */}
-      {['verdure', 'studio-dark', 'gumroad'].includes(BUILT_IN_TEMPLATES[slug]?.layoutFamily) && (
+      {['verdure', 'studio-dark', 'gumroad', 'fms-official'].includes(BUILT_IN_TEMPLATES[slug]?.layoutFamily) && (
         <a
           href={getPath(`/template-playground?slug=${slug}`)}
           target="_blank"

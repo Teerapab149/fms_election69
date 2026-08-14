@@ -220,6 +220,10 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
 const FAMILY_CATEGORY = {
   original: "official",
   classic: "official",
+  // The faculty-branded family is the most "official" thing in the list — it is
+  // the only one whose colour and chrome come from fms.psu.ac.th — so it must not
+  // fall to the expressive default and sit below the poster templates.
+  "fms-official": "official",
   // everything else is expressive by default
 };
 const CATEGORY_META = {
@@ -329,7 +333,7 @@ export default function TemplateChooserTab() {
     // v2-R6 — surface the newest, most-complete families first: receipt + blossom
     // lead, then original, then the earlier real templates. Families absent here fall
     // to the end (index 99); the classic family is filtered out above regardless.
-    const ORDER = ["receipt", "blossom", "original", "gumroad", "studio-dark", "verdure"];
+    const ORDER = ["fms-official", "receipt", "blossom", "original", "gumroad", "studio-dark", "verdure"];
     const REP = { gumroad: "gumroad", "studio-dark": "studio-dark", verdure: "verdure", original: "original" };
     const groups = {};
     for (const t of templates) {

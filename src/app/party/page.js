@@ -16,6 +16,7 @@ import CandidateModal from '../../components/CandidateModal';
 import GumroadParty from "../../components/vote/GumroadParty";
 import StudioDarkParty from "../../components/vote/StudioDarkParty";
 import VerdureParty from "../../components/vote/VerdureParty";
+import FmsOfficialParty from "../../components/vote/FmsOfficialParty";
 import ReceiptParty from "../../components/vote/ReceiptParty";
 import BlossomParty from "../../components/vote/BlossomParty";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
@@ -606,6 +607,7 @@ function PartyContent() {
   const isStudio = activeTemplateId?.startsWith('studio-dark');
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
   const isBlossom = activeTemplateId?.startsWith('blossom');
 
   const listSectionRef = useRef(null);
@@ -757,6 +759,16 @@ function PartyContent() {
       <>
         <PageThemeOverrides page="party" />
         <BlossomParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
+      </>
+    );
+  }
+
+  // FMS OFFICIAL layout (faculty chrome) — replaces the classic cinematic page entirely.
+  if (isFmsOfficial) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <FmsOfficialParty party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
       </>
     );
   }

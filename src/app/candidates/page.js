@@ -16,6 +16,7 @@ import PageThemeOverrides from '../../components/PageThemeOverrides';
 import GumroadCandidates from '../../components/vote/GumroadCandidates';
 import StudioDarkCandidates from '../../components/vote/StudioDarkCandidates';
 import VerdureCandidates from '../../components/vote/VerdureCandidates';
+import FmsOfficialCandidates from '../../components/vote/FmsOfficialCandidates';
 import BlossomCandidates from '../../components/vote/BlossomCandidates';
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
@@ -45,6 +46,7 @@ export default function CandidatesPage({
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
   const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
 
   const Wrap = ({ id, children }) => editorMode ? (
     <EditorElement
@@ -168,6 +170,17 @@ export default function CandidatesPage({
       <>
         {!editorMode && <PageThemeOverrides page="candidates" />}
         <ReceiptCandidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
+  // FMS OFFICIAL layout (faculty chrome: plum strip + PSU lockup + plum page
+  // plate) — replaces the classic page entirely.
+  if (isFmsOfficial) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <FmsOfficialCandidates candidates={parties} editorMode={editorMode} />
       </>
     );
   }

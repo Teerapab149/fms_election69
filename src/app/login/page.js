@@ -14,6 +14,7 @@ import VerdureLogin from "../../components/login/VerdureLogin";
 import GumroadLogin from "../../components/login/GumroadLogin";
 import BlossomLogin from "../../components/login/BlossomLogin";
 import ReceiptLogin from "../../components/login/ReceiptLogin";
+import FmsOfficialLogin from "../../components/login/FmsOfficialLogin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -126,6 +127,7 @@ export default function LoginPage() {
   // classic/original card.
   if (activeTemplateId?.startsWith("blossom")) return <BlossomLogin {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("receipt")) return <ReceiptLogin {...templateLoginProps} />;
+  if (activeTemplateId?.startsWith("fms-official")) return <FmsOfficialLogin {...templateLoginProps} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">

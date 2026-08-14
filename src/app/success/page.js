@@ -29,6 +29,7 @@ import Navbar from '../../components/Navbar';
 import GumroadSuccess from '../../components/vote/GumroadSuccess';
 import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
 import VerdureSuccess from '../../components/vote/VerdureSuccess';
+import FmsOfficialSuccess from '../../components/vote/FmsOfficialSuccess';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
 import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
@@ -71,6 +72,7 @@ export default function SuccessPage({
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
   const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
 
   useEffect(() => {
     if (editorMode) { setTemplateReady(true); return; }
@@ -282,7 +284,7 @@ export default function SuccessPage({
   // Render 
   // =========================================================
   return (
-    <div className={(isGumroad || isStudio || isVerdure || isBlossom || isReceipt) ? "relative" : "min-h-screen flex flex-col font-sans relative overflow-hidden bg-[var(--color-bg)]"}>
+    <div className={(isGumroad || isStudio || isVerdure || isBlossom || isReceipt || isFmsOfficial) ? "relative" : "min-h-screen flex flex-col font-sans relative overflow-hidden bg-[var(--color-bg)]"}>
       {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* classic/original chrome. This family mounts <Navbar /> on candidates, closed,
@@ -290,7 +292,7 @@ export default function SuccessPage({
           end of the flow was also the one screen with no way back to anywhere. The
           centring moved onto the inner wrapper below so the bar stays at the top
           instead of being centred together with the card. */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !editorMode && <Navbar />}
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && !editorMode && <Navbar />}
 
       {/* RECEIPT layout (own printer-moment chrome); the form + alert modals below stay shared */}
       {isReceipt && (isAuthorized || editorMode) && (
@@ -322,6 +324,16 @@ export default function SuccessPage({
         />
       )}
 
+      {/* FMS OFFICIAL layout (faculty chrome); the form + alert modals below stay shared */}
+      {isFmsOfficial && (isAuthorized || editorMode) && (
+        <FmsOfficialSuccess
+          user={user}
+          isUnlocked={isUnlocked}
+          onOpenForm={() => setShowModal(true)}
+          editorMode={editorMode}
+        />
+      )}
+
       {/* GUMROAD layout (own chrome); the form + alert modals below stay shared */}
       {isGumroad && (isAuthorized || editorMode) && (
         <GumroadSuccess
@@ -343,7 +355,7 @@ export default function SuccessPage({
       )}
 
       {/* Background Grid */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '48px 48px' }}></div>
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-[var(--color-primary)] opacity-20 blur-[80px] md:blur-[120px]"></div>
@@ -351,7 +363,7 @@ export default function SuccessPage({
       </div>
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && (isAuthorized || editorMode) && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (isAuthorized || editorMode) && (
         <div className="success-cardwrap flex-1 w-full flex items-center justify-center p-4 md:p-6 relative z-10">
         <div className="w-full max-w-lg animate-fade-in-up">
           <div className="success-card bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">

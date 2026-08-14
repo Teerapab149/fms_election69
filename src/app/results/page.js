@@ -13,6 +13,7 @@ import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadResults from "../../components/vote/GumroadResults";
 import StudioDarkResults from "../../components/vote/StudioDarkResults";
 import VerdureResults from "../../components/vote/VerdureResults";
+import FmsOfficialResults from "../../components/vote/FmsOfficialResults";
 import BlossomResults from "../../components/vote/BlossomResults";
 import ReceiptResults from "../../components/vote/ReceiptResults";
 import { resolveElectionDates } from "../../utils/electionConfig";
@@ -71,6 +72,7 @@ export default function ResultsPage() {
   const isVerdure = activeTemplateId?.startsWith('verdure');
   const isBlossom = activeTemplateId?.startsWith('blossom');
   const isReceipt = activeTemplateId?.startsWith('receipt');
+  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
@@ -377,10 +379,10 @@ export default function ResultsPage() {
       ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
       : isVerdure
       ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
-      : isBlossom || isReceipt
+      : isBlossom || isReceipt || isFmsOfficial
       ? "flex flex-col min-h-screen font-sans overflow-x-hidden relative"
       : "flex flex-col min-h-screen bg-[var(--color-bg)] font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}
-      style={(!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
+      style={(!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
       <PageThemeOverrides page="results" />
 
       {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
@@ -423,6 +425,19 @@ export default function ResultsPage() {
         />
       )}
 
+      {/* FMS OFFICIAL layout (faculty chrome); access modals below stay shared */}
+      {isFmsOfficial && isAuthorized && (
+        <FmsOfficialResults
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+        />
+      )}
+
       {/* GUMROAD layout (own topbar/footer); access modals below stay shared */}
       {isGumroad && isAuthorized && (
         <GumroadResults
@@ -449,16 +464,16 @@ export default function ResultsPage() {
         />
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && <Navbar />}
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && <Navbar />}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (
         <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
       )}
 
       {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && (
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
 
         {isAuthorized && (
@@ -626,7 +641,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && <SiteFooter className="mt-8 lg:mt-16" />}
+      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && <SiteFooter className="mt-8 lg:mt-16" />}
     </div>
   );
 }
