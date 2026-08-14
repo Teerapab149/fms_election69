@@ -474,6 +474,70 @@ export function FmsOfficialBaseStyles({ paintBody = false }) {
         height: 2px; border-radius: 2px; background: var(--fo-brand);
       }
 
+      /* ── the notice ──
+         The family's object, declared HERE rather than in the home page because
+         more than one page is a posted document: the home announces the election,
+         the closed page posts the system's status, success issues a receipt, and
+         a sealed count is an embargo notice. Leaving these rules in FmsOfficialHome
+         would have repeated the mistake the buttons already taught — a shared
+         device stranded in one page's style block, invisible everywhere else. */
+      .fo-notice {
+        position: relative; width: 100%; overflow: hidden;
+        background: var(--fo-surface);
+        border: 1px solid var(--fo-line);
+        /* the head rule — a document's masthead, and the largest single dose of
+           plum on a page that otherwise keeps the colour in small amounts */
+        border-top: 6px solid var(--fo-brand);
+        /* 4px, not the 12px the cards use: documents have corners, controls have
+           radii. That distinction is the family's radius rule. */
+        border-radius: 4px;
+        box-shadow: 0 30px 60px -46px rgba(36, 30, 40, .55);
+      }
+      /* Oversized, clipped by the frame, and deliberately weak. Anything bolder
+         competes with the heading sitting on top of it; the contrast of that
+         heading is measured, not eyeballed. */
+      .fo-notice__ghost {
+        position: absolute; right: -.04em; bottom: -.3em; z-index: 0;
+        font-size: clamp(210px, 33vw, 400px); font-weight: 700; line-height: .78;
+        letter-spacing: -.06em; color: var(--fo-brand); opacity: .07;
+        font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
+        pointer-events: none; user-select: none;
+      }
+      .fo-notice__body { position: relative; z-index: 1; padding: 30px 40px 36px; }
+      /* a compartment of the same document, divided by a hairline — never a
+         second block that happens to sit underneath */
+      .fo-notice__cd {
+        position: relative; z-index: 1;
+        border-top: 1px solid var(--fo-line);
+        padding: 20px 24px 22px;
+      }
+      .fo-notice__cd .fo-cd__cell { min-width: 68px; padding: 9px 8px 7px; border-radius: 8px; }
+      .fo-notice__cd .fo-cd__cell b { font-size: 24px; }
+      .fo-notice__cd .fo-cd__cell span { font-size: 11px; }
+
+      /* The tab hangs from the head rule: square where it meets the rule, rounded
+         where it ends, so it reads as attached rather than placed. */
+      .fo-notice__tab { position: relative; z-index: 1; display: flex; justify-content: center; }
+      .fo-eyebrow {
+        display: inline-block; padding: 8px 22px 9px;
+        border-radius: 0 0 7px 7px;
+        background: var(--fo-brand); color: #fff;
+        font-size: 12px; font-weight: 600;
+        letter-spacing: .18em; text-transform: uppercase;
+        box-shadow: 0 6px 14px -10px rgba(36, 30, 40, .6);
+      }
+      /* A full Thai sentence in a tab. The short-label tracking is meant for
+         two or three Latin words and turns a 45-character Thai string into a
+         ribbon wider than the document; Thai script also takes letter-spacing
+         badly because it has no case and its marks sit tight to the base glyph.
+         So: normal tracking, normal weight, and a cap so it wraps instead of
+         running past the frame on a phone. */
+      .fo-eyebrow--long {
+        letter-spacing: .01em; font-weight: 500; font-size: 11.5px;
+        max-width: min(90%, 460px); padding: 7px 18px 8px;
+        line-height: 1.45; text-align: center;
+      }
+
       /* ── dot field ──
          Straight off fms.psu.ac.th, where whole sections sit on a fine dot grid.
          It is the answer to "the page is flat" that costs no colour weight: a

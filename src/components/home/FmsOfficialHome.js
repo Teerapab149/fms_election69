@@ -409,46 +409,6 @@ export default function FmsOfficialHome({
           display: flex; flex-direction: column; align-items: center;
         }
 
-        .fo-notice {
-          position: relative; width: 100%; overflow: hidden;
-          background: var(--fo-surface);
-          border: 1px solid var(--fo-line);
-          /* the head rule — a document's masthead, and the largest dose of plum
-             left on the page now that the field is gone */
-          border-top: 6px solid var(--fo-brand);
-          /* 4px, not the 12px the cards use: documents have corners */
-          border-radius: 4px;
-          box-shadow: 0 30px 60px -46px rgba(36, 30, 40, .55);
-        }
-        /* Oversized, clipped by the frame, and deliberately weak. Anything bolder
-           than this competes with the heading sitting on top of it; the contrast
-           of that heading is measured, not eyeballed. */
-        .fo-notice__ghost {
-          position: absolute; right: -.04em; bottom: -.3em; z-index: 0;
-          font-size: clamp(210px, 33vw, 400px); font-weight: 700; line-height: .78;
-          letter-spacing: -.06em; color: var(--fo-brand); opacity: .07;
-          font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
-          pointer-events: none; user-select: none;
-        }
-        .fo-notice__body { position: relative; z-index: 1; padding: 30px 40px 36px; }
-        .fo-notice__cd {
-          position: relative; z-index: 1;
-          border-top: 1px solid var(--fo-line);
-          padding: 20px 24px 22px;
-        }
-
-        /* The tab hangs from the head rule: square where it meets the rule,
-           rounded where it ends, so it reads as attached rather than placed. */
-        .fo-notice__tab { position: relative; z-index: 1; display: flex; justify-content: center; }
-        .fo-eyebrow {
-          display: inline-block; padding: 8px 22px 9px;
-          border-radius: 0 0 7px 7px;
-          background: var(--fo-brand); color: #fff;
-          font-size: 12px; font-weight: 600;
-          letter-spacing: .18em; text-transform: uppercase;
-          box-shadow: 0 6px 14px -10px rgba(36, 30, 40, .6);
-        }
-
         /* ONE lockup, ONE size — owner's call. The letters and the number are
            equals, tracked slightly open so the pair reads as a stamped wordmark
            rather than a sentence. */
@@ -485,9 +445,6 @@ export default function FmsOfficialHome({
           justify-content: center; flex-wrap: wrap; gap: 8px 18px;
         }
         .fo-cd__cells { display: flex; gap: 8px; }
-        .fo-notice__cd .fo-cd__cell { min-width: 68px; padding: 9px 8px 7px; border-radius: 8px; }
-        .fo-notice__cd .fo-cd__cell b { font-size: 24px; }
-        .fo-notice__cd .fo-cd__cell span { font-size: 11px; }
 
         /* The actions sit on the board, not on the notice — so they invert. This
            is the ONLY inverted block left in the template, and it is four
