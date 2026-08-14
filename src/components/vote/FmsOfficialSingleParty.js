@@ -201,8 +201,11 @@ export default function FmsOfficialSingleParty({
                             : <Users size={22} aria-hidden />}
                         </span>
                         {m.position && <span className="fo-sb__mplate">{m.position}</span>}
+                        {/* Position and name only. สาขาวิชา belongs in the modal:
+                            it is not filled for every candidate, so on the grid it
+                            printed under some cards and not others and made a
+                            deliberately uniform register look ragged. */}
                         <b className="fo-sb__mname">{m.name}</b>
-                        {m.major && <span className="fo-sb__mmajor">{m.major}</span>}
                       </button>
                     </li>
                   );
@@ -477,7 +480,6 @@ export default function FmsOfficialSingleParty({
         }
         .fo-sb__mname { margin-top: 10px; font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--fo-ink); }
         .fo-sb__mcard:hover .fo-sb__mname { color: var(--fo-brand); }
-        .fo-sb__mmajor { margin-top: 2px; font-size: 11.5px; font-weight: 300; line-height: 1.4; color: var(--fo-muted); }
 
         /* the crest reading is the longest and least decision-relevant text on
            the screen, so it is bounded and the reader opts into it */
