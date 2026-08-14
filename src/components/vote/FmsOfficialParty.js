@@ -17,6 +17,7 @@ import { ArrowLeft, ArrowRight, Users, Target } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import FmsOfficialShell from "./FmsOfficialShell";
+import FmsOfficialMemberModal from "./FmsOfficialMemberModal";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -26,6 +27,7 @@ export default function FmsOfficialParty({
   party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false, editorMode = false,
 }) {
   const [lightbox, setLightbox] = useState(null);
+  const [member, setMember] = useState(null);
 
   const missions = useMemo(
     () => (party?.missions || []).map(asText).filter(Boolean),
@@ -185,16 +187,23 @@ export default function FmsOfficialParty({
                 // a solid plum position plate straddling the photo's lower edge,
                 // then the name beneath it. The plate is what makes the grid
                 // scannable — you read roles down the page, then names.
-                <li key={m.id} className="fo-member">
-                  <span className="fo-member__ph">
-                    {img
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={img} alt="" aria-hidden />
-                      : <span className="fo-member__ph-fb" aria-hidden><Users size={26} /></span>}
-                  </span>
-                  {m.position && <span className="fo-member__plate">{m.position}</span>}
-                  <b className="fo-member__name">{m.name}</b>
-                  {m.major && <span className="fo-member__major">{m.major}</span>}
+                <li key={m.id}>
+                  <button
+                    type="button"
+                    className="fo-member"
+                    onClick={editorMode ? undefined : () => setMember(m)}
+                    aria-label={`ดูรายละเอียดของ ${m.name || "ผู้สมัคร"}`}
+                  >
+                    <span className="fo-member__ph">
+                      {img
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={img} alt="" aria-hidden />
+                        : <span className="fo-member__ph-fb" aria-hidden><Users size={26} /></span>}
+                    </span>
+                    {m.position && <span className="fo-member__plate">{m.position}</span>}
+                    <b className="fo-member__name">{m.name}</b>
+                    {m.major && <span className="fo-member__major">{m.major}</span>}
+                  </button>
                 </li>
               );
             })}
@@ -238,6 +247,8 @@ export default function FmsOfficialParty({
           </div>
         </a>
       </section>
+
+      <FmsOfficialMemberModal member={member} onClose={() => setMember(null)} />
 
       {lightbox && (
         <div className="fo-lightbox" role="dialog" aria-modal="true" onClick={() => setLightbox(null)}>
@@ -340,7 +351,19 @@ export default function FmsOfficialParty({
         .fo-party__policies p { margin: 6px 0 0; font-size: 14px; font-weight: 300; line-height: 1.7; color: var(--fo-muted); }
 
         .fo-party__team { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 28px 18px; }
-        .fo-member { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        /* a button now — every candidate opens their own record, the same
+           affordance the ballot uses. width/padding/border reset so turning the
+           li into a control changed nothing about how the card looks. */
+        .fo-member {
+          display: flex; flex-direction: column; align-items: center; text-align: center;
+          width: 100%; padding: 0; background: none; border: 0; cursor: pointer;
+          font-family: inherit;
+        }
+        .fo-member .fo-member__ph { transition: border-color .18s; }
+        .fo-member:hover .fo-member__ph { border-color: var(--fo-brand); }
+        .fo-member:hover .fo-member__name { color: var(--fo-brand); }
+        .fo-member:focus-visible { outline: none; }
+        .fo-member:focus-visible .fo-member__ph { outline: 2px solid var(--fo-brand); outline-offset: 2px; }
         /* Portrait, not a circle avatar: the faculty uses a 3:4 plate on a pale
            field, and a portrait crop is also what a student ID photo actually is —
            circles cut the top of the head off every time. */
