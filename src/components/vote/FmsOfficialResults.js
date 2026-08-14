@@ -69,24 +69,45 @@ export default function FmsOfficialResults({
       editorMode={editorMode}
     >
       {isNotStarted ? (
-        <div className="fo-card fo-empty">
-          <span className="fo-res__ico"><Clock size={22} aria-hidden /></span>
-          <b>ยังไม่เปิดการลงคะแนน</b>
-          {countdownText && <p className="fo-note">เปิดในอีก {countdownText}</p>}
+        <div className="fo-notice fo-res__state">
+          <div className="fo-notice__body fo-res__state-body">
+            <span className="fo-res__ico"><Clock size={22} aria-hidden /></span>
+            <b>ยังไม่เปิดการลงคะแนน</b>
+            <span className="fo-rule" aria-hidden />
+            <p className="fo-note">
+              {countdownText ? `เปิดในอีก ${countdownText}` : "ผลจะแสดงที่หน้านี้เมื่อการเลือกตั้งสิ้นสุด"}
+            </p>
+          </div>
         </div>
       ) : !isRevealed ? (
-        <div className="fo-card fo-empty">
-          <span className="fo-res__ico"><Lock size={22} aria-hidden /></span>
-          <b>ผลคะแนนยังไม่เปิดเผย</b>
-          <p className="fo-note">
-            ระบบบันทึกบัตรแล้ว {fmtInt(totalVotes)} ใบ ผลจะแสดงเมื่อคณะกรรมการเปิดเผยอย่างเป็นทางการ
-          </p>
-        </div>
-      ) : (
+        /* SEALED — the count is embargoed, the TURNOUT is not.
+           This state used to render one sentence in a small card and nothing
+           else: 414px of content on a 900px page, with every figure it needed
+           already in props. What is actually secret here is the per-party
+           tally; how many people voted is public the moment they vote, and the
+           home page has been showing it live all along. So the embargo notice
+           says what is withheld and why, and the turnout it is safe to publish
+           runs underneath as real content. */
         <>
+          <div className="fo-notice fo-res__state">
+            <div className="fo-notice__body fo-res__state-body">
+              <span className="fo-res__ico"><Lock size={22} aria-hidden /></span>
+              <b>ผลคะแนนยังไม่เปิดเผย</b>
+              <span className="fo-rule" aria-hidden />
+              <p className="fo-note">
+                คะแนนรายพรรคจะเปิดเผยเมื่อคณะกรรมการประกาศอย่างเป็นทางการ
+                ระหว่างนี้แสดงเฉพาะจำนวนผู้ใช้สิทธิ์ ซึ่งไม่บอกว่าใครเลือกอะไร
+              </p>
+            </div>
+          </div>
+
+          <div className="fo-sechead fo-sechead--gap">
+            <h2>การใช้สิทธิ์ ณ ขณะนี้</h2>
+            <p>ตัวเลขนี้เปิดเผยได้ระหว่างการลงคะแนน — เป็นจำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร</p>
+          </div>
           <div className="fo-res__summary">
             <div className="fo-card fo-res__sum">
-              <span className="fo-res__sum-lbl">บัตรทั้งหมด</span>
+              <span className="fo-res__sum-lbl">บัตรที่บันทึกแล้ว</span>
               <b className="fo-res__sum-val">{fmtInt(totalVotes)}</b>
               <span className="fo-res__sum-unit">ใบ</span>
             </div>
@@ -95,17 +116,46 @@ export default function FmsOfficialResults({
               <b className="fo-res__sum-val">{fmtInt(totalEligible)}</b>
               <span className="fo-res__sum-unit">คน</span>
             </div>
-            <div className="fo-card fo-res__sum">
+            <div className="fo-card fo-res__sum fo-res__sum--pct">
               <span className="fo-res__sum-lbl">สัดส่วนผู้ใช้สิทธิ์</span>
               <b className="fo-res__sum-val">{turnout.toFixed(2)}</b>
               <span className="fo-res__sum-unit">%</span>
+              <div className="fo-meter" role="presentation"><i style={{ width: `${Math.min(100, turnout)}%` }} /></div>
             </div>
           </div>
+        </>
+      ) : (
+        <>
+          {/* REVEALED — the published record. The figures and the tally are one
+              document with a tab that says so, because this is the page that
+              gets screenshotted and argued over; a dashboard invites doubt where
+              a signed notice does not. Demographics stay outside it: they are
+              context about who turned up, not part of the result. */}
+          <div className="fo-notice fo-res__record">
 
-          <div className="fo-sechead">
-            <h2>คะแนนรายพรรค</h2>
-            <p>เรียงจากคะแนนมากไปน้อย · สัดส่วนคิดจากบัตรทั้งหมด {fmtInt(totalVotes)} ใบ</p>
-          </div>
+            <div className="fo-res__summary">
+              <div className="fo-res__sum">
+                <span className="fo-res__sum-lbl">บัตรทั้งหมด</span>
+                <b className="fo-res__sum-val">{fmtInt(totalVotes)}</b>
+                <span className="fo-res__sum-unit">ใบ</span>
+              </div>
+              <div className="fo-res__sum">
+                <span className="fo-res__sum-lbl">ผู้มีสิทธิ์</span>
+                <b className="fo-res__sum-val">{fmtInt(totalEligible)}</b>
+                <span className="fo-res__sum-unit">คน</span>
+              </div>
+              <div className="fo-res__sum">
+                <span className="fo-res__sum-lbl">สัดส่วนผู้ใช้สิทธิ์</span>
+                <b className="fo-res__sum-val">{turnout.toFixed(2)}</b>
+                <span className="fo-res__sum-unit">%</span>
+              </div>
+            </div>
+
+            <div className="fo-res__tally">
+              <div className="fo-sechead">
+                <h2>คะแนนรายพรรค</h2>
+                <p>เรียงจากคะแนนมากไปน้อย · สัดส่วนคิดจากบัตรทั้งหมด {fmtInt(totalVotes)} ใบ</p>
+              </div>
 
           <ul className="fo-race">
             {rows.map((c) => {
@@ -132,7 +182,9 @@ export default function FmsOfficialResults({
                 </li>
               );
             })}
-          </ul>
+              </ul>
+            </div>
+          </div>
 
           {demoGroups.length > 0 && (
             <>
@@ -175,8 +227,28 @@ export default function FmsOfficialResults({
           background: var(--fo-tint); color: var(--fo-brand); border: 1px solid var(--fo-line);
         }
 
+        /* the two non-revealed states share the notice; held at reading width so
+           a short message does not stretch into a banner */
+        .fo-res__state { max-width: 620px; margin: 0 auto; }
+        .fo-res__state-body { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .fo-res__state-body b { font-size: clamp(20px, 2.6vw, 26px); font-weight: 600; color: var(--fo-ink); }
+        .fo-res__state-body .fo-note { margin: 0; max-width: 440px; line-height: 1.7; }
+
         .fo-res__summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 34px; }
         .fo-res__sum { display: flex; flex-direction: column; gap: 2px; }
+        .fo-res__sum--pct .fo-meter { margin-top: 12px; }
+
+        /* the published record: figures and tally as compartments of one
+           document, each divided by the same hairline the rest of the family
+           uses. The summary loses its card borders here — inside a document the
+           figures are a row, not three floating cards. */
+        .fo-res__record .fo-res__summary {
+          margin: 0; padding: 24px 26px; gap: 20px;
+          border-bottom: 1px solid var(--fo-line);
+        }
+        .fo-res__record .fo-res__sum { background: none; border: 0; padding: 0; }
+        .fo-res__tally { padding: 24px 26px 26px; }
+        .fo-res__tally .fo-sechead { margin-bottom: 18px; }
         .fo-res__sum-lbl { font-size: 13px; font-weight: 300; color: var(--fo-muted); }
         .fo-res__sum-val {
           font-size: 34px; font-weight: 600; line-height: 1.15; color: var(--fo-ink);

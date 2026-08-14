@@ -503,7 +503,12 @@ export function FmsOfficialBaseStyles({ paintBody = false }) {
         font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
         pointer-events: none; user-select: none;
       }
-      .fo-notice__body { position: relative; z-index: 1; padding: 30px 40px 36px; }
+      /* Default is the untabbed document — every inner page. The tab only exists
+         on the home page, and where it does the body tightens to make room for
+         it; the adjacent-sibling selector does that automatically rather than
+         asking each page to remember a modifier class. */
+      .fo-notice__body { position: relative; z-index: 1; padding: 42px 40px 36px; }
+      .fo-notice__tab + .fo-notice__body { padding-top: 30px; }
       /* a compartment of the same document, divided by a hairline — never a
          second block that happens to sit underneath */
       .fo-notice__cd {
@@ -526,17 +531,16 @@ export function FmsOfficialBaseStyles({ paintBody = false }) {
         letter-spacing: .18em; text-transform: uppercase;
         box-shadow: 0 6px 14px -10px rgba(36, 30, 40, .6);
       }
-      /* A full Thai sentence in a tab. The short-label tracking is meant for
-         two or three Latin words and turns a 45-character Thai string into a
-         ribbon wider than the document; Thai script also takes letter-spacing
-         badly because it has no case and its marks sit tight to the base glyph.
-         So: normal tracking, normal weight, and a cap so it wraps instead of
-         running past the frame on a phone. */
-      .fo-eyebrow--long {
-        letter-spacing: .01em; font-weight: 500; font-size: 11.5px;
-        max-width: min(90%, 460px); padding: 7px 18px 8px;
-        line-height: 1.45; text-align: center;
-      }
+
+      /* ── turnout meter ──
+         Shared: the home stats card and the sealed results state both draw the
+         same bar. It was declared in FmsOfficialHome, so the moment results
+         reached for it the bar would have rendered as an unstyled div — the
+         third time this family has hit that exact trap.
+         The fill is a plain inline width with a CSS transition, never an
+         animation the figure depends on. */
+      .fo-meter { margin-top: 14px; width: 100%; height: 6px; border-radius: 999px; background: var(--fo-tint-2); overflow: hidden; }
+      .fo-meter i { display: block; height: 100%; border-radius: 999px; background: var(--fo-brand); transition: width .8s ease-out; }
 
       /* ── dot field ──
          Straight off fms.psu.ac.th, where whole sections sit on a fine dot grid.
