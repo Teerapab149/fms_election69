@@ -542,6 +542,26 @@ export function FmsOfficialBaseStyles({ paintBody = false }) {
       .fo-meter { margin-top: 14px; width: 100%; height: 6px; border-radius: 999px; background: var(--fo-tint-2); overflow: hidden; }
       .fo-meter i { display: block; height: 100%; border-radius: 999px; background: var(--fo-brand); transition: width .8s ease-out; }
 
+      /* ── house semantic tones ──
+         approve green · disapprove red · abstain orange. Fixed, never var(--fo-*):
+         a choice must mean the same thing in every colour variant of this
+         template, and in every other family — ReceiptSingleParty and
+         VerdureSingleParty hold the same three.
+         --fo-tone is the bright one, for fills and rings where contrast is not a
+         text concern; --fo-tone-deep is the one text may sit in. Receipt measured
+         its bright green at 4.48:1 over its own selected tint, i.e. failing AA
+         exactly when the voter had picked it.
+         Declared HERE because BOTH ballots use them and only one of the two ever
+         renders — the multi list and the single ballot are alternatives, so a
+         tone declared in either file is missing from the other half the time.
+         That is the trap this family has hit four times already. */
+      .fo-tone--approve { --fo-tone: #16A34A; --fo-tone-deep: #166534; }
+      .fo-tone--disapprove { --fo-tone: #DC2626; --fo-tone-deep: #B91C1C; }
+      /* one step deeper than Receipt's #C2410C, which measured 4.70 on this
+         template's white surface under the 8% orange tint — passing, but by 0.2,
+         and orange is the hue that gets there hardest. #9A3412 measures 6.63. */
+      .fo-tone--abstain { --fo-tone: #EA580C; --fo-tone-deep: #9A3412; }
+
       /* ── the plum panel ──
          The family's "go here next" device. Fourth time this trap has been hit:
          it was declared in FmsOfficialHome, so when the party page reached for it

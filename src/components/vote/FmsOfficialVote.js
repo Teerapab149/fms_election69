@@ -21,7 +21,7 @@
 //      is not neutral.
 
 import { useMemo } from "react";
-import { Check, Info, Loader2, ShieldCheck, Users } from "lucide-react";
+import { Check, Info, Loader2, ShieldCheck } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import FmsOfficialShell from "./FmsOfficialShell";
 import FmsOfficialSingleParty from "./FmsOfficialSingleParty";
@@ -34,7 +34,6 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 // padding or the hit area (rule 3 above).
 function Option({ opt, selected, onSelect, onViewDetails, editorMode }) {
   const logo = resolveSrc(opt.logoUrl);
-  const teamSize = (opt.members || []).length;
 
   return (
     <li role="presentation">
@@ -42,7 +41,10 @@ function Option({ opt, selected, onSelect, onViewDetails, editorMode }) {
         type="button"
         role="radio"
         aria-checked={selected}
-        className={`fo-opt ${selected ? "is-selected" : ""}`}
+        // Only the non-party choices carry a semantic tone; a party is the
+        // faculty's plum, and every row below falls back to it through
+        // var(--fo-tone, …) rather than needing a tone class of its own.
+        className={`fo-opt ${opt.kind !== "party" ? `fo-tone--${opt.kind}` : ""} ${selected ? "is-selected" : ""}`}
         onClick={editorMode ? undefined : () => onSelect(opt.id)}
       >
         <span className="fo-opt__mark" aria-hidden>
@@ -67,9 +69,6 @@ function Option({ opt, selected, onSelect, onViewDetails, editorMode }) {
         <span className="fo-opt__body">
           <b className="fo-opt__name">{opt.label}</b>
           {opt.sub && <span className="fo-opt__sub">{opt.sub}</span>}
-          {opt.kind === "party" && teamSize > 0 && (
-            <span className="fo-opt__team"><Users size={13} aria-hidden /> ทีมงาน {teamSize} คน</span>
-          )}
         </span>
 
         {opt.kind === "party" && (
@@ -214,12 +213,20 @@ export default function FmsOfficialVote({
         .fo-opt:has(.fo-opt__badge--abstain),
         .fo-opt:has(.fo-opt__badge--disapprove) { grid-template-columns: 28px 58px 1fr auto; }
 
-        .fo-opt:hover { border-color: var(--fo-brand-soft); background: var(--fo-tint); }
-        /* Selection: 2px brand ring + tinted field + a filled check. Three signals,
+        /* Every colour below reads --fo-tone with the brand as its fallback, so a
+           party row stays plum without carrying a tone class and งดออกเสียง turns
+           orange purely by having one — the same semantic the single ballot uses,
+           so a choice means the same thing on both screens. */
+        .fo-opt:hover {
+          border-color: var(--fo-tone, var(--fo-brand-soft));
+          background: color-mix(in srgb, var(--fo-tone, var(--fo-brand)) 5%, var(--fo-surface));
+        }
+        /* Selection: 2px ring + tinted field + a filled check. Three signals,
            because one is not enough on a screen someone reads once and commits to. */
         .fo-opt.is-selected {
-          border-color: var(--fo-brand); box-shadow: inset 0 0 0 1px var(--fo-brand);
-          background: var(--fo-tint);
+          border-color: var(--fo-tone, var(--fo-brand));
+          box-shadow: inset 0 0 0 1px var(--fo-tone, var(--fo-brand));
+          background: color-mix(in srgb, var(--fo-tone, var(--fo-brand)) 8%, var(--fo-surface));
         }
 
         .fo-opt__mark {
@@ -227,7 +234,13 @@ export default function FmsOfficialVote({
           display: inline-flex; align-items: center; justify-content: center;
           border: 2px solid var(--fo-line); color: #fff; background: transparent;
         }
-        .fo-opt.is-selected .fo-opt__mark { background: var(--fo-brand); border-color: var(--fo-brand); }
+        .fo-opt.is-selected .fo-opt__mark {
+          background: var(--fo-tone, var(--fo-brand));
+          border-color: var(--fo-tone, var(--fo-brand));
+        }
+        /* the deep tone, not the bright one — this is text, and once selected it
+           sits on the choice's own tint */
+        .fo-opt.is-selected .fo-opt__name { color: var(--fo-tone-deep, var(--fo-ink)); }
 
         .fo-opt__badge {
           width: 58px; height: 58px; border-radius: 12px;
@@ -236,10 +249,19 @@ export default function FmsOfficialVote({
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
         }
         .fo-opt__badge--party { background: var(--fo-brand); color: #fff; }
-        /* The non-party options are neutral, not alarming: a red "ไม่รับรอง" would
-           editorialise a choice the ballot is supposed to present evenly. */
+        /* These used to be neutral grey on the argument that colour would
+           editorialise. The house disagrees and so does the owner: every other
+           family marks the three choices with the same fixed semantics, and a
+           voter who learns orange means งดออกเสียง on the single-party ballot
+           should not have to relearn it here. Colour says what a choice MEANS —
+           the footprint, the padding and the hit area stay identical, which is
+           where neutrality actually lives (rule 3 above). */
         .fo-opt__badge--disapprove,
-        .fo-opt__badge--abstain { background: var(--fo-bg); color: var(--fo-muted); border: 1px solid var(--fo-line); font-size: 22px; }
+        .fo-opt__badge--abstain {
+          background: color-mix(in srgb, var(--fo-tone) 10%, var(--fo-surface));
+          color: var(--fo-tone-deep); border: 1px solid var(--fo-tone);
+          font-size: 22px;
+        }
 
         .fo-opt__logo {
           width: 58px; height: 58px; border-radius: 10px; overflow: hidden;
@@ -252,7 +274,6 @@ export default function FmsOfficialVote({
         .fo-opt__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
         .fo-opt__name { font-size: 18px; font-weight: 500; color: var(--fo-ink); }
         .fo-opt__sub { font-size: 13.5px; font-weight: 300; color: var(--fo-muted); }
-        .fo-opt__team { display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 12.5px; font-weight: 300; color: var(--fo-brand-soft); }
 
         .fo-opt__details {
           display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer;

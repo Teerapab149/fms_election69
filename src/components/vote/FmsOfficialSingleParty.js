@@ -360,23 +360,8 @@ export default function FmsOfficialSingleParty({
       )}
 
       <style jsx global>{`
-        /* ── house semantic tones ──
-           approve green · disapprove red · abstain orange. Fixed, never
-           var(--fo-*): a choice must mean the same thing in every colour variant
-           of this template. --fo-tone is the bright one, for fills and rings
-           where contrast is not a text concern; --fo-tone-deep is the one text
-           may sit in — Receipt measured the bright green at 4.48:1 over its own
-           selected tint, i.e. failing AA exactly when the voter had picked it. */
-        .fo-tone--approve { --fo-tone: #16A34A; --fo-tone-deep: #166534; }
-        .fo-tone--disapprove { --fo-tone: #DC2626; --fo-tone-deep: #B91C1C; }
-        /* one step deeper than Receipt's #C2410C, which measured 4.70 on this
-           template's white surface under the 8% orange tint — passing, but by
-           0.2, and orange is the hue that gets there hardest. #9A3412 takes it
-           to 6.63. The BRIGHT tone is what carries the meaning and is identical
-           across the house; the deep tone is a legibility derivative of whatever
-           surface it lands on, which is why Receipt tuned its own green ramp for
-           receipt stock and this one tunes orange for white. */
-        .fo-tone--abstain { --fo-tone: #EA580C; --fo-tone-deep: #9A3412; }
+        /* the .fo-tone--* semantic trio lives in FmsOfficialChrome: both ballots
+           use them and only one of the two ever renders */
 
         /* ── the question ── */
         .fo-sb__ask {
