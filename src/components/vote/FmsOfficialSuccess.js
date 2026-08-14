@@ -32,30 +32,52 @@ export default function FmsOfficialSuccess({
 
   return (
     <FmsOfficialShell active="vote" narrow plain editorMode={editorMode}>
+      {/* A confirmation IS a receipt, so it gets the family's document. Before
+          this it was a loose centred column — icon, heading, paragraph, tinted
+          box — with no container holding them together. */}
       <div className="fo-succ">
-        <span className="fo-succ__ico"><CheckCircle2 size={30} aria-hidden /></span>
+        <div className="fo-notice">
+          {/* Owner's call: the short "FMS Election" label belongs to the home
+              page alone. It was briefly used here on the grounds that the long
+              form duplicated the subtitle — that reasoning was borrowed from the
+              home page and does not hold on this one, where the subtitle thanks
+              the voter and never names the campaign. Nothing was duplicated; the
+              original label is simply the right one. */}
+          <div className="fo-notice__tab">
+            <span className="fo-eyebrow fo-eyebrow--long">{meta.campaign} · ปีการศึกษา {meta.ay}</span>
+          </div>
 
-        <span className="fo-succ__kicker">{meta.campaign} · ปีการศึกษา {meta.ay}</span>
-        <h1 className="fo-succ__h1">บันทึกการลงคะแนนเรียบร้อย</h1>
-        <p className="fo-succ__desc">
-          {name ? `ขอบคุณ ${name} ` : "ขอบคุณ "}
-          ระบบได้รับคะแนนของคุณแล้ว และนับรวมในผลการเลือกตั้งเรียบร้อย
-        </p>
-
-        {/* The anonymity note is a panel, not a footnote — it is the single most
-            load-bearing claim this system makes about itself. */}
-        <div className="fo-succ__panel">
-          <span className="fo-succ__panel-ico"><ShieldCheck size={18} aria-hidden /></span>
-          <div>
-            <b>บัตรของคุณไม่ระบุตัวตน</b>
-            <p>
-              ระบบบันทึกเฉพาะตัวเลือกในรูปแบบเข้ารหัส แยกออกจากบัญชีผู้ใช้ ไม่มีใคร
-              รวมถึงผู้ดูแลระบบ ที่ย้อนดูได้ว่าคุณเลือกอะไร ระบบเก็บไว้เพียงว่าคุณใช้สิทธิ์แล้ว
-              เพื่อไม่ให้ลงคะแนนซ้ำ
+          <div className="fo-notice__body fo-succ__body">
+            <span className="fo-succ__ico"><CheckCircle2 size={26} aria-hidden /></span>
+            <h1 className="fo-succ__h1">บันทึกการลงคะแนนเรียบร้อย</h1>
+            <span className="fo-rule" aria-hidden />
+            <p className="fo-succ__desc">
+              {name ? `ขอบคุณ ${name} ` : "ขอบคุณ "}
+              ระบบได้รับคะแนนของคุณแล้ว และนับรวมในผลการเลือกตั้งเรียบร้อย
             </p>
           </div>
-        </div>
 
+          {/* The anonymity note is a compartment of the receipt, not a floating
+              tinted box — it is the single most load-bearing claim this system
+              makes about itself, and it belongs ON the document that proves it. */}
+          <div className="fo-succ__panel">
+            <span className="fo-succ__panel-ico"><ShieldCheck size={18} aria-hidden /></span>
+            <div>
+              <b>บัตรของคุณไม่ระบุตัวตน</b>
+              <p>
+                ระบบบันทึกเฉพาะตัวเลือกในรูปแบบเข้ารหัส แยกออกจากบัญชีผู้ใช้ ไม่มีใคร
+                รวมถึงผู้ดูแลระบบ ที่ย้อนดูได้ว่าคุณเลือกอะไร ระบบเก็บไว้เพียงว่าคุณใช้สิทธิ์แล้ว
+                เพื่อไม่ให้ลงคะแนนซ้ำ
+              </p>
+            </div>
+          </div>
+
+        {/* The actions live INSIDE the receipt on this page, unlike closed —
+            they are its last compartment, the way a form ends in a submit row.
+            That is what makes the phone fix possible at all: the panel and the
+            buttons have to be siblings for an order swap to reach them, and on a
+            360×640 handset the 200px panel had been pushing the evaluation
+            button 131px below the fold. */}
         {/* The evaluation form is the GATE that unlocks results, so the actions
             invert on `isUnlocked` — that is the contract every other family
             implements and the one the parent page's state machine expects.
@@ -85,32 +107,35 @@ export default function FmsOfficialSuccess({
           <a href={editorMode ? undefined : getPath("/")} className="fo-btn fo-btn--ghost">กลับหน้าแรก</a>
         </div>
 
-        {!resultsOpen && (
-          <p className="fo-succ__lock">
-            <Lock size={14} aria-hidden /> ผลคะแนนจะเปิดให้ดูหลังทำแบบประเมินเรียบร้อย
-          </p>
-        )}
+          {!resultsOpen && (
+            <p className="fo-succ__lock">
+              <Lock size={14} aria-hidden /> ผลคะแนนจะเปิดให้ดูหลังทำแบบประเมินเรียบร้อย
+            </p>
+          )}
+        </div>
       </div>
 
       <style jsx global>{`
-        /* Ordered so the phone rule below can lift the actions above the explainer
-           without moving any JSX: the panel takes a later order value there, the actions an earlier one. */
-        .fo-succ { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 26px 0 10px; }
+        .fo-succ { display: flex; flex-direction: column; align-items: center; }
+        /* a flex column so its compartments can be re-ordered on a phone */
+        .fo-succ .fo-notice { max-width: 620px; display: flex; flex-direction: column; }
+        .fo-succ__body { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .fo-succ__ico {
-          width: 66px; height: 66px; border-radius: 50%; margin-bottom: 20px;
+          width: 56px; height: 56px; border-radius: 50%; margin-bottom: 16px;
           display: inline-flex; align-items: center; justify-content: center;
           background: var(--fo-brand); color: #fff;
           box-shadow: 0 14px 30px -16px rgba(110, 31, 103, .85);
         }
-        .fo-succ__kicker { font-size: 12px; font-weight: 500; letter-spacing: .04em; color: var(--fo-brand-soft); }
-        .fo-succ__h1 { margin: 8px 0 0; font-size: clamp(26px, 3.6vw, 40px); font-weight: 600; line-height: 1.2; color: var(--fo-ink); }
-        .fo-succ__desc { margin: 14px 0 0; max-width: 560px; font-size: 15px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
+        .fo-succ__h1 { margin: 0; font-size: clamp(24px, 3.2vw, 34px); font-weight: 600; line-height: 1.25; color: var(--fo-ink); }
+        .fo-succ__desc { margin: 14px 0 0; max-width: 460px; font-size: 15px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
 
+        /* a compartment, divided by the hairline — no second border, no second
+           background, because it is part of the same piece of paper */
         .fo-succ__panel {
-          margin-top: 28px; width: 100%; max-width: 620px;
+          position: relative; z-index: 1;
           display: flex; gap: 14px; text-align: left;
-          padding: 20px 22px; border-radius: 12px;
-          background: var(--fo-tint); border: 1px solid var(--fo-line);
+          border-top: 1px solid var(--fo-line); padding: 20px 26px 22px;
+          background: var(--fo-tint);
         }
         .fo-succ__panel-ico {
           flex: 0 0 auto; width: 34px; height: 34px; border-radius: 8px;
@@ -120,10 +145,18 @@ export default function FmsOfficialSuccess({
         .fo-succ__panel b { display: block; font-size: 15px; font-weight: 500; color: var(--fo-ink); }
         .fo-succ__panel p { margin: 6px 0 0; font-size: 13.5px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
 
-        .fo-succ__actions { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+        /* the submit row of the receipt: its own compartment, hairline-divided
+           like every other one, so the document ends on the thing to do next */
+        .fo-succ__actions {
+          position: relative; z-index: 1;
+          display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+          border-top: 1px solid var(--fo-line); padding: 20px 26px 22px;
+        }
         .fo-succ__lock {
-          display: inline-flex; align-items: center; gap: 7px; margin: 16px 0 0;
-          font-size: 13px; font-weight: 300; color: var(--fo-muted);
+          position: relative; z-index: 1;
+          display: flex; align-items: center; justify-content: center; gap: 7px;
+          margin: 0; padding: 0 26px 20px;
+          font-size: 13px; font-weight: 300; color: var(--fo-muted); text-align: center;
         }
         .fo-succ__lock svg { color: var(--fo-brand-soft); }
 
@@ -134,13 +167,17 @@ export default function FmsOfficialSuccess({
              do belongs above the thing to read. Reordering in CSS keeps the DOM in
              reading order for screen readers, which still meet the explanation
              before the buttons. */
-          .fo-succ__ico    { order: 0; }
-          .fo-succ__kicker { order: 1; }
-          .fo-succ__h1     { order: 2; }
-          .fo-succ__desc   { order: 3; }
-          .fo-succ__actions{ order: 4; margin-top: 24px; width: 100%; flex-direction: column; }
-          .fo-succ__lock   { order: 5; }
-          .fo-succ__panel  { order: 6; margin-top: 24px; flex-direction: column; gap: 12px; }
+          /* Phone: the buttons come BEFORE the explainer. The anonymity panel is
+             ~200px tall here and it had been pushing the evaluation button 131px
+             below the fold on a 360x640 handset. Reordering in CSS leaves the DOM
+             in reading order, so a screen reader still meets the explanation
+             before the actions — only the eye sees them swapped. */
+          .fo-notice__tab   { order: 0; }
+          .fo-succ__body    { order: 1; }
+          .fo-succ__actions { order: 2; flex-direction: column; padding: 18px 16px 16px; }
+          .fo-succ__lock    { order: 3; padding: 0 16px 16px; }
+          .fo-succ__panel   { order: 4; flex-direction: column; gap: 12px; padding: 18px 16px; }
+          .fo-succ__actions .fo-btn { width: 100%; justify-content: center; }
           .fo-succ__actions .fo-btn { width: 100%; justify-content: center; }
           .fo-succ__ico { width: 56px; height: 56px; margin-bottom: 16px; }
         }

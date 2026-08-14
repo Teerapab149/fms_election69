@@ -63,31 +63,48 @@ export default function FmsOfficialClosed({
 
   return (
     <FmsOfficialShell active="vote" narrow plain editorMode={editorMode}>
+      {/* One document, not a column of loose boxes. Before this the page stacked
+          an icon, a heading, a countdown row and a facts panel as four unrelated
+          objects floating in the middle of the screen — the same "flat" failure
+          the home page had, for the same reason: no container, so nothing to
+          read as a thing. A status page is a NOTICE; giving it the family's
+          notice makes that literal. */}
       <div className="fo-closed">
-        <span className={`fo-closed__ico fo-closed__ico--${v.tone}`}><Icon size={26} aria-hidden /></span>
-
-        <span className="fo-closed__kicker">{v.kicker}</span>
-        <h1 className="fo-closed__h1">{title}</h1>
-        {desc && <p className="fo-closed__desc">{desc}</p>}
-
-        {cd && (
-          <div className="fo-closed__cd">
-            {[[cd.d, "วัน"], [cd.h, "ชั่วโมง"], [cd.m, "นาที"], [cd.s, "วินาที"]].map(([n, l]) => (
-              <div key={l} className="fo-cd__cell">
-                <b>{String(n).padStart(2, "0")}</b>
-                <span>{l}</span>
-              </div>
-            ))}
+        <div className="fo-notice">
+          <div className="fo-notice__tab">
+            <span className="fo-eyebrow">{v.kicker}</span>
           </div>
-        )}
 
-        {(openAt || closeAt) && (
-          <dl className="fo-closed__facts">
-            {openAt && (<><dt>เปิดลงคะแนน</dt><dd>{openAt}</dd></>)}
-            {closeAt && (<><dt>ปิดลงคะแนน</dt><dd>{closeAt}</dd></>)}
-          </dl>
-        )}
+          <div className="fo-notice__body fo-closed__body">
+            <span className={`fo-closed__ico fo-closed__ico--${v.tone}`}><Icon size={24} aria-hidden /></span>
+            <h1 className="fo-closed__h1">{title}</h1>
+            <span className="fo-rule" aria-hidden />
+            {desc && <p className="fo-closed__desc">{desc}</p>}
 
+            {cd && (
+              <div className="fo-closed__cd">
+                {[[cd.d, "วัน"], [cd.h, "ชั่วโมง"], [cd.m, "นาที"], [cd.s, "วินาที"]].map(([n, l]) => (
+                  <div key={l} className="fo-cd__cell">
+                    <b>{String(n).padStart(2, "0")}</b>
+                    <span>{l}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* the schedule becomes a compartment of the notice, divided by the
+              same hairline the home page uses for its countdown strip */}
+          {(openAt || closeAt) && (
+            <dl className="fo-closed__facts">
+              {openAt && (<><dt>เปิดลงคะแนน</dt><dd>{openAt}</dd></>)}
+              {closeAt && (<><dt>ปิดลงคะแนน</dt><dd>{closeAt}</dd></>)}
+            </dl>
+          )}
+        </div>
+
+        {/* actions sit OUTSIDE the document — what you read and what you act on
+            are different jobs, same rule the home page follows */}
         <div className="fo-closed__actions">
           {variant === "ended" ? (
             <>
@@ -112,31 +129,33 @@ export default function FmsOfficialClosed({
       </div>
 
       <style jsx global>{`
-        .fo-closed {
-          display: flex; flex-direction: column; align-items: center; text-align: center;
-          padding: 26px 0 10px;
-        }
+        /* centre the document in the page and let the main region grow, so short
+           states do not leave a band of dead white above the footer */
+        .fo-closed { display: flex; flex-direction: column; align-items: center; }
+        .fo-closed .fo-notice { max-width: 620px; }
+        .fo-closed__body { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .fo-closed__ico {
-          width: 60px; height: 60px; border-radius: 14px; margin-bottom: 20px;
+          width: 52px; height: 52px; border-radius: 12px; margin-bottom: 16px;
           display: inline-flex; align-items: center; justify-content: center;
           background: var(--fo-tint); color: var(--fo-brand); border: 1px solid var(--fo-line);
         }
         .fo-closed__ico--hold { color: var(--fo-plum); }
-        .fo-closed__kicker { font-size: 12px; font-weight: 500; letter-spacing: .04em; color: var(--fo-brand-soft); }
-        .fo-closed__h1 { margin: 8px 0 0; font-size: clamp(26px, 3.6vw, 40px); font-weight: 600; line-height: 1.2; color: var(--fo-ink); }
-        .fo-closed__desc { margin: 14px 0 0; max-width: 560px; font-size: 15px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
-        .fo-closed__cd { display: flex; gap: 10px; margin-top: 28px; }
+        .fo-closed__h1 { margin: 0; font-size: clamp(24px, 3.2vw, 34px); font-weight: 600; line-height: 1.25; color: var(--fo-ink); }
+        .fo-closed__desc { margin: 14px 0 0; max-width: 460px; font-size: 15px; font-weight: 300; line-height: 1.65; color: var(--fo-muted); }
+        .fo-closed__cd { display: flex; gap: 8px; margin-top: 24px; }
 
         /* Facts as a definition list, not sentences: a reader scanning for "when
-           does it open" finds a label and a datetime, not a paragraph to parse. */
+           does it open" finds a label and a datetime, not a paragraph to parse.
+           Now a compartment of the notice rather than a separate tinted box —
+           same hairline division the home page uses for its countdown strip. */
         .fo-closed__facts {
-          margin: 26px 0 0; padding: 18px 22px; width: 100%; max-width: 460px;
+          position: relative; z-index: 1; margin: 0;
+          border-top: 1px solid var(--fo-line); padding: 18px 26px 20px;
           display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; text-align: left;
-          background: var(--fo-tint); border: 1px solid var(--fo-line); border-radius: 12px;
         }
         .fo-closed__facts dt { font-size: 13px; font-weight: 400; color: var(--fo-muted); white-space: nowrap; }
         .fo-closed__facts dd { margin: 0; font-size: 14px; font-weight: 500; color: var(--fo-ink); }
-        .fo-closed__actions { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+        .fo-closed__actions { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; justify-content: center; }
 
         @media (max-width: 640px) {
           .fo-closed__cd { gap: 8px; width: 100%; }
