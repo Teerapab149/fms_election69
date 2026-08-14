@@ -499,30 +499,10 @@ export default function FmsOfficialHome({
         .fo-banner { margin: 0; border: 1px solid var(--fo-line); border-radius: 12px; overflow: hidden; background: var(--fo-bg); }
         .fo-banner img { display: block; width: 100%; height: auto; }
 
-        /* ── candidates CTA ── */
-        /* Their panel proportions: tall, text pushed to one side, plenty of empty
-           plum. The emptiness is the point — it is what makes the panel read as a
-           designed field rather than a coloured box with a sentence in it. */
-        .fo-meet {
-          display: flex; align-items: flex-end; justify-content: flex-end;
-          min-height: 260px; padding: 40px 44px; border-radius: 4px;
-          background: var(--fo-plum); color: #fff;
-          transition: background .2s;
-        }
-        .fo-meet:hover { background: var(--fo-plum-deep); }
-        .fo-meet__txt { display: flex; flex-direction: column; align-items: flex-end; text-align: right; max-width: 460px; }
-        .fo-meet__txt b { font-size: clamp(24px, 3vw, 34px); font-weight: 600; color: #fff; line-height: 1.25; }
-        .fo-meet__sub { margin-top: 8px; font-size: 15px; font-weight: 300; color: rgba(255,255,255,.82); }
-        /* short rule, right-aligned to match the text block */
-        .fo-meet__rule { width: 46px; height: 2px; background: rgba(255,255,255,.55); margin: 18px 0 0; }
-        /* an underlined link, not a button — the faculty's "เพิ่มเติม" treatment */
-        .fo-meet__go {
-          display: inline-flex; align-items: center; gap: 7px; margin-top: 16px;
-          font-size: 15px; font-weight: 400; color: #fff;
-          border-bottom: 1px solid rgba(255,255,255,.6); padding-bottom: 3px;
-          transition: border-color .18s;
-        }
-        .fo-meet:hover .fo-meet__go { border-bottom-color: #fff; }
+        /* the candidates CTA — .fo-meet — now lives in FmsOfficialChrome with the
+           notice and the meter: the party page closes with the same panel, and a
+           shared device stranded in one page's style block is invisible on every
+           other page that uses it */
 
         /* responsive blocks come AFTER the base rules on purpose — equal
            specificity means source order decides, and a @media block placed
@@ -562,8 +542,6 @@ export default function FmsOfficialHome({
           .fo-band__in, .fo-sec__in { padding: 40px 16px; }
           .fo-sec--last .fo-sec__in { padding-bottom: 56px; }
           .fo-stat__val { font-size: 32px; }
-          .fo-meet { min-height: 0; padding: 28px 20px; align-items: flex-start; justify-content: flex-start; }
-          .fo-meet__txt { align-items: flex-start; text-align: left; }
         }
         @media (max-width: 380px) {
           .fo-hero__in { padding: 20px 12px 24px; }

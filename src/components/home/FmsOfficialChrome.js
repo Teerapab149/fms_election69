@@ -542,6 +542,47 @@ export function FmsOfficialBaseStyles({ paintBody = false }) {
       .fo-meter { margin-top: 14px; width: 100%; height: 6px; border-radius: 999px; background: var(--fo-tint-2); overflow: hidden; }
       .fo-meter i { display: block; height: 100%; border-radius: 999px; background: var(--fo-brand); transition: width .8s ease-out; }
 
+      /* ── the plum panel ──
+         The family's "go here next" device. Fourth time this trap has been hit:
+         it was declared in FmsOfficialHome, so when the party page reached for it
+         to close its dossier the panel rendered as bare inline text on a
+         transparent ground — right markup, no styles, because a page that does
+         not render FmsOfficialHome never receives its style block.
+         The rule this family keeps relearning: if two pages use a device, the
+         device belongs to the chrome.
+
+         Their panel proportions: tall, text pushed to one side, plenty of empty
+         plum. The emptiness is the point — it is what makes the panel read as a
+         designed field rather than a coloured box with a sentence in it. */
+      .fo-meet {
+        display: flex; align-items: flex-end; justify-content: flex-end;
+        min-height: 260px; padding: 40px 44px; border-radius: 4px;
+        background: var(--fo-plum); color: #fff;
+        transition: background .2s;
+      }
+      .fo-meet:hover { background: var(--fo-plum-deep); }
+      .fo-meet__txt { display: flex; flex-direction: column; align-items: flex-end; text-align: right; max-width: 460px; }
+      .fo-meet__txt b { font-size: clamp(24px, 3vw, 34px); font-weight: 600; color: #fff; line-height: 1.25; }
+      .fo-meet__sub { margin-top: 8px; font-size: 15px; font-weight: 300; color: rgba(255,255,255,.82); }
+      /* short rule, right-aligned to match the text block */
+      .fo-meet__rule { width: 46px; height: 2px; background: rgba(255,255,255,.55); margin: 18px 0 0; }
+      /* an underlined link, not a button — the faculty's "เพิ่มเติม" treatment */
+      .fo-meet__go {
+        display: inline-flex; align-items: center; gap: 7px; margin-top: 16px;
+        font-size: 15px; font-weight: 400; color: #fff;
+        border-bottom: 1px solid rgba(255,255,255,.6); padding-bottom: 3px;
+        transition: border-color .18s;
+      }
+      .fo-meet:hover .fo-meet__go { border-bottom-color: #fff; }
+      /* Its own block, immediately after the base rules rather than folded into
+         the chrome's 620 breakpoint below: the panel has always flipped to
+         top-left at 640, and moving that boundary would change how the home page
+         renders between 621 and 640 for no reason connected to this fix. */
+      @media (max-width: 640px) {
+        .fo-meet { min-height: 0; padding: 28px 20px; align-items: flex-start; justify-content: flex-start; }
+        .fo-meet__txt { align-items: flex-start; text-align: left; }
+      }
+
       /* ── dot field ──
          Straight off fms.psu.ac.th, where whole sections sit on a fine dot grid.
          It is the answer to "the page is flat" that costs no colour weight: a
