@@ -102,6 +102,11 @@ export default function FmsOfficialShell({
           border-radius: 12px; padding: 22px;
         }
         .fo-note { font-size: 13px; font-weight: 300; color: var(--fo-muted); }
+        /* Section rhythm for the party screens. Here rather than in one of them
+           because three files set it now — the dossier body, the /party wrapper
+           and the single-party ballot — and this family's standing lesson is
+           that a rule more than one component uses belongs to the shared frame. */
+        .fo-party__sec { margin-top: 42px; }
         .fo-back {
           display: inline-flex; align-items: center; gap: 7px; margin-bottom: 20px;
           font-size: 14px; font-weight: 400; color: var(--fo-muted);
@@ -130,6 +135,12 @@ export default function FmsOfficialShell({
           .fo-main { padding: 26px 16px 52px; }
           .fo-lead { margin-bottom: 22px; }
           .fo-lead p { font-size: 14px; }
+        }
+        /* 760, not the 620 above: this rhythm has always turned over with the
+           party layout's breakpoint rather than the chrome's, and moving it
+           would reflow those screens between 621 and 760. */
+        @media (max-width: 760px) {
+          .fo-party__sec { margin-top: 34px; }
         }
         @media (max-width: 380px) {
           .fo-pagehead__in { padding: 22px 12px 24px; }

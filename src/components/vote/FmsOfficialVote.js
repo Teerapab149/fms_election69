@@ -24,6 +24,7 @@ import { useMemo } from "react";
 import { Check, Info, Loader2, ShieldCheck, Users } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import FmsOfficialShell from "./FmsOfficialShell";
+import FmsOfficialSingleParty from "./FmsOfficialSingleParty";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { fmsMeta } from "../home/FmsOfficialChrome";
 
@@ -105,20 +106,30 @@ export default function FmsOfficialVote({
 
   const options = useMemo(() => {
     const abstain = specialOptions?.abstain;
-    const disapprove = specialOptions?.disapprove;
     const out = [];
-
-    if (isSingleParty && regularParties[0]) {
-      const p = regularParties[0];
-      out.push({ ...p, kind: "party", label: `รับรอง ${p.name}`, sub: p.slogan || "เห็นชอบให้พรรคนี้เข้าดำรงตำแหน่ง" });
-      if (disapprove) out.push({ ...disapprove, kind: "disapprove", label: "ไม่รับรอง", sub: "ไม่เห็นชอบให้พรรคนี้เข้าดำรงตำแหน่ง" });
-    } else {
-      regularParties.forEach((p) => out.push({ ...p, kind: "party", label: p.name, sub: p.slogan || "" }));
-    }
-
+    regularParties.forEach((p) => out.push({ ...p, kind: "party", label: p.name, sub: p.slogan || "" }));
     if (abstain) out.push({ ...abstain, kind: "abstain", label: "งดออกเสียง", sub: "ใช้สิทธิ์โดยไม่เลือกผู้สมัครรายใด" });
     return out;
-  }, [regularParties, specialOptions, isSingleParty]);
+  }, [regularParties, specialOptions]);
+
+  // A one-party election asks a different question — endorse or reject, rather
+  // than pick — and it cannot be asked honestly with a party the voter has been
+  // shown nothing about. That screen is its own component: the dossier first,
+  // the three choices at the foot of it.
+  if (isSingleParty) {
+    return (
+      <FmsOfficialSingleParty
+        party={regularParties[0] || {}}
+        specialOptions={specialOptions}
+        selectedPartyId={selectedPartyId}
+        onSelect={onSelect}
+        user={user}
+        onConfirm={onConfirm}
+        isSubmitting={isSubmitting}
+        editorMode={editorMode}
+      />
+    );
+  }
 
   const chosen = options.find((o) => o.id === selectedPartyId) || null;
 
