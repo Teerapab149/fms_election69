@@ -101,7 +101,19 @@ export default function FmsOfficialParty({
               the length of the page, and the reader chooses to go into it.
               tabIndex on the viewport is not decoration — a scroll region that
               only a mouse wheel can move is unreachable by keyboard. */}
-          <div className="fo-party__story">
+          {/* Every other block on this page runs the full 1092 measure; this
+              panel sat at 652 and read as arbitrarily narrow against the section
+              rule above it. Widening the TEXT was not the fix — 1092 at 15px is
+              about 124 Thai characters a line. The crest goes in the space
+              instead, which is the one thing this section is actually about and
+              had never shown. */}
+          <div className={`fo-party__story ${logo ? "has-crest" : ""}`}>
+            {logo && (
+              <div className="fo-party__story-crest">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
+              </div>
+            )}
             <div
               className="fo-party__story-vp"
               tabIndex={0}
@@ -261,17 +273,29 @@ export default function FmsOfficialParty({
         .fo-party__prose + .fo-party__prose { margin-top: 15px; }
 
         /* ── the crest reading ──
-           A document's corners (4px), not a control's radius, same as the
-           notice. The panel is the measure now: 652 wide less 26 of padding
-           each side leaves 600 for the text. */
-        .fo-party__story { position: relative; max-width: 652px; }
+           One panel at the page's own measure, two fields divided by a hairline
+           — the crest, and the reading of it. Document corners (4px), not a
+           control's radius, same as the notice.
+           The crest takes a fixed 400 and the reading gets the rest, so the text
+           measure falls out of the page width rather than being set: 638 at
+           1440, about 72 Thai characters a line. The paragraph no longer caps
+           itself — the column is the cap. */
+        .fo-party__story {
+          position: relative; border-radius: 4px; overflow: hidden;
+          background: var(--fo-surface); border: 1px solid var(--fo-line);
+        }
+        .fo-party__story.has-crest { display: grid; grid-template-columns: 400px minmax(0, 1fr); }
+        .fo-party__story-crest {
+          display: grid; place-items: center; padding: 28px;
+          background: var(--fo-tint); border-right: 1px solid var(--fo-line);
+        }
+        .fo-party__story-crest img { max-width: 100%; max-height: 274px; object-fit: contain; }
         .fo-party__story-vp {
           max-height: 330px; overflow-y: auto; overscroll-behavior: contain;
-          /* 44 at the bottom, not 34: the fade is 40 tall and sits 1 in from the
-             edge, so anything less than 41 leaves the last paragraph's box under
-             the gradient's foot. Measured 6px of overlap at 34. */
-          padding: 22px 26px 44px; border-radius: 4px;
-          background: var(--fo-surface); border: 1px solid var(--fo-line);
+          /* 44 at the bottom, not 34: the fade is 40 tall and sits flush to the
+             scrollport's foot, so anything less than 40 leaves the last
+             paragraph's box under the gradient. Measured 6px of overlap at 34. */
+          padding: 22px 26px 44px;
           /* The scrollbar IS the affordance, so it is tinted and left at full
              width. Standard properties only: setting either of them makes
              Chromium ignore ::-webkit-scrollbar entirely, so the two cannot be
@@ -286,10 +310,11 @@ export default function FmsOfficialParty({
         .fo-party__story-fade {
           position: sticky; bottom: -44px; z-index: 1;
           display: block; height: 40px; pointer-events: none;
-          /* bleed back over the viewport's own padding so the gradient reaches
+          /* Bleed back over the viewport's own padding so the gradient reaches
              all three edges, and pull the same amount off the bottom so the
-             element adds no height to the scroll content */
-          margin: 0 -26px -40px; border-radius: 0 0 4px 4px;
+             element adds no height to the scroll content. No radius of its own —
+             the panel clips its corners now. */
+          margin: 0 -26px -40px;
           /* the keyword transparent, never rgba(255,255,255,0) — the surface is a
              token and the colour variants are free to make it something other
              than white, at which point a hardcoded white start fades through a
@@ -349,6 +374,14 @@ export default function FmsOfficialParty({
         .fo-lightbox img { max-width: min(1100px, 94vw); max-height: 88vh; object-fit: contain; border-radius: 8px; }
         .fo-lightbox__x { position: absolute; top: 18px; right: 20px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff; font-size: 17px; cursor: pointer; }
 
+        /* The crest gives way first, and it has to: the text column is whatever
+           is left over, so holding the crest at 400 would have squeezed the
+           reading to a 320px measure by 820 — narrower than the phone gets. */
+        @media (max-width: 1000px) {
+          .fo-party__story.has-crest { grid-template-columns: 280px minmax(0, 1fr); }
+          .fo-party__story-crest { padding: 22px; }
+        }
+
         @media (max-width: 760px) {
           /* stacked, not side-by-side: at 360 a 96px logo left the party name
              about 200px and pushed the header to 353px tall. Centred stack keeps
@@ -361,6 +394,11 @@ export default function FmsOfficialParty({
           /* Shorter, but still well under the viewport on purpose: a scroll box
              that fills the screen steals the page's own scroll on a phone, and a
              reader who wants out of it has nothing left to grab. */
+          /* The crest drops rather than stacking above the reading. It is already
+             on this screen — the header carries it a few hundred pixels up — and
+             a second copy would cost a phone ~200px of scroll to repeat itself. */
+          .fo-party__story.has-crest { display: block; }
+          .fo-party__story-crest { display: none; }
           .fo-party__story-vp { max-height: 270px; padding: 18px 18px 44px; }
           .fo-party__story-fade { margin-left: -18px; margin-right: -18px; }
           .fo-party__team { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 22px 12px; }
