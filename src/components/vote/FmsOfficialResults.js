@@ -161,8 +161,15 @@ export default function FmsOfficialResults({
             {rows.map((c) => {
               const score = c.score || 0;
               const share = totalVotes > 0 ? (score / totalVotes) * 100 : 0;
+              // The house semantic reaches the tally too: a voter who learned
+              // orange means งดออกเสียง on the ballot should find the same row
+              // orange when the count is published. Parties carry no tone and
+              // fall back to the brand through var(--fo-tone, …).
               return (
-                <li key={c.id} className={`fo-race__row ${c.id === winnerId ? "is-winner" : ""}`}>
+                <li
+                  key={c.id}
+                  className={`fo-race__row ${c.number === 0 ? "fo-tone--abstain" : c.number < 0 ? "fo-tone--disapprove" : ""} ${c.id === winnerId ? "is-winner" : ""}`}
+                >
                   <span className={`fo-race__num ${c.number > 0 ? "" : "is-special"}`}>
                     {c.number > 0 ? c.number : c.number === 0 ? "—" : "✕"}
                   </span>
@@ -271,7 +278,11 @@ export default function FmsOfficialResults({
           background: var(--fo-brand); color: #fff; font-size: 21px; font-weight: 600;
           font-variant-numeric: tabular-nums; font-feature-settings: "tnum";
         }
-        .fo-race__num.is-special { background: var(--fo-bg); color: var(--fo-muted); border: 1px solid var(--fo-line); }
+        /* the special rows take their semantic tone; parties keep the plum badge */
+        .fo-race__num.is-special {
+          background: color-mix(in srgb, var(--fo-tone) 10%, var(--fo-surface));
+          color: var(--fo-tone-deep); border: 1px solid var(--fo-tone);
+        }
         .fo-race__name { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 17px; font-weight: 500; color: var(--fo-ink); }
         .fo-race__win {
           display: inline-flex; align-items: center; gap: 5px;
@@ -285,7 +296,7 @@ export default function FmsOfficialResults({
         }
         .fo-race__figs span { font-size: 13.5px; font-weight: 300; color: var(--fo-muted); }
         .fo-race__bar { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: var(--fo-tint-2); overflow: hidden; }
-        .fo-race__bar i { display: block; height: 100%; border-radius: 999px; background: var(--fo-brand); }
+        .fo-race__bar i { display: block; height: 100%; border-radius: 999px; background: var(--fo-tone, var(--fo-brand)); }
 
         .fo-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
         .fo-demo__h { display: block; font-size: 15px; font-weight: 500; color: var(--fo-ink); margin-bottom: 14px; }

@@ -220,8 +220,16 @@ export default function FmsOfficialHome({
               <span className="fo-rule" aria-hidden />
 
               <Wrap id="hero-subtitle">
+                {/* Three lines, three elements. Run together as one paragraph the
+                    browser broke it wherever it ran out of room — Thai has no
+                    spaces between words, so "โครงการเลือกตั้งคณะกรรมการ / บริหาร
+                    สโมสรนักศึกษาคณะวิทยาการ / จัดการ ประจำปี…" split the name of
+                    the committee and the name of the faculty mid-word. These are
+                    three separate facts and each gets its own line. */}
                 <p className="fo-hero__sub">
-                  {heroSub} {meta.org} ประจำปีการศึกษา {meta.ay}
+                  <span>{heroSub}</span>
+                  <span>{meta.org}</span>
+                  <span>ประจำปีการศึกษา {meta.ay}</span>
                 </p>
               </Wrap>
             </div>
@@ -424,10 +432,14 @@ export default function FmsOfficialHome({
         }
         .fo-hero__num { font-style: normal; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
+        /* each fact on its own line — see the markup note. text-wrap: balance is
+           gone with it: it balanced a run the browser should not have been
+           breaking in the first place, and per-line it has nothing to do. */
+        .fo-hero__sub span { display: block; }
         .fo-hero__sub {
           margin: 16px auto 0; max-width: 620px;
           font-size: clamp(15px, 1.5vw, 18px); font-weight: 300; line-height: 1.65;
-          color: var(--fo-muted); text-wrap: balance;
+          color: var(--fo-muted);
         }
 
         /* .fo-cd* and .fo-btn* now live in FmsOfficialChrome's base styles, NOT
