@@ -40,7 +40,14 @@ export default function FmsOfficialParty({
     [party?.policies]
   );
   const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
-  const story = (party?.logoMeaning || "").trim();
+  // The field holds real paragraphs — the party wrote nine, separated by CRLF —
+  // and rendering the raw string collapsed all of them into one 1,580-character
+  // block. Half of "this section is a wall" was the page throwing away structure
+  // the author had already put in.
+  const story = useMemo(
+    () => (party?.logoMeaning || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+    [party?.logoMeaning]
+  );
   const gallery = useMemo(
     () => (galleryImages || []).map((g) => resolveSrc(g?.imageUrl || g)).filter(Boolean),
     [galleryImages]
@@ -83,12 +90,36 @@ export default function FmsOfficialParty({
         </div>
       </header>
 
-      {story && (
+      {story.length > 0 && (
         <section className="fo-party__sec">
           <div className="fo-sechead">
             <h2>ความหมายของตราสัญลักษณ์</h2>
           </div>
-          <p className="fo-party__prose">{story}</p>
+          {/* The longest prose in the template, and the least load-bearing: a
+              voter deciding between parties does not need the full reading of a
+              crest to cast a ballot. Bounded into its own panel it stops setting
+              the length of the page, and the reader chooses to go into it.
+              tabIndex on the viewport is not decoration — a scroll region that
+              only a mouse wheel can move is unreachable by keyboard. */}
+          <div className="fo-party__story">
+            <div
+              className="fo-party__story-vp"
+              tabIndex={0}
+              role="region"
+              aria-label="ความหมายของตราสัญลักษณ์"
+            >
+              {story.map((para, i) => (
+                <p key={i} className="fo-party__prose">{para}</p>
+              ))}
+              {/* Inside the scroller and sticky, not absolutely placed over it:
+                  a sticky element resolves against the SCROLLPORT, which already
+                  excludes the scrollbar. Positioning it from outside meant
+                  guessing that width — and it is 2px in headless Chromium against
+                  roughly 15 in a real one, so any inset I picked was wrong in one
+                  of them. */}
+              <span className="fo-party__story-fade" aria-hidden />
+            </div>
+          </div>
         </section>
       )}
 
@@ -222,10 +253,49 @@ export default function FmsOfficialParty({
         .fo-party__id p { margin: 8px 0 0; font-size: 15px; font-weight: 300; color: var(--fo-muted); }
 
         .fo-party__sec { margin-top: 42px; }
-        /* 640px at 15px is about 68 Thai characters a line. It was 760, which
-           measured 97 — a third past the point where the eye reliably finds the
-           start of the next line, and this is the longest prose in the template. */
-        .fo-party__prose { margin: 0; font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--fo-ink); max-width: 600px; }
+        /* 600px at 15px is about 68 Thai characters a line — the panel below
+           holds the measure, so the paragraph itself no longer needs to. It was
+           760, which measured 97: a third past the point where the eye reliably
+           finds the start of the next line. */
+        .fo-party__prose { margin: 0; font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--fo-ink); }
+        .fo-party__prose + .fo-party__prose { margin-top: 15px; }
+
+        /* ── the crest reading ──
+           A document's corners (4px), not a control's radius, same as the
+           notice. The panel is the measure now: 652 wide less 26 of padding
+           each side leaves 600 for the text. */
+        .fo-party__story { position: relative; max-width: 652px; }
+        .fo-party__story-vp {
+          max-height: 330px; overflow-y: auto; overscroll-behavior: contain;
+          /* 44 at the bottom, not 34: the fade is 40 tall and sits 1 in from the
+             edge, so anything less than 41 leaves the last paragraph's box under
+             the gradient's foot. Measured 6px of overlap at 34. */
+          padding: 22px 26px 44px; border-radius: 4px;
+          background: var(--fo-surface); border: 1px solid var(--fo-line);
+          /* The scrollbar IS the affordance, so it is tinted and left at full
+             width. Standard properties only: setting either of them makes
+             Chromium ignore ::-webkit-scrollbar entirely, so the two cannot be
+             combined — and scrollbar-width:thin gave a 2px gutter here, measured,
+             which is not an affordance anyone sees. */
+          scrollbar-color: var(--fo-brand-soft) var(--fo-tint);
+        }
+        .fo-party__story-vp:focus-visible { outline: 2px solid var(--fo-brand); outline-offset: 2px; }
+        /* The 44px of bottom padding above is what this sits over: at the end of
+           the scroll the fade covers blank space, so it signals "more below"
+           without ever greying out a line the reader still has to read. */
+        .fo-party__story-fade {
+          position: sticky; bottom: -44px; z-index: 1;
+          display: block; height: 40px; pointer-events: none;
+          /* bleed back over the viewport's own padding so the gradient reaches
+             all three edges, and pull the same amount off the bottom so the
+             element adds no height to the scroll content */
+          margin: 0 -26px -40px; border-radius: 0 0 4px 4px;
+          /* the keyword transparent, never rgba(255,255,255,0) — the surface is a
+             token and the colour variants are free to make it something other
+             than white, at which point a hardcoded white start fades through a
+             grey haze on its way to the panel's own colour. */
+          background: linear-gradient(to bottom, transparent, var(--fo-surface) 82%);
+        }
 
         .fo-party__missions { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; max-width: 820px; }
         .fo-party__missions li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; font-size: 15px; font-weight: 300; line-height: 1.7; color: var(--fo-ink); }
@@ -288,6 +358,11 @@ export default function FmsOfficialParty({
           .fo-party__logo { width: 72px; height: 72px; }
           .fo-party__id h1 { font-size: 22px; }
           .fo-party__sec { margin-top: 34px; }
+          /* Shorter, but still well under the viewport on purpose: a scroll box
+             that fills the screen steals the page's own scroll on a phone, and a
+             reader who wants out of it has nothing left to grab. */
+          .fo-party__story-vp { max-height: 270px; padding: 18px 18px 44px; }
+          .fo-party__story-fade { margin-left: -18px; margin-right: -18px; }
           .fo-party__team { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 22px 12px; }
           .fo-member__plate { font-size: 12px; padding: 8px 12px; margin-top: -18px; }
           .fo-member__name { font-size: 14.5px; }
