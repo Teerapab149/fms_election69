@@ -37,16 +37,10 @@ export default function FmsOfficialSuccess({
           box — with no container holding them together. */}
       <div className="fo-succ">
         <div className="fo-notice">
-          {/* Owner's call: the short "FMS Election" label belongs to the home
-              page alone. It was briefly used here on the grounds that the long
-              form duplicated the subtitle — that reasoning was borrowed from the
-              home page and does not hold on this one, where the subtitle thanks
-              the voter and never names the campaign. Nothing was duplicated; the
-              original label is simply the right one. */}
-          <div className="fo-notice__tab">
-            <span className="fo-eyebrow fo-eyebrow--long">{meta.campaign} · ปีการศึกษา {meta.ay}</span>
-          </div>
-
+          {/* No tab here — owner's call, same as the other inner pages: the
+              hanging tab belongs to the home page alone, and repeating it made
+              the documents look stamped rather than designed. The frame and the
+              head rule already say which family this is. */}
           <div className="fo-notice__body fo-succ__body">
             <span className="fo-succ__ico"><CheckCircle2 size={26} aria-hidden /></span>
             <h1 className="fo-succ__h1">บันทึกการลงคะแนนเรียบร้อย</h1>
@@ -172,7 +166,6 @@ export default function FmsOfficialSuccess({
              below the fold on a 360x640 handset. Reordering in CSS leaves the DOM
              in reading order, so a screen reader still meets the explanation
              before the actions — only the eye sees them swapped. */
-          .fo-notice__tab   { order: 0; }
           .fo-succ__body    { order: 1; }
           .fo-succ__actions { order: 2; flex-direction: column; padding: 18px 16px 16px; }
           .fo-succ__lock    { order: 3; padding: 0 16px 16px; }

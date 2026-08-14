@@ -71,10 +71,10 @@ export default function FmsOfficialClosed({
           notice makes that literal. */}
       <div className="fo-closed">
         <div className="fo-notice">
-          <div className="fo-notice__tab">
-            <span className="fo-eyebrow">{v.kicker}</span>
-          </div>
-
+          {/* No tab here. Owner's call: the hanging tab is the home page's mark
+              and repeating it on every document made the set look stamped rather
+              than designed. The notice itself carries the identity — head rule,
+              frame, compartments — and that is enough on an inner page. */}
           <div className="fo-notice__body fo-closed__body">
             <span className={`fo-closed__ico fo-closed__ico--${v.tone}`}><Icon size={24} aria-hidden /></span>
             <h1 className="fo-closed__h1">{title}</h1>
