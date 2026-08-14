@@ -14,15 +14,72 @@ import { originalTheme } from "./originalPalettes";
 import { studioDarkTheme } from "./studioDarkPalettes";
 import { blossomTheme } from "./blossomPalettes";
 import { receiptTheme } from "./receiptPalettes";
+import { fmsOfficialTheme } from "./fmsOfficialPalette";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
   if (themeSlug.startsWith("verdure")) injectVerdure(doc, themeSlug);
   else if (themeSlug.startsWith("gumroad")) injectGumroad(doc, themeSlug);
+  // BEFORE the `original` test on purpose: both are prefix matches and
+  // "fms-official" does not start with "original", but keeping the two identity
+  // families adjacent makes it obvious they are a pair when the next one lands.
+  else if (themeSlug.startsWith("fms-official")) injectFmsOfficial(doc, themeSlug);
   else if (themeSlug.startsWith("original")) injectOriginal(doc, themeSlug);
   else if (themeSlug.startsWith("studio-dark")) injectStudio(doc, themeSlug);
   else if (themeSlug.startsWith("blossom")) injectBlossom(doc, themeSlug);
   else if (themeSlug.startsWith("receipt")) injectReceipt(doc, themeSlug);
+}
+
+// A family with no branch here does not fail loudly — it silently does nothing,
+// which is exactly how fms-official shipped: the chooser's colour swatches
+// called this, fell through every test, and the preview never re-tinted. The
+// apply endpoint worked the whole time, so the bug read as "the colour picker is
+// broken" when in fact only the preview was.
+function injectFmsOfficial(doc, themeSlug) {
+  const t = fmsOfficialTheme(themeSlug);
+  // 1) The family's own surfaces — every page reads the --fo-* ramp on .fo-root.
+  const foVars = {
+    "--fo-plum-deep": t.plumDeep, "--fo-plum": t.plum,
+    "--fo-foot": t.foot, "--fo-foot-bar": t.footBar,
+    "--fo-brand": t.brand, "--fo-brand-deep": t.brandDeep, "--fo-brand-soft": t.brandSoft,
+    "--fo-tint": t.tint, "--fo-tint-2": t.tint2, "--fo-line": t.line,
+    "--fo-ink": t.ink, "--fo-muted": t.muted,
+    "--fo-surface": t.surface, "--fo-bg": t.bg,
+  };
+  doc.querySelectorAll(".fo-root").forEach((r) => {
+    r.classList.add("fo-theming");
+    for (const k in foVars) r.style.setProperty(k, foVars[k]);
+    setTimeout(() => r.classList.remove("fo-theming"), 600);
+  });
+
+  // 2) Layer-1 tokens on .fms-app. This family owns all eight pages so nothing
+  // falls through to the classic layout today — but the tokens still ship on the
+  // template, so the preview must match them or a future fallthrough page would
+  // preview in one palette and apply in another. Mapping MUST equal
+  // buildFmsOfficialTemplate in builtIn/fms-official.js — parity rule.
+  const apps = doc.querySelectorAll(".fms-app");
+  if (!apps.length) return;
+  if (!doc.getElementById("fo-morph-style")) {
+    const st = doc.createElement("style");
+    st.id = "fo-morph-style";
+    st.textContent =
+      ".fo-theming, .fo-theming *, .fo-theming *::before, .fo-theming *::after { transition: background-color .5s ease, background .5s ease, color .5s ease, border-color .5s ease, box-shadow .5s ease, fill .5s ease, stroke .5s ease !important; }";
+    doc.head.appendChild(st);
+  }
+  const tokens = {
+    "--color-primary": t.brand,
+    "--color-accent": t.plum,
+    "--color-bg": t.bg,
+    "--color-surface": t.surface,
+    "--color-text": t.ink,
+    "--color-text-muted": t.muted,
+    "--color-border": t.line,
+  };
+  apps.forEach((r) => {
+    r.classList.add("fo-theming");
+    for (const k in tokens) r.style.setProperty(k, tokens[k]);
+    setTimeout(() => r.classList.remove("fo-theming"), 600);
+  });
 }
 
 function injectReceipt(doc, themeSlug) {
