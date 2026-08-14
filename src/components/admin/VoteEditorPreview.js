@@ -8,6 +8,7 @@ import SinglePartyView from '../vote/SinglePartyView';
 import GumroadVote from '../vote/GumroadVote';
 import StudioDarkVote from '../vote/StudioDarkVote';
 import VerdureVote from '../vote/VerdureVote';
+import FmsOfficialVote from '../vote/FmsOfficialVote';
 import EditorElement from './editor/EditorElement';
 import {
   DUMMY_PARTIES_MULTI,
@@ -27,11 +28,16 @@ export default function VoteEditorPreview({
   onHoverElement = null,
   onHoverEnd = null,
 }) {
-  // Per-template layout: gumroad / studio-dark / verdure have their own distinct vote layouts.
-  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+  // Per-template layout: these families have their own distinct vote layouts.
+  // Anything not listed here still falls through to the classic view below —
+  // which is what an admin on FMS Official was seeing: the right template
+  // selected, the original page rendered.
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark'
+      || templateSlug === 'verdure' || templateSlug === 'fms-official') {
     const single = simMode === 'single';
     const VoteLayout = templateSlug === 'studio-dark' ? StudioDarkVote
-      : templateSlug === 'verdure' ? VerdureVote : GumroadVote;
+      : templateSlug === 'verdure' ? VerdureVote
+      : templateSlug === 'fms-official' ? FmsOfficialVote : GumroadVote;
     return (
       <VoteLayout
         editorMode
