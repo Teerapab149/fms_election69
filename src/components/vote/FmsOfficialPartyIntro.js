@@ -111,14 +111,19 @@ export default function FmsOfficialPartyIntro({
           หมายเลข {no === "" ? "—" : no}
         </motion.span>
 
-        <motion.h1
+        {/* a div, not an h1. The ballot underneath is already rendered and
+            already has its own h1 — the question — so a heading here made two
+            of them on one page, and this one is a curtain that wipes away in
+            three seconds. The wrapper is role="presentation" for the same
+            reason: nothing in here is page structure. */}
+        <motion.div
           className="foi__name"
           initial={rm({ opacity: 0, y: 16 })}
           animate={{ opacity: 1, y: 0 }}
           transition={rt({ duration: 0.55, ease: EASE, delay: 1.1 })}
         >
           {name}
-        </motion.h1>
+        </motion.div>
 
         <motion.p
           className="foi__sub"

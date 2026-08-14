@@ -143,6 +143,17 @@ export default function FmsOfficialSingleParty({
             {members.length > 0 && <span>ทีมงาน {members.length} คน</span>}
             {policies.length > 0 && <span>นโยบาย {policies.length} ข้อ</span>}
           </div>
+
+          {/* The case runs long, and every candidate portrait in it is a button:
+              measured 26 tab stops from the header to the first choice, 17 of
+              them team photos, and it grows with the team. On the one screen
+              whose purpose is casting a vote the ballot cannot be twenty-six
+              stops away, so this is the first thing focus reaches inside the
+              content. Visible to everyone — a keyboard-only skip link would hide
+              a shortcut that a reader who has already decided also wants. */}
+          <a href="#fo-decision" className="fo-sb__skip">
+            ข้ามไปที่การลงคะแนน <ArrowRight size={15} aria-hidden />
+          </a>
         </div>
       </section>
 
@@ -247,7 +258,12 @@ export default function FmsOfficialSingleParty({
             structural thing that makes the screen a ballot rather than an
             article: on /party you scroll to the end to act, here the act is
             always in view beside what you are weighing. */}
-        <aside className="fo-sb__rail">
+        {/* tabIndex={-1} is what makes the skip link a SKIP link. Without it the
+            anchor scrolls but leaves focus on the link, so the next Tab carries
+            on into the team portraits and the stop count is unchanged — measured
+            27 either way. A focusable target moves focus here, and the following
+            Tab lands on รับรอง. */}
+        <aside id="fo-decision" className="fo-sb__rail" tabIndex={-1}>
           <div className="fo-sb__rail-in">
             <h2 className="fo-sb__rlabel">การลงคะแนน</h2>
             <p className="fo-sb__rnote">เลือกได้หนึ่งข้อ เมื่อยืนยันแล้วจะไม่สามารถแก้ไขได้</p>
@@ -408,6 +424,26 @@ export default function FmsOfficialSingleParty({
           border: 1px solid rgba(255,255,255,.32); background: rgba(255,255,255,.08);
           font-size: 12.5px; font-weight: 400; color: rgba(255,255,255,.92);
         }
+        /* An underline rather than a border-bottom so the padding can grow to a
+           44px touch target without the rule drifting away from the text — it
+           measured 25px tall as a bordered box, and this is the control that
+           gets a voter to the ballot in one stop. */
+        .fo-sb__skip {
+          display: inline-flex; align-items: center; gap: 7px; margin-top: 12px;
+          padding: 10px 4px 11px;
+          font-size: 14px; font-weight: 500; color: #fff;
+          text-decoration: underline; text-decoration-thickness: 1px;
+          text-underline-offset: 5px; text-decoration-color: rgba(255,255,255,.5);
+          transition: text-decoration-color .18s;
+        }
+        .fo-sb__skip:hover { text-decoration-color: #fff; }
+        .fo-sb__skip:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+        /* the rail is sticky at top:18, so the anchor has to clear that or the
+           jump lands with the heading tucked under it */
+        .fo-sb__rail { scroll-margin-top: 24px; }
+        /* it takes focus from the skip link but is not a control — no ring of its
+           own, the choice it hands focus to shows one */
+        .fo-sb__rail:focus { outline: none; }
 
         /* ── the two tracks ── */
         .fo-sb__grid {

@@ -542,7 +542,10 @@ function PreviewBody() {
         );
       }
       if (page === 'results') {
-        const revealed = variant !== 'sealed';
+        // 'locked' as well as 'sealed': the template chooser's slide is labelled
+        // ผลคะแนน · ปิดผล and passes variant=locked, so checking only for 'sealed'
+        // made that slide render the revealed state — two identical slides.
+        const revealed = variant !== 'sealed' && variant !== 'locked';
         return (
           <FmsOfficialResults
             candidates={resultsCandidates(revealed, parties)}
@@ -776,7 +779,10 @@ function PreviewBody() {
   //    (frame + identical prop lists) that this family's closed/success do not.
   if (family === 'fms-official') {
     const single = variant === 'single';
-    const revealed = variant !== 'sealed';
+    // 'locked' as well as 'sealed': the template chooser's slide is labelled
+        // ผลคะแนน · ปิดผล and passes variant=locked, so checking only for 'sealed'
+        // made that slide render the revealed state — two identical slides.
+        const revealed = variant !== 'sealed' && variant !== 'locked';
     if (page === 'candidates') return <FmsOfficialCandidates candidates={parties} editorMode />;
     if (page === 'party') return <FmsOfficialParty party={parties[0]} galleryImages={[]} showBackToVote={false} editorMode />;
     if (page === 'vote') {

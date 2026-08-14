@@ -36,12 +36,17 @@ export default function FmsOfficialClosed({
   // renders no clock at all rather than a stuck 00:00:00 — a frozen countdown on
   // a status page reads as a broken system, which is the opposite of the job.
   const [cd, setCd] = useState(null);
+  // The dependency is the TIMESTAMP, not the Date. resolveElectionDates() builds
+  // fresh Date objects on every call and this component calls it every render, so
+  // depending on the object re-ran this effect on every render — and because the
+  // effect setState's a newly built object, React never bailed out and the page
+  // span its own render loop. Measured 48 "Maximum update depth exceeded" errors
+  // on the waiting state, which is also the default. A number compares by value.
+  const startMs = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
   useEffect(() => {
-    if (variant !== "waiting") { setCd(null); return; }
-    const target = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
-    if (isNaN(target)) { setCd(null); return; }
+    if (variant !== "waiting" || isNaN(startMs)) { setCd(null); return; }
     const calc = () => {
-      const diff = target - Date.now();
+      const diff = startMs - Date.now();
       if (diff <= 0) return null;
       return {
         d: Math.floor(diff / 86400000),
@@ -54,7 +59,7 @@ export default function FmsOfficialClosed({
     if (editorMode) return;               // admin preview must not tick
     const id = setInterval(() => setCd(calc()), 1000);
     return () => clearInterval(id);
-  }, [variant, editorMode, ELECTION_START]);
+  }, [variant, editorMode, startMs]);
 
   const when = (d) =>
     d instanceof Date && !isNaN(d.getTime()) ? `${formatThaiDate(d)} เวลา ${formatThaiTime(d)}` : null;

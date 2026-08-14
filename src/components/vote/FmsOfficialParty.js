@@ -201,8 +201,12 @@ export default function FmsOfficialParty({
                         : <span className="fo-member__ph-fb" aria-hidden><Users size={26} /></span>}
                     </span>
                     {m.position && <span className="fo-member__plate">{m.position}</span>}
+                    {/* Position and name only, same as the ballot's grid.
+                        สาขาวิชา is filled for a fraction of the team, so on the
+                        card it printed under some and not others; in the modal a
+                        missing value prints an em dash in a labelled row and
+                        reads as "not supplied" instead of as a ragged grid. */}
                     <b className="fo-member__name">{m.name}</b>
-                    {m.major && <span className="fo-member__major">{m.major}</span>}
                   </button>
                 </li>
               );
@@ -382,7 +386,6 @@ export default function FmsOfficialParty({
           box-shadow: 0 8px 18px -12px rgba(36, 30, 40, .8);
         }
         .fo-member__name { margin-top: 12px; font-size: 15.5px; font-weight: 500; color: var(--fo-ink); }
-        .fo-member__major { margin-top: 3px; font-size: 12.5px; font-weight: 300; color: var(--fo-muted); }
 
         /* shorter than the home page panel: this one closes a long document
            rather than opening a section */
