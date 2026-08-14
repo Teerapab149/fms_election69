@@ -505,6 +505,69 @@ function PreviewBody() {
       );
     }
 
+    // ── fms-official family — all six inner pages. Unlike the older families this
+    //    one landed complete, so it gets one block rather than page-by-page tickets.
+    //    ?variant= drives the states worth previewing: vote single, results
+    //    revealed/sealed, closed ended|closed|waiting.
+    //
+    //    It sits HERE, above the classic fallbacks, and that position is the whole
+    //    point: the block used to live below them, so `if (page === 'vote')` two
+    //    screens down returned the cinematic SinglePartyView first and this family's
+    //    ballot was unreachable in the interactive preview — the right template
+    //    selected, the original page rendered. Blossom and Receipt were never
+    //    affected because their blocks were already above that line. ──
+    if (family === 'fms-official') {
+      if (page === 'candidates') {
+        return <FmsOfficialCandidates candidates={parties} editorMode={false} />;
+      }
+      if (page === 'party') {
+        const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
+        return <FmsOfficialParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
+      }
+      if (page === 'vote') {
+        const single = variant === 'single';
+        return (
+          <FmsOfficialVote
+            regularParties={single ? parties.slice(0, 1) : parties}
+            specialOptions={SPECIAL}
+            selectedPartyId={selectedPartyId}
+            onSelect={setSelectedPartyId}
+            onViewDetails={(p) => navTo('party', p?.number ?? 1)}
+            isSingleParty={single}
+            user={DUMMY_USER}
+            isSubmitting={false}
+            onConfirm={() => navTo('success')}
+            editorMode={false}
+          />
+        );
+      }
+      if (page === 'results') {
+        const revealed = variant !== 'sealed';
+        return (
+          <FmsOfficialResults
+            candidates={resultsCandidates(revealed, parties)}
+            totalVotes={revealed ? 625 : 418}
+            demographics={DEMOGRAPHICS}
+            finalStatus={revealed ? 'ENDED' : 'ONGOING'}
+            isRevealed={revealed}
+            isNotStarted={false}
+            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            editorMode={false}
+          />
+        );
+      }
+      if (page === 'success') {
+        // ?variant=locked previews the state a voter actually lands on first —
+        // results still gated behind the evaluation form. Default stays unlocked
+        // so the existing preview link is unchanged.
+        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant !== 'locked'} onOpenForm={noop} editorMode={false} />;
+      }
+      if (page === 'closed') {
+        const c = receiptClosedCopy(variant);
+        return <FmsOfficialClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
+      }
+    }
+
     // ── classic family (incl. original) — VOTE page composed from the REAL pure
     //    components exactly as app/vote/page.js does for multi-party, but with local
     //    state and zero DB/auth. single → the real cinematic SinglePartyView + footer.
@@ -683,62 +746,6 @@ function PreviewBody() {
     if (family === 'receipt' && page === 'closed') {
       const c = receiptClosedCopy(variant);
       return <ReceiptClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
-    }
-
-    // ── fms-official family — all six inner pages. Unlike the older families this
-    //    one landed complete, so it gets one block rather than page-by-page tickets.
-    //    ?variant= drives the states worth previewing: vote single, results
-    //    revealed/sealed, closed ended|closed|waiting. ──
-    if (family === 'fms-official') {
-      if (page === 'candidates') {
-        return <FmsOfficialCandidates candidates={parties} editorMode={false} />;
-      }
-      if (page === 'party') {
-        const partyForDetail = parties.find((p) => p.number === partyNumber) || parties[0];
-        return <FmsOfficialParty party={partyForDetail} galleryImages={[]} showBackToVote editorMode={false} />;
-      }
-      if (page === 'vote') {
-        const single = variant === 'single';
-        return (
-          <FmsOfficialVote
-            regularParties={single ? parties.slice(0, 1) : parties}
-            specialOptions={SPECIAL}
-            selectedPartyId={selectedPartyId}
-            onSelect={setSelectedPartyId}
-            onViewDetails={noop}
-            isSingleParty={single}
-            user={DUMMY_USER}
-            isSubmitting={false}
-            onConfirm={noop}
-            editorMode={false}
-          />
-        );
-      }
-      if (page === 'results') {
-        const revealed = variant !== 'sealed';
-        return (
-          <FmsOfficialResults
-            candidates={resultsCandidates(revealed, parties)}
-            totalVotes={revealed ? 625 : 418}
-            demographics={DEMOGRAPHICS}
-            finalStatus={revealed ? 'ENDED' : 'ONGOING'}
-            isRevealed={revealed}
-            isNotStarted={false}
-            countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
-            editorMode={false}
-          />
-        );
-      }
-      if (page === 'success') {
-        // ?variant=locked previews the state a voter actually lands on first —
-        // results still gated behind the evaluation form. Default stays unlocked
-        // so the existing preview link is unchanged.
-        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant !== 'locked'} onOpenForm={noop} editorMode={false} />;
-      }
-      if (page === 'closed') {
-        const c = receiptClosedCopy(variant);
-        return <FmsOfficialClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
-      }
     }
 
     // other classic/original inner pages (candidates/results/closed/party): keep the
