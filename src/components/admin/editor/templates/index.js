@@ -23,6 +23,17 @@ import { verdureTemplate, verdureHoneyTemplate, verdureTealTemplate, verdureBerr
 import { originalTemplate } from "./builtIn/original";
 import { blossomTemplate, blossomSkyTemplate, blossomMintTemplate, blossomButterTemplate } from "./builtIn/blossom";
 import { receiptTemplate, receiptInkBlueTemplate, receiptTealTemplate, receiptCarbonTemplate } from "./builtIn/receipt";
+// The faculty-branded formal template (fms.psu.ac.th colour + chrome) plus its
+// colour variants. layoutFamily stays "fms-official" → ONE chooser card with
+// swatches, like verdure/receipt. The plum build is the identity one; the rest
+// keep the structure usable if the brand (or the faculty) ever changes.
+import {
+  fmsOfficialTemplate,
+  fmsOfficialNavyTemplate,
+  fmsOfficialEmeraldTemplate,
+  fmsOfficialMaroonTemplate,
+  fmsOfficialSlateTemplate,
+} from "./builtIn/fms-official";
 
 const BUILT_IN_TEMPLATES = {
   // "classic" and "original" were never two designs. Original IS the classic layout
@@ -63,7 +74,12 @@ const BUILT_IN_TEMPLATES = {
   receipt:             receiptTemplate,
   "receipt-ink-blue":  receiptInkBlueTemplate,
   "receipt-teal":      receiptTealTemplate,
-  "receipt-carbon":    receiptCarbonTemplate
+  "receipt-carbon":    receiptCarbonTemplate,
+  "fms-official":          fmsOfficialTemplate,
+  "fms-official-navy":     fmsOfficialNavyTemplate,
+  "fms-official-emerald":  fmsOfficialEmeraldTemplate,
+  "fms-official-maroon":   fmsOfficialMaroonTemplate,
+  "fms-official-slate":    fmsOfficialSlateTemplate
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).

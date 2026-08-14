@@ -18,6 +18,7 @@ import VerdureHome from "./VerdureHome";
 import OriginalHome from "./OriginalHome";
 import BlossomHome from "./BlossomHome";
 import ReceiptHome from "./ReceiptHome";
+import FmsOfficialHome from "./FmsOfficialHome";
 
 // slug → layout component. Absent slug = classic layout (HomeContent).
 // Colour-variant slugs (e.g. receipt-teal) resolve via the layoutFamily fallback
@@ -29,6 +30,7 @@ const HOME_LAYOUTS = {
   original: OriginalHome,
   blossom: BlossomHome,
   receipt: ReceiptHome,
+  "fms-official": FmsOfficialHome,
 };
 
 export default function HomeRenderer(props) {
