@@ -131,11 +131,20 @@ export default function FmsOfficialMemberModal({ member = null, onClose = () => 
 
         @media (max-width: 620px) {
           .fo-mm { padding: 16px; }
-          /* The portrait stops being a column and becomes a band: a 3:4 photo at
-             full phone width is 470px tall and pushes every field off screen. */
+          /* The portrait stops being a column and sits above the fields. It KEEPS
+             its 3:4 though, capped by height and centred on the tint, rather than
+             being squeezed into a 4:3 band as it was.
+             The band was the mistake: the source photos are 800×1200, so filling
+             a 356×267 window with object-fit:cover showed 267 of the 534px the
+             image scales to — half the portrait discarded, and which half decided
+             by a hand-picked object-position. Bounding the HEIGHT instead crops
+             nothing and frames every candidate the same way the grid does. */
           .fo-mm__card { grid-template-columns: minmax(0, 1fr); max-height: 88vh; overflow-y: auto; }
-          .fo-mm__ph { aspect-ratio: 4 / 3; border-right: 0; border-bottom: 1px solid var(--fo-line); }
-          .fo-mm__ph img { object-position: center 22%; }
+          .fo-mm__ph {
+            aspect-ratio: 3 / 4; max-height: min(46vh, 340px); width: auto; margin: 0 auto;
+            border-right: 0; border-bottom: 1px solid var(--fo-line);
+            background: var(--fo-tint);
+          }
           .fo-mm__body { padding: 20px 20px 24px; }
           .fo-mm__fields > div { grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
         }
