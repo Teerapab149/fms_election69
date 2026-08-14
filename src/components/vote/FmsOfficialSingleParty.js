@@ -37,6 +37,7 @@ import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import FmsOfficialShell from "./FmsOfficialShell";
 import FmsOfficialPartyIntro from "./FmsOfficialPartyIntro";
+import FmsOfficialMemberModal from "./FmsOfficialMemberModal";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -52,6 +53,7 @@ export default function FmsOfficialSingleParty({
   // full-screen curtain over a preview pane is only in the way.
   const [introDone, setIntroDone] = useState(editorMode);
   const [confirming, setConfirming] = useState(false);
+  const [member, setMember] = useState(null);
 
   const missions = useMemo(
     () => (party?.missions || []).map(asText).filter(Boolean),
@@ -176,24 +178,32 @@ export default function FmsOfficialSingleParty({
           {members.length > 0 && (
             <section className="fo-sb__field">
               <h2 className="fo-sb__flabel">ผู้สมัครในทีม · {members.length} คน</h2>
-              {/* Named rows, not the record page's wall of portraits. On a ballot
-                  the useful question is who holds which post, and a roll answers
-                  it in a fifth of the height 17 portrait cards need. */}
-              <ul className="fo-sb__roll">
+              {/* Portraits, and every one of them opens. A voter deciding whether
+                  to hand this team the สโมสร is entitled to see who they are and
+                  to check any individual's record — which post, which major,
+                  which year. A 40px thumbnail beside a name could not carry that
+                  and gave nothing to click. */}
+              <ul className="fo-sb__team">
                 {members.map((m) => {
                   const img = resolveSrc(m.imageUrl);
                   return (
                     <li key={m.id}>
-                      <span className="fo-sb__face">
-                        {img
-                          // eslint-disable-next-line @next/next/no-img-element
-                          ? <img src={img} alt="" aria-hidden />
-                          : <Users size={16} aria-hidden />}
-                      </span>
-                      <span className="fo-sb__who">
-                        <b>{m.name}</b>
-                        {m.position && <span>{m.position}</span>}
-                      </span>
+                      <button
+                        type="button"
+                        className="fo-sb__mcard"
+                        onClick={editorMode ? undefined : () => setMember(m)}
+                        aria-label={`ดูรายละเอียดของ ${m.name || "ผู้สมัคร"}`}
+                      >
+                        <span className="fo-sb__mph">
+                          {img
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={img} alt="" aria-hidden />
+                            : <Users size={22} aria-hidden />}
+                        </span>
+                        {m.position && <span className="fo-sb__mplate">{m.position}</span>}
+                        <b className="fo-sb__mname">{m.name}</b>
+                        {m.major && <span className="fo-sb__mmajor">{m.major}</span>}
+                      </button>
                     </li>
                   );
                 })}
@@ -319,6 +329,8 @@ export default function FmsOfficialSingleParty({
             : <>ยืนยันการลงคะแนน</>}
         </button>
       </div>
+
+      <FmsOfficialMemberModal member={member} onClose={() => setMember(null)} />
 
       {confirming && chosen && (
         <div className="fo-cm" role="dialog" aria-modal="true" aria-labelledby="fo-cm-title">
@@ -447,17 +459,40 @@ export default function FmsOfficialSingleParty({
           width: 7px; height: 7px; border-radius: 50%; background: var(--fo-brand-soft);
         }
 
-        .fo-sb__roll { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
-        .fo-sb__roll li { display: grid; grid-template-columns: 40px 1fr; gap: 11px; align-items: center; min-width: 0; }
-        .fo-sb__face {
-          width: 40px; height: 40px; border-radius: 6px; overflow: hidden;
-          display: inline-flex; align-items: center; justify-content: center;
-          background: var(--fo-bg); border: 1px solid var(--fo-line); color: var(--fo-brand-soft);
+        /* ── the team ──
+           Portraits at a size you can actually read a face at, each one a
+           button. The position plate straddling the photo's lower edge is the
+           faculty's own คณะผู้บริหาร motif, which is what makes the grid
+           scannable: you read roles down the page, then names. */
+        .fo-sb__team {
+          list-style: none; margin: 0; padding: 0; display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 24px 14px;
         }
-        .fo-sb__face img { width: 100%; height: 100%; object-fit: cover; }
-        .fo-sb__who { min-width: 0; display: flex; flex-direction: column; }
-        .fo-sb__who b { font-size: 14px; font-weight: 500; color: var(--fo-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .fo-sb__who span { font-size: 12px; font-weight: 300; color: var(--fo-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .fo-sb__mcard {
+          display: flex; flex-direction: column; align-items: center; text-align: center;
+          width: 100%; padding: 0; background: none; border: 0; cursor: pointer;
+          font-family: inherit;
+        }
+        .fo-sb__mph {
+          position: relative; width: 100%; aspect-ratio: 3 / 4; overflow: hidden;
+          display: flex; align-items: center; justify-content: center;
+          background: var(--fo-bg); border: 1px solid var(--fo-line); color: var(--fo-brand-soft);
+          transition: border-color .18s;
+        }
+        .fo-sb__mph img { width: 100%; height: 100%; object-fit: cover; }
+        .fo-sb__mcard:hover .fo-sb__mph { border-color: var(--fo-brand); }
+        .fo-sb__mcard:focus-visible { outline: none; }
+        .fo-sb__mcard:focus-visible .fo-sb__mph { outline: 2px solid var(--fo-brand); outline-offset: 2px; }
+        .fo-sb__mplate {
+          margin-top: -18px; position: relative; z-index: 1; max-width: 92%;
+          padding: 7px 13px; border-radius: 7px;
+          background: var(--fo-plum); color: #fff;
+          font-size: 12px; font-weight: 500; line-height: 1.35;
+          box-shadow: 0 8px 18px -12px rgba(36, 30, 40, .8);
+        }
+        .fo-sb__mname { margin-top: 10px; font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--fo-ink); }
+        .fo-sb__mcard:hover .fo-sb__mname { color: var(--fo-brand); }
+        .fo-sb__mmajor { margin-top: 2px; font-size: 11.5px; font-weight: 300; line-height: 1.4; color: var(--fo-muted); }
 
         /* the crest reading is the longest and least decision-relevant text on
            the screen, so it is bounded and the reader opts into it */
@@ -608,7 +643,15 @@ export default function FmsOfficialSingleParty({
           .fo-sb__crest { width: 64px; height: 64px; }
           .fo-sb__facts { margin-top: 16px; }
           .fo-sb__field { padding: 18px 18px 20px; }
-          .fo-sb__roll { grid-template-columns: minmax(0, 1fr); }
+          /* Lands at two across, 155px a portrait — the same width /party's own
+             phone grid gives them, and the point of the change was that a face
+             has to be readable. Three would fit at ~100px and would save about
+             800px of scroll, but a 100px portrait is not what was asked for.
+             The cost is real and stated: the team block is 2,371 of the page's
+             5,068 on a phone. */
+          .fo-sb__team { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 20px 10px; }
+          .fo-sb__mplate { font-size: 11px; padding: 6px 10px; margin-top: -16px; }
+          .fo-sb__mname { font-size: 13px; }
           /* one per row again — three columns of Thai at a third of 358px is two
              words a line, and this is the control that decides an election */
           .fo-sb__opts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
