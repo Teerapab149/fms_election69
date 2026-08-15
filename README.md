@@ -73,10 +73,13 @@ provider จาก `/api/auth/providers` ตอน runtime จึงเป็น
 node scripts/generate-election-keys.js
 ```
 
-private key พิมพ์ลงกระดาษแบ่งเก็บระหว่างเจ้าหน้าที่ผู้ดูแลระบบกับอาจารย์ที่ปรึกษา ห้ามอยู่บน
-เซิร์ฟเวอร์หรือใน repo — ใช้เฉพาะตอนมีข้อพิพาทเพื่อ recount แบบ offline ส่วน public key
-กับ chain secret ตั้งเป็น env บนเซิร์ฟเวอร์ และบน production ต้องรัน
-`scripts/sql/ballot-grants.sql` เพื่อให้แอปมีสิทธิ์แค่ INSERT บนตารางบัตร
+private key ออกมาเป็นไฟล์เข้ารหัสด้วยรหัสผ่าน (`--out key-<ปี>.enc`) เก็บไว้ 2 ที่ที่คณะคุมเอง
+ห้ามอยู่บนเซิร์ฟเวอร์ ใน repo หรือในชุดสำรองเดียวกับฐานข้อมูล — ใช้เฉพาะตอนมีข้อพิพาทเพื่อ
+recount แบบ offline ส่วน public key กับ chain secret ตั้งเป็น env บนเซิร์ฟเวอร์ และบน
+production ต้องรัน `scripts/sql/ballot-grants.sql` เพื่อให้แอปแก้หรือลบบัตรไม่ได้
+
+รายละเอียดว่ากุญแจแต่ละดอกทำอะไร หายหรือหลุดแล้วเสียอะไร และต้องทำยังไงเมื่อเกิดเหตุ
+อยู่ใน `docs/BALLOT-SECURITY-GUIDE.md`
 (การเลือกตั้งที่จบแล้วจึงแก้ไม่ได้แม้ยึด server ได้)
 
 ระหว่างและหลังเลือกตั้ง: `verify-ballot-chain.js` ตรวจโซ่ทั้งตาราง,
@@ -116,6 +119,7 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 | **คู่มือ IT คณะ — เซิร์ฟเวอร์/ฐานข้อมูล (ส่งมอบงาน)** | `docs/STAFF-IT-GUIDE.md` |
 | ขั้นตอน deploy จริงไล่ทีละข้อ | `docs/DEPLOY-CHECKLIST-2026.md` |
 | **คู่มือสโมสรนักศึกษา — หน้าแอดมิน (ส่งมอบงาน)** | `docs/ADMIN-GUIDE.md` |
+| **กุญแจบัตรลงคะแนนและการตรวจสอบผล (ส่งมอบงาน)** | `docs/BALLOT-SECURITY-GUIDE.md` |
 | สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
 | กติกาแก้โค้ด | `CLAUDE.md` |
