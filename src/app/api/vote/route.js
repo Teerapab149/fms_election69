@@ -52,6 +52,14 @@ export async function POST(request) {
     const { ELECTION_END, ELECTION_START } = resolveElectionDates(systemConfig?.globalConfig);
     const now = Date.now();
 
+    // 0.0 Certified results are final. This sits above every mode check on
+    // purpose: MANUAL_OPEN forces the box open regardless of the clock, so
+    // without this a certified election could still take votes and push score
+    // past the tally someone signed their name to.
+    if (systemConfig?.globalConfig?.ballotsAnonymized) {
+      return NextResponse.json({ error: "ผลการเลือกตั้งถูกรับรองอย่างเป็นทางการแล้ว" }, { status: 403 });
+    }
+
     // 0.1 Check Manual Modes First
     if (mode === "PAUSE") {
       return NextResponse.json({ error: "ระบบปิดปรับปรุงชั่วคราว (System Maintenance)" }, { status: 403 });

@@ -169,7 +169,15 @@ export async function GET(request) {
         byYear:   (showBreakdown && started) ? mkGroup(yearVoted,   yearElig,   'year')   : [],
         byGender: (showBreakdown && started) ? mkGroup(genderVoted, genderElig, 'gender') : [],
       },
-      isRevealed: !!isShowResult
+      isRevealed: !!isShowResult,
+      // Who signed off on this result, for the banner on the results page. Set by
+      // the staff account that pressed รับรองผล — see api/admin/dashboard.
+      certified: systemConfig?.globalConfig?.ballotsAnonymized
+        ? {
+            by: systemConfig?.globalConfig?.certifiedBy || null,
+            at: systemConfig?.globalConfig?.certifiedAt || null,
+          }
+        : null,
     });
 
   } catch (error) {

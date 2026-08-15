@@ -9,6 +9,7 @@ import ResultCard from "../../components/ResultCard";
 import ResultsStatsBar from "../../components/ResultsStatsBar";
 import ResultsDemographics from "../../components/ResultsDemographics";
 import SiteFooter from "../../components/SiteFooter";
+import CertifiedBanner from "../../components/CertifiedBanner";
 import PageThemeOverrides from "../../components/PageThemeOverrides";
 import GumroadResults from "../../components/vote/GumroadResults";
 import StudioDarkResults from "../../components/vote/StudioDarkResults";
@@ -56,6 +57,7 @@ export default function ResultsPage() {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false); // ✅ สถานะบังคับเปิดเผยข้อมูล
+  const [certified, setCertified] = useState(null);    // { by, at } เมื่อเจ้าหน้าที่รับรองผลแล้ว
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
@@ -202,6 +204,7 @@ export default function ResultsPage() {
 
       // ✅ Fix: Always update boolean state (even if false)
       setIsRevealed(!!data.isRevealed);
+      setCertified(data.certified || null);
 
       if (typeof data.totalVotes !== 'undefined') {
         setTotalVotes(data.totalVotes);
@@ -384,6 +387,11 @@ export default function ResultsPage() {
       : "flex flex-col min-h-screen bg-[var(--color-bg)] font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}
       style={(!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
       <PageThemeOverrides page="results" />
+
+      {/* แถบรับรองผล — วางไว้เหนือทุกธีมจุดเดียว ธีมไหนก็เห็นเหมือนกัน */}
+      {isAuthorized && isRevealed && certified && (
+        <CertifiedBanner by={certified.by} at={certified.at} />
+      )}
 
       {/* VERDURE layout (own glass-terrarium chrome); access modals below stay shared */}
       {isVerdure && isAuthorized && (

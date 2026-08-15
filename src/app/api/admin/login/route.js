@@ -84,9 +84,23 @@ export async function POST(request) {
             );
         }
 
+        // An account with its own password does NOT also accept the shared one.
+        //
+        // The old order tried the shared hash first and accepted it for every
+        // admin, so anyone holding the committee password could sign in under
+        // any admin username — including the staff account that certifies a
+        // result. A signature the whole committee can produce is not a
+        // signature, and break-glass exists precisely for when the shared
+        // password is lost, so it must not depend on it either.
+        //
+        // Locked out of a personal password? scripts/admin.js --clear-personal
+        // drops them all back to the shared one.
         let ok = false;
-        if (sharedHash) ok = await bcrypt.compare(String(password), sharedHash);
-        if (!ok && user.passwordHash) ok = await bcrypt.compare(String(password), user.passwordHash);
+        if (user.passwordHash) {
+            ok = await bcrypt.compare(String(password), user.passwordHash);
+        } else if (sharedHash) {
+            ok = await bcrypt.compare(String(password), sharedHash);
+        }
 
         if (!ok) {
             return NextResponse.json(

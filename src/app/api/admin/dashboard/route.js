@@ -80,6 +80,17 @@ export async function POST(req) {
       }
 
       const config = await db.systemConfig.findFirst();
+
+      // Certification is the end of the election. Reopening the box afterwards
+      // would let score climb past the numbers someone already signed for, so
+      // the mode is frozen from here — the flag used to be a label with nothing
+      // behind it.
+      if (config?.globalConfig?.ballotsAnonymized && mode !== "ENDED") {
+        return NextResponse.json({
+          error: "ผลถูกรับรองแล้ว เปลี่ยนโหมดไม่ได้ — การเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ",
+        }, { status: 409 });
+      }
+
       await db.systemConfig.update({
         where: { id: config.id },
         data: { systemMode: mode }
@@ -159,10 +170,40 @@ export async function POST(req) {
         return NextResponse.json({ message: "รับรองผลไปก่อนหน้านี้แล้ว" });
       }
 
-      // ตั้งธงรับรองผล → downstream tools (reconcile) ถือว่าคะแนนถูก freeze แล้ว
-      await db.systemConfig.update({ where: { id: 1 }, data: { globalConfig: { ...(cfg.globalConfig || {}), ballotsAnonymized: true } } });
+      // Only a faculty staff account may certify. The committee runs the
+      // election; signing off on its own result is the conflict this guard
+      // exists to prevent. Staff accounts come from scripts/admin.js
+      // --create-staff, which sets role STAFF and a password of their own so
+      // the shared committee password cannot produce this signature.
+      if (auth.user?.role !== "STAFF") {
+        return NextResponse.json({
+          error: "รับรองผลได้เฉพาะบัญชีเจ้าหน้าที่คณะเท่านั้น — ให้เจ้าหน้าที่เข้าสู่ระบบด้วยบัญชีของตนเองแล้วกดรับรอง",
+        }, { status: 403 });
+      }
 
-      return NextResponse.json({ success: true, message: "รับรองผลเรียบร้อย — บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้ว และคะแนนรวมถูกบันทึกไว้ครบ" });
+      // Who signed, by name, so the results page and the year's archive can say
+      // it. The audit log above already recorded the action against a studentId;
+      // this is the copy meant to be read by people, not auditors.
+      const certifiedAt = new Date().toISOString();
+      await db.systemConfig.update({
+        where: { id: 1 },
+        data: {
+          globalConfig: {
+            ...(cfg.globalConfig || {}),
+            ballotsAnonymized: true,
+            certifiedAt,
+            certifiedBy: auth.user?.name || auth.user?.studentId || null,
+            certifiedByUsername: auth.user?.studentId || null,
+          },
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        certifiedAt,
+        certifiedBy: auth.user?.name || auth.user?.studentId || null,
+        message: "รับรองผลเรียบร้อย — ผลถูกล็อก เปิดรับคะแนนเพิ่มไม่ได้อีก",
+      });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

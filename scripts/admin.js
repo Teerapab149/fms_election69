@@ -186,9 +186,98 @@ async function breakGlass(db) {
      "  บัญชีนี้ลงคะแนนไม่ได้โดยตั้งใจ (ไม่มีชั้นปี) · ปิดการใช้งานด้วย --revoke " + username);
 }
 
+// A permanent admin account for faculty staff, who are not in the student roll
+// and may not be able to reach PSU SSO for this app at all. Without this the
+// only ways in were --grant (needs a row SSO created first) and --break-glass
+// (the emergency hatch, meant to be revoked after use), so the person who should
+// certify a result had no ordinary account to do it from.
+//
+// Unlike --break-glass this account signs in with the SHARED committee password,
+// exactly like every other admin. What it gets instead is an identity: a real
+// name, recorded, so certifying a result signs it with a person.
+//
+// year stays null on purpose — the same guard that stops --break-glass voting
+// keeps this account out of /api/vote and out of every turnout count.
+async function askPassword() {
+  const readline = require("node:readline");
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+  const ask = (q) => new Promise((res) => rl.question(q, res));
+  try {
+    console.log("\n  รหัสจะแสดงบนจอขณะพิมพ์ เพื่อให้เห็นว่าพิมพ์ถูก — ดูให้แน่ใจว่าไม่มีใครอยู่ข้างหลัง\n");
+    const a = await ask("ตั้งรหัสผ่านของบัญชีนี้: ");
+    if (!a || a.length < 8) { console.error("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร"); process.exit(1); }
+    const b = await ask("พิมพ์อีกครั้ง: ");
+    if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน — ยังไม่ได้สร้างบัญชีใดๆ"); process.exit(1); }
+    return a;
+  } finally {
+    rl.close();
+  }
+}
+
+async function createStaff(db, username) {
+  const name = argOf("--name");
+  if (!username || username.startsWith("--")) {
+    console.log("\nต้องระบุ username · เช่น  node scripts/admin.js --create-staff anuwat.s --name \"อนุวัฒน์ นามสกุล\"\n");
+    process.exitCode = 1;
+    return;
+  }
+  if (!name) {
+    console.log(`\nต้องระบุ --name ด้วย เพราะชื่อนี้จะถูกใช้เป็นผู้รับรองผลการเลือกตั้ง
+  เช่น  node scripts/admin.js --create-staff ${username} --name "อนุวัฒน์ นามสกุล"\n`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const email = argOf("--email") || `${username}@psu.ac.th`;
+  const existing = await db.user.findUnique({ where: { studentId: username } });
+  if (existing && existing.year) {
+    console.log(`\n"${username}" มีอยู่แล้วและเป็นนักศึกษา (ชั้นปี ${existing.year})
+  บัญชีเจ้าหน้าที่ต้องไม่มีชั้นปี ไม่งั้นจะถูกนับเป็นผู้มีสิทธิ์เลือกตั้ง
+  ถ้าต้องการให้คนนี้เป็นแอดมิน ใช้  --grant ${username}  แทน\n`);
+    process.exitCode = 1;
+    return;
+  }
+
+  // Its own password, not the shared committee one — this is the account that
+  // signs a certified result, so the shared password must not be able to produce
+  // that signature. --ask-password to choose one; otherwise a generated one is
+  // shown once. Never taken from argv (see the header).
+  const chosen = has("--ask-password");
+  const password = chosen ? await askPassword() : generatePassword();
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await db.user.upsert({
+    where: { studentId: username },
+    update: { name, email, isAdmin: true, role: "STAFF", passwordHash },
+    create: {
+      studentId: username,
+      email,
+      name,
+      role: "STAFF",
+      isAdmin: true,
+      passwordHash,
+      year: null,
+      isVoted: false,
+      isFormCompleted: false,
+    },
+  });
+
+  banner(existing ? "อัปเดตบัญชีเจ้าหน้าที่แล้ว" : "สร้างบัญชีเจ้าหน้าที่แล้ว", [
+    ["เข้าที่", "/fms-ovs/admin/login"],
+    ["Username", username],
+    ["หรืออีเมล", email],
+    ["ชื่อ", name],
+    ["Password", chosen ? "รหัสที่คุณเพิ่งตั้ง" : password],
+  ], "  รหัสนี้เป็นของบัญชีนี้บัญชีเดียว · รหัสกลางของกรรมการเปิดบัญชีนี้ไม่ได้\n" +
+     "  บัญชีนี้ลงคะแนนไม่ได้และไม่ถูกนับเป็นผู้มีสิทธิ์เลือกตั้ง (ไม่มีชั้นปี)\n" +
+     "  ชื่อข้างบนจะถูกบันทึกเป็นผู้รับรองผล เมื่อกดรับรองผลในหน้าแอดมิน\n" +
+     "  ถอดสิทธิ์ด้วย  --revoke " + username);
+}
+
 (async () => {
   const db = new PrismaClient();
   try {
+    if (has("--create-staff")) return await createStaff(db, argOf("--create-staff"));
     if (has("--list")) return await list(db);
     if (has("--grant")) return await grant(db, argOf("--grant"));
     if (has("--revoke")) return await revoke(db, argOf("--revoke"));
@@ -202,11 +291,15 @@ async function breakGlass(db) {
   --list                  ใครเป็นแอดมินตอนนี้ + รหัสกลางตั้งไว้หรือยัง
   --grant <รหัส นศ.>       ให้สิทธิ์แอดมิน (รับ email ก็ได้)
   --revoke <รหัส นศ.>      ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
+  --create-staff <ชื่อผู้ใช้> --name "<ชื่อจริง>"
+                          บัญชีเจ้าหน้าที่คณะ ใช้รหัสกลางเหมือนแอดมินคนอื่น
+                          ลงคะแนนไม่ได้ · ชื่อจริงใช้เป็นผู้รับรองผล
   --rotate-password       ออกรหัสกลางใหม่ แสดงครั้งเดียว รหัสเดิมตายทันที
   --clear-personal        ล้างรหัสประจำบัญชีทุกบัญชี ให้เหลือแต่รหัสกลาง
   --break-glass           บัญชีสำรองที่มีรหัสของตัวเอง (--username เปลี่ยนชื่อได้)
+                          ใช้ตอนฉุกเฉินเท่านั้น ถอดทิ้งเมื่อแก้ปัญหาเสร็จ
 
-ล็อกอินต้องมีครบสองอย่าง: รหัส นศ. ที่ถูก --grant ไว้ + รหัสกลาง
+ล็อกอินต้องมีครบสองอย่าง: ชื่อผู้ใช้ที่ถูกให้สิทธิ์ไว้ + รหัสกลาง
 `);
   } finally {
     await db.$disconnect();

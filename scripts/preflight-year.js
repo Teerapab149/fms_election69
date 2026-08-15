@@ -123,16 +123,23 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
     // Admin access = a flagged row + the shared password (RUNBOOK §10). Both live
     // in the DB now, so check the DB, not the env.
     const cfgRow = await prisma.systemConfig.findFirst({ where: { id: 1 }, select: { adminPasswordHash: true } });
-    const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { studentId: true, passwordHash: true } });
+    const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { studentId: true, passwordHash: true, role: true } });
     if (!cfgRow?.adminPasswordHash) add("FAIL", "no shared admin password set", "run: node scripts/admin.js --rotate-password");
     else add("PASS", "shared admin password set", "bcrypt hash in SystemConfig");
 
     if (!admins.length) add("FAIL", "nobody has admin", "run: node scripts/admin.js --grant <studentId>");
     else add("PASS", `${admins.length} admin account(s)`, admins.map((a) => a.studentId).join(", "));
 
-    const personal = admins.filter((a) => a.passwordHash);
-    if (personal.length) add("WARN", `${personal.length} admin(s) still have a personal password`, `only a break-glass account should — clear with --clear-personal: ${personal.map((a) => a.studentId).join(", ")}`);
+    // Staff accounts are SUPPOSED to hold their own password — that is what makes
+    // a certified result attributable to a person instead of to whoever knew the
+    // shared committee password. Warning about them here told the reader to run
+    // --clear-personal, which would hand the signature back to the whole
+    // committee. Only committee accounts are meant to share.
+    const staff = admins.filter((a) => a.role === "STAFF" && a.passwordHash);
+    const personal = admins.filter((a) => a.role !== "STAFF" && a.passwordHash);
+    if (personal.length) add("WARN", `${personal.length} committee admin(s) still have a personal password`, `only break-glass and staff accounts should — clear with --clear-personal: ${personal.map((a) => a.studentId).join(", ")}`);
     else add("PASS", "no leftover personal admin passwords", "");
+    if (staff.length) add("PASS", `${staff.length} staff account(s) with their own password`, `can certify results: ${staff.map((a) => a.studentId).join(", ")}`);
 
     if (env.NEXT_PUBLIC_ENABLE_MOCK_LOGIN === "true") add("FAIL", "mock-login is ENABLED", "NEXT_PUBLIC_ENABLE_MOCK_LOGIN must be off in production");
     else add("PASS", "mock-login disabled", "");

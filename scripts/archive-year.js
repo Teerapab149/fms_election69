@@ -84,6 +84,9 @@ function arg(name) {
       },
       certified: !!cfg.showResult,
       ballotsAnonymized: !!gc.ballotsAnonymized,
+      // ใครเซ็นรับรองผลปีนี้ — ตั้งตอนเจ้าหน้าที่กดปุ่มรับรองในหน้าแอดมิน
+      certifiedBy: gc.certifiedBy ?? null,
+      certifiedAt: gc.certifiedAt ?? null,
       turnout: {
         eligible: totalEligible,
         voted: totalVotes,
@@ -129,7 +132,9 @@ _Generated ${generatedAt} by \`scripts/archive-year.js\`._
 ${cfg.showResult ? "" : "\n> ⚠️ Snapshotted while results were NOT yet revealed — scores may not be final.\n"}
 ## Results
 - **Turnout:** ${results.turnout.voted} / ${results.turnout.eligible} eligible (**${results.turnout.percent}%**)
-- **Anonymized:** ${results.ballotsAnonymized ? "yes (individual ballots wiped, tallies frozen)" : "no"}
+- **Certified:** ${results.ballotsAnonymized
+      ? `yes — signed off by ${results.certifiedBy || "(name not recorded)"}${results.certifiedAt ? ` on ${results.certifiedAt}` : ""}; Candidate.score below is the record`
+      : "no — result was never formally certified"}
 
 | № | Party | Score |
 |---|---|---|
