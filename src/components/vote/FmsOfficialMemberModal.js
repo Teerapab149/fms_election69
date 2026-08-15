@@ -131,22 +131,31 @@ export default function FmsOfficialMemberModal({ member = null, onClose = () => 
 
         @media (max-width: 620px) {
           .fo-mm { padding: 16px; }
-          /* The portrait stops being a column and sits above the fields, full
-             width at its own 3:4 — the same frame the candidate grid uses.
-             Two earlier attempts were wrong in opposite directions. A 4:3 band
-             threw away half the picture: the sources are 800×1200, so filling a
-             356×267 window with object-fit:cover showed 267 of the 534px the
-             image scales to, and which half you got was decided by a hand-picked
-             object-position. Capping the HEIGHT instead cropped nothing but left
-             the photo narrower than the card, and the gutters read as a mistake
-             rather than as a margin. Full width at 3:4 is both: the whole frame,
-             no arbitrary crop, and the card scrolls when a short screen cannot
-             take it — which is what max-height:88vh + overflow-y is already for. */
+          /* The portrait stops being a column and sits above the fields — as an
+             ID photo MOUNTED on the record, not as a full-bleed header.
+             Full-bleed at 3:4 was 341×455 on a 375 phone and drove the card to
+             715px: it fits a 812px viewport by 49px and clips the fields on any
+             phone whose browser chrome eats more than that. The photo is back to
+             about the size it has in the candidate grid (170×226 there), and the
+             gutters that made the earlier height-capped attempt look like a
+             mistake are the point now — tint field, hairline frame, padding on
+             all four sides, which is how the faculty mounts a photo on a form.
+             Card lands ~554px: the fields are visible on every phone. */
           .fo-mm__card { grid-template-columns: minmax(0, 1fr); max-height: 88vh; overflow-y: auto; }
           .fo-mm__ph {
-            aspect-ratio: 3 / 4; width: 100%;
+            aspect-ratio: auto; width: 100%; padding: 22px 0 24px;
+            background: var(--fo-tint);
             border-right: 0; border-bottom: 1px solid var(--fo-line);
           }
+          /* Sized by HEIGHT so the card fits inside its own max-height:88vh on a
+             short phone too — 246px is the plate on a 812 screen, 32vh takes
+             over below ~770 and keeps the last field on screen at 568. */
+          .fo-mm__ph img,
+          .fo-mm__ph-fb {
+            height: min(246px, 32vh); width: auto; aspect-ratio: 3 / 4;
+            background: var(--fo-bg); border: 1px solid var(--fo-line);
+          }
+          .fo-mm__ph-fb { display: grid; place-items: center; font-size: 44px; }
           .fo-mm__body { padding: 18px 20px 22px; }
           .fo-mm__fields > div { grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
         }
