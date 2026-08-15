@@ -1,5 +1,20 @@
 -- scripts/sql/ballot-grants.sql — v2-SEC least-privilege grants for PRODUCTION.
 --
+-- Run against a database whose fms_app role already exists. Without the guard
+-- below, a missing role produced twenty identical "role fms_app does not exist"
+-- lines and an exit code that looked like partial success — easy to scroll past
+-- and conclude the grants are in place when none of them applied.
+\set ON_ERROR_STOP on
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'fms_app') THEN
+    RAISE EXCEPTION USING
+      MESSAGE = 'ยังไม่มี role fms_app — ยังใช้ไฟล์นี้ไม่ได้',
+      HINT    = 'สร้างก่อนด้วย: CREATE ROLE fms_app LOGIN PASSWORD ''<สุ่มใหม่>''; แล้วชี้ DATABASE_URL มาที่บัญชีนี้ (STAFF-IT-GUIDE §3.0)';
+  END IF;
+END
+$$;
+--
 -- ⚠️ NOT applied in dev. This is a documented ceremony for the production DB.
 --
 -- The point: even if the application server is fully compromised, the DB ROLE it

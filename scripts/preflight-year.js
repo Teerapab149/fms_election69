@@ -170,6 +170,33 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
       }
     }
 
+    // ── Can the app DELETE a ballot? It must not be able to. ───────────────────
+    // The whole tamper-evidence story rests on the app role holding SELECT and
+    // INSERT on "Ballot" and nothing more, so a compromised app cannot rewrite
+    // the box. That depends entirely on whoever deployed it: creating fms_app,
+    // pointing DATABASE_URL at it, and applying ballot-grants.sql. Miss any of
+    // the three — point DATABASE_URL at the postgres superuser, say, which is
+    // what the local compose file does — and nothing anywhere says so. Every
+    // check passes, the election runs, and the guarantee quietly is not there.
+    // Probe it: the delete below matches no rows and is rolled back regardless;
+    // only the privilege matters.
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.$executeRawUnsafe(`DELETE FROM "Ballot" WHERE false`);
+        throw new Error("__rollback__");
+      });
+      add("FAIL", "app CAN delete ballots", "least-privilege is NOT in effect — the app role holds DELETE on \"Ballot\"");
+    } catch (e) {
+      if (/permission denied/i.test(e.message)) {
+        add("PASS", "app cannot delete ballots", "least-privilege in effect (SELECT/INSERT only)");
+      } else if (e.message === "__rollback__" || e.message?.includes("__rollback__")) {
+        add("FAIL", "app CAN delete ballots",
+          "least-privilege is NOT in effect · DATABASE_URL likely points at a superuser instead of fms_app · fix: create the fms_app role, apply scripts/sql/ballot-grants.sql, and repoint DATABASE_URL (STAFF-IT-GUIDE §3.0)");
+      } else {
+        add("WARN", "could not probe ballot delete privilege", e.message.split("\n")[0]);
+      }
+    }
+
     const leftover = await prisma.candidate.count({ where: { name: "__preflight probe__" } });
     if (leftover > 0) add("FAIL", "preflight probe row was not rolled back", `delete it by hand: name = '__preflight probe__'`);
   } catch (e) {
