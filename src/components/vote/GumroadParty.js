@@ -385,7 +385,10 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           background:var(--ink); color:var(--cream); padding:3px 7px; border-radius:6px; letter-spacing:.06em; }
 
         /* SOCIALS — ป้ายขอบหนาเงาแข็ง ตาม idiom ของตระกูล */
-        .gp-socialwrap{ padding:0 32px 26px; }
+        /* Same measure and the same side padding as .gp-page — it sits OUTSIDE
+           <main>, so with only its own 32px of padding it ran the full viewport
+           and was ~460px wider than every card above it at 1448. */
+        .gp-socialwrap{ width:100%; max-width:1040px; margin:0 auto; padding:0 28px 26px; }
         .gp-social{ border:var(--bw) solid var(--ink); border-radius:18px; background:var(--paper); padding:18px 20px; box-shadow:4px 4px 0 var(--ink); }
         .gp-social__label{ display:block; font-family:var(--fm); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); margin-bottom:12px; }
         .gp-social__row{ display:flex; flex-wrap:wrap; gap:10px; }
@@ -455,6 +458,8 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         }
         @container gp (max-width:520px){
           .gp-page{ padding:24px 14px; } .gp-members{ grid-template-columns:repeat(2,1fr); }
+          /* follows .gp-page's narrower gutter — same reason as the base rule */
+          .gp-socialwrap{ padding:0 14px 22px; }
           .gp-votebar{ flex-direction:column; align-items:stretch; gap:10px; padding:12px 16px; text-align:center; } .gp-votebar__btn{ justify-content:center; }
         }
       `}</style>

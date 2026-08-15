@@ -17,7 +17,7 @@ import { getPath } from "../../utils/basePath";
 import { useMemo, useState } from "react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import { socialList } from "../../utils/socialLinks";
-import PartySocials from "./PartySocials";
+import SocialGlyph from "./SocialGlyph";
 import StudioDarkShell from "./StudioDarkShell";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
 import StoryClamp from "./StoryClamp";
@@ -61,6 +61,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
   // เดิมอัปเพิ่มมากี่ใบก็ไม่มีที่แสดงเลยสักใบ (2026-07-30)
   const extraShots = gallery.slice(1);
   const socialCount = socialList(party?.socials).length;
+  const logo = resolveSrc(party?.logoUrl);
 
   const no = pad2(party?.number);
   const hasVision = !!story || missions.length > 0;
@@ -84,10 +85,49 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
     >
       {/* PROFILE HEADER */}
       <div className="sdp-h">
-        <div className="sdp-h__no">{no.slice(0, -1)}<em>{no.slice(-1)}</em></div>
+        {/* The party's own crest goes where the edition numeral used to be — this
+            was the ONE family that never showed a logo the admin had uploaded,
+            on the very page about that party. The number is not lost: it stays
+            in the scene bar above (PARTY № 01) and prints under the crest, which
+            is also where it sits on the ballot row. No logo → the big numeral
+            comes back, so a party that uploaded nothing still gets an object. */}
+        <div className="sdp-h__mark">
+          {logo ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <span className="sdp-h__logo"><img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} /></span>
+              <span className="sdp-h__markno">№ {no}</span>
+            </>
+          ) : (
+            <div className="sdp-h__no">{no.slice(0, -1)}<em>{no.slice(-1)}</em></div>
+          )}
+        </div>
         <div>
           <h1 className="sdp-h__title">{party?.name}</h1>
           {party?.slogan && <p className="sdp-h__slogan">{party.slogan}</p>}
+          {/* Contact channels belong to the party's identity, so they sit with
+              the name rather than as a panel stranded under whichever tab the
+              reader happens to be on. Glyph only — three chips with the word
+              "Instagram" spelled out would outweigh the slogan they sit under.
+              The handle rides in aria-label/title, so a screen reader and a
+              hover both still get the account name. */}
+          {socialCount > 0 && (
+            <div className="sdp-h__social">
+              {socialList(party?.socials).map((s) => (
+                <a
+                  key={s.key}
+                  className="sdp-h__soc"
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`${s.label} · ${s.handle || s.url}`}
+                  aria-label={`${s.label} ของพรรค ${s.handle || ""}`.trim()}
+                >
+                  <SocialGlyph platform={s.key} size={17} />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
         <div className="sdp-h__quick">
           <div className="sdp-h__row">CANDIDATES <strong>{members.length || "—"}</strong></div>
@@ -215,12 +255,9 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
         </section>
       )}
 
-      {/* SOCIALS — Social media ของพรรค */}
-      {socialCount > 0 && (
-        <div className="sdp-socialwrap">
-          <PartySocials socials={party?.socials} prefix="sdp" />
-        </div>
-      )}
+      {/* Socials moved up into the profile header (2026-08-15, owner call). As a
+          panel down here they hung under whichever tab was open, at a width that
+          matched nothing, and read as an afterthought bolted to the page. */}
 
       {/* CLOSING CTA */}
       <div className="sdp-cta">
@@ -239,7 +276,44 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           padding:56px 48px 32px; border-bottom:1px solid var(--sd-line);
         }
         .sdp-h__no { font-family:var(--sd-sans); font-weight:400; font-size:clamp(110px,13vw,200px); line-height:.78; letter-spacing:-.07em; color:var(--sd-ink); }
+        /* The crest sits in the numeral's slot, sized to about the numeral's own
+           cap height so the header's mass does not move. Plate + hairline, not a
+           bare cut-out: uploaded logos are opaque JPGs as often as PNGs, and a
+           white square dropped straight onto this background is a hole in it. */
+        .sdp-h__mark { display:grid; justify-items:center; gap:12px; }
+        /* height stated, not aspect-ratio: the plate is a grid item and stretched
+           to 184×222 under it — a stated height beats the stretch */
+        .sdp-h__logo {
+          position:relative; display:block;
+          width:clamp(120px,13vw,184px); height:clamp(120px,13vw,184px);
+          background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:20px;
+        }
+        /* Absolutely placed with a STATED width and height, both computed off the
+           plate's definite box. Two things had to go wrong first: a percentage
+           height inside the centred grid resolved against an indefinite row and
+           was dropped, and an image is a replaced element, so height:auto takes
+           its intrinsic height even when top+bottom are both set. Either way a
+           3375px-tall crest came out 228px tall in a 184px plate. calc() off a
+           definite box is the version with nothing left to resolve. */
+        .sdp-h__logo img {
+          position:absolute; top:16px; left:16px;
+          width:calc(100% - 32px); height:calc(100% - 32px); object-fit:contain;
+        }
+        .sdp-h__markno {
+          font-family:var(--sd-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+          color:var(--sd-ink-3);
+        }
         .sdp-h__title { font-family:var(--sd-sans); font-weight:400; font-size:clamp(32px,4vw,58px); line-height:1; letter-spacing:-.035em; margin:0; }
+        /* under the slogan, on the name's own column — the party's channels are
+           part of who they are, not a footer note */
+        .sdp-h__social { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+        .sdp-h__soc {
+          display:grid; place-items:center; width:38px; height:38px; border-radius:50%;
+          color:var(--sd-ink-2); background:var(--sd-bg-2); border:1px solid var(--sd-line);
+          transition:color .2s, border-color .2s, transform .2s;
+        }
+        .sdp-h__soc:hover { color:var(--sd-accent); border-color:var(--sd-accent); transform:translateY(-2px); }
+        .sdp-h__soc:focus-visible { outline:2px solid var(--sd-accent); outline-offset:2px; }
         .sdp-h__slogan {
           font-family:var(--sd-serif); font-style:italic; font-size:18px; color:var(--sd-ink-2);
           margin:16px 0 0; line-height:1.45; font-weight:300; max-width:540px;
@@ -341,17 +415,6 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           letter-spacing:.15em; color:var(--sd-ink); background:var(--sd-bg); border:1px solid var(--sd-line);
           padding:3px 7px; border-radius:6px; }
 
-        /* SOCIALS — แถบเส้นบางโทนมืด ขึ้น accent ตอน hover */
-        .sdp-socialwrap { padding:0 40px 40px; }
-        .sdp-social { border:1px solid var(--sd-line); border-radius:16px; background:var(--sd-bg-2); padding:18px 20px; }
-        .sdp-social__label { display:block; font-family:var(--sd-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--sd-ink-3); margin-bottom:12px; }
-        .sdp-social__row { display:flex; flex-wrap:wrap; gap:10px; }
-        .sdp-social__link { display:inline-flex; align-items:baseline; gap:8px; text-decoration:none; border:1px solid var(--sd-line);
-          border-radius:999px; padding:8px 15px; color:var(--sd-ink); transition:border-color .2s, color .2s; }
-        .sdp-social__link:hover { border-color:var(--sd-accent); color:var(--sd-accent); }
-        .sdp-social__name { font-family:var(--sd-sans); font-size:13px; font-weight:500; }
-        .sdp-social__handle { font-family:var(--sd-mono); font-size:11px; color:var(--sd-ink-3); }
-
         .sdp-roster { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
         .sdp-tile {
           background:var(--sd-bg-2); border:1px solid var(--sd-line); border-radius:16px; padding:14px;
@@ -371,6 +434,10 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           .sdp-h { grid-template-columns:1fr; gap:20px; padding:36px 24px 24px; }
           .sdp-h__quick { display:flex; gap:24px; }
           .sdp-h__row { text-align:left; }
+          /* stacked header → the crest stops being a centred column of its own */
+          .sdp-h__mark { justify-items:start; gap:10px; }
+          .sdp-h__logo { width:104px; height:104px; border-radius:16px; }
+          .sdp-h__logo img { top:12px; left:12px; width:calc(100% - 24px); height:calc(100% - 24px); }
           .sdp-tabs { top:0; padding:0 24px; }
           .sdp-section { padding:36px 24px; }
           .sdp-story { grid-template-columns:1fr; gap:24px; }
