@@ -370,8 +370,8 @@ const PartyVisionSection = ({ party, theme }) => {
 // chart that used to sit between the vision block and the list) was removed
 // 2026-08-15 on the owner's call: it restated the roster the list below already
 // carries, in a second visual language, and cost a phone reader ~1.5 screens of
-// scrolling to reach the names. The list is the roster now. PartyChart.js is
-// left in the tree unused — nothing else imports it.
+// scrolling to reach the names. The list is the roster now, and
+// components/PartyChart.js went with it — this page was its only importer.
 
 
 const CandidateList = ({ members, theme, onSelectMember, socials }) => {
