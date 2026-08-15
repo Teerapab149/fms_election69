@@ -1,6 +1,7 @@
 // scripts/decrypt-recount.js — OFFLINE dispute recount (key-holders only).
 //
 //   node scripts/decrypt-recount.js --key /path/to/election-private.pem
+//   node scripts/decrypt-recount.js /path/to/election-private.pem       (same thing)
 //
 // Reads the election PRIVATE key from a path OUTSIDE the repo, decrypts every
 // Ballot.payload, and tallies per candidate — then compares that independent
@@ -22,15 +23,20 @@ const { verifyChain } = require("./lib/chainVerify");
 const db = new PrismaClient();
 
 function keyPathFromArgs() {
-  const i = process.argv.indexOf("--key");
-  if (i === -1 || !process.argv[i + 1]) return null;
-  return process.argv[i + 1];
+  const argv = process.argv.slice(2);
+  const i = argv.indexOf("--key");
+  if (i !== -1 && argv[i + 1]) return argv[i + 1];
+  // A bare path works too. The key ceremony output told key-holders to type it
+  // that way for a while, and a dispute recount is the worst possible moment to
+  // lose time to a missing flag.
+  return argv.find((a) => !a.startsWith("-")) || null;
 }
 
 async function main() {
   const keyPath = keyPathFromArgs();
   if (!keyPath) {
     console.error("Usage: node scripts/decrypt-recount.js --key <path-to-private-key.pem>");
+    console.error("   or: node scripts/decrypt-recount.js <path-to-private-key.pem>");
     process.exitCode = 1;
     return;
   }

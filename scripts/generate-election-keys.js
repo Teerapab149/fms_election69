@@ -125,7 +125,7 @@ ${payload.chainSecret}
 
 ${line}
   วิธีใช้กับการนับซ้ำ: บันทึก PRIVATE KEY ข้างบนลงไฟล์ชั่วคราวนอก repo
-  แล้วรัน  node scripts/decrypt-recount.js <path ของไฟล์นั้น>  จากนั้นลบไฟล์ทิ้ง
+  แล้วรัน  node scripts/decrypt-recount.js --key <path ของไฟล์นั้น>  จากนั้นลบไฟล์ทิ้ง
 ${line}
 `);
   })();
