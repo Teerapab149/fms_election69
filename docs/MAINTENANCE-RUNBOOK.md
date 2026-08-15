@@ -101,7 +101,11 @@ npm run preflight            # ✓/⚠/✗ (mode/showResult/พรรคทด�
 ```
 DATABASE_URL              # PostgreSQL connection string
 NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา)
-NEXT_PUBLIC_BASE_PATH     # subpath ตอน deploy (ค่า: /fms-ovs)
+BASE_PATH                 # subpath ที่ Next.js เสิร์ฟ (ค่า: /fms-ovs)
+NEXT_PUBLIC_BASE_PATH     # subpath ที่ getPath() ใช้สร้างลิงก์ (ค่า: /fms-ovs)
+ASSET_PREFIX              # ที่อยู่ไฟล์ static js/css/รูป (ค่า: /fms-ovs)
+                          # ⚠️ สามตัวนี้ต้องครบ — ขาดตัวใดตัวหนึ่ง เว็บเสิร์ฟที่ / แต่ลิงก์ชี้ /fms-ovs
+                          #    กดอะไรก็ 404 ทั้งเว็บ โดยไม่มี error ในล็อกเลย
 ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (auth แอดมิน — P0-1)
                           # ⚠️ รหัสผ่านแอดมิน "ไม่ได้" อยู่ใน env — อยู่ใน DB เป็น bcrypt hash
                           #    ตั้ง/เปลี่ยนด้วย  node scripts/admin.js --rotate-password  (ดู §10)

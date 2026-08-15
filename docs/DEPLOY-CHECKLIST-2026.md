@@ -45,7 +45,9 @@
 | `DATABASE_URL` | connection string ของ production DB (role `fms_app` least-privilege — ดู §3) |
 | `NEXTAUTH_SECRET` | สุ่มใหม่ทุกปี (`openssl rand -base64 32`) — เข้ารหัส session นักศึกษา |
 | `NEXTAUTH_URL` | URL จริงของระบบ (เช่น `https://<host>/fms-ovs`) — ใช้ใน `layout.js`/callback |
-| `NEXT_PUBLIC_BASE_PATH` | `/fms-ovs` |
+| `BASE_PATH` | `/fms-ovs` — **ต้องมี** บอก Next.js ว่าเสิร์ฟที่ subpath ไหน |
+| `NEXT_PUBLIC_BASE_PATH` | `/fms-ovs` — **ต้องมี** ตัวที่ `getPath()` ใช้สร้างลิงก์ฝั่งหน้าเว็บ |
+| `ASSET_PREFIX` | `/fms-ovs` — ที่อยู่ของไฟล์ static (js/css/รูป) |
 | `AUTHENTIK_CLIENT_ID` | PSU SSO client id (จาก PSU IT) |
 | `AUTHENTIK_CLIENT_SECRET` | PSU SSO client secret |
 | `AUTHENTIK_REDIRECT_URI` | callback URL ที่ลงทะเบียนไว้กับ PSU SSO |
@@ -53,6 +55,18 @@
 | `ELECTION_BALLOT_PUBLIC_KEY` | **ตั้งใน §2** — public key เข้ารหัสบัตร (PEM, `\n`-escaped) |
 | `BALLOT_CHAIN_SECRET` | **ตั้งใน §2** — secret ของ HMAC hash-chain บัตร |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ~~ต้องไม่ตั้งบน production~~ — **เลิกมีผลแล้ว (SEC-MOCK3, 2026-07-27)** ไม่ต้องตั้งและไม่ต้องกังวลว่าจะตั้งค้าง: ตัวกั้นจริงคือ `NODE_ENV=production` ซึ่งทำให้ NextAuth ไม่ register provider `mock-login` เลย และปุ่มบนหน้า login อ่านรายการ provider จาก `/api/auth/providers` ตอน runtime จึงหายตามไปเอง |
+
+> ⚠️ **ตัวแปร base path ต้องตั้งครบทั้งสามตัว ไม่งั้นเว็บพังแบบเงียบ ๆ**
+>
+> `BASE_PATH` บอก Next.js ว่าเสิร์ฟที่ `/fms-ovs` ส่วน `NEXT_PUBLIC_BASE_PATH` เป็นตัวที่
+> `getPath()` ใช้สร้างลิงก์ทุกอันในหน้าเว็บ · **สองตัวนี้คนละตัวกัน และค่า default ไม่ตรงกัน**
+> ถ้าตั้งแค่ตัวใดตัวหนึ่ง เว็บจะเสิร์ฟที่ `/` แต่ลิงก์ทุกอันชี้ไป `/fms-ovs` → กดอะไรก็ 404 ทั้งเว็บ
+> ทั้งที่ไม่มี error ในล็อกสักบรรทัด
+>
+> ถ้าใช้ `docker-compose.yml` ที่มากับโปรเจกต์ ตั้ง `BASE_PATH` กับ `ASSET_PREFIX` ใน `.env`
+> พอ — compose ส่ง `NEXT_PUBLIC_BASE_PATH` ต่อให้เอง (บรรทัด 22) · ถ้า deploy วิธีอื่น ต้องตั้งเองครบทั้งสาม
+>
+> **เช็คหลัง deploy:** เปิดหน้าแรกแล้วกดเมนูสักอัน ถ้าเด้ง 404 ให้สงสัยข้อนี้ก่อนอย่างอื่น
 
 > ⛔ **เลิกใช้แล้ว (P0-1)** — ห้ามตั้ง: `ADMIN_PRIVATE_KEY`, `ADMIN_AUTH_SECRET`,
 > `NEXT_PUBLIC_ADMIN_PUBLIC_KEY`, `NEXT_PUBLIC_ADMIN_AUTH_SECRET`. ระบบ admin auth เก่า

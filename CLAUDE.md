@@ -122,7 +122,11 @@ Admin identity = httpOnly cookie `admin_token` (signed JWT จาก `/api/admin
 fetch(getPath("/api/admin/..."), { credentials: 'include' });
 ```
 ฝั่ง server ทุก admin route ต้องเรียก `adminGuard(request)` (หรือ `requireAdmin`)
-จาก `src/lib/auth/adminCheck.js` — รับ NextAuth session (ADMIN/STAFF) หรือ JWT cookie.
+จาก `src/lib/auth/adminCheck.js` — **ทางเข้าทางเดียวคือ cookie `admin_token`**
+session ของ PSU SSO ไม่ให้สิทธิ์อะไรเลย (ของเดิมเคยให้ แล้วถูกถอดออก) และทุก request
+อ่านธง `isAdmin` จาก DB ใหม่เสมอ ถอดสิทธิ์แล้วมีผลกับคลิกถัดไปทันที
+ส่วนการรับรองผลต้องเป็น `role === "STAFF"` เพิ่มอีกชั้น — บัญชีเจ้าหน้าที่จาก
+`scripts/admin.js --create-staff` เท่านั้น กรรมการสโมฯ กดไม่ได้.
 ⛔ ห้ามนำ pattern เก่ากลับมา: `getEncryptedToken()` / header `x-admin-token` /
 `NEXT_PUBLIC_ADMIN_*` ถูกลบแล้ว (P0-1) เพราะ secret ฝังใน client bundle → ใครก็ forge ได้.
 
