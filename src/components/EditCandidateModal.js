@@ -698,7 +698,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             </div>
                         </FormSection>
 
-                        <FormSection n="4" title="Social media ของพรรค" hint="ใส่ช่องไหนก็ได้ · ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรคให้นักศึกษาตามข่าวพรรคต่อได้">
+                        <FormSection n="4" title="Social media ของพรรค" hint="ใส่ช่องไหนก็ได้ · ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรคให้นักศึกษาตามข่าวพรรคต่อได้ · ถ้าปล่อยว่างทุกช่อง ส่วนนี้จะไม่แสดงในหน้าพรรคเลย">
                             <div className="space-y-3">
                                 {SOCIAL_PLATFORMS.map((p) => {
                                     const typed = socials[p.key] || '';
@@ -725,6 +725,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                 <p className="text-[11px] leading-relaxed text-slate-400">
                                     พิมพ์แค่ชื่อผู้ใช้ก็ได้ เช่น <code className="rounded bg-slate-100 px-1">@samofms</code> ระบบจะเติมลิงก์ให้เอง ·
                                     ลบข้อความในช่องให้ว่าง = เอาช่องทางนั้นออกจากหน้าเว็บ
+                                </p>
+                                <p className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+                                    ส่วน &ldquo;ช่องทางติดต่อพรรค&rdquo; ในหน้าพรรคจะแสดงก็ต่อเมื่อมีอย่างน้อยหนึ่งช่องที่กรอกไว้ ·
+                                    ถ้าไม่กรอกเลย หน้าพรรคจะไม่มีส่วนนี้ ไม่ได้ขึ้นเป็นช่องว่าง
                                 </p>
                             </div>
                         </FormSection>

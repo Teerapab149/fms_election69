@@ -16,6 +16,8 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Users, Target } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { socialList } from "../../utils/socialLinks";
+import PartySocials from "./PartySocials";
 import FmsOfficialShell from "./FmsOfficialShell";
 import FmsOfficialMemberModal from "./FmsOfficialMemberModal";
 
@@ -54,6 +56,9 @@ export default function FmsOfficialParty({
     () => (galleryImages || []).map((g) => resolveSrc(g?.imageUrl || g)).filter(Boolean),
     [galleryImages]
   );
+  // Contact channels are optional data — a party that supplied none gets no
+  // section at all, like every other block on this page.
+  const socialCount = socialList(party?.socials).length;
 
   const logo = resolveSrc(party?.logoUrl);
   // A single-party election has no listing worth going back to — the vote page is
@@ -233,6 +238,20 @@ export default function FmsOfficialParty({
         </section>
       )}
 
+      {/* Last of the document's fields, immediately before the closing panel:
+          a reader who has finished the dossier and wants to follow the party
+          further looks for the address at the foot of a notice, not at its top.
+          Rendered only when the party filled at least one channel in. */}
+      {socialCount > 0 && (
+        <section className="fo-party__sec">
+          <div className="fo-sechead">
+            <h2>ช่องทางติดต่อพรรค</h2>
+            <p>ช่องทางที่พรรคแจ้งไว้ · เปิดในแท็บใหม่</p>
+          </div>
+          <PartySocials socials={party?.socials} prefix="fo" heading="" />
+        </section>
+      )}
+
       {/* The page runs ~3,800px on desktop and used to simply stop. A voter who
           reaches the bottom of a party's dossier has one obvious next move, so
           the family's plum panel closes it — the same device the home page uses
@@ -395,6 +414,25 @@ export default function FmsOfficialParty({
         .fo-party__gallery button { display: block; width: 100%; padding: 0; border: 1px solid var(--fo-line); border-radius: 12px; overflow: hidden; background: var(--fo-bg); cursor: pointer; transition: border-color .18s; }
         .fo-party__gallery button:hover { border-color: var(--fo-brand); }
         .fo-party__gallery img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+
+        /* Contact channels — a row of document fields, not social buttons. No
+           platform colours and no icons: this family renders every party the
+           same way, and an Instagram gradient next to a plain Facebook chip
+           would give one channel more weight than another. Label carries the
+           platform, the handle sits beside it in muted, and the whole chip
+           takes the brand on hover like every other link on the page. */
+        .fo-social__row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .fo-social__link {
+          display: inline-flex; align-items: baseline; gap: 10px;
+          padding: 11px 16px; border-radius: 4px; text-decoration: none;
+          background: var(--fo-surface); border: 1px solid var(--fo-line); color: var(--fo-ink);
+          transition: border-color .18s, color .18s, background-color .18s;
+        }
+        .fo-social__link:hover { border-color: var(--fo-brand); color: var(--fo-brand); background: var(--fo-tint); }
+        .fo-social__link:focus-visible { outline: 2px solid var(--fo-brand); outline-offset: 2px; }
+        .fo-social__name { font-size: 14.5px; font-weight: 500; }
+        .fo-social__handle { font-size: 13px; font-weight: 300; color: var(--fo-muted); }
+        .fo-social__link:hover .fo-social__handle { color: var(--fo-brand-soft); }
 
         .fo-lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(36, 30, 40, .88); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
         .fo-lightbox img { max-width: min(1100px, 94vw); max-height: 88vh; object-fit: contain; border-radius: 8px; }

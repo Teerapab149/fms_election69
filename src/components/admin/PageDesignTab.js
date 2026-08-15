@@ -284,7 +284,9 @@ function TemplateHomeThumb({ tpl }) {
 const GALLERY_SLIDES = [
   { page: 'home', label: 'หน้าแรก' },
   { page: 'candidates', label: 'ผู้สมัคร' },
-  { page: 'party', label: 'ข้อมูลพรรค' },
+  // note — ข้อมูลตัวอย่างกรอก social media ไว้ให้เห็นหน้าตาของส่วนนั้น
+  // ของจริงจะขึ้นเฉพาะพรรคที่กรอกไว้
+  { page: 'party', label: 'ข้อมูลพรรค', note: 'ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ — ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน' },
   { page: 'vote', variant: 'multi', label: 'ลงคะแนน · หลายพรรค' },
   { page: 'vote', variant: 'single', label: 'ลงคะแนน · พรรคเดียว' },
   { page: 'results', variant: 'locked', label: 'ผลคะแนน · ปิดผล' },
@@ -370,6 +372,10 @@ function TemplateGallery({ slug }) {
           />
         ))}
       </div>
+
+      {slide.note && (
+        <p className="mt-2 text-[11px] leading-relaxed text-slate-400 text-center">{slide.note}</p>
+      )}
 
       {/* interactive playground — clickable, DB-free; only for the distinct
           (non-classic) layout families the playground supports */}

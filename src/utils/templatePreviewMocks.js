@@ -53,6 +53,21 @@ export const mkParty = (i, name, slogan, color) => ({
     "Concord คือ ความกลมเกลียว สื่อถึงการทำงานที่ประสานกันอย่างราบรื่น รับฟังความเห็นต่างและหาข้อสรุปร่วมกันได้ โดยยึดประโยชน์ของนักศึกษาทั้งคณะเป็นที่ตั้ง\n" +
     "สัญลักษณ์เรือใบสื่อถึงการเดินทางไปข้างหน้าด้วยกัน แม้ลมจะเปลี่ยนทิศ แต่หากทุกคนช่วยกันถือหางเสือ เราจะไปถึงจุดหมายเดียวกันได้เสมอ",
   missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
+  // Contact channels, stored the way the DB stores them: sanitizeSocials() has
+  // already turned whatever the admin typed into canonical URLs, so the preview
+  // must carry URLs too — a bare "@handle" here would render nothing and the
+  // section would look broken in the gallery while working in production.
+  // Party 1 fills three channels, party 2 only one: both the full row and the
+  // single-chip case are on screen somewhere in the chooser. A party that fills
+  // NONE gets no section at all — that path is the production default and is why
+  // the admin form and the chooser caption both say so.
+  socials: i === 1
+    ? {
+        instagram: "https://www.instagram.com/unityconcord.fms/",
+        facebook: "https://www.facebook.com/unityconcord.fms",
+        tiktok: "https://www.tiktok.com/@unityconcord.fms",
+      }
+    : { instagram: "https://www.instagram.com/samo.fms.psu/" },
 });
 
 // Party presets — index 0/1 are the canonical default pair (makeParties(2) must stay

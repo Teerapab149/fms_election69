@@ -3,12 +3,11 @@ import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Loader2, X, User, ChevronDown, Search, ChevronRight,
+  Loader2, X, User, Search, ChevronRight,
   Crown, Maximize2, ChevronLeft, Target, Shield,
   Flag, BookOpen, Star, Lightbulb, Quote, CheckCircle2, ArrowUpRight
 } from 'lucide-react';
 import Navbar from "../../components/Navbar";
-import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 import { socialList } from "../../utils/socialLinks";
 import BackToVoteBar from "../../components/BackToVoteBar";
@@ -367,25 +366,15 @@ const PartyVisionSection = ({ party, theme }) => {
   );
 };
 
-const PartyChartSection = ({ party, theme, onSelectMember, onScrollToList }) => {
-  return (
-    <section className="relative w-full flex flex-col overflow-visible">
-      <div className="absolute top-0 right-0 w-full z-20 pt-8 px-6 flex justify-end items-start pointer-events-none">
-        <button onClick={onScrollToList}
-          className="pointer-events-auto bg-slate-900/10 hover:bg-slate-900/20 text-slate-900 px-4 py-2 rounded-full backdrop-blur-md transition-all border border-slate-900/10 hover:scale-105 flex items-center gap-2 shadow-sm">
-          <span className="text-xs font-bold tracking-wider">รายชื่อ</span>
-          <ChevronDown size={16} />
-        </button>
-      </div>
-      <div className="relative w-full">
-        <PartyChart members={party.chartMembers} theme={theme} onMemberClick={onSelectMember} partyName={party.name} />
-      </div>
-    </section>
-  );
-};
+// PartyChartSection (the 150vh "THE CANDIDATES / Organization Framework" org
+// chart that used to sit between the vision block and the list) was removed
+// 2026-08-15 on the owner's call: it restated the roster the list below already
+// carries, in a second visual language, and cost a phone reader ~1.5 screens of
+// scrolling to reach the names. The list is the roster now. PartyChart.js is
+// left in the tree unused — nothing else imports it.
 
 
-const CandidateList = ({ members, theme, onSelectMember }) => {
+const CandidateList = ({ members, theme, onSelectMember, socials }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { president, executives, heads, filteredSearch, isSearching } = useMemo(() => {
@@ -522,6 +511,31 @@ const CandidateList = ({ members, theme, onSelectMember }) => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Social media ของพรรค — อยู่ "ใน" แถบมืดนี้ ไม่ใช่การ์ดขาวที่ต่อท้ายมัน
+            เดิมเป็น section แยกบนพื้นตาราง ทำให้หน้าที่ควรจบด้วยแถบมืดมีการ์ดสว่าง
+            โผล่มาอีกใบข้างล่างสุด · ที่นี่ใช้ชิปโปร่งแบบเดียวกับช่องค้นหาด้านบน
+            จะขึ้นเฉพาะเมื่อแอดมินกรอกช่องทางไว้ (2026-08-15) */}
+        {socialList(socials).length > 0 && (
+          <div className="mt-20 pt-10 border-t border-white/10">
+            <SectionLabel theme={theme} label="FOLLOW THE PARTY" />
+            <div className="flex flex-wrap gap-3">
+              {socialList(socials).map((s) => (
+                <a
+                  key={s.key}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`${s.label} · ${s.handle || s.url}`}
+                  className="inline-flex items-baseline gap-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 text-white transition-all duration-300 hover:bg-white/10 hover:border-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
+                >
+                  <span className="text-sm font-bold">{s.label}</span>
+                  {s.handle && <span className="text-xs text-slate-400">{s.handle}</span>}
+                </a>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -676,7 +690,6 @@ function PartyContent() {
           if (enrichedParty.members) {
             enrichedParty.members.sort((a, b) => (a.number || 999) - (b.number || 999));
           }
-          enrichedParty.chartMembers = enrichedParty.members || [];
 
           setActiveParty(enrichedParty);
         } else {
@@ -791,43 +804,15 @@ function PartyContent() {
         {/* 2. Vision & Policies (UP) */}
         <PartyVisionSection party={activeParty} theme={currentTheme} />
 
-        {/* 3. Chart (DOWN) */}
-        <PartyChartSection
-          party={activeParty}
-          theme={currentTheme}
-          onSelectMember={setSelectedMember}
-          onScrollToList={() => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
-        />
-
-        {/* 4. List */}
+        {/* 3. List — ปิดหน้าด้วยแถบมืด และ social media ของพรรคอยู่ในแถบนี้ */}
         <div ref={listSectionRef}>
-          <CandidateList members={activeParty.members} theme={currentTheme} onSelectMember={setSelectedMember} />
+          <CandidateList
+            members={activeParty.members}
+            theme={currentTheme}
+            onSelectMember={setSelectedMember}
+            socials={activeParty?.socials}
+          />
         </div>
-
-        {/* 5. Social media ของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น (2026-07-30) */}
-        {socialList(activeParty?.socials).length > 0 && (
-          <section className="w-full px-6 xl:px-12 pb-24 max-w-[90rem] mx-auto">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Social media ของพรรค</span>
-              <div className="flex flex-wrap gap-2.5">
-                {socialList(activeParty?.socials).map((s) => (
-                  <a
-                    key={s.key}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-baseline gap-2 rounded-full border border-slate-200 px-4 py-2 transition-colors hover:border-slate-800"
-                    style={{ color: currentTheme.textOnLight }}
-                    title={`${s.label} · ${s.handle || s.url}`}
-                  >
-                    <span className="text-sm font-bold">{s.label}</span>
-                    {s.handle && <span className="text-xs text-slate-400">{s.handle}</span>}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
 
       </main>
 
@@ -886,35 +871,9 @@ export function ClassicPartyPreview({ party, galleryImages = [] }) {
       <main className="flex-1 flex flex-col pt-16 xl:pt-16">
         <PartyBanner party={party} theme={theme} galleryImages={galleryImages} onOpenLightbox={(img) => setLightboxImage(img || galleryImages[0])} />
         <PartyVisionSection party={party} theme={theme} />
-        <PartyChartSection party={party} theme={theme} onSelectMember={setSelectedMember} onScrollToList={() => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' })} />
         <div ref={listSectionRef}>
-          <CandidateList members={party.members} theme={theme} onSelectMember={setSelectedMember} />
+          <CandidateList members={party.members} theme={theme} onSelectMember={setSelectedMember} socials={party?.socials} />
         </div>
-        {/* Social media ของพรรค — ต่อท้ายรายชื่อสมาชิก เหมือนตระกูลอื่น
-            ลิงก์ออกนอกเว็บ ใช้ target=_blank + rel=noopener (2026-07-30) */}
-        {socialList(party?.socials).length > 0 && (
-          <section className="w-full px-6 xl:px-12 pb-24 max-w-[90rem] mx-auto">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Social media ของพรรค</span>
-              <div className="flex flex-wrap gap-2.5">
-                {socialList(party?.socials).map((s) => (
-                  <a
-                    key={s.key}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-baseline gap-2 rounded-full border border-slate-200 px-4 py-2 transition-colors hover:border-slate-800"
-                    style={{ color: theme.textOnLight }}
-                    title={`${s.label} · ${s.handle || s.url}`}
-                  >
-                    <span className="text-sm font-bold">{s.label}</span>
-                    {s.handle && <span className="text-xs text-slate-400">{s.handle}</span>}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
       </main>
       {lightboxImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center" onClick={() => setLightboxImage(null)}>

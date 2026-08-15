@@ -33,7 +33,9 @@ const DEVICES = [
 const PAGES = [
   { page: "home", label: "หน้าแรก" },
   { page: "candidates", label: "ผู้สมัคร · หลายพรรค" },
-  { page: "party", label: "ข้อมูลพรรค" },
+  // note = ข้อความกำกับใต้สไลด์ · ที่นี่มีเพราะข้อมูลตัวอย่างกรอก social media ไว้
+  // ให้เห็นว่าหน้าตาเป็นอย่างไร แต่ของจริงจะขึ้นเฉพาะพรรคที่กรอกไว้เท่านั้น
+  { page: "party", label: "ข้อมูลพรรค", note: "ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ในหน้าจัดการผู้สมัคร — ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน" },
   { page: "vote", variant: "multi", label: "ลงคะแนน · หลายพรรค" },
   { page: "vote", variant: "single", label: "ลงคะแนน · พรรคเดียว" },
   { page: "results", variant: "locked", label: "ผลคะแนน · ปิดผล" },
@@ -202,6 +204,10 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
           <ExternalLink className="w-3 h-3" /> เปิดเต็มจอ
         </button>
       </div>
+
+      {slide.note && (
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-slate-400">{slide.note}</p>
+      )}
     </div>
   );
 }
