@@ -50,12 +50,35 @@ async function main() {
   }
 
   // Verify chain integrity first — a recount over a tampered box is meaningless.
+  //
+  // verifyChain() returns one combined `ok` over four checks, but only two of
+  // them answer "was a ballot altered?". The other two compare counts, and those
+  // drift for ordinary reasons — a user row edited after the box closed, say.
+  // Reporting a single verdict meant a clean recount got stamped "untrustworthy"
+  // over bookkeeping, and printing one line meant nobody could tell which. This
+  // is read during a dispute, so it names the failing check.
+  const TAMPER_CHECKS = ["chain-integrity", "head-matches"];
   const secret = process.env.BALLOT_CHAIN_SECRET;
   if (secret) {
     const v = await verifyChain(db, secret);
-    console.log(`chain integrity: ${v.ok ? "✅ OK" : "❌ FAILED (recount below is untrustworthy)"}`);
+    const tamper = v.checks.filter((c) => TAMPER_CHECKS.includes(c.name));
+    const books = v.checks.filter((c) => !TAMPER_CHECKS.includes(c.name));
+
+    const intact = tamper.every((c) => c.ok);
+    console.log(intact
+      ? "chain integrity: ✅ OK — no ballot was added, removed or altered"
+      : "chain integrity: ❌ FAILED — the ballot box was altered; the recount below cannot be trusted");
+    for (const c of tamper) console.log(`   ${c.ok ? "✅" : "❌"} ${c.name.padEnd(16)} ${c.detail}`);
+
+    if (!books.every((c) => c.ok)) {
+      console.log(intact
+        ? "bookkeeping:     ⚠️  counts disagree — the chain itself is intact, so the recount stands,\n                     but reconcile these before certifying:"
+        : "bookkeeping:     ⚠️  counts also disagree (expected once the box has been altered):");
+      for (const c of books) console.log(`   ${c.ok ? "✅" : "⚠️ "} ${c.name.padEnd(16)} ${c.detail}`);
+    }
+    console.log("");
   } else {
-    console.log("chain integrity: (skipped — BALLOT_CHAIN_SECRET not set)");
+    console.log("chain integrity: (skipped — BALLOT_CHAIN_SECRET not set)\n");
   }
 
   const ballots = await db.ballot.findMany({ orderBy: { seq: "asc" } });

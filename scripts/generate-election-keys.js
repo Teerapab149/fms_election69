@@ -42,31 +42,46 @@ const outPath = argOf("--out");
 const decPath = argOf("--decrypt");
 
 // ── passphrase input ────────────────────────────────────────────────────────
-// KEY_PASSPHRASE lets this be scripted/tested; otherwise prompt with the echo
-// muted so the passphrase does not end up in a screen recording or scrollback.
-function askHidden(question) {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
-    const onData = (ch) => {
-      // reprint the prompt without the typed characters
-      if (["\n", "\r", ""].includes(String(ch))) return;
-      readline.clearLine(process.stdout, 0);
-      readline.cursorTo(process.stdout, 0);
-      process.stdout.write(question);
-    };
-    process.stdin.on("data", onData);
-    rl.question(question, (answer) => { process.stdin.off("data", onData); rl.close(); process.stdout.write("\n"); resolve(answer); });
-  });
+// KEY_PASSPHRASE lets this be scripted/tested; otherwise prompt on the terminal.
+//
+// The passphrase is ECHOED as you type, on purpose. Muting it meant redrawing
+// the prompt on every keypress, which gave no backspace feedback and garbled
+// pasted input — and a passphrase one character off from what the typist
+// believed seals the file shut forever. The ceremony runs once a year on an
+// offline machine whose room you control, so a visible passphrase is the
+// cheaper risk of the two.
+
+// One readline interface for the whole prompt session. Closing an interface
+// tears stdin down with it, so a fresh one per question left the second prompt
+// waiting on a stream that was already gone — the ceremony then exited 0 having
+// written nothing at all.
+function openPrompt() {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+  return {
+    ask: (question) => new Promise((resolve) => rl.question(question, resolve)),
+    close: () => rl.close(),
+  };
 }
-async function getPassphrase({ confirm }) {
+// mode "create" invents a new passphrase for a file about to be written;
+// mode "open" asks for the one an existing file was sealed with. Same prompt
+// text for both used to read as "set a password" while opening, which makes it
+// look like the wrong file or a lost passphrase when it is neither.
+async function getPassphrase({ mode }) {
   if (process.env.KEY_PASSPHRASE) return process.env.KEY_PASSPHRASE;
-  const a = await askHidden("ตั้งรหัสผ่านสำหรับไฟล์กุญแจ: ");
-  if (!a || a.length < 8) { console.error("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร"); process.exit(1); }
-  if (confirm) {
-    const b = await askHidden("พิมพ์รหัสผ่านอีกครั้ง: ");
-    if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน — ยังไม่ได้เขียนไฟล์ใดๆ"); process.exit(1); }
+  const creating = mode === "create";
+  console.log("\n  รหัสผ่านจะแสดงบนจอขณะพิมพ์ เพื่อให้เห็นว่าพิมพ์ถูก — ดูให้แน่ใจว่าไม่มีใครอยู่ข้างหลัง\n");
+  const prompt = openPrompt();
+  try {
+    const a = await prompt.ask(creating ? "ตั้งรหัสผ่านใหม่สำหรับไฟล์กุญแจ: " : "ใส่รหัสผ่านของไฟล์กุญแจ: ");
+    if (!a || a.length < 8) { console.error("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร"); process.exit(1); }
+    if (creating) {
+      const b = await prompt.ask("พิมพ์รหัสผ่านอีกครั้ง: ");
+      if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน — ยังไม่ได้เขียนไฟล์ใดๆ"); process.exit(1); }
+    }
+    return a;
+  } finally {
+    prompt.close();
   }
-  return a;
 }
 
 // ── envelope format ─────────────────────────────────────────────────────────
@@ -106,7 +121,7 @@ if (decPath) {
     let envelope;
     try { envelope = JSON.parse(fs.readFileSync(decPath, "utf8")); }
     catch (e) { console.error(`อ่านไฟล์ไม่ได้: ${decPath}\n${e.message}`); process.exit(1); }
-    const pass = await getPassphrase({ confirm: false });
+    const pass = await getPassphrase({ mode: "open" });
     let payload;
     try { payload = open(envelope, pass); }
     catch { console.error("เปิดไฟล์ไม่สำเร็จ — รหัสผ่านผิด หรือไฟล์ถูกแก้ไข"); process.exit(1); }
@@ -144,7 +159,7 @@ ${line}
   (async () => {
     if (outPath) {
       if (fs.existsSync(outPath)) { console.error(`มีไฟล์ ${outPath} อยู่แล้ว — ยกเลิกเพื่อไม่ให้ทับกุญแจเดิม`); process.exit(1); }
-      const pass = await getPassphrase({ confirm: true });
+      const pass = await getPassphrase({ mode: "create" });
       const sealed = seal({
         electionYear: process.env.ELECTION_YEAR || null,
         createdAt: new Date().toISOString(),

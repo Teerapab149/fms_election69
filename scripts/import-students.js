@@ -208,8 +208,12 @@ function normalizeYear(yearStatus) {
  * Build full name from components
  */
 function buildFullName(titleName, firstName, lastName) {
-    const parts = [titleName, firstName, lastName].filter(Boolean);
-    return parts.join('') || null;
+    // Thai convention attaches the title to the given name and separates the
+    // surname with a space: "นายสมชาย ใจดี". Joining all three with '' produced
+    // "นายสมชายใจดี" for every imported student — invisible until the first real
+    // registrar file lands, then wrong on every name in the system at once.
+    const given = [titleName, firstName].filter(Boolean).join('');
+    return [given, lastName].filter(Boolean).join(' ') || null;
 }
 
 // ============================================
@@ -355,6 +359,18 @@ async function importStudents(filePath) {
     console.log(`   ⏭️  ข้าม: ${skipped} รายการ`);
     console.log(`   ❌ Error: ${errors} รายการ`);
     console.log('=========================================\n');
+
+    // A file whose headers this script does not recognise skips every row and
+    // still reports "Error: 0", which reads like success. Say so plainly — the
+    // caller is usually importing the voter roll, and an empty import is the
+    // difference between an election and no election.
+    if (created === 0 && updated === 0 && skipped > 0) {
+        console.log('⚠️  ไม่ได้นำเข้าข้อมูลสักรายการ — ข้ามทั้งหมด ' + skipped + ' แถว');
+        console.log('   สาเหตุที่พบบ่อยคืออ่านหัวคอลัมน์ไม่ออก ตรวจว่าไฟล์มีคอลัมน์เหล่านี้:');
+        console.log('   studentId · titleName · studNameThai · studSnameThai · yearStatus');
+        console.log('   (หัวคอลัมน์ภาษาไทยก็ได้: รหัสนักศึกษา · คำนำหน้า · ชื่อ · นามสกุล · ชั้นปี)\n');
+        process.exitCode = 1;
+    }
 }
 
 // ============================================
@@ -394,13 +410,18 @@ Expected columns:
 
 const filePath = path.resolve(args[0]);
 
+// $disconnect() is async. Firing it and calling process.exit() in the same tick
+// killed the process mid-teardown, which libuv reports as
+//   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING) ... async.c line 76
+// and an exit code of 127 — "command not found" to anything reading it, even
+// though every row had already imported cleanly. Await the disconnect and let
+// node exit on its own; set exitCode instead of forcing an immediate exit.
 importStudents(filePath)
-    .then(() => {
-        prisma.$disconnect();
-        process.exit(0);
+    .then(async () => {
+        await prisma.$disconnect();
     })
-    .catch((error) => {
+    .catch(async (error) => {
         console.error('❌ Fatal error:', error);
-        prisma.$disconnect();
-        process.exit(1);
+        await prisma.$disconnect();
+        process.exitCode = 1;
     });
