@@ -46,7 +46,7 @@ if (REAL) {
 const db = REAL ? new PrismaClient() : null;
 
 const BASE = process.env.BASE || "http://127.0.0.1:3000/fms-ovs";
-const FAMS = (process.env.FAM || "original,gumroad,studio-dark,verdure,blossom,receipt").split(",");
+const FAMS = (process.env.FAM || "original,gumroad,studio-dark,verdure,blossom,receipt,fms-official").split(",");
 const VPS = (process.env.VP || "1440x900,412x880").split(",").map((s) => s.split("x").map(Number));
 // login is deliberately in the list: it is the page two families did not have.
 const PAGES = (process.env.PG || "home,candidates,party,vote,results,success,closed").split(",");
@@ -57,8 +57,19 @@ const AUDIT = () => {
     return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && +cs.opacity > 0.05;
   };
   // chrome: anything pinned to the viewport that carries navigation or identity
+  // Pinned via an ANCESTOR counts. fms-official puts its nav inside a sticky
+  // wrapper div whose class matches none of the selectors below, so testing
+  // position on the matched element alone reported a family with a perfectly
+  // normal pinned header as having no chrome on all seven pages — the harness
+  // measuring itself, the same trap the exit check fell into earlier.
+  const pinned = (e) => {
+    for (let n = e; n && n !== document.body; n = n.parentElement) {
+      if (["fixed", "sticky"].includes(getComputedStyle(n).position)) return true;
+    }
+    return false;
+  };
   const chrome = [...document.querySelectorAll('nav,header,aside,[class*="topbar"],[class*="rail"],[class*="dock"],[class*="cornermark"],[class*="navbar"]')]
-    .filter((e) => vis(e) && ["fixed", "sticky"].includes(getComputedStyle(e).position) && e.getBoundingClientRect().height > 8)
+    .filter((e) => vis(e) && pinned(e) && e.getBoundingClientRect().height > 8)
     .map((e) => `${e.tagName.toLowerCase()}.${(e.className?.toString?.() || "").trim().split(/\s+/).filter((c) => !c.startsWith("jsx-"))[0] || "?"}`);
 
   // exit: a control that offers a way onward. Matched on LABEL, not href — the
