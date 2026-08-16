@@ -90,9 +90,11 @@ production ต้องรัน `scripts/sql/ballot-grants.sql` เพื่อ
 
 ```bash
 npm run build      # ต้องผ่านก่อน deploy เสมอ
-npm run smoke      # sanity 15 เคส (server ต้องรันอยู่)
-npm run e2e        # Playwright 35 เคส 5 ไฟล์: โหวตครบวงจร, งดออกเสียง, หน้าปิดหีบ,
-                   # invariant ของบัตร/คะแนน และหน้า admin ทั้งคอนโซล
+npm run smoke      # sanity 13 เคส (server ต้องรันอยู่)
+npm run e2e        # Playwright 9 เคส 4 ไฟล์: โหวตครบวงจร, งดออกเสียง, หน้าปิดหีบ,
+                   # และ invariant ของบัตร/คะแนน
+                   # (e2e/admin-console.spec.js 26 เคสถูก testIgnore ไว้ — ชุดเก่าของ
+                   #  editor ที่เลิกใช้แล้ว ยังแดงค้าง ดู MAINTENANCE-RUNBOOK §4.1)
 ```
 
 e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ DB>_e2e` สร้างเองอัตโนมัติ) กับ server แยกที่ :3100

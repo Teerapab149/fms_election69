@@ -36,7 +36,7 @@
 > build โดยไม่มี `.env` ใน image → `migrate deploy` ทั้ง 7 migrations ลง DB container
 > เปล่า → seed → เว็บขึ้น :3000 — ตรวจแล้ว: static/รูปครบจาก standalone image,
 > image optimizer (sharp) ทำงาน, mock login ไม่โผล่ใน prod image, สถานะเลือกตั้ง
-> คำนวณเวลาไทยถูกบน container UTC, smoke 15/15 ยิงใส่ container ผ่านหมด
+> คำนวณเวลาไทยถูกบน container UTC, smoke ยิงใส่ container ผ่านหมด
 
 ตั้งบน **server env** (Docker env / `.env` ที่ gitignored) — **ห้าม commit ลง git**:
 
