@@ -18,8 +18,9 @@ hash chain ที่ตรวจย้อนหลังได้ — ไม่�
   พร้อมตัวเลือก รับรอง / ไม่รับรอง / งดออกเสียง
 - หน้าแนะนำพรรคกรอกได้จาก admin ทั้งนโยบาย ทีม รูป และช่องทางติดต่อของพรรคเอง
   (IG / Facebook / TikTok ตรวจ URL ก่อนเก็บ)
-- template ทั้งระบบ 6 ตระกูล 23 แบบ (receipt, blossom, original, gumroad,
-  studio-dark, verdure) สลับได้จาก admin คลิกเดียว ดูตัวอย่างก่อนได้ที่
+- template ทั้งระบบ **31 แบบ** — 6 ตระกูลที่มีชุดสีให้เลือก (gumroad 6 · fms-official 5 ·
+  blossom 4 · receipt 4 · studio-dark 4 · verdure 4) และธีมเดี่ยวอีก 4 (original,
+  minimal, modern-dark, playful) สลับได้จาก admin คลิกเดียว ดูตัวอย่างก่อนได้ที่
   `/template-preview` และ `/template-playground` โดยไม่แตะ DB
   — ตัวธีมเป็นไฟล์โค้ดใน `src/components/admin/editor/templates/builtIn/`
   หน้า admin มีแค่ "เลือกแล้ว Apply" ไม่มีตัวแก้แบบลากวาง เพิ่มธีมใหม่คือเขียนไฟล์

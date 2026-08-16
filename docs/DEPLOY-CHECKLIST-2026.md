@@ -259,8 +259,8 @@ npm run build            # ต้องผ่านครบทุก route ก�
 ## 8. เลือก template ของปีนี้
 
 - [ ] แท็บ **"เลือกธีม (Template)"**: กดดูตัวอย่าง flow จริงก่อน (`?interact=1`) แล้ว Apply
-  (`activeTemplateId`) — 6 ตระกูล: gumroad / studio-dark / verdure / original / receipt / blossom
-  แต่ละตระกูลมีชุดสีให้เลือก (รวม 23 แบบ)
+  (`activeTemplateId`) — **31 แบบ**: 6 ตระกูลที่มีชุดสี (gumroad 6 · fms-official 5 · blossom 4 ·
+  receipt 4 · studio-dark 4 · verdure 4) + ธีมเดี่ยวอีก 4 (original, minimal, modern-dark, playful)
 - [ ] หน้าแอดมินเป็น **"เลือกแล้ว Apply" อย่างเดียว** ไม่มีตัวแก้เลย์เอาต์ — อยากได้หน้าตาใหม่ทั้งชุด
   ต้องเขียนไฟล์ธีมเพิ่มแล้ว deploy (RUNBOOK §7)
 
