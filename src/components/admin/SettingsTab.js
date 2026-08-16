@@ -514,16 +514,16 @@ const SettingsTab = () => {
               <div className="min-w-0">
                 <h5 className="text-base font-bold text-indigo-800 flex items-center gap-2 break-words">
                   <Power className="w-4 h-4 shrink-0" />
-                  ลบข้อมูลการลงคะแนนรายบุคคล (รับรองผล)
+                  รับรองผลอย่างเป็นทางการ
                 </h5>
                 <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
-                  ปิดผลอย่างเป็นทางการ — ปักธงว่าคะแนนถูกล็อกแล้ว เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก · คะแนนรวมของทุกพรรคยังอยู่ครบ และบัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลว่า “ใครเลือกพรรคใด” เหลือให้ลบ
+                  ปิดการเลือกตั้งครั้งนี้อย่างเป็นทางการ · <b>ไม่มีการลบข้อมูลใด ๆ</b> — บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลว่า “ใครเลือกพรรคใด” ให้ลบตั้งแต่แรก · ระบบจะบันทึกชื่อผู้รับรองกับวันเวลา แล้วขึ้นเป็นแถบรับรองบนหน้าผลคะแนน (สั่งพิมพ์เป็น PDF แนบรายงานได้)
                 </p>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
-                  ใช้เมื่อ ปิดหีบและเผยแพร่ผลเรียบร้อยแล้ว ต้องการรับรองผลเป็นครั้งสุดท้าย
+                  ใช้เมื่อ ปิดหีบและเผยแพร่ผลเรียบร้อยแล้ว และตรวจคะแนนกับเจ้าหน้าที่ IT เสร็จแล้ว
                 </p>
                 <p className="text-[11px] font-bold text-indigo-600 mt-1.5 leading-relaxed break-words">
-                  กู้คืนไม่ได้ · กดได้เฉพาะหลังปิดหีบและเปิดการแสดงผลคะแนนแล้วเท่านั้น
+                  กดได้เฉพาะบัญชีเจ้าหน้าที่คณะ (กรรมการสโมฯ กดไม่ได้) · กดแล้วย้อนกลับไม่ได้ ระบบจะล็อก — เปิดหีบใหม่ไม่ได้ รับคะแนนเพิ่มไม่ได้
                 </p>
               </div>
 
@@ -534,7 +534,7 @@ const SettingsTab = () => {
                 className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
               >
                 <Power className="w-4 h-4" />
-                Anonymize
+                รับรองผล
               </button>
             </div>
           </div>

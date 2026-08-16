@@ -1,7 +1,8 @@
 # MAINTENANCE & PANIC RUNBOOK — FMS Online Voting (SAMO 49)
 
 คู่มือสำหรับ **staff ที่ดูแลระบบ + dev คนถัดไป** ให้ระบบอยู่ได้ยาว โดยคนที่ไม่ได้สร้างมันก็ดูแลต่อได้.
-อ่านคู่กับ `CLAUDE.md` (ภาพรวม + conventions) และ `docs/HANDOFF-*.md` (สถานะงาน editor).
+อ่านคู่กับ `CLAUDE.md` (ภาพรวม + conventions) และ `DECISIONS.md` (บทเรียนที่เคยเจ็บมาแล้ว).
+(ไฟล์ `docs/HANDOFF-*.md` ที่เคยอ้างถึงตรงนี้ถูกลบออกจาก tree แล้ว 2026-07-19 — หาได้จาก git history)
 
 > หลักคิดที่ตกลงกันไว้ (memory `editor-strategy-decision`): สิ่งที่ทำให้ระบบ **อยู่ครบหลายปี = ความทนทานเชิง
 > operation + เอกสารนี้** ไม่ใช่ความหลากหลายของดีไซน์. การเปลี่ยนหน้าตาแต่ละปีทำได้ด้วย **เลือก template +
@@ -19,7 +20,7 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 ---
 
 ## 1. งานประจำปี — เปลี่ยนปีการเลือกตั้งใหม่ (checklist)
-> ✅ **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/fms-ovs/admin`, 5 แท็บ) ครอบคลุมงานรายปี **เกือบทั้งหมด** —
+> ✅ **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/fms-ovs/admin`, 6 แท็บ) ครอบคลุมงานรายปี **เกือบทั้งหมด** —
 > staff ทำเองได้โดยไม่ต้องมี dev **ครบทุกข้อแล้ว** (รวมวันเวลาเลือกตั้ง — ดูข้อ 6, ย้ายเข้า admin แล้ว 2026-06-09).
 
 ทำผ่านหน้า admin (ไม่ต้องแตะโค้ด) ตามแท็บ:
@@ -27,9 +28,13 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 1. **ชื่อ/ปี/เลขครั้ง/เนื้อหา** — แท็บ **"ตั้งค่าทั่วไป"**: ชื่อการเลือกตั้ง (SAMO 50→51), เลขครั้งที่,
    ปีการศึกษา พ.ศ. (2570→2571), ปี ค.ศ., ชื่อโครงการ/องค์กร/คณะ/มหาวิทยาลัย/ปีลิขสิทธิ์ (ทุกช่องมีปุ่ม ↺ คืนค่า).
 2. **พรรค + สมาชิก** — แท็บ **"จัดการผู้สมัคร"**: เพิ่ม/แก้/ลบพรรค + สมาชิก + รูป + สีพรรค (รูปถูก optimize อัตโนมัติ).
-3. **หน้าตา/สี (ธีม)** — แท็บ **"ออกแบบหน้าเว็บ"** → **"ธีมสี / Theme Tokens"**: ปรับสี/ฟอนต์/มุมโค้งทั้งเว็บพร้อมกัน
-   → **เปลี่ยนสีก็ทำให้ "รู้สึกใหม่" ได้ทั้งปีโดยไม่ต้องสร้าง template ใหม่** (กลไก variety หลัก). + เลือก template,
-   จัด Sections หน้า Home (เปิด/ปิด/ลำดับ), สลับ variant ของ element (คลัง 47 ชนิด).
+3. **หน้าตา/สี (ธีม)** — แท็บ **"เลือกธีม (Template)"**: เลือก template 1 ใน 6 ตระกูล แต่ละตระกูลมีชุดสีให้เลือก
+   กดดูตัวอย่างก่อนแล้วค่อย Apply → **เปลี่ยน template/ชุดสีก็ทำให้ "รู้สึกใหม่" ได้ทั้งปีโดยไม่ต้องเขียนโค้ด**
+   (กลไก variety หลัก)
+   > ⚠️ **ไม่มีตัวแก้แบบลากวาง** หน้า admin เป็น "เลือกแล้ว Apply" อย่างเดียว — เลย์เอาต์ของแต่ละ template
+   > คงที่ ไม่มีการจัด Sections หน้า Home หรือสลับ variant ของ element จากหน้าเว็บ
+   > (editor ตัวเต็ม `PageDesignTab` ยังอยู่ในโค้ดแต่เข้าได้ทาง URL `?advanced=1` เท่านั้น
+   > เป็นเครื่องมือของ dev ไม่ใช่ของ staff — เพิ่มธีมใหม่คือเขียนไฟล์ธีมแล้ว deploy ดู §7)
 4. **โหมดระบบ + แสดงผล + Google Form** — แท็บ **"ตั้งค่าระบบ"**: `AUTO` (ใช้เวลาจาก electionConfig) /
    `MANUAL_OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
 5. **รีเซ็ตเริ่มปีใหม่** — **ทำที่ฐานข้อมูล ไม่ใช่หน้า admin** (ถอดปุ่มออก 2026-07-28):
@@ -70,12 +75,22 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 เก็บ "ปีนั้น = ผลนี้ + หน้าตานี้" ลง git ถาวร **ก่อน** reset (ตอนคะแนนยังอยู่). ดู `archive/README.md`.
 
 **B. รับรองผล / Certify (หลังปิดหีบ + เผยแพร่ผล):** กดปุ่ม **"รับรองผล"** ในแท็บ "ตั้งค่าระบบ"
-(action `ANONYMIZE_BALLOTS` — ชื่อเดิม P0-6, ตอนนี้เป็น *certification flag*).
-⚠️ **v2-SEC เปลี่ยนความหมาย:** บัตรทุกใบ **ไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วโดยโครงสร้าง** (`Ballot`
-ไม่มี `userId` + choice เข้ารหัส) — ไม่มี "ร่องรอยว่าใครเลือกใคร" ให้ลบเหมือนโมเดลเก่า. ปุ่มนี้จึงแค่
-**ตั้งธง `globalConfig.ballotsAnonymized = true`** เป็นหมุดรับรองผล ที่ downstream tools ยอมรับ
-(เช่น reconcile-scores ถือว่า `Candidate.score` ถูก freeze แล้ว). ทำได้เฉพาะหลังปิดหีบ + เปิด `showResult`
-(ระบบกันทำกลางคัน). คะแนนรวมอยู่ที่ `Candidate.score` (atomic increment ตอนโหวต) = บันทึกสุดท้ายอยู่แล้ว.
+(action `ANONYMIZE_BALLOTS` — ชื่อเดิม P0-6, ตอนนี้คือ *การรับรองผลอย่างเป็นทางการ*).
+
+⚠️ **ชื่อ action หลอก — มันไม่ได้ลบอะไร** บัตรทุกใบ **ไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วโดยโครงสร้าง**
+(`Ballot` ไม่มี `userId` + choice เข้ารหัส) จึงไม่มี "ร่องรอยว่าใครเลือกใคร" ให้ลบตั้งแต่แรก.
+
+สิ่งที่ปุ่มนี้ทำจริง (อัปเดต 2026-08-15):
+- **กดได้เฉพาะบัญชี `role = STAFF`** (เจ้าหน้าที่คณะ จาก `admin.js --create-staff`) — กรรมการสโมฯ โดน 403
+  ที่ API ไม่ใช่แค่ซ่อนปุ่ม เพราะการรับรองผลของตัวเองเป็น conflict of interest
+- **ตั้งธง `globalConfig.ballotsAnonymized = true` + บันทึก `certifiedBy` / `certifiedAt`** (ชื่อจริงของคนที่กด)
+  ซึ่งไปโผล่เป็นแถบรับรองบนหน้าผลคะแนน (สั่งพิมพ์เป็น PDF แนบรายงานได้) และลงใน `archive-year`
+- **ล็อกจริง** หลังรับรอง `/api/vote` ปฏิเสธทุกคะแนน (403) และเปลี่ยน `systemMode` ไม่ได้ (409)
+  ยกเว้นตั้งเป็น `ENDED` ซ้ำ — คะแนนที่มีคนเซ็นรับรองแล้วต้องไม่ขยับได้อีก
+
+ทำได้เฉพาะหลังปิดหีบ + เปิด `showResult` (ระบบกันทำกลางคัน). คะแนนรวมอยู่ที่ `Candidate.score`
+(atomic increment ตอนโหวต) = บันทึกสุดท้ายอยู่แล้ว.
+`decrypt-recount.js` และ `verify-ballot-chain.js` **ยังใช้ได้ตามปกติหลังรับรองผล** — ข้อพิพาทมักเกิดหลังประกาศผล.
 
 **C. ตั้งปีใหม่ (admin UI):** ตามข้อ 1–6 ด้านบน — ตั้งชื่อ/ปี/วันเวลา, `systemMode=AUTO`, seed พรรคจริง,
 ลบพรรคทดสอบ, `showResult=false`, import รายชื่อผู้มีสิทธิ์ปีใหม่ · ส่วนการล้างคะแนน/บัตร
@@ -130,7 +145,7 @@ BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain �
 ## 3. รันในเครื่อง (dev)
 ```
 npm install
-npx prisma generate         # ถ้าเพิ่งแก้ schema: npx prisma db push  (อย่า migrate — ดู §6)
+npx prisma generate         # แก้ schema ตอน dev: npx prisma db push (บน production ใช้ migrate deploy — §6)
 npm run dev                 # http://localhost:3000/fms-ovs
 ```
 Windows quirk: ถ้า `.next` ล็อก/พัง → หยุด dev server, `rm -rf .next`, รันใหม่.
@@ -169,8 +184,9 @@ VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
   dev server :3000 ตามเดิม.
 - ลำดับ e2e ก่อน smoke ไม่ critical แล้ว (คนละ server คนละ DB) — แต่ smoke ยัง trip login
   rate-limit ของ :3000 เองตามเดิม (10/5นาที/IP).
-- ⚠️ `e2e/admin-console.spec.js` (ของเดิม คนละชุด) ยังมี 11 เคสแดงค้าง — ถูก exclude ออกจาก
-  playwright config (`testIgnore`) รอแก้แยก.
+- ⚠️ `e2e/admin-console.spec.js` (ชุดเก่าของ editor ที่เลิกใช้แล้ว) มี 26 เคส และถูก **exclude ทั้งไฟล์**
+  ด้วย `testIgnore` ใน `playwright.config.js` — ยังแดงค้างอยู่ ไม่ได้อยู่ในด่าน gate
+  จำนวนที่รันจริงจึงเป็น **9 เคส 4 ไฟล์** (`npm run e2e`) และ **7 เคส** (`npm run e2e:gate`)
 
 ## 4.2 e2e test DB (v2-R11) — วิธีทำงาน + วิธีรัน
 e2e ทั้งชุดแยกตัวจาก dev สมบูรณ์: **DB ของตัวเอง + server ของตัวเอง**. คนดูแลรุ่นถัดไปกดรันได้เลย:
@@ -245,11 +261,15 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 | **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
 | **admin เข้าไม่ได้** | ลืมรหัสกลาง · ไม่ได้ถูก `--grant` · `ADMIN_JWT_SECRET` เปลี่ยน/หาย | `node scripts/admin.js --list` ก่อน (บอกทั้งรายชื่อและว่ารหัสกลางตั้งหรือยัง) · ลืมรหัส → `--rotate-password` ออกใหม่ แสดงครั้งเดียว บอกกรรมการทุกคน · ไม่มีชื่อในรายการ → `--grant <รหัส นศ.>` · ยังไม่ได้ → ตรวจ `ADMIN_JWT_SECRET` · ทุกคนล็อกอินไม่ได้พร้อมกันตอนวันจริง → `--break-glass` (§10) |
-| **ลิงก์/รูปพังหลัง deploy** | path ไม่ผ่าน `getPath()` หรือ `NEXT_PUBLIC_BASE_PATH` ผิด | ตั้ง base path = `/fms-ovs`; หา path ตรงๆ ในโค้ด |
+| **ลิงก์/รูปพังหลัง deploy · กดเมนูแล้ว 404 ทั้งเว็บ** | ตัวแปร base path ไม่ครบ (ต้องมี `BASE_PATH` + `NEXT_PUBLIC_BASE_PATH` + `ASSET_PREFIX` ทั้งสามตัว) หรือมี path ตรงๆ ที่ไม่ผ่าน `getPath()` | ตั้งให้ครบทั้งสามตัว = `/fms-ovs` แล้ว redeploy (ดู §2); ถ้ายังพังเฉพาะบางลิงก์ ให้หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
 
-⚠️ **ใช้ `prisma db push` ไม่ใช่ `migrate`** สำหรับ schema นี้ (มี drift; ดู handoff). สำรอง DB ก่อนทุกครั้ง.
+⚠️ **บน production ใช้ `npx prisma migrate deploy`** — `scripts/setup.sh` รันให้อยู่แล้ว และเป็นขั้นตอนใน
+`DEPLOY-CHECKLIST §4` · ตอนนี้รีโปมี migration ครบ 9 ตัว และ drift เก่าถูกเก็บเป็น migration แล้ว
+(2026-07-18) จึง deploy ลง DB เปล่าได้จบในคำสั่งเดียว
+**`prisma db push` ใช้เฉพาะบนเครื่อง dev และใน e2e test DB เท่านั้น** (ดู §4.2) — อย่าใช้กับ production
+เพราะมันข้าม migration history · สำรอง DB ก่อนทุกครั้ง
 
 ---
 
@@ -263,7 +283,8 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 ## 8. ใครดูแล / ติดต่อใคร
 - **ผู้สร้างเดิม:** (ระบุชื่อ/ติดต่อ — เติมเอง)
 - **Staff คณะที่ดูแล operation:** (เติมเอง)
-- เอกสารสถานะงานล่าสุด: `docs/HANDOFF-editor-ui-phase-2.md`, memory note ของโปรเจกต์.
+- เอกสารสถานะงานล่าสุด: `docs/TEMPLATE-SYSTEM-STATE.md` และ `PROGRESS.md`
+  (ไฟล์ `docs/HANDOFF-*.md` ที่เคยอยู่ตรงนี้ถูกลบออกจาก tree แล้ว 2026-07-19 — หาได้จาก git history)
 
 > 🔧 จุดที่ควรเติมเองให้ครบ: ชื่อ/เบอร์ผู้ดูแล, ที่อยู่ deploy/Docker host, ที่เก็บ backup env + DB,
 > และค่า PSU SSO ปัจจุบัน. กรอกแล้วคู่มือนี้จะใช้กู้ระบบได้จริงตอนฉุกเฉิน.
@@ -336,8 +357,19 @@ node scripts/admin.js --break-glass          # บัญชีสำรองท
 **บัญชีสำรอง (`--break-glass`)** มีรหัสของตัวเองแยกจากรหัสกลาง ไว้ใช้ตอน SSO ล่มหรือรหัส
 กลางหาย · บัญชีนี้ตั้งใจให้ `year=null` ด่านตรวจสิทธิ์ ปี 1-4 ใน `/api/vote` เลยปฏิเสธ
 ลงคะแนนไม่ได้ · ส่วนแอดมินที่เป็นนักศึกษายังใช้สิทธิ์เลือกตั้งด้วยบัญชีตัวเองได้ตามปกติ
-· รหัสประจำบัญชีไม่ควรมีอยู่บนแถวนักศึกษา ถ้า `--list` ขึ้นว่า "มีรหัสของตัวเอง"
+· รหัสประจำบัญชีไม่ควรมีอยู่บนแถว**นักศึกษา** ถ้า `--list` ขึ้นว่า "มีรหัสของตัวเอง" บนบัญชีกรรมการ
 ให้ล้างด้วย `--clear-personal` (ของเก่าจาก seed ซึ่งรหัสตัวจริงเคยอยู่ใน git สาธารณะ)
+
+> ⛔ **ยกเว้นบัญชีเจ้าหน้าที่ (`role = STAFF`) — ห้ามล้าง** บัญชีจาก `--create-staff` **ต้อง**มีรหัสของตัวเอง
+> เพราะเป็นบัญชีที่เซ็นรับรองผล ถ้าล้างแล้วรหัสกลางจะเปิดบัญชีนั้นได้ แปลว่ากรรมการคนไหนก็ปลอมลายเซ็น
+> เจ้าหน้าที่ได้ · `npm run preflight` แยกให้แล้ว: บัญชี STAFF ขึ้นเป็น PASS ไม่ใช่ WARN
+
+**บัญชีเจ้าหน้าที่คณะ (`--create-staff`)** — บัญชีประจำ ไม่ใช่ทางหนีไฟ ใช้รหัสของตัวเอง
+`year=null` (โหวตไม่ได้ ไม่ถูกนับใน turnout) และเป็น **role เดียวที่กดรับรองผลได้**
+```bash
+node scripts/admin.js --create-staff anuwat.s --name "ชื่อ นามสกุล"   # เติม --ask-password เพื่อตั้งรหัสเอง
+```
+ชื่อที่ใส่จะถูกบันทึกเป็นผู้รับรองผลและขึ้นบนหน้าผลคะแนน
 
 **หมายเหตุ (แก้ 2026-06-12):** เดิมโค้ดดูแค่ `groups[0]` (กลุ่มแรกเท่านั้น) → แก้ให้สแกน
 ทั้ง array แล้ว ตอนนี้ `roleFromSsoGroups` ยังสแกนทั้ง array เหมือนเดิม แต่ผลลัพธ์เป็นแค่ป้าย
@@ -359,7 +391,8 @@ node scripts/admin.js --break-glass          # บัญชีสำรองท
 
 **Key ceremony (ทำ 1 ครั้ง/ปี บนเครื่อง offline — รายละเอียดใน `docs/DEPLOY-CHECKLIST-2026.md`):**
 ```
-node scripts/generate-election-keys.js    # พิมพ์ keypair + chain secret ออก stdout เท่านั้น (ไม่เขียนดิสก์)
+node scripts/generate-election-keys.js --out key-<ปี>.enc   # แนะนำ: เก็บ private key + chain secret ลงไฟล์เข้ารหัส
+node scripts/generate-election-keys.js                      # ไม่ใส่ --out = พิมพ์ออกจอเฉย ๆ ไม่เขียนดิสก์
 ```
 - **private key** → ไฟล์เข้ารหัสจาก `generate-election-keys.js --out` เก็บ 2 ที่ที่คณะคุมเอง (จะแยกไฟล์กับรหัสผ่านให้คนละคนก็ได้) **ห้ามอยู่บนเซิร์ฟเวอร์/ใน repo/ในชุดสำรองเดียวกับฐานข้อมูล**
 - **public key** → env `ELECTION_BALLOT_PUBLIC_KEY` · **chain secret** → env `BALLOT_CHAIN_SECRET` + สำเนานอกเครื่อง
@@ -370,8 +403,13 @@ node scripts/verify-ballot-chain.js       # ตรวจโซ่ + count (certi
 node scripts/export-chain-head.js         # เก็บปลายโซ่ไว้นอก DB เป็นระยะ (cron) → จับ tamper ที่ปลอมโซ่ด้วย
 node scripts/decrypt-recount.js --key <path-to-private.pem>   # OFFLINE เท่านั้น, เฉพาะข้อพิพาท (นับรายพรรค)
 ```
-> **Production ต้อง apply `scripts/sql/ballot-grants.sql`** → DB role ของแอปเป็น **INSERT-only บน `Ballot`**
+> **Production ต้อง apply `scripts/sql/ballot-grants.sql`** → DB role ของแอปได้แค่ `SELECT, INSERT` บน `Ballot`
 > (แก้/ลบบัตรไม่ได้เชิงโครงสร้าง แม้แอปถูก compromise). superuser DB ยังแก้ได้เสมอ (ไม่มีระบบไหนกัน 100%)
 > — แต่ "แก้แบบไม่ถูกจับ" ต้องมี chain secret + superuser + rewrite ปลายโซ่ที่ export ออกไปแล้ว = แทบเป็นไปไม่ได้.
+>
+> ⚠️ **การป้องกันนี้ขึ้นกับ 3 อย่างพร้อมกัน**: สร้าง role `fms_app` · apply ไฟล์ grants · ชี้ `DATABASE_URL`
+> มาที่ role นั้น · **ถ้าชี้ไป superuser แทน ทุกอย่างยังทำงานปกติแต่การป้องกันไม่มีอยู่จริง**
+> `npm run preflight` มีด่านจับข้อนี้แล้ว (2026-08-15) — ต้องขึ้น `app cannot delete ballots`
 
-> ปุ่ม **"รับรองผล"** (§1.1 B) ตั้งธง `ballotsAnonymized` — ไม่ได้ลบบัตร (บัตรนิรนามอยู่แล้ว) แค่หมุดรับรอง.
+> ปุ่ม **"รับรองผล"** (§1.1 B) ตั้งธง `ballotsAnonymized` + บันทึกชื่อผู้รับรอง — ไม่ได้ลบบัตร
+> (บัตรนิรนามอยู่แล้ว) แต่**ล็อกระบบจริง**: กดได้เฉพาะ `role = STAFF` และหลังกดแล้วโหวตไม่ได้ เปลี่ยนโหมดไม่ได้

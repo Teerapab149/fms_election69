@@ -146,8 +146,9 @@
    ```bash
    psql "$MIGRATE_DATABASE_URL" -f scripts/sql/ballot-grants.sql
    ```
-   ไฟล์นี้ทำให้ role แอป **INSERT-only บน `Ballot`** (ห้าม UPDATE/DELETE) และ SELECT+UPDATE บน `ChainHead`
+   ไฟล์นี้ทำให้ role แอปได้แค่ **`SELECT, INSERT` บน `Ballot`** (ห้าม UPDATE/DELETE) และ SELECT+UPDATE บน `ChainHead`
    → แอปแก้/ลบบัตรไม่ได้เชิงโครงสร้างแม้ถูก compromise.
+   ไฟล์จะหยุดทันทีพร้อมบอกวิธีแก้ ถ้ายังไม่ได้สร้าง role `fms_app` ในข้อ 1
 
 4. [ ] ตรวจว่า lockdown ติดจริง (คำสั่งอยู่ท้ายไฟล์ grants):
    ```sql
@@ -155,6 +156,13 @@
    WHERE grantee='fms_app' AND table_name='Ballot';
    -- คาดหวัง: SELECT, INSERT เท่านั้น (ต้องไม่มี UPDATE / DELETE)
    ```
+
+5. [ ] **ยืนยันด้วย preflight ว่า `DATABASE_URL` ชี้มาที่ `fms_app` จริง** — grants ถูกต้องแต่แอปยังต่อด้วย
+   superuser อยู่ = การป้องกันไม่มีผล และไม่มีอะไรฟ้อง
+   ```bash
+   npm run preflight     # ต้องขึ้น: ✓ app cannot delete ballots — least-privilege in effect
+   ```
+   ถ้าขึ้น `✗ app CAN delete ballots` แปลว่า `DATABASE_URL` ยังชี้ผิด role — แก้ก่อนเปิดหีบ
 
 ---
 
@@ -167,13 +175,17 @@ Docker image รัน `npx prisma generate` ตอน build แล้ว แต
 npx prisma migrate deploy       # apply committed migrations ตามลำดับ
 ```
 
-migration ที่ต้องมีครบ (ล่าสุด = v2-SEC):
+migration ที่ต้องมีครบ (9 ตัว ตรวจล่าสุด 2026-08-15):
 ```
 20251231105732_init_new_database
 20260102175233_add_logo_url
 20260114190038_add_slogan
 20260519120000_add_templates_phase3
 20260716120000_v2_sec_anonymous_ballots   ← สร้าง Ballot + ChainHead + seed genesis (id=1, head='GENESIS', seq=0)
+20260718140000_admin_audit_log
+20260718180000_catchup_db_push_drift      ← เก็บ drift เก่าที่เคยเกิดจาก db push เข้าเป็น migration
+20260728124632_admin_shared_password
+20260730024540_party_socials
 ```
 
 - [ ] ตรวจ `npx prisma migrate status` = up to date
@@ -205,7 +217,9 @@ npm run build            # ต้องผ่านครบทุก route ก�
 
 ## 6. ตั้งค่าการเลือกตั้งในหน้า admin
 
-เข้า `/fms-ovs/admin` (login ด้วย bootstrap password / บัญชี staff SSO) แล้ว:
+เข้า `/fms-ovs/admin` แล้ว — **ล็อกอินต้องมีครบสองอย่าง**: ชื่อผู้ใช้ที่ถูก `--grant` ไว้ + รหัสกลางจาก
+`--rotate-password` (ไม่มี bootstrap password และ SSO ไม่ให้สิทธิ์อะไรแล้ว — ดู RUNBOOK §10)
+ฝั่งเจ้าหน้าที่ให้สร้างบัญชีของตัวเองด้วย `admin.js --create-staff` ซึ่งเป็นบัญชีเดียวที่รับรองผลได้
 
 - [ ] แท็บ **"ตั้งค่าทั่วไป"**: ชื่อการเลือกตั้ง / เลขครั้ง / ปีการศึกษา พ.ศ.+ค.ศ. / ชื่อคณะ-องค์กร
 - [ ] แท็บ **"ตั้งค่าทั่วไป" → "ช่วงเวลาเลือกตั้ง"**: ตั้ง 3 ช่อง (เปิดตัวผู้สมัคร / เปิดหีบ / ปิดหีบ)
@@ -244,9 +258,11 @@ npm run build            # ต้องผ่านครบทุก route ก�
 
 ## 8. เลือก template ของปีนี้
 
-- [ ] แท็บ **"ออกแบบหน้าเว็บ" → template chooser**: preview flow จริงก่อน (`?interact=1`) แล้ว apply
-  (`activeTemplateId`) — ตระกูล gumroad / studio-dark / verdure (สลับสีได้) / original / receipt / blossom
-- [ ] ปรับธีมสี/ฟอนต์/มุมโค้ง (theme tokens) ถ้าต้องการหน้าตาใหม่โดยไม่แก้โค้ด
+- [ ] แท็บ **"เลือกธีม (Template)"**: กดดูตัวอย่าง flow จริงก่อน (`?interact=1`) แล้ว Apply
+  (`activeTemplateId`) — 6 ตระกูล: gumroad / studio-dark / verdure / original / receipt / blossom
+  แต่ละตระกูลมีชุดสีให้เลือก (รวม 23 แบบ)
+- [ ] หน้าแอดมินเป็น **"เลือกแล้ว Apply" อย่างเดียว** ไม่มีตัวแก้เลย์เอาต์ — อยากได้หน้าตาใหม่ทั้งชุด
+  ต้องเขียนไฟล์ธีมเพิ่มแล้ว deploy (RUNBOOK §7)
 
 ---
 
@@ -262,7 +278,9 @@ npm run build            # ต้องผ่านครบทุก route ก�
 **หลังปิดหีบ + ก่อนประกาศผล (certification):**
 - [ ] `node scripts/verify-ballot-chain.js` + `node scripts/reconcile-scores.js` → PASS (โซ่ไม่ถูกแก้ + invariant ตรง)
 - [ ] `node scripts/export-chain-head.js` เก็บปลายโซ่ไว้นอก DB
-- [ ] เปิด `showResult = true` แล้วกดปุ่ม **"รับรองผล"** (ตั้งธง `ballotsAnonymized` — RUNBOOK §1.1 B / §11)
+- [ ] เปิด `showResult = true` แล้วให้**เจ้าหน้าที่คณะ**เข้าด้วยบัญชีของตัวเองแล้วกดปุ่ม **"รับรองผล"**
+  (กรรมการสโมฯ กดไม่ได้ — ระบบปฏิเสธที่ API · ชื่อผู้กดถูกบันทึกและขึ้นบนหน้าผลคะแนน)
+  ⚠️ กดแล้วระบบล็อก: โหวตไม่ได้อีก เปลี่ยนโหมดไม่ได้ — ตรวจให้จบก่อนกด
 - [ ] `npm run archive-year` เก็บผล+หน้าตาปีนี้ลง git (ก่อน reset ปีถัดไป)
 
 > dispute-recount รายพรรค (ถ้าจำเป็น) = `node scripts/decrypt-recount.js --key <path>` — **offline เท่านั้น**
