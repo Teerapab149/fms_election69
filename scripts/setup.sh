@@ -69,7 +69,7 @@ need() {
 }
 need DATABASE_URL              "connection string ของฐานข้อมูล (บัญชี fms_app)"
 need NEXTAUTH_SECRET           "สุ่มด้วย: openssl rand -base64 32"
-need NEXTAUTH_URL              "URL จริงของระบบ เช่น https://xxx.psu.ac.th/fms-ovs"
+need NEXTAUTH_URL              "URL จริงของระบบ เช่น https://ovs.fms.psu.ac.th"
 need ADMIN_JWT_SECRET          "สุ่มด้วย: openssl rand -hex 32"
 need AUTHENTIK_CLIENT_ID       "ขอจาก IT ม.อ. (PSU SSO)"
 need AUTHENTIK_CLIENT_SECRET   "ขอจาก IT ม.อ. (PSU SSO)"
@@ -166,7 +166,8 @@ fi
 
 # ── 6. ตรวจว่าเว็บตอบ ───────────────────────────────────────────────────────
 step "6. ตรวจว่าเว็บใช้งานได้จริง"
-BASE_PATH_VAL="$(envval BASE_PATH)"; [ -n "$BASE_PATH_VAL" ] || BASE_PATH_VAL="/fms-ovs"
+# ปกติว่าง = เสิร์ฟจาก root ของโดเมนตัวเอง จะมีค่าก็เฉพาะตอนตั้ง BASE_PATH ให้ไปอยู่ subpath
+BASE_PATH_VAL="$(envval BASE_PATH)"
 URL="http://localhost:3000${BASE_PATH_VAL}"
 if command -v curl >/dev/null 2>&1; then
   # หน้าแรกอย่างเดียวไม่พอ: มันขึ้น 200 ได้แม้ต่อฐานข้อมูลไม่ได้เลย (เคยหลอกให้คิดว่า

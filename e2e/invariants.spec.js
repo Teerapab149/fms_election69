@@ -103,7 +103,7 @@ test.describe('Voting invariants (isolated test DB)', () => {
       const { realParty } = await getBallot();
       const trueScore = await candidateScore(realParty.id);
       expect(trueScore, 'precondition: some real votes exist by now').toBeGreaterThan(0);
-      await page.goto('/fms-ovs/results');
+      await page.goto('/results');
       await page.waitForLoadState('networkidle');
       const body = await page.locator('body').innerText();
       expect(body, 'no per-party score digits on the embargoed results page')

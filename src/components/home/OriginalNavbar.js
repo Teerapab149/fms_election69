@@ -32,15 +32,16 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    // 1. Check if we have NEXT_PUBLIC_BASE_PATH, otherwise default to '/fms-ovs'
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
+    // 1. Empty on a root deployment (the current shape); a subpath only when BASE_PATH is set
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
     // 2. Construct absolute return URL. Use window.location.origin but ensure we append basePath correctly
-    // If the app is hosted at /fms-ovs, we want to return there.
-    const origin = window.location.origin; // e.g., https://cvs.fms.psu.ac.th
-    const returnUrl = `${origin}${basePath}`; // -> https://cvs.fms.psu.ac.th/fms-ovs
+    const origin = window.location.origin; // e.g., https://ovs.fms.psu.ac.th
+    const returnUrl = `${origin}${basePath}`; // -> https://ovs.fms.psu.ac.th
 
     // 3. PSU SSO Logout URL
+    // ⚠️ 'fms-ovs' below is the Authentik APPLICATION SLUG, not our URL path — it stays
+    // as-is now that the site is served from the root of its own domain.
     let psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
 
     if (session?.id_token) {

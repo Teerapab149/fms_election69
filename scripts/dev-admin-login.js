@@ -51,7 +51,7 @@ function readEnv(file) {
     console.error("  then: add ADMIN_DEV_PASSWORD=<the password it printed> to .env.local");
     process.exit(1);
   }
-  const basePath = env.NEXT_PUBLIC_BASE_PATH || env.BASE_PATH || "/fms-ovs";
+  const basePath = env.NEXT_PUBLIC_BASE_PATH || env.BASE_PATH || "";
   const port = process.env.PORT || 3000;
   const base = `http://localhost:${port}${basePath}`;
 

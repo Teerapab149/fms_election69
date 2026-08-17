@@ -83,7 +83,7 @@ async function grant(db, target) {
   banner("ให้สิทธิ์แอดมินแล้ว", [
     ["Username", user.studentId],
     ["ชื่อ", user.name || "-"],
-  ], "  เขาล็อกอินที่ /fms-ovs/admin/login ด้วยรหัส นศ. ตัวเอง + รหัสกลาง\n  ยังไม่รู้รหัสกลาง? ออกใหม่ด้วย --rotate-password (รหัสเดิมจะใช้ไม่ได้ทั้งชุด)");
+  ], "  เขาล็อกอินที่ /admin/login ด้วยรหัส นศ. ตัวเอง + รหัสกลาง\n  ยังไม่รู้รหัสกลาง? ออกใหม่ด้วย --rotate-password (รหัสเดิมจะใช้ไม่ได้ทั้งชุด)");
 }
 
 async function revoke(db, target) {
@@ -124,7 +124,7 @@ async function rotatePassword(db) {
   const admins = await db.user.count({ where: { isAdmin: true } });
   const personal = await db.user.count({ where: { isAdmin: true, passwordHash: { not: null } } });
   banner("รหัสกลางใหม่ — แสดงครั้งเดียว", [
-    ["เข้าที่", "/fms-ovs/admin/login"],
+    ["เข้าที่", "/admin/login"],
     ["Username", "รหัส นศ. ของแต่ละคน"],
     ["Password", password],
   ], `  ใช้ได้กับแอดมิน ${admins} คนที่ตั้งไว้ (ดูรายชื่อด้วย --list)\n` +
@@ -179,7 +179,7 @@ async function breakGlass(db) {
   });
 
   banner("บัญชีสำรอง — แสดงรหัสครั้งเดียว", [
-    ["เข้าที่", "/fms-ovs/admin/login"],
+    ["เข้าที่", "/admin/login"],
     ["Username", username],
     ["Password", password],
   ], "  รหัสนี้เป็นของบัญชีนี้บัญชีเดียว ไม่ใช่รหัสกลาง และไม่ควรบอกใครนอกจากผู้ดูแล\n" +
@@ -263,7 +263,7 @@ async function createStaff(db, username) {
   });
 
   banner(existing ? "อัปเดตบัญชีเจ้าหน้าที่แล้ว" : "สร้างบัญชีเจ้าหน้าที่แล้ว", [
-    ["เข้าที่", "/fms-ovs/admin/login"],
+    ["เข้าที่", "/admin/login"],
     ["Username", username],
     ["หรืออีเมล", email],
     ["ชื่อ", name],

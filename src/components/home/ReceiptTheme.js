@@ -63,7 +63,7 @@ const RC_SHIP_SVG = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10
 export const RC_SHIP_MASK = `url("data:image/svg+xml,${encodeURIComponent(RC_SHIP_SVG)}") center/contain no-repeat`;
 
 export function ReceiptBaseStyles() {
-  const bp = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+  const bp = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const activeSlug = useActiveTemplateId();
   const [previewSlug, setPreviewSlug] = useState(null);
   useEffect(() => {

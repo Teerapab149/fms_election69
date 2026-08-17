@@ -31,7 +31,7 @@ hash chain ที่ตรวจย้อนหลังได้ — ไม่�
   และตัวล็อกกันกดรีเซ็ตข้อมูลระหว่างการโหวตยังเปิดอยู่
 
 Stack: Next.js (App Router), PostgreSQL + Prisma, NextAuth (PSU SSO), Tailwind,
-Framer Motion, Recharts, Playwright — deploy ด้วย Docker ใต้ subpath `/fms-ovs`
+Framer Motion, Recharts, Playwright — deploy ด้วย Docker บนโดเมนของตัวเอง (เสิร์ฟจาก root)
 
 ## เริ่มพัฒนา
 
@@ -39,7 +39,7 @@ Framer Motion, Recharts, Playwright — deploy ด้วย Docker ใต้ sub
 npm install
 npx prisma migrate dev
 node prisma/seed.js
-npm run dev        # http://localhost:3000/fms-ovs
+npm run dev        # http://localhost:3000
 ```
 
 ตัวแปร env ที่ต้องมีใน `.env`:

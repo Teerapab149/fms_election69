@@ -201,10 +201,10 @@ node scripts/admin.js --rotate-password                  # รหัสกลา
 DATABASE_URL=              # ของบัญชี fms_app (บัญชีที่เว็บใช้)
 MIGRATE_DATABASE_URL=      # ของบัญชี fms_migrate (ใช้ตอนสร้าง/แก้ตารางเท่านั้น)
 NEXTAUTH_SECRET=           # สุ่มด้วย: openssl rand -base64 32
-NEXTAUTH_URL=              # URL จริง เช่น https://xxx.psu.ac.th/fms-ovs
-BASE_PATH=/fms-ovs            # ⚠️ สามตัวนี้ต้องครบ ขาดตัวใดตัวหนึ่งเว็บจะ 404 ทั้งเว็บ
-NEXT_PUBLIC_BASE_PATH=/fms-ovs
-ASSET_PREFIX=/fms-ovs
+NEXTAUTH_URL=              # URL จริง เช่น https://ovs.fms.psu.ac.th (ไม่มี path ต่อท้าย)
+BASE_PATH=                 # ⚠️ ว่างทั้งสามตัว = เสิร์ฟที่ root ของโดเมนตัวเอง
+NEXT_PUBLIC_BASE_PATH=     #    ถ้าใส่ค่าต้องใส่ให้ครบทั้งสาม ไม่งั้นเว็บ 404 ทั้งเว็บ
+ASSET_PREFIX=
 ADMIN_JWT_SECRET=          # สุ่มด้วย: openssl rand -hex 32
 AUTHENTIK_CLIENT_ID=
 AUTHENTIK_CLIENT_SECRET=

@@ -5,7 +5,7 @@
 (backup / panic / รายปี) อยู่ที่ `docs/MAINTENANCE-RUNBOOK.md`, กติกาแก้โค้ดที่ `CLAUDE.md`.
 
 > สแตก: Next.js (App Router, `output: 'standalone'`) + PostgreSQL (Prisma) + NextAuth
-> (PSU SSO ผ่าน Authentik OIDC) · Docker ใต้ subpath **`/fms-ovs`** · admin = httpOnly
+> (PSU SSO ผ่าน Authentik OIDC) · Docker บนโดเมนตัวเอง `https://ovs.fms.psu.ac.th` (root) · admin = httpOnly
 > JWT cookie · บัตรลงคะแนน = v2-SEC นิรนาม+เข้ารหัส+hash-chain.
 >
 > ทุกคำสั่ง/พาธในไฟล์นี้ถูกตรวจกับสคริปต์จริงในรีโปแล้ว (2026-07-17, HEAD `9314cf2`).
@@ -44,10 +44,10 @@
 |---|---|
 | `DATABASE_URL` | connection string ของ production DB (role `fms_app` least-privilege — ดู §3) |
 | `NEXTAUTH_SECRET` | สุ่มใหม่ทุกปี (`openssl rand -base64 32`) — เข้ารหัส session นักศึกษา |
-| `NEXTAUTH_URL` | URL จริงของระบบ (เช่น `https://<host>/fms-ovs`) — ใช้ใน `layout.js`/callback |
-| `BASE_PATH` | `/fms-ovs` — **ต้องมี** บอก Next.js ว่าเสิร์ฟที่ subpath ไหน |
-| `NEXT_PUBLIC_BASE_PATH` | `/fms-ovs` — **ต้องมี** ตัวที่ `getPath()` ใช้สร้างลิงก์ฝั่งหน้าเว็บ |
-| `ASSET_PREFIX` | `/fms-ovs` — ที่อยู่ของไฟล์ static (js/css/รูป) |
+| `NEXTAUTH_URL` | URL จริงของระบบ (`https://ovs.fms.psu.ac.th`) — ใช้ใน `layout.js`/callback |
+| `BASE_PATH` | **ว่าง** — ระบบเสิร์ฟที่ root ของโดเมนตัวเอง (ดูกรอบเตือนใต้ตาราง) |
+| `NEXT_PUBLIC_BASE_PATH` | **ว่าง** — ตัวที่ `getPath()` ใช้สร้างลิงก์ฝั่งหน้าเว็บ |
+| `ASSET_PREFIX` | **ว่าง** — ที่อยู่ของไฟล์ static (js/css/รูป) |
 | `AUTHENTIK_CLIENT_ID` | PSU SSO client id (จาก PSU IT) |
 | `AUTHENTIK_CLIENT_SECRET` | PSU SSO client secret |
 | `AUTHENTIK_REDIRECT_URI` | callback URL ที่ลงทะเบียนไว้กับ PSU SSO |
@@ -56,15 +56,21 @@
 | `BALLOT_CHAIN_SECRET` | **ตั้งใน §2** — secret ของ HMAC hash-chain บัตร |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ~~ต้องไม่ตั้งบน production~~ — **เลิกมีผลแล้ว (SEC-MOCK3, 2026-07-27)** ไม่ต้องตั้งและไม่ต้องกังวลว่าจะตั้งค้าง: ตัวกั้นจริงคือ `NODE_ENV=production` ซึ่งทำให้ NextAuth ไม่ register provider `mock-login` เลย และปุ่มบนหน้า login อ่านรายการ provider จาก `/api/auth/providers` ตอน runtime จึงหายตามไปเอง |
 
-> ⚠️ **ตัวแปร base path ต้องตั้งครบทั้งสามตัว ไม่งั้นเว็บพังแบบเงียบ ๆ**
+> ⚠️ **base path: ปล่อยว่างทั้งสามตัว — และถ้าจะตั้ง ต้องตั้งครบทั้งสามพร้อมกัน**
 >
-> `BASE_PATH` บอก Next.js ว่าเสิร์ฟที่ `/fms-ovs` ส่วน `NEXT_PUBLIC_BASE_PATH` เป็นตัวที่
-> `getPath()` ใช้สร้างลิงก์ทุกอันในหน้าเว็บ · **สองตัวนี้คนละตัวกัน และค่า default ไม่ตรงกัน**
-> ถ้าตั้งแค่ตัวใดตัวหนึ่ง เว็บจะเสิร์ฟที่ `/` แต่ลิงก์ทุกอันชี้ไป `/fms-ovs` → กดอะไรก็ 404 ทั้งเว็บ
-> ทั้งที่ไม่มี error ในล็อกสักบรรทัด
+> ระบบอยู่บนโดเมนของตัวเอง (`https://ovs.fms.psu.ac.th`) เสิร์ฟจาก `/` เพราะงั้น
+> `BASE_PATH` / `NEXT_PUBLIC_BASE_PATH` / `ASSET_PREFIX` **ต้องว่างทั้งสามตัว**
+> ใส่ `/fms-ovs` กลับมาตัวเดียว = ลิงก์ทั้งเว็บชี้ผิด → กดอะไรก็ 404 โดยไม่มี error ในล็อกสักบรรทัด
 >
-> ถ้าใช้ `docker-compose.yml` ที่มากับโปรเจกต์ ตั้ง `BASE_PATH` กับ `ASSET_PREFIX` ใน `.env`
-> พอ — compose ส่ง `NEXT_PUBLIC_BASE_PATH` ต่อให้เอง (บรรทัด 22) · ถ้า deploy วิธีอื่น ต้องตั้งเองครบทั้งสาม
+> `BASE_PATH` บอก Next.js ว่าเสิร์ฟที่ path ไหน (คุม `router`/`<Link>`/`_next`) ส่วน
+> `NEXT_PUBLIC_BASE_PATH` เป็นตัวที่ `getPath()` ใช้สร้างลิงก์/`fetch`/`<img src>` ในหน้าเว็บ ·
+> **คนละตัวกัน ต้องมีค่าเท่ากันเสมอ** ตั้งข้างเดียวคือครึ่งเว็บพัง
+>
+> ถ้าวันหนึ่งต้องย้ายไปอยู่ใต้ subpath (แบบ `cvs.fms.psu.ac.th/fms-ovs` ของเดิม) ตั้ง
+> `BASE_PATH=/fms-ovs` + `ASSET_PREFIX=/fms-ovs` ใน `.env` แล้ว rebuild — โค้ดรองรับอยู่แล้ว
+> ไม่ต้องแก้ไฟล์ · compose ส่ง `NEXT_PUBLIC_BASE_PATH` ต่อให้เอง (บรรทัด 22) ·
+> ถ้า deploy วิธีอื่น ต้องตั้งเองครบทั้งสาม · และต้องแก้ `NEXTAUTH_URL` +
+> `AUTHENTIK_REDIRECT_URI` ให้มี subpath ด้วย แล้วแจ้ง PSU IT ลงทะเบียน redirect URI ใหม่
 >
 > **เช็คหลัง deploy:** เปิดหน้าแรกแล้วกดเมนูสักอัน ถ้าเด้ง 404 ให้สงสัยข้อนี้ก่อนอย่างอื่น
 
@@ -217,7 +223,7 @@ npm run build            # ต้องผ่านครบทุก route ก�
 
 ## 6. ตั้งค่าการเลือกตั้งในหน้า admin
 
-เข้า `/fms-ovs/admin` แล้ว — **ล็อกอินต้องมีครบสองอย่าง**: ชื่อผู้ใช้ที่ถูก `--grant` ไว้ + รหัสกลางจาก
+เข้า `/admin` แล้ว — **ล็อกอินต้องมีครบสองอย่าง**: ชื่อผู้ใช้ที่ถูก `--grant` ไว้ + รหัสกลางจาก
 `--rotate-password` (ไม่มี bootstrap password และ SSO ไม่ให้สิทธิ์อะไรแล้ว — ดู RUNBOOK §10)
 ฝั่งเจ้าหน้าที่ให้สร้างบัญชีของตัวเองด้วย `admin.js --create-staff` ซึ่งเป็นบัญชีเดียวที่รับรองผลได้
 
@@ -268,7 +274,7 @@ npm run build            # ต้องผ่านครบทุก route ก�
 
 ## 9. Smoke test หลัง deploy (ก่อนประกาศเปิดหีบ)
 
-- [ ] **health:** `curl https://<host>/fms-ovs/api/health` → `200 {"ok":true,"db":true}`
+- [ ] **health:** `curl https://ovs.fms.psu.ac.th/api/health` → `200 {"ok":true,"db":true}`
 - [ ] **fail-closed:** ถ้า `ELECTION_BALLOT_PUBLIC_KEY`/`BALLOT_CHAIN_SECRET` หาย → `/api/vote` คืน 503 (ทดสอบบน staging)
 - [ ] **โหวตจริง 1 ครั้ง** (บัญชีทดสอบ/ช่วง staging): login → เลือก → ยืนยัน → success → `isVoted` ติด, โหวตซ้ำถูกปฏิเสธ
 - [ ] **โซ่บัตร:** `node scripts/verify-ballot-chain.js` → ทุกข้อ PASS (ต้องมี `BALLOT_CHAIN_SECRET` ใน env)

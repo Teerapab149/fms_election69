@@ -43,7 +43,7 @@ const VIEWPORTS = [
 export default function TemplatePreviewWrapper({
   children,
   src,
-  url = "fms-ovs.psu.ac.th",
+  url = "ovs.fms.psu.ac.th",
   actions,
   defaultView = "pc",
   themeSlug,

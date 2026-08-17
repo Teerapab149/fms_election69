@@ -1,8 +1,8 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-const BASE = '/fms-ovs/admin';
-const LOGIN_URL = '/fms-ovs/admin/login';
+const BASE = '/admin';
+const LOGIN_URL = '/admin/login';
 
 // Admin credentials from seed data
 const ADMIN_USERNAME = '6610510149';

@@ -10,7 +10,9 @@
 #   VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
 set -euo pipefail
 
-BASE_PATH="/fms-ovs"
+# Root deployment (https://ovs.fms.psu.ac.th). Export BASE_PATH=/fms-ovs to verify
+# a subpath deployment instead.
+BASE_PATH="${BASE_PATH:-}"
 PORT="${VERIFY_PORT:-3100}"
 
 if [ -n "${VERIFY_REUSE_URL:-}" ]; then

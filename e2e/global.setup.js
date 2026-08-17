@@ -35,7 +35,7 @@ const {
 const { seedTestDb } = require('./helpers/seed');
 
 const PORT = Number(process.env.PW_TEST_PORT || 3100);
-const BASE_PATH = process.env.BASE_PATH || '/fms-ovs';
+const BASE_PATH = process.env.BASE_PATH || '';
 const SERVER_STATE_FILE = path.join(os.tmpdir(), 'fms-e2e-server.json');
 const HEALTH_URL = `http://localhost:${PORT}${BASE_PATH}/api/health`;
 const READY_TIMEOUT_MS = 90_000;
@@ -194,7 +194,13 @@ module.exports = async function globalSetup() {
       PORT: String(PORT),
       NEXTAUTH_URL: `http://localhost:${PORT}${BASE_PATH}`,
       NEXT_PUBLIC_ENABLE_MOCK_LOGIN: 'true',
+      // Both halves of the pair, always in lockstep: BASE_PATH drives next.config's
+      // own basePath, NEXT_PUBLIC_BASE_PATH drives getPath() in client code. Passing
+      // only the first used to work by accident, because getPath defaulted to the
+      // same hardcoded '/fms-ovs'. It no longer does, so a subpath e2e run
+      // (BASE_PATH=/fms-ovs npm run e2e) needs this to stay honest.
       BASE_PATH,
+      NEXT_PUBLIC_BASE_PATH: BASE_PATH,
     },
     stdio: 'inherit',
     shell: process.platform === 'win32', // resolve npx.cmd on Windows

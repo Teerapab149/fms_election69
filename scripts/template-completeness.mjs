@@ -45,7 +45,7 @@ if (REAL) {
 }
 const db = REAL ? new PrismaClient() : null;
 
-const BASE = process.env.BASE || "http://127.0.0.1:3000/fms-ovs";
+const BASE = process.env.BASE || "http://127.0.0.1:3000";
 const FAMS = (process.env.FAM || "original,gumroad,studio-dark,verdure,blossom,receipt,fms-official").split(",");
 const VPS = (process.env.VP || "1440x900,412x880").split(",").map((s) => s.split("x").map(Number));
 // login is deliberately in the list: it is the page two families did not have.

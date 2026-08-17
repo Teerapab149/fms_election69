@@ -86,13 +86,13 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
     if (editorMode) return;
     // Optional sign-in override (playground) instead of next-auth signIn().
     if (onSignIn) { onSignIn(); return; }
-    signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" });
+    signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote" });
   };
   // Match the canonical logout flow (Navbar.js): clear the local NextAuth
   // session, then federated PSU SSO end-session so the IdP cookie is cleared too.
   const doSignOut = async () => {
     if (editorMode) return;
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
     const returnUrl = `${window.location.origin}${basePath}`;
     let psuLogoutUrl = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
     if (session?.id_token) psuLogoutUrl += `&id_token_hint=${session.id_token}`;

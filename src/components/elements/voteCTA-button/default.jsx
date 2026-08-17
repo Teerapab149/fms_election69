@@ -261,7 +261,7 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
         <div
           onClick={() =>
             signIn("authentik", {
-              callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
+              callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote",
             })
           }
           className="group relative w-[90%] sm:w-auto inline-block cursor-pointer"

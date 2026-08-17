@@ -92,7 +92,7 @@ export function fmsMeta(gc = {}) {
 
 export function fmsOfficialSignIn() {
   signIn("authentik", {
-    callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
+    callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote",
   });
 }
 
@@ -102,7 +102,7 @@ export function fmsOfficialSignIn() {
 // every other family uses — a voter must be able to actually hand the laptop to
 // the next person in the queue).
 function fmsOfficialSignOut(session) {
-  const bp = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+  const bp = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const ret = `${window.location.origin}${bp}`;
   let url = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(ret)}`;
   if (session?.id_token) url += `&id_token_hint=${session.id_token}`;

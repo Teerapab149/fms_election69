@@ -6,8 +6,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - BASE_PATH=/fms-ovs
-        - ASSET_PREFIX=/fms-ovs
+        # Root deployment, mirroring production on https://ovs.fms.psu.ac.th.
+        # Empty on purpose — see the base-path note in .env.
+        - BASE_PATH=
+        - ASSET_PREFIX=
     container_name: fms-election-web-local
     restart: always
     ports:
@@ -19,15 +21,15 @@ services:
     depends_on:
       - db
     environment:
-      # ตั้งค่า Path ที่นี่
-      - BASE_PATH=/fms-ovs
-      - NEXT_PUBLIC_BASE_PATH=/fms-ovs
-      - ASSET_PREFIX=/fms-ovs
+      # ตั้งค่า Path ที่นี่ — ว่างทั้งชุด = เสิร์ฟจาก root เหมือน production
+      - BASE_PATH=
+      - NEXT_PUBLIC_BASE_PATH=
+      - ASSET_PREFIX=
       - NODE_ENV=production
 
       # URL Configuration for LOCALHOST Testing
-      - NEXTAUTH_URL=http://localhost:3000/fms-ovs
-      - AUTHENTIK_REDIRECT_URI=http://localhost:3000/fms-ovs/api/auth/authentik/callback
+      - NEXTAUTH_URL=http://localhost:3000
+      - AUTHENTIK_REDIRECT_URI=http://localhost:3000/api/auth/authentik/callback
 
       # Override Database URL to point to the internal 'db' container
       # (POSTGRES_PASSWORD comes from .env — never commit a real password here)

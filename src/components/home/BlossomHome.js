@@ -33,7 +33,7 @@ const THAI_RE = /[฀-๿]/;
 
 // sign-in helper (same seam as the other families)
 function blossomSignIn() {
-  signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote" });
+  signIn("authentik", { callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote" });
 }
 
 // derived election meta — everything year/number-specific comes from globalConfig.
@@ -82,7 +82,7 @@ export function BlossomTopBar({ editorMode, onSignIn, active = "/" }) {
   const doSignIn = () => { if (editorMode) return; onSignIn ? onSignIn() : blossomSignIn(); };
   const doSignOut = () => {
     if (editorMode) return;
-    const bp = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+    const bp = process.env.NEXT_PUBLIC_BASE_PATH || "";
     const ret = `${window.location.origin}${bp}`;
     let url = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(ret)}`;
     if (session?.id_token) url += `&id_token_hint=${session.id_token}`;

@@ -75,7 +75,7 @@ function BrowserSlide({ familySlug, themeSlug, slide, device, displayW, isCurren
           <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
           <div className="ml-2 flex-1 h-5 rounded-md bg-white border border-slate-200 flex items-center px-2 text-[10px] text-slate-400 font-mono truncate">
-            fms-ovs/{slide.page}{slide.variant ? `·${slide.variant}` : ""}
+            ovs.fms.psu.ac.th/{slide.page}{slide.variant ? `·${slide.variant}` : ""}
           </div>
         </div>
         {/* viewport — iframe fades in only once loaded + styled, to hide the

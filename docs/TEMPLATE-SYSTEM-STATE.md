@@ -96,7 +96,7 @@ register ใน index.js → จบ (BaseStyles/injector/dispatch/chooser ตา
    session · login rate-limited 429 · role/privilege invariants 7 เคส · dev server restart กลับแล้ว (:3000 live)
    · `npm run e2e:gate` (Playwright) ยังไม่รัน — optional เพิ่มความมั่นใจ ไม่บล็อก
 2. **[บล็อก] Production config sweep:** `.env` จริง (DATABASE_URL, NEXTAUTH_SECRET, ADMIN_PRIVATE_KEY,
-   ADMIN_AUTH_SECRET, NEXT_PUBLIC_BASE_PATH=/fms-ovs) · **`NEXT_PUBLIC_ENABLE_MOCK_LOGIN` ต้องไม่ = true**
+   ADMIN_AUTH_SECRET, NEXT_PUBLIC_BASE_PATH ว่าง = root) · **`NEXT_PUBLIC_ENABLE_MOCK_LOGIN` ต้องไม่ = true**
    (ตอนนี้เปิดอยู่ใน .env.local!) · PSU SSO callback URL จริง
 3. **[บล็อก] Security rotate (สโคปจริงใหญ่กว่าที่คิด — grep เต็ม 2026-07-13):** docs 2 ไฟล์ scrub แล้ว (8c000f6)
    แต่ dev admin password ตัวเดิมยัง**ฝังเป็น literal ใน `prisma/seed.js:284,287` + `e2e/admin-console.spec.js:9`

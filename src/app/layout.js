@@ -177,12 +177,13 @@ const chakraPetch = Chakra_Petch({
 
 // Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
 // so link previews resolve to the real host, not localhost. basePath rides along
-// so the image URL is the full /fms-ovs/... path the asset is actually served at.
+// so the image URL is the full path the asset is actually served at (empty on the
+// current root deployment, '/fms-ovs/...' if BASE_PATH ever puts us on a subpath).
 const SITE_ORIGIN = (() => {
   try { return new URL(process.env.NEXTAUTH_URL || "http://localhost:3000").origin; }
   catch { return "http://localhost:3000"; }
 })();
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 // The election promo banner (same image the home banner element shows).
 const OG_IMAGE = `${BASE_PATH}/images/prob/samo49_1.png`;
 

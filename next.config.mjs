@@ -33,6 +33,11 @@ const nextConfig = {
         ],
     },
     // รองรับการ Deploy บน path อื่น หรือ CDN ผ่าน Environment Variables
+    // ปัจจุบันระบบอยู่บนโดเมนของตัวเอง (https://ovs.fms.psu.ac.th) เสิร์ฟจาก root
+    // → ทั้งสองตัวว่าง = undefined = ไม่ prefix อะไรเลย
+    // ถ้าตั้ง BASE_PATH ต้องตั้ง NEXT_PUBLIC_BASE_PATH ให้ค่าเดียวกันด้วยเสมอ:
+    // ตัวนี้คุม router/<Link>/_next ของ Next เอง ส่วน NEXT_PUBLIC_BASE_PATH คุม
+    // getPath() ที่ fetch/<a href>/<img src> ใช้ — ตั้งข้างเดียวคือครึ่งเว็บพัง
     assetPrefix: process.env.ASSET_PREFIX || undefined,
     basePath: process.env.BASE_PATH || undefined,
     async rewrites() {

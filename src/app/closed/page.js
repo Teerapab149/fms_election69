@@ -86,8 +86,8 @@ export default function ClosedPage() {
 
     const handleLogout = async () => {
         // 1. เตรียม URL สำหรับ Redirect กลับมา
-        // Hardcode fallback prevention: ถ้าไม่มี env ให้ใช้ '/fms-ovs' ไปเลยเพื่อความชัวร์ใน Local
-        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
+        // ว่าง = deploy ที่ root (รูปแบบปัจจุบัน) — จะมีค่าก็เฉพาะตอนตั้ง BASE_PATH ให้ไปอยู่ subpath
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
         const origin = window.location.origin;
         // ป้องกัน double slash ถ้า basePath มี / นำหน้า และ origin มี / ลงท้าย (ซึ่งปกติ origin ไม่มี)
         const baseUrl = `${origin}${basePath}`;

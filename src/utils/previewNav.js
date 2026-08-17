@@ -5,7 +5,7 @@
 // switch instead of navigating to the auth-gated real route. This is the single
 // source of that translation — do not duplicate it (repo convention: one seam).
 
-const BP = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
+const BP = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 // Resolve an internal app href (absolute, getPath-prefixed) → a preview destination
 // { page, partyNumber? }. Returns null for external links (let them through).

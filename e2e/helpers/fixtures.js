@@ -17,7 +17,7 @@ const {
   TEST_DB_URL,
 } = require('./testDb');
 
-const BASE_PATH = process.env.BASE_PATH || '/fms-ovs';
+const BASE_PATH = process.env.BASE_PATH || '';
 const SERVER = process.env.PW_BASE_URL || 'http://localhost:3100';
 /** Absolute API URL for fixture-side fetches (the page uses its own baseURL). */
 const API = (p) => `${SERVER}${BASE_PATH}${p}`;

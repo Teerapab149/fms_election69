@@ -84,9 +84,9 @@ template-preview เป็นเจ้าของ Layer-1 ของ slug ที
 7. ปี/ชื่องานทุกจุด bind useGlobalConfig (1c8d09b) — ห้าม hardcode เพิ่ม
 
 ### Preview surfaces (ใช้ verify — DB-free)
-- `/fms-ovs/template-preview?slug=X` (bare, damped, screenshot ได้) · `+&chrome=1` (มี swatch bar morph)
+- `/template-preview?slug=X` (bare, damped, screenshot ได้) · `+&chrome=1` (มี swatch bar morph)
 - `+&interact=1` (จำลอง flow จริง, motion เต็ม) · `&page=vote&variant=single` (หน้า single-vote)
-- apply จริง: `node scripts/dev-admin-login.js` → cookie → `POST /fms-ovs/api/admin/templates/<slug>/apply` → **restore ตัวเดิมเสมอ**
+- apply จริง: `node scripts/dev-admin-login.js` → cookie → `POST /api/admin/templates/<slug>/apply` → **restore ตัวเดิมเสมอ**
 
 ---
 

@@ -81,7 +81,7 @@ test.describe('Vote flow (receipt template, isolated test DB)', () => {
 
     // 6. Re-vote is rejected.
     //    UI: a voted user opening /vote is bounced straight back to /success.
-    await page.goto('/fms-ovs/vote');
+    await page.goto('/vote');
     await page.waitForURL('**/success**', { timeout: 20000 });
     //    API: the atomic guard answers 403 (see header note re old 400/409 claim).
     const again = await page.request.post(API('/api/vote'), { data: { candidateId: realParty.id } });

@@ -257,7 +257,7 @@ function PreviewBody() {
     return (
       <TemplatePreviewWrapper
         src={raw}
-        url={`fms-ovs/${page}${variant ? `·${variant}` : ''}`}
+        url={`ovs.fms.psu.ac.th/${page}${variant ? `·${variant}` : ''}`}
         themeSlug={themeSlug}
         onExit={exit}
         actions={<PreviewPageControls page={page} variant={variant} goto={goto}

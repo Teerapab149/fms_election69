@@ -162,7 +162,7 @@ export default function ChunkyStampVoteCTA({ config = {}, data = {}, resolvedCon
             onSignIn
               ? onSignIn()
               : signIn("authentik", {
-                  callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs") + "/vote",
+                  callbackUrl: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/vote",
                 })
           }
           className="cursor-pointer inline-block"

@@ -23,7 +23,7 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
 
     // ✅ Shared Logout Logic
     const handleLogout = async () => {
-        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/fms-ovs';
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
         const origin = window.location.origin;
         const baseUrl = `${origin}${basePath}`;
 

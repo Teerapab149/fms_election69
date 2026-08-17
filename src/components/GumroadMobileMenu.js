@@ -29,7 +29,7 @@ export default function GumroadMobileMenu({ active = "", onSignIn = null, editor
   const loggedIn = status === "authenticated" && !!session?.user;
   const navName = session?.user?.name || "";
   const navId = session?.user?.studentId || "";
-  const BP = process.env.NEXT_PUBLIC_BASE_PATH || "/fms-ovs";
+  const BP = process.env.NEXT_PUBLIC_BASE_PATH || "";
   // Optional sign-in override (playground): call it instead of next-auth signIn().
   const doSignIn = () => {
     if (editorMode) return;

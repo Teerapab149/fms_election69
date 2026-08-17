@@ -12,7 +12,7 @@
 - **Animation:** Framer Motion (`motion`, `useSpring`, `useMotionValue`, `AnimatePresence`)
 - **Charts:** Recharts (`BarChart`, `PieChart`, `ResponsiveContainer`)
 - **Icons:** Lucide React
-- **Deployment:** Docker with subpath `/fms-ovs`
+- **Deployment:** Docker on its own domain, served from the root (`https://ovs.fms.psu.ac.th`)
 
 ## Directory Structure
 ```
@@ -107,13 +107,22 @@ model SystemConfig {
 ## Critical Conventions — MUST FOLLOW
 
 ### 1. Base Path
-**ทุก URL ภายในต้องผ่าน `getPath()`** — ห้ามใช้ path ตรงๆ
+ระบบย้ายมาอยู่ **root ของโดเมนตัวเอง** แล้ว (`https://ovs.fms.psu.ac.th`) — เลิกใช้ subpath
+`/fms-ovs` ใต้ `cvs.fms.psu.ac.th` → `BASE_PATH` / `NEXT_PUBLIC_BASE_PATH` / `ASSET_PREFIX` ว่างทั้งสามตัว
+
+แต่ **ทุก URL ภายในยังต้องผ่าน `getPath()`** — ตอนอยู่ root มันเป็น identity function
+เหตุผลที่ยังต้องมี: มันคือ seam ที่ทำให้ย้ายกลับไป subpath ได้ด้วยการตั้ง env อย่างเดียว
+ไม่ต้องแก้โค้ด 234 จุด
 ```js
 import { getPath } from "../utils/basePath";
-// ✅ getPath("/api/vote")  → "/fms-ovs/api/vote"
-// ✅ getPath("/images/logo.png")  → "/fms-ovs/images/logo.png"
-// ❌ "/api/vote" (จะพังใน Docker deployment)
+// ✅ getPath("/api/vote")  → "/api/vote"  (root) · "/fms-ovs/api/vote" ถ้าตั้ง BASE_PATH
+// ✅ getPath("https://…/x.png")  → ปล่อยผ่าน (external URL + data: ไม่แตะ)
+// ❌ fetch("/api/vote") ตรงๆ — พังทันทีถ้าวันหนึ่งกลับไปอยู่ subpath
 ```
+เส้นแบ่งที่ห้ามเบลอ:
+- **Next primitives** (`router.push`, `<Link>`, `next/font`) → ใส่ path ดิบๆ Next เติม basePath ให้เอง
+  ห้ามครอบ `getPath()` (จะ prefix ซ้อน)
+- **ที่เหลือ** (`fetch`, `<a href>`, `<img src>`, `window.location`) → `getPath()` เสมอ เพราะไม่มีใครเติมให้
 
 ### 2. Admin Authentication (P0-1 security fix, 2026-06-10)
 Admin identity = httpOnly cookie `admin_token` (signed JWT จาก `/api/admin/login`)
@@ -191,7 +200,9 @@ ENDED        → ปิดอย่างเป็นทางการ
 ```
 DATABASE_URL          # PostgreSQL connection string
 NEXTAUTH_SECRET       # NextAuth encryption key
-NEXT_PUBLIC_BASE_PATH # Subpath for deployment (default: /fms-ovs)
+NEXT_PUBLIC_BASE_PATH # Subpath that getPath() prepends — EMPTY on the current root deploy.
+                      # Set it (together with BASE_PATH + ASSET_PREFIX) only to serve
+                      # under a subpath. Setting one without the others 404s the whole site.
 ADMIN_PRIVATE_KEY     # RSA private key for admin auth
 ADMIN_AUTH_SECRET     # Secret for admin token validation
 ```

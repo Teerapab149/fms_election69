@@ -11,8 +11,8 @@
 ---
 
 ## 0. ระบบนี้คืออะไร (1 ย่อหน้า)
-Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy เป็น Docker ที่ subpath
-`/fms-ovs`. หน้า admin ใช้ **httpOnly JWT cookie `admin_token`** (P0-1 — เลิกใช้ RSA token เก่าแล้ว). ข้อมูล
+Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy เป็น Docker บนโดเมน
+ของตัวเอง `https://ovs.fms.psu.ac.th` เสิร์ฟจาก root. หน้า admin ใช้ **httpOnly JWT cookie `admin_token`** (P0-1 — เลิกใช้ RSA token เก่าแล้ว). ข้อมูล
 เลือกตั้ง (พรรค/สมาชิก/คะแนน) อยู่ใน DB; บัตรลงคะแนนเก็บแบบนิรนาม+เข้ารหัส+ต่อ hash chain (v2-SEC — ดู §11);
 วันเวลาเลือกตั้งตั้งได้ใน admin (เก็บใน `SystemConfig.globalConfig`) โดยมีค่า default ในโค้ด
 (`src/utils/electionConfig.js`) เป็น fallback. **Deploy ปีนี้: ไล่ `docs/DEPLOY-CHECKLIST-2026.md` ทีละขั้น.**
@@ -20,7 +20,7 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 ---
 
 ## 1. งานประจำปี — เปลี่ยนปีการเลือกตั้งใหม่ (checklist)
-> ✅ **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/fms-ovs/admin`, 6 แท็บ) ครอบคลุมงานรายปี **เกือบทั้งหมด** —
+> ✅ **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/admin`, 6 แท็บ) ครอบคลุมงานรายปี **เกือบทั้งหมด** —
 > staff ทำเองได้โดยไม่ต้องมี dev **ครบทุกข้อแล้ว** (รวมวันเวลาเลือกตั้ง — ดูข้อ 6, ย้ายเข้า admin แล้ว 2026-06-09).
 
 ทำผ่านหน้า admin (ไม่ต้องแตะโค้ด) ตามแท็บ:
@@ -116,11 +116,14 @@ npm run preflight            # ✓/⚠/✗ (mode/showResult/พรรคทด�
 ```
 DATABASE_URL              # PostgreSQL connection string
 NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา)
-BASE_PATH                 # subpath ที่ Next.js เสิร์ฟ (ค่า: /fms-ovs)
-NEXT_PUBLIC_BASE_PATH     # subpath ที่ getPath() ใช้สร้างลิงก์ (ค่า: /fms-ovs)
-ASSET_PREFIX              # ที่อยู่ไฟล์ static js/css/รูป (ค่า: /fms-ovs)
-                          # ⚠️ สามตัวนี้ต้องครบ — ขาดตัวใดตัวหนึ่ง เว็บเสิร์ฟที่ / แต่ลิงก์ชี้ /fms-ovs
+BASE_PATH                 # subpath ที่ Next.js เสิร์ฟ (ค่า: ว่าง — เสิร์ฟที่ root)
+NEXT_PUBLIC_BASE_PATH     # subpath ที่ getPath() ใช้สร้างลิงก์ (ค่า: ว่าง)
+ASSET_PREFIX              # ที่อยู่ไฟล์ static js/css/รูป (ค่า: ว่าง)
+                          # ⚠️ ระบบอยู่บนโดเมนตัวเองแล้ว → ทั้งสามตัวต้องว่าง
+                          #    ใส่ /fms-ovs กลับมาตัวเดียว = เว็บเสิร์ฟที่ / แต่ลิงก์ชี้ /fms-ovs
                           #    กดอะไรก็ 404 ทั้งเว็บ โดยไม่มี error ในล็อกเลย
+                          #    จะย้ายไป subpath ต้องตั้งครบทั้งสาม + แก้ NEXTAUTH_URL
+                          #    + AUTHENTIK_REDIRECT_URI + ลงทะเบียน redirect ใหม่กับ PSU IT
 ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (auth แอดมิน — P0-1)
                           # ⚠️ รหัสผ่านแอดมิน "ไม่ได้" อยู่ใน env — อยู่ใน DB เป็น bcrypt hash
                           #    ตั้ง/เปลี่ยนด้วย  node scripts/admin.js --rotate-password  (ดู §10)
@@ -146,7 +149,7 @@ BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain �
 ```
 npm install
 npx prisma generate         # แก้ schema ตอน dev: npx prisma db push (บน production ใช้ migrate deploy — §6)
-npm run dev                 # http://localhost:3000/fms-ovs
+npm run dev                 # http://localhost:3000
 ```
 Windows quirk: ถ้า `.next` ล็อก/พัง → หยุด dev server, `rm -rf .next`, รันใหม่.
 
@@ -158,8 +161,9 @@ Windows quirk: ถ้า `.next` ล็อก/พัง → หยุด dev ser
 rm -rf .next
 npm run build               # ต้องผ่านครบทุก route ก่อน deploy
 ```
-Deploy เป็น Docker ที่ subpath `/fms-ovs`. **ทุก URL ภายในต้องผ่าน `getPath()`** (utils/basePath.js) —
-ถ้าเห็นลิงก์/รูปพังหลัง deploy มักเพราะมี path ตรงๆ ที่ไม่ผ่าน `getPath()`.
+Deploy เป็น Docker บนโดเมนของตัวเอง เสิร์ฟจาก root. **ทุก URL ภายในยังต้องผ่าน `getPath()`**
+(utils/basePath.js) — ตอนอยู่ root มันไม่เติมอะไร แต่มันคือจุดเดียวที่ทำให้ย้ายไป subpath ได้
+ด้วยการตั้ง env เฉย ๆ · ถ้าเห็นลิงก์/รูปพังหลัง deploy มักเพราะมี path ตรงๆ ที่ไม่ผ่าน `getPath()`.
 
 ---
 
@@ -250,7 +254,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 ## 6. PANIC — อาการพัง + วิธีแก้
 
-**เช็คก่อนทุกอย่าง:** `curl https://<host>/fms-ovs/api/health`
+**เช็คก่อนทุกอย่าง:** `curl https://ovs.fms.psu.ac.th/api/health`
 - `200 {"ok":true,"db":true}` → app + DB ปกติ (ปัญหาอยู่ชั้นอื่น เช่น SSO/หน้าเว็บเฉพาะหน้า)
 - `503 {"ok":false,"db":false}` → app ขึ้นแต่ DB ล่ม → ตรวจ container Postgres / `DATABASE_URL`
 - ไม่ตอบเลย → app ล่ม → ตรวจ Docker/host
@@ -261,7 +265,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 | **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
 | **admin เข้าไม่ได้** | ลืมรหัสกลาง · ไม่ได้ถูก `--grant` · `ADMIN_JWT_SECRET` เปลี่ยน/หาย | `node scripts/admin.js --list` ก่อน (บอกทั้งรายชื่อและว่ารหัสกลางตั้งหรือยัง) · ลืมรหัส → `--rotate-password` ออกใหม่ แสดงครั้งเดียว บอกกรรมการทุกคน · ไม่มีชื่อในรายการ → `--grant <รหัส นศ.>` · ยังไม่ได้ → ตรวจ `ADMIN_JWT_SECRET` · ทุกคนล็อกอินไม่ได้พร้อมกันตอนวันจริง → `--break-glass` (§10) |
-| **ลิงก์/รูปพังหลัง deploy · กดเมนูแล้ว 404 ทั้งเว็บ** | ตัวแปร base path ไม่ครบ (ต้องมี `BASE_PATH` + `NEXT_PUBLIC_BASE_PATH` + `ASSET_PREFIX` ทั้งสามตัว) หรือมี path ตรงๆ ที่ไม่ผ่าน `getPath()` | ตั้งให้ครบทั้งสามตัว = `/fms-ovs` แล้ว redeploy (ดู §2); ถ้ายังพังเฉพาะบางลิงก์ ให้หา path ตรงๆ ในโค้ด |
+| **ลิงก์/รูปพังหลัง deploy · กดเมนูแล้ว 404 ทั้งเว็บ** | ตัวแปร base path ไม่ตรงกัน — ระบบอยู่ root แต่มี `BASE_PATH`/`NEXT_PUBLIC_BASE_PATH`/`ASSET_PREFIX` ตัวใดตัวหนึ่งค้างเป็น `/fms-ovs` (หรือกลับกัน) หรือมี path ตรงๆ ที่ไม่ผ่าน `getPath()` | ทำให้ทั้งสามตัวว่างพร้อมกัน (หรือถ้าตั้งใจอยู่ subpath ก็ตั้งครบทั้งสาม) แล้ว **rebuild** ไม่ใช่แค่ restart — `NEXT_PUBLIC_*` ถูกฝังตอน build (ดู §2); ถ้ายังพังเฉพาะบางลิงก์ ให้หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
 
@@ -275,7 +279,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 ## 7. ถ้าต้องเพิ่ม template ใหม่ (ต้องใช้ dev)
 แนวทางที่ตกลงไว้: **มี 3-5 template ก็พอ**, เพิ่มแบบ lazy เมื่อต้องการจริง ไม่ตุนไว้ล่วงหน้า.
-มี skill ช่วย: `fms-add-template` / `fms-add-element`. เครื่องมือ author เร็วขึ้น = `/fms-ovs/compose-lab`
+มี skill ช่วย: `fms-add-template` / `fms-add-element`. เครื่องมือ author เร็วขึ้น = `/compose-lab`
 (composition editor — เป็น lab สำหรับ dev/author เท่านั้น ไม่ใช่หน้าให้ผู้ใช้ทั่วไปลากเอง).
 
 ---

@@ -3,7 +3,7 @@
 //   npm run dev        # in one terminal (or point BASE at staging)
 //   node --test scripts/smoke/election.test.mjs
 //
-// Env: BASE (default http://localhost:3000/fms-ovs), ADMIN_USER (a studentId
+// Env: BASE (default http://localhost:3000), ADMIN_USER (a studentId
 // flagged isAdmin), ADMIN_PASS (the shared committee password — no default, and
 // never a literal in this file: it used to carry one, which put a working dev
 // password in a public repo). Get one with `node scripts/admin.js --list` /
@@ -16,7 +16,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 
-const BASE = process.env.BASE || 'http://localhost:3000/fms-ovs';
+const BASE = process.env.BASE || 'http://localhost:3000';
 const ADMIN_USER = process.env.ADMIN_USER || '6610510149';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
 const noPass = { skip: ADMIN_PASS ? false : 'ADMIN_PASS not set — export the shared admin password to run the login tests' };

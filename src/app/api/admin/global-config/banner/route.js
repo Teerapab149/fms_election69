@@ -64,8 +64,10 @@ export async function POST(request) {
     await writeFile(path.join(uploadDir, fileName), optimized);
 
     // The stored value is a ROOT-RELATIVE app path with no basePath — every
-    // reader runs it through getPath(), which is what prepends /fms-ovs. Baking
-    // the basePath in here would double it in Docker.
+    // reader runs it through getPath(), which is the one place a basePath gets
+    // prepended (nothing, on the current root deployment). Baking a prefix in
+    // here would double it the moment BASE_PATH is ever set, and would rot in
+    // the database across a domain move.
     return NextResponse.json({ ok: true, url: `/images/banner/${fileName}` });
   } catch (err) {
     console.error("[POST /api/admin/global-config/banner]", err);

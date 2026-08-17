@@ -21,7 +21,7 @@
 
 ## 1. เข้าระบบ
 
-`https://<เว็บของคณะ>/fms-ovs/admin/login`
+`https://ovs.fms.psu.ac.th/admin/login`
 
 ```
 Username   รหัส นศ. ของตัวเอง       เช่น 6610510149
