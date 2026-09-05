@@ -270,6 +270,7 @@ async function importStudents(filePath) {
     let updated = 0;
     let skipped = 0;
     let errors = 0;
+    const seenStudentIds = new Set();   // ใช้หาคนที่ "หายไปจากทะเบียนใหม่" ตอนท้าย
 
     for (const row of data) {
         const normalized = normalizeRow(row);
@@ -279,6 +280,7 @@ async function importStudents(filePath) {
             skipped++;
             continue;
         }
+        seenStudentIds.add(normalized.studentId);
 
         try {
             const fullName = buildFullName(
@@ -306,20 +308,22 @@ async function importStudents(filePath) {
             });
 
             if (existingUser) {
-                // Update - only update fields that are null in DB
+                // ทะเบียนนักศึกษาคือแหล่งความจริงของทุกฟิลด์ในนี้ — เขียนทับเสมอถ้าไฟล์มีค่ามาให้
+                //
+                // ของเดิมเติมเฉพาะฟิลด์ที่ "เป็น null อยู่ใน DB" แล้ว force-update แค่
+                // major/subKeyId/subMajorId/subMajorNameThai — **year ไม่อยู่ในลิสต์นั้น**
+                // ผลคือคนที่เคยอยู่ในระบบแล้วจะค้างชั้นปีเดิมตลอดไป: เด็กปี 1 ยังเป็นปี 1
+                // ในปีถัดไป และคนที่จบไปแล้วยังเป็น "ปี 4" ซึ่งคือชั้นปีที่มีสิทธิ์เลือกตั้ง
+                // (/api/vote route.js:121 ตรวจแค่ว่า year อยู่ใน ปี 1-4) นี่คือระบบที่ใช้ซ้ำ
+                // ทุกปีไม่ได้ — ปีที่สองเป็นต้นไปรายชื่อผู้มีสิทธิ์จะเพี้ยนสะสม
+                //
+                // ยังคงกติกา "ไม่เขียนทับด้วย null": ถ้าไฟล์ไม่มีคอลัมน์นั้นมาให้ ค่าเดิมใน DB
+                // อยู่ต่อ ไม่ใช่ถูกล้างทิ้งเพราะไฟล์ export มาไม่ครบ
                 const updateData = {};
-
                 for (const [key, value] of Object.entries(userData)) {
-                    if (value !== null && (existingUser[key] === null || existingUser[key] === undefined)) {
-                        updateData[key] = value;
-                    }
+                    if (value === null || value === undefined) continue;
+                    if (existingUser[key] !== value) updateData[key] = value;
                 }
-
-                // Always update these fields from dump file (they're more accurate)
-                if (userData.major) updateData.major = userData.major;
-                if (userData.subKeyId) updateData.subKeyId = userData.subKeyId;
-                if (userData.subMajorId) updateData.subMajorId = userData.subMajorId;
-                if (userData.subMajorNameThai) updateData.subMajorNameThai = userData.subMajorNameThai;
 
                 if (Object.keys(updateData).length > 0) {
                     await prisma.user.update({
@@ -359,6 +363,57 @@ async function importStudents(filePath) {
     console.log(`   ⏭️  ข้าม: ${skipped} รายการ`);
     console.log(`   ❌ Error: ${errors} รายการ`);
     console.log('=========================================\n');
+
+    // ── ถอนสิทธิ์คนที่หายไปจากทะเบียนใหม่ ────────────────────────────────────────
+    //
+    // ระบบนี้ถูกออกแบบให้ใช้ซ้ำทุกปี แต่การ import เดิมมีแต่ "เพิ่มกับอัปเดต" ไม่เคยมี
+    // "เอาออก" คนที่จบไปแล้วจึงยังเป็น ปี 4 ค้างอยู่ใน DB และ /api/vote (route.js:121)
+    // ตรวจสิทธิ์จาก year เพียงอย่างเดียว — บัณฑิตที่ล็อกอิน PSU SSO ได้อยู่จึงยังลงคะแนน
+    // ในการเลือกตั้งปีถัดไปได้ ทั้งที่ไม่ได้เป็นนักศึกษาคณะแล้ว
+    //
+    // ไม่ลบแถวผู้ใช้ทิ้ง: ประวัติการใช้สิทธิ์ปีก่อน (isVoted/votedAt) และยอดผู้มีสิทธิ์
+    // ย้อนหลังต้องอยู่ครบ แค่ย้ายชั้นปีออกจากช่วงที่มีสิทธิ์ก็พอ
+    //
+    // ค่าเริ่มต้นคือ "รายงานอย่างเดียว ไม่แก้อะไร" — การถอนสิทธิ์คนหมู่มากจากไฟล์ที่อาจ
+    // export มาไม่ครบคือความเสียหายที่กู้คืนยาก ต้องสั่ง --retire ด้วยตัวเองเท่านั้น
+    const RETIRED_YEAR = 'พ้นสภาพ';   // ไม่อยู่ใน ปี 1-4 → ไม่มีสิทธิ์ลงคะแนน
+    // ด่านกันพลาด: ต้องอ่านรหัสนักศึกษาจากไฟล์ได้อย่างน้อยหนึ่งรายการก่อน ไม่งั้นไฟล์ที่
+    // อ่านหัวคอลัมน์ไม่ออก (ทุกแถวถูกข้าม) จะกลายเป็น "ไม่มีใครอยู่ในทะเบียนใหม่"
+    // แล้วถอนสิทธิ์ทั้งคณะรวดเดียว
+    //
+    // เคยเขียนด่านนี้เป็น `created + updated > 0` ซึ่งผิด: import ไฟล์เดิมซ้ำรอบสองจะได้
+    // created 0 / updated 0 (ทุกค่าตรงกันหมดแล้ว จึงนับเป็น skipped) การถอนสิทธิ์เลย
+    // ไม่ทำงานเงียบ ๆ ทั้งที่สั่ง --retire มา — จับได้ตอนทดสอบ import สองปีซ้อน
+    if (seenStudentIds.size > 0) {
+        const stale = await prisma.user.findMany({
+            where: {
+                year: { in: ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'] },
+                studentId: { notIn: Array.from(seenStudentIds) },
+                isAdmin: false,          // บัญชีแอดมิน/เจ้าหน้าที่ไม่ได้มาจากทะเบียนนักศึกษา
+                role: 'student',
+            },
+            select: { studentId: true, name: true, year: true },
+        });
+
+        if (stale.length === 0) {
+            console.log('✅ ไม่มีผู้มีสิทธิ์คนไหนหายไปจากทะเบียนใหม่\n');
+        } else if (process.argv.includes('--retire')) {
+            const r = await prisma.user.updateMany({
+                where: { studentId: { in: stale.map((u) => u.studentId) } },
+                data: { year: RETIRED_YEAR },
+            });
+            console.log(`🚪 ถอนสิทธิ์ ${r.count} คนที่ไม่อยู่ในทะเบียนใหม่ (ตั้ง year = "${RETIRED_YEAR}")`);
+            console.log('   ข้อมูลผู้ใช้และประวัติการใช้สิทธิ์เดิมยังอยู่ครบ ไม่ได้ลบแถวไหนทิ้ง\n');
+        } else {
+            console.log(`⚠️  พบ ${stale.length} คนที่ยังมีสิทธิ์อยู่ใน DB แต่ไม่มีในทะเบียนใหม่`);
+            console.log('   ถ้าไฟล์นี้คือทะเบียนปีปัจจุบันฉบับเต็ม คนเหล่านี้คือผู้ที่พ้นสภาพแล้ว');
+            console.log('   และตอนนี้ยังลงคะแนนได้อยู่ · สั่งถอนสิทธิ์ด้วย:');
+            console.log(`     node scripts/import-students.js ${path.basename(filePath || '<ไฟล์>')} --retire`);
+            console.log('   ตัวอย่าง 5 คนแรก:');
+            stale.slice(0, 5).forEach((u) => console.log(`     - ${u.studentId} ${u.name || ''} (${u.year})`));
+            console.log('');
+        }
+    }
 
     // A file whose headers this script does not recognise skips every row and
     // still reports "Error: 0", which reads like success. Say so plainly — the
