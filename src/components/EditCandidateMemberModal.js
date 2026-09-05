@@ -424,7 +424,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-3 py-2.5 text-xs text-gray-400 text-center">ใช้ตำแหน่งใหม่: "{currentMember.position}"</div>
+                                                <div className="px-3 py-2.5 text-xs text-gray-400 text-center">ใช้ตำแหน่งใหม่: &quot;{currentMember.position}&quot;</div>
                                             )}
                                         </div>
                                     )}

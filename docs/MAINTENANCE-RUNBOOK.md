@@ -244,6 +244,11 @@ npm run e2e:gate     # 2) หรือ npm run e2e (ครบชุด) — setu
   (mock=false) และ**ห้าม**รัน e2e กับ build นั้น (login panel ไม่มีให้กด — fail เอง).
 - server :3100 ถูก start ด้วย `NODE_ENV=development` โดยเจตนา (เสิร์ฟ prod build เหมือนเดิม
   แต่ NextAuth ยอม register mock-login provider ซึ่ง gate ที่ `NODE_ENV !== 'production'`).
+- `npm run lint` ใช้เป็น gate ได้แล้ว (2026-09-05) — เดิมเรียก `next lint` ที่เปิด wizard
+  ถามการตั้งค่าแล้วรอ input · ใน CI มันค้าง ส่วนแบบไม่มี stdin มัน **จบด้วย exit 0 ทั้งที่ไม่ได้
+  ตรวจไฟล์สักไฟล์** ตอนนี้ใช้ ESLint CLI + `eslint.config.mjs` · **error = 0** (บังคับ)
+  ส่วน warning ยังเหลือ 136 ข้อ ตั้งใจไม่บังคับ ส่วนใหญ่คือ `no-img-element` (96)
+  ซึ่งเป็นคำแนะนำเรื่องประสิทธิภาพ ไม่ใช่บั๊ก
 - ลำดับ gate เต็ม: **build → smoke → e2e:gate** (นโยบาย §4.1: ไม่เขียว ห้าม merge).
 
 ---

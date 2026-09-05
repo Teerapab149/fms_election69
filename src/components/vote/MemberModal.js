@@ -29,7 +29,7 @@ const MemberModal = ({ member, onClose }) => {
                     <p className="text-black/40 text-lg mb-6">{member.studentId || "Candidate Member"}</p>
                     <div className="h-px w-20 bg-[#B8860B] mb-6" />
                     <p className="text-black/60 leading-relaxed">
-                        "มุ่งมั่นพัฒนาคณะ ร่วมสร้างสรรค์กิจกรรม เพื่อประโยชน์สูงสุดของนักศึกษาทุกคน"
+                        &quot;มุ่งมั่นพัฒนาคณะ ร่วมสร้างสรรค์กิจกรรม เพื่อประโยชน์สูงสุดของนักศึกษาทุกคน&quot;
                     </p>
                 </div>
             </div>

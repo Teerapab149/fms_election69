@@ -32,6 +32,39 @@ export default function VoteEditorPreview({
   // Anything not listed here still falls through to the classic view below —
   // which is what an admin on FMS Official was seeing: the right template
   // selected, the original page rendered.
+  // ⚠️ hook block นี้ต้องอยู่ **เหนือ** early-return ของ template ด้านล่างเสมอ
+  //
+  // เดิมมันอยู่ใต้ `if (templateSlug === ...) return <ClosedLayout/>` ซึ่งแปลว่าจำนวน hook
+  // ที่คอมโพเนนต์นี้เรียก เปลี่ยนไปตามค่า templateSlug — แอดมินสลับธีมทีเดียว React ก็เจอ
+  // "Rendered more hooks than during the previous render" แล้วทั้ง subtree ล่ม
+  // (react-hooks/rules-of-hooks จับได้ตอนเปิด lint จริงครั้งแรก 2026-09-05)
+  //
+  // ย้ายขึ้นมาบนสุดปลอดภัย: มันอ่านแต่ props ที่มีอยู่แล้วตั้งแต่ต้นฟังก์ชัน
+  // Stable Wrap identity (see HomeContent): inline definition remounts the
+  // wrapped subtree on every hover re-render → animation flicker. useCallback
+  // pins identity; live state via ref keeps hover a re-render, not a remount.
+  const editorStateRef = useRef(null);
+  editorStateRef.current = {
+    elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd,
+  };
+  const Wrap = useCallback(({ id, children }) => {
+    const s = editorStateRef.current;
+    return (
+      <EditorElement
+        id={id}
+        config={s.elementConfigs?.[id]}
+        isSelected={s.selectedElement === id}
+        isHovered={s.hoveredElement === id}
+        onSelect={s.onSelectElement}
+        onHover={s.onHoverElement}
+        onHoverEnd={s.onHoverEnd}
+      >
+        {children}
+      </EditorElement>
+    );
+  }, []);
+
   if (templateSlug === 'gumroad' || templateSlug === 'studio-dark'
       || templateSlug === 'verdure' || templateSlug === 'fms-official') {
     const single = simMode === 'single';
@@ -57,30 +90,6 @@ export default function VoteEditorPreview({
       />
     );
   }
-  // Stable Wrap identity (see HomeContent): inline definition remounts the
-  // wrapped subtree on every hover re-render → animation flicker. useCallback
-  // pins identity; live state via ref keeps hover a re-render, not a remount.
-  const editorStateRef = useRef(null);
-  editorStateRef.current = {
-    elementConfigs, selectedElement, hoveredElement,
-    onSelectElement, onHoverElement, onHoverEnd,
-  };
-  const Wrap = useCallback(({ id, children }) => {
-    const s = editorStateRef.current;
-    return (
-      <EditorElement
-        id={id}
-        config={s.elementConfigs?.[id]}
-        isSelected={s.selectedElement === id}
-        isHovered={s.hoveredElement === id}
-        onSelect={s.onSelectElement}
-        onHover={s.onHoverElement}
-        onHoverEnd={s.onHoverEnd}
-      >
-        {children}
-      </EditorElement>
-    );
-  }, []);
 
   if (simMode === "single") {
     return (

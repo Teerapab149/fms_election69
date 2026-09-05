@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "import-students": "node scripts/import-students.js",
     "smoke": "node --test \"scripts/smoke/**/*.test.mjs\"",
     "e2e": "playwright test",
@@ -15,7 +15,8 @@
     "verify": "bash scripts/verify.sh",
     "preflight": "node scripts/preflight-year.js",
     "archive-year": "node scripts/archive-year.js",
-    "template-gate": "node scripts/template-completeness.mjs"
+    "template-gate": "node scripts/template-completeness.mjs",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

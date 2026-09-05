@@ -549,7 +549,7 @@ const SectionLabel = ({ theme, label }) => (
   </h3>
 );
 
-const MemberCard = React.memo(({ member, theme, onClick, index, compact }) => (
+const MemberCard = React.memo(function MemberCard({ member, theme, onClick, index, compact }) { return (
   <div onClick={onClick}
     className={`
          group cursor-pointer transition-all duration-300 relative overflow-hidden backdrop-blur-md bg-white/5 border border-white/10
@@ -592,7 +592,7 @@ const MemberCard = React.memo(({ member, theme, onClick, index, compact }) => (
       </div>
     </div>
   </div>
-));
+); });
 
 // --- MAIN CONTENT CONTROLLER ---
 

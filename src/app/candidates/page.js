@@ -408,7 +408,7 @@ function PartyCard({ party, cfg }) {
 
           {party.slogan && (
             <p className="mt-5 md:mt-8 text-slate-500 text-xs md:text-base font-medium italic leading-relaxed line-clamp-2 border-l-2 pl-4" style={{ borderColor: `${theme.main}22` }}>
-              "{party.slogan}"
+              &quot;{party.slogan}&quot;
             </p>
           )}
         </div>

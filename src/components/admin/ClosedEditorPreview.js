@@ -54,22 +54,14 @@ export default function ClosedEditorPreview({
 
   // Per-template layout: gumroad / studio-dark have their own closed layouts.
   // simMode "paused" maps to the live page's "closed" variant.
-  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
-    const ClosedLayout = templateSlug === 'studio-dark' ? StudioDarkClosed
-      : templateSlug === 'verdure' ? VerdureClosed : GumroadClosed;
-    const variant = simMode === 'paused' ? 'closed' : simMode;
-    return (
-      <ClosedLayout
-        editorMode
-        title={message.title}
-        desc={message.description}
-        variant={variant}
-        session={null}
-        onLogout={() => {}}
-      />
-    );
-  }
-
+  // ⚠️ hook block นี้ต้องอยู่ **เหนือ** early-return ของ template ด้านล่างเสมอ
+  //
+  // เดิมมันอยู่ใต้ `if (templateSlug === ...) return <ClosedLayout/>` ซึ่งแปลว่าจำนวน hook
+  // ที่คอมโพเนนต์นี้เรียก เปลี่ยนไปตามค่า templateSlug — แอดมินสลับธีมทีเดียว React ก็เจอ
+  // "Rendered more hooks than during the previous render" แล้วทั้ง subtree ล่ม
+  // (react-hooks/rules-of-hooks จับได้ตอนเปิด lint จริงครั้งแรก 2026-09-05)
+  //
+  // ย้ายขึ้นมาบนสุดปลอดภัย: มันอ่านแต่ props ที่มีอยู่แล้วตั้งแต่ต้นฟังก์ชัน
   // Stable Wrap identity (see HomeContent): inline definition remounts the
   // wrapped subtree on every hover re-render → animation flicker.
   const editorStateRef = useRef(null);
@@ -93,6 +85,22 @@ export default function ClosedEditorPreview({
       </EditorElement>
     );
   }, []);
+
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+    const ClosedLayout = templateSlug === 'studio-dark' ? StudioDarkClosed
+      : templateSlug === 'verdure' ? VerdureClosed : GumroadClosed;
+    const variant = simMode === 'paused' ? 'closed' : simMode;
+    return (
+      <ClosedLayout
+        editorMode
+        title={message.title}
+        desc={message.description}
+        variant={variant}
+        session={null}
+        onLogout={() => {}}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">

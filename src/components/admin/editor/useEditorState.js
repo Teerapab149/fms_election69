@@ -314,7 +314,7 @@ export default function useEditorState(initialConfigs = {}) {
   }, []);
 
   const applyTemplateToElement = useCallback((elementId, templateId) => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // require แบบ lazy โดยตั้งใจ (กันวงจร import) — @next/next/no-assign-module-variable
     const { getTemplate } = require('./templateEngine');
     const template = getTemplate(templateId);
     if (!template) return;

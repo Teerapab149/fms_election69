@@ -21,19 +21,14 @@ export default function SuccessEditorPreview({
   const isUnlocked = simMode === "unlocked";
 
   // Per-template layout: gumroad / studio-dark have their own success layouts.
-  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
-    const SuccessLayout = templateSlug === 'studio-dark' ? StudioDarkSuccess
-      : templateSlug === 'verdure' ? VerdureSuccess : GumroadSuccess;
-    return (
-      <SuccessLayout
-        editorMode
-        user={DUMMY_USER}
-        isUnlocked={isUnlocked}
-        onOpenForm={() => {}}
-      />
-    );
-  }
-
+  // ⚠️ hook block นี้ต้องอยู่ **เหนือ** early-return ของ template ด้านล่างเสมอ
+  //
+  // เดิมมันอยู่ใต้ `if (templateSlug === ...) return <ClosedLayout/>` ซึ่งแปลว่าจำนวน hook
+  // ที่คอมโพเนนต์นี้เรียก เปลี่ยนไปตามค่า templateSlug — แอดมินสลับธีมทีเดียว React ก็เจอ
+  // "Rendered more hooks than during the previous render" แล้วทั้ง subtree ล่ม
+  // (react-hooks/rules-of-hooks จับได้ตอนเปิด lint จริงครั้งแรก 2026-09-05)
+  //
+  // ย้ายขึ้นมาบนสุดปลอดภัย: มันอ่านแต่ props ที่มีอยู่แล้วตั้งแต่ต้นฟังก์ชัน
   // Stable Wrap identity (see HomeContent): inline definition remounts the
   // wrapped subtree on every hover re-render → animation flicker.
   const editorStateRef = useRef(null);
@@ -57,6 +52,19 @@ export default function SuccessEditorPreview({
       </EditorElement>
     );
   }, []);
+
+  if (templateSlug === 'gumroad' || templateSlug === 'studio-dark' || templateSlug === 'verdure') {
+    const SuccessLayout = templateSlug === 'studio-dark' ? StudioDarkSuccess
+      : templateSlug === 'verdure' ? VerdureSuccess : GumroadSuccess;
+    return (
+      <SuccessLayout
+        editorMode
+        user={DUMMY_USER}
+        isUnlocked={isUnlocked}
+        onOpenForm={() => {}}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden flex items-center justify-center p-4">
