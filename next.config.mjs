@@ -17,6 +17,13 @@ const nextConfig = {
         ignoreDuringBuilds: true,
     },
     images: {
+        // AVIF ปิดไว้โดยตั้งใจ — อย่าเติม 'image/avif' เข้ามาโดยไม่อ่านบรรทัดนี้ก่อน
+        // GHSA-2xp9-vwfh-vxw4 (CVSS 9.5) คือ heap buffer overflow ใน libheif ที่ sharp
+        // เรียกใช้ตอนจัดการ AVIF — กระทบ Next ทุกเวอร์ชันตั้งแต่ 10.0.0 ถึง 15.5.23
+        // (เราอยู่ 14.2.35 และสาย 14 ไม่มี patch ให้แล้ว: dist-tag next-14 = 14.2.35)
+        // ค่านี้เท่ากับ default ของ Next อยู่แล้ว แต่เขียนไว้ให้เห็นชัด ๆ เพราะ
+        // "ค่า default ที่ปลอดภัย" ที่ไม่มีใครรู้ว่ามีอยู่ = ค่าที่รอวันถูกเปลี่ยน
+        formats: ['image/webp'],
         remotePatterns: [
             {
                 protocol: 'https',

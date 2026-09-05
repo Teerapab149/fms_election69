@@ -70,6 +70,11 @@ export async function POST(request) {
     // the database across a domain move.
     return NextResponse.json({ ok: true, url: `/images/banner/${fileName}` });
   } catch (err) {
+    // ไฟล์ไม่ผ่านด่านตรวจชนิดจริง (magic bytes) — เป็นความผิดของ input ไม่ใช่ระบบล่ม
+    // ต้องเป็น 400 พร้อมข้อความที่คนอัปโหลดแก้ตามได้ ไม่ใช่ 500 "อัปโหลดไม่สำเร็จ" ลอย ๆ
+    if (err?.code === "UNSUPPORTED_IMAGE") {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     console.error("[POST /api/admin/global-config/banner]", err);
     return NextResponse.json({ error: "อัปโหลดไม่สำเร็จ" }, { status: 500 });
   }

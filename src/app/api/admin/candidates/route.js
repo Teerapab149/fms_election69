@@ -497,6 +497,7 @@ export async function PUT(req) {
 
   } catch (error) {
     console.error("🔥 Error:", error);
+    if (error.code === 'UNSUPPORTED_IMAGE') return NextResponse.json({ error: error.message }, { status: 400 });
     if (error.code === 'P2002') return NextResponse.json({ error: "เลขพรรคหรือรหัสนักศึกษาซ้ำ" }, { status: 400 });
     return NextResponse.json({ error: "Failed to update", detail: error }, { status: 500 });
   }
@@ -601,6 +602,7 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("🔥 Error:", error);
+    if (error.code === 'UNSUPPORTED_IMAGE') return NextResponse.json({ error: error.message }, { status: 400 });
     if (error.code === 'P2002') return NextResponse.json({ error: "เลขพรรคหรือรหัสนักศึกษาซ้ำ" }, { status: 400 });
     return NextResponse.json({ error: "Failed to create" }, { status: 500 });
   }
