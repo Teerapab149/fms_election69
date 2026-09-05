@@ -43,8 +43,12 @@ services:
     # re-enabled Node's vulnerable PKCS#1 v1.5 decryption for the RETIRED admin
     # RSA login (P0-1). v2-SEC ballot crypto is RSA-OAEP and does not need it.
     command: node server.js
+    # ของเดิมเป็น `depends_on: [db]` เฉย ๆ ซึ่งรอแค่ "คอนเทนเนอร์ db ถูกสตาร์ต"
+    # ไม่ได้รอให้ postgres พร้อมรับ connection · ตอนบูตพร้อมกันครั้งแรก web จึงวิ่งไป
+    # ต่อฐานข้อมูลที่ยังไม่พร้อม แล้วพ่น error ชุดหนึ่งออกมาให้คนติดตั้งตกใจเล่น
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15-alpine
@@ -62,6 +66,13 @@ services:
     # loopback only and point MIGRATE_DATABASE_URL at it:
     #   ports: ["127.0.0.1:5433:5432"]
     #   MIGRATE_DATABASE_URL=postgresql://postgres:<pw>@localhost:5433/fms_election
+    # ให้ docker รู้ว่า postgres พร้อมรับงานจริงหรือยัง — web ใช้ค่านี้รอผ่าน depends_on
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "fms_election"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
 
