@@ -292,6 +292,44 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
 }
 
 // --- PUT (Update) ---
+/**
+ * ด่านกันแก้โครงสร้างบัตรหลังการลงคะแนนเริ่มแล้ว
+ *
+ * v2-SEC เก็บบัตรเป็น ciphertext ของ { c: candidateId } แบบนิรนาม แปลว่าเมื่อมีบัตร
+ * ใบแรกเข้ากล่องแล้ว รายชื่อพรรคกลายเป็นส่วนหนึ่งของบัตรที่นับไม่ได้อีกต่อไป:
+ *
+ *   • ลบพรรค → ciphertext ที่ชี้ candidateId นั้นกลายเป็นบัตรกำพร้า ถอดออกมาแล้วชี้แถวที่
+ *     ไม่มีอยู่ และ score ของพรรคหายไปจากยอดรวม — chain audit จะรายงานว่า ballots > score
+ *   • เพิ่มพรรค → ชุดตัวเลือกกลางคันไม่เท่ากัน คนที่โหวตไปแล้วไม่เคยเห็นตัวเลือกนี้
+ *   • เปลี่ยนเลขพรรค → คนที่กา "เบอร์ 1" ไปแล้วเข้าใจว่าเบอร์ 1 คือพรรคหนึ่ง ผลออกมาเป็นอีกพรรค
+ *
+ * โค้ดเดิมรู้เรื่องนี้ดี — คอมเมนต์ใน DELETE เขียนไว้ครบว่าจะเกิดอะไรขึ้น แล้วลงท้ายว่า
+ * "The admin owns that choice" โดยไม่มีด่านอะไรเลย ปุ่มลบในหน้าแอดมินจึงกดได้ตลอดเวลา
+ * รวมทั้งกลางวันเลือกตั้งและหลังรับรองผลไปแล้ว
+ *
+ * @returns {Promise<NextResponse|null>} response ที่ต้องคืนทันที หรือ null ถ้าผ่าน
+ */
+async function ballotBoxGuard(action) {
+  const [ballots, cfg] = await Promise.all([
+    db.ballot.count(),
+    db.systemConfig.findUnique({ where: { id: 1 }, select: { globalConfig: true } }),
+  ]);
+
+  if (cfg?.globalConfig?.ballotsAnonymized) {
+    return NextResponse.json(
+      { error: `รับรองผลไปแล้ว ${action}ไม่ได้ — ผลการเลือกตั้งถูกปิดผนึกแล้ว` },
+      { status: 409 }
+    );
+  }
+  if (ballots > 0) {
+    return NextResponse.json(
+      { error: `มีบัตรลงคะแนนในระบบแล้ว ${ballots} ใบ จึง${action}ไม่ได้ — การแก้โครงสร้างบัตรกลางคันทำให้ผลนับไม่ตรง` },
+      { status: 409 }
+    );
+  }
+  return null;
+}
+
 export async function PUT(req) {
   const authError = await adminGuard(req);
   if (authError) return authError;
@@ -305,7 +343,20 @@ export async function PUT(req) {
     const dataToUpdate = {};
 
     if (formData.has("name")) dataToUpdate.name = formData.get("name");
-    if (formData.has("number")) dataToUpdate.number = parseInt(formData.get("number"));
+    if (formData.has("number")) {
+      // แก้เนื้อหา (สโลแกน/รูป/นโยบาย) กลางคันยังทำได้ — แก้คำผิดระหว่างวันเลือกตั้งเป็นเรื่องปกติ
+      // แต่ "เลขพรรค" คือสิ่งที่ผู้ลงคะแนนใช้ตัดสินใจ เปลี่ยนหลังมีบัตรแล้วไม่ได้
+      // `id` มาจาก searchParams จึงเป็น string — ที่อื่นในไฟล์นี้ parseInt ทุกจุด
+      // ส่งดิบ ๆ เข้า Prisma จะได้ PrismaClientValidationError กลายเป็น 500 แทนที่จะเป็น
+      // 409 ที่ตั้งใจ (ด่านไม่ทำงาน แต่ดูเหมือนทำงานเพราะคำขอล้มเหลวพอดี)
+      const existing = await db.candidate.findUnique({ where: { id: parseInt(id) }, select: { number: true } });
+      const nextNumber = parseInt(formData.get("number"));
+      if (existing && existing.number !== nextNumber) {
+        const blocked = await ballotBoxGuard("เปลี่ยนหมายเลขพรรค");
+        if (blocked) return blocked;
+      }
+      dataToUpdate.number = nextNumber;
+    }
     // SLG-1: slogan is optional — normalize empty/whitespace-only → null so the
     // render-site `party?.slogan &&` guards collapse the slot (a stray " " is truthy
     // and would render an empty quoted slogan). Trim also drops incidental padding.
@@ -505,6 +556,10 @@ export async function PUT(req) {
 
 // --- POST (Create) ---
 export async function POST(req) {
+  {
+    const blocked = await ballotBoxGuard("เพิ่มพรรคใหม่");
+    if (blocked) return blocked;
+  }
   const authError = await adminGuard(req);
   if (authError) return authError;
   try {
@@ -616,6 +671,9 @@ export async function DELETE(req) {
     const { searchParams } = new URL(req.url);
     target_id = parseInt(searchParams.get("id"));
     if (!target_id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+
+    const blocked = await ballotBoxGuard("ลบพรรค");
+    if (blocked) return blocked;
 
     // 1. ดึงข้อมูลรูปภาพเก็บไว้ก่อนลบจาก DB
     const candidateToDelete = await db.candidate.findUnique({

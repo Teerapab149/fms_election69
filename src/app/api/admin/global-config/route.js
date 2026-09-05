@@ -45,7 +45,37 @@ export async function PUT(request) {
     // it out of the JSON blob. Only write the column when the client actually
     // sent the key, so an older client that omits it never wipes the value.
     const { googleFormUrl, ...rest } = globalConfig;
-    const data = { globalConfig: rest };
+
+    // คีย์การรับรองผลไม่ใช่ของ endpoint นี้ — ปฏิเสธทิ้งไปเลย
+    //
+    // การรับรองผลถูกออกแบบไว้ว่าทำได้เฉพาะบัญชีเจ้าหน้าที่คณะ (role === "STAFF")
+    // และทำได้หลังปิดหีบ+ประกาศผลแล้วเท่านั้น แล้วห้ามย้อน — ทั้งหมดอยู่ใน
+    // /api/admin/dashboard (route.js:165-196) แต่ endpoint นี้ผ่านแค่ adminGuard
+    // คือกรรมการสโมฯ คนไหนก็เรียกได้ ถ้าปล่อยให้เขียนคีย์พวกนี้ได้ กรรมการจะ
+    // เซ็นรับรองผลของตัวเองได้โดยไม่ต้องเป็นเจ้าหน้าที่ ซึ่งคือ conflict of interest
+    // ที่ด่าน STAFF ตั้งขึ้นมากันพอดี
+    //
+    // `ballotsAnonymized` ยังเป็นด่านที่ /api/vote (route.js:59) ใช้ปฏิเสธคะแนนหลัง
+    // รับรองผลแล้ว การล้างค่านี้ทิ้งจึงเท่ากับ "เปิดหีบที่ปิดไปแล้ว" กลับมาอีกครั้ง
+    const CERTIFICATION_KEYS = ["ballotsAnonymized", "certifiedAt", "certifiedBy", "certifiedByUsername"];
+    const attempted = CERTIFICATION_KEYS.filter((k) => k in rest);
+    if (attempted.length > 0) {
+      return NextResponse.json(
+        { error: `แก้ค่าการรับรองผลที่นี่ไม่ได้ (${attempted.join(", ")}) — การรับรองผลทำได้เฉพาะบัญชีเจ้าหน้าที่คณะผ่านหน้าแดชบอร์ด` },
+        { status: 403 }
+      );
+    }
+
+    // ผสานทับของเดิม ไม่ใช่เขียนทับทั้งก้อน
+    //
+    // ของเดิมเขียน `globalConfig: rest` ตรง ๆ ซึ่งแทนที่ JSON ทั้งอัน คีย์ไหนที่ client
+    // ไม่ได้ส่งมาก็หายทันที ฟอร์มตั้งค่าทั่วไปส่งมาเฉพาะฟิลด์ของตัวเอง เพราะงั้นแค่กด
+    // "บันทึก" ครั้งเดียวหลังรับรองผล ก็ลบลายเซ็นรับรองทิ้งทั้งชุดโดยไม่มีใครตั้งใจ
+    // และปลดล็อกให้ /api/vote รับคะแนนได้อีก
+    const current = await db.systemConfig.findUnique({ where: { id: 1 }, select: { globalConfig: true } });
+    const merged = { ...(current?.globalConfig ?? {}), ...rest };
+
+    const data = { globalConfig: merged };
     if (googleFormUrl !== undefined) data.googleFormUrl = googleFormUrl;
 
     const updated = await db.systemConfig.upsert({

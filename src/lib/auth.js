@@ -42,6 +42,11 @@ export const authOptions = {
       clientSecret: CLIENT_SECRET,
       issuer: "https://psusso.psu.ac.th/application/o/fms-ovs/",
 
+      // ประกาศไว้ตรง ๆ ไม่พึ่ง default ของไลบรารี: NextAuth v4 เติม checks: ["state"]
+      // ให้เองเมื่อไม่ได้ระบุ (core/lib/providers.js:62) แต่ด่านตรวจ state ด้านล่าง
+      // พึ่งค่านี้อยู่ ถ้าวันหนึ่ง default เปลี่ยน ด่านจะเงียบไปโดยไม่มีใครรู้
+      checks: ["state"],
+
       authorization: {
         url: `${AUTHENTIK_BASE_URL}/application/o/authorize/`,
         params: {
@@ -52,7 +57,28 @@ export const authOptions = {
 
       token: {
         async request(context) {
-          const { params } = context;
+          const { params, checks } = context;
+
+          // ตรวจ state เอง — จำเป็นเพราะ provider นี้เขียน token.request ของตัวเอง
+          //
+          // ใน next-auth v4 (core/lib/oauth/callback.js:74-96) `checks.state.use()`
+          // แค่ "อ่าน" state จาก cookie มาใส่ `checks` เท่านั้น คนที่ "เทียบ" ว่า
+          // state ที่ IdP ส่งกลับมาตรงกับ cookie ไหมคือ openid-client ข้างใน
+          // `client.callback()` / `client.oauthCallback()` — แต่พอ provider มี
+          // `token.request` ของตัวเอง โค้ดจะแตกไปสาขาบรรทัดที่ 85 แล้วสร้าง TokenSet
+          // จากผลลัพธ์ของเราตรง ๆ **ทั้งสองฟังก์ชันนั้นไม่ถูกเรียกเลย** ด่านเทียบ state
+          // จึงหายไปทั้งด่าน และ token.request เดิมก็อ่านแต่ params.code ไม่เคยแตะ checks
+          //
+          // ผลคือ login CSRF: ผู้โจมตีถือ code ที่ใช้ได้ของตัวเองอยู่ หลอกให้เหยื่อเปิด
+          // callback URL นั้น เหยื่อก็จะได้ session เป็นบัญชีของผู้โจมตีโดยไม่รู้ตัว
+          // ในบริบทเลือกตั้งแปลว่านักศึกษาอาจกำลังดูหน้าจอ/ลงคะแนนในนามคนอื่นอยู่
+          //
+          // เทียบแบบ constant-time ไม่จำเป็น: ทั้งสองค่าฝั่งเราเป็นคนออกเอง ไม่ใช่ความลับ
+          // ที่ต้องกันการเดาทีละไบต์ และการรั่วเวลาที่นี่ไม่ให้ข้อมูลอะไรกับผู้โจมตี
+          if (!checks?.state || !params?.state || checks.state !== params.state) {
+            throw new Error("OAuth state mismatch — ปฏิเสธการล็อกอินนี้");
+          }
+
           const body = new URLSearchParams({
             grant_type: "authorization_code",
             code: params.code,
