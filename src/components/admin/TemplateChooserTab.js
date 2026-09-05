@@ -156,7 +156,14 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
         <span className="text-[11px] font-mono text-slate-400 tabular-nums">{device.w}×{device.h}</span>
       </div>
 
-      <div ref={vpRef} className="relative overflow-hidden">
+      {/* tabIndex + onKeyDown: ให้เลื่อนด้วยลูกศรคีย์บอร์ดได้ เป็นทางที่ไม่ต้องเล็งปุ่มเลย
+          และเป็นทางเดียวที่ผู้ใช้คีย์บอร์ดล้วนเข้าถึงสไลด์ได้ */}
+      <div ref={vpRef} tabIndex={0} role="group" aria-label="ตัวอย่างหน้าเว็บของเทมเพลต"
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+          else if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+        }}
+        className="relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8A2680] focus-visible:ring-offset-2 rounded-lg">
         <div className="flex items-start" style={{ gap, transform: `translateX(${offset}px)`, transition: "transform 520ms cubic-bezier(0.22,1,0.36,1)" }}>
           {PAGES.map((s, i) => (
             <BrowserSlide
@@ -173,19 +180,28 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
           ))}
         </div>
 
-        {/* edge arrows */}
-        {idx > 0 && (
-          <button type="button" onClick={() => go(-1)} aria-label="หน้าก่อนหน้า"
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg flex items-center justify-center text-slate-700 transition active:scale-90">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-        )}
-        {idx < PAGES.length - 1 && (
-          <button type="button" onClick={() => go(1)} aria-label="หน้าถัดไป"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg flex items-center justify-center text-slate-700 transition active:scale-90">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        )}
+        {/* edge arrows
+            สองอย่างที่เคยทำให้ "กดไม่ติด" แล้วต้องกดรัว ๆ:
+
+            1. `active:scale-90` — ปุ่มหดลง 10% ตอนกดค้าง ปลายนิ้ว/เคอร์เซอร์ที่จิ้มใกล้ขอบปุ่ม
+               จะหลุดออกนอกปุ่มระหว่าง mousedown→mouseup เบราว์เซอร์เลยไม่นับเป็น click เลย
+               ไม่มีอะไรเกิดขึ้นและไม่มีอะไรบอกว่าทำไม · เปลี่ยนเป็นเปลี่ยนสีพื้นตอนกดแทน
+               ซึ่งให้ฟีดแบ็กเหมือนกันโดยไม่ขยับพื้นที่กด
+            2. ปุ่มถูก unmount ตอนถึงสุดทาง (`idx > 0 &&`) — สไลด์สุดท้ายปุ่มขวาหายวับ
+               ใต้เคอร์เซอร์ที่กำลังกดรัวอยู่ คลิกที่เหลือจึงตกไปโดนสไลด์ข้างหลังแทน
+               ตอนนี้ปุ่มอยู่ตลอด แค่ disabled + จางลง ตำแหน่งกดไม่เคยหายไปกลางคัน
+
+            ส่วนอาการ "กดติดแล้วพุ่งไปหลายหน้า" คือผลพวงของข้อ 1: กดไม่ติดหลายครั้ง
+            แล้วครั้งที่ติดพร้อมกันหลายคลิกเลยเลื่อนทีเดียวหลายสไลด์ (setIdx เป็น functional
+            update จึงนับครบทุกคลิกจริง ๆ) พอคลิกไม่หายแล้วอาการนี้ก็หายตาม */}
+        <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="หน้าก่อนหน้า"
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-slate-700 transition-colors enabled:hover:bg-white enabled:active:bg-slate-200 disabled:opacity-0 disabled:pointer-events-none">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button type="button" onClick={() => go(1)} disabled={idx === PAGES.length - 1} aria-label="หน้าถัดไป"
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-slate-700 transition-colors enabled:hover:bg-white enabled:active:bg-slate-200 disabled:opacity-0 disabled:pointer-events-none">
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
 
       {/* caption + dots */}

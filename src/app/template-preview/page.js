@@ -134,9 +134,20 @@ function PreviewBody() {
   // PLACE (no reload) — so the iframe src stays pinned to the family's BASE slug
   // (repSlug, stable) and the chosen palette is injected onto it. Single-theme
   // families (gumroad/studio-dark/original today) yield one entry → no swatches.
-  const familyThemes = Object.values(BUILT_IN_TEMPLATES)
-    .filter((t) => (t.layoutFamily || 'classic') === family)
-    .map((t) => ({ slug: t.slug, name: t.name, color: t.colorSwatch?.primary || '#8A2680' }));
+  //
+  // ⚠️ ต้อง dedupe ด้วย slug: BUILT_IN_TEMPLATES เก็บ "classic" เป็น alias ชี้ object
+  // เดียวกับ "original" (index.js:50) พอ Object.values() มันจึงคืน object เดิมมาสองครั้ง
+  // ตระกูล original เลยได้ themes.length === 2 → แถบสีโผล่ขึ้นมาทั้งที่มีสีเดียว และเพราะ
+  // ทั้งสองรายการมี slug เดียวกัน เงื่อนไข `on` จึงจริงทั้งคู่ → ติ๊กถูกสองวง สีม่วงเหมือนกัน
+  // (แถม key={t.slug} ซ้ำอีก) · ฝั่ง registry listing dedupe ด้วย slug อยู่แล้ว (index.js:124)
+  // ที่นี่ลอกไม่ครบมาแต่แรก
+  const familyThemes = [
+    ...new Map(
+      Object.values(BUILT_IN_TEMPLATES)
+        .filter((t) => (t.layoutFamily || 'classic') === family)
+        .map((t) => [t.slug, t])
+    ).values(),
+  ].map((t) => ({ slug: t.slug, name: t.name, color: t.colorSwatch?.primary || '#8A2680' }));
   const repSlug = familyThemes[0]?.slug || slug;
   const [themeSlug, setThemeSlug] = useState(slug);
 
