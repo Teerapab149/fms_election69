@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import StudioDarkShell from "./StudioDarkShell";
+import { resolveVerdict } from "../../utils/electionVerdict";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
@@ -74,9 +75,11 @@ export default function StudioDarkResults({
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? ((totalVotes / totalEligible) * 100) : 0;
 
-  const parties = candidates.filter((c) => parseInt(c.number) > 0);
-  const singleParty = parties.length === 1;
-  const disapprove = candidates.find((c) => parseInt(c.number) === -1);
+  // ผลตัดสินมาจาก resolveVerdict() ที่เดียว — ห้ามคำนวณเองในไฟล์ธีม
+  const verdict = resolveVerdict(candidates, { revealed });
+  const parties = verdict.parties;
+  const singleParty = verdict.mode === "single";
+  const disapprove = verdict.disapprove;
 
   const pctOf = (c) => (totalVotes > 0 ? ((c?.score || 0) / totalVotes) * 100 : 0);
   const labelOf = (c) =>
@@ -84,14 +87,16 @@ export default function StudioDarkResults({
   const subOf = (c) =>
     parseInt(c.number) > 0 ? `PARTY № ${pad2(c.number)}` : (parseInt(c.number) === 0 ? "ABSTAIN" : "DISAPPROVE");
 
-  // winner — multi: top-scoring party; single: รับรอง (party) vs ไม่รับรอง verdict
-  const topScore = revealed ? Math.max(0, ...parties.map((p) => p.score || 0)) : -1;
-  const winner = revealed && !singleParty && topScore > 0
-    ? parties.find((p) => (p.score || 0) === topScore)
-    : null;
-  const approveWins = revealed && singleParty
-    ? (parties[0]?.score || 0) >= (disapprove?.score || 0)
-    : null;
+  // winner — multi: พรรคที่นำเดี่ยว · single: ผลรับรอง/ไม่รับรอง
+  // ของเดิม `(parties[0].score||0) >= (disapprove.score||0)` พังสองทาง: `>=` ทำให้เสมอกัน
+  // นับเป็นรับรอง และไม่มีด่านคะแนน 0 เลย ทุกฝ่าย 0 เสียง (ยังไม่มีใครโหวตสักคน) จึงขึ้น
+  // "It's a yes. ... ด้วยคะแนน 0 เสียง" — พิสูจน์สดบน container มาแล้ว
+  const winner = verdict.winner;
+  const approveWins = singleParty ? verdict.approved : null;   // null = ตัดสินไม่ได้
+  const undecided = revealed && (verdict.outcome === "tie" || verdict.outcome === "no-votes");
+  const undecidedNote = verdict.outcome === "tie"
+    ? "คะแนนสูงสุดเสมอกัน ยังประกาศผลไม่ได้ รอคณะกรรมการชี้ขาด"
+    : "ยังไม่มีคะแนนในระบบ";
 
   const raceRows = useMemo(() => {
     const rows = [...candidates];
@@ -146,6 +151,14 @@ export default function StudioDarkResults({
 
             {revealed ? (
               singleParty ? (
+                undecided ? (
+                  /* เสมอ หรือยังไม่มีคะแนนเลย — ประกาศไม่ได้ ต้องไม่ตกไปเข้าสาขา yes/no
+                     ของเดิมไม่มีสาขานี้ approveWins จึงเป็น true ตั้งแต่คะแนน 0-0 */
+                  <>
+                    <h2 className="sdr-board__title">No <em>call.</em></h2>
+                    <p className="sdr-board__deck">{undecidedNote}</p>
+                  </>
+                ) : (
                 <>
                   <h2 className="sdr-board__title">{approveWins ? <>It&rsquo;s a <em>yes.</em></> : <>It&rsquo;s a <em>no.</em></>}</h2>
                   <p className="sdr-board__deck">
@@ -154,6 +167,7 @@ export default function StudioDarkResults({
                       : <>ผลการลงคะแนน <strong className="sdr-strong">ไม่รับรอง</strong> ด้วยคะแนน <span className="sd-tabular"><RevealInt value={disapprove?.score || 0} enabled={anim} /></span> เสียง (<span className="sd-tabular"><RevealPct value={pctOf(disapprove)} enabled={anim} /></span>)</>}
                   </p>
                 </>
+                )
               ) : winner ? (
                 <>
                   <h2 className="sdr-board__title sdr-board__title--name">{winner.name}<em>.</em></h2>
@@ -163,8 +177,8 @@ export default function StudioDarkResults({
                 </>
               ) : (
                 <>
-                  <h2 className="sdr-board__title">The <em>returns.</em></h2>
-                  <p className="sdr-board__deck">ผลคะแนนอย่างเป็นทางการแสดงอยู่ด้านล่าง</p>
+                  <h2 className="sdr-board__title">{undecided ? <>No <em>call.</em></> : <>The <em>returns.</em></>}</h2>
+                  <p className="sdr-board__deck">{undecided ? undecidedNote : "ผลคะแนนอย่างเป็นทางการแสดงอยู่ด้านล่าง"}</p>
                 </>
               )
             ) : (

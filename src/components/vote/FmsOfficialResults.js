@@ -19,6 +19,7 @@ import { BarChart3, Lock, Clock, Trophy } from "lucide-react";
 import FmsOfficialShell from "./FmsOfficialShell";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { fmsMeta } from "../home/FmsOfficialChrome";
+import { resolveVerdict } from "../../utils/electionVerdict";
 
 const fmtInt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n ?? 0);
 
@@ -40,11 +41,19 @@ export default function FmsOfficialResults({
     return r;
   }, [candidates, isRevealed]);
 
-  const topScore = isRevealed ? Math.max(0, ...rows.map((c) => c.score || 0)) : 0;
   // A tie has no winner to mark. Marking both rows "ผู้ชนะ" would be a claim the
   // count does not support, so the trophy is withheld until exactly one row leads.
-  const leaders = rows.filter((c) => (c.score || 0) === topScore && topScore > 0);
-  const winnerId = isRevealed && leaders.length === 1 ? leaders[0].id : null;
+  //
+  // ธีมนี้จัดการเสมอถูกมาตลอด แต่ pool ที่ใช้หาคะแนนสูงสุดคือ `rows` = candidates ทั้งก้อน
+  // ซึ่งรวม "งดออกเสียง" (number = 0) ด้วย ถ้างดออกเสียงมาที่หนึ่ง มันจะได้ 🏆 ผู้ชนะ
+  // ทั้งที่การงดออกเสียงคือการไม่เลือก ไม่ใช่ตัวเลือกที่ลงแข่ง — resolveVerdict()
+  // ตัดมันออกจาก pool ให้แล้ว และคุมกติกาเสมอ/คะแนน 0 ให้เหมือนกันทุกธีม
+  const verdict = resolveVerdict(candidates, { revealed: isRevealed });
+  const winnerId = verdict.featured?.id ?? null;
+  const undecided = isRevealed && (verdict.outcome === 'tie' || verdict.outcome === 'no-votes');
+  const undecidedNote = verdict.outcome === 'tie'
+    ? 'คะแนนสูงสุดเสมอกัน ยังประกาศผู้ชนะไม่ได้ รอคณะกรรมการชี้ขาด'
+    : 'ยังไม่มีคะแนนในระบบ';
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const demoGroups = [
@@ -157,6 +166,10 @@ export default function FmsOfficialResults({
                 <p>เรียงจากคะแนนมากไปน้อย · สัดส่วนคิดจากบัตรทั้งหมด {fmtInt(totalVotes)} ใบ</p>
               </div>
 
+          {undecided && (
+            /* เสมอ / ยังไม่มีคะแนน — ไม่มีแถวไหนได้ถ้วย ต้องบอกเหตุผลไว้ตรงนี้ */
+            <p className="fo-nocall">{undecidedNote}</p>
+          )}
           <ul className="fo-race">
             {rows.map((c) => {
               const score = c.score || 0;
@@ -265,6 +278,7 @@ export default function FmsOfficialResults({
 
         .fo-sechead--gap { margin-top: 42px; }
 
+        .fo-nocall { margin: 0 0 12px; padding: 12px 14px; border: 1px dashed var(--fo-line, currentColor); text-align: center; font-weight: 600; opacity: .9; }
         .fo-race { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
         .fo-race__row {
           display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 16px;

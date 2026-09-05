@@ -15,6 +15,7 @@ import { Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import VerdureShell from "./VerdureShell";
 import { verdureMeta } from "../home/VerdureChrome";
+import { resolveVerdict } from "../../utils/electionVerdict";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
@@ -77,17 +78,24 @@ export default function VerdureResults({
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? ((totalVotes / totalEligible) * 100) : 0;
 
-  const parties = candidates.filter((c) => parseInt(c.number) > 0);
-  const singleParty = parties.length === 1;
-  const disapprove = candidates.find((c) => parseInt(c.number) === -1);
+  // ผลตัดสินมาจาก resolveVerdict() ที่เดียว — ห้ามคำนวณเองในไฟล์ธีม
+  const verdict = resolveVerdict(candidates, { revealed });
+  const parties = verdict.parties;
+  const singleParty = verdict.mode === "single";
+  const disapprove = verdict.disapprove;
 
   const pctOf = (c) => (totalVotes > 0 ? ((c?.score || 0) / totalVotes) * 100 : 0);
   const labelOf = (c) => parseInt(c.number) > 0 ? c.name : (parseInt(c.number) === 0 ? "งดออกเสียง" : "ไม่รับรอง");
   const subOf = (c) => parseInt(c.number) > 0 ? `PARTY No. ${pad2(c.number)}` : (parseInt(c.number) === 0 ? "ABSTAIN" : "DISAPPROVE");
 
-  const topScore = revealed ? Math.max(0, ...parties.map((p) => p.score || 0)) : -1;
-  const winner = revealed && !singleParty && topScore > 0 ? parties.find((p) => (p.score || 0) === topScore) : null;
-  const approveWins = revealed && singleParty ? (parties[0]?.score || 0) >= (disapprove?.score || 0) : null;
+  // ของเดิม: `(parties[0].score||0) >= (disapprove.score||0)` — `>=` ทำให้เสมอกันนับเป็น
+  // รับรอง และไม่มีด่านคะแนน 0 เลย ทุกฝ่าย 0 เสียงจึงประกาศ "รับรอง" ทั้งที่ยังไม่มีใครโหวต
+  const winner = verdict.winner;
+  const approveWins = singleParty ? verdict.approved : null;      // null = ตัดสินไม่ได้
+  const undecided = revealed && (verdict.outcome === "tie" || verdict.outcome === "no-votes");
+  const undecidedNote = verdict.outcome === "tie"
+    ? "คะแนนสูงสุดเสมอกัน รอคณะกรรมการชี้ขาด"
+    : "ยังไม่มีคะแนนในระบบ";
 
   // Winner label + a LENGTH-TIERED type size for it. Party names are admin-typed and
   // unbounded — the live 2569 roster has a 43-character one — so a single fixed size
@@ -97,7 +105,9 @@ export default function VerdureResults({
   // the ORIGINAL clamp untouched — the disc is byte-identical for every name that
   // already fit. Longer names step down one/two notches so the whole label still lands
   // inside the inner dashed ring.
-  const winnerLabel = singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—");
+  const winnerLabel = undecided
+    ? (verdict.outcome === "tie" ? "เสมอกัน" : "ยังไม่มีผล")
+    : singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—");
   const winnerNameSize = winnerLabel.length >= 40 ? "clamp(23px,2.6vw,33px)"
     : winnerLabel.length >= 28 ? "clamp(26px,3.0vw,38px)"
     : null;
@@ -134,16 +144,20 @@ export default function VerdureResults({
           <div className="vd-rdisc">
             {revealed ? (
               <>
-                <div className="vd-rdisc__kicker">{singleParty
-                  ? <><span className="vd-nw">OFFICIAL VERDICT</span> · <span className="vd-thai">ผลรับรอง</span></>
-                  : <><span className="vd-nw">THE WINNER</span> · <span className="vd-thai">ผู้ชนะ</span></>}</div>
+                <div className="vd-rdisc__kicker">{undecided
+                  ? <><span className="vd-nw">NO CALL</span> · <span className="vd-thai">ยังประกาศผลไม่ได้</span></>
+                  : singleParty
+                    ? <><span className="vd-nw">OFFICIAL VERDICT</span> · <span className="vd-thai">ผลรับรอง</span></>
+                    : <><span className="vd-nw">THE WINNER</span> · <span className="vd-thai">ผู้ชนะ</span></>}</div>
                 <div className="vd-rdisc__name" style={winnerNameSize ? { fontSize: winnerNameSize } : undefined}>
                   {winnerLabel}
                 </div>
                 <div className="vd-rdisc__pct vd-tabular">
-                  {singleParty
-                    ? <RevealScoreLine score={(approveWins ? parties[0] : disapprove)?.score || 0} pct={pctOf(approveWins ? parties[0] : disapprove)} />
-                    : (winner ? <RevealScoreLine score={winner.score || 0} pct={pctOf(winner)} suffix=" ของคะแนน" /> : "")}
+                  {undecided
+                    ? <span className="vd-thai">{undecidedNote}</span>
+                    : singleParty
+                      ? <RevealScoreLine score={(approveWins ? parties[0] : disapprove)?.score || 0} pct={pctOf(approveWins ? parties[0] : disapprove)} />
+                      : (winner ? <RevealScoreLine score={winner.score || 0} pct={pctOf(winner)} suffix=" ของคะแนน" /> : "")}
                 </div>
               </>
             ) : (

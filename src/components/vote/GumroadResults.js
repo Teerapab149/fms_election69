@@ -18,6 +18,7 @@ import { Lock } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import { resolveVerdict } from "../../utils/electionVerdict";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import SiteFooter from "../elements/site-footer/gumroad";
 import ResultsHead from "../elements/results-head/gumroad";
@@ -151,8 +152,12 @@ export default function GumroadResults({
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? ((totalVotes / totalEligible) * 100) : 0;
 
-  const parties = candidates.filter((c) => parseInt(c.number) > 0);
-  const singleParty = parties.length === 1; // single-party ballot → รับรอง/ไม่รับรอง, not a race
+  // ผลตัดสินมาจาก resolveVerdict() ที่เดียว — ห้ามคำนวณผู้ชนะเองในไฟล์ธีม
+  // ของเดิมบรรทัดนี้คือ `parties.filter(number > 0)` แล้วหาผู้ชนะจาก pool นั้น ซึ่งแปลว่า
+  // "ไม่รับรอง" ไม่เคยเข้าสมการ: พรรค 3 คะแนน แพ้ไม่รับรอง 10 คะแนน แต่ยังได้ 👑 ผู้ชนะ
+  const verdict = resolveVerdict(candidates, { revealed });
+  const parties = verdict.parties;
+  const singleParty = verdict.mode === 'single'; // single-party ballot → รับรอง/ไม่รับรอง, not a race
   // drop blank-named groups (e.g. a null-gender bucket the groupBy emits) so they
   // don't render as an empty "0" legend chip / ghost bar.
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
@@ -160,8 +165,18 @@ export default function GumroadResults({
   const byGender = clean(demographics?.byGender);
   const byMajor = clean(demographics?.byMajor);
   const genderTotal = byGender.reduce((a, b) => a + (b.value || 0), 0);
-  const topScore = revealed ? Math.max(0, ...parties.map((p) => p.score || 0)) : -1;
-  const winner = revealed && topScore > 0 ? parties.find((p) => (p.score || 0) === topScore) : null;
+  // การ์ดมงกุฎขึ้นได้เฉพาะ "พรรคที่ชนะจริง" เท่านั้น — verdict.winner ไม่มีวันชี้แถว
+  // ไม่รับรอง/งดออกเสียง และเป็น null เมื่อเสมอหรือยังไม่มีคะแนน
+  const winner = verdict.winner;
+  // ผลที่ประกาศไม่ได้ ต้องพูดออกมาตรง ๆ ไม่ใช่ปล่อยหน้าให้ว่างจนดูเหมือนยังไม่นับ
+  const verdictNote =
+    verdict.outcome === 'disapproved'
+      ? `ผลออกมาว่า ไม่รับรอง ด้วยคะแนน ${verdict.disapprove?.score || 0} เสียง`
+      : verdict.outcome === 'tie'
+        ? 'คะแนนสูงสุดเสมอกัน ยังประกาศผู้ชนะไม่ได้ รอคณะกรรมการชี้ขาด'
+        : verdict.outcome === 'no-votes'
+          ? 'ยังไม่มีคะแนนในระบบ'
+          : null;
   const restCards = winner ? candidates.filter((c) => c !== winner) : candidates;
   const pctOf = (c) => (totalVotes > 0 ? ((c.score || 0) / totalVotes * 100) : 0);
   const logoSrc = (c) => (c?.logoUrl ? (String(c.logoUrl).startsWith("http") ? c.logoUrl : getPath(c.logoUrl)) : null);
@@ -247,6 +262,9 @@ export default function GumroadResults({
               </div>
               {revealed ? (
                 <div className="gr-reveal">
+                  {/* ผลที่ประกาศผู้ชนะไม่ได้ (ไม่รับรอง / เสมอ / ยังไม่มีคะแนน) ต้องมีข้อความ
+                      บอกตรง ๆ ไม่งั้นหน้าจะว่างจนดูเหมือนระบบยังนับไม่เสร็จ */}
+                  {verdictNote && <div className="gr-verdict-note gm-thai">{verdictNote}</div>}
                   {/* the winner card is painted with the party's own colour, which an
                       admin types in — so the text colour has to follow it. On a mid-tone
                       signature the fixed --ink2 secondary text measured 2.03:1. */}
@@ -485,6 +503,12 @@ export default function GumroadResults({
 
         /* revealed: winner spotlight + ranked cards */
         .gr-reveal{ display:flex; flex-direction:column; gap:18px; }
+        /* ใช้ภาษาเดิมของธีม: กระดาษ + ขอบหมึก + เงาแข็ง ไม่ได้เพิ่มภาษาภาพใหม่ */
+        .gr-verdict-note{
+          background: var(--cream); border: 2px solid var(--ink); border-radius: 12px;
+          box-shadow: 4px 4px 0 var(--ink); padding: 14px 16px;
+          font-weight: 700; color: var(--ink); text-align: center;
+        }
         .gr-winner{ position:relative; color:var(--won-ink,var(--ink)); background:var(--lime); border:var(--bw) solid var(--ink); border-radius:24px; box-shadow:var(--sh-lg); padding:24px 26px; }
         .gr-winner__badge{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--cream); font-family:var(--fm); font-weight:600; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:7px 14px; border-radius:999px; }
         .gr-winner__main{ display:flex; align-items:center; gap:22px; margin-top:16px; flex-wrap:wrap; }

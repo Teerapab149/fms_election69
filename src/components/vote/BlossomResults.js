@@ -36,6 +36,7 @@ import {
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles, blossomTheme } from "../home/BlossomTheme";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
+import { resolveVerdict } from "../../utils/electionVerdict";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
@@ -127,16 +128,13 @@ export default function BlossomResults({
 
   // winner = highest score in the eligible pool (parties, plus DISAPPROVE only in a
   // single-party ballot); geometry-only marker, never for งดออกเสียง or a 0 tally.
-  const winnerId = useMemo(() => {
-    if (!revealed) return null;
-    const pool = candidates.filter((c) => {
-      const n = parseInt(c.number);
-      return n > 0 || (singleParty && n === -1);
-    });
-    let top = null;
-    pool.forEach((c) => { if ((c.score || 0) > (top?.score ?? -1)) top = c; });
-    return top && (top.score || 0) > 0 ? top.id : null;
-  }, [candidates, revealed, singleParty]);
+  // ตัดสินที่ resolveVerdict() ที่เดียว — เสมอกันคืน null (เดิมเงียบ ๆ เอาตัวแรกใน array)
+  const verdict = useMemo(() => resolveVerdict(candidates, { revealed }), [candidates, revealed]);
+  const winnerId = verdict.featured?.id ?? null;
+  const undecided = revealed && (verdict.outcome === 'tie' || verdict.outcome === 'no-votes');
+  const undecidedNote = verdict.outcome === 'tie'
+    ? 'คะแนนสูงสุดเสมอกัน ยังประกาศผลไม่ได้ รอคณะกรรมการชี้ขาด'
+    : 'ยังไม่มีคะแนนในระบบ';
 
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const byYear = clean(demographics?.byYear);
@@ -230,6 +228,10 @@ export default function BlossomResults({
                       : <><span className="bl-thai bl-thai--nw">อันดับคะแนน</span> · <span className="bl-nw">STANDINGS</span></>}</span>
                     <h2 className="bl-res-sechead__h">{singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h2>
                   </div>
+                  {undecided && (
+                    /* เสมอ / ยังไม่มีคะแนน — ไม่มีแถวไหนถูกมาร์กเป็นผู้ชนะ ต้องบอกเหตุผล */
+                    <p className="bl-nocall"><span className="bl-thai">{undecidedNote}</span></p>
+                  )}
                   <ol className="bl-rrows">
                     {candidates.map((c, i) => {
                       const n = parseInt(c.number);
@@ -541,6 +543,7 @@ export default function BlossomResults({
           line-height:1.12; letter-spacing:-.01em; color:var(--bl-ink); }
 
         /* ---- ranking rows (home figures grammar: big tabular numeral + candy track) ---- */
+        .bl-res-root .bl-nocall { margin:0 0 12px; padding:12px 14px; border:1px dashed currentColor; opacity:.8; text-align:center; font-weight:600; border-radius:10px; }
         .bl-res-root .bl-rrows { list-style:none; margin:0; padding:0; }
         .bl-res-root .bl-rrow { border-bottom:1px solid var(--bl-line); animation:blRRise .55s ease both; }
         .bl-res-root .bl-rrow:nth-child(1) { animation-delay:.06s; }

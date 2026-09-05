@@ -43,6 +43,7 @@ import {
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles, receiptTheme } from "../home/ReceiptTheme";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
+import { resolveVerdict } from "../../utils/electionVerdict";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n);
@@ -130,16 +131,13 @@ export default function ReceiptResults({
 
   // winner = highest score in the eligible pool (parties, plus DISAPPROVE only in a
   // single-party ballot); geometry-only marker, never for งดออกเสียง or a 0 tally.
-  const winnerId = useMemo(() => {
-    if (!revealed) return null;
-    const pool = candidates.filter((c) => {
-      const n = parseInt(c.number);
-      return n > 0 || (singleParty && n === -1);
-    });
-    let top = null;
-    pool.forEach((c) => { if ((c.score || 0) > (top?.score ?? -1)) top = c; });
-    return top && (top.score || 0) > 0 ? top.id : null;
-  }, [candidates, revealed, singleParty]);
+  // ตัดสินที่ resolveVerdict() ที่เดียว — เสมอกันคืน null (เดิมเงียบ ๆ เอาตัวแรกใน array)
+  const verdict = useMemo(() => resolveVerdict(candidates, { revealed }), [candidates, revealed]);
+  const winnerId = verdict.featured?.id ?? null;
+  const undecided = revealed && (verdict.outcome === 'tie' || verdict.outcome === 'no-votes');
+  const undecidedNote = verdict.outcome === 'tie'
+    ? 'คะแนนสูงสุดเสมอกัน ยังประกาศผลไม่ได้ รอคณะกรรมการชี้ขาด'
+    : 'ยังไม่มีคะแนนในระบบ';
 
   // owner round-5 (ข) — 3-layer hierarchy. Layer 1 = the WINNER HERO (the winning
   // party — or in a single-party ballot, the winning verdict — presented headline-
@@ -245,6 +243,11 @@ export default function ReceiptResults({
                   the winning party (or the winning verdict on a single-party ballot)
                   printed headline-size with the big green ผู้ชนะ · WINNER text stamp.
                   Semantic green only — never the brand accent; text-only stamp. */}
+              {undecided && (
+                /* เสมอ / ยังไม่มีคะแนน — hero ไม่ขึ้นเพราะไม่มีผู้ชนะ ต้องบอกเหตุผล
+                   ไม่งั้นหน้าดูเหมือนระบบยังนับไม่เสร็จ */
+                <p className="rc-nocall"><span className="rc-th">{undecidedNote}</span></p>
+              )}
               {winner && (
                 <section className="rc-hero" aria-label={singleParty ? "ผลการรับรอง" : "ผู้ชนะการเลือกตั้ง"}>
                   <div className="rc-hero__body">
@@ -627,6 +630,7 @@ export default function ReceiptResults({
            the winning party / verdict at headline scale + the big green ink stamp.
            SEMANTIC GREEN only (theme-independent, never the brand accent); the stamp
            is text-only (no star/diamond marks — owner mark rule). */
+        .rc-res-root .rc-nocall { margin:0 0 14px; padding:12px 14px; border:1px dashed var(--rc-ink2); color:var(--rc-ink2); text-align:center; font-weight:600; }
         .rc-res-root .rc-hero { position:relative; display:grid; grid-template-columns:1fr; gap:16px; align-items:center;
           margin-top:20px; padding:4px 4px 24px; border-bottom:1.5px solid var(--rc-ink); }
         .rc-res-root .rc-hero__body { min-width:0; }
