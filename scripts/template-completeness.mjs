@@ -34,14 +34,13 @@ import { PrismaClient } from "@prisma/client";
 
 const REAL = process.env.REAL === "1";
 const env = {};
-if (REAL) {
+// อ่าน .env เสมอ ไม่ใช่เฉพาะ REAL=1 — preview mode ต้องใช้ ADMIN_JWT_SECRET เซ็น cookie แอดมิน
   for (const l of fs.readFileSync(".env", "utf8").split(/\r?\n/)) {
     const m = l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i);
     if (!m) continue;
     let v = m[2].trim();
     if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
     env[m[1]] = v;
-  }
 }
 const db = REAL ? new PrismaClient() : null;
 
@@ -128,6 +127,25 @@ const rows = [];
 const b = await chromium.launch();
 const cfg0 = REAL ? await db.systemConfig.findUnique({ where: { id: 1 } }) : null;
 const voter = REAL ? await db.user.findFirst({ where: { isVoted: true } }) : null;
+// /template-preview ถูกกั้นด้วย cookie admin_token ตั้งแต่ 2026-09-05 (middleware.js)
+// เพราะหน้านั้น render หน้าเลือกตั้งจริงด้วยข้อมูลจำลอง ปล่อยสาธารณะแล้วนักศึกษาหลงเข้าไป
+// กดจนจบ flow ได้ว่าตัวเองโหวตแล้ว · สคริปต์นี้จึงต้องล็อกอินเองเหมือน admin console
+// ไม่งั้นทุกหน้าจะเด้งไป /admin/login แล้วรายงาน "ไม่มี chrome" ครบ 98/98 ซึ่งดูเหมือน
+// ธีมพังหมด ทั้งที่เป็นแค่ redirect
+//
+// middleware ตรวจแค่ลายเซ็นกับวันหมดอายุ (isValidAdminToken) ไม่ได้แตะ DB — ต่างจาก
+// adminGuard ของ API ที่อ่าน isAdmin ใหม่ทุกครั้ง ตรงนี้จึงไม่ต้องมี user จริงในฐานข้อมูล
+const adminCookie = async () => {
+  const secret = env.ADMIN_JWT_SECRET;
+  if (!secret) throw new Error("ADMIN_JWT_SECRET ไม่มีใน .env — /template-preview ต้องใช้ cookie แอดมิน");
+  const { SignJWT } = await import("jose");
+  const token = await new SignJWT({ sub: "template-gate" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("2h")
+    .sign(new TextEncoder().encode(secret));
+  return [{ name: "admin_token", value: token, url: new URL(BASE).origin }];
+};
+
 const cookieFor = async () => [{
   name: "next-auth.session-token",
   value: await encode({ token: { name: voter.name, email: voter.email, sub: String(voter.id), id: voter.id, studentId: voter.studentId, role: voter.role, isAdmin: voter.isAdmin, isVoted: voter.isVoted, year: voter.year }, secret: env.NEXTAUTH_SECRET }),
@@ -140,6 +158,7 @@ try {
     for (const [w, h] of VPS) {
       const ctx = await b.newContext({ viewport: { width: w, height: h } });
       if (REAL) await ctx.addCookies(await cookieFor());
+      else await ctx.addCookies(await adminCookie());
       const p = await ctx.newPage();
       for (const page of PAGES) {
         let ok = false;
