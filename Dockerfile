@@ -1,6 +1,8 @@
-# Node 20 LTS (Node 18 reached EOL Apr 2025). Next 14.2 supports Node 18.17+/20/22.
-# If you bump this, run `docker build` + a smoke test before deploying.
-FROM node:20-alpine AS base
+# Node 22 LTS. Node 20 went EOL in April 2026 — it stopped getting security
+# patches, which is not a base image to run an election on. Next 15.5 requires
+# Node 18.18+ and supports 20 and 22; 22 is the current LTS with support into 2027.
+# If you bump this, run `docker build` + smoke + e2e before deploying.
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
