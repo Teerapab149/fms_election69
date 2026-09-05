@@ -3,14 +3,18 @@ import { db } from "../../../../../../lib/db";
 import { requireAdmin } from "../../../../../../lib/auth/adminCheck";
 import { getTemplate } from "../../../../../../components/admin/editor/templates";
 
+// Next 15: params ใน route handler เป็น Promise แล้ว ต้อง await ก่อนใช้
+// (ของเดิม `{ params }` แล้วอ่าน params.id ตรง ๆ ได้ เพราะ 14 ส่งเป็น object)
+
 // POST /api/admin/templates/:id/apply — set active template
 export async function POST(request, { params }) {
+  const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const template = await getTemplate(params.id, db);
+  const template = await getTemplate(id, db);
   if (!template) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
@@ -35,7 +39,7 @@ export async function POST(request, { params }) {
 
   const updated = await db.systemConfig.update({
     where: { id: systemConfig.id },
-    data: { activeTemplateId: params.id, pageLayout: structuralLayout }
+    data: { activeTemplateId: id, pageLayout: structuralLayout }
   });
 
   return NextResponse.json({

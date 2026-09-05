@@ -3,14 +3,18 @@ import { db } from "../../../../../lib/db";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
 import { getTemplate, isTemplateEditable, isBuiltInSlug } from "../../../../../components/admin/editor/templates";
 
+// Next 15: params ใน route handler เป็น Promise แล้ว ต้อง await ก่อนใช้
+// (ของเดิม `{ params }` แล้วอ่าน params.id ตรง ๆ ได้ เพราะ 14 ส่งเป็น object)
+
 // GET /api/admin/templates/:id — fetch single template (full data)
 export async function GET(request, { params }) {
+  const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const template = await getTemplate(params.id, db);
+  const template = await getTemplate(id, db);
   if (!template) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
@@ -20,19 +24,20 @@ export async function GET(request, { params }) {
 
 // PUT /api/admin/templates/:id — update editable template
 export async function PUT(request, { params }) {
+  const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  if (isBuiltInSlug(params.id)) {
+  if (isBuiltInSlug(id)) {
     return NextResponse.json(
       { error: "Built-in templates cannot be edited (fork instead)" },
       { status: 403 }
     );
   }
 
-  const template = await getTemplate(params.id, db);
+  const template = await getTemplate(id, db);
   if (!template) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
@@ -58,7 +63,7 @@ export async function PUT(request, { params }) {
 
   try {
     const updated = await db.template.update({
-      where: { slug: params.id },
+      where: { slug: id },
       data: updateData
     });
     return NextResponse.json({ template: updated });
@@ -70,19 +75,20 @@ export async function PUT(request, { params }) {
 
 // DELETE /api/admin/templates/:id
 export async function DELETE(request, { params }) {
+  const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  if (isBuiltInSlug(params.id)) {
+  if (isBuiltInSlug(id)) {
     return NextResponse.json(
       { error: "Built-in templates cannot be deleted" },
       { status: 403 }
     );
   }
 
-  const template = await getTemplate(params.id, db);
+  const template = await getTemplate(id, db);
   if (!template) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 });
   }
@@ -95,7 +101,7 @@ export async function DELETE(request, { params }) {
   }
 
   const systemConfig = await db.systemConfig.findFirst();
-  if (systemConfig?.activeTemplateId === params.id) {
+  if (systemConfig?.activeTemplateId === id) {
     return NextResponse.json(
       { error: "Cannot delete active template. Switch active first." },
       { status: 409 }
@@ -103,7 +109,7 @@ export async function DELETE(request, { params }) {
   }
 
   try {
-    await db.template.delete({ where: { slug: params.id } });
+    await db.template.delete({ where: { slug: id } });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[DELETE /api/admin/templates/:id]", err);
