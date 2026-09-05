@@ -119,7 +119,59 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
 
   // Reset to the home slide only when the LAYOUT family changes — switching colour
   // theme (themeSlug) keeps the current page (no bounce); it re-tints in place.
-  useEffect(() => { setIdx(0); }, [familySlug]);
+  useEffect(() => { setIdx(0); setMounted(new Set([0])); }, [familySlug]);
+
+  // ── ทำไมต้องจำว่าสไลด์ไหน mount แล้ว แทนที่จะคิดจาก idx ทุกครั้ง ────────────────
+  //
+  // ของเดิมส่ง `mounted={Math.abs(i - idx) <= 1}` ให้ทุกสไลด์ แปลว่าทุกครั้งที่กดลูกศร
+  // จะมี iframe ถูก "ทำลายหนึ่งตัว สร้างใหม่หนึ่งตัว" เสมอ — และ iframe แต่ละตัวคือการ
+  // โหลดหน้าเว็บทั้งหน้าแบบ same-origin ซึ่งสคริปต์ของหน้าลูกรันบน main thread เดียวกับปุ่ม
+  //
+  // วัดจากเครื่องเจ้าของจริง (dev server) ตอนกดลูกศรรัว 10 ครั้ง:
+  //   คลิกที่ระบบรับได้ 10 · main thread ค้าง 14 ช่วง รวม 2100ms · นานสุด 480ms
+  //
+  // จุดสำคัญคือ **คลิกไม่เคยหาย** — เบราว์เซอร์รับครบทุกครั้ง setIdx ก็ทำงานจริง แต่ React
+  // วาดจอใหม่ไม่ได้จนกว่างานก้อนนั้นจะจบ ผู้ใช้จึงเห็นว่า "กดไม่ติด" แล้วกดซ้ำ พอ thread ว่าง
+  // คลิกที่ค้างอยู่ถูกประมวลผลพร้อมกันเลย "พุ่งไปหลายหน้า" — สองอาการนี้คือเรื่องเดียวกัน
+  // (บน dev หนักกว่า production เพราะ Next ต้อง compile route ใหม่ทุกครั้งที่ iframe ขอหน้า
+  //  จึงเป็น "บางครั้งเร็ว บางครั้งค้างยาว" ตามว่า route นั้น compile ไว้แล้วหรือยัง)
+  //
+  // แก้สองชั้น:
+  //   ก. mount แล้ว mount เลย ไม่ทำลายทิ้ง — กดย้อนกลับไม่ต้องโหลดใหม่ และไม่มีงาน teardown
+  //   ข. สไลด์ข้างเคียงรอจนสไลด์เลื่อนเสร็จค่อย mount — คลิกกับการสร้าง iframe ไม่แย่ง
+  //      thread กัน จอขยับทันทีที่กด แล้วงานหนักค่อยตามมาทีหลัง
+  const [mounted, setMounted] = useState(() => new Set([0]));
+
+  // ก. สไลด์ที่กำลังดู — รอให้เบราว์เซอร์วาดการเลื่อนเสร็จก่อน แล้วค่อย mount
+  //
+  // ไม่ mount ทันทีในเรนเดอร์เดียวกับที่ idx เปลี่ยน เพราะการสร้าง iframe จะไปกินเวลา
+  // ในเฟรมเดียวกับที่ต้องวาดสไลด์ให้เลื่อน จอเลยนิ่งไปทั้งก้อน (ที่วัดได้คือค้างสูงสุด 480ms)
+  // หน่วง 80ms ให้ transform ได้ออกตัวก่อน — ระหว่างนั้นสไลด์มี spinner กับพื้นสีของธีมคุมอยู่แล้ว
+  //
+  // ผลพลอยได้: กดลูกศรรัวผ่านหลายสไลด์รวดเดียว cleanup จะยกเลิกตัวที่ผ่านไปแล้วให้เอง
+  // เหลือ mount แค่สไลด์ที่หยุดจริง ไม่ต้องโหลด iframe ของทุกสไลด์ที่กวาดผ่าน
+  useEffect(() => {
+    if (mounted.has(idx)) return undefined;
+    const t = setTimeout(() => {
+      setMounted((prev) => (prev.has(idx) ? prev : new Set(prev).add(idx)));
+    }, 80);
+    return () => clearTimeout(t);
+  }, [idx, mounted]);
+
+  // ข. เพื่อนบ้านรอ 600ms — ยาวกว่า transition 520ms ของสไลด์เล็กน้อย
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setMounted((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        for (const i of [idx - 1, idx + 1]) {
+          if (i >= 0 && i < PAGES.length && !next.has(i)) { next.add(i); changed = true; }
+        }
+        return changed ? next : prev;
+      });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [idx]);
   useEffect(() => {
     const el = vpRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
@@ -174,7 +226,7 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
               device={device}
               displayW={displayW}
               isCurrent={i === idx}
-              mounted={Math.abs(i - idx) <= 1}
+              mounted={mounted.has(i)}
               accent={accent}
             />
           ))}
