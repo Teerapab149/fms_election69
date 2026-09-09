@@ -14,3 +14,7 @@ e2e
 test-results
 .specs
 playwright.config.js
+backups
+.agents
+.codex
+.next-*
