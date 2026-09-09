@@ -1,6 +1,7 @@
 // src/components/HomeContent.js
 "use client";
 import { getPath } from "../../utils/basePath";
+import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -44,7 +45,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
     const [isVotedReal, setIsVotedReal] = useState(false);
     const [isCheckingVoted, setIsCheckingVoted] = useState(true);
 
-    const slideshowImages = [getPath("/images/prob/samo49_1.png")];
+    const slideshowImages = [getPath(resolveElectionPosterPath(gc))];
     const isMultiImage = slideshowImages.length > 1;
     const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
 

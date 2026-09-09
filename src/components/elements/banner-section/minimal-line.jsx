@@ -18,8 +18,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { getPath } from "../../../utils/basePath";
+import { DEFAULT_ELECTION_POSTER_PATH } from "../../../utils/electionPoster.mjs";
 
-export default function MinimalLineBanner({ config = {}, resolvedTemplate = null, elementConfigs = null }) {
+export default function MinimalLineBanner({ config = {}, resolvedTemplate = null, elementConfigs = null, posterPath = DEFAULT_ELECTION_POSTER_PATH }) {
   // Dual-channel config read for banner-section.
   const bannerCfg = elementConfigs?.["banner-section"]?.config
     ?? resolvedTemplate?.elements?.["banner-section"]?.config
@@ -37,7 +38,7 @@ export default function MinimalLineBanner({ config = {}, resolvedTemplate = null
 
   // Same slideshow as default — content (the campaign image carousel) is
   // shared by all banner variants. Frame differs; content does not.
-  const slideshowImages = [getPath("/images/prob/samo49_1.png")];
+  const slideshowImages = [getPath(posterPath || DEFAULT_ELECTION_POSTER_PATH)];
   const isMultiImage = slideshowImages.length > 1;
   const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
 
