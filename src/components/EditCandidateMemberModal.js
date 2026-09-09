@@ -221,10 +221,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
             });
             data.append('members', JSON.stringify(membersPayload));
 
-            if (currentMember.imageFile && !isLoading) {
+            if (currentMember.imageFile) {
                 data.append(`member_file_${currentMember.studentId}`, currentMember.imageFile);
             }
-            if (currentMember.modalImageFile && !isLoading) {
+            if (currentMember.modalImageFile) {
                 data.append(`member_modal_file_${currentMember.studentId}`, currentMember.modalImageFile);
             }
 

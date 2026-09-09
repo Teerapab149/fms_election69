@@ -7,6 +7,7 @@ import ConfirmModal from "./ConfirmModal";
 import FormSection from "./FormSection";
 import { SOCIAL_PLATFORMS, normalizeSocial } from "../utils/socialLinks";
 import { buildPartyTheme } from "../utils/partyColors";
+import { normalizeImageUrls } from "../utils/imageUrls";
 
 /** [{title, desc}] → ข้อความบรรทัดละนโยบาย คั่นด้วย "::" (คู่กับ textToPolicyArray ฝั่ง API) */
 function policiesToText(policies) {
@@ -129,30 +130,16 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             setPreviewUrl(candidate.logoUrl || '');
             setSelectedFile(null);
 
-            let initialGroupImages = [];
-            if (Array.isArray(candidate.groupImageUrls)) {
-                initialGroupImages = candidate.groupImageUrls;
-            } else if (candidate.groupImageUrl) {
-                initialGroupImages = [candidate.groupImageUrl];
-            } else if (candidate.groupImageUrls && typeof candidate.groupImageUrls === 'string') {
-                try { initialGroupImages = JSON.parse(candidate.groupImageUrls) } catch (e) { }
-            }
+            const initialGroupImages = normalizeImageUrls(
+                candidate.groupImageUrls || candidate.groupImageUrl
+            );
 
             // Initialize Official (Mobile Hero) Preview
             setOfficialPreview(candidate.officialImageUrl || '');
             setOfficialFile(null);
 
             // Initialize Mobile Hero (Vertical Team) - Multiple
-            let initialMobileHeroImages = [];
-            if (candidate.mobileHeroImage) {
-                if (Array.isArray(candidate.mobileHeroImage)) initialMobileHeroImages = candidate.mobileHeroImage;
-                else if (typeof candidate.mobileHeroImage === 'string') {
-                    try {
-                        const parsed = JSON.parse(candidate.mobileHeroImage);
-                        initialMobileHeroImages = Array.isArray(parsed) ? parsed : [candidate.mobileHeroImage];
-                    } catch (e) { initialMobileHeroImages = [candidate.mobileHeroImage]; }
-                }
-            }
+            const initialMobileHeroImages = normalizeImageUrls(candidate.mobileHeroImage);
             setExistingMobileHeroImages(initialMobileHeroImages);
             setMobileHeroPreviews([]);
             setMobileHeroFiles([]);

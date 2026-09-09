@@ -3,9 +3,27 @@ import { db } from "../../../../lib/db";
 import { optimizeImage } from "../../../../lib/imageOptimize";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
+import { normalizeImageUrls } from "../../../../utils/imageUrls";
+import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
+
+const UPLOAD_STORAGE_ERROR_CODES = new Set(["EACCES", "EPERM", "EROFS"]);
+
+function uploadStorageErrorResponse(error) {
+  const code = error?.code || error?.cause?.code;
+  const message = String(error?.message || "");
+  const isStorageError = UPLOAD_STORAGE_ERROR_CODES.has(code)
+    || /permission denied|read-only file system/i.test(message);
+
+  if (!isStorageError) return null;
+
+  return NextResponse.json({
+    error: "พื้นที่เก็บรูปบนเซิร์ฟเวอร์เขียนไม่ได้ กรุณาให้ผู้ดูแลตรวจ ownership ของ public/images และโฟลเดอร์ย่อย",
+    code: "UPLOAD_STORAGE_NOT_WRITABLE",
+  }, { status: 507 });
+}
 
 /**
  * ลบ folder ถ้ามันว่างเปล่า
@@ -341,6 +359,7 @@ export async function PUT(req) {
     const formData = await req.formData();
 
     const dataToUpdate = {};
+    let partyNumberChanged = false;
 
     if (formData.has("name")) dataToUpdate.name = formData.get("name");
     if (formData.has("number")) {
@@ -354,6 +373,7 @@ export async function PUT(req) {
       if (existing && existing.number !== nextNumber) {
         const blocked = await ballotBoxGuard("เปลี่ยนหมายเลขพรรค");
         if (blocked) return blocked;
+        partyNumberChanged = true;
       }
       dataToUpdate.number = nextNumber;
     }
@@ -403,22 +423,14 @@ export async function PUT(req) {
       select: { mobileHeroImage: true }
     });
 
-    let oldMobileHeroImages = [];
-    if (existingCandidateData?.mobileHeroImage) {
-      if (Array.isArray(existingCandidateData.mobileHeroImage)) oldMobileHeroImages = existingCandidateData.mobileHeroImage;
-      else if (typeof existingCandidateData.mobileHeroImage === 'string') {
-        try { oldMobileHeroImages = JSON.parse(existingCandidateData.mobileHeroImage) } catch (e) { oldMobileHeroImages = [existingCandidateData.mobileHeroImage] }
-      }
-    }
-    if (!Array.isArray(oldMobileHeroImages)) oldMobileHeroImages = [];
+    const oldMobileHeroImages = normalizeImageUrls(existingCandidateData?.mobileHeroImage);
 
     const existingMobileHeroImagesJson = formData.get("existingMobileHeroImages");
     let finalMobileHeroImages = [];
 
     if (existingMobileHeroImagesJson !== null) {
       try {
-        finalMobileHeroImages = JSON.parse(existingMobileHeroImagesJson);
-        if (!Array.isArray(finalMobileHeroImages)) finalMobileHeroImages = [];
+        finalMobileHeroImages = normalizeImageUrls(JSON.parse(existingMobileHeroImagesJson));
       } catch (e) { finalMobileHeroImages = []; }
     } else {
       finalMobileHeroImages = [...oldMobileHeroImages];
@@ -430,7 +442,7 @@ export async function PUT(req) {
     if (validMobileHeroFiles.length > 0) {
       const currentName = dataToUpdate.name || "candidate_update";
       const newMobileHeroUrls = await uploadMultipleMobileHeroImages(validMobileHeroFiles, currentName, id);
-      finalMobileHeroImages = [...finalMobileHeroImages, ...newMobileHeroUrls];
+      finalMobileHeroImages = normalizeImageUrls([...finalMobileHeroImages, ...newMobileHeroUrls]);
     }
 
     // Cleanup removed Mobile Hero images
@@ -454,13 +466,11 @@ export async function PUT(req) {
       where: { id: parseInt(id) },
       select: { groupImageUrls: true }
     });
-    let oldGroupImages = existingCandidate?.groupImageUrls || [];
-    if (!Array.isArray(oldGroupImages)) oldGroupImages = oldGroupImages ? [oldGroupImages] : [];
+    const oldGroupImages = normalizeImageUrls(existingCandidate?.groupImageUrls);
 
     if (existingGroupImagesJson !== null) {
       try {
-        finalGroupImages = JSON.parse(existingGroupImagesJson);
-        if (!Array.isArray(finalGroupImages)) finalGroupImages = [];
+        finalGroupImages = normalizeImageUrls(JSON.parse(existingGroupImagesJson));
       } catch (e) {
         finalGroupImages = [];
       }
@@ -475,7 +485,7 @@ export async function PUT(req) {
       const currentName = dataToUpdate.name || "candidate_update";
       const newUrls = await uploadMultipleGroupImages(validGroupFiles, currentName, id);
 
-      finalGroupImages = [...finalGroupImages, ...newUrls];
+      finalGroupImages = normalizeImageUrls([...finalGroupImages, ...newUrls]);
     }
 
     // หารูปที่ถูกลบออก (อยู่ใน old แต่ไม่อยู่ใน new) และลบไฟล์จริง
@@ -541,6 +551,10 @@ export async function PUT(req) {
         include: { members: true }
       });
 
+      if (partyNumberChanged) {
+        await syncCandidateSpecialOptions(tx);
+      }
+
       return candidate;
     });
 
@@ -550,7 +564,9 @@ export async function PUT(req) {
     console.error("🔥 Error:", error);
     if (error.code === 'UNSUPPORTED_IMAGE') return NextResponse.json({ error: error.message }, { status: 400 });
     if (error.code === 'P2002') return NextResponse.json({ error: "เลขพรรคหรือรหัสนักศึกษาซ้ำ" }, { status: 400 });
-    return NextResponse.json({ error: "Failed to update", detail: error }, { status: 500 });
+    const storageError = uploadStorageErrorResponse(error);
+    if (storageError) return storageError;
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }
 
@@ -602,26 +618,31 @@ export async function POST(req) {
       };
     }));
 
-    let newCandidate = await db.candidate.create({
-      data: {
-        name,
-        number,
-        slogan,
-        color,
-        logoUrl,
-        officialImageUrl,
-        mobileHeroImage,
-        groupImageUrls: [],
-        logoMeaning,
-        missions,
-        policies,
-        socials,
-        score: 0,
-        members: {
-          create: membersDataToCreate
-        }
-      },
-      include: { members: true }
+    let newCandidate = await db.$transaction(async (tx) => {
+      const candidate = await tx.candidate.create({
+        data: {
+          name,
+          number,
+          slogan,
+          color,
+          logoUrl,
+          officialImageUrl,
+          mobileHeroImage,
+          groupImageUrls: [],
+          logoMeaning,
+          missions,
+          policies,
+          socials,
+          score: 0,
+          members: {
+            create: membersDataToCreate
+          }
+        },
+        include: { members: true }
+      });
+
+      await syncCandidateSpecialOptions(tx);
+      return candidate;
     });
 
     // Upload Mobile Hero Images (Files)
@@ -659,6 +680,8 @@ export async function POST(req) {
     console.error("🔥 Error:", error);
     if (error.code === 'UNSUPPORTED_IMAGE') return NextResponse.json({ error: error.message }, { status: 400 });
     if (error.code === 'P2002') return NextResponse.json({ error: "เลขพรรคหรือรหัสนักศึกษาซ้ำ" }, { status: 400 });
+    const storageError = uploadStorageErrorResponse(error);
+    if (storageError) return storageError;
     return NextResponse.json({ error: "Failed to create" }, { status: 500 });
   }
 }
@@ -695,6 +718,8 @@ export async function DELETE(req) {
       await tx.candidate.delete({
         where: { id: target_id }
       });
+
+      await syncCandidateSpecialOptions(tx);
     });
 
     // 2. ลบไฟล์ออกจากเครื่อง (ทำหลังจากลบ DB สำเร็จแล้ว)
@@ -706,30 +731,16 @@ export async function DELETE(req) {
       if (candidateToDelete.officialImageUrl) imagesToDelete.push(candidateToDelete.officialImageUrl);
 
       // Mobile Hero Image
-      if (candidateToDelete.mobileHeroImage) {
-        if (Array.isArray(candidateToDelete.mobileHeroImage)) {
-          imagesToDelete.push(...candidateToDelete.mobileHeroImage);
-        } else if (typeof candidateToDelete.mobileHeroImage === 'string') {
-          // Handle case where it might be a JSON string or direct string
-          try {
-            const parsed = JSON.parse(candidateToDelete.mobileHeroImage);
-            if (Array.isArray(parsed)) imagesToDelete.push(...parsed);
-            else imagesToDelete.push(parsed);
-          } catch (e) {
-            imagesToDelete.push(candidateToDelete.mobileHeroImage);
-          }
-        }
-      }
+      imagesToDelete.push(...normalizeImageUrls(candidateToDelete.mobileHeroImage));
 
       // Group Images
-      if (Array.isArray(candidateToDelete.groupImageUrls)) {
-        imagesToDelete.push(...candidateToDelete.groupImageUrls);
-      }
+      imagesToDelete.push(...normalizeImageUrls(candidateToDelete.groupImageUrls));
 
       // Members Images
       if (candidateToDelete.members) {
         candidateToDelete.members.forEach(m => {
           if (m.imageUrl) imagesToDelete.push(m.imageUrl);
+          if (m.modalImageUrl) imagesToDelete.push(m.modalImageUrl);
         });
       }
 
