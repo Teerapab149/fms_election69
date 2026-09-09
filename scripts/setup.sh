@@ -199,15 +199,36 @@ step "6.5 สิทธิ์เขียนรูปที่อัปโหล�
 # รันด้วยผู้ใช้ nextjs (uid 1001) ตาม Dockerfile · บน Linux สิทธิ์ของโฟลเดอร์บนโฮสต์คือ
 # ของจริง ถ้าโฟลเดอร์เป็นของ root หรือของผู้ใช้ที่ deploy uid 1001 จะเขียนไม่ได้เลย
 #
-# อาการที่เจอคือ "อัปโหลดรูปพรรคไม่ได้" ตอนกรรมการกำลังกรอกข้อมูลก่อนเลือกตั้ง ซึ่งไล่ยาก
-# มากเพราะทุกอย่างอื่นทำงานปกติ · และบน Docker Desktop (Windows/macOS) จะไม่มีวันเจอ
-# เพราะมันปลอมสิทธิ์ให้ผ่านหมด — ทดสอบบนเครื่อง dev แล้วผ่าน แต่ขึ้นเซิร์ฟเวอร์จริงพัง
+# ต้องตรวจทุกโฟลเดอร์ย่อย ไม่ใช่แค่ mount root: โฟลเดอร์สมาชิกเดิมอาจเขียนได้ แต่
+# candidates/groupimage หรือ Modal เป็นของ root ทำให้บางช่องอัปโหลดผ่าน บางช่องล้มเหลว
+# และบน Docker Desktop (Windows/macOS) มักไม่เห็นอาการเดียวกับ Linux production
 if [ "$CHECK_ONLY" = "1" ] || [ "$HAS_DOCKER" = "0" ]; then
   warn "ข้ามการตรวจสิทธิ์ (ไม่ได้เปิดคอนเทนเนอร์)"
-elif docker compose -f "$COMPOSE_FILE" exec -T web sh -c 'touch /app/public/images/.wtest && rm -f /app/public/images/.wtest' >/dev/null 2>&1; then
-  ok "คอนเทนเนอร์เขียนไฟล์ลง public/images ได้"
+elif docker compose -f "$COMPOSE_FILE" exec -T web sh -c '
+  set -eu
+  image_root=/app/public/images
+  mkdir -p \
+    "$image_root/candidates/logo" \
+    "$image_root/candidates/officialImageUrl" \
+    "$image_root/candidates/mobileheroimage" \
+    "$image_root/candidates/groupimage" \
+    "$image_root/members"
+  for tree in "$image_root/candidates" "$image_root/members"; do
+    find "$tree" -type d -print | while IFS= read -r dir; do
+      touch "$dir/.wtest"
+      rm -f "$dir/.wtest"
+    done
+  done
+  probe="$image_root/.upload-write-probe"
+  mkdir -p "$probe/candidates/groupimage/party-test" "$probe/members/party_test/Modal"
+  touch "$probe/candidates/groupimage/party-test/.wtest" "$probe/members/party_test/Modal/.wtest"
+  rm -f "$probe/candidates/groupimage/party-test/.wtest" "$probe/members/party_test/Modal/.wtest"
+  rmdir "$probe/candidates/groupimage/party-test" "$probe/candidates/groupimage" "$probe/candidates"
+  rmdir "$probe/members/party_test/Modal" "$probe/members/party_test" "$probe/members" "$probe"
+' >/dev/null 2>&1; then
+  ok "คอนเทนเนอร์เขียน public/images และโฟลเดอร์อัปโหลดทุกระดับได้"
 else
-  bad "คอนเทนเนอร์เขียนลง public/images ไม่ได้ — อัปโหลดรูปพรรค/สมาชิกจะล้มเหลวทั้งหมด"
+  bad "มีโฟลเดอร์ใต้ public/images ที่คอนเทนเนอร์เขียนไม่ได้ — บางช่องอาจผ่าน แต่รูปพรรค/Modal ล้มเหลว"
   printf '  แก้ที่เครื่องนี้ (ให้ uid ที่แอปใช้เป็นเจ้าของโฟลเดอร์):
 '
   printf '    sudo chown -R 1001 public/images

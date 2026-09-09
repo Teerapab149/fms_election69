@@ -327,29 +327,21 @@ export default function FmsOfficialHome({
         </div>
       </section>
 
-      {/* ── ANNOUNCEMENT BANNER ──
-          Renders ONLY when staff have uploaded a poster for this year
-          (globalConfig.electionBannerUrl, set from the admin general-settings
-          tab). The section used to point at a checked-in file whose artwork read
-          "วันศุกร์ที่ 6 กุมภาพันธ์ 2569" — a previous year's polling date, on the
-          faculty's own site, unfixable from admin. An absent section is honest;
-          a confidently wrong date is not. */}
-      {meta.bannerUrl && (
-        <Wrap id="banner-section">
-          <section className="fo-sec">
-            <div className="fo-sec__in">
-              <div className="fo-sechead">
-                <h2>ประชาสัมพันธ์</h2>
-                <p>ภาพประกาศการเลือกตั้งประจำปีการศึกษา {meta.ay}</p>
-              </div>
-              <figure className="fo-banner">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={getPath(meta.bannerUrl)} alt={`ประกาศ${meta.campaign} ประจำปีการศึกษา ${meta.ay}`} />
-              </figure>
+      {/* ── ANNOUNCEMENT BANNER ── */}
+      <Wrap id="banner-section">
+        <section className="fo-sec">
+          <div className="fo-sec__in">
+            <div className="fo-sechead">
+              <h2>ประชาสัมพันธ์</h2>
+              <p>ภาพประกาศการเลือกตั้งประจำปีการศึกษา {meta.ay}</p>
             </div>
-          </section>
-        </Wrap>
-      )}
+            <figure className="fo-banner">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={getPath(meta.bannerUrl)} alt={`ประกาศ${meta.campaign} ประจำปีการศึกษา ${meta.ay}`} />
+            </figure>
+          </div>
+        </section>
+      </Wrap>
 
       {/* ── CANDIDATES CTA ── */}
       <Wrap id="meet-section">

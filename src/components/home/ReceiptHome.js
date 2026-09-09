@@ -31,6 +31,7 @@
 // Latin/digits only (A10.3); Thai always sits in a Chakra span.
 
 import { getPath } from "../../utils/basePath";
+import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { ReceiptBaseStyles, RC_SHIP_PATHS } from "./ReceiptTheme";
@@ -352,7 +353,7 @@ export default function ReceiptHome({
   const ctaHref = editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/");
 
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
-  const posterSrc = getPath("/images/prob/samo49_1.png");
+  const posterSrc = getPath(resolveElectionPosterPath(globalConfig));
 
   // ── one discriminator (cd.kind) drives every consumer below — no fragile label
   //    string-matching (F5 lockstep). Booleans read straight off it. ──
@@ -698,11 +699,9 @@ export default function ReceiptHome({
         .rc-home-root { --rc-stamp-red:#B91C1C;
           /* SEMANTIC dispenser-LED colours — locked across every theme (A8.1) */
           --rc-led-open:#16A34A; --rc-led-wait:#E0A200; --rc-led-closed:#C0403A;
-          /* clip, NOT hidden: hidden forces overflow-y to auto → this root becomes the
-             scroll container and every sticky child pins to it instead of the viewport.
-             Measured with hidden @1440x860: .rc-topbar 0→-248 and .rc-rail 96→-152 at
-             scrollY 248 — neither ever pinned. clip clips identically without making a
-             scroll container; xo measured 0 on every receipt page × 4 viewports × 4 themes. */
+          /* clip, NOT hidden: hidden forces overflow-y to auto and makes this root an
+             unexpected scroll container. clip prevents horizontal overflow without
+             changing the page's vertical scrolling behavior. */
           overflow-x:clip; }
 
         :where(.rc-home-root) a { text-decoration:none; color:var(--rc-ink); }
@@ -1279,7 +1278,7 @@ export default function ReceiptHome({
 
         /* ================= DESKTOP : 2×2 desk — hero + turnout LEFT, rail + poster RIGHT =====
            a 2-column grid. row 1: the paper-stack hero + CTA action row (LEFT ~57%) +
-           the sticky rail (clock + short note) pulled slightly OVER the hero's right
+           the rail (clock + short note) pulled slightly OVER the hero's right
            edge. row 2: the TURNOUT slip docks bottom-LEFT (under the hero) and the poster
            docks bottom-RIGHT (under the rail) — a balanced bottom band with tighter
            row-gap. The card is capped so the rail overlap lands on empty desk, never on
@@ -1292,7 +1291,7 @@ export default function ReceiptHome({
           .rc-home-root .rc-hero { grid-column:1; grid-row:1; }
           .rc-home-root .rc-stack { max-width:480px; margin-left:0; margin-right:0; }
           .rc-home-root .rc-actions { margin-left:0; margin-right:0; max-width:480px; }
-          .rc-home-root .rc-rail { grid-column:2; grid-row:1; position:sticky; top:84px;
+          .rc-home-root .rc-rail { grid-column:2; grid-row:1;
             margin:6px 0 0 -28px; gap:clamp(20px, 3vh, 34px); }
           .rc-home-root .rc-note { max-width:none; }
           /* the desk note follows the hero card's 480px measure, not the full column —

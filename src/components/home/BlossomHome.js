@@ -18,6 +18,7 @@
 // so a theme swap re-tints the whole page in place.
 
 import { getPath } from "../../utils/basePath";
+import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { BlossomBaseStyles } from "./BlossomTheme";
@@ -327,11 +328,7 @@ export default function BlossomHome({
   };
 
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
-  // Admin-set poster wins; the checked-in file stays as the fallback so this
-  // change cannot alter what blossom renders today. (The fallback artwork is
-  // year-locked — set electionBannerUrl in the admin general settings to replace
-  // it rather than shipping a new file each year.)
-  const bannerSrc = getPath(globalConfig?.electionBannerUrl?.trim() || "/images/prob/samo49_1.png");
+  const bannerSrc = getPath(resolveElectionPosterPath(globalConfig));
   const pad2 = (n) => String(n).padStart(2, "0");
 
   // ── ring textPath string (skip empty config parts) ──

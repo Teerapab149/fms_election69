@@ -13,9 +13,13 @@
 // inline-override behaviour all live in the variant file (default.jsx).
 
 import { getBannerVariant } from "../elements/banner-section";
+import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 
 export default function ElectionBannerBlock(props) {
+  const globalConfig = useGlobalConfig();
   const variantId = props?.resolvedTemplate?.elements?.["banner-section"]?.variant || "default";
   const VariantComponent = getBannerVariant(variantId);
-  return <VariantComponent {...props} />;
+  const posterPath = resolveElectionPosterPath(globalConfig);
+  return <VariantComponent {...props} posterPath={posterPath} />;
 }

@@ -24,6 +24,7 @@ import { useState, useEffect, useRef } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { LogIn, Power } from "lucide-react";
 import { getPath } from "../../utils/basePath";
+import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { FMS_OFFICIAL, FMS_OFFICIAL_THEMES, fmsOfficialTheme } from "../../utils/fmsOfficialPalette";
 
@@ -80,12 +81,7 @@ export function fmsMeta(gc = {}) {
     // purpose; the footer is the one place that must use it (every other family
     // already does).
     copyrightYear: String(gc.copyrightYear ?? gc.electionCalendarYear ?? 2026),
-    // Empty on purpose when unset — no poster beats a stale one. There is NO
-    // hardcoded fallback here (unlike classic/blossom, which keep theirs so this
-    // change cannot alter what they render today): the shipped default carried
-    // last year's polling date, and the whole point of the field is that the
-    // faculty stops publishing a wrong date it cannot edit.
-    bannerUrl: (gc.electionBannerUrl || "").trim(),
+    bannerUrl: resolveElectionPosterPath(gc),
     systemName: "ระบบเลือกตั้งออนไลน์",
   };
 }

@@ -1,0 +1,38 @@
+# Completely separate disposable DB; never reads the project's .env.
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: isolated-lab-only
+      POSTGRES_DB: nginx_lab
+    ports:
+      - "127.0.0.1:5439:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d nginx_lab"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+  web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      NEXTAUTH_URL: http://localhost:8182
+      NEXTAUTH_SECRET: isolated-nginx-lab-session-secret-not-for-deployment
+      ADMIN_JWT_SECRET: isolated-nginx-lab-admin-secret-not-for-deployment
+      DATABASE_URL: postgresql://lab:isolated-lab-only@db:5432/nginx_lab
+    depends_on:
+      db:
+        condition: service_healthy
+  nginx:
+    image: nginx:stable-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+    ports:
+      - "127.0.0.1:8182:8080"
+    volumes:
+      - ./production.conf:/etc/nginx/nginx.conf:ro
+      - ../../deploy/nginx/auth-proxy-buffers.conf:/etc/nginx/snippets/auth-proxy-buffers.conf:ro
+    depends_on:
+      - web

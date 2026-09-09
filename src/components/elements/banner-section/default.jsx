@@ -13,6 +13,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { getPath } from "../../../utils/basePath";
+import { DEFAULT_ELECTION_POSTER_PATH } from "../../../utils/electionPoster.mjs";
 import { RADIUS_MAP } from "../../../utils/styleMaps";
 
 // Build inline frame style from a (flat, non-stateful) banner-section config.
@@ -35,14 +36,14 @@ function buildBannerStyle(cfg) {
   return style;
 }
 
-export default function DefaultBanner({ config = {}, resolvedTemplate = null, elementConfigs = null }) {
+export default function DefaultBanner({ config = {}, resolvedTemplate = null, elementConfigs = null, posterPath = DEFAULT_ELECTION_POSTER_PATH }) {
   // Dual-channel config read for banner-section (non-stateful flat config).
   const bannerCfg = elementConfigs?.["banner-section"]?.config
     ?? resolvedTemplate?.elements?.["banner-section"]?.config
     ?? null;
   const hasOverride = !!bannerCfg && Object.keys(bannerCfg).length > 0;
   const frameStyle = hasOverride ? buildBannerStyle(bannerCfg) : undefined;
-  const slideshowImages = [getPath("/images/prob/samo49_1.png")];
+  const slideshowImages = [getPath(posterPath || DEFAULT_ELECTION_POSTER_PATH)];
   const isMultiImage = slideshowImages.length > 1;
   const extendedImages = isMultiImage ? [...slideshowImages, slideshowImages[0]] : slideshowImages;
 

@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import {
   Save, Loader2, CheckCircle2, RotateCcw, Eye,
   Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2, Link,
-  Image as ImageIcon, Upload, Trash2, AlertCircle,
+  Image as ImageIcon, Upload, AlertCircle,
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { getPath } from "../../utils/basePath";
+import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 
@@ -24,6 +25,8 @@ function ImageField({ value, onChange }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const hasCustomPoster = Boolean(String(value ?? "").trim());
+  const posterSrc = getPath(resolveElectionPosterPath({ electionBannerUrl: value }));
 
   const pick = async (e) => {
     const file = e.target.files?.[0];
@@ -49,16 +52,12 @@ function ImageField({ value, onChange }) {
 
   return (
     <div>
-      {value ? (
-        <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={getPath(value)} alt="โปสเตอร์ประชาสัมพันธ์ที่ตั้งไว้" className="w-full h-auto block" />
-        </div>
-      ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-          <ImageIcon className="w-6 h-6 text-slate-300 mx-auto mb-2" />
-          <p className="text-xs text-slate-500">ยังไม่ได้ตั้งโปสเตอร์ — หน้าแรกจะไม่แสดงส่วนประชาสัมพันธ์</p>
-        </div>
+      <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={posterSrc} alt={hasCustomPoster ? "โปสเตอร์ประชาสัมพันธ์ที่ตั้งไว้" : "โปสเตอร์ประชาสัมพันธ์เริ่มต้น"} className="w-full h-auto block" />
+      </div>
+      {!hasCustomPoster && (
+        <p className="text-xs text-slate-500 mt-2">กำลังใช้โปสเตอร์เริ่มต้น — อัปโหลดรูปใหม่เพื่อเปลี่ยนโปสเตอร์ในทุก template ที่แสดงภาพประชาสัมพันธ์</p>
       )}
 
       <div className="flex items-center gap-2 mt-2">
@@ -69,14 +68,14 @@ function ImageField({ value, onChange }) {
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#8A2680] hover:bg-[#6E1F67] disabled:bg-slate-300 text-white text-xs font-bold transition-colors"
         >
           {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-          {value ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
+          {hasCustomPoster ? "เปลี่ยนรูป" : "อัปโหลดรูปใหม่"}
         </button>
-        {value && (
+        {hasCustomPoster && (
           <button
             type="button" onClick={() => onChange("")}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:text-red-600 text-slate-500 text-xs font-bold transition-colors"
           >
-            <Trash2 className="w-3.5 h-3.5" /> เอาออก
+            <RotateCcw className="w-3.5 h-3.5" /> ใช้ภาพเริ่มต้น
           </button>
         )}
       </div>
@@ -213,17 +212,23 @@ export default function GlobalConfigTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ globalConfig: payload }),
       });
-      if (!res.ok) throw new Error("Save failed");
-      replaceConfig(payload);
-      setConfig(payload);
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("เซสชันผู้ดูแลหมดอายุหรือยังไม่ได้เข้าสู่ระบบ กรุณาเข้าสู่ระบบผู้ดูแลในแท็บใหม่ แล้วกลับมากดบันทึกอีกครั้ง ข้อมูลที่แก้ไขยังอยู่ในฟอร์มนี้");
+        }
+        throw new Error(result.error || `บันทึกไม่สำเร็จ (HTTP ${res.status})`);
+      }
+      const savedConfig = result.globalConfig || payload;
+      replaceConfig(savedConfig);
+      setConfig(savedConfig);
       derivedFromRef.current = {
         prefix: payload.electionNamePrefix,
         number: payload.electionNumber,
       };
       setSavedAt(new Date());
     } catch (e) {
-      console.error(e);
-      setError("บันทึกไม่สำเร็จ");
+      setError(e.message || "บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
       setSaving(false);
     }
@@ -371,6 +376,14 @@ export default function GlobalConfigTab() {
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
+          <a
+            href={getPath("/admin/login")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-2 underline font-medium"
+          >
+            เปิดหน้าเข้าสู่ระบบผู้ดูแลในแท็บใหม่
+          </a>
         </div>
       )}
 

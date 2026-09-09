@@ -1,33 +1,26 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { db } from '../../../lib/db';
+import { normalizeImageUrls } from '../../../utils/imageUrls';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id'); 
+    const id = Number.parseInt(searchParams.get('id'), 10);
 
-    if (!id) return NextResponse.json({ images: [] });
-
-    const folderName = `party${id}`;
-    
-    const directoryPath = path.join(
-      process.cwd(), 
-      'public', 'images', 'candidates', 'groupimage', folderName
-    );
-
-    // 2. เช็คว่ามีโฟลเดอร์นี้ไหม
-    if (!fs.existsSync(directoryPath)) {
+    if (!Number.isInteger(id) || id <= 0) {
       return NextResponse.json({ images: [] });
     }
 
-    // 3. อ่านไฟล์และสร้าง URL กลับไป
-    const files = fs.readdirSync(directoryPath);
-    const images = files
-      .filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file))
-      .map(file => `/images/candidates/groupimage/${folderName}/${file}`); // ⚠️ URL สำหรับหน้าเว็บต้องไม่มีคำว่า public
+    // DB is the source of truth for both visibility and order. Candidate IDs
+    // (and therefore party{id} folders) can be reused after a reset, so scanning
+    // the directory leaks orphaned files from an older candidate into Gallery.
+    const candidate = await db.candidate.findUnique({
+      where: { id },
+      select: { groupImageUrls: true },
+    });
+    const images = normalizeImageUrls(candidate?.groupImageUrls);
 
     return NextResponse.json({ images });
     
