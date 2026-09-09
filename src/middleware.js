@@ -1,6 +1,7 @@
 // src/middleware.js
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
+import { buildAdminRedirectUrl } from './lib/auth/adminRedirectUrl.mjs';
 
 // Edge-runtime JWT verification of the admin_token cookie (issued by
 // /api/admin/login via jsonwebtoken HS256 with ADMIN_JWT_SECRET). `jose` is used
@@ -37,6 +38,7 @@ export async function middleware(request) {
   const isLoginPage = path === '/admin/login';
   const isAdminTool = ADMIN_TOOL_PAGES.some((p) => path === p || path.startsWith(`${p}/`));
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
+  const adminUrl = (pathname) => buildAdminRedirectUrl(pathname, request.url);
 
   // /compose-lab คือ sandbox ของ Layer-2 Composition Editor ไม่มีใครในระบบลิงก์ถึง
   // และไม่ใช่เครื่องมือที่เจ้าหน้าที่ต้องใช้ → ปิดตายบน production ไปเลย ไม่ต้องมี
@@ -51,21 +53,21 @@ export async function middleware(request) {
 
   // 🛡️ Rule 1: entering /admin without a VALID token → bounce to login
   if (isAdminPage && !isLoginPage && !valid) {
-    const res = NextResponse.redirect(new URL(`${basePath}/admin/login`, request.url));
+    const res = NextResponse.redirect(adminUrl('/admin/login'));
     if (token) res.cookies.delete('admin_token'); // clear stale/forged cookie
     return res;
   }
 
   // 🛡️ Rule 3: หน้าเครื่องมือแอดมินนอก /admin — ด่านเดียวกัน คนนอกเด้งไปหน้าล็อกอิน
   if (isAdminTool && !valid) {
-    const res = NextResponse.redirect(new URL(`${basePath}/admin/login`, request.url));
+    const res = NextResponse.redirect(adminUrl('/admin/login'));
     if (token) res.cookies.delete('admin_token');
     return res;
   }
 
   // 🛡️ Rule 2: already validly logged in but hitting the login page → go to admin
   if (isLoginPage && valid) {
-    return NextResponse.redirect(new URL(`${basePath}/admin`, request.url));
+    return NextResponse.redirect(adminUrl('/admin'));
   }
 }
 
