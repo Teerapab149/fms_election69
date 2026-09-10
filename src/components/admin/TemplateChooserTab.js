@@ -19,7 +19,7 @@ import {
   Monitor, Laptop, Tablet, Smartphone,
 } from "lucide-react";
 import { getPath } from "../../utils/basePath";
-import { injectTemplateTheme } from "../../utils/injectTemplateTheme";
+import { injectTemplateTheme, injectTemplateThemeOnReady } from "../../utils/injectTemplateTheme";
 
 // Device viewports — each previews the page at its TRUE width (the iframe is a real
 // viewport, so the page reflows) then scales the frame down to fit the column.
@@ -94,7 +94,7 @@ function BrowserSlide({ familySlug, themeSlug, slide, device, displayW, isCurren
                 key={src}
                 src={src}
                 title={slide.label}
-                onLoad={() => { injectTemplateTheme(iframeRef.current?.contentDocument, themeSlug); setTimeout(() => setLoaded(true), 220); }}
+                onLoad={() => { injectTemplateThemeOnReady(iframeRef.current, themeSlug); setTimeout(() => setLoaded(true), 220); }}
                 scrolling="no"
                 style={{ width: device.w, height: device.h, border: 0, transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none", opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
               />

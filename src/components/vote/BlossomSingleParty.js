@@ -17,7 +17,7 @@
 //
 // Dispatched from BlossomVote when isSingleParty. Pure presentation: vote/page.js
 // owns auth + the vote-system hook; onConfirm() IS the submit (single-party has no
-// shared VoteConfirmationModal — the confirm dialog here calls onConfirm directly,
+// shared VoteConfirm sheet — the confirm dialog here calls onConfirm directly,
 // the same contract as GumroadSingleParty / VerdureSingleParty). Colours flow ONLY
 // through var(--bl-*) emitted by BlossomBaseStyles on .bl-root; the chrome (topbar +
 // footer + blobs + dot-grid) mirrors the rest of the family. Calm rules match the

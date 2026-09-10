@@ -13,12 +13,12 @@
 //     SOLID diamond marker (geometry only — no check icons)
 //   • งดออกเสียง (abstain) renders as a quieter row that KEEPS its semantic ORANGE
 //     coding (the same ส้ม family as the classic MultiPartyView / the shared
-//     VoteConfirmationModal) — this is a semantic vote colour, deliberately NOT
+//     VoteConfirm) — this is a semantic vote colour, deliberately NOT
 //     repainted into candy. ไม่รับรอง (disapprove, number = -1) is a single-party-
 //     only choice (project convention) and is never rendered in the multi ballot,
 //     matching MultiPartyView / VerdureVote.
 //   • a fixed confirm bar in Blossom chrome shows the current selection + a confirm
-//     button → onConfirm() (opens the SHARED VoteConfirmationModal owned by
+//     button → onConfirm() (opens the SHARED VoteConfirm sheet owned by
 //     vote/page.js — its markup/semantics are untouched here)
 //
 // SINGLE-PARTY (T3.3): when only one party stands, BlossomVote dispatches to
@@ -28,7 +28,7 @@
 // submit for single, or the shared-modal opener for multi.
 //
 // Pure presentation: vote/page.js owns auth, the vote-system hook, PartyDetailModal
-// + VoteConfirmationModal + the submit/redirect flow. Colours flow ONLY through
+// + VoteConfirm + the submit/redirect flow. Colours flow ONLY through
 // var(--bl-*) emitted by BlossomBaseStyles on .bl-root (the one exception is the
 // abstain row's semantic orange, above). The chrome (topbar + footer + blobs +
 // dot-grid) mirrors BlossomHome byte-for-byte (only one Blossom page renders at a
@@ -523,7 +523,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-vopt__more:hover svg { transform:translateX(3px); }
 
         /* งดออกเสียง — quieter row, KEEPS its semantic ORANGE coding (ส้ม family,
-           mirrors classic MultiPartyView + shared VoteConfirmationModal). These
+           mirrors classic MultiPartyView + shared VoteConfirm sheet). These
            oranges are semantic vote colours, deliberately NOT var(--bl-*) candy. */
         .bl-vote-root .bl-vopt--abstain .bl-vopt__idx,
         .bl-vote-root .bl-vopt--abstain .bl-vopt__logo-ph { color:#ea580c; }

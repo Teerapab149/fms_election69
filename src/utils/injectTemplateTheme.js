@@ -30,6 +30,31 @@ export function injectTemplateTheme(doc, themeSlug) {
   else if (themeSlug.startsWith("receipt")) injectReceipt(doc, themeSlug);
 }
 
+// Same injection, but held until the embedded preview has HYDRATED.
+//
+// Every branch below writes the palette as inline `style` on `.fms-app` (and on
+// the family root). Called from an iframe's `load` handler that is too early:
+// `load` only means the document and its subresources finished, while React
+// inside the frame hydrates a tick or more later. Hydration then compares its own
+// render against a DOM that already carries a `style` attribute nobody rendered,
+// and logs "A tree hydrated but some attributes of the server rendered HTML
+// didn't match" — pointing at whichever `.fms-app` element is the page root
+// (OriginalSuccess's <main> is one).
+//
+// /template-preview raises `fms-preview-hydrated` on its own window once mounted
+// (see PreviewHydrationBeacon there). The timeout is for any other document that
+// never raises it — it still gets tinted, just as before.
+export function injectTemplateThemeOnReady(frame, themeSlug) {
+  const win = frame?.contentWindow;
+  if (!win || !themeSlug) return;
+  const run = () => injectTemplateTheme(frame.contentDocument, themeSlug);
+  if (win.__fmsPreviewHydrated) { run(); return; }
+  let done = false;
+  const once = () => { if (done) return; done = true; run(); };
+  win.addEventListener("fms-preview-hydrated", once, { once: true });
+  win.setTimeout(once, 1500);
+}
+
 // A family with no branch here does not fail loudly — it silently does nothing,
 // which is exactly how fms-official shipped: the chooser's colour swatches
 // called this, fell through every test, and the preview never re-tinted. The

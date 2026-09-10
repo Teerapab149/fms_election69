@@ -71,7 +71,7 @@ import ReceiptClosed from '../../components/vote/ReceiptClosed';
 
 // shared confirm popup for the blossom MULTI ballot (owned by the parent, exactly
 // as /template-preview interact + the real vote/page.js compose it).
-import VoteConfirmationModal from '../../components/VoteConfirmationModal';
+import VoteConfirm from '../../components/vote/VoteConfirm';
 
 import { DUMMY_USER } from '../../utils/editorDummyData';
 import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
@@ -87,7 +87,7 @@ const COMPONENTS = {
   gumroad: { candidates: GumroadCandidates, party: GumroadParty, vote: GumroadVote, results: GumroadResults, success: GumroadSuccess, closed: GumroadClosed },
   // blossom now has its OWN party layout (BlossomParty — Candy Editorial feature,
   // v2-R4c). vote is special-cased (single booth confirms internally; multi opens the
-  // shared VoteConfirmationModal at the parent).
+  // shared VoteConfirm popup at the parent).
   blossom: { candidates: BlossomCandidates, party: BlossomParty, vote: BlossomVote, results: BlossomResults, success: BlossomSuccess, closed: BlossomClosed },
   // receipt has its OWN party layout (ReceiptParty — paper dossier, v2-R4b); vote
   // dispatches single→ReceiptSingleParty (internal confirm) / multi→shared modal, and
@@ -205,7 +205,8 @@ function PlaygroundBody() {
           <V regularParties={parties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
             onSelect={setSelectedPartyId} onViewDetails={onViewDetails} isSingleParty={false}
             user={DUMMY_USER} onConfirm={() => setConfirmOpen(true)} isSubmitting={false} editorMode={false} />
-          <VoteConfirmationModal
+          <VoteConfirm
+            family={slug}
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
             onConfirm={() => { setConfirmOpen(false); onConfirm(); }}

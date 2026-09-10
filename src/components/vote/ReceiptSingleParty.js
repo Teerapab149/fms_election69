@@ -19,7 +19,7 @@
 //
 // Dispatched from ReceiptVote when isSingleParty. Pure presentation: vote/page.js
 // owns auth + the vote-system hook; onConfirm() IS the submit (single-party has no
-// shared VoteConfirmationModal — the confirm dialog here calls onConfirm directly,
+// shared VoteConfirm sheet — the confirm dialog here calls onConfirm directly,
 // the same contract as GumroadSingleParty / VerdureSingleParty / BlossomSingleParty).
 // Colours flow ONLY through var(--rc-*) emitted by ReceiptBaseStyles on .rc-root
 // (the one exception is the three semantic stamp tones). The desk language
