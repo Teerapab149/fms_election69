@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-label="Fictional FMS-inspired junk ship party logo 1">
+<rect width="400" height="400" rx="60" fill="#F7EFF7"/>
+<circle cx="200" cy="195" r="164" fill="#FFF" opacity=".75"/>
+<g stroke-linecap="round" stroke-linejoin="round">
+<path d="M65 249 Q155 275 325 235 L300 280 Q184 310 91 277Z" fill="#8A2680"/>
+<path d="M177 86 V250 M256 123 V248" stroke="#493C51" stroke-width="7"/>
+<path d="M166 99 Q108 119 101 220 L168 221Z" fill="#ECD29D"/>
+<path d="M185 100 Q241 141 230 219 L185 222Z" fill="#8A2680"/>
+<path d="M246 140 Q217 168 222 221 L247 219Z M266 137 Q307 160 299 214 L266 220Z" fill="#D6B7DC"/>
+<path d="M113 151 L165 145 M105 184 L166 180 M187 145 L218 152 M187 180 L230 184 M271 176 L299 178" stroke="#FFF" stroke-width="3" opacity=".75"/>
+<path d="M70 312 Q102 298 135 312 T200 312 T265 312 T330 312" fill="none" stroke="#338393" stroke-width="7"/>
+<path d="M183 87 L212 96 L183 105Z" fill="#D89D47"/></g>
+<text x="200" y="355" text-anchor="middle" font-family="sans-serif" font-size="17" letter-spacing="3" fill="#8A2680">FMS · DEMO 1</text>
+</svg>

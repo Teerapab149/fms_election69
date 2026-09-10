@@ -62,7 +62,6 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
 
   const hasCutout = !!member.modalImageUrl;
   const src = resolveSrc(member.modalImageUrl || member.imageUrl);
-  const idSuffix = member.studentId ? String(member.studentId).slice(-3) : pad2(member.number ?? 0);
 
   // the record column — shared by both modes (frame + cutout)
   const idBlock = (
@@ -127,7 +126,7 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
               >
                 <img src={src} alt={member.name || ""} />
               </button>
-              <span className="rcm__hero-no rc-mono" aria-hidden="true">No.{pad2(member.number ?? 0)} · {idSuffix}</span>
+              <span className="rcm__hero-no rc-mono" aria-hidden="true">No.{pad2(member.number ?? 0)}</span>
             </div>
             {idBlock}
           </div>
@@ -145,7 +144,7 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
               {src
                 ? <img src={src} alt={member.name || ""} />
                 : <span className="rcm__photo-ph" aria-hidden="true">{(member.name || "?").trim().charAt(0)}</span>}
-              <span className="rcm__photo-no rc-mono" aria-hidden="true">{idSuffix}</span>
+              <span className="rcm__photo-no rc-mono" aria-hidden="true">No.{pad2(member.number ?? 0)}</span>
             </button>
 
             {idBlock}

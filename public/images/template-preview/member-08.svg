@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="480" viewBox="0 0 360 480" role="img" aria-label="Fictional preview team member 8">
+<rect width="360" height="480" fill="#F5F0F7"/><circle cx="142" cy="115" r="110" fill="#4164A3" opacity=".09"/>
+<path d="M0 380 Q180 285 360 380 V480 H0Z" fill="#4164A3" opacity=".12"/>
+<path d="M99 164 Q84 53 180 48 Q277 53 264 173 L276 306 H85Z" fill="#704A3C"/>
+<path d="M146 220 H214 V298 H146Z" fill="#F0CEB7"/>
+<path d="M53 480 V362 Q57 279 142 270 L180 305 L218 270 Q303 279 307 362 V480Z" fill="#4164A3"/>
+<path d="M142 270 L180 305 L218 270 L227 298 L180 340 L133 298Z" fill="#FFF" opacity=".96"/>
+<ellipse cx="109" cy="169" rx="13" ry="21" fill="#F0CEB7"/><ellipse cx="251" cy="169" rx="13" ry="21" fill="#F0CEB7"/>
+<rect x="111" y="89" width="138" height="163" rx="66" fill="#F0CEB7"/>
+<path d="M105 128 Q108 60 182 66 Q257 60 256 131 Q204 118 178 92 Q146 124 105 128Z" fill="#704A3C"/>
+<path d="M134 155 Q146 149 157 154 M203 154 Q215 149 226 155" fill="none" stroke="#704A3C" stroke-width="5" stroke-linecap="round"/>
+<circle cx="146" cy="171" r="4.5" fill="#35313B"/><circle cx="215" cy="171" r="4.5" fill="#35313B"/>
+
+<path d="M180 175 L176 191 H184" fill="none" stroke="#AB765C" stroke-width="3" stroke-linecap="round"/>
+<path d="M159 211 Q180 228 201 211" fill="none" stroke="#915A51" stroke-width="4" stroke-linecap="round"/>
+<circle cx="137" cy="195" r="9" fill="#DA8A82" opacity=".28"/><circle cx="224" cy="195" r="9" fill="#DA8A82" opacity=".28"/>
+<rect x="24" y="26" width="68" height="26" rx="13" fill="#FFF"/><text x="58" y="44" font-family="sans-serif" font-size="11" letter-spacing="2" text-anchor="middle" fill="#675D73">DEMO</text>
+<text x="180" y="437" font-family="sans-serif" font-size="15" letter-spacing="3" text-anchor="middle" fill="#FFF">TEAM 08</text>
+</svg>
