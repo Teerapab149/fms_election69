@@ -6,23 +6,18 @@
 // members[]/policies[]/logoMeaning/groupImageUrls that the vote + party
 // pages consume). Pure presentation data; never touches the database.
 
-// real party-logo artwork (admin-uploaded style — opaque JPG, not the institutional
-// FMS mark) so the preview shows what an actual party logo looks like in the disc
-const PARTY_LOGOS = [
-  "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769963446319.jpg",
-  "/images/candidates/logo/The_Unity_Concord_Of_FMS_2_1769902576579.jpg",
-];
-
-// Members carry BOTH image files, like real records do: imageUrl (team card) and
-// modalImageUrl (the standalone portrait the member modal presents big — v2-R13).
-// Every 5th member deliberately ships WITHOUT modalImageUrl so the modal's
-// fallback (framed) mode stays exercisable in the harness.
-export const mkMembers = (n) =>
-  Array.from({ length: n }, (_, i) => ({
-    id: i + 1, number: i + 1, name: `สมาชิกพรรค คนที่ ${i + 1}`,
-    position: i === 0 ? "President" : i < 5 ? "Core Exec" : "Dept Head",
-    imageUrl: `/images/members/party_1/${(i % 9) + 1}.jpg`,
-    modalImageUrl: (i + 1) % 5 === 0 ? null : `/images/members/party_1/Modal/${(i % 6) + 1}.jpg`,
+// Original fictional assets live outside all upload directories.
+const ROOT = "/images/template-preview";
+const PARTY_LOGOS = [ROOT + "/logo-1.svg", ROOT + "/logo-2.svg"];
+const POSITIONS = ["นายกสโมสรนักศึกษา", "อุปนายกฝ่ายกิจการภายใน", "อุปนายกฝ่ายกิจการภายนอก", "เลขานุการ", "เหรัญญิก", "ฝ่ายวิชาการ", "ฝ่ายประชาสัมพันธ์", "ฝ่ายกิจกรรม", "ฝ่ายกีฬา", "ฝ่ายสวัสดิการ"];
+export const mkMembers = (n = 20) =>
+  Array.from({ length: Math.max(20, n) }, (_, i) => ({
+    id: i + 1, number: i + 1, name: `สมาชิกตัวอย่าง ${String(i + 1).padStart(2, "0")}`,
+    studentId: `DEMO-${String(i + 1).padStart(2, "0")}`,
+    major: ["การบัญชี", "การตลาด", "ระบบสารสนเทศทางธุรกิจ", "การจัดการ"][i % 4],
+    position: i < POSITIONS.length ? POSITIONS[i] : `คณะทำงาน${POSITIONS[5 + (i % 5)]}`,
+    imageUrl: `${ROOT}/member-${String(i % 20 + 1).padStart(2, "0")}.svg`,
+    modalImageUrl: `${ROOT}/member-${String(i % 20 + 1).padStart(2, "0")}.svg`,
   }));
 
 // Shaped like the REAL record: each policy is a { title, desc } object (the live DB
@@ -43,45 +38,33 @@ export const MISSIONS = [
 
 export const mkParty = (i, name, slogan, color) => ({
   id: i, number: i, name, slogan, color,
-  logoUrl: PARTY_LOGOS[(i - 1) % PARTY_LOGOS.length], groupImageUrls: ["/images/candidates/groupimage/party1/GROUP_The_Unity_Concord_Of_FMS_2_1769963102478_0.jpg"], officialImageUrl: null, mobileHeroImage: null,
+  logoUrl: PARTY_LOGOS[(i - 1) % PARTY_LOGOS.length], groupImageUrls: [1, 2, 3].map(n => `${ROOT}/gallery-${n}.svg`), officialImageUrl: `${ROOT}/gallery-1.svg`, mobileHeroImage: [`${ROOT}/gallery-1.svg`],
   // Long on purpose: real admins type a full essay here (the live record is ~1,500
   // characters). The preview must show what a real story does to the page — that is
   // what the StoryClamp collapse exists for.
   logoMeaning:
-    "The Unity Concord of FMS 2 สะท้อนความหลากหลายของนักศึกษาที่กลับมารวมเป็นหนึ่ง เพื่อร่วมขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ\n" +
-    "Unity คือ ความสามัคคี หมายถึงความสัมพันธ์ที่ทุกคนในหมู่คณะร่วมมือกันอย่างเข้าใจ ไม่ว่าจะมาจากสาขาใด ชั้นปีใด ทุกเสียงมีความหมายเท่ากันในการกำหนดทิศทางของสโมสรนักศึกษา\n" +
-    "Concord คือ ความกลมเกลียว สื่อถึงการทำงานที่ประสานกันอย่างราบรื่น รับฟังความเห็นต่างและหาข้อสรุปร่วมกันได้ โดยยึดประโยชน์ของนักศึกษาทั้งคณะเป็นที่ตั้ง\n" +
-    "สัญลักษณ์เรือใบสื่อถึงการเดินทางไปข้างหน้าด้วยกัน แม้ลมจะเปลี่ยนทิศ แต่หากทุกคนช่วยกันถือหางเสือ เราจะไปถึงจุดหมายเดียวกันได้เสมอ",
-  missions: MISSIONS, policies: POLICIES, members: mkMembers(i === 1 ? 17 : 6),
-  // Contact channels, stored the way the DB stores them: sanitizeSocials() has
-  // already turned whatever the admin typed into canonical URLs, so the preview
-  // must carry URLs too — a bare "@handle" here would render nothing and the
-  // section would look broken in the gallery while working in production.
-  // Party 1 fills three channels, party 2 only one: both the full row and the
-  // single-chip case are on screen somewhere in the chooser. A party that fills
-  // NONE gets no section at all — that path is the production default and is why
-  // the admin form and the chooser caption both say so.
-  socials: i === 1
-    ? {
-        instagram: "https://www.instagram.com/unityconcord.fms/",
-        facebook: "https://www.facebook.com/unityconcord.fms",
-        tiktok: "https://www.tiktok.com/@unityconcord.fms",
-      }
-    : { instagram: "https://www.instagram.com/samo.fms.psu/" },
+    "ข้อมูลสมมติสำหรับแสดงตัวอย่าง template เท่านั้น ไม่ใช่พรรคที่ลงสมัครจริง\n" +
+    "รูปทรงที่เชื่อมต่อกันสื่อถึงความร่วมมือของนักศึกษาที่มีความถนัดแตกต่างกัน แต่พร้อมเรียนรู้และพัฒนาไปด้วยกัน ทุกส่วนมีพื้นที่และความสำคัญของตนเอง\n" +
+    "พื้นที่ว่างระหว่างรูปทรงแทนการเปิดรับแนวคิดใหม่และการรับฟังอย่างเคารพ สีที่แตกต่างสะท้อนความหลากหลาย ขณะที่ภาพรวมแสดงถึงจุดหมายร่วมกัน\n" +
+    "องค์ประกอบเหล่านี้เป็นตัวอย่างสำหรับตรวจสอบการจัดวางข้อความและภาพ ไม่มีความเกี่ยวข้องกับพรรคหรือบุคคลจริง",
+  missions: [...MISSIONS], policies: POLICIES.map(p => ({ ...p })), members: mkMembers(20),
+  // Reserved domain: preview links never point to a real social account.
+  socials: {
+    instagram: `https://preview.invalid/instagram/party-${i}`,
+    facebook: `https://preview.invalid/facebook/party-${i}`,
+    tiktok: `https://preview.invalid/tiktok/party-${i}`,
+    website: `https://preview.invalid/party-${i}`,
+  },
 });
 
-// Party presets — index 0/1 are the canonical default pair (makeParties(2) must stay
-// byte-identical to the old hardcoded PARTIES so the admin chooser slideshow never
-// drifts). 2..5 extend the roster for N>2 harness testing (?parties=N). Distinct
-// names/slogans/colours; preset[2] is a deliberately long name (~50 chars) to exercise
-// the clamp across vote row / candidates card / results row / confirm bar.
+// Fictional party presets shared across preview surfaces.
 const PARTY_PRESETS = [
-  { name: "The Unity Concord Of FMS 2", slogan: "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน", color: "#2D6CDF" },
-  { name: "พรรคก้าวไกลวิทยาการจัดการ", slogan: "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS", color: "#E0457B" },
-  { name: "พรรคพลังนักศึกษาวิทยาการจัดการเพื่อการพัฒนาที่ยั่งยืน", slogan: "รวมพลังทุกสาขา สร้างการเปลี่ยนแปลงที่จับต้องได้จริง", color: "#F59E0B" },
-  { name: "พรรคใจอาสา", slogan: "เสียงของนักศึกษา คือหัวใจของการทำงาน", color: "#10B981" },
-  { name: "พรรคเดินหน้า FMS", slogan: "โปร่งใส ตรวจสอบได้ ทุกงบประมาณกิจกรรม", color: "#8B5CF6" },
-  { name: "พรรคนวัตกรรมรุ่นใหม่", slogan: "เทคโนโลยีเพื่อชีวิตนักศึกษาที่ดีกว่าเดิม", color: "#EF4444" },
+  { name: "พรรคตัวอย่าง ร่วมสร้าง", slogan: "หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน", color: "#2D6CDF" },
+  { name: "พรรคตัวอย่าง เปิดฟ้า", slogan: "นโยบายเด่น มุ่งมั่น โปร่งใส เพื่อชาว FMS", color: "#E0457B" },
+  { name: "พรรคตัวอย่าง พลังนักศึกษาวิทยาการจัดการเพื่อการพัฒนาที่ยั่งยืน", slogan: "รวมพลังทุกสาขา สร้างการเปลี่ยนแปลงที่จับต้องได้จริง", color: "#F59E0B" },
+  { name: "พรรคตัวอย่าง ใจอาสา", slogan: "เสียงของนักศึกษา คือหัวใจของการทำงาน", color: "#10B981" },
+  { name: "พรรคตัวอย่าง เดินหน้า FMS", slogan: "โปร่งใส ตรวจสอบได้ ทุกงบประมาณกิจกรรม", color: "#8B5CF6" },
+  { name: "พรรคตัวอย่าง นวัตกรรมรุ่นใหม่", slogan: "เทคโนโลยีเพื่อชีวิตนักศึกษาที่ดีกว่าเดิม", color: "#EF4444" },
 ];
 
 // makeParties(n) — n parties (n clamped by the caller). preset[i % len] cycles if a

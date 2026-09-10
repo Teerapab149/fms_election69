@@ -856,7 +856,7 @@ function MemberImage({ url }) {
 // Read-only CLASSIC party detail for /template-preview (classic + original families).
 // Mirrors PartyContent's classic branch with mock props — no fetch, no auth — so the
 // chooser's party slide shows the real cinematic layout instead of a placeholder.
-export function ClassicPartyPreview({ party, galleryImages = [] }) {
+export function ClassicPartyPreview({ party, galleryImages = party?.groupImageUrls || [] }) {
   const [selectedMember, setSelectedMember] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
   const listSectionRef = useRef(null);
