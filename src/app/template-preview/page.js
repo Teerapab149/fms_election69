@@ -20,7 +20,7 @@
 // data. Auth-gated pages (vote/results/success) render here WITHOUT a session
 // because the layout components are pure + we pass mock props.
 
-import { Suspense, useState, useEffect, useCallback, useMemo } from 'react';
+import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MotionConfig } from 'framer-motion';
 import { Palette, Check } from 'lucide-react';
@@ -28,6 +28,7 @@ import { getPath } from '../../utils/basePath';
 import { hrefToDest } from '../../utils/previewNav';
 import { buildTemplateStyles } from '../../lib/templateTokens';
 import TemplatePreviewWrapper from '../../components/admin/TemplatePreviewWrapper';
+import Navbar from '../../components/Navbar';
 
 import HomeRenderer from '../../components/home/HomeRenderer';
 import { BUILT_IN_TEMPLATES } from '../../components/admin/editor/templates';
@@ -62,7 +63,7 @@ import BlossomVote from '../../components/vote/BlossomVote';
 import BlossomClosed from '../../components/vote/BlossomClosed';
 
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
-import ReceiptVote, { useBallotDrop, ReceiptConfirmSlip } from '../../components/vote/ReceiptVote';
+import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
 import ReceiptResults from '../../components/vote/ReceiptResults';
 import ReceiptClosed from '../../components/vote/ReceiptClosed';
 import ReceiptCandidates from '../../components/vote/ReceiptCandidates';
@@ -78,7 +79,8 @@ import CandidatesEditorPreview from '../../components/admin/CandidatesEditorPrev
 import VoteEditorPreview from '../../components/admin/VoteEditorPreview';
 import ResultsEditorPreview from '../../components/admin/ResultsEditorPreview';
 import ClosedEditorPreview from '../../components/admin/ClosedEditorPreview';
-import SuccessPage from '../success/page';
+import OriginalSuccess from '../../components/vote/OriginalSuccess';
+import { useVoteCast } from '../../hooks/useVoteCast';
 import { ClassicPartyPreview } from '../party/page';
 import SinglePartyView from '../../components/vote/SinglePartyView';
 
@@ -86,12 +88,25 @@ import SinglePartyView from '../../components/vote/SinglePartyView';
 import MultiPartyView from '../../components/vote/MultiPartyView';
 import VoteFooter from '../../components/vote/VoteFooter';
 import PartyDetailModal from '../../components/PartyDetailModal';
-import VoteConfirmationModal from '../../components/VoteConfirmationModal';
+import VoteConfirm from '../../components/vote/VoteConfirm';
 
 import { DUMMY_ELECTION, DUMMY_USER } from '../../utils/editorDummyData';
 import { makeParties, SPECIAL, DEMOGRAPHICS, resultsCandidates } from '../../utils/templatePreviewMocks';
 
 const noop = () => {};
+
+// The classic family's own top bar. Its six inner pages mount <Navbar /> in
+// production, and VoteEditorPreview / ResultsEditorPreview / ClosedEditorPreview
+// already mount the real one here — success was the page that never did, so it
+// previewed as a bare canvas next to six families that each show their shell.
+// Signed out in the preview (there is no session), which is the same state every
+// other family's top bar renders here.
+const classicChrome = (el) => (
+  <div className="flex min-h-screen flex-col bg-[var(--color-bg,#f8f9fd)]">
+    <div className="relative z-50"><Navbar /></div>
+    {el}
+  </div>
+);
 
 // CLOSED preview copy — mirrors closed/page.js getMessage() semantics (waiting /
 // ended / paused). Drive via ?variant=ended|closed|waiting; absent/unknown value →
@@ -159,6 +174,9 @@ function PreviewBody() {
   // bounce-back error path can be exercised without a server.
   const { playDrop, sceneNode } = useBallotDrop();
   const dropFail = sp.get('fail') === '1';
+  const { playCast, sceneNode: castScene, castActive } = useVoteCast({ templateId: slug });
+  const [previewError, setPreviewError] = useState('');
+  const previewPending = useRef(false);
   // ?parties=N — DB-free multi-party harness (v2-R9). int 2..6, default 2, garbage → 2.
   // makeParties(2) is byte-identical to the old default roster, so the chooser slideshow
   // (which never passes ?parties) is unchanged. Memoised on N so the array identity is
@@ -198,6 +216,17 @@ function PreviewBody() {
     const id = isParty && variantOrPartyNumber != null ? `&id=${variantOrPartyNumber}` : '';
     window.location.href = getPath(`/template-preview?slug=${slug}&page=${p}${vr ? `&variant=${vr}` : ''}${id}&interact=1`);
   }, [slug]);
+
+  // Preview submits are local promises only: no ballot or form API writes.
+  const confirmPreviewVote = async () => {
+    if (previewPending.current) return;
+    previewPending.current = true;
+    setConfirmOpen(false);
+    setPreviewError('');
+    const ok = await playCast(() => new Promise(resolve => setTimeout(() => resolve(!dropFail), 600)));
+    if (ok) navTo('success');
+    else { previewPending.current = false; setPreviewError('ตัวอย่าง: บันทึกไม่สำเร็จ กรุณาลองใหม่'); }
+  };
 
   // one seam catches the dock + every in-page <a> nav across all families (same
   // logic as the playground, via the shared hrefToDest util).
@@ -295,7 +324,16 @@ function PreviewBody() {
       {interact ? (
         <>
           <PreviewInteractAuthGuard />
-          <div onClickCapture={onClickCapture}>{renderInteractive()}</div>
+          <div onClickCapture={onClickCapture}>
+            {renderInteractive()}
+            {page === 'vote' && variant !== 'single' && ['gumroad', 'studio-dark', 'verdure', 'fms-official'].includes(family) && (
+              <VoteConfirm family={slug} isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={confirmPreviewVote}
+                party={[...parties, SPECIAL.abstain].find(p => p.id === selectedPartyId) || null}
+                isVoteNo={selectedPartyId === SPECIAL.abstain.id} isSubmitting={castActive} />
+            )}
+            {page === 'vote' && family !== 'receipt' && castScene}
+            {page === 'vote' && previewError && <p role="alert" className="fixed top-4 inset-x-4 z-[10001] mx-auto max-w-lg rounded-xl border border-red-200 bg-white p-4 text-center text-red-800">{previewError}</p>}
+          </div>
         </>
       ) : (
         renderPage()
@@ -308,7 +346,6 @@ function PreviewBody() {
   // handlers; HOME goes through HomeRenderer WITHOUT editorMode + onSignIn (the merged
   // seam). Classic/original inner pages keep their static EditorPreview renders for
   // now (out of scope — flow still demonstrable: original home login → vote page).
-  // eslint-disable-next-line no-inner-declarations
   function renderInteractive() {
     if (page === 'home') {
       // gm-B2 T2 / bl-B1B verification seam: gumroad + blossom reuse the closed page's
@@ -357,8 +394,8 @@ function PreviewBody() {
             onViewDetails={(p) => navTo('party', p?.number ?? 1)}
             isSingleParty={single}
             user={DUMMY_USER}
-            onConfirm={() => navTo('success')}
-            isSubmitting={false}
+            onConfirm={single ? confirmPreviewVote : () => setConfirmOpen(true)}
+            isSubmitting={castActive}
             editorMode={false}
           />
         );
@@ -387,7 +424,7 @@ function PreviewBody() {
       }
       if (page === 'success') {
         const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
-        return frame(<S user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />);
+        return frame(<S user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />);
       }
       if (page === 'closed') {
         const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
@@ -398,7 +435,7 @@ function PreviewBody() {
 
     // ── blossom family — SINGLE-PARTY booth (T3.3). BlossomVote dispatches to the
     //    calm Candy Editorial booth; its OWN confirm dialog calls onConfirm (the
-    //    submit) → navTo('success'). No shared VoteConfirmationModal for single.
+    //    submit) → navTo('success'). No shared confirm popup for single.
     if (family === 'blossom' && page === 'vote' && variant === 'single') {
       return (
         <BlossomVote
@@ -409,8 +446,8 @@ function PreviewBody() {
           onViewDetails={(p) => navTo('party', p?.number ?? 1)}
           isSingleParty
           user={DUMMY_USER}
-          onConfirm={() => navTo('success')}
-          isSubmitting={false}
+          onConfirm={confirmPreviewVote}
+          isSubmitting={castActive}
           editorMode={false}
         />
       );
@@ -432,17 +469,18 @@ function PreviewBody() {
             isSingleParty={false}
             user={DUMMY_USER}
             onConfirm={() => setConfirmOpen(true)}
-            isSubmitting={false}
+            isSubmitting={castActive}
             editorMode={false}
           />
-          <VoteConfirmationModal
+          <VoteConfirm
+            family={slug}
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
-            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
+            onConfirm={confirmPreviewVote}
             party={selectedParty}
             isVoteNo={selectedParty?.number === 0}
             isDisapprove={selectedParty?.number === -1}
-            isSubmitting={false}
+            isSubmitting={castActive}
           />
         </>
       );
@@ -450,7 +488,7 @@ function PreviewBody() {
 
     // ── receipt family — SINGLE-PARTY ink-stamp booth (R3). ReceiptVote dispatches
     //    to ReceiptSingleParty; its OWN confirm dialog calls onConfirm (the submit)
-    //    → navTo('success'). No shared VoteConfirmationModal for single. MUST precede
+    //    → navTo('success'). No shared confirm popup for single. MUST precede
     //    the generic `if (page === 'vote')` classic catch-all below (which would
     //    otherwise render receipt's ballot with the classic MultiPartyView).
     if (family === 'receipt' && page === 'vote' && variant === 'single') {
@@ -469,7 +507,7 @@ function PreviewBody() {
             isSingleParty
             user={DUMMY_USER}
             onConfirm={async () => { const ok = await playDrop(submitSim); if (ok) navTo('success'); }}
-            isSubmitting={false}
+            isSubmitting={castActive}
             editorMode={false}
           />
           {sceneNode}
@@ -478,7 +516,7 @@ function PreviewBody() {
     }
 
     // ── receipt family — MULTI ballot (R3). Local selection → the family's OWN
-    //    ReceiptConfirmSlip (v2-R4a T4 — the shared VoteConfirmationModal stays for
+    //    its own paper slip (v2-R4a T4 — dispatched by VoteConfirm, which keeps
     //    the other families) → navTo('success'). MUST precede the generic
     //    `if (page === 'vote')` classic catch-all below.
     if (family === 'receipt' && page === 'vote' && variant !== 'single') {
@@ -499,17 +537,17 @@ function PreviewBody() {
             isSingleParty={false}
             user={DUMMY_USER}
             onConfirm={() => setConfirmOpen(true)}
-            isSubmitting={false}
+            isSubmitting={castActive}
             editorMode={false}
           />
-          <ReceiptConfirmSlip
+          <VoteConfirm family={slug}
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
             onConfirm={async () => { setConfirmOpen(false); const ok = await playDrop(submitSim); if (ok) navTo('success'); }}
             party={selectedParty}
             isVoteNo={selectedParty?.number === 0}
             isDisapprove={selectedParty?.number === -1}
-            isSubmitting={false}
+            isSubmitting={castActive}
           />
           {sceneNode}
         </>
@@ -546,8 +584,8 @@ function PreviewBody() {
             onViewDetails={(p) => navTo('party', p?.number ?? 1)}
             isSingleParty={single}
             user={DUMMY_USER}
-            isSubmitting={false}
-            onConfirm={() => navTo('success')}
+            isSubmitting={castActive}
+            onConfirm={single ? confirmPreviewVote : () => setConfirmOpen(true)}
             editorMode={false}
           />
         );
@@ -574,7 +612,7 @@ function PreviewBody() {
         // ?variant=locked previews the state a voter actually lands on first —
         // results still gated behind the evaluation form. Default stays unlocked
         // so the existing preview link is unchanged.
-        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant !== 'locked'} onOpenForm={noop} editorMode={false} />;
+        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />;
       }
       if (page === 'closed') {
         const c = receiptClosedCopy(variant);
@@ -590,7 +628,7 @@ function PreviewBody() {
       const tpl = BUILT_IN_TEMPLATES[slug] || {};
       const pageBg = tpl.pages?.[page]?.backgroundColor || tpl.theme?.colors?.background || tpl.theme?.background || 'var(--color-bg)';
       // Derive the selected party across regular + special options (as useVoteSystem
-      // does) so VoteFooter/VoteConfirmationModal get the right object + number.
+      // does) so VoteFooter/VoteConfirm get the right object + number.
       const allSelectable = [...parties, SPECIAL.abstain, SPECIAL.disapprove];
       const selectedParty = allSelectable.find((p) => p.id === selectedPartyId) || null;
 
@@ -614,17 +652,17 @@ function PreviewBody() {
             </main>
             <VoteFooter
               selectedParty={selectedParty}
-              isSubmitting={false}
+              isSubmitting={castActive}
               variant="single"
               partyPrimary={singleParty?.themePrimary || 'var(--spv-footer-primary, #4D2A67)'}
               partyGold={singleParty?.themeGold || 'var(--spv-footer-gold, #CDA176)'}
-              onConfirm={() => navTo('success')}
+              onConfirm={confirmPreviewVote}
             />
           </div>
         );
       }
 
-      // multi → MultiPartyView + VoteFooter(multi) + PartyDetailModal + VoteConfirmationModal
+      // multi → MultiPartyView + VoteFooter(multi) + PartyDetailModal + VoteConfirm
       return (
         <div className="min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative" style={{ background: pageBg }}>
           {/* Full-bleed themed background — grid texture + soft corner blobs, same as
@@ -651,7 +689,7 @@ function PreviewBody() {
 
           <VoteFooter
             selectedParty={selectedParty}
-            isSubmitting={false}
+            isSubmitting={castActive}
             variant="multi"
             partyPrimary={parties?.[0]?.themePrimary || '#4D2A67'}
             partyGold={parties?.[0]?.themeGold || '#CDA176'}
@@ -666,14 +704,15 @@ function PreviewBody() {
             showVoteButton={false}
           />
 
-          <VoteConfirmationModal
+          <VoteConfirm
+            family={slug}
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
-            onConfirm={() => { setConfirmOpen(false); navTo('success'); }}
+            onConfirm={confirmPreviewVote}
             party={selectedParty}
             isVoteNo={selectedParty?.number === 0}
             isDisapprove={selectedParty?.number === -1}
-            isSubmitting={false}
+            isSubmitting={castActive}
           />
 
           {/* Vote-page keyframes (MultiPartyView cards use animate-fade-in-up) */}
@@ -687,6 +726,8 @@ function PreviewBody() {
         </div>
       );
     }
+
+    if (page === 'success' && ['classic', 'original'].includes(family)) return classicChrome(<OriginalSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} templateId={slug} />);
 
     // Blossom family — its own Candy Editorial inner pages (home goes through
     // HomeRenderer above).
@@ -716,14 +757,14 @@ function PreviewBody() {
           />
         );
       }
-      if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
+      if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />;
       if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />; }
     }
 
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
     //    are ticketed later; they fall through to classic below for now.
     if (family === 'receipt' && page === 'success') {
-      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode={false} />;
+      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />;
     }
 
     // ── receipt family — CANDIDATES (R4). paper flyers on the desk; links to party. ──
@@ -767,7 +808,6 @@ function PreviewBody() {
     return renderPage();
   }
 
-  // eslint-disable-next-line no-inner-declarations
   function renderPage() {
   // ── HOME — HomeRenderer dispatches by template slug for every family ──
   if (page === 'home') {
@@ -826,7 +866,7 @@ function PreviewBody() {
         />
       );
     }
-    if (page === 'success') return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked onOpenForm={noop} editorMode />;
+    if (page === 'success') return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
     if (page === 'closed') {
       const cc = closedPreviewCopy(variant);
       return <FmsOfficialClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />;
@@ -901,7 +941,7 @@ function PreviewBody() {
     }
     if (page === 'success') {
       const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
-      return frame(<S user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />);
+      return frame(<S user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />);
     }
     if (page === 'closed') {
       const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
@@ -948,7 +988,7 @@ function PreviewBody() {
         />
       );
     }
-    if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
+    if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
     if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />; }
   }
 
@@ -976,7 +1016,7 @@ function PreviewBody() {
     }
     if (page === 'candidates') return <ReceiptCandidates candidates={parties} editorMode />;
     if (page === 'party') return <ReceiptParty party={parties[0]} galleryImages={[]} showBackToVote={false} editorMode />;
-    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={false} onOpenForm={noop} editorMode />;
+    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
     if (page === 'results') {
       const revealed = variant === 'revealed';
       return (
@@ -1013,7 +1053,7 @@ function PreviewBody() {
   // (paused == the live page's "closed"); absent/unknown → waiting as before
   if (page === 'closed') return <ClosedEditorPreview simMode={variant === 'ended' ? 'ended' : (variant === 'closed' || variant === 'paused') ? 'paused' : 'waiting'} />;
   if (page === 'party') return <ClassicPartyPreview party={parties[0]} />;
-  if (page === 'success') return <SuccessPage editorMode pageLayout={null} elementConfigs={{}} />;
+  if (page === 'success') return classicChrome(<OriginalSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode templateId={slug} />);
 
   // unknown page
   return (
@@ -1103,6 +1143,7 @@ function PreviewPageControls({ page, variant, goto, themes = [], themeSlug, onTh
         </select>
       </label>
       {page === 'vote' && seg(variant || 'multi', [['multi', 'หลายพรรค'], ['single', 'พรรคเดียว']], 'vote')}
+      {page === 'success' && seg(variant || 'locked', [['locked', 'ยังไม่ประเมิน'], ['unlocked', 'ประเมินแล้ว']], 'success')}
       {page === 'results' && seg(variant || 'revealed', [['locked', 'ปิดผล'], ['revealed', 'เปิดผล']], 'results')}
       {/* colour-theme switcher — re-tints the preview IN PLACE (same morph as the
           chooser). Only shown when this family has more than one theme. */}
@@ -1125,9 +1166,26 @@ function PreviewPageControls({ page, variant, goto, themes = [], themeSlug, onTh
   );
 }
 
+// Hydration beacon for the surfaces that embed this route in an iframe (the
+// chooser slides + TemplatePreviewWrapper). Those parents re-tint the preview by
+// writing Layer-1 tokens straight onto `.fms-app` as INLINE styles — and they used
+// to do it on the iframe's `load` event, which fires BEFORE React hydrates in here.
+// React then found a `style` attribute on `<main class="fms-app os-success …">`
+// that its own render never produced and logged the "tree hydrated but some
+// attributes … didn't match" error. The parent now waits for this signal instead;
+// see injectTemplateThemeOnReady in utils/injectTemplateTheme.js.
+function PreviewHydrationBeacon() {
+  useEffect(() => {
+    window.__fmsPreviewHydrated = true;
+    window.dispatchEvent(new Event('fms-preview-hydrated'));
+  }, []);
+  return null;
+}
+
 export default function TemplatePreviewPage() {
   return (
     <Suspense fallback={<div style={{ minHeight: '100vh', background: '#fff' }} />}>
+      <PreviewHydrationBeacon />
       <PreviewBody />
     </Suspense>
   );

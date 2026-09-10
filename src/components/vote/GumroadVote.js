@@ -13,7 +13,7 @@
 // — regularParties + specialOptions{abstain,disapprove} + selectedPartyId +
 // onSelect(id) + onViewDetails(party). Single-party (1 candidate) shows that party
 // + the ไม่รับรอง (disapprove, number -1) option; multi shows งดออกเสียง (abstain, 0).
-// Confirm calls onConfirm (parent owns submit + VoteConfirmationModal). editorMode:
+// Confirm calls onConfirm (parent owns submit + VoteConfirm). editorMode:
 // key elements carry data-element + the stable Wrap → selectable in the editor.
 
 import React, { useRef, useCallback, useMemo } from "react";

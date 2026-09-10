@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
-import VoteConfirmationModal from '../../components/VoteConfirmationModal';
+import VoteConfirm from '../../components/vote/VoteConfirm';
 import { Loader2, Sparkles } from 'lucide-react';
 // Components
 import Navbar from '../../components/Navbar';
@@ -18,7 +18,8 @@ import StudioDarkVote from '../../components/vote/StudioDarkVote';
 import VerdureVote from '../../components/vote/VerdureVote';
 import FmsOfficialVote from '../../components/vote/FmsOfficialVote';
 import BlossomVote from '../../components/vote/BlossomVote';
-import ReceiptVote, { useBallotDrop, ReceiptConfirmSlip } from '../../components/vote/ReceiptVote';
+import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
+import { useVoteCast } from '../../hooks/useVoteCast';
 import VoteFooter from '../../components/vote/VoteFooter';
 
 // Hook
@@ -53,16 +54,15 @@ export default function VotePage() {
   // ✅ Prevent double click during redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Receipt-only "หย่อนบัตร" scene (ruling C3). The overlay + controller live in
-  // ReceiptVote; here we only orchestrate it around the awaited submit for the receipt
-  // branch. Hook is unconditional (Rules of Hooks); sceneNode is rendered only when the
-  // active template is receipt, so every other family is byte-unaffected.
+  // Receipt retains its own paper-box scene; hooks remain unconditional.
   const { playDrop, sceneNode } = useBallotDrop();
 
   // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
   const [voteConfig, setVoteConfig] = useState({});
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  const { playCast, sceneNode: castScene, castActive } = useVoteCast({ templateId: activeTemplateId });
+  const confirmPending = useRef(false);
   // Gate render until the template is known — otherwise the classic layout (with
   // its own cinematic AutoIntro) flashes for a frame before the real template
   // resolves, looking like a stray "old intro".
@@ -118,43 +118,21 @@ export default function VotePage() {
   };
 
   const onConfirmVote = async () => {
-    if (isRedirecting) return; // 🔒 Guard
-
-    // Receipt family: play the "หย่อนบัตร" scene AROUND the awaited submit (ruling
-    // C3). playDrop starts the ~900ms fold+drop overlay, fires submitVote() in parallel,
-    // HOLDS the final frame until it resolves, then returns the result — the vote is
-    // NEVER coupled to the animation (reduced-motion / JS-fail skip the scene but still
-    // await the submit). On failure the ballot bounces back and submitVote's own alert
-    // is the error. The receipt confirm slip is closed first (multi) so the scene is
-    // unobstructed. Every other family keeps its original hard-nav path.
-    if (isReceipt) {
-      setIsConfirmModalOpen(false);
-      const success = await playDrop(submitVote);
+    // Synchronous lock covers the frame before React disables the confirm button.
+    if (confirmPending.current || isRedirecting || isSubmitting) return;
+    confirmPending.current = true;
+    setIsConfirmModalOpen(false);
+    let success = false;
+    try {
+      success = await (isReceipt ? playDrop(submitVote) : playCast(submitVote));
       if (success) {
-        setIsRedirecting(true); // 🔒 Lock UI
-        // Receipt keeps a SOFT router.push purely for UX: the drop scene holds its
-        // final frame and a soft transition lets success mount without a full-page
-        // flash. This is NOT a secrecy mechanism anymore — since v2-R4a the success
-        // receipt shows only the voter's own identity (never any choice), so a hard
-        // reload of /success is equally safe.
+        setIsRedirecting(true);
         router.push("/success");
       }
-      return;
+    } finally {
+      // A failed request leaves the existing selection available for retry.
+      if (!success) confirmPending.current = false;
     }
-
-    const success = await submitVote();
-    if (success) {
-      setIsRedirecting(true); // 🔒 Lock UI
-      setIsConfirmModalOpen(false)
-      // Soft push, like receipt already did. The hard nav here dated from when
-      // /success had to be re-rendered from scratch for ballot secrecy; since
-      // v2-R4a it shows only the voter's own identity and never the choice, so
-      // the reload buys nothing and costs a full document load plus a fresh
-      // /api/auth/session round trip — a blank screen between confirming and
-      // being told it worked. submitVote() has already invalidated the shared
-      // status cache, and the success gate forces its own read.
-      router.push("/success");
-    };
   };
 
 
@@ -186,7 +164,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : useBlossomVote ? (
@@ -198,7 +176,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isVerdure ? (
@@ -210,7 +188,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isFmsOfficial ? (
@@ -222,7 +200,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isStudio ? (
@@ -234,7 +212,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isGumroad ? (
@@ -246,7 +224,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : (
@@ -293,22 +271,21 @@ export default function VotePage() {
 
       <VoteFooter
         selectedParty={selectedParty}
-        isSubmitting={isSubmitting || isRedirecting} // ✅ Disable when redirecting too
+        isSubmitting={isSubmitting || isRedirecting || castActive} // ✅ Disable when redirecting too
         variant={isSingleParty ? "single" : "multi"}
         partyPrimary={regularParties?.[0]?.themePrimary || (isSingleParty ? "var(--spv-footer-primary, #4D2A67)" : "#4D2A67")}
         partyGold={regularParties?.[0]?.themeGold || (isSingleParty ? "var(--spv-footer-gold, #CDA176)" : "#CDA176")}
         onConfirm={
           isSingleParty
             ? onConfirmVote              // ✅ single: กดใน footer modal แล้วค่อย submitVote
-            : () => setIsConfirmModalOpen(true) // ✅ multi: เปิด VoteConfirmationModal เดิม
+            : () => setIsConfirmModalOpen(true) // ✅ multi: เปิดขั้นยืนยันของ family นั้น
         }
       />
        </>
       )}
 
-      {/* Receipt-only ballot-drop scene overlay (ruling C3). Client-only; renders inert
-          until playDrop runs. Never mounted for other families. */}
-      {isReceipt && sceneNode}
+      {/* Presentation only: the submit result, never animation completion, gates navigation. */}
+      {isReceipt ? sceneNode : castScene}
 
       {/* Modals */}
       <PartyDetailModal
@@ -318,30 +295,20 @@ export default function VotePage() {
         showVoteButton={false}
       />
 
-      {/* Receipt family gets its OWN paper confirm slip (v2-R4a T4) — same open/
-          confirm/cancel semantics; the shared VoteConfirmationModal below stays
-          byte-untouched for every other family. */}
-      {!isSingleParty && isReceipt && (
-        <ReceiptConfirmSlip
+      {/* One confirm step, each family's own hand — VoteConfirm dispatches on the
+          active template (receipt keeps its paper slip, classic keeps the original
+          modal). Behaviour is shared inside it: Escape, scrim, focus and the
+          submitting lock must not vary by template. */}
+      {!isSingleParty && (
+        <VoteConfirm
+          family={activeTemplateId}
           isOpen={isConfirmModalOpen}
           onClose={() => setIsConfirmModalOpen(false)}
           onConfirm={onConfirmVote}
           party={selectedParty}
           isVoteNo={selectedParty?.number === 0}
           isDisapprove={selectedParty?.number === -1}
-          isSubmitting={isSubmitting || isRedirecting}
-        />
-      )}
-
-      {!isSingleParty && !isReceipt && (
-        <VoteConfirmationModal
-          isOpen={isConfirmModalOpen}
-          onClose={() => setIsConfirmModalOpen(false)}
-          onConfirm={onConfirmVote}
-          party={selectedParty}
-          isVoteNo={selectedParty?.number === 0}
-          isDisapprove={selectedParty?.number === -1}
-          isSubmitting={isSubmitting || isRedirecting} // ✅ Pass explicit submitting state to modal (if supported)
+          isSubmitting={isSubmitting || isRedirecting || castActive}
         />
       )}
 

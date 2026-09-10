@@ -31,6 +31,7 @@ import StudioDarkSuccess from '../../components/vote/StudioDarkSuccess';
 import VerdureSuccess from '../../components/vote/VerdureSuccess';
 import FmsOfficialSuccess from '../../components/vote/FmsOfficialSuccess';
 import BlossomSuccess from '../../components/vote/BlossomSuccess';
+import OriginalSuccess from '../../components/vote/OriginalSuccess';
 import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
 import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
@@ -354,148 +355,16 @@ export default function SuccessPage({
         />
       )}
 
-      {/* Background Grid */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 8%, transparent) 1px, transparent 1px)', backgroundSize: '48px 48px' }}></div>
-        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-[var(--color-primary)] opacity-20 blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute right-0 bottom-0 -z-10 h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full bg-emerald-400 opacity-20 blur-[80px] md:blur-[120px]"></div>
-      </div>
-      )}
-
       {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (isAuthorized || editorMode) && (
-        <div className="success-cardwrap flex-1 w-full flex items-center justify-center p-4 md:p-6 relative z-10">
-        <div className="w-full max-w-lg animate-fade-in-up">
-          <div className="success-card bg-white/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 ring-1 ring-slate-100 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[color-mix(in_srgb,var(--color-primary)_60%,white)]"></div>
-
-            <div className="flex flex-col items-center text-center">
-              {isSuccessMessageVisible && (
-                <>
-                  <div className="relative mb-6 group cursor-default">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full blur-xl opacity-30 group-hover:opacity-60 transition duration-700"></div>
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-emerald-50 relative z-10 animate-bounce-gentle">
-                      <Check className="w-10 h-10 md:w-12 md:h-12 text-emerald-500 stroke-[3.5]" />
-                    </div>
-                  </div>
-
-                  {/* ✅ ห่อ Wrap หัวข้อ */}
-                  <Wrap id="success-title">
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight mb-2" style={{
-                      color: cfg('success-title').color || '#1e293b',
-                      fontSize: SIZE_MAP[cfg('success-title').fontSize] || undefined,
-                    }}>
-                      {cfg('success-title').text || 'บันทึกคะแนนสำเร็จ!'}
-                    </h1>
-                  </Wrap>
-
-                  {/* ✅ ห่อ Wrap Subtitle */}
-                  <Wrap id="success-subtitle1">
-                    <p className="text-sm md:text-base mb-6 px-2 font-medium" style={{
-                      color: cfg('success-subtitle1').color || '#64748b',
-                      fontSize: SIZE_MAP[cfg('success-subtitle1').fontSize] || undefined,
-                    }}>
-                      {cfg('success-subtitle1').text || 'ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการขับเคลื่อนกิจกรรมนักศึกษาคณะวิทยาการจัดการ'}
-                    </p>
-                  </Wrap>
-                </>
-              )}
-
-              {isGoogleFormLinkVisible && (
-                <>
-                  {/* Box: Announcement */}
-                  <div className="w-full bg-gradient-to-br from-[color-mix(in_srgb,var(--color-primary)_8%,white)] to-white border border-[color-mix(in_srgb,var(--color-primary)_15%,white)] rounded-2xl p-5 shadow-[0_2px_15px_color-mix(in_srgb,var(--color-primary)_6%,transparent)] relative overflow-hidden text-left pb-6 mb-4">
-                    <div className="absolute top-0 right-0 -mr-4 -mt-4 text-[color-mix(in_srgb,var(--color-primary)_16%,white)] opacity-20 pointer-events-none">
-                      <Megaphone size={100} />
-                    </div>
-                    <div className="flex gap-4 items-start relative z-10">
-                      <div className="bg-white p-3 rounded-2xl text-[var(--color-primary)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--color-primary)_10%,white)] shrink-0 mt-1">
-                        <Megaphone size={24} strokeWidth={2.5} />
-                      </div>
-                      <div className="space-y-3 flex-1 min-w-0">
-                        <div>
-                          <h3 className="font-bold text-[var(--color-primary)] text-base md:text-lg leading-tight">รับทรานสคริปต์กิจกรรม</h3>
-                          <p className="text-slate-500 text-xs md:text-sm mt-1">กรุณาทำแบบประเมินให้ครบถ้วน</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)] text-xs font-bold border border-[color-mix(in_srgb,var(--color-primary)_25%,white)] whitespace-nowrap">
-                            <CheckCircle2 size={12} /><span>ชั่วโมงกิจกรรม 2 ชม.</span>
-                          </div>
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
-                            <Tag size={12} /><span>ประเภทเลือกเข้าร่วม</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="relative z-10 mt-4 pt-3 border-t border-[color-mix(in_srgb,var(--color-primary)_15%,white)]">
-                      <p className="text-slate-600 text-xs md:text-sm flex items-center justify-center gap-2">
-                        <span className="shrink-0">🔓</span>
-                        <span className="truncate">และ <span className="font-semibold text-[var(--color-primary)] underline decoration-[color-mix(in_srgb,var(--color-primary)_25%,white)] decoration-2 underline-offset-2">ปลดล็อคหน้าสรุปผลคะแนนเสียง</span></span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Buttons */}
-                  <div className="w-full space-y-3 pd">
-                    
-                    {/* ✅ ห่อ Wrap ปุ่ม Google Form */}
-                    <Wrap id="success-form-btn">
-                      <button
-                        onClick={() => !editorMode && setShowModal(true)}
-                        disabled={isUnlocked && !editorMode}
-                        className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base shadow-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden group
-                          ${isUnlocked && !editorMode ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-none cursor-default' : 'bg-slate-900 text-white hover:bg-black hover:shadow-xl hover:-translate-y-1'}`}
-                        style={{
-                          backgroundColor: (!isUnlocked || editorMode) ? (cfg('success-form-btn').backgroundColor || undefined) : undefined,
-                          color: (!isUnlocked || editorMode) ? (cfg('success-form-btn').textColor || undefined) : undefined,
-                          borderRadius: RADIUS_MAP[cfg('success-form-btn').borderRadius] || undefined,
-                        }}
-                      >
-                        {(isUnlocked && !editorMode) ? (
-                          <><span>ส่งแบบประเมินเรียบร้อยแล้ว</span> <Check size={18} /></>
-                        ) : (
-                          <>
-                            <span className="relative flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-primary)] opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
-                            </span>
-                            <span>{cfg('success-form-btn').text || 'เปิดแบบประเมิน (คลิกที่นี่)'}</span>
-                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                          </>
-                        )}
-                      </button>
-                    </Wrap>
-
-                    <div className="relative group/lock">
-                      <button
-                        onClick={() => { if (isUnlocked && !editorMode) router.push('/results'); }}
-                        disabled={!isUnlocked && !editorMode}
-                        className={`w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base border transition-all duration-500 flex items-center justify-center gap-2
-                          ${(isUnlocked || editorMode) ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] hover:-translate-y-1' : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'}`}
-                      >
-                        {(isUnlocked || editorMode) ? (
-                          <>ไปดูผลคะแนน (Results) <BarChart3 size={18} /></>
-                        ) : (
-                          <><Lock size={16} /> <span>ล็อค: กรุณาทำแบบประเมินก่อน</span></>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* was slate-400 text at 12px — measured 2.56:1 against the card, the
-                        worst contrast of any exit in the product and well under AA's 4.5.
-                        It also sat under a button that is locked until the evaluation is
-                        done, so the one always-available way off this page was the one
-                        rendered as fine print. Now an outlined button in the same stack. */}
-                    <Link href="/" className="block">
-                      <button className="w-full py-3.5 md:py-4 px-6 rounded-xl font-bold text-sm md:text-base border border-dashed border-slate-300 text-slate-600 bg-white hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">← กลับหน้าหลัก</button>
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        </div>
+        <OriginalSuccess
+          user={user}
+          isUnlocked={isUnlocked}
+          onOpenForm={() => setShowModal(true)}
+          editorMode={editorMode}
+          templateId={activeTemplateId}
+          showMessage={isSuccessMessageVisible}
+          showActions={isGoogleFormLinkVisible}
+        />
       )}
 
       {/* Modal & Alert */}

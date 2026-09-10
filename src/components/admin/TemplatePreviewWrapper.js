@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Monitor, Laptop, Tablet, Smartphone, Lock, X, Loader2 } from "lucide-react";
-import { injectTemplateTheme } from "../../utils/injectTemplateTheme";
+import { injectTemplateTheme, injectTemplateThemeOnReady } from "../../utils/injectTemplateTheme";
 
 /**
  * @typedef {"pc"|"laptop"|"tablet"|"mobile"} ViewportKey
@@ -169,7 +169,7 @@ export default function TemplatePreviewWrapper({
                   ref={iframeRef}
                   src={src}
                   title="Template preview"
-                  onLoad={() => { injectTemplateTheme(iframeRef.current?.contentDocument, themeSlug); setLoaded(true); }}
+                  onLoad={() => { injectTemplateThemeOnReady(iframeRef.current, themeSlug); setLoaded(true); }}
                   className="w-full h-full border-0"
                   style={{ opacity: loaded ? 1 : 0, transition: "opacity 280ms ease" }}
                 />

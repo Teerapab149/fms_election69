@@ -11,13 +11,13 @@
 //     slogan + team count, and "ดูรายละเอียด" (→ the parent-owned PartyDetailModal,
 //     exactly as Blossom multi does)
 //   • งดออกเสียง (abstain) is a quieter row that KEEPS its semantic ORANGE coding
-//     (the same ส้ม family as MultiPartyView / the shared VoteConfirmationModal) —
+//     (the same ส้ม family as MultiPartyView / the shared VoteConfirm sheet) —
 //     deliberately NOT var(--rc-*). ไม่รับรอง (disapprove, number = -1) is a
 //     single-party-only choice and is NEVER rendered in the multi ballot (mirrors
 //     MultiPartyView / BlossomVote).
 //   • a fixed confirm bar in Receipt chrome — a paper TRAY strip (torn perforation
 //     top edge) carrying the current selection + a foil-rim confirm button →
-//     onConfirm() (opens the SHARED VoteConfirmationModal owned by vote/page.js —
+//     onConfirm() (opens the SHARED VoteConfirm sheet owned by vote/page.js —
 //     its markup/semantics are untouched here)
 //
 // SINGLE-PARTY: when only one party stands, ReceiptVote dispatches to
@@ -27,7 +27,7 @@
 // the shared-modal opener for multi.
 //
 // Pure presentation: vote/page.js owns auth, the vote-system hook, PartyDetailModal
-// + VoteConfirmationModal + the submit/redirect flow. Colours flow ONLY through
+// + VoteConfirm + the submit/redirect flow. Colours flow ONLY through
 // var(--rc-*) emitted by ReceiptBaseStyles on .rc-root (the one exception is the
 // abstain row's semantic orange). Decoration is print-language only (die-cut /
 // perforation / stamps / foil — no icons, no lucide). Base state is fully visible:
@@ -60,6 +60,7 @@ const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPa
 export function BallotDropScene({ phase = "idle" }) {
   return (
     <div className={`rc-root rc-drop rc-drop--${phase}`} aria-hidden="true">
+      <div className="rc-drop__stage">
       <div className="rc-drop__paper">
         <span className="rc-drop__paper-line rc-dropmono">BALLOT · ✓</span>
         <span className="rc-drop__paper-band" />
@@ -70,6 +71,7 @@ export function BallotDropScene({ phase = "idle" }) {
           <span className="rc-drop__front-th">กล่องรับบัตร</span>
           <span className="rc-drop__front-en rc-dropmono">BALLOT BOX</span>
         </div>
+      </div>
       </div>
       <style jsx global>{`
         /* overlay root — opaque desk wash (NO backdrop-filter, ruling #4); token
@@ -83,11 +85,12 @@ export function BallotDropScene({ phase = "idle" }) {
         .rc-drop.rc-drop--idle { visibility:hidden; }
         .rc-drop .rc-dropmono { font-family:var(--rc-fm); }
 
-        /* the ballot box — rises from the bottom of the screen (translateY only) */
-        .rc-drop__box { position:relative; z-index:1; width:min(300px, 74vw); height:150px;
-          transform:translateY(130%); }
-        .rc-drop.rc-drop--drop .rc-drop__box { animation:rcBoxRise .34s cubic-bezier(.22,1,.36,1) both; }
-        .rc-drop.rc-drop--error .rc-drop__box { animation:rcBoxRise .34s cubic-bezier(.22,1,.36,1) both; }
+        /* One coordinate system: paper and box share a stage, with the entire
+           box above the paper. A child z-index cannot escape its parent's stack. */
+        .rc-drop__stage { position:relative; isolation:isolate; width:min(300px, 74vw); height:330px; }
+        .rc-drop.rc-drop--drop .rc-drop__stage,
+        .rc-drop.rc-drop--error .rc-drop__stage { animation:rcBoxRise .3s cubic-bezier(.22,1,.36,1) both; }
+        .rc-drop__box { position:absolute; z-index:3; bottom:0; left:0; width:100%; height:150px; }
         .rc-drop__slot { position:absolute; z-index:3; left:50%; top:-3px; transform:translateX(-50%);
           width:56%; height:9px; border-radius:5px; background:var(--rc-ink);
           box-shadow:inset 0 2px 4px color-mix(in srgb, var(--rc-ink) 80%, transparent); }
@@ -103,9 +106,9 @@ export function BallotDropScene({ phase = "idle" }) {
 
         /* the ballot being cast — sits above the slot, then folds + drops through it.
            z-index below the box FRONT so it disappears behind the box as it descends. */
-        .rc-drop__paper { position:absolute; z-index:2; left:50%; bottom:118px; width:min(178px, 46vw); height:112px;
-          margin-left:calc(min(178px, 46vw) / -2); border-radius:4px; background:var(--rc-receipt);
-          border:1px solid var(--rc-line); transform-origin:bottom center; transform:translateY(40px) scaleY(1);
+        .rc-drop__paper { position:absolute; z-index:2; left:50%; bottom:150px; width:min(148px, 38vw); height:112px;
+          margin-left:calc(min(148px, 38vw) / -2); border-radius:3px; background:var(--rc-receipt);
+          border:1px solid var(--rc-line); transform-origin:bottom center; transform:translateY(130px) scaleY(.5);
           opacity:0; padding:14px 14px 0; overflow:hidden;
           box-shadow:2px 12px 26px -14px color-mix(in srgb, var(--rc-ink) 45%, transparent);
           background-image:repeating-linear-gradient(180deg, transparent 0 15px, color-mix(in srgb, var(--rc-ink) 4%, transparent) 15px 16px); }
@@ -113,20 +116,20 @@ export function BallotDropScene({ phase = "idle" }) {
         .rc-drop__paper-band { display:block; margin-top:10px; height:26px; border-radius:3px;
           background:color-mix(in srgb, var(--rc-accent) 12%, transparent); }
         .rc-drop.rc-drop--drop .rc-drop__paper { animation:rcPaperCast .9s cubic-bezier(.5,0,.6,1) both; }
-        .rc-drop.rc-drop--error .rc-drop__paper { animation:rcPaperBounce .42s cubic-bezier(.34,1.56,.64,1) both; }
+        .rc-drop.rc-drop--error .rc-drop__paper { animation:rcPaperReturn .42s cubic-bezier(.22,1,.36,1) both; }
 
         @keyframes rcBoxRise { from { transform:translateY(130%); } to { transform:translateY(0); } }
         @keyframes rcPaperCast {
-          0%   { transform:translateY(40px) scaleY(1); opacity:0; }
-          16%  { transform:translateY(-4px) scaleY(1); opacity:1; }
-          40%  { transform:translateY(-4px) scaleY(1); opacity:1; }
-          58%  { transform:translateY(0px) scaleY(.5); opacity:1; }
-          100% { transform:translateY(96px) scaleY(.16); opacity:.85; }
+          0%   { transform:translateY(-36px) scaleY(1); opacity:0; }
+          20%  { transform:translateY(-24px) scaleY(1); opacity:1; }
+          42%  { transform:translateY(-16px) scaleY(.55); opacity:1; }
+          58%  { transform:translateY(0) scaleY(.5); opacity:1; }
+          100% { transform:translateY(130px) scaleY(.5); opacity:1; }
         }
-        @keyframes rcPaperBounce {
-          0%   { transform:translateY(-4px) scaleY(1); opacity:1; }
-          45%  { transform:translateY(20px) scaleY(.72); opacity:1; }
-          100% { transform:translateY(-56px) scaleY(1); opacity:0; }
+        @keyframes rcPaperReturn {
+          0%   { transform:translateY(130px) scaleY(.5); opacity:1; }
+          70%  { transform:translateY(-24px) scaleY(.8); opacity:1; }
+          100% { transform:translateY(-44px) scaleY(1); opacity:0; }
         }
         /* the vote is NEVER coupled to the scene — reduced-motion skips playDrop's
            animation entirely (parent still awaits submit), but freeze here too so a
@@ -172,7 +175,7 @@ export function useBallotDrop() {
 }
 
 // ── RECEIPT CONFIRM SLIP (v2-R4a T4) — the receipt family's OWN confirmation,
-//    replacing the shared VoteConfirmationModal on the receipt branch ONLY (the
+//    replacing the shared VoteConfirm sheet on the receipt branch ONLY (the
 //    shared modal file is untouched; every other family keeps using it). Semantics
 //    mirror the shared modal exactly: open from the tray's confirm → ยืนยัน runs
 //    onConfirm (→ the ballot-drop scene → the original flow) / ยกเลิก + Esc +
