@@ -2423,6 +2423,87 @@ because someone will hand over a dead system believing it was checked.
 
 ---
 
+### P-LOG-134: [2026-09-11] The iframe fired `load` before React had hydrated inside it
+**Context:** Every /template-preview surface opened in the admin chooser logged "A tree
+hydrated but some attributes of the server rendered HTML didn't match the client
+properties". The element it named changed page to page — OriginalSuccess's `<main
+class="fms-app os-success">`, RootLayout's `<div className="fms-app">` at layout.js:249 —
+but the diff was always a `style` attribute full of Layer-1 tokens that no component
+renders. TemplateChooserTab.js:97 and TemplatePreviewWrapper.js:172 called
+`injectTemplateTheme` from the iframe's `onLoad`, and that event only means the document
+and its subresources finished; React inside the frame hydrates a tick or more later. The
+injected values (`#8A2680` / `#C026D3` / `#F8F9FD`) matched `injectOriginal` byte for
+byte, which is what pinned it down.
+**Fix:** /template-preview raises `fms-preview-hydrated` on its own window after mount;
+`injectTemplateThemeOnReady` waits for that signal, with a timeout so any document that
+never raises it still gets tinted (`5a7210d`). Proved with a controlled A/B in one page:
+injecting on `onLoad` produced 1 hydration error, injecting on the beacon produced 0, and
+both painted the palette.
+**Lesson:** `load` is not "the app is ready" — for anything React owns it is strictly too
+early. When you must mutate a hydrating subtree's DOM from outside, wait for a signal the
+app itself raises. And a hydration diff naming a random-looking element is usually one
+writer touching a class that many elements share, not a bug in that element.
+**Tags:** `#hydration` `#preview` `#react`
+
+---
+
+### P-LOG-135: [2026-09-11] A button that changes element between states broke in only one state
+**Context:** Verdure's success page rendered its primary action as an empty cream capsule
+— but only after the evaluation form was done. That action is a `<button>` while the form
+is outstanding and an `<a>` once it is finished, and VerdureShell carries
+`.vd-root a:not(.vd-btn){color:inherit}` at specificity (0,2,1), which outranks
+`.vx-verdure .vx-primary` at (0,2,0). The link inherited `--vx-ink` (= cream) onto a cream
+pill; the button never matched the rule and looked right. Reading the code showed a
+correct-looking colour declaration covering both.
+**Fix:** Paint buttons through two classes on the target (`.vx-button.vx-primary`,
+(0,3,0)) so no shell's blanket element rule can win, and add
+`scripts/smoke/successButtonContrast.mjs`, which composites each button's real painted
+backdrop and fails under a luminance delta (`5a7210d`). It measured Δlum 0 on the broken
+state and 206 after.
+**Lesson:** Any control whose ELEMENT changes with state has two cascade fates, and
+per-state visual QA is the only thing that catches the second one. Shell-level `a { }`
+rules are specificity traps for every component rendered inside them. Assert on computed
+colour, not on the declaration you wrote.
+**Tags:** `#css` `#specificity` `#a11y` `#verification`
+
+---
+
+### P-LOG-136: [2026-09-11] A fixed overlay rendered by the page cannot see its family's CSS vars
+**Context:** The new gumroad confirm sheet rendered as a transparent, borderless card — no
+paper, no 3px ink border, no lime. Its CSS referenced `var(--paper)`, `var(--ink)`,
+`var(--lime)`, all of which live on `.gum-root`. The sheet is a `position:fixed` overlay
+rendered by vote/page.js and template-preview, i.e. a sibling of the family component, so
+it inherits nothing from the family root. Studio-dark and verdure looked fine by luck —
+their vars happened to be reachable on those pages — which made the failure look
+family-specific rather than structural.
+**Fix:** Each skin resolves its own palette in JS from the slug (`gumroadTheme(slug)` and
+friends) and hands it to the shared shell as inline vars, the same way `VoteCastScene`
+already solved this (`5a7210d`). Adding the family root class to the overlay is NOT an
+option: `.sd-root` and `.bl-root` set a full-height background and would paint over the
+page.
+**Lesson:** CSS vars scoped to a family root are unreachable from anything the PAGE
+renders. Overlays, portals and modals need their palette passed in, not inherited — and
+when only some families break, suspect placement before suspecting the families.
+**Tags:** `#css` `#templates` `#overlay`
+
+---
+
+### P-LOG-137: [2026-09-11] A backtick in a CSS comment killed the build, twice in one session
+**Context:** `next build` failed with `Expected '</', got 'display'` pointing at a line
+inside a `<style jsx global>` block. The line was a prose comment that quoted a CSS
+property in backticks — which closes the template literal the styled-jsx block is written
+in. It happened again an hour later in the same file, in a comment quoting a selector. Dev
+served a 500 whose real message was buried in the JSON error payload, so the page just
+looked blank in the smoke run rather than failing loudly.
+**Fix:** No backticks anywhere inside a `<style jsx>` template literal, comments included.
+Quote CSS in prose with nothing, or with single quotes.
+**Lesson:** The comment syntax used everywhere else in the file is a syntax error inside a
+template literal. This repo hit it before during the fms-official arc; recurring means the
+rule is worth checking on sight rather than relearning it from a broken build.
+**Tags:** `#build` `#styled-jsx` `#gotcha`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
