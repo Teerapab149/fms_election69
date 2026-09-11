@@ -5,6 +5,7 @@ import { adminGuard } from "../../../../lib/auth/adminCheck";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
+import { uploadDir, candidatePaths, relativeFromUrl } from "../../../../lib/media/storage";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
@@ -20,7 +21,7 @@ function uploadStorageErrorResponse(error) {
   if (!isStorageError) return null;
 
   return NextResponse.json({
-    error: "พื้นที่เก็บรูปบนเซิร์ฟเวอร์เขียนไม่ได้ กรุณาให้ผู้ดูแลตรวจ ownership ของ public/images และโฟลเดอร์ย่อย",
+    error: "พื้นที่เก็บรูปบนเซิร์ฟเวอร์เขียนไม่ได้ กรุณาให้ผู้ดูแลตรวจสิทธิ์ของโฟลเดอร์เก็บรูป (UPLOAD_ROOT หรือ public/images ถ้าไม่ได้ตั้ง) และโฟลเดอร์ย่อย",
     code: "UPLOAD_STORAGE_NOT_WRITABLE",
   }, { status: 507 });
 }
@@ -48,16 +49,20 @@ async function deleteImageFile(imageUrl) {
   if (!imageUrl || typeof imageUrl !== 'string') return;
 
   try {
-    // แปลง URL เป็น file path
-    const filePath = path.join(process.cwd(), 'public', imageUrl);
+    // แปลง URL เป็น file path — ไล่หาในทุกรากที่ระบบยอมรับ (UPLOAD_ROOT ก่อน
+    // แล้วค่อย public/images) เพราะรูปที่อัปไว้ก่อนย้าย UPLOAD_ROOT ยังอยู่ที่เดิม
+    const rel = relativeFromUrl(imageUrl);
+    if (!rel) return;
 
-    // เช็คว่าไฟล์มีอยู่จริงก่อนลบ
-    if (fs.existsSync(filePath)) {
-      await unlink(filePath);
-      console.log(`🗑️ Deleted file: ${imageUrl}`);
+    for (const filePath of candidatePaths(rel.split('/'))) {
+      // เช็คว่าไฟล์มีอยู่จริงก่อนลบ
+      if (fs.existsSync(filePath)) {
+        await unlink(filePath);
+        console.log(`🗑️ Deleted file: ${imageUrl}`);
 
-      // ลองลบ parent folder ถ้ามันว่าง
-      await removeEmptyDir(path.dirname(filePath));
+        // ลองลบ parent folder ถ้ามันว่าง
+        await removeEmptyDir(path.dirname(filePath));
+      }
     }
   } catch (error) {
     console.error(`❌ Failed to delete file ${imageUrl}:`, error.message);
@@ -166,10 +171,10 @@ async function uploadLogo(file, candidateName) {
     const buffer = Buffer.from(bytes);
     const safeName = candidateName.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, "");
     const fileName = `${safeName}_${Date.now()}.jpg`;
-    const uploadDir = path.join(process.cwd(), "public/images/candidates/logo");
+    const targetDir = uploadDir("candidates", "logo");
 
-    if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 700, format: "keep" }));
+    if (!fs.existsSync(targetDir)) await mkdir(targetDir, { recursive: true });
+    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 700, format: "keep" }));
 
     return `/images/candidates/logo/${fileName}`;
   }
@@ -184,10 +189,10 @@ async function uploadOfficialImage(file, candidateName) {
     const safeName = candidateName.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, "");
     // ตั้งชื่อไฟล์นำหน้าด้วย OFFICIAL เพื่อให้แยกง่าย
     const fileName = `OFFICIAL_${safeName}_${Date.now()}.jpg`;
-    const uploadDir = path.join(process.cwd(), "public/images/candidates/officialImageUrl");
+    const targetDir = uploadDir("candidates", "officialImageUrl");
 
-    if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
+    if (!fs.existsSync(targetDir)) await mkdir(targetDir, { recursive: true });
+    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
 
     return `/images/candidates/officialImageUrl/${fileName}`;
   }
@@ -200,8 +205,8 @@ async function uploadMultipleMobileHeroImages(files, candidateName, candidateId)
 
   const uploadedUrls = [];
   // ใช้ folder path ตามที่ user ต้องการ: /images/candidates/mobileheroimage/party{id}/
-  const uploadDir = path.join(process.cwd(), `public/images/candidates/mobileheroimage/party${candidateId}`);
-  if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
+  const targetDir = uploadDir("candidates", "mobileheroimage", `party${candidateId}`);
+  if (!fs.existsSync(targetDir)) await mkdir(targetDir, { recursive: true });
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -212,7 +217,7 @@ async function uploadMultipleMobileHeroImages(files, candidateName, candidateId)
 
       const fileName = `MOBILE_HERO_${safeName}_${Date.now()}_${i}.jpg`;
 
-      await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1280, quality: 80 }));
+      await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1280, quality: 80 }));
       uploadedUrls.push(`/images/candidates/mobileheroimage/party${candidateId}/${fileName}`);
     }
   }
@@ -223,8 +228,8 @@ async function uploadMultipleGroupImages(files, candidateName, candidateId) {
   if (!files || files.length === 0) return [];
 
   const uploadedUrls = [];
-  const uploadDir = path.join(process.cwd(), `public/images/candidates/groupimage/party${candidateId}`);
-  if (!fs.existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
+  const targetDir = uploadDir("candidates", "groupimage", `party${candidateId}`);
+  if (!fs.existsSync(targetDir)) await mkdir(targetDir, { recursive: true });
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -235,7 +240,7 @@ async function uploadMultipleGroupImages(files, candidateName, candidateId) {
 
       const fileName = `GROUP_${safeName}_${Date.now()}_${i}.jpg`;
 
-      await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
+      await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
       uploadedUrls.push(`/images/candidates/groupimage/party${candidateId}/${fileName}`);
     }
   }
@@ -252,13 +257,13 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
 
     const fileName = `${positionNum}.jpg`;
     const folderName = `party_${partyNumber}`;
-    const uploadDir = path.join(process.cwd(), `public/images/members/${folderName}`);
+    const targetDir = uploadDir("members", folderName);
 
-    if (!fs.existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    if (!fs.existsSync(targetDir)) {
+      await mkdir(targetDir, { recursive: true });
     }
 
-    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 800, quality: 82 }));
+    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 800, quality: 82 }));
     return `/images/members/${folderName}/${fileName}`;
   }
 
@@ -288,13 +293,13 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
 
     const fileName = `${positionNum}_${studentId}.jpg`;
     const folderName = `party_${partyNumber}`;
-    const uploadDir = path.join(process.cwd(), `public/images/members/${folderName}/Modal`);
+    const targetDir = uploadDir("members", folderName, "Modal");
 
-    if (!fs.existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    if (!fs.existsSync(targetDir)) {
+      await mkdir(targetDir, { recursive: true });
     }
 
-    await writeFile(path.join(uploadDir, fileName), await optimizeImage(buffer, { maxWidth: 1000, quality: 82 }));
+    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1000, quality: 82 }));
     return `/images/members/${folderName}/Modal/${fileName}`;
   }
 

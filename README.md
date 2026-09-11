@@ -51,6 +51,7 @@ npm run dev        # http://localhost:3000
 | `ADMIN_JWT_SECRET` | เซ็น cookie ของ admin (รหัสผ่าน admin อยู่ใน DB ไม่ใช่ env — ดู `scripts/admin.js`) |
 | `ELECTION_BALLOT_PUBLIC_KEY`, `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน (ดูหัวข้อความปลอดภัย) |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่มีผลกับหน้า login แล้ว (ตัวกั้นจริงคือ `NODE_ENV`) แต่ถ้าตั้งเป็น `true` ค้างไว้ `npm run preflight` จะ FAIL — บน production ไม่ต้องมีบรรทัดนี้ |
+| `UPLOAD_ROOT` | โฟลเดอร์เก็บรูปที่แอดมินอัปโหลด ไม่ตั้ง = `public/images` ใต้โฟลเดอร์ที่รันแอป บน production ควรตั้งไปที่ไดเรกทอรีนอกซอร์ส (เช่น `/var/lib/fms-ovs/images`) ไม่งั้น deploy รอบถัดไปที่สร้างโฟลเดอร์ใหม่จะลบรูปทิ้ง |
 
 ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ตั้งรหัสด้วย
 `node scripts/admin.js --rotate-password` แล้วใส่ค่าที่ได้เป็น `ADMIN_DEV_PASSWORD`

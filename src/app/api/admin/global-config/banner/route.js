@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
 import { optimizeImage } from "../../../../../lib/imageOptimize";
+import { uploadDir } from "../../../../../lib/media/storage";
 
 // POST /api/admin/global-config/banner — upload the election announcement poster.
 //
@@ -17,9 +18,9 @@ import { optimizeImage } from "../../../../../lib/imageOptimize";
 // NO SCHEMA CHANGE: the resulting path is stored under `electionBannerUrl` in
 // SystemConfig.globalConfig, which is a Json column. Nothing migrates.
 //
-// The written file lands in public/images/banner, which docker-compose
-// bind-mounts (`./public/images:/app/public/images`) — so an uploaded poster
-// survives a redeploy instead of vanishing with the container.
+// The file lands under UPLOAD_ROOT (src/lib/media/storage.js) — public/images
+// when that env var is unset, a directory outside the source tree when it is set,
+// which is what keeps an uploaded poster alive across deploys.
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -59,9 +60,9 @@ export async function POST(request) {
     // from the browser (and any CDN) cache after a replacement, so staff would
     // upload a corrected poster and still see the old one.
     const fileName = `election-${Date.now()}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public/images/banner");
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), optimized);
+    const targetDir = uploadDir("banner");
+    await mkdir(targetDir, { recursive: true });
+    await writeFile(path.join(targetDir, fileName), optimized);
 
     // The stored value is a ROOT-RELATIVE app path with no basePath — every
     // reader runs it through getPath(), which is the one place a basePath gets

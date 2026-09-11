@@ -54,6 +54,7 @@
 | `ADMIN_JWT_SECRET` | สุ่มใหม่ (`openssl rand -hex 32`) — เซ็น/ตรวจ `admin_token` cookie |
 | `ELECTION_BALLOT_PUBLIC_KEY` | **ตั้งใน §2** — public key เข้ารหัสบัตร (PEM, `\n`-escaped) |
 | `BALLOT_CHAIN_SECRET` | **ตั้งใน §2** — secret ของ HMAC hash-chain บัตร |
+| `UPLOAD_ROOT` | โฟลเดอร์เก็บรูปที่แอดมินอัปโหลด — ตั้งให้อยู่ **นอกโฟลเดอร์ซอร์ส** (เช่น `/var/lib/fms-ovs/images`) และให้ผู้ใช้ที่รันแอปเป็นเจ้าของ ไม่ตั้ง = `public/images` ซึ่ง deploy รอบถัดไปที่สร้างโฟลเดอร์ใหม่จะลบรูปทิ้ง (ดู STAFF-IT-GUIDE §7.3) |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ~~ต้องไม่ตั้งบน production~~ — **เลิกมีผลแล้ว (SEC-MOCK3, 2026-07-27)** ไม่ต้องตั้งและไม่ต้องกังวลว่าจะตั้งค้าง: ตัวกั้นจริงคือ `NODE_ENV=production` ซึ่งทำให้ NextAuth ไม่ register provider `mock-login` เลย และปุ่มบนหน้า login อ่านรายการ provider จาก `/api/auth/providers` ตอน runtime จึงหายตามไปเอง |
 
 > ⚠️ **base path: ปล่อยว่างทั้งสามตัว — และถ้าจะตั้ง ต้องตั้งครบทั้งสามพร้อมกัน**
