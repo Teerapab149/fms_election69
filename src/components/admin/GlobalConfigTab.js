@@ -11,6 +11,7 @@ import { getPath } from "../../utils/basePath";
 import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import { evaluationPromptText } from "../../utils/activityHours";
 
 // section-header icons (metadata carries the NAME so the data module stays
 // component-free); falls back to a neutral glyph if a group has none.
@@ -325,13 +326,23 @@ export default function GlobalConfigTab() {
       // ตระกูลแบบไม่มีเงื่อนไข ค่านี้จึงไม่ได้คุมการมี/ไม่มีปุ่ม เว้นว่าง = กดแล้วเจอ
       // "ไม่พบลิงก์แบบประเมิน" ไม่ใช่ปุ่มหายไป (ข้อความเดิมเขียนผิด)
       const url = String(config.googleFormUrl ?? "").trim();
-      body = url ? (
-        <div className="text-xs text-slate-600 break-all leading-relaxed">
-          ปุ่มบนหน้าขอบคุณจะพาไปที่{" "}
-          <span className="font-semibold text-[#8A2680]">{url}</span>
+      body = (
+        <div className="space-y-1.5">
+          {url ? (
+            <div className="text-xs text-slate-600 break-all leading-relaxed">
+              ปุ่มบนหน้าขอบคุณจะพาไปที่{" "}
+              <span className="font-semibold text-[#8A2680]">{url}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-amber-600">(ยังไม่ตั้ง) — ปุ่มแบบประเมินยังแสดงบนหน้าขอบคุณ แต่กดแล้วจะขึ้นว่าไม่พบลิงก์</div>
+          )}
+          {/* ประโยคจริงที่ทุก template จะพูดตรงกัน ประกอบจาก utils/activityHours.js
+              ตัวเดียวกับที่หน้าขอบคุณใช้ ไม่ใช่ข้อความที่พิมพ์ซ้ำไว้ที่นี่ */}
+          <div className="text-xs text-slate-600 leading-relaxed">
+            ทุก template จะเขียนว่า{" "}
+            <span className="font-semibold text-[#8A2680]">{evaluationPromptText(config)}</span>
+          </div>
         </div>
-      ) : (
-        <div className="text-xs text-amber-600">(ยังไม่ตั้ง) — ปุ่มแบบประเมินยังแสดงบนหน้าขอบคุณ แต่กดแล้วจะขึ้นว่าไม่พบลิงก์</div>
       );
     } else if (id === "copyright") {
       const t = (v) => String(v ?? "").trim() || "—";
@@ -439,7 +450,11 @@ export default function GlobalConfigTab() {
                           onChange={(e) =>
                             handleChange(
                               field.key,
-                              field.type === "number" ? Number(e.target.value) : e.target.value
+                              field.type === "number"
+                                // allowEmpty: บางช่องตัวเลข "ไม่ใส่" คือคำตอบที่ถูกต้อง
+                                // ไม่ใช่ศูนย์ — Number("") คือ 0 ซึ่งจะกลายเป็นค่าจริง
+                                ? (field.allowEmpty && e.target.value === "" ? "" : Number(e.target.value))
+                                : e.target.value
                             )
                           }
                           className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/10 focus:outline-none text-sm transition-colors"
