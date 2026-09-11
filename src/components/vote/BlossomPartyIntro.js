@@ -11,10 +11,10 @@
 //   - the parent flips `introDone` on onDone, which adds .is-live to the root so the
 //     booth's own entrance choreography plays AFTER this lifts, not behind it
 //
-// Choreography: the canvas breathes in with the family's dot grid → six petals
-// unfurl one by one around the party medallion (logo, or the numeral) → the
-// hairline rule draws → party name rises in the family's two-tone display → slogan
-// and the tap hint follow → the whole panel wipes up into the booth.
+// Choreography: petals are ALREADY drifting down the canvas when the curtain
+// appears → the party medallion settles in under a soft halo → the hairline rule
+// draws → the name rises in the family's two-tone display → slogan and the tap
+// hint follow → the whole panel wipes up into the booth.
 //
 // Every colour comes from var(--bl-*) emitted by BlossomBaseStyles on .bl-root, so
 // the intro re-themes with the rest of the family. Motion is transform/opacity only.
@@ -29,7 +29,37 @@ import { getPath } from "../../utils/basePath";
 
 const EASE = [0.16, 1, 0.3, 1];
 const EASE_IO = [0.76, 0, 0.24, 1];
-const PETALS = [0, 60, 120, 180, 240, 300];
+
+// กลีบที่ร่วงอยู่ — ตารางค่าคงที่ ไม่ใช่ Math.random()
+//
+// ม่านนี้ถูก render ฝั่ง server ด้วย (introDone เริ่มที่ false) ถ้าสุ่มค่าตอน render
+// markup สองฝั่งจะไม่ตรงกันแล้ว hydration พัง ตารางนี้จึงเขียนมือไว้เลย
+//   x     ตำแหน่งแนวนอน (%)
+//   w     ความกว้างกลีบ (px)
+//   dur   เวลาร่วงหนึ่งรอบ (s) — กลีบเล็กร่วงช้ากว่า ให้รู้สึกว่ามันอยู่ไกลออกไป
+//   delay **ติดลบ** เพื่อให้กลีบค้างอยู่กลางทางตั้งแต่เฟรมแรก ไม่ใช่เริ่มโปรยพร้อมกัน
+//         ตอนม่านขึ้น (ม่านอยู่แค่ ~3.4s ถ้าเริ่มที่ 0 ทุกใบ ครึ่งแรกจอจะว่าง)
+//   sway  ระยะแกว่งซ้ายขวา (px) · spin องศาที่หมุนต่อรอบ · tone เฉดของกลีบ (0-2)
+const FALLING = [
+  { x: 4, w: 16, dur: 9.5, delay: -6.2, sway: 26, spin: 220, tone: 0 },
+  { x: 12, w: 11, dur: 12.0, delay: -2.4, sway: 18, spin: -180, tone: 2 },
+  { x: 19, w: 20, dur: 8.2, delay: -4.8, sway: 34, spin: 260, tone: 1 },
+  { x: 27, w: 13, dur: 11.0, delay: -8.6, sway: 22, spin: -200, tone: 0 },
+  { x: 34, w: 9, dur: 13.5, delay: -1.2, sway: 16, spin: 300, tone: 2 },
+  { x: 41, w: 18, dur: 9.0, delay: -5.5, sway: 30, spin: -240, tone: 0 },
+  { x: 48, w: 12, dur: 12.6, delay: -9.4, sway: 20, spin: 190, tone: 1 },
+  { x: 56, w: 15, dur: 10.2, delay: -3.1, sway: 28, spin: -210, tone: 0 },
+  { x: 63, w: 10, dur: 13.0, delay: -7.3, sway: 15, spin: 280, tone: 2 },
+  { x: 70, w: 19, dur: 8.6, delay: -2.0, sway: 32, spin: 230, tone: 1 },
+  { x: 77, w: 12, dur: 11.5, delay: -10.1, sway: 21, spin: -260, tone: 0 },
+  { x: 84, w: 14, dur: 9.8, delay: -4.2, sway: 25, spin: 200, tone: 2 },
+  { x: 90, w: 17, dur: 10.8, delay: -6.9, sway: 29, spin: -190, tone: 0 },
+  { x: 96, w: 10, dur: 12.2, delay: -1.7, sway: 17, spin: 250, tone: 1 },
+  { x: 8, w: 13, dur: 10.6, delay: -0.6, sway: 24, spin: -230, tone: 1 },
+  { x: 31, w: 15, dur: 9.2, delay: -11.3, sway: 27, spin: 210, tone: 0 },
+  { x: 52, w: 17, dur: 11.8, delay: -5.9, sway: 31, spin: -220, tone: 0 },
+  { x: 74, w: 11, dur: 12.8, delay: -8.0, sway: 19, spin: 270, tone: 2 },
+];
 
 export default function BlossomPartyIntro({ party = {}, onDone = () => {}, durationMs = 3400 }) {
   const calledRef = useRef(false);
@@ -69,49 +99,55 @@ export default function BlossomPartyIntro({ party = {}, onDone = () => {}, durat
       <motion.span className="bl-intro__blob bl-intro__blob--2" aria-hidden="true"
         animate={{ y: [0, 12, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
 
+      {/* กลีบร่วง — ซ้อนสามชั้นเพราะแต่ละชั้นกิน transform คนละแบบ: ชั้นนอกร่วงลง
+          (linear) ชั้นกลางแกว่งซ้ายขวา (ease-in-out สลับไปกลับ) ชั้นในหมุนรอบตัวเอง
+          ถ้ายัดสามอย่างไว้ที่ element เดียว animation ตัวหลังจะทับ transform ตัวหน้า */}
+      <div className="bl-intro__fall" aria-hidden="true">
+        {FALLING.map((p, i) => (
+          <span key={i} className="bl-intro__fp"
+            style={{ left: `${p.x}%`, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s` }}>
+            <span className="bl-intro__fp-sway"
+              style={{ "--sway": `${p.sway}px`, animationDuration: `${(p.dur / 3).toFixed(2)}s`, animationDelay: `${p.delay}s` }}>
+              <span className={`bl-intro__fp-petal bl-intro__fp-petal--${p.tone}`}
+                style={{ width: `${p.w}px`, "--spin": `${p.spin}deg`, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s` }} />
+            </span>
+          </span>
+        ))}
+      </div>
+
       <div className="bl-intro__stage">
         <motion.p className="bl-intro__eyebrow"
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: EASE }}>
           พรรคเดียวที่ลงสมัคร{hasNo ? ` · หมายเลข ${no}` : ""}
         </motion.p>
 
-        {/* ดอกไม้คลี่รอบตราพรรค — กลีบละจังหวะ ไม่พร้อมกัน ให้รู้สึกว่ามันค่อย ๆ บาน */}
-        <div className="bl-intro__bloom" aria-hidden="true">
-          {PETALS.map((angle, i) => (
-            <span key={angle} className="bl-intro__petalwrap" style={{ transform: `rotate(${angle}deg)` }}>
-              <motion.span className={`bl-intro__petal${i % 2 ? " bl-intro__petal--alt" : ""}`}
-                initial={{ scaleY: 0.1, scaleX: 0.5, opacity: 0 }}
-                animate={{ scaleY: 1, scaleX: 1, opacity: 1 }}
-                transition={{ delay: 0.2 + i * 0.08, duration: 0.72, ease: EASE }} />
-            </span>
-          ))}
-          <motion.span className="bl-intro__medallion"
-            initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.52, duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}>
-            {logo
-              ? <img src={logo} alt="" className="bl-intro__logo" />
-              : <em className="bl-intro__no">{hasNo ? no : "—"}</em>}
-          </motion.span>
-        </div>
+        <motion.div className="bl-intro__medallion"
+          initial={{ scale: 0.72, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.24, duration: 0.62, ease: [0.34, 1.56, 0.64, 1] }}>
+          <span className="bl-intro__halo" aria-hidden="true" />
+          {logo
+            ? <img src={logo} alt="" className="bl-intro__logo" />
+            : <em className="bl-intro__no">{hasNo ? no : "—"}</em>}
+        </motion.div>
 
         <motion.span className="bl-intro__rule"
-          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.92, duration: 0.55, ease: EASE }} />
+          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.72, duration: 0.55, ease: EASE }} />
 
         <motion.h2 className="bl-intro__name"
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.04, duration: 0.62, ease: EASE }}>
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.86, duration: 0.62, ease: EASE }}>
           {head}{tail && <> <em>{tail}</em></>}
         </motion.h2>
 
         {party?.slogan && (
           <motion.p className="bl-intro__slogan"
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.22, duration: 0.6, ease: EASE }}>
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.04, duration: 0.6, ease: EASE }}>
             “{party.slogan}”
           </motion.p>
         )}
 
         <motion.p className="bl-intro__hint"
           initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 1, 0.5, 1] }}
-          transition={{ delay: 1.5, duration: 2, repeat: Infinity, repeatDelay: 0.2 }}>
+          transition={{ delay: 1.34, duration: 2, repeat: Infinity, repeatDelay: 0.2 }}>
           แตะเพื่อเข้าสู่หน้าพรรค
         </motion.p>
       </div>
@@ -129,25 +165,44 @@ export default function BlossomPartyIntro({ party = {}, onDone = () => {}, durat
         .bl-intro__blob--2 { width:min(38vw,340px); aspect-ratio:1; bottom:-14%; left:-6%;
           background:color-mix(in srgb, var(--bl-sup1) 30%, transparent); }
 
+        /* ── กลีบร่วง ───────────────────────────────────────────────────────── */
+        .bl-intro__fall { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+        .bl-intro__fp { position:absolute; top:0; will-change:transform;
+          animation-name:blFallY; animation-timing-function:linear; animation-iteration-count:infinite; }
+        .bl-intro__fp-sway { display:block;
+          animation-name:blFallX; animation-timing-function:ease-in-out;
+          animation-iteration-count:infinite; animation-direction:alternate; }
+        /* กลีบทรงหยดน้ำ ปลายแหลมมุมเดียว ไม่ใช่วงรี */
+        .bl-intro__fp-petal { display:block; aspect-ratio:1/1.18; background:var(--bl-primary);
+          border-radius:100% 8% 100% 100%;
+          animation-name:blFallSpin; animation-timing-function:linear; animation-iteration-count:infinite; }
+        .bl-intro__fp-petal--1 { background:var(--bl-primary-deep); }
+        .bl-intro__fp-petal--2 { background:color-mix(in srgb, var(--bl-primary) 62%, var(--bl-card)); }
+        @keyframes blFallY {
+          0%   { transform:translate3d(0,-14vh,0); opacity:0; }
+          9%   { opacity:.9; }
+          86%  { opacity:.75; }
+          100% { transform:translate3d(0,112vh,0); opacity:0; }
+        }
+        @keyframes blFallX {
+          from { transform:translate3d(calc(var(--sway) * -1),0,0); }
+          to   { transform:translate3d(var(--sway),0,0); }
+        }
+        @keyframes blFallSpin { from { transform:rotate(0deg); } to { transform:rotate(var(--spin)); } }
+
         .bl-intro__stage { position:relative; display:flex; flex-direction:column; align-items:center;
           max-width:640px; width:100%; }
         .bl-intro__eyebrow { font-family:var(--bl-fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
-          color:var(--bl-primary-ink); margin:0 0 28px; }
+          color:var(--bl-primary-ink); margin:0 0 30px; }
 
-        .bl-intro__bloom { position:relative; width:clamp(170px,30vw,224px); aspect-ratio:1; }
-        .bl-intro__petalwrap { position:absolute; inset:0; }
-        /* กลีบยาวเลยขอบตราออกไป ดอกจึงใหญ่กว่าตรา ไม่ใช่กลีบเล็ก ๆ เกาะอยู่รอบ ๆ */
-        .bl-intro__petal { position:absolute; left:31%; top:-9%; width:38%; height:62%;
-          border-radius:50% 50% 46% 46%; transform-origin:50% 92%; display:block;
-          background:var(--bl-primary); }
-        /* สองโทนของสีเดียวกัน = ดอกเดียวที่มีมิติ ถ้าสลับไปหาสีสนับสนุน (มิ้นต์/ฟ้า)
-           มันจะอ่านเป็นดอกไม้สองดอกซ้อนกันมากกว่าดอกเดียว */
-        .bl-intro__petal--alt { background:var(--bl-primary-deep); }
-        .bl-intro__medallion { position:absolute; inset:26%; border-radius:50%; display:grid; place-items:center;
-          background:var(--bl-card); border:1.5px solid var(--bl-ink); overflow:hidden; padding:12px; }
-        .bl-intro__logo { width:100%; height:100%; object-fit:contain; display:block; }
-        .bl-intro__no { font-family:var(--bl-fd); font-style:normal; font-weight:700; font-size:clamp(34px,6vw,52px);
-          line-height:1; color:var(--bl-ink); }
+        .bl-intro__medallion { position:relative; width:clamp(116px,20vw,150px); aspect-ratio:1; border-radius:50%;
+          display:grid; place-items:center; background:var(--bl-card); border:1.5px solid var(--bl-ink);
+          padding:18px; }
+        .bl-intro__halo { position:absolute; inset:-22px; border-radius:50%; pointer-events:none;
+          background:radial-gradient(circle, color-mix(in srgb, var(--bl-primary) 30%, transparent) 0%, transparent 66%); }
+        .bl-intro__logo { position:relative; width:100%; height:100%; object-fit:contain; display:block; }
+        .bl-intro__no { position:relative; font-family:var(--bl-fd); font-style:normal; font-weight:700;
+          font-size:clamp(34px,6vw,52px); line-height:1; color:var(--bl-ink); }
 
         .bl-intro__rule { display:block; width:min(220px,52%); height:1.5px; background:var(--bl-ink);
           transform-origin:center; margin:30px 0 22px; opacity:.75; }
