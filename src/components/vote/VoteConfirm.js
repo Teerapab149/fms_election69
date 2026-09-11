@@ -35,6 +35,19 @@ import { fmsOfficialTheme } from "../../utils/fmsOfficialPalette";
 // ห้ามมาก่อนไทย — คนที่อ่านอังกฤษไม่ออกต้องอ่านหน้านี้รู้เรื่องเท่าเดิมเป๊ะ ๆ
 // ใส่เฉพาะ "ชั้น 1" คือสิ่งที่ไม่เข้าใจแล้วลงคะแนนผิด (ตัวเลือก/ปุ่มยืนยัน/สถานะบัตร)
 // ไม่แตะเนื้อหาที่สโมสรฯ กรอกเอง (ชื่อพรรค นโยบาย พันธกิจ) — ระบบแปลให้ไม่ได้อยู่แล้ว
+// ⚠️ สีของ tone ใช้กับ "ตัวเลือกที่แสดง" เท่านั้น (ตรา ป้าย ชื่อตัวเลือก) ห้ามเอาไปทาปุ่มส่งบัตร
+//
+// ของเดิมปุ่มยืนยันถูกทาด้วย t.accent ทั้งห้าสกิน คนที่เลือก "ไม่รับรอง" จึงเจอปุ่มสีแดง
+// และคนที่เลือก "งดออกเสียง" เจอปุ่มสีส้ม ส่วนคนที่เลือกพรรคเจอปุ่มสีแบรนด์ปกติ
+// (ยืนยันบนหน้าจริง 2026-09-11: blossom เลือกงดออกเสียง → ปุ่ม rgb(194,65,12))
+//
+// แดงในภาษาของอินเทอร์เฟซแปลว่า "อันตราย/อย่ากด" การส่งบัตรทั้งสามแบบถูกต้องเท่ากัน
+// ตามกติกา ปุ่มที่เปลี่ยนสีตามตัวเลือกจึงทำให้ทางเดินไปจนจบ "ยากง่ายไม่เท่ากัน" ระหว่าง
+// เสียงที่ควรมีน้ำหนักเท่ากัน — เป็นเรื่องความเป็นกลางของบัตร ไม่ใช่เรื่องความสวย
+// (เจ้าของทักเรื่องนี้เอง 2026-09-11 ตอนถามว่าปุ่มหย่อนบัตรควรเป็นสีเขียวไหม)
+//
+// ปุ่มจึงใช้สีหลักของแต่ละ family เหมือนกันทุกตัวเลือก — ความหมายอยู่ที่ตัวเลือกซึ่งมีสีกำกับ
+// อยู่แล้วเหนือปุ่มนั้น receipt ทำถูกมาตั้งแต่แรกด้วยการให้ปุ่มเป็น chrome ของธีมเสมอ
 const TONES = {
   party: { accent: null, soft: null, line: null },
   abstain: { accent: "#c2410c", soft: "#fff7ed", line: "#fdba74", label: "งดออกเสียง", en: "ABSTAIN", sub: "ไม่ประสงค์ลงคะแนนเสียง" },
@@ -155,8 +168,7 @@ function BlossomConfirm(props) {
         </div>
         <div className="vc-btns">
           <button type="button" className="vc-act vc-bl__ghost" onClick={onClose} disabled={isSubmitting}>ยกเลิก</button>
-          <button type="button" data-confirm-focus className="vc-act vc-bl__go" onClick={onConfirm} disabled={isSubmitting}
-            style={tone !== "party" ? { background: t.accent, borderColor: t.accent } : undefined}><ConfirmLabel busy={isSubmitting} /></button>
+          <button type="button" data-confirm-focus className="vc-act vc-bl__go" onClick={onConfirm} disabled={isSubmitting}><ConfirmLabel busy={isSubmitting} /></button>
         </div>
       </div>
       <style jsx global>{`
@@ -219,8 +231,7 @@ function GumroadConfirm(props) {
           </div>
           <div className="vc-btns">
             <button type="button" className="vc-act vc-gm__ghost" onClick={onClose} disabled={isSubmitting}>ยกเลิก</button>
-            <button type="button" data-confirm-focus className="vc-act vc-gm__go" onClick={onConfirm} disabled={isSubmitting}
-              style={tone !== "party" ? { background: t.accent, color: "#fff" } : undefined}><ConfirmLabel busy={isSubmitting} text="ยืนยัน!" /></button>
+            <button type="button" data-confirm-focus className="vc-act vc-gm__go" onClick={onConfirm} disabled={isSubmitting}><ConfirmLabel busy={isSubmitting} text="ยืนยัน!" /></button>
           </div>
         </div>
       </div>
@@ -285,8 +296,7 @@ function StudioDarkConfirm(props) {
         </div>
         <div className="vc-btns">
           <button type="button" className="vc-act vc-sd__ghost" onClick={onClose} disabled={isSubmitting}>ยกเลิก</button>
-          <button type="button" data-confirm-focus className="vc-act vc-sd__go" onClick={onConfirm} disabled={isSubmitting}
-            style={tone !== "party" ? { background: t.accent, color: "#fff" } : undefined}><ConfirmLabel busy={isSubmitting} /></button>
+          <button type="button" data-confirm-focus className="vc-act vc-sd__go" onClick={onConfirm} disabled={isSubmitting}><ConfirmLabel busy={isSubmitting} /></button>
         </div>
       </div>
       <style jsx global>{`
@@ -349,8 +359,7 @@ function VerdureConfirm(props) {
         </div>
         <div className="vc-btns">
           <button type="button" className="vc-act vc-vd__ghost" onClick={onClose} disabled={isSubmitting}>ยกเลิก</button>
-          <button type="button" data-confirm-focus className="vc-act vc-vd__go" onClick={onConfirm} disabled={isSubmitting}
-            style={tone !== "party" ? { background: t.accent, color: "#fff", borderColor: t.accent } : undefined}><ConfirmLabel busy={isSubmitting} /></button>
+          <button type="button" data-confirm-focus className="vc-act vc-vd__go" onClick={onConfirm} disabled={isSubmitting}><ConfirmLabel busy={isSubmitting} /></button>
         </div>
       </div>
       <style jsx global>{`
@@ -412,8 +421,7 @@ function FmsOfficialConfirm(props) {
           </div>
           <div className="vc-btns">
             <button type="button" className="vc-act vc-fo__ghost" onClick={onClose} disabled={isSubmitting}>ยกเลิก</button>
-            <button type="button" data-confirm-focus className="vc-act vc-fo__go" onClick={onConfirm} disabled={isSubmitting}
-              style={tone !== "party" ? { background: t.accent, borderColor: t.accent } : undefined}><ConfirmLabel busy={isSubmitting} /></button>
+            <button type="button" data-confirm-focus className="vc-act vc-fo__go" onClick={onConfirm} disabled={isSubmitting}><ConfirmLabel busy={isSubmitting} /></button>
           </div>
         </div>
       </div>
@@ -473,8 +481,7 @@ function ClassicConfirm(props) {
         </div>
         <div className="vc-btns">
           <button type="button" className="vc-act vc-os__ghost" onClick={onClose} disabled={isSubmitting}>ยกเลิก</button>
-          <button type="button" data-confirm-focus className="vc-act vc-os__go" onClick={onConfirm} disabled={isSubmitting}
-            style={tone !== "party" ? { background: t.accent, backgroundImage: "none" } : undefined}><ConfirmLabel busy={isSubmitting} /></button>
+          <button type="button" data-confirm-focus className="vc-act vc-os__go" onClick={onConfirm} disabled={isSubmitting}><ConfirmLabel busy={isSubmitting} /></button>
         </div>
       </div>
       <style jsx global>{`
