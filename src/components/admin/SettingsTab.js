@@ -74,10 +74,16 @@ const MockLoginStatusBadge = ({ status }) => {
 // ปุ่มเดียวที่กรรมการกดก่อนวันจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม. read-only ล้วน —
 // เรียก GET /api/admin/readiness แล้วแสดงผลตาม level (pass/warn/fail).
 const READINESS_LEVEL = {
-  pass: { Icon: CheckCircle2, cls: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
-  warn: { Icon: AlertTriangle, cls: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" },
-  fail: { Icon: XCircle, cls: "text-red-600", bg: "bg-red-50", border: "border-red-100" },
+  pass: { Icon: CheckCircle2, cls: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100",
+    label: "ผ่าน", chip: "text-emerald-600", chipOn: "bg-emerald-600 text-white border-emerald-600", rank: 2 },
+  warn: { Icon: AlertTriangle, cls: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100",
+    label: "เตือน", chip: "text-amber-600", chipOn: "bg-amber-500 text-white border-amber-500", rank: 1 },
+  fail: { Icon: XCircle, cls: "text-red-600", bg: "bg-red-50", border: "border-red-100",
+    label: "ไม่ผ่าน", chip: "text-red-600", chipOn: "bg-red-600 text-white border-red-600", rank: 0 },
 };
+// เรียง ไม่ผ่าน → เตือน → ผ่าน เสมอ คนกดตรวจเพื่อหา "อะไรยังไม่พร้อม" ไม่ได้กดมาอ่าน
+// ของที่ผ่านแล้ว ของเดิมเรียงตามลำดับที่ API ตรวจ ข้อที่พังจึงไปแอบอยู่กลางรายการ
+const LEVEL_ORDER = ["fail", "warn", "pass"];
 
 const ReadinessCard = () => {
   const globalConfig = useGlobalConfig();
@@ -86,6 +92,8 @@ const ReadinessCard = () => {
   const [error, setError] = useState(null);
   const [fixing, setFixing] = useState(false);
   const [fixMessage, setFixMessage] = useState(null);
+  // null = แสดงทุกระดับ · "fail" | "warn" | "pass" = ดูเฉพาะระดับนั้น
+  const [levelFilter, setLevelFilter] = useState(null);
 
   const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
   const scheduleRows = [
@@ -93,6 +101,16 @@ const ReadinessCard = () => {
     { label: "เปิดหีบ", key: "electionStartAt", date: ELECTION_START },
     { label: "ปิดหีบ", key: "electionEndAt", date: ELECTION_END },
   ];
+
+  // เรียงก่อนเสมอ แล้วค่อยกรอง — ตัวเลขบนชิปยังนับจากผลเต็มชุด ไม่ใช่จากที่กรองแล้ว
+  const sortedChecks = result
+    ? [...result.checks].sort((a, b) => {
+        const ra = READINESS_LEVEL[a.level]?.rank ?? 1;
+        const rb = READINESS_LEVEL[b.level]?.rank ?? 1;
+        return ra - rb;   // ลำดับเดิมภายในระดับเดียวกันคงไว้ (sort เสถียรใน JS)
+      })
+    : [];
+  const visibleChecks = levelFilter ? sortedChecks.filter((c) => c.level === levelFilter) : sortedChecks;
 
   const runCheck = async () => {
     setRunning(true);
@@ -102,6 +120,7 @@ const ReadinessCard = () => {
       if (!res.ok) throw new Error(`สถานะ ${res.status}`);
       const data = await res.json();
       setResult(data);
+      setLevelFilter(null);
     } catch (e) {
       setError("ตรวจไม่สำเร็จ — " + e.message);
     } finally {
@@ -202,10 +221,39 @@ const ReadinessCard = () => {
       {result && (
         <div>
           {/* สรุปหัว + ปุ่มปิดผลการตรวจ (ผลยาว ไม่ควรค้างเต็มหน้าจอ) */}
-          <div className="flex flex-wrap items-center gap-3 mb-4 text-sm font-bold">
-            <span className="flex items-center gap-1.5 text-emerald-600"><CheckCircle2 className="w-4 h-4" /> ผ่าน {result.summary.pass}</span>
-            <span className="flex items-center gap-1.5 text-amber-600"><AlertTriangle className="w-4 h-4" /> เตือน {result.summary.warn}</span>
-            <span className="flex items-center gap-1.5 text-red-600"><XCircle className="w-4 h-4" /> ไม่ผ่าน {result.summary.fail}</span>
+          <div className="flex flex-wrap items-center gap-2 mb-4 text-sm font-bold">
+            {/* ชิปสรุปเป็นปุ่มกรองในตัว — กดเพื่อดูเฉพาะระดับนั้น กดซ้ำเพื่อกลับมาดูทั้งหมด
+                ตัวเลขยังนับจากผลเต็มชุดเสมอ ไม่เปลี่ยนตามตัวกรอง */}
+            {LEVEL_ORDER.map((level) => {
+              const lv = READINESS_LEVEL[level];
+              const LvIcon = lv.Icon;
+              const count = result.summary[level] ?? 0;
+              const on = levelFilter === level;
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setLevelFilter(on ? null : level)}
+                  aria-pressed={on}
+                  disabled={count === 0 && !on}
+                  title={count === 0 ? `ไม่มีข้อที่${lv.label}` : on ? "กดอีกครั้งเพื่อดูทั้งหมด" : `ดูเฉพาะข้อที่${lv.label}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors max-md:min-h-[40px]
+                    ${on ? lv.chipOn : `bg-white border-slate-200 ${lv.chip} hover:bg-slate-50`}
+                    ${count === 0 && !on ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <LvIcon className="w-4 h-4" /> {lv.label} {count}
+                </button>
+              );
+            })}
+            {levelFilter && (
+              <button
+                type="button"
+                onClick={() => setLevelFilter(null)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-colors max-md:min-h-[40px]"
+              >
+                ดูทั้งหมด
+              </button>
+            )}
             <button
               onClick={() => setResult(null)}
               className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-colors max-md:min-h-[40px] max-md:px-4"
@@ -216,7 +264,7 @@ const ReadinessCard = () => {
           </div>
 
           <div className="space-y-2 max-h-[26rem] overflow-y-auto pr-1">
-            {result.checks.map((c) => {
+            {visibleChecks.map((c) => {
               const lv = READINESS_LEVEL[c.level] || READINESS_LEVEL.warn;
               const Icon = lv.Icon;
               return (
@@ -242,6 +290,11 @@ const ReadinessCard = () => {
                 </div>
               );
             })}
+            {visibleChecks.length === 0 && (
+              <p className="text-sm text-slate-400 text-center py-6">
+                ไม่มีข้อที่{READINESS_LEVEL[levelFilter]?.label ?? ""}ในผลการตรวจครั้งนี้
+              </p>
+            )}
           </div>
         </div>
       )}
