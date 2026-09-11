@@ -63,12 +63,14 @@ export default function SinglePartyView({
   // setLightboxOpen(true) เลย (ภาพหมู่กับโลโก้จึงกดไม่ได้ทั้งที่โค้ด lightbox มีอยู่)
   // กดภาพหมู่ = เลื่อนดูภาพหมู่ทั้งชุดได้ · กดโลโก้ = ดูตราพรรคใบเดียว
   const [lightboxImages, setLightboxImages] = useState([]);
-  const openLightbox = (src, pool) => {
+  const [lightboxCaption, setLightboxCaption] = useState("");
+  const openLightbox = (src, pool, caption = "") => {
     if (!src) return;
     const list = (pool && pool.length) ? pool : [src];
     const i = list.indexOf(src);
     setLightboxImages(list);
     setLightboxIndex(i >= 0 ? i : 0);
+    setLightboxCaption(caption);
     setLightboxOpen(true);
   };
   const [introFinished, setIntroFinished] = useState(previewMode);
@@ -591,7 +593,7 @@ export default function SinglePartyView({
                     ">
                       <button
                         type="button"
-                        onClick={() => openLightbox(partyLogo, [partyLogo])}
+                        onClick={() => openLightbox(partyLogo, [partyLogo], `โลโก้พรรค · ${partyName || ""}`)}
                         className="w-full h-full block cursor-zoom-in"
                         aria-label={`ขยายโลโก้พรรค ${partyName || ""}`}
                       >
@@ -768,7 +770,7 @@ export default function SinglePartyView({
                       <div className="block md:hidden w-full">
                         <button
                           type="button"
-                          onClick={() => openLightbox(finalTeamMobileImage, [finalTeamMobileImage])}
+                          onClick={() => openLightbox(finalTeamMobileImage, [finalTeamMobileImage], `ภาพหมู่พรรค · ${partyName || ""}`)}
                           className="w-full block cursor-zoom-in"
                           aria-label="ขยายภาพหมู่พรรค"
                         >
@@ -786,7 +788,7 @@ export default function SinglePartyView({
                     <div className={`${finalTeamMobileImage ? 'hidden md:block' : 'block'} w-full`}>
                       <button
                         type="button"
-                        onClick={() => openLightbox(carouselImages[0], carouselImages)}
+                        onClick={() => openLightbox(carouselImages[0], carouselImages, `ภาพหมู่พรรค · ${partyName || ""}`)}
                         className="w-full block cursor-zoom-in"
                         aria-label="ขยายภาพหมู่พรรค"
                       >
@@ -818,7 +820,7 @@ export default function SinglePartyView({
                             ? [...carouselImages, ...carouselImages, ...carouselImages].slice(0, 3)
                             : carouselImages
                         }
-                        onImageClick={(src) => openLightbox(src, carouselImages)}
+                        onImageClick={(src) => openLightbox(src, carouselImages, `ภาพกิจกรรม · ${partyName || ""}`)}
                       />
                     </div>
                   </div>
@@ -924,7 +926,7 @@ export default function SinglePartyView({
           ทำให้ position:fixed ยึดกับ ancestor นั้นแทน viewport — ของเดิมวางไว้ข้างใน
           จึงเรนเดอร์ที่ y = -798px (นอกจอ) วัดสดแล้ว · CandidateModal ด้านบนอยู่ระดับนี้
           มาแต่แรกด้วยเหตุผลเดียวกัน */}
-      <SimpleLightbox isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} images={lightboxImages.length ? lightboxImages : bannerImages} initialIndex={lightboxIndex} />
+      <SimpleLightbox isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} images={lightboxImages.length ? lightboxImages : bannerImages} initialIndex={lightboxIndex} caption={lightboxCaption} />
     </div>,
     portalContainer
   );

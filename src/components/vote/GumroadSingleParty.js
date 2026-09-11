@@ -123,6 +123,9 @@ export default function GumroadSingleParty({
                 aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
               >
                 <img src={heroImg} alt={party?.name || "party"} />
+                {/* ป้ายบอกให้รู้ว่าภาพกดได้ — ตระกูลอื่นบอกไว้ใน figcaption ของภาพหมู่
+                    ตัวนี้ไม่มี figure จึงวางเป็นสติกเกอร์ในภาษาของ family */}
+                <span className="gsp-hero__zoomtag"><span className="gm-thai">คลิกเพื่อขยาย</span> ⌕</span>
               </button>
             ) : (
               <span className="gsp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>
@@ -369,6 +372,9 @@ export default function GumroadSingleParty({
            on the img: gspKen (below) owns its transform while .is-live. */
         .gsp-hero__zoom{ position:absolute; inset:0; z-index:1; width:100%; height:100%; padding:0; border:0;
           background:none; cursor:zoom-in; display:block; }
+        .gsp-hero__zoomtag{ position:absolute; left:12px; bottom:12px; display:inline-flex; align-items:center; gap:6px;
+          font-family:var(--fm); font-size:12px; font-weight:700; background:var(--cream); color:var(--ink);
+          border:var(--bw) solid var(--ink); border-radius:999px; padding:6px 13px; box-shadow:3px 3px 0 var(--ink); }
         .gsp-hero__media img{ width:100%; height:100%; object-fit:cover; }
         /* ชิปมุมล่างขวาบนภาพหมู่ — idiom เดียวกับปุ่มแกลเลอรีของหน้า /party ตระกูลนี้ */
         .gsp-hero__more{ position:absolute; right:12px; bottom:12px; z-index:2; display:inline-flex; align-items:center; gap:6px;

@@ -173,9 +173,18 @@ export default function VerdureSingleParty({
           </button>
         </div>
 
+        {/* ปุ่มจริง ไม่ใช่ figure[role=button] — ของเดิมรับแต่ Enter (Space ไม่ทำงาน
+            ทั้งที่ประกาศตัวเป็นปุ่ม) และไม่มี aria-label ให้ screen reader */}
         {heroImg && (
-          <figure className="vd-booth__cover" onClick={() => openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`); }}>
-            <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
+          <figure className="vd-booth__cover">
+            <button
+              type="button"
+              className="vd-booth__zoom"
+              onClick={() => openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+              aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
+            >
+              <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
+            </button>
             <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
@@ -348,9 +357,10 @@ export default function VerdureSingleParty({
         .vd-booth__more:hover, .vd-booth__more:focus-visible { opacity:1; color:var(--terra); border-color:var(--terra); outline:none; }
         .vd-booth__more .arr { font-size:13px; }
 
-        .vd-booth__cover { display:block; margin:40px 0 0; cursor:zoom-in; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(var(--moss-rgb),.45); }
+        .vd-booth__cover { display:block; margin:40px 0 0; position:relative; border-radius:26px; overflow:hidden; border:1px solid var(--rule); box-shadow:0 36px 70px -40px rgba(var(--moss-rgb),.45); }
+        .vd-booth__zoom { display:block; width:100%; padding:0; border:0; background:none; cursor:zoom-in; }
         .vd-booth__cover img { width:100%; height:clamp(260px,38vw,440px); object-fit:cover; display:block; transition:transform .6s; }
-        .vd-booth__cover:hover img { transform:scale(1.03); }
+        .vd-booth__zoom:hover img { transform:scale(1.03); }
         .vd-booth__cover figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--cream); background:rgba(var(--moss-rgb),.78); padding:6px 14px; border-radius:999px; }
 
         .vd-booth__brief, .vd-booth__section { margin-top:48px; padding-top:36px; border-top:1px solid var(--rule); }

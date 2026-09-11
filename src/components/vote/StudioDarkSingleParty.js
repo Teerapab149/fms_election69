@@ -192,15 +192,19 @@ export default function StudioDarkSingleParty({
                 </>
               )}
             </div>
+            {/* ปุ่มจริง ไม่ใช่ figure[role=button] — ของเดิมรับแต่ Enter (Space ไม่ทำงาน
+                ทั้งที่ประกาศตัวเป็นปุ่ม) และไม่มี aria-label ให้ screen reader
+                โครงนี้ตรงกับ receipt/blossom/verdure/fms-official แล้ว */}
             {heroImg && (
-              <figure
-                className="sds-story__media"
-                onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`); }}
-              >
-                <img src={heroImg} alt={party?.name} />
+              <figure className="sds-story__media">
+                <button
+                  type="button"
+                  className="sds-story__zoom"
+                  onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)}
+                  aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
+                >
+                  <img src={heroImg} alt={party?.name} />
+                </button>
                 <figcaption className="sds-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
               </figure>
             )}
@@ -483,9 +487,10 @@ export default function StudioDarkSingleParty({
           transition:color .2s, border-color .2s; }
         .sds-story__more:hover, .sds-story__more:focus-visible { color:var(--sd-accent); border-color:var(--sd-accent); outline:none; }
 
-        .sds-story__media { position:relative; border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2); max-height:420px; margin:0; cursor:zoom-in; }
+        .sds-story__media { position:relative; border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; background:var(--sd-bg-2); max-height:420px; margin:0; }
+        .sds-story__zoom { display:block; width:100%; padding:0; border:0; background:none; cursor:zoom-in; }
         .sds-story__media img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s; }
-        .sds-story__media:hover img { transform:scale(1.025); }
+        .sds-story__zoom:hover img { transform:scale(1.025); }
         .sds-story__cap {
           position:absolute; left:12px; bottom:12px; font-family:var(--sd-mono); font-size:11px;
           letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink);
