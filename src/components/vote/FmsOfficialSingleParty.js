@@ -152,11 +152,11 @@ export default function FmsOfficialSingleParty({
               <button
                 type="button"
                 className="fo-sb__crest fo-sb__crest--btn"
-                onClick={() => openLightbox(logo, `ตราสัญลักษณ์พรรค${name}`)}
-                aria-label={`ขยายตราสัญลักษณ์พรรค${name}`}
+                onClick={() => openLightbox(logo, `ตราสัญลักษณ์พรรค · ${name}`)}
+                aria-label={`ขยายตราสัญลักษณ์พรรค ${name}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logo} alt={`ตราสัญลักษณ์พรรค${name}`} />
+                <img src={logo} alt={`ตราสัญลักษณ์พรรค ${name}`} />
               </button>
             ) : (
               <span className="fo-sb__crest">
@@ -229,7 +229,7 @@ export default function FmsOfficialSingleParty({
                 <button
                   type="button"
                   className="fo-sb__cover-btn"
-                  onClick={() => openLightbox(cover, `ภาพหมู่พรรค ${name}`)}
+                  onClick={() => openLightbox(cover, `ภาพหมู่พรรค · ${name}`)}
                   aria-label={`ขยายภาพหมู่พรรค ${name}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -410,6 +410,7 @@ export default function FmsOfficialSingleParty({
         <div className="fo-sb-lb" role="dialog" aria-modal="true" aria-label="ภาพขยาย" onClick={() => setLightbox(null)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={lightbox.src} alt={lightbox.alt} onClick={(e) => e.stopPropagation()} />
+          <span className="fo-sb-lb__cap">{lightbox.alt}</span>
           <button type="button" className="fo-sb-lb__x" onClick={() => setLightbox(null)} aria-label="ปิด">✕</button>
         </div>
       )}
@@ -499,6 +500,15 @@ export default function FmsOfficialSingleParty({
           display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
         .fo-sb-lb img { max-width: min(1100px, 94vw); max-height: 88vh; object-fit: contain; border-radius: 8px;
           background: #fff; cursor: auto; }
+        /* ป้ายบอกว่ากำลังดูภาพอะไร — อีก 5 ตระกูลมีมาก่อน */
+        .fo-sb-lb__cap {
+          position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+          font-size: 12px; color: #fff; background: rgba(0,0,0,.55);
+          border: 1px solid rgba(255,255,255,.28); padding: 6px 16px; border-radius: 999px;
+          /* ชื่อพรรคจริงยาว 40+ ตัวอักษร ถ้าไม่คุมความกว้าง ป้ายที่จัดกลางจะล้นออกสองข้าง */
+          max-width: min(88vw, 520px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        @media (max-width: 640px) { .fo-sb-lb__cap { bottom: 14px; max-width: 92vw; } }
         .fo-sb-lb__x { position: absolute; top: 18px; right: 20px; width: 40px; height: 40px; border-radius: 50%;
           border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff; font-size: 17px; cursor: pointer; }
         .fo-sb-lb__x:hover { background: rgba(255,255,255,.2); }

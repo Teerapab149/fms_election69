@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 /**
  * Lightbox component สำหรับดูรูปแบบเต็มจอ พร้อม navigation
  */
-const SimpleLightbox = React.memo(function SimpleLightbox({ isOpen, onClose, images, initialIndex = 0 }) {
+const SimpleLightbox = React.memo(function SimpleLightbox({ isOpen, onClose, images, initialIndex = 0, caption = "" }) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
     useEffect(() => setCurrentIndex(initialIndex), [initialIndex]);
@@ -58,8 +58,12 @@ const SimpleLightbox = React.memo(function SimpleLightbox({ isOpen, onClose, ima
                 />
             </div>
 
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 px-6 py-2 rounded-full text-xs font-bold text-white/60 tracking-widest">
-                {currentIndex + 1} / {images.length}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 px-6 py-2 rounded-full text-xs font-bold text-white/60 tracking-widest max-w-[88vw] truncate">
+                {/* ป้ายเดียว: มีหลายภาพ = บอกลำดับด้วย · ภาพเดียว = บอกแค่ว่าดูอะไรอยู่ */}
+                {caption ? <span className="text-white/80 font-semibold">{caption}</span> : null}
+                {caption && images.length > 1 ? <span className="mx-2 opacity-40">·</span> : null}
+                {images.length > 1 ? <span>{currentIndex + 1} / {images.length}</span> : null}
+                {!caption && images.length <= 1 ? <span>{currentIndex + 1} / {images.length}</span> : null}
             </div>
         </div>
     );

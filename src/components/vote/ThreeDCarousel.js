@@ -87,6 +87,12 @@ const ThreeDCarousel = ({ images, onImageClick = null }) => {
                             style={getStyle(i)}
                         >
                             <SmartImage src={src} alt={`Slide ${i}`} className="w-full h-full object-cover" />
+                            {/* บอกให้รู้ว่าภาพกดได้ — ตระกูลอื่นบอกไว้ที่ figcaption ของภาพหมู่ */}
+                            {clickable && isActive && (
+                                <span className="absolute left-4 bottom-4 bg-black/60 text-white text-[11px] font-semibold tracking-wider px-3.5 py-1.5 rounded-full backdrop-blur-sm">
+                                    คลิกเพื่อขยาย ⌕
+                                </span>
+                            )}
                         </Slide>
                     );
                 })}
