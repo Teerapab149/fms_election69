@@ -21,16 +21,42 @@ export function VoteCompletionMark({ family, quiet = false }) {
     <motion.svg className="vx-art" viewBox="0 0 280 210" fill="none" aria-hidden="true"
       initial={enter} animate={{ opacity: 1, y: 0, scale: 1 }} transition={timing}>
       {family === "blossom" ? <>
+        {/* ซองจดหมายที่พับได้จริง เรียงชั้นตามของจริง:
+              หลังซอง → ฝา(พับ) → รอยพับ → จดหมาย → ปากซอง → ดอกไม้
+            ของเดิมรวมฝาไว้ใน path เดียวกับหลังซอง จึงไม่มีชิ้นไหนพับได้เลย — วัดบนหน้าเว็บ
+            ได้ 10 โหนด ขยับจริงใบเดียวคือจดหมาย ฝาที่แยกออกมาหมุนรอบเส้นพับด้วย scaleY
+            -1 → 1 คือการพับที่อ่านออกโดยไม่ต้องใช้ 3D
+            ฝาต้องอยู่ "หลัง" จดหมาย ไม่งั้นตอนกางออกมันจะทับหัวจดหมายจนเครื่องหมายถูกหาย
+            จดหมายจึงซ่อนด้วย opacity ระหว่างที่ฝายังปิด แล้วค่อยไล่ขึ้นมาเมื่อฝาเปิดพ้น */}
         <path d="M42 87 140 25l98 62v96H42Z" fill="var(--vx-tint)" stroke="var(--vx-accent)" strokeWidth="1.5" />
-        <motion.g initial={quiet ? false : { y: 35 }} animate={{ y: 0 }} transition={timing}>
-          <rect x="64" y="42" width="152" height="125" rx="5" fill="var(--vx-paper)" />
+        <motion.g style={{ originX: "50%", originY: "100%" }}
+          initial={quiet ? false : { scaleY: -1 }} animate={{ scaleY: 1 }}
+          transition={{ duration: quiet ? 0 : 0.62, ease: [0.22, 1, 0.36, 1], delay: quiet ? 0 : 0.26 }}>
+          {/* ⚠️ จุดหมุนต้องส่งเป็น originX/originY ใน style เท่านั้น: framer 12 ประกอบ
+              transform-origin จาก latest.originX/originY (ปริยาย 50%/50%) แล้วเขียนทับ
+              transformOrigin ที่เราเขียนเองเสมอ — ใส่ผิดที่แล้วฝาพับรอบกึ่งกลางตัวเอง
+              (วัดได้ transform-origin:98px 31px แทนที่จะเป็น 98px 62px = กลางเส้นพับ) */}
+          <path d="M42 87 140 25l98 62Z" fill="var(--vx-tint)" stroke="var(--vx-accent)" strokeWidth="1.5" strokeLinejoin="round" />
+          {/* ด้านในของฝาเป็นคนละสีกับด้านนอก — สลับด้วย opacity เพราะค่า var() interpolate ไม่ได้ */}
+          <motion.path d="M42 87 140 25l98 62Z" fill="var(--vx-paper)" stroke="var(--vx-accent)" strokeWidth="1.5" strokeLinejoin="round"
+            initial={quiet ? false : { opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: quiet ? 0 : 0.28, delay: quiet ? 0 : 0.52 }} />
+        </motion.g>
+        <path d="M42 87h196" stroke="var(--vx-accent)" strokeWidth="1.5" opacity=".5" />
+        <motion.g initial={quiet ? false : { y: 52, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+          transition={{ y: { duration: quiet ? 0 : 0.7, ease: [0.22, 1, 0.36, 1], delay: quiet ? 0 : 0.5 }, opacity: { duration: quiet ? 0 : 0.18, delay: quiet ? 0 : 0.5 } }}>
+          <rect x="64" y="42" width="152" height="125" rx="5" fill="var(--vx-paper)" stroke="var(--vx-line)" />
           <path d="m124 80 11 11 23-25" stroke="var(--vx-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M94 111h92m-76 12h60" stroke="var(--vx-line)" strokeWidth="2" />
         </motion.g>
         <path d="m42 87 98 64 98-64v96H42Z" fill="var(--vx-tint)" stroke="var(--vx-accent)" strokeWidth="1.5" />
         <path d="m42 183 79-61m117 61-79-61" stroke="var(--vx-accent)" opacity=".3" />
-        {[0, 1, 2, 3, 4].map(i => <g key={i} transform={`rotate(${i * 72} 140 146)`}><ellipse cx="140" cy="135" rx="8" ry="14" fill="var(--vx-accent)" /></g>)}
-        <circle cx="140" cy="146" r="7" fill="var(--vx-paper)" />
+        {/* ดอกไม้คือตราปิดผนึก ลงเป็นจังหวะสุดท้ายหลังฝากางสุดและจดหมายขึ้นสุด */}
+        <motion.g initial={quiet ? false : { scale: 0.4, opacity: 0, rotate: -28 }} animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ duration: quiet ? 0 : 0.46, ease: [0.34, 1.56, 0.64, 1], delay: quiet ? 0 : 1 }}>
+          {[0, 1, 2, 3, 4].map(i => <g key={i} transform={`rotate(${i * 72} 140 146)`}><ellipse cx="140" cy="135" rx="8" ry="14" fill="var(--vx-accent)" /></g>)}
+          <circle cx="140" cy="146" r="7" fill="var(--vx-paper)" />
+        </motion.g>
       </> : family === "verdure" ? <>
         <ellipse cx="141" cy="188" rx="74" ry="8" fill="var(--vx-accent)" opacity=".1" />
         <path d="M38 183h204M58 193h164" stroke="var(--vx-line)" />

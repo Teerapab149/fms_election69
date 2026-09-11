@@ -32,6 +32,7 @@ import { BlossomBaseStyles } from "../home/BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
+import BlossomPartyIntro from "./BlossomPartyIntro";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -80,6 +81,8 @@ export default function BlossomSingleParty({
   const copyrightYear = gc.copyrightYear ?? "";
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // ม่านแนะนำพรรค — editor/preview ข้ามไปหน้าบูธเลย (เหมือนทุก family)
+  const [introDone, setIntroDone] = useState(editorMode);
 
   const abstain = specialOptions?.abstain;
   const disapprove = specialOptions?.disapprove;
@@ -116,8 +119,9 @@ export default function BlossomSingleParty({
   const canConfirm = kind != null && !isSubmitting && !editorMode;
 
   return (
-    <div className="fms-app bl-root bl-single-root">
+    <div className={`fms-app bl-root bl-single-root${introDone ? " is-live" : ""}`}>
       <BlossomBaseStyles />
+      {!introDone && <BlossomPartyIntro party={party} onDone={() => setIntroDone(true)} />}
 
       {/* organic candy blobs (faded toward canvas — calm) */}
       <span className="bl-blob bl-blob-1" aria-hidden="true" />
@@ -751,6 +755,18 @@ export default function BlossomSingleParty({
           .bl-single-root .bl-scm__actions { flex-direction:column-reverse; }
           .bl-single-root .bl-scm__cancel, .bl-single-root .bl-scm__go { width:100%; flex:none; }
         }
+
+        /* ม่านแนะนำพรรคเปิดก่อน แล้วค่อยให้หน้าบูธไล่ขึ้นทีละชิ้น
+           ถ้าไม่กั้นตรงนี้ animation ทุกตัววิ่งจบอยู่หลังม่านตั้งแต่หน้าโหลดเสร็จ พอม่านเปิด
+           เลยได้หน้านิ่ง ๆ ไม่มีจังหวะอะไรเลย (gumroad กับ studio-dark กันด้วย .is-live
+           แบบเดียวกัน) · ไม่มี JS = ไม่มี .is-live = ไม่มี animation ทุกอย่างจึงเห็นครบ
+           ตั้งแต่เฟรมแรก ไม่มีเนื้อหาไหนถูกซ่อนไว้หลัง motion */
+        .bl-single-root:not(.is-live) .bl-sp-head,
+        .bl-single-root:not(.is-live) .bl-sp-word__in,
+        .bl-single-root:not(.is-live) .bl-sp-slogan,
+        .bl-single-root:not(.is-live) .bl-sp-voter,
+        .bl-single-root:not(.is-live) .bl-sp-cover,
+        .bl-single-root:not(.is-live) .bl-vpaper { animation:none; }
 
         /* reduced motion — scope to .bl-single-root, keep transitions */
         @media (prefers-reduced-motion:reduce) {
