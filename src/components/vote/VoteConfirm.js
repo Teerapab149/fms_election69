@@ -29,10 +29,16 @@ import { verdureTheme } from "../../utils/verdurePalettes";
 import { studioDarkTheme } from "../../utils/studioDarkPalettes";
 import { fmsOfficialTheme } from "../../utils/fmsOfficialPalette";
 
+// en = ป้ายอังกฤษกำกับตัวเลือก สำหรับนักศึกษาต่างชาติในคณะ
+//
+// กติกา: ไทยคือภาษาหลัก อังกฤษเป็นป้ายเล็ก ๆ จาง ๆ ต่อท้ายเท่านั้น ห้ามแทนที่ ห้ามใหญ่เท่า
+// ห้ามมาก่อนไทย — คนที่อ่านอังกฤษไม่ออกต้องอ่านหน้านี้รู้เรื่องเท่าเดิมเป๊ะ ๆ
+// ใส่เฉพาะ "ชั้น 1" คือสิ่งที่ไม่เข้าใจแล้วลงคะแนนผิด (ตัวเลือก/ปุ่มยืนยัน/สถานะบัตร)
+// ไม่แตะเนื้อหาที่สโมสรฯ กรอกเอง (ชื่อพรรค นโยบาย พันธกิจ) — ระบบแปลให้ไม่ได้อยู่แล้ว
 const TONES = {
   party: { accent: null, soft: null, line: null },
-  abstain: { accent: "#c2410c", soft: "#fff7ed", line: "#fdba74", label: "งดออกเสียง", sub: "ไม่ประสงค์ลงคะแนนเสียง" },
-  disapprove: { accent: "#b91c1c", soft: "#fef2f2", line: "#fca5a5", label: "ไม่รับรอง", sub: "ไม่ประสงค์ให้ผู้สมัครได้รับเลือก" },
+  abstain: { accent: "#c2410c", soft: "#fff7ed", line: "#fdba74", label: "งดออกเสียง", en: "ABSTAIN", sub: "ไม่ประสงค์ลงคะแนนเสียง" },
+  disapprove: { accent: "#b91c1c", soft: "#fef2f2", line: "#fca5a5", label: "ไม่รับรอง", en: "DISAPPROVE", sub: "ไม่ประสงค์ให้ผู้สมัครได้รับเลือก" },
 };
 
 function toneOf(isVoteNo, isDisapprove) {
@@ -42,8 +48,9 @@ function toneOf(isVoteNo, isDisapprove) {
 // The choice, as text. Never rendered anywhere but this sheet — once confirmed the
 // selection lives only in the encrypted ballot.
 function choiceOf(party, tone) {
-  if (tone !== "party") return { label: TONES[tone].label, sub: TONES[tone].sub, number: null };
-  return { label: party?.name || "—", sub: party?.number != null ? `เบอร์ ${party.number}` : null, number: party?.number ?? null };
+  if (tone !== "party") return { label: TONES[tone].label, en: TONES[tone].en, sub: TONES[tone].sub, number: null };
+  // ชื่อพรรคไม่มีป้ายอังกฤษ — เป็นข้อความที่สโมสรฯ กรอกเอง ไม่ใช่ศัพท์ของระบบ
+  return { label: party?.name || "—", en: null, sub: party?.number != null ? `เบอร์ ${party.number}` : null, number: party?.number ?? null };
 }
 
 // Shared behaviour: dialog semantics, Escape, scrim, focus, submitting lock. Every
@@ -78,6 +85,8 @@ function ConfirmShell({ isOpen, onClose, isSubmitting, rootClass, scrim, vars, c
         .vc-act svg { flex:none; }
         .vc-btns { display:flex; flex-direction:column-reverse; gap:10px; }
         .vc-logo { width:100%; height:100%; object-fit:contain; }
+        /* ป้ายอังกฤษกำกับ — เล็กและจางกว่าไทยเสมอ อยู่ต่อท้ายบรรทัดเดียวกัน */
+        .vc-en { font-size:.6em; font-weight:600; letter-spacing:.14em; opacity:.5; margin-left:7px; white-space:nowrap; }
         @media(min-width:480px) { .vc-btns { flex-direction:row; } .vc-btns > * { flex:1; } }
         .vc-spin { animation:vcSpin 1s linear infinite; }
         @keyframes vcIn { from { opacity:0; transform:translateY(14px) scale(.97); } to { opacity:1; transform:none; } }
@@ -140,7 +149,7 @@ function BlossomConfirm(props) {
           </div>
           <div className="vc-bl__meta">
             <span className="vc-bl__lead" style={tone !== "party" ? { color: t.accent } : undefined}>ท่านเลือก</span>
-            <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}</strong>
+            <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}{c.en && <span className="vc-en">{c.en}</span>}</strong>
             {c.sub && <span className="vc-bl__sub">{c.sub}</span>}
           </div>
         </div>
@@ -204,7 +213,7 @@ function GumroadConfirm(props) {
             </div>
             <div className="vc-gm__meta">
               <span className="vc-gm__lead">YOUR PICK</span>
-              <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}</strong>
+              <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}{c.en && <span className="vc-en">{c.en}</span>}</strong>
               {c.sub && <span className="vc-gm__sub">{c.sub}</span>}
             </div>
           </div>
@@ -269,7 +278,7 @@ function StudioDarkConfirm(props) {
               <ChoiceMark tone={tone} party={party} number={c.number} size={20} />
             </span>
             <span className="vc-sd__meta">
-              <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}</strong>
+              <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}{c.en && <span className="vc-en">{c.en}</span>}</strong>
               {c.sub && <span>{c.sub}</span>}
             </span>
           </div>
@@ -334,7 +343,7 @@ function VerdureConfirm(props) {
           </div>
           <div className="vc-vd__meta">
             <span className="vc-vd__lead">ท่านเลือก</span>
-            <strong>{c.label}</strong>
+            <strong>{c.label}{c.en && <span className="vc-en">{c.en}</span>}</strong>
             {c.sub && <span className="vc-vd__sub">{c.sub}</span>}
           </div>
         </div>
@@ -397,7 +406,7 @@ function FmsOfficialConfirm(props) {
             </div>
             <div className="vc-fo__meta">
               <span className="vc-fo__lead">ตัวเลือกของท่าน</span>
-              <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}</strong>
+              <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}{c.en && <span className="vc-en">{c.en}</span>}</strong>
               {c.sub && <span className="vc-fo__sub">{c.sub}</span>}
             </div>
           </div>
@@ -458,7 +467,7 @@ function ClassicConfirm(props) {
           </div>
           <div className="vc-os__meta">
             <span className="vc-os__lead" style={tone !== "party" ? { color: t.accent } : undefined}>ท่านเลือก</span>
-            <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}</strong>
+            <strong style={tone !== "party" ? { color: t.accent } : undefined}>{c.label}{c.en && <span className="vc-en">{c.en}</span>}</strong>
             {c.sub && <span className="vc-os__sub">{c.sub}</span>}
           </div>
         </div>

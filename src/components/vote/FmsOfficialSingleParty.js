@@ -79,7 +79,7 @@ export default function FmsOfficialSingleParty({
     const out = [];
     if (party?.id != null) {
       out.push({
-        id: party.id, tone: "approve", label: "รับรอง",
+        id: party.id, tone: "approve", label: "รับรอง", en: "Approve",
         // spaces around the name on purpose: Thai does not space between words,
         // but a Latin party name butted straight against สรรพนาม reads as one
         // unbroken run — "ให้พรรคThe Unity Concord Of FMS 2เข้า"
@@ -88,13 +88,13 @@ export default function FmsOfficialSingleParty({
     }
     if (specialOptions?.disapprove) {
       out.push({
-        id: specialOptions.disapprove.id, tone: "disapprove", label: "ไม่รับรอง",
+        id: specialOptions.disapprove.id, tone: "disapprove", label: "ไม่รับรอง", en: "Disapprove",
         sub: "ไม่เห็นชอบให้พรรคนี้เข้าดำรงตำแหน่ง",
       });
     }
     if (specialOptions?.abstain) {
       out.push({
-        id: specialOptions.abstain.id, tone: "abstain", label: "งดออกเสียง",
+        id: specialOptions.abstain.id, tone: "abstain", label: "งดออกเสียง", en: "Abstain",
         sub: "ใช้สิทธิ์โดยไม่ลงคะแนนให้ฝ่ายใด",
       });
     }
@@ -290,7 +290,7 @@ export default function FmsOfficialSingleParty({
                       {selected ? <Check size={15} strokeWidth={3} /> : null}
                     </span>
                     <span className="fo-sb__otxt">
-                      <b>{c.label}</b>
+                      <b>{c.label}{c.en && <i className="fo-sb__en">{c.en}</i>}</b>
                       <span>{c.sub}</span>
                     </span>
                   </button>
@@ -589,6 +589,11 @@ export default function FmsOfficialSingleParty({
         .fo-sb__opt.is-selected .fo-sb__mark { background: var(--fo-tone); border-color: var(--fo-tone); }
         .fo-sb__otxt { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
         .fo-sb__otxt b { font-size: 16px; font-weight: 600; color: var(--fo-ink); }
+        /* ป้ายอังกฤษกำกับตัวเลือก — สำหรับนักศึกษาต่างชาติในคณะ
+           ไทยคือภาษาหลัก อังกฤษเล็กกว่าและจางกว่าเสมอ อยู่ต่อท้าย ไม่ขึ้นก่อน ไม่แทนที่
+           คนที่อ่านอังกฤษไม่ออกต้องอ่านบัตรนี้รู้เรื่องเท่าเดิมทุกตัวอักษร */
+        .fo-sb__en { font-style: normal; font-weight: 500; font-size: 10.5px; letter-spacing: .14em;
+          text-transform: uppercase; opacity: .5; margin-left: 9px; white-space: nowrap; }
         /* the deep tone, not the bright one — this is text, and it sits on the
            choice's own tint once selected */
         .fo-sb__opt.is-selected .fo-sb__otxt b { color: var(--fo-tone-deep); }

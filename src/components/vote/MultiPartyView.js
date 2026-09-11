@@ -212,7 +212,7 @@ export default function MultiPartyView({
                 <div className="font-bold text-base leading-tight">
                   {cfg('vote-abstain-button').text || 'งดออกเสียง'}
                 </div>
-                <div className="text-[10px] opacity-70">ไม่ประสงค์ลงคะแนนเสียง</div>
+                <div className="text-[10px] opacity-70">ไม่ประสงค์ลงคะแนนเสียง · <span className="tracking-[.12em] uppercase">Abstain</span></div>
               </div>
               {selectedPartyId === specialOptions.abstain.id && (
                 <div className="absolute top-2 right-2 bg-white text-orange-600 p-0.5 rounded-full">
@@ -242,6 +242,7 @@ export default function MultiPartyView({
               <Ban size={18} strokeWidth={2.5} />
               <span className="font-bold text-sm">
                 {cfg('vote-abstain-button').text || 'งดออกเสียง'}
+                <span className="ml-2 text-[10px] font-semibold tracking-[.12em] uppercase opacity-60">Abstain</span>
               </span>
               {selectedPartyId === specialOptions.abstain.id && (
                 <Check size={14} strokeWidth={3} className="text-white" />
@@ -268,6 +269,7 @@ export default function MultiPartyView({
               <Ban size={16} strokeWidth={2} />
               <span className="text-sm font-medium">
                 {cfg('vote-abstain-button').text || 'งดออกเสียง'}
+                <span className="ml-2 text-[10px] font-semibold tracking-[.12em] uppercase opacity-60">Abstain</span>
               </span>
             </button>
           </Wrap>

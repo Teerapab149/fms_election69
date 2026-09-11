@@ -376,7 +376,7 @@ export default function SinglePartyView({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-white/60 mb-1">เลือกพรรค {candidate?.name || ''}</p>
-                  <h3 className="text-3xl font-black text-white">รับรอง</h3>
+                  <h3 className="text-3xl font-black text-white">รับรอง<span className="ml-2.5 align-middle text-[11px] font-semibold tracking-[.14em] uppercase text-white/45">Approve</span></h3>
                 </div>
               </div>
               <span className="hidden md:block text-6xl font-black text-white/10">
@@ -405,6 +405,7 @@ export default function SinglePartyView({
                 <span className="font-bold text-lg text-rose-50">
                   {cfg('vote-disapprove-button').text || 'ไม่รับรอง'}
                 </span>
+                <span className="-mt-2 text-[10.5px] font-semibold tracking-[.14em] uppercase text-white/45">Disapprove</span>
               </button>
             </Wrap>
 
@@ -427,6 +428,7 @@ export default function SinglePartyView({
                 <span className="font-bold text-lg text-amber-50">
                   {cfg('vote-abstain-button').text || 'งดออกเสียง'}
                 </span>
+                <span className="-mt-2 text-[10.5px] font-semibold tracking-[.14em] uppercase text-white/45">Abstain</span>
               </button>
             </Wrap>
           </div>
@@ -851,7 +853,7 @@ export default function SinglePartyView({
                         <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl md:text-2xl font-bold transition-colors flex-shrink-0 ${selectedPartyId === candidate?.id ? 'bg-emerald-400 text-white' : 'bg-white text-black'}`}><CheckCircle2 /></div>
                         <div>
                           <p className="text-sm font-bold text-white/60 mb-2">เลือกพรรค {partyName}</p>
-                          <h3 className="text-3xl md:text-5xl font-black text-white">รับรอง</h3>
+                          <h3 className="text-3xl md:text-5xl font-black text-white">รับรอง<span className="ml-2.5 align-middle text-[11px] font-semibold tracking-[.14em] uppercase text-white/45">Approve</span></h3>
                         </div>
                       </div>
                       <span className="hidden md:block text-8xl font-black text-white/10 group-hover:text-white/20">{String(partyNumber).padStart(2, '0')}</span>
@@ -864,12 +866,14 @@ export default function SinglePartyView({
                     <button onClick={() => onSelect(specialOptions?.disapprove?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.disapprove?.id ? 'bg-rose-500/20 border-2 border-rose-400 ring-2 ring-rose-400/50 shadow-lg shadow-rose-500/20' : 'bg-[var(--spv-dark-2,#2A2A2A)] border border-white/20 hover:bg-[var(--spv-dark-3,#3A3A3A)]'}`}>
                       <XCircle className={selectedPartyId === specialOptions?.disapprove?.id ? 'text-rose-300' : 'text-white/70'} size={32} />
                       <span className={`font-bold text-lg ${selectedPartyId === specialOptions?.disapprove?.id ? 'text-white' : 'text-white/90'}`}>ไม่รับรอง</span>
+                      <span className="-mt-2 text-[10.5px] font-semibold tracking-[.14em] uppercase text-white/45">Disapprove</span>
                     </button>
 
                     {/* งดออกเสียง Button - Solid Background */}
                     <button onClick={() => onSelect(specialOptions?.abstain?.id)} className={`p-6 rounded-2xl transition-all flex flex-col items-center gap-3 ${selectedPartyId === specialOptions?.abstain?.id ? 'bg-amber-500/20 border-2 border-amber-400 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20' : 'bg-[var(--spv-dark-2,#2A2A2A)] border border-white/20 hover:bg-[var(--spv-dark-3,#3A3A3A)]'}`}>
                       <Ban className={selectedPartyId === specialOptions?.abstain?.id ? 'text-amber-300' : 'text-white/70'} size={32} />
                       <span className={`font-bold text-lg ${selectedPartyId === specialOptions?.abstain?.id ? 'text-white' : 'text-white/90'}`}>งดออกเสียง</span>
+                      <span className="-mt-2 text-[10.5px] font-semibold tracking-[.14em] uppercase text-white/45">Abstain</span>
                     </button>
                   </div>
                 </div>

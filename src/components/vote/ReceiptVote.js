@@ -206,6 +206,8 @@ export function ReceiptConfirmSlip({
   // (red) — semantic colours fixed, deliberately NOT var(--rc-*).
   const tone = isVoteNo ? "abstain" : isDisapprove ? "disapprove" : "party";
   const label = isVoteNo ? "งดออกเสียง" : isDisapprove ? "ไม่รับรอง" : (party?.name || "—");
+  // ป้ายอังกฤษกำกับเฉพาะศัพท์ของระบบ ไม่ใช่ชื่อพรรค — เล็กและจางกว่าไทยเสมอ
+  const labelEn = isVoteNo ? "Abstain" : isDisapprove ? "Disapprove" : null;
   const subLabel = isVoteNo
     ? "ไม่ประสงค์ลงคะแนนเสียง"
     : isDisapprove
@@ -227,7 +229,7 @@ export function ReceiptConfirmSlip({
         <p className="rc-cslip__sub">โปรดตรวจสอบความถูกต้อง ท่านไม่สามารถแก้ไขได้หลังจากยืนยัน</p>
         <div className={`rc-cslip__pick rc-cslip__pick--${tone}`}>
           <span className="rc-cslip__pick-lab"><span className="rc-th">ท่านเลือก</span> · YOUR SELECTION</span>
-          <span className="rc-cslip__pick-val">{label}</span>
+          <span className="rc-cslip__pick-val">{label}{labelEn && <i className="rc-cslip__pick-en">{labelEn}</i>}</span>
           {subLabel && <span className="rc-cslip__pick-sub">{subLabel}</span>}
         </div>
         <div className="rc-cslip__actions">
@@ -272,6 +274,8 @@ export function ReceiptConfirmSlip({
           color:var(--rc-ink2); }
         .rc-root .rc-cslip__pick-lab .rc-th { font-family:var(--rc-fr) !important; }
         .rc-root .rc-cslip__pick-val { font-family:var(--rc-fh); font-weight:700; font-size:19px; line-height:1.3; color:var(--rc-ink); }
+        .rc-root .rc-cslip__pick-en { font-style:normal; font-family:var(--rc-fm); font-weight:600; font-size:10.5px;
+          letter-spacing:.14em; text-transform:uppercase; opacity:.5; margin-left:8px; white-space:nowrap; }
         .rc-root .rc-cslip__pick--abstain .rc-cslip__pick-val { color:#C2410C; }
         .rc-root .rc-cslip__pick--disapprove .rc-cslip__pick-val { color:#DC2626; }
         .rc-root .rc-cslip__pick-sub { font-family:var(--rc-fr); font-size:12.5px; color:var(--rc-ink2); }
