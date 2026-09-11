@@ -447,16 +447,26 @@ export default function GlobalConfigTab() {
                         <input
                           type={field.type === "datetime" ? "datetime-local" : field.type}
                           value={config[field.key] ?? ""}
-                          onChange={(e) =>
-                            handleChange(
-                              field.key,
-                              field.type === "number"
-                                // allowEmpty: บางช่องตัวเลข "ไม่ใส่" คือคำตอบที่ถูกต้อง
-                                // ไม่ใช่ศูนย์ — Number("") คือ 0 ซึ่งจะกลายเป็นค่าจริง
-                                ? (field.allowEmpty && e.target.value === "" ? "" : Number(e.target.value))
-                                : e.target.value
-                            )
-                          }
+                          min={field.min}
+                          step={field.step}
+                          onChange={(e) => {
+                            if (field.type !== "number") {
+                              handleChange(field.key, e.target.value);
+                              return;
+                            }
+                            // allowEmpty: บางช่องตัวเลข "ไม่ใส่" คือคำตอบที่ถูกต้อง
+                            // ไม่ใช่ศูนย์ — Number("") คือ 0 ซึ่งจะกลายเป็นค่าจริง
+                            if (field.allowEmpty && e.target.value === "") {
+                              handleChange(field.key, "");
+                              return;
+                            }
+                            const num = Number(e.target.value);
+                            // ค่าต่ำกว่า min ไม่รับเลย ไม่ใช่ปัดขึ้นเงียบ ๆ — input ถูก
+                            // ควบคุมโดย React ช่องจึงเด้งกลับเป็นค่าเดิมทันที ผู้ใช้เห็นว่า
+                            // พิมพ์ไม่ผ่าน (attribute min คุมได้แค่ปุ่มลูกศร พิมพ์มือยังลบล้างได้)
+                            if (field.min !== undefined && (!Number.isFinite(num) || num < field.min)) return;
+                            handleChange(field.key, num);
+                          }}
                           className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/10 focus:outline-none text-sm transition-colors"
                         />
                       )}
