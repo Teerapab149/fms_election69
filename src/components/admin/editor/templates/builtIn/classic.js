@@ -428,9 +428,6 @@ export const classicTemplate = {
     "success-megaphone-desc": {
       config: { text: "กรุณาทำแบบประเมินให้ครบถ้วน", fontSize: "xs", color: "#64748b", fontWeight: "normal", align: "left" }
     },
-    "success-chip-1": {
-      config: { text: "ชั่วโมงกิจกรรม 2 ชม.", backgroundColor: "#f3e8ff", textColor: "#8A2680", borderRadius: "lg" }
-    },
     "success-chip-2": {
       config: { text: "ประเภทเลือกเข้าร่วม", backgroundColor: "#fff1f2", textColor: "#e11d48", borderRadius: "lg" }
     },

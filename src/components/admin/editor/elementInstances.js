@@ -734,22 +734,6 @@ export const ELEMENT_INSTANCES = {
     schemaVersion: "v1"
   },
 
-  "success-chip-1": {
-    id: "success-chip-1",
-    typeId: "button-badge",
-    name: "ป้ายชั่วโมงกิจกรรม",
-    pages: ["success"],
-    section: "googleFormLink",
-    boundTo: null,
-    isStateful: false,
-    stateResolverKey: null,
-    states: null,
-    propertyFields: FIELDS_BUTTON,
-    defaultConfig: { text: "ชั่วโมงกิจกรรม 2 ชม.", backgroundColor: "#f3e8ff", textColor: "#8A2680", borderRadius: "lg" },
-    presets: null,
-    schemaVersion: "v1"
-  },
-
   "success-chip-2": {
     id: "success-chip-2",
     typeId: "button-badge",
