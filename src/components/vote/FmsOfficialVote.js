@@ -67,7 +67,7 @@ function Option({ opt, selected, onSelect, onViewDetails, editorMode }) {
         )}
 
         <span className="fo-opt__body">
-          <b className="fo-opt__name">{opt.label}</b>
+          <b className="fo-opt__name">{opt.label}{opt.en && <i className="fo-opt__en">{opt.en}</i>}</b>
           {opt.sub && <span className="fo-opt__sub">{opt.sub}</span>}
         </span>
 
@@ -107,7 +107,7 @@ export default function FmsOfficialVote({
     const abstain = specialOptions?.abstain;
     const out = [];
     regularParties.forEach((p) => out.push({ ...p, kind: "party", label: p.name, sub: p.slogan || "" }));
-    if (abstain) out.push({ ...abstain, kind: "abstain", label: "งดออกเสียง", sub: "ใช้สิทธิ์โดยไม่เลือกผู้สมัครรายใด" });
+    if (abstain) out.push({ ...abstain, kind: "abstain", label: "งดออกเสียง", en: "Abstain", sub: "ใช้สิทธิ์โดยไม่เลือกผู้สมัครรายใด" });
     return out;
   }, [regularParties, specialOptions]);
 
@@ -273,6 +273,9 @@ export default function FmsOfficialVote({
 
         .fo-opt__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
         .fo-opt__name { font-size: 18px; font-weight: 500; color: var(--fo-ink); }
+        /* ป้ายอังกฤษกำกับ — เล็กและจางกว่าไทยเสมอ ต่อท้ายบรรทัดเดียวกัน */
+        .fo-opt__en { font-style: normal; font-weight: 500; font-size: 10.5px; letter-spacing: .14em;
+          text-transform: uppercase; opacity: .5; margin-left: 9px; white-space: nowrap; }
         .fo-opt__sub { font-size: 13.5px; font-weight: 300; color: var(--fo-muted); }
 
         .fo-opt__details {

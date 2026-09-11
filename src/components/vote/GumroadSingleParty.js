@@ -196,19 +196,19 @@ export default function GumroadSingleParty({
             <button type="button" data-element="vote-approve-button"
               className={`gsp-choice gsp-choice--approve ${kind === "approve" ? "is-on" : ""}`} onClick={pick(party?.id)}>
               <span className="gsp-choice__ic"><Check size={24} strokeWidth={3} /></span>
-              <span className="gsp-choice__lb">รับรอง</span>
+              <span className="gsp-choice__lb">รับรอง<i className="gsp-choice__en">Approve</i></span>
               <span className="gsp-choice__sub">เห็นชอบให้ {party?.name} ดำรงตำแหน่ง</span>
             </button>
             <button type="button" data-element="vote-disapprove-button"
               className={`gsp-choice gsp-choice--no ${kind === "disapprove" ? "is-on" : ""}`} onClick={pick(disapproveId)}>
               <span className="gsp-choice__ic"><X size={24} strokeWidth={3} /></span>
-              <span className="gsp-choice__lb">ไม่รับรอง</span>
+              <span className="gsp-choice__lb">ไม่รับรอง<i className="gsp-choice__en">Disapprove</i></span>
               <span className="gsp-choice__sub">ไม่เห็นชอบให้พรรคนี้ดำรงตำแหน่ง</span>
             </button>
             <button type="button" data-element="vote-abstain-button"
               className={`gsp-choice gsp-choice--abstain ${kind === "abstain" ? "is-on" : ""}`} onClick={pick(abstainId)}>
               <span className="gsp-choice__ic"><Ban size={24} strokeWidth={2.5} /></span>
-              <span className="gsp-choice__lb">งดออกเสียง</span>
+              <span className="gsp-choice__lb">งดออกเสียง<i className="gsp-choice__en">Abstain</i></span>
               <span className="gsp-choice__sub">ไม่ประสงค์ลงคะแนนในครั้งนี้</span>
             </button>
           </div>
@@ -383,6 +383,11 @@ export default function GumroadSingleParty({
         .gsp-choice:hover{ transform:translate(-3px,-3px); box-shadow:var(--sh-lg); }
         .gsp-choice__ic{ width:48px; height:48px; border-radius:999px; display:grid; place-items:center; border:var(--bw) solid var(--ink); background:var(--cream); }
         .gsp-choice__lb{ font-family:var(--fd); font-size:22px; text-transform:uppercase; letter-spacing:-.01em; }
+        /* ป้ายอังกฤษกำกับตัวเลือก — สำหรับนักศึกษาต่างชาติในคณะ
+           ไทยคือภาษาหลัก อังกฤษเล็กกว่าและจางกว่าเสมอ อยู่ต่อท้าย ไม่ขึ้นก่อน ไม่แทนที่
+           คนที่อ่านอังกฤษไม่ออกต้องอ่านบัตรนี้รู้เรื่องเท่าเดิมทุกตัวอักษร */
+        .gsp-choice__en{ font-style:normal; font-family:var(--fm,ui-monospace,monospace); font-size:10.5px;
+          letter-spacing:.14em; text-transform:uppercase; opacity:.55; margin-left:9px; white-space:nowrap; }
         .gsp-choice__sub{ font-size:13px; color:var(--ink2); line-height:1.45; }
         /* Semantic vote colours — FIXED soft tones, never theme-linked (approve=
            green, disapprove=red, abstain=amber-orange) so the psychological meaning
