@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, Lock, ShieldCheck } from "lucide-react";
 import { getPath } from "../../utils/basePath";
+import { evaluationPromptText } from "../../utils/activityHours";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // The completion seal. Original is the family the other six were built next to, and
@@ -98,7 +99,7 @@ export default function OriginalSuccess({ user = null, isUnlocked = false, onOpe
           {showActions && <section className="os-next min-w-0 self-start md:col-start-2 md:row-start-1">
             <span className="os-eyebrow">WHAT’S NEXT</span>
             <h2 className="os-h2">{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : "อีกนิด เพื่อรับชั่วโมงกิจกรรม"}</h2>
-            <p className="os-note">{isUnlocked ? "ส่งแบบประเมินเรียบร้อย คุณสามารถไปยังหน้าผลคะแนนได้แล้ว" : "ทำแบบประเมินให้ครบถ้วนเพื่อรับชั่วโมงกิจกรรม และปลดล็อกหน้าผลคะแนน"}</p>
+            <p className="os-note">{isUnlocked ? "ส่งแบบประเมินเรียบร้อย คุณสามารถไปยังหน้าผลคะแนนได้แล้ว" : evaluationPromptText(gc)}</p>
             <div className="os-stack">
               {isUnlocked ? <><span className="os-done"><Check size={17} aria-hidden /> ส่งแบบประเมินแล้ว</span><a className="os-action os-primary" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <ArrowRight size={18} aria-hidden /></a></> : <><button type="button" className="os-action os-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={18} aria-hidden /></button><button type="button" disabled className="os-action os-locked"><Lock size={16} aria-hidden /> ทำแบบประเมินก่อนดูผลคะแนน</button></>}
               <a className="os-action os-home" href={editorMode ? undefined : getPath("/")}>กลับหน้าแรก</a>

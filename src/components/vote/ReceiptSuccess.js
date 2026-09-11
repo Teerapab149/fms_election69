@@ -46,6 +46,7 @@
 
 import { useState, useEffect } from "react";
 import { getPath } from "../../utils/basePath";
+import { evaluationPromptText } from "../../utils/activityHours";
 import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
@@ -257,10 +258,13 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
                 <button type="button" className="rc-suc-cta" onClick={() => !editorMode && onOpenForm()}>
                   <span className="rc-suc-grommet" aria-hidden="true" />
                   <span className="rc-suc-cta-in">
-                    ทำแบบประเมิน (รับชั่วโมงกิจกรรม)
+                    ทำแบบประเมิน
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" /></svg>
                   </span>
                 </button>
+                {/* บรรทัดอธิบายเดียวกับทุกตระกูล — ตัวเลขชั่วโมงอยู่ตรงนี้ที่เดียว
+                    ป้ายบนแท็กเป็นของสั้นตายตัว ใส่เลขเข้าไปแล้วแท็กจะล้น */}
+                <p className="rc-suc-hours rc-th">{evaluationPromptText(gc)}</p>
               </div>
             )}
 
@@ -297,6 +301,10 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
            from the SHARED .rc-desk classes in ReceiptBaseStyles (T1) — this root opts
            in via rc-desk so the printer moment rests on the SAME desk as home/vote
            (was a bespoke dot-grid + vignette). */
+        /* บรรทัดชั่วโมงกิจกรรมใต้แท็กแบบประเมิน — เสียงเดียวกับ fine print ของใบเสร็จ */
+        .rc-suc-root .rc-suc-hours { margin:10px 0 0; max-width:34ch; font-family:var(--rc-fr);
+          font-size:12px; line-height:1.6; color:var(--rc-ink2); }
+
         /* clip not hidden — same reason as every other receipt root: hidden makes
            overflow-y compute to auto and turns the root into a scroll container that
            kills any sticky inside it. This page has no sticky today; kept uniform so the
