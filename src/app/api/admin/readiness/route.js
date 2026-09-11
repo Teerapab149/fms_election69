@@ -179,14 +179,22 @@ export async function GET(request) {
   await run("candidates.single", "candidates", "ตัวเลือกกรณีพรรคเดียว", async () => {
     if (!candidates) throw new Error("อ่านข้อมูลพรรคไม่ได้");
     const real = candidates.filter((c) => c.number > 0);
-    if (real.length !== 1) {
-      return {
-        level: "pass",
-        detail: `มีพรรคจริง ${real.length} พรรค (ไม่เข้าเงื่อนไขพรรคเดียว — ไม่ต้องมีตัวเลือกไม่รับรอง)`,
-      };
-    }
     const hasDisapprove = candidates.some((c) => c.number === -1);
     const hasAbstain = candidates.some((c) => c.number === 0);
+    if (real.length !== 1) {
+      // งดออกเสียงต้องมีทุกกรณี ไม่ใช่เฉพาะบัตรพรรคเดียว — หน้าโหวตแบบหลายพรรค
+      // อ่าน specialOptions.abstain.id ตรง ๆ ถ้าแถวนี้หายไปคือบัตรใช้งานไม่ได้จริง
+      if (!hasAbstain) {
+        return {
+          level: "fail",
+          detail: `มีพรรคจริง ${real.length} พรรค แต่ไม่มีตัวเลือก งดออกเสียง (เบอร์ 0) — บัตรลงคะแนนยังใช้งานไม่ได้`,
+        };
+      }
+      return {
+        level: "pass",
+        detail: `มีพรรคจริง ${real.length} พรรค + มีตัวเลือกงดออกเสียง (ไม่เข้าเงื่อนไขพรรคเดียว จึงไม่ต้องมีตัวเลือกไม่รับรอง)`,
+      };
+    }
     if (!hasDisapprove) {
       return {
         level: "fail",

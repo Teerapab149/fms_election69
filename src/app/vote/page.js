@@ -6,7 +6,7 @@ import { getPath } from '../../utils/basePath';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
 import PartyDetailModal from '../../components/PartyDetailModal';
 import VoteConfirm from '../../components/vote/VoteConfirm';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ShieldAlert } from 'lucide-react';
 // Components
 import Navbar from '../../components/Navbar';
 import PageThemeOverrides from '../../components/PageThemeOverrides';
@@ -33,6 +33,7 @@ export default function VotePage() {
     regularParties,
     specialOptions,
     isSingleParty,
+    ballotIssue,
 
     // Selection State
     selectedPartyId,
@@ -139,6 +140,36 @@ export default function VotePage() {
   // --- Render ---
   if (isLoading || !templateReady) {
     return <ThemedLoadingScreen text="กำลังตรวจสอบสิทธิ์..." />;
+  }
+
+  // 🛑 บัตรตั้งค่าไม่ครบ (เช่น พรรคเดียวแต่ไม่มีตัวเลือก "ไม่รับรอง" ในฐานข้อมูล)
+  // หยุดตั้งแต่ตรงนี้ ดีกว่าปล่อยให้เลือกแล้วไปตายที่ /api/vote — แอดมินกดซ่อมได้ที่
+  // แท็บตั้งค่า > ตรวจความพร้อมระบบ (ข้อ "ตัวเลือกกรณีพรรคเดียว")
+  if (ballotIssue) {
+    return (
+      <div className="min-h-screen flex flex-col font-sans bg-[var(--color-bg,#F8F9FD)]">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center px-4 py-16">
+          <div className="max-w-md w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+            <h1 className="text-xl font-bold text-slate-800 mb-2">ยังลงคะแนนไม่ได้ตอนนี้</h1>
+            <p className="text-sm text-slate-500 leading-relaxed mb-6">
+              {ballotIssue}
+              <br />
+              กรุณาแจ้งผู้ดูแลระบบก่อนลงคะแนน
+            </p>
+            <button
+              onClick={() => router.push('/')}
+              className="w-full py-3 rounded-xl bg-[#8A2680] text-white font-bold text-sm hover:bg-[#7a2270] transition-colors"
+            >
+              กลับหน้าแรก
+            </button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
