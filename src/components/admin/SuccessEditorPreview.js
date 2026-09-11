@@ -154,12 +154,6 @@ export default function SuccessEditorPreview({
 
                     {/* Badges */}
                     <div className="flex flex-wrap gap-2">
-                      <Wrap id="success-chip-1">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100/80 text-[#8A2680] text-xs font-bold border border-purple-200 whitespace-nowrap">
-                          <CheckCircle2 size={12} />
-                          <span>{elementConfigs?.['success-chip-1']?.config?.text ?? 'ชั่วโมงกิจกรรม 2 ชม.'}</span>
-                        </div>
-                      </Wrap>
                       <Wrap id="success-chip-2">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 whitespace-nowrap">
                           <Tag size={12} />

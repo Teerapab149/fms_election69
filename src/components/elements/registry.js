@@ -404,15 +404,6 @@ export const ELEMENT_TYPES = {
     schemaVersion: "v1",
     stateful: false,
   },
-  "success-chip-1": {
-    name: "Success Chip 1",
-    description: "Small info chip on success page (activity-hour credit)",
-    category: "content",
-    variants: ONLY_DEFAULT,
-    defaultVariant: "default",
-    schemaVersion: "v1",
-    stateful: false,
-  },
   "success-chip-2": {
     name: "Success Chip 2",
     description: "Small info chip on success page (participation-type)",
