@@ -9,7 +9,6 @@ import EditCandidateModal from "../../components/EditCandidateModal";
 import EditCandidateMember from "../../components/EditCandidateMember";
 import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
-import PageDesignTab from "../../components/admin/PageDesignTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
 import ManualTab from "../../components/admin/ManualTab";
@@ -518,13 +517,9 @@ export default function AdminDashboard() {
   // Auto-collapse on the editor tab to give the canvas room; user can toggle.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  // The full element editor is now an author-only tool — staff get the clean
-  // template chooser by default. ?advanced=1 reveals the editor (kept in git).
-  const [advancedEditor, setAdvancedEditor] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
-      setAdvancedEditor(sp.get('advanced') === '1');
       // Deep-link a starting tab (e.g. the preview's "Exit" returns to ?tab=pageDesign,
       // the template selector — never the overview). Ignore unknown values.
       const tab = sp.get('tab');
@@ -533,7 +528,6 @@ export default function AdminDashboard() {
       }
     }
   }, []);
-  useEffect(() => { setSidebarCollapsed(activeTab === 'pageDesign' && advancedEditor); }, [activeTab, advancedEditor]);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
   // Who is holding this session — asked of the server, not read off the token.
@@ -700,7 +694,7 @@ export default function AdminDashboard() {
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'globalConfig' && <GlobalConfigTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
-          {activeTab === 'pageDesign' && (advancedEditor ? <PageDesignTab /> : <TemplateChooserTab />)}
+          {activeTab === 'pageDesign' && <TemplateChooserTab />}
           {activeTab === 'settings' && <SettingsTab />}
         </main>
       </div>

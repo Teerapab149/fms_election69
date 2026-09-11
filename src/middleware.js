@@ -27,9 +27,8 @@ async function isValidAdminToken(token) {
 // ช่วงเปิดหีบ ลิงก์หลุดใน LINE กลุ่มเดียวก็พอ
 //
 // ห้ามเปลี่ยนเป็น 404 เฉย ๆ: admin console เรียกใช้จริง — TemplateChooserTab.js:48
-// และ PageDesignTab.js:322 ฝัง /template-preview เป็น iframe, PageDesignTab.js:384
-// ลิงก์ไป /template-playground, PageDesignTab.js:648 เปิด /preview
-// iframe วิ่งด้วย cookie ของแอดมินอยู่แล้ว การกั้นด้วย admin_token จึงไม่กระทบของเดิม
+// ฝัง /template-preview เป็น iframe ซึ่งวิ่งด้วย cookie ของแอดมินอยู่แล้ว การกั้นด้วย
+// admin_token จึงไม่กระทบของเดิม
 const ADMIN_TOOL_PAGES = ['/preview', '/template-preview', '/template-playground'];
 
 export async function middleware(request) {
@@ -37,16 +36,7 @@ export async function middleware(request) {
   const isAdminPage = path.startsWith('/admin');
   const isLoginPage = path === '/admin/login';
   const isAdminTool = ADMIN_TOOL_PAGES.some((p) => path === p || path.startsWith(`${p}/`));
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.BASE_PATH || '';
   const adminUrl = (pathname) => buildAdminRedirectUrl(pathname, request.url);
-
-  // /compose-lab คือ sandbox ของ Layer-2 Composition Editor ไม่มีใครในระบบลิงก์ถึง
-  // และไม่ใช่เครื่องมือที่เจ้าหน้าที่ต้องใช้ → ปิดตายบน production ไปเลย ไม่ต้องมี
-  // สวิตช์ให้เผลอเปิด (บทเรียนเดียวกับ mock-login: ตัวกั้นที่เชื่อได้คือ NODE_ENV
-  // ไม่ใช่ flag ที่ต้องจำว่าต้องปิด)
-  if (path === '/compose-lab' && process.env.NODE_ENV === 'production') {
-    return NextResponse.rewrite(new URL(`${basePath}/_not-found`, request.url));
-  }
 
   const token = request.cookies.get('admin_token')?.value;
   const valid = await isValidAdminToken(token);
@@ -78,6 +68,5 @@ export const config = {
     '/preview',
     '/template-preview',
     '/template-playground',
-    '/compose-lab',
   ],
 };
