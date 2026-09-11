@@ -35,6 +35,7 @@ import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
+import ReceiptPartyIntro from "./ReceiptPartyIntro";
 
 // stamp imprint glyph + Thai label per semantic choice (kind)
 const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "—" };
@@ -88,6 +89,8 @@ export default function ReceiptSingleParty({
   const copyrightYear = gc.copyrightYear ?? "";
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // ม่านแนะนำพรรค — editor/preview ข้ามไปหน้าบูธเลย (เหมือนทุก family)
+  const [introDone, setIntroDone] = useState(editorMode);
   // stamping-desk enhancement state (JS-only; the 3 rows below stay the base path)
   const [ghostKind, setGhostKind] = useState(null);   // the previous imprint, fading out
   const prevKindRef = useRef(null);
@@ -172,8 +175,9 @@ export default function ReceiptSingleParty({
   }, [editorMode]);
 
   return (
-    <div className="fms-app rc-root rc-single-root rc-desk">
+    <div className={`fms-app rc-root rc-single-root rc-desk${introDone ? " is-live" : ""}`}>
       <ReceiptBaseStyles />
+      {!introDone && <ReceiptPartyIntro party={party} onDone={() => setIntroDone(true)} />}
 
       <ReceiptTopBar editorMode={editorMode} active="/vote" />
 
@@ -974,6 +978,19 @@ export default function ReceiptSingleParty({
           .rc-single-root .rc-jump { right:12px; bottom:172px; font-size:12.5px; }
           .rc-single-root .rc-jump.is-in { opacity:.82; }
         }
+
+        /* ม่านแนะนำพรรคเปิดก่อน แล้วค่อยให้หน้าบูธไล่ขึ้นทีละชิ้น
+           ถ้าไม่กั้นตรงนี้ animation ทุกตัววิ่งจบอยู่หลังม่านตั้งแต่หน้าโหลดเสร็จ พอม่านเปิด
+           เลยได้หน้านิ่ง ๆ ไม่มีจังหวะอะไรเลย (gumroad กับ studio-dark กันด้วย .is-live
+           แบบเดียวกัน) · ไม่มี JS = ไม่มี .is-live = ไม่มี animation ทุกอย่างจึงเห็นครบ
+           ตั้งแต่เฟรมแรก ไม่มีเนื้อหาไหนถูกซ่อนไว้หลัง motion */
+        .rc-single-root:not(.is-live) .rc-issue,
+        .rc-single-root:not(.is-live) .rc-sp-head,
+        .rc-single-root:not(.is-live) .rc-sp-num b,
+        .rc-single-root:not(.is-live) .rc-vvoter,
+        .rc-single-root:not(.is-live) .rc-sp-cover,
+        .rc-single-root:not(.is-live) .rc-sp-cover figcaption,
+        .rc-single-root:not(.is-live) .rc-ballot { animation:none; }
 
         /* reduced motion — freeze every animation (foil stays statically iridescent),
            full booth visible. Scoped to .rc-single-root. */
