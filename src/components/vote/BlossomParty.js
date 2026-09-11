@@ -85,6 +85,14 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
   const openMember = (m, i) => { if (!editorMode) { setSelectedMember(m); setSelectedNo(i + 1); } };
   const openLightbox = (src) => { if (!editorMode) setLightboxSrc(src); };
 
+  // Esc ปิดภาพขยาย — ทุก family อื่นทำได้ ผู้ใช้คีย์บอร์ดคาดหวังแบบนี้
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const onKey = (e) => { if (e.key === "Escape") setLightboxSrc(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxSrc]);
+
   return (
     <div className={`fms-app bl-root bl-party-root${showBackToVote ? " has-backvote" : ""}`}>
       <BlossomBaseStyles />
@@ -108,13 +116,22 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           <div className="bl-pty-hero">
             <span className="bl-pty-no" aria-hidden="true">{pad2(no)}</span>
             <div className="bl-pty-id">
-              <span className="bl-pty-logo">
-                {logo ? (
+              {logo ? (
+                /* ตราพรรคกดขยายได้เหมือนภาพกิจกรรมด้านล่าง — หน้านี้มีหัวข้อ
+                   "ความหมายสัญลักษณ์" อยู่แล้ว แต่ย่อตราเหลือ 96px */
+                <button
+                  type="button"
+                  className="bl-pty-logo bl-pty-logo--btn"
+                  onClick={() => openLightbox(logo)}
+                  aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+                >
                   <img src={logo} alt={party?.name || "โลโก้พรรค"} loading="lazy" />
-                ) : (
+                </button>
+              ) : (
+                <span className="bl-pty-logo">
                   <span className="bl-pty-logo-ph" aria-hidden="true">{pad2(no)}</span>
-                )}
-              </span>
+                </span>
+              )}
               <div className="bl-pty-title">
                 <span className="bl-pty-num"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{no}</b></span>
                 <h1 className="bl-pty-word">{party?.name || "พรรค"}</h1>
@@ -430,6 +447,10 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
           box-shadow:0 20px 44px -30px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
         /* contain — a logo is a mark with its own margins; cover cropped it */
         .bl-party-root .bl-pty-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
+        .bl-party-root .bl-pty-logo--btn { padding:0; cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .22s cubic-bezier(.16,1,.3,1); }
+        .bl-party-root .bl-pty-logo--btn:hover { transform:translateY(-3px); }
+        .bl-party-root .bl-pty-logo--btn:active { transform:translateY(0) scale(.98); }
         .bl-party-root .bl-pty-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:34px;
           font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-party-root .bl-pty-title { min-width:0; }

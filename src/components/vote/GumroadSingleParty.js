@@ -13,7 +13,7 @@
 
 import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, X, Ban } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
@@ -53,6 +53,18 @@ export default function GumroadSingleParty({
   const [introDone, setIntroDone] = useState(editorMode); // editor skips the intro
   const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
   const [confirmOpen, setConfirmOpen] = useState(false);  // double-check before submitting the vote
+  // ภาพหมู่พรรค + โลโก้ กดขยายได้ — กรอบในบูธ crop ภาพหมู่ (object-fit:cover) และย่อ
+  // โลโก้เหลือ 110px คนลงคะแนนควรดูของจริงได้ตรงจุดที่ตัดสินใจ (StudioDark/Verdure
+  // ทำกับภาพหมู่มาก่อนแล้ว) · editorMode ไม่เปิด overlay เหมือน modal สมาชิก
+  const [lightbox, setLightbox] = useState(null);         // { src, caption } | null
+  const openLightbox = (src, caption) => { if (!editorMode && src) setLightbox({ src, caption }); };
+  // Esc ปิดภาพขยาย — ทุก family อื่นทำได้ ผู้ใช้คีย์บอร์ดคาดหวังแบบนี้
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === "Escape") setLightbox(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map((it) => (
@@ -103,8 +115,18 @@ export default function GumroadSingleParty({
         {/* HERO */}
         <section className="gsp-hero" data-element="vote-party-card">
           <div className="gsp-hero__media">
-            {heroImg ? <img src={heroImg} alt={party?.name || "party"} /> :
-              <span className="gsp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>}
+            {heroImg ? (
+              <button
+                type="button"
+                className="gsp-hero__zoom"
+                onClick={() => openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+                aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
+              >
+                <img src={heroImg} alt={party?.name || "party"} />
+              </button>
+            ) : (
+              <span className="gsp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>
+            )}
             {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมที่พรรคอัปเพิ่มอยู่ในแกลเลอรีของหน้านั้น
                 source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
             <a className="gsp-hero__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
@@ -112,9 +134,18 @@ export default function GumroadSingleParty({
             </a>
           </div>
           <div className="gsp-hero__body">
-            <div className="gsp-hero__logo">
-              {logoImg ? <img src={logoImg} alt="logo" /> : <span>{(party?.name || "P").slice(0, 2).toUpperCase()}</span>}
-            </div>
+            {logoImg ? (
+              <button
+                type="button"
+                className="gsp-hero__logo gsp-hero__logo--btn"
+                onClick={() => openLightbox(logoImg, `โลโก้พรรค · ${party?.name || ""}`)}
+                aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+              >
+                <img src={logoImg} alt="logo" />
+              </button>
+            ) : (
+              <div className="gsp-hero__logo"><span>{(party?.name || "P").slice(0, 2).toUpperCase()}</span></div>
+            )}
             <div className="gsp-hero__txt">
               <h1 className="gsp-hero__title" data-element="vote-header-title">{party?.name}</h1>
               {party?.slogan ? <p className="gsp-hero__slogan">&ldquo;{party.slogan}&rdquo;</p> : null}
@@ -256,6 +287,20 @@ export default function GumroadSingleParty({
         })()}
       </AnimatePresence>
 
+      {/* ภาพหมู่ / โลโก้ ขยายเต็มจอ — ของบูธเอง (หน้าพรรคมี gp-lb ของมันแยกต่างหาก) */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div className="gsp-lb" onClick={() => setLightbox(null)} role="dialog" aria-modal="true" aria-label="ภาพขยาย"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <button type="button" className="gsp-lb__x" onClick={() => setLightbox(null)} aria-label="ปิด"><X size={22} strokeWidth={2.5} /></button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <motion.img src={lightbox.src} alt={lightbox.caption} className="gsp-lb__img" onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }} />
+            {lightbox.caption && <span className="gsp-lb__cap gm-thai">{lightbox.caption}</span>}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* CONFIRM VOTE — double-check (selection can't be changed after) */}
       <AnimatePresence>
         {confirmOpen && (
@@ -319,6 +364,11 @@ export default function GumroadSingleParty({
         .gsp-hero{ background:var(--paper); border:var(--bw) solid var(--ink); border-radius:28px; box-shadow:var(--sh-lg); overflow:hidden; margin-bottom:28px; }
         .gsp-hero__media{ position:relative; height:clamp(220px,38cqw,360px); display:grid; place-items:center; border-bottom:var(--bw) solid var(--ink); overflow:hidden;
           background-image:repeating-linear-gradient(45deg,transparent 0 16px,rgba(0,0,0,.04) 16px 18px),linear-gradient(135deg,#FFD1F2,#E9D5FF); }
+        /* the photo is the hit target — absolute button under .gsp-hero__more (z-index 2),
+           so the "full profile" pill still wins the corner it sits in. NO hover transform
+           on the img: gspKen (below) owns its transform while .is-live. */
+        .gsp-hero__zoom{ position:absolute; inset:0; z-index:1; width:100%; height:100%; padding:0; border:0;
+          background:none; cursor:zoom-in; display:block; }
         .gsp-hero__media img{ width:100%; height:100%; object-fit:cover; }
         /* ชิปมุมล่างขวาบนภาพหมู่ — idiom เดียวกับปุ่มแกลเลอรีของหน้า /party ตระกูลนี้ */
         .gsp-hero__more{ position:absolute; right:12px; bottom:12px; z-index:2; display:inline-flex; align-items:center; gap:6px;
@@ -334,6 +384,10 @@ export default function GumroadSingleParty({
         /* same fix as GumroadParty: forcing 100%/100% sized a portrait logo by its own
            aspect ratio and the box's overflow:hidden cut the bottom off */
         .gsp-hero__logo img{ width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; } .gsp-hero__logo span{ font-family:var(--fd); font-size:34px; }
+        /* pressable mark — both classes on one element, so the tile look above is inherited */
+        .gsp-hero__logo--btn{ cursor:zoom-in; -webkit-appearance:none; appearance:none; transition:transform .15s ease, box-shadow .15s ease; }
+        .gsp-hero__logo--btn:hover{ transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink); }
+        .gsp-hero__logo--btn:active{ transform:translate(0,0); box-shadow:var(--sh); }
         .gsp-hero__txt{ min-width:0; flex:1; }
         .gsp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gsp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }
@@ -416,6 +470,24 @@ export default function GumroadSingleParty({
         .gsp-confirm:disabled{ background:var(--paper); color:color-mix(in srgb, var(--ink) 66%, var(--paper)); border-color:color-mix(in srgb, var(--ink) 22%, var(--paper)); box-shadow:none; cursor:not-allowed; }
 
         /* MEMBER PROFILE MODAL */
+        /* image lightbox — the booth's own (chunky border + offset shadow, family voice) */
+        .gsp-lb{ position:fixed; inset:0; z-index:9550; display:grid; place-items:center; padding:28px; cursor:zoom-out;
+          background:color-mix(in srgb, var(--ink) 82%, transparent); backdrop-filter:blur(4px); }
+        .gsp-lb__img{ max-width:min(1100px,92vw); max-height:84vh; object-fit:contain; cursor:auto; background:var(--paper);
+          border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:10px 10px 0 rgba(0,0,0,.5); }
+        .gsp-lb__x{ position:absolute; top:18px; right:18px; z-index:2; width:44px; height:44px; border-radius:999px;
+          background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }
+        .gsp-lb__x:hover{ background:var(--pop); }
+        .gsp-lb__cap{ position:absolute; bottom:20px; left:50%; transform:translateX(-50%); font-family:var(--fm); font-size:12px;
+          color:var(--cream); background:var(--ink); border:2px solid var(--cream); padding:5px 14px; border-radius:999px;
+          /* cap it — a 40-char party name would run the centred pill off both phone edges */
+          max-width:min(88vw,520px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        @media (max-width:640px){
+          .gsp-lb{ padding:14px; }
+          .gsp-lb__x{ top:14px; right:14px; width:38px; height:38px; }
+          .gsp-lb__cap{ bottom:14px; max-width:92vw; }
+        }
+
         .gsp-modal{ position:fixed; inset:0; z-index:9500; display:grid; place-items:center; padding:20px; background:color-mix(in srgb, var(--ink) 62%, transparent); backdrop-filter:blur(4px); }
         .gsp-modal__card{ position:relative; width:100%; max-width:860px; max-height:92vh; overflow:hidden; background:var(--paper); border:var(--bw) solid var(--ink); border-radius:26px; box-shadow:10px 10px 0 var(--ink); display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); }
         .gsp-modal__x{ position:absolute; top:14px; right:14px; z-index:3; width:40px; height:40px; border-radius:999px; background:var(--paper); border:var(--bw) solid var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--sh-sm); }

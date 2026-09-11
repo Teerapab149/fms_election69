@@ -313,3 +313,53 @@ export default function ReceiptMemberModal({ member = null, no = null, onClose =
     </div>
   );
 }
+
+// ReceiptLightbox — the family's standalone image lightbox, for the surfaces that
+// show a party's OWN artwork (group photo, logo mark) rather than a member portrait.
+// Same ink-scrim grammar as .rcm-lb above, but mountable on its own: callers portal
+// it to <document.body>, so the overlay carries .rc-root for the var declarations and
+// a two-class rule strips .rc-root's page background / height (A3: NO backdrop-filter).
+// Mirrors StudioDarkLightbox / VerdureLightbox — same { src, caption, onClose } API.
+export function ReceiptLightbox({ src = null, caption = "", onClose = () => {} }) {
+  useEscape(!!src, onClose);
+  if (!src) return null;
+
+  return (
+    <div className="rc-root rc-lbx" onClick={onClose} role="dialog" aria-modal="true" aria-label="ภาพขยาย">
+      <button type="button" className="rc-lbx__x" onClick={onClose} aria-label="ปิด">✕</button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={caption || "ภาพขยาย"} onClick={(e) => e.stopPropagation()} />
+      {caption && <span className="rc-lbx__cap">{caption}</span>}
+
+      <style jsx global>{`
+        .rc-root.rc-lbx { position:fixed; inset:0; z-index:9400; min-height:0; display:grid; place-items:center;
+          padding:28px; cursor:zoom-out; background:color-mix(in srgb, var(--rc-ink) 88%, transparent);
+          animation:rcLbxFade .2s ease both; }
+        @keyframes rcLbxFade { from { opacity:0; } }
+        .rc-lbx img { max-width:min(1100px,94vw); max-height:84vh; object-fit:contain; cursor:auto; border-radius:4px;
+          background:var(--rc-receipt); box-shadow:0 40px 90px -30px rgba(0,0,0,.6); }
+        .rc-lbx__x { position:absolute; top:18px; right:18px; width:44px; height:44px; border-radius:50%; z-index:2;
+          display:grid; place-items:center; cursor:pointer; font-size:16px; line-height:1; color:var(--rc-receipt);
+          background:color-mix(in srgb, var(--rc-ink) 40%, transparent);
+          border:1.5px solid color-mix(in srgb, var(--rc-receipt) 40%, transparent);
+          transition:background .2s ease, border-color .2s ease, color .2s ease; }
+        .rc-lbx__x:hover { background:var(--rc-accent-deep); border-color:var(--rc-accent-deep); color:var(--rc-on-accent); }
+        .rc-lbx__cap { position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+          font-family:var(--rc-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+          color:var(--rc-receipt); background:color-mix(in srgb, var(--rc-ink) 55%, transparent);
+          border:1px solid color-mix(in srgb, var(--rc-receipt) 28%, transparent);
+          padding:6px 16px; border-radius:999px;
+          /* a real party name runs 40+ chars — cap it or the centred pill runs off both
+             screen edges on a phone (same guard as .sdl-caption) */
+          max-width:min(88vw,520px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .rc-lbx__cap .rc-th { font-family:var(--rc-fr) !important; }
+        @media (max-width:640px) {
+          .rc-root.rc-lbx { padding:14px; }
+          .rc-lbx__x { top:14px; right:14px; width:38px; height:38px; }
+          .rc-lbx__cap { bottom:14px; max-width:92vw; }
+        }
+        @media (prefers-reduced-motion:reduce) { .rc-root.rc-lbx { animation:none !important; } }
+      `}</style>
+    </div>
+  );
+}

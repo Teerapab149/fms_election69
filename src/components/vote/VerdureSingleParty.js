@@ -101,7 +101,11 @@ export default function VerdureSingleParty({
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modalMember, setModalMember] = useState(null);
+  // the group cover OR the party mark opens fullscreen; the caption travels with the
+  // src (it used to be hardcoded ภาพหมู่พรรค, which lies once the logo can open it too)
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [lightboxCap, setLightboxCap] = useState("");
+  const openLightbox = (src, cap) => { if (src) { setLightboxSrc(src); setLightboxCap(cap); } };
   // editor/preview skip the cinematic intro — unless forceIntro (the dev-only intro demo)
   const [introDone, setIntroDone] = useState(editorMode && !forceIntro);
 
@@ -146,9 +150,20 @@ export default function VerdureSingleParty({
             <span className="vd-seal__glow" />
             <span className="vd-seal__ring" />
             <span className="vd-seal__ring2" />
-            <div className="vd-seal__disc">
-              {logoSrc ? <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} /> : <span className="no">{party?.number}</span>}
-            </div>
+            {logoSrc ? (
+              /* the mark opens full-size too — the group cover below has done this
+                 since the booth shipped, and the disc letterboxes a logo to 74% */
+              <button
+                type="button"
+                className="vd-seal__disc vd-seal__disc--btn"
+                onClick={() => openLightbox(logoSrc, `โลโก้พรรค · ${party?.name || ""}`)}
+                aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+              >
+                <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} />
+              </button>
+            ) : (
+              <div className="vd-seal__disc"><span className="no">{party?.number}</span></div>
+            )}
           </div>
           <h1 className="vd-booth__name">{party?.name}</h1>
           {party?.slogan && <p className="vd-booth__slogan">“{party.slogan}”</p>}
@@ -159,7 +174,7 @@ export default function VerdureSingleParty({
         </div>
 
         {heroImg && (
-          <figure className="vd-booth__cover" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
+          <figure className="vd-booth__cover" onClick={() => openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`); }}>
             <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
             <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
           </figure>
@@ -260,7 +275,7 @@ export default function VerdureSingleParty({
       )}
 
       <VerdureMemberModal member={modalMember} onClose={() => setModalMember(null)} />
-      <VerdureLightbox src={lightboxSrc} caption={`ภาพหมู่พรรค · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
+      <VerdureLightbox src={lightboxSrc} caption={lightboxCap} onClose={() => setLightboxSrc(null)} />
 
       <style jsx global>{`
         /* ── cinematic ballot intro — WARM cream wax-seal curtain that wipes up into
@@ -310,6 +325,10 @@ export default function VerdureSingleParty({
            letterboxes the logo inside that square box, centred by the disc's grid. */
         .vd-seal__disc img { width:74%; aspect-ratio:1; object-fit:contain; display:block; }
         .vd-seal__disc .no { font-family:var(--fd); font-style:italic; font-weight:400; font-size:84px; line-height:1; color:var(--moss); }
+        .vd-seal__disc--btn { padding:0; cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .25s cubic-bezier(.16,1,.3,1); }
+        .vd-seal__disc--btn:hover { transform:translateY(-3px); }
+        .vd-seal__disc--btn:active { transform:translateY(0) scale(.98); }
         @keyframes vdGlow { 0%,100%{opacity:.55; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.05)} }
 
         .vd-booth__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(36px,5.4vw,62px); line-height:1.04; letter-spacing:-.02em; margin:0 0 14px; color:var(--moss); }

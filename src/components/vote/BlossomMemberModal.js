@@ -322,3 +322,54 @@ export default function BlossomMemberModal({ member = null, no = null, onClose =
     </div>
   );
 }
+
+// BlossomLightbox — the family's standalone image lightbox, for the surfaces that show
+// a party's OWN artwork (group photo, logo mark) rather than a member portrait. Same
+// scrim grammar as .blm-lb above but mountable on its own: callers portal it to
+// <document.body>, so the overlay carries .bl-root for the var declarations and a
+// two-class rule strips .bl-root's canvas background / min-height.
+// Mirrors StudioDarkLightbox / VerdureLightbox — same { src, caption, onClose } API.
+export function BlossomLightbox({ src = null, caption = "", onClose = () => {} }) {
+  useEscape(!!src, onClose);
+  if (!src) return null;
+
+  return (
+    <div className="bl-root bl-lbx" onClick={onClose} role="dialog" aria-modal="true" aria-label="ภาพขยาย">
+      <button type="button" className="bl-lbx__x" onClick={onClose} aria-label="ปิด">✕</button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={caption || "ภาพขยาย"} onClick={(e) => e.stopPropagation()} />
+      {caption && <span className="bl-lbx__cap">{caption}</span>}
+
+      <style jsx global>{`
+        .bl-root.bl-lbx { position:fixed; inset:0; z-index:9400; min-height:0; display:grid; place-items:center;
+          padding:28px; cursor:zoom-out; background:color-mix(in srgb, var(--bl-ink) 84%, transparent);
+          -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); animation:blLbxFade .2s ease both; }
+        @keyframes blLbxFade { from { opacity:0; } }
+        .bl-lbx img { max-width:min(1100px,94vw); max-height:84vh; object-fit:contain; cursor:auto; border-radius:16px;
+          background:var(--bl-canvas); box-shadow:0 40px 90px -30px rgba(0,0,0,.6); }
+        .bl-lbx__x { position:absolute; top:18px; right:18px; width:44px; height:44px; border-radius:50%; z-index:2;
+          display:grid; place-items:center; cursor:pointer; font-size:16px; line-height:1; color:var(--bl-canvas);
+          background:color-mix(in srgb, var(--bl-ink) 40%, transparent);
+          border:1.5px solid color-mix(in srgb, var(--bl-canvas) 40%, transparent);
+          transition:background .2s ease, border-color .2s ease, color .2s ease; }
+        .bl-lbx__x:hover { background:var(--bl-primary-deep); border-color:var(--bl-primary-deep); color:var(--bl-on-primary); }
+        .bl-lbx__cap { position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+          font-family:var(--bl-fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+          color:var(--bl-canvas); background:color-mix(in srgb, var(--bl-ink) 55%, transparent);
+          border:1px solid color-mix(in srgb, var(--bl-canvas) 28%, transparent);
+          padding:6px 16px; border-radius:999px;
+          /* cap it or a 40-char party name runs the centred pill off both phone edges */
+          max-width:min(88vw,520px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        /* Space Mono has no Thai glyphs — Thai inside a mono line takes the display face */
+        .bl-lbx__cap .bl-thai { font-family:var(--bl-fd) !important; letter-spacing:.04em; }
+        @media (max-width:640px) {
+          .bl-root.bl-lbx { padding:14px; }
+          .bl-lbx img { border-radius:12px; }
+          .bl-lbx__x { top:14px; right:14px; width:38px; height:38px; }
+          .bl-lbx__cap { bottom:14px; max-width:92vw; }
+        }
+        @media (prefers-reduced-motion:reduce) { .bl-root.bl-lbx { animation:none !important; } }
+      `}</style>
+    </div>
+  );
+}

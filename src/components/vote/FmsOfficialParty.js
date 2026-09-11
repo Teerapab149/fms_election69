@@ -12,7 +12,7 @@
 // wall and party B's led with policy, the template would be quietly campaigning.
 // Sections render only when the party supplied content, but they never reorder.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Users, Target } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
@@ -29,6 +29,14 @@ export default function FmsOfficialParty({
   party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false, editorMode = false,
 }) {
   const [lightbox, setLightbox] = useState(null);
+
+  // Esc ปิดภาพขยาย — ทุก family อื่นทำได้ ผู้ใช้คีย์บอร์ดคาดหวังแบบนี้
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === "Escape") setLightbox(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
   const [member, setMember] = useState(null);
 
   const missions = useMemo(
@@ -83,12 +91,23 @@ export default function FmsOfficialParty({
           <span className="fo-notice__ghost" aria-hidden>{party.number}</span>
         )}
         <div className="fo-notice__body fo-party__head-body">
-          <span className="fo-party__logo">
-            {logo
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
-              : <span className="fo-party__logo-fb" aria-hidden>{String(party?.name || "").trim().charAt(0)}</span>}
-          </span>
+          {logo ? (
+            /* ตราสัญลักษณ์กดขยายได้เหมือนภาพในแฟ้ม — หน้านี้อธิบายความหมายของตรา
+               อยู่แล้ว แต่กรอบย่อเหลือ 96px */
+            <button
+              type="button"
+              className="fo-party__logo fo-party__logo--btn"
+              onClick={editorMode ? undefined : () => setLightbox(logo)}
+              aria-label={`ขยายตราสัญลักษณ์พรรค${party?.name || ""}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
+            </button>
+          ) : (
+            <span className="fo-party__logo">
+              <span className="fo-party__logo-fb" aria-hidden>{String(party?.name || "").trim().charAt(0)}</span>
+            </span>
+          )}
           <div className="fo-party__id">
             <span className="fo-party__kicker">หมายเลข {party?.number ?? "—"}</span>
             <h1>{party?.name || "—"}</h1>
@@ -292,6 +311,10 @@ export default function FmsOfficialParty({
           background: var(--fo-surface); border: 1px solid var(--fo-line);
         }
         .fo-party__logo img { width: 100%; height: 100%; object-fit: contain; }
+        .fo-party__logo--btn { padding: 0; cursor: zoom-in; -webkit-appearance: none; appearance: none;
+          transition: transform .18s ease, box-shadow .18s ease; }
+        .fo-party__logo--btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(0,0,0,.35); }
+        .fo-party__logo--btn:active { transform: translateY(0) scale(.98); }
         .fo-party__logo-fb { font-size: 34px; font-weight: 600; color: var(--fo-brand-soft); }
         .fo-party__id { min-width: 0; }
         .fo-party__kicker { font-size: 12px; font-weight: 500; letter-spacing: .04em; color: var(--fo-brand-soft); }
