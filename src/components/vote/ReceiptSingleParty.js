@@ -29,6 +29,7 @@
 // render the full booth instantly (no JS-gated content).
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
@@ -36,6 +37,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import ReceiptPartyIntro from "./ReceiptPartyIntro";
+import ReceiptMemberModal from "./ReceiptMemberModal";
 
 // stamp imprint glyph + Thai label per semantic choice (kind)
 const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "—" };
@@ -87,6 +89,15 @@ export default function ReceiptSingleParty({
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
   const copyrightYear = gc.copyrightYear ?? "";
+
+  // การ์ดสมาชิกในบูธกดดูประวัติได้เหมือนหน้าพรรค — ผู้ใช้สิทธิ์ต้องดูข้อมูลคนที่กำลังจะ
+  // ลงคะแนนให้ได้ "ตรงจุดที่ตัดสินใจ" ไม่ใช่ต้องย้อนออกไปหน้าพรรคก่อน
+  // editorMode ไม่เปิด modal (พรีวิวในแอดมินไม่ควรมี overlay เด้ง) เหมือนหน้าพรรคทำอยู่
+  const [mounted, setMounted] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedNo, setSelectedNo] = useState(null);
+  useEffect(() => { setMounted(true); }, []);
+  const openMember = (m, i) => { if (!editorMode) { setSelectedMember(m); setSelectedNo(i + 1); } };
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   // ม่านแนะนำพรรค — editor/preview ข้ามไปหน้าบูธเลย (เหมือนทุก family)
@@ -305,15 +316,16 @@ export default function ReceiptSingleParty({
               {members.map((m, i) => {
                 const img = resolveSrc(m?.imageUrl);
                 return (
-                  <figure className="rc-sp-cand" key={m.id || i}>
+                  <button type="button" className="rc-sp-cand" key={m.id || i}
+                    onClick={() => openMember(m, i)} aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}>
                     <span className="rc-sp-cand__photo">
                       {img ? <img src={img} alt={m.name} /> : <span className="rc-sp-cand__ph" aria-hidden="true">{(m.name || "?").trim().charAt(0)}</span>}
                     </span>
-                    <figcaption className="rc-sp-cand__body">
+                    <span className="rc-sp-cand__body">
                       <span className="rc-sp-cand__name">{m.name}</span>
                       {(m.position || m.major) && <span className="rc-sp-cand__role">{m.position || m.major}</span>}
-                    </figcaption>
-                  </figure>
+                    </span>
+                  </button>
                 );
               })}
             </div>
@@ -697,9 +709,11 @@ export default function ReceiptSingleParty({
         /* team — a portrait-card GRID so all 17 candidates are seen at once (owner
            ruling v2-R14: no more horizontal scroll strip). Mobile 2 cols → 4 at ≥768. */
         .rc-single-root .rc-sp-team { margin-top:20px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; padding:2px 0 4px; }
-        .rc-single-root .rc-sp-cand { margin:0;
+        .rc-single-root .rc-sp-cand { margin:0; display:flex; flex-direction:column; width:100%; text-align:left;
+          padding:0; cursor:pointer; font-family:inherit; color:var(--rc-ink);
           background:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px;
           overflow:hidden; transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+        .rc-single-root .rc-sp-cand:focus-visible { outline:2px solid var(--rc-accent); outline-offset:3px; }
         .rc-single-root .rc-sp-cand:hover { transform:translateY(-4px); border-color:var(--rc-accent);
           box-shadow:2px 22px 40px -26px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
         .rc-single-root .rc-sp-cand__photo { display:block; width:100%; aspect-ratio:4/5; overflow:hidden;
@@ -1006,6 +1020,13 @@ export default function ReceiptSingleParty({
           .rc-single-root *, .rc-single-root *::before, .rc-single-root *::after { animation:none !important; }
         }
       `}</style>
+
+      {/* ประวัติสมาชิก — การ์ดของ family เดียวกับหน้าพรรค portal ไป body กัน
+          position:fixed โดน ancestor ตัด (เหมือน ReceiptParty ทำ) */}
+      {mounted && selectedMember && createPortal(
+        <ReceiptMemberModal member={selectedMember} no={selectedNo} onClose={() => setSelectedMember(null)} />,
+        document.body
+      )}
     </div>
   );
 }

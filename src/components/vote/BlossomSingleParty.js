@@ -25,7 +25,8 @@
 // base state is visible (entrance CSS only supplies the hidden from-frame, so
 // reduced-motion / no-JS lands everything visible — no JS-gated content).
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
@@ -33,6 +34,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import BlossomPartyIntro from "./BlossomPartyIntro";
+import BlossomMemberModal from "./BlossomMemberModal";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -79,6 +81,15 @@ export default function BlossomSingleParty({
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
   const copyrightYear = gc.copyrightYear ?? "";
+
+  // การ์ดสมาชิกในบูธกดดูประวัติได้เหมือนหน้าพรรค — ผู้ใช้สิทธิ์ต้องดูข้อมูลคนที่กำลังจะ
+  // ลงคะแนนให้ได้ "ตรงจุดที่ตัดสินใจ" ไม่ใช่ต้องย้อนออกไปหน้าพรรคก่อน
+  // editorMode ไม่เปิด modal (พรีวิวในแอดมินไม่ควรมี overlay เด้ง) เหมือนหน้าพรรคทำอยู่
+  const [mounted, setMounted] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedNo, setSelectedNo] = useState(null);
+  useEffect(() => { setMounted(true); }, []);
+  const openMember = (m, i) => { if (!editorMode) { setSelectedMember(m); setSelectedNo(i + 1); } };
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   // ม่านแนะนำพรรค — editor/preview ข้ามไปหน้าบูธเลย (เหมือนทุก family)
@@ -239,15 +250,16 @@ export default function BlossomSingleParty({
               {members.map((m, i) => {
                 const img = resolveSrc(m?.imageUrl);
                 return (
-                  <figure className="bl-sp-cand" key={m.id || i}>
+                  <button type="button" className="bl-sp-cand" key={m.id || i}
+                    onClick={() => openMember(m, i)} aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}>
                     <span className="bl-sp-cand__photo">
                       {img ? <img src={img} alt={m.name} /> : <span className="bl-sp-cand__ph" aria-hidden="true">{(m.name || "?").trim().charAt(0)}</span>}
                     </span>
-                    <figcaption className="bl-sp-cand__body">
+                    <span className="bl-sp-cand__body">
                       <span className="bl-sp-cand__name">{m.name}</span>
                       {(m.position || m.major) && <span className="bl-sp-cand__role bl-thai">{m.position || m.major}</span>}
-                    </figcaption>
-                  </figure>
+                    </span>
+                  </button>
                 );
               })}
             </div>
@@ -579,8 +591,11 @@ export default function BlossomSingleParty({
 
         /* team — portrait grid */
         .bl-single-root .bl-sp-team { margin-top:22px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
-        .bl-single-root .bl-sp-cand { margin:0; background:var(--bl-card); border:1.5px solid var(--bl-line); border-radius:18px;
+        .bl-single-root .bl-sp-cand { margin:0; display:block; width:100%; text-align:left; padding:0; cursor:pointer;
+          font-family:inherit; color:var(--bl-ink);
+          background:var(--bl-card); border:1.5px solid var(--bl-line); border-radius:18px;
           overflow:hidden; transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+        .bl-single-root .bl-sp-cand:focus-visible { outline:2px solid var(--bl-primary-deep); outline-offset:3px; }
         .bl-single-root .bl-sp-cand:hover { transform:translateY(-4px); border-color:var(--bl-primary);
           box-shadow:0 24px 44px -28px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
         .bl-single-root .bl-sp-cand__photo { display:block; width:100%; aspect-ratio:4/5; overflow:hidden;
@@ -776,6 +791,13 @@ export default function BlossomSingleParty({
           .bl-single-root *, .bl-single-root *::before, .bl-single-root *::after { animation:none !important; }
         }
       `}</style>
+
+      {/* ประวัติสมาชิก — การ์ดของ family เดียวกับหน้าพรรค portal ไป body กัน
+          position:fixed โดน ancestor ตัด (เหมือน BlossomParty ทำ) */}
+      {mounted && selectedMember && createPortal(
+        <BlossomMemberModal member={selectedMember} no={selectedNo} onClose={() => setSelectedMember(null)} />,
+        document.body
+      )}
     </div>
   );
 }
