@@ -11,16 +11,29 @@
 //   - the parent flips `introDone` on onDone, which adds .is-live to the root so the
 //     booth's own entrance choreography plays AFTER this lifts, not behind it
 //
-// The identity here is the PRINT ITSELF, not a card that happens to be on paper:
-// the party is issued as a receipt. A thermal head travels down the slip and every
-// line appears under it in steps() — never a fade — with dotted leaders and
-// right-aligned values the way a till prints an itemisation. The numeral lands as
-// an ink stamp with a ghost double-print offset behind it (the family's rcSoak /
-// rcGhostOut language), the ship mark is blind-embossed into the stock, and the
-// slip ends in a barcode + serial above the perforation.
+// FORM: a letterpress BROADSIDE — the sheet a faculty would paste on a board to
+// announce who is standing. Not a till receipt.
 //
-// Colours are var(--rc-*) from ReceiptBaseStyles on .rc-root. Every reveal is
-// clip-path/transform/opacity, so it all runs on the compositor.
+// The first cut WAS a till receipt: an itemised slip that printed line by line.
+// It was pretty and it was the wrong object. A receipt is a transaction record —
+// its whole grammar is small mono type, label-left/value-right, made to be filed.
+// This screen has to PRESENT a candidate. Measured against the other families the
+// mismatch was plain: the party name landed at 13.5px here while gumroad sets it
+// up to 96px and fms-official to 54px, the slip held 24% of a 1440px viewport,
+// and eight staggered steps() reveals meant nothing was fully readable until
+// 2.55s of a 3.4s curtain — the owner's screenshot caught half-printed lines.
+//
+// So: three things only — numeral, name, slogan — each landing whole, nothing
+// typing on, everything readable by ~1.5s and then simply HELD. The family's
+// material language does the identity work instead: real paper stock (.rc-grain),
+// the desk's laid texture and vignette (.rc-desk), ink rules, a foil hairline,
+// the faculty ship blind-embossed into the sheet, and a deckle bottom edge.
+//
+// Motion is a PRESS, not a fade: each block lands from slightly oversized with a
+// hard-out ease and an ink bite behind it (the same double-print ghost the family
+// uses for its stamps) — the impression of a platen striking paper.
+//
+// Colours are var(--rc-*) from ReceiptBaseStyles on .rc-root. transform/opacity only.
 //
 // reduced motion: ทั้ง family เล่นม่านนี้เสมอ เป็นการตัดสินใจเชิงผลิตภัณฑ์เดียวกับ
 // GumroadPartyIntro (ดูคอมเมนต์ `const reduce = false` ในไฟล์นั้น) — ม่านกินเวลา
@@ -28,12 +41,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { getPath } from "../../utils/basePath";
 import { ReceiptShipMark } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 const EASE = [0.16, 1, 0.3, 1];
 const EASE_IO = [0.76, 0, 0.24, 1];
+// แท่นพิมพ์กระแทกลงกระดาษ: ออกตัวเร็ว หยุดแน่น ไม่มีเด้งกลับ
+const PRESS = [0.2, 0.9, 0.2, 1];
 
 export default function ReceiptPartyIntro({ party = {}, onDone = () => {}, durationMs = 3400 }) {
   const gc = useGlobalConfig() || {};
@@ -56,184 +70,160 @@ export default function ReceiptPartyIntro({ party = {}, onDone = () => {}, durat
   }, []);
 
   const name = (party?.name || "พรรคของคุณ").trim();
-  const logo = party?.logoUrl ? getPath(party.logoUrl) : null;
+  // ขนาดตัวอักษรผูกกับความยาวชื่อพรรค ไม่ใช่ค่าคงที่ค่าเดียว
+  //
+  // ชื่อจริงยาวกว่าตัวอย่างได้มาก (ปีก่อนใช้ "The Unity Concord Of FMS") ถ้าตรึงไว้
+  // ที่ขนาดเดียว ชื่อยาวจะดันสูงจนแผ่นเกิน 94vh แล้วโดน overflow ตัดท้าย — เสียทั้ง
+  // เลขที่เอกสารและบรรทัด "แตะเพื่อเข้าสู่หน้าพรรค" · คิดจากจำนวนอักขระตอน render
+  // (คงที่ ไม่ต้องวัด DOM) จึงไม่มีปัญหา hydration และไม่มีการกระพริบตอนโหลด
+  const density = name.length <= 16 ? "a" : name.length <= 28 ? "b" : name.length <= 44 ? "c" : "d";
   const no = party?.number;
   const hasNo = no != null && no > 0;
   const numeral = hasNo ? String(no).padStart(2, "0") : "—";
-  const team = Array.isArray(party?.members) ? party.members.length : 0;
   const prefix = gc.electionNamePrefix || "SAMO";
   const edition = gc.electionNumber ?? "";
   // เลขที่เอกสารต้องคงที่ ห้ามสุ่ม/ห้ามอิงเวลา — ม่านนี้ render ฝั่ง server ด้วย
   const serial = `${prefix}${edition}-P${numeral}`;
 
-  // itemisation ของใบเสร็จ: ป้ายซ้าย · จุดไข่ปลา · ค่าชิดขวา
-  const ROWS = [
-    ["พรรค", name],
-    ["หมายเลข", numeral],
-    team ? ["ผู้สมัคร", `${team} คน`] : null,
-    ["สถานะ", "ลงสมัครรับเลือกตั้ง"],
-  ].filter(Boolean);
-
   return (
-    <motion.div className="rc-intro" role="presentation" onClick={finish}
+    <motion.div className="rc-intro rc-desk" role="presentation" onClick={finish}
       initial={{ y: 0 }} animate={{ y: leaving ? "-101%" : 0 }}
       transition={{ duration: 0.6, ease: EASE_IO }}>
-      <div className="rc-intro__machine">
-        <span className="rc-intro__slot" aria-hidden="true" />
-
-        {/* ใบเสร็จเลื่อนลงมาจากช่องพิมพ์ — ขอบล่างเป็นรอยปรุด้วย clip-path ไม่ใช่รูป */}
-        <motion.div className="rc-intro__slip"
-          initial={{ y: "-102%" }} animate={{ y: 0 }} transition={{ duration: 0.95, ease: EASE, delay: 0.1 }}>
-          {/* ตราเรือสำเภาปั๊มจมลงในเนื้อกระดาษ (blind emboss) ไม่ใช่โลโก้ลอยอยู่บนแผ่น */}
-          <span className="rc-intro__emboss" aria-hidden="true"><ReceiptShipMark strokeWidth={2.4} /></span>
-          {/* หัวพิมพ์ความร้อนไล่ลงมา บรรทัดโผล่ใต้หัวพิมพ์ทีละบรรทัด */}
-          <span className="rc-intro__head" aria-hidden="true" />
-
-          <p className="rc-intro__brand rc-print" style={{ "--at": "0.95s" }}>
-            {prefix} {edition} · FMS ELECTION
-          </p>
-          <span className="rc-intro__rule rc-intro__rule--double" aria-hidden="true" />
-          <p className="rc-intro__doctype rc-print" style={{ "--at": "1.12s" }}>ใบแสดงรายการพรรค</p>
-
-          <dl className="rc-intro__items">
-            {ROWS.map(([label, value], i) => (
-              <div key={label} className="rc-intro__row rc-print" style={{ "--at": `${1.3 + i * 0.14}s` }}>
-                <dt>{label}</dt>
-                <span className="rc-intro__leader" aria-hidden="true" />
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <span className="rc-intro__rule rc-intro__rule--dashed" aria-hidden="true" />
-
-          <div className="rc-intro__stampline">
-            {logo && <img className="rc-intro__logo" src={logo} alt="" />}
-            <motion.span className="rc-intro__stamp"
-              initial={{ scale: 1.5, opacity: 0, rotate: -12 }} animate={{ scale: 1, opacity: 1, rotate: -4 }}
-              transition={{ delay: 1.95, duration: 0.34, ease: [0.34, 1.56, 0.64, 1] }}>
-              {/* ghost = รอยปั๊มซ้อนที่จางหายไป เหมือนยกแท่นแล้วหมึกติดค้าง */}
-              <span className="rc-intro__stamp-ghost" aria-hidden="true">{numeral}</span>
-              <span className="rc-intro__stamp-kick">หมายเลข</span>
-              <span className="rc-intro__stamp-no">{numeral}</span>
-            </motion.span>
-          </div>
-
-          {party?.slogan && (
-            <p className="rc-intro__slogan rc-print" style={{ "--at": "2.25s" }}>“{party.slogan}”</p>
-          )}
-
-          <span className="rc-intro__barcode rc-print" style={{ "--at": "2.45s" }} aria-hidden="true" />
-          <p className="rc-intro__serial rc-print" style={{ "--at": "2.55s" }}>{serial}</p>
-
-          <span className="rc-intro__perf" aria-hidden="true" />
-          <p className="rc-intro__hint">แตะเพื่อเข้าสู่หน้าพรรค</p>
-        </motion.div>
+      {/* ตราปั๊มจมบนโต๊ะ — คลาสกลางของ family ไม่ได้วาดใหม่ */}
+      <div className="rc-desk-seals" aria-hidden="true">
+        <span className="rc-seal rc-seal--a"><i /><b /></span>
+        <span className="rc-seal rc-seal--b"><i /><b /></span>
       </div>
+
+      <motion.div className="rc-intro__sheet rc-grain" data-len={density}
+        initial={{ y: 16, scale: 0.985, opacity: 0 }} animate={{ y: 0, scale: 1, opacity: 1 }}
+        transition={{ duration: 0.45, ease: EASE }}>
+        <span className="rc-intro__emboss" aria-hidden="true"><ReceiptShipMark strokeWidth={2.4} /></span>
+
+        <motion.div className="rc-intro__masthead"
+          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.42, ease: EASE, delay: 0.16 }}>
+          <span>{prefix} {edition} · FMS ELECTION</span>
+          <span>พรรคเดียวที่ลงสมัคร</span>
+        </motion.div>
+
+        <p className="rc-intro__label">หมายเลขผู้สมัคร · PARTY NUMBER</p>
+
+        {/* จังหวะหลัก: เลขพรรคถูกกระแทกลงกระดาษ พร้อมรอยหมึกซ้อนที่จางออกทันที */}
+        <motion.div className="rc-intro__numeral"
+          initial={{ scale: 1.22, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.34, ease: PRESS, delay: 0.3 }}>
+          <motion.span className="rc-intro__bite" aria-hidden="true"
+            initial={{ opacity: 0.5 }} animate={{ opacity: 0 }}
+            transition={{ duration: 0.42, ease: "easeOut", delay: 0.56 }}>{numeral}</motion.span>
+          <span className="rc-intro__no">{numeral}</span>
+        </motion.div>
+
+        <motion.span className="rc-intro__bar" aria-hidden="true"
+          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.38, ease: EASE, delay: 0.62 }}>
+          <i className="rc-foil" />
+        </motion.span>
+
+        <motion.h2 className="rc-intro__name"
+          initial={{ scale: 1.07, y: 10, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }}
+          transition={{ duration: 0.4, ease: PRESS, delay: 0.72 }}>
+          {name}
+        </motion.h2>
+
+        {party?.slogan && (
+          <motion.p className="rc-intro__slogan"
+            initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.45, ease: EASE, delay: 0.95 }}>
+            “{party.slogan}”
+          </motion.p>
+        )}
+
+        <motion.div className="rc-intro__foot"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, ease: EASE, delay: 1.15 }}>
+          <span className="rc-intro__serial">{serial}</span>
+          <span className="rc-intro__hint">แตะเพื่อเข้าสู่หน้าพรรค</span>
+        </motion.div>
+
+        <span className="rc-intro__deckle" aria-hidden="true" />
+      </motion.div>
 
       <style jsx global>{`
         .rc-intro { position:fixed; inset:0; z-index:9000; display:grid; place-items:center;
-          padding:24px 20px; cursor:pointer; overflow:hidden;
-          background:var(--rc-desk); color:var(--rc-ink); font-family:var(--rc-fr);
-          background-image:radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--rc-desk-shade) 60%, transparent), transparent 72%); }
+          padding:clamp(16px,4vw,44px); cursor:pointer; overflow:hidden;
+          background:var(--rc-desk); color:var(--rc-ink); font-family:var(--rc-fr); }
 
-        .rc-intro__machine { position:relative; width:min(352px,88vw); padding-top:16px; }
-        /* คานตัดกระดาษของเครื่องพิมพ์ — ใบเสร็จโผล่ออกมาจากใต้เส้นนี้ */
-        .rc-intro__slot { position:absolute; top:0; left:-16px; right:-16px; height:13px; border-radius:3px;
-          background:var(--rc-ink); box-shadow:0 12px 26px -14px color-mix(in srgb, var(--rc-ink) 75%, transparent); }
-        .rc-intro__slot::after { content:""; position:absolute; left:10px; right:10px; bottom:2px; height:2px; border-radius:2px;
-          background:color-mix(in srgb, var(--rc-receipt) 45%, transparent); }
+        /* แผ่นประกาศ — กินพื้นที่จอจริง ไม่ใช่ของเล็ก ๆ วางกลางความว่าง
+           (ของเดิมกว้าง 352px = 24% ของจอ 1440px) */
+        .rc-intro__sheet { position:relative; width:min(720px,94vw); max-height:94vh; overflow:hidden;
+          padding:clamp(22px,3.4vw,40px) clamp(20px,4vw,52px) clamp(30px,4vw,46px);
+          text-align:center; border:1px solid var(--rc-line);
+          box-shadow:0 40px 80px -48px color-mix(in srgb, var(--rc-ink) 70%, transparent),
+                     0 2px 0 color-mix(in srgb, var(--rc-ink) 8%, transparent); }
 
-        .rc-intro__slip { position:relative; padding:22px 20px 26px; text-align:center; overflow:hidden;
-          background:var(--rc-receipt); border:1px solid var(--rc-line); border-top:0;
-          box-shadow:0 28px 52px -30px color-mix(in srgb, var(--rc-ink) 65%, transparent);
-          clip-path:polygon(0 0,100% 0,100% 98%,96% 100%,92% 98%,88% 100%,84% 98%,80% 100%,76% 98%,72% 100%,68% 98%,64% 100%,60% 98%,56% 100%,52% 98%,48% 100%,44% 98%,40% 100%,36% 98%,32% 100%,28% 98%,24% 100%,20% 98%,16% 100%,12% 98%,8% 100%,4% 98%,0 100%); }
-
-        /* ตราปั๊มจม — ไม่มีสี มีแต่เงาอ่อน ๆ ให้รู้สึกว่ากดลงไปในเนื้อกระดาษ */
-        .rc-intro__emboss { position:absolute; inset:auto 0 18% 0; margin:auto; width:58%; opacity:.07;
-          color:var(--rc-ink); pointer-events:none; }
+        /* ตราเรือปั๊มจมในเนื้อกระดาษ — ไม่มีสี มีแต่ร่องรอย */
+        .rc-intro__emboss { position:absolute; left:50%; bottom:6%; width:42%; transform:translateX(-50%);
+          opacity:.055; color:var(--rc-ink); pointer-events:none; }
         .rc-intro__emboss svg { width:100%; height:auto; display:block; }
 
-        /* หัวพิมพ์: แถบบางที่ไล่ลงตามบรรทัดที่กำลังพิมพ์
-           ⚠️ ตัวที่ขยับคือกรอบเต็มความสูงใบเสร็จ ไม่ใช่ตัวแถบ เพราะ translateY เป็น %
-           คิดจากความสูงของ element ตัวเอง — ถ้าขยับแถบหนา 2px มันจะเดินได้แค่ 2px
-           และถ้า hardcode เป็น px ไว้ หัวพิมพ์จะค้างกลางใบบนจอที่ใบเสร็จสูงกว่า
-           (มือถือใบสูง ~504px เดสก์ท็อป ~430px) */
-        .rc-intro__head { position:absolute; inset:0; pointer-events:none;
-          animation:rcIntroHead 1.75s cubic-bezier(.4,0,.5,1) .85s both; }
-        .rc-intro__head::before { content:""; position:absolute; top:0; left:0; right:0; height:2px;
-          background:linear-gradient(90deg, transparent, var(--rc-accent), transparent);
-          box-shadow:0 0 18px 2px color-mix(in srgb, var(--rc-accent) 35%, transparent); }
-        @keyframes rcIntroHead {
-          0% { transform:translateY(2%); opacity:0; }
-          12% { opacity:1; }
-          88% { opacity:1; }
-          100% { transform:translateY(100%); opacity:0; }
-        }
+        .rc-intro__masthead { display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+          padding-bottom:9px; border-bottom:3px double var(--rc-ink); transform-origin:left center;
+          font-family:var(--rc-fm); font-size:clamp(9px,1.1vw,11px); letter-spacing:.22em; text-transform:uppercase;
+          color:var(--rc-ink2); }
+        .rc-intro__masthead span:last-child { letter-spacing:.12em; }
 
-        /* ทุกบรรทัดโผล่แบบ "พิมพ์" ซ้าย→ขวา เป็นสเต็ป ไม่ใช่ fade
-           --at คือเวลาที่หัวพิมพ์ผ่านบรรทัดนั้นพอดี */
-        .rc-print { animation:rcIntroPrint .3s steps(14) var(--at) both; }
-        @keyframes rcIntroPrint { from { clip-path:inset(0 100% 0 0); } to { clip-path:inset(0 0 0 0); } }
+        .rc-intro__label { font-family:var(--rc-fm); font-size:clamp(9px,1.05vw,10.5px); letter-spacing:.3em;
+          text-transform:uppercase; color:var(--rc-ink2); margin:clamp(18px,2.6vw,30px) 0 0; }
 
-        .rc-intro__brand { font-family:var(--rc-fm); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
-          color:var(--rc-ink2); margin:0; }
-        .rc-intro__rule { display:block; margin:11px 0; }
-        .rc-intro__rule--double { height:3px; border-top:1px solid var(--rc-line); border-bottom:1px solid var(--rc-line); }
-        .rc-intro__rule--dashed { border-top:1px dashed var(--rc-line); margin:14px 0 12px; }
-        .rc-intro__doctype { font-family:var(--rc-fh); font-weight:700; font-size:15px; letter-spacing:.02em;
-          margin:0 0 12px; color:var(--rc-ink); }
+        /* พระเอกของการ์ด: เลขพรรค — เทียบเท่ากับที่ family อื่นให้ (studio-dark 300px,
+           fms-official 520px) ของเดิมอยู่ในตราปั๊มขนาด 46px */
+        .rc-intro__numeral { position:relative; display:inline-block; margin:2px 0 0; line-height:.84; }
+        /* ชั้นขนาดตามความยาวชื่อพรรค — ชื่อยิ่งยาว เลขและชื่อยิ่งเล็กลงพร้อมกัน
+           ทั้งคู่ย่อไปด้วยกันเพื่อให้สัดส่วนของแผ่นยังเป็นใบประกาศเหมือนเดิม
+           min(vw,vh) — จอเตี้ย (โน้ตบุ๊ก 768px, มือถือแนวนอน) ต้องหดตามความสูงด้วย */
+        .rc-intro__sheet[data-len="a"] { --rc-i-no:clamp(110px, min(30vw,28vh), 260px); --rc-i-nm:clamp(30px,6.2vw,64px); }
+        .rc-intro__sheet[data-len="b"] { --rc-i-no:clamp(96px,  min(26vw,24vh), 220px); --rc-i-nm:clamp(26px,5.2vw,52px); }
+        .rc-intro__sheet[data-len="c"] { --rc-i-no:clamp(84px,  min(21vw,20vh), 180px); --rc-i-nm:clamp(22px,4.2vw,40px); }
+        .rc-intro__sheet[data-len="d"] { --rc-i-no:clamp(72px,  min(17vw,17vh), 148px); --rc-i-nm:clamp(19px,3.4vw,32px); }
+        .rc-intro__no, .rc-intro__bite { display:block; font-family:var(--rc-fm); font-weight:700;
+          font-size:var(--rc-i-no); line-height:.84; letter-spacing:-.03em; }
+        .rc-intro__no { position:relative; color:var(--rc-ink);
+          text-shadow:0 1px 0 color-mix(in srgb, var(--rc-receipt) 85%, transparent); }
+        /* รอยหมึกซ้อน = แรงกระแทกของแท่นพิมพ์ ภาษาเดียวกับ ghost ของตราปั๊มใน family */
+        .rc-intro__bite { position:absolute; inset:0; color:var(--rc-accent); transform:translate(6px,-4px); }
 
-        /* itemisation: ป้าย · จุดไข่ปลา · ค่าชิดขวา — ภาษาของใบเสร็จจริง */
-        .rc-intro__items { margin:0; text-align:left; }
-        .rc-intro__row { display:flex; align-items:baseline; gap:7px; padding:3.5px 0; }
-        .rc-intro__row dt { font-family:var(--rc-fm); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-          color:var(--rc-ink2); white-space:nowrap; }
-        .rc-intro__leader { flex:1; border-bottom:1px dotted color-mix(in srgb, var(--rc-ink) 35%, transparent);
-          transform:translateY(-3px); min-width:12px; }
-        .rc-intro__row dd { margin:0; font-family:var(--rc-fh); font-weight:700; font-size:13.5px; color:var(--rc-ink);
-          text-align:right; max-width:62%; }
+        /* แท่งหมึกหนาคือภาษาของ letterpress ส่วนฟอยล์ (ลายเซ็นของ family) เหลือเป็น
+           เส้นบางใต้แท่ง — เต็มแถบแล้วมันกลายเป็นสติกเกอร์สีรุ้งแย่งซีนเลขพรรค */
+        .rc-intro__bar { display:block; height:9px; border-radius:1px; margin:clamp(10px,1.6vw,18px) 0 clamp(16px,2.2vw,24px);
+          background-color:var(--rc-ink); transform-origin:center; position:relative; }
+        .rc-intro__bar i { position:absolute; left:0; right:0; bottom:-5px; height:3px; border-radius:1px; display:block; }
 
-        .rc-intro__stampline { display:flex; align-items:center; justify-content:center; gap:16px; margin:4px 0 2px; }
-        .rc-intro__logo { width:44px; height:44px; object-fit:contain; display:block; }
-        .rc-intro__stamp { position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:1px;
-          padding:8px 16px 10px; border:2.5px solid var(--rc-accent); border-radius:5px; color:var(--rc-accent);
-          transform-origin:center; }
-        .rc-intro__stamp-kick { font-family:var(--rc-fm); font-size:9px; letter-spacing:.24em; text-transform:uppercase; }
-        .rc-intro__stamp-no { font-family:var(--rc-fm); font-weight:700; font-size:clamp(34px,9vw,46px); line-height:1; }
-        .rc-intro__stamp-ghost { position:absolute; left:16px; top:14px; font-family:var(--rc-fm); font-weight:700;
-          font-size:clamp(34px,9vw,46px); line-height:1; color:var(--rc-accent); pointer-events:none;
-          animation:rcIntroGhost .85s ease-out 2.1s both; }
-        @keyframes rcIntroGhost {
-          from { opacity:.42; transform:translate(0,0) rotate(0deg) scale(1); }
-          to { opacity:0; transform:translate(7px,-5px) rotate(7deg) scale(1.07); }
-        }
+        .rc-intro__name { font-family:var(--rc-fh); font-weight:700; font-size:var(--rc-i-nm);
+          line-height:1.12; letter-spacing:-.01em; margin:0; color:var(--rc-ink); overflow-wrap:break-word;
+          /* ชื่อพรรคไทยยาว ๆ ตัดบรรทัดกลางวลีแล้วอ่านสะดุด (พรรคตัวอย่าง ร่วม / สร้าง)
+             balance เกลี่ยให้สองบรรทัดยาวใกล้กัน เบราว์เซอร์ที่ไม่รองรับก็ตัดแบบเดิม */
+          text-wrap:balance; }
+        .rc-intro__slogan { font-family:var(--rc-fr); font-size:clamp(13px,1.7vw,19px); line-height:1.5;
+          color:var(--rc-ink2); margin:clamp(10px,1.4vw,16px) auto 0; max-width:44ch; }
 
-        .rc-intro__slogan { font-family:var(--rc-fr); font-size:12.5px; line-height:1.5; color:var(--rc-ink2);
-          margin:12px auto 0; max-width:30ch; }
+        .rc-intro__foot { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+          margin-top:clamp(20px,3vw,34px); padding-top:12px; border-top:1px solid var(--rc-line);
+          font-family:var(--rc-fm); font-size:clamp(9px,1vw,10px); letter-spacing:.24em; text-transform:uppercase;
+          color:var(--rc-ink2); }
+        .rc-intro__hint { animation:rcIntroBlink 2s ease-in-out 1.6s infinite; }
+        @keyframes rcIntroBlink { 0%,100% { opacity:1; } 55% { opacity:.45; } }
 
-        /* บาร์โค้ดเป็น gradient ล้วน ไม่ใช่รูป — ความถี่ไม่สม่ำเสมอเหมือนของจริง */
-        .rc-intro__barcode { display:block; height:34px; margin:14px 0 6px;
-          background-image:repeating-linear-gradient(90deg,
-            var(--rc-ink) 0 2px, transparent 2px 5px,
-            var(--rc-ink) 5px 6px, transparent 6px 8px,
-            var(--rc-ink) 8px 11px, transparent 11px 13px,
-            var(--rc-ink) 13px 14px, transparent 14px 18px); }
-        .rc-intro__serial { font-family:var(--rc-fm); font-size:10px; letter-spacing:.26em; color:var(--rc-ink2); margin:0; }
+        /* ขอบล่างเป็นรอยฉีกของกระดาษ (deckle) — ปิดท้ายแผ่นด้วยวัสดุ ไม่ใช่เส้นตรง */
+        .rc-intro__deckle { position:absolute; left:0; right:0; bottom:-1px; height:12px;
+          background:var(--rc-desk);
+          clip-path:polygon(0 100%,100% 100%,100% 38%,96% 74%,92% 30%,88% 70%,84% 26%,80% 66%,76% 34%,72% 72%,68% 28%,64% 64%,60% 36%,56% 74%,52% 30%,48% 68%,44% 26%,40% 70%,36% 34%,32% 62%,28% 28%,24% 72%,20% 32%,16% 66%,12% 26%,8% 70%,4% 34%,0 64%); }
 
-        /* รอยปรุ + สัญลักษณ์กรรไกร ปิดท้ายใบเสร็จ */
-        .rc-intro__perf { display:block; position:relative; margin:16px -20px 12px;
-          border-top:1px dashed color-mix(in srgb, var(--rc-ink) 40%, transparent); }
-        .rc-intro__perf::before { content:"✂"; position:absolute; left:14px; top:-9px; font-size:12px;
-          line-height:1; color:var(--rc-ink2); background:var(--rc-receipt); padding:0 4px; }
-        .rc-intro__hint { font-family:var(--rc-fm); font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
-          color:var(--rc-ink2); margin:0; animation:rcIntroBlink 2s ease-in-out 2.7s infinite; }
-        @keyframes rcIntroBlink { 0%,100% { opacity:1; } 55% { opacity:.42; } }
-
-        @media (max-width:380px) {
-          .rc-intro__slip { padding:20px 16px 24px; }
-          .rc-intro__stampline { gap:12px; }
-          .rc-intro__logo { width:38px; height:38px; }
+        @media (max-width:520px) {
+          /* บนมือถือให้แผ่นสูงเกือบเต็มจอ เหมือนใบประกาศที่แปะอยู่ตรงหน้า
+             ไม่ใช่การ์ดใบเล็กลอยกลางโต๊ะ (วัดของเดิมได้ 338px = 42% ของจอ) */
+          .rc-intro__sheet { min-height:72vh; display:flex; flex-direction:column; justify-content:center; }
+          .rc-intro__masthead { font-size:8.5px; letter-spacing:.16em; }
+          .rc-intro__masthead span:last-child { display:none; }
+          .rc-intro__foot { justify-content:center; gap:8px; }
+          .rc-intro__emboss { bottom:10%; width:54%; }
         }
       `}</style>
     </motion.div>

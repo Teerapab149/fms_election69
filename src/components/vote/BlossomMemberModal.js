@@ -72,7 +72,7 @@ export function useFocusTrap(active, ref) {
   }, [active, ref]);
 }
 
-export default function BlossomMemberModal({ member = null, onClose = () => {} }) {
+export default function BlossomMemberModal({ member = null, no = null, onClose = () => {} }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -134,7 +134,8 @@ export default function BlossomMemberModal({ member = null, onClose = () => {} }
         {/* eyebrow + member-number pill */}
         <div className="blm__top">
           <span className="blm__eyebrow"><i className="blm__tick" aria-hidden="true" />CANDIDATE FILE · <span className="bl-th">ผู้สมัคร</span></span>
-          <span className="blm__no"><span className="blm__no-l bl-th">หมายเลข</span> {pad2(member.number ?? 0)}</span>
+          {/* no = ลำดับในทีมที่หน้าพรรคส่งมา ไม่ใช่ member.number ซึ่งเป็นกุญแจเรียงลำดับ */}
+          {no != null && <span className="blm__no"><span className="blm__no-l bl-th">ลำดับที่</span> {pad2(no)}</span>}
         </div>
 
         {/* close button */}

@@ -65,6 +65,8 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
   const copyrightYear = gc.copyrightYear ?? "";
 
   const [selectedMember, setSelectedMember] = useState(null);
+  // ลำดับในทีมของคนที่เปิดอยู่ — ส่งต่อให้ modal เพราะตัว member ไม่มีเลขลำดับที่ใช้โชว์ได้
+  const [selectedNo, setSelectedNo] = useState(null);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   // portal-mount guard — the member modal is position:fixed; parenting it to
   // document.body immunises it against any transformed / overflow-clipped ancestor a
@@ -107,7 +109,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
   const showStory = story && !story.startsWith("ยังไม่มีข้อมูล");
   const teamCount = members.length;
 
-  const openMember = (m) => { if (!editorMode) setSelectedMember(m); };
+  const openMember = (m, i) => { if (!editorMode) { setSelectedMember(m); setSelectedNo(i + 1); } };
   const openLightbox = (src) => { if (!editorMode) setLightboxSrc(src); };
 
   return (
@@ -243,12 +245,17 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
                 const img = resolveSrc(m?.imageUrl || m?.modalImageUrl);
                 return (
                   <li className="rc-lany" key={m.id || i}>
-                    <button type="button" className="rc-lany__btn" onClick={() => openMember(m)} aria-label={m.name}>
+                    <button type="button" className="rc-lany__btn" onClick={() => openMember(m, i)} aria-label={m.name}>
                       <span className="rc-lany__grommet" aria-hidden="true" />
                       <span className="rc-lany__clip" aria-hidden="true" />
                       <span className="rc-lany__photo">
                         {img ? <img src={img} alt={m.name} loading="lazy" /> : <span className="rc-lany__ph" aria-hidden="true">{(m.name || "?").trim().charAt(0)}</span>}
-                        <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(m.number ?? i + 1)}</span>
+                      {/* ลำดับที่แสดง = ลำดับในทีมหลังเรียงแล้ว ไม่ใช่ member.number
+                          member.number คือกุญแจ "เรียงลำดับ" ที่ getPositionNumber() ปั๊มไว้
+                          (นายก=1 · อุปนายก=201/202 · เลขา/เหรัญญิก=301/302 · ประธานฝ่ายทุกคน=400)
+                          เอามาโชว์ตรง ๆ ผู้ใช้จะเห็นเลขกระโดด 1 → 202 → 400 ซ้ำกันทั้งแถว
+                          template อื่นใช้ i+1 ถูกอยู่แล้ว (เทียบ GumroadParty.js:152) */}
+                        <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(i + 1)}</span>
                       </span>
                       <span className="rc-lany__body">
                         <span className="rc-lany__name">{m.name}</span>
@@ -326,7 +333,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
       {/* member modal — the receipt family's own dossier card (its own lightbox);
           portalled to <body> so its fixed positioning can never be clipped by an ancestor. */}
       {mounted && selectedMember && createPortal(
-        <ReceiptMemberModal member={selectedMember} onClose={() => setSelectedMember(null)} />,
+        <ReceiptMemberModal member={selectedMember} no={selectedNo} onClose={() => setSelectedMember(null)} />,
         document.body
       )}
 
