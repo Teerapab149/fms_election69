@@ -159,7 +159,10 @@ export default function BlossomSingleParty({
         <div className="bl-sp-voter">
           <span className="bl-sp-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-sp-voter__row"><b>ID</b>{sid}</span>
-          <span className="bl-sp-voter__row"><b><span className="bl-thai">รูปแบบบัตรเลือกตั้ง</span></b><span className="bl-thai">พรรคเดียว</span></span>
+          {/* ป้ายของแถบนี้เป็น Latin ทั้งแถวตามเสียงของ family (VOTER / ID) ส่วนค่าเป็นไทย
+              — ใส่ป้ายไทยเฉพาะช่องนี้ช่องเดียวแล้วมันอ่านเป็นสองภาษาปนกันในบรรทัดเดียว
+              Receipt ใช้ป้ายไทยทั้งแถวซึ่งเป็นเสียงของมันเอง แต่ละ template จึงสม่ำเสมอในตัว */}
+          <span className="bl-sp-voter__row"><b>BALLOT TYPE</b><span className="bl-thai">พรรคเดียว</span></span>
         </div>
 
         {/* group cover (poster grammar — never cropped) */}
