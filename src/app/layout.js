@@ -16,9 +16,15 @@ async function getGlobalConfig() {
   try {
     const config = await db.systemConfig.findFirst({
       where: { id: 1 },
-      select: { globalConfig: true },
+      select: { globalConfig: true, googleFormUrl: true },
     });
-    return config?.globalConfig ?? null;
+    if (!config) return null;
+    // googleFormUrl อยู่ใน COLUMN ของตัวเอง ไม่ได้อยู่ใน JSON ก้อนนี้ — ต้องเชื่อมเข้ามา
+    // ให้เหมือนที่ /api/admin/global-config ทำ ไม่งั้น context จะถือค่าว่างของ
+    // GLOBAL_CONFIG_DEFAULTS แล้วทุกคนที่เขียน config ทั้งก้อนกลับไป (updateField ของ
+    // PropertyPanel, ฟอร์มตั้งค่าทั่วไปหลัง context re-sync) จะลบลิงก์แบบประเมินทิ้ง
+    // โดยไม่มีใครตั้งใจ — ลิงก์นั้นคือทางเดียวที่นักศึกษาจะได้ชั่วโมงกิจกรรม
+    return { ...(config.globalConfig ?? {}), googleFormUrl: config.googleFormUrl ?? "" };
   } catch (error) {
     console.error("Failed to fetch globalConfig:", error);
     return null;

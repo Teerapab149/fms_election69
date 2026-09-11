@@ -62,12 +62,18 @@ export function GlobalConfigProvider({ value: initialValue, activeTemplateId = "
         return nextConfig;
       });
 
+      // googleFormUrl ไม่ไปกับคำขอนี้ — ตัวเขียนนี้ตั้งใจแก้ field เดียว แต่ส่ง config
+      // ทั้งก้อนไป ถ้า context ถือค่าว่างอยู่ (เคยเป็นแบบนั้นเพราะ SSR ไม่ได้ส่งมา)
+      // การแก้ข้อความอะไรก็ได้ใน PropertyPanel จะลบลิงก์แบบประเมินทิ้งไปด้วย
+      // ฝั่ง API เขียนคอลัมน์เฉพาะเมื่อคีย์นี้ถูกส่งมา การไม่ส่งจึงแปลว่า "ไม่แตะ"
+      // ลิงก์แก้ได้ที่ฟอร์มตั้งค่าทั่วไปซึ่งส่งคีย์นี้มาโดยตั้งใจ
+      const { googleFormUrl: _omitFormUrl, ...payload } = nextConfig;
       // Admin identity = httpOnly admin_token cookie (sent automatically; P0-1)
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ globalConfig: nextConfig }),
+        body: JSON.stringify({ globalConfig: payload }),
       });
 
       if (!res.ok) {
