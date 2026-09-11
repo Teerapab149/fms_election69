@@ -7,7 +7,9 @@ import SmartImage from "../SmartImage";
 /**
  * ThreeDCarousel component - 3D image carousel with auto-play
  */
-const ThreeDCarousel = ({ images }) => {
+// onImageClick — คลิกภาพที่อยู่ตรงกลางเพื่อเปิดดูขนาดเต็ม (คลิกภาพข้าง ๆ = เลื่อนมาตรงกลาง
+// ซึ่งเป็นสิ่งที่คนคาดหวังจากคาโรเซล) ไม่ส่ง prop นี้มา = พฤติกรรมเดิมทุกอย่าง
+const ThreeDCarousel = ({ images, onImageClick = null }) => {
     const [activeIndex, setActiveIndex] = useState(1);
 
     const displayImages = useMemo(() => {
@@ -69,15 +71,25 @@ const ThreeDCarousel = ({ images }) => {
     return (
         <div className="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
             <div className="relative w-[90%] md:w-[60%] h-[500px] flex items-center justify-center perspective-[1000px]">
-                {displayImages.map((src, i) => (
-                    <div
-                        key={i}
-                        className="absolute top-0 w-full h-full rounded-[2rem] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] bg-white border border-black/5"
-                        style={getStyle(i)}
-                    >
-                        <SmartImage src={src} alt={`Slide ${i}`} className="w-full h-full object-cover" />
-                    </div>
-                ))}
+                {displayImages.map((src, i) => {
+                    const isActive = i === activeIndex;
+                    const clickable = !!onImageClick;
+                    const Slide = clickable ? "button" : "div";
+                    return (
+                        <Slide
+                            key={i}
+                            {...(clickable ? {
+                                type: "button",
+                                onClick: () => (isActive ? onImageClick(src) : setActiveIndex(i)),
+                                "aria-label": isActive ? "ขยายภาพกิจกรรม" : "เลื่อนไปภาพนี้",
+                            } : {})}
+                            className={`absolute top-0 w-full h-full rounded-[2rem] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] bg-white border border-black/5${clickable ? (isActive ? " cursor-zoom-in" : " cursor-pointer") : ""}`}
+                            style={getStyle(i)}
+                        >
+                            <SmartImage src={src} alt={`Slide ${i}`} className="w-full h-full object-cover" />
+                        </Slide>
+                    );
+                })}
             </div>
 
             <button

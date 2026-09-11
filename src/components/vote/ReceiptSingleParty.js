@@ -37,7 +37,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import ReceiptPartyIntro from "./ReceiptPartyIntro";
-import ReceiptMemberModal from "./ReceiptMemberModal";
+import ReceiptMemberModal, { ReceiptLightbox } from "./ReceiptMemberModal";
 
 // stamp imprint glyph + Thai label per semantic choice (kind)
 const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "—" };
@@ -98,6 +98,12 @@ export default function ReceiptSingleParty({
   const [selectedNo, setSelectedNo] = useState(null);
   useEffect(() => { setMounted(true); }, []);
   const openMember = (m, i) => { if (!editorMode) { setSelectedMember(m); setSelectedNo(i + 1); } };
+
+  // ภาพหมู่พรรคกับโลโก้กดขยายได้ — ในบูธคนลงคะแนนอยากดูหน้าคนในภาพหมู่/รายละเอียด
+  // ของตราพรรคให้ชัดก่อนตัดสินใจ แต่กรอบในหน้านี้ย่อภาพลงมาก (เหมือน StudioDark/Verdure
+  // ที่ทำมาก่อนแล้ว) · editorMode ไม่เปิด overlay เหมือน modal สมาชิก
+  const [lightbox, setLightbox] = useState(null);   // { src, caption } | null
+  const openLightbox = (src, caption) => { if (!editorMode && src) setLightbox({ src, caption }); };
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   // ม่านแนะนำพรรค — editor/preview ข้ามไปหน้าบูธเลย (เหมือนทุก family)
@@ -210,13 +216,20 @@ export default function ReceiptSingleParty({
         <header className="rc-sp-head">
           <span className="rc-sp-kick">✶ <span className="rc-th">พรรคเดียวที่ลงสมัคร</span> · THE ONLY PARTY ✶</span>
           <div className="rc-sp-hero">
-            <span className="rc-sp-logo">
-              {logo ? (
+            {logo ? (
+              <button
+                type="button"
+                className="rc-sp-logo rc-sp-logo--btn"
+                onClick={() => openLightbox(logo, `โลโก้พรรค · ${party?.name || ""}`)}
+                aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+              >
                 <img src={logo} alt={party?.name || "โลโก้พรรค"} />
-              ) : (
+              </button>
+            ) : (
+              <span className="rc-sp-logo">
                 <span className="rc-sp-logo-ph" aria-hidden="true">{pad2(no)}</span>
-              )}
-            </span>
+              </span>
+            )}
             <div className="rc-sp-title">
               <span className="rc-sp-num"><span className="rc-th">พรรคหมายเลข</span> <b>{no}</b></span>
               <h1 className="rc-sp-word">{party?.name || "พรรค"}</h1>
@@ -238,8 +251,15 @@ export default function ReceiptSingleParty({
         {/* group cover — framed like a print taped to the desk (never cropped hard) */}
         {cover && (
           <figure className="rc-sp-cover">
-            <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption><span className="rc-th">ภาพหมู่พรรค</span> · GROUP PHOTO</figcaption>
+            <button
+              type="button"
+              className="rc-sp-cover__btn"
+              onClick={() => openLightbox(cover, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+              aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
+            >
+              <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
+            </button>
+            <figcaption><span className="rc-th">ภาพหมู่พรรค</span> · GROUP PHOTO · <span className="rc-th">คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -611,6 +631,15 @@ export default function ReceiptSingleParty({
           box-shadow:2px 14px 30px -18px color-mix(in srgb, var(--rc-ink) 32%, transparent); }
         /* party LOGO — letterbox, never crop (see ReceiptCandidates note) */
         .rc-single-root .rc-sp-logo img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; }
+        /* the mark is pressable — a party logo carries meaning and this tile shrinks it
+           to 104px, so it opens full-size (same affordance StudioDark/Verdure already
+           give the team photo). Button reset first, then the tile look is inherited from
+           .rc-sp-logo above (both classes are on the same element). */
+        .rc-single-root .rc-sp-logo--btn { cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease, border-color .2s ease; }
+        .rc-single-root .rc-sp-logo--btn:hover { transform:translateY(-2px); border-color:var(--rc-accent-deep);
+          box-shadow:2px 18px 34px -18px color-mix(in srgb, var(--rc-ink) 42%, transparent); }
+        .rc-single-root .rc-sp-logo--btn:active { transform:translateY(0) scale(.98); }
         .rc-single-root .rc-sp-logo-ph { font-family:var(--rc-fh); font-weight:700; font-size:40px;
           font-variant-numeric:tabular-nums; color:var(--rc-accent-deep); }
         .rc-single-root .rc-sp-title { min-width:0; }
@@ -644,7 +673,12 @@ export default function ReceiptSingleParty({
              slight tilt, then settles flat (transform/opacity only) */
           animation:rcDrop .6s cubic-bezier(.22,1,.36,1) both .16s;
           box-shadow:3px 20px 44px -24px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
-        .rc-single-root .rc-sp-cover img { width:100%; height:clamp(220px,40vw,420px); object-fit:cover; display:block; border-radius:3px; }
+        /* the print itself is the hit target — button reset, the figure keeps the frame */
+        .rc-single-root .rc-sp-cover__btn { display:block; width:100%; padding:0; border:0; background:none;
+          cursor:zoom-in; border-radius:3px; overflow:hidden; }
+        .rc-single-root .rc-sp-cover img { width:100%; height:clamp(220px,40vw,420px); object-fit:cover; display:block; border-radius:3px;
+          transition:transform .5s cubic-bezier(.16,1,.3,1); }
+        .rc-single-root .rc-sp-cover__btn:hover img { transform:scale(1.02); }
         .rc-single-root .rc-sp-cover figcaption { position:absolute; left:16px; bottom:16px; font-family:var(--rc-fm); font-size:10px;
           letter-spacing:.16em; text-transform:uppercase; color:var(--rc-receipt);
           background:color-mix(in srgb, var(--rc-ink) 82%, transparent); padding:6px 13px; border-radius:3px;
@@ -1025,6 +1059,12 @@ export default function ReceiptSingleParty({
           position:fixed โดน ancestor ตัด (เหมือน ReceiptParty ทำ) */}
       {mounted && selectedMember && createPortal(
         <ReceiptMemberModal member={selectedMember} no={selectedNo} onClose={() => setSelectedMember(null)} />,
+        document.body
+      )}
+
+      {/* ภาพหมู่ / โลโก้ ขยายเต็มจอ — portal เหมือนกัน ด้วยเหตุผลเดียวกัน */}
+      {mounted && lightbox && createPortal(
+        <ReceiptLightbox src={lightbox.src} caption={lightbox.caption} onClose={() => setLightbox(null)} />,
         document.body
       )}
     </div>

@@ -41,7 +41,11 @@ const ROMAN = ["i.", "ii.", "iii.", "iv."];
 export default function StudioDarkParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [tab, setTab] = useState("vision");
   const [modalMember, setModalMember] = useState(null); // click a member → profile modal
-  const [lightboxSrc, setLightboxSrc] = useState(null); // click the team photo → fullscreen
+  // ภาพหมู่ / ภาพกิจกรรม / ตราพรรค เปิดเต็มจอได้ทั้งหมด — คำบรรยายเดินทางมากับ src
+  // (เดิม hardcode ไว้ว่า TEAM PHOTO ซึ่งไม่จริงแล้วเมื่อตราพรรคก็เปิดได้)
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [lightboxCap, setLightboxCap] = useState("");
+  const openLightbox = (src, cap) => { if (src) { setLightboxSrc(src); setLightboxCap(cap); } };
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map((it) => (
@@ -95,7 +99,12 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           {logo ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <span className="sdp-h__logo"><img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} /></span>
+              {/* ตราพรรคกดขยายได้เหมือนภาพหมู่ — หน้านี้อธิบายความหมายของตราอยู่แล้ว */}
+              <button type="button" className="sdp-h__logo sdp-h__logo--btn"
+                onClick={() => openLightbox(logo, `PARTY MARK · ${party?.name || ""}`)}
+                aria-label={`ขยายตราสัญลักษณ์พรรค${party?.name || ""}`}>
+                <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
+              </button>
               <span className="sdp-h__markno">№ {no}</span>
             </>
           ) : (
@@ -165,10 +174,10 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           {heroImg && (
             <figure
               className="sdp-vision__photo"
-              onClick={() => setLightboxSrc(heroImg)}
+              onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
+              onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`); }}
             >
               <img src={heroImg} alt={party?.name} />
               <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
@@ -244,7 +253,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
                 type="button"
                 className="sdp-shot"
                 key={src}
-                onClick={() => setLightboxSrc(src)}
+                onClick={() => openLightbox(src, `GALLERY ${pad2(i + 1)} · ${party?.name || ""}`)}
                 aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
               >
                 <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />
@@ -267,7 +276,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
 
       {/* shared studio overlays */}
       <StudioDarkMemberModal member={modalMember} onClose={() => setModalMember(null)} />
-      <StudioDarkLightbox src={lightboxSrc} caption={`TEAM PHOTO · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
+      <StudioDarkLightbox src={lightboxSrc} caption={lightboxCap} onClose={() => setLightboxSrc(null)} />
 
       <style jsx global>{`
         /* profile header */
@@ -295,6 +304,10 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
            its intrinsic height even when top+bottom are both set. Either way a
            3375px-tall crest came out 228px tall in a 184px plate. calc() off a
            definite box is the version with nothing left to resolve. */
+        .sdp-h__logo--btn { padding:0; border:0; cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .2s cubic-bezier(.16,1,.3,1); }
+        .sdp-h__logo--btn:hover { transform:translateY(-2px); }
+        .sdp-h__logo--btn:active { transform:translateY(0) scale(.98); }
         .sdp-h__logo img {
           position:absolute; top:16px; left:16px;
           width:calc(100% - 32px); height:calc(100% - 32px); object-fit:contain;

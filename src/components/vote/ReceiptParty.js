@@ -154,13 +154,22 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
 
             <div className="rc-folder__head">
               <span className="rc-folder__stamp" aria-hidden="true"><b>{no}</b><span className="rc-mono">No.</span></span>
-              <span className="rc-folder__logo">
-                {logo ? (
+              {logo ? (
+                /* ตราพรรคกดขยายได้เหมือนภาพกิจกรรมในแถบด้านล่าง — หน้านี้อธิบาย
+                   "ความหมายสัญลักษณ์" อยู่แล้ว แต่ย่อตราเหลือ 86px */
+                <button
+                  type="button"
+                  className="rc-folder__logo rc-folder__logo--btn"
+                  onClick={() => openLightbox(logo)}
+                  aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+                >
                   <img src={logo} alt={party?.name || "โลโก้พรรค"} width="76" height="76" loading="lazy" />
-                ) : (
+                </button>
+              ) : (
+                <span className="rc-folder__logo">
                   <span className="rc-folder__logo-ph" aria-hidden="true">{pad2(no)}</span>
-                )}
-              </span>
+                </span>
+              )}
             </div>
 
             <div className="rc-folder__title">
@@ -521,6 +530,10 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         /* party LOGO — letterbox, never crop (see ReceiptCandidates note) */
         .rc-party-root .rc-folder__logo img { max-width:100%; max-height:100%; width:auto; height:auto;
           object-fit:contain; border-radius:2px; }
+        .rc-party-root .rc-folder__logo--btn { padding:0; border:0; cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .2s cubic-bezier(.16,1,.3,1); }
+        .rc-party-root .rc-folder__logo--btn:hover { transform:translateY(-2px); }
+        .rc-party-root .rc-folder__logo--btn:active { transform:translateY(0) scale(.98); }
         .rc-party-root .rc-folder__logo-ph { font-family:var(--rc-fr); font-weight:700; font-size:30px; font-variant-numeric:tabular-nums;
           color:var(--rc-accent-deep); }
 

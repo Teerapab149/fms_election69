@@ -34,7 +34,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import BlossomPartyIntro from "./BlossomPartyIntro";
-import BlossomMemberModal from "./BlossomMemberModal";
+import BlossomMemberModal, { BlossomLightbox } from "./BlossomMemberModal";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -90,6 +90,11 @@ export default function BlossomSingleParty({
   const [selectedNo, setSelectedNo] = useState(null);
   useEffect(() => { setMounted(true); }, []);
   const openMember = (m, i) => { if (!editorMode) { setSelectedMember(m); setSelectedNo(i + 1); } };
+
+  // ภาพหมู่พรรคกับโลโก้กดขยายได้ — กรอบในบูธย่อทั้งคู่ลงมาก คนลงคะแนนควรดูหน้าคนใน
+  // ภาพหมู่ / รายละเอียดตราพรรคได้ตรงจุดที่ตัดสินใจ (StudioDark/Verdure ทำกับภาพหมู่มาก่อน)
+  const [lightbox, setLightbox] = useState(null);   // { src, caption } | null
+  const openLightbox = (src, caption) => { if (!editorMode && src) setLightbox({ src, caption }); };
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   // ม่านแนะนำพรรค — editor/preview ข้ามไปหน้าบูธเลย (เหมือนทุก family)
@@ -151,13 +156,20 @@ export default function BlossomSingleParty({
         <header className="bl-sp-head">
           <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">พรรคเดียวที่ลงสมัคร</span> · <span className="bl-nw">THE ONLY PARTY</span></span>
           <div className="bl-sp-hero">
-            <span className="bl-sp-logo">
-              {logo ? (
+            {logo ? (
+              <button
+                type="button"
+                className="bl-sp-logo bl-sp-logo--btn"
+                onClick={() => openLightbox(logo, `โลโก้พรรค · ${party?.name || ""}`)}
+                aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+              >
                 <img src={logo} alt={party?.name || "โลโก้พรรค"} />
-              ) : (
+              </button>
+            ) : (
+              <span className="bl-sp-logo">
                 <span className="bl-sp-logo-ph" aria-hidden="true">{pad2(no)}</span>
-              )}
-            </span>
+              </span>
+            )}
             <div className="bl-sp-title">
               <span className="bl-sp-num"><span className="bl-thai bl-thai--nw">พรรคหมายเลข</span> <b>{no}</b></span>
               <h1 className="bl-sp-word"><span className="bl-sp-word__in">{party?.name || "พรรค"}</span></h1>
@@ -179,8 +191,15 @@ export default function BlossomSingleParty({
         {/* group cover (poster grammar — never cropped) */}
         {cover && (
           <figure className="bl-sp-cover">
-            <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption><span className="bl-thai bl-thai--nw">ภาพหมู่พรรค</span> · <span className="bl-nw">GROUP PHOTO</span></figcaption>
+            <button
+              type="button"
+              className="bl-sp-cover__btn"
+              onClick={() => openLightbox(cover, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+              aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
+            >
+              <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
+            </button>
+            <figcaption><span className="bl-thai bl-thai--nw">ภาพหมู่พรรค</span> · <span className="bl-nw">GROUP PHOTO</span> · <span className="bl-thai bl-thai--nw">คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -486,6 +505,13 @@ export default function BlossomSingleParty({
           box-shadow:0 20px 44px -30px color-mix(in srgb, var(--bl-ink) 30%, transparent); }
         /* contain — see BlossomCandidates: cover cropped the party mark */
         .bl-single-root .bl-sp-logo img { width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; }
+        /* the mark is pressable — both classes sit on the same element, so the medallion
+           look above is inherited and only the affordance is added here */
+        .bl-single-root .bl-sp-logo--btn { cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s ease; }
+        .bl-single-root .bl-sp-logo--btn:hover { transform:translateY(-3px);
+          box-shadow:0 26px 50px -28px color-mix(in srgb, var(--bl-ink) 42%, transparent); }
+        .bl-single-root .bl-sp-logo--btn:active { transform:translateY(0) scale(.98); }
         .bl-single-root .bl-sp-logo-ph { font-family:var(--bl-fd); font-weight:800; font-size:40px;
           font-variant-numeric:tabular-nums; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-title { min-width:0; }
@@ -537,6 +563,9 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-sp-cover { margin:36px 0 0; position:relative; border:1.5px solid var(--bl-ink); border-radius:22px;
           overflow:hidden; background:var(--bl-card); animation:blSRise .6s ease both .2s;
           box-shadow:0 26px 54px -34px color-mix(in srgb, var(--bl-ink) 26%, transparent); }
+        /* the poster itself is the hit target — button reset only. NO hover transform on
+           the img: blCoverPan (below) already owns its transform and the two would fight. */
+        .bl-single-root .bl-sp-cover__btn { display:block; width:100%; padding:0; border:0; background:none; cursor:zoom-in; }
         .bl-single-root .bl-sp-cover img { width:100%; height:clamp(240px,40vw,440px); object-fit:cover; display:block; }
         .bl-single-root .bl-sp-cover figcaption { position:absolute; left:14px; bottom:14px; font-family:var(--bl-fm); font-size:10px;
           letter-spacing:.16em; text-transform:uppercase; color:var(--bl-canvas);
@@ -796,6 +825,12 @@ export default function BlossomSingleParty({
           position:fixed โดน ancestor ตัด (เหมือน BlossomParty ทำ) */}
       {mounted && selectedMember && createPortal(
         <BlossomMemberModal member={selectedMember} no={selectedNo} onClose={() => setSelectedMember(null)} />,
+        document.body
+      )}
+
+      {/* ภาพหมู่ / โลโก้ ขยายเต็มจอ — portal ด้วยเหตุผลเดียวกัน */}
+      {mounted && lightbox && createPortal(
+        <BlossomLightbox src={lightbox.src} caption={lightbox.caption} onClose={() => setLightbox(null)} />,
         document.body
       )}
     </div>

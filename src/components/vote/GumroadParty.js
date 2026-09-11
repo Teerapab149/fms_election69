@@ -16,7 +16,7 @@
 
 import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { sortMembersByPosition } from "../../utils/memberSort";
@@ -78,8 +78,21 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
   const extraShots = gallery.slice(1);
   const socialCount = socialList(party?.socials).length;
 
-  const closeLightbox = () => setLightbox(-1);
+  // ตราพรรคเปิดเต็มจอได้ด้วย — แต่มันไม่ได้อยู่ใน gallery (ซึ่ง lightbox เดินด้วย index)
+  // จึงเก็บเป็นภาพเดี่ยวแยก: เปิดอยู่เมื่อไหร่ = ไม่มีปุ่มเลื่อนและไม่มีตัวนับ
+  const [soloSrc, setSoloSrc] = useState(null);
+  const lbSrc = soloSrc || (lightbox >= 0 ? gallery[lightbox] : null);
+  const lbMulti = !soloSrc && gallery.length > 1;
+  const closeLightbox = () => { setLightbox(-1); setSoloSrc(null); };
   const step = (dir) => setLightbox((i) => (gallery.length ? (i + dir + gallery.length) % gallery.length : -1));
+
+  // Esc ปิดภาพขยาย — ทุก family อื่นทำได้ ผู้ใช้คีย์บอร์ดคาดหวังแบบนี้
+  useEffect(() => {
+    if (!lbSrc) return;
+    const onKey = (e) => { if (e.key === "Escape") closeLightbox(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lbSrc]);
 
   return (
     <div
@@ -118,9 +131,14 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
             )}
           </div>
           <div className="gp-hero__body">
-            <div className="gp-hero__logo">
-              {logoImg ? <img src={logoImg} alt="logo" /> : <span>{(party?.name || "P").slice(0, 2).toUpperCase()}</span>}
-            </div>
+            {logoImg ? (
+              <button type="button" className="gp-hero__logo gp-hero__logo--btn"
+                onClick={() => setSoloSrc(logoImg)} aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}>
+                <img src={logoImg} alt="logo" />
+              </button>
+            ) : (
+              <div className="gp-hero__logo"><span>{(party?.name || "P").slice(0, 2).toUpperCase()}</span></div>
+            )}
             <div className="gp-hero__txt">
               <h1 className="gp-hero__title">{party?.name}</h1>
               {party?.slogan ? <p className="gp-hero__slogan">&ldquo;{party.slogan}&rdquo;</p> : null}
@@ -271,18 +289,18 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
 
       {/* GALLERY LIGHTBOX */}
       <AnimatePresence>
-        {lightbox >= 0 && gallery[lightbox] && (
+        {lbSrc && (
           <motion.div className="gp-lb" onClick={closeLightbox}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>
             <button type="button" className="gp-lb__x" onClick={closeLightbox} aria-label="ปิด"><X size={22} strokeWidth={2.5} /></button>
-            {gallery.length > 1 && (
+            {lbMulti && (
               <button type="button" className="gp-lb__nav gp-lb__nav--prev" onClick={(e) => { e.stopPropagation(); step(-1); }} aria-label="ก่อนหน้า"><ChevronLeft size={26} strokeWidth={2.5} /></button>
             )}
-            <img src={gallery[lightbox]} alt="" className="gp-lb__img" onClick={(e) => e.stopPropagation()} />
-            {gallery.length > 1 && (
+            <img src={lbSrc} alt="" className="gp-lb__img" onClick={(e) => e.stopPropagation()} />
+            {lbMulti && (
               <button type="button" className="gp-lb__nav gp-lb__nav--next" onClick={(e) => { e.stopPropagation(); step(1); }} aria-label="ถัดไป"><ChevronRight size={26} strokeWidth={2.5} /></button>
             )}
-            <span className="gp-lb__count">{lightbox + 1} / {gallery.length}</span>
+            {!soloSrc && <span className="gp-lb__count">{lightbox + 1} / {gallery.length}</span>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -335,6 +353,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
            box's overflow:hidden. Constraining instead of forcing keeps the whole mark
            visible whatever shape the admin uploads. */
         .gp-hero__logo img{ width:auto; height:auto; max-width:100%; max-height:100%; object-fit:contain; } .gp-hero__logo span{ font-family:var(--fd); font-size:34px; }
+        .gp-hero__logo--btn{ cursor:zoom-in; -webkit-appearance:none; appearance:none; transition:transform .15s ease, box-shadow .15s ease; }
+        .gp-hero__logo--btn:hover{ transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink); }
+        .gp-hero__logo--btn:active{ transform:translate(0,0); box-shadow:var(--sh); }
         .gp-hero__txt{ min-width:0; flex:1; }
         .gp-hero__title{ font-family:var(--fd); font-size:clamp(30px,5cqw,52px); margin:0; letter-spacing:-.02em; line-height:1.02; text-transform:uppercase; text-wrap:balance; }
         .gp-hero__slogan{ font-style:italic; color:var(--ink2); margin:8px 0 0; font-size:clamp(14px,1.8cqw,17px); }

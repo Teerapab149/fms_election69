@@ -84,7 +84,11 @@ export default function StudioDarkSingleParty({
   const [introDone, setIntroDone] = useState(editorMode); // editor/preview skips the intro
   const [confirmOpen, setConfirmOpen] = useState(false);  // double-check before the one-shot vote
   const [modalMember, setModalMember] = useState(null);   // click a member → profile modal
-  const [lightboxSrc, setLightboxSrc] = useState(null);   // click the team photo → fullscreen
+  // click the team photo OR the party mark → fullscreen. The caption travels with the
+  // src (it used to be hardcoded TEAM PHOTO, which lies once the logo can open it too).
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [lightboxCap, setLightboxCap] = useState("");
+  const openLightbox = (src, cap) => { if (src) { setLightboxSrc(src); setLightboxCap(cap); } };
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map((it) => (
@@ -141,9 +145,16 @@ export default function StudioDarkSingleParty({
         </div>
         <div className="sds-h__side">
           {resolveSrc(party?.logoUrl) && (
-            <div className="sds-h__logo">
+            /* the mark opens full-size too — the team photo has done this since the
+               booth shipped, and the plate shrinks a logo to 104px */
+            <button
+              type="button"
+              className="sds-h__logo sds-h__logo--btn"
+              onClick={() => openLightbox(resolveSrc(party.logoUrl), `PARTY MARK · ${party?.name || ""}`)}
+              aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
+            >
               <img src={resolveSrc(party.logoUrl)} alt={`โลโก้ ${party?.name || ""}`} />
-            </div>
+            </button>
           )}
           <div className="sds-h__quick">
             <div className="sds-h__row">CANDIDATES <strong>{members.length || "—"}</strong></div>
@@ -184,10 +195,10 @@ export default function StudioDarkSingleParty({
             {heroImg && (
               <figure
                 className="sds-story__media"
-                onClick={() => setLightboxSrc(heroImg)}
+                onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}
+                onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`); }}
               >
                 <img src={heroImg} alt={party?.name} />
                 <figcaption className="sds-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
@@ -373,7 +384,7 @@ export default function StudioDarkSingleParty({
 
       {/* shared studio overlays (self-gating: null prop = nothing) */}
       <StudioDarkMemberModal member={modalMember} onClose={() => setModalMember(null)} />
-      <StudioDarkLightbox src={lightboxSrc} caption={`TEAM PHOTO · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
+      <StudioDarkLightbox src={lightboxSrc} caption={lightboxCap} onClose={() => setLightboxSrc(null)} />
 
       <style jsx global>{`
         .sds-accent { color:var(--sd-accent); }
@@ -403,6 +414,10 @@ export default function StudioDarkSingleParty({
           border:1px solid var(--sd-line-strong); background:var(--sd-ink); padding:11px;
         }
         .sds-h__logo img { width:100%; height:100%; object-fit:contain; display:block; border-radius:10px; }
+        .sds-h__logo--btn { cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .2s cubic-bezier(.16,1,.3,1), border-color .2s ease; }
+        .sds-h__logo--btn:hover { transform:translateY(-2px); border-color:var(--sd-accent); }
+        .sds-h__logo--btn:active { transform:translateY(0) scale(.98); }
         .sds-h__quick { display:grid; gap:16px; }
         .sds-h__row { font-family:var(--sd-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--sd-ink-2); text-align:right; }
         .sds-h__row strong { display:block; font-family:var(--sd-sans); font-size:22px; color:var(--sd-ink); margin-top:4px; letter-spacing:-.02em; font-weight:400; }

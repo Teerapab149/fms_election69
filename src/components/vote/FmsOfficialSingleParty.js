@@ -31,7 +31,7 @@
 // exactly as ReceiptSingleParty and VerdureSingleParty hold them. A choice has
 // to mean the same thing in every theme.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, ShieldCheck, ArrowRight, Users } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
@@ -54,6 +54,17 @@ export default function FmsOfficialSingleParty({
   const [introDone, setIntroDone] = useState(editorMode);
   const [confirming, setConfirming] = useState(false);
   const [member, setMember] = useState(null);
+  // ตราสัญลักษณ์กดขยายได้ — ตราพรรคมีความหมายของมัน (หน้านี้อธิบายไว้ด้านล่าง) แต่
+  // กรอบในบัตรย่อเหลือ 92px จึงเปิดดูขนาดเต็มได้ · หน้านี้ไม่มีภาพหมู่ให้กด (ภาพหมู่
+  // ทั้งหมดอยู่ในแฟ้มพรรคที่ /party) · editorMode ไม่เปิด overlay เหมือน modal สมาชิก
+  const [lightbox, setLightbox] = useState(null);
+  // Esc ปิดภาพขยาย — ทุก family อื่นทำได้ ผู้ใช้คีย์บอร์ดคาดหวังแบบนี้
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === "Escape") setLightbox(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   const missions = useMemo(
     () => (party?.missions || []).map(asText).filter(Boolean),
@@ -121,12 +132,21 @@ export default function FmsOfficialSingleParty({
         <div className="fo-sb__ask-in">
           <span className="fo-sb__eyebrow">บัตรลงคะแนน · ผู้สมัครเพียงพรรคเดียว</span>
           <div className="fo-sb__ask-row">
-            <span className="fo-sb__crest">
-              {logo
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={logo} alt={`ตราสัญลักษณ์พรรค${name}`} />
-                : <span aria-hidden>{String(name).trim().charAt(0)}</span>}
-            </span>
+            {logo ? (
+              <button
+                type="button"
+                className="fo-sb__crest fo-sb__crest--btn"
+                onClick={editorMode ? undefined : () => setLightbox(logo)}
+                aria-label={`ขยายตราสัญลักษณ์พรรค${name}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt={`ตราสัญลักษณ์พรรค${name}`} />
+              </button>
+            ) : (
+              <span className="fo-sb__crest">
+                <span aria-hidden>{String(name).trim().charAt(0)}</span>
+              </span>
+            )}
             <div className="fo-sb__ask-txt">
               {/* the space after พรรค is not optional — Thai does not space
                   between words, but a Latin party name butted against it reads
@@ -351,6 +371,15 @@ export default function FmsOfficialSingleParty({
 
       <FmsOfficialMemberModal member={member} onClose={() => setMember(null)} />
 
+      {/* ตราสัญลักษณ์ขนาดเต็ม — ของบูธเอง (หน้าพรรคมี .fo-lightbox ของมันแยกต่างหาก) */}
+      {lightbox && (
+        <div className="fo-sb-lb" role="dialog" aria-modal="true" aria-label="ภาพขยาย" onClick={() => setLightbox(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt={`ตราสัญลักษณ์พรรค${name}`} onClick={(e) => e.stopPropagation()} />
+          <button type="button" className="fo-sb-lb__x" onClick={() => setLightbox(null)} aria-label="ปิด">✕</button>
+        </div>
+      )}
+
       {confirming && chosen && (
         <div className="fo-cm" role="dialog" aria-modal="true" aria-labelledby="fo-cm-title">
           <div className="fo-cm__card">
@@ -407,6 +436,19 @@ export default function FmsOfficialSingleParty({
           font-size: 32px; font-weight: 600;
         }
         .fo-sb__crest img { width: 100%; height: 100%; object-fit: contain; }
+        /* pressable crest — both classes on one element, the tile look above is inherited */
+        .fo-sb__crest--btn { padding: 0; border: 0; cursor: zoom-in; -webkit-appearance: none; appearance: none;
+          transition: transform .18s ease, box-shadow .18s ease; }
+        .fo-sb__crest--btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(0,0,0,.45); }
+        .fo-sb__crest--btn:active { transform: translateY(0) scale(.98); }
+
+        .fo-sb-lb { position: fixed; inset: 0; z-index: 100; background: rgba(36, 30, 40, .88);
+          display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+        .fo-sb-lb img { max-width: min(1100px, 94vw); max-height: 88vh; object-fit: contain; border-radius: 8px;
+          background: #fff; cursor: auto; }
+        .fo-sb-lb__x { position: absolute; top: 18px; right: 20px; width: 40px; height: 40px; border-radius: 50%;
+          border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff; font-size: 17px; cursor: pointer; }
+        .fo-sb-lb__x:hover { background: rgba(255,255,255,.2); }
         .fo-sb__ask-txt h1 {
           margin: 0; font-size: clamp(22px, 2.9vw, 33px); font-weight: 600;
           line-height: 1.35; color: #fff; text-wrap: balance;

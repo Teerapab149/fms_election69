@@ -59,6 +59,18 @@ export default function SinglePartyView({
   const [bannerImages, setBannerImages] = useState([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  // ชุดภาพที่กำลังเปิดอยู่ — เดิมหน้านี้ mount SimpleLightbox ไว้แต่ไม่มีที่ไหนเรียก
+  // setLightboxOpen(true) เลย (ภาพหมู่กับโลโก้จึงกดไม่ได้ทั้งที่โค้ด lightbox มีอยู่)
+  // กดภาพหมู่ = เลื่อนดูภาพหมู่ทั้งชุดได้ · กดโลโก้ = ดูตราพรรคใบเดียว
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const openLightbox = (src, pool) => {
+    if (!src) return;
+    const list = (pool && pool.length) ? pool : [src];
+    const i = list.indexOf(src);
+    setLightboxImages(list);
+    setLightboxIndex(i >= 0 ? i : 0);
+    setLightboxOpen(true);
+  };
   const [introFinished, setIntroFinished] = useState(previewMode);
   const [contentReady, setContentReady] = useState(false); // Lazy render heavy content
   const [selectedMember, setSelectedMember] = useState(null);
@@ -454,7 +466,6 @@ export default function SinglePartyView({
         {/* Content Wrapper */}
         <div ref={contentRef} className="w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-white relative">
           <CinematicNavbar onScrollTo={scrollTo} partyName={partyName} partyLogoUrl={partyLogo} user={user} scrollContainerRef={contentRef} introFinished={introFinished} theme="light" />
-          <SimpleLightbox isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} images={bannerImages} initialIndex={lightboxIndex} />
 
           {/* === 1. HERO SECTION: Redesigned Layout === */}
           <section id="hero" className="relative overflow-hidden">
@@ -578,11 +589,18 @@ export default function SinglePartyView({
                       lg:static lg:w-[400px] lg:h-[400px] lg:mx-0 lg:mt-2       /* Desktop: lg:mt-2 (Reduced from 8) to move up */
                       drop-shadow-2xl hover:scale-105 transition-transform duration-500
                     ">
-                      <SmartImage
-                        src={partyLogo}
-                        alt="Party Logo"
-                        className="w-full h-full object-contain"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(partyLogo, [partyLogo])}
+                        className="w-full h-full block cursor-zoom-in"
+                        aria-label={`ขยายโลโก้พรรค ${partyName || ""}`}
+                      >
+                        <SmartImage
+                          src={partyLogo}
+                          alt="Party Logo"
+                          className="w-full h-full object-contain"
+                        />
+                      </button>
                     </div>
                   </div>
 
@@ -748,22 +766,36 @@ export default function SinglePartyView({
                     {/* 1. MOBILE VERTICAL IMAGE (Resolved with Fallback) */}
                     {finalTeamMobileImage && (
                       <div className="block md:hidden w-full">
-                        <img
-                          src={finalTeamMobileImage}
-                          alt="Team Vertical"
-                          className="w-full h-auto shadow-2xl"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => openLightbox(finalTeamMobileImage, [finalTeamMobileImage])}
+                          className="w-full block cursor-zoom-in"
+                          aria-label="ขยายภาพหมู่พรรค"
+                        >
+                          <img
+                            src={finalTeamMobileImage}
+                            alt="Team Vertical"
+                            className="w-full h-auto shadow-2xl"
+                          />
+                        </button>
                         <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--spv-deep,#2E0249)_5%,transparent)] pointer-events-none mix-blend-multiply" />
                       </div>
                     )}
 
                     {/* 2. DESKTOP/TABLET HORIZONTAL IMAGE */}
                     <div className={`${finalTeamMobileImage ? 'hidden md:block' : 'block'} w-full`}>
-                      <img
-                        src={carouselImages[0]}
-                        alt="Team Horizontal"
-                        className="w-full h-auto object-contain max-h-[90vh] mx-auto shadow-2xl"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => openLightbox(carouselImages[0], carouselImages)}
+                        className="w-full block cursor-zoom-in"
+                        aria-label="ขยายภาพหมู่พรรค"
+                      >
+                        <img
+                          src={carouselImages[0]}
+                          alt="Team Horizontal"
+                          className="w-full h-auto object-contain max-h-[90vh] mx-auto shadow-2xl"
+                        />
+                      </button>
                       <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--spv-deep,#2E0249)_5%,transparent)] pointer-events-none mix-blend-multiply" />
                     </div>
                   </div>
@@ -786,6 +818,7 @@ export default function SinglePartyView({
                             ? [...carouselImages, ...carouselImages, ...carouselImages].slice(0, 3)
                             : carouselImages
                         }
+                        onImageClick={(src) => openLightbox(src, carouselImages)}
                       />
                     </div>
                   </div>
@@ -887,6 +920,11 @@ export default function SinglePartyView({
         </div>
       </div>
       {selectedMember && <CandidateModal member={selectedMember} onClose={() => setSelectedMember(null)} />}
+      {/* ⚠️ ต้องอยู่นอก div ที่ทำ -translate-y-full ตอนม่านเปิด: ancestor ที่มี transform
+          ทำให้ position:fixed ยึดกับ ancestor นั้นแทน viewport — ของเดิมวางไว้ข้างใน
+          จึงเรนเดอร์ที่ y = -798px (นอกจอ) วัดสดแล้ว · CandidateModal ด้านบนอยู่ระดับนี้
+          มาแต่แรกด้วยเหตุผลเดียวกัน */}
+      <SimpleLightbox isOpen={lightboxOpen} onClose={() => setLightboxOpen(false)} images={lightboxImages.length ? lightboxImages : bannerImages} initialIndex={lightboxIndex} />
     </div>,
     portalContainer
   );

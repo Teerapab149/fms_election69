@@ -30,7 +30,11 @@ const ROMAN = ["I", "II", "III", "IV", "V"];
 
 export default function VerdureParty({ party = {}, galleryImages = [], showBackToVote = false, isSingleParty = false }) {
   const [modalMember, setModalMember] = useState(null);
+  // ภาพหมู่ / ภาพกิจกรรม / ตราพรรค เปิดเต็มจอได้ทั้งหมด — คำบรรยายเดินทางมากับ src
+  // (เดิม hardcode ไว้ว่า TEAM PHOTO ซึ่งไม่จริงแล้วเมื่อตราพรรคก็เปิดได้)
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [lightboxCap, setLightboxCap] = useState("");
+  const openLightbox = (src, cap) => { if (src) { setLightboxSrc(src); setLightboxCap(cap); } };
 
   const missions = useMemo(() => (party?.missions || []).map(asText).filter(Boolean), [party?.missions]);
   const policies = useMemo(() => (party?.policies || []).map((it) => (
@@ -69,9 +73,16 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
     >
       <div className="vd-profile">
         <div className="vd-ribbon">
-          <div className={`vd-ribbon__no ${logoSrc ? "has-logo" : ""}`}>
-            {logoSrc ? <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} /> : party?.number}
-          </div>
+          {logoSrc ? (
+            /* ตราพรรคกดขยายได้เหมือนภาพหมู่ด้านล่าง — หน้านี้อธิบายความหมายของตราอยู่แล้ว */
+            <button type="button" className="vd-ribbon__no has-logo vd-ribbon__no--btn"
+              onClick={() => openLightbox(logoSrc, `โลโก้พรรค · ${party?.name || ""}`)}
+              aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}>
+              <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} />
+            </button>
+          ) : (
+            <div className="vd-ribbon__no">{party?.number}</div>
+          )}
           <div className="vd-ribbon__main">
             <div className="vd-ribbon__kicker">PARTY No. {no}</div>
             <h1 className="vd-ribbon__name">{party?.name}</h1>
@@ -80,7 +91,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         </div>
 
         {heroImg && (
-          <figure className="vd-groupphoto" onClick={() => setLightboxSrc(heroImg)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") setLightboxSrc(heroImg); }}>
+          <figure className="vd-groupphoto" onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`); }}>
             <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
             <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
           </figure>
@@ -171,7 +182,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
                   type="button"
                   className="vd-shot"
                   key={src}
-                  onClick={() => setLightboxSrc(src)}
+                  onClick={() => openLightbox(src, `GALLERY · ${party?.name || ""}`)}
                   aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
                 >
                   <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />
@@ -194,7 +205,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
       </div>
 
       <VerdureMemberModal member={modalMember} onClose={() => setModalMember(null)} />
-      <VerdureLightbox src={lightboxSrc} caption={`TEAM PHOTO · ${party?.name || ""}`} onClose={() => setLightboxSrc(null)} />
+      <VerdureLightbox src={lightboxSrc} caption={lightboxCap} onClose={() => setLightboxSrc(null)} />
 
       <style jsx global>{`
         .vd-profile { flex:1; padding:96px 80px 150px; max-width:1280px; margin:0 auto; width:100%; position:relative; z-index:1; }
@@ -210,6 +221,10 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         .vd-ribbon__no { width:132px; height:132px; border-radius:50%; background:var(--terra); color:var(--cream); display:grid; place-items:center; font-family:var(--fd); font-style:italic; font-weight:400; font-size:96px; line-height:1; letter-spacing:-.04em; flex-shrink:0; overflow:hidden; }
         .vd-ribbon__no.has-logo { background:var(--cream-2); border:1px solid var(--rule); padding:18px; box-shadow:inset 0 0 0 1px rgba(var(--moss-rgb),.04); }
         .vd-ribbon__no img { width:100%; height:100%; object-fit:contain; display:block; }
+        .vd-ribbon__no--btn { cursor:zoom-in; -webkit-appearance:none; appearance:none;
+          transition:transform .25s cubic-bezier(.16,1,.3,1); }
+        .vd-ribbon__no--btn:hover { transform:translateY(-3px); }
+        .vd-ribbon__no--btn:active { transform:translateY(0) scale(.98); }
         .vd-ribbon__main { min-width:0; }
         .vd-ribbon__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--terra-soft); margin-bottom:12px; }
         .vd-ribbon__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(32px,4.2vw,54px); line-height:1.02; letter-spacing:-.015em; margin:0 0 14px; color:var(--cream); }
