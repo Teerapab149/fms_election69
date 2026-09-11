@@ -9,6 +9,8 @@ import {
 } from "../../../../utils/electionConfig";
 import { isBuiltInSlug } from "../../../../components/admin/editor/templates";
 import { isMockLoginProviderRegistered } from "../../../../lib/auth";
+import { UPLOAD_ROOT, BUNDLED_ROOT } from "../../../../lib/media/storage";
+import { access, constants as fsConstants } from "fs/promises";
 
 // Never statically rendered: this route reads headers/request.url per call. Without
 // this Next tries to prerender it at build time, the read throws DynamicServerError,
@@ -179,14 +181,22 @@ export async function GET(request) {
   await run("candidates.single", "candidates", "ตัวเลือกกรณีพรรคเดียว", async () => {
     if (!candidates) throw new Error("อ่านข้อมูลพรรคไม่ได้");
     const real = candidates.filter((c) => c.number > 0);
-    if (real.length !== 1) {
-      return {
-        level: "pass",
-        detail: `มีพรรคจริง ${real.length} พรรค (ไม่เข้าเงื่อนไขพรรคเดียว — ไม่ต้องมีตัวเลือกไม่รับรอง)`,
-      };
-    }
     const hasDisapprove = candidates.some((c) => c.number === -1);
     const hasAbstain = candidates.some((c) => c.number === 0);
+    if (real.length !== 1) {
+      // งดออกเสียงต้องมีทุกกรณี ไม่ใช่เฉพาะบัตรพรรคเดียว — หน้าโหวตแบบหลายพรรค
+      // อ่าน specialOptions.abstain.id ตรง ๆ ถ้าแถวนี้หายไปคือบัตรใช้งานไม่ได้จริง
+      if (!hasAbstain) {
+        return {
+          level: "fail",
+          detail: `มีพรรคจริง ${real.length} พรรค แต่ไม่มีตัวเลือก งดออกเสียง (เบอร์ 0) — บัตรลงคะแนนยังใช้งานไม่ได้`,
+        };
+      }
+      return {
+        level: "pass",
+        detail: `มีพรรคจริง ${real.length} พรรค + มีตัวเลือกงดออกเสียง (ไม่เข้าเงื่อนไขพรรคเดียว จึงไม่ต้องมีตัวเลือกไม่รับรอง)`,
+      };
+    }
     if (!hasDisapprove) {
       return {
         level: "fail",
@@ -317,6 +327,34 @@ export async function GET(request) {
       detail:
         "ปิดการเข้าสู่ระบบจำลองสนิท — provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ ปุ่มบนหน้า login จึงไม่แสดงตามไปด้วย (ใช้ PSU SSO จริงเท่านั้น)",
     };
+  });
+
+  // 13) env.uploads — โฟลเดอร์เก็บรูปต้องมีอยู่จริงและเขียนได้
+  //
+  // รูปที่อัปโหลดไม่ขึ้นเป็นอาการที่มาจากหลายสาเหตุแล้วหน้าตาเหมือนกันหมด (สิทธิ์ไม่พอ /
+  // โฟลเดอร์หาย / ตั้ง UPLOAD_ROOT ผิดที่) ตรวจให้เห็นตรงนี้ก่อนวันจริง ดีกว่าไปเจอ
+  // ตอนกรรมการอัปรูปพรรคแล้วหน้าเว็บขาวโพลน
+  await run("env.uploads", "env", "โฟลเดอร์เก็บรูปที่อัปโหลด", async () => {
+    const custom = UPLOAD_ROOT !== BUNDLED_ROOT;
+    try {
+      await access(UPLOAD_ROOT, fsConstants.W_OK | fsConstants.X_OK);
+    } catch (e) {
+      return {
+        level: "fail",
+        detail:
+          `เขียนไฟล์ลง ${UPLOAD_ROOT} ไม่ได้ (${e.code || e.message}) — อัปโหลดรูปจะล้มเหลวทั้งหมด` +
+          " · ให้ผู้ดูแลสร้างโฟลเดอร์นี้และให้สิทธิ์เขียนแก่ผู้ใช้ที่รันแอป",
+      };
+    }
+    if (!custom) {
+      return {
+        level: "warn",
+        detail:
+          `เก็บรูปไว้ใน ${UPLOAD_ROOT} ซึ่งอยู่ในโฟลเดอร์ซอร์สของแอป — เขียนได้ปกติ แต่การ deploy ที่สร้างโฟลเดอร์ใหม่ (คัดลอก public, clone ใหม่, git clean) จะลบรูปที่อัปโหลดไว้ทั้งหมด` +
+          " · ตั้ง UPLOAD_ROOT ให้ชี้ไปไดเรกทอรีนอกซอร์ส แล้วย้ายไฟล์เดิมตามไปเพื่อให้รอดทุกรอบ deploy",
+      };
+    }
+    return { level: "pass", detail: `เก็บรูปไว้ที่ ${UPLOAD_ROOT} (นอกโฟลเดอร์ซอร์ส) และเขียนได้` };
   });
 
   const summary = checks.reduce(

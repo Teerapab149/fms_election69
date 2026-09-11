@@ -77,11 +77,10 @@ export function useVoteSystem() {
 
       const partyData = await resParty.json();
 
-      // Append Special Options if missing
-      if (!partyData.some(c => c.number === 0)) {
-        partyData.push({ id: 998, number: 0, name: "งดออกเสียง (Abstain)" });
-        partyData.push({ id: 999, number: -1, name: "ไม่รับรองผู้สมัคร (Disapprove)" });
-      }
+      // ⛔ ห้ามเติมตัวเลือกปลอมตรงนี้ (เดิมยัด id 998/999 เมื่อ DB ไม่มีแถวเบอร์ 0/-1)
+      // id พวกนั้นไม่มีอยู่จริงใน Candidate ผู้ใช้จึงเลือก "ไม่รับรอง" ได้ กดยืนยัน
+      // ดูอนิเมชันหย่อนบัตรจนจบ แล้วค่อยโดน /api/vote ตอบ 400 "ไม่พบตัวเลือกที่เลือก"
+      // — บัตรที่เลือกไม่ได้จริงต้องไม่ถูกวาดตั้งแต่แรก ดู ballotIssue ด้านล่าง
 
       setCandidates(partyData);
       preloadPartyImages(partyData).catch(console.warn);
@@ -131,15 +130,27 @@ export function useVoteSystem() {
   };
 
   // --- Computed Data ---
-  const { regularParties, specialOptions, isSingleParty } = useMemo(() => {
+  const { regularParties, specialOptions, isSingleParty, ballotIssue } = useMemo(() => {
     const regular = candidates.filter(c => parseInt(c.number) > 0);
-    const abstain = candidates.find(c => parseInt(c.number) === 0) || { id: 998, number: 0, name: "Abstain" };
-    const disapprove = candidates.find(c => parseInt(c.number) === -1) || { id: 999, number: -1, name: "Disapprove" };
+    // null เมื่อไม่มีแถวจริงใน DB — ห้าม fallback เป็น id สมมติ (ดูหมายเหตุตอน fetch)
+    const abstain = candidates.find(c => parseInt(c.number) === 0) || null;
+    const disapprove = candidates.find(c => parseInt(c.number) === -1) || null;
+    const single = regular.length === 1;
+
+    // บัตรที่ตั้งค่าไม่ครบ = กันไว้ก่อน ไม่ปล่อยให้ลงคะแนนแล้วค่อยพังที่ปลายทาง
+    // (พรรคเดียวต้องมี "ไม่รับรอง" ตามกติกา · ทุกแบบต้องมี "งดออกเสียง" — และ
+    //  MultiPartyView อ่าน specialOptions.abstain.id ตรง ๆ ถ้าไม่มีจะ throw)
+    const missing = [];
+    if (!abstain) missing.push("งดออกเสียง");
+    if (single && !disapprove) missing.push("ไม่รับรอง");
 
     return {
       regularParties: regular,
       specialOptions: { abstain, disapprove },
-      isSingleParty: regular.length === 1
+      isSingleParty: single,
+      ballotIssue: regular.length > 0 && missing.length
+        ? `บัตรเลือกตั้งยังตั้งค่าไม่ครบ — ไม่มีตัวเลือก ${missing.join(" และ ")} ในระบบ`
+        : null
     };
   }, [candidates]);
 
@@ -160,6 +171,7 @@ export function useVoteSystem() {
     regularParties,
     specialOptions,
     isSingleParty,
+    ballotIssue,
     selectedPartyId,
     selectedParty,
     handleSelectParty,

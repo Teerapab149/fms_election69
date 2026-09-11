@@ -48,12 +48,31 @@ const nextConfig = {
     assetPrefix: process.env.ASSET_PREFIX || undefined,
     basePath: process.env.BASE_PATH || undefined,
     async rewrites() {
-        return [
-            {
-                source: '/api/auth/authentik/callback',
-                destination: '/api/auth/callback/authentik',
-            },
-        ];
+        return {
+            // beforeFiles = ก่อน Next จะไปดูไฟล์ใน public/
+            //
+            // รูปทุกใบวิ่งผ่าน /api/media ซึ่งอ่านดิสก์สดทุก request เพราะ Next อ่าน
+            // รายชื่อไฟล์ใน public/ ครั้งเดียวตอนบูตแล้วไม่อ่านซ้ำอีกเลยใน production
+            // (ดูหมายเหตุยาวใน src/app/api/media/[...path]/route.js) รูปที่แอดมิน
+            // อัปโหลดหลังคอนเทนเนอร์ขึ้นจึง 404 ทั้งหมดบนเครื่องจริง ส่วน dev ไม่เจอ
+            // เพราะ dev เช็คดิสก์สดให้อยู่แล้ว
+            //
+            // ต้องเป็น beforeFiles ไม่ใช่ fallback: ไฟล์ที่มีอยู่ตอน build จะ "แมตช์
+            // ของเดิมได้" ก่อนถึง fallback เสมอ ทางเดินของรูปจะกลายเป็นสองทาง
+            // แล้วแต่ว่าไฟล์นั้นมาก่อนหรือหลังบูต — ซึ่งคือต้นเรื่องของบั๊กนี้พอดี
+            beforeFiles: [
+                {
+                    source: '/images/:path*',
+                    destination: '/api/media/:path*',
+                },
+            ],
+            afterFiles: [
+                {
+                    source: '/api/auth/authentik/callback',
+                    destination: '/api/auth/callback/authentik',
+                },
+            ],
+        };
     },
     compiler: {
         // removeConsole:true strips EVERY console.* call, console.error included — so the

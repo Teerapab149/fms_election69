@@ -2,6 +2,7 @@ import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
 import { isMockLoginProviderRegistered } from "../../../../lib/auth";
+import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
 
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
 export async function GET(req) {
@@ -203,6 +204,63 @@ export async function POST(req) {
         certifiedAt,
         certifiedBy: auth.user?.name || auth.user?.studentId || null,
         message: "รับรองผลเรียบร้อย — ผลถูกล็อก เปิดรับคะแนนเพิ่มไม่ได้อีก",
+      });
+    }
+
+    // กรณี: ซ่อมตัวเลือกพิเศษของบัตร (งดออกเสียง เบอร์ 0 / ไม่รับรอง เบอร์ -1)
+    //
+    // ทำไมต้องมีปุ่มนี้: syncCandidateSpecialOptions() ถูกเรียกเฉพาะตอนเพิ่มพรรค /
+    // ลบพรรค / เปลี่ยนเบอร์พรรค เท่านั้น ฐานข้อมูลที่ตั้งพรรคไว้ก่อนโค้ดนั้นจะลง
+    // (หรือ import ข้อมูลเข้ามา) จึงไม่มีแถวเบอร์ 0 / -1 เลย และเดิมไม่มีทางสร้าง
+    // ขึ้นมาได้นอกจากลบพรรคทิ้งแล้วเพิ่มใหม่ — readiness ข้อ candidates.single เห็น
+    // ปัญหานี้แต่ได้แค่รายงาน ปุ่มนี้คือทางแก้ที่ตรงกับสิ่งที่มันฟ้อง
+    //
+    // ใช้ได้เฉพาะก่อนมีบัตรจริง: การเพิ่ม/ลบตัวเลือกหลังมีบัตรแล้วคือการแก้โครงสร้าง
+    // บัตรกลางคัน (เหตุผลเดียวกับ ballotBoxGuard ใน api/admin/candidates)
+    if (action === 'SYNC_BALLOT_OPTIONS') {
+      const [ballots, cfg] = await Promise.all([
+        db.ballot.count(),
+        db.systemConfig.findUnique({ where: { id: 1 }, select: { globalConfig: true } }),
+      ]);
+
+      if (cfg?.globalConfig?.ballotsAnonymized) {
+        return NextResponse.json(
+          { error: "รับรองผลไปแล้ว แก้ตัวเลือกในบัตรไม่ได้ — ผลการเลือกตั้งถูกปิดผนึกแล้ว" },
+          { status: 409 }
+        );
+      }
+      if (ballots > 0) {
+        return NextResponse.json(
+          { error: `มีบัตรลงคะแนนในระบบแล้ว ${ballots} ใบ จึงแก้ตัวเลือกในบัตรไม่ได้ — การแก้โครงสร้างบัตรกลางคันทำให้ผลนับไม่ตรง` },
+          { status: 409 }
+        );
+      }
+
+      let plan;
+      try {
+        plan = await db.$transaction((tx) => syncCandidateSpecialOptions(tx));
+      } catch (e) {
+        return NextResponse.json({ error: e.message || "ปรับตัวเลือกไม่สำเร็จ" }, { status: 409 });
+      }
+
+      const options = await db.candidate.findMany({
+        where: { number: { lte: 0 } },
+        select: { id: true, number: true, name: true },
+        orderBy: { number: 'desc' },
+      });
+
+      const changed = [];
+      if (plan.createAbstain) changed.push("เพิ่มตัวเลือกงดออกเสียง");
+      if (plan.createDisapprove) changed.push("เพิ่มตัวเลือกไม่รับรอง");
+      if (plan.removeDisapprove) changed.push("ลบตัวเลือกไม่รับรอง (เพราะมีพรรคจริงมากกว่าหนึ่งพรรค)");
+
+      return NextResponse.json({
+        success: true,
+        plan,
+        options,
+        message: changed.length
+          ? `ปรับตัวเลือกในบัตรเรียบร้อย — ${changed.join(" · ")}`
+          : "ตัวเลือกในบัตรครบถูกต้องอยู่แล้ว ไม่มีอะไรต้องแก้",
       });
     }
 

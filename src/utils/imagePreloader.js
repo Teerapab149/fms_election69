@@ -1,60 +1,47 @@
 "use client";
 
-import smartcrop from 'smartcrop';
 import { getPath } from './basePath';
 
-// Global cache สำหรับเก็บผลลัพธ์ smartcrop
+const DEFAULT_CROP = { objectPosition: '50% 35%' };
+
+// Global cache — จำว่ารูปไหนถูกโหลดไว้แล้ว
 const cropCache = new Map();
 const imageCache = new Map();
 
 /**
- * Preload รูปภาพและคำนวณ smartcrop ล่วงหน้า
+ * โหลดรูปล่วงหน้าให้เข้า cache ของเบราว์เซอร์ เพื่อให้ตอนหน้าวาดจริงรูปขึ้นพร้อมกันทันที
+ *
+ * ⚠️ ไม่คำนวณ smartcrop ที่นี่อีกแล้ว (เดิมรัน smartcrop.crop() ต่อทุกรูป = ถอดรหัสรูป
+ * ลง canvas แล้ววิเคราะห์ทีละรูปบน CPU ของเครื่องผู้ใช้ พรรคละ 20 คนก็ 20+ รอบ
+ * แย่งเครื่องตอนที่กำลังจะวาดหน้าพอดี) การเลือกกรอบย้ายไปทำตอนอัปโหลดด้วย
+ * sharp.strategy.attention ใน processMemberImage() — ตัดมาเป็น 4:5 ให้ตรงช่องแล้ว
+ * เบราว์เซอร์จึงไม่มีอะไรต้องตัดสินใจอีก
+ *
+ * ⚠️ ไม่ตั้ง crossOrigin ด้วย: <img> ที่หน้าเว็บวาดจริงไม่ได้ตั้ง การ preload แบบ CORS
+ * จึงเป็นคนละ request กันในสายตาเบราว์เซอร์ (วัดบนเครื่องจริงได้ 2 requests ต่อรูป)
+ *
  * @param {string} src - URL ของรูปภาพ
  * @returns {Promise<{objectPosition: string}>}
  */
 export async function preloadImage(src) {
-    if (!src) return { objectPosition: '50% 35%' };
+    if (!src) return DEFAULT_CROP;
 
-    // ถ้ามีใน cache แล้ว return ทันที
     if (cropCache.has(src)) {
         return cropCache.get(src);
     }
 
     return new Promise((resolve) => {
         const img = new Image();
-        img.crossOrigin = "Anonymous";
+
+        const done = () => {
+            imageCache.set(src, true);
+            cropCache.set(src, DEFAULT_CROP);
+            resolve(DEFAULT_CROP);
+        };
+
+        img.onload = done;
+        img.onerror = done;
         img.src = src;
-
-        img.onload = async () => {
-            try {
-                // เก็บ Image object ไว้ใน cache (browser จะ cache รูปอัตโนมัติ)
-                imageCache.set(src, true);
-
-                // คำนวณ smartcrop
-                const result = await smartcrop.crop(img, { width: 500, height: 500 });
-                const crop = result.topCrop;
-
-                const centerX = (crop.x + crop.width / 2) / img.width * 100;
-                const centerY = (crop.y + crop.height / 2) / img.height * 100;
-
-                const cropStyle = { objectPosition: `${centerX}% ${centerY}%` };
-
-                // เก็บผลลัพธ์ใน cache
-                cropCache.set(src, cropStyle);
-                resolve(cropStyle);
-            } catch (error) {
-                // ถ้า smartcrop fail ใช้ค่า default
-                const defaultStyle = { objectPosition: '50% 35%' };
-                cropCache.set(src, defaultStyle);
-                resolve(defaultStyle);
-            }
-        };
-
-        img.onerror = () => {
-            const defaultStyle = { objectPosition: '50% 35%' };
-            cropCache.set(src, defaultStyle);
-            resolve(defaultStyle);
-        };
     });
 }
 

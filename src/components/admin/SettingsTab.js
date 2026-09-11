@@ -5,7 +5,7 @@ import { getPath } from "../../utils/basePath";
 import CompletedActionModal from "../CompletedActionModal";
 import ErrorActionModal from "../ErrorActionModal";
 import ConfirmModal from "../ConfirmModal";
-import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, Trash2, Hourglass, Zap, X, Loader2, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, Trash2, Hourglass, Zap, X, Loader2, CheckCircle2, XCircle, ShieldCheck, Wrench } from "lucide-react";
 import { resolveElectionDates, parseBangkok, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
@@ -84,6 +84,8 @@ const ReadinessCard = () => {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [fixing, setFixing] = useState(false);
+  const [fixMessage, setFixMessage] = useState(null);
 
   const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
   const scheduleRows = [
@@ -104,6 +106,30 @@ const ReadinessCard = () => {
       setError("ตรวจไม่สำเร็จ — " + e.message);
     } finally {
       setRunning(false);
+    }
+  };
+
+  // ซ่อมตัวเลือกในบัตรให้ตรงกับจำนวนพรรคจริง (งดออกเสียง เบอร์ 0 · ไม่รับรอง เบอร์ -1)
+  // ปุ่มนี้โผล่เฉพาะตอน readiness ฟ้องว่าตัวเลือกขาด แล้วตรวจซ้ำให้เองหลังซ่อมเสร็จ
+  const syncBallotOptions = async () => {
+    setFixing(true);
+    setError(null);
+    setFixMessage(null);
+    try {
+      const res = await fetch(getPath("/api/admin/dashboard"), {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SYNC_BALLOT_OPTIONS" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `สถานะ ${res.status}`);
+      setFixMessage(data.message || "ปรับตัวเลือกในบัตรเรียบร้อย");
+      await runCheck();
+    } catch (e) {
+      setError("สร้างตัวเลือกไม่สำเร็จ — " + e.message);
+    } finally {
+      setFixing(false);
     }
   };
 
@@ -160,6 +186,19 @@ const ReadinessCard = () => {
         </div>
       )}
 
+      {fixMessage && (
+        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700 flex items-start justify-between gap-3">
+          <span className="min-w-0">{fixMessage}</span>
+          <button
+            onClick={() => setFixMessage(null)}
+            title="ปิดข้อความนี้"
+            className="shrink-0 text-emerald-400 hover:text-emerald-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {result && (
         <div>
           {/* สรุปหัว + ปุ่มปิดผลการตรวจ (ผลยาว ไม่ควรค้างเต็มหน้าจอ) */}
@@ -186,6 +225,19 @@ const ReadinessCard = () => {
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-700">{c.title}</p>
                     <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{c.detail}</p>
+                    {/* ข้อเดียวที่ซ่อมได้ด้วยปุ่ม: ตัวเลือกพิเศษของบัตรหายไปจากฐานข้อมูล
+                        (เกิดกับ DB ที่ตั้งพรรคไว้ก่อนระบบ sync จะมี หรือ import ข้อมูลมา) */}
+                    {c.id === "candidates.single" && c.level !== "pass" && (
+                      <button
+                        onClick={syncBallotOptions}
+                        disabled={fixing}
+                        className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#8A2680] text-white text-xs font-bold hover:bg-[#7a2270] transition-colors disabled:opacity-50 max-md:min-h-[40px] max-md:px-4"
+                      >
+                        {fixing
+                          ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> กำลังสร้าง</>
+                          : <><Wrench className="w-3.5 h-3.5" /> สร้างตัวเลือกที่ขาดให้อัตโนมัติ</>}
+                      </button>
+                    )}
                   </div>
                 </div>
               );

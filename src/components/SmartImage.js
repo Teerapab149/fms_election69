@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import smartcrop from 'smartcrop';
 import { getCropStyle, isPreloaded } from '../utils/imagePreloader';
 
 export default function SmartImage({ src, alt, className, objectFit = 'cover', priority = false }) {

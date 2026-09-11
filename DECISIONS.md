@@ -2504,6 +2504,45 @@ rule is worth checking on sight rather than relearning it from a broken build.
 
 ---
 
+### P-LOG-138: [2026-09-11] A ballot option the UI offered but the server could never accept
+**Context:** On production the single-party ballot showed "ไม่รับรอง", and picking it ran the
+whole confirm + ballot-drop animation before /api/vote answered 400 "ไม่พบตัวเลือกที่เลือก".
+The Candidate rows for number 0 and -1 did not exist at all: the party predated
+`syncCandidateSpecialOptions()`, which only runs when a party is added, deleted or
+renumbered, so nothing could create them short of deleting the party. `useVoteSystem` hid
+the gap by inventing ids 998/999 when the rows were missing.
+**Fix:** No fabricated ids — a missing option becomes `ballotIssue` and the vote page blocks
+with a readable message instead of rendering an unusable ballot. Admin gained
+`SYNC_BALLOT_OPTIONS` (guarded like ballotBoxGuard) wired to the readiness check that
+reports the gap.
+**Lesson:** A client-side fallback that invents a primary key turns a config gap into a
+failure at the last irreversible step. If the server is the authority on what is selectable,
+the client must render only what the server sent — and a checker that can only report a
+problem should come with the button that fixes it.
+**Tags:** `#vote` `#data-integrity` `#admin`
+
+---
+
+### P-LOG-139: [2026-09-11] Next serves public/ from a snapshot taken at boot
+**Context:** Every image uploaded on the production container came back 404 while files
+baked into the image served fine; dev was perfect. Not permissions and not the database —
+the URLs were in the DB and `writeFile` is awaited with no catch, so the write had
+succeeded. `setupFsCheck()` calls `recursiveReadDir(publicFolderPath)` once at startup and
+production serves only what is in that Set; the `fileExists` fallback next to it is guarded
+by `opts.dev`. Anything written after boot is invisible until the container restarts.
+**Fix:** `/api/media/[...path]` reads from the same `public/images` base the uploaders write
+to, per request, with traversal + extension guards and ETag/304; next.config rewrites
+`/images/:path*` to it in the **beforeFiles** phase so stored URLs keep working and images
+stop splitting into two code paths depending on whether they existed at boot.
+**Lesson:** "It works in dev" is not evidence for anything that touches the filesystem at
+runtime — dev re-reads the disk on purpose, production caches. Reproduce with `next build`
+plus the standalone `node server.js` Docker actually runs, and create the file AFTER the
+server is up; that control (a twin file outside the rewrite still 404s) is what turns a
+theory into proof.
+**Tags:** `#nextjs` `#production-only` `#uploads` `#gotcha`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
