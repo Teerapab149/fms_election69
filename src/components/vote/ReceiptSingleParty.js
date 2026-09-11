@@ -221,7 +221,7 @@ export default function ReceiptSingleParty({
         <div className="rc-vvoter">
           <span className="rc-vvoter__row"><b><span className="rc-th">ผู้มีสิทธิ์</span></b><span className="rc-th">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="rc-vvoter__row"><b><span className="rc-th">รหัส</span></b>{sid}</span>
-          <span className="rc-vvoter__row"><b><span className="rc-th">บัตร</span></b>1 <span className="rc-th">พรรค</span></span>
+          <span className="rc-vvoter__row"><b><span className="rc-th">รูปแบบบัตรเลือกตั้ง</span></b><span className="rc-th">พรรคเดียว</span></span>
         </div>
 
         {/* group cover — framed like a print taped to the desk (never cropped hard) */}
@@ -335,7 +335,7 @@ export default function ReceiptSingleParty({
                 the old one ghosted out. Enhancement layer only (aria-hidden): the three
                 role=radio stamps below are the base path — keyboard + no-JS + reduced-
                 motion all read the plain rows with no imprint gate. */}
-            <div className="rc-stampslot" aria-hidden="true">
+            <div className={`rc-stampslot${kind ? " is-stamped" : ""}`} aria-hidden="true">
               {/* faint blind ring-impression — a previous stamp's ghost with the
                   faculty เรือสำเภา at its centre (v2-R6). A soft ink watermark the
                   live semantic imprint presses over. */}
@@ -803,10 +803,18 @@ export default function ReceiptSingleParty({
         .rc-single-root .rc-stampslot__ship { width:58%; height:58%; color:var(--rc-ink); }
         /* hint: mono LATIN lead-in + Chakra Thai (A10.3 — Thai never wears mono) */
         .rc-single-root .rc-stampslot__hint { position:relative; z-index:1; font-family:var(--rc-fr); font-size:12px; letter-spacing:.06em;
-          color:var(--rc-faint); display:inline-flex; align-items:baseline; gap:6px; }
+          color:var(--rc-faint); display:inline-flex; align-items:baseline; gap:6px;
+          transition:opacity .18s ease; }
+        /* ประทับตราแล้ว = เหลือแต่รอยตรา
+           ข้อความ "STAMP HERE · ประทับตราของคุณที่นี่" กว้างกว่าตัวตราปั๊ม ปลายสองข้าง
+           จึงโผล่พ้นออกมาอ่านได้ทั้งที่ปั๊มทับแล้ว (ไม่ใช่เพราะตราโปร่ง) · แท่นหมึกสามสี
+           ก็หมดหน้าที่ไปพร้อมกัน เหลือแค่ลายน้ำเรือใต้ตราที่อ่านเป็นเนื้อกระดาษ ไม่ใช่ตัวอักษร */
+        .rc-single-root .rc-stampslot.is-stamped .rc-stampslot__hint,
+        .rc-single-root .rc-stampslot.is-stamped .rc-inkwells { opacity:0; pointer-events:none; }
         .rc-single-root .rc-stampslot__hint .rc-mono { font-size:10px; letter-spacing:.18em; text-transform:uppercase; }
         /* 3-colour ink pad in the slot corner — SEMANTIC wells (fixed, never accent) */
-        .rc-single-root .rc-inkwells { position:absolute; right:10px; bottom:8px; display:inline-flex; gap:4px; }
+        .rc-single-root .rc-inkwells { position:absolute; right:10px; bottom:8px; display:inline-flex; gap:4px;
+          transition:opacity .18s ease; }
         .rc-single-root .rc-inkwell { width:20px; height:9px; border-radius:2px;
           border:1px solid color-mix(in srgb, var(--rc-ink) 22%, transparent);
           box-shadow:inset 0 1.5px 2px color-mix(in srgb, var(--rc-ink) 32%, transparent); }

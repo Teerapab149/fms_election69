@@ -159,7 +159,7 @@ export default function BlossomSingleParty({
         <div className="bl-sp-voter">
           <span className="bl-sp-voter__row"><b>VOTER</b><span className="bl-thai">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span></span>
           <span className="bl-sp-voter__row"><b>ID</b>{sid}</span>
-          <span className="bl-sp-voter__row"><b>BALLOT</b>1 PARTY</span>
+          <span className="bl-sp-voter__row"><b><span className="bl-thai">รูปแบบบัตรเลือกตั้ง</span></b><span className="bl-thai">พรรคเดียว</span></span>
         </div>
 
         {/* group cover (poster grammar — never cropped) */}

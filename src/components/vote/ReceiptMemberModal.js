@@ -43,7 +43,7 @@ function useEscape(active, onClose) {
   }, [active, onClose]);
 }
 
-export default function ReceiptMemberModal({ member = null, onClose = () => {} }) {
+export default function ReceiptMemberModal({ member = null, no = null, onClose = () => {} }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -104,7 +104,8 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
         {/* file header — mono, Latin/digits only */}
         <div className="rcm__head">
           <span className="rcm__head-l rc-mono">CANDIDATE FILE · {prefix} {number}</span>
-          <span className="rcm__head-r rc-mono">No. {pad2(member.number ?? 0)}</span>
+          {/* no = ลำดับในทีมที่หน้าพรรคส่งมา ไม่ใช่ member.number ซึ่งเป็นกุญแจเรียงลำดับ */}
+          {no != null && <span className="rcm__head-r rc-mono">No. {pad2(no)}</span>}
         </div>
         <div className="rcm__perf" aria-hidden="true" />
 
@@ -126,7 +127,7 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
               >
                 <img src={src} alt={member.name || ""} />
               </button>
-              <span className="rcm__hero-no rc-mono" aria-hidden="true">No.{pad2(member.number ?? 0)}</span>
+              {no != null && <span className="rcm__hero-no rc-mono" aria-hidden="true">No.{pad2(no)}</span>}
             </div>
             {idBlock}
           </div>
@@ -144,7 +145,7 @@ export default function ReceiptMemberModal({ member = null, onClose = () => {} }
               {src
                 ? <img src={src} alt={member.name || ""} />
                 : <span className="rcm__photo-ph" aria-hidden="true">{(member.name || "?").trim().charAt(0)}</span>}
-              <span className="rcm__photo-no rc-mono" aria-hidden="true">No.{pad2(member.number ?? 0)}</span>
+              {no != null && <span className="rcm__photo-no rc-mono" aria-hidden="true">No.{pad2(no)}</span>}
             </button>
 
             {idBlock}
