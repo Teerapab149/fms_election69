@@ -62,12 +62,19 @@ export async function GET(request, { params }) {
   }
   if (!target) return notFound();
 
-  // ETag จากขนาด+เวลาแก้ไข: รูปสมาชิกถูกเขียนทับด้วยชื่อเดิมได้ (1.jpg) การ cache
-  // แบบ immutable จึงใช้ไม่ได้ — ให้เบราว์เซอร์ถามทุกครั้งแล้วตอบ 304 แทน
+  // ETag จากขนาด+เวลาแก้ไข: รูปสมาชิกถูกเขียนทับด้วยชื่อเดิมได้ (1.webp) การ cache
+  // แบบ immutable จึงใช้ไม่ได้ — รูปที่แก้แล้วจะค้างอยู่ในเครื่องคนอื่นเป็นปี
+  //
+  // must-revalidate อย่างเดียวก็แรงเกินไปอีกทาง: หน้าพรรค 20 คนต้องยิงถาม 20 รอบ
+  // (วัดได้ ~40ms ต่อรูป) ทุกครั้งที่เปิดซ้ำ ทั้งที่แทบไม่มีอะไรเปลี่ยน
+  //
+  // max-age 5 นาที = เปิดซ้ำในช่วงนั้นขึ้นทันทีจากแคช ไม่ยิงอะไรเลย · หลังจากนั้น
+  // stale-while-revalidate ให้แสดงของเดิมไปก่อนแล้วค่อยเช็คเบื้องหลัง รูปที่แอดมิน
+  // เปลี่ยนจึงตามมาภายในไม่กี่นาที โดยที่นักศึกษาไม่ต้องรอรูปโหลดใหม่กลางคัน
   const etag = `W/"${info.size}-${Math.floor(info.mtimeMs)}"`;
   const headers = {
     "Content-Type": contentType,
-    "Cache-Control": "public, max-age=0, must-revalidate",
+    "Cache-Control": "public, max-age=300, stale-while-revalidate=604800",
     ETag: etag,
     "X-Content-Type-Options": "nosniff",
   };

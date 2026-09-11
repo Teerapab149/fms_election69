@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
-import { optimizeImage } from "../../../../../lib/imageOptimize";
+import { optimizeImage, extensionForBuffer } from "../../../../../lib/imageOptimize";
 import { uploadDir } from "../../../../../lib/media/storage";
 
 // POST /api/admin/global-config/banner — upload the election announcement poster.
@@ -53,9 +53,10 @@ export async function POST(request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     // Same pipeline the candidate uploads use. A poster is wide artwork, so it
     // gets the generous width — text inside the image has to stay readable.
-    const optimized = await optimizeImage(buffer, { maxWidth: 1600, quality: 82, format: "keep" });
+    const optimized = await optimizeImage(buffer, { maxWidth: 1600, quality: 82, format: "webp" });
 
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    // นามสกุลมาจากไบต์จริงที่จะเขียนลงดิสก์ ไม่ใช่จาก file.type ที่ฝั่งผู้ส่งเขียนมาเอง
+    const ext = extensionForBuffer(optimized);
     // Timestamped filename, never a fixed one: a stable name would be served
     // from the browser (and any CDN) cache after a replacement, so staff would
     // upload a corrected poster and still see the old one.

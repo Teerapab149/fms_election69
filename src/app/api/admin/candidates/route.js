@@ -6,6 +6,7 @@ import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
 import { uploadDir, candidatePaths, relativeFromUrl } from "../../../../lib/media/storage";
+import { extensionForBuffer } from "../../../../lib/imageOptimize";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
@@ -170,11 +171,15 @@ async function uploadLogo(file, candidateName) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const safeName = candidateName.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, "");
-    const fileName = `${safeName}_${Date.now()}.jpg`;
     const targetDir = uploadDir("candidates", "logo");
 
+    // webp เก็บพื้นหลังโปร่งใสได้เหมือน PNG แต่เล็กกว่าหลายเท่า — ของเดิม format "keep"
+    // ทำให้โลโก้ PNG ความละเอียดสูงถูกเก็บแบบ lossless ทั้งก้อน (มีไฟล์จริง 1.8MB บนเครื่อง)
+    const optimized = await optimizeImage(buffer, { maxWidth: 700, quality: 90, format: "webp" });
+    const fileName = `${safeName}_${Date.now()}.${extensionForBuffer(optimized)}`;
+
     if (!fs.existsSync(targetDir)) await mkdir(targetDir, { recursive: true });
-    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 700, format: "keep" }));
+    await writeFile(path.join(targetDir, fileName), optimized);
 
     return `/images/candidates/logo/${fileName}`;
   }
@@ -188,11 +193,13 @@ async function uploadOfficialImage(file, candidateName) {
     const buffer = Buffer.from(bytes);
     const safeName = candidateName.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, "");
     // ตั้งชื่อไฟล์นำหน้าด้วย OFFICIAL เพื่อให้แยกง่าย
-    const fileName = `OFFICIAL_${safeName}_${Date.now()}.jpg`;
     const targetDir = uploadDir("candidates", "officialImageUrl");
 
+    const optimized = await optimizeImage(buffer, { maxWidth: 1600, quality: 82, format: "webp" });
+    const fileName = `OFFICIAL_${safeName}_${Date.now()}.${extensionForBuffer(optimized)}`;
+
     if (!fs.existsSync(targetDir)) await mkdir(targetDir, { recursive: true });
-    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
+    await writeFile(path.join(targetDir, fileName), optimized);
 
     return `/images/candidates/officialImageUrl/${fileName}`;
   }
@@ -215,9 +222,10 @@ async function uploadMultipleMobileHeroImages(files, candidateName, candidateId)
       const buffer = Buffer.from(bytes);
       const safeName = candidateName.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, "");
 
-      const fileName = `MOBILE_HERO_${safeName}_${Date.now()}_${i}.jpg`;
+      const optimized = await optimizeImage(buffer, { maxWidth: 1280, quality: 82, format: "webp" });
+      const fileName = `MOBILE_HERO_${safeName}_${Date.now()}_${i}.${extensionForBuffer(optimized)}`;
 
-      await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1280, quality: 80 }));
+      await writeFile(path.join(targetDir, fileName), optimized);
       uploadedUrls.push(`/images/candidates/mobileheroimage/party${candidateId}/${fileName}`);
     }
   }
@@ -238,9 +246,10 @@ async function uploadMultipleGroupImages(files, candidateName, candidateId) {
       const buffer = Buffer.from(bytes);
       const safeName = candidateName.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, "");
 
-      const fileName = `GROUP_${safeName}_${Date.now()}_${i}.jpg`;
+      const optimized = await optimizeImage(buffer, { maxWidth: 1600, quality: 82, format: "webp" });
+      const fileName = `GROUP_${safeName}_${Date.now()}_${i}.${extensionForBuffer(optimized)}`;
 
-      await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1600, quality: 80 }));
+      await writeFile(path.join(targetDir, fileName), optimized);
       uploadedUrls.push(`/images/candidates/groupimage/party${candidateId}/${fileName}`);
     }
   }
@@ -255,15 +264,31 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const fileName = `${positionNum}.jpg`;
     const folderName = `party_${partyNumber}`;
     const targetDir = uploadDir("members", folderName);
+
+    // กริดผู้สมัครทุกเทมเพลตแสดงกรอบ 4:5 กว้างจริงราว 170-200px (object-fit:cover)
+    // ตัดให้ตรงสัดส่วนตั้งแต่ตอนอัปโหลด: ไม่ต้องส่งไบต์ส่วนที่เบราว์เซอร์จะตัดทิ้งอยู่ดี
+    // และ sharp.strategy.attention เลือกโซนเด่นที่สุด (ในทางปฏิบัติคือใบหน้า) — งานเดียว
+    // กับที่ smartcrop เคยทำบนเครื่องผู้ใช้ทุกครั้งที่เปิดหน้า แต่ทำครั้งเดียวตอนอัปโหลด
+    const optimized = await optimizeImage(buffer, {
+      quality: 80,
+      format: "webp",
+      crop: { width: 640, height: 800 },
+    });
+    // ⚠️ ชื่อไฟล์ต้องมี studentId ด้วย ไม่ใช่แค่เลขตำแหน่ง
+    // getPositionNumber() คืน 400 ให้ประธานฝ่าย/หัวหน้าฝ่าย **ทุกคน** (จงใจ เพื่อให้เรียง
+    // ต่อท้ายเท่ากันหมด) พรรคจริงที่มีประธานฝ่าย 15 คนจึงเขียนทับกันเองลงไฟล์ 400 ไฟล์เดียว
+    // — ทุกคนได้รูปคนสุดท้ายที่อัป (พิสูจน์แล้วบน dev: ประธานวิชาการกับประธานกีฬา
+    // ได้ /images/members/party_1/400.webp เหมือนกันทั้งคู่) รูปใน Modal ใส่ studentId
+    // มาตั้งแต่แรกอยู่แล้ว รูปในกริดแค่ตกหล่นไป
+    const fileName = `${positionNum}_${memberData.studentId || Date.now()}.${extensionForBuffer(optimized)}`;
 
     if (!fs.existsSync(targetDir)) {
       await mkdir(targetDir, { recursive: true });
     }
 
-    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 800, quality: 82 }));
+    await writeFile(path.join(targetDir, fileName), optimized);
     return `/images/members/${folderName}/${fileName}`;
   }
 
@@ -291,15 +316,17 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const fileName = `${positionNum}_${studentId}.jpg`;
     const folderName = `party_${partyNumber}`;
     const targetDir = uploadDir("members", folderName, "Modal");
+
+    const optimized = await optimizeImage(buffer, { maxWidth: 1000, quality: 82, format: "webp" });
+    const fileName = `${positionNum}_${studentId}.${extensionForBuffer(optimized)}`;
 
     if (!fs.existsSync(targetDir)) {
       await mkdir(targetDir, { recursive: true });
     }
 
-    await writeFile(path.join(targetDir, fileName), await optimizeImage(buffer, { maxWidth: 1000, quality: 82 }));
+    await writeFile(path.join(targetDir, fileName), optimized);
     return `/images/members/${folderName}/Modal/${fileName}`;
   }
 

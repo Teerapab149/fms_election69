@@ -94,11 +94,15 @@ export class UnsupportedImageError extends Error {
  * @param {object} opts
  * @param {number} opts.maxWidth  ความกว้างสูงสุด (ไม่ขยายภาพเล็กให้ใหญ่ขึ้น); ค่าเริ่มต้น 1600
  * @param {number} opts.quality   คุณภาพ JPEG/WebP 1-100; ค่าเริ่มต้น 80
- * @param {"jpeg"|"webp"|"keep"} opts.format  "keep" = คงชนิดเดิม (ใช้กับโลโก้ที่ต้องการพื้นหลังโปร่ง)
+ * @param {"jpeg"|"webp"|"keep"} opts.format  "keep" = คงชนิดเดิม (ใช้กับรูปที่ต้องการพื้นหลังโปร่ง)
+ * @param {{width:number,height:number}} [opts.crop]  ตัดให้ได้สัดส่วนนี้เป๊ะ ๆ ด้วย
+ *        sharp.strategy.attention (หาโซนที่ "น่าสนใจที่สุด" ในภาพ = ใบหน้าคนในทางปฏิบัติ)
+ *        ใช้กับรูปที่รู้สัดส่วนช่องแสดงผลแน่นอน เช่นรูปผู้สมัครในกริด 4:5 — ตัดที่นี่ทีเดียว
+ *        แล้วเบราว์เซอร์ไม่ต้องคำนวณ crop เอง และไม่ต้องส่งไบต์ส่วนที่จะถูกตัดทิ้งอยู่ดี
  * @returns {Promise<Buffer>} ไบต์ที่ย่อแล้ว
  * @throws {UnsupportedImageError} เมื่อไบต์จริงไม่ใช่ JPG/PNG/WebP
  */
-export async function optimizeImage(buffer, { maxWidth = 1600, quality = 80, format = "jpeg" } = {}) {
+export async function optimizeImage(buffer, { maxWidth = 1600, quality = 80, format = "jpeg", crop = null } = {}) {
   const detected = detectImageFormat(buffer);
   if (!ALLOWED_FORMATS.has(detected)) {
     console.warn("[imageOptimize] ปฏิเสธไฟล์อัปโหลด — ชนิดจริงคือ:", detected || "ไม่รู้จัก");
@@ -106,20 +110,55 @@ export async function optimizeImage(buffer, { maxWidth = 1600, quality = 80, for
   }
 
   try {
-    let img = sharp(buffer, { failOn: "none" })
-      .rotate() // หมุนตาม EXIF ก่อน แล้วค่อยตัด metadata ทิ้ง
-      .resize({ width: maxWidth, withoutEnlargement: true });
+    let img = sharp(buffer, { failOn: "none" }).rotate(); // หมุนตาม EXIF ก่อน แล้วค่อยตัด metadata ทิ้ง
+
+    if (crop) {
+      img = img.resize({
+        width: crop.width,
+        height: crop.height,
+        fit: "cover",
+        position: sharp.strategy.attention,
+        withoutEnlargement: true,
+      });
+    } else {
+      img = img.resize({ width: maxWidth, withoutEnlargement: true });
+    }
 
     if (format === "jpeg") img = img.jpeg({ quality, mozjpeg: true });
     else if (format === "webp") img = img.webp({ quality });
     // "keep" → ไม่ re-encode นอกจากย่อขนาด คง transparency ของ PNG ไว้
 
     const out = await img.toBuffer();
-    // เก็บอันที่เล็กกว่า (ต้นฉบับที่ถูกบีบมาหนักแล้วอาจเล็กกว่าไฟล์ที่เรา encode ใหม่)
-    return out.length && out.length < buffer.length ? out : buffer;
+    if (!out.length) return buffer;
+
+    // ⚠️ "เก็บอันที่เล็กกว่า" ใช้ได้เฉพาะตอนที่ผลลัพธ์ยังเป็นไฟล์ชนิดเดิมและขนาดเดิม
+    // ถ้าเราสั่งแปลงชนิด (webp/jpeg) หรือสั่งตัดสัดส่วน แล้วดันคืนต้นฉบับเพราะมันเล็กกว่า
+    // ไฟล์ .webp ที่เขียนลงดิสก์จะมีไบต์ JPEG อยู่ข้างใน และรูปจะไม่ถูกตัดตามที่สั่ง
+    if (format === "keep" && !crop) {
+      return out.length < buffer.length ? out : buffer;
+    }
+    return out;
   } catch (e) {
     // ไฟล์ผ่านด่านชนิดมาแล้ว แค่ย่อไม่สำเร็จ — คืนต้นฉบับได้ ไม่ใช่ไฟล์แปลกปลอม
     console.warn("[imageOptimize] ย่อรูปไม่สำเร็จ ใช้ไฟล์ต้นฉบับแทน:", e?.message);
     return buffer;
   }
+}
+
+/**
+ * นามสกุลไฟล์ของ "ไบต์ที่จะเขียนลงดิสก์จริง" — อ่านจาก magic bytes ไม่ใช่จากชนิดที่สั่งไว้
+ *
+ * ต้องอ่านจากผลลัพธ์เพราะ optimizeImage() ไม่ได้คืนชนิดที่สั่งเสมอไป: format "keep"
+ * คงชนิดเดิมตามไฟล์ต้นทาง และถ้า sharp ย่อไม่สำเร็จมันคืนต้นฉบับมาแทน
+ *
+ * ชื่อไฟล์ที่ไม่ตรงกับไบต์ข้างในเป็นบั๊กที่ซ่อนได้นาน เพราะเบราว์เซอร์เดาจากไบต์จริง
+ * แล้วแสดงให้อยู่ดี — แต่ /api/media เลือก Content-Type จากนามสกุล
+ * (public/images/candidates/logo มีไฟล์ .jpg ที่ข้างในเป็น PNG 3375x4219 อยู่จริง)
+ */
+export function extensionForBuffer(buffer, fallback = "jpg") {
+  const detected = detectImageFormat(buffer);
+  if (detected === "webp") return "webp";
+  if (detected === "png") return "png";
+  if (detected === "jpeg") return "jpg";
+  return fallback;
 }
