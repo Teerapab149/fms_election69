@@ -42,6 +42,17 @@ import FmsOfficialMemberModal from "./FmsOfficialMemberModal";
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
+// ช่องภาพหมู่ในฐานข้อมูลเป็น JSON หลวม ๆ — array, สตริงเดี่ยว หรือสตริงที่เป็น JSON array
+const firstImage = (val) => {
+  if (!val) return null;
+  if (Array.isArray(val)) return val[0] || null;
+  if (typeof val === "string") {
+    const s = val.trim();
+    if (s.startsWith("[")) { try { const a = JSON.parse(s); return Array.isArray(a) ? a[0] : null; } catch { return s; } }
+    return s;
+  }
+  return null;
+};
 
 export default function FmsOfficialSingleParty({
   party = {}, specialOptions = {},
@@ -54,10 +65,11 @@ export default function FmsOfficialSingleParty({
   const [introDone, setIntroDone] = useState(editorMode);
   const [confirming, setConfirming] = useState(false);
   const [member, setMember] = useState(null);
-  // ตราสัญลักษณ์กดขยายได้ — ตราพรรคมีความหมายของมัน (หน้านี้อธิบายไว้ด้านล่าง) แต่
-  // กรอบในบัตรย่อเหลือ 92px จึงเปิดดูขนาดเต็มได้ · หน้านี้ไม่มีภาพหมู่ให้กด (ภาพหมู่
-  // ทั้งหมดอยู่ในแฟ้มพรรคที่ /party) · editorMode ไม่เปิด overlay เหมือน modal สมาชิก
-  const [lightbox, setLightbox] = useState(null);
+  // ตราสัญลักษณ์กับภาพหมู่กดขยายได้ — ตราย่อเหลือ 92px ในบัตร ส่วนภาพหมู่ถูก crop
+  // ด้วย object-fit:cover ทั้งคู่จึงเปิดดูขนาดเต็มได้ · เก็บ alt มากับ src เพราะ
+  // overlay ตัวเดียวเปิดได้สองอย่าง · editorMode ไม่เปิด overlay เหมือน modal สมาชิก
+  const [lightbox, setLightbox] = useState(null);   // { src, alt } | null
+  const openLightbox = (src, alt) => { if (!editorMode && src) setLightbox({ src, alt }); };
   // Esc ปิดภาพขยาย — ทุก family อื่นทำได้ ผู้ใช้คีย์บอร์ดคาดหวังแบบนี้
   useEffect(() => {
     if (!lightbox) return;
@@ -84,6 +96,10 @@ export default function FmsOfficialSingleParty({
     [party?.logoMeaning]
   );
   const logo = resolveSrc(party?.logoUrl);
+  // ลำดับเดียวกับทุกตระกูล: ภาพหมู่แนวนอน → โปสเตอร์ → ภาพ hero มือถือ
+  const cover = resolveSrc(
+    firstImage(party?.groupImageUrls) || firstImage(party?.officialImageUrl) || firstImage(party?.mobileHeroImage)
+  );
   const name = party?.name || "";
 
   const choices = useMemo(() => {
@@ -136,7 +152,7 @@ export default function FmsOfficialSingleParty({
               <button
                 type="button"
                 className="fo-sb__crest fo-sb__crest--btn"
-                onClick={editorMode ? undefined : () => setLightbox(logo)}
+                onClick={() => openLightbox(logo, `ตราสัญลักษณ์พรรค${name}`)}
                 aria-label={`ขยายตราสัญลักษณ์พรรค${name}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -203,6 +219,24 @@ export default function FmsOfficialSingleParty({
               <ul className="fo-sb__mis">
                 {missions.map((m, i) => <li key={i}>{m}</li>)}
               </ul>
+            </section>
+          )}
+
+          {cover && (
+            <section className="fo-sb__field">
+              <h2 className="fo-sb__flabel">ภาพหมู่พรรค</h2>
+              <figure className="fo-sb__cover">
+                <button
+                  type="button"
+                  className="fo-sb__cover-btn"
+                  onClick={() => openLightbox(cover, `ภาพหมู่พรรค ${name}`)}
+                  aria-label={`ขยายภาพหมู่พรรค ${name}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cover} alt={`ภาพหมู่พรรค ${name}`} />
+                </button>
+                <figcaption>คลิกที่ภาพเพื่อดูขนาดเต็ม</figcaption>
+              </figure>
             </section>
           )}
 
@@ -375,7 +409,7 @@ export default function FmsOfficialSingleParty({
       {lightbox && (
         <div className="fo-sb-lb" role="dialog" aria-modal="true" aria-label="ภาพขยาย" onClick={() => setLightbox(null)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt={`ตราสัญลักษณ์พรรค${name}`} onClick={(e) => e.stopPropagation()} />
+          <img src={lightbox.src} alt={lightbox.alt} onClick={(e) => e.stopPropagation()} />
           <button type="button" className="fo-sb-lb__x" onClick={() => setLightbox(null)} aria-label="ปิด">✕</button>
         </div>
       )}
@@ -441,6 +475,25 @@ export default function FmsOfficialSingleParty({
           transition: transform .18s ease, box-shadow .18s ease; }
         .fo-sb__crest--btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(0,0,0,.45); }
         .fo-sb__crest--btn:active { transform: translateY(0) scale(.98); }
+
+        /* ภาพหมู่ในแฟ้ม — วางเป็นหลักฐานแนบ ไม่ใช่ hero: กรอบบาง มุมคม
+           เหมือนทุก field ในหน้านี้ */
+        .fo-sb__cover { margin: 0; }
+        .fo-sb__cover-btn {
+          display: block; width: 100%; padding: 0; border: 1px solid var(--fo-line);
+          border-radius: 4px; overflow: hidden; background: var(--fo-surface); cursor: zoom-in;
+        }
+        .fo-sb__cover-btn img {
+          display: block; width: 100%; height: clamp(200px, 34vw, 380px); object-fit: cover;
+          transition: transform .5s cubic-bezier(.16, 1, .3, 1);
+        }
+        .fo-sb__cover-btn:hover img { transform: scale(1.02); }
+        .fo-sb__cover figcaption {
+          margin-top: 10px; font-size: 12px; color: var(--fo-muted);
+        }
+        @media (max-width: 720px) {
+          .fo-sb__cover-btn img { height: clamp(170px, 46vw, 240px); }
+        }
 
         .fo-sb-lb { position: fixed; inset: 0; z-index: 100; background: rgba(36, 30, 40, .88);
           display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
