@@ -21,9 +21,26 @@ export async function GET(req) {
       config = await db.systemConfig.create({ data: { isVoteOpen: true } });
     }
 
-    // ดึงคะแนนผู้สมัคร (เรียงตามเบอร์)
+    // รายชื่อตัวเลือกในบัตร (เรียงตามเบอร์) — score ติดไปด้วยเฉพาะหลังประกาศผลแล้ว
+    //
+    // H2 (2026-09-25): ของเดิมเป็น findMany เปล่า ๆ = ทุกคอลัมน์รวม score ทำให้กรรมการ
+    // ทุกคนเปิด network tab ของแท็บตั้งค่าแล้วเห็นคะแนนสดรายพรรคได้ตลอดวันเลือกตั้ง
+    // ทั้งที่ /api/results ปิดคะแนนแม้แต่กับแอดมิน (นโยบายความลับของบัตร 2026-06-10)
+    // คะแนนสดต่อพรรค + turnout รายสาขา/ชั้นปีแบบสด = ย้อนดูได้ว่าคนที่เพิ่งกดโหวตเลือกใคร
+    //
+    // select แบบระบุชื่อ (แบบเดียวกับ /api/party) และเติม score เข้าไปเฉพาะเมื่อ
+    // showResult เปิดแล้ว — ตรงกับที่ /api/results เปิดเผยให้ทุกคนเห็นในจังหวะเดียวกัน
     const candidates = await db.candidate.findMany({
-      orderBy: { number: 'asc' }
+      orderBy: { number: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        number: true,
+        slogan: true,
+        logoUrl: true,
+        color: true,
+        ...(config.showResult ? { score: true } : {}),
+      },
     });
 
     return NextResponse.json({
