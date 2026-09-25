@@ -111,7 +111,10 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
               border-radius:24px; overflow:hidden;
             }
             .sdm-x {
-              position:absolute; top:14px; right:14px; z-index:2; width:38px; height:38px;
+              /* 44x44 — WCAG/mobile tap-target floor (measured 38x38 at 360x740,
+                 QA-SWEEP-RULES-2026-09-25 §C). top/right trimmed 14->11px so the
+                 icon's visual position barely shifts. */
+              position:absolute; top:11px; right:11px; z-index:2; width:44px; height:44px;
               display:grid; place-items:center; border-radius:999px; cursor:pointer;
               background:rgba(20,20,15,.7); border:1px solid var(--sd-line-strong, #3E3E2D);
               color:var(--sd-ink-2, #B5B0A2); transition:all .2s;
@@ -168,7 +171,8 @@ export function StudioDarkLightbox({ src = null, caption = "", onClose = () => {
               border:1px solid var(--sd-line-strong, #3E3E2D); border-radius:14px; background:var(--sd-bg-2, #1B1B14);
             }
             .sdl-x {
-              position:absolute; top:20px; right:20px; width:42px; height:42px; z-index:2;
+              /* 44x44 — same tap-target floor as .sdm-x above (was 42x42). */
+              position:absolute; top:19px; right:19px; width:44px; height:44px; z-index:2;
               display:grid; place-items:center; border-radius:999px; cursor:pointer;
               background:rgba(20,20,15,.7); border:1px solid var(--sd-line-strong, #3E3E2D);
               color:var(--sd-ink-2, #B5B0A2); transition:all .2s;

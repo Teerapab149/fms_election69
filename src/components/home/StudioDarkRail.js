@@ -408,6 +408,19 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
             .sd-mininav__num { display:none; }
             .sd-mininav__link { gap:0; }
           }
+          /* countdown strip (.sd-rail__cd, collapsed into .sd-topbar above 1100px):
+             measured scrollWidth 384 vs clientWidth 360 at exactly 360px wide —
+             xo=24 (QA-SWEEP-RULES-2026-09-25 matrix includes 360x740). 4 cells +
+             20px side padding + the "POLLS OPEN IN" label don't fit. Unlike the
+             mininav numeral above, nothing here is redundant (the label names
+             WHICH clock — see the ink-2 comment on .sd-rail__cd-lbl), so this
+             tightens gutters/type instead of dropping content. */
+          @media (max-width:380px) {
+            .sd-rail__cd { padding:8px 12px; gap:8px; }
+            .sd-rail__cd-grid { gap:6px; }
+            .sd-rail__cd-lbl { font-size:8px; letter-spacing:.1em; gap:4px; }
+            .sd-rail__cd-cell { gap:2px; }
+          }
           .sd-mininav__num { font-family:var(--sd-serif); font-style:italic; font-size:13px; color:var(--sd-ink-3); }
           .sd-mininav__link.is-active .sd-mininav__num { color:var(--sd-accent); }
         }
