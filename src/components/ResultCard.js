@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trophy, Users, Ban, UserX, Activity, Lock, Clock } from "lucide-react";
 import { getPath } from "../utils/basePath";
 
-export default function ResultCard({ candidate, rank, totalVotes, status, isRevealed }) {
+export default function ResultCard({ candidate, rank, totalVotes, status, isRevealed, isFeatured = false }) {
   const [imageError, setImageError] = useState(false);
 
   // ✅ 1. แยกสถานะ (รับค่า status ที่คำนวณมาจาก Config ในหน้า Page)
@@ -19,7 +19,11 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
   const showHidden = (isEnded || isOngoing) && !isRevealed;
 
   const percentage = totalVotes > 0 ? (candidate.score / totalVotes) * 100 : 0;
-  const isWinner = showScore && rank === 1; // ใช้ showScore แทน isEnded เพื่อให้ Highlight คนชนะตอน Reveal
+  // Highlight comes from resolveVerdict() via the isFeatured prop, never from
+  // rank===1 alone: rank is just sort order, and a tie/no-votes/abstain-led
+  // board all sort a row to #1 without that row having actually won anything
+  // (CLAUDE.md "การตัดสินผลเลือกตั้ง" — 2026-09-25, QA sweep).
+  const isWinner = showScore && isFeatured;
 
   let imageSrc = candidate.image || (candidate.logoUrl ? `${candidate.logoUrl}` : null);
   if (imageSrc && imageSrc.startsWith('/images/')) {
@@ -152,7 +156,11 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
               )}
             </div>
           </div>
-          {isWinner && <Trophy className="w-5 h-5 text-yellow-500 animate-bounce shrink-0" />}
+          {/* Trophy = "won", so it never sits on a disapprove card even when that
+              row is featured (a single-party ballot where "ไม่รับรอง" got the
+              most votes) — the yellow highlight/border still marks it as the
+              result, just without implying a celebratory win. */}
+          {isWinner && !isDisapprove && <Trophy className="w-5 h-5 text-yellow-500 animate-bounce shrink-0" />}
         </div>
 
         {/* ✅ ส่วนแสดงผลคะแนน (เปลี่ยนไปตาม Status) */}

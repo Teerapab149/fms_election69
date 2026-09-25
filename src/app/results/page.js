@@ -18,6 +18,7 @@ import FmsOfficialResults from "../../components/vote/FmsOfficialResults";
 import BlossomResults from "../../components/vote/BlossomResults";
 import ReceiptResults from "../../components/vote/ReceiptResults";
 import { resolveElectionDates } from "../../utils/electionConfig";
+import { resolveVerdict } from "../../utils/electionVerdict";
 import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 
@@ -75,6 +76,17 @@ export default function ResultsPage() {
   const isBlossom = activeTemplateId?.startsWith('blossom');
   const isReceipt = activeTemplateId?.startsWith('receipt');
   const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
+
+  // Single source of truth for who won — CLAUDE.md "การตัดสินผลเลือกตั้ง":
+  // ห้ามคำนวณผู้ชนะเองในไฟล์ธีม ResultCard used to derive isWinner from
+  // rank===1 alone, which crowned the lowest-numbered party on a tie, party
+  // #1 when every score was 0, and (on a single-party ballot) the party
+  // itself even when "ไม่รับรอง" had more votes. resolveVerdict() is the
+  // only place that pool/tie/no-votes logic lives now (2026-09-25, QA sweep).
+  const verdict = useMemo(
+    () => resolveVerdict(candidates, { revealed: isRevealed }),
+    [candidates, isRevealed]
+  );
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
@@ -564,18 +576,30 @@ export default function ResultsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
-                  {candidates.map((candidate, index) => (
-                    <ResultCard
-                      key={candidate.id}
-                      candidate={candidate}
-                      rank={index + 1}
-                      totalVotes={totalVotes}
-                      status={finalStatus}
-                      isRevealed={isRevealed} // ✅ ส่งสถานะเปิดเผยไปที่การ์ด
-                    />
-                  ))}
-                </div>
+                <>
+                  {/* เสมอ/ไม่มีคะแนนเลย = ไม่มีถ้วยให้ใคร (resolveVerdict) — บอกเหตุผล
+                      แทนความเงียบ ไม่งั้นดูเหมือนหน้าเว็บลืมประกาศผู้ชนะ ไทยล้วนห้ามลงท้าย "." */}
+                  {isRevealed && (verdict.outcome === 'tie' || verdict.outcome === 'no-votes') && (
+                    <div className="mb-4 lg:mb-6 flex items-center justify-center gap-2 text-xs lg:text-base font-bold px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-center">
+                      {verdict.outcome === 'tie'
+                        ? 'คะแนนเท่ากัน — รอคณะกรรมการตัดสิน ยังไม่ประกาศผู้ชนะ'
+                        : 'ยังไม่มีคะแนน — ยังไม่มีผลให้ประกาศ'}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
+                    {candidates.map((candidate, index) => (
+                      <ResultCard
+                        key={candidate.id}
+                        candidate={candidate}
+                        rank={index + 1}
+                        totalVotes={totalVotes}
+                        status={finalStatus}
+                        isRevealed={isRevealed} // ✅ ส่งสถานะเปิดเผยไปที่การ์ด
+                        isFeatured={verdict.featured?.id === candidate.id}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
