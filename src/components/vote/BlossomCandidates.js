@@ -286,10 +286,15 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
            (measured cutTop 3.1px on the real "พรรคพลังนักศึกษาฯ", 4.08px worst case at
            32px). padding-top opens the clip box, the negative margin puts the text back
            where it was — layout is byte-identical. padding-BOTTOM is banned here: Chrome
-           spills the line the clamp dropped into it. */
+           spills the line the clamp dropped into it.
+           clamp:3 — QA-mobile-crossfamily-2026-09-25: the preset[2] long party name (53
+           chars) needs 3 lines at every breakpoint (measured 360/375/412/1440); clamp:2
+           was truncating real ballot text (cut up to 26px on real cards), not just the
+           ink gutter's own residual (~4-5px). Same fix as ReceiptCandidates.js
+           .rc-index-name (line-clamp:3). */
         .bl-cand-root .bl-crow__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,32px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
-          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
         .bl-cand-root .bl-crow__link:hover .bl-crow__name { color:var(--bl-primary-ink); }
         /* ink gutter: same Kanit-vs-lh clipping as .bl-crow__name above, just far
            smaller here because lh 1.5 is generous — measured needEm 0.01 constant

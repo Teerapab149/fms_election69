@@ -662,7 +662,17 @@ export default function BlossomHome({
         /* ── entrance choreography (CSS-ONLY — base style is the VISIBLE state; each
            keyframe only supplies the hidden from-frame, so reduced-motion animation:none
            lands everything visible. No JS gates visibility.) ── */
-        .bl-reveal { display:block; overflow:hidden; }
+        /* .bl-reveal is also the ink-clip window (overflow:hidden) for the slide-up
+           reveal, not just an animation mask — Kanit's glyph box at this line-height
+           overflows the 1.1 line box on BOTH edges (measured via Range on rendered
+           text, .specs/qa-0925-blossom/reveal-ink2.mjs: top .20-.23em, bottom .17-.19em
+           of font-size, constant across all 4 breakpoints) so real tone-mark ink was
+           being clipped, not just the animation's off-screen state (screenshot proof:
+           .specs/qa-0925-blossom/headline-1440.png shows a flat-cut top on ศึ). Open the
+           clip window with padding + cancel the added box height with equal negative
+           margin so line position/spacing is unchanged (same technique as the
+           .bl-crow__slogan / .bl-vopt__slogan ink-groove fix, QA-blossom-slogan-2026-07-26). */
+        .bl-reveal { display:block; overflow:hidden; padding-top:.25em; padding-bottom:.21em; margin-top:-.25em; margin-bottom:-.21em; }
         .bl-reveal__in { display:block; animation:blLineUp .65s cubic-bezier(.22,1,.36,1) both; }
         .bl-headline .bl-reveal:nth-child(1) .bl-reveal__in { animation-delay:.15s; }
         .bl-headline .bl-reveal:nth-child(2) .bl-reveal__in { animation-delay:.28s; }
