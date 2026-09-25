@@ -31,7 +31,62 @@ async function isValidAdminToken(token) {
 // admin_token จึงไม่กระทบของเดิม
 const ADMIN_TOOL_PAGES = ['/preview', '/template-preview', '/template-playground'];
 
+// ─── Content-Security-Policy (H1 defence in depth, 2026-09-25) ───────────────
+//
+// Nonce-based, per request, the way Next documents it: Next reads the CSP from
+// the *request* headers, pulls the nonce out and stamps it onto every script it
+// renders (framework chunks + the inline RSC payload). 'strict-dynamic' then
+// lets those nonce'd scripts load the rest of the chunks. An injected
+// <script> without the nonce does not run — which is the point: H1 showed that
+// one admin-controlled value reaching a <style> tag was enough to run script on
+// /vote and cast ballots for whoever was logged in.
+//
+// This works only because every page is dynamically rendered (the root layout
+// calls getServerSession + reads the DB), so each response carries a fresh nonce.
+// A statically prerendered page would ship HTML without the nonce and break.
+//
+// style-src keeps 'unsafe-inline': framer-motion writes style attributes and the
+// templates inject <style> tags. That is styling, not script execution.
+function buildCsp(nonce) {
+  const dev = process.env.NODE_ENV !== "production";
+  return [
+    "default-src 'self'",
+    // 'unsafe-eval' only for next dev (react-refresh); never in a production build
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
+    "style-src 'self' 'unsafe-inline'",
+    // https: — party pages pull a texture from transparenttextures.com; data:/blob:
+    // for inline placeholders and client-side image previews in the admin console
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src 'self'${dev ? " ws: wss:" : ""}`,
+    // success page embeds the evaluation Google Form; admin chooser embeds our own pages
+    "frame-src 'self' https://docs.google.com https://forms.gle",
+    "frame-ancestors 'self'",
+    "form-action 'self' https://psusso.psu.ac.th",
+    "base-uri 'self'",
+    "object-src 'none'",
+  ].join("; ");
+}
+
 export async function middleware(request) {
+  const nonce = btoa(crypto.randomUUID());
+  const csp = buildCsp(nonce);
+  const withCsp = (res) => {
+    res.headers.set("Content-Security-Policy", csp);
+    return res;
+  };
+  const response = await guardAdmin(request);
+  if (response) return withCsp(response);
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+  return withCsp(NextResponse.next({ request: { headers: requestHeaders } }));
+}
+
+// The admin gate, unchanged: returns a redirect response, or undefined to let the
+// request through.
+async function guardAdmin(request) {
   const path = request.nextUrl.pathname;
   const isAdminPage = path.startsWith('/admin');
   const isLoginPage = path === '/admin/login';
@@ -61,12 +116,12 @@ export async function middleware(request) {
   }
 }
 
-// เฝ้า /admin + หน้าเครื่องมือแอดมินที่อยู่นอก /admin (ดู ADMIN_TOOL_PAGES)
+// Every page (so each HTML response gets a CSP nonce) — guardAdmin() still only
+// acts on /admin + ADMIN_TOOL_PAGES. Excluded: API routes (JSON, no HTML — and
+// /api/vote stays free of middleware overhead), Next's static assets, and the
+// /images rewrite to /api/media.
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/preview',
-    '/template-preview',
-    '/template-playground',
+    '/((?!api/|_next/static|_next/image|images/|favicon\\.ico).*)',
   ],
 };

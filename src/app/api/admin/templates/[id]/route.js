@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../../lib/db";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
 import { getTemplate, isTemplateEditable, isBuiltInSlug } from "../../../../../components/admin/editor/templates";
+import { validateTemplateStyles } from "../../../../../lib/cssSafety.mjs";
 
 // Next 15: params ใน route handler เป็น Promise แล้ว ต้อง await ก่อนใช้
 // (ของเดิม `{ params }` แล้วอ่าน params.id ตรง ๆ ได้ เพราะ 14 ส่งเป็น object)
@@ -60,6 +61,16 @@ export async function PUT(request, { params }) {
   const updateData = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowedFields.includes(k))
   );
+
+  // same gate as template create + page-layout (H1, cssSafety.mjs): an editable
+  // template can be applied site-wide, and its tokens/vars render into <style>
+  const styleErrors = validateTemplateStyles({ theme: updateData.theme, elements: updateData.elements });
+  if (styleErrors.length > 0) {
+    return NextResponse.json(
+      { error: `ค่าธีมไม่ผ่านการตรวจ: ${styleErrors[0]}`, errors: styleErrors.slice(0, 20) },
+      { status: 400 }
+    );
+  }
 
   try {
     const updated = await db.template.update({

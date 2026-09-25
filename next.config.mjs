@@ -47,6 +47,30 @@ const nextConfig = {
     // getPath() ที่ fetch/<a href>/<img src> ใช้ — ตั้งข้างเดียวคือครึ่งเว็บพัง
     assetPrefix: process.env.ASSET_PREFIX || undefined,
     basePath: process.env.BASE_PATH || undefined,
+    poweredByHeader: false,
+    // Security headers for every response (pages + API). The per-request
+    // Content-Security-Policy is NOT here — it needs a fresh nonce each time, so
+    // src/middleware.js sets it. Nothing upstream sets these today (the repo's
+    // nginx config only proxies), so there is no duplicate to fight with; if nginx
+    // later adds its own, remove one side rather than sending both.
+    async headers() {
+        const headers = [
+            { key: 'X-Content-Type-Options', value: 'nosniff' },
+            { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+            // same-origin framing stays allowed: the admin template chooser iframes
+            // /template-preview. CSP frame-ancestors 'self' says the same for modern
+            // browsers; this line covers the ones that only read X-Frame-Options.
+            { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+            { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
+        ];
+        // HSTS only from a production build. Browsers ignore it over plain http, so
+        // it is harmless on http://localhost e2e runs; no `preload` — that is a
+        // one-way door for the whole domain and not ours to decide.
+        if (process.env.NODE_ENV === 'production') {
+            headers.push({ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' });
+        }
+        return [{ source: '/:path*', headers }];
+    },
     async rewrites() {
         return {
             // beforeFiles = ก่อน Next จะไปดูไฟล์ใน public/

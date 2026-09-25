@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../../../lib/db";
 import { requireAdmin } from "../../../../../../lib/auth/adminCheck";
 import { getTemplate, isBuiltInSlug } from "../../../../../../components/admin/editor/templates";
+import { validateTemplateStyles } from "../../../../../../lib/cssSafety.mjs";
 
 // Next 15: params ใน route handler เป็น Promise แล้ว ต้อง await ก่อนใช้
 // (ของเดิม `{ params }` แล้วอ่าน params.id ตรง ๆ ได้ เพราะ 14 ส่งเป็น object)
@@ -41,6 +42,16 @@ export async function POST(request, { params }) {
 
   if (isBuiltInSlug(newSlug)) {
     return NextResponse.json({ error: "Slug reserved for built-in" }, { status: 400 });
+  }
+
+  // A fork copies theme/elements verbatim. Built-ins are known-good, but a DB
+  // source could predate the H1 gate — don't launder an unsafe row into a new one.
+  const styleErrors = validateTemplateStyles({ theme: source.theme, elements: source.elements });
+  if (styleErrors.length > 0) {
+    return NextResponse.json(
+      { error: `แม่แบบต้นทางมีค่าธีมที่ไม่ผ่านการตรวจ: ${styleErrors[0]}` },
+      { status: 400 }
+    );
   }
 
   const existing = await db.template.findUnique({ where: { slug: newSlug } });
