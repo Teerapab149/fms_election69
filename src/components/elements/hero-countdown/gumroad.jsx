@@ -81,7 +81,14 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
            one card instead of four, so the tile keeps its box/material identity. */
         .gh-cd__status{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; border:2px solid var(--ink, #26271c); padding:clamp(16px,2.2cqw,22px) clamp(12px,1.8cqw,18px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; }
         .gh-cd__status-txt{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:800; font-size:clamp(15px,2.1cqw,20px); line-height:1.25; }
-        .gh-cd__status-cap{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:600; font-size:clamp(11px,1.3cqw,13px); color:var(--cd-accent, var(--pink, #FF9CE9)); letter-spacing:.02em; }
+        /* QA 2026-09-25: was color:var(--cd-accent) — the bright accent pink is
+           tuned for the dark .gh-cd ink background, but this caption sits inside
+           .gh-cd__status which is the CREAM card (same as .gh-cd__status-txt/
+           .gh-cd__unit). pink-on-cream measured 1.76:1 across all 6 colour slugs
+           (need 4.5 at 11-13px) — swap to --ink2 (the same muted-on-cream token
+           .gh-cd__unit already uses two lines down), which measures 6.3-8.65:1
+           on all 6 slugs (base/cyber/retro/acid/premium/bubblegum). */
+        .gh-cd__status-cap{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:600; font-size:clamp(11px,1.3cqw,13px); color:var(--cd-caption, var(--ink2, #5c5a4b)); letter-spacing:.02em; }
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }
         .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:var(--ink2, #5c5a4b); margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
         .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:ghCdPulse 1.6s ease-out infinite; }

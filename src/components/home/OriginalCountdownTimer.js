@@ -90,7 +90,9 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
           icon: <Hourglass className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-orange-500 animate-spin" />,
           badgeBg: "bg-orange-100 !text-orange-700",
           textMain: "text-orange-600",
-          textSub: "text-orange-400",
+          // orange-400 on white measured 2.26:1 at 12px (AA needs 4.5) — orange-700
+          // is 5.18:1 (2026-09-25 QA sweep, mobile 360/375/412 contrast pass)
+          textSub: "text-orange-700",
           border: "border-orange-200",
           shadow: "shadow-sm shadow-orange-100"
         };
@@ -100,7 +102,9 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
           icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-slate-500" />,
           badgeBg: "bg-slate-200 !text-slate-700",
           textMain: "text-slate-600",
-          textSub: "text-slate-400",
+          // slate-400 on white measured 2.56:1 at 12px (AA needs 4.5) — slate-500
+          // is 4.76:1 (2026-09-25 QA sweep, mobile 360/375/412 contrast pass)
+          textSub: "text-slate-500",
           border: "border-slate-300",
           shadow: "shadow-none"
         };
@@ -110,7 +114,9 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
           icon: <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 animate-pulse" />,
           badgeBg: "bg-red-500",
           textMain: "text-red-600",
-          textSub: "text-red-400",
+          // red-400 on white measured 2.77:1 at 12px (AA needs 4.5) — red-600
+          // is 4.83:1 (2026-09-25 QA sweep, mobile 360/375/412 contrast pass)
+          textSub: "text-red-600",
           border: "border-red-100",
           shadow: "shadow-[0_2px_15px_rgba(239,68,68,0.2)]"
         };
@@ -120,7 +126,9 @@ export default function CountdownTimer({ compact = false, systemMode = "AUTO" })
           icon: <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />,
           badgeBg: "bg-slate-800",
           textMain: "text-slate-700",
-          textSub: "text-slate-400",
+          // slate-400 on white measured 2.56:1 at 12px (AA needs 4.5) — slate-500
+          // is 4.76:1 (2026-09-25 QA sweep, mobile 360/375/412 contrast pass)
+          textSub: "text-slate-500",
           border: "border-slate-200",
           shadow: "shadow-sm"
         };
