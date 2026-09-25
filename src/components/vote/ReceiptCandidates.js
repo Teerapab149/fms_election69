@@ -119,7 +119,11 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
                       <span className="rc-flyer__head">
                         <span className="rc-flyer__logo">
                           {logo ? (
-                            <img src={logo} alt={p.name} width="64" height="64" loading="lazy" />
+                            /* candidate grid: no lazy-load, by owner decision — lazy images
+                               popped in one by one on this grid a year ago and broke the flow
+                               ("ทุกคนเห็นทันที"). The fix for weight is fewer bytes (webp at
+                               upload), not deferred loading. */
+                            <img src={logo} alt={p.name} width="64" height="64" />
                           ) : (
                             <span className="rc-flyer__logo-ph" aria-hidden="true">{pad2(p.number)}</span>
                           )}
