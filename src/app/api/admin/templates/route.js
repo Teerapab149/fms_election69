@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { requireAdmin } from "../../../../lib/auth/adminCheck";
 import { listTemplates, isBuiltInSlug } from "../../../../components/admin/editor/templates";
+import { validateTemplateStyles } from "../../../../lib/cssSafety.mjs";
 
 // GET /api/admin/templates — list (built-ins + DB)
 export async function GET(request) {
@@ -68,6 +69,16 @@ export async function POST(request) {
   if (isBuiltInSlug(slug)) {
     return NextResponse.json(
       { error: `Slug "${slug}" is reserved for built-in template` },
+      { status: 400 }
+    );
+  }
+
+  // theme.tokens + elements[id].vars go straight into the site-wide <style> once
+  // this template is applied — same gate as page-layout (H1, cssSafety.mjs)
+  const styleErrors = validateTemplateStyles({ theme, elements });
+  if (styleErrors.length > 0) {
+    return NextResponse.json(
+      { error: `ค่าธีมไม่ผ่านการตรวจ: ${styleErrors[0]}`, errors: styleErrors.slice(0, 20) },
       { status: 400 }
     );
   }

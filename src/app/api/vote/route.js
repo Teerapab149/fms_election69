@@ -6,6 +6,25 @@ import { rateLimit } from "../../../lib/rateLimit";
 import { encryptBallot } from "../../../lib/ballotCrypto";
 import { appendBallotTx, hourBucketBangkok } from "../../../lib/ballotChain";
 
+// Interactive-transaction limits for the vote (M1, 2026-09-25).
+//
+// Prisma's defaults are maxWait 2s (to get a pooled connection) and timeout 5s
+// (start → commit). Every vote serialises on the ChainHead row lock — on
+// purpose, it is what keeps the ballot chain gap-free — so under a burst, every
+// pooled connection is held by a transaction queued behind that lock and new
+// votes wait for a connection. The load test (scripts/load/vote-load.mjs)
+// measured ~100 committed votes/s; a 500-voter burst therefore needs ~5s to
+// drain and the defaults turned the tail into P2028 → HTTP 500 (58 of 500).
+//
+// Raising both limits makes those requests queue instead of failing. It changes
+// nothing about correctness: a transaction that does time out still rolls back
+// whole (no isVoted without a ballot, no ballot without a score), and the voter
+// can simply retry. Override per deployment without a rebuild if needed.
+const VOTE_TX_OPTIONS = {
+  maxWait: Number(process.env.VOTE_TX_MAX_WAIT_MS) || 15000,
+  timeout: Number(process.env.VOTE_TX_TIMEOUT_MS) || 15000,
+};
+
 export async function POST(request) {
   try {
     // 🔐 Security Fix: ดึง studentId จาก verified session แทน request body
@@ -163,7 +182,7 @@ export async function POST(request) {
         data: { score: { increment: 1 } },
       });
       return "OK";
-    });
+    }, VOTE_TX_OPTIONS);
 
     if (outcome === "ALREADY_VOTED") {
       return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });

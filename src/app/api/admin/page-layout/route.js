@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from "../../../../lib/db";
 import { hasVariant } from "../../../../components/elements/registry.js";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { validateThemeTokens, validateElementVars, validateElementCss } from "../../../../lib/cssSafety.mjs";
 
 // E2E-DIAG: GET below takes no `request` and reads only the DB, so Next 14's App
 // Router classified this route as STATIC and prerendered its body at BUILD time
@@ -95,60 +96,25 @@ export async function PUT(request) {
       }
     }
 
-    // Day 11: validate Layer 1 theme token overrides — strict key allow-list,
-    // non-empty string values. Rejects typos before they hit the live scope.
+    // Layer 1 tokens, Layer 2 element vars, Layer 3 custom CSS all end up inside
+    // the <style> tag the root layout renders on every public page. The old
+    // checks here were "is it a non-empty string", which let
+    // `red}</style><script>…` through (H1, 2026-09-25). cssSafety validates each
+    // value by what it is supposed to be (colour, length, font stack …), and the
+    // page/element ids and var names by a strict identifier pattern.
+    // templateTokens.js re-checks at render time — this is the layer that tells
+    // the admin what was wrong instead of silently dropping it.
     const { themeTokens, elementVars, elementCss } = body;
-    if (themeTokens && typeof themeTokens === "object") {
-      for (const [key, value] of Object.entries(themeTokens)) {
-        if (!VALID_TOKEN_KEYS.has(key)) {
-          return NextResponse.json({ error: `Unknown theme token "${key}"` }, { status: 400 });
-        }
-        if (typeof value !== "string" || value.trim() === "") {
-          return NextResponse.json({ error: `Invalid value for theme token "${key}"` }, { status: 400 });
-        }
-      }
-    }
-
-    // Day 11: validate Layer 2 per-element var overrides — var name must be a
-    // CSS custom property (-- prefix), value a non-empty string.
-    if (elementVars && typeof elementVars === "object") {
-      for (const [pageId, elementMap] of Object.entries(elementVars)) {
-        if (!elementMap || typeof elementMap !== "object") {
-          return NextResponse.json({ error: `Invalid elementVars for page "${pageId}"` }, { status: 400 });
-        }
-        for (const [elementId, varMap] of Object.entries(elementMap)) {
-          if (!varMap || typeof varMap !== "object") {
-            return NextResponse.json({ error: `Invalid elementVars for element "${elementId}"` }, { status: 400 });
-          }
-          for (const [varKey, val] of Object.entries(varMap)) {
-            if (!varKey.startsWith("--") || typeof val !== "string" || val.trim() === "") {
-              return NextResponse.json(
-                { error: `Invalid var "${varKey}" for element "${elementId}"` },
-                { status: 400 }
-              );
-            }
-          }
-        }
-      }
-    }
-
-    // Pillar 3: validate Layer 3 per-element custom CSS — each value must be a
-    // string (raw declarations). Scoping + `<>` stripping happen at render time
-    // (buildElementCss); this is the shape gate before persist.
-    if (elementCss && typeof elementCss === "object") {
-      for (const [pageId, elementMap] of Object.entries(elementCss)) {
-        if (!elementMap || typeof elementMap !== "object") {
-          return NextResponse.json({ error: `Invalid elementCss for page "${pageId}"` }, { status: 400 });
-        }
-        for (const [elementId, css] of Object.entries(elementMap)) {
-          if (typeof css !== "string") {
-            return NextResponse.json(
-              { error: `Invalid custom CSS for element "${elementId}"` },
-              { status: 400 }
-            );
-          }
-        }
-      }
+    const styleErrors = [
+      ...validateThemeTokens(themeTokens, VALID_TOKEN_KEYS),
+      ...validateElementVars(elementVars),
+      ...validateElementCss(elementCss),
+    ];
+    if (styleErrors.length > 0) {
+      return NextResponse.json(
+        { error: `ค่าธีมไม่ผ่านการตรวจ: ${styleErrors[0]}`, errors: styleErrors.slice(0, 20) },
+        { status: 400 }
+      );
     }
 
     // Shallow-merge: ป้องกัน body ว่าง หรือ missing fields

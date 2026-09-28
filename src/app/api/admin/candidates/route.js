@@ -580,7 +580,10 @@ export async function PUT(req) {
       const candidate = await tx.candidate.update({
         where: { id: parseInt(id) },
         data: dataToUpdate,
-        include: { members: true }
+        include: { members: true },
+        // H2: the edit modal never reads score, and returning it here handed every
+        // admin who saved a slogan the party's live tally mid-election
+        omit: { score: true },
       });
 
       if (partyNumberChanged) {

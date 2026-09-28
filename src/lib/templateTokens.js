@@ -1,3 +1,5 @@
+import { isSafeVarName, isSafeCssValue, isSafeElementId, isSafeCustomCss } from "./cssSafety.mjs";
+
 /**
  * Layer 1 token emission — unified pipeline (ADR-001 D11).
  *
@@ -11,12 +13,17 @@
  *                          tokens independently without polluting :root.
  * @returns {string} CSS text to put inside a <style> block. Empty string when
  *                   tokens is missing or has no -- prefixed keys.
+ *
+ * Every pair is checked again here (H1): the output goes into
+ * `<style dangerouslySetInnerHTML>` unescaped, so the API validation alone is
+ * one missed route away from `</style><script>` on every public page. A name or
+ * value that fails cssSafety is dropped, never emitted.
  */
 export function buildTokenStyles(tokens, scope = ":root") {
   if (!tokens || typeof tokens !== "object") return "";
   const decls = Object.entries(tokens)
-    .filter(([k]) => typeof k === "string" && k.startsWith("--"))
-    .map(([k, v]) => `  ${k}: ${v};`)
+    .filter(([k, v]) => isSafeVarName(k) && isSafeCssValue(v))
+    .map(([k, v]) => `  ${k}: ${v.trim()};`)
     .join("\n");
   if (!decls) return "";
   return `${scope} {\n${decls}\n}`;
@@ -50,6 +57,8 @@ export function buildTemplateStyles(template, scope = ".fms-app") {
   // Layer 2: element-scope vars (one rule per element that defines `vars`)
   const elements = template?.elements || {};
   for (const [elementId, entry] of Object.entries(elements)) {
+    // the id is interpolated into the selector — `"]{}</style>` must not get there
+    if (!isSafeElementId(elementId)) continue;
     if (entry?.vars && typeof entry.vars === "object") {
       const css = buildTokenStyles(entry.vars, `${scope} [data-element="${elementId}"]`);
       if (css) blocks.push(css);
@@ -65,9 +74,12 @@ export function buildTemplateStyles(template, scope = ".fms-app") {
  * Wraps each element's raw declaration string as a scoped rule
  * `{scope} [data-element="X"]{ ... }`. The textarea holds DECLARATIONS only
  * (e.g. `transform: rotate(-2deg);`), so the wrapper owns the braces and the
- * admin can't accidentally (or maliciously) escape the element scope. We also
- * strip `<`/`>` to block `</style>` injection. Dev-only feature (RSA-gated
- * admin), but cheap defense is still worth it.
+ * admin can't accidentally (or maliciously) escape the element scope.
+ *
+ * H1 (2026-09-25): stripping `<`/`>` from the declarations was not enough — the
+ * element id went into the selector untouched, and `}` in the declarations
+ * could still close the scoped rule. Both are now checked with cssSafety and an
+ * entry that fails is skipped whole rather than half-sanitised.
  *
  * @param {Object} cssMap - { [elementId]: "css declarations" }
  * @param {string} scope  - CSS selector for the root (default ".fms-app")
@@ -77,8 +89,8 @@ export function buildElementCss(cssMap, scope = ".fms-app") {
   if (!cssMap || typeof cssMap !== "object") return "";
   const blocks = [];
   for (const [elementId, raw] of Object.entries(cssMap)) {
-    if (typeof raw !== "string") continue;
-    const decls = raw.replace(/[<>]/g, "").trim();
+    if (!isSafeElementId(elementId) || !isSafeCustomCss(raw)) continue;
+    const decls = raw.trim();
     if (!decls) continue;
     blocks.push(`${scope} [data-element="${elementId}"] {\n${decls}\n}`);
   }
