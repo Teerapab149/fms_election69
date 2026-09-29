@@ -189,10 +189,15 @@ function PreviewBody() {
   // ทั้งสองรายการมี slug เดียวกัน เงื่อนไข `on` จึงจริงทั้งคู่ → ติ๊กถูกสองวง สีม่วงเหมือนกัน
   // (แถม key={t.slug} ซ้ำอีก) · ฝั่ง registry listing dedupe ด้วย slug อยู่แล้ว (index.js:124)
   // ที่นี่ลอกไม่ครบมาแต่แรก
+  // Grouped by the template's OWN layoutFamily, not `family`: `family` is mapped
+  // to the base family (a v2 template falls back to its base's pages), so
+  // ballot-official was grouped with fms-official here — the full-screen preview
+  // loaded fms-official in its iframe and offered fms-official's swatches.
+  const ownFamily = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
   const familyThemes = [
     ...new Map(
       Object.values(BUILT_IN_TEMPLATES)
-        .filter((t) => (t.layoutFamily || 'classic') === family)
+        .filter((t) => (t.layoutFamily || 'classic') === ownFamily)
         .map((t) => [t.slug, t])
     ).values(),
   ].map((t) => ({ slug: t.slug, name: t.name, color: t.colorSwatch?.primary || '#8A2680' }));

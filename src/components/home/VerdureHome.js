@@ -196,6 +196,16 @@ export default function VerdureHome({
   const partyCount = parties.length || (editorMode ? 2 : 0);
   const deckText = String(getText("hero-subtitle", meta.campaign) ?? meta.campaign);
   const href = (h) => (editorMode ? undefined : getPath(h));
+  // "9 FEB 2027" — the same register as "VOL. 50 / 2027" on the other side
+  // (months spelled out here: en-GB's "short" month is "Sept", not "SEP")
+  const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const votingDay = election.start instanceof Date && !isNaN(election.start.getTime())
+    ? (() => {
+        const parts = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Bangkok" }).formatToParts(election.start);
+        const get = (t) => parts.find((x) => x.type === t)?.value;
+        return `${Number(get("day"))} ${MON[Number(get("month")) - 1]} ${get("year")}`;
+      })()
+    : "";
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
@@ -217,7 +227,10 @@ export default function VerdureHome({
 
       <div className="vd-home">
         <div className="vd-home__above">
-          <span className="side side--l">EST. {meta.founded}</span>
+          {/* the polling day, from the configured schedule — it used to read
+              "EST. 1978", a founding year computed as (year − edition + 1) that
+              no one had set and no voter needed */}
+          <span className="side side--l">VOTING · {votingDay}</span>
           <span className="mid">{meta.tagline}</span>
           <span className="side side--r">VOL. {numberPart} / {meta.cy}</span>
         </div>

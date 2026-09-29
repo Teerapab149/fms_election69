@@ -23,7 +23,7 @@ const p = BALLOT_OFFICIAL;
 
 export const ballotOfficialTemplate = {
   slug: "ballot-official",
-  name: "บัตรเลือกตั้ง",
+  name: "Ballot",
   description:
     "ธีมทางการรุ่นใหม่ หน้าเว็บสร้างรอบ “บัตรเลือกตั้ง” ที่ทุกคนคุ้นเคย ตัวอักษรไม่มีหัวอ่านง่าย สีม่วงคณะ เห็นชัดตั้งแต่จอแรกว่าต้องทำอะไร",
   layoutFamily: "ballot-official",
