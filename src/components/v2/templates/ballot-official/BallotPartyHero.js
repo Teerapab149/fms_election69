@@ -11,6 +11,7 @@ import { Maximize2 } from "lucide-react";
 import { getPath } from "../../../../utils/basePath";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
+import { Phrases } from "./BallotChrome";
 
 const EASE = [0.16, 1, 0.3, 1];
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
@@ -33,7 +34,7 @@ const BallotPartyHero = forwardRef(function BallotPartyHero(
     <section className="bh">
       <div className="bh__in">
         <div className="bh__txt">
-          <p className="bh__ctx">{meta.wordmark} {meta.campaign}</p>
+          <p className="bh__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
           <div className="bh__mark">
             {party?.logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element

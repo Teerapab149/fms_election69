@@ -19,7 +19,7 @@ import { MotionConfig, motion } from "framer-motion"; // Motion for React
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { resolveVerdict } from "../../../../utils/electionVerdict";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 import BallotBox from "./BallotBox";
 import { resultsView } from "../../shared/results/resultsView.mjs";
 
@@ -67,7 +67,7 @@ export default function BallotResults({
         <main>
           <section className="br">
             <div className="br__in">
-              <p className="br__ctx">{meta.wordmark} {meta.campaign}</p>
+              <p className="br__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
               <h1 className="br__title">{r.title}</h1>
               <p className="br__lede">{lede}</p>
 

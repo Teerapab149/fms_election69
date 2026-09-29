@@ -29,10 +29,12 @@ export const ballotMeta = electionMeta;
 // "โครงการ / เลือกตั้งคณะ / กรรมการบริหาร" split "คณะกรรมการ" in two, and
 // "สโมสรนักศึกษาคณะ / วิทยาการจัดการ" split the faculty's name. A line may only
 // break between phrases: before "คณะ…" / "สโมสร" / "ประจำปี", or at a space the
-// admin typed. Anything else stays as written (one phrase).
+// admin typed — but never before a Latin word or a number, so "SAMO 50",
+// "PSU Passport" and "ปีการศึกษา 2570" stay whole. Anything else stays as
+// written (one phrase).
 export function thaiPhrases(s) {
   const str = String(s || "");
-  const parts = str.split(/(?=คณะ|สโมสร|ประจำปี)|\s+/).map((x) => x.trim()).filter(Boolean);
+  const parts = str.split(/(?=คณะ|สโมสร|ประจำปี)|\s+(?![0-9A-Za-z])/).map((x) => x.trim()).filter(Boolean);
   return parts.length ? parts : [str];
 }
 export function Phrases({ text }) {

@@ -10,7 +10,7 @@ import { MotionConfig } from "framer-motion"; // Motion for React
 import { getPath } from "../../../../utils/basePath";
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 import BallotPartyCard from "./BallotPartyCard";
 
 export default function BallotCandidates({ candidates = [], editorMode = false }) {
@@ -29,7 +29,7 @@ export default function BallotCandidates({ candidates = [], editorMode = false }
         <main>
           <section className="bc">
             <div className="bc__in">
-              <p className="bc__ctx">{meta.wordmark} {meta.campaign}</p>
+              <p className="bc__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
               <h1 className="bc__title">
                 {c.title}
                 {parties.length > 0 && <span className="bc__count">{parties.length} {c.count}</span>}

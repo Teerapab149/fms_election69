@@ -16,7 +16,7 @@ import { MotionConfig } from "framer-motion"; // Motion for React
 import { Loader2, AlertCircle } from "lucide-react";
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 
 export default function BallotLogin({
   error, loading, onLogin, showMock = false, mockStudentId, setMockStudentId,
@@ -37,12 +37,12 @@ export default function BallotLogin({
               {k.steps.map((s, i) => (
                 <li key={s} className={i === 0 ? "is-now" : ""} aria-current={i === 0 ? "step" : undefined}>
                   <span className="bl__n">{i + 1}</span>
-                  <span className="bl__s">{s}</span>
+                  <span className="bl__s"><Phrases text={s} /></span>
                 </li>
               ))}
             </ol>
 
-            <p className="bl__ctx">{meta.wordmark} {meta.campaign}</p>
+            <p className="bl__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
             <h1 className="bl__title">{k.title}</h1>
             <p className="bl__lede">{k.lede}</p>
 
@@ -87,6 +87,8 @@ export default function BallotLogin({
           .bl__steps li { display: flex; flex-direction: column; gap: 6px; color: var(--bo-muted); }
           .bl__n { width: 30px; height: 30px; display: grid; place-items: center; border: 2px solid var(--bo-rule); border-radius: 3px; font-weight: 800; font-size: 15px; }
           .bl__s { font-size: 13.5px; font-weight: 600; line-height: 1.4; }
+          /* a label that is one phrase may still wrap if the column is narrower than it */
+          .bl__s .bo-phrase:only-child { white-space: normal; }
           .bl__steps li.is-now { color: var(--bo-plum); }
           .bl__steps li.is-now .bl__n { background: var(--bo-plum); border-color: var(--bo-plum); color: #fff; }
           .bl__ctx { margin: 0; font-size: 14px; color: var(--bo-muted); }
