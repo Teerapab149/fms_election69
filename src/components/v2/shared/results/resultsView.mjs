@@ -22,7 +22,7 @@ const ballotOrder = (a, b) => {
  *   rows: revealed → sorted by score, each with `score` and `share` (%);
  *         sealed → ballot order, `score`/`share` removed
  */
-export function resultsView({ candidates = [], totalVotes = 0, demographics = {}, revealed = false, groups = [] } = {}) {
+export function resultsView({ candidates = [], totalVotes = 0, demographics = {}, revealed = false, groups = [], unknownLabel = "" } = {}) {
   const list = (Array.isArray(candidates) ? candidates : []).filter(Boolean);
   const rows = revealed
     ? [...list]
@@ -33,11 +33,19 @@ export function resultsView({ candidates = [], totalVotes = 0, demographics = {}
   const eligible = demographics?.totalEligible || 0;
   const turnout = eligible > 0 ? (totalVotes / eligible) * 100 : 0;
 
-  // groups: [{ key: "byYear", label: "ชั้นปี" }, …] — labels are the template's words
+  // groups: [{ key: "byYear", label: "ชั้นปี" }, …] — labels are the template's words.
+  // The API leaves out voters with no value on record (no gender, no major), so
+  // a group can add up to fewer than the voters. Given `unknownLabel`, the gap
+  // becomes its own row, and every group totals the same number as the page's
+  // ballot count instead of three different ones.
   const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
   const demo = groups
     .map((g) => {
       const rowsOf = clean(demographics?.[g.key]).map((x) => ({ name: x.name, value: x.value || x.count || 0 }));
+      const known = rowsOf.reduce((a, x) => a + x.value, 0);
+      if (unknownLabel && rowsOf.length > 0 && totalVotes > known) {
+        rowsOf.push({ name: unknownLabel, value: totalVotes - known, unknown: true });
+      }
       const sum = rowsOf.reduce((a, x) => a + x.value, 0) || 1;
       return { label: g.label, rows: rowsOf.map((x) => ({ ...x, share: (x.value / sum) * 100 })) };
     })

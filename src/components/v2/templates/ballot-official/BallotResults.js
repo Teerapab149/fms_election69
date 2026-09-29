@@ -25,6 +25,9 @@ import { resultsView } from "../../shared/results/resultsView.mjs";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n ?? 0);
 const EASE = [0.16, 1, 0.3, 1];
+// one ink, stepping lighter row by row, so the strip reads as a single whole
+// in the theme's colour rather than a rainbow of unrelated categories
+const DEMO_SHADES = [1, 0.74, 0.54, 0.38, 0.26, 0.17];
 
 export default function BallotResults({
   candidates = [], totalVotes = 0, demographics = {},
@@ -39,7 +42,8 @@ export default function BallotResults({
   const { rows, eligible, turnout, demo } = useMemo(() => resultsView({
     candidates, totalVotes, demographics, revealed: isRevealed,
     groups: [{ key: "byYear", label: r.demoYear }, { key: "byGender", label: r.demoGender }, { key: "byMajor", label: r.demoMajor }],
-  }), [candidates, totalVotes, demographics, isRevealed, r]);
+    unknownLabel: r.demoUnknown,
+  }),[candidates, totalVotes, demographics, isRevealed, r]);
 
   const verdict = resolveVerdict(candidates, { revealed: isRevealed });
   const featuredId = verdict.featured?.id ?? null;
@@ -155,13 +159,22 @@ export default function BallotResults({
                       <div className="br-demo__grid">
                         {demo.map((g) => (
                           <div key={g.label} className="br-demo__g">
-                            <b>{g.label}</b>
+                            <b>{g.label}<span>{fmt(g.rows.reduce((a, x) => a + x.value, 0))} {r.people}</span></b>
+                            {/* the whole group as one strip: each segment's width is its
+                                share, its shade matches the key beside its row */}
+                            <span className="br-demo__strip" aria-hidden>
+                              {g.rows.map((x, i) => (
+                                <i key={x.name} className={x.unknown ? "is-unknown" : undefined}
+                                  style={{ flexGrow: x.value, "--a": DEMO_SHADES[i % DEMO_SHADES.length] }} />
+                              ))}
+                            </span>
                             <ul>
-                              {g.rows.map((x) => (
-                                <li key={x.name}>
-                                  <span>{x.name}</span>
+                              {g.rows.map((x, i) => (
+                                <li key={x.name} className={x.unknown ? "is-unknown" : undefined}>
+                                  <span className="br-demo__key" aria-hidden style={{ "--a": DEMO_SHADES[i % DEMO_SHADES.length] }} />
+                                  <span className="br-demo__n">{x.name}</span>
                                   <span className="br-demo__v">{fmt(x.value)}</span>
-                                  <span className="br-demo__bar" aria-hidden><i style={{ width: `${x.share}%` }} /></span>
+                                  <span className="br-demo__p">{x.share.toFixed(1)}%</span>
                                 </li>
                               ))}
                             </ul>
@@ -251,17 +264,40 @@ export default function BallotResults({
           .br-demo { margin-top: 64px; }
           .br-demo__h { margin: 0; font-size: 24px; font-weight: 800; }
           .br-demo__note { margin: 6px 0 0; font-size: 15px; color: var(--bo-muted); }
-          .br-demo__grid { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 36px; }
-          .br-demo__g > b { display: block; font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--bo-ink); }
-          .br-demo__g ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-          .br-demo__g li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; font-size: 15px; }
-          .br-demo__v { font-weight: 700; font-variant-numeric: tabular-nums; }
-          .br-demo__bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--bo-rule); overflow: hidden; }
-          .br-demo__bar i { display: block; height: 100%; background: var(--bo-plum); opacity: .6; }
+          /* the breakdown is printed on the same paper as the result sheet above;
+             its groups are divided by the ballot's dashed perforation */
+          .br-demo__grid {
+            margin-top: 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+            background: var(--bo-paper); border-radius: 12px;
+            box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.06), 0 24px 48px -30px rgba(var(--bo-shade-rgb),.45);
+          }
+          .br-demo__g { padding: 26px 28px 28px; min-width: 0; }
+          .br-demo__g + .br-demo__g { border-left: 2px dashed var(--bo-rule); }
+          .br-demo__g > b { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 17px; font-weight: 800; }
+          .br-demo__g > b span { font-size: 13.5px; font-weight: 500; color: var(--bo-muted); font-variant-numeric: tabular-nums; }
+          /* one strip per group; segments keep a hairline of paper between them */
+          .br-demo__strip { display: flex; gap: 2px; height: 14px; margin: 14px 0 18px; border-radius: 4px; overflow: hidden; }
+          .br-demo__strip i { display: block; min-width: 3px; background: rgba(var(--bo-plum-rgb), var(--a)); }
+          .br-demo__g ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+          .br-demo__g li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto 52px; gap: 10px; align-items: center; font-size: 15px; }
+          .br-demo__key { width: 12px; height: 12px; border-radius: 3px; background: rgba(var(--bo-plum-rgb), var(--a)); box-shadow: inset 0 0 0 1px rgba(var(--bo-plum-rgb),.18); }
+          .br-demo__n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .br-demo__v { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+          .br-demo__p { font-size: 13.5px; color: var(--bo-muted); font-variant-numeric: tabular-nums; text-align: right; }
+          /* voters with nothing on record: counted, but grey — not one of the groups */
+          .br-demo__g li.is-unknown { color: var(--bo-muted); }
+          .br-demo__g li.is-unknown .br-demo__key,
+          .br-demo__strip i.is-unknown {
+            background: repeating-linear-gradient(135deg, var(--bo-rule) 0 3px, transparent 3px 6px);
+            box-shadow: inset 0 0 0 1px var(--bo-rule);
+          }
 
           @media (max-width: 860px) {
             .br-box { grid-template-columns: minmax(0, 1fr); gap: 32px; }
             .br-box__art { max-width: 380px; width: 100%; margin: 0 auto; }
+            /* stacked, the perforation runs across instead of down */
+            .br-demo__grid { grid-template-columns: minmax(0, 1fr); }
+            .br-demo__g + .br-demo__g { border-left: 0; border-top: 2px dashed var(--bo-rule); }
           }
           @media (max-width: 640px) {
             .br__in { padding: 28px 16px 64px; }
@@ -289,7 +325,7 @@ export default function BallotResults({
             .br-sheet__foot { margin: 8px 18px 0; font-size: 12.5px; }
             .br-demo { margin-top: 44px; }
             .br-demo__h { font-size: 20px; }
-            .br-demo__grid { gap: 28px; }
+            .br-demo__g { padding: 22px 18px 24px; }
           }
         `}</style>
       </div>

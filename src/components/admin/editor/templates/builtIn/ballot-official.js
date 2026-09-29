@@ -208,6 +208,7 @@ export const ballotOfficialTemplate = {
       demoYear: "ชั้นปี",
       demoGender: "เพศ",
       demoMajor: "สาขา",
+      demoUnknown: "ไม่ระบุ",
     },
     // the status page (not open yet / paused / closed) — title and message come
     // from app/closed/page.js; these are only this family's own furniture

@@ -49,6 +49,16 @@ test("turnout and group tables", () => {
   assert.equal(v.demo.length, 1, "an empty group is dropped");
   assert.deepEqual(v.demo[0].rows.map((r) => [r.name, r.value, r.share]), [["ปี 1", 3, 75], ["ปี 2", 1, 25]]);
 });
+test("voters with no value on record become one 'unknown' row, so every group totals the ballots", () => {
+  const v = resultsView({
+    candidates: CANDS, totalVotes: 10, revealed: true,
+    demographics: { byGender: [{ name: "หญิง", value: 5 }, { name: "ชาย", value: 3 }], byYear: [{ name: "ปี 1", value: 10 }] },
+    groups: [{ key: "byGender", label: "เพศ" }, { key: "byYear", label: "ชั้นปี" }],
+    unknownLabel: "ไม่ระบุ",
+  });
+  assert.deepEqual(v.demo[0].rows.map((r) => [r.name, r.value, r.share]), [["หญิง", 5, 50], ["ชาย", 3, 30], ["ไม่ระบุ", 2, 20]]);
+  assert.equal(v.demo[1].rows.length, 1, "a complete group gets no unknown row");
+});
 
 // ── party content: same rules for every template ──
 const DEPS = {
