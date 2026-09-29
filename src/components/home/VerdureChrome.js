@@ -141,7 +141,10 @@ export function VerdureDock({ active = "home", editorMode = false }) {
 }
 
 // ── top-right status (live chip + user disc) ──
-export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode = "AUTO", statusChip = null, backHref = null, backLabel = "" }) {
+// `election` (from useElectionStatus): when the page has the server's status it
+// passes it, and the chip says exactly what the rest of the page says. Pages
+// without it (they only know systemMode) keep the calendar reading below.
+export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode = "AUTO", statusChip = null, backHref = null, backLabel = "", election = null }) {
   const globalConfig = useGlobalConfig();
   const { data: session, status } = useSession();
 
@@ -183,9 +186,24 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
   const userId = session?.user?.studentId || "";
   const avatarChar = (userName || "T").charAt(0).toUpperCase();
 
+  // what the chip says: from `election` when given, else the calendar reading.
+  // Only a real countdown gets a timer — a closed or paused election used to
+  // show a frozen "00D 00H 00M", which reads as a broken clock.
+  const chip = election
+    ? (() => {
+        const r = election.remaining;
+        if (election.target && r) return { label: election.target.kind === "opens" ? "Polls open in" : "Polls close", timer: `${pad(r.d)}D ${pad(r.h)}H ${pad(r.m)}M` };
+        if (election.phase === "open") return { label: "OPEN NOW", timer: "เปิดรับอยู่" };
+        if (election.phase === "paused") return { label: "PAUSED", timer: "หยุดชั่วคราว" };
+        if (election.phase === "before") return { label: "POLLS NOT OPEN", timer: "ยังไม่เปิด" };
+        return { label: "POLLS CLOSED", timer: "ปิดแล้ว" };
+      })()
+    : cd.noTimer ? { label: "OPEN NOW", timer: "เปิดรับอยู่" }
+    : (cd.d || cd.h || cd.m) ? { label: cd.label, timer: `${pad(cd.d)}D ${pad(cd.h)}H ${pad(cd.m)}M` }
+    : { label: cd.label, timer: cd.label === "PAUSED" ? "หยุดชั่วคราว" : "ปิดแล้ว" };
   const defaultChip = (
     <div className="vd-chip-live">
-      <span className="dot" /> {cd.noTimer ? "OPEN NOW" : cd.label} · <strong>{cd.noTimer ? "เปิดรับอยู่" : `${pad(cd.d)}D ${pad(cd.h)}H ${pad(cd.m)}M`}</strong>
+      <span className="dot" /> {chip.label} · <strong>{chip.timer}</strong>
     </div>
   );
 
@@ -431,6 +449,7 @@ export default function VerdureChrome({
   active = "home", moss = false, editorMode = false, systemMode = "AUTO",
   edge = { num: "01", label: "Home", th: "" }, cornermarkTitle = null,
   cornermarkSub = null, statusChip = null, backHref = null, backLabel = "",
+  election = null,
 }) {
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
@@ -439,7 +458,7 @@ export default function VerdureChrome({
       <VerdureEdge num={edge.num} label={edge.label} th={edge.th} right={!!edge.right} />
       <VerdureCornermark title={cornermarkTitle || meta.wordmark} sub={cornermarkSub || meta.cornermarkSub} editorMode={editorMode} />
       <VerdureCornerStatus active={active} editorMode={editorMode} systemMode={systemMode}
-        statusChip={statusChip} backHref={backHref} backLabel={backLabel} />
+        statusChip={statusChip} backHref={backHref} backLabel={backLabel} election={election} />
       <VerdureDock active={active} editorMode={editorMode} />
       <VerdureBaseStyles />
     </>

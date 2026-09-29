@@ -17,12 +17,14 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } fr
 import { useSession } from "next-auth/react";
 import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme, VerdureFooter } from "./VerdureChrome";
 import EditorElement from "../admin/editor/EditorElement";
-import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { getBinding } from "../admin/editor/elementCatalog";
 import { buildTemplateStyles } from "../../lib/templateTokens";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
-import { resolveElectionDates } from "../../utils/electionConfig";
+import { useElectionStatus } from "../../hooks/useElectionStatus";
+
+// useElectionStatus action → the voteCTA-button state vocabulary
+const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
 
 // ── the interactive wax seal ──
 function VerdureSeal({ num, ordSuffix, faculty, cy, prefix }) {
@@ -86,35 +88,42 @@ export default function VerdureHome({
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Phase-aware countdown: before open → count to START ("OPENS IN"); during →
-  // count to END ("CLOSES IN"); after → "ปิดแล้ว". A day segment prefixes the
-  // clock when >0 day remains so a multi-day gap doesn't render as "946:12:33".
+  // ONE status for the whole page. The corner chip, the ledger countdown and the
+  // CTA used to work it out three ways — the chip and ledger from the calendar,
+  // the CTA from the server — so a page could say "POLLS CLOSED · ปิดแล้ว" beside
+  // "เข้าสู่ระบบเพื่อลงคะแนน". useElectionStatus is the same source every v2
+  // template uses (rule 6); the chip receives it too (VerdureChrome `election`).
+  const signedIn = !editorMode && status === "authenticated" && !!session?.user;
+  const election = useElectionStatus({
+    globalConfig,
+    systemMode: initialData?.systemMode || initialData?.systemConfig?.systemMode || "AUTO",
+    isSystemOpen: editorMode ? true
+      : initialData?.isSystemOpen ?? initialData?.systemConfig?.isSystemOpen ?? initialData?.electionStatus === "ONGOING",
+    electionStatus: editorMode ? "ONGOING" : initialData?.electionStatus,
+    signedIn,
+    isVoted: !!(isVotedReal ?? initialData?.userData?.isVoted),
+    tick: !editorMode,
+  });
+
+  // The ledger's countdown, from that status. A day segment prefixes the clock
+  // when >0 day remains so a multi-day gap doesn't render as "946:12:33".
   // `days` is kept OUT of `value` on purpose: as one string the ledger rendered
   // "26 วัน10:32:34" — the ink gap between the Thai "น" and the clock's "1"
   // collapsed (the plain space advances only 6.8px at 34px, and the display
   // face's -.02em tracking eats what is left). Separate spans let CSS own the
   // separation instead of a glyph. See `.vd-home__stat .val .d` below.
-  const [cd, setCd] = useState({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "--:--:--" });
-  useEffect(() => {
-    const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
-    const fmt = (diff) => {
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff / 3600000) % 24), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
-      const p = (n) => String(n).padStart(2, "0");
-      return { days: d, value: `${p(h)}:${p(m)}:${p(s)}` };
-    };
-    const tick = () => {
-      const now = Date.now();
-      const start = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
-      const end = ELECTION_END instanceof Date ? ELECTION_END.getTime() : NaN;
-      if (!isNaN(start) && now < start) { setCd({ labelEn: "OPENS IN", labelTh: "เปิดใน", ...fmt(start - now) }); return; }
-      if (!isNaN(end) && now < end) { setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", ...fmt(end - now) }); return; }
-      setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "ปิดแล้ว" });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [globalConfig?.electionEndAt, globalConfig?.electionStartAt]);
+  const p2 = (n) => String(n).padStart(2, "0");
+  const rem = election.remaining;
+  const cd = election.target && rem
+    ? {
+        labelEn: election.target.kind === "opens" ? "OPENS IN" : "CLOSES IN",
+        labelTh: election.target.kind === "opens" ? "เปิดใน" : "ปิดใน",
+        days: rem.d, value: `${p2(rem.h)}:${p2(rem.m)}:${p2(rem.s)}`,
+      }
+    : election.phase === "paused" ? { labelEn: "STATUS", labelTh: "สถานะ", days: 0, value: "หยุดชั่วคราว" }
+    : election.phase === "open" ? { labelEn: "STATUS", labelTh: "สถานะ", days: 0, value: "เปิดอยู่" }
+    : election.phase === "before" ? { labelEn: "STATUS", labelTh: "สถานะ", days: 0, value: "ยังไม่เปิด" }
+    : { labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "ปิดแล้ว" };
 
   const editorStateRef = useRef(null);
   editorStateRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
@@ -145,11 +154,8 @@ export default function VerdureHome({
 
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
 
-  const runtimeCtx = buildRuntimeContext({
-    session, systemConfig: initialData?.systemConfig, electionStatus: initialData?.electionStatus,
-    userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
-  });
-  const voteState = editorMode ? "login" : (resolveElementState("voteCTA-button", runtimeCtx) || "login");
+  // the CTA follows the same status as the chip and the ledger
+  const voteState = editorMode ? "login" : (CTA_STATE[election.action] || "login");
   const CTA = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN · PSU PASSPORT", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง",          sub: "CAST YOUR BALLOT",       href: "/vote",     disabled: false },
@@ -179,7 +185,7 @@ export default function VerdureHome({
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
       {!editorMode && <style>{`html,body{background:${themeT.cream};color-scheme:light}`}</style>}
 
-      <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode}
+      <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode} election={election}
         edge={{ num: "01", label: "Home", th: "หน้าหลัก" }} />
 
       <div className="vd-home">
