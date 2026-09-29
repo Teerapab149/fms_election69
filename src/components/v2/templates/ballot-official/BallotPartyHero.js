@@ -11,7 +11,7 @@ import { Maximize2 } from "lucide-react";
 import { getPath } from "../../../../utils/basePath";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { Phrases } from "./BallotChrome";
+import { BallotContext } from "./BallotChrome";
 
 const EASE = [0.16, 1, 0.3, 1];
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
@@ -34,7 +34,7 @@ const BallotPartyHero = forwardRef(function BallotPartyHero(
     <section className="bh">
       <div className="bh__in">
         <div className="bh__txt">
-          <p className="bh__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
+          <BallotContext meta={meta} className="bh__ctx" />
           <div className="bh__mark">
             {party?.logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -72,7 +72,6 @@ const BallotPartyHero = forwardRef(function BallotPartyHero(
           max-width: var(--bo-max); margin: 0 auto; padding: 0 20px;
           display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center;
         }
-        .bh__ctx { margin: 0; font-size: 15px; color: var(--bo-muted); }
         .bh__mark { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
         .bh__logo { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: #fff; padding: 7px; box-shadow: 0 0 0 1px var(--bo-rule); }
         .bh__no {
@@ -105,7 +104,6 @@ const BallotPartyHero = forwardRef(function BallotPartyHero(
         @media (max-width: 640px) {
           .bh { padding: 16px 0 40px; }
           .bh__in { padding: 0 16px; }
-          .bh__ctx { font-size: 13px; }
           .bh__mark { margin-top: 12px; gap: 10px; }
           .bh__logo { width: 48px; height: 48px; padding: 5px; }
           .bh__no { height: 34px; padding: 0 11px; font-size: 15px; }

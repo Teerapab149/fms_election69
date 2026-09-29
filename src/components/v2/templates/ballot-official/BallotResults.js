@@ -19,7 +19,7 @@ import { MotionConfig, motion } from "framer-motion"; // Motion for React
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { resolveVerdict } from "../../../../utils/electionVerdict";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, BallotPageHead } from "./BallotChrome";
 import BallotBox from "./BallotBox";
 import { resultsView } from "../../shared/results/resultsView.mjs";
 
@@ -71,9 +71,7 @@ export default function BallotResults({
         <main>
           <section className="br">
             <div className="br__in">
-              <p className="br__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
-              <h1 className="br__title">{r.title}</h1>
-              <p className="br__lede">{lede}</p>
+              <BallotPageHead meta={meta} title={r.title} lede={lede} />
 
               {state !== "revealed" ? (
                 /* the box, closed — the object the voter last saw take their ballot */
@@ -193,9 +191,6 @@ export default function BallotResults({
 
         <style jsx global>{`
           .br__in { max-width: var(--bo-max); margin: 0 auto; padding: 56px 20px 96px; }
-          .br__ctx { margin: 0; font-size: 15px; color: var(--bo-muted); }
-          .br__title { margin: 12px 0 0; font-size: clamp(32px, 3.8vw, 48px); font-weight: 800; line-height: 1.2; letter-spacing: -.015em; }
-          .br__lede { margin: 12px 0 0; max-width: 36em; font-size: 17px; line-height: 1.7; color: var(--bo-muted); }
 
           /* the closed box */
           .br-box { margin-top: 48px; display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 56px; align-items: center; }
@@ -301,9 +296,6 @@ export default function BallotResults({
           }
           @media (max-width: 640px) {
             .br__in { padding: 28px 16px 64px; }
-            .br__ctx { font-size: 13px; }
-            .br__title { font-size: 28px; }
-            .br__lede { font-size: 15px; }
             .br-box { margin-top: 32px; gap: 24px; }
             .br-box__art { max-width: 260px; }
             .br-box__count span { font-size: 17px; }

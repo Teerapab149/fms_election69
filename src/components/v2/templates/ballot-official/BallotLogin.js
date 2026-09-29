@@ -16,7 +16,7 @@ import { MotionConfig } from "framer-motion"; // Motion for React
 import { Loader2, AlertCircle } from "lucide-react";
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases, BallotContext } from "./BallotChrome";
 
 export default function BallotLogin({
   error, loading, onLogin, showMock = false, mockStudentId, setMockStudentId,
@@ -42,7 +42,7 @@ export default function BallotLogin({
               ))}
             </ol>
 
-            <p className="bl__ctx"><Phrases text={`${meta.wordmark} ${meta.campaign}`} /></p>
+            <BallotContext meta={meta} className="bl__ctx" />
             <h1 className="bl__title">{k.title}</h1>
             <p className="bl__lede">{k.lede}</p>
 
@@ -91,7 +91,8 @@ export default function BallotLogin({
           .bl__s .bo-phrase:only-child { white-space: normal; }
           .bl__steps li.is-now { color: var(--bo-plum); }
           .bl__steps li.is-now .bl__n { background: var(--bo-plum); border-color: var(--bo-plum); color: #fff; }
-          .bl__ctx { margin: 0; font-size: 14px; color: var(--bo-muted); }
+          /* the card is narrow: the context line a size down from the pages' */
+          .bo-ctx.bl__ctx { font-size: 14px; }
           .bl__title { margin: 6px 0 0; font-size: 28px; font-weight: 800; line-height: 1.3; letter-spacing: -.01em; }
           .bl__lede { margin: 10px 0 0; font-size: 16px; line-height: 1.7; color: var(--bo-muted); }
           .bl__err {

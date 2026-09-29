@@ -192,6 +192,36 @@ export function BallotStatus({ status, showClock = true }) {
   );
 }
 
+// Which election this page belongs to — the home hero's identity line, set
+// small: the cohort in plum, a short rule, then the campaign and faculty, all
+// from ตั้งค่าทั่วไป. Every inner page opens with it.
+export function BallotContext({ meta, className = "" }) {
+  const rest = [meta.campaign, meta.faculty].filter(Boolean).join(" ");
+  return (
+    <p className={`bo-ctx ${className}`}>
+      {meta.wordmark && <b className="bo-ctx__mark">{meta.wordmark}</b>}
+      {meta.wordmark && rest && <span className="bo-ctx__rule" aria-hidden />}
+      {rest && <span className="bo-ctx__txt"><Phrases text={rest} /></span>}
+    </p>
+  );
+}
+
+// The head of a reading page (candidates, results): context, title (with an
+// optional aside such as the party count), lede — on a strip of the ballot's
+// security print, closed off by the ballot's perforation.
+export function BallotPageHead({ meta, title, aside = null, lede = null }) {
+  return (
+    <header className="bo-phead">
+      <BallotContext meta={meta} />
+      <h1 className="bo-phead__title">
+        <span>{title}</span>
+        {aside != null && <span className="bo-phead__aside">{aside}</span>}
+      </h1>
+      {lede && <p className="bo-phead__lede">{lede}</p>}
+    </header>
+  );
+}
+
 export function BallotFooter({ meta, tone = "day" }) {
   return (
     <footer className={`bo-footer bo-footer--${tone}`}>
@@ -246,6 +276,50 @@ export function BallotBaseStyles() {
       .bo-root button { font: inherit; cursor: pointer; }
       .bo-phrase { display: inline-block; white-space: nowrap; margin-right: .22em; }
       .bo-phrase:last-child { margin-right: 0; }
+
+      /* context line (BallotContext) */
+      /* inline flow, not flex: in a narrow column the words wrap phrase by
+         phrase after the mark instead of the whole run dropping a line */
+      .bo-ctx { margin: 0; font-size: 15px; line-height: 1.6; color: var(--bo-muted); }
+      .bo-ctx__mark { color: var(--bo-plum); font-weight: 800; font-size: 16px; letter-spacing: .01em; white-space: nowrap; }
+      .bo-ctx__rule { display: inline-block; vertical-align: middle; width: 24px; height: 2px; margin: 0 12px; border-radius: 2px; background: var(--bo-plum); opacity: .35; }
+
+      /* page head (BallotPageHead) */
+      .bo-phead { position: relative; isolation: isolate; padding-bottom: 32px; border-bottom: 2px dashed var(--bo-rule); }
+      /* the ballot's security print behind the right of the head, fading out
+         before it reaches the words */
+      .bo-phead::before {
+        content: ""; position: absolute; z-index: -1; pointer-events: none;
+        top: -56px; bottom: 0; right: -20px; width: 62%;
+        background: var(--bo-plum); opacity: .13;
+        -webkit-mask-image: var(--bo-g), radial-gradient(70% 90% at 80% 45%, #000 0%, transparent 75%);
+                mask-image: var(--bo-g), radial-gradient(70% 90% at 80% 45%, #000 0%, transparent 75%);
+        -webkit-mask-size: 200px 48px, 100% 100%; mask-size: 200px 48px, 100% 100%;
+        -webkit-mask-repeat: repeat, no-repeat; mask-repeat: repeat, no-repeat;
+        -webkit-mask-composite: source-in; mask-composite: intersect;
+      }
+      .bo-phead__title {
+        margin: 14px 0 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px;
+        font-size: clamp(38px, 4.6vw, 58px); font-weight: 800; line-height: 1.12; letter-spacing: -.02em;
+      }
+      /* the aside is a fact about the title (2 พรรค), set as a quiet tag */
+      .bo-phead__aside {
+        display: inline-flex; align-items: center; min-height: 32px; padding: 0 14px; border-radius: 999px;
+        font-size: 16px; font-weight: 700; letter-spacing: 0; color: var(--bo-plum);
+        background: rgba(var(--bo-plum-rgb),.08); box-shadow: inset 0 0 0 1px rgba(var(--bo-plum-rgb),.2);
+      }
+      .bo-phead__lede { margin: 14px 0 0; max-width: 36em; font-family: var(--bo-font-read); font-size: 17px; line-height: 1.75; color: var(--bo-muted); }
+      @media (max-width: 640px) {
+        .bo-ctx { font-size: 13px; }
+        .bo-ctx__mark { font-size: 14px; }
+        .bo-ctx__rule { width: 16px; margin: 0 9px; }
+        .bo-phead { padding-bottom: 24px; }
+        /* the gutter is 16px here: bleeding further would scroll the page sideways */
+        .bo-phead::before { width: 90%; top: -28px; right: -16px; opacity: .1; }
+        .bo-phead__title { font-size: 30px; margin-top: 10px; gap: 6px 12px; }
+        .bo-phead__aside { min-height: 28px; padding: 0 11px; font-size: 14px; }
+        .bo-phead__lede { font-size: 15px; margin-top: 10px; }
+      }
 
       /* header */
       /* At rest the header sits on the page (no surface); scrolled, a paper sheet
