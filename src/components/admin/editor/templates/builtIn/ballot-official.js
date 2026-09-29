@@ -95,8 +95,8 @@ export const ballotOfficialTemplate = {
       config: {
         login:    { text: "เข้าสู่ระบบเพื่อลงคะแนน", note: "ใช้บัญชี PSU Passport ใช้เวลาไม่เกิน 1 นาที" },
         notVoted: { text: "ไปที่บัตรเลือกตั้ง",       note: "ใช้เวลาไม่เกิน 1 นาที" },
-        voted:    { text: "ดูผลคะแนน",               note: "ระบบรับบัตรของคุณแล้ว" },
-        closed:   { text: "ยังไม่เปิดหีบ",            note: "" },
+        voted:    { text: "ดูผลคะแนน",               note: "คุณลงคะแนนแล้ว" },
+        closed:   { text: "ยังไม่เปิดลงคะแนน",        note: "" },
         paused:   { text: "หยุดให้บริการชั่วคราว",     note: "กลับมาลงคะแนนได้เมื่อระบบเปิดอีกครั้ง" },
         ended:    { text: "ดูผลคะแนน",               note: "ปิดหีบแล้ว ขอบคุณทุกคนที่มาใช้สิทธิ์" },
       },
@@ -143,7 +143,7 @@ export const ballotOfficialTemplate = {
     },
     // the success page: the voter keeps the ballot's stub
     success: {
-      title: "หีบได้รับบัตรของคุณแล้ว",
+      title: "ลงคะแนนเรียบร้อยแล้ว",
       deck: "ขอบคุณที่มาใช้สิทธิ์ บัตรของคุณถูกเข้ารหัสและเก็บอยู่ในหีบออนไลน์เรียบร้อย",
       nextTitle: "อีกหนึ่งขั้นตอน",
       doneTitle: "ครบทุกขั้นตอนแล้ว",
@@ -164,7 +164,7 @@ export const ballotOfficialTemplate = {
     },
     // the candidates page
     candidates: {
-      title: "ผู้สมัครรับเลือกตั้ง",
+      title: "ผู้สมัคร",
       lede: "พรรคที่ลงสมัครปีนี้ เรียงตามหมายเลขบนบัตร อ่านนโยบายและรู้จักทีมก่อนตัดสินใจ",
       count: "พรรค",
       empty: "ยังไม่มีพรรคลงสมัคร รายชื่อจะแสดงที่นี่เมื่อประกาศแล้ว",
@@ -178,12 +178,12 @@ export const ballotOfficialTemplate = {
     },
     // the results page — the count happens where the story left off: at the box
     results: {
-      title: "ผลการนับคะแนน",
+      title: "ผลคะแนน",
       ledeBefore: "ยังไม่เปิดหีบ ผลจะแสดงที่หน้านี้หลังปิดหีบและคณะกรรมการประกาศผล",
-      ledeSealed: "หีบยังปิดผนึกอยู่ คะแนนรายพรรคจะเปิดเผยเมื่อคณะกรรมการประกาศอย่างเป็นทางการ",
+      ledeSealed: "ยังไม่ประกาศผล คะแนนของแต่ละพรรคจะแสดงเมื่อคณะกรรมการประกาศผล",
       ledeRevealed: "ผลอย่างเป็นทางการ นับจากบัตรทุกใบที่อยู่ในหีบออนไลน์",
       boxBefore: "ยังไม่เปิดหีบ",
-      boxSealed: "หีบปิดผนึก",
+      boxSealed: "รอประกาศผล",
       opensIn: "เปิดหีบในอีก",
       sealedTitle: "บัตรที่อยู่ในหีบแล้ว",
       sealedNote: "จำนวนนี้เปิดเผยได้ระหว่างลงคะแนน เพราะบอกแค่ว่ามีคนมาใช้สิทธิ์กี่คน ไม่บอกว่าใครเลือกอะไร",
@@ -191,7 +191,7 @@ export const ballotOfficialTemplate = {
       eligible: "ผู้มีสิทธิ์",
       people: "คน",
       turnout: "มาใช้สิทธิ์",
-      sheetTitle: "รายงานผลการนับคะแนน",
+      sheetTitle: "คะแนนแต่ละพรรค",
       total: "บัตรทั้งหมด",
       order: "เรียงจากคะแนนมากไปน้อย สัดส่วนคิดจากบัตรทั้งหมด",
       winner: "ได้รับเลือก",
@@ -199,7 +199,7 @@ export const ballotOfficialTemplate = {
       verdictWinner: "ได้รับเลือกด้วยคะแนนสูงสุด",
       verdictApproved: "ได้รับการรับรองจากเสียงส่วนใหญ่",
       verdictDisapproved: "เสียงไม่รับรองมากที่สุด พรรคนี้ไม่ได้รับการรับรอง",
-      verdictTie: "คะแนนสูงสุดเสมอกัน ยังประกาศผลไม่ได้ รอคณะกรรมการชี้ขาด",
+      verdictTie: "คะแนนสูงสุดเสมอกัน ยังประกาศผลไม่ได้ รอคณะกรรมการตัดสิน",
       verdictNone: "ยังไม่มีคะแนนในหีบ",
       abstain: "งดออกเสียง",
       disapprove: "ไม่รับรอง",
@@ -226,12 +226,12 @@ export const ballotOfficialTemplate = {
     },
     // the sign-in page — the first of the three steps a voter takes
     login: {
-      title: "ยืนยันตัวตนก่อนรับบัตร",
+      title: "เข้าสู่ระบบก่อนลงคะแนน",
       lede: "ใช้บัญชี PSU Passport ของมหาวิทยาลัย ระบบใช้เพื่อตรวจสิทธิ์เท่านั้น บัตรของคุณไม่มีชื่อติดไปด้วย",
       go: "เข้าสู่ระบบด้วย PSU Passport",
       going: "กำลังพาไปหน้าเข้าสู่ระบบ",
       // a space marks where a narrow column may break ("…ทำ / เครื่องหมาย" otherwise)
-      steps: ["ยืนยันตัวตน", "รับบัตร ทำเครื่องหมาย", "ส่งเข้าหีบออนไลน์"],
+      steps: ["เข้าสู่ระบบ","รับบัตร ทำเครื่องหมาย", "ส่งเข้าหีบออนไลน์"],
       stepsLabel: "ขั้นตอนการลงคะแนน",
       mock: "โหมดทดสอบสำหรับผู้พัฒนา",
       mockId: "รหัสนักศึกษา",
@@ -242,7 +242,7 @@ export const ballotOfficialTemplate = {
     // the send, between confirming and the success page
     cast: {
       pending: "กำลังพับบัตรและส่งเข้าหีบ",
-      confirmed: "หีบได้รับบัตรของคุณแล้ว",
+      confirmed: "ลงคะแนนเรียบร้อยแล้ว",
       note: "กรุณารอสักครู่ อย่าปิดหน้านี้",
     },
     // the ballot page
@@ -273,7 +273,7 @@ export const ballotOfficialTemplate = {
       step: "ขั้นที่",
       stepOf: "จาก",
       ch1Link: "ดูนโยบายและทีมงาน",
-      ch2Title: "ยืนยันตัวตนด้วย PSU Passport",
+      ch2Title: "เข้าสู่ระบบด้วย PSU Passport",
       ch2Body: "ระบบใช้บัญชีของมหาวิทยาลัยตรวจว่าคุณมีสิทธิ์ และบันทึกว่าคุณใช้สิทธิ์แล้ว ส่วนบัตรของคุณถูกเก็บแยกไว้ในหีบโดยไม่มีชื่อติดไปด้วย",
       ch2List: "รายชื่อผู้มีสิทธิ์",
       ch2ListYou: "คุณ ใช้สิทธิ์แล้ว",
@@ -284,7 +284,7 @@ export const ballotOfficialTemplate = {
       ch3Box: "หีบบัตรออนไลน์",
       ch3Body: "เลือกได้ช่องเดียว กดยืนยัน แล้วบัตรจะถูกเข้ารหัสและส่งเข้าหีบออนไลน์ทันที เมื่อยืนยันแล้วจะแก้ไขไม่ได้",
       ch4Title: "นับคะแนนและประกาศผล",
-      ch4Body: "ผลคะแนนจะแสดงที่หน้าผลคะแนน เมื่อคณะกรรมการเปิดเผยผลหลังปิดหีบ",
+      ch4Body: "ผลคะแนนจะแสดงที่หน้าผลคะแนน เมื่อคณะกรรมการประกาศผลหลังปิดหีบ",
       ch4Close: "ปิดหีบ",
       ch4Link: "ไปหน้าผลคะแนน",
     },
