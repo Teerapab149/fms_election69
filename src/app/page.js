@@ -18,6 +18,11 @@ async function getHomeData(session) {
         id: true,
         number: true,
         logoUrl: true,
+        // the ballot-official home prints a sample ballot with the real choices,
+        // and introduces each party (slogan + group photo) in its first chapter
+        name: true,
+        slogan: true,
+        groupImageUrls: true,
       },
       orderBy: { number: 'asc' },
       take: 5,

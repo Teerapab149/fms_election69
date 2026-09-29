@@ -1,5 +1,7 @@
 "use client";
 import { getPath } from "../../utils/basePath";
+import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { V2_PAGES } from "../../components/v2/registry";
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -67,6 +69,9 @@ export default function SuccessPage({
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // the real slug: a v2 family (components/v2) with its own success page renders it
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Success = V2_PAGES[v2KeyOf(rawTemplateId)]?.success || null;
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
@@ -79,7 +84,7 @@ export default function SuccessPage({
     if (editorMode) { setTemplateReady(true); return; }
     fetch(getPath('/api/admin/page-layout'))
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .then(d => { if (d?.activeTemplateId) { setActiveTemplateId(baseFamilyOf(d.activeTemplateId)); setRawTemplateId(d.activeTemplateId); } })
       .catch(() => {})
       .finally(() => setTemplateReady(true));
   }, [editorMode]);
@@ -326,7 +331,11 @@ export default function SuccessPage({
       )}
 
       {/* FMS OFFICIAL layout (faculty chrome); the form + alert modals below stay shared */}
-      {isFmsOfficial && (isAuthorized || editorMode) && (
+      {V2Success && (isAuthorized || editorMode) && (
+        <V2Success user={user} isUnlocked={isUnlocked} onOpenForm={() => setShowModal(true)} editorMode={editorMode} />
+      )}
+
+      {isFmsOfficial && !V2Success && (isAuthorized || editorMode) && (
         <FmsOfficialSuccess
           user={user}
           isUnlocked={isUnlocked}

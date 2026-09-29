@@ -19,6 +19,8 @@ import OriginalHome from "./OriginalHome";
 import BlossomHome from "./BlossomHome";
 import ReceiptHome from "./ReceiptHome";
 import FmsOfficialHome from "./FmsOfficialHome";
+import { V2_PAGES } from "../v2/registry";
+import { v2KeyOf, baseFamilyOf } from "../v2/families";
 
 // slug → layout component. Absent slug = classic layout (HomeContent).
 // Colour-variant slugs (e.g. receipt-teal) resolve via the layoutFamily fallback
@@ -38,6 +40,9 @@ export default function HomeRenderer(props) {
   // Colour-theme variants (e.g. verdure-honey) share their family's home layout —
   // fall back to layoutFamily so verdure-* → VerdureHome, not the classic HomeContent.
   const fam = props?.resolvedTemplate?.layoutFamily;
-  const Layout = HOME_LAYOUTS[slug] || HOME_LAYOUTS[fam] || HomeContent;
+  // v2 families first: their own home if built, else their base family's home.
+  const v2 = v2KeyOf(slug) || v2KeyOf(fam);
+  const Layout = (v2 && V2_PAGES[v2]?.home)
+    || HOME_LAYOUTS[slug] || HOME_LAYOUTS[fam] || HOME_LAYOUTS[baseFamilyOf(fam)] || HomeContent;
   return <Layout {...props} />;
 }

@@ -21,6 +21,8 @@
 // because the layout components are pure + we pass mock props.
 
 import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { baseFamilyOf, v2KeyOf } from "../../components/v2/families";
+import { V2_PAGES } from "../../components/v2/registry";
 import { useSearchParams } from 'next/navigation';
 import { MotionConfig } from 'framer-motion';
 import { Palette, Check } from 'lucide-react';
@@ -133,7 +135,38 @@ function PreviewBody() {
   // (the chooser slides never send it). The chrome wrapper injects it onto its inner
   // iframe so the full-screen preview is interactive wherever it's used.
   const interact = sp.get('interact') === '1';
-  const family = BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic';
+  // v2 families render their base family's pages until they build their own (components/v2/families.js);
+  // HOME resolves the v2 layout itself through HomeRenderer, which gets the real slug.
+  const family = baseFamilyOf(BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic');
+  const V2Vote = V2_PAGES[v2KeyOf(slug)]?.vote || null;
+  const V2Party = V2_PAGES[v2KeyOf(slug)]?.party || null;
+  const V2Success = V2_PAGES[v2KeyOf(slug)]?.success || null;
+  const V2Candidates = V2_PAGES[v2KeyOf(slug)]?.candidates || null;
+  const V2Results = V2_PAGES[v2KeyOf(slug)]?.results || null;
+  const V2Closed = V2_PAGES[v2KeyOf(slug)]?.closed || null;
+  const V2Login = V2_PAGES[v2KeyOf(slug)]?.login || null;
+  // v2 results: ?variant=sealed|locked (count embargoed) · before (polls not open) · default revealed
+  const v2ResultsProps = () => {
+    const before = variant === "before";
+    const revealed = !before && variant !== "sealed" && variant !== "locked";
+    const single = variant === "single";
+    // a single-party ballot also carries ไม่รับรอง; the total is the rows' own sum
+    const candidates = [
+      ...resultsCandidates(revealed, single ? parties.slice(0, 1) : parties),
+      ...(single ? [{ id: 997, number: -1, name: "ไม่รับรอง", score: revealed ? 41 : 0 }] : []),
+    ];
+    return {
+      candidates,
+      totalVotes: before ? 0 : revealed ? candidates.reduce((a, c) => a + (c.score || 0), 0) : 418, demographics: DEMOGRAPHICS,
+      finalStatus: revealed ? "ENDED" : "ONGOING", isRevealed: revealed, isNotStarted: before,
+      countdownText: revealed ? "" : before ? "12 วัน 04:10:00" : "เหลืออีก 02:14:33",
+    };
+  };
+  // v2 login: ?variant=mock shows the developer form, ?variant=error the error line
+  const v2LoginProps = {
+    error: variant === "error" ? "เกิดข้อผิดพลาดในการเชื่อมต่อ" : "", loading: false, onLogin: noop,
+    showMock: variant === "mock", mockStudentId: "", setMockStudentId: noop, mockLoading: false, onMockLogin: noop, onBack: noop, onAdmin: noop,
+  };
   // The template being PREVIEWED (P2 #2 fix). layout.js SSRs the ACTIVE template's
   // Layer-1 tokens on `.fms-app` site-wide — including this route — so previewing a
   // NON-active template leaked the active palette into every token-consuming element
@@ -193,6 +226,28 @@ function PreviewBody() {
     const base = makeParties(partiesN);
     return noSlogan ? base.map((p) => ({ ...p, slogan: null })) : base;
   }, [partiesN, noSlogan]);
+  // v2 families: ?variant=before|open|paused|ended on the HOME page picks the
+  // election phase, with dates placed around "now" so the countdown is live in
+  // every phase that has one. The real schedule is never touched. Default = open.
+  // v1 families get null here and render exactly as before.
+  const [previewNow] = useState(() => Date.now());
+  const v2HomeData = (() => {
+    if (!v2KeyOf(slug)) return null;
+    const H = 3600e3;
+    const phases = {
+      before: { systemMode: 'AUTO', isSystemOpen: false, electionStatus: 'WAITING', previewDates: { start: previewNow + 51 * H + 20 * 60e3, end: previewNow + 66 * H } },
+      // months out (3-digit days): the countdown's widest case
+      far: { systemMode: 'AUTO', isSystemOpen: false, electionStatus: 'WAITING', previewDates: { start: previewNow + (123 * 24 + 7) * H, end: previewNow + (123 * 24 + 22) * H } },
+      open: { systemMode: 'AUTO', isSystemOpen: true, electionStatus: 'ONGOING', previewDates: { start: previewNow - 2 * H, end: previewNow + 5 * H + 12 * 60e3 } },
+      paused: { systemMode: 'PAUSE', isSystemOpen: false, electionStatus: 'CLOSED', previewDates: { start: previewNow - 2 * H, end: previewNow + 5 * H } },
+      ended: { systemMode: 'ENDED', isSystemOpen: false, electionStatus: 'ENDED', previewDates: { start: previewNow - 20 * H, end: previewNow - 5 * H } },
+    };
+    // live home data lists the special options next to the parties; &parties=1
+    // previews the one-party ballot (approve / disapprove / abstain)
+    const onlyOne = sp.get('parties') === '1';
+    const candidates = [...(onlyOne ? parties.slice(0, 1) : parties), SPECIAL.abstain, SPECIAL.disapprove];
+    return { ...(phases[variant] || phases.open), candidates };
+  })();
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [partyNumber, setPartyNumber] = useState(parties[0]?.number ?? 1);
   // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
@@ -347,6 +402,24 @@ function PreviewBody() {
   // seam). Classic/original inner pages keep their static EditorPreview renders for
   // now (out of scope — flow still demonstrable: original home login → vote page).
   function renderInteractive() {
+    // v2 families: their own success page (?variant=unlocked = evaluation done)
+    if (page === 'success' && V2Success) return <V2Success user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} />;
+    if (page === 'candidates' && V2Candidates) return <V2Candidates candidates={parties} />;
+    if (page === 'results' && V2Results) return <V2Results {...v2ResultsProps()} />;
+    if (page === 'closed' && V2Closed) { const c = closedPreviewCopy(variant); return <V2Closed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} />; }
+    if (page === 'login' && V2Login) return <V2Login {...v2LoginProps} />;
+    // v2 families: their own party page
+    if (page === 'party' && V2Party) {
+      const p = parties.find((x) => x.number === partyNumber) || parties[0];
+      return <V2Party party={p} galleryImages={[]} showBackToVote={variant === 'single'} isSingleParty={variant === 'single'} />;
+    }
+    // v2 families (components/v2): their own ballot page and confirm step
+    if (page === 'vote' && V2Vote) {
+      const single = variant === 'single';
+      return <V2Vote regularParties={single ? parties.slice(0, 1) : parties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
+        onSelect={setSelectedPartyId} onViewDetails={(p) => navTo('party', p?.number ?? 1)} isSingleParty={single} user={DUMMY_USER}
+        isSubmitting={castActive} onConfirm={confirmPreviewVote} />;
+    }
     if (page === 'home') {
       // gm-B2 T2 / bl-B1B verification seam: gumroad + blossom reuse the closed page's
       // existing ?variant=ended|paused tokens so the home countdown's ENDED/PAUSE
@@ -359,7 +432,7 @@ function PreviewBody() {
         <HomeRenderer
           onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
           resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
+          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties, ...(v2HomeData || {}) }}
         />
       );
     }
@@ -809,6 +882,18 @@ function PreviewBody() {
   }
 
   function renderPage() {
+  if (page === 'party' && V2Party) return <V2Party party={parties[0]} galleryImages={[]} isSingleParty={false} editorMode />;
+  if (page === 'success' && V2Success) return <V2Success user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
+  if (page === 'candidates' && V2Candidates) return <V2Candidates candidates={parties} editorMode />;
+  if (page === 'results' && V2Results) return <V2Results {...v2ResultsProps()} editorMode />;
+  if (page === 'closed' && V2Closed) { const c = closedPreviewCopy(variant); return <V2Closed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode />; }
+  if (page === 'login' && V2Login) return <V2Login {...v2LoginProps} />;
+  // v2 families (components/v2): their own ballot page, still (chooser slides)
+  if (page === 'vote' && V2Vote) {
+    const single = variant === 'single';
+    return <V2Vote regularParties={single ? [parties[0]] : parties} specialOptions={SPECIAL} selectedPartyId={selectedPartyId}
+      onSelect={setSelectedPartyId} onViewDetails={noop} isSingleParty={single} user={DUMMY_USER} isSubmitting={false} onConfirm={noop} editorMode />;
+  }
   // ── HOME — HomeRenderer dispatches by template slug for every family ──
   if (page === 'home') {
     // gm-B2 T2 / bl-B1B verification seam — same gumroad+blossom ended|paused reach as above.
@@ -820,7 +905,7 @@ function PreviewBody() {
         editorMode
         editorData={DUMMY_ELECTION}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-        initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties }}
+        initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties, ...(v2HomeData || {}) }}
       />
     );
   }

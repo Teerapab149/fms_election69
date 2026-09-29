@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { V2_PAGES } from "../../components/v2/registry";
 import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
@@ -62,7 +64,11 @@ export default function VotePage() {
   const [voteConfig, setVoteConfig] = useState({});
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
-  const { playCast, sceneNode: castScene, castActive } = useVoteCast({ templateId: activeTemplateId });
+  // the real slug: v2 families (components/v2) render their own ballot and cast
+  // scene; everything else keeps dispatching on the base family above
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Vote = V2_PAGES[v2KeyOf(rawTemplateId)]?.vote || null;
+  const { playCast, sceneNode: castScene, castActive } = useVoteCast({ templateId: rawTemplateId });
   const confirmPending = useRef(false);
   // Gate render until the template is known — otherwise the classic layout (with
   // its own cinematic AutoIntro) flashes for a frame before the real template
@@ -79,7 +85,8 @@ export default function VotePage() {
             setVoteConfig(data.vote.multiParty);
           }
           if (data?.activeTemplateId) {
-            setActiveTemplateId(data.activeTemplateId);
+            setActiveTemplateId(baseFamilyOf(data.activeTemplateId));
+            setRawTemplateId(data.activeTemplateId);
           }
         }
       } catch (e) {
@@ -186,7 +193,21 @@ export default function VotePage() {
       : "min-h-screen flex flex-col font-sans pb-32 overflow-x-hidden relative bg-[var(--color-bg)]"}>
       <PageThemeOverrides page="vote" />
 
-      {useReceiptVote ? (
+      {V2Vote ? (
+        // v2 family with its own ballot page: same props; it runs its own confirm
+        // step, so it is handed the submit directly in both modes
+        <V2Vote
+          regularParties={regularParties}
+          specialOptions={specialOptions}
+          selectedPartyId={selectedPartyId}
+          onSelect={handleSelectParty}
+          onViewDetails={handleViewDetails}
+          isSingleParty={isSingleParty}
+          user={session?.user}
+          isSubmitting={isSubmitting || isRedirecting || castActive}
+          onConfirm={onConfirmVote}
+        />
+      ) : useReceiptVote ? (
         <ReceiptVote
           regularParties={regularParties}
           specialOptions={specialOptions}

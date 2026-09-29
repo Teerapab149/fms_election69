@@ -1,7 +1,7 @@
 import './globals.css';
 import Providers from "../components/Providers";
 import ImageErrorGuard from "../components/ImageErrorGuard";
-import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch } from 'next/font/google';
+import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch, Noto_Sans_Thai, Noto_Sans_Thai_Looped } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -181,6 +181,25 @@ const chakraPetch = Chakra_Petch({
   display: 'swap',
 });
 
+// ballot-official (v2 official family). One superfamily, two voices: Noto Sans
+// Thai (loopless) carries headings, controls and short text; its Looped sibling
+// is kept for long reading only — policies, biographies. Owner's call: looped
+// everywhere read as too bureaucratic. preload:false so other templates do not pay.
+const notoThai = Noto_Sans_Thai({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-noto-thai',
+  display: 'swap',
+  preload: false,
+});
+const notoThaiLooped = Noto_Sans_Thai_Looped({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500'],
+  variable: '--font-noto-thai-looped',
+  display: 'swap',
+  preload: false,
+});
+
 // Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
 // so link previews resolve to the real host, not localhost. basePath rides along
 // so the image URL is the full path the asset is actually served at (empty on the
@@ -235,7 +254,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} ${chakraPetch.variable} font-sans antialiased`}>
+      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} ${chakraPetch.variable} ${notoThai.variable} ${notoThaiLooped.variable} font-sans antialiased`}>
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}

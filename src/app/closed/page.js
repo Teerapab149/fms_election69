@@ -1,5 +1,7 @@
 "use client";
 import { getPath } from "../../utils/basePath";
+import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { V2_PAGES } from "../../components/v2/registry";
 
 import { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react";
@@ -25,6 +27,9 @@ export default function ClosedPage() {
 
     // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
     const [activeTemplateId, setActiveTemplateId] = useState('classic');
+    // the raw id picks a v2 family's own status page; the base family drives the rest
+    const [rawTemplateId, setRawTemplateId] = useState('classic');
+    const V2Closed = V2_PAGES[v2KeyOf(rawTemplateId)]?.closed || null;
     // Gate render until the template is known — without this the classic light
     // page flashes for a frame before a dark template resolves (same gate the
     // other 5 pages use).
@@ -40,7 +45,7 @@ export default function ClosedPage() {
         fetchVoteStatus().then(setStatusData).catch(() => {});
         fetch(getPath('/api/admin/page-layout'))
             .then(r => r.ok ? r.json() : null)
-            .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+            .then(d => { if (d?.activeTemplateId) { setRawTemplateId(d.activeTemplateId); setActiveTemplateId(baseFamilyOf(d.activeTemplateId)); } })
             .catch(() => {})
             .finally(() => setTemplateReady(true));
     }, []);
@@ -220,10 +225,11 @@ export default function ClosedPage() {
 
     // FMS OFFICIAL layout (faculty chrome) — replaces the classic page entirely.
     if (isFmsOfficial) {
+        const Closed = V2Closed || FmsOfficialClosed;
         return (
             <>
                 <PageThemeOverrides page="closed" />
-                <FmsOfficialClosed
+                <Closed
                     title={title}
                     desc={desc}
                     variant={variant}

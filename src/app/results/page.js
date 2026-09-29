@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { V2_PAGES } from "../../components/v2/registry";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
@@ -62,11 +64,14 @@ export default function ResultsPage() {
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // the raw id picks a v2 family's own results page; the base family drives the rest
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Results = V2_PAGES[v2KeyOf(rawTemplateId)]?.results || null;
   const [templateReady, setTemplateReady] = useState(false);
   useEffect(() => {
     fetch(getPath('/api/admin/page-layout'))
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .then((d) => { if (d?.activeTemplateId) { setRawTemplateId(d.activeTemplateId); setActiveTemplateId(baseFamilyOf(d.activeTemplateId)); } })
       .catch(() => {})
       .finally(() => setTemplateReady(true));
   }, []);
@@ -446,7 +451,18 @@ export default function ResultsPage() {
       )}
 
       {/* FMS OFFICIAL layout (faculty chrome); access modals below stay shared */}
-      {isFmsOfficial && isAuthorized && (
+      {isFmsOfficial && isAuthorized && V2Results && (
+        <V2Results
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+        />
+      )}
+      {isFmsOfficial && isAuthorized && !V2Results && (
         <FmsOfficialResults
           candidates={candidates}
           totalVotes={totalVotes}

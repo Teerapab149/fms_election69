@@ -2,6 +2,8 @@
 
 import { createElement, useEffect, useRef, useState } from "react";
 import VoteCastScene from "../components/vote/VoteCastScene";
+import { V2_PAGES } from "../components/v2/registry";
+import { v2KeyOf } from "../components/v2/families";
 
 // Presentation only: the caller owns submission, errors and navigation. Never
 // retry a vote here, and never turn an animation completion into a vote result.
@@ -57,7 +59,8 @@ export default function useVoteCast({ templateId = "original" } = {}) {
   return {
     playCast,
     castActive: phase !== "idle",
-    sceneNode: phase === "idle" ? null : createElement(VoteCastScene, { family: templateId, phase, reduced }),
+    // v2 families bring their own scene (same props, same presentation-only contract)
+    sceneNode: phase === "idle" ? null : createElement(V2_PAGES[v2KeyOf(templateId)]?.cast || VoteCastScene, { family: templateId, phase, reduced }),
   };
 }
 

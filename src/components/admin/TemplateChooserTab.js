@@ -303,6 +303,8 @@ const FAMILY_CATEGORY = {
   // the only one whose colour and chrome come from fms.psu.ac.th — so it must not
   // fall to the expressive default and sit below the poster templates.
   "fms-official": "official",
+  // v2 official family (components/v2/families.js)
+  "ballot-official": "official",
   // everything else is expressive by default
 };
 const CATEGORY_META = {
