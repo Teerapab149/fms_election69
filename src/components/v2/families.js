@@ -14,8 +14,6 @@
 
 export const V2_FAMILIES = {
   "ballot-official": { base: "fms-official", built: ["home", "vote", "party", "success", "candidates", "results", "closed", "login"] },
-  // "สวนของทุกเสียง" replaces verdure; built page by page for the owner's review
-  "voter-garden":    { base: "verdure",      built: ["home"] },
 };
 
 // v2 family key for a slug (exact, or a colour variant "<key>-<variant>")
