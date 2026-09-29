@@ -186,7 +186,7 @@ export default function BallotResults({
 
           /* the closed box */
           .br-box { margin-top: 48px; display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 56px; align-items: center; }
-          .br-box__art { aspect-ratio: 300 / 190; filter: drop-shadow(0 26px 30px rgba(46,20,60,.25)); }
+          .br-box__art { aspect-ratio: 300 / 190; filter: drop-shadow(0 26px 30px rgba(var(--bo-shade-rgb),.25)); }
           .br-box--before .br-box__art { opacity: .92; }
           .br-box__h { margin: 0; font-size: 16px; font-weight: 600; color: var(--bo-muted); }
           .br-box__count { margin: 4px 0 0; line-height: 1; }
@@ -205,7 +205,7 @@ export default function BallotResults({
           /* the count sheet — paper, like the ballot it counts */
           .br-sheet {
             margin-top: 44px; background: var(--bo-paper); border-radius: 6px; padding: 30px 0 22px;
-            box-shadow: 0 1px 0 var(--bo-rule), 0 28px 50px -34px rgba(46,20,60,.4);
+            box-shadow: 0 1px 0 var(--bo-rule), 0 28px 50px -34px rgba(var(--bo-shade-rgb),.4);
           }
           .br-sheet__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; padding: 0 32px; }
           .br-sheet__head h2 { margin: 0; font-size: 22px; font-weight: 800; }

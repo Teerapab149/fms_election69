@@ -91,12 +91,12 @@ export default function BallotSuccess({ user = null, isUnlocked = false, onOpenF
         <BallotFooter meta={meta} />
 
         <style jsx global>{`
-          .bs { background: linear-gradient(var(--bo-board), #E6DEEC); }
+          .bs { background: linear-gradient(var(--bo-board), var(--bo-tint-2)); }
           .bs__in {
             max-width: var(--bo-max); margin: 0 auto; padding: 72px 20px 104px;
             display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 72px; align-items: center;
           }
-          .bs__ok { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 6px 14px; border-radius: 999px; background: rgba(36,71,196,.1); color: var(--bo-pen); font-weight: 700; font-size: 15px; }
+          .bs__ok { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 6px 14px; border-radius: 999px; background: rgba(var(--bo-pen-rgb),.1); color: var(--bo-pen); font-weight: 700; font-size: 15px; }
           .bs__title { margin: 18px 0 0; font-size: clamp(34px, 4vw, 52px); font-weight: 800; line-height: 1.18; letter-spacing: -.015em; text-wrap: balance; }
           .bs__deck { margin: 14px 0 0; max-width: 32em; font-family: var(--bo-font-read); font-size: 17px; line-height: 1.75; color: var(--bo-muted); }
           .bs__next { margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--bo-rule); max-width: 34em; }
@@ -111,7 +111,7 @@ export default function BallotSuccess({ user = null, isUnlocked = false, onOpenF
           .bs__stub {
             position: relative; justify-self: center; width: 100%; max-width: 400px; padding: 30px 28px 26px;
             background: var(--bo-paper); border-radius: 0 0 10px 10px;
-            box-shadow: 0 0 0 1px rgba(46,20,60,.06), 0 30px 60px -32px rgba(46,20,60,.5);
+            box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.06), 0 30px 60px -32px rgba(var(--bo-shade-rgb),.5);
           }
           .bs__perf {
             position: absolute; left: 0; right: 0; top: -1px; height: 10px;

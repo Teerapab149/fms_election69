@@ -88,13 +88,13 @@ const BallotPartyHero = forwardRef(function BallotPartyHero(
         .bh__photo {
           position: relative; display: block; padding: 0; border: 0; border-radius: 14px; overflow: hidden;
           aspect-ratio: 4 / 3; background: var(--bo-rule); cursor: zoom-in;
-          box-shadow: 0 0 0 1px rgba(46,20,60,.06), 0 30px 60px -36px rgba(46,20,60,.5);
+          box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.06), 0 30px 60px -36px rgba(var(--bo-shade-rgb),.5);
         }
         .bh__photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .7s cubic-bezier(.16,1,.3,1); }
         .bh__photo:hover img { transform: scale(1.02); }
         .bh__zoom {
           position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-          padding: 6px 10px; border-radius: 8px; background: rgba(30,24,40,.66); color: #fff; font-size: 13px;
+          padding: 6px 10px; border-radius: 8px; background: rgba(var(--bo-ink-rgb),.66); color: #fff; font-size: 13px;
         }
         @media (max-width: 960px) {
           .bh { padding: 24px 0 48px; }

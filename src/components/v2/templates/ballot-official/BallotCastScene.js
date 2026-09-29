@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion"; // Motion for React
 import { Check } from "lucide-react";
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
-import { ballotOfficialTemplate, BALLOT_OFFICIAL as P } from "../../../admin/editor/templates/builtIn/ballot-official";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta } from "./BallotChrome";
 import BallotBox from "./BallotBox";
 
@@ -40,7 +40,7 @@ export default function BallotCastScene({ phase = "pending", reduced = false }) 
   return (
     <motion.div ref={overlay} role="dialog" aria-modal="true" aria-label={k.pending} tabIndex={-1}
       onKeyDown={(e) => { if (e.key === "Tab") e.preventDefault(); }}
-      className="fms-app bcs" data-vote-cast="ballot-official" data-phase={phase}
+      className="fms-app bcs bo-scope" data-vote-cast="ballot-official" data-phase={phase}
       initial={{ opacity: quiet ? 1 : 0 }} animate={{ opacity: 1 }} transition={{ duration: quiet ? 0 : 0.2 }}>
       <div className="bcs__stage" aria-hidden>
         <div className="bcs__window">
@@ -77,7 +77,7 @@ export default function BallotCastScene({ phase = "pending", reduced = false }) 
       <style jsx global>{`
         .bcs {
           position: fixed; inset: 0; z-index: 200000; display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 36px; padding: 24px; outline: none; background: ${P.board}; color: ${P.ink};
+          gap: 36px; padding: 24px; outline: none; background: var(--bo-board); color: var(--bo-ink);
           font-family: var(--font-noto-thai), 'Noto Sans Thai', system-ui, sans-serif;
         }
         .bcs__stage { position: relative; width: 300px; height: 440px; max-width: 100%; }
@@ -87,23 +87,23 @@ export default function BallotCastScene({ phase = "pending", reduced = false }) 
         .bcs__face {
           position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
           background: #fff; border-radius: 5px 5px 0 0; padding: 14px; display: flex; flex-direction: column; gap: 12px;
-          box-shadow: 0 0 0 1px rgba(46,20,60,.07);
+          box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.07);
         }
-        .bcs__face--back { transform: rotateX(180deg); border-radius: 0 0 5px 5px; background: linear-gradient(#F3EEF6, #E9E1EF); }
+        .bcs__face--back { transform: rotateX(180deg); border-radius: 0 0 5px 5px; background: linear-gradient(var(--bo-tint-1), var(--bo-tint-2)); }
         .bcs__bottom {
           height: 95px; background: #fff; border-radius: 0 0 5px 5px; padding: 8px 14px; display: flex; flex-direction: column; gap: 12px;
-          box-shadow: 0 0 0 1px rgba(46,20,60,.07), 0 18px 30px -18px rgba(46,20,60,.45);
+          box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.07), 0 18px 30px -18px rgba(var(--bo-shade-rgb),.45);
         }
-        .bcs i { display: block; height: 8px; border-radius: 4px; background: ${P.rule}; }
-        .bcs i.is-head { width: 62%; background: ${P.plum}; }
+        .bcs i { display: block; height: 8px; border-radius: 4px; background: var(--bo-rule); }
+        .bcs i.is-head { width: 62%; background: var(--bo-plum); }
         .bcs__box { position: absolute; left: 0; right: 0; top: 250px; height: 190px; z-index: 1; }
         .bcs__ok {
           position: absolute; left: 50%; top: -34px; margin-left: -22px; width: 44px; height: 44px; border-radius: 50%;
-          display: grid; place-items: center; background: ${P.pen}; color: #fff; box-shadow: 0 10px 24px -10px rgba(36,71,196,.8);
+          display: grid; place-items: center; background: var(--bo-pen); color: #fff; box-shadow: 0 10px 24px -10px rgba(var(--bo-pen-rgb),.8);
         }
         .bcs__msg { text-align: center; max-width: 22rem; }
         .bcs__title { margin: 0; font-size: 20px; font-weight: 800; }
-        .bcs__note { margin: 8px 0 0; font-size: 14px; color: ${P.muted}; }
+        .bcs__note { margin: 8px 0 0; font-size: 14px; color: var(--bo-muted); }
         @media (max-height: 640px) { .bcs__stage { transform: scale(.8); margin: -40px 0; } }
       `}</style>
     </motion.div>

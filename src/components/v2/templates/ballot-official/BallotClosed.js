@@ -85,8 +85,8 @@ export default function BallotClosed({
 
         <style jsx global>{`
           .bcl__in { max-width: 640px; margin: 0 auto; padding: 56px 20px 88px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-          .bcl__box { width: min(340px, 72vw); aspect-ratio: 300 / 190; filter: drop-shadow(0 24px 28px rgba(46,20,60,.24)); }
-          .bcl--closed .bcl__box { filter: drop-shadow(0 24px 28px rgba(46,20,60,.24)) saturate(.55); }
+          .bcl__box { width: min(340px, 72vw); aspect-ratio: 300 / 190; filter: drop-shadow(0 24px 28px rgba(var(--bo-shade-rgb),.24)); }
+          .bcl--closed .bcl__box { filter: drop-shadow(0 24px 28px rgba(var(--bo-shade-rgb),.24)) saturate(.55); }
           .bcl__title { margin: 40px 0 0; font-size: clamp(28px, 3.4vw, 40px); font-weight: 800; line-height: 1.25; letter-spacing: -.01em; }
           .bcl__desc { margin: 12px 0 0; max-width: 32em; font-size: 17px; line-height: 1.75; color: var(--bo-muted); }
           .bcl__desc strong { color: var(--bo-ink); }

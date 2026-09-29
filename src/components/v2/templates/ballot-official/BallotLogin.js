@@ -80,7 +80,7 @@ export default function BallotLogin({
           .bl { display: grid; place-items: center; padding: 40px 20px 72px; }
           .bl__card {
             width: 100%; max-width: 520px; background: var(--bo-paper); border-radius: 8px; padding: 30px 36px 28px;
-            box-shadow: 0 1px 0 var(--bo-rule), 0 30px 60px -40px rgba(46,20,60,.45);
+            box-shadow: 0 1px 0 var(--bo-rule), 0 30px 60px -40px rgba(var(--bo-shade-rgb),.45);
           }
           /* the three steps: this page is the first */
           .bl__steps { list-style: none; margin: 0 0 28px; padding: 0 0 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; border-bottom: 2px dashed var(--bo-rule); }

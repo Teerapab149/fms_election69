@@ -528,9 +528,11 @@ function BallotOfficialConfirm(props) {
   const P = BALLOT_OFFICIAL;
   const tone = toneOf(props.isVoteNo, props.isDisapprove);
   const c = choiceOf(party, tone);
-  const vars = { "--bc-paper": P.paper, "--bc-ink": P.ink, "--bc-muted": P.muted, "--bc-rule": P.rule, "--bc-plum": P.plum, "--bc-plum-deep": P.plumDeep, "--bc-pen": P.pen, "--bc-board": P.board };
+  // the active colour theme's --bo-* ramp (the dialog carries .bo-scope, see
+  // BallotChrome), with the plum values as the fallback if it ever renders alone
+  const vars = { "--bc-paper": `var(--bo-paper, ${P.paper})`, "--bc-ink": `var(--bo-ink, ${P.ink})`, "--bc-muted": `var(--bo-muted, ${P.muted})`, "--bc-rule": `var(--bo-rule, ${P.rule})`, "--bc-plum": `var(--bo-plum, ${P.plum})`, "--bc-plum-deep": `var(--bo-plum-deep, ${P.plumDeep})`, "--bc-pen": `var(--bo-pen, ${P.pen})`, "--bc-board": `var(--bo-board, ${P.board})` };
   return (
-    <ConfirmShell {...props} vars={vars} rootClass="vc-bc" scrim="rgba(30,24,40,.6)">
+    <ConfirmShell {...props} vars={vars} rootClass="vc-bc bo-scope" scrim="rgba(30,24,40,.6)">
       <div className="vc-bc__card">
         <div className="vc-bc__head">
           <h2>{k.title}</h2>

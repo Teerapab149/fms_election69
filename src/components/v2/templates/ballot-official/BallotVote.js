@@ -293,8 +293,8 @@ export default function BallotVote({
           .bh + .bv-body { border-top: 1px solid var(--bo-rule); }
 
           /* ── the decision band: the page's ending ── */
-          .bv-decide { background: linear-gradient(var(--bo-board), #E2D9EA); padding: 80px 0 104px; border-top: 1px solid var(--bo-rule); }
-          .bv-decide--solo { border-top: 0; padding-top: 48px; background: linear-gradient(var(--bo-board), #E6DEEC); }
+          .bv-decide { background: linear-gradient(var(--bo-board), var(--bo-tint-3)); padding: 80px 0 104px; border-top: 1px solid var(--bo-rule); }
+          .bv-decide--solo { border-top: 0; padding-top: 48px; background: linear-gradient(var(--bo-board), var(--bo-tint-2)); }
           .bv-decide__in { display: flex; flex-direction: column; align-items: center; text-align: center; }
           .bv-decide__title { margin: 0; font-size: clamp(28px, 3vw, 38px); font-weight: 800; line-height: 1.2; }
           .bv-decide__note { margin: 10px 0 0; max-width: 38em; font-size: 16px; line-height: 1.7; color: var(--bo-muted); }
@@ -303,7 +303,7 @@ export default function BallotVote({
           .bv-ballot {
             width: 100%; max-width: 560px; margin-top: 36px; text-align: left; scroll-margin-top: 112px;
             background: var(--bo-paper); border-radius: 10px; overflow: hidden;
-            box-shadow: 0 0 0 1px rgba(46,20,60,.06), 0 2px 4px rgba(46,20,60,.05), 0 18px 36px -18px rgba(46,20,60,.28), 0 48px 80px -48px rgba(46,20,60,.4);
+            box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.06), 0 2px 4px rgba(var(--bo-shade-rgb),.05), 0 18px 36px -18px rgba(var(--bo-shade-rgb),.28), 0 48px 80px -48px rgba(var(--bo-shade-rgb),.4);
           }
           .bv-ballot__head { display: flex; justify-content: space-between; gap: 16px; padding: 22px 24px 14px; box-shadow: inset 0 5px 0 var(--bo-plum); border-bottom: 1px solid var(--bo-rule); }
           .bv-ballot__title { display: block; font-size: 23px; font-weight: 800; line-height: 1.2; }
@@ -313,12 +313,12 @@ export default function BallotVote({
           .bv-rows { padding: 8px 12px; }
           .bv-row { display: flex; align-items: stretch; border-radius: 8px; transition: background-color .2s; }
           .bv-row + .bv-row { margin-top: 2px; }
-          .bv-row.is-on { background: rgba(36,71,196,.07); }
+          .bv-row.is-on { background: rgba(var(--bo-pen-rgb),.07); }
           .bv-row__hit {
             flex: 1; display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 8px 12px;
             background: none; border: 0; border-radius: 8px; text-align: left; color: var(--bo-ink);
           }
-          .bv-row__hit:hover:not(:disabled) { background: rgba(46,20,60,.04); }
+          .bv-row__hit:hover:not(:disabled) { background: rgba(var(--bo-shade-rgb),.04); }
           .bv-row__box { position: relative; width: 30px; height: 30px; border: 2px solid var(--bo-ink); border-radius: 3px; flex-shrink: 0; background: #fff; }
           .bv-row.is-on .bv-row__box { border-color: var(--bo-pen); }
           .bv-x { position: absolute; inset: 1px; }
@@ -328,7 +328,7 @@ export default function BallotVote({
           .bv-row__label { font-size: 17px; font-weight: 600; line-height: 1.35; }
           .bv-row.is-on .bv-row__label { color: var(--bo-pen); }
           .bv-row__info { width: 48px; flex-shrink: 0; display: grid; place-items: center; background: none; border: 0; border-radius: 8px; color: var(--bo-muted); }
-          .bv-row__info:hover { color: var(--bo-plum); background: rgba(46,20,60,.04); }
+          .bv-row__info:hover { color: var(--bo-plum); background: rgba(var(--bo-shade-rgb),.04); }
           .bv-ballot__rule { margin: 0; padding: 4px 24px 16px; font-size: 14px; color: var(--bo-muted); }
           .bv-stub { padding: 20px 24px 24px; }
           .bv-stub__choice { margin: 0 0 12px; font-size: 15px; color: var(--bo-muted); min-height: 1.6em; }
@@ -339,7 +339,7 @@ export default function BallotVote({
             position: fixed; left: 50%; bottom: 20px; z-index: 60; translate: -50% 0;
             width: min(560px, calc(100% - 24px)); display: flex; align-items: center; gap: 14px;
             padding: 10px 10px 10px 20px; border-radius: 14px; background: rgba(255,255,255,.97);
-            box-shadow: 0 0 0 1px rgba(46,20,60,.08), 0 18px 40px -16px rgba(46,20,60,.45);
+            box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.08), 0 18px 40px -16px rgba(var(--bo-shade-rgb),.45);
           }
           .bv-bar__choice { flex: 1; min-width: 0; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .bv-bar__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bo-pen); flex-shrink: 0; }
@@ -377,15 +377,15 @@ export default function BallotVote({
           .bv-intro__top { position: relative; height: 120px; transform-origin: 50% 100%; transform-style: preserve-3d; }
           .bv-intro__face {
             position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-            border-radius: 8px 8px 0 0; background: #fff; box-shadow: inset 0 5px 0 var(--bo-plum), 0 0 0 1px rgba(46,20,60,.07);
+            border-radius: 8px 8px 0 0; background: #fff; box-shadow: inset 0 5px 0 var(--bo-plum), 0 0 0 1px rgba(var(--bo-shade-rgb),.07);
             display: flex; flex-direction: column; justify-content: center; padding: 0 20px;
           }
           .bv-intro__face b { font-size: 24px; font-weight: 800; }
           .bv-intro__face span { color: var(--bo-plum); font-weight: 700; }
-          .bv-intro__face--back { transform: rotateX(180deg); border-radius: 0 0 8px 8px; background: linear-gradient(#F3EEF6, #E9E1EF); box-shadow: 0 0 0 1px rgba(46,20,60,.08); }
+          .bv-intro__face--back { transform: rotateX(180deg); border-radius: 0 0 8px 8px; background: linear-gradient(var(--bo-tint-1), var(--bo-tint-2)); box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.08); }
           .bv-intro__bottom {
             height: 120px; background: #fff; border-radius: 0 0 8px 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;
-            box-shadow: 0 0 0 1px rgba(46,20,60,.07), 0 24px 44px -24px rgba(46,20,60,.5);
+            box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.07), 0 24px 44px -24px rgba(var(--bo-shade-rgb),.5);
           }
           .bv-intro__bottom i { display: block; height: 10px; border-radius: 5px; background: var(--bo-rule); }
           .bv-intro__hint { margin: 0; font-size: 13px; color: var(--bo-muted); }

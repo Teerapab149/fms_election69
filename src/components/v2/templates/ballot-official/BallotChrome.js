@@ -9,16 +9,16 @@
 // families hid the voter pill on some pages/widths and a voter on a shared
 // computer could not find how to leave.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"; // Motion for React
-import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { useGlobalConfig, useActiveTemplateId } from "../../../../contexts/GlobalConfigContext";
 import { LogIn, LogOut } from "lucide-react";
 import { getPath } from "../../../../utils/basePath";
 import { voterSignIn, voterSignOut } from "../../../../lib/auth/voterSession";
 import { formatThaiTime } from "../../../../utils/electionConfig";
 import { electionMeta } from "../../shared/election/electionMeta";
-import { BALLOT_OFFICIAL as P } from "../../../admin/editor/templates/builtIn/ballot-official";
+import { ballotTheme, ballotVars } from "../../../admin/editor/templates/builtIn/ballot-official";
 
 const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 
@@ -179,21 +179,31 @@ export function BallotStatus({ status, showClock = true }) {
 export function BallotFooter({ meta, tone = "day" }) {
   return (
     <footer className={`bo-footer bo-footer--${tone}`}>
+      {/* the same line every template signs off with, from ตั้งค่าทั่วไป */}
       <div className="bo-footer__in">
-        <span>{meta.faculty}</span>
-        <span>© {meta.copyrightYear} {meta.facultyShort}@{meta.university}</span>
+        <span>© {meta.facultyShort}@{meta.university} {meta.copyrightYear}. All Rights Reserved.</span>
       </div>
     </footer>
   );
 }
 
 export function BallotBaseStyles() {
+  // Which colour theme paints. Live = the active template (SSR-consistent). On
+  // /template-preview the previewed ballot-official-* slug wins — read from
+  // window in an effect (not useSearchParams, which would de-opt the build).
+  const activeSlug = useActiveTemplateId();
+  const [previewSlug, setPreviewSlug] = useState(null);
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("slug");
+    if (s && s.startsWith("ballot-official")) setPreviewSlug(s);
+  }, []);
+  const vars = Object.entries(ballotVars(ballotTheme(previewSlug || activeSlug))).map(([k, v]) => `${k}: ${v};`).join(" ");
   return (
     <style jsx global>{`
+      /* .bo-scope: surfaces rendered outside .bo-root (the cast scene, the
+         confirm dialog's portal) take the same ramp */
+      .bo-root, .bo-scope { ${vars} }
       .bo-root {
-        --bo-paper: ${P.paper}; --bo-board: ${P.board}; --bo-plum: ${P.plum};
-        --bo-plum-deep: ${P.plumDeep}; --bo-ink: ${P.ink}; --bo-muted: ${P.muted};
-        --bo-rule: ${P.rule}; --bo-pen: ${P.pen};
         --bo-font: var(--font-noto-thai), 'Noto Sans Thai', system-ui, sans-serif;
         /* looped Thai for long reading only (policies, biographies) — owner's call */
         --bo-font-read: var(--font-noto-thai-looped), 'Noto Sans Thai Looped', var(--font-noto-thai), system-ui, sans-serif;
@@ -219,7 +229,7 @@ export function BallotBaseStyles() {
       .bo-header::before {
         content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0;
         background: rgba(255,255,255,.94); border-bottom: 1px solid var(--bo-rule);
-        box-shadow: 0 8px 24px -18px rgba(46,20,60,.35);
+        box-shadow: 0 8px 24px -18px rgba(var(--bo-shade-rgb),.35);
         transition: opacity .3s ease;
       }
       .bo-header.is-scrolled::before { opacity: 1; }
@@ -281,17 +291,33 @@ export function BallotBaseStyles() {
         display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 22px;
         border-radius: 10px; background: var(--bo-plum); color: #fff !important;
         font-size: 19px; font-weight: 700; text-align: center;
-        box-shadow: 0 10px 22px -12px rgba(138,38,128,.8);
+        box-shadow: 0 10px 22px -12px rgba(var(--bo-plum-rgb),.8);
         transition: background-color .2s, transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s;
       }
       /* hover: the button rises a pixel and its shadow opens; pressing settles it */
-      .bo-cta:not(.is-disabled):not(:disabled):hover { background: var(--bo-plum-deep); transform: translateY(-1px); box-shadow: 0 16px 28px -14px rgba(94,26,88,.85); }
-      .bo-cta:not(.is-disabled):not(:disabled):active { transform: translateY(0); box-shadow: 0 8px 18px -12px rgba(94,26,88,.8); }
+      .bo-cta:not(.is-disabled):not(:disabled):hover { background: var(--bo-plum-deep); transform: translateY(-1px); box-shadow: 0 16px 28px -14px rgba(var(--bo-plum-deep-rgb),.85); }
+      .bo-cta:not(.is-disabled):not(:disabled):active { transform: translateY(0); box-shadow: 0 8px 18px -12px rgba(var(--bo-plum-deep-rgb),.8); }
       .bo-cta.is-disabled { background: var(--bo-board); color: var(--bo-muted) !important; box-shadow: none; cursor: not-allowed; }
       .bo-cta:disabled { background: var(--bo-board); color: var(--bo-muted) !important; box-shadow: none; cursor: not-allowed; transform: none; }
 
+      /* Guilloche — the interlaced security lines printed on real ballots and
+         banknotes, so the page's paper is the ballot's paper. Used as a MASK
+         (with a second fade mask per surface) filled with --bo-plum, so it
+         takes every colour theme. */
+      .bo-root, .bo-scope {
+        --bo-g: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='48' fill='none' stroke='%23000' stroke-width='1'%3E%3Cpath d='M0 24C25 6 75 6 100 24S175 42 200 24'/%3E%3Cpath d='M0 24C25 42 75 42 100 24S175 6 200 24'/%3E%3Cpath d='M0 24C25 14 75 14 100 24S175 34 200 24' stroke-opacity='.55'/%3E%3Cpath d='M0 24C25 34 75 34 100 24S175 14 200 24' stroke-opacity='.55'/%3E%3C/svg%3E");
+      }
+
       /* the closing band: where a reading page points at the ballot */
-      .bo-end { background: linear-gradient(var(--bo-board), #E2D9EA); border-top: 1px solid var(--bo-rule); padding: 80px 20px 96px; }
+      .bo-end { position: relative; overflow: hidden; isolation: isolate; background: linear-gradient(var(--bo-board), var(--bo-tint-3)); border-top: 1px solid var(--bo-rule); padding: 80px 20px 96px; }
+      .bo-end::before {
+        content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--bo-plum); opacity: .12;
+        -webkit-mask-image: var(--bo-g), linear-gradient(transparent, #000 70%);
+                mask-image: var(--bo-g), linear-gradient(transparent, #000 70%);
+        -webkit-mask-size: 200px 48px, 100% 100%; mask-size: 200px 48px, 100% 100%;
+        -webkit-mask-repeat: repeat, no-repeat; mask-repeat: repeat, no-repeat;
+        -webkit-mask-composite: source-in; mask-composite: intersect;
+      }
       .bo-end__in { max-width: 640px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; }
       .bo-end__title { margin: 0; font-size: clamp(26px, 3vw, 38px); font-weight: 800; line-height: 1.2; }
       .bo-end__note { margin: 10px 0 0; font-size: 16px; line-height: 1.7; color: var(--bo-muted); }
@@ -317,9 +343,9 @@ export function BallotBaseStyles() {
       /* footer */
       .bo-footer { border-top: 1px solid var(--bo-rule); background: var(--bo-paper); }
       /* night: the home page ends in the count chapter's deep plum */
-      .bo-footer--night { background: #2A0E28; border-top-color: rgba(255,255,255,.08); }
+      .bo-footer--night { background: var(--bo-night); border-top-color: rgba(255,255,255,.08); }
       .bo-footer--night .bo-footer__in { color: rgba(255,255,255,.6); }
-      .bo-footer__in { max-width: var(--bo-max); margin: 0 auto; padding: 22px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; font-size: 14px; color: var(--bo-muted); }
+      .bo-footer__in { max-width: var(--bo-max); margin: 0 auto; padding: 22px 20px; display: flex; justify-content: center; font-size: 13px; letter-spacing: .04em; color: var(--bo-muted); text-align: center; }
 
       @media (max-width: 860px) {
         .bo-nav { display: none; }

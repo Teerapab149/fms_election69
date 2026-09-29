@@ -8,16 +8,71 @@
 //
 // Plain module: resolved on the server by templates/index.js, so no client imports.
 
-export const BALLOT_OFFICIAL = {
-  paper:    "#FFFFFF",
-  board:    "#EEEAF2", // the faculty notice board — cool lilac grey, not cream
-  plum:     "#8A2680", // faculty identity
-  plumDeep: "#5E1A58",
-  ink:      "#1E1828",
-  muted:    "#5F5870",
-  rule:     "#D8D1E0",
-  pen:      "#2447C4", // ballpoint blue — used ONLY for marks the voter makes
+// Colour themes. Every colour a Ballot page paints comes from one of these ramps
+// (BallotChrome turns the active one into --bo-* vars), so a theme recolours
+// the whole family — ballot, box, bands, shadows — from one object.
+//
+//   plum      the primary (the institution's colour)
+//   plumDeep / plumDeeper / plumMid / plumSoft   its ramp (the ballot box)
+//   glow      the box slot lighting up · night: the closing chapter / footer
+//   board + tint1..4   the page and its bands, lightest → deepest
+//   shade     "r,g,b" of the family's shadow tint
+//   pen       ballpoint blue — ONLY the voter's own marks. No theme is blue, so
+//             the voter's mark never blends into the institution's colour.
+export const BALLOT_THEMES = {
+  // the faculty plum — the identity build
+  "ballot-official": {
+    paper: "#FFFFFF", board: "#EEEAF2", plum: "#8A2680", plumDeep: "#5E1A58", plumDeeper: "#4E1549",
+    plumMid: "#A34793", plumSoft: "#C36FB5", glow: "#F9CFF1", night: "#2A0E28",
+    ink: "#1E1828", muted: "#5F5870", rule: "#D8D1E0", pen: "#2447C4",
+    tint1: "#F3EEF6", tint2: "#E9E1EF", tint3: "#E2D9EA", tint4: "#D2C4DD", shade: "46,20,60",
+  },
+  // deep green — calm, neutral, clashes with no party colour
+  "ballot-official-forest": {
+    paper: "#FFFFFF", board: "#E8EFEB", plum: "#1F6B4F", plumDeep: "#134A36", plumDeeper: "#0F3D2C",
+    plumMid: "#3E8F6A", plumSoft: "#6FB594", glow: "#CFF5E2", night: "#0C2A1F",
+    ink: "#16241E", muted: "#56655D", rule: "#CFDBD4", pen: "#2447C4",
+    tint1: "#F2F7F4", tint2: "#E3ECE7", tint3: "#DAE6DF", tint4: "#C3D5CB", shade: "16,48,36",
+  },
+  // brick red — warm and weighty, the closest in temperature to the plum
+  "ballot-official-brick": {
+    paper: "#FFFFFF", board: "#F3ECE8", plum: "#A63D2A", plumDeep: "#74281A", plumDeeper: "#5E2014",
+    plumMid: "#BE5A44", plumSoft: "#D98A74", glow: "#FBD9CF", night: "#2E120C",
+    ink: "#2A1A16", muted: "#6E5B55", rule: "#E3D3CB", pen: "#2447C4",
+    tint1: "#F8F2EF", tint2: "#EFE4DE", tint3: "#E9DCD4", tint4: "#DCC6BA", shade: "70,30,20",
+  },
+  // graphite — the quietest; no colour to read into, for a close year
+  "ballot-official-graphite": {
+    paper: "#FFFFFF", board: "#ECEEF1", plum: "#2F3A4A", plumDeep: "#1D2531", plumDeeper: "#161C26",
+    plumMid: "#4D5B70", plumSoft: "#8391A6", glow: "#DCE3EE", night: "#11151C",
+    ink: "#1A1F27", muted: "#5D6571", rule: "#D5D9E0", pen: "#2447C4",
+    tint1: "#F4F5F7", tint2: "#E6E9EE", tint3: "#DFE3E9", tint4: "#C9CFD8", shade: "25,32,44",
+  },
 };
+
+/** the ramp for a slug (a ballot-official-* variant); plum when unknown */
+export function ballotTheme(slug) {
+  return BALLOT_THEMES[slug] || BALLOT_THEMES["ballot-official"];
+}
+
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(",");
+
+/** the --bo-* custom properties for a ramp — BallotChrome and the preview's
+ *  live re-tint (utils/injectTemplateTheme) both read this, so they cannot drift */
+export function ballotVars(t) {
+  return {
+    "--bo-paper": t.paper, "--bo-board": t.board, "--bo-plum": t.plum, "--bo-plum-deep": t.plumDeep,
+    "--bo-plum-deeper": t.plumDeeper, "--bo-plum-mid": t.plumMid, "--bo-plum-soft": t.plumSoft,
+    "--bo-glow": t.glow, "--bo-night": t.night, "--bo-ink": t.ink, "--bo-muted": t.muted,
+    "--bo-rule": t.rule, "--bo-pen": t.pen,
+    "--bo-tint-1": t.tint1, "--bo-tint-2": t.tint2, "--bo-tint-3": t.tint3, "--bo-tint-4": t.tint4,
+    "--bo-shade-rgb": t.shade, "--bo-plum-rgb": rgb(t.plum), "--bo-plum-deep-rgb": rgb(t.plumDeep),
+    "--bo-ink-rgb": rgb(t.ink), "--bo-pen-rgb": rgb(t.pen),
+  };
+}
+
+// the plum ramp — kept under its old name for existing imports
+export const BALLOT_OFFICIAL = BALLOT_THEMES["ballot-official"];
 
 const p = BALLOT_OFFICIAL;
 
@@ -98,12 +153,14 @@ export const ballotOfficialTemplate = {
       toResults: "ไปหน้าผลคะแนน",
       lockNote: "ทำแบบประเมินก่อนดูผลคะแนน",
       home: "กลับหน้าแรก",
-      stubTitle: "ต้นขั้วบัตรเลือกตั้ง",
-      stubVoter: "ผู้ใช้สิทธิ์",
+      // plain words a student uses, not the polling station's ("ต้นขั้วบัตร…"
+      // read as old and bureaucratic — owner)
+      stubTitle: "หลักฐานการลงคะแนน",
+      stubVoter: "ชื่อ",
       stubId: "รหัสนักศึกษา",
-      stubTime: "เวลาที่ส่งบัตร",
+      stubTime: "เวลาที่ลงคะแนน",
       stubStamp: "ใช้สิทธิ์แล้ว",
-      privacy: "ต้นขั้วนี้ยืนยันการใช้สิทธิ์เท่านั้น ไม่มีพรรคหรือตัวเลือกที่คุณลงคะแนน",
+      privacy: "ใช้ยืนยันว่าคุณลงคะแนนแล้วเท่านั้น ไม่มีข้อมูลว่าคุณเลือกตัวเลือกไหน",
     },
     // the candidates page
     candidates: {
@@ -207,6 +264,12 @@ export const ballotOfficialTemplate = {
     // "the ballot's journey" — the home page's chapters, in the order a voter
     // lives them. Election facts (times, names) are filled in from settings.
     journey: {
+      // the heading that says these chapters ARE the steps of voting
+      leadKicker: "วิธีลงคะแนน",
+      leadTitle: "ลงคะแนนใน 4 ขั้นตอน",
+      leadBody: "ตั้งแต่รู้จักผู้สมัคร จนถึงวันประกาศผล ทำได้บนเว็บนี้ทั้งหมด",
+      step: "ขั้นที่",
+      stepOf: "จาก",
       ch1Link: "ดูนโยบายและทีมงาน",
       ch2Title: "ยืนยันตัวตนด้วย PSU Passport",
       ch2Body: "ระบบใช้บัญชีของมหาวิทยาลัยตรวจว่าคุณมีสิทธิ์ และบันทึกว่าคุณใช้สิทธิ์แล้ว ส่วนบัตรของคุณถูกเก็บแยกไว้ในหีบโดยไม่มีชื่อติดไปด้วย",
@@ -215,7 +278,7 @@ export const ballotOfficialTemplate = {
       ch2Box: "หีบบัตรออนไลน์",
       ch2BoxNote: "บัตรไม่มีชื่อ",
       ch2Gap: "สองส่วนนี้ไม่เชื่อมถึงกัน",
-      ch3Title: "กา แล้วส่งเข้าหีบออนไลน์",
+      ch3Title: "ทำเครื่องหมาย แล้วส่งบัตรเข้าหีบออนไลน์",
       ch3Box: "หีบบัตรออนไลน์",
       ch3Body: "เลือกได้ช่องเดียว กดยืนยัน แล้วบัตรจะถูกเข้ารหัสและส่งเข้าหีบออนไลน์ทันที เมื่อยืนยันแล้วจะแก้ไขไม่ได้",
       ch4Title: "นับคะแนนและประกาศผล",
@@ -237,5 +300,30 @@ export const ballotOfficialTemplate = {
   },
   pages: { home: {}, candidates: {}, party: {}, vote: {}, results: {}, success: {}, closed: {} },
 };
+
+// ── colour variants ──
+// Same layout, words and behaviour — only the ramp moves. Each is its own slug
+// (ballot-official-<name>) so the chooser shows it as a swatch of this family.
+function ballotVariant(slug, name, description) {
+  const t = BALLOT_THEMES[slug];
+  return {
+    ...ballotOfficialTemplate,
+    slug, name, description,
+    colorSwatch: { primary: t.plum, secondary: t.pen, background: t.board },
+    theme: {
+      tokens: {
+        "--color-primary": t.plum, "--color-accent": t.plumDeep, "--color-bg": t.board,
+        "--color-surface": t.paper, "--color-text": t.ink, "--color-text-muted": t.muted, "--color-border": t.rule,
+      },
+    },
+  };
+}
+
+export const ballotForestTemplate = ballotVariant("ballot-official-forest", "Ballot · Forest",
+  "โทนเขียวเข้ม — สงบ เป็นกลาง ไม่ชนกับสีประจำพรรคใด");
+export const ballotBrickTemplate = ballotVariant("ballot-official-brick", "Ballot · Brick",
+  "โทนแดงอิฐ — อบอุ่น หนักแน่น ใกล้เคียงอุณหภูมิสีม่วงเดิม");
+export const ballotGraphiteTemplate = ballotVariant("ballot-official-graphite", "Ballot · Graphite",
+  "โทนเทาชนวน — เงียบที่สุด ไม่มีสีให้ตีความ เหมาะกับปีที่ผลคะแนนสูสี");
 
 export default ballotOfficialTemplate;

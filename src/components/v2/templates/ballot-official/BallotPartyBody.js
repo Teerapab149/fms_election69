@@ -223,7 +223,7 @@ export default function BallotPartyBody({ party, cover = true, wide = false }) {
         .bp-cover:hover img { transform: scale(1.02); }
         .bp-cover__hint {
           position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px;
-          padding: 6px 10px; border-radius: 8px; background: rgba(30,24,40,.66); color: #fff; font-size: 13px;
+          padding: 6px 10px; border-radius: 8px; background: rgba(var(--bo-ink-rgb),.66); color: #fff; font-size: 13px;
         }
         .bp-h { margin: 0 0 16px; font-size: 22px; font-weight: 800; line-height: 1.3; display: flex; align-items: baseline; gap: 10px; }
         .bp-count { font-size: 14px; font-weight: 500; color: var(--bo-muted); }
@@ -267,7 +267,7 @@ export default function BallotPartyBody({ party, cover = true, wide = false }) {
         .bp-social__row { display: flex; flex-wrap: wrap; gap: 12px; }
         .bp-social__link {
           display: inline-flex; flex-direction: column; gap: 2px; min-width: 180px; padding: 14px 18px; border-radius: 10px;
-          background: rgba(255,255,255,.75); box-shadow: 0 0 0 1px rgba(46,20,60,.08); color: var(--bo-ink); text-decoration: none;
+          background: rgba(255,255,255,.75); box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.08); color: var(--bo-ink); text-decoration: none;
           transition: box-shadow .2s, background-color .2s;
         }
         .bp-social__link:hover { background: #fff; box-shadow: 0 0 0 1px var(--bo-plum); }
@@ -279,7 +279,7 @@ export default function BallotPartyBody({ party, cover = true, wide = false }) {
           display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 32px; align-items: center;
           width: 100%; padding: 0; margin: 0 0 32px; border: 0; background: none; text-align: left; color: var(--bo-ink); cursor: pointer;
         }
-        .bp-lead__photo { display: block; aspect-ratio: 4 / 5; border-radius: 12px; overflow: hidden; background: var(--bo-rule); box-shadow: 0 24px 48px -32px rgba(46,20,60,.55); }
+        .bp-lead__photo { display: block; aspect-ratio: 4 / 5; border-radius: 12px; overflow: hidden; background: var(--bo-rule); box-shadow: 0 24px 48px -32px rgba(var(--bo-shade-rgb),.55); }
         .bp-lead__photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.16,1,.3,1); }
         .bp-lead:hover .bp-lead__photo img { transform: scale(1.03); }
         .bp-lead__pos { display: block; font-size: 16px; font-weight: 700; color: var(--bo-plum); }
@@ -290,9 +290,9 @@ export default function BallotPartyBody({ party, cover = true, wide = false }) {
         .bp-vice__card {
           display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 18px; align-items: center; width: 100%;
           padding: 10px 16px 10px 10px; border: 0; border-radius: 12px; text-align: left; color: var(--bo-ink); cursor: pointer;
-          background: rgba(255,255,255,.7); box-shadow: 0 0 0 1px rgba(46,20,60,.07); transition: box-shadow .2s, background-color .2s;
+          background: rgba(255,255,255,.7); box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.07); transition: box-shadow .2s, background-color .2s;
         }
-        .bp-vice__card:hover { background: #fff; box-shadow: 0 0 0 1px rgba(46,20,60,.12), 0 12px 24px -18px rgba(46,20,60,.45); }
+        .bp-vice__card:hover { background: #fff; box-shadow: 0 0 0 1px rgba(var(--bo-shade-rgb),.12), 0 12px 24px -18px rgba(var(--bo-shade-rgb),.45); }
         .bp-vice__photo { display: block; aspect-ratio: 4 / 5; border-radius: 8px; overflow: hidden; background: var(--bo-rule); }
         .bp-vice__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .bp-vice__txt b { display: block; font-size: 18px; font-weight: 800; line-height: 1.3; }
@@ -318,11 +318,11 @@ export default function BallotPartyBody({ party, cover = true, wide = false }) {
         }
 
         /* dialogs */
-        .bp-dlg { position: fixed; inset: 0; z-index: 9500; display: grid; place-items: center; padding: 20px; background: rgba(30,24,40,.62); }
-        .bp-dlg--photo { background: rgba(20,14,24,.9); }
+        .bp-dlg { position: fixed; inset: 0; z-index: 9500; display: grid; place-items: center; padding: 20px; background: rgba(var(--bo-ink-rgb),.62); }
+        .bp-dlg--photo { background: rgba(var(--bo-ink-rgb),.9); }
         .bp-member {
           position: relative; width: min(640px, 100%); display: grid; grid-template-columns: 240px 1fr; overflow: hidden;
-          background: #fff; border-radius: 12px; box-shadow: inset 0 5px 0 var(--bo-plum), 0 30px 64px -28px rgba(30,24,40,.6);
+          background: #fff; border-radius: 12px; box-shadow: inset 0 5px 0 var(--bo-plum), 0 30px 64px -28px rgba(var(--bo-ink-rgb),.6);
           font-family: var(--bo-font);
         }
         .bp-member__photo { display: block; aspect-ratio: 4 / 5; background: var(--bo-rule); }

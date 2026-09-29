@@ -242,15 +242,17 @@ export default function BallotHome({
         /* ── hero ── */
         /* the page itself is board-coloured, so the header (transparent at rest)
            reads as part of the hero without overlapping it */
-        .bo-hero { position: relative; overflow: hidden; background: var(--bo-board); }
-        /* the board's texture: rows of empty ballot boxes, printed faintly and
-           fading out from behind the ballot — the page's paper, not decoration */
+        /* the board: light falling from the top left onto the page */
+        .bo-hero { position: relative; overflow: hidden; background: radial-gradient(110% 90% at 12% 0%, var(--bo-tint-1) 0%, transparent 62%), var(--bo-board); }
+        /* the ballot's security print (guilloche, BallotChrome) behind the
+           ballot, fading out towards the words — the page's paper, themed */
         .bo-hero::before {
-          content: ""; position: absolute; inset: 0; pointer-events: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect x='12' y='12' width='20' height='20' rx='2.5' fill='none' stroke='%238A2680' stroke-opacity='.13' stroke-width='1.5'/%3E%3C/svg%3E");
-          background-size: 44px 44px;
-          -webkit-mask-image: radial-gradient(60% 75% at 78% 50%, #000 0%, transparent 72%);
-                  mask-image: radial-gradient(60% 75% at 78% 50%, #000 0%, transparent 72%);
+          content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--bo-plum); opacity: .17;
+          -webkit-mask-image: var(--bo-g), radial-gradient(60% 80% at 78% 50%, #000 0%, transparent 74%);
+                  mask-image: var(--bo-g), radial-gradient(60% 80% at 78% 50%, #000 0%, transparent 74%);
+          -webkit-mask-size: 200px 48px, 100% 100%; mask-size: 200px 48px, 100% 100%;
+          -webkit-mask-repeat: repeat, no-repeat; mask-repeat: repeat, no-repeat;
+          -webkit-mask-composite: source-in; mask-composite: intersect;
         }
         /* words and ballot share one centre line and one column rhythm — the two
            halves read as one statement, not two blocks side by side */
@@ -295,7 +297,7 @@ export default function BallotHome({
         .bo-stage { position: relative; padding-bottom: 44px; }
         .bo-glow {
           position: absolute; left: 50%; top: 46%; width: 130%; aspect-ratio: 1; translate: -50% -50%;
-          background: radial-gradient(closest-side, rgba(138,38,128,.17), rgba(138,38,128,0));
+          background: radial-gradient(closest-side, rgba(var(--bo-plum-rgb),.17), rgba(var(--bo-plum-rgb),0));
           pointer-events: none; animation: boBreathe 14s ease-in-out infinite alternate;
         }
         @keyframes boBreathe { from { transform: scale(.94); opacity: .75; } to { transform: scale(1.06); opacity: 1; } }
@@ -305,7 +307,7 @@ export default function BallotHome({
         .bo-stage:has(.bo-cta:not(.is-disabled):hover) .bo-lift { transform: translateY(-4px); }
         .bo-shadow {
           position: absolute; left: 12%; right: 12%; bottom: 8px; height: 26px; border-radius: 50%;
-          background: radial-gradient(closest-side, rgba(46,20,60,.32), rgba(46,20,60,0));
+          background: radial-gradient(closest-side, rgba(var(--bo-shade-rgb),.32), rgba(var(--bo-shade-rgb),0));
           filter: blur(6px); pointer-events: none;
         }
 
@@ -315,10 +317,10 @@ export default function BallotHome({
           position: relative; background: var(--bo-paper); border-radius: 10px;
           overflow: hidden; /* the perforation notches bite INTO the ballot, nothing hangs outside */
           box-shadow:
-            0 0 0 1px rgba(46,20,60,.06),
-            0 2px 4px rgba(46,20,60,.05),
-            0 18px 36px -18px rgba(46,20,60,.28),
-            0 48px 80px -48px rgba(46,20,60,.4);
+            0 0 0 1px rgba(var(--bo-shade-rgb),.06),
+            0 2px 4px rgba(var(--bo-shade-rgb),.05),
+            0 18px 36px -18px rgba(var(--bo-shade-rgb),.28),
+            0 48px 80px -48px rgba(var(--bo-shade-rgb),.4);
         }
         .bo-ballot__head {
           display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;

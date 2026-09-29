@@ -21,10 +21,10 @@ export default function BallotBox({ glow = 0, label, wordmark, idPrefix = "bb" }
       <svg className="bb__art" viewBox="0 0 300 190" preserveAspectRatio="none" aria-hidden>
         <defs>
           <linearGradient id={g("Top")} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#C36FB5" /><stop offset="1" stopColor="#A34793" />
+            <stop offset="0" style={{ stopColor: "var(--bo-plum-soft)" }} /><stop offset="1" style={{ stopColor: "var(--bo-plum-mid)" }} />
           </linearGradient>
           <linearGradient id={g("Front")} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#8A2680" /><stop offset="1" stopColor="#4E1549" />
+            <stop offset="0" style={{ stopColor: "var(--bo-plum)" }} /><stop offset="1" style={{ stopColor: "var(--bo-plum-deeper)" }} />
           </linearGradient>
           <linearGradient id={g("Sheen")} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stopColor="#fff" stopOpacity=".16" /><stop offset=".45" stopColor="#fff" stopOpacity="0" />
@@ -32,8 +32,8 @@ export default function BallotBox({ glow = 0, label, wordmark, idPrefix = "bb" }
           <filter id={g("Blur")} x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5" /></filter>
         </defs>
         <path d="M24 4 H276 L300 56 H0 Z" fill={`url(#${g("Top")})`} />
-        <rect x="74" y="24" width="152" height="10" rx="5" fill="#2A0E28" />
-        <motion.rect x="70" y="20" width="160" height="18" rx="9" fill="#F9CFF1" filter={`url(#${g("Blur")})`} style={{ opacity: glow }} />
+        <rect x="74" y="24" width="152" height="10" rx="5" style={{ fill: "var(--bo-night)" }} />
+        <motion.rect x="70" y="20" width="160" height="18" rx="9" filter={`url(#${g("Blur")})`} style={{ opacity: glow, fill: "var(--bo-glow)" }} />
         <path d="M0 56 H300 V170 Q300 186 284 186 H16 Q0 186 0 170 Z" fill={`url(#${g("Front")})`} />
         <path d="M0 56 H300 V170 Q300 186 284 186 H16 Q0 186 0 170 Z" fill={`url(#${g("Sheen")})`} />
         <path d="M0 56.5 H300" stroke="#fff" strokeOpacity=".35" />
