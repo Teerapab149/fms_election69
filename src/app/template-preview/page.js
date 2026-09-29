@@ -407,8 +407,9 @@ function PreviewBody() {
   // seam). Classic/original inner pages keep their static EditorPreview renders for
   // now (out of scope — flow still demonstrable: original home login → vote page).
   function renderInteractive() {
-    // v2 families: their own success page (?variant=unlocked = evaluation done)
-    if (page === 'success' && V2Success) return <V2Success user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} />;
+    // v2 families: their own success page (?variant=unlocked = evaluation done,
+    // ?variant=noform = no evaluation form this year: unlocked, no form step)
+    if (page === 'success' && V2Success) return <V2Success user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} />;
     if (page === 'candidates' && V2Candidates) return <V2Candidates candidates={parties} />;
     if (page === 'results' && V2Results) return <V2Results {...v2ResultsProps()} />;
     if (page === 'closed' && V2Closed) { const c = closedPreviewCopy(variant); return <V2Closed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} />; }
@@ -502,7 +503,7 @@ function PreviewBody() {
       }
       if (page === 'success') {
         const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
-        return frame(<S user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />);
+        return frame(<S user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode={false} />);
       }
       if (page === 'closed') {
         const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
@@ -690,7 +691,7 @@ function PreviewBody() {
         // ?variant=locked previews the state a voter actually lands on first —
         // results still gated behind the evaluation form. Default stays unlocked
         // so the existing preview link is unchanged.
-        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />;
+        return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode={false} />;
       }
       if (page === 'closed') {
         const c = receiptClosedCopy(variant);
@@ -805,7 +806,7 @@ function PreviewBody() {
       );
     }
 
-    if (page === 'success' && ['classic', 'original'].includes(family)) return classicChrome(<OriginalSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} templateId={slug} />);
+    if (page === 'success' && ['classic', 'original'].includes(family)) return classicChrome(<OriginalSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} templateId={slug} />);
 
     // Blossom family — its own Candy Editorial inner pages (home goes through
     // HomeRenderer above).
@@ -835,14 +836,14 @@ function PreviewBody() {
           />
         );
       }
-      if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />;
+      if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode={false} />;
       if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />; }
     }
 
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
     //    are ticketed later; they fall through to classic below for now.
     if (family === 'receipt' && page === 'success') {
-      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode={false} />;
+      return <ReceiptSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode={false} />;
     }
 
     // ── receipt family — CANDIDATES (R4). paper flyers on the desk; links to party. ──
@@ -888,7 +889,7 @@ function PreviewBody() {
 
   function renderPage() {
   if (page === 'party' && V2Party) return <V2Party party={parties[0]} galleryImages={[]} isSingleParty={false} editorMode />;
-  if (page === 'success' && V2Success) return <V2Success user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
+  if (page === 'success' && V2Success) return <V2Success user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode />;
   if (page === 'candidates' && V2Candidates) return <V2Candidates candidates={parties} editorMode />;
   if (page === 'results' && V2Results) return <V2Results {...v2ResultsProps()} editorMode />;
   if (page === 'closed' && V2Closed) { const c = closedPreviewCopy(variant); return <V2Closed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode />; }
@@ -956,7 +957,7 @@ function PreviewBody() {
         />
       );
     }
-    if (page === 'success') return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
+    if (page === 'success') return <FmsOfficialSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode />;
     if (page === 'closed') {
       const cc = closedPreviewCopy(variant);
       return <FmsOfficialClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />;
@@ -1031,7 +1032,7 @@ function PreviewBody() {
     }
     if (page === 'success') {
       const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
-      return frame(<S user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />);
+      return frame(<S user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode />);
     }
     if (page === 'closed') {
       const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
@@ -1078,7 +1079,7 @@ function PreviewBody() {
         />
       );
     }
-    if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
+    if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode />;
     if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode />; }
   }
 
@@ -1106,7 +1107,7 @@ function PreviewBody() {
     }
     if (page === 'candidates') return <ReceiptCandidates candidates={parties} editorMode />;
     if (page === 'party') return <ReceiptParty party={parties[0]} galleryImages={[]} showBackToVote={false} editorMode />;
-    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode />;
+    if (page === 'success') return <ReceiptSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode />;
     if (page === 'results') {
       const revealed = variant === 'revealed';
       return (
@@ -1143,7 +1144,7 @@ function PreviewBody() {
   // (paused == the live page's "closed"); absent/unknown → waiting as before
   if (page === 'closed') return <ClosedEditorPreview simMode={variant === 'ended' ? 'ended' : (variant === 'closed' || variant === 'paused') ? 'paused' : 'waiting'} />;
   if (page === 'party') return <ClassicPartyPreview party={parties[0]} />;
-  if (page === 'success') return classicChrome(<OriginalSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked'} onOpenForm={noop} editorMode templateId={slug} />);
+  if (page === 'success') return classicChrome(<OriginalSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode templateId={slug} />);
 
   // unknown page
   return (

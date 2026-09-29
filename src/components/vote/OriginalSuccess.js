@@ -65,7 +65,7 @@ function CompletionSeal({ quiet = false }) {
 }
 
 // Presentation only: the parent verifies participation and owns form completion.
-export default function OriginalSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false, showMessage = true, showActions = true }) {
+export default function OriginalSuccess({ user = null, isUnlocked = false, hasForm = true, onOpenForm = () => {}, editorMode = false, showMessage = true, showActions = true }) {
   const gc = useGlobalConfig() || {};
   const reduce = useReducedMotion();
   const quiet = Boolean(reduce || editorMode);
@@ -99,9 +99,9 @@ export default function OriginalSuccess({ user = null, isUnlocked = false, onOpe
           {showActions && <section className="os-next min-w-0 self-start md:col-start-2 md:row-start-1">
             <span className="os-eyebrow">WHAT’S NEXT</span>
             <h2 className="os-h2">{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : "อีกนิด เพื่อรับชั่วโมงกิจกรรม"}</h2>
-            <p className="os-note">{isUnlocked ? "ส่งแบบประเมินเรียบร้อย คุณสามารถไปยังหน้าผลคะแนนได้แล้ว" : evaluationPromptText(gc)}</p>
+            <p className="os-note">{!hasForm ? "ไม่มีแบบประเมินในปีนี้ ไปหน้าผลคะแนนได้เลย" : isUnlocked ? "ส่งแบบประเมินเรียบร้อย คุณสามารถไปยังหน้าผลคะแนนได้แล้ว" : evaluationPromptText(gc)}</p>
             <div className="os-stack">
-              {isUnlocked ? <><span className="os-done"><Check size={17} aria-hidden /> ส่งแบบประเมินแล้ว</span><a className="os-action os-primary" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <ArrowRight size={18} aria-hidden /></a></> : <><button type="button" className="os-action os-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={18} aria-hidden /></button><button type="button" disabled className="os-action os-locked"><Lock size={16} aria-hidden /> ทำแบบประเมินก่อนดูผลคะแนน</button></>}
+              {isUnlocked ? <>{hasForm && <span className="os-done"><Check size={17} aria-hidden /> ส่งแบบประเมินแล้ว</span>}<a className="os-action os-primary" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <ArrowRight size={18} aria-hidden /></a></> : <><button type="button" className="os-action os-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={18} aria-hidden /></button><button type="button" disabled className="os-action os-locked"><Lock size={16} aria-hidden /> ทำแบบประเมินก่อนดูผลคะแนน</button></>}
               <a className="os-action os-home" href={editorMode ? undefined : getPath("/")}>กลับหน้าแรก</a>
             </div>
           </section>}

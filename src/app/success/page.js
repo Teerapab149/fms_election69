@@ -93,6 +93,8 @@ export default function SuccessPage({
   }, [editorMode]);
 
   const isJustVoted = searchParams.get('voted') === 'true';
+  // is there an evaluation form this year? The editor always shows the form step.
+  const hasForm = editorMode || Boolean(String(googleFormUrl || "").trim());
 
   // =========================================================
   // ✅ Editor Wrappers & Visibility Logic (แก้บั๊ก s.type)
@@ -170,6 +172,11 @@ export default function SuccessPage({
           setIsVoted(voted);
 
           if (statusData.googleFormUrl) setGoogleFormUrl(statusData.googleFormUrl);
+          // No form this year → nothing to complete, so nothing to lock. The only
+          // way to unlock was finishing the form; with no link the button led to
+          // "ไม่พบลิงก์แบบประเมิน" and the results link never opened. Each family
+          // reads hasForm (below) to drop the form step and its wording.
+          else setIsUnlocked(true);
 
           // one branch, not two: this block used to be duplicated, so the silent
           // redirect always won and the explanatory modal below it was dead code.
@@ -308,6 +315,7 @@ export default function SuccessPage({
         <ReceiptSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -318,6 +326,7 @@ export default function SuccessPage({
         <BlossomSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -328,6 +337,7 @@ export default function SuccessPage({
         <VerdureSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -335,13 +345,15 @@ export default function SuccessPage({
 
       {/* FMS OFFICIAL layout (faculty chrome); the form + alert modals below stay shared */}
       {V2Success && (isAuthorized || editorMode) && (
-        <V2Success user={user} isUnlocked={isUnlocked} onOpenForm={() => setShowModal(true)} editorMode={editorMode} />
+        <V2Success user={user} isUnlocked={isUnlocked}
+          hasForm={hasForm} onOpenForm={() => setShowModal(true)} editorMode={editorMode} />
       )}
 
       {isFmsOfficial && (isAuthorized || editorMode) && (
         <FmsOfficialSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -352,6 +364,7 @@ export default function SuccessPage({
         <GumroadSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -362,6 +375,7 @@ export default function SuccessPage({
         <StudioDarkSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -371,6 +385,7 @@ export default function SuccessPage({
         <OriginalSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
           templateId={activeTemplateId}

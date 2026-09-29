@@ -97,7 +97,7 @@ export function VoteCompletionMark({ family, quiet = false }) {
   );
 }
 
-export default function VoteSuccessExperience({ family, user, isUnlocked = false, onOpenForm = () => {}, editorMode = false, children }) {
+export default function VoteSuccessExperience({ family, user, isUnlocked = false, hasForm = true, onOpenForm = () => {}, editorMode = false, children }) {
   const gc = useGlobalConfig() || {};
   const reduce = useReducedMotion();
   const copy = COPY[family] || COPY["fms-official"];
@@ -119,9 +119,9 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
           <p className="vx-deck">ขอบคุณที่ร่วมเป็นส่วนหนึ่งของ{gc.organizationName || "สโมสรนักศึกษา คณะวิทยาการจัดการ"}</p>
         </section>
         <section className="vx-next">
-          <div className="vx-next-copy"><span className="vx-label">{isUnlocked ? "COMPLETE" : "NEXT STEP"}</span><h2>{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : copy.next}</h2><p>{isUnlocked ? "ส่งแบบประเมินเรียบร้อยแล้ว ไปยังหน้าผลคะแนนได้เมื่อพร้อม" : evaluationPromptText(gc)}</p></div>
+          <div className="vx-next-copy"><span className="vx-label">{isUnlocked ? "COMPLETE" : "NEXT STEP"}</span><h2>{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : copy.next}</h2><p>{!hasForm ? "ไม่มีแบบประเมินในปีนี้ ไปหน้าผลคะแนนได้เลย" : isUnlocked ? "ส่งแบบประเมินเรียบร้อยแล้ว ไปยังหน้าผลคะแนนได้เมื่อพร้อม" : evaluationPromptText(gc)}</p></div>
           <div className="vx-actions">
-            {isUnlocked ? <><div className="vx-done"><Check size={16} aria-hidden="true" /> ทำแบบประเมินแล้ว</div><a className="vx-button vx-primary" href={editorMode ? undefined : getPath("/results")}>ไปหน้าผลคะแนน <ArrowRight size={17} aria-hidden="true" /></a></> : <><button type="button" className="vx-button vx-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={17} aria-hidden="true" /></button><span className="vx-lock"><Lock size={13} aria-hidden="true" /> ทำแบบประเมินก่อนดูผลคะแนน</span></>}
+            {isUnlocked ? <>{hasForm && <div className="vx-done"><Check size={16} aria-hidden="true" /> ทำแบบประเมินแล้ว</div>}<a className="vx-button vx-primary" href={editorMode ? undefined : getPath("/results")}>ไปหน้าผลคะแนน <ArrowRight size={17} aria-hidden="true" /></a></> : <><button type="button" className="vx-button vx-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={17} aria-hidden="true" /></button><span className="vx-lock"><Lock size={13} aria-hidden="true" /> ทำแบบประเมินก่อนดูผลคะแนน</span></>}
             <a className="vx-button vx-home" href={editorMode ? undefined : getPath("/")}>กลับหน้าแรก</a>
           </div>
         </section>

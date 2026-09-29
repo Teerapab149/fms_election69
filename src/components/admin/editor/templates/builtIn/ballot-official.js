@@ -148,6 +148,8 @@ export const ballotOfficialTemplate = {
       nextTitle: "อีกหนึ่งขั้นตอน",
       doneTitle: "ครบทุกขั้นตอนแล้ว",
       doneNote: "ส่งแบบประเมินเรียบร้อยแล้ว ไปหน้าผลคะแนนได้เมื่อพร้อม",
+      // when there is no evaluation form this year (ตั้งค่าทั่วไป left it blank)
+      noFormNote: "ไม่มีแบบประเมินในปีนี้ ไปหน้าผลคะแนนได้เลย",
       openForm: "เปิดแบบประเมิน",
       formDone: "ทำแบบประเมินแล้ว",
       toResults: "ไปหน้าผลคะแนน",

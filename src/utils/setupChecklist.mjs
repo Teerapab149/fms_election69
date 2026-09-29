@@ -88,7 +88,9 @@ export function posterItem(cfg) {
 export function formItem(cfg) {
   const url = String(cfg?.googleFormUrl ?? "").trim();
   const base = { key: "form", title: "ลิงก์แบบประเมิน" };
-  if (!url) return { ...base, value: "ยังไม่ได้ใส่ลิงก์", tone: "warn", status: "ยังไม่ใส่" };
+  // blank is allowed (no form this year → no form step, no lock) but is far
+  // more often forgotten than chosen, and students lose their activity hours
+  if (!url) return { ...base, value: "ยังไม่ได้ใส่ลิงก์ · นักศึกษาจะไม่มีแบบประเมินให้ทำ", tone: "warn", status: "ยังไม่ใส่" };
   if (!/^https:\/\/\S+$/.test(url)) return { ...base, value: url, tone: "err", status: "ลิงก์ไม่ถูกต้อง" };
   let shown = url;
   try { const u = new URL(url); shown = `${u.host}${u.pathname.length > 24 ? `${u.pathname.slice(0, 24)}…` : u.pathname}`; } catch { /* keep raw */ }

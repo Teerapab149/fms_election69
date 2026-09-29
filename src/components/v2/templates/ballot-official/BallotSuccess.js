@@ -21,7 +21,7 @@ import { hourWindow } from "../../shared/election/voteTime.mjs";
 
 const EASE = [0.16, 1, 0.3, 1];
 
-export default function BallotSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false }) {
+export default function BallotSuccess({ user = null, isUnlocked = false, hasForm = true, onOpenForm = () => {}, editorMode = false }) {
   const gc = useGlobalConfig() || {};
   const meta = ballotMeta(gc);
   const s = ballotOfficialTemplate.copy.success;
@@ -46,8 +46,9 @@ export default function BallotSuccess({ user = null, isUnlocked = false, onOpenF
 
               {/* the one thing left to do */}
               <div className="bs__next">
+                {/* no form this year: nothing was submitted, so don't say it was */}
                 <h2>{isUnlocked ? s.doneTitle : s.nextTitle}</h2>
-                <p>{isUnlocked ? s.doneNote : evaluationPromptText(gc)}</p>
+                <p>{!hasForm ? s.noFormNote : isUnlocked ? s.doneNote : evaluationPromptText(gc)}</p>
                 <div className="bs__acts">
                   {isUnlocked ? (
                     <a className="bo-cta bs__primary" href={editorMode ? undefined : getPath("/results")}>{s.toResults}</a>
@@ -56,9 +57,11 @@ export default function BallotSuccess({ user = null, isUnlocked = false, onOpenF
                   )}
                   <a className="bs__home" href={editorMode ? undefined : getPath("/")}>{s.home}</a>
                 </div>
-                <p className="bs__lock">
-                  {isUnlocked ? <><Check size={14} aria-hidden /> {s.formDone}</> : <><Lock size={13} aria-hidden /> {s.lockNote}</>}
-                </p>
+                {hasForm && (
+                  <p className="bs__lock">
+                    {isUnlocked ? <><Check size={14} aria-hidden /> {s.formDone}</> : <><Lock size={13} aria-hidden /> {s.lockNote}</>}
+                  </p>
+                )}
               </div>
             </section>
 
