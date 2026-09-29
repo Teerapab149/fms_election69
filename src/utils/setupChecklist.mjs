@@ -79,9 +79,11 @@ export function posterItem(cfg) {
   return {
     key: "poster",
     title: "โปสเตอร์",
-    value: set ? "อัปโหลดแล้ว" : "ยังเป็นโปสเตอร์ของปีก่อน",
-    tone: set ? "ok" : "warn",
-    status: set ? "พร้อม" : "ต้องเปลี่ยน",
+    // the fallback is a generic poster (no date, no edition number) — a valid
+    // choice, not a gap
+    value: set ? "อัปโหลดแล้ว" : "ใช้โปสเตอร์เริ่มต้นของระบบ",
+    tone: set ? "ok" : "none",
+    status: set ? "พร้อม" : "ใช้ภาพเริ่มต้น",
   };
 }
 

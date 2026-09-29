@@ -28,9 +28,9 @@ export const GLOBAL_CONFIG_DEFAULTS = {
   copyrightYear: 2026,
 
   // Election announcement poster shown on the home page. Empty = the checked-in
-  // poster (utils/electionPoster.mjs → DEFAULT_ELECTION_POSTER_PATH, last
-  // year's), so the settings form warns while this is blank. Root-relative
-  // path (no basePath — readers add it via getPath).
+  // generic poster (utils/electionPoster.mjs → DEFAULT_ELECTION_POSTER_PATH; no
+  // date or edition number on it, despite the file name). Root-relative path
+  // (no basePath — readers add it via getPath).
   electionBannerUrl: "",
 
   // Success-page evaluation form (stored in the SystemConfig.googleFormUrl

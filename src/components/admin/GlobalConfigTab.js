@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { DERIVED, isCustom, applyDerived } from "../../utils/globalConfigDerive.mjs";
-import { setupChecklist, thaiLongDateTime, thaiDuration } from "../../utils/setupChecklist.mjs";
+import { setupChecklist, thaiDuration } from "../../utils/setupChecklist.mjs";
+import ThaiDateTimeField from "./ThaiDateTimeField";
 import { getPath } from "../../utils/basePath";
 import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
@@ -63,15 +64,14 @@ function ImageField({ value, onChange }) {
     <div className="grid sm:grid-cols-[220px_minmax(0,1fr)] gap-4 items-start">
       <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={posterSrc} alt={hasCustomPoster ? "โปสเตอร์ที่อัปโหลดไว้" : "โปสเตอร์ของปีก่อน"} className="w-full h-auto block" />
+        <img src={posterSrc} alt={hasCustomPoster ? "โปสเตอร์ที่อัปโหลดไว้" : "โปสเตอร์เริ่มต้นของระบบ"} className="w-full h-auto block" />
       </div>
       <div>
-        {/* the fallback is the checked-in poster from a PAST election, dates and
-            all — say so plainly rather than calling it a neutral "default" */}
+        {/* the fallback is the checked-in generic poster (no date, no edition
+            number on it), so using it is fine — just say which one is showing */}
         {!hasCustomPoster && (
-          <p className="flex items-start gap-1.5 text-[13px] text-amber-700 mb-3">
-            <AlertCircle className="w-4 h-4 mt-px shrink-0" />
-            ยังไม่ได้อัปโหลด หน้าเว็บจึงใช้โปสเตอร์ของปีก่อน ซึ่งวันที่บนภาพไม่ใช่ของปีนี้
+          <p className="text-[13px] text-slate-600 mb-3">
+            ยังไม่ได้อัปโหลด หน้าเว็บจึงใช้โปสเตอร์เริ่มต้นของระบบ (ภาพนี้) อัปโหลดโปสเตอร์ของปีนี้แทนได้ถ้ามี
           </p>
         )}
         <div className="flex flex-wrap items-center gap-2">
@@ -93,7 +93,7 @@ function ImageField({ value, onChange }) {
             </button>
           )}
         </div>
-        <p className="text-xs text-slate-500 mt-2">JPG, PNG หรือ WebP · ตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง</p>
+        <p className="text-xs text-slate-500 mt-2">JPG, PNG หรือ WebP · ถ้าโปสเตอร์ใหม่มีวันที่ ตรวจว่าตรงกับวันเลือกตั้งจริง</p>
         {err && (
           <p className="flex items-center gap-1.5 text-xs text-red-600 mt-2">
             <AlertCircle className="w-4 h-4" /> {err}
@@ -343,15 +343,61 @@ export default function GlobalConfigTab() {
     );
   }
 
-  // one datetime field with how it reads in Thai right under it
+  // ── the faculty's names, as fill-in-the-sentence ──
+  // An outsider thinks in whole names ("change the project name"), not in the
+  // parts they are assembled from. So each line shows the name exactly as the
+  // site will, with only the editable part as a dashed slot sized to its text.
+
+  // one dashed slot inside a sentence, with what it is written under it
+  function slot(k, hint) {
+    const v = String(config[k] ?? "");
+    return (
+      <span className="inline-flex flex-col gap-1">
+        <input
+          id={`gc-${k}`} aria-label={hint} value={v} onChange={(e) => set(k, e.target.value)}
+          size={Math.max(3, [...v].length + 1)}
+          className="h-10 px-2.5 rounded-lg border border-dashed border-[#8A2680]/50 bg-[#8A2680]/[0.04] text-[17px] text-slate-800 focus:border-solid focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/15 focus:outline-none max-w-full"
+        />
+        <small className="text-[11px] text-slate-400 pl-0.5">{hint}</small>
+      </span>
+    );
+  }
+
+  // one line: the sentence (or, once written by hand, the whole name as one
+  // field), where it shows up, and the switch between the two
+  function sentence({ title, k = null, parts, after = null, where }) {
+    const own = k && manual.has(k);
+    return (
+      <div className="py-4">
+        <div className="flex items-baseline justify-between gap-3 mb-2">
+          <span className="text-[13px] font-bold text-slate-800">{title}</span>
+          {k && (
+            <button type="button" onClick={() => setManualKey(k, !own)}
+              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-[#8A2680] hover:underline">
+              {own ? <><Wand2 className="w-3.5 h-3.5" /> กลับไปเติมเฉพาะช่อง</> : <><PencilLine className="w-3.5 h-3.5" /> พิมพ์ชื่อเต็มเองทั้งหมด</>}
+            </button>
+          )}
+        </div>
+        {own ? (
+          <input id={`gc-${k}`} aria-label={title} className={INPUT} value={config[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
+        ) : (
+          <div className="flex flex-wrap items-start gap-1.5 text-[17px] text-slate-800">{parts}</div>
+        )}
+        {after}
+        {where && (
+          <p className="flex items-start gap-1 text-xs text-slate-500 mt-2 leading-relaxed">
+            <MapPin className="w-3.5 h-3.5 mt-px shrink-0 text-slate-400" /><span>แสดงที่: {where}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // one date-and-time, picked and shown the Thai way (ThaiDateTimeField)
   function dateField(k) {
-    const d = parseBangkok(config[k]);
     return (
       <Field k={k}>
-        <input id={`gc-${k}`} type="datetime-local" className={INPUT} value={config[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
-        <p className={`text-[13px] mt-1.5 ${d ? "text-[#8A2680] font-semibold" : "text-slate-400"}`}>
-          {d ? `= ${thaiLongDateTime(d)}` : "ยังไม่ได้ตั้ง"}
-        </p>
+        <ThaiDateTimeField id={`gc-${k}`} value={config[k] ?? ""} onChange={(v) => set(k, v)} />
       </Field>
     );
   }
@@ -429,8 +475,9 @@ export default function GlobalConfigTab() {
         </div>
       )}
 
-      {/* ── this year's setup ── */}
-      <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      {/* ── this year's setup ── not overflow-hidden: the date picker opens
+          past the card's edge, so the last row rounds its own corners instead */}
+      <section className="bg-white rounded-2xl border border-slate-200">
         <div className="px-6 pt-5 pb-4 border-b border-slate-100">
           <div className="flex items-baseline justify-between gap-4">
             <div>
@@ -449,7 +496,7 @@ export default function GlobalConfigTab() {
             const t = TONE[item.tone];
             const isOpen = open.has(item.key);
             return (
-              <li key={item.key} className="border-t border-slate-100 first:border-t-0">
+              <li key={item.key} className="border-t border-slate-100 first:border-t-0 last:[&>button]:rounded-b-2xl">
                 <button
                   type="button" onClick={() => toggle(item.key)} aria-expanded={isOpen}
                   className="w-full grid grid-cols-[24px_minmax(0,1fr)_auto_16px] items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 transition-colors"
@@ -487,16 +534,37 @@ export default function GlobalConfigTab() {
           </span>
         </button>
         {orgOpen && (
-          <div className="px-6 pb-6 pt-2 sm:pl-[60px] grid sm:grid-cols-2 gap-4">
-            {["committeeName", "organizationShort", "facultyName", "facultyShortEn", "university"].map((k) => (
-              <Field key={k} k={k}>
-                <input id={`gc-${k}`} className={INPUT} value={config[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
-              </Field>
-            ))}
-            <div className="sm:col-span-2 grid gap-4 pt-1">
-              {derived("campaignTitle")}
-              {derived("organizationName")}
-            </div>
+          <div className="px-6 pb-6 pt-1 sm:pl-[60px] divide-y divide-slate-100">
+            <p className="pb-3 text-[13px] text-slate-500">แก้เฉพาะช่องเส้นประ ส่วนที่เหลือระบบเติมให้</p>
+
+            {sentence({
+              title: "ชื่อโครงการ", k: "campaignTitle",
+              parts: <><span className="py-2">โครงการเลือกตั้ง</span>{slot("committeeName", "ชื่อคณะกรรมการ")}</>,
+              where: FIELD.campaignTitle?.where,
+            })}
+
+            {sentence({
+              title: "ชื่อองค์กร", k: "organizationName",
+              parts: <>{slot("organizationShort", "องค์กร")}{slot("facultyName", "คณะ")}</>,
+              // written by hand, the full name no longer carries the faculty — which
+              // other pages still use on its own — so keep that one slot beside it
+              after: manual.has("organizationName") && (
+                <div className="mt-3 flex flex-wrap items-start gap-1.5 text-[17px] text-slate-800">{slot("facultyName", "ชื่อคณะ (ใช้ต่อท้ายชื่อโครงการในหน้าอื่น)")}</div>
+              ),
+              where: `${FIELD.organizationName?.where} · ชื่อคณะต่อท้ายชื่อโครงการในหน้าผู้สมัคร ผลคะแนน พรรค`,
+            })}
+
+            {sentence({
+              title: "ท้ายเว็บ",
+              parts: (
+                <>
+                  <span className="py-2">©</span>{slot("facultyShortEn", "อักษรย่อคณะ")}
+                  <span className="py-2">@</span>{slot("university", "มหาวิทยาลัย")}
+                  <span className="py-2 text-slate-500">{String(view.copyrightYear ?? "").trim() || "—"}. All Rights Reserved.</span>
+                </>
+              ),
+              where: "ท้ายทุกหน้า · ปีตั้งที่ \"ครั้งที่และปีการศึกษา\" ด้านบน",
+            })}
           </div>
         )}
       </section>
