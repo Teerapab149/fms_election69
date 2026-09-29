@@ -39,6 +39,7 @@ import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
+import { thaiPhrases, LONG_PHRASE } from "../v2/shared/text/thaiPhrases.mjs";
 import { socialList } from "../../utils/socialLinks";
 import PartySocials from "./PartySocials";
 import ReceiptMemberModal from "./ReceiptMemberModal";
@@ -174,7 +175,9 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
 
             <div className="rc-folder__title">
               <span className="rc-folder__kick rc-mono"><span className="rc-th">แฟ้มประวัติพรรค</span> · OFFICIAL PARTY FILE</span>
-              <h1 className="rc-folder__name">{party?.name || "พรรค"}</h1>
+              {/* a party name breaks only at its own spaces (or known phrase starts),
+                  never inside a word — "ร่วม / สร้าง" at 375 before */}
+              <h1 className="rc-folder__name">{thaiPhrases(party?.name || "พรรค").map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</h1>
               {party?.slogan && <p className="rc-folder__slogan">“{party.slogan}”</p>}
             </div>
           </div>
@@ -539,6 +542,9 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
 
         .rc-party-root .rc-folder__title { position:relative; z-index:1; margin-top:18px; }
         .rc-party-root .rc-folder__kick { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--rc-ink2); }
+        .rc-party-root .rc-phrase { display:inline-block; white-space:nowrap; margin-right:.22em; max-width:100%; }
+        .rc-party-root .rc-phrase:last-child { margin-right:0; }
+        .rc-party-root .rc-phrase.is-long { display:inline; white-space:normal; }
         .rc-party-root .rc-folder__name { margin:8px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.04;
           letter-spacing:-.01em; font-size:clamp(30px,7vw,52px); color:var(--rc-ink); overflow-wrap:break-word; }
         .rc-party-root .rc-folder__slogan { margin:12px 0 0; max-width:52ch; font-family:var(--rc-fr); font-size:15px; line-height:1.6;

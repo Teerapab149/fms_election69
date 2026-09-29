@@ -165,7 +165,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
             <div className="rc-suc-regtape"><span>0142 · 0938 · 1204 · 0071 · 0559</span></div>
             {/* the ballot STUB — tucked under the receipt's lower-left, same ref */}
             <div className="rc-suc-stub">
-              <div className="rc-suc-stub-h"><span className="rc-th">ต้นขั้ว</span> · STUB No.</div>
+              <div className="rc-suc-stub-h"><span className="rc-th">เลขอ้างอิง</span> · REF No.</div>
               <div className="rc-suc-stub-ref">{stubRef}</div>
             </div>
             {/* matte paper tape — one pins the stub, one loose on the desk */}
