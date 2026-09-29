@@ -24,10 +24,12 @@ import { getPath } from "../../../utils/basePath";
 import Image from "next/image";
 import GumroadMobileMenu from "../../GumroadMobileMenu";
 
+// Thai first; a small English line under it for the few international students
+// (owner, template-fix-plan). Was "Meet Candidates" alone next to Thai labels.
 const LINKS = [
-  { key: "home", href: "/", label: "หน้าแรก" },
-  { key: "candidates", href: "/candidates", label: "Meet Candidates" },
-  { key: "results", href: "/results", label: "ผลการลงคะแนนเสียง" },
+  { key: "home", href: "/", label: "หน้าแรก", en: "Home" },
+  { key: "candidates", href: "/candidates", label: "ผู้สมัคร", en: "Candidates" },
+  { key: "results", href: "/results", label: "ผลคะแนน", en: "Results" },
 ];
 
 export default function SiteNavbarGumroad({ active = "", editorMode = false, onSignIn = null }) {
@@ -51,7 +53,8 @@ export default function SiteNavbarGumroad({ active = "", editorMode = false, onS
             href={getPath(l.href)}
             className={`snav__link ${active === l.key ? "is-active" : ""}`}
           >
-            {l.label}
+            <span className="snav__th">{l.label}</span>
+            <span className="snav__en" lang="en">{l.en}</span>
           </a>
         ))}
       </nav>
@@ -76,6 +79,10 @@ export default function SiteNavbarGumroad({ active = "", editorMode = false, onS
         .snav__word{ width:auto; height:32px; object-fit:contain; }
         .snav__actions{ flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:flex-end; gap:12px; }
         .snav__nav{ flex:0 0 auto; display:flex; gap:4px; }
+        /* two lines inside the pill: the Thai name, then its English under it */
+        .snav__th{ display:block; line-height:1.2; }
+        .snav__en{ display:block; margin-top:1px; font-family:var(--font-space-grotesk),'Space Grotesk',system-ui,sans-serif;
+          font-size:9.5px; font-weight:600; line-height:1; letter-spacing:.12em; text-transform:uppercase; opacity:.62; }
         .snav__link{
           padding:8px 16px; border-radius:999px; font-weight:600; font-size:14px;
           border:2px solid transparent; text-decoration:none; color:inherit; white-space:nowrap;

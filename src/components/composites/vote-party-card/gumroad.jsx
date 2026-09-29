@@ -55,7 +55,7 @@ export function buildVotePartyCard({ party, pop, isSel, onSelect, onViewDetails,
           party?.slogan ? { kind: "atom", type: "text-body", props: { children: `“${party.slogan}”` } } : null,
           { kind: "node", render: (
             <button type="button" className="gv-card__cta" onClick={(e) => { e.stopPropagation(); if (!editorMode) onViewDetails(party); }}>
-              VIEW PROFILE <ArrowRight size={14} />
+              ดูนโยบาย <ArrowRight size={14} />
             </button>
           ) },
         ].filter(Boolean),

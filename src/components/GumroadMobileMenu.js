@@ -14,10 +14,12 @@ import { useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { ArrowRight, Menu, X, LogOut } from "lucide-react";
 
+// Thai first; a small English line under it for the few international students
+// (owner, template-fix-plan). Was "Meet Candidates" alone next to Thai labels.
 const LINKS = [
-  { key: "home", href: "/", label: "หน้าแรก" },
-  { key: "candidates", href: "/candidates", label: "Meet Candidates" },
-  { key: "results", href: "/results", label: "ผลการลงคะแนนเสียง" },
+  { key: "home", href: "/", label: "หน้าแรก", en: "Home" },
+  { key: "candidates", href: "/candidates", label: "ผู้สมัคร", en: "Candidates" },
+  { key: "results", href: "/results", label: "ผลคะแนน", en: "Results" },
 ];
 
 // `editorMode` — the gumroad navbar element already passes this (site-navbar/gumroad.jsx),
@@ -94,6 +96,7 @@ export default function GumroadMobileMenu({ active = "", onSignIn = null, editor
               {LINKS.map((l) => (
                 <a key={l.key} href={getPath(l.href)} className={`gnav-dlink ${active === l.key ? "is-active" : ""}`}>
                   {l.label}
+                  <small className="gnav-den" lang="en">{l.en}</small>
                 </a>
               ))}
             </nav>
@@ -134,6 +137,7 @@ export default function GumroadMobileMenu({ active = "", onSignIn = null, editor
         .gnav-livedot{ width:9px; height:9px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; }
 
         .gnav-dnav{ display:flex; flex-direction:column; gap:9px; }
+        .gnav-den{ margin-left:8px; font-family:var(--font-space-grotesk),'Space Grotesk',system-ui,sans-serif; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; opacity:.6; }
         .gnav-dlink{ padding:13px 16px; border:2px solid var(--ink, #26271c); border-radius:12px; background:var(--paper, #FFFDFA); font-weight:700; font-size:15px;
           box-shadow:3px 3px 0 var(--ink, #26271c); text-decoration:none; color:var(--ink, #26271c); }
         .gnav-dlink:hover{ background:var(--pink, #FF9CE9); }

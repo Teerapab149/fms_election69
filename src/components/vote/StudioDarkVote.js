@@ -100,7 +100,7 @@ export default function StudioDarkVote({
         className="sdv-strip__view"
         onClick={(e) => { e.stopPropagation(); onViewDetails(party); }}
       >
-        VIEW PROFILE →
+        ดูนโยบาย →
       </button>
     </>
   );
@@ -262,7 +262,8 @@ export default function StudioDarkVote({
         .sdv-strip__view {
           display:inline-flex; align-items:center; gap:8px; margin-top:12px; padding:6px 14px;
           border:1px solid var(--sd-line-strong); border-radius:999px; background:none; cursor:pointer;
-          font-family:var(--sd-mono); font-size:11px; letter-spacing:.12em; color:var(--sd-ink-2); text-transform:uppercase;
+          /* Thai label (was VIEW PROFILE): Thai-capable face, no tracking/caps */
+          font-family:var(--sd-sans); font-size:13px; letter-spacing:0; color:var(--sd-ink-2);
           transition:all .2s;
         }
         .sdv-strip__view:hover { background:var(--sd-accent); border-color:var(--sd-accent); color:var(--sd-bg); }
