@@ -35,7 +35,7 @@ import VoteConfirm from "../../../vote/VoteConfirm";
 import BallotPartyBody, { PhotoViewer } from "./BallotPartyBody";
 import BallotPartyHero, { partyCover } from "./BallotPartyHero";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
-import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 
 const EASE = [0.16, 1, 0.3, 1];
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
@@ -244,7 +244,7 @@ export default function BallotVote({
             <section className="bv-decide bv-decide--solo">
               <div className="bv-wrap bv-decide__in">
                 <h1 className="bv-decide__title">{v.titleMulti}</h1>
-                <p className="bv-decide__note">{meta.campaign} {meta.org} <span className="bo-nowrap">ปีการศึกษา {meta.ay}</span></p>
+                <p className="bv-decide__note"><Phrases text={`${meta.campaign} ${meta.org}`} /> <span className="bo-nowrap">ปีการศึกษา {meta.ay}</span></p>
                 <p className="bv-decide__note">{v.decideMulti}</p>
                 {ballot}
               </div>

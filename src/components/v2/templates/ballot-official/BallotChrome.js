@@ -25,6 +25,20 @@ const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 // election facts from globalConfig only — shared by every v2 template
 export const ballotMeta = electionMeta;
 
+// Thai has no spaces, so a line breaks wherever the dictionary allows —
+// "โครงการ / เลือกตั้งคณะ / กรรมการบริหาร" split "คณะกรรมการ" in two, and
+// "สโมสรนักศึกษาคณะ / วิทยาการจัดการ" split the faculty's name. A line may only
+// break between phrases: before "คณะ…" / "สโมสร" / "ประจำปี", or at a space the
+// admin typed. Anything else stays as written (one phrase).
+export function thaiPhrases(s) {
+  const str = String(s || "");
+  const parts = str.split(/(?=คณะ|สโมสร|ประจำปี)|\s+/).map((x) => x.trim()).filter(Boolean);
+  return parts.length ? parts : [str];
+}
+export function Phrases({ text }) {
+  return thaiPhrases(text).map((ph, i) => <span key={i} className="bo-phrase">{ph}</span>);
+}
+
 const NAV = [
   { key: "home", label: "หน้าแรก", href: "/" },
   { key: "candidates", label: "ผู้สมัคร", href: "/candidates" },
@@ -208,7 +222,15 @@ export function BallotBaseStyles() {
         /* looped Thai for long reading only (policies, biographies) — owner's call */
         --bo-font-read: var(--font-noto-thai-looped), 'Noto Sans Thai Looped', var(--font-noto-thai), system-ui, sans-serif;
         --bo-max: 1120px;
-        min-height: 100vh; background: var(--bo-board); color: var(--bo-ink);
+        min-height: 100vh; color: var(--bo-ink);
+        /* the room every page sits in: light falling from above onto the
+           heading, a faint plum shade at the right, and the paper's grain —
+           so the board reads as a lit sheet, not a flat fill */
+        background:
+          var(--bo-grain),
+          radial-gradient(55% 560px at 30% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 100%),
+          radial-gradient(35% 700px at 100% 240px, rgba(var(--bo-plum-rgb),.07), rgba(var(--bo-plum-rgb),0) 100%),
+          var(--bo-board);
         font-family: var(--bo-font); font-size: 17px; line-height: 1.6;
         -webkit-font-smoothing: antialiased;
       }
@@ -220,6 +242,8 @@ export function BallotBaseStyles() {
       .bo-root a { color: inherit; text-decoration: none; }
       .bo-root :focus-visible { outline: 2px solid var(--bo-pen); outline-offset: 3px; border-radius: 6px; }
       .bo-root button { font: inherit; cursor: pointer; }
+      .bo-phrase { display: inline-block; white-space: nowrap; margin-right: .22em; }
+      .bo-phrase:last-child { margin-right: 0; }
 
       /* header */
       /* At rest the header sits on the page (no surface); scrolled, a paper sheet
@@ -305,7 +329,9 @@ export function BallotBaseStyles() {
          (with a second fade mask per surface) filled with --bo-plum, so it
          takes every colour theme. */
       .bo-root, .bo-scope {
-        --bo-g: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='48' fill='none' stroke='%23000' stroke-width='1'%3E%3Cpath d='M0 24C25 6 75 6 100 24S175 42 200 24'/%3E%3Cpath d='M0 24C25 42 75 42 100 24S175 6 200 24'/%3E%3Cpath d='M0 24C25 14 75 14 100 24S175 34 200 24' stroke-opacity='.55'/%3E%3Cpath d='M0 24C25 34 75 34 100 24S175 14 200 24' stroke-opacity='.55'/%3E%3C/svg%3E");
+        /* paper grain: a faint plum-tinted noise, tiled */
+        --bo-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .1 0 0 0 0 .3 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        --bo-g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='48' fill='none' stroke='%23000' stroke-width='1'%3E%3Cpath d='M0 24C25 6 75 6 100 24S175 42 200 24'/%3E%3Cpath d='M0 24C25 42 75 42 100 24S175 6 200 24'/%3E%3Cpath d='M0 24C25 14 75 14 100 24S175 34 200 24' stroke-opacity='.55'/%3E%3Cpath d='M0 24C25 34 75 34 100 24S175 14 200 24' stroke-opacity='.55'/%3E%3C/svg%3E");
       }
 
       /* the closing band: where a reading page points at the ballot */

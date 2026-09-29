@@ -198,10 +198,7 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
         /* the day: chapters 1–3 deepen one into the next with no seam. Each has
            a pool of light on the side its picture sits, and the run carries a
            faint paper grain, so the lilac reads as a lit room, not a flat fill */
-        .bj {
-          --c1: var(--bo-tint-2); --c2: var(--bo-tint-3); --c3: var(--bo-tint-4); --c4: var(--bo-night);
-          --bj-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .1 0 0 0 0 .3 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
+        .bj { --c1: var(--bo-tint-2); --c2: var(--bo-tint-3); --c3: var(--bo-tint-4); --c4: var(--bo-night); }
         .bj-ch { position: relative; isolation: isolate; }
         .bj-ch::before {
           content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
@@ -214,9 +211,9 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
           background:
             radial-gradient(44% 40% at 50% 50%, rgba(255,255,255,.6), rgba(255,255,255,0) 100%);
         }
-        .bj-ch--1 { background: var(--bj-grain), linear-gradient(var(--bo-board), var(--c1)); }
-        .bj-ch--2 { background: var(--bj-grain), linear-gradient(var(--c1), var(--c2)); }
-        .bj-ch--3 { background: var(--bj-grain), linear-gradient(var(--c2), var(--c3)); }
+        .bj-ch--1 { background: var(--bo-grain), linear-gradient(var(--bo-board), var(--c1)); }
+        .bj-ch--2 { background: var(--bo-grain), linear-gradient(var(--c1), var(--c2)); }
+        .bj-ch--3 { background: var(--bo-grain), linear-gradient(var(--c2), var(--c3)); }
         /* the night: step 4 is a different time of day, so it starts on a clean
            edge instead of blending — plum light rising from the top left */
         .bj-ch--4 {

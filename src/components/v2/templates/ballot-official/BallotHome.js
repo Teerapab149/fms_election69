@@ -25,7 +25,7 @@ import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { useHomeModel } from "../../shared/home/useHomeModel";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import BallotJourney from "./BallotJourney";
-import { ballotMeta, BallotHeader, BallotStatus, BallotCountdown, BallotFooter, BallotBaseStyles } from "./BallotChrome";
+import { ballotMeta, BallotHeader, BallotStatus, BallotCountdown, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
 
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
@@ -36,15 +36,6 @@ const EASE = [0.16, 1, 0.3, 1];
 const STAGGER = { hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } };
 const RISE = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } };
 
-// Thai has no spaces, so a large headline breaks wherever the dictionary allows
-// — "โครงการ / เลือกตั้งคณะ / กรรมการบริหาร" split "คณะกรรมการ" in two. The line
-// may only break between phrases: before "คณะกรรมการ" / "สโมสร" / "ประจำปี", or at
-// a space the admin typed. Anything else stays as written (one phrase).
-function thaiPhrases(s) {
-  const str = String(s || "");
-  const parts = str.split(/(?=คณะกรรมการ|สโมสร|ประจำปี)|\s+/).map((x) => x.trim()).filter(Boolean);
-  return parts.length ? parts : [str];
-}
 
 // The ballot's rows, from the real candidate list. One party → approve /
 // disapprove / abstain; several → one row per party plus abstain. The special
@@ -138,7 +129,7 @@ export default function BallotHome({
                   <span className="bo-hero__idrule" aria-hidden />
                   <Wrap id="hero-year-badge"><span className="bo-hero__ay">ปีการศึกษา {text("hero-year-badge", meta.ay)}</span></Wrap>
                 </span>{" "}
-                <Wrap id="hero-subtitle"><span className="bo-hero__campaign">{thaiPhrases(text("hero-subtitle", meta.campaign)).map((ph, i) => <span key={i} className="bo-phrase">{ph}</span>)}</span></Wrap>
+                <Wrap id="hero-subtitle"><span className="bo-hero__campaign"><Phrases text={text("hero-subtitle", meta.campaign)} /></span></Wrap>
               </motion.h1>
               <motion.p variants={RISE} className="bo-hero__sub">
                 <Wrap id="hero-subtitle2"><span>{text("hero-subtitle2", meta.org)}</span></Wrap>
@@ -307,8 +298,6 @@ export default function BallotHome({
           letter-spacing: -.022em;
         }
         /* each phrase stays whole; the line breaks only between them */
-        .bo-phrase { display: inline-block; white-space: nowrap; margin-right: .22em; }
-        .bo-phrase:last-child { margin-right: 0; }
         .bo-hero__sub { margin: 16px 0 0; font-size: clamp(17px, 1.4vw, 20px); font-weight: 500; color: var(--bo-muted); }
         .bo-nowrap { white-space: nowrap; }
 
