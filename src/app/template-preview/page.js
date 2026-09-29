@@ -432,7 +432,7 @@ function PreviewBody() {
         <HomeRenderer
           onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
           resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties, ...(v2HomeData || {}) }}
+          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: sp.get('parties') === '1' ? parties.slice(0, 1) : parties, ...(v2HomeData || {}) }}
         />
       );
     }
@@ -905,7 +905,7 @@ function PreviewBody() {
         editorMode
         editorData={DUMMY_ELECTION}
         resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-        initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: parties, ...(v2HomeData || {}) }}
+        initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: sp.get('parties') === '1' ? parties.slice(0, 1) : parties, ...(v2HomeData || {}) }}
       />
     );
   }

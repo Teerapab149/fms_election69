@@ -43,6 +43,62 @@ const STEPS = [
 const EASE = [0.16, 1, 0.3, 1];
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
 
+// Spot illustrations for the three steps — the kind a magazine runs beside a
+// how-to: thin moss ink, one terracotta accent, drawn in once as they scroll
+// into view. 1 sign in on a phone · 2 one box marked on the ballot · 3 the
+// ballot folded into a sealed envelope, no name on it.
+function StepArt({ k, still }) {
+  const draw = (d = 0) => (still
+    ? { initial: false }
+    : { initial: { pathLength: 0, opacity: 0 }, whileInView: { pathLength: 1, opacity: 1 }, viewport: { once: true, margin: "-60px" },
+        transition: { pathLength: { duration: 0.9, ease: EASE, delay: d }, opacity: { duration: 0.2, delay: d } } });
+  const pop = (d = 0) => (still
+    ? { initial: false }
+    : { initial: { scale: 0, opacity: 0 }, whileInView: { scale: 1, opacity: 1 }, viewport: { once: true, margin: "-60px" },
+        transition: { duration: 0.45, ease: EASE, delay: d } });
+  return (
+    <svg className="vd-art" viewBox="0 0 140 100" aria-hidden>
+      {k === 0 && (
+        <>
+          <motion.rect x="46" y="8" width="48" height="84" rx="9" {...draw(0)} />
+          <motion.path d="M63 16 H77" {...draw(0.2)} />
+          <motion.circle cx="70" cy="40" r="9" {...draw(0.3)} />
+          <motion.path d="M56 63 Q70 49 84 63" {...draw(0.4)} />
+          <motion.rect x="55" y="70" width="30" height="10" rx="5" className="acc" {...draw(0.55)} />
+          <motion.g style={{ transformOrigin: "100px 20px", transformBox: "view-box" }} {...pop(0.8)}>
+            <circle cx="100" cy="20" r="10" className="fill" />
+            <path d="M95 20 L99 24 L106 16" className="on-fill" />
+          </motion.g>
+        </>
+      )}
+      {k === 1 && (
+        <>
+          <motion.rect x="32" y="10" width="76" height="82" rx="4" {...draw(0)} />
+          {[24, 46, 68].map((y, i) => (
+            <g key={y}>
+              <motion.rect x="42" y={y} width="13" height="13" rx="2" {...draw(0.2 + i * 0.1)} />
+              <motion.path d={`M63 ${y + 6.5} H${i === 1 ? 96 : 90}`} {...draw(0.3 + i * 0.1)} />
+            </g>
+          ))}
+          <motion.path d="M44 48 L53 57 M53 48 L44 57" className="mark" {...draw(0.8)} />
+        </>
+      )}
+      {k === 2 && (
+        <>
+          <motion.path d="M50 40 V14 H90 V40" {...draw(0)} />
+          <motion.path d="M58 22 H82 M58 30 H76" {...draw(0.15)} />
+          <motion.rect x="26" y="38" width="88" height="54" rx="4" {...draw(0.3)} />
+          <motion.path d="M26 38 L70 70 L114 38" {...draw(0.45)} />
+          <motion.g style={{ transformOrigin: "70px 70px", transformBox: "view-box" }} {...pop(0.9)}>
+            <circle cx="70" cy="70" r="10" className="fill" />
+            <path d="M66 70 V67 A4 4 0 0 1 74 67 V70 M64.5 70 H75.5 V77 H64.5 Z" className="on-fill" />
+          </motion.g>
+        </>
+      )}
+    </svg>
+  );
+}
+
 export default function VerdureHome({
   initialData, editorMode = false, editorData = null, elementConfigs = null,
   selectedElement = null, hoveredElement = null, onSelectElement = null,
@@ -191,7 +247,7 @@ export default function VerdureHome({
             </Wrap>
             <a href={href("/candidates")} className="vd-hero__alt">
               <span className="vd-hero__alt-label">ดูผู้สมัครและนโยบาย</span>
-              <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} PARTIES</span>
+              <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
             </a>
           </motion.div>
         </section>
@@ -208,14 +264,15 @@ export default function VerdureHome({
           </div>
         </Wrap>
 
-        {/* the parties standing — compact rows, each to its own page */}
+        {/* the parties standing — an index, one line per party, so two, three or
+            four parties read the same way (a two-up grid ran down the page) */}
         {parties.length > 0 && (
           <section className="vd-sec" aria-labelledby="vd-parties-h">
             <div className="vd-sec__head">
               <h2 id="vd-parties-h">ผู้สมัคร <em>{parties.length} พรรค</em></h2>
               <a href={href("/candidates")} className="vd-sec__more">ดูนโยบายทั้งหมด <span aria-hidden>→</span></a>
             </div>
-            <ul className={`vd-parties ${parties.length === 1 ? "is-one" : ""}`}>
+            <ul className="vd-parties">
               {parties.map((p) => (
                 <li key={p.id ?? p.number}>
                   <a href={href(`/party?id=${p.number}`)} className="vd-party">
@@ -223,27 +280,32 @@ export default function VerdureHome({
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {p.logoUrl ? <img src={src(p.logoUrl)} alt="" /> : <b>{p.number}</b>}
                     </span>
-                    <span className="vd-party__txt">
+                    <span className="vd-party__id">
                       <span className="vd-party__no">เบอร์ {p.number}</span>
                       <span className="vd-party__name">{p.name}</span>
-                      {p.slogan && <span className="vd-party__slogan">{p.slogan}</span>}
                     </span>
+                    {p.slogan && <span className="vd-party__slogan">“{p.slogan}”</span>}
                     <span className="vd-party__go" aria-hidden>→</span>
                   </a>
                 </li>
               ))}
             </ul>
+            {/* one party standing is a different vote: approve it or not */}
+            {parties.length === 1 && (
+              <p className="vd-parties__note">มีพรรคเดียวที่ลงสมัคร ในบัตรเลือกได้ว่าจะ <b>รับรอง</b> <b>ไม่รับรอง</b> หรือ <b>งดออกเสียง</b></p>
+            )}
           </section>
         )}
 
         {/* how to vote — what the club otherwise posts on Instagram */}
         <section className="vd-sec" aria-labelledby="vd-steps-h">
           <div className="vd-sec__head">
-            <h2 id="vd-steps-h">ลงคะแนนใน <em>3 ขั้น</em></h2>
+            <h2 id="vd-steps-h">ลงคะแนนใน <em>3 ขั้นตอนง่ายๆ</em></h2>
           </div>
           <ol className="vd-steps">
             {STEPS.map((s, i) => (
               <li key={s.t}>
+                <StepArt k={i} still={still} />
                 <span className="vd-steps__no">{p2(i + 1)}</span>
                 <b>{s.t}</b>
                 <p>{s.d}</p>
@@ -290,8 +352,11 @@ export default function VerdureHome({
         .vd-home__cta-sub { font-family:var(--fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cta-text); opacity:.8; }
         .vd-home__cta.is-disabled .vd-home__cta-sub { color:var(--moss); opacity:.6; }
         /* the second action: read the candidates first — a real button, not a footnote */
-        .vd-hero__alt { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:66px; padding:14px 34px; border-radius:999px; border:1.5px solid var(--moss); color:var(--moss); transition:background .2s, color .2s; }
-        .vd-hero__alt:hover { background:var(--moss); color:var(--cream); }
+        /* "a." prefixes: Verdure's base rule .vd-root a:not(.vd-btn){color:inherit}
+           is (0,2,1) — a bare class loses to it, which left the hover state moss
+           text on a moss fill (unreadable). */
+        .vd-root a.vd-hero__alt { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:66px; padding:14px 34px; border-radius:999px; border:1.5px solid var(--moss); color:var(--moss); transition:background .2s, color .2s; }
+        .vd-root a.vd-hero__alt:hover { background:var(--moss); color:var(--cream); }
         .vd-hero__alt-label { font-family:var(--fs); font-weight:700; font-size:18px; }
         .vd-hero__alt-sub { font-family:var(--fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; opacity:.7; }
 
@@ -309,25 +374,36 @@ export default function VerdureHome({
         .vd-sec__head { display:flex; align-items:baseline; justify-content:space-between; gap:10px 24px; flex-wrap:wrap; padding-bottom:12px; border-bottom:2px solid var(--moss); }
         .vd-sec__head h2 { margin:0; font-family:var(--fd); font-weight:400; font-size:clamp(30px,3.4vw,42px); line-height:1.1; color:var(--moss); letter-spacing:-.015em; }
         .vd-sec__head h2 em { font-style:italic; color:var(--terra); }
-        .vd-sec__more { font-family:var(--fs); font-weight:700; font-size:15px; color:var(--terra); border-bottom:1.5px solid currentColor; padding-bottom:1px; }
+        .vd-root a.vd-sec__more { font-family:var(--fs); font-weight:700; font-size:15px; color:var(--terra); border-bottom:1.5px solid currentColor; padding-bottom:1px; }
+        .vd-root a.vd-sec__more:hover { color:var(--moss); }
 
-        .vd-parties { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:36px; }
-        .vd-parties.is-one { grid-template-columns:minmax(0,1fr); }
+        /* the parties as an index: one line each — logo, number + name, slogan, arrow */
+        .vd-parties { list-style:none; margin:0; padding:0; }
         .vd-parties li { border-bottom:1px solid var(--rule); }
-        .vd-party { display:grid; grid-template-columns:52px minmax(0,1fr) auto; align-items:center; gap:16px; padding:18px 0; color:var(--moss); }
+        .vd-root a.vd-party { display:grid; grid-template-columns:52px minmax(0,1.1fr) minmax(0,1fr) 28px; align-items:center; gap:20px; padding:16px 0; color:var(--moss); transition:background .2s; }
+        .vd-root a.vd-party:hover { background:rgba(var(--moss-rgb),.04); }
         .vd-party__logo { width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; }
         .vd-party__logo img { width:100%; height:100%; object-fit:contain; }
         .vd-party__logo b { font-family:var(--fd); font-style:italic; font-size:24px; color:var(--terra); }
-        .vd-party__txt { display:flex; flex-direction:column; min-width:0; }
+        .vd-party__id { display:flex; flex-direction:column; min-width:0; }
         .vd-party__no { font-family:var(--ft); font-size:13px; font-weight:600; color:var(--terra); }
-        .vd-party__name { font-family:var(--fd); font-size:23px; line-height:1.25; }
-        .vd-party__slogan { font-family:var(--ft); font-size:14.5px; line-height:1.5; opacity:.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .vd-party__go { font-size:20px; color:var(--terra); transition:transform .2s; }
-        .vd-party:hover .vd-party__name { color:var(--terra); }
-        .vd-party:hover .vd-party__go { transform:translateX(4px); }
+        .vd-party__name { font-family:var(--fd); font-size:24px; line-height:1.25; }
+        .vd-party__slogan { font-family:var(--fd); font-style:italic; font-size:17px; line-height:1.45; opacity:.72; }
+        .vd-party__go { font-size:20px; color:var(--terra); transition:transform .2s; justify-self:end; }
+        .vd-root a.vd-party:hover .vd-party__name { color:var(--terra); }
+        .vd-root a.vd-party:hover .vd-party__go { transform:translateX(4px); }
+        .vd-parties__note { margin:14px 0 0; font-family:var(--ft); font-size:15px; color:var(--moss); opacity:.8; }
+        .vd-parties__note b { color:var(--terra); font-weight:600; }
 
         .vd-steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 36px; }
-        .vd-steps li { padding:22px 0 8px; }
+        .vd-steps li { padding:26px 0 8px; }
+        /* spot illustrations: moss ink, one terracotta accent */
+        .vd-art { display:block; width:140px; height:100px; margin:0 0 10px -6px; overflow:visible; }
+        .vd-art rect, .vd-art path, .vd-art circle { fill:none; stroke:var(--moss); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+        .vd-art .acc { stroke:var(--terra); fill:rgba(var(--terra-rgb),.12); }
+        .vd-art .mark { stroke:var(--terra); stroke-width:3; }
+        .vd-art .fill { fill:var(--terra); stroke:none; }
+        .vd-art .on-fill { stroke:var(--cream); stroke-width:1.8; fill:none; }
         /* the steps really are a sequence, so they carry their numbers */
         .vd-steps__no { display:block; font-family:var(--fd); font-style:italic; font-size:52px; line-height:1; color:var(--terra); letter-spacing:-.03em; }
         .vd-steps b { display:block; margin-top:10px; font-family:var(--fd); font-weight:400; font-size:23px; line-height:1.3; color:var(--moss); }
@@ -339,11 +415,16 @@ export default function VerdureHome({
           .vd-home__above .side--l, .vd-home__above .side--r { justify-self:center; }
         }
         @media (max-width:860px) {
-          .vd-parties { grid-template-columns:minmax(0,1fr); }
+          /* the slogan drops under the name — the index stays one row per party */
+          .vd-root a.vd-party { grid-template-columns:48px minmax(0,1fr) 22px; gap:14px; }
+          .vd-party__logo { width:48px; height:48px; grid-row:1 / span 2; }
+          .vd-party__slogan { grid-column:2; grid-row:2; font-size:15px; margin-top:-6px; }
+          .vd-party__go { grid-column:3; grid-row:1 / span 2; }
           .vd-steps { grid-template-columns:minmax(0,1fr); }
-          .vd-steps li { display:grid; grid-template-columns:52px minmax(0,1fr); column-gap:14px; padding:18px 0; border-bottom:1px solid var(--rule); }
-          .vd-steps__no { grid-row:span 2; font-size:38px; }
-          .vd-steps b { margin-top:0; }
+          .vd-steps li { display:grid; grid-template-columns:96px minmax(0,1fr); column-gap:16px; align-items:start; padding:18px 0; border-bottom:1px solid var(--rule); }
+          .vd-art { grid-row:span 3; width:96px; height:70px; margin:0; }
+          .vd-steps__no { font-size:30px; }
+          .vd-steps b { margin-top:2px; }
         }
         @media (max-width:640px) {
           .vd-hero { padding-top:12px; }
