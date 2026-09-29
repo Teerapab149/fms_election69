@@ -22,6 +22,7 @@
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { LogIn, Vote, BarChart3 } from "lucide-react";
+import { voteCtaState } from "../../../lib/election/electionStatus.mjs";
 
 function buildButtonStyle(cfg) {
   if (!cfg) return undefined;
@@ -135,10 +136,17 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
     animation: "",
   };
 
-  const sysMode = initialData?.systemMode || "AUTO";
-  const electionStatus = initialData?.electionStatus;
+  // one ladder with the text (stateResolver.voteCTA) — lib/election/electionStatus.
+  // An absent isSystemOpen (editor / gallery renders) reads as open, as before.
+  const ctaState = voteCtaState({
+    systemMode: initialData?.systemMode || "AUTO",
+    isSystemOpen: initialData?.isSystemOpen !== false,
+    electionStatus: initialData?.electionStatus,
+    signedIn: !!session,
+    isVoted: !!isVotedReal,
+  });
 
-  if (sysMode === "PAUSE") {
+  if (ctaState === "paused") {
     btnConfig = {
       isLoginAction: false,
       href: "/closed",
@@ -150,11 +158,11 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
       icon: <Vote className="w-5 h-5 text-white animate-spin-slow" />,
       animation: "",
     };
-  } else if (sysMode === "ENDED" || (sysMode === "AUTO" && electionStatus === "ENDED")) {
+  } else if (ctaState === "ended") {
     btnConfig = {
       isLoginAction: false,
       href: "/results",
-      text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended",
+      text: "ดูผลคะแนน / Results",
       gradientBase: "from-slate-700 via-slate-800 to-slate-900",
       gradientHover: "from-slate-600 via-slate-700 to-slate-800",
       glowColor: "from-slate-500 to-slate-700",
@@ -162,7 +170,9 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
       icon: <Vote className="w-5 h-5 text-slate-400" />,
       animation: "",
     };
-  } else if (initialData?.isSystemOpen === false && !(sysMode === "AUTO" && electionStatus === "WAITING")) {
+  } else if (ctaState === "closed") {
+    // voteCtaState no longer produces "closed" (before opening the button stays
+    // a sign-in, after closing it is "ended"); kept for an admin state preview
     btnConfig = {
       isLoginAction: false,
       href: "/closed",
@@ -174,7 +184,7 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
       icon: <Vote className="w-5 h-5 text-slate-400" />,
       animation: "",
     };
-  } else if (sysMode === "MANUAL_OPEN") {
+  } else if (ctaState === "voted" || ctaState === "notVoted") {
     if (session) {
       if (isVotedReal) {
         btnConfig = {
@@ -199,30 +209,6 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
           animation: "animate-pulse",
         };
       }
-    }
-  } else if (session) {
-    if (isVotedReal) {
-      btnConfig = {
-        isLoginAction: false, href: "/results",
-        text: "ดูผลคะแนน / Results",
-        gradientBase: "from-[#0369a1] via-[#0284c7] to-[#38bdf8]",
-        gradientHover: "from-[#0f766e] via-[#0d9488] to-[#14b8a6]",
-        glowColor: "from-[#0ea5e9] to-[#14b8a6]",
-        shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
-        icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
-        animation: "",
-      };
-    } else {
-      btnConfig = {
-        isLoginAction: false, href: "/vote",
-        text: "ลงคะแนน / Vote Now",
-        gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
-        gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
-        glowColor: "from-[#34D399] to-[#059669]",
-        shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
-        icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
-        animation: "animate-pulse",
-      };
     }
   }
 

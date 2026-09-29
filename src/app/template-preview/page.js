@@ -29,6 +29,9 @@ import { Palette, Check } from 'lucide-react';
 import { getPath } from '../../utils/basePath';
 import { hrefToDest } from '../../utils/previewNav';
 import { buildTemplateStyles } from '../../lib/templateTokens';
+import { liveSystemStatus } from '../../lib/election/systemStatus.mjs';
+import { resolveElectionDates } from '../../utils/electionConfig';
+import { GlobalConfigProvider, useGlobalConfig, useActiveTemplateId } from '../../contexts/GlobalConfigContext';
 import TemplatePreviewWrapper from '../../components/admin/TemplatePreviewWrapper';
 import Navbar from '../../components/Navbar';
 
@@ -235,24 +238,89 @@ function PreviewBody() {
   // election phase, with dates placed around "now" so the countdown is live in
   // every phase that has one. The real schedule is never touched. Default = open.
   // v1 families get null here and render exactly as before.
-  const [previewNow] = useState(() => Date.now());
+  // on the 10-minute mark: the server and the browser each run this, and a page
+  // printing the case's times ("06.27 น.") hydrated with a mismatch whenever the
+  // two runs straddled a minute. The countdowns tick from the real clock anyway.
+  const [previewNow] = useState(() => Math.floor(Date.now() / 600e3) * 600e3);
+  const gc = useGlobalConfig();
+  const activeTemplateId = useActiveTemplateId();
+  // ?variant= on the HOME page picks a case the live site can actually be in —
+  // mode + where "now" sits in the schedule, dates placed around now so every
+  // countdown is live. The mode→status step is liveSystemStatus, the SAME
+  // function app/page.js uses, so the page under review is fed exactly what the
+  // site would feed it. The real schedule is never touched.
+  //   before · far — AUTO, not open yet (far = months out, 3-digit days)
+  //   open         — AUTO, polls open now
+  //   after        — AUTO, schedule over
+  //   early        — admin forced OPEN before the scheduled start
+  //   overtime     — admin forced OPEN after the scheduled end
+  //   paused       — admin PAUSE during the polls
+  //   ended        — admin forced ENDED
+  const H = 3600e3;
+  const PHASES = {
+    before:   { systemMode: 'AUTO',        start: previewNow + 51 * H + 20 * 60e3, end: previewNow + 66 * H },
+    far:      { systemMode: 'AUTO',        start: previewNow + (123 * 24 + 7) * H, end: previewNow + (123 * 24 + 22) * H },
+    open:     { systemMode: 'AUTO',        start: previewNow - 2 * H,              end: previewNow + 5 * H + 12 * 60e3 },
+    after:    { systemMode: 'AUTO',        start: previewNow - 20 * H,             end: previewNow - 5 * H },
+    early:    { systemMode: 'MANUAL_OPEN', start: previewNow + 51 * H + 20 * 60e3, end: previewNow + 66 * H },
+    overtime: { systemMode: 'MANUAL_OPEN', start: previewNow - 20 * H,             end: previewNow - 5 * H },
+    paused:   { systemMode: 'PAUSE',       start: previewNow - 2 * H,              end: previewNow + 5 * H },
+    ended:    { systemMode: 'ENDED',       start: previewNow - 20 * H,             end: previewNow - 5 * H },
+  };
+  PHASES.closed = PHASES.paused; // older links used ?variant=closed for the paused state
+  // the same fields app/page.js puts in initialData (systemConfig included —
+  // several v1 homes read isSystemOpen from there rather than the top level)
+  const phaseOf = (p) => {
+    const s = liveSystemStatus({ systemMode: p.systemMode, start: p.start, end: p.end, now: previewNow });
+    return { systemMode: p.systemMode, ...s, systemConfig: { systemMode: p.systemMode, isSystemOpen: s.isSystemOpen, showResult: false } };
+  };
+  // "YYYY-MM-DDTHH:mm" in Bangkok — how the settings store a date
+  const bkkLocal = (ms) => new Date(ms + 7 * H).toISOString().slice(0, 16);
+  const chosenPhase = PHASES[variant] || null;
+
   const v2HomeData = (() => {
     if (!v2KeyOf(slug)) return null;
-    const H = 3600e3;
-    const phases = {
-      before: { systemMode: 'AUTO', isSystemOpen: false, electionStatus: 'WAITING', previewDates: { start: previewNow + 51 * H + 20 * 60e3, end: previewNow + 66 * H } },
-      // months out (3-digit days): the countdown's widest case
-      far: { systemMode: 'AUTO', isSystemOpen: false, electionStatus: 'WAITING', previewDates: { start: previewNow + (123 * 24 + 7) * H, end: previewNow + (123 * 24 + 22) * H } },
-      open: { systemMode: 'AUTO', isSystemOpen: true, electionStatus: 'ONGOING', previewDates: { start: previewNow - 2 * H, end: previewNow + 5 * H + 12 * 60e3 } },
-      paused: { systemMode: 'PAUSE', isSystemOpen: false, electionStatus: 'CLOSED', previewDates: { start: previewNow - 2 * H, end: previewNow + 5 * H } },
-      ended: { systemMode: 'ENDED', isSystemOpen: false, electionStatus: 'ENDED', previewDates: { start: previewNow - 20 * H, end: previewNow - 5 * H } },
-    };
+    const p = chosenPhase || PHASES.open;
     // live home data lists the special options next to the parties; &parties=1
     // previews the one-party ballot (approve / disapprove / abstain)
     const onlyOne = sp.get('parties') === '1';
     const candidates = [...(onlyOne ? parties.slice(0, 1) : parties), SPECIAL.abstain, SPECIAL.disapprove];
-    return { ...(phases[variant] || phases.open), candidates };
+    return { ...phaseOf(p), previewDates: { start: p.start, end: p.end }, candidates };
   })();
+
+  // v1 families read the schedule from the settings context rather than props,
+  // so a chosen case also swaps the three dates in a nested, read-only provider.
+  // With no case chosen they get the real schedule, judged the way the live page
+  // judges it in AUTO (the preview cannot see the stored system mode).
+  const v1HomeData = (() => {
+    if (v2KeyOf(slug)) return null;
+    if (chosenPhase) return phaseOf(chosenPhase);
+    const { ELECTION_START, ELECTION_END } = resolveElectionDates(gc);
+    return phaseOf({ systemMode: 'AUTO', start: ELECTION_START.getTime(), end: ELECTION_END.getTime() });
+  })();
+  // the closed page names its cases differently (?variant=waiting|ended|closed)
+  const closedPhase = page === "closed" ? { waiting: PHASES.before, ended: PHASES.after, closed: PHASES.paused }[variant] : null;
+  const withPhaseDates = (node, phase = chosenPhase || closedPhase) => (!phase || v2KeyOf(slug)) ? node : (
+    <GlobalConfigProvider
+      activeTemplateId={activeTemplateId}
+      value={{
+        ...gc,
+        campaignStartAt: bkkLocal(phase.start - 7 * 24 * H),
+        electionStartAt: bkkLocal(phase.start),
+        electionEndAt: bkkLocal(phase.end),
+      }}
+    >{node}</GlobalConfigProvider>
+  );
+  // v1 results pages: two states the live page (app/results/page.js) reaches that
+  // the per-family defaults never showed. Spread LAST so it overrides them.
+  //   before — polls not open yet (finalStatus WAITING → isNotStarted)
+  //   after  — polls closed, the committee has not revealed the tally yet
+  //            (the live countdown has hit zero and reads "เร็วๆ นี้")
+  const resultsCase = variant === "before"
+    ? { candidates: resultsCandidates(false, parties), totalVotes: 0, finalStatus: "WAITING", isRevealed: false, isNotStarted: true, countdownText: "2 วัน 3 ชม. 20 น." }
+    : variant === "after"
+    ? { candidates: resultsCandidates(false, parties), totalVotes: 625, finalStatus: "ENDED", isRevealed: false, isNotStarted: false, countdownText: "เร็วๆ นี้" }
+    : null;
   const [selectedPartyId, setSelectedPartyId] = useState(null);
   const [partyNumber, setPartyNumber] = useState(parties[0]?.number ?? 1);
   // Classic-family VOTE modal state (mirrors app/vote/page.js local UI state)
@@ -427,18 +495,14 @@ function PreviewBody() {
         isSubmitting={castActive} onConfirm={confirmPreviewVote} />;
     }
     if (page === 'home') {
-      // gm-B2 T2 / bl-B1B verification seam: gumroad + blossom reuse the closed page's
-      // existing ?variant=ended|paused tokens so the home countdown's ENDED/PAUSE
-      // dead-state (hero-countdown/gumroad's grid swap · BlossomHome's is-closed band)
-      // is reachable here too. Other families keep AUTO (unchanged).
-      const homeSystemMode = (family === 'gumroad' || family === 'blossom')
-        ? (variant === 'ended' ? 'ENDED' : (variant === 'paused' || variant === 'closed') ? 'PAUSE' : 'AUTO')
-        : 'AUTO';
-      return (
+      // every family: the status the live site would hand it (v1HomeData /
+      // v2HomeData above — the case table replaced the old gumroad+blossom-only
+      // ENDED/PAUSE seam, whose ?variant=ended|paused|closed still mean the same)
+      return withPhaseDates(
         <HomeRenderer
           onSignIn={() => navTo('vote', variant === 'single' ? 'single' : 'multi')}
           resolvedTemplate={BUILT_IN_TEMPLATES[slug] || BUILT_IN_TEMPLATES.classic}
-          initialData={{ systemMode: homeSystemMode, electionStatus: 'ONGOING', stats: { totalVoted: 342, totalEligible: 1200 }, candidates: sp.get('parties') === '1' ? parties.slice(0, 1) : parties, ...(v2HomeData || {}) }}
+          initialData={{ stats: { totalVoted: 342, totalEligible: 1200 }, candidates: sp.get('parties') === '1' ? parties.slice(0, 1) : parties, ...(v1HomeData || {}), ...(v2HomeData || {}) }}
         />
       );
     }
@@ -488,7 +552,7 @@ function PreviewBody() {
         const gumroadCounting = family === 'gumroad' && variant === 'counting';
         // RES-1: production results (app/results/page.js) is a read-only tally board —
         // party rows are NOT links (no modal, no navigation). Mirror that here.
-        return frame(
+        return withPhaseDates(frame(
           <R
             candidates={resultsCandidates(revealed, parties)}
             totalVotes={revealed ? 625 : gumroadCounting ? 418 : 0}
@@ -497,9 +561,10 @@ function PreviewBody() {
             isRevealed={revealed}
             isNotStarted={!revealed && !gumroadCounting}
             countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            {...resultsCase}
             editorMode={false}
           />
-        );
+        ));
       }
       if (page === 'success') {
         const S = byFamily(StudioDarkSuccess, GumroadSuccess, VerdureSuccess);
@@ -508,7 +573,7 @@ function PreviewBody() {
       if (page === 'closed') {
         const Cl = byFamily(StudioDarkClosed, GumroadClosed, VerdureClosed);
         const cc = closedPreviewCopy(variant);
-        return frame(<Cl title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />);
+        return withPhaseDates(frame(<Cl title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />));
       }
     }
 
@@ -823,7 +888,7 @@ function PreviewBody() {
         const revealed = variant === 'revealed';
         // RES-1: results is a read-only tally board — party rows are NOT links
         // (no modal, no navigation), matching production app/results/page.js.
-        return (
+        return withPhaseDates(
           <BlossomResults
             candidates={resultsCandidates(revealed, parties)}
             totalVotes={revealed ? 625 : 418}
@@ -832,12 +897,13 @@ function PreviewBody() {
             isRevealed={revealed}
             isNotStarted={false}
             countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+            {...resultsCase}
             editorMode={false}
           />
         );
       }
       if (page === 'success') return <BlossomSuccess user={DUMMY_USER} isUnlocked={variant === 'unlocked' || variant === 'noform'} hasForm={variant !== 'noform'} onOpenForm={noop} editorMode={false} />;
-      if (page === 'closed') { const cc = closedPreviewCopy(variant); return <BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />; }
+      if (page === 'closed') { const cc = closedPreviewCopy(variant); return withPhaseDates(<BlossomClosed title={cc.title} desc={cc.desc} variant={cc.variant} session={null} onLogout={noop} editorMode={false} />); }
     }
 
     // ── receipt family — the "printer moment" Success (R1). Other receipt pages
@@ -862,7 +928,7 @@ function PreviewBody() {
     //    otherwise the SEALED embargo slip (polls open, scores sealed, turnout public). ──
     if (family === 'receipt' && page === 'results') {
       const revealed = variant === 'revealed';
-      return (
+      return withPhaseDates(
         <ReceiptResults
           candidates={resultsCandidates(revealed, parties)}
           totalVotes={revealed ? 625 : 418}
@@ -871,6 +937,7 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          {...resultsCase}
           editorMode={false}
         />
       );
@@ -879,7 +946,7 @@ function PreviewBody() {
     // ── receipt family — CLOSED (R4). reason via ?variant=ended|closed|waiting. ──
     if (family === 'receipt' && page === 'closed') {
       const c = receiptClosedCopy(variant);
-      return <ReceiptClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />;
+      return withPhaseDates(<ReceiptClosed title={c.title} desc={c.desc} variant={c.variant} session={null} onLogout={noop} editorMode={false} />);
     }
 
     // other classic/original inner pages (candidates/results/closed/party): keep the
@@ -1027,6 +1094,7 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={!revealed && !gumroadCounting}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          {...resultsCase}
         />
       );
     }
@@ -1075,6 +1143,7 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          {...resultsCase}
           editorMode
         />
       );
@@ -1119,6 +1188,7 @@ function PreviewBody() {
           isRevealed={revealed}
           isNotStarted={false}
           countdownText={revealed ? '' : 'เหลืออีก 02:14:33'}
+          {...resultsCase}
           editorMode
         />
       );

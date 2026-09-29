@@ -23,7 +23,13 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
       let diff, label, sub, live = false;
       if (systemMode === "PAUSE") { label = "PAUSED"; sub = "พักลงคะแนนชั่วคราว"; diff = 0; }
       else if (systemMode === "ENDED") { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
-      else if (systemMode === "MANUAL_OPEN") { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
+      // forced open: counts to the scheduled close — or, once that has passed (the
+      // admin kept the polls open late), says so instead of a frozen 00:00:00:00
+      else if (systemMode === "MANUAL_OPEN") {
+        diff = ELECTION_END - now; live = true;
+        if (diff > 0) { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; }
+        else { label = "OPEN"; sub = "เปิดรับลงคะแนนอยู่"; diff = 0; }
+      }
       else if (now < ELECTION_START) { label = "STARTS IN"; sub = "เปิดรับลงคะแนนใน"; diff = ELECTION_START - now; }
       else if (now < ELECTION_END) { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
       else { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
@@ -40,7 +46,7 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
   // counting down/up). Swap the grid for a real-copy status statement in those two
   // modes ONLY; live/pre-start/manual-open keep the ticking grid untouched. Close
   // caption is real-schedule (formatThaiDate/Time), guarded for an unresolved date.
-  const isDead = t.label === "ENDED" || t.label === "PAUSED";
+  const isDead = t.label === "ENDED" || t.label === "PAUSED" || t.label === "OPEN";
   const closeCaption = t.label === "ENDED" ? (() => {
     const d = formatThaiDate(ELECTION_END);
     return d ? `${d} · ${formatThaiTime(ELECTION_END)}` : "";
@@ -50,7 +56,7 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
       <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · <span className="gm-thai">{t.sub}</span></div>
       {isDead ? (
         <div className="gh-cd__status">
-          <div className="gh-cd__status-txt">{t.label === "PAUSED" ? "พักระบบชั่วคราว" : "ปิดรับลงคะแนนแล้ว"}</div>
+          <div className="gh-cd__status-txt">{t.label === "PAUSED" ? "พักระบบชั่วคราว" : t.label === "OPEN" ? "เปิดรับลงคะแนนอยู่" : "ปิดรับลงคะแนนแล้ว"}</div>
           {/* PAUSE has no close caption (no real schedule for "resumes at") — render
               an invisible spacer line so the tile keeps ENDED's 2-line height instead
               of shrinking (no reflow of the bento row). Not real copy: aria-hidden. */}

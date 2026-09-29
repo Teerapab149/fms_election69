@@ -32,3 +32,46 @@ for (const [name, input, phase, action, kind] of cases) {
     assert.equal(r.target?.kind ?? null, kind);
   });
 }
+
+// ── voteCtaState: one ladder for the v1 button's text AND its click ──
+import { voteCtaState } from '../../src/lib/election/electionStatus.mjs';
+import { liveSystemStatus } from '../../src/lib/election/systemStatus.mjs';
+
+test('voteCtaState: every case the live page can produce (fed by liveSystemStatus)', () => {
+  const H = 3600e3, now = Date.UTC(2027, 1, 6, 5);
+  const around = { before: [now + 5 * H, now + 10 * H], open: [now - H, now + H], after: [now - 10 * H, now - 5 * H] };
+  const cases = [
+    // [label, mode, window, signedIn, isVoted, expected]
+    ['A AUTO before (sign-in stays, on purpose)', 'AUTO', 'before', false, false, 'login'],
+    ['B AUTO open, signed out', 'AUTO', 'open', false, false, 'login'],
+    ['B AUTO open, signed in', 'AUTO', 'open', true, false, 'notVoted'],
+    ['B AUTO open, voted', 'AUTO', 'open', true, true, 'voted'],
+    ['C AUTO after', 'AUTO', 'after', true, false, 'ended'],
+    ['D forced open early', 'MANUAL_OPEN', 'before', false, false, 'login'],
+    ['E forced open late', 'MANUAL_OPEN', 'after', true, false, 'notVoted'],
+    ['F paused', 'PAUSE', 'open', true, false, 'paused'],
+    ['G forced ended', 'ENDED', 'open', true, false, 'ended'],
+  ];
+  for (const [label, systemMode, w, signedIn, isVoted, want] of cases) {
+    const [start, end] = around[w];
+    const s = liveSystemStatus({ systemMode, start, end, now });
+    assert.equal(voteCtaState({ systemMode, ...s, signedIn, isVoted }), want, label);
+  }
+});
+
+test('AUTO: a page left open moves forward with the clock, never backward', () => {
+  const start = new Date('2027-02-06T08:30:00+07:00'), end = new Date('2027-02-06T17:00:00+07:00');
+  const m = 60e3;
+  // rendered 08:25 (WAITING) — still open at 08:31: now open, counting to close
+  const a = derive({ systemMode: 'AUTO', isSystemOpen: false, electionStatus: 'WAITING', start, end, now: start.getTime() + m });
+  assert.equal(a.phase, 'open'); assert.equal(a.target?.kind, 'closes');
+  // rendered 16:55 (open) — still open at 17:01: now ended, results
+  const b = derive({ systemMode: 'AUTO', isSystemOpen: true, electionStatus: 'ONGOING', start, end, now: end.getTime() + m });
+  assert.equal(b.phase, 'ended'); assert.equal(b.action, 'results');
+  // server says open but this device's clock is 5 minutes slow: stays open
+  const c = derive({ systemMode: 'AUTO', isSystemOpen: true, electionStatus: 'ONGOING', start, end, now: start.getTime() - 5 * m });
+  assert.equal(c.phase, 'open');
+  // forced modes are never second-guessed by the clock
+  assert.equal(derive({ systemMode: 'MANUAL_OPEN', isSystemOpen: true, start, end, now: end.getTime() + m }).phase, 'open');
+  assert.equal(derive({ systemMode: 'PAUSE', start, end, now: start.getTime() + m }).phase, 'paused');
+});

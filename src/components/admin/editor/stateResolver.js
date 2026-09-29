@@ -18,6 +18,10 @@
 
 import { ELECTION_CONFIG } from '../../../utils/electionConfig';
 import { ELEMENT_INSTANCES } from './elementCatalog';
+import { voteCtaState } from '../../../lib/election/electionStatus.mjs';
+
+// resolver vocabulary back to the server's, for the shared status derivation
+const STATUS_FROM_PHASE = { before: "WAITING", running: "ONGOING", ended: "ENDED" };
 
 // Derived at module load so the resolver's STATEFUL_ELEMENTS lookup keeps
 // the same shape as the old statefulRegistry export (object keyed by id).
@@ -27,15 +31,17 @@ const STATEFUL_ELEMENTS = Object.fromEntries(
 
 export const STATE_RESOLVERS = {
 
+  // One ladder shared with each voteCTA variant's click/look (lib/election/
+  // electionStatus → voteCtaState). The old inline ladder returned "closed" for
+  // AUTO both before opening AND after closing, so after the polls the button
+  // said "not open yet" while the variant sent the click to the results.
   voteCTA: (context) => {
-    const { session, systemMode, isSystemOpen, isVoted } = context || {};
-
-    if (systemMode === "PAUSE") return "paused";
-    if (systemMode === "ENDED") return "ended";
-    if (isSystemOpen === false) return "closed";
-    if (!session) return "login";
-    if (isVoted) return "voted";
-    return "notVoted";
+    const { session, systemMode, isSystemOpen, isVoted, electionPhase } = context || {};
+    return voteCtaState({
+      systemMode, isSystemOpen,
+      electionStatus: STATUS_FROM_PHASE[electionPhase] || null,
+      signedIn: !!session, isVoted: !!isVoted,
+    });
   },
 
   countdown: (context) => {
