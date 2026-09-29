@@ -29,12 +29,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, MotionConfig, useReducedMotion } from "framer-motion"; // Motion for React
 import { Info } from "lucide-react";
-import { getPath } from "../../../utils/basePath";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import VoteConfirm from "../../vote/VoteConfirm";
+import { getPath } from "../../../../utils/basePath";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import VoteConfirm from "../../../vote/VoteConfirm";
 import BallotPartyBody, { PhotoViewer } from "./BallotPartyBody";
 import BallotPartyHero, { partyCover } from "./BallotPartyHero";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
 
 const EASE = [0.16, 1, 0.3, 1];

@@ -12,13 +12,13 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"; // Motion for React
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { LogIn, LogOut } from "lucide-react";
-import { getPath } from "../../../utils/basePath";
-import { voterSignIn, voterSignOut } from "../../../lib/auth/voterSession";
-import { formatThaiTime } from "../../../utils/electionConfig";
-import { resolveElectionPosterPath } from "../../../utils/electionPoster.mjs";
-import { BALLOT_OFFICIAL as P } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { voterSignIn, voterSignOut } from "../../../../lib/auth/voterSession";
+import { formatThaiTime } from "../../../../utils/electionConfig";
+import { resolveElectionPosterPath } from "../../../../utils/electionPoster.mjs";
+import { BALLOT_OFFICIAL as P } from "../../../admin/editor/templates/builtIn/ballot-official";
 
 const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 

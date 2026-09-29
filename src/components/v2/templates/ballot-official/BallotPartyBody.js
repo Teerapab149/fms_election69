@@ -8,42 +8,17 @@
 // Every section appears only when the party filled it in; an empty section is
 // dropped entirely rather than shown with placeholder text.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion"; // Motion for React
 import { Maximize2, X } from "lucide-react";
-import PartySocials from "../../vote/PartySocials";
-import { socialList } from "../../../utils/socialLinks";
-import { getPath } from "../../../utils/basePath";
-import { normalizeImageUrls } from "../../../utils/imageUrls";
-import { sortMembersByPosition, positionRank } from "../../../utils/memberSort";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import PartySocials from "../../../vote/PartySocials";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
+// what a party may show and in what order is shared by every v2 template;
+// this file only decides how it looks
+import { usePartyContent, mediaSrc as src } from "../../shared/party/usePartyContent";
+import { useDialog } from "../../shared/interaction/useDialog";
 
 const EASE = [0.16, 1, 0.3, 1];
-const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
-const asText = (it) => (typeof it === "string" ? it : it?.title ?? it?.name ?? "");
-const asDesc = (it) => (typeof it === "string" ? "" : it?.desc ?? it?.description ?? it?.detail ?? "");
-const isPlaceholder = (t) => !t || t.startsWith("ยังไม่มีข้อมูล");
-
-// dialog behaviour shared by the member card and the photo viewer: Escape,
-// focus into the dialog and back, no page scroll behind it
-function useDialog(open, onClose) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!open) return undefined;
-    const prev = document.activeElement;
-    ref.current?.querySelector("[data-dialog-focus]")?.focus();
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflow;
-      if (prev?.isConnected) prev.focus();
-    };
-  }, [open, onClose]);
-  return ref;
-}
 
 function MemberCard({ member, onClose, k }) {
   const ref = useDialog(!!member, onClose);
@@ -100,21 +75,9 @@ export default function BallotPartyBody({ party, cover = true, wide = false }) {
   const [member, setMember] = useState(null);
   const [viewing, setViewing] = useState(null); // src of the photo open full-screen
 
-  // the group photos: the first is the party's cover; any further ones are its
-  // activity gallery, which only exists when the party uploaded more than one
-  const images = useMemo(() => normalizeImageUrls(party?.groupImageUrls).map(src).filter(Boolean), [party?.groupImageUrls]);
-  const photo = images[0] || src(party?.officialImageUrl);
-  const gallery = images.slice(1);
-  const hasSocials = socialList(party?.socials).length > 0;
-  const story = useMemo(() => String(party?.logoMeaning || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean), [party?.logoMeaning]);
-  const missions = useMemo(() => (party?.missions || []).map(asText).filter((t) => !isPlaceholder(t)), [party?.missions]);
-  const policies = useMemo(() => (party?.policies || []).map((it) => ({ title: asText(it), desc: asDesc(it) })).filter((p) => !isPlaceholder(p.title)), [party?.policies]);
-  const members = useMemo(() => sortMembersByPosition(party?.members || []), [party?.members]);
-  const tiers = useMemo(() => ({
-    lead: members.filter((m) => positionRank(m.position) === 1),
-    vice: members.filter((m) => { const r = positionRank(m.position); return r > 1 && r < 4; }),
-    rest: members.filter((m) => positionRank(m.position) >= 4),
-  }), [members]);
+  // cover = first group photo; gallery = the rest (only when there is more than
+  // one); sections empty or placeholder are dropped; team tiered by positionRank
+  const { cover: photo, gallery, hasSocials, story, missions, policies, members, tiers } = usePartyContent(party);
   // wide pages set the two short sections side by side when both exist
   const pair = wide && story.length > 0 && missions.length > 0;
 

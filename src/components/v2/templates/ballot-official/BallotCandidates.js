@@ -7,9 +7,9 @@
 // at the ballot, like the party page.
 
 import { MotionConfig } from "framer-motion"; // Motion for React
-import { getPath } from "../../../utils/basePath";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
 import BallotPartyCard from "./BallotPartyCard";
 

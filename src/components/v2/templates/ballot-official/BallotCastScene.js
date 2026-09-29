@@ -14,8 +14,8 @@
 import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion"; // Motion for React
 import { Check } from "lucide-react";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { ballotOfficialTemplate, BALLOT_OFFICIAL as P } from "../../admin/editor/templates/builtIn/ballot-official";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { ballotOfficialTemplate, BALLOT_OFFICIAL as P } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta } from "./BallotChrome";
 import BallotBox from "./BallotBox";
 

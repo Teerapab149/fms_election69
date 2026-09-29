@@ -11,11 +11,11 @@
 // only when there is something real to count to.
 
 import { MotionConfig } from "framer-motion"; // Motion for React
-import { getPath } from "../../../utils/basePath";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { useElectionStatus } from "../../../hooks/useElectionStatus";
-import { formatThaiDate, formatThaiTime } from "../../../utils/electionConfig";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { useElectionStatus } from "../../../../hooks/useElectionStatus";
+import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, BallotCountdown } from "./BallotChrome";
 import BallotBox from "./BallotBox";
 

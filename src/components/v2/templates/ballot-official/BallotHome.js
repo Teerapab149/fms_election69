@@ -21,18 +21,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, MotionConfig, animate, useMotionValue, useReducedMotion, useTransform } from "framer-motion"; // Motion for React
 import { useSession } from "next-auth/react";
 import { Check } from "lucide-react";
-import { getPath } from "../../../utils/basePath";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { useVoteStatus } from "../../../hooks/useVoteStatus";
-import { useElectionStatus } from "../../../hooks/useElectionStatus";
-import { voterSignIn } from "../../../lib/auth/voterSession";
-import EditorElement from "../../admin/editor/EditorElement";
-import { getBinding } from "../../admin/editor/elementCatalog";
-import { resolveStatefulConfig } from "../../admin/editor/templateEngine";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { useVoteStatus } from "../../../../hooks/useVoteStatus";
+import { useElectionStatus } from "../../../../hooks/useElectionStatus";
+import { voterSignIn } from "../../../../lib/auth/voterSession";
+import EditorElement from "../../../admin/editor/EditorElement";
+import { getBinding } from "../../../admin/editor/elementCatalog";
+import { resolveStatefulConfig } from "../../../admin/editor/templateEngine";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import BallotJourney from "./BallotJourney";
 import { ballotMeta, BallotHeader, BallotStatus, BallotCountdown, BallotFooter, BallotBaseStyles } from "./BallotChrome";
-import { formatThaiDate, formatThaiTime } from "../../../utils/electionConfig";
+import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
 
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
 

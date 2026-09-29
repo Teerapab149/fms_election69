@@ -7,8 +7,8 @@
 //
 // The party page takes the party's NUMBER as ?id= (app/party/page.js).
 
-import { getPath } from "../../../utils/basePath";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { partyCover } from "./BallotPartyHero";
 
 export default function BallotPartyCard({ party, editorMode = false, large = false }) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
-import { V2_PAGES } from "../../components/v2/registry";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage, familyFor } from "../../components/v2/resolve";
 import { useRouter } from 'next/navigation';
 import { getPath } from '../../utils/basePath';
 import { ELECTION_YEAR_TH } from '../../utils/electionConfig';
@@ -67,7 +67,7 @@ export default function VotePage() {
   // the real slug: v2 families (components/v2) render their own ballot and cast
   // scene; everything else keeps dispatching on the base family above
   const [rawTemplateId, setRawTemplateId] = useState('classic');
-  const V2Vote = V2_PAGES[v2KeyOf(rawTemplateId)]?.vote || null;
+  const V2Vote = resolveTemplatePage(rawTemplateId, 'vote');
   const { playCast, sceneNode: castScene, castActive } = useVoteCast({ templateId: rawTemplateId });
   const confirmPending = useRef(false);
   // Gate render until the template is known — otherwise the classic layout (with
@@ -98,12 +98,14 @@ export default function VotePage() {
     fetchConfig();
   }, []);
 
-  const isGumroad = activeTemplateId?.startsWith('gumroad');
-  const isStudio = activeTemplateId?.startsWith('studio-dark');
-  const isVerdure = activeTemplateId?.startsWith('verdure');
-  const isBlossom = activeTemplateId?.startsWith('blossom');
-  const isReceipt = activeTemplateId?.startsWith('receipt');
-  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
+  // a v2 page owns the screen: every v1 family flag below is off when it exists
+  const fam = familyFor(activeTemplateId, V2Vote);
+  const isGumroad = fam?.startsWith('gumroad');
+  const isStudio = fam?.startsWith('studio-dark');
+  const isVerdure = fam?.startsWith('verdure');
+  const isBlossom = fam?.startsWith('blossom');
+  const isReceipt = fam?.startsWith('receipt');
+  const isFmsOfficial = fam?.startsWith('fms-official');
   // Blossom Candy Editorial ballot — MULTI (T3.2) + SINGLE booth (T3.3). BlossomVote
   // dispatches internally to BlossomSingleParty when isSingleParty.
   const useBlossomVote = isBlossom;
@@ -184,7 +186,7 @@ export default function VotePage() {
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#14140F]"
       : isVerdure
       ? "min-h-screen flex flex-col font-sans overflow-x-hidden relative bg-[#E7F1E2]"
-      : useBlossomVote || useReceiptVote || isFmsOfficial
+      : useBlossomVote || useReceiptVote || isFmsOfficial || V2Vote
       /* fms-official owns its own footer, so it must join the families that opt
          OUT of the classic wrapper. Left in the default branch it inherited
          pb-32, and that 128px sat BELOW the rendered footer as dead page —

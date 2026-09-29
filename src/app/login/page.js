@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
-import { V2_PAGES } from "../../components/v2/registry";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 import { useRouter, useSearchParams } from "next/navigation"; // ✅ เพิ่ม useSearchParams เพื่อดัก Error จาก URL
 import { signIn, useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
@@ -25,7 +25,7 @@ export default function LoginPage() {
   const rawTemplateId = useActiveTemplateId();
   const activeTemplateId = baseFamilyOf(rawTemplateId);
   // a v2 family's own sign-in page, before the base-family dispatch below
-  const V2Login = V2_PAGES[v2KeyOf(rawTemplateId)]?.login || null;
+  const V2Login = resolveTemplatePage(rawTemplateId, 'login');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

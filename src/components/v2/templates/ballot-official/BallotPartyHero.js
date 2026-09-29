@@ -8,9 +8,9 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion"; // Motion for React
 import { Maximize2 } from "lucide-react";
-import { getPath } from "../../../utils/basePath";
-import { normalizeImageUrls } from "../../../utils/imageUrls";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { normalizeImageUrls } from "../../../../utils/imageUrls";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 
 const EASE = [0.16, 1, 0.3, 1];
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));

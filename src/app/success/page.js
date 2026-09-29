@@ -1,7 +1,7 @@
 "use client";
 import { getPath } from "../../utils/basePath";
-import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
-import { V2_PAGES } from "../../components/v2/registry";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage, familyFor } from "../../components/v2/resolve";
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -71,14 +71,17 @@ export default function SuccessPage({
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   // the real slug: a v2 family (components/v2) with its own success page renders it
   const [rawTemplateId, setRawTemplateId] = useState('classic');
-  const V2Success = V2_PAGES[v2KeyOf(rawTemplateId)]?.success || null;
+  const V2Success = resolveTemplatePage(rawTemplateId, 'success');
   const [templateReady, setTemplateReady] = useState(false);
-  const isGumroad = activeTemplateId?.startsWith('gumroad');
-  const isStudio = activeTemplateId?.startsWith('studio-dark');
-  const isVerdure = activeTemplateId?.startsWith('verdure');
-  const isBlossom = activeTemplateId?.startsWith('blossom');
-  const isReceipt = activeTemplateId?.startsWith('receipt');
-  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
+  // a v2 page owns the screen: every v1 family flag below is off when it exists
+  const fam = familyFor(activeTemplateId, V2Success);
+  const isGumroad = fam?.startsWith('gumroad');
+  const isStudio = fam?.startsWith('studio-dark');
+  const isVerdure = fam?.startsWith('verdure');
+  const isBlossom = fam?.startsWith('blossom');
+  const isReceipt = fam?.startsWith('receipt');
+  const isFmsOfficial = fam?.startsWith('fms-official');
+  const ownChrome = !!V2Success || isGumroad || isStudio || isVerdure || isBlossom || isReceipt || isFmsOfficial;
 
   useEffect(() => {
     if (editorMode) { setTemplateReady(true); return; }
@@ -290,7 +293,7 @@ export default function SuccessPage({
   // Render 
   // =========================================================
   return (
-    <div className={(isGumroad || isStudio || isVerdure || isBlossom || isReceipt || isFmsOfficial) ? "relative" : "min-h-screen flex flex-col font-sans relative overflow-hidden bg-[var(--color-bg)]"}>
+    <div className={ownChrome ? "relative" : "min-h-screen flex flex-col font-sans relative overflow-hidden bg-[var(--color-bg)]"}>
       {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* classic/original chrome. This family mounts <Navbar /> on candidates, closed,
@@ -298,7 +301,7 @@ export default function SuccessPage({
           end of the flow was also the one screen with no way back to anywhere. The
           centring moved onto the inner wrapper below so the bar stays at the top
           instead of being centred together with the card. */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && !editorMode && <Navbar />}
+      {!ownChrome && !editorMode && <Navbar />}
 
       {/* RECEIPT layout (own printer-moment chrome); the form + alert modals below stay shared */}
       {isReceipt && (isAuthorized || editorMode) && (
@@ -335,7 +338,7 @@ export default function SuccessPage({
         <V2Success user={user} isUnlocked={isUnlocked} onOpenForm={() => setShowModal(true)} editorMode={editorMode} />
       )}
 
-      {isFmsOfficial && !V2Success && (isAuthorized || editorMode) && (
+      {isFmsOfficial && (isAuthorized || editorMode) && (
         <FmsOfficialSuccess
           user={user}
           isUnlocked={isUnlocked}
@@ -364,7 +367,7 @@ export default function SuccessPage({
         />
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (isAuthorized || editorMode) && (
+      {!ownChrome && (isAuthorized || editorMode) && (
         <OriginalSuccess
           user={user}
           isUnlocked={isUnlocked}

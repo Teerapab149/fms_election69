@@ -1,7 +1,7 @@
 'use client';
 import { getPath } from "../../utils/basePath";
-import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
-import { V2_PAGES } from "../../components/v2/registry";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -620,7 +620,7 @@ function PartyContent() {
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   // the real slug: a v2 family (components/v2) with its own party page renders it
   const [rawTemplateId, setRawTemplateId] = useState('classic');
-  const V2Party = V2_PAGES[v2KeyOf(rawTemplateId)]?.party || null;
+  const V2Party = resolveTemplatePage(rawTemplateId, 'party');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');

@@ -12,11 +12,12 @@
 
 import { motion, MotionConfig, useReducedMotion } from "framer-motion"; // Motion for React
 import { Check, Lock } from "lucide-react";
-import { getPath } from "../../../utils/basePath";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { evaluationPromptText } from "../../../utils/activityHours";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { getPath } from "../../../../utils/basePath";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { evaluationPromptText } from "../../../../utils/activityHours";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
+import { hourWindow } from "../../shared/election/voteTime.mjs";
 
 const EASE = [0.16, 1, 0.3, 1];
 
@@ -27,12 +28,8 @@ export default function BallotSuccess({ user = null, isUnlocked = false, onOpenF
   const reduce = useReducedMotion();
   const still = reduce || editorMode;
 
-  // The stub may say WHEN only as finely as the ballot itself records it: the
-  // Ballot row keeps an hour bucket, never a minute. A minute-precise time on a
-  // screenshot a voter shares is a correlation handle the ballot table was built
-  // not to have — so the stub shows the date and the hour window, nothing finer.
-  const when = user?.votedAt ? new Date(user.votedAt) : null;
-  const recorded = when && !Number.isNaN(when.getTime()) ? hourWindow(when) : null;
+  // the stub says WHEN only as finely as the ballot row records it (rule 11)
+  const recorded = hourWindow(user?.votedAt);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -155,14 +152,4 @@ export default function BallotSuccess({ user = null, isUnlocked = false, onOpenF
       </div>
     </MotionConfig>
   );
-}
-
-// "12 ก.พ. 2570 ช่วง 09.00–10.00 น." — the hour bucket the ballot row keeps
-// (Asia/Bangkok), in the same dot-separated time style as the rest of the site.
-function hourWindow(d) {
-  const tz = "Asia/Bangkok";
-  const date = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeZone: tz }).format(d);
-  const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone: tz }).format(d));
-  const pad = (n) => String(n % 24).padStart(2, "0");
-  return `${date} ช่วง ${pad(h)}.00–${pad(h + 1)}.00 น.`;
 }

@@ -22,7 +22,7 @@
 
 import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { baseFamilyOf, v2KeyOf } from "../../components/v2/families";
-import { V2_PAGES } from "../../components/v2/registry";
+import { resolveTemplatePage } from "../../components/v2/resolve";
 import { useSearchParams } from 'next/navigation';
 import { MotionConfig } from 'framer-motion';
 import { Palette, Check } from 'lucide-react';
@@ -138,13 +138,13 @@ function PreviewBody() {
   // v2 families render their base family's pages until they build their own (components/v2/families.js);
   // HOME resolves the v2 layout itself through HomeRenderer, which gets the real slug.
   const family = baseFamilyOf(BUILT_IN_TEMPLATES[slug]?.layoutFamily || 'classic');
-  const V2Vote = V2_PAGES[v2KeyOf(slug)]?.vote || null;
-  const V2Party = V2_PAGES[v2KeyOf(slug)]?.party || null;
-  const V2Success = V2_PAGES[v2KeyOf(slug)]?.success || null;
-  const V2Candidates = V2_PAGES[v2KeyOf(slug)]?.candidates || null;
-  const V2Results = V2_PAGES[v2KeyOf(slug)]?.results || null;
-  const V2Closed = V2_PAGES[v2KeyOf(slug)]?.closed || null;
-  const V2Login = V2_PAGES[v2KeyOf(slug)]?.login || null;
+  const V2Vote = resolveTemplatePage(slug, 'vote');
+  const V2Party = resolveTemplatePage(slug, 'party');
+  const V2Success = resolveTemplatePage(slug, 'success');
+  const V2Candidates = resolveTemplatePage(slug, 'candidates');
+  const V2Results = resolveTemplatePage(slug, 'results');
+  const V2Closed = resolveTemplatePage(slug, 'closed');
+  const V2Login = resolveTemplatePage(slug, 'login');
   // v2 results: ?variant=sealed|locked (count embargoed) · before (polls not open) · default revealed
   const v2ResultsProps = () => {
     const before = variant === "before";

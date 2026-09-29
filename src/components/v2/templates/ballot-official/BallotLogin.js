@@ -14,8 +14,8 @@
 
 import { MotionConfig } from "framer-motion"; // Motion for React
 import { Loader2, AlertCircle } from "lucide-react";
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
 
 export default function BallotLogin({

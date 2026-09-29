@@ -25,6 +25,25 @@
 - **v1 ไม่ถูกแตะ** จนกว่าจะลบ template เดิม
 - **fms-official ยังไม่ลบ** จน v2 ผ่านครบทุกหน้า ผ่าน routing ผ่านข้อมูลจริง ผ่านมือถือ ไม่มี regression และผ่าน deploy preview
 
+## โครงไฟล์ (หลัง foundation commit)
+
+```
+src/components/v2/
+├── families.js         slug → base family + หน้าที่สร้างแล้ว (อ่านได้ฝั่ง server)
+├── registry.js         component ของแต่ละ template
+├── resolve.js          resolveTemplatePage(id, page), familyFor(id, v2Page) — route ถามที่นี่ที่เดียว
+├── shared/             พฤติกรรมและข้อมูล ไม่มีหน้าตา
+│   ├── election/voteTime.mjs       hourWindow() — กฎข้อ 11
+│   ├── results/resultsView.mjs     ลำดับแถว สัดส่วน turnout — กฎข้อ 7 (ก่อนประกาศไม่มีคะแนนในแถว)
+│   ├── party/partyContent.mjs      ปก แกลเลอรี ส่วนที่ว่าง ลำดับทีม
+│   ├── party/usePartyContent.js    hook ที่ต่อกับ utils ของแอป
+│   └── interaction/useDialog.js    Escape, focus, หยุด scroll
+└── templates/<slug>/   หน้าตาของแต่ละ template
+```
+
+**เพิ่ม template ใหม่:** สร้าง `templates/<slug>/` + `builtIn/<slug>.js` → ใส่ใน `families.js` (base + built) และ `registry.js` → ลงทะเบียนใน `templates/index.js` และ `FAMILY_CATEGORY` — route และ template-preview ไม่ต้องแก้
+เทสต์: `node --test scripts/smoke/v2Shared.test.mjs scripts/smoke/electionStatus.test.mjs`
+
 ## วิธีทำงาน
 
 - commit แยกเป็นชุดที่อ่านย้อนได้: โครงสร้างกลางไม่ปนกับ template ใหม่ ไม่ปนกับการแก้บั๊ก

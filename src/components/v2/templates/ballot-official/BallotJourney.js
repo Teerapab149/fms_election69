@@ -20,8 +20,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { Lock } from "lucide-react";
 import BallotBox from "./BallotBox";
 import BallotPartyCard from "./BallotPartyCard";
-import { getPath } from "../../../utils/basePath";
-import { formatThaiDate, formatThaiTime } from "../../../utils/electionConfig";
+import { getPath } from "../../../../utils/basePath";
+import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
 
 const EASE = [0.16, 1, 0.3, 1];
 

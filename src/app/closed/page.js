@@ -1,7 +1,7 @@
 "use client";
 import { getPath } from "../../utils/basePath";
-import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
-import { V2_PAGES } from "../../components/v2/registry";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 
 import { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react";
@@ -29,7 +29,7 @@ export default function ClosedPage() {
     const [activeTemplateId, setActiveTemplateId] = useState('classic');
     // the raw id picks a v2 family's own status page; the base family drives the rest
     const [rawTemplateId, setRawTemplateId] = useState('classic');
-    const V2Closed = V2_PAGES[v2KeyOf(rawTemplateId)]?.closed || null;
+    const V2Closed = resolveTemplatePage(rawTemplateId, 'closed');
     // Gate render until the template is known — without this the classic light
     // page flashes for a frame before a dark template resolves (same gate the
     // other 5 pages use).
@@ -143,6 +143,16 @@ export default function ClosedPage() {
 
     if (!templateReady) return null;
 
+    // a v2 template's own status page owns the screen, before any v1 family
+    if (V2Closed) {
+        return (
+            <>
+                <PageThemeOverrides page="closed" />
+                <V2Closed title={title} desc={desc} variant={variant} session={session} onLogout={handleLogout} />
+            </>
+        );
+    }
+
     if (isGumroad) {
         return (
             <>
@@ -225,11 +235,10 @@ export default function ClosedPage() {
 
     // FMS OFFICIAL layout (faculty chrome) — replaces the classic page entirely.
     if (isFmsOfficial) {
-        const Closed = V2Closed || FmsOfficialClosed;
         return (
             <>
                 <PageThemeOverrides page="closed" />
-                <Closed
+                <FmsOfficialClosed
                     title={title}
                     desc={desc}
                     variant={variant}

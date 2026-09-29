@@ -1,7 +1,7 @@
 'use client';
 import { getPath } from "../../utils/basePath";
-import { baseFamilyOf, v2KeyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
-import { V2_PAGES } from "../../components/v2/registry";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -44,7 +44,7 @@ export default function CandidatesPage({
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
   // the real slug: a v2 family (components/v2) with its own candidates page renders it
   const [rawTemplateId, setRawTemplateId] = useState('classic');
-  const V2Candidates = V2_PAGES[v2KeyOf(rawTemplateId)]?.candidates || null;
+  const V2Candidates = resolveTemplatePage(rawTemplateId, 'candidates');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');

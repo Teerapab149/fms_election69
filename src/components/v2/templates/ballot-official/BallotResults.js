@@ -16,11 +16,12 @@
 
 import { useMemo } from "react";
 import { MotionConfig, motion } from "framer-motion"; // Motion for React
-import { useGlobalConfig } from "../../../contexts/GlobalConfigContext";
-import { resolveVerdict } from "../../../utils/electionVerdict";
-import { ballotOfficialTemplate } from "../../admin/editor/templates/builtIn/ballot-official";
+import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import { resolveVerdict } from "../../../../utils/electionVerdict";
+import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles } from "./BallotChrome";
 import BallotBox from "./BallotBox";
+import { resultsView } from "../../shared/results/resultsView.mjs";
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : n ?? 0);
 const EASE = [0.16, 1, 0.3, 1];
@@ -33,15 +34,12 @@ export default function BallotResults({
   const meta = ballotMeta(useGlobalConfig() || {});
   const r = ballotOfficialTemplate.copy.results;
 
-  const eligible = demographics?.totalEligible || 0;
-  const turnout = eligible > 0 ? (totalVotes / eligible) * 100 : 0;
-
-  const rows = useMemo(() => {
-    const list = [...(candidates || [])];
-    if (isRevealed) list.sort((a, b) => (b.score || 0) - (a.score || 0));
-    else list.sort((a, b) => (b.number ?? 0) - (a.number ?? 0));
-    return list;
-  }, [candidates, isRevealed]);
+  // order, shares, turnout and group tables are shared by every v2 template;
+  // before the reveal the rows carry no score at all (rule 7)
+  const { rows, eligible, turnout, demo } = useMemo(() => resultsView({
+    candidates, totalVotes, demographics, revealed: isRevealed,
+    groups: [{ key: "byYear", label: r.demoYear }, { key: "byGender", label: r.demoGender }, { key: "byMajor", label: r.demoMajor }],
+  }), [candidates, totalVotes, demographics, isRevealed, r]);
 
   const verdict = resolveVerdict(candidates, { revealed: isRevealed });
   const featuredId = verdict.featured?.id ?? null;
@@ -56,12 +54,6 @@ export default function BallotResults({
   const stampText = verdict.outcome === "winner" ? r.winner : verdict.outcome === "approved" ? r.approved : null;
 
   const label = (c) => (c.number > 0 ? c.name : c.number === 0 ? r.abstain : r.disapprove);
-  const clean = (arr) => (arr || []).filter((d) => d && d.name != null && String(d.name).trim() !== "");
-  const demo = [
-    { th: r.demoYear, rows: clean(demographics?.byYear) },
-    { th: r.demoGender, rows: clean(demographics?.byGender) },
-    { th: r.demoMajor, rows: clean(demographics?.byMajor) },
-  ].filter((g) => g.rows.length > 0);
 
   const state = isNotStarted ? "before" : !isRevealed ? "sealed" : "revealed";
   const lede = { before: r.ledeBefore, sealed: r.ledeSealed, revealed: r.ledeRevealed }[state];
@@ -131,8 +123,7 @@ export default function BallotResults({
 
                     <ol className="br-rows">
                       {rows.map((c, i) => {
-                        const score = c.score || 0;
-                        const share = totalVotes > 0 ? (score / totalVotes) * 100 : 0;
+                        const { score, share } = c; // revealed rows only — resultsView sets both
                         const featured = c.id === featuredId;
                         return (
                           <li key={c.id} className={`br-row ${featured ? "is-featured" : ""} ${c.number > 0 ? "" : "is-special"}`}>
@@ -162,26 +153,20 @@ export default function BallotResults({
                       <h2 id="br-demo-h" className="br-demo__h">{r.demoTitle}</h2>
                       <p className="br-demo__note">{r.demoNote}</p>
                       <div className="br-demo__grid">
-                        {demo.map((g) => {
-                          const sum = g.rows.reduce((a, x) => a + (x.value || x.count || 0), 0) || 1;
-                          return (
-                            <div key={g.th} className="br-demo__g">
-                              <b>{g.th}</b>
-                              <ul>
-                                {g.rows.map((x) => {
-                                  const v = x.value || x.count || 0;
-                                  return (
-                                    <li key={x.name}>
-                                      <span>{x.name}</span>
-                                      <span className="br-demo__v">{fmt(v)}</span>
-                                      <span className="br-demo__bar" aria-hidden><i style={{ width: `${(v / sum) * 100}%` }} /></span>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          );
-                        })}
+                        {demo.map((g) => (
+                          <div key={g.label} className="br-demo__g">
+                            <b>{g.label}</b>
+                            <ul>
+                              {g.rows.map((x) => (
+                                <li key={x.name}>
+                                  <span>{x.name}</span>
+                                  <span className="br-demo__v">{fmt(x.value)}</span>
+                                  <span className="br-demo__bar" aria-hidden><i style={{ width: `${x.share}%` }} /></span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
                       </div>
                     </section>
                   )}
