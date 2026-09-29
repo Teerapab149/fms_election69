@@ -203,10 +203,10 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
           But ≤1100px that chip is hidden, so home's corner was simply empty and
           a signed-in voter had no way to see WHOSE session they were in — the
           only page in the template where that was true. Home therefore renders
-          the same pill, marked --home so CSS keeps it to the widths where the
-          corner is free (see .vd-user--home below). Every other page: unchanged. */}
+          the same pill at every width, beside the chip, so sign-out is always
+          reachable. */}
       {isAuthed && (
-        <div className={`vd-user ${userOpen ? "is-open" : ""} ${active === "home" ? "vd-user--home" : ""}`}>
+        <div className={`vd-user ${userOpen ? "is-open" : ""}`}>
           <button type="button" className="vd-user__av" onClick={() => setUserOpen((o) => !o)} aria-label="ดูข้อมูลผู้ใช้" aria-expanded={userOpen}>{avatarChar}</button>
           <div className="vd-user__meta">
             <div className="vd-user__name">{userName.split(" ")[0] || userName}</div>
@@ -333,10 +333,10 @@ export function VerdureBaseStyles() {
       .vd-user__out { margin-left:0; width:32px; height:32px; border-radius:50%; border:1px solid var(--rule); background:transparent; color:var(--moss); cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; flex-shrink:0; }
       .vd-user__out:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
       .vd-moss .vd-user__out { color:var(--cream); border-color:var(--rule-moss); }
-      /* home only — the pill takes the corner exactly where the live chip gives it
-         up (the same 1100px breakpoint that hides the chip below). Above that the
-         chip is back and home stays the composition it was designed as. */
-      @media (min-width:1101px) { .vd-user--home { display:none; } }
+      /* home used to hide the pill above 1100px so the live chip had the corner to
+         itself — which left a signed-in desktop voter with no way to sign out from
+         home. The chip and pill sit side by side in the flex row like every other
+         page, so it is shown at every width now. */
 
       /* dock — clean labeled pill; active = cream fill + a terra index dot. No
          numbered discs (that read as a studio-dark echo); plain Thai labels so

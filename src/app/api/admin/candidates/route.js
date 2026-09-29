@@ -282,7 +282,10 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
     // — ทุกคนได้รูปคนสุดท้ายที่อัป (พิสูจน์แล้วบน dev: ประธานวิชาการกับประธานกีฬา
     // ได้ /images/members/party_1/400.webp เหมือนกันทั้งคู่) รูปใน Modal ใส่ studentId
     // มาตั้งแต่แรกอยู่แล้ว รูปในกริดแค่ตกหล่นไป
-    const fileName = `${positionNum}_${memberData.studentId || Date.now()}.${extensionForBuffer(optimized)}`;
+    // ต่อท้ายด้วยเวลาอัปโหลด: /api/media cache รูปไว้ (max-age 5 นาที + stale-while-revalidate)
+    // ถ้าอัปรูปใหม่ทับชื่อเดิม URL ไม่เปลี่ยน แอดมินจะเห็นรูปเก่าค้างและเข้าใจว่า "แก้ไม่ได้"
+    // ไฟล์เก่าลบทิ้งหลัง transaction สำเร็จ (ดู replacedMemberImages ใน PUT)
+    const fileName = `${positionNum}_${memberData.studentId || "x"}_${Date.now().toString(36)}.${extensionForBuffer(optimized)}`;
 
     if (!fs.existsSync(targetDir)) {
       await mkdir(targetDir, { recursive: true });
@@ -320,7 +323,8 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
     const targetDir = uploadDir("members", folderName, "Modal");
 
     const optimized = await optimizeImage(buffer, { maxWidth: 1000, quality: 82, format: "webp" });
-    const fileName = `${positionNum}_${studentId}.${extensionForBuffer(optimized)}`;
+    // ชื่อไฟล์ใหม่ทุกครั้งที่อัป — เหตุผลเดียวกับ processMemberImage (cache ของ /api/media)
+    const fileName = `${positionNum}_${studentId}_${Date.now().toString(36)}.${extensionForBuffer(optimized)}`;
 
     if (!fs.existsSync(targetDir)) {
       await mkdir(targetDir, { recursive: true });
@@ -534,6 +538,8 @@ export async function PUT(req) {
     }
 
     const membersJson = formData.get("members");
+    // รูปสมาชิกที่ถูกแทนที่ในรอบนี้ — ลบหลัง commit เท่านั้น ถ้า transaction ล้ม DB ยังชี้ไฟล์เดิมอยู่
+    let replacedMemberImages = [];
 
     const updatedCandidate = await db.$transaction(async (tx) => {
 
@@ -570,6 +576,11 @@ export async function PUT(req) {
           };
         }));
 
+        const keptUrls = new Set(membersDataToCreate.flatMap(m => [m.imageUrl, m.modalImageUrl]));
+        replacedMemberImages = currentMembers
+          .flatMap(m => [m.imageUrl, m.modalImageUrl])
+          .filter(url => url && !keptUrls.has(url));
+
         await tx.member.deleteMany({ where: { candidateId: parseInt(id) } });
 
         dataToUpdate.members = {
@@ -592,6 +603,17 @@ export async function PUT(req) {
 
       return candidate;
     });
+
+    // ลบไฟล์ที่ถูกแทนที่ เฉพาะไฟล์ที่ไม่มีสมาชิกคนไหน (พรรคไหนก็ได้) ยังอ้างอยู่ — ข้อมูลเก่า
+    // เคยมีหลายคนใช้ไฟล์เดียวกัน (400.webp) จะลบตามชื่ออย่างเดียวไม่ได้
+    if (replacedMemberImages.length > 0) {
+      const stillUsed = await db.member.findMany({
+        where: { OR: [{ imageUrl: { in: replacedMemberImages } }, { modalImageUrl: { in: replacedMemberImages } }] },
+        select: { imageUrl: true, modalImageUrl: true },
+      });
+      const used = new Set(stillUsed.flatMap(m => [m.imageUrl, m.modalImageUrl]));
+      await deleteMultipleImageFiles([...new Set(replacedMemberImages)].filter(url => !used.has(url)));
+    }
 
     return NextResponse.json(updatedCandidate);
 
