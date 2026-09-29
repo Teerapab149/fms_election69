@@ -244,9 +244,7 @@ export default function BallotVote({
             <section className="bv-decide bv-decide--solo">
               <div className="bv-wrap bv-decide__in">
                 <h1 className="bv-decide__title">{v.titleMulti}</h1>
-                {/* campaign + faculty, as on every page head: campaign + the org's full
-                    name repeated "นักศึกษา" once the campaign carried it too */}
-                <p className="bv-decide__note"><Phrases text={[meta.campaign, meta.faculty].filter(Boolean).join(" ")} /> <span className="bo-nowrap">ปีการศึกษา {meta.ay}</span></p>
+                <p className="bv-decide__note"><Phrases text={`${meta.campaign} ${meta.org}`} /> <span className="bo-nowrap">ปีการศึกษา {meta.ay}</span></p>
                 <p className="bv-decide__note">{v.decideMulti}</p>
                 {ballot}
               </div>

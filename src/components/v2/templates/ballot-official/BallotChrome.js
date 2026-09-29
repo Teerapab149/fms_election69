@@ -18,7 +18,6 @@ import { getPath } from "../../../../utils/basePath";
 import { voterSignIn, voterSignOut } from "../../../../lib/auth/voterSession";
 import { formatThaiTime } from "../../../../utils/electionConfig";
 import { electionMeta } from "../../shared/election/electionMeta";
-import { thaiPhrases, LONG_PHRASE } from "../../shared/text/thaiPhrases.mjs";
 import { ballotTheme, ballotVars } from "../../../admin/editor/templates/builtIn/ballot-official";
 
 const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
@@ -26,12 +25,20 @@ const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 // election facts from globalConfig only — shared by every v2 template
 export const ballotMeta = electionMeta;
 
-// Thai lines break between phrases only (rules in shared/text/thaiPhrases).
-// A phrase too long to promise it fits is left free to wrap inside itself.
+// Thai has no spaces, so a line breaks wherever the dictionary allows —
+// "โครงการ / เลือกตั้งคณะ / กรรมการบริหาร" split "คณะกรรมการ" in two, and
+// "สโมสรนักศึกษาคณะ / วิทยาการจัดการ" split the faculty's name. A line may only
+// break between phrases: before "คณะ…" / "สโมสร" / "ประจำปี", or at a space the
+// admin typed — but never before a Latin word or a number, so "SAMO 50",
+// "PSU Passport" and "ปีการศึกษา 2570" stay whole. Anything else stays as
+// written (one phrase).
+export function thaiPhrases(s) {
+  const str = String(s || "");
+  const parts = str.split(/(?=คณะ|สโมสร|ประจำปี)|\s+(?![0-9A-Za-z])/).map((x) => x.trim()).filter(Boolean);
+  return parts.length ? parts : [str];
+}
 export function Phrases({ text }) {
-  return thaiPhrases(text).map((ph, i) => (
-    <span key={i} className={ph.length > LONG_PHRASE ? "bo-phrase is-long" : "bo-phrase"}>{ph}</span>
-  ));
+  return thaiPhrases(text).map((ph, i) => <span key={i} className="bo-phrase">{ph}</span>);
 }
 
 const NAV = [
@@ -269,7 +276,6 @@ export function BallotBaseStyles() {
       .bo-root button { font: inherit; cursor: pointer; }
       .bo-phrase { display: inline-block; white-space: nowrap; margin-right: .22em; }
       .bo-phrase:last-child { margin-right: 0; }
-      .bo-phrase.is-long { display: inline; white-space: normal; }
 
       /* context line (BallotContext) */
       /* inline flow, not flex: in a narrow column the words wrap phrase by
