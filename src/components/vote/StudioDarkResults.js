@@ -133,7 +133,9 @@ export default function StudioDarkResults({
               ? <><span className="sd-nw">FINAL</span> · <span className="sd-thai">ผลอย่างเป็นทางการ</span></>
               : isNotStarted
                 ? <><span className="sd-nw">WAITING</span> · <span className="sd-thai">ยังไม่เปิดโหวต</span></>
-                : <><span className="sd-nw">LIVE TALLY</span> · <span className="sd-thai">กำลังนับ</span></>}
+                : ended
+                  ? <><span className="sd-nw">CLOSED</span> · <span className="sd-thai">รอประกาศผล</span></>
+                  : <><span className="sd-nw">LIVE TALLY</span> · <span className="sd-thai">กำลังนับ</span></>}
           </div>
         </div>
 
@@ -188,7 +190,7 @@ export default function StudioDarkResults({
               <>
                 <h2 className="sdr-board__title">{singleParty ? <>Yes or <em>no?</em></> : <>Who will <em>win?</em></>}</h2>
                 <p className="sdr-board__deck">
-                  เพื่อรักษาความเป็นกลาง ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้ — การประกาศจะเกิดขึ้นเมื่อปิดโหวตแล้วเท่านั้น
+                  เพื่อรักษาความเป็นกลาง ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้ — จะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น
                 </p>
               </>
             )}
@@ -206,9 +208,13 @@ export default function StudioDarkResults({
             ) : (
               <>
                 <div className="sdr-aside__kicker">§ EDITOR&rsquo;S NOTE</div>
-                <h3>การประกาศจะเกิด<br />เมื่อ <em>ปิดโหวต</em></h3>
+                <h3>ผลจะประกาศ<br />หลัง <em>ปิดโหวต</em></h3>
                 <p>ระหว่างการลงคะแนน เราเลือกที่จะไม่แสดง{singleParty ? "ผลรับรอง" : "พรรคที่กำลังนำ"} — เพื่อไม่ให้ตัวเลขมีอิทธิพลต่อการตัดสินใจของผู้ที่ยังไม่ได้ลงคะแนน</p>
-                {countdownText && <div className="sdr-aside__cd">{countdownText}</div>}
+                {/* the bare time read the same before opening and during voting,
+                    and after closing the live page hands "เร็วๆ นี้" — say what it is */}
+                {ended
+                  ? <div className="sdr-aside__cd">ปิดโหวตแล้ว · รอประกาศผล</div>
+                  : countdownText && <div className="sdr-aside__cd">{isNotStarted ? "เปิดโหวตใน " : "ปิดโหวตใน "}{countdownText}</div>}
               </>
             )}
           </div>
@@ -267,7 +273,7 @@ export default function StudioDarkResults({
               <div>
                 <div className="sdr-veil__lock"><Lock size={20} strokeWidth={2} /></div>
                 <h4>Embargoed until <em>polls close.</em></h4>
-                <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่ทันทีเมื่อปิดโหวต</p>
+                <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่เมื่อคณะกรรมการประกาศผล</p>
               </div>
             </div>
           )}
@@ -306,7 +312,7 @@ export default function StudioDarkResults({
             ) : (
               <div className="sdr-demo__locked">
                 <div className="sdr-demo__locked-ic"><Lock size={18} strokeWidth={2} /></div>
-                <p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อปิดโหวตแล้วเท่านั้น</p>
+                <p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อคณะกรรมการประกาศผลเท่านั้น</p>
               </div>
             )}
           </div>

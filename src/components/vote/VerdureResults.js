@@ -126,15 +126,17 @@ export default function VerdureResults({
   return (
     <VerdureShell active="results" editorMode={editorMode}
       edge={{ num: "05", label: "Returns", th: "ผลคะแนน", right: true }}
-      cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : "Live tally · embargoed"}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : "COUNTING"} · <strong>{statusTxt}</strong></div>}>
+      cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : isNotStarted ? "Polls not open" : "Live tally · embargoed"}
+      statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : "COUNTING"} · <strong>{statusTxt}</strong></div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">
           <div className="vd-returns__kicker">
             <span className="vd-nw">NO. 05</span> · {revealed
               ? <><span className="vd-nw">FINAL RESULT</span> · <span className="vd-thai">ผลอย่างเป็นทางการ</span></>
-              : <><span className="vd-nw">LIVE RETURNS</span> · <span className="vd-thai">กำลังนับคะแนน</span></>}
+              : isNotStarted
+                ? <><span className="vd-nw">UPCOMING</span> · <span className="vd-thai">ยังไม่เปิดโหวต</span></>
+                : <><span className="vd-nw">LIVE RETURNS</span> · <span className="vd-thai">กำลังนับคะแนน</span></>}
           </div>
           <h1 className="vd-returns__title">The <em>Returns.</em></h1>
           <div className="vd-returns__accent" aria-hidden />
@@ -164,8 +166,13 @@ export default function VerdureResults({
               <>
                 <div className="vd-rdisc__lock"><Lock size={22} strokeWidth={2} /></div>
                 <div className="vd-rdisc__title">{singleParty ? <>Yes or <em>no?</em></> : <>Who will <em>win?</em></>}</div>
-                <p className="vd-rdisc__deck">ผลคะแนน{singleParty ? "" : "รายพรรค"}จะถูกปลดล็อกเมื่อปิดโหวตเท่านั้น</p>
-                {countdownText && <div className="vd-rdisc__cd">CLOSES IN <strong className="vd-tabular">{countdownText}</strong></div>}
+                <p className="vd-rdisc__deck">ผลคะแนน{singleParty ? "" : "รายพรรค"}จะถูกปลดล็อกเมื่อคณะกรรมการประกาศผลเท่านั้น</p>
+                {/* the countdown runs to the OPENING before the polls, to the closing
+                    during them; after closing the live page hands "เร็วๆ นี้" — there is
+                    nothing left to count down to, only the announcement to wait for */}
+                {ended
+                  ? <div className="vd-rdisc__cd"><span className="vd-thai">ปิดโหวตแล้ว · รอประกาศผล</span></div>
+                  : countdownText && <div className="vd-rdisc__cd">{isNotStarted ? "OPENS IN" : "CLOSES IN"} <strong className="vd-tabular">{countdownText}</strong></div>}
               </>
             )}
           </div>
@@ -203,8 +210,8 @@ export default function VerdureResults({
             {!revealed && (
               <div className="vd-race__veil">
                 <div>
-                  <h4>Embargoed until <em>polls close.</em></h4>
-                  <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่ทันทีเมื่อปิดโหวต</p>
+                  <h4>Embargoed until <em>announced.</em></h4>
+                  <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่เมื่อคณะกรรมการประกาศผล</p>
                 </div>
               </div>
             )}
@@ -239,7 +246,7 @@ export default function VerdureResults({
                 })}
               </div>
             ) : (
-              <div className="vd-demo__locked"><Lock size={18} strokeWidth={2} /><p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อปิดโหวตแล้วเท่านั้น</p></div>
+              <div className="vd-demo__locked"><Lock size={18} strokeWidth={2} /><p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อคณะกรรมการประกาศผลเท่านั้น</p></div>
             )}
           </div>
         )}
@@ -288,8 +295,10 @@ export default function VerdureResults({
         .vd-rdisc__title { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(44px,6vw,84px); line-height:.92; letter-spacing:-.03em; color:var(--cream); margin:0; }
         .vd-rdisc__title em { color:var(--terra-soft); }
         .vd-rdisc__deck { font-family:var(--ft); font-size:14px; color:rgba(var(--cream-rgb),.72); line-height:1.5; max-width:280px; margin:16px auto 0; }
-        .vd-rdisc__cd { margin-top:18px; font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:rgba(var(--cream-rgb),.65); }
-        .vd-rdisc__cd strong { font-family:var(--fd); font-style:italic; font-size:20px; font-weight:400; color:var(--cream); letter-spacing:-.02em; margin-left:8px; text-transform:none; }
+        /* label above the time: the live page counts "2 วัน 3 ชม. 20 น." —
+           on one line with the label it ran past the circle at phone width */
+        .vd-rdisc__cd { display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:18px; font-family:var(--fm); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:rgba(var(--cream-rgb),.65); }
+        .vd-rdisc__cd strong { font-family:var(--fd); font-style:italic; font-size:20px; font-weight:400; color:var(--cream); letter-spacing:-.02em; white-space:nowrap; text-transform:none; }
 
         .vd-rstats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:36px; }
         .vd-rstat { padding:24px 28px; background:var(--cream-2); border:1px solid var(--rule); border-radius:22px; text-align:center; box-shadow:0 16px 40px -30px rgba(var(--moss-rgb),.4); }
@@ -377,6 +386,18 @@ export default function VerdureResults({
           .vd-race__head { flex-direction:column; align-items:stretch; gap:0; }
           .vd-race__head .vd-smallcaps { order:-1; align-self:flex-end; margin-bottom:14px; }
           .vd-race__head h3 { font-size:24px; }
+        }
+        /* the smallest phones (320): the disc min of 300px plus its outer dashed
+           ring was wider than the screen — size it to the viewport and tighten
+           what sits inside so it still fits the circle */
+        @media (max-width:360px) {
+          .vd-rdisc { --rd:calc(100vw - 64px); }
+          .vd-rdisc__lock { width:44px; height:44px; margin-bottom:12px; }
+          .vd-rdisc__title { font-size:38px; }
+          .vd-rdisc__deck { font-size:13px; margin-top:10px; }
+          .vd-rdisc__cd { margin-top:10px; }
+          .vd-rdisc__cd strong { font-size:18px; }
+          .vd-rdisc__name { font-size:28px; }
         }
       `}</style>
     </VerdureShell>
