@@ -172,6 +172,16 @@ function BlCdDigits({ value }) {
 
 // ── loop-safe phase-aware countdown (mirrors the 7086f21 tick pattern: stable
 //    interval, deps only on the resolved date strings + systemMode) ──
+// How to vote — Blossom's own flow and words: PSU Passport sign-in → the
+// ballot ("แตะที่พรรคเพื่อเลือก", "ดูรายละเอียด") → "ยืนยันการลงคะแนน" →
+// the thank-you note, which asks for the form when this year has one.
+const BL_STEPS = [
+  { en: "SIGN IN", title: "เข้าสู่ระบบ", desc: "ใช้บัญชี PSU Passport ของมหาวิทยาลัย ระบบตรวจสิทธิ์ให้เอง" },
+  { en: "CHOOSE", title: "เลือกพรรค", desc: "แตะที่พรรคเพื่อเลือก หรืองดออกเสียง กด “ดูรายละเอียด” เพื่ออ่านนโยบายก่อนได้" },
+  { en: "CONFIRM", title: "ยืนยันการลงคะแนน", desc: "ตรวจอีกครั้งแล้วกดยืนยัน เมื่อยืนยันแล้วจะแก้ไขไม่ได้" },
+  { en: "DONE", title: "บันทึกแล้ว", desc: "หน้าขอบคุณยืนยันว่าคุณใช้สิทธิ์แล้ว ถ้ามีแบบประเมิน ทำให้ครบเพื่อรับชั่วโมงกิจกรรม" },
+];
+
 function useCountdown(globalConfig, systemMode) {
   const [cd, setCd] = useState({ d: 0, h: 0, m: 0, s: 0, label: "กำลังโหลด", live: false, done: false });
   useEffect(() => {
@@ -181,6 +191,9 @@ function useCountdown(globalConfig, systemMode) {
       let target, label, live = false, done = false;
       if (systemMode === "PAUSE") { label = "ระบบพักชั่วคราว"; done = true; }
       else if (systemMode === "ENDED") { label = "ปิดโหวตแล้ว"; done = true; }
+      // forced open past the scheduled end: nothing to count down to, and it is
+      // NOT closed — it used to fall through to the "VOTING CLOSED" block
+      else if (systemMode === "MANUAL_OPEN" && now >= ELECTION_END) { label = "เปิดรับลงคะแนนอยู่"; live = true; done = true; }
       else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
       else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดโหวตใน"; }
       else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
@@ -375,12 +388,14 @@ export default function BlossomHome({
         ? "CLOSES IN"
         : "LOADING";
   const cdPaused = cd.label === "ระบบพักชั่วคราว";
-  const cdClosedEn = cdPaused ? "SYSTEM PAUSED" : "VOTING CLOSED";
-  const cdClosedTh = cdPaused ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : "ดูผลได้ที่หน้าผลการเลือกตั้ง";
+  const cdOvertime = cd.label === "เปิดรับลงคะแนนอยู่";
+  const cdClosedEn = cdPaused ? "SYSTEM PAUSED" : cdOvertime ? "VOTING OPEN" : "VOTING CLOSED";
+  // results are hidden until the committee announces them, not at closing
+  const cdClosedTh = cdPaused ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : cdOvertime ? "ลงคะแนนได้จนกว่าคณะกรรมการจะปิดหีบ" : "รอคณะกรรมการประกาศผล";
   // ENDED-only factual close line (bl-B1B) — real close date/time from the resolved
   // schedule, empty-guarded so an invalid date renders nothing. PAUSE has no real
   // "resumes at" instant, so it keeps the plain hold copy (no fabricated time).
-  const cdCloseFact = cd.done && !cdPaused
+  const cdCloseFact = cd.done && !cdPaused && !cdOvertime
     ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}` : ""; })()
     : "";
 
@@ -478,6 +493,27 @@ export default function BlossomHome({
           </div>
         </section>
 
+        {/* ===== how to vote — a contents page: ink rule, indexed rows, one
+             candy ink per step (the same set the figures use) ===== */}
+        <section className="bl-steps" aria-labelledby="bl-steps-h">
+          <div className="bl-steps-head">
+            <h2 id="bl-steps-h">วิธี<em>ลงคะแนน</em></h2>
+            <span className="bl-steps-head__en">HOW TO VOTE · 4 STEPS</span>
+          </div>
+          <ol className="bl-steps-list">
+            {BL_STEPS.map((st, i) => (
+              <li key={st.en} className={`bl-step bl-step-${i + 1}`}>
+                <span className="bl-step-n">{String(i + 1).padStart(2, "0")}</span>
+                <div className="bl-step-body">
+                  <span className="bl-step-en">{st.en}</span>
+                  <h3 className="bl-thai">{st.title}</h3>
+                  <p>{st.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
           <div className="bl-count__in">
@@ -495,7 +531,7 @@ export default function BlossomHome({
               {cd.label}
               <small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small>
               {cdCloseFact && <span className="bl-count-closed__fact"><span className="bl-thai">{cdCloseFact}</span></span>}
-              {!cdPaused && (
+              {!cdPaused && !cdOvertime && (
                 <a className="bl-count-closed__link" href={editorMode ? undefined : getPath("/results")}>
                   ดูผลคะแนน
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
@@ -824,6 +860,25 @@ export default function BlossomHome({
         .bl-fig-1 .bl-idx { color:var(--bl-sup1-ink); }
         .bl-fig-2 .bl-idx { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-idx { color:var(--bl-sup2-ink); }
+        /* how to vote */
+        .bl-steps { margin-top:70px; }
+        .bl-steps-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;
+          padding-bottom:14px; border-bottom:1.5px solid var(--bl-ink); }
+        .bl-steps-head h2 { font-family:var(--bl-fd); font-weight:700; font-size:clamp(24px,6vw,38px); line-height:1.2; margin:0; }
+        .bl-steps-head h2 em { font-style:normal; color:var(--bl-primary-ink); }
+        .bl-steps-head__en { font-family:var(--bl-fm); font-size:10px; letter-spacing:.2em; color:var(--bl-ink2); }
+        .bl-steps-list { list-style:none; margin:0; padding:0; }
+        .bl-step { display:flex; gap:16px; padding:20px 4px; border-bottom:1px solid var(--bl-line); }
+        .bl-step-n { flex:none; width:56px; font-family:var(--bl-fd); font-weight:800; font-size:clamp(34px,8vw,48px);
+          line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+        .bl-step-body { min-width:0; }
+        .bl-step-en { display:block; font-family:var(--bl-fm); font-size:10px; letter-spacing:.2em; color:var(--bl-ink2); }
+        .bl-step-body h3 { font-family:var(--bl-fd); font-weight:700; font-size:19px; line-height:1.35; margin:4px 0 0; color:var(--bl-ink); }
+        .bl-step-body p { margin:6px 0 0; font-size:14.5px; line-height:1.75; color:var(--bl-ink2); }
+        .bl-step-1 .bl-step-n { color:var(--bl-sup1-ink); }
+        .bl-step-2 .bl-step-n { color:var(--bl-primary-ink); }
+        .bl-step-3 .bl-step-n { color:var(--bl-sup2-ink); }
+        .bl-step-4 .bl-step-n { color:var(--bl-sup3-ink); }
         .bl-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--bl-primary);
           margin-right:5px; animation:blBlip 1.6s infinite; }
         @keyframes blBlip { 50%{opacity:.3} }
@@ -915,6 +970,9 @@ export default function BlossomHome({
           .bl-feature-orb { display:block; position:absolute; left:0; top:38%; width:90px; height:90px;
             border-radius:50%; background:var(--bl-sup3); transform:translateX(-50%); z-index:0; }
           .bl-fig { padding:26px 8px; }
+          /* steps: two columns of rows, like a contents spread */
+          .bl-steps-list { display:grid; grid-template-columns:1fr 1fr; column-gap:48px; }
+          .bl-step { padding:26px 8px; }
           .bl-count-line { gap:3vw; }
         }
         @media (max-width:560px) {

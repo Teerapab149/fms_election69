@@ -38,8 +38,20 @@ import { ReceiptBaseStyles, RC_SHIP_PATHS } from "./ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import { thaiPhrases, LONG_PHRASE } from "../v2/shared/text/thaiPhrases.mjs";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
+
+// The home page's "how to vote" receipt — this template's real flow, in the
+// words its own pages use (the ballot's "หย่อนบัตร" button, the success page's
+// participation receipt). The English tag is decoration for the few
+// international students; the Thai line always carries the meaning.
+const RC_STEPS = [
+  { tag: "SIGN IN", title: "เข้าสู่ระบบ", desc: "ใช้บัญชี PSU Passport ของมหาวิทยาลัย ระบบตรวจสิทธิ์ให้เอง" },
+  { tag: "MARK", title: "ทำเครื่องหมายบนบัตร", desc: "แตะเลือกพรรคได้หนึ่งช่อง หรือเลือกไม่ประสงค์ลงคะแนน กดดูรายละเอียดเพื่ออ่านนโยบายก่อนได้" },
+  { tag: "CAST", title: "หย่อนบัตร", desc: "ตรวจอีกครั้งแล้วกดหย่อนบัตร เมื่อยืนยันแล้วจะแก้ไขไม่ได้" },
+  { tag: "RECEIPT", title: "รับใบยืนยันการใช้สิทธิ์", desc: "ยืนยันว่าคุณใช้สิทธิ์แล้ว ในใบไม่มีข้อมูลว่าคุณเลือกอะไร" },
+];
 
 // sign-in helper (same seam as the other families)
 function receiptSignIn() {
@@ -193,10 +205,9 @@ function RcSlipDigits({ value }) {
 //                                                         CLOSED" (green LED). Protects the
 //                                                         R5f regression: no red under manual.
 //      pause   — PAUSE                                   → static "รอเปิดอีกครั้ง" (amber LED)
-//      ended   — ENDED, or AUTO past close              → the election-day sheet + red stamp,
-//                                                         then a "เจอกันปีหน้า" countdown to
-//                                                         next year's start (red LED). d/h/m/s
-//                                                         now carry that next-year delta.
+//      ended   — ENDED, or AUTO past close              → the election-day sheet + red stamp
+//                                                         (red LED). No countdown: it used to
+//                                                         count to an estimated next year.
 //    MANUAL_OPEN used to show a live wall clock (HH:MM:SS) with no target. It now counts
 //    down to ELECTION_END while the scheduled window is still open, and only falls back to
 //    the digitless "เปิดโหวตอยู่" sheet once the clock passes the scheduled close. ──
@@ -204,12 +215,6 @@ function useCountdown(globalConfig, systemMode) {
   const [cd, setCd] = useState({ d: 0, h: 0, m: 0, s: 0, kind: "loading", label: "กำลังโหลด", live: false, done: false });
   useEffect(() => {
     const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
-    // next election is ~1 year after this cycle's start. Deliberately an ESTIMATE:
-    // once next year's config dates are actually set, resolveElectionDates returns the
-    // real values and this delta is replaced automatically — no code change needed.
-    const nextStart = ELECTION_START
-      ? (() => { const d = new Date(ELECTION_START); d.setFullYear(d.getFullYear() + 1); return d.getTime(); })()
-      : null;
     // d/h/m/s from `now` to a target (clamped ≥ 0). Reused by open + ended countdowns.
     const partsTo = (target, now) => {
       const diff = target != null ? Math.max(0, target - now) : 0;
@@ -240,12 +245,12 @@ function useCountdown(globalConfig, systemMode) {
         return;
       }
       if (systemMode === "ENDED") {
-        setCd({ ...partsTo(nextStart, now), kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
+        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
         return;
       }
       // AUTO ladder — the clock decides.
       if (now >= ELECTION_END) {
-        setCd({ ...partsTo(nextStart, now), kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
+        setCd({ d: 0, h: 0, m: 0, s: 0, kind: "ended", label: "ปิดโหวตแล้ว", live: false, done: true });
         return;
       }
       const before = now < ELECTION_START;
@@ -449,8 +454,10 @@ export default function ReceiptHome({
                 </div>
 
                 <div className="rc-notice-eyebrow rc-mono">✶ {meta.faculty} ELECTION{meta.calYear !== "" ? ` ${meta.calYear}` : ""} ✶</div>
-                <h1 className="rc-notice-title">{meta.org}</h1>
-                <p className="rc-notice-deck">{meta.campaign}</p>
+                {/* breaks only between phrases: "สโมสรนักศึกษา / คณะวิทยาการจัดการ",
+                    never "สโมสรนักศึกษาคณะ / วิทยาการจัดการ" (shared/text/thaiPhrases) */}
+                <h1 className="rc-notice-title">{thaiPhrases(meta.org).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</h1>
+                <p className="rc-notice-deck">{thaiPhrases(meta.campaign).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</p>
                 {ELECTION_START && (
                   <div className="rc-daterow">
                     <span className="rc-daterow-k">เปิดโหวต</span>
@@ -479,7 +486,7 @@ export default function ReceiptHome({
                 {/* die-cut grommet — punched hole ringed with metal (present in every
                     state → no layout shift), aria-hidden */}
                 <span className="rc-grommet" aria-hidden="true" />
-                <span className="rc-cta-in">{CTA.label}<span className="rc-cta-arrow" aria-hidden="true">→</span></span>
+                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true">→</span></span>
               </a>
 
               <a href={editorMode ? undefined : getPath("/candidates")} className="rc-ticket-cta">
@@ -581,22 +588,10 @@ export default function ReceiptHome({
                   </div>
                 )}
 
-                {/* ENDED — a live countdown to next year's election (T2). Sits under the
-                    election-day leaf, separated by a perforation rule. The day tile can run
-                    to 3 digits (~360 right after the vote) so this row is sized down to stay
-                    on ONE line at 390px. New meaning ("เจอกันปีหน้า"), never duplicating the
-                    "รอประกาศผลคะแนน" cap above (R5c one-meaning rule). */}
-                {isEnded && (
-                  <div className="rc-nextyear">
-                    <div className="rc-nextyear-cap"><span>เจอกันปีหน้า</span><small className="rc-mono">SEE YOU NEXT YEAR</small></div>
-                    <div className="rc-slip-digits rc-nextyear-digits" aria-label="นับถอยหลังสู่การเลือกตั้งครั้งถัดไป">
-                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
-                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
-                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.m)} /><span className="rc-u">นาที</span></span>
-                      <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.s)} /><span className="rc-u">วินาที</span></span>
-                    </div>
-                  </div>
-                )}
+                {/* ENDED — no countdown after the polls close. The sheet used to count
+                    ~364 days to an ESTIMATED next election nobody had scheduled; the
+                    useful next step is the results, which the hero button already
+                    offers ("ดูผลคะแนนอย่างเป็นทางการ"). Owner-approved, template-fix-plan S3. */}
 
                 {/* today's REAL date — every live state; the ended day-sheet prints the
                     election date itself instead */}
@@ -684,6 +679,38 @@ export default function ReceiptHome({
             </figure>
           </div>
         </div>{/* /rc-stage */}
+
+        {/* ===== HOW TO VOTE — the steps of THIS template's flow, printed as one
+            long narrow receipt (the family's own object): each step a line item
+            with its English tag at the right, the results as the "total" line,
+            a ref line and the die-cut end. The club used to teach these steps on
+            Instagram; the site now says them itself (owner, template-fix-plan S2).
+            Voting only — the evaluation form is the success page's job, which
+            knows whether there is one this year. ===== */}
+        <section className="rc-howto rc-grain" aria-labelledby="rc-howto-h">
+          <div className="rc-turnout-head" id="rc-howto-h"><span className="rc-mono">HOW TO VOTE ·</span> <span>วิธีลงคะแนน</span></div>
+          <ol className="rc-howto-list">
+            {RC_STEPS.map((s, i) => (
+              <li key={s.tag} className="rc-howto-row">
+                <span className="rc-howto-n rc-mono" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                <span className="rc-howto-body">
+                  <span className="rc-howto-t">{s.title}</span>
+                  <span className="rc-howto-d">{s.desc}</span>
+                </span>
+                <span className="rc-howto-tag rc-mono" aria-hidden="true">{s.tag}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="rc-howto-total">
+            <span className="rc-howto-body">
+              <span className="rc-howto-t">ผลคะแนน</span>
+              <span className="rc-howto-d">ประกาศที่หน้าผลคะแนน หลังปิดหีบ เมื่อคณะกรรมการเปิดเผยผล</span>
+            </span>
+            <a className="rc-howto-go" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <span aria-hidden="true">→</span></a>
+          </div>
+          <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · HOW TO VOTE</div>
+          <div className="rc-turnout-end" aria-hidden="true" />
+        </section>
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-home-footer">
@@ -933,6 +960,12 @@ export default function ReceiptHome({
         /* ---- notice card content ---- */
         .rc-home-root .rc-notice-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
           color:var(--rc-ink2); }
+        .rc-home-root .rc-phrase { display:inline-block; white-space:nowrap; margin-right:.22em; }
+        .rc-home-root .rc-phrase:last-child { margin-right:0; }
+        .rc-home-root .rc-phrase.is-long { display:inline; white-space:normal; }
+        /* inside the button the label reads as one word when it fits — no gap —
+           and still breaks only between its phrases when it does not */
+        .rc-home-root .rc-cta-in .rc-phrase { margin-right:0; }
         .rc-home-root .rc-notice-title { margin:12px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.12;
           letter-spacing:-.01em; font-size:clamp(27px, 6vw, 42px); color:var(--rc-ink); }
         /* the campaign/PROJECT name — elevated in the hierarchy (larger + bolder +
@@ -1089,6 +1122,37 @@ export default function ReceiptHome({
           box-shadow:0 8px 18px -14px color-mix(in srgb, var(--rc-ink) 40%, transparent);
           -webkit-mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x;
                   mask:radial-gradient(7px 11px at 9px 100%, transparent 96%, #000) bottom left/18px 11px repeat-x; }
+
+        /* ---- HOW TO VOTE — one long narrow receipt under the desk: the turnout
+           slip's paper, head, ref line and die-cut end; each step a line item
+           (no. · what to do · English tag), the results a "total" under a rule. ---- */
+        .rc-home-root .rc-howto { position:relative; z-index:2; margin:44px auto 0; max-width:560px;
+          background-color:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px 4px 3px 3px;
+          padding:16px clamp(16px,4vw,24px) 0;
+          box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
+        /* this slip exists to teach, so its Thai title reads as a title, not a tag */
+        .rc-home-root .rc-howto .rc-turnout-head { align-items:center; }
+        .rc-home-root .rc-howto .rc-turnout-head span:last-child { font-family:var(--rc-fh); font-size:20px; color:var(--rc-ink); }
+        .rc-home-root .rc-howto-list { list-style:none; margin:4px 0 0; padding:0; }
+        .rc-home-root .rc-howto-row { display:grid; grid-template-columns:30px minmax(0, 1fr) auto;
+          column-gap:12px; align-items:baseline; padding:14px 0; border-bottom:1px dotted var(--rc-line); }
+        .rc-home-root .rc-howto-n { font-size:13px; font-weight:700; color:var(--rc-accent-deep); letter-spacing:.04em; }
+        .rc-home-root .rc-howto-body { display:flex; flex-direction:column; gap:3px; min-width:0; }
+        .rc-home-root .rc-howto-t { font-family:var(--rc-fh); font-weight:700; font-size:16px; line-height:1.35; color:var(--rc-ink); }
+        .rc-home-root .rc-howto-d { font-family:var(--rc-fr); font-size:13.5px; line-height:1.6; color:var(--rc-ink2); }
+        .rc-home-root .rc-howto-tag { font-size:9.5px; letter-spacing:.18em; color:var(--rc-ink2); white-space:nowrap; }
+        /* the "total" line of a receipt: a solid rule above, the results and the way there */
+        .rc-home-root .rc-howto-total { display:flex; align-items:center; justify-content:space-between; gap:14px;
+          margin-top:4px; padding:14px 0 2px; border-top:2px solid var(--rc-ink); }
+        .rc-home-root .rc-howto-go { flex-shrink:0; font-family:var(--rc-fh); font-weight:700; font-size:14px;
+          color:var(--rc-accent-deep); border-bottom:1.5px solid currentColor; padding-bottom:1px; }
+        .rc-home-root .rc-howto-go:hover { color:var(--rc-ink); }
+        @media (max-width:420px) {
+          .rc-home-root .rc-howto { margin:32px 12px 0; }
+          .rc-home-root .rc-howto-row { grid-template-columns:26px minmax(0, 1fr); }
+          .rc-home-root .rc-howto-tag { display:none; }
+          .rc-home-root .rc-howto-total { flex-direction:column; align-items:flex-start; gap:10px; }
+        }
 
         /* geometric die-cut STICKERS (v2-R5b) — desk ephemera stuck on the turnout
            slip's corners. Exactly TWO, accent-faint, aria-hidden — a circle + a cut-
