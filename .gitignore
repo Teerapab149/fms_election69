@@ -75,3 +75,7 @@ docs/portfolio-shots/
 # number mean the work again. (AGENTS.md is deliberately NOT here — that one is
 # project documentation, the sibling of the committed CLAUDE.md.)
 .agents/
+
+# Local database dumps and image archives (backups/<name>/database.dump,
+# public-images.tar.gz) hold real student data. Never commit them.
+backups/

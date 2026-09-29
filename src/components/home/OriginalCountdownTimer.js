@@ -194,6 +194,10 @@ const TimeUnit = ({ value, unit, colorSub }) => (
 );
 
 // ✅ Separator: ตัวคั่น (:) ปรับขนาดตาม
+// opacity-60 measured 2.25-2.72:1 on the 4 non-BEFORE textSub colors (need 3.0,
+// large text) — opacity-90 clears all of them (slate-500 3.91:1, red-600 4.32:1,
+// orange-700 4.42:1, brand-mix 3.62:1) while staying visibly fainter than the
+// solid-color digits next to it (2026-09-25 QA sweep round b)
 const Separator = ({ color }) => (
-  <span className={`font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl lg:pb-1 ${color} opacity-60`}>:</span>
+  <span className={`font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl lg:pb-1 ${color} opacity-90`}>:</span>
 );

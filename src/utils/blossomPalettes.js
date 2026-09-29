@@ -67,10 +67,22 @@ const INK2  = "#7A6B74"; // muted plum-grey — labels / subtitles
 const FAINT = "#8A6478";
 const CARD  = "#FFFFFF"; // surface — always white
 
-function makeTheme({ canvas, line, primary, primaryDeep, primaryInk, primarySoft, onPrimary = INK, sups }) {
+function makeTheme({ canvas, line, primary, primaryDeep, primaryInk, primarySoft, onPrimary = INK, onPrimarySm, sups }) {
   return {
     canvas, card: CARD, ink: INK, ink2: INK2, faint: FAINT, line,
     primary, primaryDeep, primaryInk, primarySoft, onPrimary,
+    // onPrimarySm — the SAME text ink, but for the sub-18.66px/bold "small text"
+    // WCAG bucket (need 4.5:1, not 3:1). Only the CTA button hits this: it sits at
+    // clamp(16px,4vw,19px) — below the large-text cutoff on phones (<768px, real
+    // size measured 16-16.48px), at/above it on tablet+. onPrimary=INK reads
+    // 4.28:1 on primaryDeep in "blossom" (pink) only — the other 3 themes already
+    // clear 4.5 with plain INK (4.87/5.92/7.40), see contrast doc below, so they
+    // don't need a swap. Default = onPrimary itself (no-op); "blossom" overrides to
+    // a slightly darker plum (#221b26, was INK #2B2230) which measures 4.694:1 —
+    // darkening TEXT only, brand pink fill (primaryDeep) untouched, applied via
+    // @media(max-width:767px) in BlossomHome.js so desktop/tablet (already ≥3:1
+    // large-text pass) keep the exact original INK.
+    onPrimarySm: onPrimarySm || onPrimary,
     sup1: sups[0].bg, sup1Ink: sups[0].ink,
     sup2: sups[1].bg, sup2Ink: sups[1].ink,
     sup3: sups[2].bg, sup3Ink: sups[2].ink,
@@ -83,6 +95,9 @@ export const BLOSSOM_THEMES = {
     canvas: "#FCF9FA", line: "#EDE2E8",
     primary: "#FF6FBF", primaryDeep: "#E24FA3", primarySoft: "#FFE1F0",
     primaryInk: SUP_PINK.ink,   // #B02E7A — 5.98:1 on card, 4.92:1 on #FFE1F0
+    onPrimarySm: "#221B26", // mobile-only CTA text ink — INK darkened ~20% toward
+    // black (same hue). 4.28:1 -> 4.694:1 on primaryDeep #E24FA3 at 16-16.48px
+    // (QA-blossom-2026-09-25.md "รอบแก้ b"). Desktop/tablet keep INK unchanged.
     sups: [SUP_MINT, SUP_SKY, SUP_BUTTER],
   }),
   // ฟ้า — friendly sky blue.

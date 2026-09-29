@@ -719,6 +719,15 @@ export default function BlossomHome({
         .bl-cta.is-disabled::after { display:none; }
         .bl-cta.is-disabled:hover { transform:none; }
         .bl-cta.is-disabled:active { transform:none; }
+        /* <768px the CTA label sits below the 18.66px/bold large-text cutoff
+           (clamp floor 16-16.48px) — swap to --bl-on-primary-sm (darker text ink,
+           "blossom" pink only) so it clears 4.5:1; tablet/desktop (>=19px, already
+           >=3:1) keep the untouched --bl-on-primary. Button fill (--bl-primary-deep)
+           never changes. QA-blossom-2026-09-25.md "รอบแก้ b". */
+        @media (max-width:767px) {
+          .bl-cta:not(.is-disabled) { color:var(--bl-on-primary-sm, var(--bl-on-primary, var(--bl-card))); }
+          .bl-cta:not(.is-disabled):hover { color:var(--bl-on-primary-sm, var(--bl-on-primary, var(--bl-card))); }
+        }
         /* secondary = a REAL outlined pill (owner: the page felt button-less) */
         .bl-cta2 { display:inline-flex; align-items:center; justify-content:center; min-height:44px;
           font-family:var(--bl-fd); font-weight:600; font-size:16px; color:var(--bl-ink);

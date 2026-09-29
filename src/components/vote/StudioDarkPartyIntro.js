@@ -131,7 +131,7 @@ export default function StudioDarkPartyIntro({ party = {}, onDone = () => {}, du
         }
         .sdi-corner {
           position:absolute; font-family:var(--sd-mono, ui-monospace, monospace); font-size:10px;
-          letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3, #7F7A6E);
+          letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3, #878275);
         }
         .sdi-corner--tl { top:28px; left:32px; }
         .sdi-corner--tr { top:28px; right:32px; color:var(--sd-accent, #D5FF3F); }
@@ -156,7 +156,7 @@ export default function StudioDarkPartyIntro({ party = {}, onDone = () => {}, du
           font-size:clamp(130px, 24vw, 300px); line-height:1.05; letter-spacing:-.02em;
           padding-right: .08em; /* keep the italic overhang of the final digit inside the clip */
         }
-        .sdi-no__sign { font-size:.32em; vertical-align:.9em; color:var(--sd-ink-3, #7F7A6E); letter-spacing:0; margin-right:.06em; }
+        .sdi-no__sign { font-size:.32em; vertical-align:.9em; color:var(--sd-ink-3, #878275); letter-spacing:0; margin-right:.06em; }
         .sdi-no__dot { color:var(--sd-accent, #D5FF3F); font-style:normal; }
 
         .sdi-namewrap { display:flex; flex-direction:column; align-items:center; gap:18px; margin-top:8px; }
@@ -168,7 +168,7 @@ export default function StudioDarkPartyIntro({ party = {}, onDone = () => {}, du
         }
         .sdi-hint {
           margin-top:34px; font-family:var(--sd-mono, ui-monospace, monospace); font-size:10px;
-          letter-spacing:.24em; text-transform:uppercase; color:var(--sd-ink-3, #7F7A6E);
+          letter-spacing:.24em; text-transform:uppercase; color:var(--sd-ink-3, #878275);
         }
 
         .sdi-progress {

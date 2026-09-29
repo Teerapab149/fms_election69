@@ -158,6 +158,10 @@ export default function FmsOfficialMemberModal({ member = null, onClose = () => 
           .fo-mm__ph-fb { display: grid; place-items: center; font-size: 44px; }
           .fo-mm__body { padding: 18px 20px 22px; }
           .fo-mm__fields > div { grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
+          /* Close button grows to a 44px tap target on phones only — the icon
+             itself is unchanged (18px), so the visible mark stays the same
+             size the desktop card uses at 36px; only the touch area grows. */
+          .fo-mm__x { top: 10px; right: 10px; width: 44px; height: 44px; }
         }
       `}</style>
     </div>

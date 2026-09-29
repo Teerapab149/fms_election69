@@ -129,11 +129,11 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
             }
             .sdm-info { padding:32px 30px; display:flex; flex-direction:column; justify-content:center; text-align:left; }
             .sdm-accent { color:var(--sd-accent, #D5FF3F); }
-            .sdm-eyebrow { font-family:var(--sd-mono, monospace); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3, #7F7A6E); margin-bottom:12px; }
+            .sdm-eyebrow { font-family:var(--sd-mono, monospace); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3, #878275); margin-bottom:12px; }
             .sdm-name { font-family:var(--sd-sans, sans-serif); font-weight:400; font-size:clamp(24px,3vw,34px); letter-spacing:-.03em; line-height:1.1; margin:0 0 22px; color:var(--sd-ink, #F2EDDF); }
             .sdm-rows { margin:0; display:grid; gap:0; }
             .sdm-rows > div { display:grid; gap:4px; padding:12px 0; border-top:1px solid var(--sd-line, #2E2E22); }
-            .sdm-rows dt { font-family:var(--sd-mono, monospace); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-3, #7F7A6E); }
+            .sdm-rows dt { font-family:var(--sd-mono, monospace); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-3, #878275); }
             .sdm-rows dd { margin:0; font-family:var(--sd-sans, sans-serif); font-size:15px; color:var(--sd-ink, #F2EDDF); font-weight:400; }
             @media (max-width:640px) {
               .sdm-card { grid-template-columns:1fr; max-height:90vh; overflow-y:auto; }

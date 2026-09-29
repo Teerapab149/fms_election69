@@ -62,9 +62,12 @@ export default function CandidateModal({ member, onClose }) {
         </div>
 
         {/* Close Button */}
+        {/* p-2 measured 40x40px on mobile (X size=24 + 8px*2) — below the 44px tap
+            target minimum (2026-09-25 QA sweep round b, w360). Desktop untouched:
+            bumped only under max-[480px] per the round-b modal rules */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-[60] p-2 text-white/50 hover:text-white transition-colors"
+          className="absolute top-4 right-4 z-[60] p-2 max-[480px]:p-3 text-white/50 hover:text-white transition-colors"
         >
           <X size={24} />
         </button>

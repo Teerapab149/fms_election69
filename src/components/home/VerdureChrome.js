@@ -365,8 +365,13 @@ export function VerdureBaseStyles() {
          reads as the same class of mark as the edge rails, not as a slab. */
       .vd-footer { text-align:center; padding:44px 20px 112px; font-family:var(--fm);
         font-size:10px; letter-spacing:.22em; text-transform:uppercase;
-        color:rgba(var(--moss-rgb),.55); }
-      .vd-moss .vd-footer { color:rgba(var(--cream-rgb),.5); }
+        /* 2026-09-25 QA rb: .55 measured 3.28:1 on cream (need 4.5:1) across all
+           4 slugs; .7 measures 4.58-6.64:1 (AUDIT/rc-shot.js formula) — bumped
+           just enough to clear the gate, still the faintest mark on the page. */
+        color:rgba(var(--moss-rgb),.7); }
+      .vd-moss .vd-footer { /* dark-bg variant (candidates/success): .5 measured
+        4.38-4.40:1 (need 4.5:1); .6 measures 5.08-6.81:1 across all 4 slugs. */
+        color:rgba(var(--cream-rgb),.6); }
       @media (max-width:640px) { .vd-footer { padding:32px 16px 84px; } }
 
       .vd-dock { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:stretch; gap:2px; padding:6px; background:var(--moss); border-radius:999px; box-shadow:0 22px 60px -12px rgba(var(--moss-rgb),.55), 0 0 0 1px rgba(var(--cream-rgb),.08); }

@@ -263,7 +263,7 @@ export default function VerdureSingleParty({
 
         <section id="vd-decision" className="vd-decision">
           <div className="vd-decision__head">
-            <span className="vd-decision__kicker">★ <span className="vd-nw">Cast your vote</span> · <span className="vd-thai">ลงคะแนน</span> ★</span>
+            <span className="vd-decision__kicker">★ <span className="vd-thai">ลงคะแนน</span> · <span className="vd-nw">Cast your vote</span> ★</span>
             <h2>การตัดสินใจของคุณ</h2>
             <p>เลือกหนึ่งตัวเลือก แล้วกดยืนยัน · ลงคะแนนได้เพียงครั้งเดียว</p>
           </div>

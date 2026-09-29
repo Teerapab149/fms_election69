@@ -170,7 +170,10 @@ export default function StudioDarkResults({
                 )
               ) : winner ? (
                 <>
-                  <h2 className="sdr-board__title sdr-board__title--name">{winner.name}<em>.</em></h2>
+                  {/* trailing "." is an ENGLISH-headline editorial device (see bilingual
+                      rule note below) — a Thai party name must not take it, so only
+                      append <em>.</em> when the name has no Thai characters (2026-09-25 รอบ b) */}
+                  <h2 className="sdr-board__title sdr-board__title--name">{winner.name}{!/[฀-๿]/.test(winner.name || "") ? <em>.</em> : null}</h2>
                   <p className="sdr-board__deck">
                     ชนะการเลือกตั้งด้วยคะแนน <span className="sd-tabular"><RevealInt value={winner.score || 0} enabled={anim} /></span> เสียง — <strong className="sdr-strong sd-tabular"><RevealPct value={pctOf(winner)} enabled={anim} /></strong> ของผู้ลงคะแนนทั้งหมด
                   </p>

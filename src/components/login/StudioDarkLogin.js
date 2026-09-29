@@ -81,7 +81,7 @@ export default function StudioDarkLogin({
         html, body { background:var(--sd-bg, #14140F); color-scheme:dark; }
         .sdl-root {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
-          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#7F7A6E; --sd-accent:#D5FF3F;
+          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#878275; --sd-accent:#D5FF3F;
           --sd-sans:var(--font-studio-sans),'Inter',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --sd-serif:var(--font-instrument-serif),'Instrument Serif','Times New Roman',serif;
           --sd-mono:var(--font-studio-mono),'JetBrains Mono',ui-monospace,monospace;
