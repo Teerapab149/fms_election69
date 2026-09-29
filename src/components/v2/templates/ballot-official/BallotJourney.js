@@ -195,17 +195,45 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
       </section>
 
       <style jsx global>{`
-        /* the page deepens chapter by chapter; each chapter's background runs from
-           the previous chapter's colour into its own, so there is no seam */
-        .bj { --c1: var(--bo-tint-2); --c2: var(--bo-tint-3); --c3: var(--bo-tint-4); --c4: var(--bo-night); }
-        .bj-ch { position: relative; }
-        .bj-ch--1 { background: linear-gradient(var(--bo-board), var(--c1)); }
-        .bj-ch--2 { background: linear-gradient(var(--c1), var(--c2)); }
-        .bj-ch--3 { background: linear-gradient(var(--c2), var(--c3)); }
-        .bj-ch--4 { background: linear-gradient(var(--c3), var(--bo-plum-deep) 140px, var(--c4) 420px); color: #fff; }
-        .bj-in { max-width: var(--bo-max); margin: 0 auto; padding: 96px 20px; }
-        .bj-ch--4 .bj-in { padding-top: 180px; }
+        /* the day: chapters 1–3 deepen one into the next with no seam. Each has
+           a pool of light on the side its picture sits, and the run carries a
+           faint paper grain, so the lilac reads as a lit room, not a flat fill */
+        .bj {
+          --c1: var(--bo-tint-2); --c2: var(--bo-tint-3); --c3: var(--bo-tint-4); --c4: var(--bo-night);
+          --bj-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .1 0 0 0 0 .3 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        .bj-ch { position: relative; isolation: isolate; }
+        .bj-ch::before {
+          content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+          background:
+            radial-gradient(34% 44% at 74% 50%, rgba(255,255,255,.7), rgba(255,255,255,0) 100%),
+            radial-gradient(26% 36% at 6% 50%, rgba(var(--bo-plum-rgb),.08), rgba(var(--bo-plum-rgb),0) 100%);
+        }
+        /* every pool fades out before its section's edge, so no seam shows */
+        .bj-ch--1::before {
+          background:
+            radial-gradient(44% 40% at 50% 50%, rgba(255,255,255,.6), rgba(255,255,255,0) 100%);
+        }
+        .bj-ch--1 { background: var(--bj-grain), linear-gradient(var(--bo-board), var(--c1)); }
+        .bj-ch--2 { background: var(--bj-grain), linear-gradient(var(--c1), var(--c2)); }
+        .bj-ch--3 { background: var(--bj-grain), linear-gradient(var(--c2), var(--c3)); }
+        /* the night: step 4 is a different time of day, so it starts on a clean
+           edge instead of blending — plum light rising from the top left */
+        .bj-ch--4 {
+          color: #fff;
+          background: radial-gradient(70% 55% at 12% 0%, rgba(var(--bo-plum-rgb),.45), rgba(var(--bo-plum-rgb),0) 100%),
+                      radial-gradient(50% 40% at 100% 100%, rgba(var(--bo-plum-rgb),.18), rgba(var(--bo-plum-rgb),0) 100%),
+                      var(--c4);
+        }
+        .bj-ch--4::before { display: none; }
+        .bj-in { max-width: var(--bo-max); margin: 0 auto; padding: 72px 20px; }
         .bj-in--split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; align-items: center; }
+        /* the cast scene keeps ~80px of air above the ballot for the fold; that
+           air stands in for the chapter's own top padding */
+        .bj-ch--3 .bj-in { padding-top: 16px; }
+        /* ...and the heading lines up with the ballot's top edge instead of
+           centring on the whole 460px stage */
+        .bj-ch--3 .bj-head { align-self: start; margin-top: 84px; }
 
         /* chapter heading: the step number in a ballot box */
         .bj-head { max-width: 34em; }
@@ -294,19 +322,28 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
         .bj-close { margin: 22px 0 0; font-size: 20px; font-weight: 700; }
         .bj-link { display: inline-block; margin-top: 14px; font-weight: 600; color: #fff; border-bottom: 1.5px solid rgba(255,255,255,.6); padding-bottom: 1px; transition: border-color .2s; }
         .bj-link:hover { border-color: #fff; }
+        /* with a poster, step 4 takes the same text-left / picture-right split
+           as steps 2 and 3 instead of a full-width banner */
+        .bj-ch--4 .bj-in:has(.bj-poster) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; align-items: center; }
+        .bj-ch--4 .bj-in:has(.bj-poster) .bj-poster { margin: 0; }
         .bj-poster { margin: 56px 0 0; border-radius: 12px; overflow: hidden; box-shadow: 0 30px 60px -30px rgba(0,0,0,.6); }
         .bj-poster img { display: block; width: 100%; height: auto; }
 
         @media (max-width: 900px) {
-          .bj-in { padding: 64px 20px; }
-          .bj-ch--4 .bj-in { padding-top: 120px; }
+          .bj-in { padding: 56px 20px; }
+          .bj-ch--3 .bj-in { padding-top: 56px; }
+          .bj-ch--3 .bj-head { margin-top: 0; }
+          /* stacked, the scene's air above the ballot would double the gap under the text */
+          .bj-ch--3 .bj-cast { margin-top: -56px; }
+          .bj-ch--4 .bj-in:has(.bj-poster) { grid-template-columns: 1fr; gap: 36px; }
           .bj-in--split { grid-template-columns: 1fr; gap: 36px; }
           .bj-parties { grid-template-columns: 1fr; gap: 28px; }
           .bj-secret { grid-template-columns: 1fr; }
           .bj-secret__gap { flex-direction: row; max-width: none; justify-content: center; }
         }
         @media (max-width: 640px) {
-          .bj-in { padding: 48px 16px; }
+          .bj-in { padding: 44px 16px; }
+          .bj-ch--3 .bj-in { padding-top: 44px; }
           .bj-no { width: 36px; height: 36px; font-size: 18px; }
           .bj-step__lbl { font-size: 13.5px; }
           .bj-lead__title { font-size: 28px; }
