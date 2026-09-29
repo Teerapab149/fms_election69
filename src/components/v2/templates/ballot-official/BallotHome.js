@@ -36,6 +36,16 @@ const EASE = [0.16, 1, 0.3, 1];
 const STAGGER = { hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } };
 const RISE = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } };
 
+// Thai has no spaces, so a large headline breaks wherever the dictionary allows
+// — "โครงการ / เลือกตั้งคณะ / กรรมการบริหาร" split "คณะกรรมการ" in two. The line
+// may only break between phrases: before "คณะกรรมการ" / "สโมสร" / "ประจำปี", or at
+// a space the admin typed. Anything else stays as written (one phrase).
+function thaiPhrases(s) {
+  const str = String(s || "");
+  const parts = str.split(/(?=คณะกรรมการ|สโมสร|ประจำปี)|\s+/).map((x) => x.trim()).filter(Boolean);
+  return parts.length ? parts : [str];
+}
+
 // The ballot's rows, from the real candidate list. One party → approve /
 // disapprove / abstain; several → one row per party plus abstain. The special
 // options keep the names the admin gave them.
@@ -84,6 +94,8 @@ export default function BallotHome({
   const reduceMotion = useReducedMotion();
   const count = useMotionValue(0);
   const countText = useTransform(count, (v) => Math.round(v).toLocaleString("en-US"));
+  // the share follows the same count, so the two figures can never disagree mid-count
+  const pctText = useTransform(count, (v) => `${(stats.totalEligible > 0 ? (v / stats.totalEligible) * 100 : 0).toFixed(1)}%`);
   useEffect(() => {
     if (editorMode || reduceMotion) { count.set(stats.totalVoted); return undefined; }
     const c = animate(count, stats.totalVoted, { delay: 0.6, duration: 1.4, ease: EASE });
@@ -115,15 +127,21 @@ export default function BallotHome({
           <div className="bo-hero__in">
             {/* staged entrance: status, heading, facts, turnout — one short cascade */}
             <motion.div className="bo-hero__text" variants={STAGGER} initial={intro ? "hidden" : false} animate="show">
+              {/* live system state: a restrained pill, the dot pulses only while open */}
               <motion.div variants={RISE} className="bo-hero__status"><BallotStatus status={election} showClock={false} /></motion.div>
 
+              {/* which election, which cohort, which year — then the headline that
+                  carries the left half on its own */}
               <motion.h1 variants={RISE} className="bo-hero__h1">
-                <Wrap id="hero-title"><span className="bo-hero__title">{title}</span></Wrap>{" "}
-                <Wrap id="hero-subtitle"><span className="bo-hero__campaign">{text("hero-subtitle", meta.campaign)}</span></Wrap>
+                <span className="bo-hero__id">
+                  <Wrap id="hero-title"><span className="bo-hero__title">{title}</span></Wrap>
+                  <span className="bo-hero__idrule" aria-hidden />
+                  <Wrap id="hero-year-badge"><span className="bo-hero__ay">ปีการศึกษา {text("hero-year-badge", meta.ay)}</span></Wrap>
+                </span>{" "}
+                <Wrap id="hero-subtitle"><span className="bo-hero__campaign">{thaiPhrases(text("hero-subtitle", meta.campaign)).map((ph, i) => <span key={i} className="bo-phrase">{ph}</span>)}</span></Wrap>
               </motion.h1>
               <motion.p variants={RISE} className="bo-hero__sub">
-                <Wrap id="hero-subtitle2"><span>{text("hero-subtitle2", meta.org)}</span></Wrap>{" "}
-                <Wrap id="hero-year-badge"><span className="bo-nowrap">ปีการศึกษา {text("hero-year-badge", meta.ay)}</span></Wrap>
+                <Wrap id="hero-subtitle2"><span>{text("hero-subtitle2", meta.org)}</span></Wrap>
               </motion.p>
 
               <motion.div variants={RISE} className="bo-hero__facts">
@@ -139,13 +157,15 @@ export default function BallotHome({
               ) : (
                 <Wrap id="stats-progress-card">
                   <div className="bo-turnout">
-                    {/* the figure counts up and the meter fills once, together; the
-                        spoken label always carries the final numbers */}
+                    {/* live turnout as the page's second figure: the share large,
+                        the count beside it; both count up once with the meter. The
+                        spoken label always carries the final numbers. */}
                     <p className="bo-turnout__line" aria-label={`${text("stats-header")} ${n(stats.totalVoted)} จาก ${n(stats.totalEligible)} คน ${pct.toFixed(1)}%`}>
-                      <Wrap id="stats-header"><span aria-hidden>{text("stats-header")}</span></Wrap>{" "}
-                      <motion.b aria-hidden>{countText}</motion.b>
-                      <span aria-hidden> จาก {n(stats.totalEligible)} คน</span>
-                      <span className="bo-turnout__pct" aria-hidden>{pct.toFixed(1)}%</span>
+                      <motion.b className="bo-turnout__pct" aria-hidden>{pctText}</motion.b>
+                      <span className="bo-turnout__of" aria-hidden>
+                        <Wrap id="stats-header"><span className="bo-turnout__lbl">{text("stats-header")}</span></Wrap>
+                        <span><motion.b>{countText}</motion.b> จาก {n(stats.totalEligible)} คน</span>
+                      </span>
                     </p>
                     <div className="bo-meter" role="presentation">
                       <motion.i style={{ originX: 0 }}
@@ -253,6 +273,12 @@ export default function BallotHome({
           -webkit-mask-size: 200px 48px, 100% 100%; mask-size: 200px 48px, 100% 100%;
           -webkit-mask-repeat: repeat, no-repeat; mask-repeat: repeat, no-repeat;
           -webkit-mask-composite: source-in; mask-composite: intersect;
+          /* the print drifts one tile a minute — alive, never noticed */
+          animation: boDrift 60s linear infinite;
+        }
+        @keyframes boDrift {
+          from { -webkit-mask-position: 0 0, 0 0; mask-position: 0 0, 0 0; }
+          to   { -webkit-mask-position: 200px 0, 0 0; mask-position: 200px 0, 0 0; }
         }
         /* words and ballot share one centre line and one column rhythm — the two
            halves read as one statement, not two blocks side by side */
@@ -261,17 +287,41 @@ export default function BallotHome({
           display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 72px; align-items: center;
         }
 
-        /* the words stay quiet: the scene on the right is the page's picture */
-        .bo-hero__h1 { margin: 20px 0 0; font-weight: 800; color: var(--bo-ink); line-height: 1.22; letter-spacing: -.01em; text-wrap: balance; }
-        .bo-hero__title { display: block; color: var(--bo-plum); font-size: clamp(22px, 2vw, 26px); letter-spacing: 0; margin-bottom: 6px; }
-        .bo-hero__campaign { display: block; font-size: clamp(34px, 4vw, 52px); }
-        .bo-hero__sub { margin: 12px 0 0; font-size: 18px; color: var(--bo-muted); }
+        /* ── the left half: typography carries it ──
+           status pill → identity line → headline → organisation → live turnout.
+           Spacing grows as the hierarchy steps down, so each group reads apart. */
+        .bo-hero__status .bo-status {
+          display: inline-grid; padding: 7px 14px 7px 12px; border-radius: 999px;
+          background: color-mix(in srgb, var(--bo-paper) 72%, transparent); box-shadow: 0 0 0 1px var(--bo-rule);
+          font-size: 14.5px; font-weight: 600;
+        }
+        .bo-hero__h1 { margin: 28px 0 0; font-weight: 800; color: var(--bo-ink); }
+        /* identity: the cohort and the year, set as one line above the headline */
+        .bo-hero__id { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .bo-hero__title { color: var(--bo-plum); font-size: clamp(20px, 1.7vw, 24px); font-weight: 800; letter-spacing: .01em; }
+        .bo-hero__idrule { width: 28px; height: 2px; border-radius: 2px; background: var(--bo-plum); opacity: .35; }
+        .bo-hero__ay { font-size: clamp(16px, 1.3vw, 18px); font-weight: 600; color: var(--bo-muted); }
+        /* the headline: the largest thing on the left, tight and balanced */
+        .bo-hero__campaign {
+          display: block; margin-top: 14px; font-size: clamp(40px, 4.9vw, 66px); line-height: 1.1;
+          letter-spacing: -.022em;
+        }
+        /* each phrase stays whole; the line breaks only between them */
+        .bo-phrase { display: inline-block; white-space: nowrap; margin-right: .22em; }
+        .bo-phrase:last-child { margin-right: 0; }
+        .bo-hero__sub { margin: 16px 0 0; font-size: clamp(17px, 1.4vw, 20px); font-weight: 500; color: var(--bo-muted); }
         .bo-nowrap { white-space: nowrap; }
 
-        .bo-turnout { margin-top: 36px; max-width: 440px; }
-        .bo-turnout__line { margin: 0 0 10px; font-size: 17px; }
-        .bo-turnout__line b { font-weight: 800; font-variant-numeric: tabular-nums; }
-        .bo-turnout__pct { margin-left: 10px; font-weight: 700; color: var(--bo-plum); font-variant-numeric: tabular-nums; }
+        /* live turnout: the share is the left half's second figure */
+        .bo-turnout { margin-top: 44px; max-width: 460px; padding-top: 22px; border-top: 1px solid var(--bo-rule); }
+        .bo-turnout__line { display: flex; align-items: center; gap: 18px; margin: 0 0 14px; }
+        .bo-turnout__pct {
+          font-size: clamp(44px, 4.2vw, 58px); font-weight: 800; line-height: 1; letter-spacing: -.03em;
+          color: var(--bo-plum); font-variant-numeric: tabular-nums;
+        }
+        .bo-turnout__of { display: flex; flex-direction: column; gap: 2px; font-size: 16px; color: var(--bo-muted); line-height: 1.35; }
+        .bo-turnout__lbl { font-weight: 700; color: var(--bo-ink); }
+        .bo-turnout__of b { font-weight: 800; color: var(--bo-ink); font-variant-numeric: tabular-nums; }
         .bo-meter { height: 8px; border-radius: 999px; background: var(--bo-rule); overflow: hidden; }
         /* full width, scaled from the left — the fill is a transform, not a width */
         .bo-meter i { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--bo-plum); }
@@ -283,7 +333,8 @@ export default function BallotHome({
         /* the ballot on the home page is a SAMPLE, stamped like the real ones, so
            nobody tries to vote on it */
         .bo-sample {
-          position: absolute; z-index: 1; top: 38%; left: 72%; translate: -50% -50%; rotate: -12deg;
+          /* over the empty right end of the last row, never over a party's name */
+          position: absolute; z-index: 1; top: 44%; left: 76%; translate: -50% -50%; rotate: -12deg;
           padding: 2px 18px 4px; border: 3px solid currentColor; border-radius: 8px;
           font-size: 34px; font-weight: 800; letter-spacing: .06em; line-height: 1.25;
           color: rgba(196, 42, 58, .72); pointer-events: none; user-select: none; mix-blend-mode: multiply;
@@ -349,8 +400,10 @@ export default function BallotHome({
 
 
         @media (max-width: 960px) {
-          .bo-hero__in { grid-template-columns: 1fr; gap: 28px; padding: 32px 20px 56px; }
-          .bo-stage { max-width: 520px; width: 100%; margin: 0 auto; }
+          /* one column the width of the ballot, so the words and the ballot share
+             a left edge instead of text at the margin and a ballot in the middle */
+          .bo-hero__in { grid-template-columns: 1fr; gap: 28px; padding: 32px 20px 56px; max-width: 600px; }
+          .bo-stage { width: 100%; }
           /* phones: the ballot comes straight after the heading so its button stays
              in the first screen; turnout moves under the ballot */
           .bo-hero__text { display: contents; }
@@ -363,11 +416,17 @@ export default function BallotHome({
           /* phone scale: one step down across the board, so the ballot reads as
              a ballot in the hand rather than a poster */
           .bo-hero__in { padding: 16px 16px 40px; gap: 16px; }
-          .bo-hero__h1 { margin-top: 10px; }
-          .bo-hero__title { font-size: 16px; margin-bottom: 2px; }
-          .bo-hero__campaign { font-size: 23px; }
-          .bo-hero__sub { font-size: 13.5px; margin-top: 4px; }
-          .bo-turnout__line, .bo-date span { font-size: 14px; }
+          .bo-hero__h1 { margin-top: 14px; }
+          .bo-hero__status .bo-status { font-size: 13px; padding: 5px 12px 5px 10px; }
+          .bo-hero__title { font-size: 17px; }
+          .bo-hero__idrule { width: 18px; }
+          .bo-hero__ay { font-size: 14px; }
+          .bo-hero__campaign { margin-top: 6px; font-size: 30px; line-height: 1.15; }
+          .bo-hero__sub { font-size: 14px; margin-top: 6px; }
+          .bo-turnout { margin-top: 4px; padding-top: 16px; }
+          .bo-turnout__pct { font-size: 40px; }
+          .bo-turnout__of { font-size: 14px; }
+          .bo-date span { font-size: 14px; }
           .bo-date b { font-size: 22px; }
           .bo-stage { padding-bottom: 28px; }
           .bo-ballot__head { padding: 14px 16px 10px; }
