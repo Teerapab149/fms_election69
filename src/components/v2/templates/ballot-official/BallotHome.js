@@ -17,28 +17,18 @@
 //
 // Status, action and countdown come from useElectionStatus (one source).
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { motion, MotionConfig, animate, useMotionValue, useReducedMotion, useTransform } from "framer-motion"; // Motion for React
-import { useSession } from "next-auth/react";
 import { Check } from "lucide-react";
 import { getPath } from "../../../../utils/basePath";
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
-import { useVoteStatus } from "../../../../hooks/useVoteStatus";
-import { useElectionStatus } from "../../../../hooks/useElectionStatus";
-import { voterSignIn } from "../../../../lib/auth/voterSession";
-import EditorElement from "../../../admin/editor/EditorElement";
-import { getBinding } from "../../../admin/editor/elementCatalog";
-import { resolveStatefulConfig } from "../../../admin/editor/templateEngine";
+import { useHomeModel } from "../../shared/home/useHomeModel";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import BallotJourney from "./BallotJourney";
 import { ballotMeta, BallotHeader, BallotStatus, BallotCountdown, BallotFooter, BallotBaseStyles } from "./BallotChrome";
 import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
 
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
-
-// useElectionStatus action → voteCTA-button state (the catalog's vocabulary)
-const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
-const CTA_HREF = { vote: "/vote", voted: "/results", results: "/results" };
 
 // Motion system: one easing for everything (fast out, long settle) and a short
 // stagger for the hero's text. Nothing bounces.
@@ -74,72 +64,18 @@ export default function BallotHome({
   onHoverElement = null, onHoverEnd = null, pageLayout = null,
   resolvedTemplate = null, onSignIn = null,
 }) {
-  const { data: session, status: authStatus } = useSession();
-  const globalConfig = useGlobalConfig();
-  const signedIn = !editorMode && authStatus === "authenticated" && !!session?.user;
-  const { isVoted } = useVoteStatus({ enabled: signedIn });
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
-  // /template-preview hands in a phase with dates around "now" (previewDates);
-  // the page editor without one is pinned to "open"
-  const previewDates = initialData?.previewDates || null;
-  const pinOpen = editorMode && !previewDates;
-  const election = useElectionStatus({
-    globalConfig,
-    systemMode: initialData?.systemMode || initialData?.systemConfig?.systemMode || "AUTO",
-    // live data always carries isSystemOpen; previews send only electionStatus
-    isSystemOpen: pinOpen ? true
-      : initialData?.isSystemOpen ?? initialData?.systemConfig?.isSystemOpen ?? initialData?.electionStatus === "ONGOING",
-    electionStatus: pinOpen ? "ONGOING" : initialData?.electionStatus,
-    signedIn,
-    isVoted: !!(isVoted ?? initialData?.userData?.isVoted),
-    tick: !editorMode || !!previewDates,
-    previewDates,
-  });
-
-  // editor selection wrapper — same contract as the v1 family homes
-  const editorRef = useRef(null);
-  editorRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
-  const Wrap = useCallback(({ id, children, className }) => {
-    const s = editorRef.current;
-    if (!s.editorMode) return children;
-    return (
-      <EditorElement id={id} className={className} config={s.elementConfigs?.[id]}
-        isSelected={s.selectedElement === id} isHovered={s.hoveredElement === id}
-        onSelect={s.onSelectElement} onHover={s.onHoverElement} onHoverEnd={s.onHoverEnd}>{children}</EditorElement>
-    );
-  }, []);
-
-  const template = resolvedTemplate?.elements ? resolvedTemplate : ballotOfficialTemplate;
-  const copy = { ...ballotOfficialTemplate.copy, ...(template.copy || {}) };
-  const saved = editorMode ? elementConfigs : (pageLayout?.elementConfigs?.home || {});
-  // bound → globalConfig; else what the admin saved; else this family's default
-  const text = (id, fallback = "") => {
-    const b = getBinding(id);
-    if (b && globalConfig?.[b] != null && globalConfig[b] !== "") return String(globalConfig[b]);
-    return String(saved?.[id]?.config?.text ?? template.elements?.[id]?.config?.text ?? fallback);
-  };
-  const visible = (id) => saved?.[id]?.config?.visible !== false;
+  // status, editable words, CTA state and turnout: shared by every v2 home
+  const {
+    mounted, globalConfig, election, Wrap, text, visible, copy,
+    cta, ctaDisabled, ctaHref, onAction, stats, pct,
+  } = useHomeModel({
+    initialData, editorMode, editorData, elementConfigs, selectedElement, hoveredElement,
+    onSelectElement, onHoverElement, onHoverEnd, pageLayout, resolvedTemplate, onSignIn,
+  }, ballotOfficialTemplate);
 
   const meta = ballotMeta(globalConfig || {});
   const rows = ballotRows(initialData?.candidates || [], copy);
-
-  const ctaState = CTA_STATE[election.action] || "login";
-  const cta = resolveStatefulConfig(template, "voteCTA-button", ctaState, pageLayout?.elementOverrides?.["voteCTA-button"]?.[ctaState] || {});
-  const ctaDisabled = election.action === "wait" || election.action === "paused";
-  const ctaSignin = election.action === "signin";
-
-  const stats = editorMode && !previewDates
-    ? { totalVoted: editorData?.totalVoted ?? 342, totalEligible: editorData?.totalEligible ?? 1200 }
-    : { totalVoted: initialData?.stats?.totalVoted ?? 0, totalEligible: initialData?.stats?.totalEligible ?? 0 };
-  const pct = stats.totalEligible > 0 ? (stats.totalVoted / stats.totalEligible) * 100 : 0;
   const n = (v) => Number(v || 0).toLocaleString("en-US");
-
-  const onAction = (e) => {
-    if (editorMode || ctaDisabled) { e.preventDefault(); return; }
-    if (ctaSignin) { e.preventDefault(); onSignIn ? onSignIn() : voterSignIn(); }
-  };
 
   // the countdown depends on the clock; render after mount so server HTML and
   // the first client paint agree
@@ -274,7 +210,7 @@ export default function BallotHome({
                     )}
                     <Wrap id="voteCTA-button">
                       <a
-                        href={editorMode || ctaSignin || ctaDisabled ? undefined : getPath(CTA_HREF[election.action] || "/")}
+                        href={ctaHref}
                         onClick={onAction}
                         role="button"
                         aria-disabled={ctaDisabled || undefined}
