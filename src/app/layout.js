@@ -1,7 +1,7 @@
 import './globals.css';
 import Providers from "../components/Providers";
 import ImageErrorGuard from "../components/ImageErrorGuard";
-import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch, Noto_Sans_Thai, Noto_Sans_Thai_Looped } from 'next/font/google';
+import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch, Noto_Sans_Thai, Noto_Sans_Thai_Looped, IBM_Plex_Sans_Thai_Looped } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -199,6 +199,15 @@ const notoThaiLooped = Noto_Sans_Thai_Looped({
   display: 'swap',
   preload: false,
 });
+// voter-garden (v2, replaces verdure): IBM Plex Sans Thai (loaded above as
+// --font-plex-thai) carries the UI; its Looped sibling only long reading.
+const plexThaiLooped = IBM_Plex_Sans_Thai_Looped({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500'],
+  variable: '--font-plex-thai-looped',
+  display: 'swap',
+  preload: false,
+});
 
 // Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
 // so link previews resolve to the real host, not localhost. basePath rides along
@@ -254,7 +263,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} ${chakraPetch.variable} ${notoThai.variable} ${notoThaiLooped.variable} font-sans antialiased`}>
+      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} ${chakraPetch.variable} ${notoThai.variable} ${notoThaiLooped.variable} ${plexThaiLooped.variable} font-sans antialiased`}>
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}
