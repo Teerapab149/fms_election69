@@ -2,20 +2,28 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Save, Loader2, CheckCircle2, RotateCcw, Eye,
-  Vote, FolderOpen, Building2, CalendarClock, Copyright, Settings2, Link,
-  Image as ImageIcon, Upload, AlertCircle,
+  Save, Loader2, CheckCircle2, AlertCircle, AlertTriangle, CircleCheck, CircleDashed,
+  ChevronDown, Building2, Upload, RotateCcw, MapPin, PencilLine, Wand2,
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
+import { DERIVED, isCustom, applyDerived } from "../../utils/globalConfigDerive.mjs";
+import { setupChecklist, thaiLongDateTime, thaiDuration } from "../../utils/setupChecklist.mjs";
 import { getPath } from "../../utils/basePath";
 import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
-import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import { parseBangkok } from "../../utils/electionConfig";
 import { evaluationPromptText } from "../../utils/activityHours";
 
-// section-header icons (metadata carries the NAME so the data module stays
-// component-free); falls back to a neutral glyph if a group has none.
-const GROUP_ICONS = { Vote, FolderOpen, Building2, CalendarClock, Copyright, Link, Image: ImageIcon };
+// ตั้งค่าทั่วไป = the election's DATA (names, years, dates, poster, form link).
+// Commanding the system (modes, showing results, certifying) is ตั้งค่าระบบ's
+// job and deliberately not here: saving this form never opens or closes polls.
+//
+// Layout: the things set again every year come first as a checklist — what each
+// is now, and whether it is ready — and open in place to edit. The faculty's
+// names, which almost never change, fold into one line underneath.
+
+// labels and "แสดงที่" lines live with the field metadata, one source
+const FIELD = Object.fromEntries(GLOBAL_CONFIG_FIELDS.flatMap((g) => g.fields.map((f) => [f.key, f])));
 
 // ── image field ──
 // Uploads through /api/admin/global-config/banner and stores only the returned
@@ -52,40 +60,46 @@ function ImageField({ value, onChange }) {
   };
 
   return (
-    <div>
+    <div className="grid sm:grid-cols-[220px_minmax(0,1fr)] gap-4 items-start">
       <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={posterSrc} alt={hasCustomPoster ? "โปสเตอร์ประชาสัมพันธ์ที่ตั้งไว้" : "โปสเตอร์ประชาสัมพันธ์เริ่มต้น"} className="w-full h-auto block" />
+        <img src={posterSrc} alt={hasCustomPoster ? "โปสเตอร์ที่อัปโหลดไว้" : "โปสเตอร์ของปีก่อน"} className="w-full h-auto block" />
       </div>
-      {!hasCustomPoster && (
-        <p className="text-xs text-slate-500 mt-2">กำลังใช้โปสเตอร์เริ่มต้น — อัปโหลดรูปใหม่เพื่อเปลี่ยนโปสเตอร์ในทุก template ที่แสดงภาพประชาสัมพันธ์</p>
-      )}
-
-      <div className="flex items-center gap-2 mt-2">
-        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} className="hidden" />
-        <button
-          type="button" disabled={busy}
-          onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#8A2680] hover:bg-[#6E1F67] disabled:bg-slate-300 text-white text-xs font-bold transition-colors"
-        >
-          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-          {hasCustomPoster ? "เปลี่ยนรูป" : "อัปโหลดรูปใหม่"}
-        </button>
-        {hasCustomPoster && (
+      <div>
+        {/* the fallback is the checked-in poster from a PAST election, dates and
+            all — say so plainly rather than calling it a neutral "default" */}
+        {!hasCustomPoster && (
+          <p className="flex items-start gap-1.5 text-[13px] text-amber-700 mb-3">
+            <AlertCircle className="w-4 h-4 mt-px shrink-0" />
+            ยังไม่ได้อัปโหลด หน้าเว็บจึงใช้โปสเตอร์ของปีก่อน ซึ่งวันที่บนภาพไม่ใช่ของปีนี้
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} className="hidden" />
           <button
-            type="button" onClick={() => onChange("")}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:text-red-600 text-slate-500 text-xs font-bold transition-colors"
+            type="button" disabled={busy}
+            onClick={() => inputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#8A2680] hover:bg-[#6E1F67] disabled:bg-slate-300 text-white text-sm font-bold transition-colors"
           >
-            <RotateCcw className="w-3.5 h-3.5" /> ใช้ภาพเริ่มต้น
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {hasCustomPoster ? "เปลี่ยนรูป" : "อัปโหลดโปสเตอร์ปีนี้"}
           </button>
+          {hasCustomPoster && (
+            <button
+              type="button" onClick={() => onChange("")}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:border-red-300 hover:text-red-600 text-slate-500 text-sm font-bold transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" /> เอาออก
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mt-2">JPG, PNG หรือ WebP · ตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง</p>
+        {err && (
+          <p className="flex items-center gap-1.5 text-xs text-red-600 mt-2">
+            <AlertCircle className="w-4 h-4" /> {err}
+          </p>
         )}
       </div>
-
-      {err && (
-        <p className="flex items-center gap-1.5 text-[11px] text-red-600 mt-2">
-          <AlertCircle className="w-3.5 h-3.5" /> {err}
-        </p>
-      )}
     </div>
   );
 }
@@ -95,14 +109,11 @@ function ImageField({ value, onChange }) {
 // The KEY is kept in the payload because many surfaces read it (hero-title
 // default, results title, layout metadata, VerdureChrome number fallback).
 //
-// ⚠️ CFG-DUAL — this is NOT the only writer of globalConfig.electionName.
-// The element editor's `hero-title` instance is bound to it
-// (src/components/admin/editor/elementInstances.js → boundTo: "electionName")
-// and PropertyPanel writes it straight through updateField(). Deriving on
-// EVERY save used to clobber that author's custom title silently, even when
-// the admin had only touched an unrelated field. handleSave() below therefore
-// re-derives only when prefix/number actually changed (see the comment there).
-// If you change either side, change both.
+// ⚠️ CFG-DUAL — the element editor's `hero-title` instance is bound to it
+// (src/components/admin/editor/elementInstances.js → boundTo: "electionName").
+// handleSave() therefore re-derives only when prefix/number actually changed,
+// so a custom title set there survives unrelated saves. If you change either
+// side, change both.
 function deriveElectionName(cfg) {
   return [cfg?.electionNamePrefix, cfg?.electionNumber]
     .map((v) => String(v ?? "").trim())
@@ -110,54 +121,80 @@ function deriveElectionName(cfg) {
     .join(" ");
 }
 
-// year-ish display: numeric fields coerce blank → 0, which is never a real
-// year, so show an em-dash instead of a bare "0" in previews.
-function yearText(v) {
-  const s = String(v ?? "").trim();
-  return s && s !== "0" ? s : "—";
+const INPUT = "w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/15 focus:outline-none text-sm text-slate-800 transition-colors";
+
+const TONE = {
+  ok:   { Icon: CircleCheck,   icon: "text-emerald-600", chip: "bg-emerald-50 text-emerald-700" },
+  none: { Icon: CircleDashed,  icon: "text-slate-400",   chip: "bg-slate-100 text-slate-600" },
+  warn: { Icon: AlertTriangle, icon: "text-amber-500",   chip: "bg-amber-50 text-amber-700" },
+  err:  { Icon: AlertCircle,   icon: "text-red-600",     chip: "bg-red-50 text-red-700" },
+};
+
+// a labelled control with its "แสดงที่" line
+function Field({ k, label, children, aside = null }) {
+  const f = FIELD[k] || {};
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <label htmlFor={`gc-${k}`} className="text-[13px] font-bold text-slate-800">{label ?? f.label}</label>
+        {aside}
+      </div>
+      {children}
+      {f.where && (
+        <p className="flex items-start gap-1 text-xs text-slate-500 mt-1.5 leading-relaxed">
+          <MapPin className="w-3.5 h-3.5 mt-px shrink-0 text-slate-400" />
+          <span>แสดงที่: {f.where}</span>
+        </p>
+      )}
+    </div>
+  );
 }
 
 /**
  * GlobalConfigTab — admin form to edit globalConfig.
  * Reads/writes via /api/admin/global-config; admin identity = the httpOnly
- * admin_token cookie (sent automatically — P0-1).
- *
- * Stays in sync with the element editor: initial values come from
- * GlobalConfigContext (so any field already updated via PropertyPanel's bound
- * editor is reflected here), and saving pushes the new config back into the
- * Context via replaceConfig so other surfaces re-render without reload.
+ * admin_token cookie (sent automatically — P0-1). Saving pushes the new config
+ * into GlobalConfigContext so other surfaces re-render without a reload.
  */
 export default function GlobalConfigTab() {
   const ctxConfig = useGlobalConfig();
   const { replaceConfig } = useGlobalConfigUpdate();
 
+  // derived keys the admin writes by hand (utils/globalConfigDerive). Seeded from
+  // what is stored: a value that differs from the assembled one is the admin's
+  // own wording and must never be silently replaced.
+  const customKeys = (cfg) => new Set(Object.keys(DERIVED).filter((k) => isCustom(k, cfg)));
+
   const [config, setConfig] = useState(ctxConfig);
+  const [baseline, setBaseline] = useState(ctxConfig);   // what is saved — for "changed" and ยกเลิก
+  const [manual, setManual] = useState(() => customKeys(ctxConfig));
+  const [open, setOpen] = useState(() => new Set());
+  const [orgOpen, setOrgOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
   const [error, setError] = useState(null);
 
   // CFG-DUAL: prefix/number as they stood the last time this form took a value
-  // from the server/Context. handleSave compares against this to tell "the admin
-  // renamed the election" apart from "the admin saved something else".
-  const derivedFromRef = useRef({
-    prefix: ctxConfig?.electionNamePrefix,
-    number: ctxConfig?.electionNumber,
-  });
+  // from the server/Context — see deriveElectionName.
+  const derivedFromRef = useRef({ prefix: ctxConfig?.electionNamePrefix, number: ctxConfig?.electionNumber });
 
-  // Refresh from server once on mount, then keep tracking Context updates so the
-  // form mirrors changes made elsewhere (e.g., bound element editor).
+  function adopt(cfg) {
+    setConfig(cfg);
+    setBaseline(cfg);
+    setManual(customKeys(cfg));
+    derivedFromRef.current = { prefix: cfg?.electionNamePrefix, number: cfg?.electionNumber };
+  }
+
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(getPath("/api/admin/global-config"), {
-          credentials: "include",
-        });
+        const res = await fetch(getPath("/api/admin/global-config"), { credentials: "include" });
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
         if (data.globalConfig) {
           const merged = { ...GLOBAL_CONFIG_DEFAULTS, ...data.globalConfig };
-          setConfig(merged);
+          adopt(merged);
           replaceConfig(merged);
         }
       } catch (e) {
@@ -172,41 +209,63 @@ export default function GlobalConfigTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When the Context picks up a change from the element editor (or another tab),
-  // mirror it locally so the user sees the synced value.
+  // mirror changes made elsewhere (another tab, the element editor)
   useEffect(() => {
-    setConfig(ctxConfig);
-    derivedFromRef.current = {
-      prefix: ctxConfig?.electionNamePrefix,
-      number: ctxConfig?.electionNumber,
-    };
+    adopt(ctxConfig);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctxConfig]);
 
-  function handleChange(key, value) {
+  function set(key, value) {
     setConfig((prev) => ({ ...prev, [key]: value }));
     setSavedAt(null);
   }
+
+  // number inputs: some blanks are valid answers (activityHours), never 0; below
+  // min is refused outright so the field visibly snaps back
+  function setNumber(key, raw) {
+    const f = FIELD[key] || {};
+    if (f.allowEmpty && raw === "") return set(key, "");
+    const num = Number(raw);
+    if (f.min !== undefined && (!Number.isFinite(num) || num < f.min)) return;
+    set(key, num);
+  }
+
+  function setManualKey(key, on) {
+    const assembled = applyDerived(config, manual)[key];
+    setManual((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key); else next.delete(key);
+      return next;
+    });
+    if (on) set(key, assembled);
+    setSavedAt(null);
+  }
+
+  function toggle(key) {
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
+  // what the site will show once saved — derived keys filled in
+  const view = applyDerived(config, manual);
+  const changed = Object.keys({ ...baseline, ...view }).filter(
+    (k) => k !== "electionName" && String(view[k] ?? "") !== String(baseline?.[k] ?? "")
+  );
 
   async function handleSave() {
     setSaving(true);
     setError(null);
     try {
-      // auto-derive electionName so it always mirrors the "SAMO 50" badge;
-      // keep the KEY (many pages read it) but never edit it directly.
-      //
-      // CFG-DUAL: only re-derive when the source fields moved. electionName has
-      // a second writer (the bound `hero-title` element editor — see the note on
-      // deriveElectionName above), and rewriting on every save silently threw
-      // that value away. Renaming the election still wins, so CFG-1 holds where
-      // it matters; a save that never touched prefix/number now leaves the name
-      // alone. A blank stored name is still healed — nothing to lose there.
       const base = derivedFromRef.current;
       const nameSourceChanged =
-        String(config.electionNamePrefix ?? "") !== String(base.prefix ?? "") ||
-        String(config.electionNumber ?? "") !== String(base.number ?? "");
-      const payload = (nameSourceChanged || !String(config.electionName ?? "").trim())
-        ? { ...config, electionName: deriveElectionName(config) }
-        : { ...config };
+        String(view.electionNamePrefix ?? "") !== String(base.prefix ?? "") ||
+        String(view.electionNumber ?? "") !== String(base.number ?? "");
+      const payload = (nameSourceChanged || !String(view.electionName ?? "").trim())
+        ? { ...view, electionName: deriveElectionName(view) }
+        : { ...view };
       const res = await fetch(getPath("/api/admin/global-config"), {
         method: "PUT",
         credentials: "include",
@@ -222,11 +281,7 @@ export default function GlobalConfigTab() {
       }
       const savedConfig = result.globalConfig || payload;
       replaceConfig(savedConfig);
-      setConfig(savedConfig);
-      derivedFromRef.current = {
-        prefix: payload.electionNamePrefix,
-        number: payload.electionNumber,
-      };
+      adopt(savedConfig);
       setSavedAt(new Date());
     } catch (e) {
       setError(e.message || "บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง");
@@ -235,9 +290,10 @@ export default function GlobalConfigTab() {
     }
   }
 
-  function handleResetField(key) {
-    setConfig((prev) => ({ ...prev, [key]: GLOBAL_CONFIG_DEFAULTS[key] }));
-    setSavedAt(null);
+  function handleCancel() {
+    setConfig(baseline);
+    setManual(customKeys(baseline));
+    setError(null);
   }
 
   if (loading) {
@@ -248,268 +304,228 @@ export default function GlobalConfigTab() {
     );
   }
 
-  // live composed-output preview per section (id set in field metadata) — shows
-  // the admin what their inputs BECOME on the real site, so the several
-  // name/year/date fields stop reading as redundant and you can see how they
-  // assemble. Pure display; reads config, never writes.
-  function renderPreview(id) {
-    let body = null;
+  const list = setupChecklist(view, new Date());
+  const wordmark = deriveElectionName(view);
 
-    if (id === "election") {
-      const badge = deriveElectionName(config) || "—";
-      body = (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#8A2680]/10 text-[#8A2680] text-sm font-black tabular-nums">
-            {badge}
-          </span>
-          <span className="text-xs text-slate-500">
-            ประจำปีการศึกษา <b className="text-slate-700 tabular-nums">{yearText(config.academicYearTh)}</b>
-            <span className="mx-1.5 text-slate-300">·</span>
-            ปีปฏิทิน <b className="text-slate-700 tabular-nums">{yearText(config.electionCalendarYear)}</b>
-          </span>
-        </div>
-      );
-    } else if (id === "org") {
-      const t = (v) => String(v ?? "").trim() || "—";
-      body = (
-        <>
-          {/* stacked identity block — mirrors how the fields land on the hero */}
-          <div className="space-y-0.5">
-            <div className="text-sm font-black text-slate-800 whitespace-pre-line break-words leading-snug">
-              {t(config.campaignTitle)}
-            </div>
-            <div className="text-sm font-semibold text-slate-600 break-words">
-              {t(config.organizationName)}
-            </div>
-            <div className="text-xs text-slate-500 break-words">
-              {t(config.facultyName)}
-              <span className="mx-1 text-slate-300">·</span>
-              {t(config.university)}
-            </div>
-          </div>
-          <div className="mt-2 pt-2 border-t border-dashed border-slate-200 text-[11px] text-slate-400 leading-relaxed break-words">
-            ย่อ {t(config.organizationShort)}
-            <span className="mx-1 text-slate-300">·</span>
-            {t(config.facultyShortEn)}@{t(config.university)}
-            <span className="mx-1.5 text-slate-300">|</span>
-            โครงการเลือกตั้ง{t(config.committeeName)}
-          </div>
-        </>
-      );
-    } else if (id === "schedule") {
-      const d = resolveElectionDates(config);
-      const rows = [
-        { label: "เปิดตัวผู้สมัคร", date: d.CAMPAIGN_START, isDefault: !String(config.campaignStartAt ?? "").trim() },
-        { label: "เปิดโหวต", date: d.ELECTION_START, isDefault: !String(config.electionStartAt ?? "").trim() },
-        { label: "ปิดโหวต", date: d.ELECTION_END, isDefault: !String(config.electionEndAt ?? "").trim() },
-      ];
-      body = (
-        <div className="space-y-1.5">
-          {rows.map((r) => {
-            const ds = formatThaiDate(r.date);
-            if (!ds) return null; // invalid date → hide the line (never "Invalid Date")
-            const ts = formatThaiTime(r.date);
-            return (
-              <div key={r.label} className="text-xs leading-relaxed break-words">
-                <span className="text-slate-400">{r.label} </span>
-                <span className="text-slate-700 tabular-nums">{ds} {ts}</span>
-                {r.isDefault && (
-                  <span className="ml-1.5 text-[10px] text-amber-500 whitespace-nowrap">· ค่าเริ่มต้น</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
-    } else if (id === "form") {
-      // ปุ่มแบบประเมินบนหน้าขอบคุณ "แสดงเสมอ" — success/page.js ส่ง onOpenForm ให้ทุก
-      // ตระกูลแบบไม่มีเงื่อนไข ค่านี้จึงไม่ได้คุมการมี/ไม่มีปุ่ม เว้นว่าง = กดแล้วเจอ
-      // "ไม่พบลิงก์แบบประเมิน" ไม่ใช่ปุ่มหายไป (ข้อความเดิมเขียนผิด)
-      const url = String(config.googleFormUrl ?? "").trim();
-      body = (
-        <div className="space-y-1.5">
-          {url ? (
-            <div className="text-xs text-slate-600 break-all leading-relaxed">
-              ปุ่มบนหน้าขอบคุณจะพาไปที่{" "}
-              <span className="font-semibold text-[#8A2680]">{url}</span>
-            </div>
-          ) : (
-            <div className="text-xs text-amber-600">(ยังไม่ตั้ง) — ปุ่มแบบประเมินยังแสดงบนหน้าขอบคุณ แต่กดแล้วจะขึ้นว่าไม่พบลิงก์</div>
-          )}
-          {/* ประโยคจริงที่ทุก template จะพูดตรงกัน ประกอบจาก utils/activityHours.js
-              ตัวเดียวกับที่หน้าขอบคุณใช้ ไม่ใช่ข้อความที่พิมพ์ซ้ำไว้ที่นี่ */}
-          <div className="text-xs text-slate-600 leading-relaxed">
-            ทุก template จะเขียนว่า{" "}
-            <span className="font-semibold text-[#8A2680]">{evaluationPromptText(config)}</span>
-          </div>
-        </div>
-      );
-    } else if (id === "copyright") {
-      const t = (v) => String(v ?? "").trim() || "—";
-      body = (
-        <div className="text-xs text-slate-600 break-words">
-          © {t(config.facultyShortEn)}@{t(config.university)}{" "}
-          <span className="tabular-nums">{yearText(config.copyrightYear)}</span> · All Rights Reserved
-        </div>
-      );
-    } else {
-      return null;
-    }
-
+  // a key assembled from other fields: the result, and the way to take it over.
+  // Plain render functions, not components: a component declared inside render
+  // is a new type every keystroke, so React would remount the input and drop focus.
+  function derived(k) {
+    const isManual = manual.has(k);
     return (
-      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <div className="flex items-center gap-1.5 mb-2.5">
-          <Eye className="w-3.5 h-3.5 text-[#8A2680]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A2680]">
-            ตัวอย่างที่จะแสดงจริง
-          </span>
-        </div>
-        {body}
-      </div>
+      <Field
+        k={k}
+        aside={isManual
+          ? <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">พิมพ์เอง</span>
+          : <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#8A2680]/10 text-[#8A2680]">ระบบประกอบให้</span>}
+      >
+        {isManual ? (
+          <>
+            <input id={`gc-${k}`} className={INPUT} value={config[k] ?? ""}
+              onChange={(e) => (FIELD[k]?.type === "number" ? setNumber(k, e.target.value) : set(k, e.target.value))} />
+            <button type="button" onClick={() => setManualKey(k, false)}
+              className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-[#8A2680] hover:underline">
+              <Wand2 className="w-3.5 h-3.5" /> ให้ระบบประกอบให้ ({String(applyDerived(config)[k] ?? "").trim() || "—"})
+            </button>
+          </>
+        ) : (
+          <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-slate-50 border border-dashed border-slate-200">
+            <span className="text-sm text-slate-700 break-words min-w-0">
+              {String(view[k] ?? "").trim() || <span className="text-slate-400">ยังประกอบไม่ได้</span>}
+            </span>
+            <button type="button" onClick={() => setManualKey(k, true)}
+              className="shrink-0 inline-flex items-center gap-1 text-xs font-bold text-[#8A2680] hover:underline">
+              <PencilLine className="w-3.5 h-3.5" /> พิมพ์เอง
+            </button>
+          </div>
+        )}
+      </Field>
     );
   }
 
-  return (
-    <div className="max-w-3xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6 flex items-start gap-3">
-        <div className="mt-0.5 shrink-0 w-10 h-10 rounded-xl bg-[#8A2680]/10 flex items-center justify-center">
-          <Settings2 className="w-5 h-5 text-[#8A2680]" />
+  // one datetime field with how it reads in Thai right under it
+  function dateField(k) {
+    const d = parseBangkok(config[k]);
+    return (
+      <Field k={k}>
+        <input id={`gc-${k}`} type="datetime-local" className={INPUT} value={config[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
+        <p className={`text-[13px] mt-1.5 ${d ? "text-[#8A2680] font-semibold" : "text-slate-400"}`}>
+          {d ? `= ${thaiLongDateTime(d)}` : "ยังไม่ได้ตั้ง"}
+        </p>
+      </Field>
+    );
+  }
+
+  const EDITORS = {
+    edition: (
+      <div className="grid sm:grid-cols-3 gap-4">
+        <Field k="electionNamePrefix">
+          <input id="gc-electionNamePrefix" className={INPUT} value={config.electionNamePrefix ?? ""} onChange={(e) => set("electionNamePrefix", e.target.value)} />
+        </Field>
+        <Field k="electionNumber">
+          <input id="gc-electionNumber" type="number" className={INPUT} value={config.electionNumber ?? ""} onChange={(e) => setNumber("electionNumber", e.target.value)} />
+        </Field>
+        <Field k="academicYearTh">
+          <input id="gc-academicYearTh" type="number" className={INPUT} value={config.academicYearTh ?? ""} onChange={(e) => setNumber("academicYearTh", e.target.value)} />
+        </Field>
+        <div className="sm:col-span-3 grid sm:grid-cols-2 gap-4 pt-1">
+          {derived("electionCalendarYear")}
+          {derived("copyrightYear")}
         </div>
-        <div>
-          <h2 className="text-2xl font-black text-slate-800 mb-1">ตั้งค่าทั่วไป</h2>
-          <p className="text-sm text-slate-500">
-            ข้อมูลที่ใช้ทั่วทั้งเว็บไซต์ — เปลี่ยนที่นี่ที่เดียว ทุกหน้าเปลี่ยนตาม
+      </div>
+    ),
+    schedule: (() => {
+      const s = parseBangkok(config.electionStartAt);
+      const e = parseBangkok(config.electionEndAt);
+      return (
+        <div className="grid lg:grid-cols-3 gap-4">
+          {dateField("campaignStartAt")}
+          {dateField("electionStartAt")}
+          {dateField("electionEndAt")}
+          {s && e && e > s && (
+            <p className="lg:col-span-3 text-[13px] text-slate-600">เปิดรับลงคะแนน <b>{thaiDuration(e - s)}</b></p>
+          )}
+          <p className="lg:col-span-3 text-xs text-slate-500">
+            โหมด AUTO เปิด-ปิดหีบตามเวลานี้ · การสั่งเปิด-ปิดด้วยมืออยู่ที่เมนู ตั้งค่าระบบ
           </p>
         </div>
+      );
+    })(),
+    poster: <ImageField value={config.electionBannerUrl ?? ""} onChange={(v) => set("electionBannerUrl", v)} />,
+    form: (
+      <Field k="googleFormUrl">
+        <input id="gc-googleFormUrl" className={INPUT} placeholder="https://forms.gle/…" value={config.googleFormUrl ?? ""} onChange={(e) => set("googleFormUrl", e.target.value)} />
+      </Field>
+    ),
+    hours: (
+      <div className="grid sm:grid-cols-[180px_minmax(0,1fr)] gap-4 items-start">
+        <Field k="activityHours">
+          <input id="gc-activityHours" type="number" className={INPUT} min={FIELD.activityHours?.min} step={FIELD.activityHours?.step}
+            value={config.activityHours ?? ""} onChange={(e) => setNumber("activityHours", e.target.value)} />
+        </Field>
+        <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 text-[13px] text-slate-600 sm:mt-6">
+          ทุก template จะเขียนว่า <span className="font-semibold text-[#8A2680]">{evaluationPromptText(view)}</span>
+        </div>
+      </div>
+    ),
+  };
+
+  const orgSummary = [view.campaignTitle, view.organizationName, `${view.facultyShortEn || "—"}@${view.university || "—"}`]
+    .map((x) => String(x ?? "").trim()).filter(Boolean).join(" · ");
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 pb-28">
+      <div className="mb-6">
+        <h2 className="text-2xl font-black text-slate-800">ตั้งค่าทั่วไป</h2>
+        <p className="text-sm text-slate-500 mt-1">ข้อมูลของการเลือกตั้งที่แสดงบนเว็บ · การสั่งเปิด-ปิดระบบอยู่ที่เมนู ตั้งค่าระบบ</p>
       </div>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
-          <a
-            href={getPath("/admin/login")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block mt-2 underline font-medium"
-          >
+          <a href={getPath("/admin/login")} target="_blank" rel="noopener noreferrer" className="block mt-2 underline font-medium">
             เปิดหน้าเข้าสู่ระบบผู้ดูแลในแท็บใหม่
           </a>
         </div>
       )}
 
-      {/* Form sections */}
-      <div className="space-y-5">
-        {GLOBAL_CONFIG_FIELDS.map((group) => {
-          const GroupIcon = GROUP_ICONS[group.icon] || Settings2;
-          return (
-            <section key={group.group} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              {/* section header — icon + title + one-line purpose */}
-              <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-slate-100 bg-slate-50/60">
-                <div className="shrink-0 w-9 h-9 rounded-lg bg-[#8A2680]/10 flex items-center justify-center">
-                  <GroupIcon className="w-[18px] h-[18px] text-[#8A2680]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-800 leading-tight">{group.group}</h3>
-                  {group.desc && <p className="text-xs text-slate-500 mt-0.5">{group.desc}</p>}
-                </div>
-              </div>
+      {/* ── this year's setup ── */}
+      <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+          <div className="flex items-baseline justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-black text-slate-800">เตรียมการเลือกตั้ง {wordmark}</h3>
+              <p className="text-[13px] text-slate-500 mt-0.5">สิ่งที่ต้องตั้งใหม่ทุกปี · กดแต่ละแถวเพื่อแก้</p>
+            </div>
+            <p className="text-sm text-slate-600 whitespace-nowrap"><b className="text-lg text-slate-800">{list.ready}</b> / {list.total} พร้อม</p>
+          </div>
+          <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={list.total} aria-valuenow={list.ready}>
+            <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-500" style={{ width: `${(list.ready / list.total) * 100}%` }} />
+          </div>
+        </div>
 
-              {/* fields — 2-col grid; short fields pair up, full-width fields span both */}
-              <div className="p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
-                  {group.fields.map((field) => (
-                    <div key={field.key} className={field.col === "full" ? "sm:col-span-2" : undefined}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-bold text-slate-700">{field.label}</label>
-                        <button
-                          type="button"
-                          onClick={() => handleResetField(field.key)}
-                          className="inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-[#8A2680] transition-colors"
-                          title="คืนค่าเริ่มต้นของช่องนี้"
-                        >
-                          <RotateCcw className="w-3 h-3" /> ค่าเริ่มต้น
-                        </button>
-                      </div>
-                      {field.type === "image" ? (
-                        <ImageField
-                          value={config[field.key] ?? ""}
-                          onChange={(v) => handleChange(field.key, v)}
-                        />
-                      ) : field.multiline ? (
-                        <textarea
-                          rows={2}
-                          value={config[field.key] ?? ""}
-                          onChange={(e) => handleChange(field.key, e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/10 focus:outline-none text-sm resize-y leading-relaxed transition-colors"
-                        />
-                      ) : (
-                        <input
-                          type={field.type === "datetime" ? "datetime-local" : field.type}
-                          value={config[field.key] ?? ""}
-                          min={field.min}
-                          step={field.step}
-                          onChange={(e) => {
-                            if (field.type !== "number") {
-                              handleChange(field.key, e.target.value);
-                              return;
-                            }
-                            // allowEmpty: บางช่องตัวเลข "ไม่ใส่" คือคำตอบที่ถูกต้อง
-                            // ไม่ใช่ศูนย์ — Number("") คือ 0 ซึ่งจะกลายเป็นค่าจริง
-                            if (field.allowEmpty && e.target.value === "") {
-                              handleChange(field.key, "");
-                              return;
-                            }
-                            const num = Number(e.target.value);
-                            // ค่าต่ำกว่า min ไม่รับเลย ไม่ใช่ปัดขึ้นเงียบ ๆ — input ถูก
-                            // ควบคุมโดย React ช่องจึงเด้งกลับเป็นค่าเดิมทันที ผู้ใช้เห็นว่า
-                            // พิมพ์ไม่ผ่าน (attribute min คุมได้แค่ปุ่มลูกศร พิมพ์มือยังลบล้างได้)
-                            if (field.min !== undefined && (!Number.isFinite(num) || num < field.min)) return;
-                            handleChange(field.key, num);
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/10 focus:outline-none text-sm transition-colors"
-                        />
-                      )}
-                      {field.hint && (
-                        <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">{field.hint}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {group.preview && renderPreview(group.preview)}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+        <ul>
+          {list.items.map((item) => {
+            const t = TONE[item.tone];
+            const isOpen = open.has(item.key);
+            return (
+              <li key={item.key} className="border-t border-slate-100 first:border-t-0">
+                <button
+                  type="button" onClick={() => toggle(item.key)} aria-expanded={isOpen}
+                  className="w-full grid grid-cols-[24px_minmax(0,1fr)_auto_16px] items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <t.Icon className={`w-5 h-5 ${t.icon}`} aria-hidden />
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-bold text-slate-800">{item.title}</span>
+                    <span className="block text-[13px] text-slate-500 truncate">{item.value}</span>
+                  </span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${t.chip}`}>{item.status}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {isOpen && <div className="px-6 pb-6 pt-1 sm:pl-[60px]">{EDITORS[item.key]}</div>}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
-      {/* Save bar */}
-      <div className="sticky bottom-4 mt-6 bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex items-center justify-between">
-        <div className="text-xs text-slate-500">
-          {savedAt ? (
-            <span className="flex items-center gap-1 text-emerald-600 font-bold">
+      {/* ── the faculty's names: almost never change, so one folded line ── */}
+      <section className="mt-5 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <button
+          type="button" onClick={() => setOrgOpen((v) => !v)} aria-expanded={orgOpen}
+          className="w-full grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 transition-colors"
+        >
+          <Building2 className="w-5 h-5 text-slate-400" aria-hidden />
+          <span className="min-w-0">
+            <span className="block text-[15px] font-bold text-slate-800">
+              ข้อมูลองค์กร <span className="text-xs font-normal text-slate-400 ml-1">แทบไม่ต้องแก้</span>
+            </span>
+            <span className="block text-[13px] text-slate-500 truncate">{orgSummary}</span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-[13px] text-slate-500">
+            {orgOpen ? "ปิด" : "แก้ไข"} <ChevronDown className={`w-4 h-4 transition-transform ${orgOpen ? "rotate-180" : ""}`} aria-hidden />
+          </span>
+        </button>
+        {orgOpen && (
+          <div className="px-6 pb-6 pt-2 sm:pl-[60px] grid sm:grid-cols-2 gap-4">
+            {["committeeName", "organizationShort", "facultyName", "facultyShortEn", "university"].map((k) => (
+              <Field key={k} k={k}>
+                <input id={`gc-${k}`} className={INPUT} value={config[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
+              </Field>
+            ))}
+            <div className="sm:col-span-2 grid gap-4 pt-1">
+              {derived("campaignTitle")}
+              {derived("organizationName")}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── save: only when there is something to save ── */}
+      {(changed.length > 0 || savedAt) && (
+        <div className="sticky bottom-4 mt-6 bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex items-center justify-between gap-4">
+          {changed.length > 0 ? (
+            <>
+              <span className="text-sm text-slate-600">แก้ไข {changed.length} ช่อง · ยังไม่ได้บันทึก</span>
+              <span className="flex items-center gap-2">
+                <button type="button" onClick={handleCancel} disabled={saving}
+                  className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                  ยกเลิก
+                </button>
+                <button type="button" onClick={handleSave} disabled={saving}
+                  className="px-6 py-2 bg-[#8A2680] text-white text-sm font-bold rounded-lg hover:bg-[#7a2270] disabled:opacity-50 flex items-center gap-2">
+                  {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> กำลังบันทึก…</> : <><Save className="w-4 h-4" /> บันทึก</>}
+                </button>
+              </span>
+            </>
+          ) : (
+            <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-bold">
               <CheckCircle2 className="w-4 h-4" /> บันทึกแล้ว
             </span>
-          ) : (
-            "ยังไม่ได้บันทึก"
           )}
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-6 py-2 bg-[#8A2680] text-white text-sm font-bold rounded-lg hover:bg-[#7a2270] disabled:opacity-50 flex items-center gap-2"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> กำลังบันทึก...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" /> บันทึก
-            </>
-          )}
-        </button>
-      </div>
+      )}
+
     </div>
   );
 }
