@@ -12,7 +12,7 @@ export default function FmsOfficialSuccess(props) {
   return (
     <FmsOfficialShell active="vote" plain editorMode={props.editorMode}>
       <VoteSuccessExperience family="fms-official" {...props}>
-        {validEnd && <p className="mt-4 text-xs leading-relaxed text-[var(--fo-muted)]">กำหนดปิดหีบ {formatThaiDate(end)} เวลา {formatThaiTime(end)} · ผลคะแนนจะแสดงเมื่อผู้ดูแลเปิดเผยผล และคุณทำแบบประเมินแล้ว</p>}
+        {validEnd && <p className="mt-4 text-xs leading-relaxed text-[var(--fo-muted)]">กำหนดปิดหีบ {formatThaiDate(end)} เวลา {formatThaiTime(end)}  ผลคะแนนจะแสดงเมื่อผู้ดูแลเปิดเผยผล และคุณทำแบบประเมินแล้ว</p>}
       </VoteSuccessExperience>
     </FmsOfficialShell>
   );

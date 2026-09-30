@@ -593,7 +593,7 @@ export default function SinglePartyView({
                     ">
                       <button
                         type="button"
-                        onClick={() => openLightbox(partyLogo, [partyLogo], `โลโก้พรรค · ${partyName || ""}`)}
+                        onClick={() => openLightbox(partyLogo, [partyLogo], `โลโก้พรรค ${partyName || ""}`)}
                         className="w-full h-full block cursor-zoom-in"
                         aria-label={`ขยายโลโก้พรรค ${partyName || ""}`}
                       >
@@ -770,7 +770,7 @@ export default function SinglePartyView({
                       <div className="block md:hidden w-full">
                         <button
                           type="button"
-                          onClick={() => openLightbox(finalTeamMobileImage, [finalTeamMobileImage], `ภาพหมู่พรรค · ${partyName || ""}`)}
+                          onClick={() => openLightbox(finalTeamMobileImage, [finalTeamMobileImage], `ภาพหมู่พรรค ${partyName || ""}`)}
                           className="w-full block cursor-zoom-in"
                           aria-label="ขยายภาพหมู่พรรค"
                         >
@@ -788,7 +788,7 @@ export default function SinglePartyView({
                     <div className={`${finalTeamMobileImage ? 'hidden md:block' : 'block'} w-full`}>
                       <button
                         type="button"
-                        onClick={() => openLightbox(carouselImages[0], carouselImages, `ภาพหมู่พรรค · ${partyName || ""}`)}
+                        onClick={() => openLightbox(carouselImages[0], carouselImages, `ภาพหมู่พรรค ${partyName || ""}`)}
                         className="w-full block cursor-zoom-in"
                         aria-label="ขยายภาพหมู่พรรค"
                       >
@@ -820,7 +820,7 @@ export default function SinglePartyView({
                             ? [...carouselImages, ...carouselImages, ...carouselImages].slice(0, 3)
                             : carouselImages
                         }
-                        onImageClick={(src) => openLightbox(src, carouselImages, `ภาพกิจกรรม · ${partyName || ""}`)}
+                        onImageClick={(src) => openLightbox(src, carouselImages, `ภาพกิจกรรม ${partyName || ""}`)}
                       />
                     </div>
                   </div>

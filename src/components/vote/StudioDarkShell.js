@@ -61,7 +61,7 @@ export default function StudioDarkShell({
             )}
             <span className="sep">/</span>
             <span className="here">{label}</span>
-            {labelTh && (<><span className="sep">·</span><span className="sd-thai">{labelTh}</span></>)}
+            {labelTh && (<><span className="sep">/</span><span className="sd-thai">{labelTh}</span></>)}
           </div>
           <div className="sd-scenebar__right">{right}</div>
         </div>
@@ -75,7 +75,7 @@ export default function StudioDarkShell({
           className="sd-totop"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="กลับขึ้นบนสุด"
-          title="กลับขึ้นบนสุด · Back to top"
+          title="กลับขึ้นบนสุด Back to top"
         >
           <ArrowUp size={18} strokeWidth={2.2} />
         </button>

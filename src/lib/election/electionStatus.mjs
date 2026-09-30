@@ -82,7 +82,7 @@ export function voteCtaState({ systemMode = "AUTO", isSystemOpen = false, electi
 // Only an explicit false counts — editor and gallery renders carry no
 // systemConfig and keep the text the template configured.
 export const AWAITING_RESULTS = {
-  label: "ปิดหีบแล้ว · รอประกาศผล",
+  label: "ปิดหีบแล้ว รอประกาศผล",
   en: "AWAITING RESULTS",
   note: "ผลคะแนนจะแสดงเมื่อคณะกรรมการประกาศผล",
 };

@@ -27,7 +27,7 @@ export default function PartySocials({ socials, prefix, heading = "Social media 
             href={s.url}
             target="_blank"
             rel="noopener noreferrer"
-            title={`${s.label} · ${s.handle || s.url}`}
+            title={`${s.label}: ${s.handle || s.url}`}
           >
             <span className={`${prefix}-social__name`}>{s.label}</span>
             {s.handle ? <span className={`${prefix}-social__handle`}>{s.handle}</span> : null}

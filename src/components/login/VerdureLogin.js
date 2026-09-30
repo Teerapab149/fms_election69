@@ -13,8 +13,8 @@ export default function VerdureLogin({
 }) {
   return (
     <div className="vdl-root">
-      <span className="vdl-corner vdl-corner--tl">FMS ELECTION · SAMO</span>
-      <span className="vdl-corner vdl-corner--br">SECURED · PSU PASSPORT</span>
+      <span className="vdl-corner vdl-corner--tl">FMS ELECTION / SAMO</span>
+      <span className="vdl-corner vdl-corner--br">SECURED BY PSU PASSPORT</span>
 
       <div className="vdl-card">
         <div className="vdl-logo"><img src={getPath("/images/logo/09_FMS_Short_EN_V_PNG.png")} alt="FMS PSU" /></div>

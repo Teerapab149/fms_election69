@@ -440,7 +440,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                         คนกรอกครั้งแรกจึงไม่รู้ว่าต้องมีอะไรบ้างถึงจะกดสร้างได้ */}
                     <form id="candidate-form" onSubmit={handleSubmit} className="space-y-6">
 
-                        <FormSection n="1" title="ข้อมูลหลัก" hint="สามช่องนี้กรอกครบแล้วกดสร้างได้เลย · หัวข้อ 2-3 มาเติมทีหลังได้" required>
+                        <FormSection n="1" title="ข้อมูลหลัก" hint="สามช่องนี้กรอกครบแล้วกดสร้างได้เลย หัวข้อ 2-3 มาเติมทีหลังได้" required>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">หมายเลข <span className="text-red-500">*</span></label>
@@ -458,10 +458,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     </div>
                                     {formData.number !== '' && !numberIsValid ? (
                                         <p className="mt-1 text-xs font-medium text-red-500">
-                                            ต้องเป็นเลขจำนวนเต็มตั้งแต่ 1 ขึ้นไป · เบอร์ 0 และ -1 ระบบใช้สำหรับ &ldquo;งดออกเสียง&rdquo; และ &ldquo;ไม่รับรอง&rdquo;
+                                            ต้องเป็นเลขจำนวนเต็มตั้งแต่ 1 ขึ้นไป เบอร์ 0 และ -1 ระบบใช้สำหรับ &ldquo;งดออกเสียง&rdquo; และ &ldquo;ไม่รับรอง&rdquo;
                                         </p>
                                     ) : (
-                                        <p className="mt-1 text-xs text-gray-400">เบอร์ที่นักศึกษาจะเห็นบนบัตรเลือกตั้ง · สีอัตโนมัติของพรรคก็อิงเบอร์นี้</p>
+                                        <p className="mt-1 text-xs text-gray-400">เบอร์ที่นักศึกษาจะเห็นบนบัตรเลือกตั้ง สีอัตโนมัติของพรรคก็อิงเบอร์นี้</p>
                                     )}
                                 </div>
                                 <div>
@@ -486,7 +486,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         required
                                         className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
                                     />
-                                    <p className="text-xs text-gray-400 mt-1">อธิบายสั้น ๆ ว่าโลโก้สื่อถึงอะไร · แสดงในหน้าแนะนำพรรค</p>
+                                    <p className="text-xs text-gray-400 mt-1">อธิบายสั้น ๆ ว่าโลโก้สื่อถึงอะไร แสดงในหน้าแนะนำพรรค</p>
                                 </div>
                             </div>
                         </FormSection>
@@ -507,7 +507,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                         </label>
                                     </div>
-                                    <p className="text-xs text-gray-400">โลโก้พรรค · กดที่ปุ่มอัปโหลดมุมขวาล่าง</p>
+                                    <p className="text-xs text-gray-400">โลโก้พรรค กดที่ปุ่มอัปโหลดมุมขวาล่าง</p>
                                 </div>
 
                                 {/* ช่องนี้คือช่องเดียวที่ใช้แล้ว — เดิมมีช่อง "รูปหมู่แนวตั้ง (Mobile SingleVote)"
@@ -517,7 +517,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     ฐานข้อมูลและถูกใช้เป็นตัวสำรองต่อไป แค่ไม่ต้องกรอกเพิ่มอีก */}
                                 <div className="w-full">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        ภาพหมู่ / ภาพกิจกรรมพรรค <span className="text-gray-400 font-normal">(เลือกได้หลายรูป · ไม่ใส่ก็ได้)</span>
+                                        ภาพหมู่ / ภาพกิจกรรมพรรค <span className="text-gray-400 font-normal">(เลือกได้หลายรูป ไม่ใส่ก็ได้)</span>
                                     </label>
                                     <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
                                         <b>ภาพแรก</b> = ภาพหมู่แนวนอนที่โชว์บนหน้าโหวตและหน้าแนะนำพรรค (แนะนำแนวนอน)
@@ -582,7 +582,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             name="color"
                                             value={formData.color || ''}
                                             onChange={handleChange}
-                                            placeholder="#7FC8FF · เว้นว่าง = สีอัตโนมัติ"
+                                            placeholder="#7FC8FF เว้นว่าง = สีอัตโนมัติ"
                                             className="flex-1 rounded-xl border border-gray-300 px-4 py-2 text-gray-900 font-mono text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                                         />
                                         {formData.color ? (
@@ -595,7 +595,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             </button>
                                         ) : null}
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติ <b>จากเบอร์พรรค</b> (เบอร์ 1 ฟ้า · เบอร์ 2 ชมพู · เบอร์ 3 เขียว ไล่ไปเรื่อย ๆ ไม่ซ้ำกัน) ·<b>ระบบจะใช้เฉพาะ “เฉดสี” ที่เลือก แล้วปรับความสว่างให้เข้าโทนเว็บเสมอ</b> (เลือกน้ำเงินกรมท่า จะได้ฟ้าพาสเทลเฉดเดียวกัน) เพราะสีนี้ถูกใช้เป็นพื้นหลังของตัวหนังสือและเป็นแท่งกราฟบนพื้นครีม ถ้าเข้มหรือจางเกินไปจะอ่านไม่ออก · ดูสีจริงที่จะใช้ได้ด้านล่าง</p>
+                                    <p className="text-xs text-gray-400 mt-1">เว้นว่าง = ระบบสร้างสีให้อัตโนมัติ <b>จากเบอร์พรรค</b> (เบอร์ 1 ฟ้า เบอร์ 2 ชมพู เบอร์ 3 เขียว ไล่ไปเรื่อย ๆ ไม่ซ้ำกัน) <b>ระบบจะใช้เฉพาะ “เฉดสี” ที่เลือก แล้วปรับความสว่างให้เข้าโทนเว็บเสมอ</b> (เลือกน้ำเงินกรมท่า จะได้ฟ้าพาสเทลเฉดเดียวกัน) เพราะสีนี้ถูกใช้เป็นพื้นหลังของตัวหนังสือและเป็นแท่งกราฟบนพื้นครีม ถ้าเข้มหรือจางเกินไปจะอ่านไม่ออก ดูสีจริงที่จะใช้ได้ด้านล่าง</p>
 
                                     {/* Live preview — the full colour SET the site derives from this one pick */}
                                     {(() => {
@@ -619,7 +619,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                                         เหมือนพรรคแรกแล้วนึกว่าระบบไม่เปลี่ยนสีให้ */}
                                                     <span className="text-[10px] text-gray-400">
                                                         {formData.color
-                                                            ? 'เฉดที่เลือก · โทนของระบบ'
+                                                            ? 'เฉดที่เลือก โทนของระบบ'
                                                             : numberIsValid
                                                                 ? `อัตโนมัติจากเบอร์ ${partyNumber}`
                                                                 : 'กรอกเบอร์พรรคก่อน'}
@@ -642,7 +642,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             </div>
                         </FormSection>
 
-                        <FormSection n="3" title="เนื้อหาแนะนำพรรค" hint="ทั้งหมดไม่บังคับ · ใส่แล้วจะไปแสดงในหน้าแนะนำพรรคที่นักศึกษาเห็น">
+                        <FormSection n="3" title="เนื้อหาแนะนำพรรค" hint="ทั้งหมดไม่บังคับ ใส่แล้วจะไปแสดงในหน้าแนะนำพรรคที่นักศึกษาเห็น">
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน</label>
@@ -669,7 +669,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">นโยบาย (Policies)</label>
                                     <p className="text-[11px] text-slate-500 mb-1.5 leading-relaxed">
-                                        หนึ่งบรรทัดต่อหนึ่งนโยบาย · คั่นหัวข้อกับรายละเอียดด้วย <code className="rounded bg-slate-100 px-1">::</code>
+                                        หนึ่งบรรทัดต่อหนึ่งนโยบาย คั่นหัวข้อกับรายละเอียดด้วย <code className="rounded bg-slate-100 px-1">::</code>
                                         <br />
                                         ตัวอย่าง <span className="text-slate-400">ยกระดับโครงการเดิม :: ปรับรูปแบบให้เข้ากับยุคสมัย</span>
                                     </p>
@@ -685,7 +685,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             </div>
                         </FormSection>
 
-                        <FormSection n="4" title="Social media ของพรรค" hint="ใส่ช่องไหนก็ได้ · ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรคให้นักศึกษาตามข่าวพรรคต่อได้ · ถ้าปล่อยว่างทุกช่อง ส่วนนี้จะไม่แสดงในหน้าพรรคเลย">
+                        <FormSection n="4" title="Social media ของพรรค" hint="ใส่ช่องไหนก็ได้ ที่ใส่ไว้จะไปขึ้นในหน้าแนะนำพรรคให้นักศึกษาตามข่าวพรรคต่อได้ ถ้าปล่อยว่างทุกช่อง ส่วนนี้จะไม่แสดงในหน้าพรรคเลย">
                             <div className="space-y-3">
                                 {SOCIAL_PLATFORMS.map((p) => {
                                     const typed = socials[p.key] || '';
@@ -710,11 +710,11 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     );
                                 })}
                                 <p className="text-[11px] leading-relaxed text-slate-400">
-                                    พิมพ์แค่ชื่อผู้ใช้ก็ได้ เช่น <code className="rounded bg-slate-100 px-1">@samofms</code> ระบบจะเติมลิงก์ให้เอง ·
+                                    พิมพ์แค่ชื่อผู้ใช้ก็ได้ เช่น <code className="rounded bg-slate-100 px-1">@samofms</code> ระบบจะเติมลิงก์ให้เอง 
                                     ลบข้อความในช่องให้ว่าง = เอาช่องทางนั้นออกจากหน้าเว็บ
                                 </p>
                                 <p className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
-                                    ส่วน &ldquo;ช่องทางติดต่อพรรค&rdquo; ในหน้าพรรคจะแสดงก็ต่อเมื่อมีอย่างน้อยหนึ่งช่องที่กรอกไว้ ·
+                                    ส่วน &ldquo;ช่องทางติดต่อพรรค&rdquo; ในหน้าพรรคจะแสดงก็ต่อเมื่อมีอย่างน้อยหนึ่งช่องที่กรอกไว้ 
                                     ถ้าไม่กรอกเลย หน้าพรรคจะไม่มีส่วนนี้ ไม่ได้ขึ้นเป็นช่องว่าง
                                 </p>
                             </div>

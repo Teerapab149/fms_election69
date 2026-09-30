@@ -402,3 +402,21 @@ public never reopens. "Closed" = ENDED, or AUTO past the scheduled end.
   (Gumroad chunky-stamp, Studio Dark / others minimal-pill, classic default).
   Editor/gallery renders carry no systemConfig and keep the configured text.
   Checked on all 8 in the preview's "after" case and on the live home.
+
+### Middle dot banned (owner, 2026-10-01)
+"·" read as machine-written copy. Removed from every piece of text a person
+reads (582 in 100 files); only code comments and CSS comments keep it.
+- Thai next to Thai or English: a space (Thai phrases are separated by
+  spaces; the scripts and fonts already tell Thai and English apart).
+- English label pairs: real words where possible ("SECURED BY PSU PASSPORT",
+  "HOW TO VOTE IN 4 STEPS"), "/" for editorial numbering ("NO. 02 /
+  CANDIDATES", the style Studio Dark already used), ":" for label: value.
+- Date then time: "เวลา". Theme names: a space ("Verdure Teal"). Lists in
+  admin messages: commas. Tab title: "SAMO 50 | FMS Election 2027". Score:
+  "312 เสียง (49.9% ของคะแนน)". Masked reference: "•••• •••• •••• ••••".
+- The one place code split on the dot (Gumroad's abstain title) now keeps
+  Thai and English as separate values.
+- Guard: scripts/smoke/noMiddleDot.test.mjs parses every source file and
+  fails on a "·" in string / template / JSX text. Em dashes stay allowed.
+- Not covered by code: text already saved in the database by admins (party
+  names, slogans, settings) is shown as typed.

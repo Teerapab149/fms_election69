@@ -65,7 +65,7 @@ export default function StudioDarkPartyIntro({ party = {}, onDone = () => {}, du
       {/* corner mono marks */}
       <motion.span className="sdi-corner sdi-corner--tl"
         initial={rm({ opacity: 0 })} animate={{ opacity: 1 }} transition={rt({ duration: 0.4, delay: 0.45 })}>
-        FMS ELECTION · SAMO
+        FMS ELECTION / SAMO
       </motion.span>
       <motion.span className="sdi-corner sdi-corner--tr"
         initial={rm({ opacity: 0 })} animate={{ opacity: 1 }} transition={rt({ duration: 0.4, delay: 0.45 })}>
@@ -83,7 +83,7 @@ export default function StudioDarkPartyIntro({ party = {}, onDone = () => {}, du
       <div className="sdi-stage">
         <motion.div className="sdi-eyebrow"
           initial={rm({ opacity: 0, y: 14 })} animate={{ opacity: 1, y: 0 }} transition={rt({ duration: 0.45, ease: EASE, delay: 0.25 })}>
-          <span className="sdi-dot" /> OFFICIAL VOTE · พรรคเดียวที่ลงสมัคร
+          <span className="sdi-dot" /> OFFICIAL VOTE พรรคเดียวที่ลงสมัคร
         </motion.div>
 
         {/* oversized serif-italic numeral — a different voice from the page header */}
@@ -109,7 +109,7 @@ export default function StudioDarkPartyIntro({ party = {}, onDone = () => {}, du
 
         <motion.span className="sdi-hint"
           initial={rm({ opacity: 0 })} animate={{ opacity: 1 }} transition={rt({ duration: 0.5, delay: 1.95 })}>
-          TAP TO ENTER · แตะเพื่อเข้าสู่หน้าลงคะแนน
+          TAP TO ENTER แตะเพื่อเข้าสู่หน้าลงคะแนน
         </motion.span>
       </div>
 

@@ -133,7 +133,7 @@ export default function MultiPartyView({
             boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 16%, transparent)',
           }}>
           <CalendarDays className="w-4 h-4" />
-          <span>{elPrefix} {elNumber} · ประจำปีการศึกษา {elAcademicYear}</span>
+          <span>{elPrefix} {elNumber}  ประจำปีการศึกษา {elAcademicYear}</span>
         </div>
 
         <Wrap id="vote-header-subtitle">
@@ -212,7 +212,7 @@ export default function MultiPartyView({
                 <div className="font-bold text-base leading-tight">
                   {cfg('vote-abstain-button').text || 'งดออกเสียง'}
                 </div>
-                <div className="text-[10px] opacity-70">ไม่ประสงค์ลงคะแนนเสียง · <span className="tracking-[.12em] uppercase">Abstain</span></div>
+                <div className="text-[10px] opacity-70">ไม่ประสงค์ลงคะแนนเสียง <span className="tracking-[.12em] uppercase">Abstain</span></div>
               </div>
               {selectedPartyId === specialOptions.abstain.id && (
                 <div className="absolute top-2 right-2 bg-white text-orange-600 p-0.5 rounded-full">

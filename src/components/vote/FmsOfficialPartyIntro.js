@@ -131,7 +131,7 @@ export default function FmsOfficialPartyIntro({
           animate={{ opacity: 1 }}
           transition={rt({ duration: 0.45, delay: 1.45 })}
         >
-          ผู้สมัครเพียงพรรคเดียว · โปรดพิจารณาก่อนลงคะแนน
+          ผู้สมัครเพียงพรรคเดียว โปรดพิจารณาก่อนลงคะแนน
         </motion.p>
 
         <motion.span

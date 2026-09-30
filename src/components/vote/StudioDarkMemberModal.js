@@ -89,12 +89,12 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
               {/* Thai runs escape the mono stack via .sd-thai — same rule as the rest
                   of the family (this file was the only one still setting Thai in
                   JetBrains Mono at 9-11px with .2em tracking) */}
-              <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE · <span className="sd-thai">ผู้สมัคร</span></div>
+              <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE <span className="sd-thai">ผู้สมัคร</span></div>
               <h3 className="sdm-name">{member.name}</h3>
               <dl className="sdm-rows">
-                <div><dt>STUDENT ID · <span className="sd-thai">รหัสนักศึกษา</span></dt><dd>{member.studentId || "—"}</dd></div>
-                <div><dt>POSITION · <span className="sd-thai">ตำแหน่ง</span></dt><dd>{member.position || "—"}</dd></div>
-                <div><dt>MAJOR · <span className="sd-thai">สาขาวิชา</span></dt><dd>{member.major || "—"}</dd></div>
+                <div><dt>STUDENT ID <span className="sd-thai">รหัสนักศึกษา</span></dt><dd>{member.studentId || "—"}</dd></div>
+                <div><dt>POSITION <span className="sd-thai">ตำแหน่ง</span></dt><dd>{member.position || "—"}</dd></div>
+                <div><dt>MAJOR <span className="sd-thai">สาขาวิชา</span></dt><dd>{member.major || "—"}</dd></div>
               </dl>
             </div>
           </motion.div>

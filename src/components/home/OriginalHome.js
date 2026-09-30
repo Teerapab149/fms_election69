@@ -467,7 +467,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             </div>
                             <div className="flex flex-col">
                                 <h2 id="oh-steps-title" className="text-lg lg:text-xl font-extrabold text-slate-800 leading-tight">วิธีลงคะแนน</h2>
-                                <span className="text-xs text-slate-600 font-medium">How to vote · 4 ขั้นตอน</span>
+                                <span className="text-xs text-slate-600 font-medium">How to vote in 4 steps</span>
                             </div>
                         </div>
                         <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">

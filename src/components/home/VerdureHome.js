@@ -181,9 +181,9 @@ export default function VerdureHome({
   // the CTA follows the same status as the chip and the ledger
   const voteState = editorMode ? "login" : (CTA_STATE[election.action] || "login");
   const CTA_BASE = {
-    login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN · PSU PASSPORT", action: "signin", disabled: false },
+    login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN WITH PSU PASSPORT", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง",          sub: "CAST YOUR BALLOT",       href: "/vote",     disabled: false },
-    voted:    { label: "ดูผลคะแนน",               sub: "YOU HAVE VOTED · RESULTS", href: "/results", disabled: false },
+    voted:    { label: "ดูผลคะแนน",               sub: "YOU HAVE VOTED", href: "/results", disabled: false },
     closed:   { label: "ยังไม่เปิดรับลงคะแนน",     sub: "POLLS NOT OPEN",         href: "/closed",   disabled: true },
     paused:   { label: "ระบบหยุดชั่วคราว",         sub: "ON HOLD",                href: "/closed",   disabled: true },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", sub: "FINAL RESULTS",          href: "/results",  disabled: false },
@@ -238,7 +238,7 @@ export default function VerdureHome({
           {/* the polling day, from the configured schedule — it used to read
               "EST. 1978", a founding year computed as (year − edition + 1) that
               no one had set and no voter needed */}
-          <span className="side side--l">VOTING · {votingDay}</span>
+          <span className="side side--l">VOTING {votingDay}</span>
           <span className="mid">{meta.tagline}</span>
           <span className="side side--r">VOL. {numberPart} / {meta.cy}</span>
         </div>
@@ -268,7 +268,7 @@ export default function VerdureHome({
             </Wrap>
             <a href={href("/candidates")} className="vd-hero__alt">
               <span className="vd-hero__alt-label">ดูผู้สมัครและนโยบาย</span>
-              <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
+              <span className="vd-hero__alt-sub">CANDIDATES {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
             </a>
           </motion.div>
           {howTo.link && (
@@ -280,13 +280,13 @@ export default function VerdureHome({
 
         <Wrap id="stats-progress-card">
           <div className="vd-home__ledger">
-            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span>  <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
             <span className="vd-home__ledger-sep" />
-            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span>  <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
             <span className="vd-home__ledger-sep" />
-            <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
+            <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span>  <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
             <span className="vd-home__ledger-sep" />
-            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span>  <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
           </div>
         </Wrap>
 

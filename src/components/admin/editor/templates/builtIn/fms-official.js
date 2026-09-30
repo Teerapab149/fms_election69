@@ -74,22 +74,22 @@ export const fmsOfficialTemplate = buildFmsOfficialTemplate(
 // which is what keeps a recoloured build reading as institutional rather than
 // as a themed product page.
 export const fmsOfficialNavyTemplate = buildFmsOfficialTemplate(
-  "fms-official-navy", "FMS Official · Navy",
+  "fms-official-navy", "FMS Official Navy",
   "โทนกรมท่า — ทางการแบบราชการสากล น่าเชื่อถือ สุขุม",
   FMS_OFFICIAL_THEMES["fms-official-navy"]);
 
 export const fmsOfficialEmeraldTemplate = buildFmsOfficialTemplate(
-  "fms-official-emerald", "FMS Official · Emerald",
+  "fms-official-emerald", "FMS Official Emerald",
   "โทนเขียวมรกต — สงบ เป็นกลาง ไม่ชนกับสีประจำพรรคใด",
   FMS_OFFICIAL_THEMES["fms-official-emerald"]);
 
 export const fmsOfficialMaroonTemplate = buildFmsOfficialTemplate(
-  "fms-official-maroon", "FMS Official · Maroon",
+  "fms-official-maroon", "FMS Official Maroon",
   "โทนแดงเบอร์กันดี — อบอุ่น หนักแน่น ใกล้เคียงอุณหภูมิสีม่วงเดิมที่สุด",
   FMS_OFFICIAL_THEMES["fms-official-maroon"]);
 
 export const fmsOfficialSlateTemplate = buildFmsOfficialTemplate(
-  "fms-official-slate", "FMS Official · Slate",
+  "fms-official-slate", "FMS Official Slate",
   "โทนเทาน้ำเงิน — เงียบที่สุด ไม่มีสีให้ตีความ เหมาะกับปีที่ผลคะแนนสูสี",
   FMS_OFFICIAL_THEMES["fms-official-slate"]);
 

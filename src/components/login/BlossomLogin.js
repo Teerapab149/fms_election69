@@ -22,8 +22,8 @@ export default function BlossomLogin({
     <div className="bl-root bll-root">
       <BlossomBaseStyles />
 
-      <span className="bll-corner bll-corner--tl">FMS ELECTION · SAMO</span>
-      <span className="bll-corner bll-corner--br">SECURED · PSU PASSPORT</span>
+      <span className="bll-corner bll-corner--tl">FMS ELECTION / SAMO</span>
+      <span className="bll-corner bll-corner--br">SECURED BY PSU PASSPORT</span>
 
       <div className="bll-card">
         <div className="bll-logo"><img src={getPath("/images/logo/09_FMS_Short_EN_V_PNG.png")} alt="FMS PSU" /></div>

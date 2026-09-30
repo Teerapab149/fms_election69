@@ -64,10 +64,10 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
   let factual = null;
   if (variant === "waiting") {
     const d = formatThaiDate(ELECTION_START);
-    if (d) factual = `เปิดโหวต ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `เปิดโหวต ${d} เวลา ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
   } else if (variant === "ended") {
     const d = formatThaiDate(ELECTION_END);
-    if (d) factual = `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `ปิดหีบ ${d} เวลา ${formatThaiTime(ELECTION_END)}`;
   }
 
   return (
@@ -81,7 +81,7 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
           <motion.span className="ring" animate={{ rotate: 360 }} transition={{ duration: 40, ease: "linear", repeat: Infinity }} />
           <Icon size={48} strokeWidth={1.8} />
         </div>
-        <div className="vd-closed__kicker"><span className="vd-nw">{v.kickerEn}</span> · <span className="vd-thai">{v.kickerTh}</span></div>
+        <div className="vd-closed__kicker"><span className="vd-nw">{v.kickerEn}</span>  <span className="vd-thai">{v.kickerTh}</span></div>
         <h1 className="vd-closed__head">{v.head}</h1>
         <div className="vd-closed__accent" aria-hidden />
 

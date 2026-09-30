@@ -112,14 +112,14 @@ function GrWaiting({ globalConfig, editorMode }) {
 
   let factual = null;
   const d = formatThaiDate(ELECTION_START);
-  if (d) factual = `เปิดโหวต ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+  if (d) factual = `เปิดโหวต ${d} เวลา ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
 
   return (
     <div className="gr-waiting">
       {/* Thai carries the meaning; the English is the small kicker. The deck used
           to promise results "in real time once the polls open" — the tally is
           hidden until the committee reveals it (ballot-secrecy policy). */}
-      <div className="gr-waiting__kicker"><span className="gr-dot" /> UPCOMING · POLLS OPEN SOON</div>
+      <div className="gr-waiting__kicker"><span className="gr-dot" /> POLLS OPEN SOON</div>
       <h2 className="gr-waiting__title">ยังไม่<em>เปิดโหวต</em></h2>
       <p className="gr-waiting__deck">ผลคะแนนจะแสดงที่หน้านี้ หลังปิดหีบ เมื่อคณะกรรมการเปิดเผยผล</p>
       {cd && (
@@ -214,7 +214,7 @@ export default function GumroadResults({
             {counting && (
               <div className="gr-locked">
                 <div className="gr-headline">
-                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING · <span className="gm-thai">กำลังนับคะแนน</span></span>
+                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING <span className="gm-thai">กำลังนับคะแนน</span></span>
                   {/* single party = approve/disapprove, not a multi-party race */}
                   <h2 className="gr-headline__title">
                     {singleParty ? <>YES<br />OR<br />NO<em>?</em></> : <>WHO<br />WILL<br />WIN<em>?</em></>}
@@ -237,7 +237,7 @@ export default function GumroadResults({
                   {countdownText ? (
                     <div className="gr-lock__cd">
                       {ended
-                        ? <><span className="gm-thai">ปิดโหวตแล้ว</span> · <span className="gm-thai">รอประกาศผล</span></>
+                        ? <><span className="gm-thai">ปิดโหวตแล้ว</span>  <span className="gm-thai">รอประกาศผล</span></>
                         : <><span className="gm-thai">ปิดใน</span> {countdownText}</>}
                     </div>
                   ) : null}
@@ -249,9 +249,9 @@ export default function GumroadResults({
             <div className="gr-stats">
               {/* revealed → the three tallies count up (reveal ceremony); embargoed/live
                   stays a plain string so the counting state is byte-identical to before */}
-              <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span> · TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
-              <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span> · ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span> · TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
+              <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span>  TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
+              <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span>  ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}
@@ -287,7 +287,7 @@ export default function GumroadResults({
                         };
                       })()}
                     >
-                      <span className="gr-winner__badge">👑 <span className="gm-thai">ผู้ชนะ</span> · WINNER</span>
+                      <span className="gr-winner__badge">👑 <span className="gm-thai">ผู้ชนะ</span>  WINNER</span>
                       <div className="gr-winner__main">
                         {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
                         <div className="gr-winner__id">

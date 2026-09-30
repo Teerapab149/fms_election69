@@ -301,7 +301,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                             <div className="text-xs leading-relaxed text-amber-800">
                                 <p className="font-bold">ลำดับที่เพิ่มมีผลกับการเรียงบนหน้าเว็บ</p>
                                 <p className="mt-1">
-                                    ตำแหน่งหลัก (นายก · อุปนายกฝ่ายกิจการภายนอก · อุปนายกฝ่ายกิจการภายใน · เลขานุการ · เหรัญญิก)
+                                    ตำแหน่งหลัก (นายก อุปนายกฝ่ายกิจการภายนอก อุปนายกฝ่ายกิจการภายใน เลขานุการ เหรัญญิก)
                                     ระบบเรียงให้เองเสมอ ไม่ว่าจะเพิ่มก่อนหลัง
                                 </p>
                                 <p className="mt-1">

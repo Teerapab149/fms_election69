@@ -66,28 +66,28 @@ export default function ReceiptMemberModal({ member = null, no = null, onClose =
   // the record column — shared by both modes (frame + cutout)
   const idBlock = (
     <div className="rcm__id">
-      <span className="rcm__kick rc-mono">CANDIDATE · <span className="rc-th">ผู้สมัคร</span></span>
+      <span className="rcm__kick rc-mono">CANDIDATE <span className="rc-th">ผู้สมัคร</span></span>
       <h3 className="rcm__name">{member.name}</h3>
       {(member.position || member.major) && (
-        <p className="rcm__role">{[member.position, member.major].filter(Boolean).join(" · ")}</p>
+        <p className="rcm__role">{[member.position, member.major].filter(Boolean).join(", ")}</p>
       )}
 
       <dl className="rcm__reg">
         {member.studentId && (
           <div>
-            <dt><span className="rc-mono">STUDENT ID</span> <span className="rc-th">· รหัสนักศึกษา</span></dt>
+            <dt><span className="rc-mono">STUDENT ID</span> <span className="rc-th"> รหัสนักศึกษา</span></dt>
             <dd className="rc-mono">{member.studentId}</dd>
           </div>
         )}
         {member.position && (
           <div>
-            <dt><span className="rc-mono">POSITION</span> <span className="rc-th">· ตำแหน่ง</span></dt>
+            <dt><span className="rc-mono">POSITION</span> <span className="rc-th"> ตำแหน่ง</span></dt>
             <dd>{member.position}</dd>
           </div>
         )}
         {member.major && (
           <div>
-            <dt><span className="rc-mono">MAJOR</span> <span className="rc-th">· สาขาวิชา</span></dt>
+            <dt><span className="rc-mono">MAJOR</span> <span className="rc-th"> สาขาวิชา</span></dt>
             <dd>{member.major}</dd>
           </div>
         )}
@@ -103,7 +103,7 @@ export default function ReceiptMemberModal({ member = null, no = null, onClose =
 
         {/* file header — mono, Latin/digits only */}
         <div className="rcm__head">
-          <span className="rcm__head-l rc-mono">CANDIDATE FILE · {prefix} {number}</span>
+          <span className="rcm__head-l rc-mono">CANDIDATE FILE {prefix} {number}</span>
           {/* no = ลำดับในทีมที่หน้าพรรคส่งมา ไม่ใช่ member.number ซึ่งเป็นกุญแจเรียงลำดับ */}
           {no != null && <span className="rcm__head-r rc-mono">No. {pad2(no)}</span>}
         </div>

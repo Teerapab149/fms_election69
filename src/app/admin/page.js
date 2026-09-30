@@ -51,7 +51,7 @@ function TurnoutGroup({ title, rows, sortByTurnout = false }) {
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="font-semibold text-slate-600 truncate pr-2">{r.name || '—'}</span>
                 <span className="text-slate-400 font-mono shrink-0">
-                  {r.value.toLocaleString()}/{elig.toLocaleString()} · <span style={{ color }} className="font-bold">{pct.toFixed(0)}%</span>
+                  {r.value.toLocaleString()}/{elig.toLocaleString()}  <span style={{ color }} className="font-bold">{pct.toFixed(0)}%</span>
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
@@ -79,7 +79,7 @@ function TurnoutBreakdown({ demographics }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-bold text-slate-700">ความคืบหน้าการใช้สิทธิ์ (Turnout)</h3>
-        <span className="text-[11px] text-slate-400">ใช้สำหรับติดตามกลุ่มที่ยังมาน้อย · ไม่แสดงว่าเลือกพรรคใด</span>
+        <span className="text-[11px] text-slate-400">ใช้สำหรับติดตามกลุ่มที่ยังมาน้อย ไม่แสดงว่าเลือกพรรคใด</span>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <TurnoutGroup title="แยกตามชั้นปี" rows={byYear} />
@@ -383,7 +383,7 @@ const CandidatesTab = () => {
           </button>
         </div>
         <p className="text-xs text-slate-400 mb-5 ml-1">
-          ชื่อพรรค เบอร์ โลโก้ สโลแกน และนโยบาย · คลิกที่การ์ดเพื่อแก้ไข
+          ชื่อพรรค เบอร์ โลโก้ สโลแกน และนโยบาย คลิกที่การ์ดเพื่อแก้ไข
         </p>
 
         <div>
@@ -472,7 +472,7 @@ const CandidatesTab = () => {
           )}
         </div>
         <p className="text-xs text-slate-400 mb-5 ml-1">
-          เปิดพรรคเพื่อดูรายชื่อ · คลิกที่ชื่อสมาชิกเพื่อแก้ไข หรือกดปุ่มเพิ่มสมาชิกในพรรคนั้น
+          เปิดพรรคเพื่อดูรายชื่อ คลิกที่ชื่อสมาชิกเพื่อแก้ไข หรือกดปุ่มเพิ่มสมาชิกในพรรคนั้น
         </p>
 
         <div>

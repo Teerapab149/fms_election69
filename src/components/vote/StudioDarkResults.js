@@ -130,12 +130,12 @@ export default function StudioDarkResults({
           <div className={`sdr-pill ${revealed ? "sdr-pill--final" : ""}`}>
             {!revealed && <span className="sd-dot" />}
             {revealed
-              ? <><span className="sd-nw">FINAL</span> · <span className="sd-thai">ผลอย่างเป็นทางการ</span></>
+              ? <><span className="sd-nw">FINAL</span>  <span className="sd-thai">ผลอย่างเป็นทางการ</span></>
               : isNotStarted
-                ? <><span className="sd-nw">WAITING</span> · <span className="sd-thai">ยังไม่เปิดโหวต</span></>
+                ? <><span className="sd-nw">WAITING</span>  <span className="sd-thai">ยังไม่เปิดโหวต</span></>
                 : ended
-                  ? <><span className="sd-nw">CLOSED</span> · <span className="sd-thai">รอประกาศผล</span></>
-                  : <><span className="sd-nw">LIVE TALLY</span> · <span className="sd-thai">กำลังนับ</span></>}
+                  ? <><span className="sd-nw">CLOSED</span>  <span className="sd-thai">รอประกาศผล</span></>
+                  : <><span className="sd-nw">LIVE TALLY</span>  <span className="sd-thai">กำลังนับ</span></>}
           </div>
         </div>
 
@@ -145,10 +145,10 @@ export default function StudioDarkResults({
             <div className="sdr-kicker">
               <span className="dot" />
               {revealed
-                ? <><span className="sd-nw">OFFICIAL RESULT</span> · <span className="sd-thai">ผลการเลือกตั้ง</span></>
+                ? <><span className="sd-nw">OFFICIAL RESULT</span>  <span className="sd-thai">ผลการเลือกตั้ง</span></>
                 : isNotStarted
-                  ? <><span className="sd-nw">POLLS NOT OPEN</span> · <span className="sd-thai">ยังไม่เปิดลงคะแนน</span></>
-                  : <><span className="sd-nw">COUNTING IN PROGRESS</span> · <span className="sd-thai">กำลังนับคะแนน</span></>}
+                  ? <><span className="sd-nw">POLLS NOT OPEN</span>  <span className="sd-thai">ยังไม่เปิดลงคะแนน</span></>
+                  : <><span className="sd-nw">COUNTING IN PROGRESS</span>  <span className="sd-thai">กำลังนับคะแนน</span></>}
             </div>
 
             {revealed ? (
@@ -213,7 +213,7 @@ export default function StudioDarkResults({
                 {/* the bare time read the same before opening and during voting,
                     and after closing the live page hands "เร็วๆ นี้" — say what it is */}
                 {ended
-                  ? <div className="sdr-aside__cd">ปิดโหวตแล้ว · รอประกาศผล</div>
+                  ? <div className="sdr-aside__cd">ปิดโหวตแล้ว รอประกาศผล</div>
                   : countdownText && <div className="sdr-aside__cd">{isNotStarted ? "เปิดโหวตใน " : "ปิดโหวตใน "}{countdownText}</div>}
               </>
             )}
@@ -235,7 +235,7 @@ export default function StudioDarkResults({
           <div className="sdr-stat">
             <div className="sdr-stat__lbl">TURNOUT <em>iii.</em></div>
             <div className="sdr-stat__val">{revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)}<small>%</small></div>
-            <div className="sdr-stat__sub">สัดส่วนผู้ใช้สิทธิ์ · อัปเดตเรียลไทม์</div>
+            <div className="sdr-stat__sub">สัดส่วนผู้ใช้สิทธิ์ อัปเดตเรียลไทม์</div>
           </div>
         </div>
 
@@ -297,7 +297,7 @@ export default function StudioDarkResults({
                   const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
                   return (
                     <div className="sdr-demo__col" key={g.en}>
-                      <div className="sdr-demo__title"><span className="sd-nw">{g.en}</span> · <span className="sd-thai">{g.th}</span></div>
+                      <div className="sdr-demo__title"><span className="sd-nw">{g.en}</span>  <span className="sd-thai">{g.th}</span></div>
                       {g.rows.map((r, i) => (
                         <div className="sdr-demo__row" key={i}>
                           <div className="sdr-demo__name">{r.name}</div>
@@ -312,7 +312,7 @@ export default function StudioDarkResults({
             ) : (
               <div className="sdr-demo__locked">
                 <div className="sdr-demo__locked-ic"><Lock size={18} strokeWidth={2} /></div>
-                <p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อคณะกรรมการประกาศผลเท่านั้น</p>
+                <p>สถิติผู้ใช้สิทธิ์รายชั้นปี เพศ สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อคณะกรรมการประกาศผลเท่านั้น</p>
               </div>
             )}
           </div>

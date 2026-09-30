@@ -193,7 +193,7 @@ export default function StudioDarkHome({
         <div className="sd-scenebar">
           <div className="sd-scenebar__crumbs">
             <span className="num">01</span><span className="sep">/</span>
-            <span className="here">Home</span><span className="sep">·</span>
+            <span className="here">Home</span><span className="sep">/</span>
             <span className="sd-thai">หน้าหลัก</span>
           </div>
           <div className="sd-scenebar__right">
@@ -249,20 +249,20 @@ export default function StudioDarkHome({
               <div className="sd-home__numbers">
                 <div className="sd-num-row">
                   <div>
-                    <div className="sd-num-lbl"><span className="sd-nw">VOTED</span> · <span className="sd-thai">ใช้สิทธิ์แล้ว</span></div>
+                    <div className="sd-num-lbl"><span className="sd-nw">VOTED</span>  <span className="sd-thai">ใช้สิทธิ์แล้ว</span></div>
                     <div className="sd-num-val"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div>
                   </div>
                   <div className="sd-num-bar"><div className="sd-num-bar-fill" style={{ width: `${Math.max(Number(pct), 0.5)}%` }} /></div>
                 </div>
                 <div className="sd-num-row">
                   <div>
-                    <div className="sd-num-lbl"><span className="sd-nw">PARTIES</span> · <span className="sd-thai">พรรคที่ลงสมัคร</span></div>
+                    <div className="sd-num-lbl"><span className="sd-nw">PARTIES</span>  <span className="sd-thai">พรรคที่ลงสมัคร</span></div>
                     <div className="sd-num-val">{partyCount}</div>
                   </div>
                 </div>
                 <div className="sd-num-row">
                   <div>
-                    <div className="sd-num-lbl"><span className="sd-nw">TURNOUT</span> · <span className="sd-thai">ความคืบหน้า</span></div>
+                    <div className="sd-num-lbl"><span className="sd-nw">TURNOUT</span>  <span className="sd-thai">ความคืบหน้า</span></div>
                     <div className="sd-num-val">{pct}<small>%</small></div>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ export default function StudioDarkHome({
               frame, cells divided by rules, serif-italic accent numerals */}
           <section id={howTo.id} className="sd-steps" aria-labelledby="sd-steps-h">
             <div className="sd-steps__head">
-              <div className="sd-steps__kicker"><span className="sd-nw">§ HOW TO VOTE</span> · <span className="sd-thai">วิธีลงคะแนน</span></div>
+              <div className="sd-steps__kicker"><span className="sd-nw">§ HOW TO VOTE</span>  <span className="sd-thai">วิธีลงคะแนน</span></div>
               <h2 id="sd-steps-h" className="sd-steps__title">ลงคะแนนใน <em>4</em> ขั้นตอน</h2>
             </div>
             <ol className="sd-steps__grid">
@@ -305,7 +305,7 @@ export default function StudioDarkHome({
                   {orgName && (<><span>{orgName}</span><span className="sd-marquee__dot" /></>)}
                   {partyCount > 0 && (<><span>{partyCount} พรรคผู้สมัคร</span><span className="sd-marquee__dot" /></>)}
                   <span>ใช้สิทธิ์แล้ว {pct}%</span><span className="sd-marquee__dot" />
-                  <em>{titlePart} {numberPart}</em>{calendarYear && <span>&nbsp;· {calendarYear}</span>}<span className="sd-marquee__dot" />
+                  <em>{titlePart} {numberPart}</em>{calendarYear && <span>&nbsp; {calendarYear}</span>}<span className="sd-marquee__dot" />
                 </span>
               ))}
             </motion.div>

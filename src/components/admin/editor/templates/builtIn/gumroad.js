@@ -330,13 +330,13 @@ function buildGumroadTemplate(slug, name, palette, description) {
 // preview exactly. layoutFamily stays "gumroad" → one chooser card with swatches;
 // colorSwatch derives from the palette (primary = pink slot, secondary = lime slot).
 export const gumroadTemplate        = buildGumroadTemplate("gumroad", "Gumroad", GUMROAD_THEMES["gumroad"]);
-export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "Gumroad · Cyberpunk", GUMROAD_THEMES["gumroad-cyber"]);
-export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "Gumroad · Retro", GUMROAD_THEMES["gumroad-retro"]);
-export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "Gumroad · Acid", GUMROAD_THEMES["gumroad-acid"]);
-export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "Gumroad · Premium", GUMROAD_THEMES["gumroad-premium"]);
+export const gumroadCyberTemplate   = buildGumroadTemplate("gumroad-cyber", "Gumroad Cyberpunk", GUMROAD_THEMES["gumroad-cyber"]);
+export const gumroadRetroTemplate   = buildGumroadTemplate("gumroad-retro", "Gumroad Retro", GUMROAD_THEMES["gumroad-retro"]);
+export const gumroadAcidTemplate    = buildGumroadTemplate("gumroad-acid", "Gumroad Acid", GUMROAD_THEMES["gumroad-acid"]);
+export const gumroadPremiumTemplate = buildGumroadTemplate("gumroad-premium", "Gumroad Premium", GUMROAD_THEMES["gumroad-premium"]);
 export const gumroadBubblegumTemplate = buildGumroadTemplate(
   "gumroad-bubblegum",
-  "Gumroad · Bubblegum",
+  "Gumroad Bubblegum",
   GUMROAD_THEMES["gumroad-bubblegum"],
   "สไตล์ Gumroad บับเบิ้ลกัม ป๊อป — ชมพูเป็นสีหลักทั้งบรรยากาศ ฟ้า-มินต์เป็นลูกคู่พาสเทล ขอบดำอมพลัม เงาคม (ไม่เบลอ)"
 );

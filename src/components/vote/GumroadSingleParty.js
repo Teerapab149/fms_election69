@@ -88,7 +88,7 @@ export default function GumroadSingleParty({
     selectedPartyId === disapproveId ? "disapprove" :
     selectedPartyId === abstainId ? "abstain" : null;
   const selectionLabel =
-    kind === "approve" ? `รับรอง · ${party?.name || ""}` :
+    kind === "approve" ? `รับรอง ${party?.name || ""}` :
     kind === "disapprove" ? "ไม่รับรอง" :
     kind === "abstain" ? "งดออกเสียง" : null;
 
@@ -119,7 +119,7 @@ export default function GumroadSingleParty({
               <button
                 type="button"
                 className="gsp-hero__zoom"
-                onClick={() => openLightbox(heroImg, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+                onClick={() => openLightbox(heroImg, `ภาพหมู่พรรค ${party?.name || ""}`)}
                 aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
               >
                 <img src={heroImg} alt={party?.name || "party"} />
@@ -128,7 +128,7 @@ export default function GumroadSingleParty({
                 <span className="gsp-hero__zoomtag"><span className="gm-thai">คลิกเพื่อขยาย</span> ⌕</span>
               </button>
             ) : (
-              <span className="gsp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>
+              <span className="gsp-hero__ph">★ TEAM {members.length} MEMBERS ★</span>
             )}
             {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมที่พรรคอัปเพิ่มอยู่ในแกลเลอรีของหน้านั้น
                 source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
@@ -141,7 +141,7 @@ export default function GumroadSingleParty({
               <button
                 type="button"
                 className="gsp-hero__logo gsp-hero__logo--btn"
-                onClick={() => openLightbox(logoImg, `โลโก้พรรค · ${party?.name || ""}`)}
+                onClick={() => openLightbox(logoImg, `โลโก้พรรค ${party?.name || ""}`)}
                 aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
               >
                 <img src={logoImg} alt="logo" />
@@ -224,7 +224,7 @@ export default function GumroadSingleParty({
         <section className="gsp-vote">
           <div className="gsp-vote__head">
             <span className="gsp-sticker gsp-sticker--lime">★ ตัดสินใจของคุณ</span>
-            <h2 className="gsp-card__h">{greeting ? `${greeting} · ` : ""}ลงคะแนนเสียง</h2>
+            <h2 className="gsp-card__h">{greeting ? `${greeting} ` : ""}ลงคะแนนเสียง</h2>
           </div>
           <div className="gsp-choices">
             <button type="button" data-element="vote-approve-button"
@@ -253,7 +253,7 @@ export default function GumroadSingleParty({
       <div className="gsp-footer">
         <div className="gsp-footer__info">
           <div className="gsp-footer__lbl">YOUR SELECTION</div>
-          <div className="gsp-footer__sel">{selectionLabel || "ยังไม่ได้เลือก · No selection yet"}</div>
+          <div className="gsp-footer__sel">{selectionLabel || "ยังไม่ได้เลือก No selection yet"}</div>
         </div>
         <button type="button" className="gsp-confirm" disabled={kind == null || isSubmitting || editorMode}
           onClick={() => !editorMode && kind != null && setConfirmOpen(true)}>
@@ -276,7 +276,7 @@ export default function GumroadSingleParty({
                   {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
                 </div>
                 <div className="gsp-modal__info">
-                  <span className="gsp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span> · CANDIDATE</span>
+                  <span className="gsp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span>  CANDIDATE</span>
                   <h3 className="gsp-modal__name">{modalMember.name}</h3>
                   <dl className="gsp-modal__rows">
                     <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>

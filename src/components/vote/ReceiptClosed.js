@@ -71,7 +71,7 @@ export default function ReceiptClosed({
       <div className="rc-closed-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span><span className="rc-th">สถานะระบบ</span> · SYSTEM STATUS</span>
+          <span><span className="rc-th">สถานะระบบ</span>  SYSTEM STATUS</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -85,8 +85,8 @@ export default function ReceiptClosed({
               <span className="rc-closed-usedtk rc-closed-usedtk--3" />
               <span className="rc-closed-usedtk rc-closed-usedtk--2" />
               <span className="rc-closed-usedtk rc-closed-usedtk--1">
-                <span className="rc-closed-usedtk__h rc-mono">QUEUE · USED</span>
-                <span className="rc-closed-usedtk__ref rc-mono">{prefix} {number} · 0142</span>
+                <span className="rc-closed-usedtk__h rc-mono">QUEUE / USED</span>
+                <span className="rc-closed-usedtk__ref rc-mono">{prefix} {number}  0142</span>
               </span>
               <span className="rc-closed-usedband" />
             </div>
@@ -95,7 +95,7 @@ export default function ReceiptClosed({
                 the slip emerges from (A2 language, ported from ReceiptHome) */}
             <div className={`rc-closed-disp rc-disp led-${ledState}`}>
               <div className="rc-disp-body">
-                <span className="rc-disp-label rc-mono">{prefix} {number} · CLOSED</span>
+                <span className="rc-disp-label rc-mono">{prefix} {number}  CLOSED</span>
                 <span className="rc-disp-led" aria-hidden="true" />
               </div>
               <div className="rc-disp-slot" aria-hidden="true" />
@@ -113,7 +113,7 @@ export default function ReceiptClosed({
 
               <div className="rc-closed-cap">
                 <span className="rc-closed-cap__dia" aria-hidden="true" />
-                <span className="rc-th">{eyebrow.th}</span> · {eyebrow.en}
+                <span className="rc-th">{eyebrow.th}</span>  {eyebrow.en}
               </div>
               <h1 className="rc-closed-head">{title}</h1>
 

@@ -102,11 +102,11 @@ export default function ReceiptPartyIntro({ party = {}, onDone = () => {}, durat
 
         <motion.div className="rc-intro__masthead"
           initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.42, ease: EASE, delay: 0.16 }}>
-          <span>{prefix} {edition} · FMS ELECTION</span>
+          <span>{prefix} {edition}  FMS ELECTION</span>
           <span>พรรคเดียวที่ลงสมัคร</span>
         </motion.div>
 
-        <p className="rc-intro__label">หมายเลขผู้สมัคร · PARTY NUMBER</p>
+        <p className="rc-intro__label">หมายเลขผู้สมัคร PARTY NUMBER</p>
 
         {/* จังหวะหลัก: เลขพรรคถูกกระแทกลงกระดาษ พร้อมรอยหมึกซ้อนที่จางออกทันที */}
         <motion.div className="rc-intro__numeral"

@@ -25,8 +25,8 @@ export default function StudioDarkLogin({
   return (
     <div className="sdl-root">
       <StudioDarkBaseStyles />
-      <span className="sdl-corner sdl-corner--tl">FMS ELECTION · SAMO</span>
-      <span className="sdl-corner sdl-corner--br">SECURED · PSU PASSPORT</span>
+      <span className="sdl-corner sdl-corner--tl">FMS ELECTION / SAMO</span>
+      <span className="sdl-corner sdl-corner--br">SECURED BY PSU PASSPORT</span>
 
       <main className="sdl-main">
         <div className="sdl-card">

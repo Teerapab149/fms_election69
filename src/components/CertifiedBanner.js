@@ -37,10 +37,10 @@ export default function CertifiedBanner({ by, at }) {
             </p>
             <p className="mt-1 text-sm text-emerald-800 print:text-black">
               รับรองโดย <span className="font-semibold">{by || "เจ้าหน้าที่คณะ"}</span>
-              {when ? <> · {when}</> : null}
+              {when ? <>  {when}</> : null}
             </p>
             <p className="mt-1 text-xs text-emerald-700/80 print:text-black">
-              คะแนนถูกล็อกแล้ว ไม่มีการรับคะแนนเพิ่มได้อีก · สั่งพิมพ์หน้านี้เพื่อใช้เป็นเอกสารแนบได้
+              คะแนนถูกล็อกแล้ว ไม่มีการรับคะแนนเพิ่มได้อีก สั่งพิมพ์หน้านี้เพื่อใช้เป็นเอกสารแนบได้
             </p>
           </div>
         </div>

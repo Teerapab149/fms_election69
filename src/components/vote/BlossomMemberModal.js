@@ -99,28 +99,28 @@ export default function BlossomMemberModal({ member = null, no = null, onClose =
 
   const idBlock = (
     <div className="blm__id">
-      <span className="blm__kick">{prefix} {number} · CANDIDATE PROFILE</span>
+      <span className="blm__kick">{prefix} {number}  CANDIDATE PROFILE</span>
       <h3 className="blm__name">{member.name}</h3>
       {(member.position || member.major) && (
-        <p className="blm__role">{[member.position, member.major].filter(Boolean).join(" · ")}</p>
+        <p className="blm__role">{[member.position, member.major].filter(Boolean).join(", ")}</p>
       )}
 
       <dl className="blm__reg">
         {member.studentId && (
           <div>
-            <dt><span className="bl-th">รหัสนักศึกษา</span> · STUDENT ID</dt>
+            <dt><span className="bl-th">รหัสนักศึกษา</span>  STUDENT ID</dt>
             <dd className="blm__mono">{member.studentId}</dd>
           </div>
         )}
         {member.position && (
           <div>
-            <dt><span className="bl-th">ตำแหน่ง</span> · POSITION</dt>
+            <dt><span className="bl-th">ตำแหน่ง</span>  POSITION</dt>
             <dd>{member.position}</dd>
           </div>
         )}
         {member.major && (
           <div>
-            <dt><span className="bl-th">สาขาวิชา</span> · MAJOR</dt>
+            <dt><span className="bl-th">สาขาวิชา</span>  MAJOR</dt>
             <dd>{member.major}</dd>
           </div>
         )}
@@ -133,7 +133,7 @@ export default function BlossomMemberModal({ member = null, no = null, onClose =
       <div className={`blm__card${hasCutout ? " is-cutout" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* eyebrow + member-number pill */}
         <div className="blm__top">
-          <span className="blm__eyebrow"><i className="blm__tick" aria-hidden="true" />CANDIDATE FILE · <span className="bl-th">ผู้สมัคร</span></span>
+          <span className="blm__eyebrow"><i className="blm__tick" aria-hidden="true" />CANDIDATE FILE <span className="bl-th">ผู้สมัคร</span></span>
           {/* no = ลำดับในทีมที่หน้าพรรคส่งมา ไม่ใช่ member.number ซึ่งเป็นกุญแจเรียงลำดับ */}
           {no != null && <span className="blm__no"><span className="blm__no-l bl-th">ลำดับที่</span> {pad2(no)}</span>}
         </div>

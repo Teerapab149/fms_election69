@@ -7,7 +7,7 @@
 export default function SiteFooterGumroad({ faculty = "FMS", uni = "PSU", year = "" }) {
   return (
     <footer className="sfoot" data-element="site-footer" data-variant="gumroad">
-      <div>© {faculty}@{uni} {year} · ALL RIGHTS RESERVED</div>
+      <div>© {faculty}@{uni} {year}  ALL RIGHTS RESERVED</div>
       <style jsx global>{`
         .sfoot{
           margin-top:auto; border-top:2.5px solid var(--foot-border, var(--ink, #26271c));

@@ -80,7 +80,7 @@ export default function OriginalSuccess({ user = null, isUnlocked = false, hasFo
 
       <div className="relative mx-auto w-full max-w-5xl px-5 py-6 md:px-10 md:py-14">
         <div className="os-edition flex flex-wrap items-center justify-between gap-3">
-          <span className="os-chip">{gc.electionNamePrefix || "SAMO"} {gc.electionNumber ?? ""} · PARTICIPATION</span>
+          <span className="os-chip">{gc.electionNamePrefix || "SAMO"} {gc.electionNumber ?? ""}  PARTICIPATION</span>
           <span className="os-stamp"><Check size={14} aria-hidden /> ใช้สิทธิ์แล้ว</span>
         </div>
 

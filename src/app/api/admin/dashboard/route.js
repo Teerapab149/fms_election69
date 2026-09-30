@@ -313,7 +313,7 @@ async function handleAction(body, auth) {
         plan,
         options,
         message: changed.length
-          ? `ปรับตัวเลือกในบัตรเรียบร้อย — ${changed.join(" · ")}`
+          ? `ปรับตัวเลือกในบัตรเรียบร้อย — ${changed.join(", ")}`
           : "ตัวเลือกในบัตรครบถูกต้องอยู่แล้ว ไม่มีอะไรต้องแก้",
       });
     }

@@ -66,7 +66,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
       <div className="rc-cand-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span><span className="rc-th">ผู้สมัคร</span> · CANDIDATES</span>
+          <span><span className="rc-th">ผู้สมัคร</span>  CANDIDATES</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -75,8 +75,8 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
             {/* ---- LEFT: the INDEX strip (party directory), masthead on the sheet ---- */}
             <aside className="rc-index" aria-label="สารบบผู้สมัคร">
               <div className="rc-index-mast">
-                <span className="rc-index-serial rc-mono">INDEX · No. {prefix} {number} · {pad2(count)}</span>
-                <span className="rc-index-eyebrow rc-mono">✶ {faculty} ELECTION{calYear !== "" ? ` · ${calYear}` : ""} ✶</span>
+                <span className="rc-index-serial rc-mono">INDEX No. {prefix} {number}  {pad2(count)}</span>
+                <span className="rc-index-eyebrow rc-mono">✶ {faculty} ELECTION{calYear !== "" ? ` ${calYear}` : ""} ✶</span>
                 <h1 className="rc-index-title">ผู้สมัคร</h1>
                 <div className="rc-index-count"><strong>{pad2(count)}</strong><span><span className="rc-th">พรรค</span><br />PARTIES</span></div>
                 <p className="rc-index-deck">เลือกพรรคเพื่อเปิดอ่านวิสัยทัศน์ นโยบาย และรายชื่อทีมงานทั้งหมด ก่อนตัดสินใจกาบัตร</p>
@@ -84,7 +84,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
               <div className="rc-perf" aria-hidden="true" />
 
               <ol className="rc-index-list">
-                <li className="rc-index-head" aria-hidden="true"><span>NO.</span><span><span className="rc-th">พรรค</span> · PARTY</span></li>
+                <li className="rc-index-head" aria-hidden="true"><span>NO.</span><span><span className="rc-th">พรรค</span>  PARTY</span></li>
                 {parties.map((p, i) => (
                   <li className="rc-index-row" key={p.id || i}>
                     <a className="rc-index-link" href={`#rc-flyer-${p.number}`}>
@@ -163,7 +163,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
               </a>
             </div>
             <span className="rc-chip" aria-hidden="true"><span className="rc-foil rc-foil--conic" /></span>
-            <span className="rc-cand-ref rc-mono" aria-hidden="true">{prefix} {number} · INDEX · {pad2(count)}</span>
+            <span className="rc-cand-ref rc-mono" aria-hidden="true">{prefix} {number}  INDEX {pad2(count)}</span>
           </div>
         )}
 

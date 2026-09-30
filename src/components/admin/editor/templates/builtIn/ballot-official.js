@@ -323,11 +323,11 @@ function ballotVariant(slug, name, description) {
   };
 }
 
-export const ballotForestTemplate = ballotVariant("ballot-official-forest", "Ballot · Forest",
+export const ballotForestTemplate = ballotVariant("ballot-official-forest", "Ballot Forest",
   "โทนเขียวเข้ม — สงบ เป็นกลาง ไม่ชนกับสีประจำพรรคใด");
-export const ballotBrickTemplate = ballotVariant("ballot-official-brick", "Ballot · Brick",
+export const ballotBrickTemplate = ballotVariant("ballot-official-brick", "Ballot Brick",
   "โทนแดงอิฐ — อบอุ่น หนักแน่น ใกล้เคียงอุณหภูมิสีม่วงเดิม");
-export const ballotGraphiteTemplate = ballotVariant("ballot-official-graphite", "Ballot · Graphite",
+export const ballotGraphiteTemplate = ballotVariant("ballot-official-graphite", "Ballot Graphite",
   "โทนเทาชนวน — เงียบที่สุด ไม่มีสีให้ตีความ เหมาะกับปีที่ผลคะแนนสูสี");
 
 export default ballotOfficialTemplate;

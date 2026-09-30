@@ -125,10 +125,10 @@ export default function StudioDarkClosed({
   let factual = null;
   if (variant === "waiting") {
     const d = formatThaiDate(ELECTION_START);
-    if (d) factual = `เปิดลงคะแนน ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `เปิดลงคะแนน ${d} เวลา ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
   } else if (variant === "ended") {
     const d = formatThaiDate(ELECTION_END);
-    if (d) factual = `ปิดลงคะแนน ${d} · ${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `ปิดลงคะแนน ${d} เวลา ${formatThaiTime(ELECTION_END)}`;
   }
 
   return (
@@ -144,7 +144,7 @@ export default function StudioDarkClosed({
       <div className="sdcl-scene">
         <div className="sdcl-card">
           <div className="sdcl-mark"><Icon size={28} strokeWidth={2} /></div>
-          <div className="sdcl-kicker"><span className="sd-nw">{v.kickerEn}</span> · <span className="sd-thai">{v.kickerTh}</span></div>
+          <div className="sdcl-kicker"><span className="sd-nw">{v.kickerEn}</span>  <span className="sd-thai">{v.kickerTh}</span></div>
           <h1 className="sdcl-headline">{v.headline}</h1>
 
           {cd && (

@@ -214,7 +214,7 @@ function GumroadConfirm(props) {
     <ConfirmShell {...props} vars={vars} rootClass="vc-gm" scrim="color-mix(in srgb, var(--ink) 72%, transparent)">
       <div className="vc-gm__card">
         <div className="vc-gm__bar">
-          <span>CONFIRM · ยืนยัน</span>
+          <span>CONFIRM ยืนยัน</span>
           <button type="button" onClick={onClose} disabled={isSubmitting} aria-label="ปิด"><X size={17} strokeWidth={3} /></button>
         </div>
         <div className="vc-gm__body">

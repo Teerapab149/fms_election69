@@ -10,7 +10,7 @@ export default function MeetSectionGumroad({ href, title = "รู้จัก�
     <a href={href} className="gh-meet" data-element="meet-section" data-variant="gumroad">
       <div>
         <h3 className="gh-meet__title">{title}</h3>
-        <p className="gh-meet__sub">{partyCount} พรรคในปีนี้ · ดูวิสัยทัศน์ก่อนลงคะแนน</p>
+        <p className="gh-meet__sub">{partyCount} พรรคในปีนี้ ดูวิสัยทัศน์ก่อนลงคะแนน</p>
       </div>
       <span className="gh-meet__go">ดูผู้สมัคร <ArrowRight size={20} strokeWidth={2.6} /></span>
       <style jsx global>{`

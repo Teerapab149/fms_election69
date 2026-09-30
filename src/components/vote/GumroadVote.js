@@ -63,7 +63,8 @@ export default function GumroadVote({
   const special = isSingleParty ? specialOptions?.disapprove : specialOptions?.abstain;
   const specialId = special?.id;
   const specialElementId = isSingleParty ? "vote-disapprove-button" : "vote-abstain-button";
-  const specialTitle = isSingleParty ? "ไม่รับรอง · Disapprove" : "งดออกเสียง · Abstain";
+  const specialTh = isSingleParty ? "ไม่รับรอง" : "งดออกเสียง";
+  const specialTitle = `${specialTh} ${isSingleParty ? "Disapprove" : "Abstain"}`;
   const specialDesc = isSingleParty
     ? "ไม่เห็นชอบให้พรรคเดียวที่ลงสมัครดำรงตำแหน่ง"
     : "ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้";
@@ -73,7 +74,7 @@ export default function GumroadVote({
     if (selectedPartyId == null) return null;
     const p = regularParties.find((x) => x.id === selectedPartyId);
     if (p) return p.name;
-    if (specialId === selectedPartyId) return specialTitle.split(" · ")[0];
+    if (specialId === selectedPartyId) return specialTh;
     return null;
   })();
 
@@ -120,14 +121,14 @@ export default function GumroadVote({
         {/* HEAD */}
         <div className="gv-head">
           <Wrap id="vote-header-badge">
-            <span className="gv-sticker gv-sticker--pink" data-element="vote-header-badge"><span className="gv-livedot" /> ลงคะแนนเสียง · LIVE BALLOT</span>
+            <span className="gv-sticker gv-sticker--pink" data-element="vote-header-badge"><span className="gv-livedot" /> ลงคะแนนเสียง LIVE BALLOT</span>
           </Wrap>
           <Wrap id="vote-header-title">
             <h1 className="gv-title" data-element="vote-header-title">เลือกตั้ง<em>{orgShort}</em></h1>
           </Wrap>
           <Wrap id="vote-header-subtitle">
             <p className="gv-subtitle" data-element="vote-header-subtitle">
-              {userName ? <>สวัสดีคุณ <strong>{userName}</strong> · </> : null}คลิกพรรคที่คุณต้องการ{isSingleParty ? " หรือเลือกไม่รับรอง" : " หรือเลือกงดออกเสียง"}
+              {userName ? <>สวัสดีคุณ <strong>{userName}</strong>  </> : null}คลิกพรรคที่คุณต้องการ{isSingleParty ? " หรือเลือกไม่รับรอง" : " หรือเลือกงดออกเสียง"}
             </p>
           </Wrap>
           {closeTime && (
@@ -160,7 +161,7 @@ export default function GumroadVote({
         </div>
 
         {/* OR divider */}
-        <div className="gv-or"><hr /><span>หรือ · OR</span><hr /></div>
+        <div className="gv-or"><hr /><span>หรือ OR</span><hr /></div>
 
         {/* SPECIAL OPTION (abstain / disapprove) */}
         <Wrap id={specialElementId}>
@@ -189,7 +190,7 @@ export default function GumroadVote({
       <div className="gv-footer">
         <div className="gv-footer__info">
           <div className="gv-footer__lbl">YOUR SELECTION</div>
-          <div className="gv-footer__sel">{selectedName || "ยังไม่ได้เลือก · No selection yet"}</div>
+          <div className="gv-footer__sel">{selectedName || "ยังไม่ได้เลือก No selection yet"}</div>
         </div>
         <button
           type="button"

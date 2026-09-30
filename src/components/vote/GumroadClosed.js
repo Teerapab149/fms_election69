@@ -74,10 +74,10 @@ export default function GumroadClosed({ title, desc, variant = "closed", session
   let factual = null;
   if (variant === "waiting") {
     const d = formatThaiDate(ELECTION_START);
-    if (d) factual = `เปิดลงคะแนน ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `เปิดลงคะแนน ${d} เวลา ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
   } else if (variant === "ended") {
     const d = formatThaiDate(ELECTION_END);
-    if (d) factual = `ปิดลงคะแนน ${d} · ${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `ปิดลงคะแนน ${d} เวลา ${formatThaiTime(ELECTION_END)}`;
   }
 
   const logoutBtn = (
@@ -98,7 +98,7 @@ export default function GumroadClosed({ title, desc, variant = "closed", session
     <div className="gcl-state">
       {cd && (
         <div className="gcl-cd" role="timer" aria-label="เวลาที่เหลือก่อนเปิดลงคะแนน">
-          <div className="gcl-cd__lbl">STARTS IN · <span className="gm-thai">เปิดรับลงคะแนนใน</span></div>
+          <div className="gcl-cd__lbl">STARTS IN <span className="gm-thai">เปิดรับลงคะแนนใน</span></div>
           <div className="gcl-cd__grid">
             {CD_UNITS.map(([k, u]) => (
               <div className="gcl-cd__cell" key={u}>

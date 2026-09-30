@@ -40,7 +40,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
       label="Candidates"
       labelTh="ผู้สมัคร"
       editorMode={editorMode}
-      right={<span>{parties.length} PARTIES{memberTotal > 0 ? <>&nbsp;·&nbsp;{memberTotal} CANDIDATES</> : null}</span>}
+      right={<span>{parties.length} PARTIES{memberTotal > 0 ? <>&nbsp;/&nbsp;{memberTotal} CANDIDATES</> : null}</span>}
     >
       <div className="sd-scene-h">
         <div>
@@ -81,7 +81,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
               >
                 <div className="sdc-panel__head">
                   <h2 className="sdc-panel__no">{no.slice(0, -1)}<em>{no.slice(-1)}</em></h2>
-                  <span className="sd-smallcaps">PARTY · <span className="sdc-accent">№ {no}</span></span>
+                  <span className="sd-smallcaps">PARTY <span className="sdc-accent">№ {no}</span></span>
                 </div>
 
                 <div className={`sdc-panel__media ${media ? "" : "sd-media-ph"}`}>
@@ -90,7 +90,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
                   ) : logo ? (
                     <img src={logo} alt={p.name} className="sdc-panel__media-logo" />
                   ) : (
-                    <span>★ TEAM PHOTO{p.members?.length ? ` · ${p.members.length} MEMBERS` : ""} ★</span>
+                    <span>★ TEAM PHOTO{p.members?.length ? ` / ${p.members.length} MEMBERS` : ""} ★</span>
                   )}
                 </div>
 
@@ -117,7 +117,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
           {parties.length % 2 === 1 && (
             <div className="sdc-panel sdc-filler" aria-hidden="true" style={{ "--sdc-i": parties.length }}>
               <span className="sdc-filler__mark">✦</span>
-              <span className="sdc-filler__note"><span className="sd-nw">ABSTAIN IS A RIGHT</span> · <span className="sd-thai">งดออกเสียงคือสิทธิ์</span></span>
+              <span className="sdc-filler__note"><span className="sd-nw">ABSTAIN IS A RIGHT</span>  <span className="sd-thai">งดออกเสียงคือสิทธิ์</span></span>
             </div>
           )}
         </div>

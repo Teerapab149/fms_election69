@@ -93,7 +93,7 @@ function ImageField({ value, onChange }) {
             </button>
           )}
         </div>
-        <p className="text-xs text-slate-500 mt-2">JPG, PNG หรือ WebP · ถ้าโปสเตอร์ใหม่มีวันที่ ตรวจว่าตรงกับวันเลือกตั้งจริง</p>
+        <p className="text-xs text-slate-500 mt-2">JPG, PNG หรือ WebP ถ้าโปสเตอร์ใหม่มีวันที่ ตรวจว่าตรงกับวันเลือกตั้งจริง</p>
         {err && (
           <p className="flex items-center gap-1.5 text-xs text-red-600 mt-2">
             <AlertCircle className="w-4 h-4" /> {err}
@@ -432,7 +432,7 @@ export default function GlobalConfigTab() {
             <p className="lg:col-span-3 text-[13px] text-slate-600">เปิดรับลงคะแนน <b>{thaiDuration(e - s)}</b></p>
           )}
           <p className="lg:col-span-3 text-xs text-slate-500">
-            โหมด AUTO เปิด-ปิดหีบตามเวลานี้ · การสั่งเปิด-ปิดด้วยมืออยู่ที่เมนู ตั้งค่าระบบ
+            โหมด AUTO เปิด-ปิดหีบตามเวลานี้ การสั่งเปิด-ปิดด้วยมืออยู่ที่เมนู ตั้งค่าระบบ
           </p>
         </div>
       );
@@ -457,13 +457,13 @@ export default function GlobalConfigTab() {
   };
 
   const orgSummary = [view.campaignTitle, view.organizationName, `${view.facultyShortEn || "—"}@${view.university || "—"}`]
-    .map((x) => String(x ?? "").trim()).filter(Boolean).join(" · ");
+    .map((x) => String(x ?? "").trim()).filter(Boolean).join(", ");
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-28">
       <div className="mb-6">
         <h2 className="text-2xl font-black text-slate-800">ตั้งค่าทั่วไป</h2>
-        <p className="text-sm text-slate-500 mt-1">ข้อมูลของการเลือกตั้งที่แสดงบนเว็บ · การสั่งเปิด-ปิดระบบอยู่ที่เมนู ตั้งค่าระบบ</p>
+        <p className="text-sm text-slate-500 mt-1">ข้อมูลของการเลือกตั้งที่แสดงบนเว็บ การสั่งเปิด-ปิดระบบอยู่ที่เมนู ตั้งค่าระบบ</p>
       </div>
 
       {error && (
@@ -482,7 +482,7 @@ export default function GlobalConfigTab() {
           <div className="flex items-baseline justify-between gap-4">
             <div>
               <h3 className="text-lg font-black text-slate-800">เตรียมการเลือกตั้ง {wordmark}</h3>
-              <p className="text-[13px] text-slate-500 mt-0.5">สิ่งที่ต้องตั้งใหม่ทุกปี · กดแต่ละแถวเพื่อแก้</p>
+              <p className="text-[13px] text-slate-500 mt-0.5">สิ่งที่ต้องตั้งใหม่ทุกปี กดแต่ละแถวเพื่อแก้</p>
             </div>
             <p className="text-sm text-slate-600 whitespace-nowrap"><b className="text-lg text-slate-800">{list.ready}</b> / {list.total} พร้อม</p>
           </div>
@@ -551,7 +551,7 @@ export default function GlobalConfigTab() {
               after: manual.has("organizationName") && (
                 <div className="mt-3 flex flex-wrap items-start gap-1.5 text-[17px] text-slate-800">{slot("facultyName", "ชื่อคณะ (ใช้ต่อท้ายชื่อโครงการในหน้าอื่น)")}</div>
               ),
-              where: `${FIELD.organizationName?.where} · ชื่อคณะต่อท้ายชื่อโครงการในหน้าผู้สมัคร ผลคะแนน พรรค`,
+              where: `${FIELD.organizationName?.where} ชื่อคณะต่อท้ายชื่อโครงการในหน้าผู้สมัคร ผลคะแนน พรรค`,
             })}
 
             {sentence({
@@ -563,7 +563,7 @@ export default function GlobalConfigTab() {
                   <span className="py-2 text-slate-500">{String(view.copyrightYear ?? "").trim() || "—"}. All Rights Reserved.</span>
                 </>
               ),
-              where: "ท้ายทุกหน้า · ปีตั้งที่ \"ครั้งที่และปีการศึกษา\" ด้านบน",
+              where: "ท้ายทุกหน้า ปีตั้งที่ \"ครั้งที่และปีการศึกษา\" ด้านบน",
             })}
           </div>
         )}
@@ -574,7 +574,7 @@ export default function GlobalConfigTab() {
         <div className="sticky bottom-4 mt-6 bg-white rounded-2xl border border-slate-200 shadow-lg p-4 flex items-center justify-between gap-4">
           {changed.length > 0 ? (
             <>
-              <span className="text-sm text-slate-600">แก้ไข {changed.length} ช่อง · ยังไม่ได้บันทึก</span>
+              <span className="text-sm text-slate-600">แก้ไข {changed.length} ช่อง ยังไม่ได้บันทึก</span>
               <span className="flex items-center gap-2">
                 <button type="button" onClick={handleCancel} disabled={saving}
                   className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">

@@ -25,7 +25,7 @@ const MockLoginStatusBadge = ({ status }) => {
       <div className="flex items-start gap-3 p-4 rounded-2xl border bg-slate-50 border-slate-200">
         <Loader2 className="w-5 h-5 shrink-0 mt-0.5 text-slate-400 animate-spin" />
         <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-500">การเข้าสู่ระบบจำลอง · กำลังตรวจสอบสถานะ</p>
+          <p className="text-sm font-bold text-slate-500">การเข้าสู่ระบบจำลอง กำลังตรวจสอบสถานะ</p>
           <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
             กำลังอ่านค่าจากเซิร์ฟเวอร์ที่กำลังรันอยู่
           </p>
@@ -48,8 +48,8 @@ const MockLoginStatusBadge = ({ status }) => {
 
   const title =
     tone === "danger"
-      ? "การเข้าสู่ระบบจำลอง · เส้นทางเปิดอยู่บนเซิร์ฟเวอร์นี้"
-      : "การเข้าสู่ระบบจำลอง · ปิดสนิท";
+      ? "การเข้าสู่ระบบจำลอง เส้นทางเปิดอยู่บนเซิร์ฟเวอร์นี้"
+      : "การเข้าสู่ระบบจำลอง ปิดสนิท";
 
   const detail =
     tone === "danger"
@@ -159,7 +159,7 @@ const ReadinessCard = () => {
         <div className="flex items-center gap-3">
           <div className="bg-[#8A2680]/10 text-[#8A2680] p-2.5 rounded-xl"><ShieldCheck className="h-6 w-6" /></div>
           <div>
-            <h3 className="text-xl font-bold text-slate-700">ตรวจความพร้อมระบบ · READINESS</h3>
+            <h3 className="text-xl font-bold text-slate-700">ตรวจความพร้อมระบบ READINESS</h3>
             <p className="text-sm text-slate-500">กดก่อนวันเลือกตั้งจริงเพื่อดูทุกอย่างที่ยังไม่พร้อม</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ const ReadinessCard = () => {
               <div key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="font-bold text-slate-600">{r.label}</span>
                 <span className="flex items-center gap-2">
-                  <span className="text-slate-700">{formatThaiDate(r.date)} · {formatThaiTime(r.date)}</span>
+                  <span className="text-slate-700">{formatThaiDate(r.date)}  {formatThaiTime(r.date)}</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${fromDb ? "bg-[#8A2680]/10 text-[#8A2680]" : "bg-slate-200 text-slate-500"}`}>
                     {fromDb ? "DB" : "ค่าเริ่มต้น"}
                   </span>
@@ -336,7 +336,7 @@ const SYSTEM_MODES = [
     when: 'ใช้เมื่อตั้ง AUTO ไว้แล้วระบบไม่เปิดหีบตามเวลาที่กำหนด จึงต้องเปิดเอง หรือต้องการเปิดก่อนกำหนด/ทดสอบระบบ — บังคับเปิดรับคะแนนทันที ไม่สนวันเวลาที่ตั้งไว้',
     students: 'หน้าลงคะแนนทันที แม้ยังไม่ถึงเวลาเปิดหีบตามกำหนด',
     // owner 2026-10-01: OPEN stays open on purpose — say so wherever it is chosen
-    note: 'OPEN จะไม่เปลี่ยนเป็น ENDED เอง แม้เลยเวลาปิดหีบแล้ว · เมื่อหมดเวลาเลือกตั้ง ต้องกลับมากด ENDED ด้วยตัวเอง',
+    note: 'OPEN จะไม่เปลี่ยนเป็น ENDED เอง แม้เลยเวลาปิดหีบแล้ว เมื่อหมดเวลาเลือกตั้ง ต้องกลับมากด ENDED ด้วยตัวเอง',
   },
   {
     id: 'PAUSE',
@@ -377,8 +377,8 @@ const STEP_STYLE = {
 };
 
 const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule, processing, onCloseBox, onPublish, onHide, onCertify }) => {
-  const endText = schedule.end ? formatThaiDate(schedule.end) + ' · ' + formatThaiTime(schedule.end) : '';
-  const closedHow = systemMode === 'ENDED' ? 'ปิดด้วยโหมด ENDED' : 'ปิดตามเวลา' + (endText ? ' · ' + endText : '');
+  const endText = schedule.end ? formatThaiDate(schedule.end) + ' เวลา ' + formatThaiTime(schedule.end) : '';
+  const closedHow = systemMode === 'ENDED' ? 'ปิดด้วยโหมด ENDED' : 'ปิดตามเวลา' + (endText ? ' ' + endText : '');
   const done = [boxClosed, isShowResult || certified, certified];
   const current = done.findIndex((d) => !d);
   const state = (i) => (done[i] ? 'done' : i === current ? 'current' : 'locked');
@@ -387,7 +387,7 @@ const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule
   const steps = [
     {
       title: 'ปิดหีบ',
-      desc: 'หยุดรับคะแนน · โหมด AUTO ปิดเองเมื่อถึงเวลาปิดหีบ · ถ้าใช้ OPEN อยู่ ต้องกด ENDED เอง',
+      desc: 'หยุดรับคะแนน โหมด AUTO ปิดเองเมื่อถึงเวลาปิดหีบ ถ้าใช้ OPEN อยู่ ต้องกด ENDED เอง',
       status: boxClosed ? closedHow : 'หีบยังเปิดรับคะแนนอยู่',
       action: !boxClosed && !certified && (
         <button type="button" onClick={onCloseBox} disabled={processing} className={btn + ' bg-red-600 text-white hover:bg-red-700'}>
@@ -397,8 +397,8 @@ const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule
     },
     {
       title: 'ประกาศผล',
-      desc: 'เปิดให้ทุกคนเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนน · เมื่อประกาศแล้ว เปิดหีบอีกไม่ได้จนกว่าจะซ่อนผล',
-      status: isShowResult ? 'ประกาศแล้ว · ทุกคนเห็นผลคะแนน' : (boxClosed ? 'พร้อมประกาศ' : 'ประกาศได้หลังปิดหีบ'),
+      desc: 'เปิดให้ทุกคนเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนน เมื่อประกาศแล้ว เปิดหีบอีกไม่ได้จนกว่าจะซ่อนผล',
+      status: isShowResult ? 'ประกาศแล้ว ทุกคนเห็นผลคะแนน' : (boxClosed ? 'พร้อมประกาศ' : 'ประกาศได้หลังปิดหีบ'),
       action: isShowResult
         ? (!certified && (
           <button type="button" onClick={onHide} disabled={processing} className={btn + ' bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'}>
@@ -415,7 +415,7 @@ const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule
     {
       title: 'รับรองผลอย่างเป็นทางการ',
       optional: true,
-      desc: 'บัญชีเจ้าหน้าที่คณะเท่านั้น (กรรมการสโมฯ กดไม่ได้) · บันทึกชื่อผู้รับรองกับวันเวลา ขึ้นเป็นแถบรับรองบนหน้าผลคะแนน · ไม่มีการลบข้อมูลใด ๆ · กดแล้วย้อนกลับไม่ได้ เปิดหีบใหม่ไม่ได้อีกในการเลือกตั้งครั้งนี้',
+      desc: 'บัญชีเจ้าหน้าที่คณะเท่านั้น (กรรมการสโมฯ กดไม่ได้) บันทึกชื่อผู้รับรองกับวันเวลา ขึ้นเป็นแถบรับรองบนหน้าผลคะแนน ไม่มีการลบข้อมูลใด ๆ กดแล้วย้อนกลับไม่ได้ เปิดหีบใหม่ไม่ได้อีกในการเลือกตั้งครั้งนี้',
       status: certified ? 'รับรองแล้ว' : (isShowResult && boxClosed ? 'พร้อมรับรอง' : 'รับรองได้หลังประกาศผล'),
       action: !certified && (
         <button type="button" onClick={onCertify} disabled={processing || !isShowResult || !boxClosed}
@@ -430,7 +430,7 @@ const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule
   return (
     <div className="p-6 max-sm:p-4 bg-slate-50 rounded-2xl border border-slate-100">
       <h4 className="text-lg font-bold text-slate-800">ขั้นตอนปิดการเลือกตั้ง</h4>
-      <p className="text-sm text-slate-500 mt-1">ทำตามลำดับ · ปุ่มของขั้นถัดไปจะกดได้เมื่อขั้นก่อนหน้าเสร็จแล้ว</p>
+      <p className="text-sm text-slate-500 mt-1">ทำตามลำดับ ปุ่มของขั้นถัดไปจะกดได้เมื่อขั้นก่อนหน้าเสร็จแล้ว</p>
       <ol className="mt-5 space-y-3">
         {steps.map((st, i) => {
           const k = state(i); const sty = STEP_STYLE[k];
@@ -443,7 +443,7 @@ const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h5 className="text-base font-bold text-slate-800">{st.title}</h5>
-                    <span className={'text-[11px] font-bold ' + sty.labelCls}>· {sty.label}</span>
+                    <span className={'text-[11px] font-bold ' + sty.labelCls}> {sty.label}</span>
                     {st.optional && <span className="text-[11px] font-bold text-slate-500 px-1.5 py-0.5 rounded bg-slate-100">ไม่บังคับ</span>}
                   </div>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed break-words">{st.desc}</p>
@@ -541,7 +541,7 @@ const SettingsTab = () => {
           // (dashboard/route.js POST). ไม่มีลิงก์ผู้ลงคะแนน→พรรคในฐานข้อมูลตั้งแต่แรก
           // (Ballot ไม่มี userId, User ไม่มี candidateId) ข้อความเดิมเขียนว่า
           // "ความเชื่อมโยง...ถูกลบถาวรแล้ว" ซึ่งผิด และขัดกับการ์ดในหน้าเดียวกัน
-          setSuccessMessage({ title: 'รับรองผลเรียบร้อย!', msg: 'ปักธงรับรองผลแล้ว คะแนนรวมของทุกพรรคถูกล็อกไว้ครบ · บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ' });
+          setSuccessMessage({ title: 'รับรองผลเรียบร้อย!', msg: 'ปักธงรับรองผลแล้ว คะแนนรวมของทุกพรรคถูกล็อกไว้ครบ บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ' });
         }
         setIsSuccessOpen(true);
         fetchConfig();
@@ -613,7 +613,7 @@ const SettingsTab = () => {
           {isShowResult && !certified && (
             <p className="mt-3 text-xs font-bold text-amber-700 flex items-start gap-1.5 leading-relaxed break-words">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              ผลคะแนนกำลังแสดงอยู่ จึงเปิดหีบหรือพักระบบไม่ได้ · ถ้าต้องเปิดหีบอีกครั้ง ให้ปิดการแสดงผลก่อน
+              ผลคะแนนกำลังแสดงอยู่ จึงเปิดหีบหรือพักระบบไม่ได้ ถ้าต้องเปิดหีบอีกครั้ง ให้ปิดการแสดงผลก่อน
             </p>
           )}
 
@@ -691,7 +691,7 @@ const SettingsTab = () => {
                 ขึ้นปีการศึกษาใหม่
               </h4>
               <p className="text-xs text-red-700/70 mt-0.5 leading-relaxed break-words">
-                การล้างข้อมูลกู้คืนไม่ได้ และไม่มีปุ่มในหน้านี้โดยตั้งใจ · การรับรองผลย้ายไปอยู่ในขั้นตอนปิดการเลือกตั้งด้านบน
+                การล้างข้อมูลกู้คืนไม่ได้ และไม่มีปุ่มในหน้านี้โดยตั้งใจ การรับรองผลย้ายไปอยู่ในขั้นตอนปิดการเลือกตั้งด้านบน
               </p>
             </div>
           </div>
@@ -753,8 +753,8 @@ const SettingsTab = () => {
            ทำให้ความคืบหน้าการใช้สิทธิ์ยังอยู่ในแท็บภาพรวมของแอดมินเสมอ ข้อความเดิมบอกว่า
            "ข้อมูลสถิติ" ถูกปิดกั้นด้วย ซึ่งไม่จริงสำหรับแอดมิน */
         message={isShowResult
-          ? "เมื่อซ่อนผลคะแนน คะแนนของแต่ละพรรคจะถูกปิดจากทุกคนรวมถึงแอดมินเอง · ความคืบหน้าการใช้สิทธิ์ในแท็บภาพรวมยังดูได้ตามปกติ"
-          : "ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที · เมื่อประกาศแล้ว จะเปิดหีบอีกไม่ได้จนกว่าจะซ่อนผลก่อน"}
+          ? "เมื่อซ่อนผลคะแนน คะแนนของแต่ละพรรคจะถูกปิดจากทุกคนรวมถึงแอดมินเอง ความคืบหน้าการใช้สิทธิ์ในแท็บภาพรวมยังดูได้ตามปกติ"
+          : "ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที เมื่อประกาศแล้ว จะเปิดหีบอีกไม่ได้จนกว่าจะซ่อนผลก่อน"}
         variant="primary"
         isLoading={processing}
       />
@@ -768,7 +768,7 @@ const SettingsTab = () => {
            ของเดิมเขียนว่าความเชื่อมโยง "ใครเลือกพรรคใด" จะถูกลบถาวร ซึ่งไม่จริง — ลิงก์นั้น
            ไม่เคยถูกเก็บ (v2-SEC) จึงไม่มีอะไรให้ลบ */
         title="รับรองผลอย่างเป็นทางการ?"
-        message={`นี่คือการปักธงรับรองผลครั้งสุดท้าย — คะแนนรวมของทุกพรรคถูกล็อก เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก · ระบบไม่เคยเก็บว่าใครเลือกพรรคใด บัตรทุกใบถูกบันทึกแบบไม่มีชื่อผู้ลงคะแนนอยู่แล้ว จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ · กดแล้วย้อนกลับไม่ได้`}
+        message={`นี่คือการปักธงรับรองผลครั้งสุดท้าย — คะแนนรวมของทุกพรรคถูกล็อก เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก ระบบไม่เคยเก็บว่าใครเลือกพรรคใด บัตรทุกใบถูกบันทึกแบบไม่มีชื่อผู้ลงคะแนนอยู่แล้ว จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ กดแล้วย้อนกลับไม่ได้`}
         variant="danger"
         isLoading={processing}
       />

@@ -8,10 +8,10 @@ export default function StatsEligibleGumroad({ eligible = 0, pct = "0.00" }) {
   const width = Math.max(2, Math.min(100, parseFloat(pct) || 0));
   return (
     <div className="gh-stat gh-stat--lime" data-element="stats-eligible-card" data-variant="gumroad">
-      <div className="gh-stat__lbl"><span className="gm-thai">ผู้มีสิทธิ์รวม</span> · ELIGIBLE</div>
+      <div className="gh-stat__lbl"><span className="gm-thai">ผู้มีสิทธิ์รวม</span>  ELIGIBLE</div>
       <div className="gh-stat__val">{Number(eligible).toLocaleString()}<span className="gh-stat__unit">คน</span></div>
       <div className="gh-stat__foot">
-        <div className="gh-stat__sub">ความคืบหน้า · {pct}%</div>
+        <div className="gh-stat__sub">ความคืบหน้า {pct}%</div>
         <div className="gh-stat__bar"><span style={{ width: `${width}%` }} /></div>
       </div>
       <style jsx global>{`

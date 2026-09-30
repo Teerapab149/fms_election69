@@ -53,7 +53,7 @@ export default function FmsOfficialCandidates({ candidates = [], editorMode = fa
   return (
     <FmsOfficialShell
       active="candidates"
-      kicker={`${meta.campaign} · ปีการศึกษา ${meta.ay}`}
+      kicker={`${meta.campaign} ปีการศึกษา ${meta.ay}`}
       title="ผู้สมัครรับเลือกตั้ง"
       desc="รายชื่อพรรคที่ลงสมัครในปีนี้ เรียงตามหมายเลข เลือกดูรายละเอียดเพื่อศึกษานโยบายและทีมงานก่อนตัดสินใจ"
       editorMode={editorMode}

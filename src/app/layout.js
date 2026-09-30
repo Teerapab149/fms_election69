@@ -220,7 +220,7 @@ export async function generateMetadata() {
   const name = cfg.electionName || "SAMO";
   const fac = cfg.facultyShortEn || "FMS";
   const year = cfg.electionCalendarYear || "";
-  const title = `${name} · ${fac} Election ${year}`.trim();
+  const title = `${name} | ${fac} Election ${year}`.trim();
   const description = `ระบบเลือกตั้งออนไลน์ ${cfg.organizationName || "สโมสรนักศึกษา"}`;
 
   return {
