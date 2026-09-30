@@ -8,6 +8,7 @@ import ConfirmModal from "../ConfirmModal";
 import { AlertTriangle, CalendarDays, Power, PieChart as PieIcon, Trash2, Hourglass, Zap, X, Loader2, CheckCircle2, XCircle, ShieldCheck, Wrench } from "lucide-react";
 import { resolveElectionDates, parseBangkok, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { checkSetMode, describeModeChange, MODE_LABEL } from "../../lib/election/adminGuards.mjs";
 
 // ── SEC-MOCK2 · สถานะการเข้าสู่ระบบจำลอง (read-only) ─────────────────────────
 // แสดงให้แอดมินเห็นทันทีโดยไม่ต้องกด "ตรวจตอนนี้". ค่าที่ใช้มาจาก GET
@@ -334,6 +335,8 @@ const SYSTEM_MODES = [
     status: 'เปิดรับคะแนนด้วยตนเอง (Force Open)',
     when: 'ใช้เมื่อตั้ง AUTO ไว้แล้วระบบไม่เปิดหีบตามเวลาที่กำหนด จึงต้องเปิดเอง หรือต้องการเปิดก่อนกำหนด/ทดสอบระบบ — บังคับเปิดรับคะแนนทันที ไม่สนวันเวลาที่ตั้งไว้',
     students: 'หน้าลงคะแนนทันที แม้ยังไม่ถึงเวลาเปิดหีบตามกำหนด',
+    // owner 2026-10-01: OPEN stays open on purpose — say so wherever it is chosen
+    note: 'OPEN จะไม่เปลี่ยนเป็น ENDED เอง แม้เลยเวลาปิดหีบแล้ว · เมื่อหมดเวลาเลือกตั้ง ต้องกลับมากด ENDED ด้วยตัวเอง',
   },
   {
     id: 'PAUSE',
@@ -361,9 +364,109 @@ const SYSTEM_MODES = [
   },
 ];
 
+// ── ขั้นตอนปิดการเลือกตั้ง ─────────────────────────────────────────────────────
+// What happens after voting, in the only order that is safe: close the box →
+// publish → (optionally) staff certify. Each step's button opens only when the
+// one before is done; the server enforces the same order (lib/election/
+// adminGuards + the certify guard), this screen shows it. No IT-check step:
+// the committee publishes straight after closing (owner 2026-10-01).
+const STEP_STYLE = {
+  done:    { badge: 'bg-green-600 text-white border-green-600', row: 'bg-white border-green-200', label: 'เสร็จแล้ว', labelCls: 'text-green-700' },
+  current: { badge: 'bg-[#8A2680] text-white border-[#8A2680]', row: 'bg-white border-[#8A2680]/40 shadow-sm', label: 'ขั้นนี้', labelCls: 'text-[#8A2680]' },
+  locked:  { badge: 'bg-white text-slate-400 border-slate-300', row: 'bg-slate-50 border-slate-200', label: 'รอขั้นก่อนหน้า', labelCls: 'text-slate-500' },
+};
+
+const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule, processing, onCloseBox, onPublish, onHide, onCertify }) => {
+  const endText = schedule.end ? formatThaiDate(schedule.end) + ' · ' + formatThaiTime(schedule.end) : '';
+  const closedHow = systemMode === 'ENDED' ? 'ปิดด้วยโหมด ENDED' : 'ปิดตามเวลา' + (endText ? ' · ' + endText : '');
+  const done = [boxClosed, isShowResult || certified, certified];
+  const current = done.findIndex((d) => !d);
+  const state = (i) => (done[i] ? 'done' : i === current ? 'current' : 'locked');
+  const btn = 'shrink-0 inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed';
+
+  const steps = [
+    {
+      title: 'ปิดหีบ',
+      desc: 'หยุดรับคะแนน · โหมด AUTO ปิดเองเมื่อถึงเวลาปิดหีบ · ถ้าใช้ OPEN อยู่ ต้องกด ENDED เอง',
+      status: boxClosed ? closedHow : 'หีบยังเปิดรับคะแนนอยู่',
+      action: !boxClosed && !certified && (
+        <button type="button" onClick={onCloseBox} disabled={processing} className={btn + ' bg-red-600 text-white hover:bg-red-700'}>
+          <Power className="w-4 h-4" /> ปิดหีบตอนนี้ (ENDED)
+        </button>
+      ),
+    },
+    {
+      title: 'ประกาศผล',
+      desc: 'เปิดให้ทุกคนเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนน · เมื่อประกาศแล้ว เปิดหีบอีกไม่ได้จนกว่าจะซ่อนผล',
+      status: isShowResult ? 'ประกาศแล้ว · ทุกคนเห็นผลคะแนน' : (boxClosed ? 'พร้อมประกาศ' : 'ประกาศได้หลังปิดหีบ'),
+      action: isShowResult
+        ? (!certified && (
+          <button type="button" onClick={onHide} disabled={processing} className={btn + ' bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'}>
+            ซ่อนผล
+          </button>))
+        : (
+          <button type="button" onClick={onPublish} disabled={processing || !boxClosed}
+            title={!boxClosed ? 'ประกาศได้หลังปิดหีบแล้วเท่านั้น' : undefined}
+            className={btn + ' bg-[#8A2680] text-white hover:bg-[#7a2270]'}>
+            <PieIcon className="w-4 h-4" /> ประกาศผล
+          </button>
+        ),
+    },
+    {
+      title: 'รับรองผลอย่างเป็นทางการ',
+      optional: true,
+      desc: 'บัญชีเจ้าหน้าที่คณะเท่านั้น (กรรมการสโมฯ กดไม่ได้) · บันทึกชื่อผู้รับรองกับวันเวลา ขึ้นเป็นแถบรับรองบนหน้าผลคะแนน · ไม่มีการลบข้อมูลใด ๆ · กดแล้วย้อนกลับไม่ได้ เปิดหีบใหม่ไม่ได้อีกในการเลือกตั้งครั้งนี้',
+      status: certified ? 'รับรองแล้ว' : (isShowResult && boxClosed ? 'พร้อมรับรอง' : 'รับรองได้หลังประกาศผล'),
+      action: !certified && (
+        <button type="button" onClick={onCertify} disabled={processing || !isShowResult || !boxClosed}
+          title={!isShowResult ? 'ต้องประกาศผลก่อน' : undefined}
+          className={btn + ' bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-600 hover:text-white'}>
+          <ShieldCheck className="w-4 h-4" /> รับรองผล
+        </button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="p-6 max-sm:p-4 bg-slate-50 rounded-2xl border border-slate-100">
+      <h4 className="text-lg font-bold text-slate-800">ขั้นตอนปิดการเลือกตั้ง</h4>
+      <p className="text-sm text-slate-500 mt-1">ทำตามลำดับ · ปุ่มของขั้นถัดไปจะกดได้เมื่อขั้นก่อนหน้าเสร็จแล้ว</p>
+      <ol className="mt-5 space-y-3">
+        {steps.map((st, i) => {
+          const k = state(i); const sty = STEP_STYLE[k];
+          return (
+            <li key={st.title} className={'flex gap-4 p-4 rounded-xl border ' + sty.row + ' max-sm:flex-col max-sm:gap-3 max-sm:p-3'}>
+              <div className="flex gap-4 max-sm:gap-3 min-w-0 flex-1">
+                <span className={'shrink-0 w-9 h-9 max-sm:w-7 max-sm:h-7 max-sm:text-xs rounded-full border-2 flex items-center justify-center text-sm font-black ' + sty.badge} aria-hidden>
+                  {k === 'done' ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h5 className="text-base font-bold text-slate-800">{st.title}</h5>
+                    <span className={'text-[11px] font-bold ' + sty.labelCls}>· {sty.label}</span>
+                    {st.optional && <span className="text-[11px] font-bold text-slate-500 px-1.5 py-0.5 rounded bg-slate-100">ไม่บังคับ</span>}
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed break-words">{st.desc}</p>
+                  <p className={'text-xs font-bold mt-1.5 break-words ' + (k === 'done' ? 'text-green-700' : 'text-slate-700')}>{st.status}</p>
+                </div>
+              </div>
+              {st.action && <div className="sm:self-center max-sm:pl-10">{st.action}</div>}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+};
+
 const SettingsTab = () => {
   const [systemMode, setSystemMode] = useState("AUTO");
   const [isShowResult, setIsShowResult] = useState(false);
+  // from the server: whether the box is closed now, the schedule, certification —
+  // the same facts the API checks (lib/election/adminGuards)
+  const [boxClosed, setBoxClosed] = useState(false);
+  const [schedule, setSchedule] = useState({ start: null, end: null });
+  const [certified, setCertified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   // SEC-MOCK2 · null = ยังไม่รู้ (badge แสดงสถานะเป็นกลางจนกว่าจะรู้จริง)
@@ -378,14 +481,19 @@ const SettingsTab = () => {
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState({ title: '', msg: '' });
 
-  useEffect(() => {
-    const fetchConfig = async () => {
+  // re-read after every action instead of flipping local state: another admin
+  // may have changed something in the meantime, and the screen must show what
+  // the server now holds
+  const fetchConfig = async () => {
       try {
         const res = await fetch(getPath('/api/admin/dashboard'), { credentials: 'include' });
         const data = await res.json();
         if (data.stats) {
           setSystemMode(data.stats.systemMode || "AUTO");
           setIsShowResult(data.stats.showResult);
+          setBoxClosed(!!data.stats.boxClosed);
+          setCertified(!!data.stats.certified);
+          setSchedule({ start: data.stats.electionStart ? new Date(data.stats.electionStart) : null, end: data.stats.electionEnd ? new Date(data.stats.electionEnd) : null });
           if (typeof data.stats.mockLoginProviderRegistered === "boolean") {
             setMockLoginStatus({ providerRegistered: data.stats.mockLoginProviderRegistered });
           }
@@ -395,9 +503,8 @@ const SettingsTab = () => {
       } finally {
         setLoading(false);
       }
-    };
-    fetchConfig();
-  }, []);
+  };
+  useEffect(() => { fetchConfig(); }, []);
 
   const handleConfirmAction = async () => {
     if (!activeModal) return;
@@ -409,6 +516,9 @@ const SettingsTab = () => {
 
       if (action === 'SET_MODE') {
         body.mode = pendingMode;
+      }
+      if (action === 'SET_SHOW_RESULT') {
+        body.value = !isShowResult; // the value the admin saw the switch offer
       }
 
       const res = await fetch(getPath('/api/admin/dashboard'), {
@@ -422,11 +532,9 @@ const SettingsTab = () => {
 
       if (res.ok) {
         if (action === 'SET_MODE') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${pendingMode} เรียบร้อยแล้ว` });
-          setSystemMode(pendingMode);
-        } else if (action === 'TOGGLE_SHOW_RESULT') {
-          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: 'การตั้งค่าการแสดงผลได้ถูกเปลี่ยนแปลงเรียบร้อยแล้ว' });
-          setIsShowResult(!isShowResult);
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: `เปลี่ยนโหมดระบบเป็น ${MODE_LABEL[pendingMode] || pendingMode} เรียบร้อยแล้ว` });
+        } else if (action === 'SET_SHOW_RESULT') {
+          setSuccessMessage({ title: 'บันทึกสำเร็จ!', msg: isShowResult ? 'ซ่อนผลคะแนนแล้ว' : 'เปิดแสดงผลคะแนนแล้ว ทุกคนดูผลได้ที่หน้าผลคะแนน' });
         } else if (action === 'ANONYMIZE_BALLOTS') {
           // ⚠️ AUD-COPY · v2-SEC: action นี้ "ไม่ได้ลบ" อะไรเลย — มันตั้งธง
           // globalConfig.ballotsAnonymized = true (ธงรับรองผล) เท่านั้น
@@ -436,10 +544,12 @@ const SettingsTab = () => {
           setSuccessMessage({ title: 'รับรองผลเรียบร้อย!', msg: 'ปักธงรับรองผลแล้ว คะแนนรวมของทุกพรรคถูกล็อกไว้ครบ · บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ' });
         }
         setIsSuccessOpen(true);
+        fetchConfig();
       } else {
         const errData = await res.json().catch(() => ({}));
         setErrorMessage({ title: `ดำเนินการไม่สำเร็จ (${res.status})`, msg: errData.error || res.statusText });
         setIsErrorOpen(true);
+        fetchConfig();
       }
     } catch (error) {
       console.error("Action failed!", error);
@@ -480,11 +590,14 @@ const SettingsTab = () => {
                 <640, 2 cols 640-767) so each stays a comfortable tap target instead
                 of a ragged left-aligned pile. max-md: only → desktop CSS untouched. */}
             <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/50 rounded-2xl border border-slate-200 max-md:grid max-md:grid-cols-1 sm:max-md:grid-cols-2">
-              {SYSTEM_MODES.map((m) => (
+              {SYSTEM_MODES.map((m) => {
+                const blocked = systemMode !== m.id && checkSetMode({ mode: m.id, showResult: isShowResult, certified, end: schedule.end });
+                return (
                 <button
                   key={m.id}
                   onClick={() => handleModeChange(m.id)}
-                  disabled={systemMode === m.id || processing} // ✅ Disable if same mode or processing
+                  title={blocked || undefined}
+                  disabled={systemMode === m.id || processing || !!blocked}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all max-md:justify-center ${systemMode === m.id
                     ? `${m.color} text-white shadow-lg cursor-default`
                     : 'text-slate-500 hover:bg-slate-300 disabled:opacity-50'
@@ -493,9 +606,16 @@ const SettingsTab = () => {
                   <m.Icon className="w-4 h-4" />
                   {m.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
+          {isShowResult && !certified && (
+            <p className="mt-3 text-xs font-bold text-amber-700 flex items-start gap-1.5 leading-relaxed break-words">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              ผลคะแนนกำลังแสดงอยู่ จึงเปิดหีบหรือพักระบบไม่ได้ · ถ้าต้องเปิดหีบอีกครั้ง ให้ปิดการแสดงผลก่อน
+            </p>
+          )}
 
           {/* Current Status Badge */}
           <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 py-3 px-4 bg-white/60 rounded-xl border border-dashed border-slate-200">
@@ -504,6 +624,9 @@ const SettingsTab = () => {
               <div className={`w-2 h-2 shrink-0 rounded-full animate-pulse ${activeMode.dot}`} />
               <span className="text-sm font-black text-slate-700 break-words">{activeMode.status}</span>
             </div>
+            {activeMode.note && (
+              <span className="basis-full text-xs font-bold text-blue-700 break-words">{activeMode.note}</span>
+            )}
           </div>
 
           {/* ── คู่มือเลือกโหมด — โหมดไหนใช้กรณีไหน ─────────────────────────── */}
@@ -530,6 +653,11 @@ const SettingsTab = () => {
                     <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed break-words">
                       นักศึกษาเห็น {m.students}
                     </p>
+                    {m.note && (
+                      <p className="text-[11px] font-bold text-blue-700 mt-1.5 flex items-start gap-1 leading-relaxed break-words">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />{m.note}
+                      </p>
+                    )}
                   </div>
                 );
               })}
@@ -537,40 +665,14 @@ const SettingsTab = () => {
           </div>
         </div>
 
-        {/* ADM-MOBILE: <768px this stacks — the row layout squeezed the copy into a
-            ~113px column and shrank the 64px toggle track to 45px (knob spilled out). */}
-        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-100 max-md:flex-col max-md:items-start max-md:gap-5">
-          <div>
-            <h4 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <PieIcon className="w-5 h-5 text-purple-600" />
-              การแสดงผลคะแนน
-            </h4>
-            <p className="text-xs text-slate-500 mt-1">
-              คะแนนจะเปิดให้ดูในหน้าผลคะแนนก็ต่อเมื่อเปิดสวิตช์นี้เท่านั้น · ปิดหีบอย่างเดียวยังไม่แสดงผล
-            </p>
-            <p className="text-[11px] font-bold text-amber-600 mt-1.5 flex items-start gap-1 leading-relaxed break-words">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              ไม่ควรเปิดระหว่างที่ยังเปิดให้ลงคะแนน เพราะคะแนนที่เห็นระหว่างทางอาจชี้นำคนที่ยังไม่ได้โหวต ทำให้การเลือกตั้งไม่ยุติธรรม · ปลอดภัยเมื่อเปิดหลังปิดหีบแล้ว
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 max-md:w-full max-md:justify-between">
-            <span className={`text-sm font-bold transition-colors ${isShowResult ? 'text-green-600' : 'text-red-500'}`}>
-              {loading ? '' : (isShowResult ? '🟢 แสดงผล' : '🔴 ซ่อนผล')}
-            </span>
-
-            {loading ? '' : (
-              <button
-                onClick={() => setActiveModal('TOGGLE_SHOW_RESULT')}
-                disabled={loading || processing}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shrink-0 max-md:before:absolute max-md:before:-inset-1.5 max-md:before:content-[''] ${isShowResult ? 'bg-green-500' : 'bg-gray-300'
-                  } ${processing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
-              >
-                <span className={`${isShowResult ? 'translate-x-9' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md`} />
-              </button>
-            )}
-          </div>
-        </div>
+        <ClosingSteps
+          systemMode={systemMode} boxClosed={boxClosed} isShowResult={isShowResult} certified={certified}
+          schedule={schedule} processing={processing || loading}
+          onCloseBox={() => handleModeChange('ENDED')}
+          onPublish={() => setActiveModal('SET_SHOW_RESULT')}
+          onHide={() => setActiveModal('SET_SHOW_RESULT')}
+          onCertify={() => setActiveModal('ANONYMIZE_BALLOTS')}
+        />
 
         <div className='p-3' />
 
@@ -586,10 +688,10 @@ const SettingsTab = () => {
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
             <div className="min-w-0">
               <h4 className="text-base sm:text-lg font-black text-red-800 break-words">
-                โซนอันตราย · การกระทำที่กู้คืนไม่ได้
+                ขึ้นปีการศึกษาใหม่
               </h4>
               <p className="text-xs text-red-700/70 mt-0.5 leading-relaxed break-words">
-                ปุ่มในกล่องนี้เปลี่ยนข้อมูลจริงอย่างถาวร ไม่มีปุ่มย้อนกลับ อ่านคำอธิบายให้ครบก่อนกด
+                การล้างข้อมูลกู้คืนไม่ได้ และไม่มีปุ่มในหน้านี้โดยตั้งใจ · การรับรองผลย้ายไปอยู่ในขั้นตอนปิดการเลือกตั้งด้านบน
               </p>
             </div>
           </div>
@@ -613,35 +715,6 @@ const SettingsTab = () => {
               </p>
             </div>
 
-            {/* ANONYMIZE_BALLOTS (v2-SEC = ปักธงรับรองผล) — ต้อง ENDED/พ้นเวลาปิดหีบ
-                + showResult จึงจะผ่าน guard; ตั้ง globalConfig.ballotsAnonymized = true */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-4 sm:p-5 bg-white rounded-xl border border-indigo-100 transition-colors hover:border-indigo-300">
-              <div className="min-w-0">
-                <h5 className="text-base font-bold text-indigo-800 flex items-center gap-2 break-words">
-                  <Power className="w-4 h-4 shrink-0" />
-                  รับรองผลอย่างเป็นทางการ
-                </h5>
-                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed break-words">
-                  ปิดการเลือกตั้งครั้งนี้อย่างเป็นทางการ · <b>ไม่มีการลบข้อมูลใด ๆ</b> — บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลว่า “ใครเลือกพรรคใด” ให้ลบตั้งแต่แรก · ระบบจะบันทึกชื่อผู้รับรองกับวันเวลา แล้วขึ้นเป็นแถบรับรองบนหน้าผลคะแนน (สั่งพิมพ์เป็น PDF แนบรายงานได้)
-                </p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">
-                  ใช้เมื่อ ปิดหีบและเผยแพร่ผลเรียบร้อยแล้ว และตรวจคะแนนกับเจ้าหน้าที่ IT เสร็จแล้ว
-                </p>
-                <p className="text-[11px] font-bold text-indigo-600 mt-1.5 leading-relaxed break-words">
-                  กดได้เฉพาะบัญชีเจ้าหน้าที่คณะ (กรรมการสโมฯ กดไม่ได้) · กดแล้วย้อนกลับไม่ได้ ระบบจะล็อก — เปิดหีบใหม่ไม่ได้ รับคะแนนเพิ่มไม่ได้
-                </p>
-              </div>
-
-              <button
-                onClick={() => setActiveModal('ANONYMIZE_BALLOTS')}
-                disabled={processing || !isShowResult}
-                title={!isShowResult ? 'ต้องเผยแพร่ผลก่อน' : ''}
-                className="shrink-0 self-start flex items-center gap-2 px-5 py-2.5 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-indigo-600"
-              >
-                <Power className="w-4 h-4" />
-                รับรองผล
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -664,24 +737,24 @@ const SettingsTab = () => {
         isOpen={activeModal === 'SET_MODE'}
         onClose={() => setActiveModal(null)}
         onConfirm={handleConfirmAction}
-        title="เปลี่ยนโหมดการทำงาน?"
-        message={`คุณกำลังจะเปลี่ยนโหมดระบบเป็น "${pendingMode}" ยืนยันการดำเนินการหรือไม่?`}
+        title={`เปลี่ยนเป็น ${MODE_LABEL[pendingMode] || pendingMode}?`}
+        message={describeModeChange({ from: systemMode, to: pendingMode, start: schedule.start, end: schedule.end })}
         variant="primary"
         isLoading={processing}
       />
 
       <ConfirmModal
-        isOpen={activeModal === 'TOGGLE_SHOW_RESULT'}
+        isOpen={activeModal === 'SET_SHOW_RESULT'}
         onClose={() => setActiveModal(null)}
         onConfirm={handleConfirmAction}
-        title={isShowResult ? "ซ่อนผลคะแนน?" : "แสดงผลคะแนน?"}
+        title={isShowResult ? "ซ่อนผลคะแนน?" : "ประกาศผลคะแนน?"}
         /* ⚠️ AUD-COPY · results/route.js: hideTally = !showResult ปิดคะแนนรายพรรคกับ
            "ทุกคน" รวมแอดมิน (ไม่มี bypass) แต่ showBreakdown = isAdmin || showResult
            ทำให้ความคืบหน้าการใช้สิทธิ์ยังอยู่ในแท็บภาพรวมของแอดมินเสมอ ข้อความเดิมบอกว่า
            "ข้อมูลสถิติ" ถูกปิดกั้นด้วย ซึ่งไม่จริงสำหรับแอดมิน */
         message={isShowResult
           ? "เมื่อซ่อนผลคะแนน คะแนนของแต่ละพรรคจะถูกปิดจากทุกคนรวมถึงแอดมินเอง · ความคืบหน้าการใช้สิทธิ์ในแท็บภาพรวมยังดูได้ตามปกติ"
-          : "เมื่อแสดงผลคะแนน ทุกคนจะสามารถเข้าดูผลโหวตได้ทันที แม้ระบบโหวตจะปิดอยู่"}
+          : "ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที · เมื่อประกาศแล้ว จะเปิดหีบอีกไม่ได้จนกว่าจะซ่อนผลก่อน"}
         variant="primary"
         isLoading={processing}
       />
@@ -694,7 +767,7 @@ const SettingsTab = () => {
            ANONYMIZE_BALLOTS ตั้งธง ballotsAnonymized = true (รับรองผล) เท่านั้น ไม่ลบข้อมูลใด
            ของเดิมเขียนว่าความเชื่อมโยง "ใครเลือกพรรคใด" จะถูกลบถาวร ซึ่งไม่จริง — ลิงก์นั้น
            ไม่เคยถูกเก็บ (v2-SEC) จึงไม่มีอะไรให้ลบ */
-        title="ลบข้อมูลการลงคะแนนรายบุคคล (รับรองผล)?"
+        title="รับรองผลอย่างเป็นทางการ?"
         message={`นี่คือการปักธงรับรองผลครั้งสุดท้าย — คะแนนรวมของทุกพรรคถูกล็อก เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก · ระบบไม่เคยเก็บว่าใครเลือกพรรคใด บัตรทุกใบถูกบันทึกแบบไม่มีชื่อผู้ลงคะแนนอยู่แล้ว จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ · กดแล้วย้อนกลับไม่ได้`}
         variant="danger"
         isLoading={processing}

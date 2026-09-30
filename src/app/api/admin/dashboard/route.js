@@ -3,6 +3,19 @@ import { NextResponse } from "next/server";
 import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
 import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
+import { resolveElectionDates } from "../../../../utils/electionConfig";
+import { isBoxClosed, checkSetMode, checkShowResult } from "../../../../lib/election/adminGuards.mjs";
+
+// Mode and result visibility are checked against each other (adminGuards), so
+// they are read and written under a row lock: two admins pressing "reopen" and
+// "publish" at the same moment must not each pass against the old row.
+async function lockedConfig(tx) {
+  await tx.$queryRaw`SELECT id FROM "SystemConfig" WHERE id = 1 FOR UPDATE`;
+  return tx.systemConfig.findUnique({ where: { id: 1 } });
+}
+class GuardError extends Error {
+  constructor(message, status = 409) { super(message); this.status = status; }
+}
 
 // 1. GET: ดึงข้อมูลสรุป (Dashboard Stats)
 export async function GET(req) {
@@ -50,6 +63,14 @@ export async function GET(req) {
         turnout: totalVoters > 0 ? ((votedCount / totalVoters) * 100).toFixed(2) : 0,
         showResult: config.showResult,
         systemMode: config.systemMode || "AUTO",
+        // the settings screen greys out "publish" until this is true
+        boxClosed: isBoxClosed({
+          systemMode: config.systemMode || "AUTO",
+          end: resolveElectionDates(config.globalConfig).ELECTION_END,
+        }),
+        electionStart: resolveElectionDates(config.globalConfig).ELECTION_START,
+        electionEnd: resolveElectionDates(config.globalConfig).ELECTION_END,
+        certified: !!config.globalConfig?.ballotsAnonymized,
         googleFormUrl: config.googleFormUrl || "",
         // SEC-MOCK2 · สถานะ mock-login อ่านฝั่ง server ตอน runtime (read-only)
         // badge ในแท็บ settings ต้องใช้ค่านี้ ห้ามอ่าน NEXT_PUBLIC_* ฝั่ง client
@@ -70,59 +91,77 @@ export async function GET(req) {
 export async function POST(req) {
   const auth = await requireAdmin(req);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  try {
-    const body = await req.json();
-    const { action, mode } = body;
+  let body = {};
+  try { body = await req.json(); } catch { /* handled as an invalid action below */ }
+  const res = await handleAction(body, auth);
 
-    // 📋 Audit trail — record every mutating admin action (who/what/when) for
-    // election accountability. Best-effort: never block the action if logging fails.
-    try {
-      const { action: _a, ...rest } = body;
-      await db.adminAuditLog.create({
-        data: {
-          action: String(action || "UNKNOWN"),
-          actor: auth.user?.studentId || (auth.user?.id != null ? String(auth.user.id) : null),
-          detail: Object.keys(rest).length ? JSON.stringify(rest) : null,
-        },
-      });
-    } catch (e) {
-      console.error("[audit] failed to log admin action:", e.message);
-    }
+  // 📋 Audit trail — every admin command (who/what/when) AND whether it went
+  // through. Written after the action on purpose: the table is append-only
+  // (ballot-grants.sql), and a row written before the checks read the same for
+  // a refused "publish results mid-vote" as for one that happened.
+  // Best-effort: never block or change the response if logging fails.
+  try {
+    const { action: _a, ...rest } = body || {};
+    let error = null;
+    if (!res.ok) { try { error = (await res.clone().json())?.error || null; } catch { /* not JSON */ } }
+    const detail = { ...rest, result: res.ok ? "ok" : `refused ${res.status}`, ...(error ? { error } : {}) };
+    await db.adminAuditLog.create({
+      data: {
+        action: String(body?.action || "UNKNOWN"),
+        actor: auth.user?.studentId || (auth.user?.id != null ? String(auth.user.id) : null),
+        detail: JSON.stringify(detail),
+      },
+    });
+  } catch (e) {
+    console.error("[audit] failed to log admin action:", e.message);
+  }
+  return res;
+}
+
+async function handleAction(body, auth) {
+  try {
+    const { action, mode } = body || {};
 
     // กรณี: เปลี่ยนโหมดระบบ (AUTO, PAUSE, ENDED)
     if (action === 'SET_MODE') {
-      const validModes = ["AUTO", "PAUSE", "ENDED", "MANUAL_OPEN"];
-
-      if (!validModes.includes(mode)) {
-        return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
+      try {
+        await db.$transaction(async (tx) => {
+          const config = await lockedConfig(tx);
+          const err = checkSetMode({
+            mode,
+            showResult: !!config?.showResult,
+            certified: !!config?.globalConfig?.ballotsAnonymized,
+            end: resolveElectionDates(config?.globalConfig).ELECTION_END,
+          });
+          if (err) throw new GuardError(err, mode && ["AUTO", "PAUSE", "ENDED", "MANUAL_OPEN"].includes(mode) ? 409 : 400);
+          await tx.systemConfig.update({ where: { id: 1 }, data: { systemMode: mode } });
+        });
+      } catch (e) {
+        if (e instanceof GuardError) return NextResponse.json({ error: e.message }, { status: e.status });
+        throw e;
       }
-
-      const config = await db.systemConfig.findFirst();
-
-      // Certification is the end of the election. Reopening the box afterwards
-      // would let score climb past the numbers someone already signed for, so
-      // the mode is frozen from here — the flag used to be a label with nothing
-      // behind it.
-      if (config?.globalConfig?.ballotsAnonymized && mode !== "ENDED") {
-        return NextResponse.json({
-          error: "ผลถูกรับรองแล้ว เปลี่ยนโหมดไม่ได้ — การเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ",
-        }, { status: 409 });
-      }
-
-      await db.systemConfig.update({
-        where: { id: config.id },
-        data: { systemMode: mode }
-      });
       return NextResponse.json({ message: "Success" });
     }
 
-    // กรณี: สลับเปิด/ปิด การแสดงผล
-    if (action === 'TOGGLE_SHOW_RESULT') {
-      const config = await db.systemConfig.findFirst();
-      await db.systemConfig.update({
-        where: { id: config.id },
-        data: { showResult: !config.showResult }
-      });
+    // กรณี: เปิด/ปิดการแสดงผล — ส่งค่าที่ต้องการมาตรง ๆ (value: true|false)
+    // เดิมเป็น TOGGLE ("สลับค่า") ถ้าเปิดหน้าตั้งค่าไว้สองเครื่อง หรือกดซ้ำตอนเน็ตช้า
+    // ผลจะกลับด้านกับที่แอดมินเห็นบนจอ · เปิดได้เฉพาะเมื่อหีบปิดแล้ว (adminGuards)
+    if (action === 'SET_SHOW_RESULT') {
+      try {
+        await db.$transaction(async (tx) => {
+          const config = await lockedConfig(tx);
+          const err = checkShowResult({
+            value: body.value,
+            systemMode: config?.systemMode || "AUTO",
+            end: resolveElectionDates(config?.globalConfig).ELECTION_END,
+          });
+          if (err) throw new GuardError(err, typeof body.value === "boolean" ? 409 : 400);
+          await tx.systemConfig.update({ where: { id: 1 }, data: { showResult: body.value } });
+        });
+      } catch (e) {
+        if (e instanceof GuardError) return NextResponse.json({ error: e.message }, { status: e.status });
+        throw e;
+      }
       return NextResponse.json({ message: "Success" });
     }
 
@@ -176,9 +215,7 @@ export async function POST(req) {
     if (action === 'ANONYMIZE_BALLOTS') {
       const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
       const mode = cfg?.systemMode || "AUTO";
-      const { resolveElectionDates } = await import("../../../../utils/electionConfig");
-      const { ELECTION_END } = resolveElectionDates(cfg?.globalConfig);
-      const ended = mode === "ENDED" || (mode === "AUTO" && Date.now() >= new Date(ELECTION_END).getTime());
+      const ended = isBoxClosed({ systemMode: mode, end: resolveElectionDates(cfg?.globalConfig).ELECTION_END });
 
       // ป้องกันทำกลางคัน: ต้องปิดหีบแล้ว + ประกาศผลแล้วเท่านั้น (irreversible)
       if (!ended || !cfg?.showResult) {

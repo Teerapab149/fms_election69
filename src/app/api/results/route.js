@@ -89,10 +89,11 @@ export async function GET(request) {
       if (noVoteOption) finalCandidates.push(noVoteOption);
     }
 
-    // Sorting Logic — sort by score ONLY when results are officially revealed
-    // (or the election ended). Admin is NOT given a score-sorted list: the ORDER
-    // itself would leak who's leading during voting (ballot-secrecy policy 2026-06-10).
-    if (status === "ENDED" || isShowResult) {
+    // Sorting Logic — sort by score ONLY once results are revealed. The ORDER
+    // itself says who is leading: it used to sort on "ENDED" too, so between
+    // closing and the committee's announcement the scores were zeroed below but
+    // the list still came back ranked (ballot-secrecy policy 2026-06-10).
+    if (isShowResult) {
       finalCandidates.sort((a, b) => {
         const scoreDiff = b.score - a.score;
         if (scoreDiff !== 0) return scoreDiff;
