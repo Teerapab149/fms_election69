@@ -589,7 +589,10 @@ export default function ResultsPage() {
             <div className="text-center mb-8 lg:mb-16 mt-4 animate-fade-in-up">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_5%,transparent)] text-[var(--color-primary)] text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                  {/* the ping means "moving right now": not after close, not on pause */}
+                  {finalStatus !== "ENDED" && finalStatus !== "CLOSED" && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
+                  )}
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-primary)]"></span>
                 </span>
                 {/* FINAL only once announced: a closed box that is not yet announced
@@ -624,7 +627,6 @@ export default function ResultsPage() {
                     ) : (
                       <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                         <div className="relative flex h-3 w-3 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                         </div>
                         <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">

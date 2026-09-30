@@ -265,7 +265,7 @@ export default function GumroadResults({
                   stays a plain string so the counting state is byte-identical to before */}
               <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span>  TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
               <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span>  ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : paused ? "พักการลงคะแนนชั่วคราว" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}

@@ -130,7 +130,7 @@ export default function VerdureResults({
     <VerdureShell active="results" editorMode={editorMode}
       edge={{ num: "05", label: "Returns", th: "ผลคะแนน", right: true }}
       cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : isNotStarted ? "Polls not open" : ended ? "Closed, awaiting results" : paused ? "Voting paused" : "Live tally, embargoed"}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : ended ? "CLOSED" : paused ? "VOTING" : "COUNTING"}  <strong>{statusTxt}</strong></div>}>
+      statusChip={<div className="vd-chip-live"><span className={revealed || ended || paused ? "dot dot--still" : "dot"} /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : ended ? "CLOSED" : paused ? "VOTING" : "COUNTING"}  <strong>{statusTxt}</strong></div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">

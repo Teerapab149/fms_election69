@@ -342,6 +342,12 @@ export default function BlossomHome({
   const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
     ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
     : CTA_BASE;
+  // Turnout figure follows the same phase as the CTA (voteCtaState via the
+  // resolver): a paused or closed box is not "real-time" any more.
+  const turnoutLive = voteState !== "paused" && voteState !== "ended";
+  const turnoutTag = voteState === "paused" ? "PAUSED" : voteState === "ended" ? "CLOSED" : "REAL-TIME";
+  const figuresAria = voteState === "paused" ? "สถิติการใช้สิทธิ์ พักการลงคะแนน"
+    : voteState === "ended" ? "สถิติการใช้สิทธิ์ ปิดหีบแล้ว" : "สถิติเรียลไทม์";
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
@@ -482,11 +488,11 @@ export default function BlossomHome({
         </section>
 
         {/* ===== figures ===== */}
-        <section className="bl-figures" aria-label="สถิติเรียลไทม์" ref={figuresRef}>
+        <section className="bl-figures" aria-label={figuresAria} ref={figuresRef}>
           <div className="bl-fig bl-fig-1">
             <span className="bl-idx">01</span>
             <span className="bl-fig-n">{fmtInt(displayCounts ? displayCounts.voted : rawStats.totalVoted)}<small>คน</small></span>
-            <span className="bl-lab"><span className="bl-live-dot" aria-hidden /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span><br />REAL-TIME</span>
+            <span className="bl-lab">{turnoutLive && <span className="bl-live-dot" aria-hidden />}<span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span><br />{turnoutTag}</span>
           </div>
           <div className="bl-fig bl-fig-2">
             <span className="bl-idx">02</span>

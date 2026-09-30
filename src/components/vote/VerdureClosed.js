@@ -74,7 +74,7 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
     <VerdureShell active="vote" editorMode={editorMode}
       edge={{ num: "✕", label: "Status", th: "สถานะการลงคะแนน" }}
       cornermarkTitle="Status" cornermarkSub={<span className="vd-thai">ระบบการลงคะแนน</span>}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {v.kickerEn}</div>}>
+      statusChip={<div className="vd-chip-live"><span className={variant === "waiting" ? "dot" : "dot dot--still"} /> {v.kickerEn}</div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-closed">
         <div className="vd-closed__disc">

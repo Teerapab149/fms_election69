@@ -5,6 +5,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { BarChart3, Medal, Activity, PieChart as PieIcon } from 'lucide-react';
+import { AWAITING_RESULTS } from '../lib/election/electionStatus.mjs';
 
 const COLORS_BAR = '#8A2680';
 
@@ -97,13 +98,15 @@ export default function ResultsDemographics({
 
     return (
       <div className="flex flex-col items-center justify-center py-20 lg:py-32 bg-white/50 border border-dashed border-slate-300 rounded-[2rem] text-center px-4 animate-in fade-in zoom-in-95 duration-500">
-        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-100 animate-pulse">
+        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-100">
           <Activity className="w-10 h-10 lg:w-12 lg:h-12 text-blue-600" />
         </div>
-        <h3 className="text-xl lg:text-3xl font-black text-slate-700 mb-2">กำลังนับคะเเนนเสียงชาว FMS</h3>
+        {/* ended && !revealed: the box is closed and nothing is being counted on
+            screen, so this used to say "กำลังนับ..." with a pulsing icon. Same
+            wording as every other "closed, awaiting results" surface. */}
+        <h3 className="text-xl lg:text-3xl font-black text-slate-700 mb-2">{AWAITING_RESULTS.label}</h3>
         <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm lg:text-base">
-          กรุณารอประกาศผลอย่างเป็นทางการ <br className="hidden md:block" />
-          จากคณะกรรมการการเลือกตั้ง
+          {AWAITING_RESULTS.note}
         </p>
       </div>
     );

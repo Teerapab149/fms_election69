@@ -136,9 +136,10 @@ export default function BallotHome({
                 </span>{" "}
                 <Wrap id="hero-subtitle"><span className="bo-hero__campaign"><Phrases text={text("hero-subtitle", meta.campaign)} /></span></Wrap>
               </motion.h1>
-              <motion.p variants={RISE} className="bo-hero__sub">
+              {/* div, not p: the Wrap is a div in editor mode (invalid inside p) */}
+              <motion.div variants={RISE} className="bo-hero__sub">
                 <Wrap id="hero-subtitle2"><span>{text("hero-subtitle2", meta.org)}</span></Wrap>
-              </motion.p>
+              </motion.div>
 
               <motion.div variants={RISE} className="bo-hero__facts">
               {election.phase === "before" ? (
@@ -156,13 +157,13 @@ export default function BallotHome({
                     {/* live turnout as the page's second figure: the share large,
                         the count beside it; both count up once with the meter. The
                         spoken label always carries the final numbers. */}
-                    <p className="bo-turnout__line" aria-label={`${text("stats-header")} ${n(stats.totalVoted)} จาก ${n(stats.totalEligible)} คน ${pct.toFixed(1)}%`}>
+                    <div className="bo-turnout__line" aria-label={`${text("stats-header")} ${n(stats.totalVoted)} จาก ${n(stats.totalEligible)} คน ${pct.toFixed(1)}%`}>
                       <motion.b className="bo-turnout__pct" aria-hidden>{pctText}</motion.b>
                       <span className="bo-turnout__of" aria-hidden>
                         <Wrap id="stats-header"><span className="bo-turnout__lbl">{text("stats-header")}</span></Wrap>
                         <span><motion.b>{countText}</motion.b> จาก {n(stats.totalEligible)} คน</span>
                       </span>
-                    </p>
+                    </div>
                     <div className="bo-meter" role="presentation">
                       <motion.i style={{ originX: 0 }}
                         initial={intro ? { scaleX: 0 } : false} animate={{ scaleX: Math.min(100, pct) / 100 }}

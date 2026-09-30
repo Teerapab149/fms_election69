@@ -201,9 +201,14 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
     : cd.noTimer ? { label: "OPEN NOW", timer: "เปิดรับอยู่" }
     : (cd.d || cd.h || cd.m) ? { label: cd.label, timer: `${pad(cd.d)}D ${pad(cd.h)}H ${pad(cd.m)}M` }
     : { label: cd.label, timer: cd.label === "PAUSED" ? "หยุดชั่วคราว" : "ปิดแล้ว" };
+  // The dot pulses only while the box can still move: a paused or closed
+  // election used to keep "breathing" like a live feed.
+  const chipStill = election
+    ? (election.phase === "paused" || election.phase === "ended")
+    : (cd.label === "PAUSED" || cd.label === "POLLS CLOSED");
   const defaultChip = (
     <div className="vd-chip-live">
-      <span className="dot" /> {chip.label}  <strong>{chip.timer}</strong>
+      <span className={chipStill ? "dot dot--still" : "dot"} /> {chip.label}  <strong>{chip.timer}</strong>
     </div>
   );
 
@@ -332,6 +337,7 @@ export function VerdureBaseStyles() {
       .vd-chip-live--back { cursor:pointer; }
       .vd-moss .vd-chip-live { background:var(--moss-2); border-color:var(--rule-moss); color:var(--cream); }
       .vd-chip-live .dot { width:7px; height:7px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 0 rgba(var(--terra-rgb),.55); animation:vdDot 1.8s ease-out infinite; }
+      .vd-chip-live .dot.dot--still { animation:none; box-shadow:none; }
       .vd-chip-live strong { color:var(--terra); font-weight:700; }
       /* on the dark surfaces the accent has to be the LIGHT plum: --terra on --moss-2
          measures 1.05:1, i.e. the value inside the chip ("29 CANDIDATES", "CONFIRMED")

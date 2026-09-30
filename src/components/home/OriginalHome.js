@@ -15,7 +15,7 @@ import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarCh
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useHowToVote } from "../../hooks/useHowToVote";
 import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
-import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
+import { AWAITING_RESULTS, isAwaitingResults, deriveElectionStatus } from "../../lib/election/electionStatus.mjs";
 
 // How to vote — Original's real flow: PSU Passport sign-in → the ballot
 // (MultiPartyView) → confirm → the success page, which asks for the
@@ -39,6 +39,18 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
     const elNumber = gc.electionNumber ?? GLOBAL_CONFIG_DEFAULTS.electionNumber;
     const elAcademicYear = gc.academicYearTh ?? GLOBAL_CONFIG_DEFAULTS.academicYearTh;
     const elCopyrightYear = gc.copyrightYear ?? gc.electionCalendarYear ?? GLOBAL_CONFIG_DEFAULTS.copyrightYear;
+    // Server verdict for the election (page.js → liveSystemStatus). The CTA
+    // ladder below reads sysMode/electionStatus; the turnout header reads the
+    // derived phase so a paused or closed box stops calling itself real-time.
+    const sysMode = initialData?.systemMode || "AUTO";
+    const electionStatus = initialData?.electionStatus;
+    const { phase } = deriveElectionStatus({
+        systemMode: sysMode, isSystemOpen: initialData?.isSystemOpen, electionStatus,
+    });
+    const isLive = phase !== "paused" && phase !== "ended";
+    const statsStatusLine = phase === "paused"
+        ? "พักการลงคะแนนชั่วคราว"
+        : phase === "ended" ? "ปิดหีบแล้ว ยอดผู้ใช้สิทธิ์ทั้งหมด" : "อัปเดตข้อมูลแบบ Real-time";
     // ✅ ใช้ข้อมูลที่ Server ส่งมาเป็นค่าเริ่มต้นทันที (ไม่ต้องรอโหลด)
     const [stats, setStats] = useState({
         totalEligible: initialData?.stats?.totalEligible || 0,
@@ -191,8 +203,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                     };
 
                                     // 2. เช็ค Session เพื่อเปลี่ยน config (ใช้ isVotedReal จาก DB แทน session)
-                                    const sysMode = initialData?.systemMode || "AUTO";
-                                    const electionStatus = initialData?.electionStatus;
+                                    // sysMode / electionStatus are computed once at the top.
 
                                     if (sysMode === "PAUSE") {
                                         // Case: System Manual Pause (Maintenance)
@@ -361,10 +372,12 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                     <div className="flex items-center gap-3 mb-4 px-1">
                                         <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)] transition-colors duration-300">
                                             <TrendingUp className="w-5 h-5" />
-                                            <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
-                                            </span>
+                                            {isLive && (
+                                                <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex flex-col">
                                             <h3 className="text-sm lg:text-base font-bold text-slate-800 leading-tight">
@@ -373,7 +386,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                             {/* slate-400 at 10px measured 2.44:1 on the page wash
                                                 (AA needs 4.5); slate-600 reads 6.4:1 */}
                                             <span className="text-[10px] text-slate-600 font-medium tracking-wide">
-                                                อัปเดตข้อมูลแบบ Real-time
+                                                {statsStatusLine}
                                             </span>
                                         </div>
                                     </div>

@@ -71,6 +71,8 @@ export default function StudioDarkResults({
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
   const paused = finalStatus === "CLOSED"; // admin PAUSE: not counting, no closing time
+  // the pulsing dot means "moving right now": not after close, not on pause
+  const liveDot = !revealed && !ended && !paused;
   const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
 
   const totalEligible = demographics?.totalEligible || 0;
@@ -123,14 +125,14 @@ export default function StudioDarkResults({
       label="Returns"
       labelTh="ผลคะแนน"
       editorMode={editorMode}
-      right={<span className={revealed ? "" : "live"}>{!revealed && <span className="sd-dot" />}{statusTxt}</span>}
+      right={<span className={revealed ? "" : "live"}>{liveDot && <span className="sd-dot" />}{statusTxt}</span>}
     >
       <div className="sdr-ledger">
         {/* header */}
         <div className="sdr-h">
           <h1 className="sdr-title">The <em>Returns,</em><br />{samo}.</h1>
           <div className={`sdr-pill ${revealed ? "sdr-pill--final" : ""}`}>
-            {!revealed && <span className="sd-dot" />}
+            {liveDot && <span className="sd-dot" />}
             {revealed
               ? <><span className="sd-nw">FINAL</span>  <span className="sd-thai">ผลอย่างเป็นทางการ</span></>
               : isNotStarted
@@ -147,7 +149,7 @@ export default function StudioDarkResults({
         <div className="sdr-board">
           <div className="sdr-board__hero">
             <div className="sdr-kicker">
-              <span className="dot" />
+              <span className="dot" style={ended || paused ? { animation: "none" } : undefined} />
               {revealed
                 ? <><span className="sd-nw">OFFICIAL RESULT</span>  <span className="sd-thai">ผลการเลือกตั้ง</span></>
                 : isNotStarted
@@ -257,7 +259,7 @@ export default function StudioDarkResults({
           <div className="sdr-stat">
             <div className="sdr-stat__lbl">TURNOUT <em>iii.</em></div>
             <div className="sdr-stat__val">{revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)}<small>%</small></div>
-            <div className="sdr-stat__sub">{ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "สัดส่วนผู้ใช้สิทธิ์ อัปเดตเรียลไทม์"}</div>
+            <div className="sdr-stat__sub">{ended ? "สรุปยอดผู้มาใช้สิทธิ์" : paused ? "สัดส่วนผู้ใช้สิทธิ์ พักการลงคะแนนชั่วคราว" : "สัดส่วนผู้ใช้สิทธิ์ อัปเดตเรียลไทม์"}</div>
           </div>
         </div>
 
