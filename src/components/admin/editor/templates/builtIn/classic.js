@@ -207,7 +207,7 @@ export const classicTemplate = {
           hoverEffect: "lift"
         },
         ended: {
-          text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended",
+          text: "ดูผลคะแนน / Results",
           backgroundType: "gradient",
           backgroundColor: "#1e293b",
           gradientFrom: "#334155",

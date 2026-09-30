@@ -7,8 +7,8 @@ import VoteSuccessExperience from "./VoteSuccessExperience";
 export default function VerdureSuccess(props) {
   return (
     <VerdureShell active="success" moss editorMode={props.editorMode}
-      edge={{ num: "✓", label: "Together", th: "บันทึกสำเร็จ", right: true }}
-      cornermarkTitle="Together" cornermarkSub="A shared future">
+      edge={{ num: "✓", label: "Recorded", th: "บันทึกสำเร็จ", right: true }}
+      cornermarkTitle="Vote recorded" cornermarkSub="บันทึกการลงคะแนนแล้ว">
       <VoteSuccessExperience family="verdure" {...props} />
     </VerdureShell>
   );

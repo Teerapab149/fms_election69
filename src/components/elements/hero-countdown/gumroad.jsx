@@ -23,7 +23,13 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
       let diff, label, sub, live = false;
       if (systemMode === "PAUSE") { label = "PAUSED"; sub = "พักลงคะแนนชั่วคราว"; diff = 0; }
       else if (systemMode === "ENDED") { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
-      else if (systemMode === "MANUAL_OPEN") { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
+      // forced open: counts to the scheduled close — or, once that has passed (the
+      // admin kept the polls open late), says so instead of a frozen 00:00:00:00
+      else if (systemMode === "MANUAL_OPEN") {
+        diff = ELECTION_END - now; live = true;
+        if (diff > 0) { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; }
+        else { label = "OPEN"; sub = "เปิดรับลงคะแนนอยู่"; diff = 0; }
+      }
       else if (now < ELECTION_START) { label = "STARTS IN"; sub = "เปิดรับลงคะแนนใน"; diff = ELECTION_START - now; }
       else if (now < ELECTION_END) { label = "CLOSES IN"; sub = "ปิดรับลงคะแนนใน"; diff = ELECTION_END - now; live = true; }
       else { label = "ENDED"; sub = "ปิดรับลงคะแนนแล้ว"; diff = 0; }
@@ -40,7 +46,7 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
   // counting down/up). Swap the grid for a real-copy status statement in those two
   // modes ONLY; live/pre-start/manual-open keep the ticking grid untouched. Close
   // caption is real-schedule (formatThaiDate/Time), guarded for an unresolved date.
-  const isDead = t.label === "ENDED" || t.label === "PAUSED";
+  const isDead = t.label === "ENDED" || t.label === "PAUSED" || t.label === "OPEN";
   const closeCaption = t.label === "ENDED" ? (() => {
     const d = formatThaiDate(ELECTION_END);
     return d ? `${d} · ${formatThaiTime(ELECTION_END)}` : "";
@@ -50,7 +56,7 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
       <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · <span className="gm-thai">{t.sub}</span></div>
       {isDead ? (
         <div className="gh-cd__status">
-          <div className="gh-cd__status-txt">{t.label === "PAUSED" ? "พักระบบชั่วคราว" : "ปิดรับลงคะแนนแล้ว"}</div>
+          <div className="gh-cd__status-txt">{t.label === "PAUSED" ? "พักระบบชั่วคราว" : t.label === "OPEN" ? "เปิดรับลงคะแนนอยู่" : "ปิดรับลงคะแนนแล้ว"}</div>
           {/* PAUSE has no close caption (no real schedule for "resumes at") — render
               an invisible spacer line so the tile keeps ENDED's 2-line height instead
               of shrinking (no reflow of the bento row). Not real copy: aria-hidden. */}
@@ -81,7 +87,14 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
            one card instead of four, so the tile keeps its box/material identity. */
         .gh-cd__status{ background:var(--cd-cell, var(--cream, #FFF6EC)); color:var(--ink, #26271c); border-radius:14px; border:2px solid var(--ink, #26271c); padding:clamp(16px,2.2cqw,22px) clamp(12px,1.8cqw,18px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; }
         .gh-cd__status-txt{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:800; font-size:clamp(15px,2.1cqw,20px); line-height:1.25; }
-        .gh-cd__status-cap{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:600; font-size:clamp(11px,1.3cqw,13px); color:var(--cd-accent, var(--pink, #FF9CE9)); letter-spacing:.02em; }
+        /* QA 2026-09-25: was color:var(--cd-accent) — the bright accent pink is
+           tuned for the dark .gh-cd ink background, but this caption sits inside
+           .gh-cd__status which is the CREAM card (same as .gh-cd__status-txt/
+           .gh-cd__unit). pink-on-cream measured 1.76:1 across all 6 colour slugs
+           (need 4.5 at 11-13px) — swap to --ink2 (the same muted-on-cream token
+           .gh-cd__unit already uses two lines down), which measures 6.3-8.65:1
+           on all 6 slugs (base/cyber/retro/acid/premium/bubblegum). */
+        .gh-cd__status-cap{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif; font-weight:600; font-size:clamp(11px,1.3cqw,13px); color:var(--cd-caption, var(--ink2, #5c5a4b)); letter-spacing:.02em; }
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }
         .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:var(--ink2, #5c5a4b); margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
         .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:ghCdPulse 1.6s ease-out infinite; }

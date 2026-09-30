@@ -39,6 +39,15 @@ import { buildTemplateStyles, buildElementCss } from "../../lib/templateTokens";
 import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
+
+// this template's voting flow, in the words its own ballot and done pages use
+const GH_STEPS = [
+  { tag: "SIGN IN", tone: "pink", title: "เข้าสู่ระบบ", desc: "กดเข้าสู่ระบบด้วยบัญชี PSU Passport ระบบตรวจสิทธิ์ให้เอง" },
+  { tag: "PICK", tone: "lime", title: "เลือกพรรค", desc: "คลิกพรรคที่ต้องการ หรือเลือกงดออกเสียง ดูนโยบายก่อนได้ที่หน้าผู้สมัคร" },
+  { tag: "CONFIRM", tone: "sky", title: "ยืนยันคะแนน", desc: "ตรวจอีกครั้งแล้วกดยืนยัน ส่งแล้วจะแก้ไขไม่ได้" },
+  { tag: "DONE", tone: "yellow", title: "เสร็จแล้ว!", desc: "หน้าสุดท้ายยืนยันว่าคุณใช้สิทธิ์แล้ว โดยไม่แสดงว่าคุณเลือกพรรคไหน" },
+];
 
 export default function GumroadHome({
   initialData,
@@ -65,6 +74,7 @@ export default function GumroadHome({
     enabled: !editorMode && status === "authenticated",
   });
   useEffect(() => { setMounted(true); }, []);
+  const howTo = useHowToVote(initialData || {});
 
   const editorStateRef = useRef(null);
   editorStateRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
@@ -232,6 +242,7 @@ export default function GumroadHome({
             <Wrap id="voteCTA-button">
               <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
             </Wrap>
+            {howTo.show && <a href={editorMode ? undefined : howTo.href} className="gh-howlink">วิธีลงคะแนน <span aria-hidden="true">↓</span></a>}
           </div>
 
           {/* MOBILE-ONLY meet shortcut so the "ดูผู้สมัคร" action is visible above the
@@ -265,6 +276,31 @@ export default function GumroadHome({
           </div>
         </Wrap>
       </main>
+
+      {/* ── HOW TO VOTE — this template's real flow as a row of chunky bento
+          tiles (the mosaic's own material: ink outline, hard shadow, a pastel
+          per step, the huge Archivo number). Words from its own pages: the
+          ballot says "คลิกพรรคที่คุณต้องการ หรือเลือกงดออกเสียง", the done page
+          confirms the vote without showing the choice. Owner: every home
+          teaches the steps (template-fix-plan S2). ── */}
+      {howTo.show && (
+      <section id={howTo.id} className="gh-steps" aria-labelledby="gh-steps-h">
+        <div className="gh-steps__head">
+          <span className="gh-sticker gh-sticker--lime">HOW TO VOTE</span>
+          <h2 id="gh-steps-h" className="gh-steps__title">โหวตง่าย ๆ ใน 4 ขั้นตอน</h2>
+        </div>
+        <ol className="gh-steps__row">
+          {GH_STEPS.map((st, i) => (
+            <li key={st.tag} className={`gh-step gh-step--${st.tone}`}>
+              <span className="gh-step__no" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+              <span className="gh-step__tag" aria-hidden="true">{st.tag}</span>
+              <h3 className="gh-step__t">{st.title}</h3>
+              <p className="gh-step__d">{st.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+      )}
 
       {/* ── FOOTER (element) ── */}
       <SiteFooter faculty={facultyEn} uni={uni} year={copyrightYear} />
@@ -323,6 +359,11 @@ export default function GumroadHome({
 
         /* hero title + subtitle + year-badge = library elements (own scoped styles) */
         .gh-cta{ margin-top:8px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+        /* jump to the steps — a plain inked link beside the stamp, not a second button */
+        .gh-howlink{ display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 4px;
+          font-family:var(--fb); font-weight:800; font-size:16px; color:var(--ink);
+          text-decoration:underline; text-decoration-thickness:2.5px; text-underline-offset:5px; }
+        .gh-howlink:hover{ text-decoration-color:var(--pink); }
 
         /* meet — "dark + lime" CTA (variant 2): olive bar, small light question,
            big lime "ดูผู้สมัคร →". Seen first in the hero (both PC + mobile). */
@@ -337,6 +378,24 @@ export default function GumroadHome({
         .gh-meetbtn--m{ display:none; }  /* shown only on tablet/phone (see @container) */
 
         /* mosaic tiles (countdown / stats / meet) = library elements (own scoped styles) */
+
+        /* HOW TO VOTE — a head line, then four tiles in the mosaic's material */
+        .gh-steps{ scroll-margin-top:84px; width:100%; max-width:1280px; margin:0 auto;
+          padding:0 clamp(16px,4cqw,48px) clamp(40px,5cqw,64px); }
+        .gh-steps__head{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:clamp(14px,1.8cqw,20px); }
+        .gh-steps__title{ margin:0; font-family:var(--fb); font-weight:800; font-size:clamp(24px,2.6cqw,34px); line-height:1.2; color:var(--ink); }
+        .gh-steps__row{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:clamp(13px,1.7cqw,20px); }
+        .gh-step{ position:relative; display:flex; flex-direction:column; gap:8px; min-width:0;
+          border:var(--bw) solid var(--ink); border-radius:22px; box-shadow:var(--sh);
+          padding:clamp(18px,2cqw,24px); }
+        .gh-step--pink{ background:var(--pink); } .gh-step--lime{ background:var(--lime); }
+        .gh-step--sky{ background:var(--sky); } .gh-step--yellow{ background:var(--yellow); }
+        .gh-step__no{ font-family:var(--fd); font-size:clamp(40px,4.4cqw,56px); line-height:.9; font-variant-numeric:tabular-nums; }
+        .gh-step__tag{ position:absolute; top:clamp(18px,2cqw,24px); right:clamp(18px,2cqw,24px);
+          font-family:var(--fm); font-weight:600; font-size:11px; letter-spacing:.14em; padding:4px 9px;
+          background:var(--paper); border:2px solid var(--ink); border-radius:999px; }
+        .gh-step__t{ margin:6px 0 0; font-family:var(--fb); font-weight:800; font-size:clamp(19px,1.9cqw,22px); line-height:1.25; }
+        .gh-step__d{ margin:0; font-family:var(--fb); font-size:15px; line-height:1.6; color:var(--ink); }
 
         /* footer = <SiteFooter> element (own scoped styles) */
 
@@ -355,10 +414,13 @@ export default function GumroadHome({
           .gh-subtitle{ margin-left:auto; margin-right:auto; }
           .gh-cta{ justify-content:center; }
           .gh-meetbtn{ justify-content:center; }
+          .gh-steps__row{ grid-template-columns:repeat(2, minmax(0,1fr)); }
         }
         /* phone — single column stack */
         @container gh (max-width:560px){
           .gh-hide-sm{ display:none; }
+          .gh-steps__row{ grid-template-columns:1fr; }
+          .gh-steps{ padding:0 16px 44px; }
           .gh-mosaic{ grid-template-columns:1fr; gap:13px; padding:20px 16px 44px;
             grid-template-areas:
               "hero"

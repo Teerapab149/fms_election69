@@ -1,5 +1,7 @@
 'use client';
 import { getPath } from "../../utils/basePath";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -40,6 +42,9 @@ export default function CandidatesPage({
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // the real slug: a v2 family (components/v2) with its own candidates page renders it
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Candidates = resolveTemplatePage(rawTemplateId, 'candidates');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
@@ -71,7 +76,7 @@ export default function CandidatesPage({
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.candidates) setApiLayout(data.candidates);
-        if (data?.activeTemplateId) setActiveTemplateId(data.activeTemplateId);
+        if (data?.activeTemplateId) { setActiveTemplateId(baseFamilyOf(data.activeTemplateId)); setRawTemplateId(data.activeTemplateId); }
       })
       .catch(e => console.error(e))
       .finally(() => setTemplateReady(true));
@@ -176,6 +181,15 @@ export default function CandidatesPage({
 
   // FMS OFFICIAL layout (faculty chrome: plum strip + PSU lockup + plum page
   // plate) — replaces the classic page entirely.
+  if (V2Candidates) {
+    return (
+      <>
+        {!editorMode && <PageThemeOverrides page="candidates" />}
+        <V2Candidates candidates={parties} editorMode={editorMode} />
+      </>
+    );
+  }
+
   if (isFmsOfficial) {
     return (
       <>

@@ -24,7 +24,13 @@ export const VERDURE_THEMES = {
   "verdure-honey": {
     cream: "#F4F4F6", cream2: "#FCFCFD", cream3: "#E6E6EB",
     moss: "#1A2B4C", moss2: "#26395E", moss3: "#344B73",
-    terra: "#A9863F", terra2: "#8A6D2E", soft: "#E6D3A8",
+    // 2026-09-25 QA: terra/terra2 darkened 20% — measured 3.10:1 / 4.44:1 on
+    // --cream (need 4.5:1, not large text — dock labels, edge index "01",
+    // ballot kicker, countdown STRONG all render text directly in --terra).
+    // #876B32/#6E5725 measure 4.57:1 / 6.26:1 on #F4F4F6 (rc-shot.js AUDIT
+    // contrast formula). cta/cta2 untouched — that's a button fill with its
+    // own ctaText, not read as foreground-on-cream text.
+    terra: "#876B32", terra2: "#6E5725", soft: "#E6D3A8",
     rule: "#DBDBE2", gold: "#CDA85F",
     cta: "#C5A059", cta2: "#A9863F", ctaText: "#14223D",
   },
@@ -32,7 +38,11 @@ export const VERDURE_THEMES = {
   "verdure-teal": {
     cream: "#F2EBE1", cream2: "#FAF5EC", cream3: "#E5DAC8",
     moss: "#2D221E", moss2: "#3D2F28", moss3: "#4F3D33",
-    terra: "#AF5232", terra2: "#934026", soft: "#E3BCA8",
+    // 2026-09-25 QA: terra darkened ~4% — measured 4.35:1 on --cream (need
+    // 4.5:1) at .big/.vd-dock__en/.vd-race__tag. #A84F30 measures 4.64:1 on
+    // #F2EBE1 (same AUDIT formula as verdure-honey's fix above). terra2 was
+    // already 5.91:1, left unchanged.
+    terra: "#A84F30", terra2: "#934026", soft: "#E3BCA8",
     rule: "#DDD1BE", gold: "#C0894C",
     cta: "#4E6B5E", cta2: "#3E574B", ctaText: "#F2EBE1",
   },

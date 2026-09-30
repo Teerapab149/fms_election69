@@ -59,7 +59,13 @@ body {
    - the extra scale is limited to real buttons. Anchors are excluded because
      several of them wrap whole cards and full-width rows, where a scale would
      be a bigger gesture than a press.
-   Single-class specificity, so any family rule still wins.                    */
+   The press scale uses the standalone `scale` property, NOT `transform`. This
+   selector outranks any single utility class (it is several classes deep), so a
+   `transform` here REPLACED the button's own transform — every button centred
+   with -translate-x/y-1/2 jumped half its size on mousedown, the mouseup landed
+   on whatever was behind it, and the browser dropped the click (the template
+   chooser's carousel arrow: "it presses but the slide doesn't move").
+   `scale` composes with an existing transform instead of overwriting it.      */
 .fms-app :is(button, [role="button"], a, summary, select) {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -69,7 +75,7 @@ body {
   transition: opacity 90ms ease-out;
 }
 .fms-app :is(button, [role="button"]):active:not(:disabled):not([aria-disabled="true"]) {
-  transform: scale(0.975);
+  scale: 0.975;
 }
 
 /* ใส่ต่อท้ายไฟล์ globals.css */

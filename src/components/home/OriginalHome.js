@@ -11,9 +11,20 @@ import Navbar from './OriginalNavbar';
 import CountdownTimer from './OriginalCountdownTimer';
 import MeetCandidatesCard from './OriginalMeetCandidatesCard';
 import { OriginalBaseStyles } from './OriginalTheme';
-import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock } from "lucide-react";
+import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock, ListChecks, MousePointerClick, ShieldCheck } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { useHowToVote } from "../../hooks/useHowToVote";
 import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
+
+// How to vote — Original's real flow: PSU Passport sign-in → the ballot
+// (MultiPartyView) → confirm → the success page, which asks for the
+// evaluation form when this year has one.
+const OH_STEPS = [
+    { icon: LogIn, title: "เข้าสู่ระบบ", desc: "กดเข้าสู่ระบบด้วยบัญชี PSU Passport ระบบตรวจสิทธิ์ให้เอง" },
+    { icon: MousePointerClick, title: "เลือกพรรค", desc: "เลือกพรรคที่ต้องการ หรือเลือกงดออกเสียง อ่านนโยบายก่อนได้ที่หน้าผู้สมัคร" },
+    { icon: ShieldCheck, title: "ยืนยันการลงคะแนน", desc: "ตรวจอีกครั้งแล้วกดยืนยัน เมื่อส่งแล้วจะแก้ไขไม่ได้" },
+    { icon: CheckCircle2, title: "เสร็จแล้ว", desc: "หน้าสุดท้ายยืนยันว่าคุณใช้สิทธิ์แล้ว ถ้ามีแบบประเมิน ทำให้ครบเพื่อรับชั่วโมงกิจกรรม" },
+];
 
 export default function OriginalHome({ initialData, onSignIn = null }) {
 
@@ -96,6 +107,8 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
             return () => clearTimeout(resetTimeout);
         }
     }, [currentImageIndex, extendedImages.length, isMultiImage]);
+
+    const howTo = useHowToVote(initialData || {});
 
     if (!mounted) return null;
 
@@ -201,7 +214,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         btnConfig = {
                                             isLoginAction: false,
                                             href: "/results",
-                                            text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended",
+                                            text: "ดูผลคะแนน / Results",
                                             gradientBase: "from-slate-700 via-slate-800 to-slate-900",
                                             gradientHover: "from-slate-600 via-slate-700 to-slate-800",
                                             glowColor: "from-slate-500 to-slate-700",
@@ -321,6 +334,15 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                 })()}
                             </div>
 
+                            {/* jump to the steps below — a quiet text link, not a second button */}
+                            {howTo.show && (
+                                <div className="w-full flex justify-center lg:justify-start !mt-3">
+                                    <a href={howTo.href} className="inline-flex items-center gap-1.5 min-h-[44px] text-sm md:text-base font-bold text-[var(--o-brand)] underline decoration-2 underline-offset-4 hover:text-[var(--o-deep)]">
+                                        วิธีลงคะแนน <span aria-hidden>↓</span>
+                                    </a>
+                                </div>
+                            )}
+
                             {/* Meet Candidates */}
                             <div className="w-full max-w-[400px] lg:max-w-[350px] xl:max-w-[420px] pt-1">
                                 <MeetCandidatesCard candidates={candidates} />
@@ -435,6 +457,33 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* How to vote — same card language as the stats bento */}
+                    {howTo.show && (
+                    <section id={howTo.id} aria-labelledby="oh-steps-title" className="mt-14 lg:mt-20 scroll-mt-24 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                        <div className="flex items-center gap-3 mb-5 px-1">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)]">
+                                <ListChecks className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col">
+                                <h2 id="oh-steps-title" className="text-lg lg:text-xl font-extrabold text-slate-800 leading-tight">วิธีลงคะแนน</h2>
+                                <span className="text-xs text-slate-600 font-medium">How to vote · 4 ขั้นตอน</span>
+                            </div>
+                        </div>
+                        <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                            {OH_STEPS.map(({ icon: Icon, title, desc }, i) => (
+                                <li key={title} className="relative rounded-[24px] bg-white border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--o-deep)] via-[var(--o-brand)] to-[var(--o-bright)] text-white text-base font-black tabular-nums shadow-sm">{i + 1}</span>
+                                        <Icon className="w-5 h-5 text-[var(--o-brand)]" aria-hidden />
+                                    </div>
+                                    <h3 className="text-base font-extrabold text-slate-800 leading-snug">{title}</h3>
+                                    <p className="text-sm text-slate-600 leading-relaxed">{desc}</p>
+                                </li>
+                            ))}
+                        </ol>
+                    </section>
+                    )}
                 </div>
 
             </main>

@@ -28,6 +28,7 @@ import { blossomTheme } from "../../utils/blossomPalettes";
 import { verdureTheme } from "../../utils/verdurePalettes";
 import { studioDarkTheme } from "../../utils/studioDarkPalettes";
 import { fmsOfficialTheme } from "../../utils/fmsOfficialPalette";
+import { ballotOfficialTemplate, BALLOT_OFFICIAL } from "../admin/editor/templates/builtIn/ballot-official";
 
 // en = ป้ายอังกฤษกำกับตัวเลือก สำหรับนักศึกษาต่างชาติในคณะ
 //
@@ -517,8 +518,77 @@ function ClassicConfirm(props) {
   );
 }
 
+// ──────────────────────────────────────────────────── BALLOT-OFFICIAL (v2) ──
+// "บัตรเลือกตั้ง": the voter's own row, restated as it looks on their ballot —
+// the box with their pen mark — before it is folded and sent. Words come from
+// the family's template definition, not from here.
+function BallotOfficialConfirm(props) {
+  const { onClose, onConfirm, party, isSubmitting } = props;
+  const k = ballotOfficialTemplate.copy.confirm;
+  const P = BALLOT_OFFICIAL;
+  const tone = toneOf(props.isVoteNo, props.isDisapprove);
+  const c = choiceOf(party, tone);
+  // the active colour theme's --bo-* ramp (the dialog carries .bo-scope, see
+  // BallotChrome), with the plum values as the fallback if it ever renders alone
+  const vars = { "--bc-paper": `var(--bo-paper, ${P.paper})`, "--bc-ink": `var(--bo-ink, ${P.ink})`, "--bc-muted": `var(--bo-muted, ${P.muted})`, "--bc-rule": `var(--bo-rule, ${P.rule})`, "--bc-plum": `var(--bo-plum, ${P.plum})`, "--bc-plum-deep": `var(--bo-plum-deep, ${P.plumDeep})`, "--bc-pen": `var(--bo-pen, ${P.pen})`, "--bc-board": `var(--bo-board, ${P.board})` };
+  return (
+    <ConfirmShell {...props} vars={vars} rootClass="vc-bc bo-scope" scrim="rgba(30,24,40,.6)">
+      <div className="vc-bc__card">
+        <div className="vc-bc__head">
+          <h2>{k.title}</h2>
+          <button type="button" onClick={onClose} disabled={isSubmitting} aria-label={k.close}><X size={18} /></button>
+        </div>
+        <div className="vc-bc__row">
+          <span className="vc-bc__box" aria-hidden>
+            <svg viewBox="0 0 24 24"><path d="M5 5 L19 19" /><path d="M19 5 L5 19" /></svg>
+          </span>
+          <span className="vc-bc__mark"><ChoiceMark tone={tone} party={party} number={c.number} /></span>
+          <span className="vc-bc__txt">
+            <strong>{c.label}</strong>
+            {c.sub && <span>{c.sub}</span>}
+          </span>
+        </div>
+        <p className="vc-bc__deck">{k.deck}</p>
+        <div className="vc-btns">
+          <button type="button" className="vc-act vc-bc__back" onClick={onClose} disabled={isSubmitting}>{k.back}</button>
+          <button type="button" data-confirm-focus className="vc-act vc-bc__go" onClick={onConfirm} disabled={isSubmitting}>
+            <ConfirmLabel busy={isSubmitting} text={k.go} />
+          </button>
+        </div>
+      </div>
+      <style jsx global>{`
+        .vc-bc .vc-bc__card { background:var(--bc-paper); color:var(--bc-ink); border-radius:12px; overflow:hidden;
+          font-family:var(--font-noto-thai),'Noto Sans Thai',system-ui,sans-serif;
+          box-shadow:inset 0 5px 0 var(--bc-plum), 0 30px 64px -28px rgba(30,24,40,.6); padding:22px 20px 20px; }
+        .vc-bc .vc-bc__head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .vc-bc .vc-bc__head h2 { margin:0; font-size:20px; font-weight:800; }
+        .vc-bc .vc-bc__head button { display:grid; place-items:center; width:40px; height:40px; border:0; border-radius:8px; background:transparent; color:var(--bc-muted); }
+        .vc-bc .vc-bc__head button:hover:not(:disabled) { background:var(--bc-board); }
+        .vc-bc .vc-bc__row { display:flex; align-items:center; gap:12px; margin:16px 0 0; padding:14px; border-radius:10px;
+          background:rgba(36,71,196,.07); border:1px dashed var(--bc-rule); }
+        .vc-bc .vc-bc__box { position:relative; flex:none; width:30px; height:30px; border:2px solid var(--bc-pen); border-radius:3px; background:#fff; }
+        .vc-bc .vc-bc__box svg { position:absolute; inset:1px; }
+        .vc-bc .vc-bc__box path { fill:none; stroke:var(--bc-pen); stroke-width:3.4; stroke-linecap:round; }
+        .vc-bc .vc-bc__mark { display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; color:var(--bc-plum); font-weight:800; font-size:18px; }
+        .vc-bc .vc-bc__txt { min-width:0; display:flex; flex-direction:column; }
+        .vc-bc .vc-bc__txt strong { font-size:17px; font-weight:700; line-height:1.35; color:var(--bc-pen); overflow-wrap:anywhere; }
+        .vc-bc .vc-bc__txt span { font-size:13px; color:var(--bc-muted); }
+        .vc-bc .vc-bc__deck { margin:16px 0 20px; font-size:14px; line-height:1.75; color:var(--bc-muted); }
+        .vc-bc .vc-act { border-radius:10px; font-size:15.5px; }
+        .vc-bc .vc-bc__go { background:var(--bc-plum); color:#fff; border:1px solid var(--bc-plum); }
+        .vc-bc .vc-bc__go:hover:not(:disabled) { background:var(--bc-plum-deep); }
+        .vc-bc .vc-bc__back { background:var(--bc-paper); color:var(--bc-ink); border:1px solid var(--bc-rule); }
+        .vc-bc .vc-bc__back:hover:not(:disabled) { background:var(--bc-board); }
+        .vc-bc button:focus-visible { outline:2px solid var(--bc-pen); outline-offset:2px; }
+        .vc-bc button:disabled { opacity:.6; }
+      `}</style>
+    </ConfirmShell>
+  );
+}
+
 const SKINS = {
   classic: ClassicConfirm,
+  "ballot-official": BallotOfficialConfirm,
   blossom: BlossomConfirm,
   gumroad: GumroadConfirm,
   "studio-dark": StudioDarkConfirm,

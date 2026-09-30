@@ -499,10 +499,19 @@ export default function BlossomVote({
         .bl-vote-root .bl-vopt__kick b { color:var(--bl-primary-ink); font-weight:700; }
         /* ink gutter — same Kanit-vs-lh1.12 clipping as .bl-crow__name (measured
            cutTop 2.7px on the real ballot row, 3.06px worst case at 30px). padding-top
-           only; padding-bottom would let the clamped 3rd line bleed back in. */
+           only; padding-bottom would let the clamped 3rd line bleed back in.
+           clamp:4 — QA-mobile-crossfamily-2026-09-25: preset[2]'s 53-char name needs 3
+           lines (measured cut up to 48px at 360×740 with clamp:2 — real ballot text
+           truncated, not just gutter residual). clamp:3 (BlossomCandidates.js' fix)
+           still cut 26px AT 360×740 SPECIFICALLY here: this row's text column is only
+           200px (logo+index+radio-mark share the row, narrower than the candidates
+           list row), so the same 53-char name wraps to 4 lines at this width even
+           though 3 lines is enough everywhere else (375/412/1440 all clear at clamp:3,
+           measured). clamp:4 covers the narrowest case; short names are unaffected
+           (they only ever use 1 line, clamp is a ceiling not a floor). */
         .bl-vote-root .bl-vopt__name { font-family:var(--bl-fd); font-weight:800; font-size:clamp(20px,5vw,30px); line-height:1.12;
           letter-spacing:-.01em; color:var(--bl-ink); padding-top:.2em; margin-top:-.2em;
-          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+          overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; }
         /* ink gutter: same Kanit-vs-lh clipping as .bl-vopt__name above, just far
            smaller here because lh 1.5 is generous — measured needEm 0.01 constant
            at every breakpoint and every party count (2/3/5/6). cushion .05em -> .06em.

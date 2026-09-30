@@ -34,6 +34,8 @@ import {
   fmsOfficialMaroonTemplate,
   fmsOfficialSlateTemplate,
 } from "./builtIn/fms-official";
+// v2 families — built next to the v1 family they replace (components/v2/families.js)
+import { ballotOfficialTemplate, ballotForestTemplate, ballotBrickTemplate, ballotGraphiteTemplate } from "./builtIn/ballot-official";
 
 const BUILT_IN_TEMPLATES = {
   // "classic" and "original" were never two designs. Original IS the classic layout
@@ -79,7 +81,11 @@ const BUILT_IN_TEMPLATES = {
   "fms-official-navy":     fmsOfficialNavyTemplate,
   "fms-official-emerald":  fmsOfficialEmeraldTemplate,
   "fms-official-maroon":   fmsOfficialMaroonTemplate,
-  "fms-official-slate":    fmsOfficialSlateTemplate
+  "fms-official-slate":    fmsOfficialSlateTemplate,
+  "ballot-official":          ballotOfficialTemplate,
+  "ballot-official-forest":   ballotForestTemplate,
+  "ballot-official-brick":    ballotBrickTemplate,
+  "ballot-official-graphite": ballotGraphiteTemplate,
 };
 
 // Archive (empty for now — yearly snapshots imported here in Phase 5+).

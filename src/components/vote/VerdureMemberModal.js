@@ -97,7 +97,18 @@ export function VerdureMemberModal({ member = null, onClose = () => {} }) {
         .vd-mm__rows > div { display:grid; gap:4px; padding:13px 0; border-top:1px dashed var(--rule); }
         .vd-mm__rows dt { font-family:var(--fm); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.55; }
         .vd-mm__rows dd { margin:0; font-family:var(--ft); font-size:15px; color:var(--moss); }
-        @media (max-width:640px) { .vd-mm__card { grid-template-columns:1fr; max-height:90vh; overflow-y:auto; } .vd-mm__photo { border-right:0; border-bottom:1px solid var(--rule); } }
+        @media (max-width:640px) {
+          /* 2026-09-25 QA rb: at 4/5 aspect-ratio the photo alone hit ~52% of
+             a 360-412 wide phone's height (need <=~45%) and the 90vh card cap
+             was above the ~88vh ceiling — shorten the photo crop and the cap,
+             bump the close target to the 44px minimum (was 38px). */
+          .vd-mm__card { grid-template-columns:1fr; max-height:85vh; overflow-y:auto; }
+          .vd-mm__photo { border-right:0; border-bottom:1px solid var(--rule); aspect-ratio:16/10; }
+          /* a wide crop of a portrait photo: centred, it cut through the forehead —
+             hold it near the top, where the face is */
+          .vd-mm__photo img { object-position:50% 22%; }
+          .vd-mm__x { width:44px; height:44px; }
+        }
       `}</style>
     </motion.div>
   );
@@ -122,7 +133,7 @@ export function VerdureLightbox({ src = null, caption = "", onClose = () => {} }
         @media (max-width:640px) {
           .vd-lb { padding:14px; }
           .vd-lb__img { max-width:96vw; max-height:80vh; border-radius:14px; }
-          .vd-lb__x { top:14px; right:14px; width:38px; height:38px; }
+          .vd-lb__x { top:14px; right:14px; width:44px; height:44px; }
           .vd-lb__cap { bottom:14px; max-width:90vw; white-space:normal; text-align:center; line-height:1.5; border-radius:14px; }
         }
       `}</style>

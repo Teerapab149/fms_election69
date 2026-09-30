@@ -111,7 +111,10 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
               border-radius:24px; overflow:hidden;
             }
             .sdm-x {
-              position:absolute; top:14px; right:14px; z-index:2; width:38px; height:38px;
+              /* 44x44 — WCAG/mobile tap-target floor (measured 38x38 at 360x740,
+                 QA-SWEEP-RULES-2026-09-25 §C). top/right trimmed 14->11px so the
+                 icon's visual position barely shifts. */
+              position:absolute; top:11px; right:11px; z-index:2; width:44px; height:44px;
               display:grid; place-items:center; border-radius:999px; cursor:pointer;
               background:rgba(20,20,15,.7); border:1px solid var(--sd-line-strong, #3E3E2D);
               color:var(--sd-ink-2, #B5B0A2); transition:all .2s;
@@ -126,11 +129,11 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
             }
             .sdm-info { padding:32px 30px; display:flex; flex-direction:column; justify-content:center; text-align:left; }
             .sdm-accent { color:var(--sd-accent, #D5FF3F); }
-            .sdm-eyebrow { font-family:var(--sd-mono, monospace); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3, #7F7A6E); margin-bottom:12px; }
+            .sdm-eyebrow { font-family:var(--sd-mono, monospace); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--sd-ink-3, #878275); margin-bottom:12px; }
             .sdm-name { font-family:var(--sd-sans, sans-serif); font-weight:400; font-size:clamp(24px,3vw,34px); letter-spacing:-.03em; line-height:1.1; margin:0 0 22px; color:var(--sd-ink, #F2EDDF); }
             .sdm-rows { margin:0; display:grid; gap:0; }
             .sdm-rows > div { display:grid; gap:4px; padding:12px 0; border-top:1px solid var(--sd-line, #2E2E22); }
-            .sdm-rows dt { font-family:var(--sd-mono, monospace); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-3, #7F7A6E); }
+            .sdm-rows dt { font-family:var(--sd-mono, monospace); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--sd-ink-3, #878275); }
             .sdm-rows dd { margin:0; font-family:var(--sd-sans, sans-serif); font-size:15px; color:var(--sd-ink, #F2EDDF); font-weight:400; }
             @media (max-width:640px) {
               .sdm-card { grid-template-columns:1fr; max-height:90vh; overflow-y:auto; }
@@ -168,7 +171,8 @@ export function StudioDarkLightbox({ src = null, caption = "", onClose = () => {
               border:1px solid var(--sd-line-strong, #3E3E2D); border-radius:14px; background:var(--sd-bg-2, #1B1B14);
             }
             .sdl-x {
-              position:absolute; top:20px; right:20px; width:42px; height:42px; z-index:2;
+              /* 44x44 — same tap-target floor as .sdm-x above (was 42x42). */
+              position:absolute; top:19px; right:19px; width:44px; height:44px; z-index:2;
               display:grid; place-items:center; border-radius:999px; cursor:pointer;
               background:rgba(20,20,15,.7); border:1px solid var(--sd-line-strong, #3E3E2D);
               color:var(--sd-ink-2, #B5B0A2); transition:all .2s;

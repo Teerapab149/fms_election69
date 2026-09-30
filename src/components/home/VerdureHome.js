@@ -1,72 +1,102 @@
 "use client";
 
-// VerdureHome — HOME for the Verdure template. Cream paper, a moss "wax-seal"
-// medallion as the brand centerpiece, a big STATE-AWARE terracotta action button
-// directly beneath it, and a compact serif stat ledger. The seal is an
-// Awwwards-grade interactive piece: mouse-parallax 3D tilt + a rotating
-// stamp-text ring + a counter-rotating dashed ring + a glossy sheen that follows
-// the cursor + a press-in on hover — all framer-motion so the global reduce-motion
-// rule can't freeze it (decorative motion = product call, per the project).
+// VerdureHome — HOME for the Verdure template (cream paper, moss ink, DM Serif
+// display, edge rails, the floating dock).
+//
+// The first screen answers the three questions a student arrives with — which
+// election, which cohort, which year — in one centred title block:
+//   "SAMO 50" / "โครงการเลือกตั้งคณะกรรมการบริหาร สโมสรนักศึกษาคณะวิทยาการจัดการ
+//   ประจำปีการศึกษา 2570" / the date and polling hours
+// then the two things to do: sign in / vote, or read the candidates first.
+// Below: the turnout ledger, the parties standing (compact rows, linked to their
+// pages), and how to vote in 3 steps — the student club teaches these on
+// Instagram every year; the site now explains them itself.
+//
+// (Previously a moss medallion with the edition number — it said nothing a
+// voter needed. The magazine-cover attempt that followed read as too formal.)
 //
 // ALL year/number/edition text derives from globalConfig via verdureMeta (Arabic
-// digits only). voteCTA-button STATE drives the button's label + route.
+// digits only). Status, countdown and the CTA come from ONE useElectionStatus.
 
 import { getPath } from "../../utils/basePath";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import VerdureChrome, { verdureSignIn, verdureMeta, verdureTheme, VerdureFooter } from "./VerdureChrome";
 import EditorElement from "../admin/editor/EditorElement";
-import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { getBinding } from "../admin/editor/elementCatalog";
 import { buildTemplateStyles } from "../../lib/templateTokens";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
-import { resolveElectionDates } from "../../utils/electionConfig";
+import { useElectionStatus } from "../../hooks/useElectionStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
 
-// ── the interactive wax seal ──
-function VerdureSeal({ num, ordSuffix, faculty, cy, prefix }) {
-  const px = useMotionValue(0), py = useMotionValue(0);
-  const rotX = useSpring(useTransform(py, [-0.5, 0.5], [10, -10]), { stiffness: 120, damping: 16 });
-  const rotY = useSpring(useTransform(px, [-0.5, 0.5], [-10, 10]), { stiffness: 120, damping: 16 });
-  const sheenX = useTransform(px, [-0.5, 0.5], ["28%", "72%"]);
-  const sheenY = useTransform(py, [-0.5, 0.5], ["26%", "74%"]);
-  const sheen = useMotionTemplate`radial-gradient(circle at ${sheenX} ${sheenY}, rgba(var(--cream-rgb),.22), rgba(var(--cream-rgb),0) 55%)`;
+// useElectionStatus action → the voteCTA-button state vocabulary
+const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
 
-  const onMove = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    px.set((e.clientX - r.left) / r.width - 0.5);
-    py.set((e.clientY - r.top) / r.height - 0.5);
-  };
-  const onLeave = () => { px.set(0); py.set(0); };
+// how a vote is cast, in the order a voter does it
+const STEPS = [
+  { t: "เข้าสู่ระบบด้วย PSU Passport", d: "ใช้บัญชีของมหาวิทยาลัย ระบบตรวจว่าคุณมีสิทธิ์ และบันทึกว่าคุณมาใช้สิทธิ์แล้ว" },
+  { t: "อ่านนโยบาย แล้วเลือกหนึ่งช่อง", d: "เลือกพรรคที่สนับสนุน ไม่รับรอง หรืองดออกเสียง ได้ช่องเดียว แล้วกดยืนยัน" },
+  { t: "บัตรถูกเก็บแบบไม่มีชื่อ", d: "บัตรถูกเข้ารหัสและเก็บแยกจากชื่อคุณ ไม่มีใครย้อนดูได้ว่าใครเลือกอะไร ผลคะแนนเปิดหลังปิดหีบ" },
+];
 
-  const ringText = `★ ${faculty} · ELECTION · ${cy} · ${prefix} · ${num} `.repeat(3);
+const EASE = [0.16, 1, 0.3, 1];
+const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
 
+// Spot illustrations for the three steps — the kind a magazine runs beside a
+// how-to: thin moss ink, one terracotta accent, drawn in once as they scroll
+// into view. 1 sign in on a phone · 2 one box marked on the ballot · 3 the
+// ballot folded into a sealed envelope, no name on it.
+function StepArt({ k, still }) {
+  const draw = (d = 0) => (still
+    ? { initial: false }
+    : { initial: { pathLength: 0, opacity: 0 }, whileInView: { pathLength: 1, opacity: 1 }, viewport: { once: true, margin: "-60px" },
+        transition: { pathLength: { duration: 0.9, ease: EASE, delay: d }, opacity: { duration: 0.2, delay: d } } });
+  const pop = (d = 0) => (still
+    ? { initial: false }
+    : { initial: { scale: 0, opacity: 0 }, whileInView: { scale: 1, opacity: 1 }, viewport: { once: true, margin: "-60px" },
+        transition: { duration: 0.45, ease: EASE, delay: d } });
   return (
-    <div className="vd-seal-wrap">
-      <motion.div className="vd-seal" onMouseMove={onMove} onMouseLeave={onLeave}
-        style={{ rotateX: rotX, rotateY: rotY, transformPerspective: 1100 }}
-        whileHover={{ scale: 0.985 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
-
-        {/* rotating stamp-text ring */}
-        <motion.svg className="vd-seal__ring" viewBox="0 0 400 400" aria-hidden
-          animate={{ rotate: 360 }} transition={{ duration: 46, ease: "linear", repeat: Infinity }}>
-          <defs><path id="vdSealPath" d="M200,200 m-170,0 a170,170 0 1,1 340,0 a170,170 0 1,1 -340,0" /></defs>
-          <text><textPath href="#vdSealPath" startOffset="0" className="vd-seal__ringtext">{ringText}</textPath></text>
-        </motion.svg>
-
-        {/* counter-rotating dashed ring */}
-        <motion.span className="vd-seal__dash" aria-hidden
-          animate={{ rotate: -360 }} transition={{ duration: 80, ease: "linear", repeat: Infinity }} />
-
-        {/* the moss disc */}
-        <div className="vd-seal__disc">
-          <motion.div className="vd-seal__sheen" style={{ background: sheen }} aria-hidden />
-          <div className="vd-home__disc-50">{num}</div>
-          <div className="vd-home__disc-ord">{ordSuffix} ED.</div>
-        </div>
-      </motion.div>
-    </div>
+    <svg className="vd-art" viewBox="0 0 140 100" aria-hidden>
+      {k === 0 && (
+        <>
+          <motion.rect x="46" y="8" width="48" height="84" rx="9" {...draw(0)} />
+          <motion.path d="M63 16 H77" {...draw(0.2)} />
+          <motion.circle cx="70" cy="40" r="9" {...draw(0.3)} />
+          <motion.path d="M56 63 Q70 49 84 63" {...draw(0.4)} />
+          <motion.rect x="55" y="70" width="30" height="10" rx="5" className="acc" {...draw(0.55)} />
+          <motion.g style={{ transformOrigin: "100px 20px", transformBox: "view-box" }} {...pop(0.8)}>
+            <circle cx="100" cy="20" r="10" className="fill" />
+            <path d="M95 20 L99 24 L106 16" className="on-fill" />
+          </motion.g>
+        </>
+      )}
+      {k === 1 && (
+        <>
+          <motion.rect x="32" y="10" width="76" height="82" rx="4" {...draw(0)} />
+          {[24, 46, 68].map((y, i) => (
+            <g key={y}>
+              <motion.rect x="42" y={y} width="13" height="13" rx="2" {...draw(0.2 + i * 0.1)} />
+              <motion.path d={`M63 ${y + 6.5} H${i === 1 ? 96 : 90}`} {...draw(0.3 + i * 0.1)} />
+            </g>
+          ))}
+          <motion.path d="M44 48 L53 57 M53 48 L44 57" className="mark" {...draw(0.8)} />
+        </>
+      )}
+      {k === 2 && (
+        <>
+          <motion.path d="M50 40 V14 H90 V40" {...draw(0)} />
+          <motion.path d="M58 22 H82 M58 30 H76" {...draw(0.15)} />
+          <motion.rect x="26" y="38" width="88" height="54" rx="4" {...draw(0.3)} />
+          <motion.path d="M26 38 L70 70 L114 38" {...draw(0.45)} />
+          <motion.g style={{ transformOrigin: "70px 70px", transformBox: "view-box" }} {...pop(0.9)}>
+            <circle cx="70" cy="70" r="10" className="fill" />
+            <path d="M66 70 V67 A4 4 0 0 1 74 67 V70 M64.5 70 H75.5 V77 H64.5 Z" className="on-fill" />
+          </motion.g>
+        </>
+      )}
+    </svg>
   );
 }
 
@@ -83,38 +113,40 @@ export default function VerdureHome({
   const globalConfig = useGlobalConfig();
   const [mounted, setMounted] = useState(false);
   const { isVoted: isVotedReal } = useVoteStatus({ enabled: !editorMode && status === "authenticated" });
+  const reduce = useReducedMotion();
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Phase-aware countdown: before open → count to START ("OPENS IN"); during →
-  // count to END ("CLOSES IN"); after → "ปิดแล้ว". A day segment prefixes the
-  // clock when >0 day remains so a multi-day gap doesn't render as "946:12:33".
-  // `days` is kept OUT of `value` on purpose: as one string the ledger rendered
-  // "26 วัน10:32:34" — the ink gap between the Thai "น" and the clock's "1"
-  // collapsed (the plain space advances only 6.8px at 34px, and the display
-  // face's -.02em tracking eats what is left). Separate spans let CSS own the
-  // separation instead of a glyph. See `.vd-home__stat .val .d` below.
-  const [cd, setCd] = useState({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "--:--:--" });
-  useEffect(() => {
-    const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
-    const fmt = (diff) => {
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff / 3600000) % 24), m = Math.floor((diff / 60000) % 60), s = Math.floor((diff / 1000) % 60);
-      const p = (n) => String(n).padStart(2, "0");
-      return { days: d, value: `${p(h)}:${p(m)}:${p(s)}` };
-    };
-    const tick = () => {
-      const now = Date.now();
-      const start = ELECTION_START instanceof Date ? ELECTION_START.getTime() : NaN;
-      const end = ELECTION_END instanceof Date ? ELECTION_END.getTime() : NaN;
-      if (!isNaN(start) && now < start) { setCd({ labelEn: "OPENS IN", labelTh: "เปิดใน", ...fmt(start - now) }); return; }
-      if (!isNaN(end) && now < end) { setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", ...fmt(end - now) }); return; }
-      setCd({ labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "ปิดแล้ว" });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [globalConfig?.electionEndAt, globalConfig?.electionStartAt]);
+  // ONE status for the whole page — the corner chip, the ledger and the CTA
+  // (rule 6: the same source every v2 template uses).
+  const signedIn = !editorMode && status === "authenticated" && !!session?.user;
+  const election = useElectionStatus({
+    globalConfig,
+    systemMode: initialData?.systemMode || initialData?.systemConfig?.systemMode || "AUTO",
+    isSystemOpen: editorMode ? true
+      : initialData?.isSystemOpen ?? initialData?.systemConfig?.isSystemOpen ?? initialData?.electionStatus === "ONGOING",
+    electionStatus: editorMode ? "ONGOING" : initialData?.electionStatus,
+    signedIn,
+    isVoted: !!(isVotedReal ?? initialData?.userData?.isVoted),
+    tick: !editorMode,
+  });
+  const howTo = useHowToVote({ phase: election.phase });
+
+  // The ledger's countdown, from that status. `days` stays OUT of `value`: as
+  // one string the ledger rendered "26 วัน10:32:34" (the Thai "น" and the clock's
+  // "1" leave no ink gap); separate spans let CSS own the separation.
+  const p2 = (n) => String(n).padStart(2, "0");
+  const rem = election.remaining;
+  const cd = election.target && rem
+    ? {
+        labelEn: election.target.kind === "opens" ? "OPENS IN" : "CLOSES IN",
+        labelTh: election.target.kind === "opens" ? "เปิดใน" : "ปิดใน",
+        days: rem.d, value: `${p2(rem.h)}:${p2(rem.m)}:${p2(rem.s)}`,
+      }
+    : election.phase === "paused" ? { labelEn: "STATUS", labelTh: "สถานะ", days: 0, value: "หยุดชั่วคราว" }
+    : election.phase === "open" ? { labelEn: "STATUS", labelTh: "สถานะ", days: 0, value: "เปิดอยู่" }
+    : election.phase === "before" ? { labelEn: "STATUS", labelTh: "สถานะ", days: 0, value: "ยังไม่เปิด" }
+    : { labelEn: "CLOSES IN", labelTh: "ปิดใน", days: 0, value: "ปิดแล้ว" };
 
   const editorStateRef = useRef(null);
   editorStateRef.current = { editorMode, elementConfigs, selectedElement, hoveredElement, onSelectElement, onHoverElement, onHoverEnd };
@@ -145,11 +177,8 @@ export default function VerdureHome({
 
   const tokenStylesCss = editorMode ? (editorTokenStyles || "") : buildTemplateStyles(resolvedTemplate, ".fms-app");
 
-  const runtimeCtx = buildRuntimeContext({
-    session, systemConfig: initialData?.systemConfig, electionStatus: initialData?.electionStatus,
-    userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
-  });
-  const voteState = editorMode ? "login" : (resolveElementState("voteCTA-button", runtimeCtx) || "login");
+  // the CTA follows the same status as the chip and the ledger
+  const voteState = editorMode ? "login" : (CTA_STATE[election.action] || "login");
   const CTA = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN · PSU PASSPORT", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง",          sub: "CAST YOUR BALLOT",       href: "/vote",     disabled: false },
@@ -165,58 +194,147 @@ export default function VerdureHome({
   const numberPart = String(meta.num);
   const sysMode = initialData?.systemMode || "AUTO";
 
-  const realParties = (initialData?.candidates || []).filter((c) => c.number > 0);
-  const partyCount = realParties.length || (editorMode ? 2 : 0);
+  const parties = (initialData?.candidates || []).filter((c) => c.number > 0).sort((a, b) => a.number - b.number);
+  const partyCount = parties.length || (editorMode ? 2 : 0);
   const deckText = String(getText("hero-subtitle", meta.campaign) ?? meta.campaign);
+  const href = (h) => (editorMode ? undefined : getPath(h));
+  // "9 FEB 2027" — the same register as "VOL. 50 / 2027" on the other side
+  // (months spelled out here: en-GB's "short" month is "Sept", not "SEP")
+  const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const votingDay = election.start instanceof Date && !isNaN(election.start.getTime())
+    ? (() => {
+        const parts = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Bangkok" }).formatToParts(election.start);
+        const get = (t) => parts.find((x) => x.type === t)?.value;
+        return `${Number(get("day"))} ${MON[Number(get("month")) - 1]} ${get("year")}`;
+      })()
+    : "";
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
     if (CTA.action === "signin") { e.preventDefault(); onSignIn ? onSignIn() : verdureSignIn(); }
   };
 
+  // one orchestrated entrance for the title block; still in the editor and for
+  // people who asked for less motion
+  const still = editorMode || !!reduce;
+  const rise = (d) => (still ? { initial: false } : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, ease: EASE, delay: d } });
+
   return (
     <div className="fms-app vd-root">
       {tokenStylesCss && <style dangerouslySetInnerHTML={{ __html: tokenStylesCss }} />}
       {!editorMode && <style>{`html,body{background:${themeT.cream};color-scheme:light}`}</style>}
 
-      <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode}
+      <VerdureChrome active="home" editorMode={editorMode} systemMode={sysMode} election={election}
         edge={{ num: "01", label: "Home", th: "หน้าหลัก" }} />
 
       <div className="vd-home">
         <div className="vd-home__above">
-          <span className="side side--l">EST. {meta.founded}</span>
+          {/* the polling day, from the configured schedule — it used to read
+              "EST. 1978", a founding year computed as (year − edition + 1) that
+              no one had set and no voter needed */}
+          <span className="side side--l">VOTING · {votingDay}</span>
           <span className="mid">{meta.tagline}</span>
           <span className="side side--r">VOL. {numberPart} / {meta.cy}</span>
         </div>
 
-        <div className="vd-home__hero">
-          <Wrap id="hero-title"><div className="vd-home__samo">{meta.samoSpaced}</div></Wrap>
-
-          <VerdureSeal num={numberPart} ordSuffix={meta.ordSuffix} faculty={meta.faculty} cy={meta.cy} prefix={meta.prefix} />
-
-          <Wrap id="voteCTA-button">
-            <a href={editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/login")}
-              onClick={onCta} className={`vd-home__cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">
-              <span className="vd-home__cta-label">{CTA.label}</span>
-              <span className="vd-home__cta-sub">{CTA.sub}</span>
-            </a>
+        {/* which election, which cohort, which year — the first thing anyone sees */}
+        <section className="vd-hero">
+          <Wrap id="hero-title">
+            <motion.h1 className="vd-hero__title" {...rise(0.05)}>
+              {meta.prefix} <em>{numberPart}</em>
+            </motion.h1>
           </Wrap>
-          <a href={editorMode ? undefined : getPath("/candidates")} className="vd-home__secondary"><span className="vd-thai">ดูรายชื่อผู้สมัคร</span> <span aria-hidden>↗</span></a>
-        </div>
+          <motion.span className="vd-hero__rule" aria-hidden {...rise(0.12)}>❦</motion.span>
+          <Wrap id="hero-subtitle">
+            <motion.p className="vd-hero__deck" {...rise(0.18)}>
+              {deckText} <span className="org">{meta.org}</span> <span className="vd-nowrap">ประจำปีการศึกษา {meta.ay}</span>
+            </motion.p>
+          </Wrap>
+          <motion.p className="vd-hero__date" {...rise(0.26)}>{election.dateLine}</motion.p>
 
-        <Wrap id="hero-subtitle">
-          <p className="vd-home__deck">{deckText} <em>{meta.org}</em> ประจำปีการศึกษา {meta.ay}</p>
+          <motion.div className="vd-hero__acts" {...rise(0.34)}>
+            <Wrap id="voteCTA-button">
+              <a href={editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/login")}
+                onClick={onCta} className={`vd-home__cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">
+                <span className="vd-home__cta-label">{CTA.label}</span>
+                <span className="vd-home__cta-sub">{CTA.sub}</span>
+              </a>
+            </Wrap>
+            <a href={href("/candidates")} className="vd-hero__alt">
+              <span className="vd-hero__alt-label">ดูผู้สมัครและนโยบาย</span>
+              <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
+            </a>
+          </motion.div>
+          {howTo.show && (
+            <motion.a href={editorMode ? undefined : howTo.href} className="vd-hero__how" {...rise(0.4)}>
+              วิธีลงคะแนน <span aria-hidden>↓</span>
+            </motion.a>
+          )}
+        </section>
+
+        <Wrap id="stats-progress-card">
+          <div className="vd-home__ledger">
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
+            <span className="vd-home__ledger-sep" />
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
+            <span className="vd-home__ledger-sep" />
+            <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
+            <span className="vd-home__ledger-sep" />
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
+          </div>
         </Wrap>
 
-        <div className="vd-home__ledger">
-          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
-          <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
-          <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
-          <span className="vd-home__ledger-sep" />
-          <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
-        </div>
+        {/* the parties standing — an index, one line per party, so two, three or
+            four parties read the same way (a two-up grid ran down the page) */}
+        {parties.length > 0 && (
+          <section className="vd-sec" aria-labelledby="vd-parties-h">
+            <div className="vd-sec__head">
+              <h2 id="vd-parties-h">ผู้สมัคร <em>{parties.length} พรรค</em></h2>
+              <a href={href("/candidates")} className="vd-sec__more">ดูนโยบายทั้งหมด <span aria-hidden>→</span></a>
+            </div>
+            <ul className="vd-parties">
+              {parties.map((p) => (
+                <li key={p.id ?? p.number}>
+                  <a href={href(`/party?id=${p.number}`)} className="vd-party">
+                    <span className="vd-party__logo">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {p.logoUrl ? <img src={src(p.logoUrl)} alt="" /> : <b>{p.number}</b>}
+                    </span>
+                    <span className="vd-party__id">
+                      <span className="vd-party__no">เบอร์ {p.number}</span>
+                      <span className="vd-party__name">{p.name}</span>
+                    </span>
+                    {p.slogan && <span className="vd-party__slogan">“{p.slogan}”</span>}
+                    <span className="vd-party__go" aria-hidden>→</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {/* one party standing is a different vote: approve it or not */}
+            {parties.length === 1 && (
+              <p className="vd-parties__note">มีพรรคเดียวที่ลงสมัคร ในบัตรเลือกได้ว่าจะ <b>รับรอง</b> <b>ไม่รับรอง</b> หรือ <b>งดออกเสียง</b></p>
+            )}
+          </section>
+        )}
+
+        {/* how to vote — what the club otherwise posts on Instagram */}
+        {howTo.show && (
+        <section id={howTo.id} className="vd-sec vd-sec--steps" aria-labelledby="vd-steps-h">
+          <div className="vd-sec__head">
+            <h2 id="vd-steps-h">ลงคะแนนใน <em>3 ขั้นตอนง่ายๆ</em></h2>
+          </div>
+          <ol className="vd-steps">
+            {STEPS.map((s, i) => (
+              <li key={s.t}>
+                <StepArt k={i} still={still} />
+                <span className="vd-steps__no">{p2(i + 1)}</span>
+                <b>{s.t}</b>
+                <p>{s.d}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+        )}
       </div>
 
       <VerdureFooter />
@@ -224,11 +342,9 @@ export default function VerdureHome({
       <style jsx global>{`
         /* padding-top 82 is NOT slack: the cornermark chip and the status pill are
            fixed at the top corners and end at y70, and this row's side labels sit
-           just inside their horizontal span. Trimming it to 64 put "EST. 1978"
-           straight through the logo — measured 1px of overlap at 1440 and 17px at
-           1366, where the right label hit the status pill too. Take height from the
-           seal instead; never from here. */
+           just inside their horizontal span. */
         .vd-home { flex:1; display:flex; flex-direction:column; align-items:center; padding:82px 40px 128px; max-width:1100px; margin:0 auto; width:100%; position:relative; z-index:1; }
+        .vd-nowrap { white-space:nowrap; }
 
         /* above-line — 3 equal columns so the centre line is DEAD centre regardless of side widths */
         .vd-home__above { width:100%; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:16px; padding:0 8px; }
@@ -237,41 +353,18 @@ export default function VerdureHome({
         .vd-home__above .side--r { justify-self:end; }
         .vd-home__above .mid { justify-self:center; font-family:var(--fd); font-style:italic; font-size:18px; color:var(--terra); text-align:center; white-space:nowrap; }
 
-        .vd-home__hero { display:flex; flex-direction:column; align-items:center; text-align:center; perspective:1100px; }
-        /* the tracking is what makes this read as a stamped wordmark, but it also
-           pushes the whole line right by one full space — nudge it back so the
-           optical centre matches the seal's geometric centre below it */
-        .vd-home__samo { font-family:var(--fs); font-weight:800; font-size:clamp(24px,2.6vw,38px); letter-spacing:.32em; text-indent:.32em; color:var(--moss); margin-bottom:10px; }
+        /* ── the title block ── */
+        .vd-hero { display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px,6vh,64px) 0 0; }
+        .vd-hero__title { margin:0; font-family:var(--fd); font-weight:400; font-size:clamp(84px,12vw,168px); line-height:.9; letter-spacing:-.03em; color:var(--moss); white-space:nowrap; }
+        .vd-hero__title em { font-style:italic; color:var(--terra); }
+        .vd-hero__rule { margin:14px 0 10px; font-size:22px; color:var(--terra); opacity:.7; }
+        .vd-hero__deck { margin:0; max-width:820px; font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(22px,2.4vw,30px); line-height:1.35; color:var(--moss); text-wrap:balance; }
+        .vd-hero__deck .org { color:var(--terra); }
+        .vd-hero__date { margin:14px 0 0; font-family:var(--ft); font-size:16px; color:var(--moss); opacity:.75; }
 
-        /* ── the interactive seal ── */
-        .vd-seal-wrap { display:grid; place-items:center; }
-        /* ONE variable drives the whole medallion. The numeral used to carry its own
-           clamp(150px,20vw,230px), so shrinking the seal left it at 230 regardless:
-           at a 310px disc it measured 71% of the diameter and at 1366 (248px disc)
-           88% — wider than the inner ring, clipped by the disc's own overflow. That
-           is the cramped look. Everything inside now scales from --seal, so the
-           proportion cannot drift again the next time the seal is resized. */
-        .vd-seal { --seal:clamp(290px,35vw,388px);
-          position:relative; width:var(--seal); height:var(--seal); display:grid; place-items:center; transform-style:preserve-3d; cursor:pointer; }
-        .vd-seal__ring { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-        .vd-seal__ringtext { font-family:var(--fm); font-size:13px; letter-spacing:.3em; fill:var(--terra); opacity:.7; text-transform:uppercase; }
-        .vd-seal__dash { position:absolute; inset:9%; border-radius:50%; border:1px dashed rgba(var(--terra-rgb),.45); pointer-events:none; }
-        .vd-seal__disc { position:relative; width:80%; height:80%; border-radius:50%; background:radial-gradient(125% 125% at 32% 24%, var(--moss-3) 0%, var(--moss) 58%); color:var(--cream); display:grid; place-items:center; overflow:hidden; box-shadow:0 50px 70px -38px rgba(var(--moss-rgb),.55), inset 0 3px 12px rgba(var(--cream-rgb),.07), inset 0 -10px 30px rgba(0,0,0,.18); }
-        .vd-seal__disc::before { content:""; position:absolute; inset:14px; border-radius:50%; border:1px dashed rgba(var(--cream-rgb),.22); pointer-events:none; }
-        .vd-seal__sheen { position:absolute; inset:0; border-radius:50%; pointer-events:none; mix-blend-mode:screen; }
-        /* .5 of the seal = .625 of the disc, the proportion this medallion shipped
-           with (230 inside a 352 disc) and the one the seal was designed around.
-           Tied to --seal so it holds at every size. */
-        .vd-home__disc-50 { font-family:var(--fd); font-style:italic; font-weight:400; font-size:calc(var(--seal) * .5); line-height:.86; letter-spacing:-.04em; color:var(--cream); position:relative; }
-        /* the edition tag rode at right:17%, which put it ON the numeral once the
-           numeral filled the disc (measured overlapping at every width). Pushed out
-           to the quiet band between the numeral and the inner dashed ring, and
-           scaled with the seal so it stays there. */
-        .vd-home__disc-ord { position:absolute; top:17%; right:9%; font-family:var(--fm); font-size:calc(var(--seal) * .028); letter-spacing:.22em; color:var(--terra-soft); text-transform:uppercase; transform:rotate(18deg); }
-
-        /* PRIMARY ACTION — readable on hover (darker terracotta, NOT moss, so it never
-           merges into the moss seal behind it) */
-        .vd-home__cta { display:inline-flex; flex-direction:column; align-items:center; gap:2px; margin-top:-20px; position:relative; z-index:3; padding:17px 44px; border-radius:999px; background:var(--cta); color:var(--cta-text); border:1px solid var(--cta); box-shadow:0 16px 34px -14px rgba(var(--terra-rgb),.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
+        .vd-hero__acts { display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch; gap:14px; margin-top:30px; }
+        /* PRIMARY ACTION — readable on hover (darker terracotta, never moss) */
+        .vd-home__cta { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; height:100%; min-height:66px; position:relative; z-index:3; padding:14px 40px; border-radius:999px; background:var(--cta); color:var(--cta-text); border:1px solid var(--cta); box-shadow:0 16px 34px -14px rgba(var(--terra-rgb),.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
         .vd-home__cta:hover { background:var(--cta-2); border-color:var(--cta-2); transform:translateY(-2px); box-shadow:0 20px 40px -14px rgba(var(--terra-rgb),.6); }
         .vd-home__cta-label { font-family:var(--fs); font-weight:700; font-size:18px; letter-spacing:.01em; color:var(--cta-text); display:inline-flex; align-items:center; gap:11px; }
         .vd-home__cta-label::after { content:"→"; font-size:18px; }
@@ -280,71 +373,106 @@ export default function VerdureHome({
         .vd-home__cta.is-disabled .vd-home__cta-label::after { content:"●"; opacity:.5; }
         .vd-home__cta-sub { font-family:var(--fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--cta-text); opacity:.8; }
         .vd-home__cta.is-disabled .vd-home__cta-sub { color:var(--moss); opacity:.6; }
-        .vd-home__secondary { margin-top:16px; font-family:var(--fm); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--moss); opacity:.7; border-bottom:1px solid var(--rule); padding-bottom:2px; transition:opacity .2s, color .2s; }
-        .vd-home__secondary:hover { opacity:1; color:var(--terra); }
+        /* the second action: read the candidates first — a real button, not a footnote */
+        /* "a." prefixes: Verdure's base rule .vd-root a:not(.vd-btn){color:inherit}
+           is (0,2,1) — a bare class loses to it, which left the hover state moss
+           text on a moss fill (unreadable). */
+        .vd-root a.vd-hero__alt { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:66px; padding:14px 34px; border-radius:999px; border:1.5px solid var(--moss); color:var(--moss); transition:background .2s, color .2s; }
+        .vd-root a.vd-hero__alt:hover { background:var(--moss); color:var(--cream); }
+        .vd-hero__alt-label { font-family:var(--fs); font-weight:700; font-size:18px; }
+        .vd-hero__alt-sub { font-family:var(--fm); font-size:9px; letter-spacing:.2em; text-transform:uppercase; opacity:.7; }
 
-        /* balanced wrapping at a slightly tighter measure: at the old 680px this
-           sentence ran one full line and left a short stub under it, which is what
-           made the block read loose. 620 + balance gives two near-equal lines — and
-           two lines, not three, is what keeps it clear of the dock. */
-        .vd-home__deck { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(19px,2vw,26px); line-height:1.26; color:var(--moss); margin:22px auto 0; max-width:620px; text-align:center; text-wrap:balance; }
-        .vd-home__deck em { color:var(--terra); }
-
-        /* The break before the ledger scales with the viewport on purpose. The dock is
-           a centred pill, so a ledger that lands in its band loses exactly the two
-           middle figures (TURNOUT, OPENS IN) while the outer two stay readable — a
-           half-covered row reads like a bug. Pushing the rule below the fold instead
-           makes the first screen resolve as the seal alone and turns the ledger into
-           something you scroll to, which is what the rest of the page already does. */
-        .vd-home__ledger { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0 8px; margin-top:clamp(34px,11vh,110px); padding-top:26px; border-top:1px solid var(--rule); width:100%; }
+        .vd-home__ledger { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0 8px; margin-top:clamp(44px,8vh,80px); padding-top:26px; border-top:1px solid var(--rule); width:100%; }
         .vd-home__stat { text-align:center; padding:0 22px; }
         .vd-home__stat .lbl { font-family:var(--fm); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--moss); opacity:.6; margin-bottom:6px; }
         .vd-home__stat .val { font-family:var(--fd); font-style:italic; font-weight:400; font-size:34px; line-height:1; letter-spacing:-.02em; color:var(--moss); }
         .vd-home__stat .val em { color:var(--terra); font-style:italic; }
         .vd-home__stat .val small { font-family:var(--fs); font-style:normal; font-size:13px; font-weight:500; color:var(--moss); opacity:.55; margin-left:5px; letter-spacing:0; }
-        /* day segment of the countdown — a plain space between "วัน" and the clock
-           advanced 6.8px but left almost no INK gap (Thai bowl ends flush, the
-           display "1" starts flush), reading as "26 วัน10:32:34". Own margin. */
         .vd-home__stat .val .d { margin-right:.36em; }
         .vd-home__ledger-sep { width:1px; height:38px; background:var(--rule); }
 
-        /* SHORT viewports — the laptop class (1366x768, 1024x760). Width-only rules
-           cannot see these: at 1440x860 the composition already resolves above the
-           floating dock, but with ~90px less height the identity line came to rest
-           inside the dock's band. The seal gives back the difference; nothing else
-           about the composition changes. */
-        @media (min-width:901px) and (max-height:820px) {
-          .vd-home__above { margin-bottom:12px; }
-          .vd-seal { --seal:clamp(280px,28vw,310px); }
-          .vd-home__deck { margin-top:18px; }
-        }
+        /* ── sections: parties, steps ── */
+        .vd-sec { width:100%; margin-top:80px; }
+        .vd-sec--steps { scroll-margin-top:90px; }
+        /* jump to the steps — the quietest action, under the two pills */
+        .vd-root a.vd-hero__how { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin-top:10px;
+          font-family:var(--fs); font-weight:700; font-size:15px; color:var(--moss);
+          text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:5px; }
+        .vd-root a.vd-hero__how:hover { color:var(--terra); }
+        .vd-sec__head { display:flex; align-items:baseline; justify-content:space-between; gap:10px 24px; flex-wrap:wrap; padding-bottom:12px; border-bottom:2px solid var(--moss); }
+        .vd-sec__head h2 { margin:0; font-family:var(--fd); font-weight:400; font-size:clamp(30px,3.4vw,42px); line-height:1.1; color:var(--moss); letter-spacing:-.015em; }
+        .vd-sec__head h2 em { font-style:italic; color:var(--terra); }
+        .vd-root a.vd-sec__more { font-family:var(--fs); font-weight:700; font-size:15px; color:var(--terra); border-bottom:1.5px solid currentColor; padding-bottom:1px; }
+        .vd-root a.vd-sec__more:hover { color:var(--moss); }
+
+        /* the parties as an index: one line each — logo, number + name, slogan, arrow */
+        .vd-parties { list-style:none; margin:0; padding:0; }
+        .vd-parties li { border-bottom:1px solid var(--rule); }
+        .vd-root a.vd-party { display:grid; grid-template-columns:52px minmax(0,1.1fr) minmax(0,1fr) 28px; align-items:center; gap:20px; padding:16px 0; color:var(--moss); transition:background .2s; }
+        .vd-root a.vd-party:hover { background:rgba(var(--moss-rgb),.04); }
+        .vd-party__logo { width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--cream-2); border:1px solid var(--rule); display:grid; place-items:center; }
+        .vd-party__logo img { width:100%; height:100%; object-fit:contain; }
+        .vd-party__logo b { font-family:var(--fd); font-style:italic; font-size:24px; color:var(--terra); }
+        .vd-party__id { display:flex; flex-direction:column; min-width:0; }
+        .vd-party__no { font-family:var(--ft); font-size:13px; font-weight:600; color:var(--terra); }
+        .vd-party__name { font-family:var(--fd); font-size:24px; line-height:1.25; }
+        .vd-party__slogan { font-family:var(--fd); font-style:italic; font-size:17px; line-height:1.45; opacity:.72; }
+        .vd-party__go { font-size:20px; color:var(--terra); transition:transform .2s; justify-self:end; }
+        .vd-root a.vd-party:hover .vd-party__name { color:var(--terra); }
+        .vd-root a.vd-party:hover .vd-party__go { transform:translateX(4px); }
+        .vd-parties__note { margin:14px 0 0; font-family:var(--ft); font-size:15px; color:var(--moss); opacity:.8; }
+        .vd-parties__note b { color:var(--terra); font-weight:600; }
+
+        .vd-steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 36px; }
+        .vd-steps li { padding:26px 0 8px; }
+        /* spot illustrations: moss ink, one terracotta accent */
+        .vd-art { display:block; width:140px; height:100px; margin:0 0 10px -6px; overflow:visible; }
+        .vd-art rect, .vd-art path, .vd-art circle { fill:none; stroke:var(--moss); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+        .vd-art .acc { stroke:var(--terra); fill:rgba(var(--terra-rgb),.12); }
+        .vd-art .mark { stroke:var(--terra); stroke-width:3; }
+        .vd-art .fill { fill:var(--terra); stroke:none; }
+        .vd-art .on-fill { stroke:var(--cream); stroke-width:1.8; fill:none; }
+        /* the steps really are a sequence, so they carry their numbers */
+        .vd-steps__no { display:block; font-family:var(--fd); font-style:italic; font-size:52px; line-height:1; color:var(--terra); letter-spacing:-.03em; }
+        .vd-steps b { display:block; margin-top:10px; font-family:var(--fd); font-weight:400; font-size:23px; line-height:1.3; color:var(--moss); }
+        .vd-steps p { margin:8px 0 0; font-family:var(--ft); font-size:15.5px; line-height:1.7; color:var(--moss); opacity:.78; }
 
         @media (max-width:1100px) {
           .vd-home { padding:76px 20px 116px; }
           .vd-home__above { grid-template-columns:1fr; justify-items:center; gap:4px; margin-bottom:16px; }
           .vd-home__above .side--l, .vd-home__above .side--r { justify-self:center; }
-          .vd-home__deck { font-size:18px; }
+        }
+        @media (max-width:860px) {
+          /* the slogan drops under the name — the index stays one row per party */
+          .vd-root a.vd-party { grid-template-columns:48px minmax(0,1fr) 22px; gap:14px; }
+          .vd-party__logo { width:48px; height:48px; grid-row:1 / span 2; }
+          .vd-party__slogan { grid-column:2; grid-row:2; font-size:15px; margin-top:-6px; }
+          .vd-party__go { grid-column:3; grid-row:1 / span 2; }
+          .vd-steps { grid-template-columns:minmax(0,1fr); }
+          .vd-steps li { display:grid; grid-template-columns:96px minmax(0,1fr); column-gap:16px; align-items:start; padding:18px 0; border-bottom:1px solid var(--rule); }
+          .vd-art { grid-row:span 3; width:96px; height:70px; margin:0; }
+          .vd-steps__no { font-size:30px; }
+          .vd-steps b { margin-top:2px; }
         }
         @media (max-width:640px) {
-          /* fixed break again on phones: the dock is nearly full-width here, so a
-             viewport-scaled gap pushed the figures INTO its band instead of past it.
-             Held tight, the whole ledger sits above the dock at rest. */
-          .vd-home__ledger { gap:18px 0; margin-top:28px; }
-          /* the base clamp bottoms out at 290px here, which is most of a phone's
-             width; 62vw keeps the seal dominant while giving the second stat row
-             the ~40px it needs to finish above the dock */
-          .vd-seal { --seal:clamp(230px,62vw,290px); }
+          .vd-hero { padding-top:12px; }
+          .vd-hero__title { font-size:clamp(68px,22vw,96px); }
+          .vd-hero__deck { font-size:20px; }
+          .vd-hero__date { font-size:14.5px; }
+          .vd-hero__acts { flex-direction:column; width:100%; gap:10px; margin-top:24px; }
+          .vd-home__cta, .vd-hero__alt { width:100%; min-height:58px; padding:12px 24px; }
+          .vd-home__cta-label, .vd-hero__alt-label { font-size:16px; }
+          .vd-home__ledger { gap:18px 0; margin-top:36px; }
           .vd-home__stat { flex:0 0 50%; padding:0 8px; }
-          /* the countdown is the one figure that cannot live in a half-width cell:
-             "22 วัน 18:33:10" runs ~280px at 34px while the cell is ~170, so it
-             wrapped mid-value and broke as "22" / "วัน 18:33:10" — the day count
-             orphaned from its own unit. Its own full-width row gives it 372px and
-             nowrap guarantees it stays one line even at the longest reading. */
+          /* the countdown cannot live in a half-width cell: "22 วัน 18:33:10" is
+             ~280px at 34px, so it gets its own row and never wraps mid-value */
           .vd-home__stat--cd { flex:0 0 100%; }
           .vd-home__stat--cd .val { white-space:nowrap; }
           .vd-home__ledger-sep { display:none; }
-          .vd-home__cta { padding:15px 30px; }
-          .vd-home__cta-label { font-size:16px; }
+          .vd-sec { margin-top:56px; }
+          .vd-party__name { font-size:20px; }
+          .vd-steps b { font-size:20px; }
+          .vd-steps p { font-size:14.5px; }
         }
       `}</style>
     </div>

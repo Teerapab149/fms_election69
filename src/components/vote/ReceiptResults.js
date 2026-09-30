@@ -162,7 +162,7 @@ export default function ReceiptResults({
 
   const deckCopy = revealed
     ? "ใบสรุปคะแนนเสียงการเลือกตั้ง ไล่รายพรรคตามจำนวนคะแนนที่ได้รับ พร้อมสถิติผู้ใช้สิทธิ์"
-    : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดผนึกพร้อมกันเมื่อปิดโหวต";
+    : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดผนึกพร้อมกันเมื่อคณะกรรมการประกาศผล";
 
   const lockNote = ended
     ? "ปิดโหวตแล้ว · รอประกาศผลอย่างเป็นทางการ"
@@ -221,7 +221,7 @@ export default function ReceiptResults({
           <section className="rc-res-empty">
             <span className="rc-res-empty__lab">POLLS NOT OPEN</span>
             <span className="rc-res-empty__th">ยังไม่เปิดรับลงคะแนน</span>
-            <span className="rc-res-empty__sub">ผลการเลือกตั้งจะปรากฏที่นี่เมื่อเริ่มการลงคะแนน</span>
+            <span className="rc-res-empty__sub">ผลคะแนนจะแสดงที่นี่ เมื่อคณะกรรมการประกาศผล</span>
           </section>
         ) : revealed ? (
           /* ===== REVEALED — standings strip (offset left) + scatter rail (right) ===== */
@@ -409,8 +409,8 @@ export default function ReceiptResults({
                 <h1 className="rc-seal-head">ผลคะแนนถูกผนึกไว้</h1>
                 <p className="rc-seal-deck">
                   {singleParty
-                    ? "ผลการรับรองและสถิติผู้ใช้สิทธิ์จะเปิดเผยเมื่อปิดโหวต เพื่อความโปร่งใสและเป็นธรรม"
-                    : "ผลคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์จะเปิดเผยพร้อมกันเมื่อปิดโหวต เพื่อความเป็นธรรมกับทุกพรรค"}
+                    ? "ผลการรับรองและสถิติผู้ใช้สิทธิ์จะเปิดเผยเมื่อคณะกรรมการประกาศผล เพื่อความโปร่งใสและเป็นธรรม"
+                    : "ผลคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์จะเปิดเผยพร้อมกันเมื่อคณะกรรมการประกาศผล เพื่อความเป็นธรรมกับทุกพรรค"}
                 </p>
                 <div className="rc-perf" aria-hidden="true" />
                 <div className="rc-seal-note">{thaiSafe(lockNote)}</div>

@@ -7,11 +7,13 @@ import { getPath } from "../../utils/basePath";
 import { evaluationPromptText } from "../../utils/activityHours";
 
 const COPY = {
-  blossom: { kicker: "A LITTLE NOTE OF THANKS", title: <>หนึ่งเสียงของคุณ<br />มีความหมายเสมอ</>, next: "เขียนบทต่อไปด้วยกัน" },
+  blossom: { kicker: "A LITTLE NOTE OF THANKS", title: <>หนึ่งเสียงของคุณ<br />มีความหมายเสมอ</>, next: "เหลืออีกหนึ่งขั้นตอน" },
   "fms-official": { kicker: "OUR FACULTY. OUR FUTURE.", title: <>ร่วมกำหนดทิศทาง<br />ไปด้วยกัน</>, next: "อีกหนึ่งขั้นตอน" },
   gumroad: { kicker: "YOU SHOWED UP. YOU MADE A MARK.", title: <>ใช้สิทธิ์แล้ว<br />เสียงคุณอยู่ในนี้!</>, next: "ต่ออีกนิด ก็ครบแล้ว" },
-  "studio-dark": { kicker: "YOUR VOICE HAS ARRIVED", title: <>Thank you<br />for <em>voting.</em></>, next: "The next chapter." },
-  verdure: { kicker: "SMALL VOICES. SHARED GROWTH.", title: <>จากหนึ่งเสียง<br />สู่การเติบโต</>, next: "ดูแลการเติบโตต่ออีกนิด" },
+  "studio-dark": { kicker: "YOUR VOICE HAS ARRIVED", title: <>Thank you<br />for <em>voting.</em></>, next: "One more step." },
+  // plain election words (owner): the plant stays as the picture, but "growth"
+  // wording read as if this were not a real vote
+  verdure: { kicker: "YOUR VOTE IS RECORDED.", title: <>ลงคะแนน<br />เรียบร้อยแล้ว</>, next: "เหลืออีกหนึ่งขั้นตอน" },
 };
 
 // Decorative only. The artwork never receives a voter, party, ballot ID or tally.
@@ -97,7 +99,7 @@ export function VoteCompletionMark({ family, quiet = false }) {
   );
 }
 
-export default function VoteSuccessExperience({ family, user, isUnlocked = false, onOpenForm = () => {}, editorMode = false, children }) {
+export default function VoteSuccessExperience({ family, user, isUnlocked = false, hasForm = true, onOpenForm = () => {}, editorMode = false, children }) {
   const gc = useGlobalConfig() || {};
   const reduce = useReducedMotion();
   const copy = COPY[family] || COPY["fms-official"];
@@ -119,13 +121,13 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
           <p className="vx-deck">ขอบคุณที่ร่วมเป็นส่วนหนึ่งของ{gc.organizationName || "สโมสรนักศึกษา คณะวิทยาการจัดการ"}</p>
         </section>
         <section className="vx-next">
-          <div className="vx-next-copy"><span className="vx-label">{isUnlocked ? "COMPLETE" : "NEXT STEP"}</span><h2>{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : copy.next}</h2><p>{isUnlocked ? "ส่งแบบประเมินเรียบร้อยแล้ว ไปยังหน้าผลคะแนนได้เมื่อพร้อม" : evaluationPromptText(gc)}</p></div>
+          <div className="vx-next-copy"><span className="vx-label">{isUnlocked ? "COMPLETE" : "NEXT STEP"}</span><h2>{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : copy.next}</h2><p>{!hasForm ? "ไม่มีแบบประเมินในปีนี้ ไปหน้าผลคะแนนได้เลย" : isUnlocked ? "ส่งแบบประเมินเรียบร้อยแล้ว ไปยังหน้าผลคะแนนได้เมื่อพร้อม" : evaluationPromptText(gc)}</p></div>
           <div className="vx-actions">
-            {isUnlocked ? <><div className="vx-done"><Check size={16} aria-hidden="true" /> ทำแบบประเมินแล้ว</div><a className="vx-button vx-primary" href={editorMode ? undefined : getPath("/results")}>ไปหน้าผลคะแนน <ArrowRight size={17} aria-hidden="true" /></a></> : <><button type="button" className="vx-button vx-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={17} aria-hidden="true" /></button><span className="vx-lock"><Lock size={13} aria-hidden="true" /> ทำแบบประเมินก่อนดูผลคะแนน</span></>}
+            {isUnlocked ? <>{hasForm && <div className="vx-done"><Check size={16} aria-hidden="true" /> ทำแบบประเมินแล้ว</div>}<a className="vx-button vx-primary" href={editorMode ? undefined : getPath("/results")}>ไปหน้าผลคะแนน <ArrowRight size={17} aria-hidden="true" /></a></> : <><button type="button" className="vx-button vx-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={17} aria-hidden="true" /></button><span className="vx-lock"><Lock size={13} aria-hidden="true" /> ทำแบบประเมินก่อนดูผลคะแนน</span></>}
             <a className="vx-button vx-home" href={editorMode ? undefined : getPath("/")}>กลับหน้าแรก</a>
           </div>
         </section>
-        <div className="vx-illustration"><VoteCompletionMark family={family} quiet={Boolean(reduce || editorMode)} /><span className="vx-art-caption">{family === "gumroad" ? "ONE PERSON. ONE VOICE." : family === "verdure" ? "GROWING, TOGETHER" : "YOUR VOICE MATTERS"}</span></div>
+        <div className="vx-illustration"><VoteCompletionMark family={family} quiet={Boolean(reduce || editorMode)} /><span className="vx-art-caption">{family === "gumroad" ? "ONE PERSON. ONE VOICE." : family === "verdure" ? "ONE STUDENT. ONE VOTE." : "YOUR VOICE MATTERS"}</span></div>
         <div className="vx-person">
           <span className="vx-label">ผู้ใช้สิทธิ์</span>
           {user?.name && <strong>{user.name}</strong>}

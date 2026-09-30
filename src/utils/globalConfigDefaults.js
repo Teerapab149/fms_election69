@@ -27,11 +27,10 @@ export const GLOBAL_CONFIG_DEFAULTS = {
   electionCalendarYear: 2026,
   copyrightYear: 2026,
 
-  // Election announcement poster shown on the home page. Empty = no poster
-  // section at all, which is the correct default: the alternative used to be a
-  // hardcoded image carrying LAST year's polling date, and a stale date on the
-  // faculty's own site is worse than no poster. Root-relative path (no basePath
-  // — readers add it via getPath).
+  // Election announcement poster shown on the home page. Empty = the checked-in
+  // generic poster (utils/electionPoster.mjs → DEFAULT_ELECTION_POSTER_PATH; no
+  // date or edition number on it, despite the file name). Root-relative path
+  // (no basePath — readers add it via getPath).
   electionBannerUrl: "",
 
   // Success-page evaluation form (stored in the SystemConfig.googleFormUrl
@@ -50,88 +49,85 @@ export const GLOBAL_CONFIG_DEFAULTS = {
  *
  * Optional UI-only keys (read defensively by GlobalConfigTab — absence is safe,
  * never affects saved data): `icon` (lucide name for the section header),
- * `desc` (one-line section subtitle), `preview` (id → live composed-output chip
- * row rendered by the tab), and per-field `col` ("full" spans both grid columns;
- * default "half" pairs short fields side by side).
+ * `desc` (one-line section subtitle), `preview` (id → live composed-output
+ * block), per-field `col` ("full" spans both grid columns; default "half"),
+ * `where` (where the value shows up on the site — the question an admin
+ * actually has), and `derived: true` for keys assembled from other fields
+ * (utils/globalConfigDerive.mjs) — shown as the assembled value with an
+ * "แก้เอง" switch instead of a plain input.
+ *
+ * Order = how often it changes: the dates are set every year and must not be
+ * missed, so they come first.
  */
 export const GLOBAL_CONFIG_FIELDS = [
   {
-    group: "ข้อมูลการเลือกตั้ง",
-    icon: "Vote",
-    desc: "ชื่อและปีของการเลือกตั้งครั้งนี้",
-    preview: "election",
-    fields: [
-      { key: "electionNamePrefix", label: "ชื่อย่อ", type: "text", col: "half", hint: "ตัวอักษรนำหน้า เช่น SAMO" },
-      { key: "electionNumber", label: "เลขครั้งที่", type: "number", col: "half", hint: "ครั้งที่จัด เช่น 50 — รวมกับชื่อย่อเป็นป้าย “SAMO 50” อัตโนมัติ" },
-      { key: "academicYearTh", label: "ปีการศึกษา (พ.ศ.)", type: "number", col: "half", hint: "แบบ พ.ศ. เช่น 2570" },
-      { key: "electionCalendarYear", label: "ปีการเลือกตั้ง (ค.ศ.)", type: "number", col: "half", hint: "แบบ ค.ศ. เช่น 2027" },
-    ],
-  },
-  {
-    group: "ชื่อโครงการและองค์กร",
-    icon: "Building2",
-    desc: "ชื่อโครงการ องค์กร คณะ และมหาวิทยาลัย — เรียงตามลำดับที่ประกอบขึ้นเป็นบล็อกบนหน้าเว็บ",
-    preview: "org",
-    fields: [
-      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", multiline: true, col: "full", hint: "เช่น โครงการเลือกตั้งคณะกรรมการบริหาร · กด Enter เพื่อขึ้นบรรทัดใหม่เอง" },
-      { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", col: "full", hint: "เช่น คณะกรรมการบริหาร — ใช้ในวลี “โครงการเลือกตั้ง…”" },
-      { key: "organizationName", label: "ชื่อองค์กร (เต็ม)", type: "text", col: "full", hint: "เช่น สโมสรนักศึกษาคณะวิทยาการจัดการ" },
-      { key: "organizationShort", label: "ชื่อองค์กร (ย่อ)", type: "text", col: "half", hint: "เช่น สโมสรนักศึกษา" },
-      { key: "facultyName", label: "ชื่อคณะ", type: "text", col: "half", hint: "เช่น คณะวิทยาการจัดการ" },
-      { key: "facultyShortEn", label: "ชื่อคณะ (อักษรย่อ EN)", type: "text", col: "half", hint: "เช่น FMS" },
-      { key: "university", label: "มหาวิทยาลัย", type: "text", col: "half", hint: "เช่น PSU" },
-    ],
-  },
-  {
-    group: "ช่วงเวลาเลือกตั้ง",
+    group: "วันเวลาเลือกตั้ง",
     icon: "CalendarClock",
     // ⚠️ วันเวลาชุดนี้ไม่ได้ใช้แค่โหมด AUTO — AUTO ใช้ตัดสินเปิด-ปิดหีบ แต่
     // CountdownTimer อ่านค่าเดียวกันนี้ในทุกโหมด ถ้าเว้นว่างหรือกรอกผิด
     // นักศึกษาจะเห็นนาฬิกานับถอยหลังผิดแม้ระบบจะอยู่โหมด MANUAL_OPEN
-    desc: "วันเวลาเปิด-ปิด · ใช้ตัดสินเปิด-ปิดหีบเฉพาะโหมด AUTO · หน้านับถอยหลังใช้ทุกโหมด (เว้นว่าง = ใช้ค่าในโค้ด)",
+    desc: "ต้องตั้งใหม่ทุกปี · โหมด AUTO ใช้เปิด-ปิดหีบตามเวลานี้ · นาฬิกานับถอยหลังใช้ทุกโหมด",
     preview: "schedule",
     fields: [
-      { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร", type: "datetime", col: "half", hint: "วันเวลาเริ่มเผยแพร่ผู้สมัคร" },
-      { key: "electionStartAt", label: "เปิดหีบ / เริ่มลงคะแนน", type: "datetime", col: "half", hint: "วันเวลาเริ่มโหวต" },
-      { key: "electionEndAt", label: "ปิดหีบ / สิ้นสุดลงคะแนน", type: "datetime", col: "half", hint: "วันเวลาปิดโหวต" },
+      { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร", type: "datetime", col: "half", where: "วันที่หน้าผู้สมัครเริ่มแสดงพรรค" },
+      { key: "electionStartAt", label: "เปิดหีบ", type: "datetime", col: "half", where: "สถานะและนาฬิกาหน้าแรก · หน้ายังไม่เปิดหีบ · ปีของวันนี้คือปี ค.ศ. ของการเลือกตั้ง" },
+      { key: "electionEndAt", label: "ปิดหีบ", type: "datetime", col: "half", where: "นาฬิกาหน้าแรก · \"ปิดหีบ…\" ในขั้นตอนหน้าแรก" },
     ],
   },
   {
-    group: "หน้าประเมินผล · แบบฟอร์ม",
+    group: "ครั้งที่และปี",
+    icon: "Vote",
+    desc: "ใส่ปีการศึกษาช่องเดียว · ปี ค.ศ. และปีลิขสิทธิ์ใช้ปีของวันเปิดหีบให้เอง",
+    preview: "election",
+    fields: [
+      { key: "electionNamePrefix", label: "ชื่อย่อ", type: "text", col: "half", where: "ป้าย SAMO 50 ทุกหน้า" },
+      { key: "electionNumber", label: "ครั้งที่", type: "number", col: "half", where: "ป้าย SAMO 50 ทุกหน้า" },
+      { key: "academicYearTh", label: "ปีการศึกษา (พ.ศ.)", type: "number", col: "half", where: "\"ปีการศึกษา 2570\" หน้าแรกและบนบัตร" },
+      { key: "electionCalendarYear", label: "ปีการเลือกตั้ง (ค.ศ.)", type: "number", col: "half", derived: true, where: "ชื่อแท็บเบราว์เซอร์ \"FMS Election 2027\"" },
+      { key: "copyrightYear", label: "ปีลิขสิทธิ์ (ค.ศ.)", type: "number", col: "half", derived: true, where: "ท้ายเว็บทุกหน้า © FMS@PSU 2027" },
+    ],
+  },
+  {
+    group: "ชื่อองค์กรและโครงการ",
+    icon: "Building2",
+    desc: "พิมพ์แต่ละชื่อครั้งเดียว · ชื่อโครงการและชื่อองค์กรเต็มประกอบให้เอง",
+    preview: "org",
+    fields: [
+      { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", col: "half", where: "ต่อท้าย \"โครงการเลือกตั้ง…\" เป็นชื่อโครงการ" },
+      { key: "organizationShort", label: "ชื่อองค์กร", type: "text", col: "half", where: "ขึ้นต้นชื่อองค์กรเต็ม" },
+      { key: "facultyName", label: "ชื่อคณะ", type: "text", col: "half", where: "ต่อท้ายชื่อองค์กรเต็ม · บรรทัดบนสุดของหน้าผู้สมัคร ผลคะแนน พรรค" },
+      { key: "facultyShortEn", label: "อักษรย่อคณะ (EN)", type: "text", col: "half", where: "ท้ายเว็บ FMS@PSU" },
+      { key: "university", label: "มหาวิทยาลัย", type: "text", col: "half", where: "ท้ายเว็บ FMS@PSU" },
+      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", col: "full", derived: true, where: "หัวข้อใหญ่หน้าแรก · บรรทัดบนสุดของหน้าผู้สมัคร ผลคะแนน พรรค" },
+      { key: "organizationName", label: "ชื่อองค์กรเต็ม", type: "text", col: "full", derived: true, where: "ใต้หัวข้อหน้าแรก · หัวบัตรเลือกตั้ง" },
+    ],
+  },
+  {
+    group: "แบบประเมินหลังลงคะแนน",
     icon: "Link",
-    desc: "ลิงก์ Google Form ที่แสดงบนหน้าขอบคุณหลังลงคะแนน และชั่วโมงกิจกรรมที่นักศึกษาได้รับ — ตั้งครั้งเดียว",
+    desc: "ลิงก์ Google Form และชั่วโมงกิจกรรมบนหน้าหลังลงคะแนน",
     preview: "form",
     fields: [
-      // ⚠️ ปุ่มแบบประเมินบนหน้าขอบคุณ "แสดงเสมอ" ไม่ได้ผูกกับค่านี้ (success/page.js
-      // ส่ง onOpenForm ให้ทุกตระกูลแบบไม่มีเงื่อนไข) — ถ้าเว้นว่าง โมดัลจะขึ้นว่า
-      // "ไม่พบลิงก์แบบประเมิน" hint เดิมเขียนว่า "เว้นว่าง = ไม่แสดงปุ่ม" ซึ่งผิด
-      { key: "googleFormUrl", label: "ลิงก์ Google Form", type: "text", col: "full", hint: "แบบประเมินที่นักศึกษาเห็นบนหน้าขอบคุณหลังโหวตเสร็จ · ต้องใส่ให้ถูกต้อง ถ้าเว้นว่างไว้ ปุ่มยังแสดงอยู่แต่กดแล้วจะขึ้นว่าไม่พบลิงก์" },
+      // เว้นว่าง = ปีนี้ไม่มีแบบประเมิน: success/page.js ไม่ล็อกหน้าผลคะแนน และทุก
+      // ตระกูลซ่อนขั้นแบบประเมินผ่าน prop hasForm
+      { key: "googleFormUrl", label: "ลิงก์ Google Form", type: "text", col: "full", where: "ปุ่มแบบประเมินบนหน้าหลังลงคะแนน · เว้นว่าง = ปีนี้ไม่มีแบบประเมิน ไม่มีปุ่ม และไม่ล็อกหน้าผลคะแนน" },
       // allowEmpty: ช่องนี้ "ไม่ใส่" เป็นคำตอบที่ถูกต้อง ไม่ใช่ศูนย์ — ถ้าไม่มีธง
       // นี้ การลบตัวเลขทิ้งจะกลายเป็น 0 (Number("") === 0) แล้วช่องจะโชว์ "0"
-      { key: "activityHours", label: "ชั่วโมงกิจกรรมที่ได้รับ", type: "number", col: "half", allowEmpty: true, min: 0.5, step: 0.5, hint: "เลขชั่วโมงที่นักศึกษาได้จากการทำแบบประเมิน · เว้นว่าง = หน้าขอบคุณพูดแค่ “รับชั่วโมงกิจกรรม” ไม่ระบุเลข · ใส่เลขเมื่อคณะยืนยันแล้วเท่านั้น เพราะทุก template จะประกาศเลขนี้ตรงกัน" },
+      { key: "activityHours", label: "ชั่วโมงกิจกรรม", type: "number", col: "half", allowEmpty: true, min: 0.5, step: 0.5, where: "ข้อความบนหน้าหลังลงคะแนน · เว้นว่าง = ไม่ระบุเลขชั่วโมง · ใส่เมื่อคณะยืนยันแล้วเท่านั้น" },
     ],
   },
   {
-    group: "ภาพประชาสัมพันธ์",
+    group: "โปสเตอร์ประชาสัมพันธ์",
     icon: "Image",
-    desc: "โปสเตอร์ประกาศการเลือกตั้งที่แสดงบนหน้าแรก — เปลี่ยนได้ทุกปีโดยไม่ต้องแก้โค้ด",
+    desc: "โปสเตอร์ประกาศการเลือกตั้งบนหน้าแรก · เปลี่ยนทุกปีโดยไม่ต้องแก้โค้ด",
     fields: [
       {
         key: "electionBannerUrl",
-        label: "โปสเตอร์ประชาสัมพันธ์",
+        label: "โปสเตอร์",
         type: "image",
         col: "full",
-        hint: "อัปโหลดโปสเตอร์ประจำปีนี้เพื่อใช้กับทุก template ที่แสดงภาพประชาสัมพันธ์ · เว้นว่าง = ใช้ภาพเริ่มต้นของระบบ · โปรดตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง",
+        where: "หน้าแรก (ขั้นที่ 4 ของ Ballot) · ตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง",
       },
-    ],
-  },
-  {
-    group: "ลิขสิทธิ์",
-    icon: "Copyright",
-    desc: "ปีสำหรับข้อความลิขสิทธิ์ท้ายเว็บ",
-    preview: "copyright",
-    fields: [
-      { key: "copyrightYear", label: "ปีลิขสิทธิ์ (ค.ศ.)", type: "number", col: "half", hint: "เช่น 2027 (สำหรับ © FMS@PSU 2027)" },
     ],
   },
 ];

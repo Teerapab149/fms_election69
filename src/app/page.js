@@ -6,6 +6,7 @@ import HomeRenderer from "../components/home/HomeRenderer"; // per-template home
 
 import { db } from "../lib/db";
 import { resolveElectionDates } from "../utils/electionConfig";
+import { liveSystemStatus } from "../lib/election/systemStatus.mjs";
 import { getTemplate } from "../components/admin/editor/templates";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,11 @@ async function getHomeData(session) {
         id: true,
         number: true,
         logoUrl: true,
+        // the ballot-official home prints a sample ballot with the real choices,
+        // and introduces each party (slogan + group photo) in its first chapter
+        name: true,
+        slogan: true,
+        groupImageUrls: true,
       },
       orderBy: { number: 'asc' },
       take: 5,
@@ -47,31 +53,11 @@ async function getHomeData(session) {
     const now = Date.now();
     const sysMode = config.systemMode || "AUTO";
 
-    let isSystemOpen = false;
-    let electionStatus = "WAITING";
-
-    if (sysMode === "MANUAL_OPEN") {
-      isSystemOpen = true;
-      electionStatus = "ONGOING";
-    } else if (sysMode === "PAUSE") {
-      isSystemOpen = false;
-      electionStatus = "CLOSED";
-    } else if (sysMode === "ENDED") {
-      isSystemOpen = false;
-      electionStatus = "ENDED";
-    } else {
-      // AUTO
-      if (now < ELECTION_START) {
-        isSystemOpen = false;
-        electionStatus = "WAITING";
-      } else if (now >= ELECTION_END) {
-        isSystemOpen = false;
-        electionStatus = "ENDED";
-      } else {
-        isSystemOpen = true;
-        electionStatus = "ONGOING";
-      }
-    }
+    // one definition, shared with /template-preview so a template reviewed there
+    // is fed exactly the state this page would feed it (lib/election/systemStatus)
+    const { isSystemOpen, electionStatus } = liveSystemStatus({
+      systemMode: sysMode, start: ELECTION_START, end: ELECTION_END, now,
+    });
 
     return {
       candidates,

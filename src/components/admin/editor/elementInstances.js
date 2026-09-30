@@ -330,7 +330,7 @@ export const ELEMENT_INSTANCES = {
       login:    { text: "เข้าสู่ระบบ / Sign in",            backgroundColor: "#8A2680", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
       notVoted: { text: "ลงคะแนน / Vote Now",               backgroundColor: "#10B981", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
       voted:    { text: "ดูผลคะแนน / Results",              backgroundColor: "#0369a1", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
-      ended:    { text: "อยู่นอกระยะเวลาเลือกตั้ง / Ended", backgroundColor: "#1e293b", textColor: "#94a3b8", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
+      ended:    { text: "ดูผลคะแนน / Results", backgroundColor: "#1e293b", textColor: "#94a3b8", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
       closed:   { text: "ระบบปิดรับลงคะแนน / Closed",       backgroundColor: "#1e293b", textColor: "#94a3b8", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" },
       paused:   { text: "ระบบปิดปรับปรุง / Maintenance",    backgroundColor: "#ea580c", textColor: "#ffffff", borderRadius: "xl", fontSize: "lg", fontWeight: "bold" }
     },

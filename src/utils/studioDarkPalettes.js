@@ -26,28 +26,34 @@ export const STUDIO_THEMES = {
   "studio-dark": {
     bg: "#14140F", bg2: "#1B1B14", bg3: "#232319", bgRail: "#111108",
     line: "#2E2E22", lineStrong: "#3E3E2D",
-    ink: "#F2EDDF", ink2: "#B5B0A2", ink3: "#7F7A6E", ink4: "#555142",
+    // ink3 bumped #7F7A6E→#878275 (2026-09-25 รอบ b): readable small labels
+    // (sd-scenebar__crumbs / sd-num-lbl / eyebrow ฯลฯ) วัดได้ 4.05:1 บน bg-2
+    // เดิม (ไม่ถึง 4.5) — เขยิบ lightness เท่านั้น hue เดิม → 4.52:1
+    ink: "#F2EDDF", ink2: "#B5B0A2", ink3: "#878275", ink4: "#555142",
     accent: "#D5FF3F", accent2: "#C7E866",
   },
   // ไซเบอร์ฟ้า — cool blue-blacks + sky-cyan accent. Technical · Crisp.
   "studio-dark-cyber": {
     bg: "#0F1216", bg2: "#151A20", bg3: "#1C222A", bgRail: "#0B0E12",
     line: "#242C35", lineStrong: "#323D49",
-    ink: "#E9EFF5", ink2: "#A2AEBA", ink3: "#707D89", ink4: "#4A545E",
+    // ink3 bumped #707D89→#76838F: 4.15:1→4.51:1 บน bg-2 (เหตุผลเดียวกับ studio-dark)
+    ink: "#E9EFF5", ink2: "#A2AEBA", ink3: "#76838F", ink4: "#4A545E",
     accent: "#38BDF8", accent2: "#7DD3FC",
   },
   // แมเจนต้า — plum-tinted blacks + hot magenta accent. Expressive · Bold.
   "studio-dark-magenta": {
     bg: "#151015", bg2: "#1C151C", bg3: "#241B24", bgRail: "#100C10",
     line: "#2F2430", lineStrong: "#403242",
-    ink: "#F4EDF1", ink2: "#B7A8B2", ink3: "#847484", ink4: "#574C57",
+    // ink3 bumped #847484→#8B7B8B: 4.10:1→4.52:1 บน bg-2
+    ink: "#F4EDF1", ink2: "#B7A8B2", ink3: "#8B7B8B", ink4: "#574C57",
     accent: "#F472B6", accent2: "#F9A8D4",
   },
   // ทองอำพัน — warm amber-blacks + molten gold accent. Prestigious · Warm.
   "studio-dark-amber": {
     bg: "#161207", bg2: "#1D180C", bg3: "#262010", bgRail: "#110E06",
     line: "#312A17", lineStrong: "#433A23",
-    ink: "#F4EDDC", ink2: "#B8AD97", ink3: "#857B66", ink4: "#585040",
+    // ink3 bumped #857B66→#8A806A: 4.23:1→4.52:1 บน bg-2
+    ink: "#F4EDDC", ink2: "#B8AD97", ink3: "#8A806A", ink4: "#585040",
     accent: "#F59E0B", accent2: "#FBBF24",
   },
 };

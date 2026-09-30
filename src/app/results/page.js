@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage, familyFor } from "../../components/v2/resolve";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
@@ -18,6 +20,7 @@ import FmsOfficialResults from "../../components/vote/FmsOfficialResults";
 import BlossomResults from "../../components/vote/BlossomResults";
 import ReceiptResults from "../../components/vote/ReceiptResults";
 import { resolveElectionDates } from "../../utils/electionConfig";
+import { resolveVerdict } from "../../utils/electionVerdict";
 import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 
@@ -61,20 +64,38 @@ export default function ResultsPage() {
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // the raw id picks a v2 family's own results page; the base family drives the rest
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Results = resolveTemplatePage(rawTemplateId, 'results');
   const [templateReady, setTemplateReady] = useState(false);
   useEffect(() => {
     fetch(getPath('/api/admin/page-layout'))
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .then((d) => { if (d?.activeTemplateId) { setRawTemplateId(d.activeTemplateId); setActiveTemplateId(baseFamilyOf(d.activeTemplateId)); } })
       .catch(() => {})
       .finally(() => setTemplateReady(true));
   }, []);
-  const isGumroad = activeTemplateId?.startsWith('gumroad');
-  const isStudio = activeTemplateId?.startsWith('studio-dark');
-  const isVerdure = activeTemplateId?.startsWith('verdure');
-  const isBlossom = activeTemplateId?.startsWith('blossom');
-  const isReceipt = activeTemplateId?.startsWith('receipt');
-  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
+  // a v2 page owns the screen: every v1 family flag below is off when it exists
+  const fam = familyFor(activeTemplateId, V2Results);
+  const isGumroad = fam?.startsWith('gumroad');
+  const isStudio = fam?.startsWith('studio-dark');
+  const isVerdure = fam?.startsWith('verdure');
+  const isBlossom = fam?.startsWith('blossom');
+  const isReceipt = fam?.startsWith('receipt');
+  const isFmsOfficial = fam?.startsWith('fms-official');
+  // families that bring their own chrome (no classic navbar, grid or footer)
+  const ownChrome = !!V2Results || isGumroad || isStudio || isVerdure || isBlossom || isReceipt || isFmsOfficial;
+
+  // Single source of truth for who won — CLAUDE.md "การตัดสินผลเลือกตั้ง":
+  // ห้ามคำนวณผู้ชนะเองในไฟล์ธีม ResultCard used to derive isWinner from
+  // rank===1 alone, which crowned the lowest-numbered party on a tie, party
+  // #1 when every score was 0, and (on a single-party ballot) the party
+  // itself even when "ไม่รับรอง" had more votes. resolveVerdict() is the
+  // only place that pool/tie/no-votes logic lives now (2026-09-25, QA sweep).
+  const verdict = useMemo(
+    () => resolveVerdict(candidates, { revealed: isRevealed }),
+    [candidates, isRevealed]
+  );
 
   // ==========================================
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
@@ -382,10 +403,10 @@ export default function ResultsPage() {
       ? "flex flex-col min-h-screen bg-[#14140F] font-sans overflow-x-hidden relative"
       : isVerdure
       ? "flex flex-col min-h-screen bg-[#E7F1E2] font-sans overflow-x-hidden relative"
-      : isBlossom || isReceipt || isFmsOfficial
+      : isBlossom || isReceipt || isFmsOfficial || V2Results
       ? "flex flex-col min-h-screen font-sans overflow-x-hidden relative"
       : "flex flex-col min-h-screen bg-[var(--color-bg)] font-sans text-slate-900 selection:bg-[color-mix(in_srgb,var(--color-primary)_12%,white)] overflow-x-hidden relative"}
-      style={(!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial) ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
+      style={!ownChrome ? { backgroundImage: 'linear-gradient(to right, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 7%, transparent) 1px, transparent 1px)', backgroundSize: '46px 46px' } : undefined}>
       <PageThemeOverrides page="results" />
 
       {/* แถบรับรองผล — วางไว้เหนือทุกธีมจุดเดียว ธีมไหนก็เห็นเหมือนกัน */}
@@ -434,6 +455,17 @@ export default function ResultsPage() {
       )}
 
       {/* FMS OFFICIAL layout (faculty chrome); access modals below stay shared */}
+      {V2Results && isAuthorized && (
+        <V2Results
+          candidates={candidates}
+          totalVotes={totalVotes}
+          demographics={demographics}
+          finalStatus={finalStatus}
+          isRevealed={isRevealed}
+          isNotStarted={isNotStarted}
+          countdownText={mounted ? countdownText : ""}
+        />
+      )}
       {isFmsOfficial && isAuthorized && (
         <FmsOfficialResults
           candidates={candidates}
@@ -472,16 +504,16 @@ export default function ResultsPage() {
         />
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && <Navbar />}
+      {!ownChrome && <Navbar />}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (
+      {!ownChrome && (
         <div className="fixed inset-0 z-0 opacity-[0.3] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
       )}
 
       {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) — classic only */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (
+      {!ownChrome && (
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
 
         {isAuthorized && (
@@ -564,18 +596,30 @@ export default function ResultsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
-                  {candidates.map((candidate, index) => (
-                    <ResultCard
-                      key={candidate.id}
-                      candidate={candidate}
-                      rank={index + 1}
-                      totalVotes={totalVotes}
-                      status={finalStatus}
-                      isRevealed={isRevealed} // ✅ ส่งสถานะเปิดเผยไปที่การ์ด
-                    />
-                  ))}
-                </div>
+                <>
+                  {/* เสมอ/ไม่มีคะแนนเลย = ไม่มีถ้วยให้ใคร (resolveVerdict) — บอกเหตุผล
+                      แทนความเงียบ ไม่งั้นดูเหมือนหน้าเว็บลืมประกาศผู้ชนะ ไทยล้วนห้ามลงท้าย "." */}
+                  {isRevealed && (verdict.outcome === 'tie' || verdict.outcome === 'no-votes') && (
+                    <div className="mb-4 lg:mb-6 flex items-center justify-center gap-2 text-xs lg:text-base font-bold px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-center">
+                      {verdict.outcome === 'tie'
+                        ? 'คะแนนเท่ากัน — รอคณะกรรมการตัดสิน ยังไม่ประกาศผู้ชนะ'
+                        : 'ยังไม่มีคะแนน — ยังไม่มีผลให้ประกาศ'}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
+                    {candidates.map((candidate, index) => (
+                      <ResultCard
+                        key={candidate.id}
+                        candidate={candidate}
+                        rank={index + 1}
+                        totalVotes={totalVotes}
+                        status={finalStatus}
+                        isRevealed={isRevealed} // ✅ ส่งสถานะเปิดเผยไปที่การ์ด
+                        isFeatured={verdict.featured?.id === candidate.id}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
@@ -649,7 +693,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && <SiteFooter className="mt-8 lg:mt-16" />}
+      {!ownChrome && <SiteFooter className="mt-8 lg:mt-16" />}
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { BlossomBaseStyles } from "./BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
@@ -172,6 +173,16 @@ function BlCdDigits({ value }) {
 
 // ── loop-safe phase-aware countdown (mirrors the 7086f21 tick pattern: stable
 //    interval, deps only on the resolved date strings + systemMode) ──
+// How to vote — Blossom's own flow and words: PSU Passport sign-in → the
+// ballot ("แตะที่พรรคเพื่อเลือก", "ดูรายละเอียด") → "ยืนยันการลงคะแนน" →
+// the thank-you note, which asks for the form when this year has one.
+const BL_STEPS = [
+  { en: "SIGN IN", title: "เข้าสู่ระบบ", desc: "ใช้บัญชี PSU Passport ของมหาวิทยาลัย ระบบตรวจสิทธิ์ให้เอง" },
+  { en: "CHOOSE", title: "เลือกพรรค", desc: "แตะที่พรรคเพื่อเลือก หรืองดออกเสียง กด “ดูรายละเอียด” เพื่ออ่านนโยบายก่อนได้" },
+  { en: "CONFIRM", title: "ยืนยันการลงคะแนน", desc: "ตรวจอีกครั้งแล้วกดยืนยัน เมื่อยืนยันแล้วจะแก้ไขไม่ได้" },
+  { en: "DONE", title: "บันทึกแล้ว", desc: "หน้าขอบคุณยืนยันว่าคุณใช้สิทธิ์แล้ว ถ้ามีแบบประเมิน ทำให้ครบเพื่อรับชั่วโมงกิจกรรม" },
+];
+
 function useCountdown(globalConfig, systemMode) {
   const [cd, setCd] = useState({ d: 0, h: 0, m: 0, s: 0, label: "กำลังโหลด", live: false, done: false });
   useEffect(() => {
@@ -181,6 +192,9 @@ function useCountdown(globalConfig, systemMode) {
       let target, label, live = false, done = false;
       if (systemMode === "PAUSE") { label = "ระบบพักชั่วคราว"; done = true; }
       else if (systemMode === "ENDED") { label = "ปิดโหวตแล้ว"; done = true; }
+      // forced open past the scheduled end: nothing to count down to, and it is
+      // NOT closed — it used to fall through to the "VOTING CLOSED" block
+      else if (systemMode === "MANUAL_OPEN" && now >= ELECTION_END) { label = "เปิดรับลงคะแนนอยู่"; live = true; done = true; }
       else if (systemMode === "MANUAL_OPEN") { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
       else if (now < ELECTION_START) { target = ELECTION_START; label = "เปิดโหวตใน"; }
       else if (now < ELECTION_END) { target = ELECTION_END; label = "ปิดโหวตใน"; live = true; }
@@ -216,6 +230,7 @@ export default function BlossomHome({
 
   const sysMode = initialData?.systemMode || "AUTO";
   const cd = useCountdown(globalConfig, sysMode);
+  const howTo = useHowToVote(initialData || {});
 
   // stats — editor uses dummy, live/preview uses real feed. Computed BEFORE the
   // mounted early-return so the count-up effect (hooks must be unconditional) can
@@ -375,12 +390,14 @@ export default function BlossomHome({
         ? "CLOSES IN"
         : "LOADING";
   const cdPaused = cd.label === "ระบบพักชั่วคราว";
-  const cdClosedEn = cdPaused ? "SYSTEM PAUSED" : "VOTING CLOSED";
-  const cdClosedTh = cdPaused ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : "ดูผลได้ที่หน้าผลการเลือกตั้ง";
+  const cdOvertime = cd.label === "เปิดรับลงคะแนนอยู่";
+  const cdClosedEn = cdPaused ? "SYSTEM PAUSED" : cdOvertime ? "VOTING OPEN" : "VOTING CLOSED";
+  // results are hidden until the committee announces them, not at closing
+  const cdClosedTh = cdPaused ? "กลับมาเปิดอีกครั้งเร็ว ๆ นี้" : cdOvertime ? "ลงคะแนนได้จนกว่าคณะกรรมการจะปิดหีบ" : "รอคณะกรรมการประกาศผล";
   // ENDED-only factual close line (bl-B1B) — real close date/time from the resolved
   // schedule, empty-guarded so an invalid date renders nothing. PAUSE has no real
   // "resumes at" instant, so it keeps the plain hold copy (no fabricated time).
-  const cdCloseFact = cd.done && !cdPaused
+  const cdCloseFact = cd.done && !cdPaused && !cdOvertime
     ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}` : ""; })()
     : "";
 
@@ -429,6 +446,7 @@ export default function BlossomHome({
           <div className="bl-cta-row">
             <a ref={ctaRef} href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
             <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
+            {howTo.show && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
           </div>
         </section>
 
@@ -478,6 +496,29 @@ export default function BlossomHome({
           </div>
         </section>
 
+        {/* ===== how to vote — a contents page: ink rule, indexed rows, one
+             candy ink per step (the same set the figures use) ===== */}
+        {howTo.show && (
+        <section id={howTo.id} className="bl-steps" aria-labelledby="bl-steps-h">
+          <div className="bl-steps-head">
+            <h2 id="bl-steps-h">วิธี<em>ลงคะแนน</em></h2>
+            <span className="bl-steps-head__en">HOW TO VOTE · 4 STEPS</span>
+          </div>
+          <ol className="bl-steps-list">
+            {BL_STEPS.map((st, i) => (
+              <li key={st.en} className={`bl-step bl-step-${i + 1}`}>
+                <span className="bl-step-n">{String(i + 1).padStart(2, "0")}</span>
+                <div className="bl-step-body">
+                  <span className="bl-step-en">{st.en}</span>
+                  <h3 className="bl-thai">{st.title}</h3>
+                  <p>{st.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+        )}
+
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
           <div className="bl-count__in">
@@ -495,7 +536,7 @@ export default function BlossomHome({
               {cd.label}
               <small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small>
               {cdCloseFact && <span className="bl-count-closed__fact"><span className="bl-thai">{cdCloseFact}</span></span>}
-              {!cdPaused && (
+              {!cdPaused && !cdOvertime && (
                 <a className="bl-count-closed__link" href={editorMode ? undefined : getPath("/results")}>
                   ดูผลคะแนน
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
@@ -662,7 +703,17 @@ export default function BlossomHome({
         /* ── entrance choreography (CSS-ONLY — base style is the VISIBLE state; each
            keyframe only supplies the hidden from-frame, so reduced-motion animation:none
            lands everything visible. No JS gates visibility.) ── */
-        .bl-reveal { display:block; overflow:hidden; }
+        /* .bl-reveal is also the ink-clip window (overflow:hidden) for the slide-up
+           reveal, not just an animation mask — Kanit's glyph box at this line-height
+           overflows the 1.1 line box on BOTH edges (measured via Range on rendered
+           text, .specs/qa-0925-blossom/reveal-ink2.mjs: top .20-.23em, bottom .17-.19em
+           of font-size, constant across all 4 breakpoints) so real tone-mark ink was
+           being clipped, not just the animation's off-screen state (screenshot proof:
+           .specs/qa-0925-blossom/headline-1440.png shows a flat-cut top on ศึ). Open the
+           clip window with padding + cancel the added box height with equal negative
+           margin so line position/spacing is unchanged (same technique as the
+           .bl-crow__slogan / .bl-vopt__slogan ink-groove fix, QA-blossom-slogan-2026-07-26). */
+        .bl-reveal { display:block; overflow:hidden; padding-top:.25em; padding-bottom:.21em; margin-top:-.25em; margin-bottom:-.21em; }
         .bl-reveal__in { display:block; animation:blLineUp .65s cubic-bezier(.22,1,.36,1) both; }
         .bl-headline .bl-reveal:nth-child(1) .bl-reveal__in { animation-delay:.15s; }
         .bl-headline .bl-reveal:nth-child(2) .bl-reveal__in { animation-delay:.28s; }
@@ -709,6 +760,15 @@ export default function BlossomHome({
         .bl-cta.is-disabled::after { display:none; }
         .bl-cta.is-disabled:hover { transform:none; }
         .bl-cta.is-disabled:active { transform:none; }
+        /* <768px the CTA label sits below the 18.66px/bold large-text cutoff
+           (clamp floor 16-16.48px) — swap to --bl-on-primary-sm (darker text ink,
+           "blossom" pink only) so it clears 4.5:1; tablet/desktop (>=19px, already
+           >=3:1) keep the untouched --bl-on-primary. Button fill (--bl-primary-deep)
+           never changes. QA-blossom-2026-09-25.md "รอบแก้ b". */
+        @media (max-width:767px) {
+          .bl-cta:not(.is-disabled) { color:var(--bl-on-primary-sm, var(--bl-on-primary, var(--bl-card))); }
+          .bl-cta:not(.is-disabled):hover { color:var(--bl-on-primary-sm, var(--bl-on-primary, var(--bl-card))); }
+        }
         /* secondary = a REAL outlined pill (owner: the page felt button-less) */
         .bl-cta2 { display:inline-flex; align-items:center; justify-content:center; min-height:44px;
           font-family:var(--bl-fd); font-weight:600; font-size:16px; color:var(--bl-ink);
@@ -805,6 +865,29 @@ export default function BlossomHome({
         .bl-fig-1 .bl-idx { color:var(--bl-sup1-ink); }
         .bl-fig-2 .bl-idx { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-idx { color:var(--bl-sup2-ink); }
+        /* how to vote */
+        .bl-steps { margin-top:70px; scroll-margin-top:104px; }
+        /* the third, quietest action: a text link, after the two pills */
+        .bl-howlink { display:inline-flex; align-items:center; min-height:44px; font-family:var(--bl-fd); font-weight:600;
+          font-size:15px; color:var(--bl-ink2); text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:5px; }
+        .bl-howlink:hover { color:var(--bl-primary-ink); }
+        .bl-steps-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;
+          padding-bottom:14px; border-bottom:1.5px solid var(--bl-ink); }
+        .bl-steps-head h2 { font-family:var(--bl-fd); font-weight:700; font-size:clamp(24px,6vw,38px); line-height:1.2; margin:0; }
+        .bl-steps-head h2 em { font-style:normal; color:var(--bl-primary-ink); }
+        .bl-steps-head__en { font-family:var(--bl-fm); font-size:10px; letter-spacing:.2em; color:var(--bl-ink2); }
+        .bl-steps-list { list-style:none; margin:0; padding:0; }
+        .bl-step { display:flex; gap:16px; padding:20px 4px; border-bottom:1px solid var(--bl-line); }
+        .bl-step-n { flex:none; width:56px; font-family:var(--bl-fd); font-weight:800; font-size:clamp(34px,8vw,48px);
+          line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+        .bl-step-body { min-width:0; }
+        .bl-step-en { display:block; font-family:var(--bl-fm); font-size:10px; letter-spacing:.2em; color:var(--bl-ink2); }
+        .bl-step-body h3 { font-family:var(--bl-fd); font-weight:700; font-size:19px; line-height:1.35; margin:4px 0 0; color:var(--bl-ink); }
+        .bl-step-body p { margin:6px 0 0; font-size:14.5px; line-height:1.75; color:var(--bl-ink2); }
+        .bl-step-1 .bl-step-n { color:var(--bl-sup1-ink); }
+        .bl-step-2 .bl-step-n { color:var(--bl-primary-ink); }
+        .bl-step-3 .bl-step-n { color:var(--bl-sup2-ink); }
+        .bl-step-4 .bl-step-n { color:var(--bl-sup3-ink); }
         .bl-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--bl-primary);
           margin-right:5px; animation:blBlip 1.6s infinite; }
         @keyframes blBlip { 50%{opacity:.3} }
@@ -896,6 +979,9 @@ export default function BlossomHome({
           .bl-feature-orb { display:block; position:absolute; left:0; top:38%; width:90px; height:90px;
             border-radius:50%; background:var(--bl-sup3); transform:translateX(-50%); z-index:0; }
           .bl-fig { padding:26px 8px; }
+          /* steps: two columns of rows, like a contents spread */
+          .bl-steps-list { display:grid; grid-template-columns:1fr 1fr; column-gap:48px; }
+          .bl-step { padding:26px 8px; }
           .bl-count-line { gap:3vw; }
         }
         @media (max-width:560px) {

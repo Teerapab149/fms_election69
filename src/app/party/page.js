@@ -1,5 +1,7 @@
 'use client';
 import { getPath } from "../../utils/basePath";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -616,6 +618,9 @@ function PartyContent() {
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // the real slug: a v2 family (components/v2) with its own party page renders it
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Party = resolveTemplatePage(rawTemplateId, 'party');
   const [templateReady, setTemplateReady] = useState(false);
   const isGumroad = activeTemplateId?.startsWith('gumroad');
   const isStudio = activeTemplateId?.startsWith('studio-dark');
@@ -716,7 +721,7 @@ function PartyContent() {
   useEffect(() => {
     fetch(getPath('/api/admin/page-layout'))
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .then(d => { if (d?.activeTemplateId) { setActiveTemplateId(baseFamilyOf(d.activeTemplateId)); setRawTemplateId(d.activeTemplateId); } })
       .catch(() => {})
       .finally(() => setTemplateReady(true));
   }, []);
@@ -725,6 +730,15 @@ function PartyContent() {
 
   if (loading || !templateReady) return <ThemedLoadingScreen text="กำลังโหลดข้อมูลพรรค..." />;
   if (!activeParty) return null;
+
+  if (V2Party) {
+    return (
+      <>
+        <PageThemeOverrides page="party" />
+        <V2Party party={activeParty} galleryImages={galleryImages} showBackToVote={source === 'vote'} isSingleParty={isSingleParty} />
+      </>
+    );
+  }
 
   // GUMROAD layout (own topbar/footer) — replaces the classic cinematic page entirely.
   if (isGumroad) {

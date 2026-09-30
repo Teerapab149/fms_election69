@@ -58,12 +58,16 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
       else if (now < ELECTION_START) { label = "POLLS OPEN IN"; diff = ELECTION_START - now; }
       else if (now < ELECTION_END) { label = "POLLS CLOSE"; diff = ELECTION_END - now; live = true; }
       else { label = "POLLS CLOSED"; diff = 0; }
-      // Force-open (MANUAL_OPEN) with no future close date → a zeroed countdown
-      // reads as "broken". Show a live "open" line instead of 00:00:00:00.
-      const noTimer = systemMode === "MANUAL_OPEN" && diff <= 0;
+      // Nothing left to count (force-open past the end, paused, closed): a row of
+      // 00 00 00 00 reads as "broken" — say the state in Thai instead.
+      const overtime = systemMode === "MANUAL_OPEN" && diff <= 0;
+      const note = diff > 0 ? null
+        : overtime ? "เปิดรับลงคะแนนอยู่"
+        : systemMode === "PAUSE" ? "ระงับการลงคะแนนชั่วคราว"
+        : "ปิดการลงคะแนนแล้ว";
       setT(diff > 0
-        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label, live, noTimer: false }
-        : { d: 0, h: 0, m: 0, s: 0, label: noTimer ? "POLLS OPEN" : label, live, noTimer });
+        ? { d: Math.floor(diff / 86400000), h: Math.floor((diff / 3600000) % 24), m: Math.floor((diff / 60000) % 60), s: Math.floor((diff / 1000) % 60), label, live, note: null }
+        : { d: 0, h: 0, m: 0, s: 0, label: overtime ? "POLLS OPEN" : label, live, note });
     };
     calc();
     const id = setInterval(calc, 1000);
@@ -115,13 +119,10 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         >
           <span className={mini ? "sd-mininav__num" : "sd-rail__link-num"}>{n.num}</span>
           <span className={mini ? "sd-mininav__label" : "sd-rail__link-label"}>
-            {n.label}
-            {/* Thai sub-label escapes JetBrains Mono via .sd-thai (sd-T1b) — on a
-                NESTED span, because `.sd-rail__link-label small` (0,1,1) outranks
-                the bare `.sd-thai` class (0,1,0) if put on <small> itself. The
-                class is defined by both rail consumers: StudioDarkShell (inner
-                pages) and StudioDarkHome (home) — cf7bb24. */}
-            {!mini && <small><span className="sd-thai">{n.th}</span></small>}
+            {/* Thai first, the English name as the small line under it (owner:
+                menus in Thai, a small English line for international students) */}
+            <span className="sd-thai">{n.th}</span>
+            <small>{n.label}</small>
           </span>
           {!mini && <span className={`sd-rail__link-status${on ? " on" : ""}`} />}
         </a>
@@ -205,8 +206,8 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
 
         <div className="sd-rail__cd">
           <div className="sd-rail__cd-lbl">{t.live && <span className="sd-dot" />}{t.label}</div>
-          {t.noTimer ? (
-            <div className="sd-rail__cd-live">เปิดรับลงคะแนนอยู่</div>
+          {t.note ? (
+            <div className="sd-rail__cd-live">{t.note}</div>
           ) : (
             <div className="sd-rail__cd-grid">
               {[{ n: t.d, u: "DAYS" }, { n: t.h, u: "HRS" }, { n: t.m, u: "MIN" }, { n: t.s, u: "SEC" }].map((c, i) => (
@@ -228,7 +229,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
         .sd-rail, .sd-topbar {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319; --sd-bg-rail:#111108;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
-          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#7F7A6E; --sd-ink-4:#555142;
+          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#878275; --sd-ink-4:#555142;
           --sd-accent:#D5FF3F;
           --sd-sans:var(--font-studio-sans),'Inter',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --sd-serif:var(--font-instrument-serif),'Instrument Serif','Times New Roman',serif;
@@ -407,6 +408,27 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           @media (max-width:380px) {
             .sd-mininav__num { display:none; }
             .sd-mininav__link { gap:0; }
+          }
+          /* countdown strip (.sd-rail__cd, collapsed into .sd-topbar above 1100px):
+             measured scrollWidth 384 vs clientWidth 360 at exactly 360px wide —
+             xo=24 (QA-SWEEP-RULES-2026-09-25 matrix includes 360x740). 4 cells +
+             20px side padding + the "POLLS OPEN IN" label don't fit. Unlike the
+             mininav numeral above, nothing here is redundant (the label names
+             WHICH clock — see the ink-2 comment on .sd-rail__cd-lbl), so this
+             tightens gutters/type instead of dropping content. */
+          @media (max-width:380px) {
+            .sd-rail__cd { padding:8px 12px; gap:8px; }
+            .sd-rail__cd-grid { gap:6px; }
+            .sd-rail__cd-lbl { font-size:8px; letter-spacing:.1em; gap:4px; }
+            .sd-rail__cd-cell { gap:2px; }
+          }
+          .sd-mininav__label { display:flex; flex-direction:column; line-height:1.15; }
+          .sd-mininav__label small { font-family:var(--sd-mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--sd-ink-3); }
+          /* 320: the English line under each label made the strip 30px wider than
+             the screen — trim the pill padding so all four still fit */
+          @media (max-width:340px) {
+            .sd-mininav { gap:3px; padding:0 8px 12px; }
+            .sd-mininav__link { padding:9px 7px; }
           }
           .sd-mininav__num { font-family:var(--sd-serif); font-style:italic; font-size:13px; color:var(--sd-ink-3); }
           .sd-mininav__link.is-active .sd-mininav__num { color:var(--sd-accent); }

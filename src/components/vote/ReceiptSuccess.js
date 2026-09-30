@@ -89,7 +89,7 @@ function formatVotedAt(votedAt) {
   return { date: `${dd} ${mon} ${yy}`, time: `${p.hour}:${p.minute}:${p.second}` };
 }
 
-export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpenForm = () => {}, editorMode = false }) {
+export default function ReceiptSuccess({ user = null, isUnlocked = false, hasForm = true, onOpenForm = () => {}, editorMode = false }) {
   const gc = useGlobalConfig() || {};
   const prefix = gc.electionNamePrefix || "SAMO";
   const number = gc.electionNumber ?? "";
@@ -165,7 +165,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             <div className="rc-suc-regtape"><span>0142 · 0938 · 1204 · 0071 · 0559</span></div>
             {/* the ballot STUB — tucked under the receipt's lower-left, same ref */}
             <div className="rc-suc-stub">
-              <div className="rc-suc-stub-h"><span className="rc-th">ต้นขั้ว</span> · STUB No.</div>
+              <div className="rc-suc-stub-h"><span className="rc-th">เลขอ้างอิง</span> · REF No.</div>
               <div className="rc-suc-stub-ref">{stubRef}</div>
             </div>
             {/* matte paper tape — one pins the stub, one loose on the desk */}
@@ -240,7 +240,8 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, onOpen
             (below the headline), below the receipt on mobile. */}
         <div className="rc-suc-tail">
           <div className="rc-suc-actions">
-            {isUnlocked && !editorMode ? (
+            {/* no form this year: nothing was submitted — no "done" line, no tag */}
+            {!hasForm ? null : isUnlocked && !editorMode ? (
               <div className="rc-suc-done">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
                 ส่งแบบประเมินเรียบร้อยแล้ว

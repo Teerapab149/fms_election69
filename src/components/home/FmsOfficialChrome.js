@@ -401,8 +401,16 @@ export function FmsOfficialBaseStyles({ paintBody = false }) {
         max-width: var(--fo-max); margin: 0 auto; padding: 14px 24px;
         display: flex; align-items: center; gap: 18px;
       }
-      .fo-lockup { display: inline-flex; align-items: center; gap: 12px; margin-right: auto; }
+      .fo-lockup { position: relative; display: inline-flex; align-items: center; gap: 12px; margin-right: auto; }
       .fo-lockup img { height: 38px; width: auto; }
+      /* The visible mark shrinks to 26px on small phones (below), but the tap
+         target must not — a pseudo-element extends the hit area vertically
+         only (never horizontally, so it can't steal clicks from the nav or
+         the auth chip that share this row) without adding any height to
+         .fo-bar__in itself, since an absolutely-positioned box is out of
+         flow. -9px each side reaches 44px total at the smallest (26px) logo;
+         larger breakpoints just get extra headroom, which is invisible. */
+      .fo-lockup::before { content: ""; position: absolute; inset: -9px 0; }
 
       .fo-nav { display: flex; align-items: center; gap: 4px; min-width: 0; }
 

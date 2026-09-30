@@ -91,11 +91,13 @@ export default function Navbar() {
             <NavButton
               href="/"
               label="หน้าแรก"
+              en="Home"
               isActive={pathname === '/'}
             />
             <NavButton
               href="/results"
-              label="ผลการลงคะแนนเสียง"
+              label="ผลคะแนน"
+              en="Results"
               isActive={pathname === '/results'}
             />
           </div>
@@ -122,8 +124,10 @@ export default function Navbar() {
               `}
             />
 
-            <span className="relative z-10 text-sm font-bold tracking-tight">
-              Meet Candidates
+            {/* Thai first, a small English line for international students */}
+            <span className="relative z-10 flex flex-col items-start leading-tight">
+              <span className="text-sm font-bold tracking-tight">ผู้สมัคร</span>
+              <span className="text-[10px] font-medium">Candidates</span>
             </span>
           </Link>
 
@@ -164,7 +168,10 @@ export default function Navbar() {
               className="ml-3 flex items-center gap-2 px-5 py-2 rounded-full bg-slate-900 text-white font-bold text-sm shadow-md hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
             >
               <LogIn size={18} strokeWidth={2.5} />
-              <span>เข้าสู่ระบบ</span>
+              <span className="flex flex-col items-start leading-tight">
+                <span>เข้าสู่ระบบ</span>
+                <span className="text-[10px] font-medium text-white/80">Sign in</span>
+              </span>
             </Link>
           )}
 
@@ -204,14 +211,15 @@ export default function Navbar() {
             </div>
           )}
 
-          <MobileNavLink href="/" label="หน้าแรก" isActive={pathname === '/'} onClick={() => setIsMenuOpen(false)} />
+          <MobileNavLink href="/" label="หน้าแรก" en="Home" isActive={pathname === '/'} onClick={() => setIsMenuOpen(false)} />
           <MobileNavLink
             href="/candidates"
-            label="Meet the Candidates"
+            label="ผู้สมัคร"
+            en="Candidates"
             isActive={pathname.startsWith('/candidates') || pathname.startsWith('/party')}
             onClick={() => setIsMenuOpen(false)}
           />
-          <MobileNavLink href="/results" label="ผลการลงคะแนนเสียง" isActive={pathname === '/results'} onClick={() => setIsMenuOpen(false)} />
+          <MobileNavLink href="/results" label="ผลคะแนน" en="Results" isActive={pathname === '/results'} onClick={() => setIsMenuOpen(false)} />
 
           {isLoggedIn ? (
             <>
@@ -237,7 +245,7 @@ export default function Navbar() {
   );
 }
 
-function NavButton({ href, label, isActive }) {
+function NavButton({ href, label, en, isActive }) {
   return (
     <Link
       href={href}
@@ -246,7 +254,10 @@ function NavButton({ href, label, isActive }) {
       <span className={`relative z-10 text-sm font-bold transition-colors duration-300 
         ${isActive ? 'text-[var(--o-brand)]' : 'text-gray-500 group-hover:text-[var(--o-brand)]'}`}
       >
-        {label}
+        <span className="flex flex-col items-center leading-tight">
+          <span>{label}</span>
+          {en && <span className="text-[10px] font-medium">{en}</span>}
+        </span>
       </span>
       <span className={`absolute inset-0 bg-[var(--o-soft)] rounded-lg transform transition-all duration-300 ease-out origin-center
         ${isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100'}`}>
@@ -258,7 +269,7 @@ function NavButton({ href, label, isActive }) {
   );
 }
 
-function MobileNavLink({ href, label, onClick, isActive }) {
+function MobileNavLink({ href, label, en, onClick, isActive }) {
   return (
     <Link
       href={href}
@@ -278,6 +289,7 @@ function MobileNavLink({ href, label, onClick, isActive }) {
       <span className={`transition-all duration-200 ${isActive ? 'pl-2' : ''}`}>
         {label}
       </span>
+      {en && <span className="ml-auto text-xs font-medium text-slate-500">{en}</span>}
     </Link>
   );
 }

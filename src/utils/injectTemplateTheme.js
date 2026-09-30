@@ -15,6 +15,7 @@ import { studioDarkTheme } from "./studioDarkPalettes";
 import { blossomTheme } from "./blossomPalettes";
 import { receiptTheme } from "./receiptPalettes";
 import { fmsOfficialTheme } from "./fmsOfficialPalette";
+import { ballotTheme, ballotVars } from "../components/admin/editor/templates/builtIn/ballot-official";
 
 export function injectTemplateTheme(doc, themeSlug) {
   if (!doc || !themeSlug) return;
@@ -28,6 +29,23 @@ export function injectTemplateTheme(doc, themeSlug) {
   else if (themeSlug.startsWith("studio-dark")) injectStudio(doc, themeSlug);
   else if (themeSlug.startsWith("blossom")) injectBlossom(doc, themeSlug);
   else if (themeSlug.startsWith("receipt")) injectReceipt(doc, themeSlug);
+  else if (themeSlug.startsWith("ballot-official")) injectBallot(doc, themeSlug);
+}
+
+// Ballot (v2): the whole family paints from the --bo-* ramp on .bo-root (and
+// .bo-scope for the cast scene / confirm dialog). ballotVars() is the same
+// mapping BallotChrome uses live, so the preview and the applied theme match.
+function injectBallot(doc, themeSlug) {
+  const vars = ballotVars(ballotTheme(themeSlug));
+  doc.querySelectorAll(".bo-root, .bo-scope").forEach((r) => {
+    for (const k in vars) r.style.setProperty(k, vars[k]);
+  });
+  const t = ballotTheme(themeSlug);
+  const apps = doc.querySelectorAll(".fms-app");
+  apps.forEach((a) => {
+    a.style.setProperty("--color-primary", t.plum);
+    a.style.setProperty("--color-bg", t.board);
+  });
 }
 
 // Same injection, but held until the embedded preview has HYDRATED.

@@ -17,6 +17,7 @@ import {
   DUMMY_RESULTS_DEMOGRAPHICS
 } from '../../utils/editorDummyData';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
+import { resolveVerdict } from '../../utils/electionVerdict';
 
 export default function ResultsEditorPreview({
   simMode = "multi",
@@ -39,6 +40,9 @@ export default function ResultsEditorPreview({
   const isRevealed = revealed;
   const isEnded = revealed;
   const isNotStarted = false;
+  // Same rule as the public page (src/app/results/page.js) — the admin must see
+  // the same winner the public page would show, not rank===1 recomputed here.
+  const verdict = resolveVerdict(candidates, { revealed: isRevealed });
 
   // Per-template layout: gumroad / studio-dark have their own results layouts.
   // ⚠️ hook block นี้ต้องอยู่ **เหนือ** early-return ของ template ด้านล่างเสมอ
@@ -136,6 +140,7 @@ export default function ResultsEditorPreview({
               totalVotes={totalVotes}
               status={status}
               isRevealed={isRevealed}
+              isFeatured={verdict.featured?.id === candidate.id}
             />
           ))}
         </div>

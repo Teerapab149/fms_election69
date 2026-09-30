@@ -24,6 +24,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Check } from "lucide-react";
 import { mapToPrimaryState } from "./stateMap.js";
+import { voteCtaState } from "../../../lib/election/electionStatus.mjs";
 
 // Primary-state STYLE blocks. The secondary states (login/closed/paused)
 // borrow one of these via mapToPrimaryState(). No need for 6 entries.
@@ -74,16 +75,17 @@ const PRIMARY_STYLES = {
 // Mirror of STATE_RESOLVERS.voteCTA + default.jsx legacy ladder.
 // Returns one of: 'login' | 'notVoted' | 'voted' | 'ended' | 'closed' | 'paused'.
 function deriveCurrentState(data) {
+  // one ladder with the button text (stateResolver.voteCTA): lib/election/
+  // electionStatus → voteCtaState. An absent isSystemOpen (editor / gallery
+  // renders) reads as open, as before.
   const { session, isVotedReal, initialData } = data || {};
-  const sysMode = initialData?.systemMode || "AUTO";
-  const electionStatus = initialData?.electionStatus;
-
-  if (sysMode === "PAUSE") return "paused";
-  if (sysMode === "ENDED" || (sysMode === "AUTO" && electionStatus === "ENDED")) return "ended";
-  if (initialData?.isSystemOpen === false && !(sysMode === "AUTO" && electionStatus === "WAITING")) return "closed";
-  if (sysMode === "MANUAL_OPEN" && session) return isVotedReal ? "voted" : "notVoted";
-  if (session) return isVotedReal ? "voted" : "notVoted";
-  return "login";
+  return voteCtaState({
+    systemMode: initialData?.systemMode || "AUTO",
+    isSystemOpen: initialData?.isSystemOpen !== false,
+    electionStatus: initialData?.electionStatus,
+    signedIn: !!session,
+    isVoted: !!isVotedReal,
+  });
 }
 
 // href per state (mirrors default.jsx). login uses signIn handler, no href.

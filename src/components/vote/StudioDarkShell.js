@@ -87,7 +87,7 @@ export default function StudioDarkShell({
         .sd-root {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
-          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#7F7A6E; --sd-ink-4:#555142;
+          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#878275; --sd-ink-4:#555142;
           --sd-accent:#D5FF3F;
           --sd-sans:var(--font-studio-sans),'Inter',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --sd-serif:var(--font-instrument-serif),'Instrument Serif','Times New Roman',serif;
@@ -244,6 +244,16 @@ export default function StudioDarkShell({
         }
         @media (max-width:560px) {
           .sd-scenebar__right { display:none; }
+        }
+        @media (max-width:380px) {
+          /* crumbs is a fixed-content flex row (num/sep/label/sep/labelTh) —
+             measured scrollWidth 368px vs the 312px this column gets once
+             .sd-scenebar__right is hidden above, on the party page at 360x740
+             (QA-SWEEP-RULES-2026-09-25 matrix). docXO was 32 at 360, 17 at
+             375. Tightening gap + letter-spacing (not font-size, so the Thai
+             segment set by .sd-thai stays readable) reclaims ~56px, the worst
+             case's requirement. */
+          .sd-scenebar__crumbs { gap:8px; letter-spacing:.06em; }
         }
       `}</style>
     </div>

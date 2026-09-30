@@ -141,7 +141,10 @@ export function VerdureDock({ active = "home", editorMode = false }) {
 }
 
 // ── top-right status (live chip + user disc) ──
-export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode = "AUTO", statusChip = null, backHref = null, backLabel = "" }) {
+// `election` (from useElectionStatus): when the page has the server's status it
+// passes it, and the chip says exactly what the rest of the page says. Pages
+// without it (they only know systemMode) keep the calendar reading below.
+export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode = "AUTO", statusChip = null, backHref = null, backLabel = "", election = null }) {
   const globalConfig = useGlobalConfig();
   const { data: session, status } = useSession();
 
@@ -183,9 +186,24 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
   const userId = session?.user?.studentId || "";
   const avatarChar = (userName || "T").charAt(0).toUpperCase();
 
+  // what the chip says: from `election` when given, else the calendar reading.
+  // Only a real countdown gets a timer — a closed or paused election used to
+  // show a frozen "00D 00H 00M", which reads as a broken clock.
+  const chip = election
+    ? (() => {
+        const r = election.remaining;
+        if (election.target && r) return { label: election.target.kind === "opens" ? "Polls open in" : "Polls close", timer: `${pad(r.d)}D ${pad(r.h)}H ${pad(r.m)}M` };
+        if (election.phase === "open") return { label: "OPEN NOW", timer: "เปิดรับอยู่" };
+        if (election.phase === "paused") return { label: "PAUSED", timer: "หยุดชั่วคราว" };
+        if (election.phase === "before") return { label: "POLLS NOT OPEN", timer: "ยังไม่เปิด" };
+        return { label: "POLLS CLOSED", timer: "ปิดแล้ว" };
+      })()
+    : cd.noTimer ? { label: "OPEN NOW", timer: "เปิดรับอยู่" }
+    : (cd.d || cd.h || cd.m) ? { label: cd.label, timer: `${pad(cd.d)}D ${pad(cd.h)}H ${pad(cd.m)}M` }
+    : { label: cd.label, timer: cd.label === "PAUSED" ? "หยุดชั่วคราว" : "ปิดแล้ว" };
   const defaultChip = (
     <div className="vd-chip-live">
-      <span className="dot" /> {cd.noTimer ? "OPEN NOW" : cd.label} · <strong>{cd.noTimer ? "เปิดรับอยู่" : `${pad(cd.d)}D ${pad(cd.h)}H ${pad(cd.m)}M`}</strong>
+      <span className="dot" /> {chip.label} · <strong>{chip.timer}</strong>
     </div>
   );
 
@@ -203,10 +221,10 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
           But ≤1100px that chip is hidden, so home's corner was simply empty and
           a signed-in voter had no way to see WHOSE session they were in — the
           only page in the template where that was true. Home therefore renders
-          the same pill, marked --home so CSS keeps it to the widths where the
-          corner is free (see .vd-user--home below). Every other page: unchanged. */}
+          the same pill at every width, beside the chip, so sign-out is always
+          reachable. */}
       {isAuthed && (
-        <div className={`vd-user ${userOpen ? "is-open" : ""} ${active === "home" ? "vd-user--home" : ""}`}>
+        <div className={`vd-user ${userOpen ? "is-open" : ""}`}>
           <button type="button" className="vd-user__av" onClick={() => setUserOpen((o) => !o)} aria-label="ดูข้อมูลผู้ใช้" aria-expanded={userOpen}>{avatarChar}</button>
           <div className="vd-user__meta">
             <div className="vd-user__name">{userName.split(" ")[0] || userName}</div>
@@ -333,10 +351,10 @@ export function VerdureBaseStyles() {
       .vd-user__out { margin-left:0; width:32px; height:32px; border-radius:50%; border:1px solid var(--rule); background:transparent; color:var(--moss); cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; flex-shrink:0; }
       .vd-user__out:hover { background:var(--terra); border-color:var(--terra); color:var(--cream); }
       .vd-moss .vd-user__out { color:var(--cream); border-color:var(--rule-moss); }
-      /* home only — the pill takes the corner exactly where the live chip gives it
-         up (the same 1100px breakpoint that hides the chip below). Above that the
-         chip is back and home stays the composition it was designed as. */
-      @media (min-width:1101px) { .vd-user--home { display:none; } }
+      /* home used to hide the pill above 1100px so the live chip had the corner to
+         itself — which left a signed-in desktop voter with no way to sign out from
+         home. The chip and pill sit side by side in the flex row like every other
+         page, so it is shown at every width now. */
 
       /* dock — clean labeled pill; active = cream fill + a terra index dot. No
          numbered discs (that read as a studio-dark echo); plain Thai labels so
@@ -347,8 +365,13 @@ export function VerdureBaseStyles() {
          reads as the same class of mark as the edge rails, not as a slab. */
       .vd-footer { text-align:center; padding:44px 20px 112px; font-family:var(--fm);
         font-size:10px; letter-spacing:.22em; text-transform:uppercase;
-        color:rgba(var(--moss-rgb),.55); }
-      .vd-moss .vd-footer { color:rgba(var(--cream-rgb),.5); }
+        /* 2026-09-25 QA rb: .55 measured 3.28:1 on cream (need 4.5:1) across all
+           4 slugs; .7 measures 4.58-6.64:1 (AUDIT/rc-shot.js formula) — bumped
+           just enough to clear the gate, still the faintest mark on the page. */
+        color:rgba(var(--moss-rgb),.7); }
+      .vd-moss .vd-footer { /* dark-bg variant (candidates/success): .5 measured
+        4.38-4.40:1 (need 4.5:1); .6 measures 5.08-6.81:1 across all 4 slugs. */
+        color:rgba(var(--cream-rgb),.6); }
       @media (max-width:640px) { .vd-footer { padding:32px 16px 84px; } }
 
       .vd-dock { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:stretch; gap:2px; padding:6px; background:var(--moss); border-radius:999px; box-shadow:0 22px 60px -12px rgba(var(--moss-rgb),.55), 0 0 0 1px rgba(var(--cream-rgb),.08); }
@@ -431,6 +454,7 @@ export default function VerdureChrome({
   active = "home", moss = false, editorMode = false, systemMode = "AUTO",
   edge = { num: "01", label: "Home", th: "" }, cornermarkTitle = null,
   cornermarkSub = null, statusChip = null, backHref = null, backLabel = "",
+  election = null,
 }) {
   const gc = useGlobalConfig();
   const meta = verdureMeta(gc);
@@ -439,7 +463,7 @@ export default function VerdureChrome({
       <VerdureEdge num={edge.num} label={edge.label} th={edge.th} right={!!edge.right} />
       <VerdureCornermark title={cornermarkTitle || meta.wordmark} sub={cornermarkSub || meta.cornermarkSub} editorMode={editorMode} />
       <VerdureCornerStatus active={active} editorMode={editorMode} systemMode={systemMode}
-        statusChip={statusChip} backHref={backHref} backLabel={backLabel} />
+        statusChip={statusChip} backHref={backHref} backLabel={backLabel} election={election} />
       <VerdureDock active={active} editorMode={editorMode} />
       <VerdureBaseStyles />
     </>

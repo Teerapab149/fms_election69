@@ -35,6 +35,7 @@ export function BlossomBaseStyles() {
            them is what lets the candy fills stay candy while accent type still
            reaches AA — see the primaryInk note in utils/blossomPalettes.js. */
         --bl-primary-ink:${t.primaryInk}; --bl-on-primary:${t.onPrimary};
+        --bl-on-primary-sm:${t.onPrimarySm};
         --bl-sup1:${t.sup1}; --bl-sup1-ink:${t.sup1Ink};
         --bl-sup2:${t.sup2}; --bl-sup2-ink:${t.sup2Ink};
         --bl-sup3:${t.sup3}; --bl-sup3-ink:${t.sup3Ink};

@@ -32,6 +32,17 @@ import { buildTemplateStyles, buildElementCss } from "../../lib/templateTokens";
 import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
+
+// How to vote — Studio Dark's own flow and words: PSU Passport sign-in → the
+// ballot ("Choose one, then confirm", "ดูนโยบาย") → "ยืนยันการลงคะแนน" →
+// the done page, which proves the vote without showing the choice.
+const SD_STEPS = [
+  { en: "SIGN IN", title: "เข้าสู่ระบบ", desc: "ใช้บัญชี PSU Passport ของมหาวิทยาลัย ระบบตรวจสิทธิ์ให้เอง" },
+  { en: "CHOOSE", title: "เลือกหนึ่งตัวเลือก", desc: "เลือกพรรค หรืองดออกเสียง กด “ดูนโยบาย” เพื่ออ่านก่อนตัดสินใจ" },
+  { en: "CONFIRM", title: "ยืนยันการลงคะแนน", desc: "ตรวจอีกครั้งก่อนส่ง เมื่อยืนยันแล้วจะแก้ไขไม่ได้" },
+  { en: "DONE", title: "ใช้สิทธิ์แล้ว", desc: "หน้าสุดท้ายยืนยันว่าคุณใช้สิทธิ์แล้ว โดยไม่แสดงว่าคุณเลือกอะไร" },
+];
 
 export default function StudioDarkHome({
   initialData,
@@ -60,6 +71,7 @@ export default function StudioDarkHome({
   const [clock, setClock] = useState("");
 
   useEffect(() => { setMounted(true); }, []);
+  const howTo = useHowToVote(initialData || {});
   useEffect(() => {
     const tick = () => {
       const d = new Date();
@@ -219,6 +231,11 @@ export default function StudioDarkHome({
                   <a href={editorMode ? undefined : getPath("/candidates")} className="sd-ghost">
                     ดูรายชื่อพรรค <span className="sd-ghost__arrow" aria-hidden>↗</span>
                   </a>
+                  {howTo.show && (
+                    <a href={editorMode ? undefined : howTo.href} className="sd-ghost">
+                      วิธีลงคะแนน <span className="sd-ghost__arrow" aria-hidden>↓</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -253,6 +270,27 @@ export default function StudioDarkHome({
             </div>
           </div>
 
+          {/* how to vote — the numbers panel's own material: one hairline-ruled
+              frame, cells divided by rules, serif-italic accent numerals */}
+          {howTo.show && (
+          <section id={howTo.id} className="sd-steps" aria-labelledby="sd-steps-h">
+            <div className="sd-steps__head">
+              <div className="sd-steps__kicker"><span className="sd-nw">§ HOW TO VOTE</span> · <span className="sd-thai">วิธีลงคะแนน</span></div>
+              <h2 id="sd-steps-h" className="sd-steps__title">ลงคะแนนใน <em>4</em> ขั้นตอน</h2>
+            </div>
+            <ol className="sd-steps__grid">
+              {SD_STEPS.map((st, i) => (
+                <li key={st.en} className="sd-step">
+                  <span className="sd-step__num">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="sd-step__en">{st.en}</span>
+                  <h3 className="sd-step__title">{st.title}</h3>
+                  <p className="sd-step__desc">{st.desc}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+          )}
+
           {/* marquee — real election info. framer-motion (JS) on purpose: the
               globals.css reduced-motion rule kills CSS keyframes site-wide, which
               froze this strip on machines with the OS setting on. Decorative ticker
@@ -281,7 +319,7 @@ export default function StudioDarkHome({
         .sd-root {
           --sd-bg:#14140F; --sd-bg-2:#1B1B14; --sd-bg-3:#232319;
           --sd-line:#2E2E22; --sd-line-strong:#3E3E2D;
-          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#7F7A6E; --sd-ink-4:#555142;
+          --sd-ink:#F2EDDF; --sd-ink-2:#B5B0A2; --sd-ink-3:#878275; --sd-ink-4:#555142;
           --sd-accent:#D5FF3F;
           --sd-sans:var(--font-studio-sans),'Inter',var(--font-anuphan),'Anuphan',system-ui,sans-serif;
           --sd-serif:var(--font-instrument-serif),'Instrument Serif','Times New Roman',serif;
@@ -364,6 +402,22 @@ export default function StudioDarkHome({
         .sd-num-bar { grid-column:1 / -1; height:2px; background:var(--sd-line); position:relative; margin-top:8px; overflow:hidden; }
         .sd-num-bar-fill { position:absolute; left:0; top:0; bottom:0; background:var(--sd-accent); }
 
+        /* how to vote */
+        .sd-steps { scroll-margin-top:24px; padding:72px 56px; border-top:1px solid var(--sd-line); }
+        .sd-steps__head { display:flex; align-items:end; justify-content:space-between; gap:16px 32px; flex-wrap:wrap; margin-bottom:32px; }
+        .sd-steps__kicker { font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-accent); }
+        .sd-steps__kicker .sd-thai { text-transform:none; }
+        .sd-steps__title { font-family:var(--sd-sans); font-weight:400; font-size:clamp(28px,3.4vw,48px); letter-spacing:-.02em; line-height:1.15; margin:0; color:var(--sd-ink); }
+        .sd-steps__title em { font-family:var(--sd-serif); font-style:italic; color:var(--sd-accent); font-weight:400; }
+        .sd-steps__grid { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4,1fr);
+          border:1px solid var(--sd-line); border-radius:18px; overflow:hidden; }
+        .sd-step { display:flex; flex-direction:column; gap:8px; padding:28px; border-right:1px solid var(--sd-line); }
+        .sd-step:last-child { border-right:0; }
+        .sd-step__num { font-family:var(--sd-serif); font-style:italic; font-size:44px; line-height:1; color:var(--sd-accent); margin-bottom:10px; }
+        .sd-step__en { font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; color:var(--sd-ink-3); }
+        .sd-step__title { font-family:var(--sd-sans); font-weight:500; font-size:19px; line-height:1.35; margin:0; color:var(--sd-ink); }
+        .sd-step__desc { font-size:14px; line-height:1.65; color:var(--sd-ink-2); margin:0; font-weight:300; }
+
         /* marquee — refined status ticker carrying REAL election info */
         .sd-marquee { border-top:1px solid var(--sd-line); overflow:hidden; background:var(--sd-bg-2); }
         /* motion driven by framer in JSX (not CSS — see the marquee comment) */
@@ -390,11 +444,19 @@ export default function StudioDarkHome({
           .sd-home__scene { grid-template-columns:1fr; }
           .sd-home__left { border-right:0; border-bottom:1px solid var(--sd-line); min-height:0; padding:48px 24px; gap:32px; }
           .sd-home__right { padding:48px 24px; }
+          .sd-steps { padding:48px 24px; scroll-margin-top:120px; } /* below the sticky top bar */
+          .sd-steps__grid { grid-template-columns:1fr 1fr; }
+          .sd-step:nth-child(2) { border-right:0; }
+          .sd-step:nth-child(-n+2) { border-bottom:1px solid var(--sd-line); }
         }
         @media (max-width:560px) {
           .sd-home__cta { flex-direction:column; align-items:flex-start; gap:18px; }
           .sd-ghost { align-self:flex-start; }
           .sd-scenebar__right span:last-child { display:none; }
+          .sd-steps__grid { grid-template-columns:1fr; }
+          .sd-step { border-right:0; border-bottom:1px solid var(--sd-line); padding:22px 20px; }
+          .sd-step:last-child { border-bottom:0; }
+          .sd-step__num { font-size:36px; margin-bottom:4px; }
         }
       `}</style>
     </div>

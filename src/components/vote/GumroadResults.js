@@ -116,9 +116,12 @@ function GrWaiting({ globalConfig, editorMode }) {
 
   return (
     <div className="gr-waiting">
-      <div className="gr-waiting__kicker"><span className="gr-dot" /> UPCOMING · <span className="gm-thai">ยังไม่เปิดโหวต</span></div>
-      <h2 className="gr-waiting__title">POLLS<br />OPEN <em>SOON</em></h2>
-      <p className="gr-waiting__deck">ผลการเลือกตั้งจะแสดงที่นี่แบบเรียลไทม์เมื่อเปิดหีบเลือกตั้ง</p>
+      {/* Thai carries the meaning; the English is the small kicker. The deck used
+          to promise results "in real time once the polls open" — the tally is
+          hidden until the committee reveals it (ballot-secrecy policy). */}
+      <div className="gr-waiting__kicker"><span className="gr-dot" /> UPCOMING · POLLS OPEN SOON</div>
+      <h2 className="gr-waiting__title">ยังไม่<em>เปิดโหวต</em></h2>
+      <p className="gr-waiting__deck">ผลคะแนนจะแสดงที่หน้านี้ หลังปิดหีบ เมื่อคณะกรรมการเปิดเผยผล</p>
       {cd && (
         <div className="gr-waiting__cd" role="timer" aria-label="เวลาที่เหลือก่อนเปิดโหวต">
           {GR_CD_UNITS.map(([k, u]) => (
@@ -228,8 +231,8 @@ export default function GumroadResults({
                   <h3>ผลการนับ<br />ยังถูกล็อก</h3>
                   <p>
                     {singleParty
-                      ? "เพื่อความโปร่งใส ผลการรับรองจะถูกเปิดเผยเมื่อปิดโหวตแล้วเท่านั้น"
-                      : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะถูกเปิดเผยพร้อมกันเมื่อปิดโหวตแล้วเท่านั้น"}
+                      ? "เพื่อความโปร่งใส ผลการรับรองจะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น"
+                      : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะเปิดเผยพร้อมกันหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น"}
                   </p>
                   {countdownText ? (
                     <div className="gr-lock__cd">
@@ -256,7 +259,7 @@ export default function GumroadResults({
               <div className="gr-race__head">
                 <div>
                   <h3>📊 {singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h3>
-                  <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏหลังปิดโหวตแล้วเท่านั้น"}</p>
+                  <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏเมื่อคณะกรรมการประกาศผล"}</p>
                 </div>
                 <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● LIVE" : "🔒 LOCKED"}</span>
               </div>
@@ -334,8 +337,8 @@ export default function GumroadResults({
                     })}
                   </div>
                   <div className="gr-race__hidden">
-                    <div>🔒 HIDDEN UNTIL CLOSE</div>
-                    <span>ผลคะแนนจะแสดงเมื่อปิดโหวตแล้วเท่านั้น</span>
+                    <div>🔒 HIDDEN UNTIL ANNOUNCED</div>
+                    <span>ผลคะแนนจะแสดงเมื่อคณะกรรมการประกาศผล</span>
                   </div>
                 </>
               )}

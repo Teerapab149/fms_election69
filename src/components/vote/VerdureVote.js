@@ -132,7 +132,7 @@ export default function VerdureVote({
             kicker={<>PARTY No. {pad2(p.number)}</>}
             name={p.name}
             slogan={p.slogan ? `"${p.slogan}"` : null}
-            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>VIEW PROFILE →</a>}
+            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>ดูนโยบาย →</a>}
             selected={selectedPartyId === p.id}
             onClick={() => onSelect(p.id)}
           />
@@ -249,7 +249,8 @@ export default function VerdureVote({
         .vd-opt.is-selected .vd-opt__kicker { color:rgba(var(--cream-rgb),.7); opacity:1; }
         .vd-opt__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:26px; line-height:1.15; letter-spacing:-.015em; margin:0 0 4px; }
         .vd-opt__slogan { font-family:var(--ft); font-size:14px; opacity:.82; margin:0; line-height:1.4; }
-        .vd-opt__more { display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-family:var(--fm); font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--terra); border:0; border-bottom:1px solid currentColor; background:none; padding:0 0 1px; cursor:pointer; }
+        /* Thai label (was VIEW PROFILE): Thai-capable face, no tracking/caps */
+        .vd-opt__more { display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-family:var(--ft); font-size:13px; font-weight:600; letter-spacing:0; color:var(--terra); border:0; border-bottom:1px solid currentColor; background:none; padding:0 0 1px; cursor:pointer; }
         .vd-opt.is-selected .vd-opt__more { color:var(--terra-soft); }
         .vd-opt__check { width:44px; height:44px; border-radius:50%; border:1px solid var(--rule); background:var(--cream); display:grid; place-items:center; color:var(--cream); font-size:18px; transition:all .25s; flex-shrink:0; }
         .vd-opt.is-selected .vd-opt__check { background:var(--cream); border-color:var(--cream); color:var(--moss); }

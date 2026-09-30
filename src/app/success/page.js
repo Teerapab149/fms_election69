@@ -1,5 +1,7 @@
 "use client";
 import { getPath } from "../../utils/basePath";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage, familyFor } from "../../components/v2/resolve";
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -67,24 +69,32 @@ export default function SuccessPage({
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
+  // the real slug: a v2 family (components/v2) with its own success page renders it
+  const [rawTemplateId, setRawTemplateId] = useState('classic');
+  const V2Success = resolveTemplatePage(rawTemplateId, 'success');
   const [templateReady, setTemplateReady] = useState(false);
-  const isGumroad = activeTemplateId?.startsWith('gumroad');
-  const isStudio = activeTemplateId?.startsWith('studio-dark');
-  const isVerdure = activeTemplateId?.startsWith('verdure');
-  const isBlossom = activeTemplateId?.startsWith('blossom');
-  const isReceipt = activeTemplateId?.startsWith('receipt');
-  const isFmsOfficial = activeTemplateId?.startsWith('fms-official');
+  // a v2 page owns the screen: every v1 family flag below is off when it exists
+  const fam = familyFor(activeTemplateId, V2Success);
+  const isGumroad = fam?.startsWith('gumroad');
+  const isStudio = fam?.startsWith('studio-dark');
+  const isVerdure = fam?.startsWith('verdure');
+  const isBlossom = fam?.startsWith('blossom');
+  const isReceipt = fam?.startsWith('receipt');
+  const isFmsOfficial = fam?.startsWith('fms-official');
+  const ownChrome = !!V2Success || isGumroad || isStudio || isVerdure || isBlossom || isReceipt || isFmsOfficial;
 
   useEffect(() => {
     if (editorMode) { setTemplateReady(true); return; }
     fetch(getPath('/api/admin/page-layout'))
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.activeTemplateId) setActiveTemplateId(d.activeTemplateId); })
+      .then(d => { if (d?.activeTemplateId) { setActiveTemplateId(baseFamilyOf(d.activeTemplateId)); setRawTemplateId(d.activeTemplateId); } })
       .catch(() => {})
       .finally(() => setTemplateReady(true));
   }, [editorMode]);
 
   const isJustVoted = searchParams.get('voted') === 'true';
+  // is there an evaluation form this year? The editor always shows the form step.
+  const hasForm = editorMode || Boolean(String(googleFormUrl || "").trim());
 
   // =========================================================
   // ✅ Editor Wrappers & Visibility Logic (แก้บั๊ก s.type)
@@ -162,6 +172,11 @@ export default function SuccessPage({
           setIsVoted(voted);
 
           if (statusData.googleFormUrl) setGoogleFormUrl(statusData.googleFormUrl);
+          // No form this year → nothing to complete, so nothing to lock. The only
+          // way to unlock was finishing the form; with no link the button led to
+          // "ไม่พบลิงก์แบบประเมิน" and the results link never opened. Each family
+          // reads hasForm (below) to drop the form step and its wording.
+          else setIsUnlocked(true);
 
           // one branch, not two: this block used to be duplicated, so the silent
           // redirect always won and the explanatory modal below it was dead code.
@@ -285,7 +300,7 @@ export default function SuccessPage({
   // Render 
   // =========================================================
   return (
-    <div className={(isGumroad || isStudio || isVerdure || isBlossom || isReceipt || isFmsOfficial) ? "relative" : "min-h-screen flex flex-col font-sans relative overflow-hidden bg-[var(--color-bg)]"}>
+    <div className={ownChrome ? "relative" : "min-h-screen flex flex-col font-sans relative overflow-hidden bg-[var(--color-bg)]"}>
       {!editorMode && <PageThemeOverrides page="success" />}
 
       {/* classic/original chrome. This family mounts <Navbar /> on candidates, closed,
@@ -293,13 +308,14 @@ export default function SuccessPage({
           end of the flow was also the one screen with no way back to anywhere. The
           centring moved onto the inner wrapper below so the bar stays at the top
           instead of being centred together with the card. */}
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && !editorMode && <Navbar />}
+      {!ownChrome && !editorMode && <Navbar />}
 
       {/* RECEIPT layout (own printer-moment chrome); the form + alert modals below stay shared */}
       {isReceipt && (isAuthorized || editorMode) && (
         <ReceiptSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -310,6 +326,7 @@ export default function SuccessPage({
         <BlossomSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -320,16 +337,23 @@ export default function SuccessPage({
         <VerdureSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
       )}
 
       {/* FMS OFFICIAL layout (faculty chrome); the form + alert modals below stay shared */}
+      {V2Success && (isAuthorized || editorMode) && (
+        <V2Success user={user} isUnlocked={isUnlocked}
+          hasForm={hasForm} onOpenForm={() => setShowModal(true)} editorMode={editorMode} />
+      )}
+
       {isFmsOfficial && (isAuthorized || editorMode) && (
         <FmsOfficialSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -340,6 +364,7 @@ export default function SuccessPage({
         <GumroadSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
@@ -350,15 +375,17 @@ export default function SuccessPage({
         <StudioDarkSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
         />
       )}
 
-      {!isGumroad && !isStudio && !isVerdure && !isBlossom && !isReceipt && !isFmsOfficial && (isAuthorized || editorMode) && (
+      {!ownChrome && (isAuthorized || editorMode) && (
         <OriginalSuccess
           user={user}
           isUnlocked={isUnlocked}
+          hasForm={hasForm}
           onOpenForm={() => setShowModal(true)}
           editorMode={editorMode}
           templateId={activeTemplateId}

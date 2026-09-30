@@ -8,7 +8,7 @@
 // Opens with the cinematic wax-seal intro. Same vote contract (onConfirm IS the
 // submit). All digits Arabic.
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
@@ -18,11 +18,20 @@ import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
 // ── cinematic intro: a warm cream wax-seal curtain that wipes up to reveal the
 // party's wax seal stamps in, the name + slogan reveal. editorMode skips it; a 3s
 // setTimeout always releases the page (content is never trapped). ──
-function VerdureBallotIntro({ party, no, onDone }) {
+// onReveal fires when the curtain STARTS wiping up (3.6s), so the booth's entrance
+// plays in the gap the wipe opens. It used to be gated on onDone (4.6s, after the
+// wipe) — the wipe revealed fully-visible content, then .is-live restarted it from
+// opacity 0, which read as the screen blinking once.
+function VerdureBallotIntro({ party, no, onDone, onReveal }) {
+  // latest callbacks in refs: the parent passes inline arrows, and a dep on them
+  // would restart both timers on every parent re-render
+  const cb = useRef({ onDone, onReveal });
+  cb.current = { onDone, onReveal };
   useEffect(() => {
-    const t = setTimeout(onDone, 4600); // safety: always release the page (matches the wipe)
-    return () => clearTimeout(t);
-  }, [onDone]);
+    const r = setTimeout(() => cb.current.onReveal?.(), 3600); // matches the wipe's delay
+    const t = setTimeout(() => cb.current.onDone(), 4600); // safety: always release the page (matches the wipe)
+    return () => { clearTimeout(r); clearTimeout(t); };
+  }, []);
   const words = String(party?.name || "").trim().split(/\s+/);
   const logoSrc = resolveSrc(party?.logoUrl);
   return (
@@ -108,6 +117,8 @@ export default function VerdureSingleParty({
   const openLightbox = (src, cap) => { if (src) { setLightboxSrc(src); setLightboxCap(cap); } };
   // editor/preview skip the cinematic intro — unless forceIntro (the dev-only intro demo)
   const [introDone, setIntroDone] = useState(editorMode && !forceIntro);
+  // booth entrance starts with the curtain wipe, not after it (see VerdureBallotIntro)
+  const [revealed, setRevealed] = useState(editorMode && !forceIntro);
 
   const policies = useMemo(() => (party?.policies || []).map((it) => (
     typeof it === "string"
@@ -140,10 +151,12 @@ export default function VerdureSingleParty({
       edge={{ num: "04", label: "Ballot", th: "ลงคะแนนเสียง" }}
       cornermarkTitle="Ballot" cornermarkSub={`Party No. ${no}`}
       statusChip={<></>}>
-      {!introDone && <VerdureBallotIntro party={party} no={no} onDone={() => setIntroDone(true)} />}
+      {!introDone && <VerdureBallotIntro party={party} no={no}
+        onReveal={() => setRevealed(true)}
+        onDone={() => { setRevealed(true); setIntroDone(true); }} />}
 
       <div className="vd-booth-bg" aria-hidden />
-      <div className={`vd-booth${introDone ? " is-live" : ""}`}>
+      <div className={`vd-booth${revealed ? " is-live" : ""}`}>
         <div className="vd-booth__head">
           <div className="vd-booth__eyebrow">★ <span className="vd-nw">THE ONLY PARTY</span> · <span className="vd-thai">พรรคเดียวที่ลงสมัคร</span> ★</div>
           <div className="vd-seal">
@@ -250,7 +263,7 @@ export default function VerdureSingleParty({
 
         <section id="vd-decision" className="vd-decision">
           <div className="vd-decision__head">
-            <span className="vd-decision__kicker">★ <span className="vd-nw">Cast your vote</span> · <span className="vd-thai">ลงคะแนน</span> ★</span>
+            <span className="vd-decision__kicker">★ <span className="vd-thai">ลงคะแนน</span> · <span className="vd-nw">Cast your vote</span> ★</span>
             <h2>การตัดสินใจของคุณ</h2>
             <p>เลือกหนึ่งตัวเลือก แล้วกดยืนยัน · ลงคะแนนได้เพียงครั้งเดียว</p>
           </div>
@@ -481,6 +494,9 @@ export default function VerdureSingleParty({
            the head + group cover fade-rise softly once the wax-seal intro lifts
            (gated on .is-live). The seal glow (vdGlow) + scroll cue (vdCueBounce)
            ambients are unchanged. transform/opacity only; base state visible. */
+        /* held at the entrance's from-state while the curtain still covers them, so
+           the wipe never uncovers them visible only for .is-live to blank them */
+        .vd-booth:not(.is-live) .vd-booth__head, .vd-booth:not(.is-live) .vd-booth__cover { opacity:0; }
         .vd-booth.is-live .vd-booth__head { animation:vdSoftRise .8s cubic-bezier(.16,1,.3,1) both .06s; }
         .vd-booth.is-live .vd-booth__cover { animation:vdSoftRise .85s cubic-bezier(.16,1,.3,1) both .2s; }
         @keyframes vdSoftRise { from { opacity:0; transform:translateY(18px); } }

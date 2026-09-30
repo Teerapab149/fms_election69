@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
+import { resolveTemplatePage } from "../../components/v2/resolve";
 import { useRouter, useSearchParams } from "next/navigation"; // ✅ เพิ่ม useSearchParams เพื่อดัก Error จาก URL
 import { signIn, useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
@@ -20,7 +22,10 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams(); // ดึงค่าจาก URL
   const { data: session, status } = useSession();
-  const activeTemplateId = useActiveTemplateId();
+  const rawTemplateId = useActiveTemplateId();
+  const activeTemplateId = baseFamilyOf(rawTemplateId);
+  // a v2 family's own sign-in page, before the base-family dispatch below
+  const V2Login = resolveTemplatePage(rawTemplateId, 'login');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -118,6 +123,7 @@ export default function LoginPage() {
     onBack: () => router.push("/"),
     onAdmin: () => router.push("/admin"),
   };
+  if (V2Login) return <V2Login {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("studio-dark")) return <StudioDarkLogin {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("gumroad")) return <GumroadLogin {...templateLoginProps} />;
   if (activeTemplateId?.startsWith("verdure")) return <VerdureLogin {...templateLoginProps} />;

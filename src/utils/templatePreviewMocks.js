@@ -82,17 +82,20 @@ export const SPECIAL = {
   disapprove: { id: 999, number: -1, name: "ไม่รับรอง" },
 };
 
+// Each group adds up to the revealed ballot count (312 + 245 + 68 = 625), as
+// the real API's would. Gender is 10 short on purpose: real voters can have no
+// gender on record, and the preview should show how a template handles that.
 export const DEMOGRAPHICS = {
   totalEligible: 2004,
   byYear: [
-    { name: "ปี 1", value: 145 }, { name: "ปี 2", value: 132 },
-    { name: "ปี 3", value: 118 }, { name: "ปี 4", value: 105 },
+    { name: "ปี 1", value: 180 }, { name: "ปี 2", value: 165 },
+    { name: "ปี 3", value: 150 }, { name: "ปี 4", value: 130 },
   ],
-  byGender: [{ name: "หญิง", value: 266 }, { name: "ชาย", value: 234 }],
+  byGender: [{ name: "หญิง", value: 330 }, { name: "ชาย", value: 285 }],
   byMajor: [
-    { name: "บัญชี", value: 142 }, { name: "การเงิน", value: 98 },
-    { name: "การจัดการ", value: 87 }, { name: "การตลาด", value: 73 },
-    { name: "ระบบสารสนเทศ", value: 56 },
+    { name: "บัญชี", value: 180 }, { name: "การเงิน", value: 130 },
+    { name: "การจัดการ", value: 120 }, { name: "การตลาด", value: 105 },
+    { name: "ระบบสารสนเทศ", value: 90 },
   ],
 };
 
