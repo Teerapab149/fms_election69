@@ -82,7 +82,7 @@ function arg(name) {
         academicYearTh: gc.academicYearTh ?? null,
         calendarYear: gc.electionCalendarYear ?? null,
       },
-      certified: !!cfg.showResult,
+      certified: !!gc.ballotsAnonymized,
       ballotsAnonymized: !!gc.ballotsAnonymized,
       // ใครเซ็นรับรองผลปีนี้ — ตั้งตอนเจ้าหน้าที่กดปุ่มรับรองในหน้าแอดมิน
       certifiedBy: gc.certifiedBy ?? null,

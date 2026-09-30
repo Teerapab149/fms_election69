@@ -29,10 +29,20 @@ test("results cannot be published while votes can still be cast", () => {
   assert.equal(checkShowResult({ value: true, systemMode: "AUTO", end: after.end, now }), null);
 });
 
-test("hiding results is always allowed; the value must be a real boolean", () => {
+test("hiding is allowed until certification; the value must be a real boolean", () => {
   assert.equal(checkShowResult({ value: false, systemMode: "MANUAL_OPEN", end: during.end, now }), null);
+  // uncertified: hiding a published tally is fine in a closed box too
+  assert.equal(checkShowResult({ value: false, systemMode: "ENDED", end: during.end, now, certified: false }), null);
+  assert.equal(checkShowResult({ value: false, systemMode: "AUTO", end: after.end, now, certified: false }), null);
   assert.ok(checkShowResult({ value: "true", systemMode: "ENDED", end: during.end, now }));
   assert.ok(checkShowResult({ value: undefined, systemMode: "ENDED", end: during.end, now }));
+});
+
+test("a certified result stays public: hiding is refused, re-publishing is allowed", () => {
+  for (const [mode, sched] of [["ENDED", during], ["AUTO", after]]) {
+    assert.match(checkShowResult({ value: false, systemMode: mode, end: sched.end, now, certified: true }) || "", /รับรองแล้ว/, `${mode} should refuse`);
+    assert.equal(checkShowResult({ value: true, systemMode: mode, end: sched.end, now, certified: true }), null);
+  }
 });
 
 test("a published tally never goes back to a box that can take votes", () => {

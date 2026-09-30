@@ -151,7 +151,8 @@ async function handleAction(body, auth) {
 
     // กรณี: เปิด/ปิดการแสดงผล — ส่งค่าที่ต้องการมาตรง ๆ (value: true|false)
     // เดิมเป็น TOGGLE ("สลับค่า") ถ้าเปิดหน้าตั้งค่าไว้สองเครื่อง หรือกดซ้ำตอนเน็ตช้า
-    // ผลจะกลับด้านกับที่แอดมินเห็นบนจอ · เปิดได้เฉพาะเมื่อหีบปิดแล้ว (adminGuards)
+    // ผลจะกลับด้านกับที่แอดมินเห็นบนจอ · เปิดได้เฉพาะเมื่อหีบปิดแล้ว และซ่อนไม่ได้
+    // เมื่อรับรองผลแล้ว — ผลที่รับรองต้องแสดงต่อสาธารณะ (adminGuards)
     if (action === 'SET_SHOW_RESULT') {
       try {
         await db.$transaction(async (tx) => {
@@ -160,6 +161,7 @@ async function handleAction(body, auth) {
             value: body.value,
             systemMode: config?.systemMode || "AUTO",
             end: resolveElectionDates(config?.globalConfig).ELECTION_END,
+            certified: !!config?.globalConfig?.ballotsAnonymized,
           });
           if (err) throw new GuardError(err, typeof body.value === "boolean" ? 409 : 400);
           await tx.systemConfig.update({ where: { id: 1 }, data: { showResult: body.value } });

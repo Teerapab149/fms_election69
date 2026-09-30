@@ -16,9 +16,16 @@ export function isBoxClosed({ systemMode = "AUTO", end, now = Date.now() }) {
   return systemMode === "AUTO" && Number.isFinite(endMs) && now >= endMs;
 }
 
-// → null when allowed, otherwise the Thai reason shown to the admin
-export function checkShowResult({ value, systemMode, end, now }) {
+// → null when allowed, otherwise the Thai reason shown to the admin.
+// Publishing needs a closed box; hiding is allowed until certification — a
+// certified result is the signed, final tally and must stay public (only
+// scripts/sql/annual-reset.sql hides it, in the transaction that clears the
+// certification). Re-publishing a certified result is a no-op and allowed.
+export function checkShowResult({ value, systemMode, end, now, certified }) {
   if (value !== true && value !== false) return "ค่าการแสดงผลไม่ถูกต้อง";
+  if (certified && value === false) {
+    return "ผลถูกรับรองแล้ว ซ่อนผลไม่ได้ — ผลที่รับรองแล้วต้องแสดงต่อสาธารณะ";
+  }
   if (value && !isBoxClosed({ systemMode, end, now })) {
     return "ยังเปิดแสดงผลไม่ได้ — หีบยังไม่ปิด เปลี่ยนเป็น ENDED หรือรอให้เลยเวลาปิดหีบก่อน แล้วค่อยเปิดแสดงผล";
   }
