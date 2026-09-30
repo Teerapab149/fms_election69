@@ -70,6 +70,7 @@ export default function StudioDarkResults({
   const globalConfig = useGlobalConfig();
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const paused = finalStatus === "CLOSED"; // admin PAUSE: not counting, no closing time
   const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
 
   const totalEligible = demographics?.totalEligible || 0;
@@ -112,7 +113,8 @@ export default function StudioDarkResults({
   ].filter((g) => g.rows.length > 0);
 
   const samo = `${globalConfig?.electionNamePrefix || "SAMO"} ${globalConfig?.electionNumber ?? ""}`.trim();
-  const statusTxt = isNotStarted ? "POLLS NOT OPEN" : ended ? (revealed ? "FINAL RESULT" : "COUNTING") : "LIVE TALLY";
+  // closed-but-unannounced waits for the committee; "COUNTING" there read as a tally still moving
+  const statusTxt = isNotStarted ? "POLLS NOT OPEN" : ended ? (revealed ? "FINAL RESULT" : "AWAITING") : paused ? "PAUSED" : "LIVE TALLY";
 
   return (
     <StudioDarkShell
@@ -135,7 +137,9 @@ export default function StudioDarkResults({
                 ? <><span className="sd-nw">WAITING</span>  <span className="sd-thai">ยังไม่เปิดโหวต</span></>
                 : ended
                   ? <><span className="sd-nw">CLOSED</span>  <span className="sd-thai">รอประกาศผล</span></>
-                  : <><span className="sd-nw">LIVE TALLY</span>  <span className="sd-thai">กำลังนับ</span></>}
+                  : paused
+                    ? <><span className="sd-nw">PAUSED</span>  <span className="sd-thai">หยุดรับคะแนนชั่วคราว</span></>
+                    : <><span className="sd-nw">LIVE TALLY</span>  <span className="sd-thai">กำลังนับ</span></>}
           </div>
         </div>
 
@@ -148,7 +152,11 @@ export default function StudioDarkResults({
                 ? <><span className="sd-nw">OFFICIAL RESULT</span>  <span className="sd-thai">ผลการเลือกตั้ง</span></>
                 : isNotStarted
                   ? <><span className="sd-nw">POLLS NOT OPEN</span>  <span className="sd-thai">ยังไม่เปิดลงคะแนน</span></>
-                  : <><span className="sd-nw">COUNTING IN PROGRESS</span>  <span className="sd-thai">กำลังนับคะแนน</span></>}
+                  : ended
+                    ? <><span className="sd-nw">AWAITING RESULTS</span>  <span className="sd-thai">รอประกาศผล</span></>
+                    : paused
+                      ? <><span className="sd-nw">PAUSED</span>  <span className="sd-thai">หยุดรับคะแนนชั่วคราว</span></>
+                      : <><span className="sd-nw">COUNTING IN PROGRESS</span>  <span className="sd-thai">กำลังนับคะแนน</span></>}
             </div>
 
             {revealed ? (
@@ -190,7 +198,9 @@ export default function StudioDarkResults({
               <>
                 <h2 className="sdr-board__title">{singleParty ? <>Yes or <em>no?</em></> : <>Who will <em>win?</em></>}</h2>
                 <p className="sdr-board__deck">
-                  เพื่อรักษาความเป็นกลาง ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้ — จะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น
+                  {ended
+                    ? <>ปิดโหวตแล้ว ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้จนกว่าคณะกรรมการจะประกาศผล</>
+                    : <>เพื่อรักษาความเป็นกลาง ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้ — จะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น</>}
                 </p>
               </>
             )}
@@ -208,13 +218,25 @@ export default function StudioDarkResults({
             ) : (
               <>
                 <div className="sdr-aside__kicker">§ EDITOR&rsquo;S NOTE</div>
-                <h3>ผลจะประกาศ<br />หลัง <em>ปิดโหวต</em></h3>
-                <p>ระหว่างการลงคะแนน เราเลือกที่จะไม่แสดง{singleParty ? "ผลรับรอง" : "พรรคที่กำลังนำ"} — เพื่อไม่ให้ตัวเลขมีอิทธิพลต่อการตัดสินใจของผู้ที่ยังไม่ได้ลงคะแนน</p>
+                {/* "after the polls close" reads wrong once they have — say what we wait for now */}
+                {ended ? (
+                  <>
+                    <h3>ปิดโหวตแล้ว<br />รอ <em>ประกาศผล</em></h3>
+                    <p>หีบปิดแล้ว คะแนนทุกใบถูกบันทึกครบ ผลจะแสดงพร้อมกันทุก{singleParty ? "ฝ่าย" : "พรรค"}เมื่อคณะกรรมการประกาศ</p>
+                  </>
+                ) : (
+                  <>
+                    <h3>ผลจะประกาศ<br />หลัง <em>ปิดโหวต</em></h3>
+                    <p>ระหว่างการลงคะแนน เราเลือกที่จะไม่แสดง{singleParty ? "ผลรับรอง" : "พรรคที่กำลังนำ"} — เพื่อไม่ให้ตัวเลขมีอิทธิพลต่อการตัดสินใจของผู้ที่ยังไม่ได้ลงคะแนน</p>
+                  </>
+                )}
                 {/* the bare time read the same before opening and during voting,
                     and after closing the live page hands "เร็วๆ นี้" — say what it is */}
                 {ended
                   ? <div className="sdr-aside__cd">ปิดโหวตแล้ว รอประกาศผล</div>
-                  : countdownText && <div className="sdr-aside__cd">{isNotStarted ? "เปิดโหวตใน " : "ปิดโหวตใน "}{countdownText}</div>}
+                  : paused
+                    ? <div className="sdr-aside__cd">หยุดรับคะแนนชั่วคราว</div>
+                    : countdownText && <div className="sdr-aside__cd">{isNotStarted ? "เปิดโหวตใน " : "ปิดโหวตใน "}{countdownText}</div>}
               </>
             )}
           </div>
@@ -235,7 +257,7 @@ export default function StudioDarkResults({
           <div className="sdr-stat">
             <div className="sdr-stat__lbl">TURNOUT <em>iii.</em></div>
             <div className="sdr-stat__val">{revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)}<small>%</small></div>
-            <div className="sdr-stat__sub">สัดส่วนผู้ใช้สิทธิ์ อัปเดตเรียลไทม์</div>
+            <div className="sdr-stat__sub">{ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "สัดส่วนผู้ใช้สิทธิ์ อัปเดตเรียลไทม์"}</div>
           </div>
         </div>
 
@@ -272,7 +294,7 @@ export default function StudioDarkResults({
             <div className="sdr-veil">
               <div>
                 <div className="sdr-veil__lock"><Lock size={20} strokeWidth={2} /></div>
-                <h4>Embargoed until <em>polls close.</em></h4>
+                <h4>Embargoed until <em>announced.</em></h4>
                 <p>ผลคะแนน{singleParty ? "" : "รายพรรค"}จะปรากฏที่นี่เมื่อคณะกรรมการประกาศผล</p>
               </div>
             </div>

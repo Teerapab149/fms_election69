@@ -174,6 +174,9 @@ export default function GlobalConfigTab() {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
   const [error, setError] = useState(null);
+  // the "sign in again" link belongs to an expired session only — under a
+  // refusal like "results are showing, hide them first" it reads as the fix
+  const [errorNeedsLogin, setErrorNeedsLogin] = useState(false);
 
   // CFG-DUAL: prefix/number as they stood the last time this form took a value
   // from the server/Context — see deriveElectionName.
@@ -190,7 +193,10 @@ export default function GlobalConfigTab() {
     async function load() {
       try {
         const res = await fetch(getPath("/api/admin/global-config"), { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load");
+        if (!res.ok) {
+          if (res.status === 401) setErrorNeedsLogin(true);
+          throw new Error("Failed to load");
+        }
         const data = await res.json();
         if (data.globalConfig) {
           const merged = { ...GLOBAL_CONFIG_DEFAULTS, ...data.globalConfig };
@@ -258,6 +264,7 @@ export default function GlobalConfigTab() {
   async function handleSave() {
     setSaving(true);
     setError(null);
+    setErrorNeedsLogin(false);
     try {
       const base = derivedFromRef.current;
       const nameSourceChanged =
@@ -275,6 +282,7 @@ export default function GlobalConfigTab() {
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (res.status === 401) {
+          setErrorNeedsLogin(true);
           throw new Error("เซสชันผู้ดูแลหมดอายุหรือยังไม่ได้เข้าสู่ระบบ กรุณาเข้าสู่ระบบผู้ดูแลในแท็บใหม่ แล้วกลับมากดบันทึกอีกครั้ง ข้อมูลที่แก้ไขยังอยู่ในฟอร์มนี้");
         }
         throw new Error(result.error || `บันทึกไม่สำเร็จ (HTTP ${res.status})`);
@@ -469,9 +477,11 @@ export default function GlobalConfigTab() {
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
-          <a href={getPath("/admin/login")} target="_blank" rel="noopener noreferrer" className="block mt-2 underline font-medium">
-            เปิดหน้าเข้าสู่ระบบผู้ดูแลในแท็บใหม่
-          </a>
+          {errorNeedsLogin && (
+            <a href={getPath("/admin/login")} target="_blank" rel="noopener noreferrer" className="block mt-2 underline font-medium">
+              เปิดหน้าเข้าสู่ระบบผู้ดูแลในแท็บใหม่
+            </a>
+          )}
         </div>
       )}
 

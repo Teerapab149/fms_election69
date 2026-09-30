@@ -1,6 +1,38 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
+import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
+import { checkScheduleChange } from "../../../../lib/election/adminGuards.mjs";
+import { parseBangkok, resolveElectionDates } from "../../../../utils/electionConfig";
+
+// A refused schedule change, thrown out of the transaction so it rolls back
+// (same shape as the one in api/admin/dashboard, which is not exported).
+class GuardError extends Error {
+  constructor(message, status = 409) { super(message); this.status = status; }
+}
+
+// The voting window as stored. campaignStartAt is left out on purpose: it only
+// decides when the candidate list goes public, never whether the box is open.
+const SCHEDULE_KEYS = ["electionStartAt", "electionEndAt"];
+
+// 📋 Audit trail for schedule changes, like the dashboard's mode/reveal rows —
+// moving the dates under AUTO opens or closes the box, so who did it and
+// whether it went through is worth the same record. Best-effort: a failed log
+// never fails or changes the save.
+async function logScheduleChange(auth, change, result, error) {
+  if (!change) return;
+  try {
+    await db.adminAuditLog.create({
+      data: {
+        action: "SET_SCHEDULE",
+        actor: auth.user?.studentId || (auth.user?.id != null ? String(auth.user.id) : null),
+        detail: JSON.stringify({ ...change, result, ...(error ? { error } : {}) }),
+      },
+    });
+  } catch (e) {
+    console.error("[audit] failed to log schedule change:", e.message);
+  }
+}
 
 // Never statically rendered: this route reads headers/request.url per call. Without
 // this Next tries to prerender it at build time, the read throws DynamicServerError,
@@ -30,8 +62,14 @@ export async function GET(request) {
 
 // PUT — admin only
 export async function PUT(request) {
-  const authError = await adminGuard(request);
-  if (authError) return authError;
+  // requireAdmin rather than adminGuard: the audit row needs to know who. A
+  // revoked caller still gets the stale cookie cleared, as adminGuard does.
+  const auth = await requireAdmin(request);
+  if (!auth.ok) {
+    const res = NextResponse.json({ error: auth.error }, { status: auth.status });
+    if (auth.revoked) res.cookies.delete("admin_token");
+    return res;
+  }
 
   try {
     const body = await request.json();
@@ -72,17 +110,76 @@ export async function PUT(request) {
     // ไม่ได้ส่งมาก็หายทันที ฟอร์มตั้งค่าทั่วไปส่งมาเฉพาะฟิลด์ของตัวเอง เพราะงั้นแค่กด
     // "บันทึก" ครั้งเดียวหลังรับรองผล ก็ลบลายเซ็นรับรองทิ้งทั้งชุดโดยไม่มีใครตั้งใจ
     // และปลดล็อกให้ /api/vote รับคะแนนได้อีก
-    const current = await db.systemConfig.findUnique({ where: { id: 1 }, select: { globalConfig: true } });
-    const merged = { ...(current?.globalConfig ?? {}), ...rest };
+    //
+    // Read, check and write under the same row lock the dashboard takes for
+    // SET_MODE / SET_SHOW_RESULT: the schedule is checked against the mode and
+    // showResult, so "publish" pressed in another tab must not slip in between
+    // this read and this write. Every save takes the lock — both admin clients
+    // send the whole config each time, so "did the dates change" can only be
+    // answered from the locked row.
+    let change = null;   // set once the election dates are being moved; audited below
+    let updated;
+    try {
+      updated = await db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "SystemConfig" WHERE id = 1 FOR UPDATE`;
+        const current = await tx.systemConfig.findUnique({ where: { id: 1 } });
+        const prevConfig = current?.globalConfig ?? {};
+        const merged = { ...prevConfig, ...rest };
 
-    const data = { globalConfig: merged };
-    if (googleFormUrl !== undefined) data.googleFormUrl = googleFormUrl;
+        // resolveElectionDates quietly falls back to the built-in defaults on a
+        // value it cannot read, so a typo would silently move the election to
+        // last year's dates. Refuse it instead — but only a value that is new,
+        // or a stored bad value would block saving every other field.
+        const unreadable = SCHEDULE_KEYS.filter((k) => {
+          const v = merged[k];
+          if (v === prevConfig[k] || v === undefined || v === null) return false;
+          return typeof v !== "string" || (v.trim() !== "" && parseBangkok(v) === null);
+        });
+        if (unreadable.length > 0) {
+          change = { raw: Object.fromEntries(unreadable.map((k) => [k, merged[k]])) };
+          throw new GuardError("อ่านวันเวลาเปิดหีบหรือปิดหีบไม่ออก — เลือกวันเวลาใหม่จากช่องในฟอร์ม", 400);
+        }
 
-    const updated = await db.systemConfig.upsert({
-      where: { id: 1 },
-      create: { id: 1, ...data },
-      update: data,
-    });
+        // Compare the RESOLVED instants, not the raw strings: "2026-02-06T08:30"
+        // and "2026-02-06T08:30:00" are the same time and must not count as a move.
+        const prev = resolveElectionDates(prevConfig);
+        const next = resolveElectionDates(merged);
+        if (prev.ELECTION_START.getTime() !== next.ELECTION_START.getTime()
+          || prev.ELECTION_END.getTime() !== next.ELECTION_END.getTime()) {
+          change = {
+            from: { start: prev.ELECTION_START.toISOString(), end: prev.ELECTION_END.toISOString() },
+            to: { start: next.ELECTION_START.toISOString(), end: next.ELECTION_END.toISOString() },
+          };
+          const err = checkScheduleChange({
+            systemMode: current?.systemMode || "AUTO",
+            showResult: !!current?.showResult,
+            certified: !!prevConfig.ballotsAnonymized,
+            prevStart: prev.ELECTION_START,
+            prevEnd: prev.ELECTION_END,
+            nextStart: next.ELECTION_START,
+            nextEnd: next.ELECTION_END,
+          });
+          if (err) throw new GuardError(err);
+        }
+
+        const data = { globalConfig: merged };
+        if (googleFormUrl !== undefined) data.googleFormUrl = googleFormUrl;
+        return tx.systemConfig.upsert({
+          where: { id: 1 },
+          create: { id: 1, ...data },
+          update: data,
+        });
+      });
+    } catch (e) {
+      if (!(e instanceof GuardError)) throw e;
+      await logScheduleChange(auth, change, `refused ${e.status}`, e.message);
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+
+    // The dates decide /api/results' status, and it serves a short public
+    // snapshot — drop it so a schedule change shows on the next poll.
+    bustResultsSnap();
+    await logScheduleChange(auth, change, "ok");
 
     return NextResponse.json({
       success: true,

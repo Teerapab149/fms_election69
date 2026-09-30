@@ -275,7 +275,14 @@ export default function SuccessPage({
       setShowModal(false);
     } catch (error) {
       console.error(error);
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง");
+      // the page's own alert, not the browser's: it sits above the form sheet
+      // (z-[999] over z-50), and action null leaves the sheet open to try again
+      setAlertConfig({
+        title: "บันทึกไม่สำเร็จ",
+        message: "เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง",
+        action: null,
+      });
+      setShowAlertModal(true);
     }
   };
 

@@ -39,6 +39,29 @@ export function checkSetMode({ mode, showResult, certified, end, now }) {
   return null;
 }
 
+// Editing the schedule is a mode change by another route: under AUTO the dates
+// ARE the box, so moving the end into the future reopens it just as surely as
+// pressing OPEN would. Same rule, checked by api/admin/global-config.
+// Only the voting window counts — campaignStartAt is display-only (when the
+// candidate list goes public) and never opens or closes the box.
+// → null when allowed (including "the dates did not move"), otherwise the Thai reason
+export function checkScheduleChange({
+  systemMode = "AUTO", showResult, certified, prevStart, prevEnd, nextStart, nextEnd, now = Date.now(),
+}) {
+  const ms = (d) => (d instanceof Date ? d.getTime() : Number(d));
+  // both admin clients send the whole config on every save, so an unchanged
+  // schedule must pass untouched — a certified election can still fix a typo
+  if (ms(prevStart) === ms(nextStart) && ms(prevEnd) === ms(nextEnd)) return null;
+  // certification is the end of this election (as in checkSetMode)
+  if (certified) return "ผลถูกรับรองแล้ว แก้วันเวลาเลือกตั้งไม่ได้";
+  if (showResult && !isBoxClosed({ systemMode, end: nextEnd, now })) {
+    return "ผลคะแนนกำลังแสดงอยู่ — ซ่อนผลก่อน แล้วจึงแก้วันเวลาให้หีบเปิดอีกครั้งได้";
+  }
+  // only once the dates move: a DB that is already inverted can still save its other fields
+  if (!(ms(nextEnd) > ms(nextStart))) return "เวลาปิดหีบต้องอยู่หลังเวลาเปิดหีบ";
+  return null;
+}
+
 // What each change of mode actually does, in words — for the confirm dialog.
 // (from → to), with the schedule, so "AUTO" can say whether it opens now.
 export const MODE_LABEL = {

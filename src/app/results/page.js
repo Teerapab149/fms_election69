@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { baseFamilyOf } from "../../components/v2/families"; // v2 templates fall back to their base family's pages
 import { resolveTemplatePage, familyFor } from "../../components/v2/resolve";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,7 @@ import { resolveElectionDates } from "../../utils/electionConfig";
 import { resolveVerdict } from "../../utils/electionVerdict";
 import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
+import { resultsPollDelay } from "../../lib/election/resultsPolling.mjs";
 
 import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
@@ -61,6 +62,11 @@ export default function ResultsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false); // ✅ สถานะบังคับเปิดเผยข้อมูล
   const [certified, setCertified] = useState(null);    // { by, at } เมื่อเจ้าหน้าที่รับรองผลแล้ว
+  // "status|isRevealed" from the last good /api/results, null until the first.
+  // The access check re-runs when it changes (a box closing or a reveal while
+  // the tab sits open); the ref remembers the key that check last saw.
+  const [gateKey, setGateKey] = useState(null);
+  const gateKeySeen = useRef(null);
 
   // Active template — drives the per-page LAYOUT dispatch (gumroad has its own).
   const [activeTemplateId, setActiveTemplateId] = useState('classic');
@@ -101,14 +107,24 @@ export default function ResultsPage() {
   // 🔒 1. SECURITY & ACCESS CHECK (แก้ไข Logic ตามโจทย์)
   // ==========================================
   useEffect(() => {
+    // A newer run supersedes this one (the gate re-runs on session and server
+    // changes); a slower older run must not land its verdict on top.
+    let stale = false;
     const checkAccess = async () => {
       try {
         const now = new Date();
         const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
+        // Re-running because the server's picture changed: skip the shared 15 s
+        // cache, or the check would read the mode from before the change. The
+        // key counts as seen only once a run that was not superseded read it.
+        const force = gateKeySeen.current !== null && gateKey !== null && gateKey !== gateKeySeen.current;
+
         // 1.1 เช็คสถานะระบบ (Global Config) ก่อนเสมอ (ไม่ต้อง Login ก็เช็คได้)
         // Shared cached fetch (no-store under the hood — replaces the ?t= cache-bust).
-        const statusData = await fetchVoteStatus();
+        const statusData = await fetchVoteStatus({ force });
+        if (stale) return;
+        if (gateKey !== null) gateKeySeen.current = gateKey;
 
         const isSystemClosed = statusData.systemMode === "PAUSE";
         const isManualEnd = statusData.systemMode === "ENDED";
@@ -117,6 +133,7 @@ export default function ResultsPage() {
         // ⚡️ NEW SYSTEM MODES logic:
         if (isManualEnd || isEnded || isRevealed) {
           setIsAuthorized(true);
+          setShowAccessModal(false);
           setLoading(false);
           return;
         }
@@ -136,6 +153,7 @@ export default function ResultsPage() {
         const isOngoing = statusData.electionStatus === "ONGOING";
         if (now >= ELECTION_CONFIG.CAMPAIGN_START && now < ELECTION_CONFIG.ELECTION_START && !isSystemClosed && !isOngoing) {
           setIsAuthorized(true);
+          setShowAccessModal(false);
           setLoading(false);
           return;
         }
@@ -162,6 +180,7 @@ export default function ResultsPage() {
           // เช็คสถานะส่วนตัว — same endpoint; the shared cache makes this free
           // (the server reads isVoted from the verified session, not a param).
           const userData = await fetchVoteStatus();
+          if (stale) return;
 
           // ถ้ายังไม่โหวต -> ห้ามเข้า (ต้องไปโหวตก่อน)
           if (!userData.isVoted) {
@@ -175,6 +194,7 @@ export default function ResultsPage() {
           const resForm = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}&t=${Date.now()}`));
           if (!resForm.ok) throw new Error("Failed to fetch form status");
           const formData = await resForm.json();
+          if (stale) return;
 
           if (!formData.isFormCompleted) {
             setModalType("FORM");
@@ -191,13 +211,14 @@ export default function ResultsPage() {
       } catch (error) {
         console.error("Check Access Error:", error);
         // Fallback: Stop loading, maybe deny access slightly gracefully or just show empty
-        setLoading(false);
+        if (!stale) setLoading(false);
         // Optional: Show alert or keeping unauthorized state
       }
     };
 
     checkAccess();
-  }, [status, session, router]);
+    return () => { stale = true; };
+  }, [status, session, router, gateKey]);
 
   // ==========================================
   // 📥 2. DATA FETCHING (คงเดิม)
@@ -215,11 +236,18 @@ export default function ResultsPage() {
     };
   }, []);
 
+  // Returns the body it applied, or null when it applied nothing. A failed or
+  // odd response (a 403 from the route's catch, a 500, an HTML error page)
+  // changes NO state: one bad poll must not flip every open tab back to
+  // "awaiting results" after a reveal. The last good picture stays on screen.
   const fetchResults = async () => {
     try {
       const res = await fetch(getPath("/api/results"));
+      if (!res.ok) return null;
       const data = await res.json();
+      if (typeof data?.status !== "string") return null;
 
+      setGateKey(`${data.status}|${!!data.isRevealed}`);
       if (data.status) setServerStatus(data.status);
       if (data.campaignDate) setCampaignDate(new Date(data.campaignDate));
 
@@ -235,14 +263,8 @@ export default function ResultsPage() {
         setTotalVotes(sumOfScores);
       }
 
-      // ... (code ส่วน fetch data ด้านบน) ...
-
-      if (data.isRevealed) setIsRevealed(data.isRevealed);
-
       if (data.candidates) {
         let rawCandidates = data.candidates;
-        const now = new Date();
-        const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
         // ----------------------------------------------------
         // 1️⃣ กรอง (Filter) "ไม่รับรอง" ออก ถ้ามีผู้สมัครแข่งขันกันหลายคน
@@ -322,21 +344,59 @@ export default function ResultsPage() {
           byGender: sortedByGender
         });
       }
+      return data;
     } catch (err) {
       console.error("Error fetching data:", err);
+      return null;
     }
   };
 
+  // Poll on what the SERVER last said (resultsPollDelay), not the student's
+  // clock: the old loop ran every 3 s only while the browser clock was before
+  // ELECTION_END and then stopped, so a tab open at closing time never saw the
+  // committee press ประกาศผล. One chain per mount: a timeout is scheduled only
+  // after the previous fetch settles, a hidden tab schedules nothing, and a tab
+  // coming back fetches at once unless a fetch is already out. A failed fetch
+  // keeps the last good fields, so it retries at the same pace, never faster.
   useEffect(() => {
-    fetchResults();
-    const now = new Date();
-    const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
+    let cancelled = false;
+    let timer = null;
+    let inFlight = false;
+    let last = {}; // { status, isRevealed, certified } from the last good body
 
-    if (!isEnded) {
-      const interval = setInterval(fetchResults, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [status]);
+    const clear = () => { clearTimeout(timer); timer = null; };
+    const schedule = () => {
+      clear();
+      if (cancelled || document.visibilityState === "hidden") return;
+      timer = setTimeout(tick, resultsPollDelay(last));
+    };
+    const tick = async () => {
+      timer = null;
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      try {
+        const data = await fetchResults();
+        if (data) last = { status: data.status, isRevealed: data.isRevealed, certified: data.certified };
+      } finally {
+        inFlight = false;
+      }
+      schedule();
+    };
+    const onVisibility = () => {
+      clear();
+      if (document.visibilityState !== "hidden" && !inFlight) tick();
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    tick();
+    return () => {
+      cancelled = true;
+      clear();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // [] on purpose: fetchResults only calls state setters, which React keeps
+    // stable, so the first render's copy stays correct for the life of the page.
+  }, []);
 
   // ==========================================
   // 🕒 3. TIME CONFIGURATION (คงเดิม)
@@ -525,7 +585,12 @@ export default function ResultsPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color-mix(in_srgb,var(--color-primary)_55%,white)] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-primary)]"></span>
                 </span>
-                {finalStatus === "ENDED" ? "FINAL RESULT" : "REAL-TIME UPDATE"}
+                {/* FINAL only once announced: a closed box that is not yet announced
+                    is waiting, not final, and a paused one is not updating at all */}
+                {isRevealed ? "FINAL RESULT"
+                  : finalStatus === "ENDED" ? "AWAITING RESULTS"
+                  : finalStatus === "CLOSED" ? "PAUSED"
+                  : "REAL-TIME UPDATE"}
               </div>
               <h1 className="text-2xl md:text-5xl font-black text-[var(--color-primary)] mb-2 md:mb-3 tracking-tight">
                 ผลการเลือกตั้ง {globalConfig.electionName}
@@ -556,10 +621,16 @@ export default function ResultsPage() {
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                         </div>
                         <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
-                          กำลังนับคะเเนนเสียงชาว FMS
+                          ปิดหีบแล้ว รอประกาศผล
                         </span>
                       </div>
                     )
+                  ) : finalStatus === "CLOSED" ? (
+                    <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
+                      <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
+                        หยุดรับคะแนนชั่วคราว (PAUSED)
+                      </span>
+                    </div>
                   ) : finalStatus === "ONGOING" ? (
                     <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                       <div className="relative flex h-3 w-3 shrink-0">
@@ -575,7 +646,8 @@ export default function ResultsPage() {
                   )}
                 </h2>
 
-                {!isNotStarted && finalStatus !== "ENDED" && (
+                {/* only while voting runs: a paused box has no closing time to count to */}
+                {finalStatus === "ONGOING" && (
                   <div className="flex items-center gap-2 text-xs lg:text-base font-bold px-4 py-2 rounded-full border shadow-sm bg-slate-100 text-slate-600 border-slate-200">
                     <span>{electionStatus === "WAITING" ? "⏳ เริ่มใน:" : "🔴 ปิดใน:"}</span>
                     <span className="font-mono text-[var(--color-primary)] text-sm lg:text-lg">{mounted ? countdownText : "..."}</span>
@@ -637,7 +709,9 @@ export default function ResultsPage() {
       )}
 
       {/* ✅ 6. ACCESS DENIED MODAL (Logic ตัวดักหน้าช่วงเลือกตั้ง) */}
-      {showAccessModal && (
+      {/* VOTE/FORM only — on MAINTENANCE this used to stack under the modal below
+          and ask a student to "ทำแบบประเมิน" while the system was paused */}
+      {showAccessModal && (modalType === "VOTE" || modalType === "FORM") && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"></div>
           <div className="relative bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl animate-in fade-in zoom-in duration-300 text-center">

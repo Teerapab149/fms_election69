@@ -65,14 +65,21 @@ export default function FmsOfficialResults({
   const label = (c) =>
     c.number > 0 ? c.name : c.number === 0 ? "งดออกเสียง" : "ไม่รับรอง";
 
+  // closed-but-unannounced and paused are not "การลงคะแนนดำเนินอยู่"; results
+  // appear when the committee announces, not when the election ends
+  const ended = finalStatus === "ENDED";
+  const paused = finalStatus === "CLOSED";
+
   return (
     <FmsOfficialShell
       active="results"
       kicker={`${meta.campaign} ปีการศึกษา ${meta.ay}`}
       title="ผลการลงคะแนน"
       desc={
-        isNotStarted ? "ยังไม่เปิดการลงคะแนน ผลจะแสดงที่หน้านี้เมื่อการเลือกตั้งสิ้นสุด"
-        : !isRevealed ? "การลงคะแนนดำเนินอยู่ ผลคะแนนจะเปิดเผยเมื่อคณะกรรมการประกาศ"
+        isNotStarted ? "ยังไม่เปิดการลงคะแนน ผลจะแสดงที่หน้านี้เมื่อคณะกรรมการประกาศผล"
+        : !isRevealed ? (ended ? "ปิดการลงคะแนนแล้ว ผลคะแนนจะเปิดเผยเมื่อคณะกรรมการประกาศ"
+          : paused ? "หยุดรับคะแนนชั่วคราว ผลคะแนนจะเปิดเผยเมื่อคณะกรรมการประกาศ"
+          : "การลงคะแนนดำเนินอยู่ ผลคะแนนจะเปิดเผยเมื่อคณะกรรมการประกาศ")
         : "ผลอย่างเป็นทางการ นับจากบัตรทั้งหมดที่บันทึกในระบบ"
       }
       editorMode={editorMode}
@@ -84,7 +91,7 @@ export default function FmsOfficialResults({
             <b>ยังไม่เปิดการลงคะแนน</b>
             <span className="fo-rule" aria-hidden />
             <p className="fo-note">
-              {countdownText ? `เปิดในอีก ${countdownText}` : "ผลจะแสดงที่หน้านี้เมื่อการเลือกตั้งสิ้นสุด"}
+              {countdownText ? `เปิดในอีก ${countdownText}` : "ผลจะแสดงที่หน้านี้เมื่อคณะกรรมการประกาศผล"}
             </p>
           </div>
         </div>
@@ -111,8 +118,10 @@ export default function FmsOfficialResults({
           </div>
 
           <div className="fo-sechead fo-sechead--gap">
-            <h2>การใช้สิทธิ์ ณ ขณะนี้</h2>
-            <p>ตัวเลขนี้เปิดเผยได้ระหว่างการลงคะแนน — เป็นจำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร</p>
+            <h2>{ended ? "การใช้สิทธิ์ทั้งหมด" : "การใช้สิทธิ์ ณ ขณะนี้"}</h2>
+            <p>{ended
+              ? "จำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร"
+              : "ตัวเลขนี้เปิดเผยได้ระหว่างการลงคะแนน — เป็นจำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร"}</p>
           </div>
           <div className="fo-res__summary">
             <div className="fo-card fo-res__sum">
