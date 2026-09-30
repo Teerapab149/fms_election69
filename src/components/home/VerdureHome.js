@@ -30,6 +30,7 @@ import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfi
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { useElectionStatus } from "../../hooks/useElectionStatus";
 import { useHowToVote } from "../../hooks/useHowToVote";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 
 // useElectionStatus action → the voteCTA-button state vocabulary
 const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
@@ -179,7 +180,7 @@ export default function VerdureHome({
 
   // the CTA follows the same status as the chip and the ledger
   const voteState = editorMode ? "login" : (CTA_STATE[election.action] || "login");
-  const CTA = {
+  const CTA_BASE = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN · PSU PASSPORT", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง",          sub: "CAST YOUR BALLOT",       href: "/vote",     disabled: false },
     voted:    { label: "ดูผลคะแนน",               sub: "YOU HAVE VOTED · RESULTS", href: "/results", disabled: false },
@@ -187,6 +188,11 @@ export default function VerdureHome({
     paused:   { label: "ระบบหยุดชั่วคราว",         sub: "ON HOLD",                href: "/closed",   disabled: true },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", sub: "FINAL RESULTS",          href: "/results",  disabled: false },
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN", action: "signin", disabled: false };
+  // closed but not yet announced: say so instead of promising results (the
+  // results page only shows "wait" until an admin publishes)
+  const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
+    ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
+    : CTA_BASE;
 
   const meta = verdureMeta(globalConfig);
   // body canvas sits outside .vd-root → paint it with the active theme's cream
@@ -265,7 +271,7 @@ export default function VerdureHome({
               <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
             </a>
           </motion.div>
-          {howTo.show && (
+          {howTo.link && (
             <motion.a href={editorMode ? undefined : howTo.href} className="vd-hero__how" {...rise(0.4)}>
               วิธีลงคะแนน <span aria-hidden>↓</span>
             </motion.a>
@@ -318,7 +324,6 @@ export default function VerdureHome({
         )}
 
         {/* how to vote — what the club otherwise posts on Instagram */}
-        {howTo.show && (
         <section id={howTo.id} className="vd-sec vd-sec--steps" aria-labelledby="vd-steps-h">
           <div className="vd-sec__head">
             <h2 id="vd-steps-h">ลงคะแนนใน <em>3 ขั้นตอนง่ายๆ</em></h2>
@@ -334,7 +339,6 @@ export default function VerdureHome({
             ))}
           </ol>
         </section>
-        )}
       </div>
 
       <VerdureFooter />

@@ -24,6 +24,7 @@ import { voterSignIn } from "../../../../lib/auth/voterSession";
 import EditorElement from "../../../admin/editor/EditorElement";
 import { getBinding } from "../../../admin/editor/elementCatalog";
 import { resolveStatefulConfig } from "../../../admin/editor/templateEngine";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../../../lib/election/electionStatus.mjs";
 
 // useElectionStatus action → voteCTA-button state (the catalog's vocabulary)
 const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
@@ -87,7 +88,12 @@ export function useHomeModel(props, familyTemplate) {
   const visible = (id) => saved?.[id]?.config?.visible !== false;
 
   const ctaState = CTA_STATE[election.action] || "login";
-  const cta = resolveStatefulConfig(template, "voteCTA-button", ctaState, pageLayout?.elementOverrides?.["voteCTA-button"]?.[ctaState] || {});
+  const ctaBase = resolveStatefulConfig(template, "voteCTA-button", ctaState, pageLayout?.elementOverrides?.["voteCTA-button"]?.[ctaState] || {});
+  // closed but not yet announced: the results page only says "wait" until an
+  // admin publishes, so the button says it too
+  const cta = isAwaitingResults(ctaState, initialData?.systemConfig?.showResult)
+    ? { ...ctaBase, text: AWAITING_RESULTS.label, note: AWAITING_RESULTS.note }
+    : ctaBase;
   const ctaDisabled = election.action === "wait" || election.action === "paused";
   const ctaSignin = election.action === "signin";
   const ctaHref = editorMode || ctaSignin || ctaDisabled ? undefined : getPath(CTA_HREF[election.action] || "/");

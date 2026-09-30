@@ -242,7 +242,7 @@ export default function GumroadHome({
             <Wrap id="voteCTA-button">
               <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
             </Wrap>
-            {howTo.show && <a href={editorMode ? undefined : howTo.href} className="gh-howlink">วิธีลงคะแนน <span aria-hidden="true">↓</span></a>}
+            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="gh-howlink">วิธีลงคะแนน <span aria-hidden="true">↓</span></a>}
           </div>
 
           {/* MOBILE-ONLY meet shortcut so the "ดูผู้สมัคร" action is visible above the
@@ -283,7 +283,6 @@ export default function GumroadHome({
           ballot says "คลิกพรรคที่คุณต้องการ หรือเลือกงดออกเสียง", the done page
           confirms the vote without showing the choice. Owner: every home
           teaches the steps (template-fix-plan S2). ── */}
-      {howTo.show && (
       <section id={howTo.id} className="gh-steps" aria-labelledby="gh-steps-h">
         <div className="gh-steps__head">
           <span className="gh-sticker gh-sticker--lime">HOW TO VOTE</span>
@@ -300,7 +299,6 @@ export default function GumroadHome({
           ))}
         </ol>
       </section>
-      )}
 
       {/* ── FOOTER (element) ── */}
       <SiteFooter faculty={facultyEn} uni={uni} year={copyrightYear} />

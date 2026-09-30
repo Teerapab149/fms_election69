@@ -28,6 +28,7 @@ import { useHowToVote } from "../../hooks/useHowToVote";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 
 // Thai-run detector — used to pin only the Thai segments of the spinning ring
 // textPath to the family's real Thai font (Space Mono has no Thai glyphs).
@@ -328,7 +329,7 @@ export default function BlossomHome({
     userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
   });
   const voteState = editorMode ? "login" : (resolveElementState("voteCTA-button", runtimeCtx) || "login");
-  const CTA = {
+  const CTA_BASE = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง", href: "/vote", disabled: false },
     voted:    { label: "ดูผลคะแนน", href: "/results", disabled: false },
@@ -336,6 +337,11 @@ export default function BlossomHome({
     paused:   { label: "ระบบพักปรับปรุงชั่วคราว", href: "/closed", disabled: true },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", href: "/results", disabled: false },
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", action: "signin", disabled: false };
+  // closed but not yet announced: say so instead of promising results (the
+  // results page only shows "wait" until an admin publishes)
+  const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
+    ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
+    : CTA_BASE;
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
@@ -446,7 +452,7 @@ export default function BlossomHome({
           <div className="bl-cta-row">
             <a ref={ctaRef} href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
             <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
-            {howTo.show && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
+            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
           </div>
         </section>
 
@@ -498,7 +504,6 @@ export default function BlossomHome({
 
         {/* ===== how to vote — a contents page: ink rule, indexed rows, one
              candy ink per step (the same set the figures use) ===== */}
-        {howTo.show && (
         <section id={howTo.id} className="bl-steps" aria-labelledby="bl-steps-h">
           <div className="bl-steps-head">
             <h2 id="bl-steps-h">วิธี<em>ลงคะแนน</em></h2>
@@ -517,7 +522,6 @@ export default function BlossomHome({
             ))}
           </ol>
         </section>
-        )}
 
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>

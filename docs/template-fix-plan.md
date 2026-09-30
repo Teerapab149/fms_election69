@@ -388,3 +388,17 @@ public never reopens. "Closed" = ENDED, or AUTO past the scheduled end.
   closing) → removed, and the publish confirm no longer asks about it.
   Certify stays, marked "ไม่บังคับ". Steps are now ปิดหีบ → ประกาศผล →
   รับรองผล (ไม่บังคับ).
+- Owner: keep the steps after closing too — they are part of each template's
+  look. `useHowToVote` now returns `link` (the "วิธีลงคะแนน ↓" jump link,
+  still hidden once closed, since the main button then leads to results);
+  the steps section always renders.
+- Main button after closing, before results are published: every template
+  said "ดูผลคะแนน(อย่างเป็นทางการ) / FINAL RESULTS" and led to a page that
+  only said "wait". Now "ปิดหีบแล้ว · รอประกาศผล" (+ AWAITING RESULTS /
+  note) until showResult; the configured "results" text once published.
+  One rule (`isAwaitingResults` in lib/election/electionStatus) used by
+  Blossom, Receipt, Verdure, FMS Official (own maps), Ballot and every v2
+  home (useHomeModel), Original (own ladder) and the voteCTA variants
+  (Gumroad chunky-stamp, Studio Dark / others minimal-pill, classic default).
+  Editor/gallery renders carry no systemConfig and keep the configured text.
+  Checked on all 8 in the preview's "after" case and on the live home.

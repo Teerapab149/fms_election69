@@ -15,6 +15,7 @@ import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarCh
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useHowToVote } from "../../hooks/useHowToVote";
 import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 
 // How to vote — Original's real flow: PSU Passport sign-in → the ballot
 // (MultiPartyView) → confirm → the success page, which asks for the
@@ -214,7 +215,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         btnConfig = {
                                             isLoginAction: false,
                                             href: "/results",
-                                            text: "ดูผลคะแนน / Results",
+                                            text: isAwaitingResults("ended", initialData?.systemConfig?.showResult) ? `${AWAITING_RESULTS.label} / Awaiting results` : "ดูผลคะแนน / Results",
                                             gradientBase: "from-slate-700 via-slate-800 to-slate-900",
                                             gradientHover: "from-slate-600 via-slate-700 to-slate-800",
                                             glowColor: "from-slate-500 to-slate-700",
@@ -335,7 +336,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             </div>
 
                             {/* jump to the steps below — a quiet text link, not a second button */}
-                            {howTo.show && (
+                            {howTo.link && (
                                 <div className="w-full flex justify-center lg:justify-start !mt-3">
                                     <a href={howTo.href} className="inline-flex items-center gap-1.5 min-h-[44px] text-sm md:text-base font-bold text-[var(--o-brand)] underline decoration-2 underline-offset-4 hover:text-[var(--o-deep)]">
                                         วิธีลงคะแนน <span aria-hidden>↓</span>
@@ -459,7 +460,6 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                     </div>
 
                     {/* How to vote — same card language as the stats bento */}
-                    {howTo.show && (
                     <section id={howTo.id} aria-labelledby="oh-steps-title" className="mt-14 lg:mt-20 scroll-mt-24 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                         <div className="flex items-center gap-3 mb-5 px-1">
                             <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)]">
@@ -483,7 +483,6 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             ))}
                         </ol>
                     </section>
-                    )}
                 </div>
 
             </main>

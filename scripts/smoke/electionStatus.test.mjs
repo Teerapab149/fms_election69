@@ -75,3 +75,12 @@ test('AUTO: a page left open moves forward with the clock, never backward', () =
   assert.equal(derive({ systemMode: 'MANUAL_OPEN', isSystemOpen: true, start, end, now: end.getTime() + m }).phase, 'open');
   assert.equal(derive({ systemMode: 'PAUSE', start, end, now: start.getTime() + m }).phase, 'paused');
 });
+
+test("after closing, the button waits for the announcement", async () => {
+  const { isAwaitingResults } = await import("../../src/lib/election/electionStatus.mjs");
+  assert.equal(isAwaitingResults("ended", false), true);
+  assert.equal(isAwaitingResults("ended", true), false);
+  // no systemConfig (editor / gallery): keep the configured text
+  assert.equal(isAwaitingResults("ended", undefined), false);
+  assert.equal(isAwaitingResults("voted", false), false);
+});

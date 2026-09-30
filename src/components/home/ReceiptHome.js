@@ -42,6 +42,7 @@ import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../util
 import { thaiPhrases, LONG_PHRASE } from "../v2/shared/text/thaiPhrases.mjs";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 
 // The home page's "how to vote" receipt — this template's real flow, in the
 // words its own pages use (the ballot's "หย่อนบัตร" button, the success page's
@@ -344,7 +345,7 @@ export default function ReceiptHome({
     userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
   });
   const voteState = editorMode ? "login" : (resolveElementState("voteCTA-button", runtimeCtx) || "login");
-  const CTA = {
+  const CTA_BASE = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง", href: "/vote", disabled: false },
     voted:    { label: "ดูผลคะแนน", href: "/results", disabled: false },
@@ -352,6 +353,11 @@ export default function ReceiptHome({
     paused:   { label: "ระบบพักปรับปรุงชั่วคราว", href: "/closed", disabled: true },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", href: "/results", disabled: false },
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", action: "signin", disabled: false };
+  // closed but not yet announced: say so instead of promising results (the
+  // results page only shows "wait" until an admin publishes)
+  const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
+    ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
+    : CTA_BASE;
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
@@ -488,7 +494,7 @@ export default function ReceiptHome({
                 {/* die-cut grommet — punched hole ringed with metal (present in every
                     state → no layout shift), aria-hidden */}
                 <span className="rc-grommet" aria-hidden="true" />
-                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true">→</span></span>
+                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph === "·" ? "rc-phrase is-sep" : ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true">→</span></span>
               </a>
 
               <a href={editorMode ? undefined : getPath("/candidates")} className="rc-ticket-cta">
@@ -501,7 +507,7 @@ export default function ReceiptHome({
                 </span>
               </a>
             </div>
-            {howTo.show && (
+            {howTo.link && (
               <a href={editorMode ? undefined : howTo.href} className="rc-howlink">
                 วิธีลงคะแนน <span className="rc-mono">HOW TO VOTE ↓</span>
               </a>
@@ -694,7 +700,6 @@ export default function ReceiptHome({
             Instagram; the site now says them itself (owner, template-fix-plan S2).
             Voting only — the evaluation form is the success page's job, which
             knows whether there is one this year. ===== */}
-        {howTo.show && (
         <section id={howTo.id} className="rc-howto rc-grain" aria-labelledby="rc-howto-h">
           <div className="rc-turnout-head" id="rc-howto-h"><span className="rc-mono">HOW TO VOTE ·</span> <span>วิธีลงคะแนน</span></div>
           <ol className="rc-howto-list">
@@ -719,7 +724,6 @@ export default function ReceiptHome({
           <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · HOW TO VOTE</div>
           <div className="rc-turnout-end" aria-hidden="true" />
         </section>
-        )}
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-home-footer">
@@ -975,6 +979,8 @@ export default function ReceiptHome({
         /* inside the button the label reads as one word when it fits — no gap —
            and still breaks only between its phrases when it does not */
         .rc-home-root .rc-cta-in .rc-phrase { margin-right:0; }
+        /* a "·" between two phrases ("ปิดหีบแล้ว · รอประกาศผล") keeps its spaces */
+        .rc-home-root .rc-cta-in .rc-phrase.is-sep { margin:0 .35em; }
         .rc-home-root .rc-notice-title { margin:12px 0 0; font-family:var(--rc-fh); font-weight:700; line-height:1.12;
           letter-spacing:-.01em; font-size:clamp(27px, 6vw, 42px); color:var(--rc-ink); }
         /* the campaign/PROJECT name — elevated in the hierarchy (larger + bolder +

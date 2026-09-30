@@ -231,7 +231,7 @@ export default function StudioDarkHome({
                   <a href={editorMode ? undefined : getPath("/candidates")} className="sd-ghost">
                     ดูรายชื่อพรรค <span className="sd-ghost__arrow" aria-hidden>↗</span>
                   </a>
-                  {howTo.show && (
+                  {howTo.link && (
                     <a href={editorMode ? undefined : howTo.href} className="sd-ghost">
                       วิธีลงคะแนน <span className="sd-ghost__arrow" aria-hidden>↓</span>
                     </a>
@@ -272,7 +272,6 @@ export default function StudioDarkHome({
 
           {/* how to vote — the numbers panel's own material: one hairline-ruled
               frame, cells divided by rules, serif-italic accent numerals */}
-          {howTo.show && (
           <section id={howTo.id} className="sd-steps" aria-labelledby="sd-steps-h">
             <div className="sd-steps__head">
               <div className="sd-steps__kicker"><span className="sd-nw">§ HOW TO VOTE</span> · <span className="sd-thai">วิธีลงคะแนน</span></div>
@@ -289,7 +288,6 @@ export default function StudioDarkHome({
               ))}
             </ol>
           </section>
-          )}
 
           {/* marquee — real election info. framer-motion (JS) on purpose: the
               globals.css reduced-motion rule kills CSS keyframes site-wide, which

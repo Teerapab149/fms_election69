@@ -1,8 +1,9 @@
 "use client";
 // The home page's "how to vote" steps, shared by every template:
 //   - one anchor id, so a post can link straight to it (…/#how-to-vote)
-//   - hidden once the polls have closed — nobody needs the steps then, and
-//     they only push the result / status further down the page
+//   - the steps stay after closing (owner: they are part of each template's
+//     look); only the "วิธีลงคะแนน ↓" jump link by the main button goes, since
+//     by then that button leads to the results
 //   - a jump to it on load when the URL carries the hash: most homes render
 //     after mount, so the browser's own hash scroll finds nothing
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,7 @@ export function useHowToVote(status = {}) {
     () => resolveElectionDates(gc),
     [gc?.campaignStartAt, gc?.electionStartAt, gc?.electionEndAt]
   );
-  // a page left open past the closing time drops the steps without a reload
+  // a page left open past the closing time drops the link without a reload
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60e3);
@@ -33,13 +34,13 @@ export function useHowToVote(status = {}) {
     electionStatus: status.electionStatus || null,
     start: ELECTION_START, end: ELECTION_END, now,
   }).phase;
-  const show = phase !== "ended";
+  const link = phase !== "ended";
 
   useEffect(() => {
-    if (!show || window.location.hash !== `#${HOW_TO_VOTE_ID}`) return;
+    if (window.location.hash !== `#${HOW_TO_VOTE_ID}`) return;
     const t = setTimeout(() => document.getElementById(HOW_TO_VOTE_ID)?.scrollIntoView(), 60);
     return () => clearTimeout(t);
-  }, [show]);
+  }, []);
 
-  return { show, id: HOW_TO_VOTE_ID, href: `#${HOW_TO_VOTE_ID}` };
+  return { link, id: HOW_TO_VOTE_ID, href: `#${HOW_TO_VOTE_ID}` };
 }
