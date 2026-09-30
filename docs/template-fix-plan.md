@@ -344,3 +344,47 @@ make them findable and drop them when they no longer help.
   แล้ว". The plant drawing stays. Same line in the cast animation.
 - Owner then asked for the same on the others: Blossom "เขียนบทต่อไปด้วยกัน"
   → "เหลืออีกหนึ่งขั้นตอน", Studio Dark "The next chapter." → "One more step."
+
+### ตั้งค่าระบบ — mode + การแสดงผล (2026-10-01)
+Rule, in `lib/election/adminGuards.mjs` (tests: `adminGuards.test.mjs`):
+the tally is public only once the box is closed, and a box whose tally is
+public never reopens. "Closed" = ENDED, or AUTO past the scheduled end.
+- Publishing results while votes can be cast (AUTO in the window, OPEN, PAUSE)
+  is refused by the server; the switch is greyed out with the reason.
+- While results are shown, OPEN / PAUSE / AUTO-still-in-window are refused;
+  the buttons are greyed out and a line says to hide results first.
+- TOGGLE_SHOW_RESULT → SET_SHOW_RESULT { value }: a blind flip could invert
+  what the admin saw (two screens, a double click). Mode and visibility are
+  checked and written under a row lock on SystemConfig.
+- /api/results ranked the list by score after closing even when the scores
+  were masked, so the raw JSON showed who led before the announcement. It
+  now ranks only once results are revealed.
+- The mode confirm says what the change does (reopens now, opens at the
+  scheduled time, stays closed, …) instead of "change to MANUAL_OPEN?".
+- annual-reset.sql now also sets showResult = false and systemMode = 'AUTO'
+  and drops last year's certifiedAt/By — before, a new year opened with last
+  year's "show results" still on, publishing live scores from the first vote.
+- Checked against the local DB, which was in exactly that state (OPEN +
+  results shown): publish / pause / bad values all refused, data unchanged.
+- Open: OPEN has no end (warn, or close at the scheduled end?); a stepper for
+  close → check → publish → certify; "election rounds" instead of the
+  yearly delete (see chat 2026-10-01).
+- Owner 2026-10-01: OPEN stays open-ended on purpose → written on its card,
+  under "Current status" when it is the active mode, and in the confirm:
+  "OPEN จะไม่เปลี่ยนเป็น ENDED เอง … ต้องกลับมากด ENDED ด้วยตัวเอง".
+- Closing steps (replaces the separate reveal switch and the certify card):
+  1 ปิดหีบ (button: ENDED) → 2 ตรวจคะแนนกับ IT (outside the system; the
+  scripts are named) → 3 ประกาศผล / ซ่อนผล → 4 รับรองผล. Done / this step /
+  waiting per row; a step's button opens only when the previous one is done.
+  The publish confirm asks the admin to confirm IT has checked the count.
+  The red box now only explains the yearly reset. Checked at 1280 and 375.
+- Audit log: written after the command with its outcome ("ok" / "refused
+  409" + reason). It was written before the checks, so refused commands
+  (e.g. publishing mid-vote) read like ones that happened. The table is
+  append-only, so it is one row per command, after the fact.
+- Election rounds: dropped (owner). Staff back up and start a fresh database
+  every year because the student list changes; the reset script covers it.
+- Owner: no IT-check step (last year the committee published straight after
+  closing) → removed, and the publish confirm no longer asks about it.
+  Certify stays, marked "ไม่บังคับ". Steps are now ปิดหีบ → ประกาศผล →
+  รับรองผล (ไม่บังคับ).
