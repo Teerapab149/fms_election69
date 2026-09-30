@@ -197,10 +197,11 @@ sed -i 's/\r$//' scripts/setup.sh
 | ใครเปิด PostgreSQL | DBA/ผู้ดูแลฐานข้อมูลของคณะ | Compose service `db` |
 | URL ที่เว็บใช้ | `fms_app` ที่ชื่อเครื่อง DB ซึ่งคอนเทนเนอร์เข้าถึงได้ | `fms_app` ที่ `db:5432` |
 | URL ของคำสั่งบนโฮสต์ | `fms_app` หรือ `fms_migrate` ที่ชื่อเครื่อง DB | บัญชีตามงาน ที่ `127.0.0.1:5433` หลังเปิด port แบบ loopback |
-| วิธีสำรอง | วิธีของ DBA พร้อมสำรองรูปบนเครื่องเว็บ | `scripts/backup.sh` ตาม §6.1 |
+| วิธีสำรอง | วิธีของ DBA พร้อมสำรองรูปบนเครื่องเว็บ (หรือ service `backup` ที่ชี้ `BACKUP_DATABASE_URL` ตาม §6.1) | service `backup` ใน compose ทำให้อัตโนมัติทุก 6 ชั่วโมง ตาม §6.1 |
 
 **A — ใช้ DB ของคณะ:** ขอ PostgreSQL database และ role สองตัวตาม §3.5 พร้อมเปิดการเชื่อมต่อจากโฮสต์และคอนเทนเนอร์เว็บ
-แก้ไฟล์ compose ที่ใช้จริง: เอา service `db` และ `web.depends_on.db` ออก และเอา volume `postgres_data_prod` ออกถ้าไม่ใช้แล้ว
+แก้ไฟล์ compose ที่ใช้จริง: เอา service `db`, `web.depends_on.db` และ `backup.depends_on.db` ออก และเอา volume `postgres_data_prod` ออกถ้าไม่ใช้แล้ว
+service `backup` ต้องตั้งเพิ่มหรือเอาออกตาม §6.1 กรณี A เพราะค่าเริ่มต้นของมันต่อไปที่ `db`
 ไฟล์หลักที่มากับโครงการยังมี `db` อยู่ การแก้ `DATABASE_URL` อย่างเดียวไม่ได้ทำให้ Compose เลิกเปิด DB ที่แถมมา
 การปรับนี้เป็นการแก้ config ไม่ใช่คำสั่งลบ volume ที่มีข้อมูลอยู่แล้ว
 ถ้าเก็บ config แยกเป็น `docker-compose.faculty.yml` ให้ใช้ `--compose` กับ setup และ `docker compose -f …` กับคำสั่งอื่นทุกครั้ง
@@ -251,6 +252,10 @@ NEXT_PUBLIC_ENABLE_MOCK_LOGIN=false
 | `BALLOT_CHAIN_SECRET` | secret ตรวจความต่อเนื่องของบัตร ได้จากพิธีเดียวกัน |
 | `BASE_PATH`, `NEXT_PUBLIC_BASE_PATH`, `ASSET_PREFIX` | ว่างทั้งสามเมื่อให้บริการที่ root ของโดเมนปัจจุบัน |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ตั้ง `false` เพื่อไม่คงค่าทดสอบไว้ใน config; ด่านฝั่งเซิร์ฟเวอร์ที่ปิด mock login จริงคือ `NODE_ENV=production` ซึ่ง compose/Dockerfile กำหนดให้ จึงต้องคง production mode ด้วย |
+| `BACKUP_INTERVAL_HOURS` | ไม่ต้องใส่ถ้าพอใจค่าเริ่มต้น: service `backup` สำรองทุกกี่ชั่วโมง (จำนวนเต็ม ค่าเริ่มต้น 6) หน้าตรวจความพร้อมใช้ค่านี้ตัดสินว่า backup เก่าเกินไปหรือยัง |
+| `RETENTION_DAYS` | ไม่ต้องใส่ถ้าพอใจค่าเริ่มต้น: เก็บไฟล์ใน `backups/` กี่วัน (ค่าเริ่มต้น 14) ลบของเก่าหลังรอบใหม่ผ่านการตรวจแล้วเท่านั้น |
+| `BACKUP_PG_IMAGE` | ไม่ต้องใส่กรณี B: อิมเมจที่มี `pg_dump` ของ service `backup` (ค่าเริ่มต้น `postgres:15-alpine` รุ่นเดียวกับ `db`) กรณี A ต้องเป็นรุ่นหลักไม่ต่ำกว่า PostgreSQL ของคณะ เช่น `postgres:16-alpine` |
+| `BACKUP_DATABASE_URL` | ใช้เฉพาะกรณี A ที่ให้ service `backup` สำรอง DB ของคณะ: URL ของบัญชีที่ DBA ให้อ่านได้ทุกตาราง (รวม `_prisma_migrations`) ไม่ใช่ `fms_app`; ตั้งแล้วชนะค่า `db`/`postgres` ที่ compose ใส่ไว้ |
 
 อย่าเขียนคำอธิบายท้ายบรรทัดค่า env เพราะตัวอ่านของสคริปต์บางตัวอาจนับเป็นส่วนหนึ่งของค่า
 รหัสผ่านใน URL ที่มีอักขระพิเศษต้องเข้ารหัสแบบ URL (percent-encoding) โดยให้ DBA ส่ง URL ที่พร้อมใช้
@@ -683,36 +688,81 @@ preflight ตรวจรายการที่เหลือก่อนเ�
 
 ## 6. สำรองข้อมูลและอัปเดตโค้ด
 
-### 6.1 สำรองก่อนเปลี่ยนระบบ
+### 6.1 สำรองข้อมูล
 
-**กรณี B ใช้ DB ที่มากับ Docker:** รันบนโฮสต์ในโฟลเดอร์โปรเจกต์ เมื่อ DB container ทำงานอยู่:
+**กรณี B ใช้ DB ที่มากับ Docker: สำรองอัตโนมัติ**
 
-```bash
-sh scripts/backup.sh
-```
-
-`sh` รันสคริปต์สำรองที่เขียนสำหรับ POSIX shell ตัวสคริปต์เรียก `pg_dump` ในคอนเทนเนอร์ชื่อ `fms-election-db`
-บัญชี `postgres` ฐาน `fms_election` แล้วตรวจว่า dump มีตาราง บีบอัด/ตรวจไฟล์ และเก็บรูป `public/images` ด้วย tar
+`docker compose up -d` เปิด service `backup` คู่กับเว็บและ DB ให้เอง ไม่ต้องตั้ง cron
+service นี้รัน [backup.sh](../scripts/backup.sh) ครั้งแรกหลังคอนเทนเนอร์ขึ้นประมาณ 30 วินาที แล้วทุก 6 ชั่วโมง (`BACKUP_INTERVAL_HOURS`)
+มันต่อ DB ในชื่อ `postgres` ของ service `db` ไม่ใช่ `fms_app` ของเว็บ เพราะ `fms_app` ไม่มีสิทธิ์อ่านบางตาราง เช่น `_prisma_migrations` จึง dump ไม่ครบ
+แต่ละรอบตรวจว่า dump มีตาราง บีบอัด/ตรวจไฟล์ และเก็บรูป `public/images` ด้วย tar (ทำ archive รูปใหม่เฉพาะเมื่อรูปเปลี่ยนหรือ archive ล่าสุดเก่าเกิน 24 ชั่วโมง)
 ผลอยู่ใน `backups/db-วันเวลา.sql.gz` และ `backups/images-วันเวลา.tar.gz`
-หลังตรวจผ่านจะลบไฟล์ `db-*.sql.gz` และ `images-*.tar.gz` ในโฟลเดอร์นี้ที่เก่ากว่าเกณฑ์ 14 วัน
+หลังรอบใหม่ผ่านการตรวจจะลบไฟล์ `db-*.sql.gz` และ `images-*.tar.gz` ที่เก่ากว่า `RETENTION_DAYS` (ค่าเริ่มต้น 14 วัน)
 **สำเนาสิ้นปีต้องเก็บแยกนอก `backups/`** ไม่เช่นนั้นจะถูกลบตามรอบ
 
+ตรวจว่า service ทำงาน:
+
+```bash
+docker compose ps backup
+docker compose logs --tail 50 backup
+```
+
+บรรทัดแรกต้องเห็น `fms-election-backup` สถานะ `Up` บรรทัดสองแสดง log รอบล่าสุด รอบที่สำเร็จจบด้วย `✓ เสร็จเรียบร้อย`
+ผลรอบล่าสุดดูได้จากหน้าแอดมินด้วย: ปุ่ม "ตรวจความพร้อมระบบ" ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" บอกเวลาและชื่อไฟล์ของ backup ที่สำเร็จล่าสุด
+ขึ้นเหลืองเมื่อเลยรอบที่ตั้งไว้ ขึ้นแดงเมื่อรอบล่าสุดล้มหรือ backup เก่าเกินสองรอบ ข้อความแดงบอกสาเหตุและเวลาของ backup ที่ดีล่าสุด
+รอบที่ล้มจะลองใหม่เองในอีก 30 นาที และไม่ลบ backup เก่าทิ้ง
+
+**สำรองทันทีก่อนเปลี่ยนระบบ** (อัปเดตโค้ด, reset รายปี, รับรองผล) ไม่ต้องรอรอบ:
+
+```bash
+docker compose exec backup sh scripts/backup.sh
+```
+
+คำสั่งนี้รันสคริปต์เดียวกันในคอนเทนเนอร์ `backup` ที่ตั้งการต่อ DB ไว้แล้ว เห็นผลบนหน้าจอเลย
 ถ้าขึ้นล้มเหลวให้แก้และสำรองใหม่ก่อนอัปเดต; ถ้าเตือนว่าไม่พบรูปจะได้แค่ DB แม้คำสั่งจบสำเร็จ
+
+**ไฟล์ใน `backups/` เป็นของ root** เพราะ Docker สร้างโฟลเดอร์ให้และ service `backup` รันด้วย root
+ไฟล์ dump เป็นสิทธิ์ `0600` อ่านได้เฉพาะ root โดยตั้งใจ เพราะในนั้นมีรายชื่อ รหัสนักศึกษา และใครลงคะแนนแล้ว
+ผลคือทุกคำสั่งบนโฮสต์ที่แตะไฟล์ในนั้นต้องใช้ `sudo` เช่น `sudo ls -l backups`, `sudo sh scripts/restore.sh …`, `sudo sh scripts/backup.sh` และ `sudo rsync …`
+`backups/status/` ต่างออกไป: มีแค่ไฟล์สถานะ `LAST_OK`/`LAST_FAIL` ที่ไม่มีข้อมูลส่วนบุคคล เว็บ mount ไว้แบบอ่านอย่างเดียวให้หน้าตรวจความพร้อมอ่าน
+
+**ถ้าเคยตั้ง cron `sh scripts/backup.sh` รายวันไว้ ให้ลบออก** (ตรวจทั้ง `crontab -l` และ `sudo crontab -l`)
+ไม่เช่นนั้นจะได้ backup ซ้อนกันสองชุด และ cron ที่รันด้วยผู้ใช้ธรรมดาจะล้มทุกครั้งเพราะเขียนลง `backups/` ของ root ไม่ได้
+สคริปต์ยังรันบนโฮสต์ได้ตามเดิมถ้าจำเป็น (dump ผ่าน `docker exec` เข้าคอนเทนเนอร์ `fms-election-db`) แต่ต้องใช้ `sudo`:
+
+```bash
+sudo sh scripts/backup.sh
+```
+
+ถ้าชื่อ DB container จริงต่างจากค่าเริ่มต้น ใช้ `sudo DB_CONTAINER=ชื่อจริง sh scripts/backup.sh` **หลังตรวจชื่อแล้ว**
+สคริปต์รับ `POSTGRES_USER`, `POSTGRES_DB`, `IMAGES_DIR`, `OUT_DIR`, `RETENTION_DAYS` จาก environment ของคำสั่งด้วย
+แต่แบบที่รันบนโฮสต์ **ไม่ได้อ่าน `DATABASE_URL` เพื่อเลือก DB** อย่าเปลี่ยนชื่อ container แบบเดา
+
+**สำเนานอกเครื่อง:** backup ที่อยู่ดิสก์เดียวกับ DB ไม่รอดถ้าเครื่องหรือดิสก์เสีย
+คอนเทนเนอร์ `backup` ไม่มี `rsync`/`rclone`/`ssh` จึงคัดลอกออกจาก cron ของ root บนโฮสต์ (`sudo crontab -e`) เช่น
+
+```
+45 */6 * * * rsync -a /path/to/fms_election69/backups/ backupuser@nas.example:/srv/fms-backup/
+```
+
+เปลี่ยน path, ผู้ใช้และเครื่องปลายทางให้ตรงของจริง และตั้ง SSH key ของ root ให้เข้าเครื่องปลายทางได้โดยไม่ถามรหัส
+ไม่ใส่ `--delete` เพื่อให้ฝั่งปลายทางเก็บไฟล์ไว้นานกว่า 14 วันได้ ผลของ cron ตัวนี้ไม่ขึ้นในหน้าตรวจความพร้อม ต้องตรวจฝั่งปลายทางเองเป็นระยะ
+
+**ถ้าตั้ง `UPLOAD_ROOT`:** รูปที่แอดมินอัปโหลดจะอยู่ในโฟลเดอร์นั้น ไม่ได้อยู่ใน `./public/images` ที่ service `backup` mount ไว้ archive รูปจะไม่มีรูปที่อัปโหลดเลย
+ให้แก้บรรทัด `./public/images:/app/public/images:ro` ของ service `backup` ใน `docker-compose.yml` ให้ฝั่งซ้ายเป็นโฟลเดอร์บนโฮสต์ที่เก็บรูปจริง (โฟลเดอร์ที่ mount ให้ `UPLOAD_ROOT` ของเว็บ) ฝั่งขวาคงเดิม
+archive จะยังมี path `public/images/…` ตามที่ `restore.sh` ต้องการ แต่หลัง restore ต้องย้ายรูปจาก `public/images` ไปไว้ที่ `UPLOAD_ROOT` เอง
+รูปที่มากับ repo ไม่อยู่ใน archive ในกรณีนี้ ได้คืนจาก Git
+
 การตรวจ gzip/tar ไม่ใช่การทดลองกู้ ให้ซ้อม restore กับ DB แยกก่อนวันเลือกตั้งและบันทึกผล
 backup ชุดนี้ไม่เก็บ `.env`, secret, config reverse proxy, role ระดับ cluster หรือไฟล์กุญแจ ต้องมีวิธีเก็บสิ่งเหล่านั้นแยกตามผู้รับผิดชอบ
 
-ถ้าชื่อ DB container จริงต่างจากค่าเริ่มต้น ใช้ตัวเลือกนี้ **หลังตรวจชื่อแล้ว**:
+**กรณี A DB ของคณะ:** ให้ DBA สำรองฐานที่เว็บใช้จริงและแจ้งจุดกู้/เวลาสำรอง แล้วเลือกทางใดทางหนึ่งกับ service `backup`:
 
-```bash
-DB_CONTAINER=fms-election-db sh scripts/backup.sh
-```
+- **ให้ DBA ดูแลอย่างเดียว:** เอา service `backup` ออกจากไฟล์ compose ที่ใช้จริง ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" ในหน้าตรวจความพร้อมจะขึ้นเหลืองว่าไม่พบประวัติ ข้อนั้นข้ามได้
+- **ให้ service `backup` สำรองด้วย:** เอา `backup.depends_on` ออก ตั้ง `BACKUP_DATABASE_URL` เป็นบัญชีที่ DBA ให้อ่านได้ทุกตาราง และตั้ง `BACKUP_PG_IMAGE` ให้รุ่นหลักไม่ต่ำกว่าเซิร์ฟเวอร์ของคณะ (ดูตาราง §3.2)
 
-เปลี่ยนเฉพาะค่าชื่อให้ตรง สคริปต์รับ `POSTGRES_USER`, `POSTGRES_DB`, `IMAGES_DIR`, `OUT_DIR`, `RETENTION_DAYS`
-จาก environment ของคำสั่งด้วย แต่ **ไม่ได้อ่าน `DATABASE_URL` เพื่อเลือก DB** อย่าเปลี่ยนชื่อ container แบบเดา
-
-**กรณี A DB ของคณะ:** ให้ DBA สำรองฐานที่เว็บใช้จริงและแจ้งจุดกู้/เวลาสำรอง
-อย่าใช้ผล `backup.sh` ยืนยัน DB นี้ เพราะมันจะไป dump คอนเทนเนอร์ชื่อที่ตั้งไว้ ซึ่งอาจเป็นฐานคนละตัว
-สำรองรูปจากโฮสต์ด้วยระบบสำรองของคณะหรือคำสั่งนี้ โดยเปลี่ยนชื่อปลายทางให้ไม่ซ้ำและเตรียมโฟลเดอร์ไว้แล้ว:
+อย่าใช้ `sh scripts/backup.sh` บนโฮสต์ยืนยัน DB ของคณะ เพราะแบบนั้นมันจะไป dump คอนเทนเนอร์ชื่อที่ตั้งไว้ ซึ่งอาจเป็นฐานคนละตัว
+ถ้าไม่ได้ใช้ service `backup` ให้สำรองรูปจากโฮสต์ด้วยระบบสำรองของคณะหรือคำสั่งนี้ โดยเปลี่ยนชื่อปลายทางให้ไม่ซ้ำและเตรียมโฟลเดอร์ไว้แล้ว:
 
 ```bash
 tar -czf /srv/fms-backup/images-before-update.tar.gz public/images
@@ -758,6 +808,7 @@ setup ลง migration **ก่อน** build จึงอาจแก้ DB ส
 
 หากต้อง restore ให้ DBA กำหนด DB เป้าหมาย จุดสำรอง และช่วงหยุดระบบก่อนลงมือ
 สำหรับ DB ที่มากับ Docker มี [restore.sh](../scripts/restore.sh) ซึ่งรับไฟล์ DB dump กับ archive รูป
+ไฟล์ใน `backups/` เป็นของ root (§6.1) จึงรันด้วย `sudo sh scripts/restore.sh backups/db-วันเวลา.sql.gz backups/images-วันเวลา.tar.gz`
 สคริปต์นี้ **ล้างและสร้าง schema `public` ใหม่** ก่อนโหลด dump และเขียนรูปทับ หากโหลดล้มหลังล้าง DB เดิมจะไม่อยู่ในฐานนั้นแล้ว
 จึงต้องซ้อมขั้นตอน/ตรวจ target และ backup ในเครื่องแยกก่อน ไม่ใช่คำสั่งลองแก้เว็บล่ม
 หลัง restore ตรวจสิทธิ์ `fms_app`, ยอด/chain, รูป และการเข้าระบบตามสภาพที่กู้จริง กรณี DB ของคณะใช้ขั้นตอน restore ของ DBA

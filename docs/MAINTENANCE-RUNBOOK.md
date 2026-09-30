@@ -39,7 +39,7 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
    `MANUAL_OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
 5. **รีเซ็ตเริ่มปีใหม่** — **ทำที่ฐานข้อมูล ไม่ใช่หน้า admin** (ถอดปุ่มออก 2026-07-28):
    ```bash
-   sh scripts/backup.sh                                    # สำรองก่อนเสมอ
+   docker compose exec backup sh scripts/backup.sh         # สำรองก่อนเสมอ (§5)
    psql "<connection string ของ fms_migrate>" -f scripts/sql/annual-reset.sql
    npm run preflight                                       # ยืนยันว่าเป็นศูนย์จริง
    ```
@@ -125,10 +125,11 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 **D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```
 # ทาง 1 (แนะนำ กรรมการกดเองได้): แท็บ "ตั้งค่าระบบ" → ปุ่ม "ตรวจความพร้อมระบบ" (ADM-1)
-#   เรียก GET /api/admin/readiness (read-only) → สรุป pass/warn/fail 14 ข้อ:
+#   เรียก GET /api/admin/readiness (read-only) → สรุป pass/warn/fail 16 ข้อ:
 #   schedule (ลำดับเวลา/เปิดตัวผู้สมัคร/แหล่งเวลา/อดีต), mode.coherence, candidates
 #   (มีพรรค/พรรคเดียวมีตัวเลือกครบ/เนื้อหาครบ), voters, tally.integrity, config
-#   (googleForm/ผลรั่ว/ธีม), env.mock — ต้อง "ไม่มี fail" (warn อ่านทีละข้อ)
+#   (googleForm/ผลรั่ว/ธีม), env (mock/โฟลเดอร์รูป/backup อัตโนมัติ §5)
+#   — ต้อง "ไม่มี fail" (warn อ่านทีละข้อ)
 
 # ทาง 2 (CLI สำหรับ dev): script อ่านอย่างเดียว
 npm run preflight            # ✓/⚠/✗ (mode/showResult/พรรคทดสอบ/คะแนน=0/ยังไม่โหวต/
@@ -155,6 +156,14 @@ ADMIN_JWT_SECRET          # เซ็น/ตรวจ admin_token JWT cookie (au
                           #    ตั้ง/เปลี่ยนด้วย  node scripts/admin.js --rotate-password  (ดู §10)
 ELECTION_BALLOT_PUBLIC_KEY # v2-SEC: public key เข้ารหัสบัตร (PEM, \n-escaped) — ดู §11 + DEPLOY-CHECKLIST
 BALLOT_CHAIN_SECRET       # v2-SEC: secret สำหรับ HMAC hash-chain ของบัตร — ดู §11 + DEPLOY-CHECKLIST
+
+# service backup (§5) — ไม่บังคับ ไม่ใส่ = ค่าเริ่มต้น · compose อ่านจาก .env ตอน `up`
+BACKUP_INTERVAL_HOURS     # สำรองทุกกี่ชั่วโมง (จำนวนเต็ม, ค่าเริ่มต้น 6)
+RETENTION_DAYS            # เก็บไฟล์ใน backups/ กี่วัน (ค่าเริ่มต้น 14)
+BACKUP_PG_IMAGE           # อิมเมจที่มี pg_dump (ค่าเริ่มต้น postgres:15-alpine = รุ่นเดียวกับ db)
+                          #    ต้องเป็น major ไม่ต่ำกว่าเซิร์ฟเวอร์ DB — ใช้ DB ของคณะ = ถาม DBA
+BACKUP_DATABASE_URL       # ใช้เฉพาะเมื่อให้ service backup สำรอง DB ของคณะ: บัญชีที่อ่านได้ทุกตาราง
+                          #    (รวม _prisma_migrations — fms_app ไม่พอ) · มีค่าแล้วชนะ db/postgres
 ```
 > 🔑 **`ELECTION_BALLOT_PUBLIC_KEY` + `BALLOT_CHAIN_SECRET` ไม่ครบ → `/api/vote` fail closed**
 > (โหวตไม่ได้ ไม่มีการเก็บ plaintext). **private key ไม่อยู่บนเซิร์ฟเวอร์** (offline, dispute-only — §11).
@@ -253,19 +262,45 @@ npm run e2e:gate     # 2) หรือ npm run e2e (ครบชุด) — setu
 
 ---
 
-## 5. สำรอง/กู้คืน DB + รูป (ทำก่อนงานเสี่ยงทุกครั้ง)
-ใช้สคริปต์สำเร็จ (รันบน server ที่มี docker compose):
+## 5. สำรอง/กู้คืน DB + รูป (อัตโนมัติ + ทำก่อนงานเสี่ยงทุกครั้ง)
+**สำรองอัตโนมัติแล้ว (2026-09-30):** service `backup` ใน `docker-compose.yml` ขึ้นมาพร้อม `docker compose up -d`
+รัน `scripts/backup-loop.sh` → เรียก `scripts/backup.sh` (`DUMP_VIA=direct`) ทุก `BACKUP_INTERVAL_HOURS` ชม. (ค่าเริ่มต้น 6)
+รอบแรก ~30 วิ หลังคอนเทนเนอร์ขึ้น · รอบที่ล้มลองใหม่ใน 30 นาที · รอบที่ dump ผ่านแต่สำเนานอกเครื่องล้ม (exit 2) รอรอบปกติ
 ```
-sh scripts/backup.sh
+docker compose ps backup                       # ต้อง Up
+docker compose logs --tail 50 backup           # log ทุกรอบ (ไม่มีไฟล์ log แยก)
+docker compose exec backup sh scripts/backup.sh   # สำรองทันทีหนึ่งรอบ (ก่อนงานเสี่ยง) ไม่ต้องรอรอบ
 # → backups/db-<ts>.sql.gz (pg_dump) + backups/images-<ts>.tar.gz (public/images)
-# ตั้ง cron รายวัน: 0 2 * * * cd /path/to/fms_election69 && sh scripts/backup.sh >> backups/backup.log 2>&1
+#   + backups/status/LAST_OK | LAST_FAIL (JSON บรรทัดเดียว ไม่มีข้อมูลส่วนบุคคล)
 
-# กู้คืน (DESTRUCTIVE — ยืนยันก่อน):
-sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
+# กู้คืน (DESTRUCTIVE — ยืนยันก่อน) — sudo เพราะไฟล์เป็นของ root (ดูด้านล่าง):
+sudo sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
 docker compose restart web
 ```
+- **ต่อ DB ด้วย `postgres` ของ service `db`** (compose ตั้ง `PGHOST=db PGUSER=postgres PGPASSWORD=${POSTGRES_PASSWORD}`)
+  ไม่ใช่ `DATABASE_URL` ของเว็บ — `fms_app` ไม่มีสิทธิ์อ่าน `_prisma_migrations` ฯลฯ dump ไม่ครบ ·
+  service นี้ **ไม่มี `env_file`** โดยตั้งใจ ไม่ต้องรู้ secret อื่นของแอป
+- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** "ตรวจความพร้อมระบบ" → ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
+  `backups/status/` ที่เว็บ mount แบบ `:ro` · เขียว = สำเร็จภายในรอบ+1 ชม. · เหลือง = เลยรอบ / ยังไม่มีประวัติ /
+  สำเนานอกเครื่องล้ม · แดง = รอบล่าสุดล้ม (บอกสาเหตุ + เวลา backup ดีล่าสุด) หรือเก่าเกิน 2 รอบ+1 ชม.
+- **ไฟล์เป็นของ root, dump เป็น 0600** — Docker สร้าง `./backups` เป็นของ root และ service รันด้วย root (uid ธรรมดา
+  เขียนไม่ได้แล้วล้มทุกรอบ) · dump มีรายชื่อ/รหัสนักศึกษา/ใครลงคะแนนแล้ว จึงอ่านได้เฉพาะ root โดยตั้งใจ →
+  **ทุกคำสั่งบนโฮสต์ต้อง `sudo`**: `sudo ls -l backups`, `sudo sh scripts/restore.sh …`, `sudo sh scripts/backup.sh`
+  (รันบนโฮสต์แบบเดิม `DUMP_VIA=docker` ยังใช้ได้), `sudo rsync …`
+- ⚠️ **ถ้าเคยตั้ง cron รายวัน `0 2 * * * … sh scripts/backup.sh` ให้ลบออก** (`crontab -l` และ `sudo crontab -l`) —
+  ซ้อนกับ service = backup สองชุด และ cron ของผู้ใช้ธรรมดาจะล้มทุกคืนเพราะเขียน `backups/` ของ root ไม่ได้
+- **สำเนานอกเครื่อง** (ดิสก์เสีย = backup ในเครื่องหายด้วย): คอนเทนเนอร์ไม่มี rclone/rsync/ssh จึงตั้ง
+  `BACKUP_AFTER_CMD=` ว่างไว้ใน compose · คัดลอกจาก cron ของ root บนโฮสต์แทน เช่น `sudo crontab -e`:
+  `45 */6 * * * rsync -a /path/to/fms_election69/backups/ backupuser@nas:/srv/fms-backup/` (ไม่ใส่ `--delete`)
+  ผลของ cron นี้ไม่ขึ้นในหน้าตรวจความพร้อม ต้องตรวจปลายทางเอง · ถ้ารัน `backup.sh` จาก cron บนโฮสต์แทน
+  service ก็ใช้ `BACKUP_AFTER_CMD='rclone copy backups remote:fms-backup'` ได้ ล้ม = LAST_FAIL stage `offsite` + exit 2
+- **`UPLOAD_ROOT`:** ถ้าตั้งไว้ รูปที่อัปโหลดอยู่นอก `./public/images` → **ไม่อยู่ใน archive รูป** · แก้ volume
+  `./public/images:/app/public/images:ro` ของ service `backup` ให้ฝั่งซ้ายเป็นโฟลเดอร์บนโฮสต์ที่เก็บรูปจริง
+  (ฝั่งขวาคงเดิม `restore.sh` ต้องการ path `public/images/…`) หลัง restore ย้ายรูปไป `UPLOAD_ROOT` เอง
+- **DB ของคณะ (ไม่มี service `db`):** ลบ `depends_on` ของ `backup` + ตั้ง `BACKUP_DATABASE_URL` (+ `BACKUP_PG_IMAGE`
+  ให้ major ≥ เซิร์ฟเวอร์) — หรือถ้า DBA สำรองให้อยู่แล้ว เอา service ออก (readiness จะเหลืองว่าไม่มีประวัติ ข้ามได้)
 - รูปผู้สมัคร/สมาชิก mount เป็น volume `./public/images` ใน compose แล้ว → redeploy ไม่หาย.
-- **สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, รับรองผล (Certify), แก้ schema, อัปเดต deps.**
+- **สำรองก่อน: เปิดเลือกตั้ง, รีเซ็ตคะแนน, รับรองผล (Certify), แก้ schema, อัปเดต deps.** (`docker compose exec backup sh scripts/backup.sh`)
 - ⚠️ **backup ที่ไม่เคยกู้ = ไม่มี backup** → ซ้อม `restore.sh` ใส่ DB ทิ้งๆ อย่างน้อย 1 ครั้งก่อนวันเลือกตั้ง.
 
 ### 5.1 ตรวจคะแนนก่อนประกาศผล (certification — ทำทุกครั้งก่อนเปิด showResult)
@@ -340,7 +375,8 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 1. ✅ **แก้แล้ว 2026-06-09: `node:18-alpine` → `node:20-alpine`** (Node 18 EOL เม.ย. 2025).
    ⚠️ **ต้อง `docker build` + smoke test ก่อน deploy** เพราะ build ครั้งนี้ทดสอบได้แค่ `npm run build` (local) ไม่ได้ทดสอบใน Docker.
    ถ้าอยากรันยาวกว่านี้พิจารณา `node:22-alpine` (active LTS) ภายหลัง.
-2. ⚠️ **ยังไม่มี backup อัตโนมัติ** — ตอนนี้เป็น manual `pg_dump` (§5). สำหรับ unattended หลายปีควรตั้ง **cron `pg_dump` รายวัน + เก็บนอกเครื่อง**
+2. ✅ **แก้แล้ว 2026-09-30: backup อัตโนมัติ** — service `backup` ใน compose สำรอง DB + รูปทุก 6 ชม. และหน้าตรวจความพร้อม
+   แจ้งเมื่อรอบล่าสุดล้มหรือเก่าเกิน (§5). ⚠️ **ยังเหลือ: สำเนานอกเครื่อง** ต้องตั้ง cron `rsync` ของ root บนโฮสต์เอง
    (ขึ้นกับ host — ตั้งที่ระดับ infra ไม่ใช่โค้ด).
 3. ◽ **error boundary ละเอียดขึ้น (optional)** — มีแต่ `global-error.js`; ถ้าอยาก graceful ต่อหน้า (เช่น results โชว์ "ข้อมูลไม่พร้อม"
    แทนจอ error เต็ม) เพิ่ม `error.js`/`not-found.js` ราย route ได้ — งานเสริม ไม่ด่วน.
