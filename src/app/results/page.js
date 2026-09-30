@@ -191,18 +191,25 @@ export default function ResultsPage() {
             return
           };
 
-          const resForm = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}&t=${Date.now()}`));
-          if (!resForm.ok) throw new Error("Failed to fetch form status");
-          const formData = await resForm.json();
-          if (stale) return;
+          // No form this year → nothing to complete, so the form step can't gate.
+          // Same "has a form" test as success/page.js (hasForm + its unlock).
+          // Derived per request, read-only: nothing is written for anyone.
+          const hasForm = Boolean(String(statusData.googleFormUrl || "").trim());
+          if (hasForm) {
+            // The server reads the voter from the session — no studentId param.
+            const resForm = await fetch(getPath("/api/check-form"), { cache: "no-store" });
+            if (!resForm.ok) throw new Error("Failed to fetch form status");
+            const formData = await resForm.json();
+            if (stale) return;
 
-          if (!formData.isFormCompleted) {
-            setModalType("FORM");
-            setShowAccessModal(true);
-            setIsAuthorized(false);
-            setLoading(false); // Ensure loading is off
-            return
-          };
+            if (!formData.isFormCompleted) {
+              setModalType("FORM");
+              setShowAccessModal(true);
+              setIsAuthorized(false);
+              setLoading(false); // Ensure loading is off
+              return
+            };
+          }
 
           setIsAuthorized(true);
           setShowAccessModal(false);
