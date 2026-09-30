@@ -143,8 +143,8 @@ export default function ReceiptSingleParty({
     : null;
 
   const selectionLabel = kind === "approve" ? `รับรอง — ${party?.name || ""}`
-    : kind === "disapprove" ? "ไม่รับรอง · Disapprove"
-    : kind === "abstain" ? "งดออกเสียง · Abstain"
+    : kind === "disapprove" ? "ไม่รับรอง Disapprove"
+    : kind === "abstain" ? "งดออกเสียง Abstain"
     : null;
 
   const pick = (id) => () => { if (!editorMode && id != null) onSelect(id); };
@@ -208,19 +208,19 @@ export default function ReceiptSingleParty({
       <div className="rc-single-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span><span className="rc-th">ลงคะแนน</span> · SINGLE BALLOT</span>
+          <span><span className="rc-th">ลงคะแนน</span>  SINGLE BALLOT</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== party feature masthead ===== */}
         <header className="rc-sp-head">
-          <span className="rc-sp-kick">✶ <span className="rc-th">พรรคเดียวที่ลงสมัคร</span> · THE ONLY PARTY ✶</span>
+          <span className="rc-sp-kick">✶ <span className="rc-th">พรรคเดียวที่ลงสมัคร</span>  THE ONLY PARTY ✶</span>
           <div className="rc-sp-hero">
             {logo ? (
               <button
                 type="button"
                 className="rc-sp-logo rc-sp-logo--btn"
-                onClick={() => openLightbox(logo, `โลโก้พรรค · ${party?.name || ""}`)}
+                onClick={() => openLightbox(logo, `โลโก้พรรค ${party?.name || ""}`)}
                 aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
               >
                 <img src={logo} alt={party?.name || "โลโก้พรรค"} />
@@ -254,12 +254,12 @@ export default function ReceiptSingleParty({
             <button
               type="button"
               className="rc-sp-cover__btn"
-              onClick={() => openLightbox(cover, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+              onClick={() => openLightbox(cover, `ภาพหมู่พรรค ${party?.name || ""}`)}
               aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
             >
               <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
             </button>
-            <figcaption><span className="rc-th">ภาพหมู่พรรค</span> · GROUP PHOTO · <span className="rc-th">คลิกเพื่อขยาย</span></figcaption>
+            <figcaption><span className="rc-th">ภาพหมู่พรรค</span>  GROUP PHOTO <span className="rc-th">คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -267,7 +267,7 @@ export default function ReceiptSingleParty({
             อยู่ในแกลเลอรีของหน้า /party · source=vote ทำให้หน้านั้นมีแถบกลับมาโหวต
             จึงไม่ทำให้ผู้ลงคะแนนหลงทาง (2026-07-30) */}
         <a className="rc-sp-more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-          <span className="rc-th">ดูข้อมูลพรรคแบบเต็ม</span> · FULL PROFILE &amp; GALLERY →
+          <span className="rc-th">ดูข้อมูลพรรคแบบเต็ม</span>  FULL PROFILE &amp; GALLERY →
         </a>
 
         {/* logo meaning — the story explains the party mark (logo chip ties them) */}
@@ -357,8 +357,8 @@ export default function ReceiptSingleParty({
           <div className="rc-ballot-ghost" aria-hidden="true"><span>{prefix} {number} ✓</span></div>
           <div className="rc-ballot-sheet">
             <div className="rc-ballot-head">
-              <span className="rc-ballot-head__l"><span className="rc-th">การตัดสินใจ</span> · YOUR DECISION</span>
-              <span className="rc-ballot-head__r"><span className="rc-th">หนึ่งคน</span> · <span className="rc-th">หนึ่งเสียง</span></span>
+              <span className="rc-ballot-head__l"><span className="rc-th">การตัดสินใจ</span>  YOUR DECISION</span>
+              <span className="rc-ballot-head__r"><span className="rc-th">หนึ่งคน</span>  <span className="rc-th">หนึ่งเสียง</span></span>
             </div>
             <div className="rc-perf" aria-hidden="true" />
 
@@ -378,7 +378,7 @@ export default function ReceiptSingleParty({
               <span className="rc-inkwells">
                 <i className="rc-inkwell rc-inkwell--a" /><i className="rc-inkwell rc-inkwell--d" /><i className="rc-inkwell rc-inkwell--x" />
               </span>
-              <span className="rc-stampslot__hint"><span className="rc-mono">STAMP HERE ·</span> <span>ประทับตราของคุณที่นี่</span></span>
+              <span className="rc-stampslot__hint"><span className="rc-mono">STAMP HERE </span> <span>ประทับตราของคุณที่นี่</span></span>
               {ghostKind && (
                 <span key={`g-${ghostKind}`} className={`rc-imprint rc-imprint--ghost rc-sopt--${ghostKind}`}>
                   <span className="rc-imprint__glyph">{STAMP_GLYPH[ghostKind]}</span>
@@ -397,7 +397,7 @@ export default function ReceiptSingleParty({
               <StampRow
                 tone="approve"
                 glyph="✓"
-                kick={<><span className="rc-th">เห็นชอบ</span> · APPROVE</>}
+                kick={<><span className="rc-th">เห็นชอบ</span>  APPROVE</>}
                 name="รับรอง"
                 note={`เห็นชอบให้ ${party?.name || "พรรคนี้"} ดำรงตำแหน่ง`}
                 selected={kind === "approve"}
@@ -407,7 +407,7 @@ export default function ReceiptSingleParty({
                 <StampRow
                   tone="disapprove"
                   glyph="✕"
-                  kick={<><span className="rc-th">ไม่เห็นชอบ</span> · DISAPPROVE</>}
+                  kick={<><span className="rc-th">ไม่เห็นชอบ</span>  DISAPPROVE</>}
                   name="ไม่รับรอง"
                   note="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
                   selected={kind === "disapprove"}
@@ -418,7 +418,7 @@ export default function ReceiptSingleParty({
                 <StampRow
                   tone="abstain"
                   glyph="—"
-                  kick={<><span className="rc-th">งดออกเสียง</span> · ABSTAIN</>}
+                  kick={<><span className="rc-th">งดออกเสียง</span>  ABSTAIN</>}
                   name="งดออกเสียง"
                   note="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                   selected={kind === "abstain"}
@@ -450,13 +450,13 @@ export default function ReceiptSingleParty({
         <div className="rc-vbar__perf" aria-hidden="true" />
         <div className="rc-vbar__in">
           <div className="rc-vbar__sel">
-            <span className="rc-vbar__lab"><span className="rc-th">การเลือกของคุณ</span> · YOUR SELECTION</span>
+            <span className="rc-vbar__lab"><span className="rc-th">การเลือกของคุณ</span>  YOUR SELECTION</span>
             {selectionLabel ? (
               <span className={`rc-vbar__val rc-vbar__val--${kind}`}>
                 <span className="rc-vbar__dot" aria-hidden="true" />{selectionLabel}
               </span>
             ) : (
-              <span className="rc-vbar__val rc-vbar__val--empty">ยังไม่ได้เลือก · No selection</span>
+              <span className="rc-vbar__val rc-vbar__val--empty">ยังไม่ได้เลือก No selection</span>
             )}
           </div>
           <button
@@ -482,7 +482,7 @@ export default function ReceiptSingleParty({
         <div className="rc-scm" onClick={() => !isSubmitting && setConfirmOpen(false)} role="dialog" aria-modal="true">
           <div className="rc-scm__card rc-grain" onClick={(e) => e.stopPropagation()}>
             <span className="rc-scm__perf" aria-hidden="true" />
-            <span className="rc-scm__eyebrow">CONFIRM · <span className="rc-th">ยืนยันครั้งสุดท้าย</span></span>
+            <span className="rc-scm__eyebrow">CONFIRM <span className="rc-th">ยืนยันครั้งสุดท้าย</span></span>
             <h3 className="rc-scm__title">ยืนยันการลงคะแนน</h3>
             <p className="rc-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`rc-scm__pick rc-scm__pick--${kind}`}>

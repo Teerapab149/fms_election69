@@ -66,7 +66,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
     <VerdureShell
       active={showBackToVote ? "vote" : "candidates"} editorMode={false}
       edge={{ num: "03", label: "Profile", th: `พรรคที่ ${no}` }}
-      cornermarkSub={`Profile · No. ${no}`}
+      cornermarkSub={`Profile No. ${no}`}
       // single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead
       backHref={showBackToVote ? "/vote" : (isSingleParty ? "/" : "/candidates")}
       backLabel={showBackToVote ? "BACK TO BALLOT" : (isSingleParty ? "BACK TO HOME" : "BACK TO CANDIDATES")}
@@ -76,7 +76,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           {logoSrc ? (
             /* ตราพรรคกดขยายได้เหมือนภาพหมู่ด้านล่าง — หน้านี้อธิบายความหมายของตราอยู่แล้ว */
             <button type="button" className="vd-ribbon__no has-logo vd-ribbon__no--btn"
-              onClick={() => openLightbox(logoSrc, `โลโก้พรรค · ${party?.name || ""}`)}
+              onClick={() => openLightbox(logoSrc, `โลโก้พรรค ${party?.name || ""}`)}
               aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}>
               <img src={logoSrc} alt={`โลโก้ ${party?.name || ""}`} />
             </button>
@@ -91,9 +91,9 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
         </div>
 
         {heroImg && (
-          <figure className="vd-groupphoto" onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`); }}>
+          <figure className="vd-groupphoto" onClick={() => openLightbox(heroImg, `TEAM PHOTO: ${party?.name || ""}`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO: ${party?.name || ""}`); }}>
             <img src={heroImg} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
-            <figcaption><span className="vd-thai">ภาพหมู่พรรค · คลิกเพื่อขยาย</span></figcaption>
+            <figcaption><span className="vd-thai">ภาพหมู่พรรค คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -101,7 +101,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("vision")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("vision")}</span> · <span className="vd-thai">วิสัยทัศน์</span></span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("vision")}</span>  <span className="vd-thai">วิสัยทัศน์</span></span>
               <h2>Vision &amp; <em>identity.</em></h2>
             </div>
             <div className="vd-vision__body">
@@ -116,7 +116,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("mission")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("mission")}</span> · <span className="vd-thai">พันธกิจ</span></span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("mission")}</span>  <span className="vd-thai">พันธกิจ</span></span>
               <h2>Our <em>mission.</em></h2>
             </div>
             <div className="vd-missions">
@@ -131,7 +131,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("policies")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("policies")}</span> · <span className="vd-thai">{policies.length} นโยบาย</span></span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("policies")}</span>  <span className="vd-thai">{policies.length} นโยบาย</span></span>
               <h2>Our <em>policies.</em></h2>
             </div>
             <div className="vd-policies">
@@ -151,7 +151,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("team")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow">CHAPTER {roman("team")} · {members.length} candidates</span>
+              <span className="vd-chapter__eyebrow">CHAPTER {roman("team")}  {members.length} candidates</span>
               <h2>The <em>team.</em></h2>
             </div>
             <div className="vd-roster">
@@ -173,7 +173,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
           <section className="vd-chapter">
             <div className="vd-chapter__wm">{roman("gallery")}.</div>
             <div className="vd-chapter__head">
-              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("gallery")}</span> · <span className="vd-thai">ภาพกิจกรรม</span></span>
+              <span className="vd-chapter__eyebrow"><span className="vd-nw">CHAPTER {roman("gallery")}</span>  <span className="vd-thai">ภาพกิจกรรม</span></span>
               <h2>The <em>gallery.</em></h2>
             </div>
             <div className="vd-gallery">
@@ -182,7 +182,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
                   type="button"
                   className="vd-shot"
                   key={src}
-                  onClick={() => openLightbox(src, `GALLERY · ${party?.name || ""}`)}
+                  onClick={() => openLightbox(src, `GALLERY: ${party?.name || ""}`)}
                   aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
                 >
                   <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />

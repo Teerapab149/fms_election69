@@ -24,7 +24,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Check } from "lucide-react";
 import { mapToPrimaryState } from "./stateMap.js";
-import { voteCtaState } from "../../../lib/election/electionStatus.mjs";
+import { voteCtaState, AWAITING_RESULTS, isAwaitingResults } from "../../../lib/election/electionStatus.mjs";
 
 // Primary-state STYLE blocks. The secondary states (login/closed/paused)
 // borrow one of these via mapToPrimaryState(). No need for 6 entries.
@@ -122,7 +122,10 @@ export default function MinimalPillVoteCTA({ config = {}, data = {}, resolvedCon
     // NOT spread here — see header comment on PRIMARY_STYLES for rationale.
   };
 
-  const text = stateConfig.text || "Vote Now";
+  // closed but not yet announced (lib/election/electionStatus)
+  const text = isAwaitingResults(currentState, data?.initialData?.systemConfig?.showResult)
+    ? AWAITING_RESULTS.label
+    : (stateConfig.text || "Vote Now");
   // every state is actionable (vote / results / closed / sign-in) — same call
   // chunky-stamp.jsx already made. `voted` used to be `disabled`, which took the
   // isDisabled branch below: a bare <button disabled> with NO <Link> wrapper. So

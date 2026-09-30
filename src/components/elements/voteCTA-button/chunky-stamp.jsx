@@ -15,7 +15,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Check } from "lucide-react";
 import { mapToPrimaryState } from "./stateMap.js";
-import { voteCtaState } from "../../../lib/election/electionStatus.mjs";
+import { voteCtaState, AWAITING_RESULTS, isAwaitingResults } from "../../../lib/election/electionStatus.mjs";
 
 // Primary-state STYLE blocks. Color sourcing notes:
 // - notVoted: bg = --btn-bg (primary fill is the variant's hero state).
@@ -120,7 +120,10 @@ export default function ChunkyStampVoteCTA({ config = {}, data = {}, resolvedCon
     ...(stateConfig.backgroundColor && visualState !== "voted" && { backgroundColor: stateConfig.backgroundColor }),
   };
 
-  const text = stateConfig.text || "VOTE NOW";
+  // closed but not yet announced (lib/election/electionStatus)
+  const text = isAwaitingResults(currentState, data?.initialData?.systemConfig?.showResult)
+    ? AWAITING_RESULTS.label
+    : (stateConfig.text || "VOTE NOW");
   const isDisabled = false; // every state is actionable (vote / results / closed / sign-in)
   const isLoginAction = currentState === "login";
   const href = hrefForState(currentState);

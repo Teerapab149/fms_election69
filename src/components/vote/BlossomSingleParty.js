@@ -127,8 +127,8 @@ export default function BlossomSingleParty({
     : null;
 
   const selectionLabel = kind === "approve" ? `รับรอง — ${party?.name || ""}`
-    : kind === "disapprove" ? "ไม่รับรอง · Disapprove"
-    : kind === "abstain" ? "งดออกเสียง · Abstain"
+    : kind === "disapprove" ? "ไม่รับรอง Disapprove"
+    : kind === "abstain" ? "งดออกเสียง Abstain"
     : null;
 
   const pick = (id) => () => { if (!editorMode && id != null) onSelect(id); };
@@ -148,19 +148,19 @@ export default function BlossomSingleParty({
       <div className="bl-page">
         {/* ===== issue line (masthead — single-ballot variant) ===== */}
         <div className="bl-issue-line">
-          <span><span className="bl-thai bl-thai--nw">ลงคะแนน</span> <b>·</b> SINGLE BALLOT</span>
+          <span><span className="bl-thai bl-thai--nw">ลงคะแนน</span> SINGLE BALLOT</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== party feature masthead ===== */}
         <header className="bl-sp-head">
-          <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">พรรคเดียวที่ลงสมัคร</span> · <span className="bl-nw">THE ONLY PARTY</span></span>
+          <span className="bl-sp-kick"><span className="bl-sp-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">พรรคเดียวที่ลงสมัคร</span>  <span className="bl-nw">THE ONLY PARTY</span></span>
           <div className="bl-sp-hero">
             {logo ? (
               <button
                 type="button"
                 className="bl-sp-logo bl-sp-logo--btn"
-                onClick={() => openLightbox(logo, `โลโก้พรรค · ${party?.name || ""}`)}
+                onClick={() => openLightbox(logo, `โลโก้พรรค ${party?.name || ""}`)}
                 aria-label={`ขยายโลโก้พรรค ${party?.name || ""}`}
               >
                 <img src={logo} alt={party?.name || "โลโก้พรรค"} />
@@ -194,12 +194,12 @@ export default function BlossomSingleParty({
             <button
               type="button"
               className="bl-sp-cover__btn"
-              onClick={() => openLightbox(cover, `ภาพหมู่พรรค · ${party?.name || ""}`)}
+              onClick={() => openLightbox(cover, `ภาพหมู่พรรค ${party?.name || ""}`)}
               aria-label={`ขยายภาพหมู่พรรค ${party?.name || ""}`}
             >
               <img src={cover} alt={`ภาพหมู่พรรค ${party?.name || ""}`} />
             </button>
-            <figcaption><span className="bl-thai bl-thai--nw">ภาพหมู่พรรค</span> · <span className="bl-nw">GROUP PHOTO</span> · <span className="bl-thai bl-thai--nw">คลิกเพื่อขยาย</span></figcaption>
+            <figcaption><span className="bl-thai bl-thai--nw">ภาพหมู่พรรค</span>  <span className="bl-nw">GROUP PHOTO</span>  <span className="bl-thai bl-thai--nw">คลิกเพื่อขยาย</span></figcaption>
           </figure>
         )}
 
@@ -287,11 +287,11 @@ export default function BlossomSingleParty({
 
         {/* ===== the decision — ballot paper card (semantic 3-choice) ===== */}
         <section className="bl-vpaper" id="bl-sp-decision" aria-label="การตัดสินใจของคุณ">
-          <div className="bl-vpaper__cap"><span><span className="bl-thai bl-thai--nw">การตัดสินใจ</span> · <span className="bl-nw">YOUR DECISION</span></span><em>1 <span className="bl-thai bl-thai--nw">คน</span> · 1 <span className="bl-thai bl-thai--nw">เสียง</span></em></div>
+          <div className="bl-vpaper__cap"><span><span className="bl-thai bl-thai--nw">การตัดสินใจ</span>  <span className="bl-nw">YOUR DECISION</span></span><em>1 <span className="bl-thai bl-thai--nw">คน</span>  1 <span className="bl-thai bl-thai--nw">เสียง</span></em></div>
           <ul className="bl-sballot">
             <ChoiceRow
               tone="approve"
-              kick={<><span className="bl-thai bl-thai--nw">เห็นชอบ</span> · <span className="bl-nw">APPROVE</span></>}
+              kick={<><span className="bl-thai bl-thai--nw">เห็นชอบ</span>  <span className="bl-nw">APPROVE</span></>}
               name="รับรอง"
               note={`เห็นชอบให้ ${party?.name || "พรรคนี้"} ดำรงตำแหน่ง`}
               selected={kind === "approve"}
@@ -300,7 +300,7 @@ export default function BlossomSingleParty({
             {disapprove && (
               <ChoiceRow
                 tone="disapprove"
-                kick={<><span className="bl-thai bl-thai--nw">ไม่เห็นชอบ</span> · <span className="bl-nw">DISAPPROVE</span></>}
+                kick={<><span className="bl-thai bl-thai--nw">ไม่เห็นชอบ</span>  <span className="bl-nw">DISAPPROVE</span></>}
                 name="ไม่รับรอง"
                 note="ไม่เห็นชอบให้พรรคที่ลงสมัครดำรงตำแหน่ง"
                 selected={kind === "disapprove"}
@@ -310,7 +310,7 @@ export default function BlossomSingleParty({
             {abstain && (
               <ChoiceRow
                 tone="abstain"
-                kick={<><span className="bl-thai bl-thai--nw">งดออกเสียง</span> · <span className="bl-nw">ABSTAIN</span></>}
+                kick={<><span className="bl-thai bl-thai--nw">งดออกเสียง</span>  <span className="bl-nw">ABSTAIN</span></>}
                 name="งดออกเสียง"
                 note="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                 selected={kind === "abstain"}
@@ -325,14 +325,14 @@ export default function BlossomSingleParty({
       <div className={`bl-vconfirm${canConfirm ? " is-ready" : ""}`}>
         <div className="bl-vconfirm__in">
           <div className="bl-vconfirm__sel">
-            <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span> · <span className="bl-nw">YOUR SELECTION</span></span>
+            <span className="bl-vconfirm__lab"><span className="bl-thai bl-thai--nw">การเลือกของคุณ</span>  <span className="bl-nw">YOUR SELECTION</span></span>
             {selectionLabel ? (
               <span className={`bl-vconfirm__val bl-vconfirm__val--${kind}`}>
                 <span className="bl-vconfirm__dia" aria-hidden="true" />
                 <span className="bl-vconfirm__nm">{selectionLabel}</span>
               </span>
             ) : (
-              <span className="bl-vconfirm__val bl-vconfirm__val--empty">ยังไม่ได้เลือก · No selection</span>
+              <span className="bl-vconfirm__val bl-vconfirm__val--empty">ยังไม่ได้เลือก No selection</span>
             )}
           </div>
           <button
@@ -351,7 +351,7 @@ export default function BlossomSingleParty({
       {confirmOpen && (
         <div className="bl-scm" onClick={() => !isSubmitting && setConfirmOpen(false)} role="dialog" aria-modal="true">
           <div className="bl-scm__card" onClick={(e) => e.stopPropagation()}>
-            <span className="bl-scm__eyebrow"><span className="bl-thai bl-thai--nw">ยืนยันครั้งสุดท้าย</span> · <span className="bl-nw">FINAL CONFIRMATION</span></span>
+            <span className="bl-scm__eyebrow"><span className="bl-thai bl-thai--nw">ยืนยันครั้งสุดท้าย</span>  <span className="bl-nw">FINAL CONFIRMATION</span></span>
             <h3 className="bl-scm__title">ยืนยันการลงคะแนน</h3>
             <p className="bl-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`bl-scm__pick bl-scm__pick--${kind}`}>

@@ -162,8 +162,8 @@ function buildVerdureTemplate(slug, name, palette) {
 // colorSwatch derives from the palette (primary = cta so the chip shows the theme's
 // signature button colour; the chooser groups by family).
 export const verdureTemplate      = buildVerdureTemplate("verdure", "Verdure", VERDURE_THEMES["verdure"]);
-export const verdureHoneyTemplate = buildVerdureTemplate("verdure-honey", "Verdure · Honey", VERDURE_THEMES["verdure-honey"]);
-export const verdureTealTemplate  = buildVerdureTemplate("verdure-teal", "Verdure · Teal", VERDURE_THEMES["verdure-teal"]);
-export const verdureBerryTemplate = buildVerdureTemplate("verdure-berry", "Verdure · Berry", VERDURE_THEMES["verdure-berry"]);
+export const verdureHoneyTemplate = buildVerdureTemplate("verdure-honey", "Verdure Honey", VERDURE_THEMES["verdure-honey"]);
+export const verdureTealTemplate  = buildVerdureTemplate("verdure-teal", "Verdure Teal", VERDURE_THEMES["verdure-teal"]);
+export const verdureBerryTemplate = buildVerdureTemplate("verdure-berry", "Verdure Berry", VERDURE_THEMES["verdure-berry"]);
 
 export default verdureTemplate;

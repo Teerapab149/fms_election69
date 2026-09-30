@@ -26,11 +26,11 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
     <VerdureShell
       active="candidates" moss editorMode={editorMode}
       edge={{ num: "02", label: "Candidates", th: "ผู้สมัคร", right: true }}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {parties.length} PARTIES{memberTotal > 0 ? <> · <strong>{memberTotal} CANDIDATES</strong></> : null}</div>}
+      statusChip={<div className="vd-chip-live"><span className="dot" /> {parties.length} PARTIES{memberTotal > 0 ? <>  <strong>{memberTotal} CANDIDATES</strong></> : null}</div>}
     >
       <div className="vd-cand">
         <div className="vd-cand__h">
-          <div className="vd-cand__kicker"><span className="rule" /> NO. 02 · CANDIDATES <span className="rule" /></div>
+          <div className="vd-cand__kicker"><span className="rule" /> NO. 02 / CANDIDATES <span className="rule" /></div>
           <h1 className="vd-cand__title">Meet the parties<br /><em>running this year.</em></h1>
           <p className="vd-cand__deck">เลือกพรรคใดพรรคหนึ่งเพื่อดูวิสัยทัศน์ นโยบาย และรายชื่อสมาชิกทีมทั้งหมด ก่อนตัดสินใจลงคะแนน</p>
           {/* CND-1 — the statusChip count lives in the chrome and is hidden on
@@ -61,7 +61,7 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
                 )}
               </div>
               <div className="vd-ppanel__main">
-                <div className="vd-ppanel__kicker">PARTY · <span className="ac">No. {pad2(p.number)}</span></div>
+                <div className="vd-ppanel__kicker">PARTY <span className="ac">No. {pad2(p.number)}</span></div>
                 <h2 className="vd-ppanel__name">{p.name}</h2>
                 {p.slogan && <p className="vd-ppanel__slogan">{p.slogan}</p>}
                 <div className="vd-ppanel__quick">

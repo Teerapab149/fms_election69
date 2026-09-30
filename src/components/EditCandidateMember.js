@@ -77,7 +77,7 @@ export default function EditCandidateMember({ candidate, onClick, defaultExpande
         <div className="p-4 bg-slate-50/60">
           {members.length > 0 && (
             <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
-              เรียงตามที่แสดงจริงบนหน้าพรรค · ตำแหน่งหลักระบบเรียงให้เอง ส่วนประธานฝ่ายและตำแหน่งอื่นเรียงตามลำดับที่เพิ่ม
+              เรียงตามที่แสดงจริงบนหน้าพรรค ตำแหน่งหลักระบบเรียงให้เอง ส่วนประธานฝ่ายและตำแหน่งอื่นเรียงตามลำดับที่เพิ่ม
             </p>
           )}
           {members.length > 0 ? (

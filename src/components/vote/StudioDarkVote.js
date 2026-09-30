@@ -85,8 +85,8 @@ export default function StudioDarkVote({
     if (selectedPartyId == null) return null;
     const p = regularParties.find((x) => x.id === selectedPartyId);
     if (p) return `№ ${pad2(p.number)} — ${p.name}`;
-    if (disapprove?.id === selectedPartyId) return "ไม่รับรอง · Disapprove";
-    if (abstain?.id === selectedPartyId) return "งดออกเสียง · Abstain";
+    if (disapprove?.id === selectedPartyId) return "ไม่รับรอง Disapprove";
+    if (abstain?.id === selectedPartyId) return "งดออกเสียง Abstain";
     return null;
   })();
 
@@ -172,7 +172,7 @@ export default function StudioDarkVote({
         <div className="sdv-footer">
           <div className="sdv-footer__sel">
             <div className="sdv-footer__lbl">YOUR SELECTION</div>
-            <div className="sdv-footer__val">{selectedName || "ยังไม่ได้เลือก · None"}</div>
+            <div className="sdv-footer__val">{selectedName || "ยังไม่ได้เลือก None"}</div>
           </div>
           <button
             type="button"

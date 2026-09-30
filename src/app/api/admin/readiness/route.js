@@ -229,7 +229,7 @@ export async function GET(request) {
     if (issues.length === 0) {
       return { level: "pass", detail: `ทุกพรรค (${real.length}) มีสมาชิกและโลโก้ครบ` };
     }
-    return { level: "warn", detail: `พรรคที่ข้อมูลยังไม่ครบ — ${issues.join(" · ")}` };
+    return { level: "warn", detail: `พรรคที่ข้อมูลยังไม่ครบ — ${issues.join(", ")}` };
   });
 
   // 9) voters — จำนวนผู้มีสิทธิ์ (ปี 1-4) > 0
@@ -251,7 +251,7 @@ export async function GET(request) {
       where: { isVoted: true, year: { in: validYears } },
     });
     const allEqual = scoreSum === ballotCount && ballotCount === votedCount;
-    const detail = `คะแนนรวม ${scoreSum} · บัตรในหีบ ${ballotCount} · ผู้ที่ลงคะแนนแล้ว ${votedCount}`;
+    const detail = `คะแนนรวม ${scoreSum} บัตรในหีบ ${ballotCount} ผู้ที่ลงคะแนนแล้ว ${votedCount}`;
     if (!allEqual) {
       return {
         level: "fail",
@@ -318,8 +318,8 @@ export async function GET(request) {
         level: "fail",
         detail:
           "เซิร์ฟเวอร์นี้ยังเปิดเส้นทางเข้าสู่ระบบจำลองอยู่ (mock-login provider ถูกลงทะเบียนจริง) — ใครที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน" +
-          " · ปกติของเครื่องนักพัฒนา (dev server) และไม่ต้องแก้อะไรถ้านี่คือเครื่องพัฒนา" +
-          " · เส้นทางนี้ปิดเองอัตโนมัติเมื่อรันเป็น production build (NODE_ENV=production) จึงไม่มีสวิตช์ให้กดปิดในหน้านี้ ถ้าเครื่องนี้คือเซิร์ฟเวอร์ที่จะใช้วันเลือกตั้งจริง ให้ deploy ด้วย production build ก่อนเปิดให้นักศึกษาใช้ แล้วผลตรวจข้อนี้จะเขียวเอง",
+          " ปกติของเครื่องนักพัฒนา (dev server) และไม่ต้องแก้อะไรถ้านี่คือเครื่องพัฒนา" +
+          " เส้นทางนี้ปิดเองอัตโนมัติเมื่อรันเป็น production build (NODE_ENV=production) จึงไม่มีสวิตช์ให้กดปิดในหน้านี้ ถ้าเครื่องนี้คือเซิร์ฟเวอร์ที่จะใช้วันเลือกตั้งจริง ให้ deploy ด้วย production build ก่อนเปิดให้นักศึกษาใช้ แล้วผลตรวจข้อนี้จะเขียวเอง",
       };
     }
     return {
@@ -343,7 +343,7 @@ export async function GET(request) {
         level: "fail",
         detail:
           `เขียนไฟล์ลง ${UPLOAD_ROOT} ไม่ได้ (${e.code || e.message}) — อัปโหลดรูปจะล้มเหลวทั้งหมด` +
-          " · ให้ผู้ดูแลสร้างโฟลเดอร์นี้และให้สิทธิ์เขียนแก่ผู้ใช้ที่รันแอป",
+          " ให้ผู้ดูแลสร้างโฟลเดอร์นี้และให้สิทธิ์เขียนแก่ผู้ใช้ที่รันแอป",
       };
     }
     if (!custom) {
@@ -351,7 +351,7 @@ export async function GET(request) {
         level: "warn",
         detail:
           `เก็บรูปไว้ใน ${UPLOAD_ROOT} ซึ่งอยู่ในโฟลเดอร์ซอร์สของแอป — เขียนได้ปกติ แต่การ deploy ที่สร้างโฟลเดอร์ใหม่ (คัดลอก public, clone ใหม่, git clean) จะลบรูปที่อัปโหลดไว้ทั้งหมด` +
-          " · ตั้ง UPLOAD_ROOT ให้ชี้ไปไดเรกทอรีนอกซอร์ส แล้วย้ายไฟล์เดิมตามไปเพื่อให้รอดทุกรอบ deploy",
+          " ตั้ง UPLOAD_ROOT ให้ชี้ไปไดเรกทอรีนอกซอร์ส แล้วย้ายไฟล์เดิมตามไปเพื่อให้รอดทุกรอบ deploy",
       };
     }
     return { level: "pass", detail: `เก็บรูปไว้ที่ ${UPLOAD_ROOT} (นอกโฟลเดอร์ซอร์ส) และเขียนได้` };

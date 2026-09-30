@@ -32,14 +32,14 @@ const DEVICES = [
 
 const PAGES = [
   { page: "home", label: "หน้าแรก" },
-  { page: "candidates", label: "ผู้สมัคร · หลายพรรค" },
+  { page: "candidates", label: "ผู้สมัคร หลายพรรค" },
   // note = ข้อความกำกับใต้สไลด์ · ที่นี่มีเพราะข้อมูลตัวอย่างกรอก social media ไว้
   // ให้เห็นว่าหน้าตาเป็นอย่างไร แต่ของจริงจะขึ้นเฉพาะพรรคที่กรอกไว้เท่านั้น
   { page: "party", label: "ข้อมูลพรรค", note: "ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ในหน้าจัดการผู้สมัคร — ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน" },
-  { page: "vote", variant: "multi", label: "ลงคะแนน · หลายพรรค" },
-  { page: "vote", variant: "single", label: "ลงคะแนน · พรรคเดียว" },
-  { page: "results", variant: "locked", label: "ผลคะแนน · ปิดผล" },
-  { page: "results", variant: "revealed", label: "ผลคะแนน · เปิดผล" },
+  { page: "vote", variant: "multi", label: "ลงคะแนน หลายพรรค" },
+  { page: "vote", variant: "single", label: "ลงคะแนน พรรคเดียว" },
+  { page: "results", variant: "locked", label: "ผลคะแนน ปิดผล" },
+  { page: "results", variant: "revealed", label: "ผลคะแนน เปิดผล" },
   { page: "success", label: "ลงคะแนนสำเร็จ" },
   { page: "closed", label: "ระบบปิด" },
 ];
@@ -75,7 +75,7 @@ function BrowserSlide({ familySlug, themeSlug, slide, device, displayW, isCurren
           <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
           <div className="ml-2 flex-1 h-5 rounded-md bg-white border border-slate-200 flex items-center px-2 text-[10px] text-slate-400 font-mono truncate">
-            ovs.fms.psu.ac.th/{slide.page}{slide.variant ? `·${slide.variant}` : ""}
+            ovs.fms.psu.ac.th/{slide.page}{slide.variant ? `/${slide.variant}` : ""}
           </div>
         </div>
         {/* viewport — iframe fades in only once loaded + styled, to hide the
@@ -264,7 +264,7 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
       {/* caption + dots */}
       <div className="flex items-center justify-between gap-3 mt-4 px-1">
         <span className="text-sm font-semibold text-slate-600">
-          <span className="text-slate-400 font-normal">{idx + 1}/{PAGES.length} · </span>{slide.label}
+          <span className="text-slate-400 font-normal">{idx + 1}/{PAGES.length}  </span>{slide.label}
         </span>
         <div className="flex items-center gap-1.5">
           {PAGES.map((s, i) => (
@@ -309,7 +309,7 @@ const FAMILY_CATEGORY = {
 };
 const CATEGORY_META = {
   official: {
-    label: "ทางการ · เรียบ",
+    label: "ทางการ เรียบ",
     hint: "โทนสุภาพ เหมาะกับการเสนอคณะกรรมการ",
   },
   expressive: {
@@ -487,7 +487,7 @@ export default function TemplateChooserTab() {
         </div>
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight text-slate-800">เลือกธีมเว็บไซต์</h2>
-          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที · แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
+          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
         </div>
       </div>
 
@@ -604,7 +604,7 @@ export default function TemplateChooserTab() {
       )}
 
       <p className="text-[11px] text-slate-400 mt-6">
-        แต่ละธีมรองรับครบทุกหน้า · เนื้อหา (ชื่อ/ปี/ผู้สมัคร) แก้ที่แท็บ “ตั้งค่าทั่วไป” และ “จัดการผู้สมัคร”
+        แต่ละธีมรองรับครบทุกหน้า เนื้อหา (ชื่อ/ปี/ผู้สมัคร) แก้ที่แท็บ “ตั้งค่าทั่วไป” และ “จัดการผู้สมัคร”
       </p>
 
       {/* the theme list's own scrollbar — slim and always drawn, so a short

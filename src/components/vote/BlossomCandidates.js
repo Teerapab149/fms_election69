@@ -49,7 +49,7 @@ export default function BlossomCandidates({ candidates = [], editorMode = false 
       <div className="bl-page">
         {/* ===== issue line (masthead — candidates variant) ===== */}
         <div className="bl-issue-line">
-          <span><span className="bl-thai bl-thai--nw">ผู้สมัคร</span> <b>·</b> CANDIDATES</span>
+          <span><span className="bl-thai bl-thai--nw">ผู้สมัคร</span> CANDIDATES</span>
           <span>{prefix} {number}</span>
         </div>
 

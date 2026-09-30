@@ -85,7 +85,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
       backLabel={showBackToVote ? "Vote" : (isSingleParty ? "Home" : "Candidates")}
       label="Profile"
       labelTh={`Party № ${no}`}
-      right={<span>{members.length > 0 && <>{members.length} CANDIDATES&nbsp;·&nbsp;</>}{policies.length} POLICIES</span>}
+      right={<span>{members.length > 0 && <>{members.length} CANDIDATES&nbsp;/&nbsp;</>}{policies.length} POLICIES</span>}
     >
       {/* PROFILE HEADER */}
       <div className="sdp-h">
@@ -101,7 +101,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {/* ตราพรรคกดขยายได้เหมือนภาพหมู่ — หน้านี้อธิบายความหมายของตราอยู่แล้ว */}
               <button type="button" className="sdp-h__logo sdp-h__logo--btn"
-                onClick={() => openLightbox(logo, `PARTY MARK · ${party?.name || ""}`)}
+                onClick={() => openLightbox(logo, `PARTY MARK: ${party?.name || ""}`)}
                 aria-label={`ขยายตราสัญลักษณ์พรรค${party?.name || ""}`}>
                 <img src={logo} alt={`ตราสัญลักษณ์พรรค${party?.name || ""}`} />
               </button>
@@ -129,7 +129,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`${s.label} · ${s.handle || s.url}`}
+                  title={`${s.label}: ${s.handle || s.url}`}
                   aria-label={`${s.label} ของพรรค ${s.handle || ""}`.trim()}
                 >
                   <SocialGlyph platform={s.key} size={17} />
@@ -159,7 +159,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             </button>
           ))}
           <div className="sdp-tabs__spacer" />
-          <a href={getPath("/vote")} className="sdp-tabs__action"><span className="sd-thai">ลงคะแนน</span> · Vote →</a>
+          <a href={getPath("/vote")} className="sdp-tabs__action"><span className="sd-thai">ลงคะแนน</span>  Vote →</a>
         </nav>
       )}
 
@@ -174,13 +174,13 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           {heroImg && (
             <figure
               className="sdp-vision__photo"
-              onClick={() => openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`)}
+              onClick={() => openLightbox(heroImg, `TEAM PHOTO: ${party?.name || ""}`)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO · ${party?.name || ""}`); }}
+              onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO: ${party?.name || ""}`); }}
             >
               <img src={heroImg} alt={party?.name} />
-              <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span> · <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
+              <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span>  <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
             </figure>
           )}
           {story && <div className="sdp-vision__story"><StoryClamp className="sdp-sc"><p>{story}</p></StoryClamp></div>}
@@ -188,7 +188,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           {/* missions — their own always-visible ledger below the story/photo */}
           {missions.length > 0 && (
             <div className="sdp-missions">
-              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> <span className="sd-nw">MISSIONS</span> · <span className="sd-thai">พันธกิจ</span></div>
+              <div className="sdp-missions__lbl"><span className="sdp-accent">●</span> <span className="sd-nw">MISSIONS</span>  <span className="sd-thai">พันธกิจ</span></div>
               {missions.map((m, i) => (
                 <div className="sdp-mission" key={i}>
                   <span className="sdp-mission__no">{pad2(i + 1)}</span>
@@ -253,7 +253,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
                 type="button"
                 className="sdp-shot"
                 key={src}
-                onClick={() => openLightbox(src, `GALLERY ${pad2(i + 1)} · ${party?.name || ""}`)}
+                onClick={() => openLightbox(src, `GALLERY ${pad2(i + 1)}: ${party?.name || ""}`)}
                 aria-label={`ดูภาพกิจกรรมที่ ${i + 1}`}
               >
                 <img src={src} alt={`ภาพกิจกรรม ${i + 1}`} loading="lazy" />

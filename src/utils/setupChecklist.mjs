@@ -28,7 +28,7 @@ const sameDay = (a, b) => { const p = bkk(a), q = bkk(b); return p.y === q.y && 
 export function thaiLongDateTime(d) {
   if (!d) return "";
   const p = bkk(d);
-  return `วัน${TH_DAYS[p.wd]}ที่ ${p.d} ${TH_MONTHS[p.m]} ${p.y + 543} · ${formatThaiTime(d)}`;
+  return `วัน${TH_DAYS[p.wd]}ที่ ${p.d} ${TH_MONTHS[p.m]} ${p.y + 543} เวลา ${formatThaiTime(d)}`;
 }
 /** "6 ก.พ. 2570 08.30 น." */
 export function thaiShortDateTime(d) {
@@ -52,7 +52,7 @@ export function editionItem(cfg) {
   return {
     key: "edition",
     title: "ครั้งที่และปีการศึกษา",
-    value: missing ? "ยังไม่ครบ" : `${name} · ปีการศึกษา ${cfg.academicYearTh}`,
+    value: missing ? "ยังไม่ครบ" : `${name} ปีการศึกษา ${cfg.academicYearTh}`,
     tone: missing ? "warn" : "ok",
     status: missing ? "ยังไม่ครบ" : "พร้อม",
   };
@@ -66,7 +66,7 @@ export function scheduleItem(cfg, now = new Date()) {
   if (!s || !e) {
     return { ...base, value: "ยังไม่ได้ตั้งวันเปิด-ปิดหีบ", tone: "warn", status: "ยังไม่ตั้ง" };
   }
-  const value = `เปิดหีบ ${thaiShortDateTime(s)} · ปิด ${sameDay(s, e) ? formatThaiTime(e) : thaiShortDateTime(e)}`;
+  const value = `เปิดหีบ ${thaiShortDateTime(s)} ปิด ${sameDay(s, e) ? formatThaiTime(e) : thaiShortDateTime(e)}`;
   if (e <= s) return { ...base, value, tone: "err", status: "ปิดหีบก่อนเปิดหีบ" };
   if (c && c > s) return { ...base, value, tone: "err", status: "เปิดตัวผู้สมัครหลังเปิดหีบ" };
   if (e <= now) return { ...base, value, tone: "err", status: "ผ่านไปแล้ว" };
@@ -92,7 +92,7 @@ export function formItem(cfg) {
   const base = { key: "form", title: "ลิงก์แบบประเมิน" };
   // blank is allowed (no form this year → no form step, no lock) but is far
   // more often forgotten than chosen, and students lose their activity hours
-  if (!url) return { ...base, value: "ยังไม่ได้ใส่ลิงก์ · นักศึกษาจะไม่มีแบบประเมินให้ทำ", tone: "warn", status: "ยังไม่ใส่" };
+  if (!url) return { ...base, value: "ยังไม่ได้ใส่ลิงก์ นักศึกษาจะไม่มีแบบประเมินให้ทำ", tone: "warn", status: "ยังไม่ใส่" };
   if (!/^https:\/\/\S+$/.test(url)) return { ...base, value: url, tone: "err", status: "ลิงก์ไม่ถูกต้อง" };
   let shown = url;
   try { const u = new URL(url); shown = `${u.host}${u.pathname.length > 24 ? `${u.pathname.slice(0, 24)}…` : u.pathname}`; } catch { /* keep raw */ }

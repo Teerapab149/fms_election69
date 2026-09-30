@@ -13,7 +13,7 @@ const READY = {
 test("a complete year reads as ready", () => {
   const c = setupChecklist(READY, NOW);
   assert.equal(c.ready, c.total);
-  assert.equal(scheduleItem(READY, NOW).value, "เปิดหีบ 6 ก.พ. 2570 08.30 น. · ปิด 17.00 น.");
+  assert.equal(scheduleItem(READY, NOW).value, "เปิดหีบ 6 ก.พ. 2570 08.30 น. ปิด 17.00 น.");
 });
 test("a schedule that cannot be right is not 'set'", () => {
   assert.equal(scheduleItem({ ...READY, electionEndAt: "2027-02-06T08:00" }, NOW).status, "ปิดหีบก่อนเปิดหีบ");
@@ -35,7 +35,7 @@ test("no activity hours is a valid choice, not a gap", () => {
   assert.equal(setupChecklist({ ...READY, activityHours: "" }, NOW).ready, 5);
 });
 test("dates read the way a Thai admin reads them", () => {
-  assert.equal(thaiLongDateTime(parseBangkok("2027-02-06T08:30")), "วันเสาร์ที่ 6 กุมภาพันธ์ 2570 · 08.30 น.");
+  assert.equal(thaiLongDateTime(parseBangkok("2027-02-06T08:30")), "วันเสาร์ที่ 6 กุมภาพันธ์ 2570 เวลา 08.30 น.");
   assert.equal(thaiDuration(8.5 * 3600 * 1000), "8 ชั่วโมง 30 นาที");
   assert.equal(thaiDuration(3600 * 1000), "1 ชั่วโมง");
 });

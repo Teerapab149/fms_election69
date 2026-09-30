@@ -106,13 +106,13 @@ export default function BlossomParty({ party = {}, galleryImages = [], showBackT
       <div className="bl-page">
         {/* ===== issue line (masthead — party variant) ===== */}
         <div className="bl-issue-line">
-          <span><span className="bl-thai bl-thai--nw">พรรค</span> <b>·</b> PARTY FILE</span>
+          <span><span className="bl-thai bl-thai--nw">พรรค</span> PARTY FILE</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial party masthead — giant hollow numeral + logo + name ===== */}
         <header className="bl-pty-head">
-          <span className="bl-pty-kick"><span className="bl-pty-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">บทความฉบับพิเศษ</span> · <span className="bl-nw">PARTY FEATURE</span></span>
+          <span className="bl-pty-kick"><span className="bl-pty-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">บทความฉบับพิเศษ</span>  <span className="bl-nw">PARTY FEATURE</span></span>
           <div className="bl-pty-hero">
             <span className="bl-pty-no" aria-hidden="true">{pad2(no)}</span>
             <div className="bl-pty-id">

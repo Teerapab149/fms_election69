@@ -60,8 +60,8 @@ function RevealScoreLine({ score, pct, suffix = "" }) {
   return (
     <>
       <span className="vd-nw">{fmt(Math.round(s))} <span className="vd-thai">เสียง</span></span>
-      {" · "}
-      <span className="vd-nw">{p.toFixed(1)}%{suffix ? <> <span className="vd-thai">{suffix.trim()}</span></> : null}</span>
+      {" "}
+      <span className="vd-nw">({p.toFixed(1)}%{suffix ? <> <span className="vd-thai">{suffix.trim()}</span></> : null})</span>
     </>
   );
 }
@@ -126,17 +126,17 @@ export default function VerdureResults({
   return (
     <VerdureShell active="results" editorMode={editorMode}
       edge={{ num: "05", label: "Returns", th: "ผลคะแนน", right: true }}
-      cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : isNotStarted ? "Polls not open" : "Live tally · embargoed"}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : "COUNTING"} · <strong>{statusTxt}</strong></div>}>
+      cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : isNotStarted ? "Polls not open" : "Live tally, embargoed"}
+      statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : "COUNTING"}  <strong>{statusTxt}</strong></div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">
           <div className="vd-returns__kicker">
-            <span className="vd-nw">NO. 05</span> · {revealed
-              ? <><span className="vd-nw">FINAL RESULT</span> · <span className="vd-thai">ผลอย่างเป็นทางการ</span></>
+            <span className="vd-nw">NO. 05</span>  {revealed
+              ? <><span className="vd-nw">FINAL RESULT</span>  <span className="vd-thai">ผลอย่างเป็นทางการ</span></>
               : isNotStarted
-                ? <><span className="vd-nw">UPCOMING</span> · <span className="vd-thai">ยังไม่เปิดโหวต</span></>
-                : <><span className="vd-nw">LIVE RETURNS</span> · <span className="vd-thai">กำลังนับคะแนน</span></>}
+                ? <><span className="vd-nw">UPCOMING</span>  <span className="vd-thai">ยังไม่เปิดโหวต</span></>
+                : <><span className="vd-nw">LIVE RETURNS</span>  <span className="vd-thai">กำลังนับคะแนน</span></>}
           </div>
           <h1 className="vd-returns__title">The <em>Returns.</em></h1>
           <div className="vd-returns__accent" aria-hidden />
@@ -147,10 +147,10 @@ export default function VerdureResults({
             {revealed ? (
               <>
                 <div className="vd-rdisc__kicker">{undecided
-                  ? <><span className="vd-nw">NO CALL</span> · <span className="vd-thai">ยังประกาศผลไม่ได้</span></>
+                  ? <><span className="vd-nw">NO CALL</span>  <span className="vd-thai">ยังประกาศผลไม่ได้</span></>
                   : singleParty
-                    ? <><span className="vd-nw">OFFICIAL VERDICT</span> · <span className="vd-thai">ผลรับรอง</span></>
-                    : <><span className="vd-nw">THE WINNER</span> · <span className="vd-thai">ผู้ชนะ</span></>}</div>
+                    ? <><span className="vd-nw">OFFICIAL VERDICT</span>  <span className="vd-thai">ผลรับรอง</span></>
+                    : <><span className="vd-nw">THE WINNER</span>  <span className="vd-thai">ผู้ชนะ</span></>}</div>
                 <div className="vd-rdisc__name" style={winnerNameSize ? { fontSize: winnerNameSize } : undefined}>
                   {winnerLabel}
                 </div>
@@ -171,7 +171,7 @@ export default function VerdureResults({
                     during them; after closing the live page hands "เร็วๆ นี้" — there is
                     nothing left to count down to, only the announcement to wait for */}
                 {ended
-                  ? <div className="vd-rdisc__cd"><span className="vd-thai">ปิดโหวตแล้ว · รอประกาศผล</span></div>
+                  ? <div className="vd-rdisc__cd"><span className="vd-thai">ปิดโหวตแล้ว รอประกาศผล</span></div>
                   : countdownText && <div className="vd-rdisc__cd">{isNotStarted ? "OPENS IN" : "CLOSES IN"} <strong className="vd-tabular">{countdownText}</strong></div>}
               </>
             )}
@@ -179,15 +179,15 @@ export default function VerdureResults({
         </div>
 
         <div className="vd-rstats">
-          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TOTAL VOTES</span> · <span className="vd-thai">คะแนนรวม</span></div><div className="val vd-tabular"><em>{fmt(totalVotes)}</em></div></div>
-          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{turnout.toFixed(2)}<small>%</small></div></div>
-          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">ELIGIBLE</span> · <span className="vd-thai">ผู้มีสิทธิ์</span></div><div className="val vd-tabular">{fmt(totalEligible)}<small>คน</small></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TOTAL VOTES</span>  <span className="vd-thai">คะแนนรวม</span></div><div className="val vd-tabular"><em>{fmt(totalVotes)}</em></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">TURNOUT</span>  <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{turnout.toFixed(2)}<small>%</small></div></div>
+          <div className="vd-rstat"><div className="lbl"><span className="vd-nw">ELIGIBLE</span>  <span className="vd-thai">ผู้มีสิทธิ์</span></div><div className="val vd-tabular">{fmt(totalEligible)}<small>คน</small></div></div>
         </div>
 
         <div className="vd-race">
           <div className="vd-race__head">
             <div className="vd-race__lead">
-              <span className="vd-race__kicker"><span className="vd-nw">{revealed ? "Official tally" : "Embargoed"}</span> · <span className="vd-thai">{singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span></span>
+              <span className="vd-race__kicker"><span className="vd-nw">{revealed ? "Official tally" : "Embargoed"}</span>  <span className="vd-thai">{singleParty ? "ผลเห็นชอบ" : "ผลรายพรรค"}</span></span>
               <h3>Vote distribution <em>{singleParty ? "yes / no." : "by party."}</em></h3>
             </div>
             <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ OFFICIAL" : "§ EMBARGOED"}</span>
@@ -222,7 +222,7 @@ export default function VerdureResults({
           <div className="vd-demo">
             <div className="vd-race__head">
               <div className="vd-race__lead">
-                <span className="vd-race__kicker"><span className="vd-nw">Turnout</span> · <span className="vd-thai">สถิติผู้ใช้สิทธิ์</span></span>
+                <span className="vd-race__kicker"><span className="vd-nw">Turnout</span>  <span className="vd-thai">สถิติผู้ใช้สิทธิ์</span></span>
                 <h3>Turnout <em>demographics.</em></h3>
               </div>
               <span className="vd-smallcaps" style={{ color: "var(--terra)" }}>{revealed ? "§ PARTICIPATION" : "§ EMBARGOED"}</span>
@@ -233,7 +233,7 @@ export default function VerdureResults({
                   const max = Math.max(1, ...g.rows.map((r) => r.value || 0));
                   return (
                     <div className="vd-demo__col" key={g.en}>
-                      <div className="vd-demo__title"><span className="vd-nw">{g.en}</span> · <span className="vd-thai">{g.th}</span></div>
+                      <div className="vd-demo__title"><span className="vd-nw">{g.en}</span>  <span className="vd-thai">{g.th}</span></div>
                       {g.rows.map((r, i) => (
                         <div className="vd-demo__row" key={i}>
                           <div className="vd-demo__name">{r.name}</div>
@@ -246,7 +246,7 @@ export default function VerdureResults({
                 })}
               </div>
             ) : (
-              <div className="vd-demo__locked"><Lock size={18} strokeWidth={2} /><p>สถิติผู้ใช้สิทธิ์รายชั้นปี · เพศ · สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อคณะกรรมการประกาศผลเท่านั้น</p></div>
+              <div className="vd-demo__locked"><Lock size={18} strokeWidth={2} /><p>สถิติผู้ใช้สิทธิ์รายชั้นปี เพศ สาขา จะเปิดเผยพร้อมผลคะแนน เมื่อคณะกรรมการประกาศผลเท่านั้น</p></div>
             )}
           </div>
         )}

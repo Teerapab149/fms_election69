@@ -212,10 +212,10 @@ export function FmsOfficialHeader({ active = "home", meta, voteState = "login", 
               and the university's name comes apart. The short form drops the
               university, which the lockup directly below already carries. */}
           <span className="fo-utility__name fo-utility__name--full">
-            {meta.systemName} · {meta.faculty} {meta.university}
+            {meta.systemName}  {meta.faculty} {meta.university}
           </span>
           <span className="fo-utility__name fo-utility__name--short">
-            {meta.systemName} · {meta.faculty}
+            {meta.systemName}  {meta.faculty}
           </span>
           <span className="fo-utility__right">
             <span className="fo-utility__year">ปีการศึกษา {meta.ay}</span>

@@ -68,12 +68,12 @@ export function VerdureMemberModal({ member = null, onClose = () => {} }) {
         <button type="button" className="vd-mm__x" onClick={onClose} aria-label="ปิด"><X size={18} strokeWidth={2.5} /></button>
         <div className="vd-mm__photo">{src ? <img src={src} alt={member.name || ""} /> : <span>portrait</span>}<span className="tag">CANDIDATE</span></div>
         <div className="vd-mm__info">
-          <div className="vd-mm__eyebrow"><span className="ac">●</span> CANDIDATE · ผู้สมัคร</div>
+          <div className="vd-mm__eyebrow"><span className="ac">●</span> CANDIDATE ผู้สมัคร</div>
           <h3 className="vd-mm__name">{member.name}</h3>
           <dl className="vd-mm__rows">
-            <div><dt>STUDENT ID · รหัสนักศึกษา</dt><dd>{member.studentId || "—"}</dd></div>
-            <div><dt>POSITION · ตำแหน่ง</dt><dd>{member.position || "—"}</dd></div>
-            <div><dt>MAJOR · สาขาวิชา</dt><dd>{member.major || "—"}</dd></div>
+            <div><dt>STUDENT ID รหัสนักศึกษา</dt><dd>{member.studentId || "—"}</dd></div>
+            <div><dt>POSITION ตำแหน่ง</dt><dd>{member.position || "—"}</dd></div>
+            <div><dt>MAJOR สาขาวิชา</dt><dd>{member.major || "—"}</dd></div>
           </dl>
         </div>
       </motion.div>

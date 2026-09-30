@@ -530,7 +530,7 @@ const CandidateList = ({ members, theme, onSelectMember, socials }) => {
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`${s.label} · ${s.handle || s.url}`}
+                  title={`${s.label}: ${s.handle || s.url}`}
                   className="inline-flex items-baseline gap-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 text-white transition-all duration-300 hover:bg-white/10 hover:border-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
                 >
                   <span className="text-sm font-bold">{s.label}</span>

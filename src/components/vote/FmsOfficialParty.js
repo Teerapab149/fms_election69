@@ -201,7 +201,7 @@ export default function FmsOfficialParty({
         <section className="fo-party__sec">
           <div className="fo-sechead">
             <h2>ทีมงาน</h2>
-            <p>เรียงตามลำดับตำแหน่ง · ทั้งหมด {members.length} คน</p>
+            <p>เรียงตามลำดับตำแหน่ง ทั้งหมด {members.length} คน</p>
           </div>
           <ul className="fo-party__team">
             {members.map((m) => {
@@ -265,7 +265,7 @@ export default function FmsOfficialParty({
         <section className="fo-party__sec">
           <div className="fo-sechead">
             <h2>ช่องทางติดต่อพรรค</h2>
-            <p>ช่องทางที่พรรคแจ้งไว้ · เปิดในแท็บใหม่</p>
+            <p>ช่องทางที่พรรคแจ้งไว้ เปิดในแท็บใหม่</p>
           </div>
           <PartySocials socials={party?.socials} prefix="fo" heading="" />
         </section>

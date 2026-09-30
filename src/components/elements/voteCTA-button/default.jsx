@@ -22,7 +22,7 @@
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { LogIn, Vote, BarChart3 } from "lucide-react";
-import { voteCtaState } from "../../../lib/election/electionStatus.mjs";
+import { voteCtaState, AWAITING_RESULTS, isAwaitingResults } from "../../../lib/election/electionStatus.mjs";
 
 function buildButtonStyle(cfg) {
   if (!cfg) return undefined;
@@ -216,7 +216,10 @@ export default function DefaultVoteCTA({ config = {}, data = {}, resolvedConfig 
   const styleOverride = resolvedConfig;
   const hasOverride = !!styleOverride && Object.keys(styleOverride).length > 0;
   const buttonInlineStyle = hasOverride ? buildButtonStyle(styleOverride) : undefined;
-  const textOverride = hasOverride ? styleOverride.text : null;
+  // closed but not yet announced (lib/election/electionStatus) wins over the
+  // configured "results" text
+  const awaiting = isAwaitingResults(ctaState, initialData?.systemConfig?.showResult);
+  const textOverride = awaiting ? `${AWAITING_RESULTS.label} / Awaiting results` : (hasOverride ? styleOverride.text : null);
 
   const legacyClassName = `relative w-full sm:w-auto overflow-hidden rounded-xl bg-gradient-to-r ${btnConfig.gradientBase} px-10 py-4 text-lg font-bold text-white ${btnConfig.shadow} ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate`;
   const overrideClassName = `relative w-full sm:w-auto overflow-hidden ring-1 ring-white/20 transition-all duration-500 ease-out transform group-hover:scale-[1.02] group-hover:-translate-y-1 active:scale-95 isolate text-white`;

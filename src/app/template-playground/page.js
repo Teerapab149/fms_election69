@@ -258,7 +258,7 @@ function PlaygroundBody() {
         </button>
         {barOpen && (
           <div className="tpg__panel">
-            <div className="tpg__title">ตัวอย่างแบบโต้ตอบ <span>· กดเล่นได้จริง ไม่บันทึกผลลง DB</span></div>
+            <div className="tpg__title">ตัวอย่างแบบโต้ตอบ <span> กดเล่นได้จริง ไม่บันทึกผลลง DB</span></div>
 
             <div className="tpg__group">
               <span className="tpg__lbl">ธีม</span>

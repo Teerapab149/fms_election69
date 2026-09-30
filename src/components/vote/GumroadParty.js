@@ -121,12 +121,12 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         <section className="gp-hero">
           <div className="gp-hero__media">
             {heroImg ? <img src={heroImg} alt={party?.name || "party"} /> :
-              <span className="gp-hero__ph">★ TEAM · {members.length} MEMBERS ★</span>}
+              <span className="gp-hero__ph">★ TEAM {members.length} MEMBERS ★</span>}
             {/* ภาพเดียว = ภาพนั้นโชว์เป็น hero อยู่แล้ว ปุ่มแกลเลอรีจะเปิด lightbox
                 มาให้ดูรูปเดิมซ้ำ — ขึ้นเมื่อมีรูปที่สองเป็นต้นไปเท่านั้น (2026-07-28) */}
             {gallery.length > 1 && (
               <button type="button" className="gp-hero__gallery" onClick={() => setLightbox(0)}>
-                <Maximize2 size={15} strokeWidth={2.5} /> ดูแกลเลอรี · {gallery.length}
+                <Maximize2 size={15} strokeWidth={2.5} /> ดูแกลเลอรี {gallery.length}
               </button>
             )}
           </div>
@@ -273,7 +273,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                   {src ? <img src={src} alt={modalMember.name || ""} /> : <span>{(modalMember.name || "?").slice(0, 1)}</span>}
                 </div>
                 <div className="gp-modal__info">
-                  <span className="gp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span> · CANDIDATE</span>
+                  <span className="gp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span>  CANDIDATE</span>
                   <h3 className="gp-modal__name">{modalMember.name}</h3>
                   <dl className="gp-modal__rows">
                     <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>

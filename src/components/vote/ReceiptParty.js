@@ -129,7 +129,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
       <div className="rc-party-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span><span className="rc-th">แฟ้มพรรค</span> · PARTY FILE</span>
+          <span><span className="rc-th">แฟ้มพรรค</span>  PARTY FILE</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -137,12 +137,12 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
         <div className="rc-dossier">
           {/* register tape under the folder: the party's printed index */}
           <aside className="rc-file-tape" aria-label="ทะเบียนพรรค">
-            <span className="rc-file-tape__mast rc-mono">✶ PARTY REGISTER · {faculty} ✶</span>
+            <span className="rc-file-tape__mast rc-mono">✶ PARTY REGISTER {faculty} ✶</span>
             <dl className="rc-file-reg">
-              <div><dt className="rc-mono"><span className="rc-th">ชื่อพรรค</span> · NAME</dt><dd>{party?.name || "—"}</dd></div>
-              <div><dt className="rc-mono"><span className="rc-th">หมายเลข</span> · NO.</dt><dd>{pad2(no)}</dd></div>
-              <div><dt className="rc-mono"><span className="rc-th">จำนวนทีม</span> · TEAM</dt><dd>{teamCount > 0 ? <>{pad2(teamCount)} <span className="rc-th">คน</span></> : <span className="rc-th">รอข้อมูล</span>}</dd></div>
-              {party?.slogan && <div className="rc-file-reg__slogan"><dt className="rc-mono"><span className="rc-th">คำขวัญ</span> · SLOGAN</dt><dd>“{party.slogan}”</dd></div>}
+              <div><dt className="rc-mono"><span className="rc-th">ชื่อพรรค</span>  NAME</dt><dd>{party?.name || "—"}</dd></div>
+              <div><dt className="rc-mono"><span className="rc-th">หมายเลข</span>  NO.</dt><dd>{pad2(no)}</dd></div>
+              <div><dt className="rc-mono"><span className="rc-th">จำนวนทีม</span>  TEAM</dt><dd>{teamCount > 0 ? <>{pad2(teamCount)} <span className="rc-th">คน</span></> : <span className="rc-th">รอข้อมูล</span>}</dd></div>
+              {party?.slogan && <div className="rc-file-reg__slogan"><dt className="rc-mono"><span className="rc-th">คำขวัญ</span>  SLOGAN</dt><dd>“{party.slogan}”</dd></div>}
             </dl>
             <div className="rc-file-tape__foot" aria-hidden="true">✶ ✶ ✶ ✶ ✶ ✶</div>
           </aside>
@@ -174,7 +174,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
             </div>
 
             <div className="rc-folder__title">
-              <span className="rc-folder__kick rc-mono"><span className="rc-th">แฟ้มประวัติพรรค</span> · OFFICIAL PARTY FILE</span>
+              <span className="rc-folder__kick rc-mono"><span className="rc-th">แฟ้มประวัติพรรค</span>  OFFICIAL PARTY FILE</span>
               {/* a party name breaks only at its own spaces (or known phrase starts),
                   never inside a word — "ร่วม / สร้าง" at 375 before */}
               <h1 className="rc-folder__name">{thaiPhrases(party?.name || "พรรค").map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</h1>
@@ -193,7 +193,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
               </span>
               <span className="rc-letter__id">
                 <span className="rc-letter__org">{party?.name || "พรรค"}</span>
-                <span className="rc-letter__sub rc-mono">LOGO MEANING · {prefix} {number}</span>
+                <span className="rc-letter__sub rc-mono">LOGO MEANING {prefix} {number}</span>
               </span>
             </div>
             <div className="rc-letter__rule" aria-hidden="true" />
@@ -264,7 +264,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
                         {img ? <img src={img} alt={m.name} loading="lazy" /> : <span className="rc-lany__ph" aria-hidden="true">{(m.name || "?").trim().charAt(0)}</span>}
                       {/* ลำดับที่แสดง = ลำดับในทีมหลังเรียงแล้ว ไม่ใช่ member.number
                           member.number คือกุญแจ "เรียงลำดับ" ที่ getPositionNumber() ปั๊มไว้
-                          (นายก=1 · อุปนายก=201/202 · เลขา/เหรัญญิก=301/302 · ประธานฝ่ายทุกคน=400)
+                          (นายก=1, อุปนายก=201/202, เลขา/เหรัญญิก=301/302, ประธานฝ่ายทุกคน=400)
                           เอามาโชว์ตรง ๆ ผู้ใช้จะเห็นเลขกระโดด 1 → 202 → 400 ซ้ำกันทั้งแถว
                           template อื่นใช้ i+1 ถูกอยู่แล้ว (เทียบ GumroadParty.js:152) */}
                         <span className="rc-lany__no rc-mono" aria-hidden="true">{pad2(i + 1)}</span>
@@ -322,7 +322,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
               <span className="rc-th">ไปลงคะแนน</span><span className="rc-stubcta__arrow" aria-hidden="true"> →</span>
             </a>
           </div>
-          <span className="rc-party-ref rc-mono" aria-hidden="true">{prefix} {number} · FILE · {pad2(no)}</span>
+          <span className="rc-party-ref rc-mono" aria-hidden="true">{prefix} {number}  FILE {pad2(no)}</span>
         </div>
 
         {/* ===== footer — classic single centered line ===== */}

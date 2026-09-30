@@ -139,15 +139,15 @@ export const receiptTemplate        = buildReceiptTemplate(
   "หน้าตาเหมือนกระดาษใบเสร็จวางบนโต๊ะนับคะแนน มีขอบหยักฉีก ตราปั๊ม และแถบโฮโลแกรมกันปลอม สีหมึกเริ่มต้นเป็นม่วงคณะ เลือกสีหมึกได้ 4 แบบ",
   RECEIPT_THEMES["receipt"]);
 export const receiptInkBlueTemplate = buildReceiptTemplate(
-  "receipt-ink-blue", "Receipt Paper · Ink Blue",
+  "receipt-ink-blue", "Receipt Paper Ink Blue",
   "ม้วนกระดาษขาวเย็น หมึกน้ำเงินเข้ม คมสะอาด อ่านง่าย",
   RECEIPT_THEMES["receipt-ink-blue"]);
 export const receiptTealTemplate    = buildReceiptTemplate(
-  "receipt-teal", "Receipt Paper · Teal",
+  "receipt-teal", "Receipt Paper Teal",
   "สำเนากระดาษก๊อปปี้ฟ้า หมึกครามทะเลเย็นตา ดูเป็นเอกสารจริง",
   RECEIPT_THEMES["receipt-teal"]);
 export const receiptCarbonTemplate  = buildReceiptTemplate(
-  "receipt-carbon", "Receipt Paper · Carbon",
+  "receipt-carbon", "Receipt Paper Carbon",
   "สำเนากระดาษถ่านสีเทา หมึกเทาเข้มไร้สี เรียบนิ่ง เท่แบบเอกสาร",
   RECEIPT_THEMES["receipt-carbon"]);
 

@@ -28,6 +28,7 @@ import { useHowToVote } from "../../hooks/useHowToVote";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 
 // Thai-run detector — used to pin only the Thai segments of the spinning ring
 // textPath to the family's real Thai font (Space Mono has no Thai glyphs).
@@ -328,7 +329,7 @@ export default function BlossomHome({
     userData: session?.user ? { ...(initialData?.userData || {}), isVoted: isVotedReal } : initialData?.userData,
   });
   const voteState = editorMode ? "login" : (resolveElementState("voteCTA-button", runtimeCtx) || "login");
-  const CTA = {
+  const CTA_BASE = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง", href: "/vote", disabled: false },
     voted:    { label: "ดูผลคะแนน", href: "/results", disabled: false },
@@ -336,6 +337,11 @@ export default function BlossomHome({
     paused:   { label: "ระบบพักปรับปรุงชั่วคราว", href: "/closed", disabled: true },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", href: "/results", disabled: false },
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", action: "signin", disabled: false };
+  // closed but not yet announced: say so instead of promising results (the
+  // results page only shows "wait" until an admin publishes)
+  const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
+    ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
+    : CTA_BASE;
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
@@ -398,7 +404,7 @@ export default function BlossomHome({
   // schedule, empty-guarded so an invalid date renders nothing. PAUSE has no real
   // "resumes at" instant, so it keeps the plain hold copy (no fabricated time).
   const cdCloseFact = cd.done && !cdPaused && !cdOvertime
-    ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}` : ""; })()
+    ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} เวลา ${formatThaiTime(ELECTION_END)}` : ""; })()
     : "";
 
   return (
@@ -415,8 +421,8 @@ export default function BlossomHome({
       <div className="bl-page">
         {/* ===== issue line ===== */}
         <div className="bl-issue-line">
-          <span>{meta.faculty} ELECTION{meta.calYear !== "" ? <> <b>·</b> {meta.calYear}</> : null}</span>
-          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <b>·</b> <span className="bl-thai bl-thai--nw">ปีการศึกษา {meta.academicYear}</span></> : null}</span>
+          <span>{meta.faculty} ELECTION{meta.calYear !== "" ? <> {meta.calYear}</> : null}</span>
+          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <span className="bl-thai bl-thai--nw">ปีการศึกษา {meta.academicYear}</span></> : null}</span>
         </div>
 
         {/* ===== hero ===== */}
@@ -426,7 +432,7 @@ export default function BlossomHome({
               <defs><path id="blRingPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
               <text><textPath href="#blRingPath">
                 {ringSegs.map((seg, i) => (
-                  <tspan key={i} className={THAI_RE.test(seg) ? "bl-thai" : undefined}>{seg} · </tspan>
+                  <tspan key={i} className={THAI_RE.test(seg) ? "bl-thai" : undefined}>{seg}  </tspan>
                 ))}
               </textPath></text>
             </svg>
@@ -446,7 +452,7 @@ export default function BlossomHome({
           <div className="bl-cta-row">
             <a ref={ctaRef} href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
             <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
-            {howTo.show && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
+            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
           </div>
         </section>
 
@@ -463,7 +469,7 @@ export default function BlossomHome({
               <span className="bl-poster__tape bl-poster__tape--r" aria-hidden="true" />
               <img src={bannerSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="bl-poster__img" />
             </figure>
-            <div className="bl-poster-cap"><span className="bl-nw">{meta.prefix} {meta.number}</span> · <span className="bl-thai bl-thai--nw">โปสเตอร์ประชาสัมพันธ์</span></div>
+            <div className="bl-poster-cap"><span className="bl-nw">{meta.prefix} {meta.number}</span>  <span className="bl-thai bl-thai--nw">โปสเตอร์ประชาสัมพันธ์</span></div>
           </div>
           <div className="bl-feature-copy">
             <h2>รู้จัก<em>ผู้สมัคร</em>ของคุณหรือยัง</h2>
@@ -498,11 +504,10 @@ export default function BlossomHome({
 
         {/* ===== how to vote — a contents page: ink rule, indexed rows, one
              candy ink per step (the same set the figures use) ===== */}
-        {howTo.show && (
         <section id={howTo.id} className="bl-steps" aria-labelledby="bl-steps-h">
           <div className="bl-steps-head">
             <h2 id="bl-steps-h">วิธี<em>ลงคะแนน</em></h2>
-            <span className="bl-steps-head__en">HOW TO VOTE · 4 STEPS</span>
+            <span className="bl-steps-head__en">HOW TO VOTE IN 4 STEPS</span>
           </div>
           <ol className="bl-steps-list">
             {BL_STEPS.map((st, i) => (
@@ -517,13 +522,12 @@ export default function BlossomHome({
             ))}
           </ol>
         </section>
-        )}
 
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
           <div className="bl-count__in">
             <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{cdCapTh}</span> / <span className="bl-nw">{cdCapEn}</span></div>
-            <div className="bl-count-line">
+            <div className="bl-count-line" style={{ "--bl-n": pad2(cd.d).length + 6 }}>
               <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วัน</span> / DAYS</span></span>
               <span className="bl-colon">:</span>
               <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">ชม.</span> / HRS</span></span>
@@ -534,7 +538,7 @@ export default function BlossomHome({
             </div>
             <div className="bl-count-closed">
               {cd.label}
-              <small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small>
+              <small><span className="bl-nw">{cdClosedEn}</span>  <span className="bl-thai">{cdClosedTh}</span></small>
               {cdCloseFact && <span className="bl-count-closed__fact"><span className="bl-thai">{cdCloseFact}</span></span>}
               {!cdPaused && !cdOvertime && (
                 <a className="bl-count-closed__link" href={editorMode ? undefined : getPath("/results")}>
@@ -990,6 +994,15 @@ export default function BlossomHome({
              the 4th segment orphan-wrapped behind a dangling colon. Dropping the colon
              separators (298px + gaps = ~321px) keeps all 4 digits full-size on one row */
           .bl-colon { display:none; }
+          /* digits sized to the line: 100cqw is the line's own width, a digit cell
+             is .67em, three gaps between the four groups. --bl-n counts the digits,
+             so 123 days shrinks the line instead of dropping the seconds onto a
+             row of their own */
+          .bl-count-line { container-type:inline-size; }
+          .bl-count-line .bl-cd-n { font-size:min(clamp(52px,13vw,120px), calc((100cqw - 6vw - 4px) / (var(--bl-n, 8) * .67))); }
+          /* the unit label takes its digits' width and may wrap ("วินาที /" over
+             "SEC") — it used to be the wider of the two and pushed a group down */
+          .bl-count-line .bl-u { width:0; min-width:100%; line-height:1.5; }
         }
 
         /* ===== T2.3 scroll parallax — progressive enhancement, transform/opacity ONLY.

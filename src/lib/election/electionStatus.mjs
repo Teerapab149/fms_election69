@@ -75,3 +75,17 @@ export function voteCtaState({ systemMode = "AUTO", isSystemOpen = false, electi
   return isVoted ? "voted" : "notVoted";
 }
 
+
+// After closing, the results button waits for the committee: the tally stays
+// hidden until an admin publishes it (showResult). Until then every template
+// said "ดูผลคะแนน(อย่างเป็นทางการ)" and led to a page that only said "wait".
+// Only an explicit false counts — editor and gallery renders carry no
+// systemConfig and keep the text the template configured.
+export const AWAITING_RESULTS = {
+  label: "ปิดหีบแล้ว รอประกาศผล",
+  en: "AWAITING RESULTS",
+  note: "ผลคะแนนจะแสดงเมื่อคณะกรรมการประกาศผล",
+};
+export function isAwaitingResults(ctaState, showResult) {
+  return ctaState === "ended" && showResult === false;
+}

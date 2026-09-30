@@ -145,7 +145,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
           type="button"
           onClick={doSignOut}
           className="sd-rail__logout-btn"
-          title="ออกจากระบบ · Sign out"
+          title="ออกจากระบบ Sign out"
           aria-label="ออกจากระบบ"
         >
           <LogOut size={15} strokeWidth={2} />
@@ -284,7 +284,9 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
            and is already ink-2 (7.89:1). This line names WHICH clock is running
            ("POLLS OPEN IN" / "POLLS CLOSE IN") — losing it loses the numbers' meaning. */
         .sd-rail__cd-lbl { font-family:var(--sd-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-2); display:flex; align-items:center; gap:8px; }
-        .sd-rail__cd-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:13px; }
+        /* min-content floor: four equal columns in the 176px rail gave each ~39px,
+           and a three-digit day count (123) is ~41px at 23px — it ran into "06" */
+        .sd-rail__cd-grid { display:grid; grid-template-columns:repeat(4, minmax(min-content, 1fr)); gap:6px; margin-top:13px; }
         .sd-rail__cd-cell { text-align:center; }
         .sd-rail__cd-num { font-family:var(--sd-sans); font-weight:500; font-size:23px; line-height:1; letter-spacing:-.02em; color:var(--sd-ink); font-variant-numeric:tabular-nums; }
         .sd-rail__cd-unit { font-family:var(--sd-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--sd-ink-2); margin-top:6px; }

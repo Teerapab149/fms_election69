@@ -28,6 +28,7 @@ import { buildTemplateStyles } from "../../lib/templateTokens";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { resolveElectionDates } from "../../utils/electionConfig";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 import {
   fmsMeta,
   fmsOfficialSignIn,
@@ -115,7 +116,7 @@ export default function FmsOfficialHome({
   });
   const voteState = editorMode ? "notVoted" : (resolveElementState("voteCTA-button", runtimeCtx) || "login");
 
-  const CTA = {
+  const CTA_BASE = {
     login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", note: "ยืนยันตัวตนด้วยบัญชี PSU Passport", action: "signin", disabled: false },
     notVoted: { label: "เข้าสู่หน้าลงคะแนน",      note: "ใช้เวลาไม่เกิน 1 นาที",              href: "/vote",    disabled: false },
     voted:    { label: "ดูผลคะแนน",              note: "ระบบบันทึกการลงคะแนนของคุณแล้ว",    href: "/results", disabled: false },
@@ -123,6 +124,11 @@ export default function FmsOfficialHome({
     paused:   { label: "ระบบหยุดให้บริการชั่วคราว", note: "อยู่ระหว่างปรับปรุงระบบ",           href: "/closed",  disabled: true  },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", note: "ปิดการลงคะแนนเรียบร้อยแล้ว",        href: "/results", disabled: false },
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", note: "ยืนยันตัวตนด้วยบัญชี PSU Passport", action: "signin", disabled: false };
+  // closed but not yet announced: say so instead of promising results (the
+  // results page only shows "wait" until an admin publishes)
+  const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
+    ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
+    : CTA_BASE;
 
   const meta = fmsMeta(globalConfig);
   const realParties = (initialData?.candidates || []).filter((c) => c.number > 0);

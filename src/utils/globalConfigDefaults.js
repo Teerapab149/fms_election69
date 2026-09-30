@@ -66,18 +66,18 @@ export const GLOBAL_CONFIG_FIELDS = [
     // ⚠️ วันเวลาชุดนี้ไม่ได้ใช้แค่โหมด AUTO — AUTO ใช้ตัดสินเปิด-ปิดหีบ แต่
     // CountdownTimer อ่านค่าเดียวกันนี้ในทุกโหมด ถ้าเว้นว่างหรือกรอกผิด
     // นักศึกษาจะเห็นนาฬิกานับถอยหลังผิดแม้ระบบจะอยู่โหมด MANUAL_OPEN
-    desc: "ต้องตั้งใหม่ทุกปี · โหมด AUTO ใช้เปิด-ปิดหีบตามเวลานี้ · นาฬิกานับถอยหลังใช้ทุกโหมด",
+    desc: "ต้องตั้งใหม่ทุกปี โหมด AUTO ใช้เปิด-ปิดหีบตามเวลานี้ นาฬิกานับถอยหลังใช้ทุกโหมด",
     preview: "schedule",
     fields: [
       { key: "campaignStartAt", label: "เปิดตัวผู้สมัคร", type: "datetime", col: "half", where: "วันที่หน้าผู้สมัครเริ่มแสดงพรรค" },
-      { key: "electionStartAt", label: "เปิดหีบ", type: "datetime", col: "half", where: "สถานะและนาฬิกาหน้าแรก · หน้ายังไม่เปิดหีบ · ปีของวันนี้คือปี ค.ศ. ของการเลือกตั้ง" },
-      { key: "electionEndAt", label: "ปิดหีบ", type: "datetime", col: "half", where: "นาฬิกาหน้าแรก · \"ปิดหีบ…\" ในขั้นตอนหน้าแรก" },
+      { key: "electionStartAt", label: "เปิดหีบ", type: "datetime", col: "half", where: "สถานะและนาฬิกาหน้าแรก หน้ายังไม่เปิดหีบ ปีของวันนี้คือปี ค.ศ. ของการเลือกตั้ง" },
+      { key: "electionEndAt", label: "ปิดหีบ", type: "datetime", col: "half", where: "นาฬิกาหน้าแรก \"ปิดหีบ…\" ในขั้นตอนหน้าแรก" },
     ],
   },
   {
     group: "ครั้งที่และปี",
     icon: "Vote",
-    desc: "ใส่ปีการศึกษาช่องเดียว · ปี ค.ศ. และปีลิขสิทธิ์ใช้ปีของวันเปิดหีบให้เอง",
+    desc: "ใส่ปีการศึกษาช่องเดียว ปี ค.ศ. และปีลิขสิทธิ์ใช้ปีของวันเปิดหีบให้เอง",
     preview: "election",
     fields: [
       { key: "electionNamePrefix", label: "ชื่อย่อ", type: "text", col: "half", where: "ป้าย SAMO 50 ทุกหน้า" },
@@ -90,16 +90,16 @@ export const GLOBAL_CONFIG_FIELDS = [
   {
     group: "ชื่อองค์กรและโครงการ",
     icon: "Building2",
-    desc: "พิมพ์แต่ละชื่อครั้งเดียว · ชื่อโครงการและชื่อองค์กรเต็มประกอบให้เอง",
+    desc: "พิมพ์แต่ละชื่อครั้งเดียว ชื่อโครงการและชื่อองค์กรเต็มประกอบให้เอง",
     preview: "org",
     fields: [
       { key: "committeeName", label: "ชื่อคณะกรรมการ", type: "text", col: "half", where: "ต่อท้าย \"โครงการเลือกตั้ง…\" เป็นชื่อโครงการ" },
       { key: "organizationShort", label: "ชื่อองค์กร", type: "text", col: "half", where: "ขึ้นต้นชื่อองค์กรเต็ม" },
-      { key: "facultyName", label: "ชื่อคณะ", type: "text", col: "half", where: "ต่อท้ายชื่อองค์กรเต็ม · บรรทัดบนสุดของหน้าผู้สมัคร ผลคะแนน พรรค" },
+      { key: "facultyName", label: "ชื่อคณะ", type: "text", col: "half", where: "ต่อท้ายชื่อองค์กรเต็ม บรรทัดบนสุดของหน้าผู้สมัคร ผลคะแนน พรรค" },
       { key: "facultyShortEn", label: "อักษรย่อคณะ (EN)", type: "text", col: "half", where: "ท้ายเว็บ FMS@PSU" },
       { key: "university", label: "มหาวิทยาลัย", type: "text", col: "half", where: "ท้ายเว็บ FMS@PSU" },
-      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", col: "full", derived: true, where: "หัวข้อใหญ่หน้าแรก · บรรทัดบนสุดของหน้าผู้สมัคร ผลคะแนน พรรค" },
-      { key: "organizationName", label: "ชื่อองค์กรเต็ม", type: "text", col: "full", derived: true, where: "ใต้หัวข้อหน้าแรก · หัวบัตรเลือกตั้ง" },
+      { key: "campaignTitle", label: "ชื่อโครงการ", type: "text", col: "full", derived: true, where: "หัวข้อใหญ่หน้าแรก บรรทัดบนสุดของหน้าผู้สมัคร ผลคะแนน พรรค" },
+      { key: "organizationName", label: "ชื่อองค์กรเต็ม", type: "text", col: "full", derived: true, where: "ใต้หัวข้อหน้าแรก หัวบัตรเลือกตั้ง" },
     ],
   },
   {
@@ -110,23 +110,23 @@ export const GLOBAL_CONFIG_FIELDS = [
     fields: [
       // เว้นว่าง = ปีนี้ไม่มีแบบประเมิน: success/page.js ไม่ล็อกหน้าผลคะแนน และทุก
       // ตระกูลซ่อนขั้นแบบประเมินผ่าน prop hasForm
-      { key: "googleFormUrl", label: "ลิงก์ Google Form", type: "text", col: "full", where: "ปุ่มแบบประเมินบนหน้าหลังลงคะแนน · เว้นว่าง = ปีนี้ไม่มีแบบประเมิน ไม่มีปุ่ม และไม่ล็อกหน้าผลคะแนน" },
+      { key: "googleFormUrl", label: "ลิงก์ Google Form", type: "text", col: "full", where: "ปุ่มแบบประเมินบนหน้าหลังลงคะแนน เว้นว่าง = ปีนี้ไม่มีแบบประเมิน ไม่มีปุ่ม และไม่ล็อกหน้าผลคะแนน" },
       // allowEmpty: ช่องนี้ "ไม่ใส่" เป็นคำตอบที่ถูกต้อง ไม่ใช่ศูนย์ — ถ้าไม่มีธง
       // นี้ การลบตัวเลขทิ้งจะกลายเป็น 0 (Number("") === 0) แล้วช่องจะโชว์ "0"
-      { key: "activityHours", label: "ชั่วโมงกิจกรรม", type: "number", col: "half", allowEmpty: true, min: 0.5, step: 0.5, where: "ข้อความบนหน้าหลังลงคะแนน · เว้นว่าง = ไม่ระบุเลขชั่วโมง · ใส่เมื่อคณะยืนยันแล้วเท่านั้น" },
+      { key: "activityHours", label: "ชั่วโมงกิจกรรม", type: "number", col: "half", allowEmpty: true, min: 0.5, step: 0.5, where: "ข้อความบนหน้าหลังลงคะแนน เว้นว่าง = ไม่ระบุเลขชั่วโมง ใส่เมื่อคณะยืนยันแล้วเท่านั้น" },
     ],
   },
   {
     group: "โปสเตอร์ประชาสัมพันธ์",
     icon: "Image",
-    desc: "โปสเตอร์ประกาศการเลือกตั้งบนหน้าแรก · เปลี่ยนทุกปีโดยไม่ต้องแก้โค้ด",
+    desc: "โปสเตอร์ประกาศการเลือกตั้งบนหน้าแรก เปลี่ยนทุกปีโดยไม่ต้องแก้โค้ด",
     fields: [
       {
         key: "electionBannerUrl",
         label: "โปสเตอร์",
         type: "image",
         col: "full",
-        where: "หน้าแรก (ขั้นที่ 4 ของ Ballot) · ตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง",
+        where: "หน้าแรก (ขั้นที่ 4 ของ Ballot) ตรวจว่าวันที่บนโปสเตอร์ตรงกับวันเลือกตั้งจริง",
       },
     ],
   },

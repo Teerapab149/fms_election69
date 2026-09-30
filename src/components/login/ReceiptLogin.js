@@ -21,8 +21,8 @@ export default function ReceiptLogin({
     <div className="rc-root rcl-root rc-desk">
       <ReceiptBaseStyles />
 
-      <span className="rcl-corner rcl-corner--tl">FMS ELECTION · SAMO</span>
-      <span className="rcl-corner rcl-corner--br">SECURED · PSU PASSPORT</span>
+      <span className="rcl-corner rcl-corner--tl">FMS ELECTION / SAMO</span>
+      <span className="rcl-corner rcl-corner--br">SECURED BY PSU PASSPORT</span>
 
       <div className="rcl-slip">
         <div className="rcl-logo"><img src={getPath("/images/logo/09_FMS_Short_EN_V_PNG.png")} alt="FMS PSU" /></div>

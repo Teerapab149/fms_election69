@@ -62,7 +62,7 @@ export function BallotDropScene({ phase = "idle" }) {
     <div className={`rc-root rc-drop rc-drop--${phase}`} aria-hidden="true">
       <div className="rc-drop__stage">
       <div className="rc-drop__paper">
-        <span className="rc-drop__paper-line rc-dropmono">BALLOT · ✓</span>
+        <span className="rc-drop__paper-line rc-dropmono">BALLOT ✓</span>
         <span className="rc-drop__paper-band" />
       </div>
       <div className="rc-drop__box">
@@ -224,11 +224,11 @@ export function ReceiptConfirmSlip({
     >
       <div className="rc-cslip__card rc-grain" onClick={(e) => e.stopPropagation()}>
         <span className="rc-cslip__perf" aria-hidden="true" />
-        <span className="rc-cslip__eyebrow">CONFIRM · <span className="rc-th">ยืนยันครั้งสุดท้าย</span></span>
+        <span className="rc-cslip__eyebrow">CONFIRM <span className="rc-th">ยืนยันครั้งสุดท้าย</span></span>
         <h3 id="rc-cslip-title" className="rc-cslip__title">ยืนยันการลงคะแนน</h3>
         <p className="rc-cslip__sub">โปรดตรวจสอบความถูกต้อง ท่านไม่สามารถแก้ไขได้หลังจากยืนยัน</p>
         <div className={`rc-cslip__pick rc-cslip__pick--${tone}`}>
-          <span className="rc-cslip__pick-lab"><span className="rc-th">ท่านเลือก</span> · YOUR SELECTION</span>
+          <span className="rc-cslip__pick-lab"><span className="rc-th">ท่านเลือก</span>  YOUR SELECTION</span>
           <span className="rc-cslip__pick-val">{label}{labelEn && <i className="rc-cslip__pick-en">{labelEn}</i>}</span>
           {subLabel && <span className="rc-cslip__pick-sub">{subLabel}</span>}
         </div>
@@ -418,7 +418,7 @@ export default function ReceiptVote({
     if (selectedPartyId == null) return null;
     const p = parties.find((x) => x.id === selectedPartyId);
     if (p) return { kick: `พรรคหมายเลข ${p.number}`, name: p.name };
-    if (abstain && abstain.id === selectedPartyId) return { kick: "ABSTAIN · งดออกเสียง", name: "งดออกเสียง", abstain: true };
+    if (abstain && abstain.id === selectedPartyId) return { kick: "ABSTAIN งดออกเสียง", name: "งดออกเสียง", abstain: true };
     return null;
   })();
 
@@ -440,7 +440,7 @@ export default function ReceiptVote({
       <div className="rc-vote-wrap">
         {/* ===== issue / eyebrow line ===== */}
         <div className="rc-issue">
-          <span><span className="rc-th">ลงคะแนน</span> · CAST YOUR VOTE</span>
+          <span><span className="rc-th">ลงคะแนน</span>  CAST YOUR VOTE</span>
           <span>{prefix} {number}</span>
         </div>
 
@@ -453,7 +453,7 @@ export default function ReceiptVote({
             <span className="rc-vcard__kick rc-mono">VOTER CARD</span>
             <span className="rc-vcard__name">{name || "ผู้มีสิทธิ์เลือกตั้ง"}</span>
             <span className="rc-vcard__id rc-mono">{sid}</span>
-            <span className="rc-vcard__meta">บัตร {count} พรรค · หนึ่งเสียง</span>
+            <span className="rc-vcard__meta">บัตร {count} พรรค หนึ่งเสียง</span>
           </div>
           <div className="rc-inkpad" aria-hidden="true">
             <span className="rc-inkpad__well" />
@@ -471,8 +471,8 @@ export default function ReceiptVote({
             <div className="rc-ballot-mast">
               {/* watermark band — accent 4%, full sheet width, behind the masthead ONLY
                   (never behind the party rows, so name contrast is untouched) */}
-              <span className="rc-ballot-wm" aria-hidden="true"><span className="rc-mono">{prefix} {number} · OFFICIAL BALLOT · ONE VOTE ONLY · {prefix} {number} · OFFICIAL BALLOT</span></span>
-              <span className="rc-ballot-serial rc-mono">BALLOT PAPER · No. {prefix} {number} · {pad4(count)}</span>
+              <span className="rc-ballot-wm" aria-hidden="true"><span className="rc-mono">{prefix} {number} ✶ OFFICIAL BALLOT ✶ ONE VOTE ONLY ✶ {prefix} {number}  OFFICIAL BALLOT</span></span>
+              <span className="rc-ballot-serial rc-mono">BALLOT PAPER No. {prefix} {number}  {pad4(count)}</span>
               <h1 className="rc-ballot-title">บัตรลงคะแนนเลือกตั้ง</h1>
               <p className="rc-ballot-note">เลือกได้เพียงหนึ่งตัวเลือก แตะที่พรรคเพื่อทำเครื่องหมาย หรือกดดูรายละเอียดเพื่ออ่านนโยบายก่อนตัดสินใจ</p>
             </div>
@@ -500,7 +500,7 @@ export default function ReceiptVote({
                   index={null}
                   number={0}
                   abstain
-                  kick={<><span className="rc-th">งดออกเสียง</span> · ABSTAIN</>}
+                  kick={<><span className="rc-th">งดออกเสียง</span>  ABSTAIN</>}
                   name="ไม่ประสงค์ลงคะแนน"
                   slogan="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
                   selected={abstain.id === selectedPartyId}
@@ -519,13 +519,13 @@ export default function ReceiptVote({
         <div className="rc-vbar__perf" aria-hidden="true" />
         <div className="rc-vbar__in">
           <div className="rc-vbar__sel">
-            <span className="rc-vbar__lab"><span className="rc-th">การเลือกของคุณ</span> · YOUR SELECTION</span>
+            <span className="rc-vbar__lab"><span className="rc-th">การเลือกของคุณ</span>  YOUR SELECTION</span>
             {selection ? (
               <span className={`rc-vbar__val${selection.abstain ? " is-abstain" : ""}`}>
                 <span className="rc-vbar__dot" aria-hidden="true" />{selection.name}
               </span>
             ) : (
-              <span className="rc-vbar__val rc-vbar__val--empty">ยังไม่ได้เลือก · No selection</span>
+              <span className="rc-vbar__val rc-vbar__val--empty">ยังไม่ได้เลือก No selection</span>
             )}
           </div>
           <button

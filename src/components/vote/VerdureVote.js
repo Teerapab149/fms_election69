@@ -95,8 +95,8 @@ export default function VerdureVote({
     if (selectedPartyId == null) return null;
     const p = regularParties.find((x) => x.id === selectedPartyId);
     if (p) return `No. ${pad2(p.number)} — ${p.name}`;
-    if (disapprove?.id === selectedPartyId) return "ไม่รับรอง · Disapprove";
-    if (abstain?.id === selectedPartyId) return "งดออกเสียง · Abstain";
+    if (disapprove?.id === selectedPartyId) return "ไม่รับรอง Disapprove";
+    if (abstain?.id === selectedPartyId) return "งดออกเสียง Abstain";
     return null;
   })();
 
@@ -104,11 +104,11 @@ export default function VerdureVote({
     <VerdureShell active="vote" editorMode={editorMode}
       edge={{ num: "04", label: "Ballot", th: "ลงคะแนนเสียง" }}
       cornermarkTitle="Ballot" cornermarkSub="Secure session"
-      statusChip={<div className="vd-chip-live"><span className="dot" /> BALLOT · <strong>SECURE</strong></div>}>
+      statusChip={<div className="vd-chip-live"><span className="dot" /> BALLOT <strong>SECURE</strong></div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-ballot">
         <div className="vd-ballot__h">
-          <div className="vd-ballot__kicker"><span className="rule" /> {meta.wordmark} · <span className="vd-thai">เลือกตั้งประจำปี</span> {meta.ay} <span className="rule" /></div>
+          <div className="vd-ballot__kicker"><span className="rule" /> {meta.wordmark}  <span className="vd-thai">เลือกตั้งประจำปี</span> {meta.ay} <span className="rule" /></div>
           <h1 className="vd-ballot__title">Choose <em>one.</em></h1>
           <div className="vd-ballot__accent" aria-hidden />
           <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
@@ -150,7 +150,7 @@ export default function VerdureVote({
             <div className="vd-confirm__lbl">YOUR SELECTION</div>
             {/* key remount on selection change → one-shot settle animation (CSS,
                 visible throughout — from-state is translated, never opacity-0) */}
-            <div className="vd-confirm__val" key={selectedName || "none"}>{selectedName || "ยังไม่ได้เลือก · No selection"}</div>
+            <div className="vd-confirm__val" key={selectedName || "none"}>{selectedName || "ยังไม่ได้เลือก No selection"}</div>
           </div>
           <button type="button" className={`vd-btn vd-btn--terra vd-btn--lg ${selectedPartyId == null || isSubmitting ? "is-disabled" : ""}`}
             disabled={selectedPartyId == null || isSubmitting} onClick={() => onConfirm()}>

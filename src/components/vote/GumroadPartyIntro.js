@@ -128,7 +128,7 @@ export default function GumroadPartyIntro({ party = {}, onDone = () => {}, durat
         ) : null}
 
         <motion.span className="gsi-hint" initial={rm({ opacity: 0 })} animate={{ opacity: 1 }} transition={rt({ duration: 0.5, delay: 1.95 })}>
-          แตะเพื่อเข้าสู่หน้าพรรค · TAP TO ENTER
+          แตะเพื่อเข้าสู่หน้าพรรค TAP TO ENTER
         </motion.span>
       </div>
 

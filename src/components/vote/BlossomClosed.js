@@ -90,10 +90,10 @@ export default function BlossomClosed({
   let factual = null;
   if (variant === "waiting") {
     const d = formatThaiDate(ELECTION_START);
-    if (d) factual = `เปิดโหวต ${d} · ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `เปิดโหวต ${d} เวลา ${formatThaiTime(ELECTION_START)}–${formatThaiTime(ELECTION_END)}`;
   } else if (variant === "ended") {
     const d = formatThaiDate(ELECTION_END);
-    if (d) factual = `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}`;
+    if (d) factual = `ปิดหีบ ${d} เวลา ${formatThaiTime(ELECTION_END)}`;
   }
 
   return (
@@ -109,14 +109,14 @@ export default function BlossomClosed({
       <div className="bl-page">
         {/* ===== issue line (masthead — closed variant) ===== */}
         <div className="bl-issue-line">
-          <span><span className="bl-thai bl-thai--nw">สถานะระบบ</span> <b>·</b> SYSTEM STATUS</span>
+          <span><span className="bl-thai bl-thai--nw">สถานะระบบ</span> SYSTEM STATUS</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== ink band — quiet editorial notice (mirrors home closed grammar) ===== */}
         <section className="bl-closed-band">
           <div className="bl-closed-band__in">
-            <div className="bl-closed-cap"><span className="bl-closed-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{eyebrow.th}</span> · <span className="bl-nw">{eyebrow.en}</span></div>
+            <div className="bl-closed-cap"><span className="bl-closed-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{eyebrow.th}</span>  <span className="bl-nw">{eyebrow.en}</span></div>
             <h1 className="bl-closed-head">{title}</h1>
             <p className="bl-closed-desc">{desc}</p>
 

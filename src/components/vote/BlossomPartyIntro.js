@@ -118,7 +118,7 @@ export default function BlossomPartyIntro({ party = {}, onDone = () => {}, durat
       <div className="bl-intro__stage">
         <motion.p className="bl-intro__eyebrow"
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: EASE }}>
-          พรรคเดียวที่ลงสมัคร{hasNo ? ` · หมายเลข ${no}` : ""}
+          พรรคเดียวที่ลงสมัคร{hasNo ? ` หมายเลข ${no}` : ""}
         </motion.p>
 
         <motion.div className="bl-intro__medallion"

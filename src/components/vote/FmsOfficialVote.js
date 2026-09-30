@@ -135,7 +135,7 @@ export default function FmsOfficialVote({
   return (
     <FmsOfficialShell
       active="vote"
-      kicker={`${meta.campaign} · ปีการศึกษา ${meta.ay}`}
+      kicker={`${meta.campaign} ปีการศึกษา ${meta.ay}`}
       title={isSingleParty ? "ลงคะแนนรับรองผู้สมัคร" : "ลงคะแนนเลือกตั้ง"}
       desc={
         isSingleParty

@@ -100,10 +100,10 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
   // Decorative ballot-ref — random, ephemeral, encodes nothing (client-effect so
   // SSR has no hydration mismatch). editor/preview uses a stable sample so the
   // reviewed slide is deterministic.
-  const [ref, setRef] = useState(editorMode ? "A7F3 · 90K2 · 1739 · 0847" : null);
+  const [ref, setRef] = useState(editorMode ? "A7F3 90K2 1739 0847" : null);
   useEffect(() => {
     if (editorMode) return;
-    setRef(`${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()} · ${randRefGroup()}`);
+    setRef(`${randRefGroup()} ${randRefGroup()} ${randRefGroup()} ${randRefGroup()}`);
   }, [editorMode]);
 
   // VOTER IDENTITY (v2-R4a) — the user's OWN profile: name / studentId / major /
@@ -118,7 +118,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
     ? { date: "06 ก.พ. 2569", time: "10:24:07" }
     : formatVotedAt(user?.votedAt);
 
-  const stubRef = ref || "···· · ···· · ···· · ····";
+  const stubRef = ref || "•••• •••• •••• ••••";
 
   return (
     <div className={`fms-app rc-root rc-suc-root rc-desk${editorMode ? "" : " rc-printing"}`}>
@@ -142,7 +142,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
       <div className="rc-suc-wrap">
         {/* LEFT (desktop) / TOP (mobile) — the display headline block */}
         <header className="rc-suc-headline">
-          <div className="rc-suc-hl-eyebrow">✶ <span className="rc-th">บันทึกคะแนนแล้ว</span> · BALLOT RECORDED ✶</div>
+          <div className="rc-suc-hl-eyebrow">✶ <span className="rc-th">บันทึกคะแนนแล้ว</span>  BALLOT RECORDED ✶</div>
           <div className="rc-suc-display">
             <span className="rc-suc-display-1">เสียงของคุณ</span>
             <span className="rc-suc-display-2">ถูกนับแล้ว</span>
@@ -162,10 +162,10 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
             {/* a ghost of a previous ink stamp, ON the desk (very faint) */}
             <div className="rc-suc-ghost"><span>{prefix} {number} ✓</span></div>
             {/* a short register-tape scrap peeking from the left edge */}
-            <div className="rc-suc-regtape"><span>0142 · 0938 · 1204 · 0071 · 0559</span></div>
+            <div className="rc-suc-regtape"><span>0142 0938 1204 0071 0559</span></div>
             {/* the ballot STUB — tucked under the receipt's lower-left, same ref */}
             <div className="rc-suc-stub">
-              <div className="rc-suc-stub-h"><span className="rc-th">เลขอ้างอิง</span> · REF No.</div>
+              <div className="rc-suc-stub-h"><span className="rc-th">เลขอ้างอิง</span>  REF No.</div>
               <div className="rc-suc-stub-ref">{stubRef}</div>
             </div>
             {/* matte paper tape — one pins the stub, one loose on the desk */}
@@ -175,12 +175,12 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
             <span className="rc-suc-chip"><ReceiptShipMark className="rc-suc-chip-ship" /></span>
           </div>
 
-          <div className="rc-suc-eyebrow">✶ <span className="rc-th">กำลังพิมพ์ใบเสร็จ</span> · printing ✶</div>
+          <div className="rc-suc-eyebrow">✶ <span className="rc-th">กำลังพิมพ์ใบเสร็จ</span>  printing ✶</div>
 
           {/* the ballot-printer head + slot */}
           <div className="rc-suc-machine" aria-hidden="true">
             <span className="rc-suc-led" />
-            <div className="rc-suc-brand">{prefix} {number} · BALLOT PRINTER</div>
+            <div className="rc-suc-brand">{prefix} {number}  BALLOT PRINTER</div>
             <div className="rc-suc-slot" />
           </div>
 
@@ -190,7 +190,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
           <div className="rc-suc-window">
             {/* the receipt feeding out of the slot */}
             <div className="rc-suc-receipt">
-              <div className="rc-suc-logo">{prefix} {number} · PARTICIPATION</div>
+              <div className="rc-suc-logo">{prefix} {number}  PARTICIPATION</div>
               <h1 className="rc-suc-title">บันทึกคะแนนแล้ว</h1>
               <div className="rc-suc-sub">BALLOT RECORDED</div>
 
@@ -275,7 +275,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
               aria-disabled={resultsUnlocked ? undefined : "true"}
             >
               {resultsUnlocked ? (
-                <>ดูผลคะแนน · Results
+                <>ดูผลคะแนน Results
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                 </>
               ) : (
@@ -290,7 +290,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
           </div>
 
           <div className="rc-suc-foot">
-            <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span> · <span className="rc-th">การลงคะแนนของคุณเป็นความลับ</span> · barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
+            <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span>  <span className="rc-th">การลงคะแนนของคุณเป็นความลับ</span>  barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
           </div>
 
           <footer className="rc-suc-copy">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>

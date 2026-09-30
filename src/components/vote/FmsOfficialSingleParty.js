@@ -146,13 +146,13 @@ export default function FmsOfficialSingleParty({
           <span className="fo-sb__ghost" aria-hidden>{party.number}</span>
         )}
         <div className="fo-sb__ask-in">
-          <span className="fo-sb__eyebrow">บัตรลงคะแนน · ผู้สมัครเพียงพรรคเดียว</span>
+          <span className="fo-sb__eyebrow">บัตรลงคะแนน ผู้สมัครเพียงพรรคเดียว</span>
           <div className="fo-sb__ask-row">
             {logo ? (
               <button
                 type="button"
                 className="fo-sb__crest fo-sb__crest--btn"
-                onClick={() => openLightbox(logo, `ตราสัญลักษณ์พรรค · ${name}`)}
+                onClick={() => openLightbox(logo, `ตราสัญลักษณ์พรรค ${name}`)}
                 aria-label={`ขยายตราสัญลักษณ์พรรค ${name}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -229,7 +229,7 @@ export default function FmsOfficialSingleParty({
                 <button
                   type="button"
                   className="fo-sb__cover-btn"
-                  onClick={() => openLightbox(cover, `ภาพหมู่พรรค · ${name}`)}
+                  onClick={() => openLightbox(cover, `ภาพหมู่พรรค ${name}`)}
                   aria-label={`ขยายภาพหมู่พรรค ${name}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -242,7 +242,7 @@ export default function FmsOfficialSingleParty({
 
           {members.length > 0 && (
             <section className="fo-sb__field">
-              <h2 className="fo-sb__flabel">ผู้สมัครในทีม · {members.length} คน</h2>
+              <h2 className="fo-sb__flabel">ผู้สมัครในทีม {members.length} คน</h2>
               {/* Portraits, and every one of them opens. A voter deciding whether
                   to hand this team the สโมสร is entitled to see who they are and
                   to check any individual's record — which post, which major,

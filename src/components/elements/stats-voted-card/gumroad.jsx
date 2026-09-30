@@ -8,7 +8,7 @@ import { CheckCircle2 } from "lucide-react";
 export default function StatsVotedGumroad({ voted = 0 }) {
   return (
     <div className="gh-stat gh-stat--pink" data-element="stats-voted-card" data-variant="gumroad">
-      <div className="gh-stat__lbl"><CheckCircle2 size={14} /> <span className="gm-thai">ใช้สิทธิ์แล้ว</span> · VOTED</div>
+      <div className="gh-stat__lbl"><CheckCircle2 size={14} /> <span className="gm-thai">ใช้สิทธิ์แล้ว</span>  VOTED</div>
       <div className="gh-stat__val">{Number(voted).toLocaleString()}<span className="gh-stat__unit">คน</span></div>
       <div className="gh-stat__sub">ลงคะแนนแล้ว</div>
       <svg className="gh-ekg" viewBox="0 0 200 60" stroke="#1A1A1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M0 30 L40 30 L48 30 L54 10 L62 50 L70 30 L100 30 L108 30 L116 18 L124 42 L132 30 L200 30" /></svg>

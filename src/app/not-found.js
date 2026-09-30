@@ -16,7 +16,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "ไม่พบหน้าที่ต้องการ · ระบบเลือกตั้งออนไลน์ FMS",
+  title: "ไม่พบหน้าที่ต้องการ ระบบเลือกตั้งออนไลน์ FMS",
 };
 
 export default function NotFound() {
@@ -90,7 +90,7 @@ export default function NotFound() {
         </Link>
 
         <p style={{ fontSize: "12px", color: "#9CA3AF", margin: "28px 0 0" }}>
-          ระบบเลือกตั้งออนไลน์ · สโมสรนักศึกษาคณะวิทยาการจัดการ ม.อ.
+          ระบบเลือกตั้งออนไลน์ สโมสรนักศึกษาคณะวิทยาการจัดการ ม.อ.
         </p>
       </div>
     </main>

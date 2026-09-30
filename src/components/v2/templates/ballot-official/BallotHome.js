@@ -172,7 +172,7 @@ export default function BallotHome({
                 </Wrap>
               )}
               </motion.div>
-              {howTo.show && (
+              {howTo.link && (
                 <motion.a variants={RISE} href={editorMode ? undefined : howTo.href} className="bo-howlink">
                   วิธีลงคะแนน <span aria-hidden>↓</span>
                 </motion.a>

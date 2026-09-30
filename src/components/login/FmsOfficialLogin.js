@@ -32,10 +32,10 @@ export default function FmsOfficialLogin({
       <div className="fo-utility">
         <div className="fo-utility__in">
           <span className="fo-utility__name fo-utility__name--full">
-            {meta.systemName} · {meta.faculty} {meta.university}
+            {meta.systemName}  {meta.faculty} {meta.university}
           </span>
           <span className="fo-utility__name fo-utility__name--short">
-            {meta.systemName} · {meta.faculty}
+            {meta.systemName}  {meta.faculty}
           </span>
           <span className="fo-utility__right">
             <span className="fo-utility__year">ปีการศึกษา {meta.ay}</span>

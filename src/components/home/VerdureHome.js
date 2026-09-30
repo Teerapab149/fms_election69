@@ -30,6 +30,7 @@ import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfi
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { useElectionStatus } from "../../hooks/useElectionStatus";
 import { useHowToVote } from "../../hooks/useHowToVote";
+import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
 
 // useElectionStatus action → the voteCTA-button state vocabulary
 const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
@@ -179,14 +180,19 @@ export default function VerdureHome({
 
   // the CTA follows the same status as the chip and the ledger
   const voteState = editorMode ? "login" : (CTA_STATE[election.action] || "login");
-  const CTA = {
-    login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN · PSU PASSPORT", action: "signin", disabled: false },
+  const CTA_BASE = {
+    login:    { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN WITH PSU PASSPORT", action: "signin", disabled: false },
     notVoted: { label: "ไปลงคะแนนเสียง",          sub: "CAST YOUR BALLOT",       href: "/vote",     disabled: false },
-    voted:    { label: "ดูผลคะแนน",               sub: "YOU HAVE VOTED · RESULTS", href: "/results", disabled: false },
+    voted:    { label: "ดูผลคะแนน",               sub: "YOU HAVE VOTED", href: "/results", disabled: false },
     closed:   { label: "ยังไม่เปิดรับลงคะแนน",     sub: "POLLS NOT OPEN",         href: "/closed",   disabled: true },
     paused:   { label: "ระบบหยุดชั่วคราว",         sub: "ON HOLD",                href: "/closed",   disabled: true },
     ended:    { label: "ดูผลคะแนนอย่างเป็นทางการ", sub: "FINAL RESULTS",          href: "/results",  disabled: false },
   }[voteState] || { label: "เข้าสู่ระบบเพื่อลงคะแนน", sub: "SIGN IN", action: "signin", disabled: false };
+  // closed but not yet announced: say so instead of promising results (the
+  // results page only shows "wait" until an admin publishes)
+  const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
+    ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
+    : CTA_BASE;
 
   const meta = verdureMeta(globalConfig);
   // body canvas sits outside .vd-root → paint it with the active theme's cream
@@ -232,7 +238,7 @@ export default function VerdureHome({
           {/* the polling day, from the configured schedule — it used to read
               "EST. 1978", a founding year computed as (year − edition + 1) that
               no one had set and no voter needed */}
-          <span className="side side--l">VOTING · {votingDay}</span>
+          <span className="side side--l">VOTING {votingDay}</span>
           <span className="mid">{meta.tagline}</span>
           <span className="side side--r">VOL. {numberPart} / {meta.cy}</span>
         </div>
@@ -262,10 +268,10 @@ export default function VerdureHome({
             </Wrap>
             <a href={href("/candidates")} className="vd-hero__alt">
               <span className="vd-hero__alt-label">ดูผู้สมัครและนโยบาย</span>
-              <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
+              <span className="vd-hero__alt-sub">CANDIDATES {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
             </a>
           </motion.div>
-          {howTo.show && (
+          {howTo.link && (
             <motion.a href={editorMode ? undefined : howTo.href} className="vd-hero__how" {...rise(0.4)}>
               วิธีลงคะแนน <span aria-hidden>↓</span>
             </motion.a>
@@ -274,13 +280,13 @@ export default function VerdureHome({
 
         <Wrap id="stats-progress-card">
           <div className="vd-home__ledger">
-            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span> · <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">VOTED</span>  <span className="vd-thai">ใช้สิทธิ์</span></div><div className="val vd-tabular"><em>{fmtInt(rawStats.totalVoted)}</em><small>/ {fmtInt(rawStats.totalEligible)}</small></div></div>
             <span className="vd-home__ledger-sep" />
-            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span> · <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">TURNOUT</span>  <span className="vd-thai">สัดส่วน</span></div><div className="val vd-tabular">{pct}<small>%</small></div></div>
             <span className="vd-home__ledger-sep" />
-            <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span> · <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
+            <div className="vd-home__stat vd-home__stat--cd"><div className="lbl"><span className="vd-nw">{cd.labelEn}</span>  <span className="vd-thai">{cd.labelTh}</span></div><div className="val vd-tabular">{cd.days > 0 && <span className="d">{cd.days} วัน</span>}{cd.value}</div></div>
             <span className="vd-home__ledger-sep" />
-            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span> · <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
+            <div className="vd-home__stat"><div className="lbl"><span className="vd-nw">PARTIES</span>  <span className="vd-thai">พรรค</span></div><div className="val vd-tabular">{partyCount}</div></div>
           </div>
         </Wrap>
 
@@ -318,7 +324,6 @@ export default function VerdureHome({
         )}
 
         {/* how to vote — what the club otherwise posts on Instagram */}
-        {howTo.show && (
         <section id={howTo.id} className="vd-sec vd-sec--steps" aria-labelledby="vd-steps-h">
           <div className="vd-sec__head">
             <h2 id="vd-steps-h">ลงคะแนนใน <em>3 ขั้นตอนง่ายๆ</em></h2>
@@ -334,7 +339,6 @@ export default function VerdureHome({
             ))}
           </ol>
         </section>
-        )}
       </div>
 
       <VerdureFooter />

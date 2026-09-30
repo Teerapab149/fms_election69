@@ -68,7 +68,7 @@ export default function FmsOfficialResults({
   return (
     <FmsOfficialShell
       active="results"
-      kicker={`${meta.campaign} · ปีการศึกษา ${meta.ay}`}
+      kicker={`${meta.campaign} ปีการศึกษา ${meta.ay}`}
       title="ผลการลงคะแนน"
       desc={
         isNotStarted ? "ยังไม่เปิดการลงคะแนน ผลจะแสดงที่หน้านี้เมื่อการเลือกตั้งสิ้นสุด"
@@ -163,7 +163,7 @@ export default function FmsOfficialResults({
             <div className="fo-res__tally">
               <div className="fo-sechead">
                 <h2>คะแนนรายพรรค</h2>
-                <p>เรียงจากคะแนนมากไปน้อย · สัดส่วนคิดจากบัตรทั้งหมด {fmtInt(totalVotes)} ใบ</p>
+                <p>เรียงจากคะแนนมากไปน้อย สัดส่วนคิดจากบัตรทั้งหมด {fmtInt(totalVotes)} ใบ</p>
               </div>
 
           {undecided && (

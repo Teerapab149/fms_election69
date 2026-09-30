@@ -122,8 +122,8 @@ export default function BlossomResults({
     const n = parseInt(c.number);
     if (n > 0) return `PARTY NO. ${pad2(c.number)}`;
     return n === 0
-      ? <><span className="bl-nw">ABSTAIN</span> · <span className="bl-thai bl-thai--nw">งดออกเสียง</span></>
-      : <><span className="bl-nw">DISAPPROVE</span> · <span className="bl-thai bl-thai--nw">ไม่รับรอง</span></>;
+      ? <><span className="bl-nw">ABSTAIN</span>  <span className="bl-thai bl-thai--nw">งดออกเสียง</span></>
+      : <><span className="bl-nw">DISAPPROVE</span>  <span className="bl-thai bl-thai--nw">ไม่รับรอง</span></>;
   };
 
   // winner = highest score in the eligible pool (parties, plus DISAPPROVE only in a
@@ -158,9 +158,9 @@ export default function BlossomResults({
     : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดล็อกพร้อมกันเมื่อคณะกรรมการประกาศผล";
 
   const lockNote = ended
-    ? "ปิดโหวตแล้ว · รอประกาศผลอย่างเป็นทางการ"
+    ? "ปิดโหวตแล้ว รอประกาศผลอย่างเป็นทางการ"
     : countdownText
-      ? `ปิดโหวตในอีก · ${countdownText}`
+      ? `ปิดโหวตในอีก ${countdownText}`
       : "รอเปิดโหวต";
 
   const hasDemo = byYear.length > 0 || byGender.length > 0 || byMajor.length > 0;
@@ -178,13 +178,13 @@ export default function BlossomResults({
       <div className="bl-page">
         {/* ===== issue line (masthead — results variant) ===== */}
         <div className="bl-issue-line">
-          <span><span className="bl-thai bl-thai--nw">ผลคะแนน</span> <b>·</b> RESULTS</span>
+          <span><span className="bl-thai bl-thai--nw">ผลคะแนน</span> RESULTS</span>
           <span>{prefix} {number}</span>
         </div>
 
         {/* ===== editorial masthead: mono status line + hollow display word ===== */}
         <header className="bl-res-head">
-          <span className="bl-res-kick"><span className="bl-res-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{statusTh}</span> · <span className="bl-nw">{statusEn}</span></span>
+          <span className="bl-res-kick"><span className="bl-res-dot" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{statusTh}</span>  <span className="bl-nw">{statusEn}</span></span>
           <h1 className="bl-res-word">ผลคะแนน</h1>
         </header>
         <p className="bl-res-deck">{deckCopy}</p>
@@ -203,18 +203,18 @@ export default function BlossomResults({
               <div className="bl-rfig bl-rfig-1">
                 <span className="bl-rfig__idx">01</span>
                 <span className="bl-rfig__n">{revealed ? <RevealInt value={totalVotes} enabled={anim} /> : fmt(totalVotes)}<small>เสียง</small></span>
-                <span className="bl-rfig__lab"><span className="bl-res-live" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span> · <span className="bl-nw">TOTAL VOTES</span></span>
+                <span className="bl-rfig__lab"><span className="bl-res-live" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ใช้สิทธิ์แล้ว</span>  <span className="bl-nw">TOTAL VOTES</span></span>
               </div>
               <div className="bl-rfig bl-rfig-2">
                 <span className="bl-rfig__idx">02</span>
                 <span className="bl-rfig__n">{revealed ? <RevealFixed value={turnout} digits={1} enabled={anim} /> : turnout.toFixed(1)}<small>%</small></span>
-                <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">อัตราการใช้สิทธิ์</span> · <span className="bl-nw">TURNOUT</span></span>
+                <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">อัตราการใช้สิทธิ์</span>  <span className="bl-nw">TURNOUT</span></span>
                 <span className="bl-rfig__bar" aria-hidden="true"><span style={{ width: `${Math.min(100, turnout)}%` }} /></span>
               </div>
               <div className="bl-rfig bl-rfig-3">
                 <span className="bl-rfig__idx">03</span>
                 <span className="bl-rfig__n">{revealed ? <RevealInt value={totalEligible} enabled={anim} /> : fmt(totalEligible)}<small>คน</small></span>
-                <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">ผู้มีสิทธิ์</span> · <span className="bl-nw">ELIGIBLE</span></span>
+                <span className="bl-rfig__lab"><span className="bl-thai bl-thai--nw">ผู้มีสิทธิ์</span>  <span className="bl-nw">ELIGIBLE</span></span>
               </div>
             </section>
 
@@ -224,8 +224,8 @@ export default function BlossomResults({
                 <section className="bl-res-rank">
                   <div className="bl-res-sechead">
                     <span className="bl-res-sechead__kick">{singleParty
-                      ? <><span className="bl-thai bl-thai--nw">ผลการรับรอง</span> · <span className="bl-nw">VERDICT</span></>
-                      : <><span className="bl-thai bl-thai--nw">อันดับคะแนน</span> · <span className="bl-nw">STANDINGS</span></>}</span>
+                      ? <><span className="bl-thai bl-thai--nw">ผลการรับรอง</span>  <span className="bl-nw">VERDICT</span></>
+                      : <><span className="bl-thai bl-thai--nw">อันดับคะแนน</span>  <span className="bl-nw">STANDINGS</span></>}</span>
                     <h2 className="bl-res-sechead__h">{singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h2>
                   </div>
                   {undecided && (
@@ -247,7 +247,7 @@ export default function BlossomResults({
                             <span className="bl-rrow__name">
                               {c.name}
                               {isWin && <span className="bl-rrow__dia" aria-hidden="true" />}
-                              {isWin && <span className="bl-rrow__tag"><span className="bl-thai bl-thai--nw">ผู้ชนะ</span> · <span className="bl-nw">WINNER</span></span>}
+                              {isWin && <span className="bl-rrow__tag"><span className="bl-thai bl-thai--nw">ผู้ชนะ</span>  <span className="bl-nw">WINNER</span></span>}
                             </span>
                           </span>
                           <span className="bl-rrow__data">
@@ -275,13 +275,13 @@ export default function BlossomResults({
                 {hasDemo && (
                   <section className="bl-res-demo">
                     <div className="bl-res-sechead">
-                      <span className="bl-res-sechead__kick"><span className="bl-thai bl-thai--nw">สถิติผู้ใช้สิทธิ์</span> · <span className="bl-nw">TURNOUT</span></span>
+                      <span className="bl-res-sechead__kick"><span className="bl-thai bl-thai--nw">สถิติผู้ใช้สิทธิ์</span>  <span className="bl-nw">TURNOUT</span></span>
                       <h2 className="bl-res-sechead__h">ประชากรผู้มาใช้สิทธิ์</h2>
                     </div>
                     <div className="bl-demo-grid">
                       {byGender.length > 0 && (
                         <div className="bl-panel">
-                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">เพศ</span> · <span className="bl-nw">BY GENDER</span></span><em>§ 01</em></div>
+                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">เพศ</span>  <span className="bl-nw">BY GENDER</span></span><em>§ 01</em></div>
                           <div className="bl-donut">
                             <ResponsiveContainer width="100%" height={230}>
                               <PieChart accessibilityLayer={false}>
@@ -307,7 +307,7 @@ export default function BlossomResults({
 
                       {byYear.length > 0 && (
                         <div className="bl-panel">
-                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">ชั้นปี</span> · <span className="bl-nw">BY YEAR</span></span><em>§ 02</em></div>
+                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">ชั้นปี</span>  <span className="bl-nw">BY YEAR</span></span><em>§ 02</em></div>
                           <ResponsiveContainer width="100%" height={230}>
                             <BarChart accessibilityLayer={false} data={byYear} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
                               <CartesianGrid vertical={false} stroke={t.line} />
@@ -324,7 +324,7 @@ export default function BlossomResults({
 
                       {byMajor.length > 0 && (
                         <div className="bl-panel bl-panel--wide">
-                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">สาขา</span> · <span className="bl-nw">BY MAJOR</span></span><em>§ 03</em></div>
+                          <div className="bl-panel__cap"><span><span className="bl-thai bl-thai--nw">สาขา</span>  <span className="bl-nw">BY MAJOR</span></span><em>§ 03</em></div>
                           <ResponsiveContainer width="100%" height={Math.max(240, byMajor.length * 46)}>
                             <BarChart accessibilityLayer={false} data={byMajor} layout="vertical" margin={{ top: 4, right: 44, left: 8, bottom: 4 }}>
                               <CartesianGrid horizontal={false} stroke={t.line} />
@@ -347,7 +347,7 @@ export default function BlossomResults({
               /* ===== LOCKED moment — full-bleed ink band (closed-page grammar) ===== */
               <section className="bl-res-lock">
                 <div className="bl-res-lock__in">
-                  <div className="bl-res-lock__cap"><span className="bl-res-lock__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ปิดผนึกไว้</span> · <span className="bl-nw">EMBARGOED</span></div>
+                  <div className="bl-res-lock__cap"><span className="bl-res-lock__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">ปิดผนึกไว้</span>  <span className="bl-nw">EMBARGOED</span></div>
                   <h2 className="bl-res-lock__head">
                     <span className="bl-res-lock__l1">ปิดผนึก</span>
                     <span className="bl-res-lock__l2">ผลคะแนน</span>

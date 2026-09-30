@@ -55,7 +55,7 @@ export function verdureMeta(gc = {}) {
     cy, ay, faculty, org, campaign,
     founded: String(founded), ordSuffix: ordinalSuffix(num),
     wordmark: `${prefix} ${num}`,                                // "SAMO 49"
-    cornermarkSub: `${faculty} Election · ${ay}`,                // BE year, per the design ("FMS Election · 2569")
+    cornermarkSub: `${faculty} Election ${ay}`,                // BE year, per the design ("FMS Election · 2569")
     tagline: `— ${faculty} Student Council Election —`,          // not year-locked
   };
 }
@@ -79,7 +79,7 @@ const LOGO_SRC = "/images/logo/FMS_Standard_Logo_PNG.png";
 export function VerdureEdge({ num = "01", label = "Home", th = "", right = false, wordmark = "", year = "" }) {
   return (
     <div className={`vd-edge ${right ? "vd-edge--right" : ""}`}>
-      <span className="big">{num}</span> &nbsp;·&nbsp; {label}{th ? <> &nbsp;·&nbsp; <span className="vd-thai">{th}</span></> : null}{wordmark ? <> &nbsp;·&nbsp; {wordmark}</> : null}{year ? <> &nbsp;·&nbsp; {year}</> : null}
+      <span className="big">{num}</span> &nbsp;&nbsp;&nbsp; {label}{th ? <> &nbsp;&nbsp;&nbsp; <span className="vd-thai">{th}</span></> : null}{wordmark ? <> &nbsp;&nbsp;&nbsp; {wordmark}</> : null}{year ? <> &nbsp;&nbsp;&nbsp; {year}</> : null}
     </div>
   );
 }
@@ -108,7 +108,7 @@ export function VerdureFooter() {
 }
 
 // ── top-left cornermark — real FMS logo on a cream chip + serif wordmark ──
-export function VerdureCornermark({ title = "SAMO 50", sub = "FMS Election · 2570", editorMode = false }) {
+export function VerdureCornermark({ title = "SAMO 50", sub = "FMS Election 2570", editorMode = false }) {
   return (
     <a href={editorMode ? undefined : getPath("/")} className="vd-cornermark">
       <span className="vd-cornermark__logo">
@@ -203,7 +203,7 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
     : { label: cd.label, timer: cd.label === "PAUSED" ? "หยุดชั่วคราว" : "ปิดแล้ว" };
   const defaultChip = (
     <div className="vd-chip-live">
-      <span className="dot" /> {chip.label} · <strong>{chip.timer}</strong>
+      <span className="dot" /> {chip.label}  <strong>{chip.timer}</strong>
     </div>
   );
 
@@ -230,7 +230,7 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
             <div className="vd-user__name">{userName.split(" ")[0] || userName}</div>
             {userId && <div className="vd-user__id">No. {userId}</div>}
           </div>
-          <button type="button" className="vd-user__out" title="ออกจากระบบ · Sign out" aria-label="ออกจากระบบ"
+          <button type="button" className="vd-user__out" title="ออกจากระบบ Sign out" aria-label="ออกจากระบบ"
             onClick={() => { if (editorMode) return; const bp = process.env.NEXT_PUBLIC_BASE_PATH || ""; const ret = `${window.location.origin}${bp}`; let url = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(ret)}`; if (session?.id_token) url += `&id_token_hint=${session.id_token}`; signOut({ redirect: false }).finally(() => { window.location.href = url; }); }}>
             ⏻
           </button>
