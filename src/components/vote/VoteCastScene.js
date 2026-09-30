@@ -15,7 +15,7 @@ const THEMES = {
   "fms-official": { bg: "#f5f4f1", ink: "#332e43", accent: "#782b74", surface: "#fdfbf6", label: "FACULTY OF MANAGEMENT SCIENCES" },
   gumroad: { bg: "#f4e9dd", ink: "#29241f", accent: "#8a2680", surface: "#f7c7df", label: "MAKE YOUR MARK." },
   "studio-dark": { bg: "#12130e", ink: "#ecebdd", accent: "#d3fc50", surface: "#24271b", label: "YOUR VOICE. IN MOTION." },
-  verdure: { bg: "#eff2e7", ink: "#304834", accent: "#526d3b", surface: "#dbe3ce", label: "SMALL VOICES. SHARED GROWTH." },
+  verdure: { bg: "#eff2e7", ink: "#304834", accent: "#526d3b", surface: "#dbe3ce", label: "ONE STUDENT. ONE VOTE." },
 };
 
 export function getVoteCastFamily(templateId) {

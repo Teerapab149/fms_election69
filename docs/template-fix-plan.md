@@ -316,3 +316,31 @@ StudioDarkResults and others hold small uncommitted contrast fixes from a
 QA session five days ago. Until those are committed (or dropped), the home
 steps sections for Blossom and Studio Dark, and the blocked fixes above,
 cannot be done without mixing two sessions' work in one file.
+
+### How-to-vote reach + Verdure success words (2026-10-01)
+Owner asked: keep the steps on the landing page (not a separate page), but
+make them findable and drop them when they no longer help.
+- `hooks/useHowToVote.js`: one id (`how-to-vote`) for every template, so a
+  post can link `…/#how-to-vote`; hidden once the polls have closed (checked
+  every minute, so an open page drops it at closing); jumps to it on load when
+  the URL carries the hash (most homes render after mount, so the browser's
+  own jump found nothing).
+- A quiet "วิธีลงคะแนน ↓" link under or beside each hero's main button, in
+  each template's own style (Gumroad inked underline, Receipt pencilled
+  dashed line + HOW TO VOTE, Blossom text link after its two pills, Studio
+  Dark a third ghost link, Original brand underline, Verdure under the pills,
+  Ballot under the turnout). 44px tap height everywhere.
+- Checked in open / after / overtime on all seven: the section and link
+  are there while voting is possible, gone after closing (and still there
+  when an admin keeps voting open late).
+- Ballot: its "journey" is the whole page under the hero (candidates,
+  results link, poster), so after closing only the link goes; the journey
+  stays. Its lead section carries the id.
+- Verdure success: "SMALL VOICES. SHARED GROWTH." / "จากหนึ่งเสียง สู่การ
+  เติบโต" / "ดูแลการเติบโตต่ออีกนิด" / "GROWING, TOGETHER" / corner
+  "Together · A shared future" read as if this were not a real vote →
+  "YOUR VOTE IS RECORDED." / "ลงคะแนน เรียบร้อยแล้ว" / "เหลืออีกหนึ่ง
+  ขั้นตอน" / "ONE STUDENT. ONE VOTE." / "Vote recorded · บันทึกการลงคะแนน
+  แล้ว". The plant drawing stays. Same line in the cast animation.
+- Owner then asked for the same on the others: Blossom "เขียนบทต่อไปด้วยกัน"
+  → "เหลืออีกหนึ่งขั้นตอน", Studio Dark "The next chapter." → "One more step."
