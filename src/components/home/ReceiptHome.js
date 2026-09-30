@@ -450,7 +450,7 @@ export default function ReceiptHome({
                     <circle className="rc-ghost-ring rc-ghost-ring--in" cx="60" cy="60" r="42" />
                     <text className="rc-ghost-arc">
                       <textPath href="#rcGhostArc" xlinkHref="#rcGhostArc" startOffset="0%">
-                        {`${meta.faculty} ELECTION · ${meta.prefix} ${meta.number}`}
+                        {`${meta.faculty} ELECTION / ${meta.prefix} ${meta.number}`}
                       </textPath>
                     </text>
                     {/* faculty เรือสำเภา at the seal centre (v2-R5f) — the SAME outline
@@ -494,7 +494,7 @@ export default function ReceiptHome({
                 {/* die-cut grommet — punched hole ringed with metal (present in every
                     state → no layout shift), aria-hidden */}
                 <span className="rc-grommet" aria-hidden="true" />
-                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph === "·" ? "rc-phrase is-sep" : ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true">→</span></span>
+                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true">→</span></span>
               </a>
 
               <a href={editorMode ? undefined : getPath("/candidates")} className="rc-ticket-cta">
@@ -557,13 +557,13 @@ export default function ReceiptHome({
               <section className={`rc-cal-sheet rc-grain rc-seg--reveal rc-ticket ${isEnded ? "is-ended" : ""} ${isManual ? "is-manual" : ""} ${isPause ? "is-pause" : ""}`} aria-label="สถานะการลงคะแนน">
                 <span className="rc-band" aria-hidden="true" />
                 <span className="rc-cal-perf" aria-hidden="true" />
-                <div className="rc-cal-id rc-mono">{meta.prefix} {meta.number} · HOME</div>
-                <div className="rc-cal-head"><span className="rc-mono">VOTE ·</span> <span>ลงคะแนน</span></div>
+                <div className="rc-cal-id rc-mono">{meta.prefix} {meta.number}  HOME</div>
+                <div className="rc-cal-head"><span className="rc-mono">VOTE </span> <span>ลงคะแนน</span></div>
                 <div className="rc-slip-cap"><span>{cap.th}</span>{cap.en ? <small className="rc-mono">{cap.en}</small> : null}</div>
 
                 {/* before/open — the flip COUNTDOWN to the target (DD:HH:MM:SS) */}
                 {isCountdown && (
-                  <div className="rc-slip-digits">
+                  <div className="rc-slip-digits" style={{ "--rc-n": pad2(cd.d).length + 6 }}>
                     <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.d)} /><span className="rc-u">วัน</span></span>
                     <span className="rc-colon">:</span>
                     <span className="rc-seg-cd"><RcSlipDigits value={pad2(cd.h)} /><span className="rc-u">ชม.</span></span>
@@ -595,7 +595,7 @@ export default function ReceiptHome({
                         and the sheet loses ~30px of dead air (v2-R16 balance pass) */}
                     <div className="rc-endsheet-weekday">
                       <span>วันเลือกตั้ง</span>
-                      <span className="rc-endsheet-sep" aria-hidden="true">·</span>
+                      <span className="rc-endsheet-sep" aria-hidden="true"> </span>
                       <span className="rc-endsheet-close">ปิด {formatThaiTime(ELECTION_END)}</span>
                     </div>
                   </div>
@@ -610,7 +610,7 @@ export default function ReceiptHome({
                     election date itself instead */}
                 {!isEnded && <div className="rc-cal-today" aria-label="วันที่วันนี้">{todayTh}</div>}
 
-                <div className="rc-cal-ref rc-mono">{meta.prefix} {meta.number}{meta.calYear !== "" ? ` · ${meta.calYear}` : ""}</div>
+                <div className="rc-cal-ref rc-mono">{meta.prefix} {meta.number}{meta.calYear !== "" ? ` / ${meta.calYear}` : ""}</div>
               </section>
             </div>
 
@@ -633,7 +633,7 @@ export default function ReceiptHome({
               with a tiny mono desk-tag clipped on the line; mobile keeps a plain faint
               hairline (no tag). Pure-CSS ephemera, aria-hidden, base-visible. ===== */}
           <div className="rc-perf-track" aria-hidden="true">
-            <span className="rc-perf-badge rc-mono">✶ {meta.prefix} {meta.number} · LIVE DESK ✶</span>
+            <span className="rc-perf-badge rc-mono">✶ {meta.prefix} {meta.number}  LIVE DESK ✶</span>
           </div>
 
           {/* ===== TURNOUT register — the real-time stats pulled off the manila note
@@ -659,7 +659,7 @@ export default function ReceiptHome({
               <span className="rc-stub-scrap rc-stub-scrap--b" />
               <span className="rc-stub-scrap rc-stub-scrap--a" />
             </span>
-            <div className="rc-turnout-head"><span className="rc-mono">TURNOUT ·</span> <span>รายงานยอดผู้ใช้สิทธิ์</span></div>
+            <div className="rc-turnout-head"><span className="rc-mono">TURNOUT </span> <span>รายงานยอดผู้ใช้สิทธิ์</span></div>
             <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
               <div className="rc-register-row">
                 <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
@@ -675,7 +675,7 @@ export default function ReceiptHome({
                 <span className="rc-register-v"><span className="rc-reg-num rc-mono">{partyCount}</span><small>พรรค</small></span>
               </div>
             </div>
-            <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · TURNOUT</div>
+            <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number}  TURNOUT</div>
             <div className="rc-turnout-end" aria-hidden="true" />
           </section>
 
@@ -701,7 +701,7 @@ export default function ReceiptHome({
             Voting only — the evaluation form is the success page's job, which
             knows whether there is one this year. ===== */}
         <section id={howTo.id} className="rc-howto rc-grain" aria-labelledby="rc-howto-h">
-          <div className="rc-turnout-head" id="rc-howto-h"><span className="rc-mono">HOW TO VOTE ·</span> <span>วิธีลงคะแนน</span></div>
+          <div className="rc-turnout-head" id="rc-howto-h"><span className="rc-mono">HOW TO VOTE </span> <span>วิธีลงคะแนน</span></div>
           <ol className="rc-howto-list">
             {RC_STEPS.map((s, i) => (
               <li key={s.tag} className="rc-howto-row">
@@ -721,7 +721,7 @@ export default function ReceiptHome({
             </span>
             <a className="rc-howto-go" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <span aria-hidden="true">→</span></a>
           </div>
-          <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · HOW TO VOTE</div>
+          <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number}  HOW TO VOTE</div>
           <div className="rc-turnout-end" aria-hidden="true" />
         </section>
 
@@ -1407,6 +1407,18 @@ export default function ReceiptHome({
           .rc-home-root .rc-actions { margin-left:12px; margin-right:12px; }
           /* keep the mobile desk calm — ephemera off, perf track stays a plain hairline */
           .rc-home-root .rc-stubs, .rc-home-root .rc-holo-tape { display:none; }
+        }
+
+        /* the digit row sizes itself to fit the sheet: 100cqw is the row's own
+           width, each tile is .74em wide, plus the gaps between tiles and groups.
+           --rc-n is the number of tiles, so 123 days (nine tiles) shrinks the row
+           instead of cutting the last digit off the sheet. */
+        .rc-home-root .rc-cal .rc-slip-digits { container-type:inline-size; }
+        .rc-home-root .rc-cal .rc-slip-digits .rc-cd-n {
+          font-size:min(clamp(34px, 12vw, 52px), calc((100cqw - ((var(--rc-n, 8) - 4) * 3px + 30px) - 4px) / (var(--rc-n, 8) * .76))); }
+        @media (max-width:420px) {
+          .rc-home-root .rc-cal .rc-slip-digits .rc-cd-n {
+            font-size:min(clamp(24px, 7.4vw, 32px), calc((100cqw - ((var(--rc-n, 8) - 4) * 2px + 30px) - 4px) / (var(--rc-n, 8) * .76))); }
         }
 
         /* reduced motion — freeze every animation (foil stays statically iridescent),

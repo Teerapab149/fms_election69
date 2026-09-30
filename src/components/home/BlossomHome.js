@@ -404,7 +404,7 @@ export default function BlossomHome({
   // schedule, empty-guarded so an invalid date renders nothing. PAUSE has no real
   // "resumes at" instant, so it keeps the plain hold copy (no fabricated time).
   const cdCloseFact = cd.done && !cdPaused && !cdOvertime
-    ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} · ${formatThaiTime(ELECTION_END)}` : ""; })()
+    ? (() => { const d = formatThaiDate(ELECTION_END); return d ? `ปิดหีบ ${d} เวลา ${formatThaiTime(ELECTION_END)}` : ""; })()
     : "";
 
   return (
@@ -421,8 +421,8 @@ export default function BlossomHome({
       <div className="bl-page">
         {/* ===== issue line ===== */}
         <div className="bl-issue-line">
-          <span>{meta.faculty} ELECTION{meta.calYear !== "" ? <> <b>·</b> {meta.calYear}</> : null}</span>
-          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <b>·</b> <span className="bl-thai bl-thai--nw">ปีการศึกษา {meta.academicYear}</span></> : null}</span>
+          <span>{meta.faculty} ELECTION{meta.calYear !== "" ? <> {meta.calYear}</> : null}</span>
+          <span>{meta.prefix} {meta.number}{meta.academicYear !== "" ? <> <span className="bl-thai bl-thai--nw">ปีการศึกษา {meta.academicYear}</span></> : null}</span>
         </div>
 
         {/* ===== hero ===== */}
@@ -432,7 +432,7 @@ export default function BlossomHome({
               <defs><path id="blRingPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
               <text><textPath href="#blRingPath">
                 {ringSegs.map((seg, i) => (
-                  <tspan key={i} className={THAI_RE.test(seg) ? "bl-thai" : undefined}>{seg} · </tspan>
+                  <tspan key={i} className={THAI_RE.test(seg) ? "bl-thai" : undefined}>{seg}  </tspan>
                 ))}
               </textPath></text>
             </svg>
@@ -469,7 +469,7 @@ export default function BlossomHome({
               <span className="bl-poster__tape bl-poster__tape--r" aria-hidden="true" />
               <img src={bannerSrc} alt="โปสเตอร์ประชาสัมพันธ์การเลือกตั้ง" className="bl-poster__img" />
             </figure>
-            <div className="bl-poster-cap"><span className="bl-nw">{meta.prefix} {meta.number}</span> · <span className="bl-thai bl-thai--nw">โปสเตอร์ประชาสัมพันธ์</span></div>
+            <div className="bl-poster-cap"><span className="bl-nw">{meta.prefix} {meta.number}</span>  <span className="bl-thai bl-thai--nw">โปสเตอร์ประชาสัมพันธ์</span></div>
           </div>
           <div className="bl-feature-copy">
             <h2>รู้จัก<em>ผู้สมัคร</em>ของคุณหรือยัง</h2>
@@ -507,7 +507,7 @@ export default function BlossomHome({
         <section id={howTo.id} className="bl-steps" aria-labelledby="bl-steps-h">
           <div className="bl-steps-head">
             <h2 id="bl-steps-h">วิธี<em>ลงคะแนน</em></h2>
-            <span className="bl-steps-head__en">HOW TO VOTE · 4 STEPS</span>
+            <span className="bl-steps-head__en">HOW TO VOTE IN 4 STEPS</span>
           </div>
           <ol className="bl-steps-list">
             {BL_STEPS.map((st, i) => (
@@ -527,7 +527,7 @@ export default function BlossomHome({
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
           <div className="bl-count__in">
             <div className="bl-count-cap"><span className="bl-count-cap__dia" aria-hidden="true" /><span className="bl-thai bl-thai--nw">{cdCapTh}</span> / <span className="bl-nw">{cdCapEn}</span></div>
-            <div className="bl-count-line">
+            <div className="bl-count-line" style={{ "--bl-n": pad2(cd.d).length + 6 }}>
               <span className="bl-seg"><BlCdDigits value={pad2(cd.d)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">วัน</span> / DAYS</span></span>
               <span className="bl-colon">:</span>
               <span className="bl-seg"><BlCdDigits value={pad2(cd.h)} /><span className="bl-u"><span className="bl-thai bl-thai--nw">ชม.</span> / HRS</span></span>
@@ -538,7 +538,7 @@ export default function BlossomHome({
             </div>
             <div className="bl-count-closed">
               {cd.label}
-              <small><span className="bl-nw">{cdClosedEn}</span> · <span className="bl-thai">{cdClosedTh}</span></small>
+              <small><span className="bl-nw">{cdClosedEn}</span>  <span className="bl-thai">{cdClosedTh}</span></small>
               {cdCloseFact && <span className="bl-count-closed__fact"><span className="bl-thai">{cdCloseFact}</span></span>}
               {!cdPaused && !cdOvertime && (
                 <a className="bl-count-closed__link" href={editorMode ? undefined : getPath("/results")}>
@@ -994,6 +994,15 @@ export default function BlossomHome({
              the 4th segment orphan-wrapped behind a dangling colon. Dropping the colon
              separators (298px + gaps = ~321px) keeps all 4 digits full-size on one row */
           .bl-colon { display:none; }
+          /* digits sized to the line: 100cqw is the line's own width, a digit cell
+             is .67em, three gaps between the four groups. --bl-n counts the digits,
+             so 123 days shrinks the line instead of dropping the seconds onto a
+             row of their own */
+          .bl-count-line { container-type:inline-size; }
+          .bl-count-line .bl-cd-n { font-size:min(clamp(52px,13vw,120px), calc((100cqw - 6vw - 4px) / (var(--bl-n, 8) * .67))); }
+          /* the unit label takes its digits' width and may wrap ("วินาที /" over
+             "SEC") — it used to be the wider of the two and pushed a group down */
+          .bl-count-line .bl-u { width:0; min-width:100%; line-height:1.5; }
         }
 
         /* ===== T2.3 scroll parallax — progressive enhancement, transform/opacity ONLY.

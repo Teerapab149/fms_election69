@@ -49,11 +49,11 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
   const isDead = t.label === "ENDED" || t.label === "PAUSED" || t.label === "OPEN";
   const closeCaption = t.label === "ENDED" ? (() => {
     const d = formatThaiDate(ELECTION_END);
-    return d ? `${d} · ${formatThaiTime(ELECTION_END)}` : "";
+    return d ? `${d} เวลา ${formatThaiTime(ELECTION_END)}` : "";
   })() : "";
   return (
     <div className="gh-cd" data-element="hero-countdown" data-variant="gumroad">
-      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} · <span className="gm-thai">{t.sub}</span></div>
+      <div className="gh-cd__lbl">{t.live && <span className="gh-livedot" />}{t.label} <span className="gm-thai">{t.sub}</span></div>
       {isDead ? (
         <div className="gh-cd__status">
           <div className="gh-cd__status-txt">{t.label === "PAUSED" ? "พักระบบชั่วคราว" : t.label === "OPEN" ? "เปิดรับลงคะแนนอยู่" : "ปิดรับลงคะแนนแล้ว"}</div>
@@ -77,7 +77,9 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
       <style jsx global>{`
         .gh-cd{ height:100%; background:var(--cd-bg, var(--ink, #26271c)); color:var(--cd-text, var(--cream, #FFF6EC)); border:2.5px solid var(--cd-border, var(--ink, #26271c)); border-radius:22px; box-shadow:8px 8px 0 var(--cd-border, var(--ink, #26271c));
           padding:clamp(20px,2.2cqw,30px); display:flex; flex-direction:column; justify-content:space-between; gap:clamp(14px,2cqw,22px); }
-        .gh-cd__lbl{ display:flex; align-items:center; gap:8px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-weight:600; font-size:clamp(12px,1.4cqw,14px); text-transform:uppercase; letter-spacing:.15em; color:var(--cd-accent, var(--pink, #FF9CE9)); }
+        /* wrap: on a 320px phone "CLOSES IN" + the Thai line did not fit one row and
+           pushed the whole mosaic 10px past the screen */
+        .gh-cd__lbl{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 8px; font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-weight:600; font-size:clamp(12px,1.4cqw,14px); text-transform:uppercase; letter-spacing:.15em; color:var(--cd-accent, var(--pink, #FF9CE9)); }
         /* Space Grotesk has no Thai glyphs — pin the Thai run to the family's real
            Thai body font so vowel/tone marks render correctly. */
         .gm-thai{ font-family:var(--font-anuphan),'Anuphan','Kanit',system-ui,sans-serif !important; letter-spacing:.04em; white-space:nowrap; }
@@ -98,6 +100,15 @@ export default function HeroCountdownGumroad({ systemMode = "AUTO" }) {
         .gh-cd__num{ font-family:var(--font-archivo),'Archivo Black',var(--font-anuphan),'Anuphan',system-ui,sans-serif; font-size:clamp(30px,4.6cqw,52px); line-height:1; font-variant-numeric:tabular-nums; }
         .gh-cd__unit{ font-family:var(--font-space-grotesk),'Space Grotesk',ui-monospace,monospace; font-size:clamp(10px,1.1cqw,12px); color:var(--ink2, #5c5a4b); margin-top:5px; text-transform:uppercase; letter-spacing:.1em; }
         .gh-cd .gh-livedot{ width:10px; height:10px; border-radius:999px; background:var(--coral, #FF8A8A); display:inline-block; box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 80%, transparent); animation:ghCdPulse 1.6s ease-out infinite; }
+        /* smallest phones: four boxes of 30px digits + padding came to ~315px and
+           pushed the mosaic past a 320px screen while the clock was running */
+        @media (max-width:360px){
+          .gh-cd{ padding:16px; }
+          .gh-cd__grid{ gap:6px; }
+          .gh-cd__cell{ padding:10px 2px; border-radius:12px; }
+          .gh-cd__num{ font-size:26px; }
+          .gh-cd__unit{ letter-spacing:.04em; }
+        }
         @keyframes ghCdPulse{ 0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--coral) 70%, transparent)} 70%{box-shadow:0 0 0 12px rgba(255,110,110,0)} 100%{box-shadow:0 0 0 0 rgba(255,110,110,0)} }
       `}</style>
     </div>
