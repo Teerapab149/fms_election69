@@ -33,9 +33,16 @@ UPDATE "User"
 UPDATE "Candidate" SET score = 0;
 
 -- 4. ปลดธงรับรองผลของปีก่อน (ไม่งั้นเครื่องมือตรวจสอบจะยังถือว่าคะแนนถูกล็อกอยู่)
+--    พร้อมลบชื่อผู้รับรองกับวันเวลาของปีก่อน และคืนสถานะระบบเป็นค่าเริ่มต้นของปีใหม่:
+--    - "showResult" = false: เดิมสคริปต์นี้ไม่แตะสวิตช์แสดงผล มันจึงเปิดค้างจากปีก่อน
+--      พอปีใหม่เปิดหีบ คะแนนสดของปีใหม่จะโชว์ให้ทุกคนเห็นตั้งแต่บัตรใบแรก
+--    - "systemMode" = 'AUTO': เปิด-ปิดหีบตามวันเวลาที่ตั้งใน "ตั้งค่าทั่วไป" (เดิมค้าง ENDED)
 UPDATE "SystemConfig"
    SET "globalConfig" = jsonb_set(
-         COALESCE("globalConfig", '{}')::jsonb, '{ballotsAnonymized}', 'false'::jsonb, true)
+         COALESCE("globalConfig", '{}')::jsonb - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername',
+         '{ballotsAnonymized}', 'false'::jsonb, true),
+       "showResult" = false,
+       "systemMode" = 'AUTO'
  WHERE id = 1;
 
 -- ── ถึงตรงนี้: คะแนนศูนย์ กล่องบัตรว่าง ทุกคนโหวตใหม่ได้ แต่รายชื่อพรรคยังอยู่ ──
@@ -48,10 +55,17 @@ UPDATE "SystemConfig"
 
 COMMIT;
 
--- ตรวจผลหลังรัน (ควรได้ 0 ทั้งสามค่า):
+-- ตรวจผลหลังรัน (ควรได้ 0 ทั้งสามค่า แล้วตามด้วย f / AUTO / f):
 --   SELECT (SELECT count(*) FROM "Ballot")                              AS ballots,
 --          (SELECT count(*) FROM "User" WHERE "isVoted")                AS voted,
---          (SELECT COALESCE(sum(score),0) FROM "Candidate")             AS scores;
+--          (SELECT COALESCE(sum(score),0) FROM "Candidate")             AS scores,
+--          (SELECT "showResult" FROM "SystemConfig" WHERE id = 1)       AS show_result,
+--          (SELECT "systemMode" FROM "SystemConfig" WHERE id = 1)       AS mode,
+--          (SELECT ("globalConfig"->>'ballotsAnonymized')::boolean
+--             FROM "SystemConfig" WHERE id = 1)                         AS certified;
+--
+-- อย่าลืมตั้งวันเวลาเลือกตั้งของปีใหม่ใน "ตั้งค่าทั่วไป" ก่อนเปิดใช้ — โหมด AUTO
+-- ใช้วันเวลานั้นตัดสินว่าหีบเปิดหรือปิด
 --
 -- แล้วยืนยันด้วยเครื่องมือของระบบอีกชั้น:
 --   npm run preflight
