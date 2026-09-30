@@ -29,6 +29,7 @@ import { buildTemplateStyles } from "../../lib/templateTokens";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { useElectionStatus } from "../../hooks/useElectionStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
 
 // useElectionStatus action → the voteCTA-button state vocabulary
 const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
@@ -129,6 +130,7 @@ export default function VerdureHome({
     isVoted: !!(isVotedReal ?? initialData?.userData?.isVoted),
     tick: !editorMode,
   });
+  const howTo = useHowToVote({ phase: election.phase });
 
   // The ledger's countdown, from that status. `days` stays OUT of `value`: as
   // one string the ledger rendered "26 วัน10:32:34" (the Thai "น" and the clock's
@@ -263,6 +265,11 @@ export default function VerdureHome({
               <span className="vd-hero__alt-sub">CANDIDATES · {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
             </a>
           </motion.div>
+          {howTo.show && (
+            <motion.a href={editorMode ? undefined : howTo.href} className="vd-hero__how" {...rise(0.4)}>
+              วิธีลงคะแนน <span aria-hidden>↓</span>
+            </motion.a>
+          )}
         </section>
 
         <Wrap id="stats-progress-card">
@@ -311,7 +318,8 @@ export default function VerdureHome({
         )}
 
         {/* how to vote — what the club otherwise posts on Instagram */}
-        <section className="vd-sec" aria-labelledby="vd-steps-h">
+        {howTo.show && (
+        <section id={howTo.id} className="vd-sec vd-sec--steps" aria-labelledby="vd-steps-h">
           <div className="vd-sec__head">
             <h2 id="vd-steps-h">ลงคะแนนใน <em>3 ขั้นตอนง่ายๆ</em></h2>
           </div>
@@ -326,6 +334,7 @@ export default function VerdureHome({
             ))}
           </ol>
         </section>
+        )}
       </div>
 
       <VerdureFooter />
@@ -384,6 +393,12 @@ export default function VerdureHome({
 
         /* ── sections: parties, steps ── */
         .vd-sec { width:100%; margin-top:80px; }
+        .vd-sec--steps { scroll-margin-top:90px; }
+        /* jump to the steps — the quietest action, under the two pills */
+        .vd-root a.vd-hero__how { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin-top:10px;
+          font-family:var(--fs); font-weight:700; font-size:15px; color:var(--moss);
+          text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:5px; }
+        .vd-root a.vd-hero__how:hover { color:var(--terra); }
         .vd-sec__head { display:flex; align-items:baseline; justify-content:space-between; gap:10px 24px; flex-wrap:wrap; padding-bottom:12px; border-bottom:2px solid var(--moss); }
         .vd-sec__head h2 { margin:0; font-family:var(--fd); font-weight:400; font-size:clamp(30px,3.4vw,42px); line-height:1.1; color:var(--moss); letter-spacing:-.015em; }
         .vd-sec__head h2 em { font-style:italic; color:var(--terra); }

@@ -13,6 +13,7 @@ import MeetCandidatesCard from './OriginalMeetCandidatesCard';
 import { OriginalBaseStyles } from './OriginalTheme';
 import { TrendingUp, CheckCircle2, Calendar, Users, PieChart, LogIn, Vote, BarChart3, Clock, ListChecks, MousePointerClick, ShieldCheck } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import { useHowToVote } from "../../hooks/useHowToVote";
 import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 
 // How to vote — Original's real flow: PSU Passport sign-in → the ballot
@@ -106,6 +107,8 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
             return () => clearTimeout(resetTimeout);
         }
     }, [currentImageIndex, extendedImages.length, isMultiImage]);
+
+    const howTo = useHowToVote(initialData || {});
 
     if (!mounted) return null;
 
@@ -331,6 +334,15 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                 })()}
                             </div>
 
+                            {/* jump to the steps below — a quiet text link, not a second button */}
+                            {howTo.show && (
+                                <div className="w-full flex justify-center lg:justify-start !mt-3">
+                                    <a href={howTo.href} className="inline-flex items-center gap-1.5 min-h-[44px] text-sm md:text-base font-bold text-[var(--o-brand)] underline decoration-2 underline-offset-4 hover:text-[var(--o-deep)]">
+                                        วิธีลงคะแนน <span aria-hidden>↓</span>
+                                    </a>
+                                </div>
+                            )}
+
                             {/* Meet Candidates */}
                             <div className="w-full max-w-[400px] lg:max-w-[350px] xl:max-w-[420px] pt-1">
                                 <MeetCandidatesCard candidates={candidates} />
@@ -447,7 +459,8 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                     </div>
 
                     {/* How to vote — same card language as the stats bento */}
-                    <section aria-labelledby="oh-steps-title" className="mt-14 lg:mt-20 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                    {howTo.show && (
+                    <section id={howTo.id} aria-labelledby="oh-steps-title" className="mt-14 lg:mt-20 scroll-mt-24 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                         <div className="flex items-center gap-3 mb-5 px-1">
                             <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-[var(--o-soft2)] shadow-sm text-[var(--o-brand)]">
                                 <ListChecks className="w-5 h-5" />
@@ -470,6 +483,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             ))}
                         </ol>
                     </section>
+                    )}
                 </div>
 
             </main>

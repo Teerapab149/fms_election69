@@ -25,6 +25,7 @@ import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
 import { useHomeModel } from "../../shared/home/useHomeModel";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import BallotJourney from "./BallotJourney";
+import { useHowToVote } from "../../../../hooks/useHowToVote";
 import { ballotMeta, BallotHeader, BallotStatus, BallotCountdown, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
 
@@ -73,6 +74,10 @@ export default function BallotHome({
     initialData, editorMode, editorData, elementConfigs, selectedElement, hoveredElement,
     onSelectElement, onHoverElement, onHoverEnd, pageLayout, resolvedTemplate, onSignIn,
   }, ballotOfficialTemplate);
+
+  // the journey below is the page itself (candidates, results link, poster),
+  // so it stays after closing — only the jump link goes
+  const howTo = useHowToVote({ phase: election.phase });
 
   const meta = ballotMeta(globalConfig || {});
   const rows = ballotRows(initialData?.candidates || [], copy);
@@ -167,6 +172,11 @@ export default function BallotHome({
                 </Wrap>
               )}
               </motion.div>
+              {howTo.show && (
+                <motion.a variants={RISE} href={editorMode ? undefined : howTo.href} className="bo-howlink">
+                  วิธีลงคะแนน <span aria-hidden>↓</span>
+                </motion.a>
+              )}
             </motion.div>
 
             {/* the ballot, floating: a real interface held up off the page, with a
@@ -298,6 +308,9 @@ export default function BallotHome({
           letter-spacing: -.022em;
         }
         /* each phrase stays whole; the line breaks only between them */
+        .bo-howlink { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 14px;
+          font-weight: 700; font-size: 16px; color: var(--bo-ink, currentColor);
+          text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
         .bo-hero__sub { margin: 16px 0 0; font-size: clamp(17px, 1.4vw, 20px); font-weight: 500; color: var(--bo-muted); }
         .bo-nowrap { white-space: nowrap; }
 
@@ -399,6 +412,7 @@ export default function BallotHome({
           .bo-hero__status, .bo-hero__h1, .bo-hero__sub { order: 0; }
           .bo-stage { order: 1; }
           .bo-hero__facts { order: 2; }
+          .bo-howlink { order: 3; margin-top: 0; justify-self: start; }
           .bo-hero__facts .bo-turnout, .bo-hero__facts .bo-date { margin-top: 0; }
         }
         @media (max-width: 640px) {

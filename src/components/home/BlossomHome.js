@@ -24,6 +24,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { BlossomBaseStyles } from "./BlossomTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
@@ -229,6 +230,7 @@ export default function BlossomHome({
 
   const sysMode = initialData?.systemMode || "AUTO";
   const cd = useCountdown(globalConfig, sysMode);
+  const howTo = useHowToVote(initialData || {});
 
   // stats — editor uses dummy, live/preview uses real feed. Computed BEFORE the
   // mounted early-return so the count-up effect (hooks must be unconditional) can
@@ -444,6 +446,7 @@ export default function BlossomHome({
           <div className="bl-cta-row">
             <a ref={ctaRef} href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
             <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
+            {howTo.show && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
           </div>
         </section>
 
@@ -495,7 +498,8 @@ export default function BlossomHome({
 
         {/* ===== how to vote — a contents page: ink rule, indexed rows, one
              candy ink per step (the same set the figures use) ===== */}
-        <section className="bl-steps" aria-labelledby="bl-steps-h">
+        {howTo.show && (
+        <section id={howTo.id} className="bl-steps" aria-labelledby="bl-steps-h">
           <div className="bl-steps-head">
             <h2 id="bl-steps-h">วิธี<em>ลงคะแนน</em></h2>
             <span className="bl-steps-head__en">HOW TO VOTE · 4 STEPS</span>
@@ -513,6 +517,7 @@ export default function BlossomHome({
             ))}
           </ol>
         </section>
+        )}
 
         {/* ===== countdown — the climax: full-bleed ink band ===== */}
         <section className={`bl-count ${cd.done ? "is-closed" : ""}`}>
@@ -861,7 +866,11 @@ export default function BlossomHome({
         .bl-fig-2 .bl-idx { color:var(--bl-primary-ink); }
         .bl-fig-3 .bl-idx { color:var(--bl-sup2-ink); }
         /* how to vote */
-        .bl-steps { margin-top:70px; }
+        .bl-steps { margin-top:70px; scroll-margin-top:104px; }
+        /* the third, quietest action: a text link, after the two pills */
+        .bl-howlink { display:inline-flex; align-items:center; min-height:44px; font-family:var(--bl-fd); font-weight:600;
+          font-size:15px; color:var(--bl-ink2); text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:5px; }
+        .bl-howlink:hover { color:var(--bl-primary-ink); }
         .bl-steps-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;
           padding-bottom:14px; border-bottom:1.5px solid var(--bl-ink); }
         .bl-steps-head h2 { font-family:var(--bl-fd); font-weight:700; font-size:clamp(24px,6vw,38px); line-height:1.2; margin:0; }

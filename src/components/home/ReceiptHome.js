@@ -37,6 +37,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { ReceiptBaseStyles, RC_SHIP_PATHS } from "./ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
 import { thaiPhrases, LONG_PHRASE } from "../v2/shared/text/thaiPhrases.mjs";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
@@ -285,6 +286,7 @@ export default function ReceiptHome({
   const { isVoted: isVotedReal } = useVoteStatus({ enabled: !editorMode && status === "authenticated" });
   const rootRef = useRef(null);
   useEffect(() => { setMounted(true); }, []);
+  const howTo = useHowToVote(initialData || {});
 
   // ── print-reveal (T5 / A7.1) — the lower tape segments "print out" as they scroll
   //    into view: translateY(12px)→0 + opacity, ONCE, then the observer disconnects.
@@ -499,6 +501,11 @@ export default function ReceiptHome({
                 </span>
               </a>
             </div>
+            {howTo.show && (
+              <a href={editorMode ? undefined : howTo.href} className="rc-howlink">
+                วิธีลงคะแนน <span className="rc-mono">HOW TO VOTE ↓</span>
+              </a>
+            )}
 
             {/* ENDED — the manila note moves OUT of the rail and into the desk column.
                 Two reasons: the ended calendar leaf is the tallest clock of any state,
@@ -687,7 +694,8 @@ export default function ReceiptHome({
             Instagram; the site now says them itself (owner, template-fix-plan S2).
             Voting only — the evaluation form is the success page's job, which
             knows whether there is one this year. ===== */}
-        <section className="rc-howto rc-grain" aria-labelledby="rc-howto-h">
+        {howTo.show && (
+        <section id={howTo.id} className="rc-howto rc-grain" aria-labelledby="rc-howto-h">
           <div className="rc-turnout-head" id="rc-howto-h"><span className="rc-mono">HOW TO VOTE ·</span> <span>วิธีลงคะแนน</span></div>
           <ol className="rc-howto-list">
             {RC_STEPS.map((s, i) => (
@@ -711,6 +719,7 @@ export default function ReceiptHome({
           <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number} · HOW TO VOTE</div>
           <div className="rc-turnout-end" aria-hidden="true" />
         </section>
+        )}
 
         {/* ===== footer — classic single centered line ===== */}
         <footer className="rc-home-footer">
@@ -1126,7 +1135,7 @@ export default function ReceiptHome({
         /* ---- HOW TO VOTE — one long narrow receipt under the desk: the turnout
            slip's paper, head, ref line and die-cut end; each step a line item
            (no. · what to do · English tag), the results a "total" under a rule. ---- */
-        .rc-home-root .rc-howto { position:relative; z-index:2; margin:44px auto 0; max-width:560px;
+        .rc-home-root .rc-howto { scroll-margin-top:88px; position:relative; z-index:2; margin:44px auto 0; max-width:560px;
           background-color:var(--rc-receipt); border:1px solid var(--rc-line); border-radius:4px 4px 3px 3px;
           padding:16px clamp(16px,4vw,24px) 0;
           box-shadow:2px 16px 34px -22px color-mix(in srgb, var(--rc-ink) 34%, transparent); }
@@ -1244,6 +1253,13 @@ export default function ReceiptHome({
           .rc-home-root .rc-actions .rc-cta { flex:1 1 240px; }
           .rc-home-root .rc-actions .rc-ticket-cta { flex:0 0 auto; align-self:auto; }
         }
+
+        /* jump to the steps — a pencilled line under the tags, not a third tag */
+        .rc-home-root .rc-howlink { position:relative; z-index:5; display:flex; align-items:center; gap:10px;
+          min-height:44px; margin:6px 12px 18px; font-family:var(--rc-fh); font-weight:700; font-size:15px; color:var(--rc-ink);
+          text-decoration:underline dashed; text-decoration-thickness:1.5px; text-underline-offset:5px; }
+        .rc-home-root .rc-howlink .rc-mono { font-weight:400; font-size:10px; letter-spacing:.16em; color:var(--rc-ink2); text-decoration:none; }
+        @media (max-width:639px) { .rc-home-root .rc-howlink { justify-content:center; } }
 
         /* die-cut TAG CTA — foil rim behind an accent fill, grommet at the left */
         .rc-home-root .rc-cta { position:relative; isolation:isolate; display:block; text-align:center; cursor:pointer;

@@ -32,6 +32,7 @@ import { buildTemplateStyles, buildElementCss } from "../../lib/templateTokens";
 import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
+import { useHowToVote } from "../../hooks/useHowToVote";
 
 // How to vote — Studio Dark's own flow and words: PSU Passport sign-in → the
 // ballot ("Choose one, then confirm", "ดูนโยบาย") → "ยืนยันการลงคะแนน" →
@@ -70,6 +71,7 @@ export default function StudioDarkHome({
   const [clock, setClock] = useState("");
 
   useEffect(() => { setMounted(true); }, []);
+  const howTo = useHowToVote(initialData || {});
   useEffect(() => {
     const tick = () => {
       const d = new Date();
@@ -229,6 +231,11 @@ export default function StudioDarkHome({
                   <a href={editorMode ? undefined : getPath("/candidates")} className="sd-ghost">
                     ดูรายชื่อพรรค <span className="sd-ghost__arrow" aria-hidden>↗</span>
                   </a>
+                  {howTo.show && (
+                    <a href={editorMode ? undefined : howTo.href} className="sd-ghost">
+                      วิธีลงคะแนน <span className="sd-ghost__arrow" aria-hidden>↓</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -265,7 +272,8 @@ export default function StudioDarkHome({
 
           {/* how to vote — the numbers panel's own material: one hairline-ruled
               frame, cells divided by rules, serif-italic accent numerals */}
-          <section className="sd-steps" aria-labelledby="sd-steps-h">
+          {howTo.show && (
+          <section id={howTo.id} className="sd-steps" aria-labelledby="sd-steps-h">
             <div className="sd-steps__head">
               <div className="sd-steps__kicker"><span className="sd-nw">§ HOW TO VOTE</span> · <span className="sd-thai">วิธีลงคะแนน</span></div>
               <h2 id="sd-steps-h" className="sd-steps__title">ลงคะแนนใน <em>4</em> ขั้นตอน</h2>
@@ -281,6 +289,7 @@ export default function StudioDarkHome({
               ))}
             </ol>
           </section>
+          )}
 
           {/* marquee — real election info. framer-motion (JS) on purpose: the
               globals.css reduced-motion rule kills CSS keyframes site-wide, which
@@ -394,7 +403,7 @@ export default function StudioDarkHome({
         .sd-num-bar-fill { position:absolute; left:0; top:0; bottom:0; background:var(--sd-accent); }
 
         /* how to vote */
-        .sd-steps { padding:72px 56px; border-top:1px solid var(--sd-line); }
+        .sd-steps { scroll-margin-top:24px; padding:72px 56px; border-top:1px solid var(--sd-line); }
         .sd-steps__head { display:flex; align-items:end; justify-content:space-between; gap:16px 32px; flex-wrap:wrap; margin-bottom:32px; }
         .sd-steps__kicker { font-family:var(--sd-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-accent); }
         .sd-steps__kicker .sd-thai { text-transform:none; }
@@ -435,7 +444,7 @@ export default function StudioDarkHome({
           .sd-home__scene { grid-template-columns:1fr; }
           .sd-home__left { border-right:0; border-bottom:1px solid var(--sd-line); min-height:0; padding:48px 24px; gap:32px; }
           .sd-home__right { padding:48px 24px; }
-          .sd-steps { padding:48px 24px; }
+          .sd-steps { padding:48px 24px; scroll-margin-top:120px; } /* below the sticky top bar */
           .sd-steps__grid { grid-template-columns:1fr 1fr; }
           .sd-step:nth-child(2) { border-right:0; }
           .sd-step:nth-child(-n+2) { border-bottom:1px solid var(--sd-line); }

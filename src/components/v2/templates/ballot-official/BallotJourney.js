@@ -16,6 +16,7 @@
 // the gesture, never a choice.
 
 import { useRef } from "react";
+import { HOW_TO_VOTE_ID } from "../../../../hooks/useHowToVote";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion"; // Motion for React
 import { Lock } from "lucide-react";
 import BallotBox from "./BallotBox";
@@ -115,7 +116,7 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
   return (
     <div className="bj">
       {/* what the four chapters below are: the steps of voting, start to finish */}
-      <section className="bj-lead" aria-labelledby="bj-lead-h">
+      <section id={HOW_TO_VOTE_ID} className="bj-lead" aria-labelledby="bj-lead-h">
         <div className="bj-in bj-lead__in">
           <p className="bj-lead__kicker">{j.leadKicker}</p>
           <h2 id="bj-lead-h" className="bj-lead__title">{j.leadTitle}</h2>
@@ -244,7 +245,7 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
         .bj-ch--4 .bj-step__lbl { color: rgba(255,255,255,.8); }
 
         /* the lead: names the chapters below as the four steps of voting */
-        .bj-lead { background: var(--bo-board); border-top: 1px solid var(--bo-rule); }
+        .bj-lead { scroll-margin-top: 112px; /* clears the header, 98px tall on phones */ background: var(--bo-board); border-top: 1px solid var(--bo-rule); }
         .bj-lead__in { padding-bottom: 8px; text-align: center; }
         .bj-lead__kicker { margin: 0; font-size: 15px; font-weight: 700; color: var(--bo-plum); }
         .bj-lead__title { margin: 8px 0 0; font-size: clamp(34px, 4.2vw, 54px); font-weight: 800; line-height: 1.15; letter-spacing: -.015em; }
