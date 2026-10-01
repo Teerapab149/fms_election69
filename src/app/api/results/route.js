@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../lib/db";
-import { resolveElectionDates } from "../../../utils/electionConfig";
 import { requireAdmin } from "../../../lib/auth/adminCheck";
 import { loadResultsSnap } from "../../../lib/election/resultsCache.mjs";
+import { resultsStatus } from "../../../lib/election/systemStatus.mjs";
+import { readElectionState } from "../../../lib/election/liveStatus";
 
 export const dynamic = "force-dynamic";
 
@@ -13,46 +14,19 @@ async function buildResultsBody(isAdmin) {
   const now = Date.now();
 
   const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
-  const { CAMPAIGN_START, ELECTION_START, ELECTION_END } = resolveElectionDates(systemConfig?.globalConfig);
+  const { systemMode: mode, start, end, campaignStart: CAMPAIGN_START } = readElectionState(systemConfig, now);
 
-  let status = "WAITING";
-  let isPreCampaign = false;
-
-  if (now >= ELECTION_END) {
-    status = "ENDED";
-  } else if (now >= ELECTION_START) {
-    status = "ONGOING";
-  } else if (now >= CAMPAIGN_START) {
-    status = "WAITING";
-  } else {
-    status = "PRE_CAMPAIGN";
-    isPreCampaign = true;
-  }
-
-  // ⚡️ NEW SYSTEM MODES LOGIC: (systemConfig already fetched above for dates)
-  const mode = systemConfig?.systemMode || "AUTO";
+  // Mode + schedule + reveal → status, one ladder in lib/election/systemStatus.mjs
+  // (resultsStatus: END first, PRE_CAMPAIGN, unknown mode = time-based, showResult).
   const isShowResult = systemConfig?.showResult;
-
-  if (mode === "PAUSE") {
-    status = "CLOSED";
-  } else if (mode === "ENDED") {
-    status = "ENDED";
-  } else if (mode === "MANUAL_OPEN") {
-    status = "ONGOING";
-  } else if (mode === "AUTO") {
-    // Keep time-based status calculated at the top
-  }
-
-  // 🔵 Show Result Mode Override (Unless strictly CLOSED)
-  if (isShowResult && status !== "CLOSED") {
-    if (status !== "ENDED") {
-      status = "ONGOING";
-    }
-  }
-
-  if (status === "ONGOING" || status === "ENDED") {
-    isPreCampaign = false;
-  }
+  const { status } = resultsStatus({
+    systemMode: mode,
+    start,
+    end,
+    campaignStart: CAMPAIGN_START,
+    showResult: isShowResult,
+    now,
+  });
 
   const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
   // Per-party tally = Candidate.score, the single source of truth (P2,
@@ -160,6 +134,9 @@ async function buildResultsBody(isAdmin) {
 
   return {
     status: status,
+    // additive: the admin overview countdown reads it (liveSystemStatus needs
+    // the mode); the same value /api/check-status already hands the public.
+    systemMode: mode,
     totalVotes: totalVotesReal,
     candidates: finalCandidates,
     campaignDate: CAMPAIGN_START,

@@ -5,6 +5,8 @@ import { db } from "../../../lib/db";
 import { rateLimit } from "../../../lib/rateLimit";
 import { encryptBallot } from "../../../lib/ballotCrypto";
 import { appendBallotTx, hourBucketBangkok } from "../../../lib/ballotChain";
+import { readElectionState } from "../../../lib/election/liveStatus";
+import { voteRefusal } from "../../../lib/election/systemStatus.mjs";
 
 // Interactive-transaction limits for the vote (M1, 2026-09-25).
 //
@@ -32,6 +34,14 @@ const VOTE_TX_OPTIONS = {
 function refuse(code, error, status, init = {}) {
   return NextResponse.json({ code, error }, { status, ...init });
 }
+
+// The Thai shown for each mode/schedule refusal (codes from voteRefusal).
+const VOTE_REFUSAL_MESSAGES = {
+  PAUSED: "ระบบหยุดรับลงคะแนนชั่วคราว",
+  ENDED: "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม",
+  NOT_STARTED: "ยังไม่ถึงเวลาเปิดหีบ",
+  AUTO_CLOSED: "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม",
+};
 
 export async function POST(request) {
   try {
@@ -84,10 +94,8 @@ export async function POST(request) {
 
     // 0. 🛑 SECURITY GATE:
     const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
-    const mode = systemConfig?.systemMode || "AUTO";
-    const { resolveElectionDates } = await import("../../../utils/electionConfig");
-    const { ELECTION_END, ELECTION_START } = resolveElectionDates(systemConfig?.globalConfig);
     const now = Date.now();
+    const { systemMode: mode, start, end } = readElectionState(systemConfig, now);
 
     // 0.0 Certified results are final. This sits above every mode check on
     // purpose: MANUAL_OPEN forces the box open regardless of the clock, so
@@ -97,27 +105,12 @@ export async function POST(request) {
       return refuse("CERTIFIED", "ผลการเลือกตั้งได้รับการรับรองแล้ว ไม่รับลงคะแนนเพิ่ม", 403);
     }
 
-    // 0.1 Check Manual Modes First
-    if (mode === "PAUSE") {
-      return refuse("PAUSED", "ระบบหยุดรับลงคะแนนชั่วคราว", 403);
-    }
-
-    if (mode === "ENDED") {
-      return refuse("ENDED", "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม", 403);
-    }
-
-    if (mode === "MANUAL_OPEN") {
-      // Pass: Voting is forced open, ignore time check
-    }
-
-    // 0.2 Check Auto Mode (Scheduled Time)
-    if (mode === "AUTO") {
-      if (now < ELECTION_START) {
-        return refuse("NOT_STARTED", "ยังไม่ถึงเวลาเปิดหีบ", 403);
-      }
-      if (now >= ELECTION_END) {
-        return refuse("AUTO_CLOSED", "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม", 403);
-      }
+    // 0.1 Mode + schedule (lib/election/systemStatus.mjs voteRefusal): PAUSE and
+    // ENDED refuse, MANUAL_OPEN takes votes whatever the clock says, AUTO follows
+    // the schedule. Same codes and messages as when this ladder lived here.
+    const refusal = voteRefusal({ systemMode: mode, start, end, now });
+    if (refusal) {
+      return refuse(refusal, VOTE_REFUSAL_MESSAGES[refusal], 403);
     }
 
     // 1. ตรวจสอบข้อมูล

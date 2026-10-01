@@ -112,8 +112,8 @@ export default function ResultsPage() {
     let stale = false;
     const checkAccess = async () => {
       try {
+        // Browser clock: used only for the campaign-window checks below.
         const now = new Date();
-        const isEnded = now >= ELECTION_CONFIG.ELECTION_END;
 
         // Re-running because the server's picture changed: skip the shared 15 s
         // cache, or the check would read the mode from before the change. The
@@ -129,6 +129,12 @@ export default function ResultsPage() {
         const isSystemClosed = statusData.systemMode === "PAUSE";
         const isManualEnd = statusData.systemMode === "ENDED";
         const isRevealed = statusData.showResult === true;
+        // "Has the box closed?" is the SERVER's verdict (check-status, one ladder
+        // in lib/election/systemStatus.mjs), not the browser clock (T7). Changes
+        // from the clock version, accepted: MANUAL_OPEN past the scheduled end
+        // is gated like open voting; PAUSE past the end shows MAINTENANCE; a
+        // student whose device clock is wrong no longer gets a different gate.
+        const isEnded = statusData.electionStatus === "ENDED";
 
         // ⚡️ NEW SYSTEM MODES logic:
         if (isManualEnd || isEnded || isRevealed) {
