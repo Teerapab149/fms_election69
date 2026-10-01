@@ -20,6 +20,14 @@
 # Keeps the latest RETENTION days; older files are pruned — but ONLY after this
 # run's backup has been verified. See "ทำไมต้องตรวจก่อน prune" below.
 #
+# ตรวจเนื้อ dump ก่อน gzip (แก้ 2026-10-01 — ซ้อม restore แล้วเจอ: DROP "Ballot" ทิ้ง รอบถัดไป
+# ยัง dump 8 ตารางแล้วเขียน LAST_OK หน้าตรวจความพร้อมขึ้นเขียว) · ไม่ผ่านข้อใด = LAST_FAIL
+# stage dump ไม่มีไฟล์ db-*.sql.gz ใหม่ และไม่ prune:
+#   1. มีตารางหลักครบ (ESSENTIAL_TABLES ด้านล่าง)
+#   2. กล่องบัตรสอดคล้องกับโซ่: ChainHead มี 1 แถว และจำนวนแถว Ballot = ChainHead.seq
+#   3. จำนวนตารางไม่ลดลงจาก LAST_OK รอบก่อน — ยกเว้นจำนวน migration เปลี่ยน (แก้ schema โดยตั้งใจ)
+#      ตั้งใจลบตารางโดยไม่มี migration จริง ๆ → `sudo rm backups/status/LAST_OK` แล้วรันใหม่
+#
 # Optional BACKUP_AFTER_CMD (host cron เท่านั้น): คำสั่งที่รันหลัง backup ผ่านการตรวจแล้ว
 # เช่นคัดลอกออกนอกเครื่อง `rclone copy backups remote:fms-backup` · จำกัดเวลาด้วย
 # BACKUP_AFTER_TIMEOUT วินาที (ค่าเริ่มต้น 1800) · ล้มเหลว = บันทึก LAST_FAIL stage "offsite"
@@ -226,6 +234,73 @@ grep -q 'CREATE TABLE' "$raw" || fail "ไฟล์ dump ไม่มีคำ�
 tables="$(grep -c '^CREATE TABLE' "$raw" || true)"
 echo "[backup $ts]   dump มี $tables ตาราง"
 
+# ── ตรวจเนื้อ dump ก่อน gzip: DB ที่เสียต้องไม่มีวันกลายเป็น db-*.sql.gz ─────────────
+# dump ที่ "ถูกรูปแบบ" ไม่ได้แปลว่า "ข้อมูลครบ" — pg_dump ของ DB ที่ตารางหายไปก็สำเร็จสวยงาม
+#
+# ตารางหลัก = ทุกตารางใน prisma/migrations + _prisma_migrations
+# ⚠️ รายชื่อนี้ต้องตรงกับ ESSENTIAL_TABLES ใน scripts/restore.sh — เพิ่ม model ใหม่ให้แก้ทั้งสองไฟล์
+#    กติกา schema ต่างกันโดยตั้งใจ: ที่นี่รับ schema ใดก็ได้ เพราะ use_url ทิ้ง ?schema= ของ URL ไป
+#    สคริปต์จึงไม่รู้ว่าแอปใช้ schema ไหน · restore.sh บังคับ public เพราะมันล้างและโหลดลง public
+ESSENTIAL_TABLES="User Candidate Member Ballot ChainHead SystemConfig Template AdminAuditLog _prisma_migrations"
+create_lines="$(grep '^CREATE TABLE ' "$raw" || true)"
+missing=""
+for t in $ESSENTIAL_TABLES; do
+  # รับทั้งชื่อมี/ไม่มีเครื่องหมายคำพูด และ schema ใดก็ได้ (public."User", public._prisma_migrations)
+  printf '%s\n' "$create_lines" | grep -Eq "^CREATE TABLE ([a-z0-9_]+|\"[^\"]+\")\.(\"$t\"|$t) \(" \
+    || missing="$missing $t"
+done
+# ข้อความสั้นโดยตั้งใจ — หน้าตรวจความพร้อมตัด reason ที่ 200 ตัวอักษร
+[ -z "$missing" ] || fail "dump ไม่มีตารางหลัก:$missing"
+
+# กล่องบัตร ↔ โซ่: ทุกบัตรเพิ่ม ChainHead.seq ทีละ 1 ใน transaction เดียวกัน
+# (src/lib/ballotChain.js:52-61) และ annual-reset ล้างทั้งคู่พร้อมกัน (scripts/sql/annual-reset.sql:23-25)
+# pg_dump อ่านจาก snapshot เดียว ตัวเลขสองตัวจึงต้องเท่ากันเสมอ · ไม่เท่า = บัตรถูกลบ/เพิ่มนอกระบบ
+# อ่านไฟล์รอบเดียว: นับแถวในบล็อก COPY ของ Ballot / ChainHead / _prisma_migrations
+# หาตำแหน่งคอลัมน์ seq จากหัว COPY ไม่ fix เลข เผื่อ migration เพิ่มคอลัมน์
+copy_stats="$(LC_ALL=C awk '
+  BEGIN { inblk = 0; blk = ""; b = 0; h = 0; m = 0; hseq = ""; seqcol = 0; sb = 0; sh = 0; sm = 0 }
+  inblk {
+    if ($0 == "\\.") { inblk = 0; blk = ""; next }
+    if (blk == "b") b++
+    else if (blk == "m") m++
+    else if (blk == "h") { h++; if (seqcol > 0) { split($0, f, "\t"); hseq = f[seqcol] } }
+    next
+  }
+  /^COPY [^ ]+ \(.*\) FROM stdin;$/ {
+    inblk = 1; name = $2; sub(/^.*\./, "", name); gsub(/"/, "", name)
+    blk = ""
+    if (name == "Ballot") { blk = "b"; sb = 1 }
+    else if (name == "_prisma_migrations") { blk = "m"; sm = 1 }
+    else if (name == "ChainHead") {
+      blk = "h"; sh = 1
+      cols = $0; sub(/^COPY [^(]*\(/, "", cols); sub(/\) FROM stdin;$/, "", cols)
+      n = split(cols, a, ", ")
+      for (i = 1; i <= n; i++) { c = a[i]; gsub(/"/, "", c); if (c == "seq") seqcol = i }
+    }
+  }
+  END { printf "%d %d %d %d %d %d %s\n", sb, sh, sm, b, h, m, (hseq == "" ? "-" : hseq) }
+' "$raw")" || fail "อ่านบล็อกข้อมูลใน dump ไม่ได้ (awk ล้ม)"
+set -- $copy_stats
+seen_ballot=$1; seen_head=$2; seen_mig=$3; ballots=$4; head_rows=$5; migrations=$6; head_seq=$7
+[ "$seen_ballot" = 1 ] && [ "$seen_head" = 1 ] && [ "$seen_mig" = 1 ] \
+  || fail "dump ไม่มีข้อมูล (COPY) ของ Ballot/ChainHead/_prisma_migrations — น่าจะเป็น dump แบบ schema-only"
+[ "$head_rows" = 1 ] || fail "ChainHead ต้องมี 1 แถว แต่ใน dump มี $head_rows แถว"
+case "$head_seq" in ''|*[!0-9]*) fail "อ่านค่า ChainHead.seq ใน dump ไม่ได้ (ได้ '$head_seq')" ;; esac
+[ "$ballots" -eq "$head_seq" ] \
+  || fail "บัตรใน Ballot ($ballots แถว) ไม่เท่ากับ ChainHead.seq ($head_seq) — กล่องบัตรถูกแก้นอกระบบ"
+echo "[backup $ts]   ✓ ตารางหลักครบ · บัตร $ballots ใบ = ChainHead.seq · migration $migrations รายการ"
+
+# จำนวนตารางลดลงจากรอบก่อน = มีตารางหาย (ตารางหลักข้างบนจับได้แค่ที่รู้ชื่อล่วงหน้า)
+# ยกเว้นเมื่อจำนวน migration เปลี่ยน = แก้ schema โดยตั้งใจ (migration ลบ/รวมตาราง)
+# LAST_OK รุ่นก่อนไม่มีช่อง migrations → ข้ามข้อนี้ไปหนึ่งรอบ · ไม่มี LAST_OK เลย (รอบแรก) → ข้าม
+prev_ok="$(cat "$STATUS_DIR/LAST_OK" 2>/dev/null || true)"
+prev_tables="$(printf '%s' "$prev_ok" | sed -n 's/.*"tables":\([0-9][0-9]*\).*/\1/p')"
+prev_migrations="$(printf '%s' "$prev_ok" | sed -n 's/.*"migrations":\([0-9][0-9]*\).*/\1/p')"
+if [ -n "$prev_tables" ] && [ -n "$prev_migrations" ] \
+   && [ "$tables" -lt "$prev_tables" ] && [ "$migrations" -eq "$prev_migrations" ]; then
+  fail "ตารางลดจาก $prev_tables เหลือ $tables ทั้งที่ migration เท่าเดิม — ถ้าตั้งใจลบตารางจริง: sudo rm backups/status/LAST_OK แล้วรันใหม่"
+fi
+
 gzip -c "$raw" > "$gz" || fail "gzip ไม่สำเร็จ"
 gzip -t "$gz" || fail "ไฟล์ .gz ที่ได้เสียหาย (gzip -t ไม่ผ่าน)"
 
@@ -268,7 +343,7 @@ find "$OUT_DIR" -name 'images-*.tar.gz' -mtime +"$RETENTION" -delete 2>/dev/null
 find "$OUT_DIR" -name '.db-*.sql.partial' -mtime +1 -delete 2>/dev/null || true
 
 if [ -n "$images_file" ]; then images_json="\"$images_file\""; else images_json=null; fi
-write_status LAST_OK "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"file\":\"db-$ts.sql.gz\",\"tables\":${tables:-0},\"images\":$images_json,\"interval_hours\":$interval_json}" \
+write_status LAST_OK "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"file\":\"db-$ts.sql.gz\",\"tables\":${tables:-0},\"migrations\":${migrations:-0},\"images\":$images_json,\"interval_hours\":$interval_json}" \
   || echo "[backup $ts] WARN: บันทึก $STATUS_DIR/LAST_OK ไม่ได้ — backup ใช้ได้ แต่หน้าตรวจความพร้อมจะไม่เห็นรอบนี้" >&2
 
 echo "[backup $ts] ✓ เสร็จเรียบร้อย ตรวจไฟล์แล้วว่าใช้ได้:"

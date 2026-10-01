@@ -107,11 +107,12 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 > ลำดับที่ปลอดภัย: **รับรองผล → `npm run archive-year` → commit ไฟล์ archive → แล้วค่อย
 > ล้าง/ทับรายชื่อ**
 
-> **backup/restore ตรวจตัวเองแล้ว (2026-09-05)** — `backup.sh` จะไม่ลบ backup เก่าจนกว่าจะ
-> ยืนยันว่า dump รอบนี้ใช้ได้จริง (มีหัวไฟล์ pg_dump + มี CREATE TABLE + `gzip -t` ผ่าน) และ
-> `restore.sh` จะตรวจไฟล์ให้ครบ **ก่อน** แตะฐานข้อมูล แล้วสำรองสภาพปัจจุบันไว้ที่
-> `backups/pre-restore-*.sql.gz` ก่อนล้าง · โหลดแบบ all-or-nothing (`ON_ERROR_STOP` +
-> `--single-transaction`) และนับตาราง/แถวให้ดูหลังเสร็จ
+> **backup/restore ตรวจตัวเองแล้ว (2026-09-05, เพิ่ม 2026-10-01)** — `backup.sh` จะไม่ลบ backup เก่าจนกว่าจะ
+> ยืนยันว่า dump รอบนี้ใช้ได้จริง (มีหัวไฟล์ pg_dump + มีตารางหลักครบ 9 ตาราง + จำนวนบัตรใน `Ballot`
+> เท่ากับ `ChainHead.seq` + จำนวนตารางไม่ลดจากรอบก่อนถ้า migration เท่าเดิม + `gzip -t` ผ่าน — ไม่ผ่าน
+> = ไม่มีไฟล์ `db-*.sql.gz` ใหม่) และ `restore.sh` จะตรวจไฟล์ให้ครบ (รวมตารางหลัก) **ก่อน** แตะฐานข้อมูล
+> แล้วสำรองสภาพปัจจุบันไว้ที่ `backups/pre-restore-*.sql.gz` (สิทธิ์ 0600) ก่อนล้าง · โหลดแบบ all-or-nothing
+> (`ON_ERROR_STOP` + `--single-transaction`) และนับแถวทุกตารางหลักหลังเสร็จ นับไม่ได้ = ล้ม
 >
 > ยังต้องซ้อมกู้จริงกับเป้าหมายทิ้งได้อย่างน้อยหนึ่งครั้งก่อนวันเลือกตั้ง — สคริปต์ตรวจได้แค่ว่า
 > ไฟล์ใช้ได้ ไม่ได้ตรวจว่า *ไฟล์ที่คุณเลือก* คือรอบที่ถูกต้อง
@@ -272,11 +273,18 @@ docker compose logs --tail 50 backup           # log ทุกรอบ (ไม�
 docker compose exec backup sh scripts/backup.sh   # สำรองทันทีหนึ่งรอบ (ก่อนงานเสี่ยง) ไม่ต้องรอรอบ
 # → backups/db-<ts>.sql.gz (pg_dump) + backups/images-<ts>.tar.gz (public/images)
 #   + backups/status/LAST_OK | LAST_FAIL (JSON บรรทัดเดียว ไม่มีข้อมูลส่วนบุคคล)
+#   ตรวจก่อน gzip: ตารางหลักครบ · Ballot = ChainHead.seq · ตารางไม่ลดจาก LAST_OK (ยกเว้น migration เปลี่ยน)
 
 # กู้คืน (DESTRUCTIVE — ยืนยันก่อน) — sudo เพราะไฟล์เป็นของ root (ดูด้านล่าง):
 sudo sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
 docker compose restart web
 ```
+- **backup ตรวจเนื้อ dump ก่อนบีบอัด (2026-10-01)** — ไม่ผ่าน = LAST_FAIL stage `dump` ไม่มี `db-*.sql.gz` ใหม่
+  และไม่ลบของเก่า: (1) มีตารางหลักครบ `User Candidate Member Ballot ChainHead SystemConfig Template
+  AdminAuditLog _prisma_migrations` (รายชื่อเดียวกันใน `backup.sh` และ `restore.sh` — เพิ่ม model ใหม่ต้องแก้ทั้งคู่)
+  (2) `ChainHead` มี 1 แถวและจำนวนแถว `Ballot` = `ChainHead.seq` (ไม่เท่า = บัตรถูกลบ/เพิ่มนอกระบบ)
+  (3) จำนวนตารางไม่ลดจาก `LAST_OK` รอบก่อน เว้นแต่จำนวน migration (`"migrations"` ใน LAST_OK) เปลี่ยน ·
+  ถ้าตั้งใจลบตารางโดยไม่มี migration จริง ๆ: `sudo rm backups/status/LAST_OK` แล้วสำรองใหม่ (รอบแรกที่ไม่มี LAST_OK ข้ามข้อนี้)
 - **ต่อ DB ด้วย `postgres` ของ service `db`** (compose ตั้ง `PGHOST=db PGUSER=postgres PGPASSWORD=${POSTGRES_PASSWORD}`)
   ไม่ใช่ `DATABASE_URL` ของเว็บ — `fms_app` ไม่มีสิทธิ์อ่าน `_prisma_migrations` ฯลฯ dump ไม่ครบ ·
   service นี้ **ไม่มี `env_file`** โดยตั้งใจ ไม่ต้องรู้ secret อื่นของแอป
