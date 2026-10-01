@@ -124,7 +124,7 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 
 **D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```
-# ทาง 1 (แนะนำ กรรมการกดเองได้): แท็บ "ตั้งค่าระบบ" → ปุ่ม "ตรวจความพร้อมระบบ" (ADM-1)
+# ทาง 1 (แนะนำ กรรมการกดเองได้): แท็บ "ตั้งค่าระบบ" → การ์ด "ตรวจความพร้อมระบบ READINESS" → ปุ่ม "ตรวจตอนนี้" (ADM-1)
 #   เรียก GET /api/admin/readiness (read-only) → สรุป pass/warn/fail 16 ข้อ:
 #   schedule (ลำดับเวลา/เปิดตัวผู้สมัคร/แหล่งเวลา/อดีต), mode.coherence, candidates
 #   (มีพรรค/พรรคเดียวมีตัวเลือกครบ/เนื้อหาครบ), voters, tally.integrity, config
@@ -280,7 +280,7 @@ docker compose restart web
 - **ต่อ DB ด้วย `postgres` ของ service `db`** (compose ตั้ง `PGHOST=db PGUSER=postgres PGPASSWORD=${POSTGRES_PASSWORD}`)
   ไม่ใช่ `DATABASE_URL` ของเว็บ — `fms_app` ไม่มีสิทธิ์อ่าน `_prisma_migrations` ฯลฯ dump ไม่ครบ ·
   service นี้ **ไม่มี `env_file`** โดยตั้งใจ ไม่ต้องรู้ secret อื่นของแอป
-- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** "ตรวจความพร้อมระบบ" → ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
+- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** การ์ด "ตรวจความพร้อมระบบ READINESS" → ปุ่ม "ตรวจตอนนี้" → ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
   `backups/status/` ที่เว็บ mount แบบ `:ro` · เขียว = สำเร็จภายในรอบ+1 ชม. · เหลือง = เลยรอบ / ยังไม่มีประวัติ /
   สำเนานอกเครื่องล้ม · แดง = รอบล่าสุดล้ม (บอกสาเหตุ + เวลา backup ดีล่าสุด) หรือเก่าเกิน 2 รอบ+1 ชม.
 - **ไฟล์เป็นของ root, dump เป็น 0600** — Docker สร้าง `./backups` เป็นของ root และ service รันด้วย root (uid ธรรมดา
