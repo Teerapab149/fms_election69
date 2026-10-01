@@ -2543,6 +2543,61 @@ theory into proof.
 
 ---
 
+### P-LOG-140: [2026-10-01] Two status records from one run share a timestamp
+**Context:** backup.sh writes LAST_OK and then, when the off-machine copy fails, LAST_FAIL
+in the same second. The readiness rule "fail newer than OK → warn" used `>` and reported
+`pass`, hiding the failure (caught on a real run, not in review).
+**Lesson:** when one run can write two records with second-resolution times, compare with
+`>=` (or order by run id), and test the same-second case explicitly.
+**Tags:** `#backup` `#readiness` `#gotcha`
+
+---
+
+### P-LOG-141: [2026-10-01] Status ladders that look the same are not the same
+**Context:** T7 folded four inline mode+schedule ladders into lib/election/systemStatus.mjs.
+They only looked identical: the vote gate lets an unknown mode through, the results ladder
+checks the end time first, and `isBoxClosed` ignores the start time (an inverted schedule
+must read as closed). A "cleaned-up" rewrite would have changed three answers.
+**Lesson:** consolidate behind oracle tests that paste the OLD blocks verbatim and compare
+over a matrix that includes null/unknown modes and inverted schedules — never against a
+tidy restatement of what the code "obviously" does.
+**Tags:** `#election-status` `#refactor` `#testing`
+
+---
+
+### P-LOG-142: [2026-10-01] A bare `1fr` track widened the Ballot page on phones
+**Context:** Ballot step 3 sat 4px from the screen edge at 320px. `.bj-in--split` collapsed
+to `grid-template-columns: 1fr`, whose minimum is `auto`, so the fixed 300px cast scene
+(scaled .86 visually, not in layout) widened the column past the 288px content box.
+**Lesson:** use `minmax(0, 1fr)` whenever a grid track holds a fixed-width child; a CSS
+transform never shrinks the layout box.
+**Tags:** `#css` `#mobile` `#ballot`
+
+---
+
+### P-LOG-143: [2026-10-01] Tests that write the DB directly bypass the results snapshot
+**Context:** T1 put public /api/results behind a 4 s shared snapshot that the admin
+dashboard busts on every action. An e2e test flipped `showResult` straight in the DB and
+read /api/results at once — it got the hidden body and failed.
+**Lesson:** a test (or script, e.g. annual-reset.sql) that changes showResult/systemMode/dates
+in the DB must poll /api/results for up to `RESULTS_SNAP_TTL_MS`, or go through the admin
+API that busts the snapshot.
+**Tags:** `#e2e` `#cache` `#results`
+
+---
+
+### P-LOG-144: [2026-10-01] In the cloud sandbox only the Playwright runner reaches local ports
+**Context:** a standalone Chromium script against `next start` got ERR_TUNNEL_CONNECTION_FAILED
+/ ERR_NAME_NOT_RESOLVED (the sandbox proxy), whatever proxy flags were passed, while
+`npx playwright test` reached the same server. The repo's Playwright also expects a newer
+Chromium build than the pre-installed one.
+**Lesson:** in that sandbox write throwaway probes as `e2e/_probe-*.spec.js` (delete after)
+and run them through the runner; point `PLAYWRIGHT_BROWSERS_PATH` at a shim dir that links
+the installed build under the revision the repo expects.
+**Tags:** `#environment` `#playwright` `#gotcha`
+
+---
+
 ## 🚫 Rejected Approaches
 
 ### R-001: ❌ HeroBlock as the editable hero
