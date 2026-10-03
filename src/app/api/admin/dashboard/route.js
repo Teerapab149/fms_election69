@@ -7,6 +7,7 @@ import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialO
 import { resolveElectionDates } from "../../../../utils/electionConfig";
 import { isBoxClosed, checkSetMode, checkShowResult } from "../../../../lib/election/adminGuards.mjs";
 import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
+import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.mjs";
 
 // Mode and result visibility are checked against each other (adminGuards), so
 // they are read and written under a row lock: two admins pressing "reopen" and
@@ -176,7 +177,11 @@ async function handleAction(body, auth) {
 
     // กรณี: อัปเดตลิงก์ Google Form
     if (action === 'SET_GOOGLE_FORM') {
-      const { url } = body;
+      // Same rule as global-config PUT: the link becomes an iframe src for every
+      // voter, so only a Google Forms link is stored (blank = clear).
+      const raw = typeof body.url === "string" ? body.url.trim() : "";
+      const url = raw ? normalizeFormUrl(raw) : "";
+      if (url === null) return NextResponse.json({ error: FORM_URL_ERROR }, { status: 400 });
       let config = await db.systemConfig.findFirst();
 
       // ✅ Fix: หากยังไม่มี Config ให้สร้างใหม่ (ป้องกัน Crash)
