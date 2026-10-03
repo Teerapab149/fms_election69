@@ -696,6 +696,20 @@ preflight ตรวจรายการที่เหลือก่อนเ�
 
 ### 6.1 สำรองข้อมูล
 
+**เลือกตัวตั้งเวลาตามวิธีรันแอป** สคริปต์ที่สำรองจริงมีตัวเดียว คือ [backup.sh](../scripts/backup.sh) ไม่ว่าแอปรันแบบไหน เลือกอย่างเดียว อย่าตั้งซ้อนกัน
+ไฟล์ตัวอย่างและขั้นตอนเต็มอยู่ที่ [deploy/backup/README.md](../deploy/backup/README.md)
+
+| แอปรันแบบไหน | ตัวตั้งเวลา | ไฟล์ตัวอย่าง |
+| --- | --- | --- |
+| `docker compose up -d` | service `backup` ใน compose ทำงานเอง ไม่ต้องตั้งอะไร (อ่านต่อด้านล่าง) | ไม่ต้องใช้ |
+| `node .next/standalone/server.js` หรือ `npm start` ไม่ใช้ Docker | cron | `deploy/backup/crontab.example` |
+| systemd | timer + service | `deploy/backup/fms-backup.timer`, `fms-backup.service` |
+| pm2 | pm2 รัน `scripts/backup-loop.sh` เป็นโปรเซสแยก | `deploy/backup/ecosystem.backup.config.cjs` |
+
+ทุกแบบที่ไม่ใช้ Docker ต้องมี `pg_dump` บนเครื่อง (รุ่นหลักไม่ต่ำกว่าเซิร์ฟเวอร์ DB) และไฟล์ env ของ backup ที่เก็บรหัสผ่านของบัญชีที่อ่านได้ทุกตาราง (`/etc/fms-backup.env` สิทธิ์ 0600 ตัวอย่างอยู่ใน `backup.env.example`)
+ถ้ารันเว็บด้วย `.next/standalone/server.js` ให้ตั้ง `BACKUP_STATUS_DIR` ใน `.env` ของแอปชี้ไปที่ `backups/status` ของโปรเจกต์ เพราะ `server.js` ย้ายโฟลเดอร์ทำงานไป `.next/standalone` เอง ไม่งั้นหน้าตรวจความพร้อมจะหาผล backup ไม่เจอ
+ผลของทุกแบบแสดงในหน้าตรวจความพร้อมเหมือนกัน (ข้อ "สำรองข้อมูลอัตโนมัติ (backup)") และบอกว่ารอบล่าสุดมาจากตัวไหน ส่วนที่เหลือของหัวข้อนี้เขียนจากกรณี Docker
+
 **กรณี B ใช้ DB ที่มากับ Docker: สำรองอัตโนมัติ**
 
 `docker compose up -d` เปิด service `backup` คู่กับเว็บและ DB ให้เอง ไม่ต้องตั้ง cron
@@ -768,7 +782,7 @@ backup ชุดนี้ไม่เก็บ `.env`, secret, config reverse pr
 - **ให้ DBA ดูแลอย่างเดียว:** เอา service `backup` ออกจากไฟล์ compose ที่ใช้จริง ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" ในหน้าตรวจความพร้อมจะขึ้นเหลืองว่าไม่พบประวัติ ข้อนั้นข้ามได้
 - **ให้ service `backup` สำรองด้วย:** เอา `backup.depends_on` ออก ตั้ง `BACKUP_DATABASE_URL` เป็นบัญชีที่ DBA ให้อ่านได้ทุกตาราง และตั้ง `BACKUP_PG_IMAGE` ให้รุ่นหลักไม่ต่ำกว่าเซิร์ฟเวอร์ของคณะ (ดูตาราง §3.2)
 
-อย่าใช้ `sh scripts/backup.sh` บนโฮสต์ยืนยัน DB ของคณะ เพราะแบบนั้นมันจะไป dump คอนเทนเนอร์ชื่อที่ตั้งไว้ ซึ่งอาจเป็นฐานคนละตัว
+อย่าใช้ `sh scripts/backup.sh` เปล่า ๆ บนโฮสต์ยืนยัน DB ของคณะ เพราะแบบนั้นมันจะไป dump คอนเทนเนอร์ชื่อที่ตั้งไว้ ซึ่งอาจเป็นฐานคนละตัว (ถ้าไม่ใช้ Docker ให้ตั้งตัวตั้งเวลาแบบ `DUMP_VIA=direct` ตามตารางต้น §6.1 ซึ่งต่อ DB ของคณะตรง ๆ)
 ถ้าไม่ได้ใช้ service `backup` ให้สำรองรูปจากโฮสต์ด้วยระบบสำรองของคณะหรือคำสั่งนี้ โดยเปลี่ยนชื่อปลายทางให้ไม่ซ้ำและเตรียมโฟลเดอร์ไว้แล้ว:
 
 ```bash
@@ -818,6 +832,9 @@ setup ลง migration **ก่อน** build จึงอาจแก้ DB ส
 ไฟล์ใน `backups/` เป็นของ root (§6.1) จึงรันด้วย `sudo sh scripts/restore.sh backups/db-วันเวลา.sql.gz backups/images-วันเวลา.tar.gz`
 สคริปต์นี้ **ล้างและสร้าง schema `public` ใหม่** ก่อนโหลด dump และเขียนรูปทับ หากโหลดล้มหลังล้าง DB เดิมจะไม่อยู่ในฐานนั้นแล้ว
 จึงต้องซ้อมขั้นตอน/ตรวจ target และ backup ในเครื่องแยกก่อน ไม่ใช่คำสั่งลองแก้เว็บล่ม
+เครื่องที่ไม่ใช้ Docker รันได้ด้วย `RESTORE_VIA=direct` (ต้องมี `psql` กับ `pg_dump`) โดยบอก DB เป้าหมายผ่าน `RESTORE_DATABASE_URL` หรือ `BACKUP_DATABASE_URL` ในไฟล์ `BACKUP_ENV_FILE` เช่น
+`sudo RESTORE_VIA=direct BACKUP_ENV_FILE=/etc/fms-backup.env sh scripts/restore.sh backups/db-วันเวลา.sql.gz backups/images-วันเวลา.tar.gz`
+สคริปต์บอกชื่อ DB กับเครื่องที่จะถูกเขียนทับก่อนถามยืนยัน และไม่ใช้ `DATABASE_URL` ของเว็บโดยตั้งใจ ซ้อมกู้ใส่ DB ทิ้ง ๆ ก่อนด้วยการชี้ `RESTORE_DATABASE_URL` ไปที่ DB นั้น
 หลัง restore ตรวจสิทธิ์ `fms_app`, ยอด/chain, รูป และการเข้าระบบตามสภาพที่กู้จริง กรณี DB ของคณะใช้ขั้นตอน restore ของ DBA
 
 <a id="troubleshooting"></a>

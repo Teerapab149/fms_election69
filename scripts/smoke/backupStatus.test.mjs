@@ -21,9 +21,54 @@ test("no history at all: warn, says DBA-managed backups can ignore it", () => {
   const r = run(null, null);
   assert.equal(r.level, "warn");
   assert.match(r.detail, /ยังไม่พบประวัติ backup/);
-  assert.match(r.detail, /docker compose ps backup/);
   assert.match(r.detail, /DBA/);
   assert.match(r.detail, /ข้ามได้/);
+});
+
+test("no history: advice is scheduler-neutral (every run mode named, README pointed to)", () => {
+  const r = run(null, null);
+  for (const hint of [/docker compose logs backup/, /journalctl -u fms-backup/, /pm2 logs fms-backup/, /cron/, /deploy\/backup\/README\.md/, /BACKUP_STATUS_DIR/]) {
+    assert.match(r.detail, hint);
+  }
+});
+
+test("runner recorded by backup.sh: shown on pass, and late/stale advice names only that runner's log", () => {
+  const pass = run(okLine(1, { runner: "cron" }), null);
+  assert.equal(pass.level, "pass");
+  assert.match(pass.detail, /ตัวรัน cron/);
+
+  const late = run(okLine(8, { runner: "systemd" }), null);
+  assert.equal(late.level, "warn");
+  assert.match(late.detail, /journalctl -u fms-backup/);
+  assert.doesNotMatch(late.detail, /docker compose|pm2 logs/);
+
+  const stale = run(okLine(20, { runner: "pm2" }), null);
+  assert.equal(stale.level, "fail");
+  assert.match(stale.detail, /pm2 logs fms-backup/);
+  assert.doesNotMatch(stale.detail, /docker compose|journalctl/);
+
+  const dock = run(okLine(8, { runner: "docker" }), null);
+  assert.match(dock.detail, /docker compose logs backup/);
+});
+
+test("unknown or hostile runner value is ignored: generic advice, nothing echoed", () => {
+  const r = run(okLine(8, { runner: "<script>alert(1)</script>" }), null);
+  assert.equal(r.level, "warn");
+  assert.match(r.detail, /deploy\/backup\/README\.md/);
+  assert.doesNotMatch(r.detail, /script/);
+  // records written before the runner field existed keep working and get the generic advice
+  const old = run(okLine(8), null);
+  assert.match(old.detail, /deploy\/backup\/README\.md/);
+  assert.doesNotMatch(old.detail, /ตัวรัน/);
+});
+
+test("level logic is independent of the runner field", () => {
+  for (const runner of ["docker", "cron", "systemd", "pm2", "loop", "manual", "weird"]) {
+    assert.equal(run(okLine(2, { runner }), null).level, "pass");
+    assert.equal(run(okLine(8, { runner }), null).level, "warn");
+    assert.equal(run(okLine(20, { runner }), null).level, "fail");
+    assert.equal(run(okLine(5, { runner }), failLine(1)).level, "fail");
+  }
 });
 
 test("fresh OK: pass with time, age and file name", () => {

@@ -175,6 +175,14 @@ BACKUP_PG_IMAGE           # อิมเมจที่มี pg_dump (ค่า
                           #    ต้องเป็น major ไม่ต่ำกว่าเซิร์ฟเวอร์ DB — ใช้ DB ของคณะ = ถาม DBA
 BACKUP_DATABASE_URL       # ใช้เฉพาะเมื่อให้ service backup สำรอง DB ของคณะ: บัญชีที่อ่านได้ทุกตาราง
                           #    (รวม _prisma_migrations — fms_app ไม่พอ) · มีค่าแล้วชนะ db/postgres
+
+# สำรองบนเครื่องที่ไม่ใช้ Docker (cron/systemd/pm2) — ใส่ในไฟล์ env ของ backup (BACKUP_ENV_FILE, 0600)
+# ไม่ใช่ .env ของแอป · ดู deploy/backup/README.md และ deploy/backup/backup.env.example
+BACKUP_ENV_FILE           # path ไฟล์ KEY='value' ของ backup เช่น /etc/fms-backup.env (ใส่ BACKUP_DATABASE_URL ในนั้น)
+BACKUP_RUNNER             # cron | systemd | pm2 — เขียนลง LAST_OK ให้หน้าตรวจความพร้อมรู้ว่าไปดู log ที่ไหน
+BACKUP_APP_DIR            # โฟลเดอร์โปรเจกต์ (ไม่ตั้ง = cwd ของ backup.sh / ที่ที่ backup-loop.sh อยู่)
+UPLOAD_ROOT               # รูปอัปโหลดอยู่นอก public/images: ใส่ path เดียวกับแอป ไม่งั้นรูปไม่อยู่ใน archive
+BACKUP_STATUS_DIR         # ใน .env ของแอป: โฟลเดอร์ backups/status ที่เว็บอ่าน (จำเป็นถ้ารันจาก .next/standalone)
 ```
 > 🔑 **`ELECTION_BALLOT_PUBLIC_KEY` + `BALLOT_CHAIN_SECRET` ไม่ครบ → `/api/vote` fail closed**
 > (โหวตไม่ได้ ไม่มีการเก็บ plaintext). **private key ไม่อยู่บนเซิร์ฟเวอร์** (offline, dispute-only — §11).
@@ -274,6 +282,20 @@ npm run e2e:gate     # 2) หรือ npm run e2e (ครบชุด) — setu
 ---
 
 ## 5. สำรอง/กู้คืน DB + รูป (อัตโนมัติ + ทำก่อนงานเสี่ยงทุกครั้ง)
+**เลือกตามวิธีรันแอป** — สคริปต์ที่สำรองจริงมีตัวเดียว (`scripts/backup.sh`) ตัวตั้งเวลาต่างกันตามวิธีรัน
+ไฟล์ตัวอย่างและขั้นตอนอยู่ใน [`deploy/backup/`](../deploy/backup/README.md) · เลือกอย่างเดียว อย่าตั้งซ้อน
+
+| แอปรันแบบไหน | ตัวตั้งเวลา | สำรองทันที | ดู log |
+| --- | --- | --- | --- |
+| `docker compose up -d` | service `backup` ใน compose (ไม่ต้องทำอะไร) | `docker compose exec backup sh scripts/backup.sh` | `docker compose logs backup` |
+| `node .next/standalone/server.js` / `npm start` ไม่มี Docker | cron (`deploy/backup/crontab.example`) | บรรทัดเดียวกับใน crontab (ตัด `>> …` ออก) | log ที่ crontab เขียนไว้, `grep CRON /var/log/syslog` |
+| systemd | `fms-backup.timer` + `fms-backup.service` | `sudo systemctl start fms-backup.service` | `journalctl -u fms-backup` |
+| pm2 | `ecosystem.backup.config.cjs` รัน `scripts/backup-loop.sh` | `sh scripts/backup.sh` พร้อม `BACKUP_ENV_FILE` (ดู README) | `pm2 logs fms-backup` |
+
+ทุกแบบที่ไม่ใช่ Docker ต้องมี `pg_dump` บนเครื่อง ไฟล์ env ของ backup (`/etc/fms-backup.env`, 0600) และถ้าแอปรันจาก `.next/standalone`
+ให้ตั้ง `BACKUP_STATUS_DIR` ใน `.env` ของแอปชี้ที่ `backups/status` ของโปรเจกต์ (เหตุผล: `server.js` ย้าย cwd ไป `.next/standalone`) — รายละเอียดใน README นั้น
+หน้าตรวจความพร้อมแสดงผลเหมือนกันทุกแบบ และบอกตัวรันที่เขียนผลล่าสุด · เนื้อหาด้านล่างเขียนจากมุม docker compose (ค่าเริ่มต้น) ข้อที่ใช้เฉพาะ Docker ระบุไว้
+
 **สำรองอัตโนมัติแล้ว (2026-09-30):** service `backup` ใน `docker-compose.yml` ขึ้นมาพร้อม `docker compose up -d`
 รัน `scripts/backup-loop.sh` → เรียก `scripts/backup.sh` (`DUMP_VIA=direct`) ทุก `BACKUP_INTERVAL_HOURS` ชม. (ค่าเริ่มต้น 6)
 รอบแรก ~30 วิ หลังคอนเทนเนอร์ขึ้น · รอบที่ล้มลองใหม่ใน 30 นาที · รอบที่ dump ผ่านแต่สำเนานอกเครื่องล้ม (exit 2) รอรอบปกติ
@@ -288,6 +310,13 @@ docker compose exec backup sh scripts/backup.sh   # สำรองทันท�
 # กู้คืน (DESTRUCTIVE — ยืนยันก่อน) — sudo เพราะไฟล์เป็นของ root (ดูด้านล่าง):
 sudo sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
 docker compose restart web
+
+# กู้คืนบนเครื่องที่ไม่ใช้ Docker (cron/systemd/pm2): RESTORE_VIA=direct ต้องมี psql + pg_dump และบอกเป้าหมายเอง
+#   RESTORE_DATABASE_URL (ชนะ BACKUP_DATABASE_URL) · ไม่ใช้ DATABASE_URL ของแอปโดยตั้งใจ (ล้าง schema ต้องใช้บัญชีที่ผู้รันตั้งใจเลือก)
+#   สคริปต์ถามยืนยันพร้อมบอกชื่อ DB + เครื่องที่จะถูกเขียนทับ · รันจากโฟลเดอร์โปรเจกต์ (หรือตั้ง BACKUP_APP_DIR)
+#   ซ้อมก่อน: ชี้ RESTORE_DATABASE_URL ไป DB ทิ้ง ๆ (เช่น fms_restore_test) แล้วค่อยกู้จริง
+sudo RESTORE_VIA=direct BACKUP_ENV_FILE=/etc/fms-backup.env sh scripts/restore.sh backups/db-<ts>.sql.gz backups/images-<ts>.tar.gz
+# แล้วรีสตาร์ทเว็บ (pm2 restart <ชื่อแอป> หรือ sudo systemctl restart <ชื่อ service>)
 ```
 - **backup ตรวจเนื้อ dump ก่อนบีบอัด (2026-10-01)** — ไม่ผ่าน = LAST_FAIL stage `dump` ไม่มี `db-*.sql.gz` ใหม่
   และไม่ลบของเก่า: (1) มีตารางหลักครบ `User Candidate Member Ballot ChainHead SystemConfig Template
@@ -305,8 +334,9 @@ docker compose restart web
   เขียนไม่ได้แล้วล้มทุกรอบ) · dump มีรายชื่อ/รหัสนักศึกษา/ใครลงคะแนนแล้ว จึงอ่านได้เฉพาะ root โดยตั้งใจ →
   **ทุกคำสั่งบนโฮสต์ต้อง `sudo`**: `sudo ls -l backups`, `sudo sh scripts/restore.sh …`, `sudo sh scripts/backup.sh`
   (รันบนโฮสต์แบบเดิม `DUMP_VIA=docker` ยังใช้ได้), `sudo rsync …`
-- ⚠️ **ถ้าเคยตั้ง cron รายวัน `0 2 * * * … sh scripts/backup.sh` ให้ลบออก** (`crontab -l` และ `sudo crontab -l`) —
+- ⚠️ **(เฉพาะ docker compose) ถ้าเคยตั้ง cron รายวัน `0 2 * * * … sh scripts/backup.sh` ให้ลบออก** (`crontab -l` และ `sudo crontab -l`) —
   ซ้อนกับ service = backup สองชุด และ cron ของผู้ใช้ธรรมดาจะล้มทุกคืนเพราะเขียน `backups/` ของ root ไม่ได้
+  (ถ้าไม่ใช้ Docker cron คือวิธีที่ตั้งใจใช้ ดู `deploy/backup/crontab.example` — แต่ต้องไม่มี service `backup` รันอยู่ด้วย)
 - **สำเนานอกเครื่อง** (ดิสก์เสีย = backup ในเครื่องหายด้วย): คอนเทนเนอร์ไม่มี rclone/rsync/ssh จึงตั้ง
   `BACKUP_AFTER_CMD=` ว่างไว้ใน compose · คัดลอกจาก cron ของ root บนโฮสต์แทน เช่น `sudo crontab -e`:
   `45 */6 * * * rsync -a /path/to/fms_election69/backups/ backupuser@nas:/srv/fms-backup/` (ไม่ใส่ `--delete`)

@@ -1,0 +1,16 @@
+# ตัวอย่าง crontab สำหรับรันแอปแบบ node ตรง ๆ บน Linux (ไม่ใช้ Docker)
+# อ่านวิธีใช้ใน deploy/backup/README.md — คัดลอกบรรทัดด้านล่างไปใส่ด้วย `crontab -e`
+# (หรือ `sudo crontab -e` ถ้าให้ root สำรอง) แล้วแก้ /opt/fms-election ให้เป็นโฟลเดอร์โปรเจกต์จริง
+#
+# บรรทัดนี้สำรองทุก 6 ชั่วโมง (นาทีที่ 15 ของชั่วโมง 0 6 12 18) แล้วผลต่อท้ายลงไฟล์ log
+#   cd                 backup.sh ใช้ path แบบเทียบจากโฟลเดอร์โปรเจกต์ (backups/, public/images)
+#   BACKUP_ENV_FILE    ไฟล์ KEY='value' เก็บ BACKUP_DATABASE_URL (สิทธิ์ 0600 เจ้าของคือผู้ใช้ที่ cron นี้รัน)
+#                      รหัสผ่านจึงไม่อยู่ในบรรทัดนี้ ซึ่งคนอื่นบนเครื่องเห็นได้
+#   DUMP_VIA=direct    เรียก pg_dump ตรง (ค่าเริ่มต้นของ backup.sh คือ docker exec ซึ่งเครื่องนี้ไม่มี)
+#   BACKUP_RUNNER      ให้หน้าตรวจความพร้อมในแอดมินรู้ว่าต้องไปดู log ของ cron
+#   BACKUP_INTERVAL_HOURS  ต้องตรงกับความถี่ของ schedule ด้านซ้าย — หน้าตรวจความพร้อมใช้ตัดสินว่า "เก่าเกินไป"
+# ถ้า log ที่ /var/log เขียนไม่ได้ (ไม่ใช่ root) เปลี่ยนเป็น /home/<ผู้ใช้>/fms-backup.log
+15 */6 * * * cd /opt/fms-election && BACKUP_ENV_FILE=/etc/fms-backup.env BACKUP_RUNNER=cron BACKUP_INTERVAL_HOURS=6 DUMP_VIA=direct sh scripts/backup.sh >> /var/log/fms-backup.log 2>&1
+
+# สำรองทันทีหนึ่งรอบ (ก่อนงานเสี่ยง) — รันมือด้วยคำสั่งเดียวกันนี้ ไม่ต้องรอรอบ:
+#   cd /opt/fms-election && BACKUP_ENV_FILE=/etc/fms-backup.env BACKUP_RUNNER=cron DUMP_VIA=direct sh scripts/backup.sh

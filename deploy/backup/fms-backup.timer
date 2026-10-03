@@ -1,0 +1,15 @@
+# ตัวตั้งเวลาของ fms-backup.service — ทุก 6 ชั่วโมงที่นาที 15 (00:15 06:15 12:15 18:15)
+# ถ้าเปลี่ยนความถี่ ให้แก้ BACKUP_INTERVAL_HOURS ใน fms-backup.service ให้ตรงกันด้วย
+
+[Unit]
+Description=FMS election backup every 6 hours
+
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:15:00
+# เครื่องปิด/รีบูตตอนถึงเวลา = รันทันทีที่เปิด ไม่ข้ามรอบ
+Persistent=true
+# หน่วงสุ่มเล็กน้อยเผื่อเครื่องเดียวมีหลายงานตั้งเวลาเดียวกัน
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
