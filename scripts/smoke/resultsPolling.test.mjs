@@ -107,3 +107,26 @@ test('resultsCache: a failed computation is not stored and does not block the ne
   assert.equal(calls, 1);
   assert.deepEqual(body, { status: 'ONGOING' });
 });
+
+// ── failed-fetch retry (resultsRetryDelay) ──
+import { resultsRetryDelay } from '../../src/lib/election/resultsPolling.mjs';
+
+test('resultsRetryDelay: backs off 2s, 4s, 8s, 16s (no jitter)', () => {
+  const unknown = {}; // 30 s normal cadence, so the cap does not bite yet
+  assert.deepEqual([1, 2, 3, 4].map((n) => resultsRetryDelay(unknown, n, mid)), [2_000, 4_000, 8_000, 16_000]);
+});
+
+test('resultsRetryDelay: never slower than the normal delay for the state', () => {
+  const ended = { status: 'ENDED', isRevealed: false }; // 5 s normal
+  assert.equal(resultsRetryDelay(ended, 1, mid), 2_000);
+  assert.equal(resultsRetryDelay(ended, 2, mid), 4_000);
+  assert.equal(resultsRetryDelay(ended, 3, mid), 5_000); // 8 s capped to 5 s
+  assert.equal(resultsRetryDelay(ended, 9, mid), 5_000);
+});
+
+test('resultsRetryDelay: jitter spans 0.5x-1.5x of the step and has a 1 s floor', () => {
+  const unknown = {};
+  assert.equal(resultsRetryDelay(unknown, 1, () => 0), 1_000);
+  assert.equal(resultsRetryDelay(unknown, 1, () => 0.999999), 3_000);
+  assert.equal(resultsRetryDelay(unknown, 99, mid), 30_000); // huge failure count stays finite, capped
+});
