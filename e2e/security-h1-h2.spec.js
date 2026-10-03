@@ -292,9 +292,20 @@ test.describe('H2 — dashboard carries no live score until results are revealed
         expect(typeof c.score, `candidate ${c.number} has a score after reveal`).toBe('number');
         expect(c.score).toBe(await candidateScore(c.id));
       }
-      // and the public results API reveals the same numbers
-      const pub = await (await fetch(API('/api/results'))).json();
-      expect(pub.isRevealed).toBe(true);
+      // and the public results API reveals the same numbers.
+      // Public /api/results serves a shared in-process snapshot (TTL
+      // RESULTS_SNAP_TTL_MS in src/lib/election/resultsCache.mjs). A reveal made
+      // through /api/admin/dashboard busts it at once, but setShowResult() writes
+      // the DB directly, so the old hidden body may be served for up to one TTL —
+      // by design. Poll until the reveal lands, bounded by TTL + 2 s slack.
+      const { RESULTS_SNAP_TTL_MS } = await import('../src/lib/election/resultsCache.mjs');
+      const deadline = Date.now() + RESULTS_SNAP_TTL_MS + 2000;
+      let pub = await (await fetch(API('/api/results'))).json();
+      while (pub.isRevealed !== true && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 250));
+        pub = await (await fetch(API('/api/results'))).json();
+      }
+      expect(pub.isRevealed, `public /api/results revealed within ${RESULTS_SNAP_TTL_MS + 2000} ms`).toBe(true);
       for (const c of pub.candidates) expect(c.score).toBe(await candidateScore(c.id));
     } finally {
       await restore();

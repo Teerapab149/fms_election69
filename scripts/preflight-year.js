@@ -56,7 +56,7 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
     else add("PASS", "showResult = false", "tally hidden until certification");
 
     if (gc.ballotsAnonymized)
-      add("WARN", "ballotsAnonymized flag still true", "last year's flag — RESET_VOTES clears it");
+      add("WARN", "ballotsAnonymized flag still true", "last year's flag — scripts/sql/annual-reset.sql clears it");
     else add("PASS", "ballots not anonymized", "fresh");
 
     // ── Parties / ballot shape ──────────────────────────────────────────────

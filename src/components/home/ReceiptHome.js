@@ -358,6 +358,10 @@ export default function ReceiptHome({
   const CTA = isAwaitingResults(voteState, initialData?.systemConfig?.showResult)
     ? { ...CTA_BASE, label: AWAITING_RESULTS.label, sub: AWAITING_RESULTS.en, note: AWAITING_RESULTS.note }
     : CTA_BASE;
+  // Turnout slip + desk tag follow the same phase as the CTA (voteCtaState via
+  // the resolver): a paused or closed box is not "live" any more.
+  const turnoutLive = voteState !== "paused" && voteState !== "ended";
+  const deskTag = voteState === "paused" ? "DESK PAUSED" : voteState === "ended" ? "DESK CLOSED" : "LIVE DESK";
 
   const onCta = (e) => {
     if (editorMode || CTA.disabled) { e.preventDefault(); return; }
@@ -633,7 +637,7 @@ export default function ReceiptHome({
               with a tiny mono desk-tag clipped on the line; mobile keeps a plain faint
               hairline (no tag). Pure-CSS ephemera, aria-hidden, base-visible. ===== */}
           <div className="rc-perf-track" aria-hidden="true">
-            <span className="rc-perf-badge rc-mono">✶ {meta.prefix} {meta.number}  LIVE DESK ✶</span>
+            <span className="rc-perf-badge rc-mono">✶ {meta.prefix} {meta.number}  {deskTag} ✶</span>
           </div>
 
           {/* ===== TURNOUT register — the real-time stats pulled off the manila note
@@ -662,7 +666,7 @@ export default function ReceiptHome({
             <div className="rc-turnout-head"><span className="rc-mono">TURNOUT </span> <span>รายงานยอดผู้ใช้สิทธิ์</span></div>
             <div className="rc-register" aria-label="สถิติการใช้สิทธิ์">
               <div className="rc-register-row">
-                <span className="rc-register-k"><span className="rc-live-dot" aria-hidden="true" />ใช้สิทธิ์แล้ว</span>
+                <span className="rc-register-k">{turnoutLive && <span className="rc-live-dot" aria-hidden="true" />}ใช้สิทธิ์แล้ว</span>
                 <span className="rc-register-v"><span className="rc-reg-num rc-mono">{fmtInt(rawStats.totalVoted)}</span><small>คน</small></span>
               </div>
               <div className="rc-register-row">

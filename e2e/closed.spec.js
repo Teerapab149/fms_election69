@@ -46,6 +46,7 @@ test.describe('Closed election (systemMode ENDED) — isolated test DB', () => {
     // API refuses the cast outright (mode gate runs before any DB write).
     const res = await page.request.post(API('/api/vote'), { data: { candidateId: realParty.id } });
     expect(res.status(), 'ENDED mode must refuse the vote').toBe(403);
-    expect((await res.json()).error).toMatch(/สิ้นสุด/);
+    // the stable code, not the Thai sentence (which reads "ปิดหีบแล้ว" now)
+    expect((await res.json()).code).toBe('ENDED');
   });
 });

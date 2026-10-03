@@ -150,6 +150,7 @@ export default function GumroadResults({
   const globalConfig = useGlobalConfig();
   const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
   const ended = finalStatus === "ENDED";
+  const paused = finalStatus === "CLOSED"; // admin PAUSE: not counting, no closing time
   const revealed = !!isRevealed;
   const counting = !isNotStarted && !revealed;       // active/ended but scores still locked
   const totalEligible = demographics?.totalEligible || 0;
@@ -189,8 +190,10 @@ export default function GumroadResults({
     return <span className="gm-thai">{n === 0 ? "งดออกเสียง" : "ไม่รับรอง"}</span>;
   };
 
-  const statusLabel = ended ? (revealed ? "FINAL RESULT" : "COUNTING IN PROGRESS")
-    : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : "UPCOMING";
+  // closed-but-unannounced waits for the committee (nothing is being counted on
+  // screen); a paused box used to fall through to "UPCOMING"
+  const statusLabel = ended ? (revealed ? "FINAL RESULT" : "AWAITING RESULTS")
+    : finalStatus === "ONGOING" ? "REAL-TIME UPDATE" : paused ? "PAUSED" : "UPCOMING";
 
   return (
     <div className="fms-app gr-root gum-root">
@@ -214,7 +217,11 @@ export default function GumroadResults({
             {counting && (
               <div className="gr-locked">
                 <div className="gr-headline">
-                  <span className="gr-headline__lbl"><span className="gr-dot" /> COUNTING <span className="gm-thai">กำลังนับคะแนน</span></span>
+                  <span className="gr-headline__lbl"><span className="gr-dot" /> {ended
+                    ? <>CLOSED <span className="gm-thai">ปิดโหวตแล้ว</span></>
+                    : paused
+                      ? <>PAUSED <span className="gm-thai">หยุดรับคะแนนชั่วคราว</span></>
+                      : <>COUNTING <span className="gm-thai">กำลังนับคะแนน</span></>}</span>
                   {/* single party = approve/disapprove, not a multi-party race */}
                   <h2 className="gr-headline__title">
                     {singleParty ? <>YES<br />OR<br />NO<em>?</em></> : <>WHO<br />WILL<br />WIN<em>?</em></>}
@@ -230,15 +237,22 @@ export default function GumroadResults({
                   <div className="gr-lock__icon"><Lock size={32} strokeWidth={2.5} /></div>
                   <h3>ผลการนับ<br />ยังถูกล็อก</h3>
                   <p>
+                    {/* once closed, "หลังปิดโหวต" reads as if the polls were still open */}
                     {singleParty
-                      ? "เพื่อความโปร่งใส ผลการรับรองจะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น"
-                      : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะเปิดเผยพร้อมกันหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น"}
+                      ? (ended
+                        ? "เพื่อความโปร่งใส ผลการรับรองจะเปิดเผยเมื่อคณะกรรมการประกาศผลเท่านั้น"
+                        : "เพื่อความโปร่งใส ผลการรับรองจะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น")
+                      : (ended
+                        ? "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะเปิดเผยพร้อมกันเมื่อคณะกรรมการประกาศผลเท่านั้น"
+                        : "เพื่อความเป็นธรรมกับทุกพรรค ผลคะแนนจะเปิดเผยพร้อมกันหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น")}
                   </p>
                   {countdownText ? (
                     <div className="gr-lock__cd">
                       {ended
                         ? <><span className="gm-thai">ปิดโหวตแล้ว</span>  <span className="gm-thai">รอประกาศผล</span></>
-                        : <><span className="gm-thai">ปิดใน</span> {countdownText}</>}
+                        : paused
+                          ? <span className="gm-thai">หยุดรับคะแนนชั่วคราว</span>
+                          : <><span className="gm-thai">ปิดใน</span> {countdownText}</>}
                     </div>
                   ) : null}
                 </div>
@@ -251,7 +265,7 @@ export default function GumroadResults({
                   stays a plain string so the counting state is byte-identical to before */}
               <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span>  TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
               <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span>  ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : "↑ อัปเดต Real-time"} />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : paused ? "พักการลงคะแนนชั่วคราว" : "↑ อัปเดต Real-time"} />
             </div>
 
             {/* RACE */}
@@ -261,7 +275,7 @@ export default function GumroadResults({
                   <h3>📊 {singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h3>
                   <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏเมื่อคณะกรรมการประกาศผล"}</p>
                 </div>
-                <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● LIVE" : "🔒 LOCKED"}</span>
+                <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● FINAL" : "🔒 LOCKED"}</span>
               </div>
               {revealed ? (
                 <div className="gr-reveal">

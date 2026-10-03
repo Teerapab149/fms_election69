@@ -99,7 +99,11 @@ export default function BallotResults({
                           </>
                         )}
                         <p className="br-box__note">{r.sealedNote}</p>
-                        {countdownText && <p className="br-box__cd">{countdownText}</p>}
+                        {/* the time to closing means something only while voting runs: after
+                            closing the live page hands the bare "เร็วๆ นี้", and a paused box
+                            has no closing time to count to */}
+                        {finalStatus === "ONGOING" && countdownText && <p className="br-box__cd">{countdownText}</p>}
+                        {finalStatus === "CLOSED" && <p className="br-box__cd">หยุดรับคะแนนชั่วคราว</p>}
                       </>
                     )}
                   </div>

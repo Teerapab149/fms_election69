@@ -202,8 +202,10 @@ export default function ResultCard({ candidate, rank, totalVotes, status, isReve
                 {/* 2.56:1 at 12px on white — the "counting" status is the only thing
                     telling a voter why the score is missing, so it has to clear AA */}
                 <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                  <Activity size={14} className="animate-pulse text-[var(--color-primary,#8A2680)]" />
-                  {isEnded ? "Counting Votes..." : "Voting in progress..."}
+                  {/* after close nothing is being counted on screen: the box waits
+                      for the committee, so no pulse and no "Counting" */}
+                  <Activity size={14} className={`${isEnded ? "" : "animate-pulse "}text-[var(--color-primary,#8A2680)]`} />
+                  {isEnded ? "Awaiting results" : "Voting in progress..."}
                 </span>
                 <Lock size={14} className="text-slate-300" />
               </div>

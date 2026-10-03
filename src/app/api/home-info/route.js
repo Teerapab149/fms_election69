@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../lib/db";
+import { readElectionState } from "../../../lib/election/liveStatus";
 
 export const dynamic = "force-dynamic";
 
@@ -41,36 +42,9 @@ export async function GET() {
       config = await db.systemConfig.create({ data: { id: 1, isVoteOpen: true, systemMode: "AUTO" } });
     }
 
-    const { resolveElectionDates } = await import("../../../utils/electionConfig");
-    const { ELECTION_START, ELECTION_END } = resolveElectionDates(config.globalConfig);
-    const now = Date.now();
-    const sysMode = config.systemMode || "AUTO";
-
-    let isSystemOpen = false;
-    let electionStatus = "WAITING";
-
-    if (sysMode === "MANUAL_OPEN") {
-      isSystemOpen = true;
-      electionStatus = "ONGOING";
-    } else if (sysMode === "PAUSE") {
-      isSystemOpen = false;
-      electionStatus = "CLOSED";
-    } else if (sysMode === "ENDED") {
-      isSystemOpen = false;
-      electionStatus = "ENDED";
-    } else {
-      // AUTO
-      if (now < ELECTION_START) {
-        isSystemOpen = false;
-        electionStatus = "WAITING";
-      } else if (now >= ELECTION_END) {
-        isSystemOpen = false;
-        electionStatus = "ENDED";
-      } else {
-        isSystemOpen = true;
-        electionStatus = "ONGOING";
-      }
-    }
+    // Mode + schedule → verdict, decided in one place (lib/election/systemStatus.mjs).
+    // Computed here, inside the snapshot, so it lags by the same ≤8 s as turnout.
+    const { systemMode: sysMode, isSystemOpen, electionStatus } = readElectionState(config);
 
     const body = {
       candidates,

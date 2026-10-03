@@ -16,9 +16,16 @@ export function isBoxClosed({ systemMode = "AUTO", end, now = Date.now() }) {
   return systemMode === "AUTO" && Number.isFinite(endMs) && now >= endMs;
 }
 
-// → null when allowed, otherwise the Thai reason shown to the admin
-export function checkShowResult({ value, systemMode, end, now }) {
+// → null when allowed, otherwise the Thai reason shown to the admin.
+// Publishing needs a closed box; hiding is allowed until certification — a
+// certified result is the signed, final tally and must stay public (only
+// scripts/sql/annual-reset.sql hides it, in the transaction that clears the
+// certification). Re-publishing a certified result is a no-op and allowed.
+export function checkShowResult({ value, systemMode, end, now, certified }) {
   if (value !== true && value !== false) return "ค่าการแสดงผลไม่ถูกต้อง";
+  if (certified && value === false) {
+    return "ผลถูกรับรองแล้ว ซ่อนผลไม่ได้ — ผลที่รับรองแล้วต้องแสดงต่อสาธารณะ";
+  }
   if (value && !isBoxClosed({ systemMode, end, now })) {
     return "ยังเปิดแสดงผลไม่ได้ — หีบยังไม่ปิด เปลี่ยนเป็น ENDED หรือรอให้เลยเวลาปิดหีบก่อน แล้วค่อยเปิดแสดงผล";
   }
@@ -36,6 +43,29 @@ export function checkSetMode({ mode, showResult, certified, end, now }) {
   if (showResult && !isBoxClosed({ systemMode: mode, end, now })) {
     return "ผลคะแนนกำลังแสดงอยู่ — ปิดการแสดงผลก่อน แล้วจึงเปิดหีบหรือพักระบบได้";
   }
+  return null;
+}
+
+// Editing the schedule is a mode change by another route: under AUTO the dates
+// ARE the box, so moving the end into the future reopens it just as surely as
+// pressing OPEN would. Same rule, checked by api/admin/global-config.
+// Only the voting window counts — campaignStartAt is display-only (when the
+// candidate list goes public) and never opens or closes the box.
+// → null when allowed (including "the dates did not move"), otherwise the Thai reason
+export function checkScheduleChange({
+  systemMode = "AUTO", showResult, certified, prevStart, prevEnd, nextStart, nextEnd, now = Date.now(),
+}) {
+  const ms = (d) => (d instanceof Date ? d.getTime() : Number(d));
+  // both admin clients send the whole config on every save, so an unchanged
+  // schedule must pass untouched — a certified election can still fix a typo
+  if (ms(prevStart) === ms(nextStart) && ms(prevEnd) === ms(nextEnd)) return null;
+  // certification is the end of this election (as in checkSetMode)
+  if (certified) return "ผลถูกรับรองแล้ว แก้วันเวลาเลือกตั้งไม่ได้";
+  if (showResult && !isBoxClosed({ systemMode, end: nextEnd, now })) {
+    return "ผลคะแนนกำลังแสดงอยู่ — ซ่อนผลก่อน แล้วจึงแก้วันเวลาให้หีบเปิดอีกครั้งได้";
+  }
+  // only once the dates move: a DB that is already inverted can still save its other fields
+  if (!(ms(nextEnd) > ms(nextStart))) return "เวลาปิดหีบต้องอยู่หลังเวลาเปิดหีบ";
   return null;
 }
 

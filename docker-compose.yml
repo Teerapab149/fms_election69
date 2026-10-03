@@ -16,6 +16,9 @@ services:
       - .env
     volumes:
       - ./public/images:/app/public/images
+      # ผลของ service backup (LAST_OK / LAST_FAIL) ให้หน้าตรวจความพร้อมอ่าน — read-only
+      # web อ่านได้อย่างเดียว เขียนหรือเห็นไฟล์ dump ไม่ได้ (dump อยู่ที่ ./backups ชั้นบน ไม่ได้ mount)
+      - ./backups/status:/app/backups/status:ro
     environment:
       # Use variables from .env
       - BASE_PATH=${BASE_PATH}
@@ -75,6 +78,64 @@ services:
       start_period: 20s
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
+
+  # ── สำรองข้อมูลอัตโนมัติ ─────────────────────────────────────────────────────
+  # รัน scripts/backup.sh ทุก BACKUP_INTERVAL_HOURS ชั่วโมง (ค่าเริ่มต้น 6) ได้ไฟล์ใน ./backups
+  # (db-*.sql.gz + images-*.tar.gz + status/) ลบของเก่ากว่า RETENTION_DAYS วัน (ค่าเริ่มต้น 14)
+  # หลังตรวจว่ารอบนี้ใช้ได้แล้วเท่านั้น · log: docker compose logs backup
+  # สั่ง backup ทันทีหนึ่งรอบ: docker compose exec backup sh scripts/backup.sh
+  #
+  # รันเป็น root ของอิมเมจโดยตั้งใจ: Docker สร้าง ./backups ให้เป็นของ root ตอน `up` ครั้งแรก
+  # uid ธรรมดาจะเขียนไม่ได้แล้วล้มทุกรอบ · ไฟล์ dump เป็น root:root 0600 (umask 077 ใน
+  # backup.sh) = บนโฮสต์ต้องใช้ sudo อ่าน/คัดลอก/restore ซึ่งคือที่ต้องการ เพราะในนั้นมีรายชื่อ
+  # รหัสนักศึกษา และใครลงคะแนนแล้ว
+  #
+  # ต่อ DB ด้วย postgres (superuser ของ db ด้านล่าง) ไม่ใช่ DATABASE_URL ของแอป — ผู้ใช้ของแอป
+  # (fms_app ตาม docs/STAFF-IT-GUIDE.md) ไม่มีสิทธิ์อ่านบางตาราง เช่น _prisma_migrations
+  # จึง dump ไม่ครบ · ไม่มี env_file โดยตั้งใจ: คอนเทนเนอร์นี้ไม่ต้องรู้ secret อื่นของแอปเลย
+  #
+  # ใช้ฐานข้อมูลของคณะ (ไม่มี service db): ลบ depends_on ด้านล่างทิ้ง แล้วตั้ง
+  # BACKUP_DATABASE_URL ใน .env เป็นผู้ใช้ที่อ่านได้ทุกตาราง (มีค่าแล้วชนะ PG* ทั้งหมด)
+  # และ BACKUP_PG_IMAGE ให้ major ไม่ต่ำกว่าเซิร์ฟเวอร์ของคณะ (pg_dump รุ่นต่ำกว่าเซิร์ฟเวอร์ใช้ไม่ได้)
+  # ถ้า DBA ของคณะสำรองให้อยู่แล้ว จะไม่เปิด service นี้ก็ได้
+  #
+  # ตั้ง UPLOAD_ROOT ไว้ (รูปที่อัปโหลดอยู่นอก ./public/images): เปลี่ยนบรรทัด
+  # ./public/images ด้านล่างเป็นโฟลเดอร์บนโฮสต์ที่ web ใช้เก็บรูปจริง (ปลายทางยังเป็น
+  # /app/public/images:ro เหมือนเดิม restore.sh ถึงจะรับ archive ได้) ไม่งั้นรูปที่อัปโหลด
+  # จะไม่อยู่ใน archive เลย
+  backup:
+    # pg_dump รุ่นหลักต้องไม่ต่ำกว่าเซิร์ฟเวอร์ — ใช้อิมเมจเดียวกับ db
+    image: ${BACKUP_PG_IMAGE:-postgres:15-alpine}
+    container_name: fms-election-backup
+    restart: always
+    working_dir: /app
+    # ไม่ใช้ entrypoint: docker-entrypoint.sh ของอิมเมจ postgres exec คำสั่งที่ไม่ใช่ "postgres"
+    # ต่อให้ตรง ๆ ตัววนจึงเป็น PID 1 และได้ SIGTERM ตอน `docker compose stop`
+    command: ["sh", "scripts/backup-loop.sh"]
+    # SIGTERM ไปถึงตัววน (PID 1) เท่านั้น ถ้ากำลัง backup อยู่ sh จะรอให้รอบนั้นจบก่อนค่อยออก
+    # ค่าเริ่มต้น 10 วิ ไม่พอ = โดน SIGKILL กลาง dump ทิ้งไฟล์ .partial ค้าง (backup.sh ลบให้เองเมื่ออายุเกิน 1 วัน)
+    stop_grace_period: 2m
+    environment:
+      - DUMP_VIA=direct
+      - PGHOST=db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGDATABASE=fms_election
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+      - BACKUP_DATABASE_URL=${BACKUP_DATABASE_URL:-}
+      - BACKUP_INTERVAL_HOURS=${BACKUP_INTERVAL_HOURS:-6}
+      - RETENTION_DAYS=${RETENTION_DAYS:-14}
+      # ว่างโดยตั้งใจ: คอนเทนเนอร์นี้ไม่มี rclone/rsync/ssh — สำเนานอกเครื่องทำจาก cron บนโฮสต์
+      # (ดู docs/MAINTENANCE-RUNBOOK.md §5)
+      - BACKUP_AFTER_CMD=
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./backups:/app/backups
+      # โฟลเดอร์เดียวกับที่ web mount — read-only เพราะ backup แค่อ่านไป tar
+      - ./public/images:/app/public/images:ro
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data_prod:

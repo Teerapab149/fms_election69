@@ -10,7 +10,9 @@ import {
 import { isBuiltInSlug } from "../../../../components/admin/editor/templates";
 import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 import { UPLOAD_ROOT, BUNDLED_ROOT } from "../../../../lib/media/storage";
-import { access, constants as fsConstants } from "fs/promises";
+import { describeBackupStatus } from "../../../../lib/election/backupStatus.mjs";
+import { access, readFile, constants as fsConstants } from "fs/promises";
+import path from "path";
 
 // Never statically rendered: this route reads headers/request.url per call. Without
 // this Next tries to prerender it at build time, the read throws DynamicServerError,
@@ -355,6 +357,18 @@ export async function GET(request) {
       };
     }
     return { level: "pass", detail: `เก็บรูปไว้ที่ ${UPLOAD_ROOT} (นอกโฟลเดอร์ซอร์ส) และเขียนได้` };
+  });
+
+  // 14) env.backup — service backup ใน docker-compose.yml เขียนผลแต่ละรอบไว้ที่
+  // backups/status/LAST_OK และ LAST_FAIL (JSON บรรทัดเดียว ไม่มีข้อมูลส่วนบุคคล) เว็บ mount
+  // โฟลเดอร์นั้นแบบ read-only · การตัดสินอยู่ที่ lib/election/backupStatus.mjs ที่นี่แค่อ่านไฟล์
+  await run("env.backup", "env", "สำรองข้อมูลอัตโนมัติ (backup)", async () => {
+    const dir = process.env.BACKUP_STATUS_DIR || path.join(process.cwd(), "backups", "status");
+    // ไม่มีไฟล์ = null · อ่านไม่ได้ด้วยเหตุอื่น (สิทธิ์ไม่พอ ฯลฯ) = "" ให้ถือเป็นไฟล์เสีย
+    const readStatus = (name) =>
+      readFile(path.join(dir, name), "utf8").catch((e) => (e?.code === "ENOENT" ? null : ""));
+    const [lastOk, lastFail] = await Promise.all([readStatus("LAST_OK"), readStatus("LAST_FAIL")]);
+    return describeBackupStatus({ lastOk, lastFail, now, formatWhen: whenText });
   });
 
   const summary = checks.reduce(

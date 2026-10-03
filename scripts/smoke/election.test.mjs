@@ -87,6 +87,16 @@ test('vote requires a session (401 without one)', async () => {
   assert.equal(r.status, 401);
 });
 
+test('check-form requires a session (401) and ignores ?studentId=', async () => {
+  // Used to answer for any ?studentId= with no auth — a voter-roll + form-status oracle.
+  for (const path of ['/api/check-form', '/api/check-form?studentId=anything']) {
+    const r = await fetch(`${BASE}${path}`);
+    assert.equal(r.status, 401, `${path} without a session must be 401`);
+    const j = await r.json();
+    assert.ok(!('isFormCompleted' in j), `${path} must not report isFormCompleted`);
+  }
+});
+
 test('login is rate-limited (429 under a burst)', async () => {
   let got429 = false;
   for (let i = 0; i < 14; i++) {

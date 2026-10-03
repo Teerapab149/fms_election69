@@ -65,7 +65,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
         "การจัดการโลจิสติกส์และโซ่อุปทาน": "LSM",
         "ระบบสารสนเทศทางธุรกิจ": "BIS",
         "การจัดการไมซ์": "MICE",
-        "การจัดการเเละความเป็นผู้ประกอบการ": "BBA",
+        "การจัดการและความเป็นผู้ประกอบการ": "BBA",
         "การจัดการทรัพยากรมนุษย์": "HRM"
     };
 
@@ -82,7 +82,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         id: target.id,
                         studentId: target.studentId,
                         position: target.position || '',
-                        major: target.major || '',
+                        // rows saved before the dropdown was fixed spell sara ae as two
+                        // sara e (U+0E40 U+0E40); normalise to U+0E41 so they still
+                        // select the right option (migration 20260930000000 fixes the DB)
+                        major: (target.major || '').replace(/\u0E40\u0E40/g, '\u0E41'),
                         imageFile: null,
                         previewUrl: target.imageUrl || '',
                         modalImageFile: null,

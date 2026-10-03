@@ -74,6 +74,7 @@ export default function VerdureResults({
   const meta = verdureMeta(gc);
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const paused = finalStatus === "CLOSED"; // admin PAUSE: not counting, no closing time
 
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? ((totalVotes / totalEligible) * 100) : 0;
@@ -121,13 +122,15 @@ export default function VerdureResults({
     { en: "BY MAJOR", th: "สาขา", rows: clean(demographics?.byMajor) },
   ].filter((g) => g.rows.length > 0);
 
-  const statusTxt = isNotStarted ? "POLLS NOT OPEN" : ended ? (revealed ? "FINAL" : "COUNTING") : "LIVE";
+  // after closing the box is not being counted on screen — it waits for the
+  // committee to announce; "COUNTING"/"LIVE" there read as a tally still moving
+  const statusTxt = isNotStarted ? "POLLS NOT OPEN" : ended ? (revealed ? "FINAL" : "AWAITING") : paused ? "PAUSED" : "LIVE";
 
   return (
     <VerdureShell active="results" editorMode={editorMode}
       edge={{ num: "05", label: "Returns", th: "ผลคะแนน", right: true }}
-      cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : isNotStarted ? "Polls not open" : "Live tally, embargoed"}
-      statusChip={<div className="vd-chip-live"><span className="dot" /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : "COUNTING"}  <strong>{statusTxt}</strong></div>}>
+      cornermarkTitle="Returns" cornermarkSub={revealed ? "Final result" : isNotStarted ? "Polls not open" : ended ? "Closed, awaiting results" : paused ? "Voting paused" : "Live tally, embargoed"}
+      statusChip={<div className="vd-chip-live"><span className={revealed || ended || paused ? "dot dot--still" : "dot"} /> {revealed ? "RESULT" : isNotStarted ? "UPCOMING" : ended ? "CLOSED" : paused ? "VOTING" : "COUNTING"}  <strong>{statusTxt}</strong></div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-returns">
         <div className="vd-returns__h">
@@ -136,7 +139,11 @@ export default function VerdureResults({
               ? <><span className="vd-nw">FINAL RESULT</span>  <span className="vd-thai">ผลอย่างเป็นทางการ</span></>
               : isNotStarted
                 ? <><span className="vd-nw">UPCOMING</span>  <span className="vd-thai">ยังไม่เปิดโหวต</span></>
-                : <><span className="vd-nw">LIVE RETURNS</span>  <span className="vd-thai">กำลังนับคะแนน</span></>}
+                : ended
+                  ? <><span className="vd-nw">AWAITING RESULTS</span>  <span className="vd-thai">รอประกาศผล</span></>
+                  : paused
+                    ? <><span className="vd-nw">PAUSED</span>  <span className="vd-thai">หยุดรับคะแนนชั่วคราว</span></>
+                    : <><span className="vd-nw">LIVE RETURNS</span>  <span className="vd-thai">กำลังนับคะแนน</span></>}
           </div>
           <h1 className="vd-returns__title">The <em>Returns.</em></h1>
           <div className="vd-returns__accent" aria-hidden />
@@ -172,7 +179,9 @@ export default function VerdureResults({
                     nothing left to count down to, only the announcement to wait for */}
                 {ended
                   ? <div className="vd-rdisc__cd"><span className="vd-thai">ปิดโหวตแล้ว รอประกาศผล</span></div>
-                  : countdownText && <div className="vd-rdisc__cd">{isNotStarted ? "OPENS IN" : "CLOSES IN"} <strong className="vd-tabular">{countdownText}</strong></div>}
+                  : paused
+                    ? <div className="vd-rdisc__cd"><span className="vd-thai">หยุดรับคะแนนชั่วคราว</span></div>
+                    : countdownText && <div className="vd-rdisc__cd">{isNotStarted ? "OPENS IN" : "CLOSES IN"} <strong className="vd-tabular">{countdownText}</strong></div>}
               </>
             )}
           </div>

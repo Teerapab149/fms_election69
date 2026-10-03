@@ -3,7 +3,7 @@
 // tally is public never reopens.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isBoxClosed, checkShowResult, checkSetMode, describeModeChange } from "../../src/lib/election/adminGuards.mjs";
+import { isBoxClosed, checkShowResult, checkSetMode, checkScheduleChange, describeModeChange } from "../../src/lib/election/adminGuards.mjs";
 
 const H = 3600e3;
 const now = Date.UTC(2026, 9, 1, 5, 0);
@@ -29,10 +29,20 @@ test("results cannot be published while votes can still be cast", () => {
   assert.equal(checkShowResult({ value: true, systemMode: "AUTO", end: after.end, now }), null);
 });
 
-test("hiding results is always allowed; the value must be a real boolean", () => {
+test("hiding is allowed until certification; the value must be a real boolean", () => {
   assert.equal(checkShowResult({ value: false, systemMode: "MANUAL_OPEN", end: during.end, now }), null);
+  // uncertified: hiding a published tally is fine in a closed box too
+  assert.equal(checkShowResult({ value: false, systemMode: "ENDED", end: during.end, now, certified: false }), null);
+  assert.equal(checkShowResult({ value: false, systemMode: "AUTO", end: after.end, now, certified: false }), null);
   assert.ok(checkShowResult({ value: "true", systemMode: "ENDED", end: during.end, now }));
   assert.ok(checkShowResult({ value: undefined, systemMode: "ENDED", end: during.end, now }));
+});
+
+test("a certified result stays public: hiding is refused, re-publishing is allowed", () => {
+  for (const [mode, sched] of [["ENDED", during], ["AUTO", after]]) {
+    assert.match(checkShowResult({ value: false, systemMode: mode, end: sched.end, now, certified: true }) || "", /รับรองแล้ว/, `${mode} should refuse`);
+    assert.equal(checkShowResult({ value: true, systemMode: mode, end: sched.end, now, certified: true }), null);
+  }
 });
 
 test("a published tally never goes back to a box that can take votes", () => {
@@ -61,4 +71,37 @@ test("the confirm text says what the change does", () => {
   assert.match(describeModeChange({ from: "PAUSE", to: "AUTO", ...before, now }), /เปิดเองเมื่อถึงเวลา/);
   assert.match(describeModeChange({ from: "AUTO", to: "AUTO", ...after, now }), /ยังปิดอยู่/);
   assert.match(describeModeChange({ from: "AUTO", to: "ENDED", ...during, now }), /ปิดหีบทันที/);
+});
+
+// Under AUTO the dates are the box: moving them is a mode change by another route.
+test("editing the schedule cannot reopen a box whose tally is public", () => {
+  const prev = { prevStart: after.start, prevEnd: after.end };
+  const moveEnd = (end) => ({ ...prev, nextStart: after.start, nextEnd: end });
+  const shown = { showResult: true, certified: false, now };
+  // the end moved into the future: AUTO would take votes again
+  assert.ok(checkScheduleChange({ ...shown, systemMode: "AUTO", ...moveEnd(during.end) }));
+  // moved, but still past: the box stays closed
+  assert.equal(checkScheduleChange({ ...shown, systemMode: "AUTO", ...moveEnd(new Date(now - H)) }), null);
+  // ENDED keeps it closed whatever the dates say
+  assert.equal(checkScheduleChange({ ...shown, systemMode: "ENDED", ...moveEnd(during.end) }), null);
+  // defensive: shown with a forced-open box is already wrong; do not let dates move under it
+  assert.ok(checkScheduleChange({ ...shown, systemMode: "MANUAL_OPEN", ...moveEnd(new Date(now - H)) }));
+  // hidden results: any valid schedule is fine
+  assert.equal(checkScheduleChange({ showResult: false, certified: false, now, systemMode: "AUTO", ...moveEnd(during.end) }), null);
+});
+
+test("a certified election keeps its dates, but still saves everything else", () => {
+  const same = { prevStart: after.start, prevEnd: after.end, nextStart: new Date(after.start), nextEnd: new Date(after.end) };
+  assert.equal(checkScheduleChange({ systemMode: "ENDED", showResult: true, certified: true, now, ...same }), null);
+  assert.ok(checkScheduleChange({ systemMode: "ENDED", showResult: true, certified: true, now, ...same, nextEnd: new Date(now - H) }));
+});
+
+test("the closing time must come after the opening time, once the dates move", () => {
+  const base = { systemMode: "AUTO", showResult: false, certified: false, now, prevStart: before.start, prevEnd: before.end };
+  // start moved past the end
+  assert.ok(checkScheduleChange({ ...base, nextStart: new Date(before.end.getTime() + H), nextEnd: before.end }));
+  assert.ok(checkScheduleChange({ ...base, nextStart: before.end, nextEnd: before.end }));
+  // an already-inverted schedule that nobody touched does not block other fields
+  const inverted = { prevStart: before.end, prevEnd: before.start, nextStart: before.end, nextEnd: before.start };
+  assert.equal(checkScheduleChange({ ...base, ...inverted }), null);
 });

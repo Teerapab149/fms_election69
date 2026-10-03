@@ -114,6 +114,7 @@ export default function ReceiptResults({
 
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const paused = finalStatus === "CLOSED"; // admin PAUSE: not counting, no closing time
 
   const totalEligible = demographics?.totalEligible || 0;
   const turnout = totalEligible > 0 ? (totalVotes / totalEligible) * 100 : 0;
@@ -158,15 +159,20 @@ export default function ReceiptResults({
     ? "ยังไม่เปิด POLLS NOT OPEN"
     : revealed
       ? (ended ? "ผลอย่างเป็นทางการ FINAL RESULT" : "เรียลไทม์ LIVE RESULT")
-      : (ended ? "รอประกาศผล AWAITING" : "กำลังนับคะแนน COUNTING");
+      : (ended ? "รอประกาศผล AWAITING" : paused ? "หยุดรับคะแนนชั่วคราว PAUSED" : "กำลังนับคะแนน COUNTING");
 
+  // after closing the turnout no longer moves, so "แบบเรียลไทม์" would be untrue
   const deckCopy = revealed
     ? "ใบสรุปคะแนนเสียงการเลือกตั้ง ไล่รายพรรคตามจำนวนคะแนนที่ได้รับ พร้อมสถิติผู้ใช้สิทธิ์"
-    : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดผนึกพร้อมกันเมื่อคณะกรรมการประกาศผล";
+    : ended || paused
+      ? "สรุปยอดผู้ใช้สิทธิ์ ผลคะแนนรายพรรคจะปลดผนึกพร้อมกันเมื่อคณะกรรมการประกาศผล"
+      : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดผนึกพร้อมกันเมื่อคณะกรรมการประกาศผล";
 
   const lockNote = ended
     ? "ปิดโหวตแล้ว รอประกาศผลอย่างเป็นทางการ"
-    : countdownText
+    : paused
+      ? "หยุดรับคะแนนชั่วคราว"
+      : countdownText
       ? `ปิดโหวตในอีก ${countdownText}`
       : "รอเปิดโหวต";
 

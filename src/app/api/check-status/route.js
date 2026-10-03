@@ -2,6 +2,7 @@ import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
+import { readElectionState } from "../../../lib/election/liveStatus";
 
 // Never statically rendered: this route reads headers/request.url per call. Without
 // this Next tries to prerender it at build time, the read throws DynamicServerError,
@@ -16,36 +17,8 @@ export async function GET(request) {
       config = await db.systemConfig.create({ data: { id: 1, isVoteOpen: true, showResult: false } });
     }
 
-    const { resolveElectionDates } = await import("../../../utils/electionConfig");
-    const { ELECTION_START, ELECTION_END } = resolveElectionDates(config.globalConfig);
-    const now = Date.now();
-    const sysMode = config.systemMode || "AUTO";
-
-    let isSystemOpen = false;
-    let electionStatus = "WAITING";
-
-    if (sysMode === "MANUAL_OPEN") {
-      isSystemOpen = true;
-      electionStatus = "ONGOING";
-    } else if (sysMode === "PAUSE") {
-      isSystemOpen = false;
-      electionStatus = "CLOSED";
-    } else if (sysMode === "ENDED") {
-      isSystemOpen = false;
-      electionStatus = "ENDED";
-    } else {
-      // AUTO
-      if (now < ELECTION_START) {
-        isSystemOpen = false; // Voting page will redirect for now, which is expected behavior for 'restricted' pages
-        electionStatus = "WAITING";
-      } else if (now >= ELECTION_END) {
-        isSystemOpen = false;
-        electionStatus = "ENDED";
-      } else {
-        isSystemOpen = true;
-        electionStatus = "ONGOING";
-      }
-    }
+    // Mode + schedule → verdict, decided in one place (lib/election/systemStatus.mjs)
+    const { systemMode: sysMode, isSystemOpen, electionStatus } = readElectionState(config);
 
     // 🔐 isVoted + voter identity are personal — read them for the VERIFIED session
     // user only, never from a query param (which let anyone probe any student's

@@ -171,7 +171,9 @@ export default function SuccessPage({
           const voted = !!statusData?.isVoted;
           setIsVoted(voted);
 
-          if (statusData.googleFormUrl) setGoogleFormUrl(statusData.googleFormUrl);
+          // Same "has a form" test as hasForm above and the results gate — a
+          // whitespace-only URL is no form, not a lock with a dead button.
+          if (String(statusData.googleFormUrl || "").trim()) setGoogleFormUrl(statusData.googleFormUrl);
           // No form this year → nothing to complete, so nothing to lock. The only
           // way to unlock was finishing the form; with no link the button led to
           // "ไม่พบลิงก์แบบประเมิน" and the results link never opened. Each family
@@ -208,10 +210,14 @@ export default function SuccessPage({
 
           setIsAuthorized(true);
 
-          const resForm = await fetch(getPath(`/api/check-form?studentId=${session?.user?.studentId}`));
-          const formData = await resForm.json();
-
-          if (formData.isFormCompleted) setIsUnlocked(true);
+          // The server reads the voter from the session — no studentId param.
+          // Non-OK (session expired, row missing) → just stay locked; no .json()
+          // on an error body and no error modal, the voter already has a ballot.
+          const resForm = await fetch(getPath("/api/check-form"), { cache: "no-store" });
+          if (resForm.ok) {
+            const formData = await resForm.json();
+            if (formData.isFormCompleted) setIsUnlocked(true);
+          }
 
         } catch (err) {
           console.error(err);
@@ -275,7 +281,14 @@ export default function SuccessPage({
       setShowModal(false);
     } catch (error) {
       console.error(error);
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง");
+      // the page's own alert, not the browser's: it sits above the form sheet
+      // (z-[999] over z-50), and action null leaves the sheet open to try again
+      setAlertConfig({
+        title: "บันทึกไม่สำเร็จ",
+        message: "เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง",
+        action: null,
+      });
+      setShowAlertModal(true);
     }
   };
 

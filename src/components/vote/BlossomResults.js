@@ -109,6 +109,7 @@ export default function BlossomResults({
 
   const revealed = !!isRevealed;
   const ended = finalStatus === "ENDED";
+  const paused = finalStatus === "CLOSED"; // admin PAUSE: not counting, no closing time
   const anim = !editorMode; // count-ups + bar-grow run in the live app, not admin preview
 
   const totalEligible = demographics?.totalEligible || 0;
@@ -146,20 +147,25 @@ export default function BlossomResults({
     ? "ยังไม่เปิด"
     : revealed
       ? (ended ? "ผลอย่างเป็นทางการ" : "เรียลไทม์")
-      : (ended ? "รอประกาศผล" : "กำลังนับคะแนน");
+      : (ended ? "รอประกาศผล" : paused ? "หยุดรับคะแนนชั่วคราว" : "กำลังนับคะแนน");
   const statusEn = isNotStarted
     ? "POLLS NOT OPEN"
     : revealed
       ? (ended ? "FINAL RESULT" : "LIVE RESULT")
-      : (ended ? "AWAITING" : "COUNTING");
+      : (ended ? "AWAITING" : paused ? "PAUSED" : "COUNTING");
 
+  // after closing the turnout no longer moves, so "แบบเรียลไทม์" would be untrue
   const deckCopy = revealed
     ? "สรุปคะแนนเสียงการเลือกตั้ง เรียงลำดับตามจำนวนคะแนนที่แต่ละพรรคได้รับ พร้อมสถิติผู้ใช้สิทธิ์"
-    : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดล็อกพร้อมกันเมื่อคณะกรรมการประกาศผล";
+    : ended || paused
+      ? "สรุปยอดผู้ใช้สิทธิ์ ผลคะแนนรายพรรคจะปลดล็อกพร้อมกันเมื่อคณะกรรมการประกาศผล"
+      : "สรุปยอดผู้ใช้สิทธิ์แบบเรียลไทม์ ผลคะแนนรายพรรคจะปลดล็อกพร้อมกันเมื่อคณะกรรมการประกาศผล";
 
   const lockNote = ended
     ? "ปิดโหวตแล้ว รอประกาศผลอย่างเป็นทางการ"
-    : countdownText
+    : paused
+      ? "หยุดรับคะแนนชั่วคราว"
+      : countdownText
       ? `ปิดโหวตในอีก ${countdownText}`
       : "รอเปิดโหวต";
 

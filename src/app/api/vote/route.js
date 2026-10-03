@@ -5,6 +5,8 @@ import { db } from "../../../lib/db";
 import { rateLimit } from "../../../lib/rateLimit";
 import { encryptBallot } from "../../../lib/ballotCrypto";
 import { appendBallotTx, hourBucketBangkok } from "../../../lib/ballotChain";
+import { readElectionState } from "../../../lib/election/liveStatus";
+import { voteRefusal } from "../../../lib/election/systemStatus.mjs";
 
 // Interactive-transaction limits for the vote (M1, 2026-09-25).
 //
@@ -25,12 +27,28 @@ const VOTE_TX_OPTIONS = {
   timeout: Number(process.env.VOTE_TX_TIMEOUT_MS) || 15000,
 };
 
+// Every refusal carries a stable `code` next to the Thai `error`. The vote page
+// branches on the code (src/lib/election/voteOutcome.mjs), never on the Thai, so
+// the wording can change without changing what the student is sent to do. The
+// status codes are unchanged; the e2e suite asserts them.
+function refuse(code, error, status, init = {}) {
+  return NextResponse.json({ code, error }, { status, ...init });
+}
+
+// The Thai shown for each mode/schedule refusal (codes from voteRefusal).
+const VOTE_REFUSAL_MESSAGES = {
+  PAUSED: "ระบบหยุดรับลงคะแนนชั่วคราว",
+  ENDED: "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม",
+  NOT_STARTED: "ยังไม่ถึงเวลาเปิดหีบ",
+  AUTO_CLOSED: "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม",
+};
+
 export async function POST(request) {
   try {
     // 🔐 Security Fix: ดึง studentId จาก verified session แทน request body
     const session = await getServerSession(authOptions);
     if (!session?.user?.studentId) {
-      return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนลงคะแนน" }, { status: 401 });
+      return refuse("UNAUTHENTICATED", "กรุณาเข้าสู่ระบบก่อนลงคะแนน", 401);
     }
 
     const studentId = session.user.studentId; // ✅ จาก session ที่ verify แล้ว
@@ -41,9 +59,11 @@ export async function POST(request) {
     // to shared middleware (Redis) keyed on user+IP.
     const rl = rateLimit(`vote:${studentId}`, { limit: 15, windowMs: 60 * 1000 });
     if (!rl.ok) {
-      return NextResponse.json(
-        { error: `ดำเนินการบ่อยเกินไป ลองใหม่ใน ${rl.retryAfter} วินาที` },
-        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      return refuse(
+        "RATE_LIMITED",
+        `ดำเนินการบ่อยเกินไป ลองใหม่ใน ${rl.retryAfter} วินาที`,
+        429,
+        { headers: { "Retry-After": String(rl.retryAfter) } }
       );
     }
 
@@ -54,58 +74,49 @@ export async function POST(request) {
     const chainSecret = process.env.BALLOT_CHAIN_SECRET;
     if (!publicKeyPem || !chainSecret) {
       console.error("[vote] FAIL CLOSED: missing ELECTION_BALLOT_PUBLIC_KEY / BALLOT_CHAIN_SECRET");
-      return NextResponse.json(
-        { error: "ระบบลงคะแนนยังไม่พร้อม (กุญแจเข้ารหัสบัตรไม่ถูกตั้งค่า) กรุณาแจ้งผู้ดูแลระบบ" },
-        { status: 503 }
+      return refuse(
+        "NOT_READY",
+        "ระบบลงคะแนนยังไม่พร้อม กุญแจเข้ารหัสบัตรยังไม่ถูกตั้งค่า กรุณาแจ้งผู้ดูแลระบบ",
+        503
       );
     }
 
-    const body = await request.json();
-    const { candidateId } = body;
+    // A body that is not JSON is the client's mistake, not ours: 400, not the
+    // 500 the catch below would give it (which the page reads as "rolled back").
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return refuse("BAD_REQUEST", "ข้อมูลการลงคะแนนไม่ครบถ้วน", 400);
+    }
+    const candidateId = body?.candidateId;
     // หมายเหตุ: ไม่ใช้ studentId จาก body อีกต่อไป เพื่อป้องกันการโหวตแทนคนอื่น
 
     // 0. 🛑 SECURITY GATE:
     const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
-    const mode = systemConfig?.systemMode || "AUTO";
-    const { resolveElectionDates } = await import("../../../utils/electionConfig");
-    const { ELECTION_END, ELECTION_START } = resolveElectionDates(systemConfig?.globalConfig);
     const now = Date.now();
+    const { systemMode: mode, start, end } = readElectionState(systemConfig, now);
 
     // 0.0 Certified results are final. This sits above every mode check on
     // purpose: MANUAL_OPEN forces the box open regardless of the clock, so
     // without this a certified election could still take votes and push score
     // past the tally someone signed their name to.
     if (systemConfig?.globalConfig?.ballotsAnonymized) {
-      return NextResponse.json({ error: "ผลการเลือกตั้งถูกรับรองอย่างเป็นทางการแล้ว" }, { status: 403 });
+      return refuse("CERTIFIED", "ผลการเลือกตั้งได้รับการรับรองแล้ว ไม่รับลงคะแนนเพิ่ม", 403);
     }
 
-    // 0.1 Check Manual Modes First
-    if (mode === "PAUSE") {
-      return NextResponse.json({ error: "ระบบปิดปรับปรุงชั่วคราว (System Maintenance)" }, { status: 403 });
-    }
-
-    if (mode === "ENDED") {
-      return NextResponse.json({ error: "สิ้นสุดการลงคะแนนเเล้ว (Election Ended)" }, { status: 403 });
-    }
-
-    if (mode === "MANUAL_OPEN") {
-      // Pass: Voting is forced open, ignore time check
-    }
-
-    // 0.2 Check Auto Mode (Scheduled Time)
-    if (mode === "AUTO") {
-      if (now < ELECTION_START) {
-        return NextResponse.json({ error: "ยังไม่ถึงเวลาลงคะแนน (Not Started)" }, { status: 403 });
-      }
-      if (now >= ELECTION_END) {
-        return NextResponse.json({ error: "หมดเวลาลงคะแนนเเล้ว (Auto Closed)" }, { status: 403 });
-      }
+    // 0.1 Mode + schedule (lib/election/systemStatus.mjs voteRefusal): PAUSE and
+    // ENDED refuse, MANUAL_OPEN takes votes whatever the clock says, AUTO follows
+    // the schedule. Same codes and messages as when this ladder lived here.
+    const refusal = voteRefusal({ systemMode: mode, start, end, now });
+    if (refusal) {
+      return refuse(refusal, VOTE_REFUSAL_MESSAGES[refusal], 403);
     }
 
     // 1. ตรวจสอบข้อมูล
     const parsedId = parseInt(candidateId);
     if (candidateId === undefined || Number.isNaN(parsedId)) {
-      return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
+      return refuse("BAD_REQUEST", "ข้อมูลการลงคะแนนไม่ครบถ้วน", 400);
     }
 
     // 1.1 🛡️ Validate the choice against THIS ballot's rules (P0-3).
@@ -116,7 +127,7 @@ export async function POST(request) {
     const allCandidates = await db.candidate.findMany({ select: { id: true, number: true } });
     const target = allCandidates.find((c) => c.id === parsedId);
     if (!target) {
-      return NextResponse.json({ error: "ไม่พบตัวเลือกที่เลือก" }, { status: 400 });
+      return refuse("BAD_CHOICE", "ไม่พบตัวเลือกที่เลือก", 400);
     }
     const realPartyCount = allCandidates.filter((c) => c.number > 0).length;
     const validChoice =
@@ -124,7 +135,7 @@ export async function POST(request) {
       target.number === 0 ||
       (target.number === -1 && realPartyCount === 1);
     if (!validChoice) {
-      return NextResponse.json({ error: "ตัวเลือกไม่ถูกต้องสำหรับบัตรเลือกตั้งนี้" }, { status: 400 });
+      return refuse("BAD_CHOICE", "ตัวเลือกไม่ถูกต้องสำหรับบัตรเลือกตั้งนี้", 400);
     }
 
     // 2. เช็คผู้ใช้ + สิทธิ์ (early checks ให้ข้อความที่เป็นมิตร; การกันโหวตซ้ำจริงอยู่ที่ atomic guard ด้านล่าง)
@@ -133,17 +144,17 @@ export async function POST(request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "ไม่พบผู้ใช้งาน" }, { status: 404 });
+      return refuse("USER_NOT_FOUND", "ไม่พบรายชื่อของบัญชีนี้ในระบบ กรุณาติดต่อผู้ดูแลระบบ", 404);
     }
 
     // 🛑 Eligibility Check: Must be Year 1-4
     const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
     if (!validYears.includes(user.year)) {
-      return NextResponse.json({ error: "เฉพาะนักศึกษาชั้นปีที่ 1-4 เท่านั้นที่มีสิทธิ์ลงคะแนน" }, { status: 403 });
+      return refuse("INELIGIBLE", "เฉพาะนักศึกษาชั้นปีที่ 1-4 เท่านั้นที่มีสิทธิ์ลงคะแนน", 403);
     }
 
     if (user.isVoted) {
-      return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
+      return refuse("ALREADY_VOTED", "คุณใช้สิทธิ์เลือกตั้งไปแล้ว", 403);
     }
 
     // Encrypt the choice + compute the coarse bucket OUTSIDE the transaction so
@@ -185,13 +196,16 @@ export async function POST(request) {
     }, VOTE_TX_OPTIONS);
 
     if (outcome === "ALREADY_VOTED") {
-      return NextResponse.json({ error: "คุณใช้สิทธิ์เลือกตั้งไปแล้ว" }, { status: 403 });
+      return refuse("ALREADY_VOTED", "คุณใช้สิทธิ์เลือกตั้งไปแล้ว", 403);
     }
 
     return NextResponse.json({ success: true });
 
   } catch (error) {
     console.error("Vote Error:", error);
-    return NextResponse.json({ error: "เกิดข้อผิดพลาดในการบันทึกคะแนน" }, { status: 500 });
+    // Only this handler's own catch may say "not recorded": a thrown transaction
+    // rolls back whole (see VOTE_TX_OPTIONS). A proxy's 502/504 carries no code,
+    // so the page re-checks instead of repeating this sentence.
+    return refuse("SERVER", "บันทึกคะแนนไม่สำเร็จ คะแนนของคุณยังไม่ถูกบันทึก ลองกดยืนยันอีกครั้งได้", 500);
   }
 }

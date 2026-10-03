@@ -1,7 +1,7 @@
 'use client';
 import { getPath } from "../../utils/basePath";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ResultCard from "../../components/ResultCard";
 import CandidateCard from "../../components/CandidateCard";
@@ -21,6 +21,7 @@ import {
 } from 'recharts';
 
 import { resolveElectionDates } from "../../utils/electionConfig";
+import { liveSystemStatus } from "../../lib/election/systemStatus.mjs";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // Live turnout (participation) breakdown for the admin overview — by ปี/สาขา/เพศ.
@@ -97,6 +98,16 @@ const OverviewTab = () => {
   const globalConfig = useGlobalConfig();
   const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
 
+  // The countdown's phase is the server's ladder (liveSystemStatus), fed the
+  // mode from /api/results, so PAUSE / ENDED / MANUAL_OPEN read right instead
+  // of the clock alone. The 1 s timer below is set up once, so it reads the
+  // mode and dates through refs, never the first render's values.
+  const systemModeRef = useRef(null); // null until the first /api/results
+  const datesRef = useRef({ start: ELECTION_START, end: ELECTION_END });
+  useEffect(() => {
+    datesRef.current = { start: ELECTION_START, end: ELECTION_END };
+  }, [ELECTION_START.getTime(), ELECTION_END.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [candidates, setCandidates] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [demographics, setDemographics] = useState({
@@ -113,6 +124,8 @@ const OverviewTab = () => {
       const res = await fetch(getPath("/api/results"), { credentials: 'include' });
 
       const data = await res.json();
+
+      if (typeof data.systemMode === 'string') systemModeRef.current = data.systemMode;
 
       if (data.candidates) {
         const sortedCandidates = data.candidates.sort((a, b) => b.score - a.score);
@@ -176,13 +189,26 @@ const OverviewTab = () => {
 
   useEffect(() => {
     const calculate = () => {
+      const systemMode = systemModeRef.current;
+      if (systemMode === null) return 0; // mode not known yet: stay LOADING
       const now = new Date();
-      if (now < ELECTION_START) {
+      const { start, end } = datesRef.current;
+      const { electionStatus } = liveSystemStatus({ systemMode, start, end, now: now.getTime() });
+      if (electionStatus === 'WAITING') {
         setPhase('WAITING');
-        return ELECTION_START - now;
-      } else if (now >= ELECTION_START && now < ELECTION_END) {
+        return start - now;
+      } else if (electionStatus === 'ONGOING') {
+        // MANUAL_OPEN past the scheduled end: the box stays open with no
+        // closing time, so there is nothing to count down to.
+        if (end <= now) {
+          setPhase('OPEN');
+          return 0;
+        }
         setPhase('RUNNING');
-        return ELECTION_END - now;
+        return end - now;
+      } else if (electionStatus === 'CLOSED') {
+        setPhase('PAUSED');
+        return 0;
       } else {
         setPhase('ENDED');
         return 0;
@@ -214,11 +240,15 @@ const OverviewTab = () => {
   }, []);
 
   const isEnded = phase === 'ENDED';
+  const isPaused = phase === 'PAUSED';
+  const isOpenNoEnd = phase === 'OPEN';
 
   let theme = "Loading...";
   if (phase === 'WAITING') theme = "Starts In";
   if (phase === 'RUNNING') theme = "Time Left";
   if (phase === 'ENDED') theme = "Status";
+  if (phase === 'PAUSED') theme = "Paused";
+  if (phase === 'OPEN') theme = "Open";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -256,13 +286,17 @@ const OverviewTab = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <span className={`text-xs font-bold px-2 py-1 rounded-full ${isEnded ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-700'}`}>
-              {phase}
+              {isPaused ? 'หยุดรับคะแนนชั่วคราว' : phase}
             </span>
           </div>
           <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">{theme}</h3>
           <p className="text-3xl font-black text-gray-800 mt-1">
             {isEnded ? (
               <span className="text-red-500">Ended</span>
+            ) : isPaused ? (
+              <span className="text-orange-600">หยุดรับคะแนนชั่วคราว</span>
+            ) : isOpenNoEnd ? (
+              <span className="text-orange-600">เปิดรับคะแนนอยู่ (OPEN) ไม่มีเวลาปิด กด ENDED เพื่อปิดหีบ</span>
             ) : (
               <>
                 {timeLeft.days > 0 && (

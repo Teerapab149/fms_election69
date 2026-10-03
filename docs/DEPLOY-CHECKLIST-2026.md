@@ -242,7 +242,7 @@ npm run build            # ต้องผ่านครบทุก route ก�
 
 ## 7. กดปุ่มตรวจความพร้อม (ADM-1) — ต้องไม่มี fail
 
-- [ ] แท็บ **"ตั้งค่าระบบ" → ปุ่ม "ตรวจความพร้อมระบบ"** (เรียก `GET /api/admin/readiness`, read-only)
+- [ ] แท็บ **"ตั้งค่าระบบ" → การ์ด "ตรวจความพร้อมระบบ READINESS" → ปุ่ม "ตรวจตอนนี้"** (เรียก `GET /api/admin/readiness`, read-only)
 - [ ] ตรวจครบ **14 ข้อ** ต้อง **ไม่มี `fail`** (warn ให้อ่านทีละข้อว่ายอมรับได้ไหม):
 
   | กลุ่ม | ข้อ |
@@ -280,7 +280,11 @@ npm run build            # ต้องผ่านครบทุก route ก�
 - [ ] **โหวตจริง 1 ครั้ง** (บัญชีทดสอบ/ช่วง staging): login → เลือก → ยืนยัน → success → `isVoted` ติด, โหวตซ้ำถูกปฏิเสธ
 - [ ] **โซ่บัตร:** `node scripts/verify-ballot-chain.js` → ทุกข้อ PASS (ต้องมี `BALLOT_CHAIN_SECRET` ใน env)
 - [ ] ตั้ง uptime checker ยิง `/api/health` ทุก 1–5 นาที ช่วงวันเลือกตั้ง
-- [ ] ตั้ง cron `sh scripts/backup.sh` รายวัน (RUNBOOK §5) + ซ้อม `restore.sh` อย่างน้อย 1 ครั้ง
+- [ ] **backup อัตโนมัติ:** `docker compose ps backup` ต้อง `Up` และการ์ด "ตรวจความพร้อมระบบ READINESS" (ปุ่ม "ตรวจตอนนี้") ข้อ backup เขียว (RUNBOOK §5)
+      — **ลบ cron `sh scripts/backup.sh` รายวันเดิมถ้ามี** (ซ้อนกับ service) · ไฟล์ใน `backups/` เป็นของ root 0600
+      จึงต้อง `sudo` ทั้ง `restore.sh`/`backup.sh` บนโฮสต์/`rsync` · ถ้าตั้ง `UPLOAD_ROOT` ต้องแก้ volume รูปของ service `backup`
+- [ ] ตั้ง cron ของ root คัดลอก `backups/` ออกนอกเครื่อง (`sudo crontab -e` + `rsync -a`, RUNBOOK §5)
+- [ ] ซ้อม `sudo sh scripts/restore.sh …` ใส่ DB ทิ้งได้อย่างน้อย 1 ครั้ง
 
 **หลังปิดหีบ + ก่อนประกาศผล (certification):**
 - [ ] `node scripts/verify-ballot-chain.js` + `node scripts/reconcile-scores.js` → PASS (โซ่ไม่ถูกแก้ + invariant ตรง)

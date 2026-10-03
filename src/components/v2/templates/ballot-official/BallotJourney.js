@@ -40,7 +40,9 @@ function ChapterHead({ no, title, body, intro, children, step }) {
         {step && <span className="bj-step__lbl">{step.label} {no} {step.of} {step.total}</span>}
       </span>
       <h3 className="bj-title">{title}</h3>
-      {body && <p className="bj-body">{body}</p>}
+      {/* div, not p: body is often an editor Wrap (a div in editor mode), and a
+          div inside a p is invalid nesting. .bj-body sets its own margins */}
+      {body && <div className="bj-body">{body}</div>}
       {children}
     </motion.div>
   );
@@ -334,7 +336,10 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
           /* stacked, the scene's air above the ballot would double the gap under the text */
           .bj-ch--3 .bj-cast { margin-top: -56px; }
           .bj-ch--4 .bj-in:has(.bj-poster) { grid-template-columns: 1fr; gap: 36px; }
-          .bj-in--split { grid-template-columns: 1fr; gap: 36px; }
+          /* minmax(0,1fr), not 1fr: a bare 1fr track has an auto minimum, so the
+             300px scene widened the whole column past a 288px phone content box
+             and step 3's heading ran to 4px from the screen edge */
+          .bj-in--split { grid-template-columns: minmax(0, 1fr); gap: 36px; }
           .bj-parties { grid-template-columns: 1fr; gap: 28px; }
           .bj-secret { grid-template-columns: 1fr; }
           .bj-secret__gap { flex-direction: row; max-width: none; justify-content: center; }
@@ -348,7 +353,12 @@ export default function BallotJourney({ candidates = [], election, copy, text, v
           .bj-lead__body { font-size: 15px; }
           .bj-title { font-size: 23px; margin-top: 14px; }
           .bj-body { font-size: 15px; }
-          .bj-cast { transform: scale(.86); transform-origin: top center; margin-bottom: -64px; }
+          /* the scene keeps its 300px drawing geometry (ballot 150 wide over a
+             152px slot) and is scaled to .86 = 258px; the negative side margins
+             let its layout box fit the column (margin box = column width) so it
+             no longer widens the track. Centred, same as margin:auto above 332px */
+          .bj-cast { transform: scale(.86); transform-origin: top center; margin-bottom: -64px;
+            margin-left: calc(50% - 150px); margin-right: calc(50% - 150px); }
           .bj-close { font-size: 17px; }
           .bj-poster { margin-top: 36px; }
         }

@@ -5,6 +5,7 @@ import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
 import { resolveElectionDates } from "../../../../utils/electionConfig";
 import { isBoxClosed, checkSetMode, checkShowResult } from "../../../../lib/election/adminGuards.mjs";
+import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
 
 // Mode and result visibility are checked against each other (adminGuards), so
 // they are read and written under a row lock: two admins pressing "reopen" and
@@ -95,6 +96,11 @@ export async function POST(req) {
   try { body = await req.json(); } catch { /* handled as an invalid action below */ }
   const res = await handleAction(body, auth);
 
+  // /api/results serves the public a few-second snapshot; drop it after every
+  // action that went through (mode, reveal, certification, ballot options — and
+  // whatever gets added here later) so this process never holds a reveal back.
+  if (res.ok) bustResultsSnap();
+
   // 📋 Audit trail — every admin command (who/what/when) AND whether it went
   // through. Written after the action on purpose: the table is append-only
   // (ballot-grants.sql), and a row written before the checks read the same for
@@ -145,7 +151,8 @@ async function handleAction(body, auth) {
 
     // กรณี: เปิด/ปิดการแสดงผล — ส่งค่าที่ต้องการมาตรง ๆ (value: true|false)
     // เดิมเป็น TOGGLE ("สลับค่า") ถ้าเปิดหน้าตั้งค่าไว้สองเครื่อง หรือกดซ้ำตอนเน็ตช้า
-    // ผลจะกลับด้านกับที่แอดมินเห็นบนจอ · เปิดได้เฉพาะเมื่อหีบปิดแล้ว (adminGuards)
+    // ผลจะกลับด้านกับที่แอดมินเห็นบนจอ · เปิดได้เฉพาะเมื่อหีบปิดแล้ว และซ่อนไม่ได้
+    // เมื่อรับรองผลแล้ว — ผลที่รับรองต้องแสดงต่อสาธารณะ (adminGuards)
     if (action === 'SET_SHOW_RESULT') {
       try {
         await db.$transaction(async (tx) => {
@@ -154,6 +161,7 @@ async function handleAction(body, auth) {
             value: body.value,
             systemMode: config?.systemMode || "AUTO",
             end: resolveElectionDates(config?.globalConfig).ELECTION_END,
+            certified: !!config?.globalConfig?.ballotsAnonymized,
           });
           if (err) throw new GuardError(err, typeof body.value === "boolean" ? 409 : 400);
           await tx.systemConfig.update({ where: { id: 1 }, data: { showResult: body.value } });

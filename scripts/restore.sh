@@ -30,6 +30,26 @@ OUT_DIR="${OUT_DIR:-backups}"
 
 die() { echo "[restore] ✗ $1" >&2; exit 1; }
 
+# ตารางหลัก = ทุกตารางใน prisma/migrations + _prisma_migrations
+# ⚠️ รายชื่อนี้ต้องตรงกับ ESSENTIAL_TABLES ใน scripts/backup.sh — เพิ่ม model ใหม่ให้แก้ทั้งสองไฟล์
+#    รายชื่อเดียวกัน แต่กติกา schema ต่างกันโดยตั้งใจ: ที่นี่ต้องเป็น schema public เท่านั้น เพราะ
+#    สคริปต์นี้ DROP/CREATE SCHEMA public แล้วแอปอ่านตารางจาก public · backup.sh รับ schema ใดก็ได้
+#    (มันแค่ถ่ายของที่มีอยู่ และ use_url ทิ้ง ?schema= ของ URL ไปแล้ว จึงไม่รู้ว่าแอปใช้ schema ไหน)
+ESSENTIAL_TABLES="User Candidate Member Ballot ChainHead SystemConfig Template AdminAuditLog _prisma_migrations"
+
+# $1 = ไฟล์ .sql.gz → พิมพ์ชื่อตารางหลักที่ไม่มีใน schema public ของ dump (ว่าง = ครบ)
+# รับทั้งชื่อมี/ไม่มีเครื่องหมายคำพูด แต่ schema ต้องเป็น public ตรง ๆ — "Ballot" ที่อยู่ใน schema อื่น
+# จะไม่ถูกนับ เพราะโหลดแล้วแอปมองไม่เห็น (เจอตอนทดสอบ: ผ่านด่านนี้ไปถึง DROP แล้วค่อยล้มหลังโหลด)
+missing_essential() {
+  _create="$(gunzip -c "$1" | grep '^CREATE TABLE ' || true)"
+  _missing=""
+  for _t in $ESSENTIAL_TABLES; do
+    printf '%s\n' "$_create" | grep -Eq "^CREATE TABLE public\.(\"$_t\"|$_t) \(" \
+      || _missing="$_missing $_t"
+  done
+  printf '%s' "$_missing"
+}
+
 [ -f "$DB_DUMP" ] || die "ไม่พบไฟล์ dump: $DB_DUMP"
 
 docker inspect -f '{{.State.Running}}' "$DB_CONTAINER" 2>/dev/null | grep -q true \
@@ -41,6 +61,10 @@ gzip -t "$DB_DUMP" || die "ไฟล์ .gz เสียหาย: $DB_DUMP"
 gunzip -c "$DB_DUMP" | grep -q 'PostgreSQL database dump' || die "ไม่ใช่ dump ของ pg_dump: $DB_DUMP"
 dump_tables="$(gunzip -c "$DB_DUMP" | grep -c '^CREATE TABLE' || true)"
 [ "$dump_tables" -gt 0 ] || die "dump ไม่มี CREATE TABLE สักบรรทัด — ฐานข้อมูลจะว่างเปล่าถ้าโหลดไฟล์นี้"
+# มีตารางแต่ขาดตารางหลัก = โหลดแล้วได้ระบบที่ใช้ไม่ได้ (เช่น dump จาก DB ที่ "Ballot" ถูก DROP ไป)
+# ต้องปฏิเสธตรงนี้ ก่อน DROP SCHEMA — หลังจากนั้นของเดิมหายไปแล้ว
+dump_missing="$(missing_essential "$DB_DUMP")"
+[ -z "$dump_missing" ] || die "dump ขาดตารางหลัก:$dump_missing — ไม่โหลดไฟล์นี้ (ฐานข้อมูลยังไม่ถูกแตะ) ให้เลือก backup ตัวอื่น"
 echo "[restore]   ✓ dump ใช้ได้ · มี $dump_tables ตาราง"
 
 if [ -n "$IMAGES_TAR" ]; then
@@ -62,9 +86,16 @@ read -r ans
 # ถ้าฐานข้อมูลเดิมพังอยู่แล้ว ซึ่งก็คือเหตุผลที่กำลัง restore อยู่ จึงเตือนแล้วไปต่อได้
 mkdir -p "$OUT_DIR"
 safety="$OUT_DIR/pre-restore-$(date +%Y%m%d-%H%M%S).sql.gz"
+safety_ok=1
 echo "[restore] สำรองสภาพปัจจุบันไว้ที่ $safety …"
-if docker exec "$DB_CONTAINER" pg_dump -U "$DB_USER" "$DB_NAME" 2>/dev/null | gzip > "$safety" \
-   && gzip -t "$safety" 2>/dev/null && [ -s "$safety" ]; then
+# umask 077 เฉพาะใน subshell นี้: ไฟล์สำรองคือ dump เต็ม (รหัสนักศึกษา/ใครลงคะแนนแล้ว) ต้องเป็น
+# 0600 เหมือนที่ backup.sh ทำ · ไม่ตั้งทั้งสคริปต์ เพราะ tar ตอนแตกรูปด้านล่างจะสร้างไฟล์/โฟลเดอร์
+# 0600/0700 แล้วเว็บ (uid 1001) อ่านรูปไม่ได้
+# pipeline คืนสถานะของ gzip เท่านั้น (ไม่มี pipefail ใน sh) — ความสำเร็จของ pg_dump จึงดูจาก
+# บรรทัดท้ายไฟล์ "dump complete" ที่ pg_dump เขียนเมื่อจบครบเท่านั้น
+if ( umask 077; docker exec "$DB_CONTAINER" pg_dump -U "$DB_USER" "$DB_NAME" 2>/dev/null | gzip > "$safety" ) \
+   && gzip -t "$safety" 2>/dev/null && [ -s "$safety" ] \
+   && gunzip -c "$safety" | tail -n 5 | grep -q 'PostgreSQL database dump complete'; then
   # ต้องเช็คด้วยว่า "ของเดิม" มีอะไรให้กลับไปหาจริงไหม
   #
   # ถ้าฐานข้อมูลตอนนี้ว่างอยู่แล้ว (เช่นเพิ่ง restore ล้มไปรอบก่อน) pg_dump จะสำเร็จและได้
@@ -73,7 +104,15 @@ if docker exec "$DB_CONTAINER" pg_dump -U "$DB_USER" "$DB_NAME" 2>/dev/null | gz
   # ว่า "กลับไปสภาพเดิมได้ด้วยไฟล์นี้" ซึ่งเป็นคำแนะนำที่ล้มเหลวแน่นอนตอนที่เขาเดือดร้อนที่สุด
   # (เจอตอนทดสอบ restore ล้มสองรอบติดกัน)
   if gunzip -c "$safety" | grep -q '^CREATE TABLE'; then
-    echo "[restore]   ✓ สำรองไว้แล้ว"
+    safety_missing="$(missing_essential "$safety")"
+    if [ -z "$safety_missing" ]; then
+      echo "[restore]   ✓ สำรองไว้แล้ว"
+    else
+      # เก็บไฟล์ไว้ (เป็นสภาพเดิมชุดเดียวที่มี) แต่ด่านตรวจข้างบนจะปฏิเสธมันถ้าเอามา restore
+      # จึงห้ามแนะนำให้ใช้ไฟล์นี้กู้กลับตอนโหลดล้ม
+      safety_ok=0
+      echo "[restore]   ⓘ สำรองไว้แล้ว แต่ฐานข้อมูลปัจจุบันขาดตารางหลัก:$safety_missing — ใช้ไฟล์นี้กับ restore.sh ไม่ได้"
+    fi
   else
     rm -f "$safety"
     safety=""
@@ -96,9 +135,12 @@ echo "[restore] loading $DB_DUMP…"
 if ! gunzip -c "$DB_DUMP" | docker exec -i "$DB_CONTAINER" \
       psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 --single-transaction -q -o /dev/null; then
   echo "[restore] ✗ โหลด dump ไม่สำเร็จ — ถูก rollback แล้ว ฐานข้อมูลว่างอยู่ตอนนี้" >&2
-  if [ -n "$safety" ]; then
+  if [ -n "$safety" ] && [ "$safety_ok" = 1 ]; then
     echo "[restore]   กลับไปสภาพเดิมได้ด้วย:" >&2
     echo "[restore]     sh scripts/restore.sh $safety" >&2
+  elif [ -n "$safety" ]; then
+    echo "[restore]   สภาพเดิมเก็บไว้ที่ $safety แต่ขาดตารางหลัก กู้ด้วยสคริปต์นี้ไม่ได้" >&2
+    echo "[restore]   ให้เลือก backup ตัวอื่นใน $OUT_DIR แล้วลองใหม่" >&2
   else
     echo "[restore]   ไม่มีไฟล์สำรองของสภาพก่อนหน้า (ฐานข้อมูลว่างอยู่ก่อนแล้ว)" >&2
     echo "[restore]   ให้เลือก backup ตัวอื่นใน $OUT_DIR แล้วลองใหม่" >&2
@@ -114,9 +156,15 @@ restored_tables="$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" 
 echo "[restore]   ตารางในฐานข้อมูล: $restored_tables (ใน dump มี $dump_tables)"
 [ "$restored_tables" -gt 0 ] || die "หลังโหลดแล้วไม่มีตารางเลย"
 
-for t in User Candidate Ballot SystemConfig; do
+# ทุกตารางหลักต้องนับได้ — นับไม่ได้ = ตารางไม่มีจริงหลังโหลด ห้ามรายงานว่าสำเร็จ
+# (ของเดิมมี `|| echo '-'` ที่ปลาย pipeline ซึ่งไม่เคยทำงาน เพราะสถานะคือของ tr — ตารางที่หาย
+#  จึงพิมพ์ช่องว่างแล้วเดินต่อจนขึ้น ✓)
+for t in $ESSENTIAL_TABLES; do
   n="$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -tAc \
-       "select count(*) from \"$t\";" 2>/dev/null | tr -d ' \r' || echo '-')"
+       "select count(*) from \"$t\";" 2>/dev/null | tr -d ' \r')"
+  case "$n" in
+    ''|*[!0-9]*) die "หลังโหลดแล้วนับแถวตาราง $t ไม่ได้ — ข้อมูลไม่ครบ อย่าเปิดเว็บ ให้ restore ใหม่จาก backup ตัวอื่น" ;;
+  esac
   echo "[restore]   $t: $n แถว"
 done
 

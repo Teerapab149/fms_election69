@@ -4,6 +4,7 @@ import { useRef, useCallback } from "react";
 import { TrendingUp, CheckCircle2, PieChart, Users } from "lucide-react";
 import EditorElement from "../admin/editor/EditorElement";
 import { RADIUS_MAP } from "../../utils/styleMaps";
+import { deriveElectionStatus } from "../../lib/election/electionStatus.mjs";
 
 // Build inline wrapper style from a (flat, non-stateful) sub-card config.
 // Returns undefined when cfg is missing → legacy Tailwind card wins (P-LOG-015).
@@ -69,6 +70,19 @@ export default function StatsBlock({
   const { showPercentage = true, showTotalEligible = true } = config;
   const { stats = { totalVoted: 0, totalEligible: 0, percentage: "0.00" } } = data;
 
+  // Turnout header follows the election phase (server verdict in initialData;
+  // the editor passes ACTIVE). Paused / closed boxes are not "real-time" any
+  // more, so the red ping and the "Real-time" line stop there.
+  const { phase } = deriveElectionStatus({
+    systemMode: data.initialData?.systemMode,
+    isSystemOpen: data.initialData?.isSystemOpen,
+    electionStatus: data.initialData?.electionStatus,
+  });
+  const isLive = phase !== "paused" && phase !== "ended";
+  const statusLine = phase === "paused"
+    ? "พักการลงคะแนนชั่วคราว"
+    : phase === "ended" ? "ปิดหีบแล้ว ยอดผู้ใช้สิทธิ์ทั้งหมด" : "อัปเดตข้อมูลแบบ Real-time";
+
   // Dual-channel flat config read for the non-stateful sub-cards.
   const getCardConfig = (id) =>
     elementConfigs?.[id]?.config ?? resolvedTemplate?.elements?.[id]?.config ?? null;
@@ -113,17 +127,19 @@ export default function StatsBlock({
         <div className="flex items-center gap-3 mb-4 px-1">
           <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-white border border-purple-100 shadow-sm text-[var(--color-primary)]">
             <TrendingUp className="w-5 h-5" />
-            <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white" />
-            </span>
+            {isLive && (
+              <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white" />
+              </span>
+            )}
           </div>
           <div className="flex flex-col">
             <h3 className="text-sm lg:text-base font-bold text-slate-800 leading-tight">
               สถิติผู้เข้าร่วมลงคะแนนโหวต
             </h3>
             <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-              อัปเดตข้อมูลแบบ Real-time
+              {statusLine}
             </span>
           </div>
         </div>

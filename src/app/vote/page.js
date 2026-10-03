@@ -23,6 +23,7 @@ import BlossomVote from '../../components/vote/BlossomVote';
 import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
 import { useVoteCast } from '../../hooks/useVoteCast';
 import VoteFooter from '../../components/vote/VoteFooter';
+import ErrorActionModal from '../../components/ErrorActionModal';
 
 // Hook
 import { useVoteSystem } from '../../hooks/useVoteSystem';
@@ -43,7 +44,12 @@ export default function VotePage() {
 
     // Actions
     handleSelectParty,
-    submitVote
+    submitVote,
+
+    // A vote that did not go through cleanly (see useVoteSystem / voteOutcome.mjs)
+    voteError,
+    dismissVoteError,
+    runVoteErrorAction
   } = useVoteSystem();
   const router = useRouter();
   const handleSingleSelect = (id) => {
@@ -58,7 +64,7 @@ export default function VotePage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Receipt retains its own paper-box scene; hooks remain unconditional.
-  const { playDrop, sceneNode } = useBallotDrop();
+  const { playDrop, sceneNode, dropActive } = useBallotDrop();
 
   // 🧱 pageLayout config for MultiPartyView (fetched from admin Page Design tab)
   const [voteConfig, setVoteConfig] = useState({});
@@ -70,6 +76,10 @@ export default function VotePage() {
   const V2Vote = resolveTemplatePage(rawTemplateId, 'vote');
   const { playCast, sceneNode: castScene, castActive } = useVoteCast({ templateId: rawTemplateId });
   const confirmPending = useRef(false);
+  // Everything that must lock the ballot. dropActive is receipt's paper-box scene:
+  // it holds 440ms of bounce-back after a failure, after isSubmitting has cleared,
+  // and without it receipt's confirm stayed live under its own animation.
+  const busy = isSubmitting || isRedirecting || castActive || dropActive;
   // Gate render until the template is known — otherwise the classic layout (with
   // its own cinematic AutoIntro) flashes for a frame before the real template
   // resolves, looking like a stray "old intro".
@@ -145,6 +155,17 @@ export default function VotePage() {
     }
   };
 
+  // "retry": send the same ballot again from the error dialog. The student
+  // already confirmed this choice once, and the server counts one per student,
+  // so a second press can never become a second vote.
+  const retryVote = () => {
+    dismissVoteError();
+    onConfirmVote();
+  };
+  // Only a ballot that is still live may be closed back onto (retry / notice);
+  // every other kind runs its action on Escape too.
+  const voteErrorClosable = voteError?.kind === "retry" || voteError?.kind === "notice";
+
 
   // --- Render ---
   if (isLoading || !templateReady) {
@@ -206,7 +227,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={onConfirmVote}
         />
       ) : useReceiptVote ? (
@@ -218,7 +239,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : useBlossomVote ? (
@@ -230,7 +251,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isVerdure ? (
@@ -242,7 +263,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isFmsOfficial ? (
@@ -254,7 +275,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isStudio ? (
@@ -266,7 +287,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : isGumroad ? (
@@ -278,7 +299,7 @@ export default function VotePage() {
           onViewDetails={handleViewDetails}
           isSingleParty={isSingleParty}
           user={session?.user}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
           onConfirm={isSingleParty ? onConfirmVote : () => setIsConfirmModalOpen(true)}
         />
       ) : (
@@ -325,7 +346,7 @@ export default function VotePage() {
 
       <VoteFooter
         selectedParty={selectedParty}
-        isSubmitting={isSubmitting || isRedirecting || castActive} // ✅ Disable when redirecting too
+        isSubmitting={busy} // ✅ Disable when redirecting too
         variant={isSingleParty ? "single" : "multi"}
         partyPrimary={regularParties?.[0]?.themePrimary || (isSingleParty ? "var(--spv-footer-primary, #4D2A67)" : "#4D2A67")}
         partyGold={regularParties?.[0]?.themeGold || (isSingleParty ? "var(--spv-footer-gold, #CDA176)" : "#CDA176")}
@@ -340,6 +361,24 @@ export default function VotePage() {
 
       {/* Presentation only: the submit result, never animation completion, gates navigation. */}
       {isReceipt ? sceneNode : castScene}
+
+      {/* One error dialog for every template, shown once the cast/drop scene has
+          played out its failure (never on top of it). z-[150000]: above
+          SinglePartyView (99999), VoteFooter (100001) and the templates' confirm
+          dialogs (9100-9600); the cast scene (200000) is gone by then. */}
+      <ErrorActionModal
+        isOpen={!!voteError && !castActive && !dropActive}
+        zClass="z-[150000]"
+        title={voteError?.title}
+        message={voteError?.message}
+        buttonText={voteError?.actionLabel}
+        buttonHint={voteError?.actionHint}
+        onAction={voteError?.kind === "retry" ? retryVote : runVoteErrorAction}
+        secondaryText={voteError?.dismissLabel}
+        secondaryHint={voteError?.dismissHint}
+        onSecondary={dismissVoteError}
+        onClose={voteErrorClosable ? dismissVoteError : runVoteErrorAction}
+      />
 
       {/* Modals */}
       <PartyDetailModal
@@ -362,7 +401,7 @@ export default function VotePage() {
           party={selectedParty}
           isVoteNo={selectedParty?.number === 0}
           isDisapprove={selectedParty?.number === -1}
-          isSubmitting={isSubmitting || isRedirecting || castActive}
+          isSubmitting={busy}
         />
       )}
 
