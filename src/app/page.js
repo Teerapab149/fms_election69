@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth"; // ✅ Import authOptions
 import HomeRenderer from "../components/home/HomeRenderer"; // per-template home layout dispatcher
 
-import { db } from "../lib/db";
+import { getSiteConfig, getTemplateCached, getHomeStats } from "../lib/cache/siteData";
 import { resolveElectionDates } from "../utils/electionConfig";
 import { liveSystemStatus } from "../lib/election/systemStatus.mjs";
 import { getTemplate } from "../components/admin/editor/templates";
@@ -14,28 +14,12 @@ export const dynamic = "force-dynamic";
 async function getHomeData(session) {
   try {
     // 🔥 FIX: Query DB directly instead of Fetching via HTTP Loopback (Docker Friendly)
-    const candidates = await db.candidate.findMany({
-      select: {
-        id: true,
-        number: true,
-        logoUrl: true,
-        // the ballot-official home prints a sample ballot with the real choices,
-        // and introduces each party (slogan + group photo) in its first chapter
-        name: true,
-        slogan: true,
-        groupImageUrls: true,
-      },
-      orderBy: { number: 'asc' },
-      take: 5,
-    });
+    // Cached reads (lib/cache/siteData.js, TTL 3-5 s, busted by admin writes): a
+    // reload storm otherwise re-ran 7 queries per render, two of them counts over
+    // the whole User table.
+    const { candidates, totalEligible, totalVoted } = await getHomeStats();
 
-    const validYears = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
-    const totalEligible = await db.user.count({ where: { year: { in: validYears } } });
-    const totalVoted = await db.user.count({
-      where: { isVoted: true, year: { in: validYears } }
-    });
-
-    let config = await db.systemConfig.findFirst({ where: { id: 1 } });
+    let config = await getSiteConfig();
     if (!config) {
       config = { systemMode: "AUTO" };
     }
@@ -43,10 +27,10 @@ async function getHomeData(session) {
 
     // Phase 3 Day 2A — SSR pre-resolve active template at boundary
     const activeTemplateId = config?.activeTemplateId || "classic";
-    let resolvedTemplate = await getTemplate(activeTemplateId, db);
+    let resolvedTemplate = await getTemplateCached(activeTemplateId);
     if (!resolvedTemplate) {
       // Fall back to classic if active slug missing in DB+code
-      resolvedTemplate = await getTemplate("classic", db);
+      resolvedTemplate = await getTemplateCached("classic");
     }
 
     const { ELECTION_START, ELECTION_END } = resolveElectionDates(config.globalConfig);

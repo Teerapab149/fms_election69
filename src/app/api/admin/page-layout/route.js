@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from "../../../../lib/db";
+import { bustSiteData } from "../../../../lib/cache/siteData";
 import { hasVariant } from "../../../../components/elements/registry.js";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
 import { validateThemeTokens, validateElementVars, validateElementCss } from "../../../../lib/cssSafety.mjs";
@@ -123,6 +124,7 @@ export async function PUT(request) {
       data: { pageLayout: body },
     });
 
+    bustSiteData(); // admin change must show on the next request, not after the TTL
     return NextResponse.json(updated.pageLayout);
   } catch (error) {
     console.error("page-layout PUT error:", error);

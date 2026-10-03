@@ -19,6 +19,8 @@
 // Per process only — on a multi-instance deploy other instances catch up
 // within one TTL.
 
+import { bustAllTtlCaches } from "../cache/ttlCache.mjs";
+
 export const RESULTS_SNAP_TTL_MS = 4000; // a reveal shows within one poll + 4 s
 
 function state() {
@@ -51,6 +53,11 @@ export function setSnap(body, gen, now = Date.now()) {
 // Call after anything that changes what /api/results returns (mode, reveal,
 // certification, dates) so the change is not held back by the snapshot.
 export function bustResultsSnap() {
+  // The dashboard and global-config routes call this after EVERY successful write
+  // (mode, reveal, certify, dates, settings), and those are also what the home /
+  // layout caches (lib/cache/siteData) hold. Busting them here means those two
+  // routes need no extra line and a later admin route cannot forget it.
+  bustAllTtlCaches();
   const s = state();
   s.gen += 1;
   s.body = null;
