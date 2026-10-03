@@ -1,0 +1,32 @@
+# ตัวอย่าง systemd unit: สำรอง DB + รูปหนึ่งรอบ (คู่กับ fms-backup.timer ที่สั่งให้รันทุก 6 ชั่วโมง)
+# คัดลอกไป /etc/systemd/system/ แล้วแก้ค่า 3 จุดที่มี # แก้ ด้านล่าง วิธีใช้เต็มดู deploy/backup/README.md
+#
+#   sudo cp fms-backup.service fms-backup.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now fms-backup.timer
+#   sudo systemctl start fms-backup.service      # สำรองทันทีหนึ่งรอบ
+#   journalctl -u fms-backup -n 50               # log
+
+[Unit]
+Description=FMS election backup (DB + images)
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+# แก้: โฟลเดอร์โปรเจกต์ (ที่มี scripts/ และ backups/) — backup.sh ใช้ path เทียบจากที่นี่
+WorkingDirectory=/opt/fms-election
+# แก้: ผู้ใช้ที่เป็นเจ้าของ backups/ และอ่าน /etc/fms-backup.env ได้ (ตัดสองบรรทัดนี้ออก = รันเป็น root)
+User=fms
+Group=fms
+# ไฟล์ KEY='value' ที่มี BACKUP_DATABASE_URL (chmod 600) — รูปแบบเดียวกับที่ backup.sh อ่านเอง
+# เลยไม่ต้องใส่รหัสผ่านในไฟล์ unit นี้ ซึ่งทุกคนอ่านได้
+EnvironmentFile=/etc/fms-backup.env
+# BACKUP_INTERVAL_HOURS ต้องตรงกับ OnCalendar ใน fms-backup.timer
+Environment=DUMP_VIA=direct BACKUP_RUNNER=systemd BACKUP_INTERVAL_HOURS=6
+ExecStart=/bin/sh scripts/backup.sh
+# dump ใหญ่ไม่ควรกิน CPU/ดิสก์ของเว็บตอนมีคนโหวต
+Nice=10
+IOSchedulingClass=idle
+# ค้างเกิน 2 ชั่วโมง = ผิดปกติ (ปกติไม่กี่วินาทีถึงไม่กี่นาที)
+TimeoutStartSec=2h

@@ -41,6 +41,26 @@ function parseStatus(text) {
   }
 }
 
+// ตัวตั้งเวลา backup มีหลายแบบตามวิธีรันแอป (docker compose / cron / systemd / pm2) —
+// ข้อความแนะนำต้องไม่ชี้ไปที่ docker อย่างเดียว · scripts/backup.sh เขียนชื่อตัวรันลงไฟล์สถานะ
+// (ช่อง runner) ถ้ารู้ตัวรัน บอกคำสั่งดู log ของตัวนั้นตรง ๆ ไม่รู้ก็ไล่ให้ครบทุกแบบ
+const RUNNERS = {
+  docker: { label: "docker compose", logs: "docker compose logs backup (และ docker compose ps backup)" },
+  cron: { label: "cron", logs: "ไฟล์ log ที่ crontab เขียนไว้ (บรรทัด >> … 2>&1) และ log ของ cron (grep CRON /var/log/syslog)" },
+  systemd: { label: "systemd timer", logs: "journalctl -u fms-backup และ systemctl list-timers fms-backup.timer" },
+  pm2: { label: "pm2", logs: "pm2 logs fms-backup (และ pm2 status)" },
+  loop: { label: "backup-loop.sh", logs: "log ของโปรเซสที่รัน scripts/backup-loop.sh" },
+  manual: { label: "รันมือ", logs: "ตัวตั้งเวลาที่คุณตั้งไว้ (cron / systemd timer / pm2)" },
+};
+const ANY_SCHEDULER_LOGS =
+  "ตรวจตัวตั้งเวลา backup ของเครื่องนี้ (docker compose logs backup / journalctl -u fms-backup / pm2 logs fms-backup / log ของ cron)" +
+  " ดูวิธีตั้งแต่ละแบบที่ deploy/backup/README.md";
+
+function runnerOf(rec) {
+  const k = rec && typeof rec.runner === "string" ? rec.runner : "";
+  return Object.prototype.hasOwnProperty.call(RUNNERS, k) ? k : null;
+}
+
 /** เหลือแค่ชื่อไฟล์ ไม่โชว์ path และตัดความยาว */
 function safeName(v) {
   if (typeof v !== "string" || !v) return "";
@@ -82,7 +102,9 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
     return {
       level: "warn",
       detail:
-        "ยังไม่พบประวัติ backup บนเซิร์ฟเวอร์นี้ — ตรวจว่า service backup รันอยู่ (docker compose ps backup) และดู log ด้วย docker compose logs backup" +
+        "ยังไม่พบประวัติ backup บนเซิร์ฟเวอร์นี้ — " +
+        ANY_SCHEDULER_LOGS +
+        " ถ้ามีตัวตั้งเวลารันอยู่แล้วแต่ยังไม่เห็นผล ให้ตรวจว่าเว็บอ่านโฟลเดอร์ backups/status ที่เดียวกับที่ backup เขียน (ตั้ง BACKUP_STATUS_DIR ใน .env ของแอปได้)" +
         " ถ้าใช้ฐานข้อมูลของคณะและเจ้าหน้าที่ฐานข้อมูล (DBA) สำรองให้อยู่แล้ว ข้อนี้ข้ามได้" +
         unreadableNote,
     };
@@ -97,16 +119,19 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
     if (Number.isFinite(ih) && ih > 0) intervalH = ih;
     const age = Math.max(0, nowMs - ok.rec.atDate.getTime());
     const file = safeName(ok.rec.file);
-    okText = `backup ล่าสุดที่สำเร็จ ${when(ok.rec.atDate)} (${ageText(age)})${file ? ` ไฟล์ ${file}` : ""}`;
+    const rk = runnerOf(ok.rec);
+    okText = `backup ล่าสุดที่สำเร็จ ${when(ok.rec.atDate)} (${ageText(age)})${file ? ` ไฟล์ ${file}` : ""}${rk ? ` ตัวรัน ${RUNNERS[rk].label}` : ""}`;
     if (age <= intervalH * HOUR + HOUR) ageLevel = "pass";
     else if (age <= 2 * intervalH * HOUR + HOUR) ageLevel = "warn";
     else ageLevel = "fail";
   }
+  const where = runnerOf(ok.rec || bad.rec);
+  const checkLogs = where ? `ดู ${RUNNERS[where].logs}` : ANY_SCHEDULER_LOGS;
   const lateText =
     ageLevel === "warn"
-      ? ` — เลยรอบที่ตั้งไว้ (ทุก ${intervalH} ชม.) แล้ว ตรวจ docker compose logs backup`
+      ? ` — เลยรอบที่ตั้งไว้ (ทุก ${intervalH} ชม.) แล้ว ${checkLogs}`
       : ageLevel === "fail"
-        ? ` — เก่าเกิน 2 รอบ (ทุก ${intervalH} ชม.) แล้ว backup อัตโนมัติน่าจะหยุดทำงาน ตรวจ docker compose ps backup และ docker compose logs backup`
+        ? ` — เก่าเกิน 2 รอบ (ทุก ${intervalH} ชม.) แล้ว backup อัตโนมัติน่าจะหยุดทำงาน ${checkLogs}`
         : "";
 
   // ── รอบล่าสุดล้ม ─────────────────────────────────────────────────────────────

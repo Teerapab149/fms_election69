@@ -12,6 +12,16 @@
 #     (หรือ ~/.pgpass) → DATABASE_URL · รหัสผ่านส่งทาง environment เท่านั้น ไม่อยู่บน
 #     command line ของ pg_dump (คำสั่งบนเครื่องเดียวกันเห็น command line กันได้หมดผ่าน ps)
 #
+# รันบนโฮสต์ที่ไม่ใช้ Docker (cron / systemd timer / pm2) — สคริปต์นี้ตัวเดียวทำงานทุกแบบ
+# ต่างกันแค่ใครเป็นคนเรียก · ตัวอย่างพร้อมใช้อยู่ใน deploy/backup/ (อ่าน README.md ในนั้น)
+#   BACKUP_APP_DIR   โฟลเดอร์ของแอป (ถ้ามี สคริปต์ cd ไปที่นั่นก่อน — path ทุกตัวด้านล่างเทียบจากที่นี่)
+#   BACKUP_ENV_FILE  ไฟล์ KEY='value' เก็บ BACKUP_DATABASE_URL ฯลฯ (0600) — ดู scripts/lib/backup-env.sh
+#   BACKUP_RUNNER    ชื่อตัวรัน (cron|systemd|pm2|docker) เขียนลง LAST_OK/LAST_FAIL ให้หน้าตรวจ
+#                    ความพร้อมบอกได้ว่าต้องไปดู log ที่ไหน · ไม่ตั้ง = เดาเอา (docker ถ้าอยู่ในคอนเทนเนอร์)
+#   UPLOAD_ROOT      ถ้ารูปอัปโหลดอยู่นอก public/images: อ่านจาก environment หรือจาก .env ของแอป
+#                    (เฉพาะ DUMP_VIA=direct นอกคอนเทนเนอร์) แล้ว archive รูปจากที่นั่น โดยใน tar
+#                    ยังเป็น path public/images/ เสมอ — restore.sh ตรวจแบบนั้น
+#
 # Produces, under ./backups/ (OUT_DIR):
 #   db-YYYYmmdd-HHMMSS.sql.gz       (pg_dump)
 #   images-YYYYmmdd-HHMMSS.tar.gz   (public/images — party/member photos; ทำใหม่เฉพาะเมื่อ
@@ -58,17 +68,63 @@ set -eu
 # ให้อ่านได้ทั่วไปทีหลัง เพราะเว็บ (ผู้ใช้คนละ uid) ต้องอ่าน และในนั้นไม่มีข้อมูลส่วนบุคคล
 umask 077
 
+# ── เตรียมบนโฮสต์: ไปโฟลเดอร์แอป + โหลดไฟล์ env ──────────────────────────────────
+# ยังไม่ fail ตรงนี้: fail() ต้องใช้ตัวแปรและ trap ด้านล่าง (ไม่งั้น LAST_FAIL ไม่ถูกเขียน
+# และหน้าตรวจความพร้อมไม่เห็นว่า cron ที่ตั้งไว้พัง) จึงจำสาเหตุไว้แล้วค่อย fail ทีหลัง
+boot_err=""
+script_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || script_dir=""
+if [ -n "${BACKUP_APP_DIR:-}" ]; then
+  # ล้มตรงนี้จบทันทีโดยไม่เขียน LAST_FAIL: ไม่รู้ว่าโฟลเดอร์แอปอยู่ที่ไหน สถานะจะไปตกในโฟลเดอร์
+  # แปลก ๆ (cwd ของ cron คือ $HOME) ที่เว็บไม่มีวันอ่านอยู่ดี — ผู้ตั้ง cron เห็นใน log ของ cron
+  cd "$BACKUP_APP_DIR" 2>/dev/null || { echo "[backup] ✗ เข้าโฟลเดอร์ BACKUP_APP_DIR ($BACKUP_APP_DIR) ไม่ได้" >&2; exit 1; }
+fi
+env_err=""
+if [ -z "$boot_err" ] && [ -n "$script_dir" ] && [ -f "$script_dir/lib/backup-env.sh" ]; then
+  . "$script_dir/lib/backup-env.sh"
+  load_backup_env
+  boot_err="$env_err"
+fi
+
 DUMP_VIA="${DUMP_VIA:-docker}"
 DB_CONTAINER="${DB_CONTAINER:-fms-election-db}"   # prod compose container name
 DB_USER="${POSTGRES_USER:-postgres}"
 DB_NAME="${POSTGRES_DB:-fms_election}"
-IMAGES_DIR="${IMAGES_DIR:-public/images}"
 OUT_DIR="${OUT_DIR:-backups}"
 STATUS_DIR="${STATUS_DIR:-$OUT_DIR/status}"
 RETENTION="${RETENTION_DAYS:-14}"
 
+# ตัวรัน: ใช้ตัดสินใจเรื่องที่ต่างกันระหว่างคอนเทนเนอร์กับโฮสต์ และบอกหน้าตรวจความพร้อมว่า
+# log อยู่ที่ไหน · จำกัดอักขระเพราะค่านี้ลงไปใน JSON
+in_container=0
+if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then in_container=1; fi
+runner="${BACKUP_RUNNER:-}"
+if [ -z "$runner" ]; then
+  if [ "$in_container" -eq 1 ]; then runner=docker; else runner=manual; fi
+fi
+runner="$(printf '%s' "$runner" | tr -cd 'A-Za-z0-9_-' | cut -c1-20)"
+[ -n "$runner" ] || runner=manual
+
+# โฟลเดอร์รูป: ถ้าไม่ได้ระบุ IMAGES_DIR ตรง ๆ ให้ดู UPLOAD_ROOT (ที่ที่แอปเก็บรูปอัปโหลดจริง ดู
+# src/lib/media/storage.js) ก่อนใช้ public/images · อ่าน .env ของแอปเฉพาะบนโฮสต์ที่ dump ตรง:
+# ใน compose แบบเดิม (DUMP_VIA=docker หรือในคอนเทนเนอร์) UPLOAD_ROOT ใน .env เป็น path ของ
+# คอนเทนเนอร์เว็บ ซึ่งบนโฮสต์ไม่มีอยู่จริง — อ่านมาใช้จะทำให้ archive รูปหายเงียบ ๆ
+IMAGES_DIR="${IMAGES_DIR:-}"
+if [ -z "$IMAGES_DIR" ]; then
+  upload_root="${UPLOAD_ROOT:-}"
+  if [ -z "$upload_root" ] && [ "$DUMP_VIA" = direct ] && [ "$in_container" -eq 0 ] && [ -f .env ]; then
+    upload_root="$(sed -n 's/^[[:space:]]*UPLOAD_ROOT=//p' .env | tail -n 1 | tr -d '\r')"
+    case "$upload_root" in
+      \"*\") upload_root="${upload_root#\"}"; upload_root="${upload_root%\"}" ;;
+      \'*\') upload_root="${upload_root#\'}"; upload_root="${upload_root%\'}" ;;
+      *) upload_root="$(printf '%s' "$upload_root" | sed 's/[[:space:]][[:space:]]*#.*$//; s/[[:space:]]*$//')" ;;
+    esac
+  fi
+  IMAGES_DIR="${upload_root:-public/images}"
+fi
+
 ts="$(date +%Y%m%d-%H%M%S)"
 raw=""
+stage=""
 fail_reason=""
 status_written=0
 
@@ -90,6 +146,16 @@ write_status() {
   # อ่านเจอไฟล์ที่เขียนไปครึ่งเดียว
   mkdir -p "$STATUS_DIR" 2>/dev/null || return 1
   chmod 755 "$STATUS_DIR" 2>/dev/null || true
+  # บนโฮสต์ web ไม่ได้ mount แค่ status/ เหมือนใน compose — มันอ่าน backups/status/ ตาม path จริง
+  # แต่ umask 077 ทำให้ backups/ ที่สคริปต์สร้างเป็น 0700 (คนอื่นผ่านเข้าไปไม่ได้) หน้าตรวจความพร้อม
+  # จึงอ่านไฟล์สถานะไม่ได้ทั้งที่ backup สำเร็จ · เปิดให้ "ผ่านได้" (o+x) อย่างเดียว ไม่เปิดให้ list:
+  # ตัว dump ยังเป็น 0600 ของเจ้าของ · แตะเฉพาะเมื่อ status/ อยู่ใต้ backups/ และคนอื่นยังผ่านไม่ได้
+  if [ "$STATUS_DIR" = "$OUT_DIR/status" ]; then
+    case "$(ls -ld "$OUT_DIR" 2>/dev/null | cut -c10)" in
+      x|t|s) ;;
+      *) chmod o+x "$OUT_DIR" 2>/dev/null || true ;;
+    esac
+  fi
   _tmp="$STATUS_DIR/.$1.tmp.$$"
   if printf '%s\n' "$2" > "$_tmp" 2>/dev/null && chmod 644 "$_tmp" && mv -f "$_tmp" "$STATUS_DIR/$1"; then
     status_written=1
@@ -113,9 +179,11 @@ fail() {
 on_exit() {
   rc=$?
   if [ -n "$raw" ]; then rm -f "$raw"; fi
+  # โฟลเดอร์จัดฉากของ tar รูป (มีแต่ symlink) — เช็คชื่อก่อน rm -rf เผื่อตัวแปรเพี้ยน
+  case "$stage" in */fms-backup-stage.*) rm -rf "$stage" ;; esac
   if [ "$rc" -ne 0 ] && [ "$status_written" -eq 0 ]; then
     reason="${fail_reason:-สคริปต์หยุดกลางทาง (exit $rc)}"
-    write_status LAST_FAIL "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"stage\":\"dump\",\"reason\":\"$(json_str "$reason")\",\"interval_hours\":$interval_json}" \
+    write_status LAST_FAIL "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"stage\":\"dump\",\"reason\":\"$(json_str "$reason")\",\"runner\":\"$runner\",\"interval_hours\":$interval_json}" \
       || echo "[backup $ts]   (บันทึก $STATUS_DIR/LAST_FAIL ไม่ได้ด้วย — ตรวจสิทธิ์โฟลเดอร์)" >&2
   fi
   exit "$rc"
@@ -125,6 +193,8 @@ trap on_exit EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+[ -z "$boot_err" ] || fail "$boot_err"
+
 mkdir -p "$OUT_DIR" 2>/dev/null || fail "สร้างโฟลเดอร์ $OUT_DIR ไม่ได้"
 # โฟลเดอร์ที่ Docker สร้างให้เอง (bind mount ที่ยังไม่มีอยู่) เป็นของ root — service backup
 # ที่รันด้วย uid ธรรมดาจะเขียนไม่ได้ และถ้าไม่เช็คตรงนี้ error ที่ได้จะไปโผล่เป็น "pg_dump ล้ม"
@@ -133,60 +203,13 @@ if [ -d "$STATUS_DIR" ] && [ ! -w "$STATUS_DIR" ]; then
   fail "เขียนลงโฟลเดอร์ $STATUS_DIR ไม่ได้ (ผู้ใช้ uid $(id -u)) — หน้าตรวจความพร้อมจะไม่เห็นผล backup ให้แก้เจ้าของโฟลเดอร์ก่อน"
 fi
 
-# ── ต่อ DB แบบ direct: แปลง URL เป็นตัวแปร PG* ────────────────────────────────
-# ไม่ส่ง URL ให้ pg_dump ตรง ๆ เพราะรหัสผ่านจะอยู่บน command line · และ URL ของ Prisma
-# มักมี ?schema=public / connection_limit=… ที่ libpq ไม่รู้จักแล้วปฏิเสธทั้งบรรทัด จึงเก็บไว้
-# แค่ sslmode (ความหมายเดียวกันทั้งสองฝั่ง) ที่เหลือทิ้ง
-pct_decode() {
-  # %XX → ไบต์ · LC_ALL=C ให้ awk พิมพ์เป็นไบต์ดิบ ไม่ใช่อักขระ Unicode
-  printf '%s' "$1" | LC_ALL=C awk '
-    BEGIN { hex = "0123456789abcdef" }
-    { s = $0; out = ""
-      while ((i = index(s, "%")) > 0) {
-        h = tolower(substr(s, i + 1, 2))
-        a = index(hex, substr(h, 1, 1)); b = index(hex, substr(h, 2, 1))
-        if (length(h) == 2 && a > 0 && b > 0) {
-          out = out substr(s, 1, i - 1) sprintf("%c", (a - 1) * 16 + (b - 1)); s = substr(s, i + 3)
-        } else { out = out substr(s, 1, i); s = substr(s, i + 1) }
-      }
-      printf "%s", out s }'
-}
-
-use_url() {
-  _url="$1"
-  case "$_url" in
-    postgres://*|postgresql://*) ;;
-    *) fail "$2 ไม่ใช่ URL แบบ postgresql://…" ;;
-  esac
-  _rest="${_url#*://}"
-  _query=""
-  case "$_rest" in *\?*) _query="${_rest#*\?}"; _rest="${_rest%%\?*}" ;; esac
-  _userinfo=""
-  case "$_rest" in *@*) _userinfo="${_rest%@*}"; _rest="${_rest##*@}" ;; esac
-  _db=""
-  case "$_rest" in */*) _db="${_rest#*/}"; _rest="${_rest%%/*}" ;; esac
-  _port=""
-  case "$_rest" in
-    \[*\]:*) _port="${_rest##*]:}"; _rest="${_rest%]:*}]" ;;
-    \[*) ;;
-    *:*) _port="${_rest##*:}"; _rest="${_rest%:*}" ;;
-  esac
-  _rest="${_rest#[}"; _rest="${_rest%]}"
-  if [ -n "$_userinfo" ]; then
-    case "$_userinfo" in
-      *:*) PGUSER="$(pct_decode "${_userinfo%%:*}")"; PGPASSWORD="$(pct_decode "${_userinfo#*:}")"; export PGUSER PGPASSWORD ;;
-      *) PGUSER="$(pct_decode "$_userinfo")"; export PGUSER ;;
-    esac
-  fi
-  if [ -n "$_rest" ]; then PGHOST="$(pct_decode "$_rest")"; export PGHOST; fi
-  if [ -n "$_port" ]; then PGPORT="$_port"; export PGPORT; fi
-  if [ -n "$_db" ]; then PGDATABASE="$(pct_decode "$_db")"; export PGDATABASE; fi
-  _old_ifs="$IFS"; IFS='&'; set -f
-  for _kv in $_query; do
-    case "$_kv" in sslmode=*) PGSSLMODE="${_kv#sslmode=}"; export PGSSLMODE ;; esac
-  done
-  set +f; IFS="$_old_ifs"
-}
+# ── ต่อ DB แบบ direct: แปลง URL เป็นตัวแปร PG* (use_url / pct_decode อยู่ใน scripts/lib/pgurl.sh) ──
+# เหตุผลที่ไม่ส่ง URL ให้ pg_dump ตรง ๆ อยู่ในไฟล์นั้น
+if [ -n "$script_dir" ] && [ -f "$script_dir/lib/pgurl.sh" ]; then
+  . "$script_dir/lib/pgurl.sh"
+else
+  fail "ไม่พบ scripts/lib/pgurl.sh (สคริปต์นี้ต้องอยู่กับโฟลเดอร์ lib/ ในโปรเจกต์)"
+fi
 
 case "$DUMP_VIA" in
   docker)
@@ -322,7 +345,17 @@ if [ -d "$IMAGES_DIR" ]; then
   fi
   if [ "$need_images" -eq 1 ]; then
     echo "[backup $ts] archiving $IMAGES_DIR…"
-    tar -czf "$OUT_DIR/images-$ts.tar.gz" "$IMAGES_DIR" || fail "tar รูปภาพไม่สำเร็จ"
+    if [ "$IMAGES_DIR" = public/images ]; then
+      tar -czf "$OUT_DIR/images-$ts.tar.gz" "$IMAGES_DIR" || fail "tar รูปภาพไม่สำเร็จ"
+    else
+      # รูปอยู่นอก public/images (UPLOAD_ROOT) แต่ restore.sh ตรวจว่า archive ขึ้นต้นด้วย
+      # public/images/ — จึงสร้างโฟลเดอร์จัดฉากที่มี public/images เป็น symlink ไปที่จริง แล้ว tar
+      # แบบตาม symlink (-h) · ไม่ใช้ --transform เพราะเป็นของ GNU tar เท่านั้น (busybox/bsdtar ไม่มี)
+      case "$IMAGES_DIR" in /*) img_abs="$IMAGES_DIR" ;; *) img_abs="$(pwd)/$IMAGES_DIR" ;; esac
+      stage="$(mktemp -d "${TMPDIR:-/tmp}/fms-backup-stage.XXXXXX")" || fail "สร้างโฟลเดอร์ชั่วคราวสำหรับ tar รูปไม่ได้"
+      mkdir "$stage/public" && ln -s "$img_abs" "$stage/public/images" || fail "จัดฉาก tar รูปไม่สำเร็จ"
+      tar -czhf "$OUT_DIR/images-$ts.tar.gz" -C "$stage" public/images || fail "tar รูปภาพจาก $IMAGES_DIR ไม่สำเร็จ"
+    fi
     # ตรวจว่าอ่านกลับได้จริง ไม่ใช่แค่เขียนไฟล์ออกมาได้
     tar -tzf "$OUT_DIR/images-$ts.tar.gz" >/dev/null || fail "ไฟล์ tar รูปภาพเสียหาย (อ่านกลับไม่ได้)"
     images_file="images-$ts.tar.gz"
@@ -343,7 +376,7 @@ find "$OUT_DIR" -name 'images-*.tar.gz' -mtime +"$RETENTION" -delete 2>/dev/null
 find "$OUT_DIR" -name '.db-*.sql.partial' -mtime +1 -delete 2>/dev/null || true
 
 if [ -n "$images_file" ]; then images_json="\"$images_file\""; else images_json=null; fi
-write_status LAST_OK "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"file\":\"db-$ts.sql.gz\",\"tables\":${tables:-0},\"migrations\":${migrations:-0},\"images\":$images_json,\"interval_hours\":$interval_json}" \
+write_status LAST_OK "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"file\":\"db-$ts.sql.gz\",\"tables\":${tables:-0},\"migrations\":${migrations:-0},\"images\":$images_json,\"runner\":\"$runner\",\"interval_hours\":$interval_json}" \
   || echo "[backup $ts] WARN: บันทึก $STATUS_DIR/LAST_OK ไม่ได้ — backup ใช้ได้ แต่หน้าตรวจความพร้อมจะไม่เห็นรอบนี้" >&2
 
 echo "[backup $ts] ✓ เสร็จเรียบร้อย ตรวจไฟล์แล้วว่าใช้ได้:"
@@ -372,7 +405,7 @@ if [ -n "${BACKUP_AFTER_CMD:-}" ]; then
     if [ "$after_rc" -eq 124 ]; then why="เกินเวลา ${after_timeout} วินาที"; else why="exit $after_rc"; fi
     echo "[backup $ts] ✗✗ คัดลอกออกนอกเครื่องไม่สำเร็จ ($why) — backup ในเครื่องรอบนี้ยังใช้ได้ แต่ยังไม่มีสำเนานอกเครื่อง" >&2
     status_written=0
-    write_status LAST_FAIL "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"stage\":\"offsite\",\"reason\":\"$(json_str "BACKUP_AFTER_CMD ไม่สำเร็จ ($why)")\",\"interval_hours\":$interval_json}" \
+    write_status LAST_FAIL "{\"at\":\"$(now_iso)\",\"run\":\"$ts\",\"stage\":\"offsite\",\"reason\":\"$(json_str "BACKUP_AFTER_CMD ไม่สำเร็จ ($why)")\",\"runner\":\"$runner\",\"interval_hours\":$interval_json}" \
       || echo "[backup $ts]   (บันทึก $STATUS_DIR/LAST_FAIL ไม่ได้ด้วย)" >&2
     status_written=1
     exit 2
