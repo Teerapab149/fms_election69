@@ -12,8 +12,8 @@ const { chainHash } = require("./ballotCrypto");
 /**
  * Coarse hour bucket in Thai Buddhist-era local time, e.g. "2569-02-06T09".
  * This is the ONLY time a Ballot carries — deliberately blunt so insert order +
- * a timestamp cannot be correlated back to a voter. The voter's precise time
- * lives on User.votedAt (their own, non-secret data).
+ * a timestamp cannot be correlated back to a voter. User.votedAt is floored to
+ * the SAME hour (hourFloor below), so neither table holds a finer time.
  * @param {number} nowMs
  * @returns {string}
  */
@@ -24,6 +24,23 @@ function hourBucketBangkok(nowMs) {
   const dd = String(bkk.getUTCDate()).padStart(2, "0");
   const hh = String(bkk.getUTCHours()).padStart(2, "0");
   return `${be}-${mm}-${dd}T${hh}`;
+}
+
+/**
+ * The hour a vote falls in, as a Date on the hour: what User.votedAt stores.
+ *
+ * Why not the exact time: Ballot.seq is cast order and votedAt used to be exact
+ * to the millisecond, so ORDER BY votedAt reproduced seq order for every voter
+ * (measured 2026-10-03: 4 of 4 voters lined up with their ballot; see
+ * .specs/H3-ballot-linkability-2026-10-03.md). Flooring to the hour matches
+ * Ballot.hourBucket, so the voter's row says no more than the ballot's row does.
+ * Bangkok is UTC+7 (whole hours, no DST), so flooring in UTC lands on the same
+ * instant as flooring in Bangkok.
+ * @param {number} nowMs
+ * @returns {Date}
+ */
+function hourFloor(nowMs) {
+  return new Date(Math.floor(nowMs / 3600000) * 3600000);
 }
 
 /**
@@ -63,4 +80,4 @@ async function appendBallotTx(tx, { payload, hourBucket, chainSecret }) {
   return { seq: nextSeq, rowHash, prevHash };
 }
 
-module.exports = { appendBallotTx, hourBucketBangkok };
+module.exports = { appendBallotTx, hourBucketBangkok, hourFloor };

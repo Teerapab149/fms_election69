@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
 import { readElectionState } from "../../../lib/election/liveStatus";
+import { normalizeFormUrl } from "../../../lib/forms/formUrl.mjs";
 
 // Never statically rendered: this route reads headers/request.url per call. Without
 // this Next tries to prerender it at build time, the read throws DynamicServerError,
@@ -54,7 +55,8 @@ export async function GET(request) {
       showResult: config.showResult,
       systemMode: sysMode,
       electionStatus: electionStatus,
-      googleFormUrl: config.googleFormUrl || "",
+      // only a valid Google Forms link leaves the server; a legacy bad value reads as no form
+      googleFormUrl: normalizeFormUrl(config.googleFormUrl) || "",
       ...(voter ? { voter } : {})
     });
   } catch (error) {

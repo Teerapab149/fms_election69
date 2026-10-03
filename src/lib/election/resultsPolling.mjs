@@ -26,3 +26,19 @@ export function resultsPollDelay({ status, isRevealed, certified } = {}, random 
   else base = 30_000;
   return Math.round(base * (0.9 + 0.2 * random()));
 }
+
+// After a FAILED fetch: retry sooner than the normal cadence, with capped
+// exponential backoff + jitter. Before this a failed first load (e.g. one SSR
+// timeout in a reload storm) left the tab on its 30 s "unknown" cadence, i.e. a
+// blank results page for up to 30 s (3 polls of ENDED). Now 2 s, 4 s, 8 s, 16 s …
+// but never slower than the normal delay for the state, and never faster than
+// 1 s. Jitter spans 0.5x-1.5x of the step so tabs that failed together (a server
+// stall hits everyone at once) do not come back together: a 1,000-tab room's
+// first retry spreads over ~2 s instead of landing in one instant.
+// `failures` = consecutive failed fetches so far (>= 1).
+export function resultsRetryDelay(last, failures, random = Math.random) {
+  const normal = resultsPollDelay(last, random);
+  const step = 2_000 * 2 ** Math.max(0, Math.min(failures, 10) - 1);
+  const jittered = Math.round(step * (0.5 + random()));
+  return Math.max(1_000, Math.min(normal, jittered));
+}

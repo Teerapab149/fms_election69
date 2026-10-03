@@ -38,6 +38,7 @@ import ReceiptSuccess from '../../components/vote/ReceiptSuccess';
 import ThemedLoadingScreen from '../../components/ThemedLoadingScreen';
 import { SIZE_MAP, RADIUS_MAP, WEIGHT_MAP } from '../../utils/styleMaps';
 import { fetchVoteStatus } from '../../hooks/useVoteStatus';
+import { embedFormUrl } from '../../lib/forms/formUrl.mjs';
 
 export default function SuccessPage({ 
   editorMode = false,
@@ -173,7 +174,9 @@ export default function SuccessPage({
 
           // Same "has a form" test as hasForm above and the results gate — a
           // whitespace-only URL is no form, not a lock with a dead button.
-          if (String(statusData.googleFormUrl || "").trim()) setGoogleFormUrl(statusData.googleFormUrl);
+          // A stored value that is not a Google Forms link counts as no form (the
+          // server refuses to save one, but old rows / the dashboard action may hold it).
+          if (embedFormUrl(statusData.googleFormUrl)) setGoogleFormUrl(statusData.googleFormUrl);
           // No form this year → nothing to complete, so nothing to lock. The only
           // way to unlock was finishing the form; with no link the button led to
           // "ไม่พบลิงก์แบบประเมิน" and the results link never opened. Each family
@@ -460,7 +463,7 @@ export default function SuccessPage({
                 </div>
               )}
               {googleFormUrl ? (
-                <iframe src={`${googleFormUrl}?embedded=true`} className="w-full h-full border-0" onLoad={() => setIsFormLoaded(true)} title="Evaluation Form"></iframe>
+                <iframe src={embedFormUrl(googleFormUrl)} className="w-full h-full border-0" onLoad={() => setIsFormLoaded(true)} title="Evaluation Form"></iframe>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] p-8 text-center">
                   <div className="bg-[color-mix(in_srgb,var(--color-text)_6%,var(--color-surface))] p-4 rounded-full mb-3">

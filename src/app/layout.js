@@ -7,17 +7,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
 import { useGlobalConfig } from '../contexts/GlobalConfigContext';
 
-import { db } from "../lib/db";
-import { getTemplate } from "../components/admin/editor/templates";
+import { getSiteConfig, getTemplateCached } from "../lib/cache/siteData";
 import { buildTemplateStyles } from "../lib/templateTokens";
 import { GLOBAL_CONFIG_DEFAULTS } from "../utils/globalConfigDefaults";
 
 async function getGlobalConfig() {
   try {
-    const config = await db.systemConfig.findFirst({
-      where: { id: 1 },
-      select: { globalConfig: true, googleFormUrl: true },
-    });
+    // cached (lib/cache/siteData): this row was read 3x per render (metadata + layout x2)
+    const config = await getSiteConfig();
     if (!config) return null;
     // googleFormUrl อยู่ใน COLUMN ของตัวเอง ไม่ได้อยู่ใน JSON ก้อนนี้ — ต้องเชื่อมเข้ามา
     // ให้เหมือนที่ /api/admin/global-config ทำ ไม่งั้น context จะถือค่าว่างของ
@@ -41,12 +38,9 @@ async function getGlobalConfig() {
 // wins on home; other pages fall back to these template defaults.
 async function getThemeTokenCss() {
   try {
-    const config = await db.systemConfig.findFirst({
-      where: { id: 1 },
-      select: { pageLayout: true, activeTemplateId: true },
-    });
+    const config = await getSiteConfig();
     const activeId = config?.activeTemplateId || "classic";
-    const tpl = (await getTemplate(activeId, db)) || (await getTemplate("classic", db));
+    const tpl = (await getTemplateCached(activeId)) || (await getTemplateCached("classic"));
     const overrides = config?.pageLayout?.themeTokens || {};
     const effectiveTpl = {
       ...tpl,
