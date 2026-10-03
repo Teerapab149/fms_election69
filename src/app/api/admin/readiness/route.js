@@ -359,15 +359,31 @@ export async function GET(request) {
     return { level: "pass", detail: `เก็บรูปไว้ที่ ${UPLOAD_ROOT} (นอกโฟลเดอร์ซอร์ส) และเขียนได้` };
   });
 
-  // 14) env.backup — service backup ใน docker-compose.yml เขียนผลแต่ละรอบไว้ที่
-  // backups/status/LAST_OK และ LAST_FAIL (JSON บรรทัดเดียว ไม่มีข้อมูลส่วนบุคคล) เว็บ mount
-  // โฟลเดอร์นั้นแบบ read-only · การตัดสินอยู่ที่ lib/election/backupStatus.mjs ที่นี่แค่อ่านไฟล์
+  // 14) env.backup — scripts/backup.sh (เรียกจาก service backup ใน compose / cron / systemd timer /
+  // pm2 — ดู deploy/backup/) เขียนผลแต่ละรอบไว้ที่ backups/status/LAST_OK และ LAST_FAIL (JSON
+  // บรรทัดเดียว ไม่มีข้อมูลส่วนบุคคล) ใน compose เว็บ mount โฟลเดอร์นั้นแบบ read-only
+  // การตัดสินอยู่ที่ lib/election/backupStatus.mjs ที่นี่แค่อ่านไฟล์
   await run("env.backup", "env", "สำรองข้อมูลอัตโนมัติ (backup)", async () => {
-    const dir = process.env.BACKUP_STATUS_DIR || path.join(process.cwd(), "backups", "status");
+    // โฟลเดอร์สถานะ: BACKUP_STATUS_DIR (ตั้งชัดเจนเสมอได้) ไม่งั้น <cwd>/backups/status
+    // ⚠️ `node .next/standalone/server.js` เรียก process.chdir(__dirname) ตอนบูต (server.js ที่ Next
+    // สร้างให้) cwd จึงเป็น .next/standalone ไม่ใช่โฟลเดอร์โปรเจกต์ — backups/status ที่ cron/systemd/pm2
+    // เขียนไว้ที่รากโปรเจกต์จะไม่เจอ แล้วหน้านี้เหลืองว่า "ไม่พบประวัติ" ทั้งที่ backup ปกติ
+    // จึงลองรากโปรเจกต์ (../..) ต่อท้ายให้เฉพาะกรณี cwd เป็น .next/standalone จริง ๆ
+    const cwd = process.cwd();
+    const dirs = [process.env.BACKUP_STATUS_DIR, path.join(cwd, "backups", "status")];
+    if (path.basename(cwd) === "standalone" && path.basename(path.dirname(cwd)) === ".next") {
+      dirs.push(path.join(cwd, "..", "..", "backups", "status"));
+    }
     // ไม่มีไฟล์ = null · อ่านไม่ได้ด้วยเหตุอื่น (สิทธิ์ไม่พอ ฯลฯ) = "" ให้ถือเป็นไฟล์เสีย
-    const readStatus = (name) =>
+    const readIn = (dir, name) =>
       readFile(path.join(dir, name), "utf8").catch((e) => (e?.code === "ENOENT" ? null : ""));
-    const [lastOk, lastFail] = await Promise.all([readStatus("LAST_OK"), readStatus("LAST_FAIL")]);
+    let lastOk = null;
+    let lastFail = null;
+    // ใช้โฟลเดอร์แรกที่มีไฟล์สถานะสักไฟล์ · ไม่มีเลยก็ได้ null ทั้งคู่ (= ยังไม่มีประวัติ)
+    for (const dir of dirs.filter(Boolean)) {
+      [lastOk, lastFail] = await Promise.all([readIn(dir, "LAST_OK"), readIn(dir, "LAST_FAIL")]);
+      if (lastOk !== null || lastFail !== null) break;
+    }
     return describeBackupStatus({ lastOk, lastFail, now, formatWhen: whenText });
   });
 
