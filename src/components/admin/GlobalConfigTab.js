@@ -449,6 +449,7 @@ export default function GlobalConfigTab() {
     form: (
       <Field k="googleFormUrl">
         <input id="gc-googleFormUrl" className={INPUT} placeholder="https://forms.gle/…" value={config.googleFormUrl ?? ""} onChange={(e) => set("googleFormUrl", e.target.value)} />
+        <p className="mt-1 text-xs text-slate-500">รับเฉพาะลิงก์ Google Form (docs.google.com/forms/… หรือ forms.gle/…) ลิงก์อื่นระบบจะไม่บันทึก</p>
       </Field>
     ),
     hours: (

@@ -27,6 +27,7 @@ import { resultsPollDelay } from "../../lib/election/resultsPolling.mjs";
 
 import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
+import { normalizeFormUrl } from '../../lib/forms/formUrl.mjs';
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -200,7 +201,7 @@ export default function ResultsPage() {
           // No form this year → nothing to complete, so the form step can't gate.
           // Same "has a form" test as success/page.js (hasForm + its unlock).
           // Derived per request, read-only: nothing is written for anyone.
-          const hasForm = Boolean(String(statusData.googleFormUrl || "").trim());
+          const hasForm = normalizeFormUrl(statusData.googleFormUrl) !== null;
           if (hasForm) {
             // The server reads the voter from the session — no studentId param.
             const resForm = await fetch(getPath("/api/check-form"), { cache: "no-store" });

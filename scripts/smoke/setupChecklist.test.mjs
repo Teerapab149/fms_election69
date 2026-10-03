@@ -26,7 +26,9 @@ test("a schedule that cannot be right is not 'set'", () => {
 });
 test("the form link must be a real https link", () => {
   assert.equal(formItem({ googleFormUrl: "" }).tone, "warn");
-  assert.equal(formItem({ googleFormUrl: "docs.google.com/forms" }).status, "ลิงก์ไม่ถูกต้อง");
+  assert.equal(formItem({ googleFormUrl: "docs.google.com/forms" }).status, "ไม่ใช่ลิงก์ Google Form");
+  assert.equal(formItem({ googleFormUrl: "javascript:alert(1)" }).tone, "err");
+  assert.equal(formItem({ googleFormUrl: "https://evil.example/forms" }).tone, "err");
   assert.equal(formItem(READY).tone, "ok");
 });
 test("no activity hours is a valid choice, not a gap", () => {

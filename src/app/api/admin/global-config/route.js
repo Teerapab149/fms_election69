@@ -3,6 +3,7 @@ import { db } from "../../../../lib/db";
 import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
 import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
 import { checkScheduleChange } from "../../../../lib/election/adminGuards.mjs";
+import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.mjs";
 import { parseBangkok, resolveElectionDates } from "../../../../utils/electionConfig";
 
 // A refused schedule change, thrown out of the transaction so it rolls back
@@ -82,7 +83,23 @@ export async function PUT(request) {
     // googleFormUrl lives in its own COLUMN (readers depend on it there); split
     // it out of the JSON blob. Only write the column when the client actually
     // sent the key, so an older client that omits it never wipes the value.
-    const { googleFormUrl, ...rest } = globalConfig;
+    const { googleFormUrl: rawFormUrl, ...rest } = globalConfig;
+
+    // The link ends up as an iframe src for every voter, so only a Google Forms
+    // link is stored (blank = clear = no form this year). Checked before the
+    // transaction: it needs no lock and a refusal should not queue behind one.
+    // A stored (already normalised) value is what gets written, never the raw text.
+    let googleFormUrl;
+    if (rawFormUrl !== undefined) {
+      if (typeof rawFormUrl !== "string") {
+        return NextResponse.json({ error: FORM_URL_ERROR }, { status: 400 });
+      }
+      if (rawFormUrl.trim() === "") googleFormUrl = "";
+      else {
+        googleFormUrl = normalizeFormUrl(rawFormUrl);
+        if (googleFormUrl === null) return NextResponse.json({ error: FORM_URL_ERROR }, { status: 400 });
+      }
+    }
 
     // คีย์การรับรองผลไม่ใช่ของ endpoint นี้ — ปฏิเสธทิ้งไปเลย
     //
