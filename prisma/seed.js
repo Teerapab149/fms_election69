@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs'); // Import bcryptjs
 const { loadEnv } = require('../scripts/lib/loadEnv');
 const { encryptBallot } = require('../src/lib/ballotCrypto');
-const { appendBallotTx, hourBucketBangkok } = require('../src/lib/ballotChain');
+const { appendBallotTx, hourBucketBangkok, hourFloor } = require('../src/lib/ballotChain');
 
 loadEnv();
 const prisma = new PrismaClient();
@@ -271,7 +271,7 @@ S - หัวสิงห์ สิงห์มักจะถูกใช้เ
     const yearStatusMap = { 'ปี 1': '1', 'ปี 2': '2', 'ปี 3': '3', 'ปี 4': '4' };
     const yearStatus = yearStatusMap[randomYear] || '1';
 
-    const votedAt = isVoted ? new Date() : null;
+    const votedAt = isVoted ? hourFloor(Date.now()) : null; // H3: the hour only, like the vote route
 
     await prisma.user.create({
       data: {

@@ -5,6 +5,7 @@ import { ArrowRight, Check, Lock } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { getPath } from "../../utils/basePath";
 import { evaluationPromptText } from "../../utils/activityHours";
+import { hourWindow } from "../v2/shared/election/voteTime.mjs";
 
 const COPY = {
   blossom: { kicker: "A LITTLE NOTE OF THANKS", title: <>หนึ่งเสียงของคุณ<br />มีความหมายเสมอ</>, next: "เหลืออีกหนึ่งขั้นตอน" },
@@ -103,8 +104,8 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
   const gc = useGlobalConfig() || {};
   const reduce = useReducedMotion();
   const copy = COPY[family] || COPY["fms-official"];
-  const when = user?.votedAt ? new Date(user.votedAt) : null;
-  const recorded = when && !Number.isNaN(when.getTime()) ? new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" }).format(when) : null;
+  // votedAt is stored to the hour (H3): say a window, never a fake exact minute
+  const recorded = hourWindow(user?.votedAt);
   return (
     <div className={`vx-success vx-${family}`} data-success-family={family}>
       <div className="vx-edition"><span>{gc.electionNamePrefix || "SAMO"} {gc.electionNumber ?? ""}</span><span><Check size={14} aria-hidden="true" /> บันทึกการลงคะแนนแล้ว</span></div>

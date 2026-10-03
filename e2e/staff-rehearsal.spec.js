@@ -342,6 +342,22 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
         expect(cfg?.certifiedBy).toBe(STAFF_NAME);
         expect(cfg?.certifiedByUsername).toBe(STAFF_ID);
         expect(Number.isNaN(Date.parse(cfg?.certifiedAt))).toBe(false);
+
+        // H3: certification re-stamps the voters' rows, so no User tuple shares an
+        // xmin with a Ballot tuple any more (before it, every ballot paired with
+        // its voter through the transaction that cast it).
+        const total = (await prisma().$queryRawUnsafe(`SELECT count(*)::int AS n FROM "Ballot"`))[0].n;
+        const linked = await prisma().$queryRawUnsafe(
+          `SELECT u."studentId", b.seq FROM "User" u JOIN "Ballot" b ON u.xmin = b.xmin ORDER BY b.seq`
+        );
+        // eslint-disable-next-line no-console
+        console.log(`[H3] post-certification xmin join: ${linked.length} of ${total} ballots linked`);
+        expect(total).toBeGreaterThan(0);
+        expect(linked, 'no voter row may share xmin with a ballot after certification').toHaveLength(0);
+        const offHour = await prisma().$queryRawUnsafe(
+          `SELECT count(*)::int AS n FROM "User" WHERE "votedAt" IS NOT NULL AND "votedAt" <> date_trunc('hour', "votedAt")`
+        );
+        expect(offHour[0].n, 'votedAt stays on the hour through the re-stamp').toBe(0);
       });
 
       await test.step('7. locked: hide, reopen and date edits refused; ENDED allowed; a fresh vote gets CERTIFIED', async () => {
