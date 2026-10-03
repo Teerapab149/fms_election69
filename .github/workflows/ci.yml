@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to the same PR makes the older run pointless.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Dockerfile builds on node:22-alpine and package.json has no engines field,
+  # so CI follows the image that actually ships.
+  NODE_VERSION: "22"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  check:
+    name: lint, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # `next build` only needs these to exist. Every page is dynamic, so the
+      # build never reads the database (verified: it completes with an
+      # unreachable DB, logging caught connection errors). Dummy values only.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+      NEXTAUTH_SECRET: ci-build-only
+      NEXTAUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      # Warnings are tolerated (~130 pre-existing); errors fail the job.
+      - run: npm run lint
+      # election.test.mjs is the one smoke file that talks to a running server
+      # (BASE url + admin login); every other file is pure and needs no DB.
+      - name: Unit tests (no server)
+        shell: bash
+        run: |
+          files=$(ls scripts/smoke/*.test.mjs | grep -v '/election.test.mjs$')
+          node --test $files
+      # next/font/google downloads fonts at build time; a transient Google
+      # failure fails the build (seen once locally), so retry once.
+      - name: Build
+        shell: bash
+        run: npx next build || (echo "retrying build once (font fetch flake?)" && npx next build)
+
+  e2e:
+    name: e2e vote-net (Playwright + Postgres)
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The name must end in _e2e: e2e/helpers/testDb.js refuses anything else
+      # before it runs destructive SQL, and creates the DB if missing.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fms_ci_e2e?schema=public
+      NEXTAUTH_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Throwaway keys and secrets
+        run: node .github/ci-e2e-env.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Build
+        shell: bash
+        run: npx next build || (echo "retrying build once (font fetch flake?)" && npx next build)
+      # global.setup.js does db push + seed + `next start -p 3100`, then the
+      # specs run; same set scripts/verify.sh gates a release on.
+      - run: npm run e2e:gate
+      - name: Keep results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            test-results/
+            e2e/test-results.json
+          if-no-files-found: ignore
