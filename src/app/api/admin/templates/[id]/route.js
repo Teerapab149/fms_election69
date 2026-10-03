@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../../lib/db";
+import { bustSiteData } from "../../../../../lib/cache/siteData";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
 import { getTemplate, isTemplateEditable, isBuiltInSlug } from "../../../../../components/admin/editor/templates";
 import { validateTemplateStyles } from "../../../../../lib/cssSafety.mjs";
@@ -77,6 +78,7 @@ export async function PUT(request, { params }) {
       where: { slug: id },
       data: updateData
     });
+    bustSiteData(); // admin change must show on the next request, not after the TTL
     return NextResponse.json({ template: updated });
   } catch (err) {
     console.error("[PUT /api/admin/templates/:id]", err);
@@ -121,6 +123,7 @@ export async function DELETE(request, { params }) {
 
   try {
     await db.template.delete({ where: { slug: id } });
+    bustSiteData(); // admin change must show on the next request, not after the TTL
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[DELETE /api/admin/templates/:id]", err);

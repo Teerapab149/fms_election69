@@ -23,7 +23,7 @@ import { resolveElectionDates } from "../../utils/electionConfig";
 import { resolveVerdict } from "../../utils/electionVerdict";
 import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
-import { resultsPollDelay } from "../../lib/election/resultsPolling.mjs";
+import { resultsPollDelay, resultsRetryDelay } from "../../lib/election/resultsPolling.mjs";
 
 import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
@@ -371,18 +371,19 @@ export default function ResultsPage() {
   // committee press ประกาศผล. One chain per mount: a timeout is scheduled only
   // after the previous fetch settles, a hidden tab schedules nothing, and a tab
   // coming back fetches at once unless a fetch is already out. A failed fetch
-  // keeps the last good fields, so it retries at the same pace, never faster.
+  // keeps the last good fields and retries with capped backoff (resultsRetryDelay).
   useEffect(() => {
     let cancelled = false;
     let timer = null;
     let inFlight = false;
     let last = {}; // { status, isRevealed, certified } from the last good body
+    let failures = 0; // consecutive failed fetches → capped backoff (resultsRetryDelay)
 
     const clear = () => { clearTimeout(timer); timer = null; };
     const schedule = () => {
       clear();
       if (cancelled || document.visibilityState === "hidden") return;
-      timer = setTimeout(tick, resultsPollDelay(last));
+      timer = setTimeout(tick, failures > 0 ? resultsRetryDelay(last, failures) : resultsPollDelay(last));
     };
     const tick = async () => {
       timer = null;
@@ -390,7 +391,8 @@ export default function ResultsPage() {
       inFlight = true;
       try {
         const data = await fetchResults();
-        if (data) last = { status: data.status, isRevealed: data.isRevealed, certified: data.certified };
+        if (data) { last = { status: data.status, isRevealed: data.isRevealed, certified: data.certified }; failures = 0; }
+        else failures += 1;
       } finally {
         inFlight = false;
       }

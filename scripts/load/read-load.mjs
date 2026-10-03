@@ -118,6 +118,7 @@ const TRICKLE = Number(args.trickle ?? 1);
 const TEMPLATE = args.template || 'receipt';
 const PORT = Number(args.port || 3200);
 const BASE = `http://localhost:${PORT}`;
+const IS_WIN = process.platform === 'win32';
 const FLUSH_MS = 11_000; // PG16 backend stats flush: ≤ 10 s when idle
 const CS_TTL_MS = 15_000; // hooks/useVoteStatus.js TTL_MS
 const REQ_TIMEOUT_MS = 30_000;
@@ -151,7 +152,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function run(cmd, argv, env) {
   return new Promise((resolve, reject) => {
-    const p = spawn(cmd, argv, { env: { ...process.env, ...env }, stdio: 'inherit' });
+    const p = spawn(cmd, argv, { env: { ...process.env, ...env }, stdio: 'inherit', shell: IS_WIN }); // npx is npx.cmd on Windows
     p.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`${cmd} ${argv.join(' ')} → ${code}`))));
   });
 }
@@ -249,7 +250,7 @@ async function seedFixture(db, keys, chainSecret) {
 function startServer(env) {
   const lines = [];
   const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
-    env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'], detached: true,
+    env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'], detached: !IS_WIN, shell: IS_WIN,
   });
   const onData = (buf) => { for (const l of buf.toString().split(/\r?\n/)) if (l.trim()) lines.push({ t: Date.now(), l }); };
   child.stdout.on('data', onData);
@@ -266,6 +267,7 @@ async function waitHealthy(child, ms = 90_000) {
   throw new Error('server never became healthy');
 }
 function stopServer(child) {
+  if (IS_WIN) { try { execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: 'ignore' }); } catch {} return; }
   try { process.kill(-child.pid, 'SIGTERM'); } catch { try { child.kill('SIGTERM'); } catch {} }
 }
 
@@ -273,6 +275,7 @@ function stopServer(child) {
 const CLK = (() => { try { return Number(execSync('getconf CLK_TCK').toString()) || 100; } catch { return 100; } })();
 function procTable() {
   const out = [];
+  if (!fs.existsSync('/proc')) return out; // Windows: no /proc, CPU columns read 0
   for (const d of fs.readdirSync('/proc')) {
     if (!/^\d+$/.test(d)) continue;
     try {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../../../lib/db";
+import { bustSiteData } from "../../../../../../lib/cache/siteData";
 import { requireAdmin } from "../../../../../../lib/auth/adminCheck";
 import { getTemplate } from "../../../../../../components/admin/editor/templates";
 
@@ -42,6 +43,7 @@ export async function POST(request, { params }) {
     data: { activeTemplateId: id, pageLayout: structuralLayout }
   });
 
+  bustSiteData(); // admin change must show on the next request, not after the TTL
   return NextResponse.json({
     ok: true,
     activeTemplateId: updated.activeTemplateId,

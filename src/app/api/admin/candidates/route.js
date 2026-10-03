@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
+import { bustSiteData } from "../../../../lib/cache/siteData";
 import { optimizeImage } from "../../../../lib/imageOptimize";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
@@ -615,6 +616,7 @@ export async function PUT(req) {
       await deleteMultipleImageFiles([...new Set(replacedMemberImages)].filter(url => !used.has(url)));
     }
 
+    bustSiteData(); // admin change must show on the next request, not after the TTL
     return NextResponse.json(updatedCandidate);
 
   } catch (error) {
@@ -731,6 +733,7 @@ export async function POST(req) {
       });
     }
 
+    bustSiteData(); // admin change must show on the next request, not after the TTL
     return NextResponse.json(newCandidate);
 
   } catch (error) {
@@ -808,6 +811,7 @@ export async function DELETE(req) {
       }
     }
 
+    bustSiteData(); // admin change must show on the next request, not after the TTL
     return NextResponse.json({ message: "Deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete", details: error.message, candidate_id: target_id }, { status: 500 });
