@@ -75,8 +75,9 @@ function formatVotedAt(votedAt) {
   // ADM-2: election time is Asia/Bangkok, never the host clock. getDate()/getHours()
   // read the viewer's timezone — identical on a Thai device, but an hour/day off for
   // anyone voting abroad (and on a UTC server render), which is not something a
-  // receipt stamped "เวลาใช้สิทธิ์" may get wrong. Seconds are kept, so this formats
-  // its own parts instead of using formatThaiTime (minute precision).
+  // receipt stamped "เวลาใช้สิทธิ์" may get wrong. votedAt is stored to the HOUR
+  // (H3: an exact time paired voters with ballot order), so the time line is an
+  // hour window — never a minute or second the server does not hold.
   const p = {};
   for (const part of new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Bangkok",
@@ -86,7 +87,9 @@ function formatVotedAt(votedAt) {
   const dd = p.day;
   const mon = TH_MONTHS[Number(p.month) - 1];
   const yy = Number(p.year) + 543; // Buddhist era
-  return { date: `${dd} ${mon} ${yy}`, time: `${p.hour}:${p.minute}:${p.second}` };
+  const h = Number(p.hour);
+  const pad = (n) => String(n % 24).padStart(2, "0");
+  return { date: `${dd} ${mon} ${yy}`, time: `${pad(h)}.00–${pad(h + 1)}.00 น.` };
 }
 
 export default function ReceiptSuccess({ user = null, isUnlocked = false, hasForm = true, onOpenForm = () => {}, editorMode = false }) {
@@ -115,7 +118,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
   const voterMajor = user?.major || (editorMode ? "สาขาวิชาการตลาด" : null);
   const voterYear = user?.year || (editorMode ? "ปี 3" : null);
   const stamp = editorMode
-    ? { date: "06 ก.พ. 2569", time: "10:24:07" }
+    ? { date: "06 ก.พ. 2569", time: "10.00–11.00 น." }
     : formatVotedAt(user?.votedAt);
 
   const stubRef = ref || "•••• •••• •••• ••••";
@@ -197,7 +200,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
               {/* VOTER IDENTITY (v2-R4a) — the voter's own record; never any choice.
                   Missing fields are omitted cleanly (no "-"). */}
               {stamp && <div className="rc-suc-line"><span className="rc-suc-k">วันที่ / DATE</span><b>{thaiSafe(stamp.date)}</b></div>}
-              {stamp && <div className="rc-suc-line"><span className="rc-suc-k">เวลาใช้สิทธิ์ / TIME</span><b>{stamp.time}</b></div>}
+              {stamp && <div className="rc-suc-line"><span className="rc-suc-k">ช่วงเวลาใช้สิทธิ์ / HOUR</span><b>{thaiSafe(stamp.time)}</b></div>}
               {voterName && <div className="rc-suc-line"><span className="rc-suc-k">ผู้ใช้สิทธิ์ / VOTER</span><b>{thaiSafe(voterName)}</b></div>}
               {voterId && <div className="rc-suc-line"><span className="rc-suc-k">รหัสนักศึกษา / ID</span><b>{voterId}</b></div>}
               {voterMajor && <div className="rc-suc-line"><span className="rc-suc-k">สาขา / MAJOR</span><b>{thaiSafe(voterMajor)}</b></div>}

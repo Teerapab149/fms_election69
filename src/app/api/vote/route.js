@@ -4,7 +4,7 @@ import { authOptions } from "../../../lib/auth";
 import { db } from "../../../lib/db";
 import { rateLimit } from "../../../lib/rateLimit";
 import { encryptBallot } from "../../../lib/ballotCrypto";
-import { appendBallotTx, hourBucketBangkok } from "../../../lib/ballotChain";
+import { appendBallotTx, hourBucketBangkok, hourFloor } from "../../../lib/ballotChain";
 import { readElectionState } from "../../../lib/election/liveStatus";
 import { voteRefusal } from "../../../lib/election/systemStatus.mjs";
 
@@ -160,9 +160,13 @@ export async function POST(request) {
     // Encrypt the choice + compute the coarse bucket OUTSIDE the transaction so
     // the chain row-lock (below) is held for the shortest possible time. Payload
     // depends only on the choice + a fresh nonce — never on chain state.
-    const votedAt = new Date();
+    const castAt = Date.now();
     const payload = encryptBallot(parsedId, publicKeyPem);
-    const hourBucket = hourBucketBangkok(votedAt.getTime());
+    const hourBucket = hourBucketBangkok(castAt);
+    // votedAt is stored floored to the hour, never the exact instant: with the
+    // exact time, ORDER BY votedAt reproduced Ballot.seq (cast order) and so
+    // paired every voter with their ballot (H3, measured 4 of 4).
+    const votedAt = hourFloor(castAt);
 
     // 3. 🔒 Atomic vote — combines THREE integrity guarantees in ONE transaction:
     //   (a) TOCTOU one-shot (P0-2): updateMany with isVoted:false is a
