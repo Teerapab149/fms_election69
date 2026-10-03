@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
@@ -248,6 +249,38 @@ async function handleAction(body, auth) {
       // it. The audit log above already recorded the action against a studentId;
       // this is the copy meant to be read by people, not auditors.
       const certifiedAt = new Date().toISOString();
+
+      // H3: break the xmin link between voters and ballots. The vote claims the
+      // User row and inserts the Ballot row in ONE transaction, so both tuples
+      // carry the same xmin and `User JOIN Ballot ON u.xmin = b.xmin` named the
+      // voter of every ballot (measured 4 of 4). A no-op UPDATE writes a new
+      // tuple version under THIS transaction's xid, which no ballot shares.
+      // Residual (documented in BALLOT-SECURITY-GUIDE): before certification the
+      // link exists, and old tuple versions persist until VACUUM / in WAL.
+      //
+      // The rows are re-stamped ONE AT A TIME IN RANDOM ORDER, not in one
+      // statement: a plain UPDATE walks the table in its existing physical order
+      // and writes the new tuples in that same order, so ORDER BY ctid still
+      // reproduced cast order exactly after certification (measured 2026-10-03,
+      // 20 voters: 20 of 20 positions, Spearman rho 1.0, before AND after).
+      // Shuffling the visit order gives the new tuples shuffled ctids.
+      // Limit (3,000-row simulation): at the default fillfactor the order after
+      // this is random (rho 0.00 to 0.09), but when every page has free room the
+      // updates are HOT and keep the old page, leaving page order intact (fillfactor
+      // 50: rho 0.53). The DBA step CLUSTER "User" USING "User_studentId_key" after
+      // certification closes that (rho 0.01-0.03), see MAINTENANCE-RUNBOOK 1.1 B.
+      const votedRows = await db.$queryRaw`SELECT "id" FROM "User" WHERE "isVoted" = true`;
+      const votedIds = votedRows.map((r) => r.id);
+      for (let i = votedIds.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [votedIds[i], votedIds[j]] = [votedIds[j], votedIds[i]];
+      }
+      await db.$transaction(async (tx) => {
+        for (const id of votedIds) {
+          await tx.$executeRaw`UPDATE "User" SET "votedAt" = "votedAt" WHERE "id" = ${id}`;
+        }
+      }, { maxWait: 15000, timeout: 120000 });
+
       await db.systemConfig.update({
         where: { id: 1 },
         data: {
