@@ -35,7 +35,7 @@ const PAGES = [
   { page: "candidates", label: "ผู้สมัคร หลายพรรค" },
   // note = ข้อความกำกับใต้สไลด์ · ที่นี่มีเพราะข้อมูลตัวอย่างกรอก social media ไว้
   // ให้เห็นว่าหน้าตาเป็นอย่างไร แต่ของจริงจะขึ้นเฉพาะพรรคที่กรอกไว้เท่านั้น
-  { page: "party", label: "ข้อมูลพรรค", note: "ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ในหน้าจัดการผู้สมัคร — ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน" },
+  { page: "party", label: "ข้อมูลพรรค", note: "ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ในหน้าจัดการผู้สมัคร ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน" },
   { page: "vote", variant: "multi", label: "ลงคะแนน หลายพรรค" },
   { page: "vote", variant: "single", label: "ลงคะแนน พรรคเดียว" },
   { page: "results", variant: "locked", label: "ผลคะแนน ปิดผล" },
@@ -468,7 +468,7 @@ export default function TemplateChooserTab() {
         throw new Error(e.error || `HTTP ${res.status}`);
       }
       setActiveSlug(pending.slug);
-      setToast(`เปลี่ยนเป็น “${pending.name}” แล้ว — หน้าเว็บสาธารณะอัปเดตแล้ว`);
+      setToast(`เปลี่ยนเป็น “${pending.name}” แล้ว หน้าเว็บสาธารณะอัปเดตแล้ว`);
       setTimeout(() => setToast(null), 4000);
     } catch (e) {
       setError(`เปลี่ยนธีมไม่สำเร็จ: ${e.message}`);
@@ -487,7 +487,7 @@ export default function TemplateChooserTab() {
         </div>
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight text-slate-800">เลือกธีมเว็บไซต์</h2>
-          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
+          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ หน้าเว็บสาธารณะเปลี่ยนทันที แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
         </div>
       </div>
 

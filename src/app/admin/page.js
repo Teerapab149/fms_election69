@@ -1,323 +1,23 @@
 'use client';
 import { getPath } from "../../utils/basePath";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import ResultCard from "../../components/ResultCard";
 import CandidateCard from "../../components/CandidateCard";
 import EditCandidateModal from "../../components/EditCandidateModal";
 import EditCandidateMember from "../../components/EditCandidateMember";
 import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
+import useBallotLock from "../../hooks/useBallotLock";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
 import ManualTab from "../../components/admin/ManualTab";
 import SettingsTab from "../../components/admin/SettingsTab";
-import { BarChart3, Medal, CalendarPlus2, Palette, Settings, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen, Plus, Users, Flag, UserPlus } from "lucide-react";
+import ElectionControl from "../../components/admin/console/ElectionControl";
+import TopBarStatus from "../../components/admin/console/TopBarStatus";
+import { ElectionStateProvider } from "../../components/admin/console/ElectionStateContext";
+import { Gauge, ShieldCheck, Settings, Palette, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen, Plus, Users, Flag, UserPlus } from "lucide-react";
 import Image from 'next/image';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
-} from 'recharts';
-
-import { resolveElectionDates } from "../../utils/electionConfig";
-import { liveSystemStatus } from "../../lib/election/systemStatus.mjs";
-import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
-
-// Live turnout (participation) breakdown for the admin overview — by ปี/สาขา/เพศ.
-// PARTICIPATION ONLY: counts of who has voted vs eligible per group; it never
-// reveals which party a group chose. This is what the committee uses to chase
-// the groups that haven't turned out yet. Bars colour by turnout % (low = amber,
-// so low-turnout groups pop) and are sorted lowest-first within สาขา.
-function TurnoutGroup({ title, rows, sortByTurnout = false }) {
-  if (!rows || rows.length === 0) return null;
-  const data = [...rows];
-  if (sortByTurnout) {
-    data.sort((a, b) => {
-      const pa = a.eligible > 0 ? a.value / a.eligible : 0;
-      const pb = b.eligible > 0 ? b.value / b.eligible : 0;
-      return pa - pb;
-    });
-  }
-  return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-      <h4 className="text-sm font-bold text-slate-700 mb-3">{title}</h4>
-      <div className="space-y-3">
-        {data.map((r, i) => {
-          const elig = r.eligible || 0;
-          const pct = elig > 0 ? (r.value / elig) * 100 : 0;
-          const color = pct >= 60 ? '#16a34a' : pct >= 30 ? '#f59e0b' : '#ef4444';
-          return (
-            <div key={r.name || i}>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-semibold text-slate-600 truncate pr-2">{r.name || '—'}</span>
-                <span className="text-slate-400 font-mono shrink-0">
-                  {r.value.toLocaleString()}/{elig.toLocaleString()}  <span style={{ color }} className="font-bold">{pct.toFixed(0)}%</span>
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function TurnoutBreakdown({ demographics }) {
-  const { byYear = [], byMajor = [], byGender = [] } = demographics || {};
-  const hasData = byYear.length || byMajor.length || byGender.length;
-  if (!hasData) {
-    return (
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center text-sm text-slate-400">
-        ความคืบหน้าการใช้สิทธิ์แยกตามกลุ่มจะแสดงเมื่อเริ่มเปิดลงคะแนน
-      </div>
-    );
-  }
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-bold text-slate-700">ความคืบหน้าการใช้สิทธิ์ (Turnout)</h3>
-        <span className="text-[11px] text-slate-400">ใช้สำหรับติดตามกลุ่มที่ยังมาน้อย ไม่แสดงว่าเลือกพรรคใด</span>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <TurnoutGroup title="แยกตามชั้นปี" rows={byYear} />
-        <TurnoutGroup title="แยกตามสาขา (เรียงจากน้อยสุด)" rows={byMajor} sortByTurnout />
-        <TurnoutGroup title="แยกตามเพศ" rows={byGender} />
-      </div>
-    </div>
-  );
-}
-
-const OverviewTab = () => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [phase, setPhase] = useState('LOADING');
-
-  const globalConfig = useGlobalConfig();
-  const { ELECTION_START, ELECTION_END } = resolveElectionDates(globalConfig);
-
-  // The countdown's phase is the server's ladder (liveSystemStatus), fed the
-  // mode from /api/results, so PAUSE / ENDED / MANUAL_OPEN read right instead
-  // of the clock alone. The 1 s timer below is set up once, so it reads the
-  // mode and dates through refs, never the first render's values.
-  const systemModeRef = useRef(null); // null until the first /api/results
-  const datesRef = useRef({ start: ELECTION_START, end: ELECTION_END });
-  useEffect(() => {
-    datesRef.current = { start: ELECTION_START, end: ELECTION_END };
-  }, [ELECTION_START.getTime(), ELECTION_END.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [candidates, setCandidates] = useState([]);
-  const [totalVotes, setTotalVotes] = useState(0);
-  const [demographics, setDemographics] = useState({
-    totalEligible: 0,
-    byMajor: [],
-    byYear: [],
-    byGender: []
-  });
-
-  const fetchResults = async () => {
-    try {
-      // Admin identity = httpOnly admin_token cookie (sent automatically) — the
-      // old client-minted x-admin-token header was removed (P0-1).
-      const res = await fetch(getPath("/api/results"), { credentials: 'include' });
-
-      const data = await res.json();
-
-      if (typeof data.systemMode === 'string') systemModeRef.current = data.systemMode;
-
-      if (data.candidates) {
-        const sortedCandidates = data.candidates.sort((a, b) => b.score - a.score);
-        setCandidates(sortedCandidates);
-
-        if (typeof data.totalVotes !== 'undefined') {
-          setTotalVotes(data.totalVotes);
-        } else {
-          setTotalVotes(data.candidates.reduce((acc, curr) => acc + curr.score, 0));
-        }
-      }
-
-      if (data.stats) {
-        const yearOrder = ['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4'];
-
-        const sortedByYear = data.stats.byYear
-          ? data.stats.byYear
-            .filter(item => item.name !== 'อื่นๆ')
-            .sort((a, b) => {
-              const indexA = yearOrder.indexOf(a.name);
-              const indexB = yearOrder.indexOf(b.name);
-              return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
-            })
-          : [];
-
-        // Mapping Names (M -> Male, F -> Female)
-        const genderMap = {
-          'm': 'Male',
-          'f': 'Female',
-          'ชาย': 'Male',
-          'หญิง': 'Female',
-          'male': 'Male',
-          'female': 'Female'
-        };
-
-        const processedGender = data.stats.byGender ? data.stats.byGender.map(g => ({
-          ...g,
-          name: genderMap[String(g.name).toLowerCase()] || g.name
-        })) : [];
-
-        const genderOrder = ['Male', 'Female'];
-        const sortedByGender = processedGender.sort((a, b) => {
-          const indexA = genderOrder.indexOf(a.name);
-          const indexB = genderOrder.indexOf(b.name);
-          const valA = indexA === -1 ? 999 : indexA;
-          const valB = indexB === -1 ? 999 : indexB;
-          return valA - valB;
-        });
-
-        setDemographics({
-          ...data.stats,
-          byYear: sortedByYear,
-          byGender: sortedByGender
-        });
-      }
-
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  };
-
-  useEffect(() => {
-    const calculate = () => {
-      const systemMode = systemModeRef.current;
-      if (systemMode === null) return 0; // mode not known yet: stay LOADING
-      const now = new Date();
-      const { start, end } = datesRef.current;
-      const { electionStatus } = liveSystemStatus({ systemMode, start, end, now: now.getTime() });
-      if (electionStatus === 'WAITING') {
-        setPhase('WAITING');
-        return start - now;
-      } else if (electionStatus === 'ONGOING') {
-        // MANUAL_OPEN past the scheduled end: the box stays open with no
-        // closing time, so there is nothing to count down to.
-        if (end <= now) {
-          setPhase('OPEN');
-          return 0;
-        }
-        setPhase('RUNNING');
-        return end - now;
-      } else if (electionStatus === 'CLOSED') {
-        setPhase('PAUSED');
-        return 0;
-      } else {
-        setPhase('ENDED');
-        return 0;
-      }
-    };
-
-    const timer = setInterval(() => {
-      const diff = calculate();
-      if (diff > 0) {
-        setTimeLeft({
-          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((diff / 1000 / 60) % 60),
-          seconds: Math.floor((diff / 1000) % 60),
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
-    }, 1000);
-
-    fetchResults();
-    const interval = setInterval(fetchResults, 5000);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(interval);
-    };
-
-  }, []);
-
-  const isEnded = phase === 'ENDED';
-  const isPaused = phase === 'PAUSED';
-  const isOpenNoEnd = phase === 'OPEN';
-
-  let theme = "Loading...";
-  if (phase === 'WAITING') theme = "Starts In";
-  if (phase === 'RUNNING') theme = "Time Left";
-  if (phase === 'ENDED') theme = "Status";
-  if (phase === 'PAUSED') theme = "Paused";
-  if (phase === 'OPEN') theme = "Open";
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1 */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            </div>
-            <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">{demographics.totalEligible > 0 ? ((totalVotes / demographics.totalEligible) * 100).toFixed(2) : 0}%</span>
-          </div>
-          <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">Total Votes</h3>
-          <p className="text-3xl font-black text-gray-800 mt-1">{totalVotes.toLocaleString()}</p>
-          <p className="text-xs text-gray-400 mt-2">จากผู้มีสิทธิทั้งหมด {demographics.totalEligible.toLocaleString()} คน</p>
-        </div>
-
-        {/* Card 2 */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-            </div>
-          </div>
-          <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">Candidates</h3>
-          <p className="text-3xl font-black text-gray-800 mt-1">
-            {candidates.filter((e) => parseInt(e.number) > 0).length} Teams
-          </p>
-        </div>
-
-        {/* Card 3 */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-lg ${isEnded ? 'bg-gray-100 text-gray-500' : 'bg-orange-50 text-orange-600'}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${isEnded ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-700'}`}>
-              {isPaused ? 'หยุดรับคะแนนชั่วคราว' : phase}
-            </span>
-          </div>
-          <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">{theme}</h3>
-          <p className="text-3xl font-black text-gray-800 mt-1">
-            {isEnded ? (
-              <span className="text-red-500">Ended</span>
-            ) : isPaused ? (
-              <span className="text-orange-600">หยุดรับคะแนนชั่วคราว</span>
-            ) : isOpenNoEnd ? (
-              <span className="text-orange-600">เปิดรับคะแนนอยู่ (OPEN) ไม่มีเวลาปิด กด ENDED เพื่อปิดหีบ</span>
-            ) : (
-              <>
-                {timeLeft.days > 0 && (
-                  <span className="mr-2">{timeLeft.days} วัน</span>
-                )}
-                <span>
-                  {String(timeLeft.hours).padStart(2, '0')}:
-                  {String(timeLeft.minutes).padStart(2, '0')}:
-                  {String(timeLeft.seconds).padStart(2, '0')}
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Live turnout breakdown — participation only, never per-party tally */}
-      <TurnoutBreakdown demographics={demographics} />
-    </div>
-  )
-};
 
 const CandidatesTab = () => {
   const [candidates, setCandidates] = useState([]);
@@ -332,8 +32,13 @@ const CandidatesTab = () => {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
 
+  // ballot structure locked (ballots in the box, or certified): the add button stays
+  // clickable so the modal can explain why, but it looks and reads as unavailable
+  const ballotLock = useBallotLock(true);
+
+  // no clearing before the fetch: the member list calls this after a reorder, and
+  // emptying the list first flashed the "no parties" state and reset "show all"
   const fetchResults = async () => {
-    setCandidates([]);
     try {
       const res = await fetch(getPath(`/api/results?t=${Date.now()}`), {
         cache: 'no-store',
@@ -410,7 +115,8 @@ const CandidatesTab = () => {
           )}
           <button
             onClick={() => handleEditClick(null)}
-            className="ml-auto flex items-center gap-2 px-4 py-2.5 bg-[#8A2680] text-white hover:bg-[#601A59] rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+            title={ballotLock.locked ? 'เพิ่มพรรคไม่ได้ เพราะมีบัตรในหีบแล้วหรือรับรองผลแล้ว' : undefined}
+            className={`ml-auto flex items-center gap-2 px-4 py-2.5 bg-[#8A2680] text-white hover:bg-[#601A59] rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 ${ballotLock.locked ? 'opacity-60' : ''}`}
           >
             <Plus className="w-4 h-4" />
             เพิ่มพรรค
@@ -532,6 +238,7 @@ const CandidatesTab = () => {
                   key={candidate.id}
                   candidate={candidate}
                   defaultExpanded={parties.length === 1}
+                  onReordered={fetchResults}
                   onClick={(memberId) => handleEditClickMember(candidate, memberId)}
                 />
               ))}
@@ -543,28 +250,52 @@ const CandidatesTab = () => {
   )
 };
 
+// The console's menu. The `id` values are the deep-link names (?tab=) and what
+// ManualTab's onGoTab jumps to, so they must not change; only the labels may.
+const NAV_GROUPS = [
+  {
+    title: 'วันเลือกตั้ง',
+    items: [{ id: 'overview', label: 'ศูนย์ควบคุม', Icon: Gauge }],
+  },
+  {
+    title: 'เตรียมการ',
+    items: [
+      { id: 'globalConfig', label: 'ตั้งค่าทั่วไป', Icon: Settings },
+      { id: 'candidates', label: 'จัดการผู้สมัคร', Icon: Users },
+      { id: 'pageDesign', label: 'เลือกธีม', Icon: Palette },
+    ],
+  },
+  {
+    title: 'ระบบ',
+    items: [
+      { id: 'settings', label: 'ความพร้อมและระบบ', Icon: ShieldCheck },
+      { id: 'manual', label: 'คู่มือใช้งาน', Icon: BookOpen },
+    ],
+  },
+];
+const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+const TAB_IDS = NAV_ITEMS.map((i) => i.id);
 
-export default function AdminDashboard() {
+function AdminShell() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  // Collapsible sidebar: icon-rail (collapsed) ↔ full labels (expanded).
-  // Auto-collapse on the editor tab to give the canvas room; user can toggle.
+  // Collapsible sidebar: icon rail (collapsed) or full labels (expanded).
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       // Deep-link a starting tab (e.g. the preview's "Exit" returns to ?tab=pageDesign,
-      // the template selector — never the overview). Ignore unknown values.
+      // the template selector, never the control center). Ignore unknown values.
       const tab = sp.get('tab');
-      if (tab && ['manual', 'overview', 'globalConfig', 'candidates', 'pageDesign', 'settings'].includes(tab)) {
+      if (tab && TAB_IDS.includes(tab)) {
         setActiveTab(tab);
       }
     }
   }, []);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
-  // Who is holding this session — asked of the server, not read off the token.
+  // Who is holding this session: asked of the server, not read off the token.
   // A 401/403 means the cookie is gone or the admin flag was taken away since
   // login, and the console has no business staying open: back to the form.
   const [adminUser, setAdminUser] = useState(null);
@@ -588,47 +319,40 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch(getPath('/api/admin/logout'), { method: 'POST' });
+      await fetch(getPath('/api/admin/logout'), { method: 'POST', credentials: 'include' });
       window.location.href = getPath('/admin/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
-  const menuItems = [
-    // ADM-MANUAL: first in the rail on purpose — a committee member opening the
-    // console for the first time meets the "what do I do, in what order" page
-    // before anything else. Daily users are unaffected: the DEFAULT tab is still
-    // 'overview' (useState above), so this only changes discovery, not landing.
-    { id: 'manual', label: 'คู่มือใช้งาน', icon: <BookOpen className="h-5 w-5" /> },
-    { id: 'overview', label: 'ภาพรวม', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
-    { id: 'globalConfig', label: 'ตั้งค่าทั่วไป', icon: <Settings className="h-5 w-5" /> },
-    { id: 'candidates', label: 'จัดการผู้สมัคร', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
-    { id: 'pageDesign', label: 'เลือกธีม (Template)', icon: <Palette className="h-5 w-5" /> },
-    { id: 'settings', label: 'ตั้งค่าระบบ', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
-  ];
+  const isDevMachine = process.env.NODE_ENV !== 'production';
+  const activeItem = NAV_ITEMS.find((i) => i.id === activeTab) || NAV_ITEMS[0];
+  const adminLabel = adminUser ? (adminUser.name || adminUser.studentId) : 'กำลังตรวจสิทธิ์';
+  const adminInitial = adminUser ? String(adminLabel).trim().charAt(0).toUpperCase() : '';
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex">
+    <div className="min-h-screen bg-[#F7F7F9] font-sans text-slate-900 flex">
 
       {/* Mobile drawer backdrop */}
       {mobileNavOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-30 bg-slate-900/40 md:hidden"
           onClick={() => setMobileNavOpen(false)}
           aria-hidden
         />
       )}
 
-      {/* Sidebar — collapsible icon-rail (desktop) / slide-in drawer (mobile) */}
+      {/* Sidebar: collapsible icon rail (desktop) or slide-in drawer (mobile) */}
       <aside
-        className={`fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 flex flex-col
+        className={`fixed top-0 left-0 h-full z-40 bg-white border-r border-slate-200 flex flex-col
           transition-[width,transform] duration-300 ease-out
           ${sidebarCollapsed ? 'w-64 md:w-[76px]' : 'w-64'}
           ${mobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} md:translate-x-0`}
+        aria-label="เมนูหลัก"
       >
-        {/* Brand + toggle */}
-        <div className={`h-[68px] shrink-0 border-b border-gray-100 flex items-center gap-2.5 ${sidebarCollapsed ? 'md:justify-center px-3' : 'px-5'}`}>
+        {/* Brand and toggle */}
+        <div className={`h-[60px] shrink-0 border-b border-slate-200 flex items-center gap-2.5 ${sidebarCollapsed ? 'md:justify-center px-3' : 'px-5'}`}>
           <Image
             src={getPath("/images/logo/FMS_Standard_Logo_PNG.png")}
             alt="FMS PSU"
@@ -637,102 +361,146 @@ export default function AdminDashboard() {
             className={`w-auto h-7 object-contain ${sidebarCollapsed ? 'md:hidden' : ''}`}
             priority
           />
-          <span className={`text-[11px] font-bold tracking-wide text-[#8A2680] bg-purple-50 border border-purple-100 rounded-md px-2 py-0.5 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
-            Admin
+          <span className={`text-[11px] font-semibold whitespace-nowrap shrink-0 text-[#8A2680] bg-purple-50 border border-purple-100 rounded-md px-2 py-0.5 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+            แอดมิน
           </span>
           {/* desktop collapse toggle */}
           <button
+            type="button"
             onClick={() => setSidebarCollapsed((v) => !v)}
             title={sidebarCollapsed ? 'ขยายเมนู' : 'ยุบเมนู'}
+            aria-label={sidebarCollapsed ? 'ขยายเมนู' : 'ยุบเมนู'}
             className="hidden md:flex ml-auto items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#8A2680] hover:bg-purple-50 transition-colors shrink-0"
           >
-            {sidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+            {sidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" aria-hidden /> : <PanelLeftClose className="w-5 h-5" aria-hidden />}
           </button>
           {/* mobile close */}
           <button
+            type="button"
             onClick={() => setMobileNavOpen(false)}
+            aria-label="ปิดเมนู"
             className="md:hidden ml-auto shrink-0 flex items-center justify-center w-10 h-10 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              title={sidebarCollapsed ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3.5 py-3 text-sm font-medium rounded-xl transition-all
-                ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}
-                ${activeTab === item.id
-                  ? 'bg-purple-50 text-[#8A2680] shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
-            >
-              <span className="shrink-0">{item.icon}</span>
-              <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
-            </button>
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={group.title} className={gi === 0 ? '' : 'mt-5'}>
+              <p className={`px-3.5 mb-1.5 text-[11px] font-semibold text-slate-400 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
+                {group.title}
+              </p>
+              {sidebarCollapsed && gi > 0 && <div className="hidden md:block mx-3 mb-2 border-t border-slate-200" aria-hidden />}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.Icon;
+                  const active = activeTab === item.id;
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      title={sidebarCollapsed ? item.label : undefined}
+                      aria-current={active ? 'page' : undefined}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-colors
+                        ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}
+                        ${active
+                          ? 'bg-purple-50 text-[#8A2680]'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" aria-hidden />
+                      <span className={sidebarCollapsed ? 'md:hidden' : ''}>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ))}
         </nav>
 
-        <div className="p-3 border-t border-gray-100">
+        <div className="p-3 border-t border-slate-200">
           <button
+            type="button"
             onClick={handleLogout}
-            title={sidebarCollapsed ? 'Logout' : undefined}
-            className={`w-full flex items-center gap-3 px-3.5 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
+            title={sidebarCollapsed ? 'ออกจากระบบ' : undefined}
+            aria-label="ออกจากระบบ"
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
           >
-            <LogOut className="h-5 w-5 shrink-0" />
-            <span className={sidebarCollapsed ? 'md:hidden' : ''}>Logout</span>
+            <LogOut className="h-5 w-5 shrink-0" aria-hidden />
+            <span className={sidebarCollapsed ? 'md:hidden' : ''}>ออกจากระบบ</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main content area */}
       <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-[margin] duration-300 ease-out ${sidebarCollapsed ? 'md:ml-[76px]' : 'md:ml-64'}`}>
 
-        {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-center sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            {/* mobile hamburger */}
-            <button
-              onClick={() => setMobileNavOpen(true)}
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-slate-600 hover:bg-slate-100"
+        {/* Top bar: where you are, the election's state (every tab), who you are */}
+        <header className="bg-white border-b border-slate-200 h-[60px] px-3 sm:px-4 md:px-6 flex items-center gap-3 sticky top-0 z-20">
+          {/* mobile hamburger */}
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="เปิดเมนู"
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
+          >
+            <Menu className="w-5 h-5" aria-hidden />
+          </button>
+          <h1 className="hidden lg:block text-sm font-semibold text-slate-900 whitespace-nowrap">{activeItem.label}</h1>
+          <span className="hidden lg:block h-5 w-px bg-slate-200" aria-hidden />
+          <TopBarStatus />
+
+          <div className="ml-auto flex items-center gap-3 shrink-0">
+            <span
+              className="hidden sm:inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-600 whitespace-nowrap"
+              title={isDevMachine ? 'รันบนเครื่องพัฒนา ไม่ใช่ระบบจริง' : 'รันเป็นระบบจริง'}
             >
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="font-bold text-gray-800 md:hidden">Admin</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-bold text-gray-700">
-                {adminUser ? (adminUser.name || adminUser.studentId) : 'กำลังตรวจสิทธิ์…'}
-              </p>
-              <p className="text-xs flex items-center justify-end gap-1.5">
-                {adminUser ? (
-                  <>
-                    <span className="font-semibold text-[#8A2680] bg-purple-50 border border-purple-100 rounded px-1.5 py-px">
-                      ผู้ดูแลระบบ
-                    </span>
-                    <span className="text-slate-400 font-mono">{adminUser.studentId}</span>
-                  </>
-                ) : (
-                  <span className="text-slate-400">รอการยืนยันจากเซิร์ฟเวอร์</span>
-                )}
-              </p>
+              {isDevMachine ? 'เครื่องพัฒนา' : 'ระบบจริง'}
+            </span>
+            <div className="flex items-center gap-2.5">
+              <div className="hidden md:block text-right min-w-0">
+                <p className="text-sm font-semibold text-slate-800 leading-tight truncate max-w-[16rem]">{adminLabel}</p>
+                <p className="text-xs flex items-center justify-end gap-1.5 leading-tight mt-0.5">
+                  {adminUser ? (
+                    <>
+                      <span className="font-medium text-[#8A2680]">ผู้ดูแลระบบ</span>
+                      <span className="text-slate-400 tabular-nums">{adminUser.studentId}</span>
+                    </>
+                  ) : (
+                    <span className="text-slate-400">รอการยืนยันจากเซิร์ฟเวอร์</span>
+                  )}
+                </p>
+              </div>
+              <div
+                className="w-9 h-9 rounded-full bg-purple-50 border border-purple-100 text-[#8A2680] flex items-center justify-center text-sm font-semibold shrink-0"
+                title={adminUser ? `${adminLabel} (ผู้ดูแลระบบ)` : adminLabel}
+                aria-label={adminUser ? `ผู้ใช้ ${adminLabel}` : 'กำลังตรวจสิทธิ์'}
+              >
+                {adminInitial || '?'}
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8 bg-gray-50">
-          {activeTab === 'manual' && <ManualTab onGoTab={setActiveTab} />}
-          {activeTab === 'overview' && <OverviewTab />}
+        <main className="flex-1 p-4 sm:p-6 md:p-8">
+          {activeTab === 'overview' && <ElectionControl onGoTab={setActiveTab} />}
           {activeTab === 'globalConfig' && <GlobalConfigTab />}
           {activeTab === 'candidates' && <CandidatesTab />}
           {activeTab === 'pageDesign' && <TemplateChooserTab />}
           {activeTab === 'settings' && <SettingsTab />}
+          {activeTab === 'manual' && <ManualTab onGoTab={setActiveTab} />}
         </main>
       </div>
 
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <ElectionStateProvider>
+      <AdminShell />
+    </ElectionStateProvider>
   );
 }

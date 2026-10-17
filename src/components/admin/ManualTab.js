@@ -124,15 +124,15 @@ export default function ManualTab({ onGoTab }) {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <TabChip icon={CalendarDays} onClick={go('overview')}>ภาพรวม</TabChip>
+          <TabChip icon={CalendarDays} onClick={go('overview')}>ศูนย์ควบคุม</TabChip>
           <TabChip icon={Settings} onClick={go('globalConfig')}>ตั้งค่าทั่วไป</TabChip>
           <TabChip icon={Users} onClick={go('candidates')}>จัดการผู้สมัคร</TabChip>
-          <TabChip icon={Palette} onClick={go('pageDesign')}>เลือกธีม (Template)</TabChip>
-          <TabChip icon={Power} onClick={go('settings')}>ตั้งค่าระบบ</TabChip>
+          <TabChip icon={Palette} onClick={go('pageDesign')}>เลือกธีม</TabChip>
+          <TabChip icon={Power} onClick={go('settings')}>ความพร้อมและระบบ</TabChip>
         </div>
         <Note tone="slate" icon={LifeBuoy}>
-          <span className="font-bold">ถ้าเจอปัญหา ให้ดูตรงนี้ก่อน</span> — ไปแท็บ <span className="font-bold">ตั้งค่าระบบ</span> กล่อง
-          <span className="font-bold"> ตรวจความพร้อมระบบ READINESS</span> แล้วกดปุ่ม <span className="font-bold">ตรวจตอนนี้</span> ระบบจะไล่ตรวจให้ว่าอะไรยังไม่พร้อม
+          <span className="font-bold">ถ้าเจอปัญหา ให้ดูตรงนี้ก่อน</span> ให้ไปแท็บ <span className="font-bold">ความพร้อมและระบบ</span> กล่อง
+          <span className="font-bold"> ตรวจความพร้อมระบบ</span> ระบบตรวจให้เองเมื่อเปิดแท็บ และกดปุ่ม <span className="font-bold">ตรวจซ้ำ</span> ได้หลังแก้ปัญหา จะไล่ตรวจให้ว่าอะไรยังไม่พร้อม
         </Note>
       </div>
 
@@ -148,7 +148,7 @@ export default function ManualTab({ onGoTab }) {
           <div className="grid grid-cols-1 gap-2.5 pt-1">
             <Group icon={Vote} name="ครั้งที่และปี">
               <FieldRow label="ชื่อย่อ" hint="ตัวอักษรนำหน้า เช่น SAMO" />
-              <FieldRow label="ครั้งที่" hint="ครั้งที่จัด เช่น 50 — ระบบรวมกับชื่อย่อเป็นป้าย “SAMO 50” ให้เอง ไม่ต้องพิมพ์เอง" />
+              <FieldRow label="ครั้งที่" hint="ครั้งที่จัด เช่น 50 โดยระบบรวมกับชื่อย่อเป็นป้าย “SAMO 50” ให้เอง ไม่ต้องพิมพ์เอง" />
               <FieldRow label="ปีการศึกษา (พ.ศ.)" hint="ใส่เป็น พ.ศ. เช่น 2570" />
               <FieldRow label="ปีการเลือกตั้ง (ค.ศ.)" hint="ระบบใช้ปีของวันเปิดหีบให้เอง เช่น 2027 (แก้เองได้)" />
               <FieldRow label="ปีลิขสิทธิ์ (ค.ศ.)" hint="ปีที่แสดงท้ายเว็บ ระบบใช้ปีของวันเปิดหีบให้เอง (แก้เองได้)" />
@@ -171,12 +171,12 @@ export default function ManualTab({ onGoTab }) {
             </Group>
           </div>
           <Note tone="amber">
-            <span className="font-bold">ใส่ลิงก์ Google Form เมื่อปีนี้มีแบบประเมินเท่านั้น</span> — ถ้าใส่ไว้ ระหว่างที่หีบยังเปิด
+            <span className="font-bold">ใส่ลิงก์ Google Form เมื่อปีนี้มีแบบประเมินเท่านั้น</span> ถ้าใส่ไว้ ระหว่างที่หีบยังเปิด
             นักศึกษาที่ลงคะแนนแล้วต้องทำแบบประเมินก่อนถึงจะเข้าหน้าผลคะแนนได้ จึงต้องตรวจว่าลิงก์ถูกต้อง
             ถ้าเว้นว่าง หน้าหลังลงคะแนนจะไม่มีปุ่มแบบประเมิน และไม่ล็อกหน้าผลคะแนน
           </Note>
           <Note tone="amber">
-            <span className="font-bold">ช่องชั่วโมงกิจกรรม ใส่เลขเมื่อคณะยืนยันแล้วเท่านั้น</span> — ทุก template
+            <span className="font-bold">ช่องชั่วโมงกิจกรรม ใส่เลขเมื่อคณะยืนยันแล้วเท่านั้น</span> ทุก template
             จะประกาศเลขนี้ให้นักศึกษาเห็นตรงกัน เท่ากับเป็นคำสัญญาของสโมสรนักศึกษา
             ถ้ายังไม่รู้ตัวเลขที่แน่นอน ให้เว้นว่างไว้ หน้าขอบคุณจะพูดแค่ว่า
             <span className="font-bold"> รับชั่วโมงกิจกรรม</span> ซึ่งไม่ผูกมัดจำนวน
@@ -192,7 +192,7 @@ export default function ManualTab({ onGoTab }) {
             </Group>
           </div>
           <Note tone="amber">
-            เวลาทั้ง 3 ช่องนี้ <span className="font-bold">ใช้กับโหมด AUTO เท่านั้น</span> — โหมด AUTO จะเปิดและปิดหีบตามเวลาที่กรอกไว้นี้เอง
+            เวลาทั้ง 3 ช่องนี้ <span className="font-bold">ใช้กับโหมด AUTO เท่านั้น</span> เพราะโหมด AUTO จะเปิดและปิดหีบตามเวลาที่กรอกไว้นี้เอง
             ถ้าเว้นว่างหรือกรอกไม่ถูกต้อง ระบบจะถอยไปใช้ค่าเริ่มต้นที่ฝังอยู่ในโค้ดแทน จึงควรกรอกให้ครบทั้ง 3 ช่อง
             และต้องตั้งเวลาปิดหีบให้หลังเวลาเปิดหีบเสมอ
           </Note>
@@ -205,7 +205,7 @@ export default function ManualTab({ onGoTab }) {
             จากนั้นเพิ่มสมาชิกของแต่ละพรรคในกล่อง <span className="font-bold">สมาชิกพรรค</span> ด้านล่าง
           </p>
           <Note tone="slate">
-            <span className="font-bold">เบอร์มีความหมาย</span> — เบอร์มากกว่า 0 คือพรรคจริง เบอร์ 0 คือตัวเลือก งดออกเสียง 
+            <span className="font-bold">เบอร์มีความหมาย</span> เบอร์มากกว่า 0 คือพรรคจริง เบอร์ 0 คือตัวเลือก งดออกเสียง 
             เบอร์ -1 คือตัวเลือก ไม่รับรอง ซึ่งใช้เฉพาะกรณีมีพรรคจริงพรรคเดียว
           </Note>
           <Note tone="amber">
@@ -216,14 +216,14 @@ export default function ManualTab({ onGoTab }) {
           </Note>
         </Step>
 
-        <Step n="4" title="เลือกหน้าตาเว็บที่แท็บ เลือกธีม (Template)">
+        <Step n="4" title="เลือกหน้าตาเว็บที่แท็บ เลือกธีม">
           <p>เลือกธีมที่จะใช้กับหน้าเว็บฝั่งนักศึกษาทั้งหมด เปลี่ยนได้ตลอด ไม่กระทบข้อมูลคะแนน</p>
         </Step>
 
         <Step n="5" title="กดตรวจความพร้อม แล้วแก้ให้หมดทุกข้อสีแดง">
           <p>
-            ไปที่แท็บ <span className="font-bold">ตั้งค่าระบบ</span> กล่อง <span className="font-bold">ตรวจความพร้อมระบบ READINESS</span>{' '}
-            แล้วกด <span className="font-bold">ตรวจตอนนี้</span> ระบบจะตรวจให้ครบทุกด้านโดยไม่แก้ไขข้อมูลใด ๆ
+            ไปที่แท็บ <span className="font-bold">ความพร้อมและระบบ</span> กล่อง <span className="font-bold">ตรวจความพร้อมระบบ</span>{' '}
+            ระบบจะรันให้เองเมื่อเปิดแท็บ หลังแก้แล้วกด <span className="font-bold">ตรวจซ้ำ</span> ระบบจะตรวจให้ครบทุกด้านโดยไม่แก้ไขข้อมูลใด ๆ
           </p>
           <ul className="list-disc pl-4 space-y-1 text-slate-600">
             <li>ลำดับเวลาเปิด-ปิดหีบ และเวลาเปิดตัวผู้สมัคร ถูกต้องหรือไม่</li>
@@ -252,15 +252,15 @@ export default function ManualTab({ onGoTab }) {
       >
         <Step n="1" title="ตรวจว่าระบบเปิดตามเวลาจริงหรือไม่">
           <p>
-            ไปแท็บ <span className="font-bold">ตั้งค่าระบบ</span> ดูแถบสถานะของ <span className="font-bold">ระบบการทำงาน</span> ว่าโหมดที่ใช้อยู่ตรงกับที่ตั้งใจไว้
+            ไปแท็บ <span className="font-bold">ศูนย์ควบคุม</span> ดูแถบสถานะด้านบนและกล่อง <span className="font-bold">โหมดการทำงานของระบบ</span> ว่าโหมดที่ใช้อยู่ตรงกับที่ตั้งใจไว้
             ปกติควรเป็น <span className="font-bold">AUTO</span> และเมื่อถึงเวลาเปิดหีบ นักศึกษาจะเข้าหน้าลงคะแนนได้เอง
           </p>
         </Step>
 
-        <Step n="2" title="ดูยอดผู้ใช้สิทธิ์ที่แท็บ ภาพรวม">
+        <Step n="2" title="ดูยอดผู้ใช้สิทธิ์ที่แท็บ ศูนย์ควบคุม">
           <p>
-            แท็บ <span className="font-bold">ภาพรวม</span> แสดงจำนวนผู้ลงคะแนนแบบเรียลไทม์ และกล่อง
-            <span className="font-bold"> ความคืบหน้าการใช้สิทธิ์ (Turnout)</span> ที่แยกตามชั้นปี สาขา และเพศ
+            แท็บ <span className="font-bold">ศูนย์ควบคุม</span> แสดงจำนวนผู้ลงคะแนนแบบเรียลไทม์ และกล่อง
+            <span className="font-bold"> การใช้สิทธิ์แยกตามกลุ่ม</span> ที่แยกตามชั้นปี สาขา และเพศ
             ใช้ดูว่ากลุ่มไหนยังมาใช้สิทธิ์น้อย เพื่อไปตามให้มาโหวต
           </p>
           <Note tone="slate">
@@ -319,28 +319,28 @@ export default function ManualTab({ onGoTab }) {
         n="3"
         tone="green"
         title="ระยะที่ 3 หลังปิดหีบ"
-        subtitle="ทำในหัวข้อ ขั้นตอนปิดการเลือกตั้ง แท็บ ตั้งค่าระบบ ปิดหีบแล้วยังไม่มีใครเห็นผล ต้องกดประกาศผลเองอีกขั้นหนึ่ง"
+        subtitle="ทำในหัวข้อ ขั้นตอนปิดการเลือกตั้ง แท็บ ศูนย์ควบคุม ปิดหีบแล้วยังไม่มีใครเห็นผล ต้องกดประกาศผลเองอีกขั้นหนึ่ง"
       >
         <Step n="1" title="ยืนยันว่าหีบปิดแล้วจริง">
           <p>
             โหมด AUTO จะปิดหีบเองเมื่อถึงเวลาปิดที่ตั้งไว้ ถ้าใช้ OPEN อยู่ หรือเลยเวลาแล้วยังไม่ปิด ให้กดปุ่ม
-            <span className="font-bold"> ปิดหีบตอนนี้ (ENDED)</span> ในขั้น <span className="font-bold">ปิดหีบ</span> ที่แท็บ <span className="font-bold">ตั้งค่าระบบ</span>
+            <span className="font-bold"> ปิดหีบตอนนี้ (ENDED)</span> ในขั้น <span className="font-bold">ปิดหีบ</span> ที่แท็บ <span className="font-bold">ศูนย์ควบคุม</span>
             (PAUSE ไม่นับว่าปิดหีบ ประกาศผลจาก PAUSE ไม่ได้)
           </p>
         </Step>
 
         <Step n="2" title="กดปุ่ม ประกาศผล">
           <p>
-            ที่แท็บ <span className="font-bold">ตั้งค่าระบบ</span> ในหัวข้อ <span className="font-bold">ขั้นตอนปิดการเลือกตั้ง</span> ขั้น
+            ที่แท็บ <span className="font-bold">ศูนย์ควบคุม</span> ในหัวข้อ <span className="font-bold">ขั้นตอนปิดการเลือกตั้ง</span> ขั้น
             <span className="font-bold"> ประกาศผล</span> กดปุ่ม <span className="font-bold">ประกาศผล</span> แล้วยืนยัน
             หน้าผลคะแนนที่นักศึกษาเปิดค้างไว้จะเปลี่ยนเป็นผลเอง ไม่ต้องรีเฟรช
           </p>
           <Note tone="red" icon={Lock}>
-            <span className="font-bold">ปุ่มนี้คือประตูเดียวที่เปิดให้เห็นคะแนน</span> — ถ้าไม่กด จะไม่มีใครเห็นคะแนนของแต่ละพรรคเลย
+            <span className="font-bold">ปุ่มนี้คือประตูเดียวที่เปิดให้เห็นคะแนน</span> ถ้าไม่กด จะไม่มีใครเห็นคะแนนของแต่ละพรรคเลย
             รวมถึงตัวแอดมินเองด้วย การปิดหีบอย่างเดียวไม่ทำให้ผลปรากฏ
           </Note>
           <Note tone="amber">
-            <span className="font-bold">กดได้หลังปิดหีบแล้วเท่านั้น</span> — ระบบไม่ยอมประกาศผลระหว่างที่หีบยังรับคะแนนได้
+            <span className="font-bold">กดได้หลังปิดหีบแล้วเท่านั้น</span> ระบบไม่ยอมประกาศผลระหว่างที่หีบยังรับคะแนนได้
             เพราะคะแนนที่เห็นระหว่างทางจะชี้นำคนที่ยังไม่ได้โหวต เมื่อประกาศแล้วจะเปิดหีบหรือพักระบบไม่ได้
             ถ้าจำเป็นต้องเปิดหีบอีกครั้ง ให้กดปุ่ม <span className="font-bold">ซ่อนผล</span> ในขั้นเดียวกันก่อน (ซ่อนได้จนกว่าจะรับรองผล)
           </Note>
@@ -382,7 +382,7 @@ export default function ManualTab({ onGoTab }) {
             แจ้งล่วงหน้าอย่างน้อยหนึ่งสัปดาห์ก่อนเริ่มกรอกข้อมูลปีใหม่
           </p>
           <Note tone="amber">
-            หน้าแอดมิน <span className="font-bold">ไม่มีปุ่มลบข้อมูลใด ๆ โดยตั้งใจ</span> — ระบบถูกออกแบบให้
+            หน้าแอดมิน <span className="font-bold">ไม่มีปุ่มลบข้อมูลใด ๆ โดยตั้งใจ</span> ระบบถูกออกแบบให้
             บัตรที่ลงคะแนนไปแล้วลบไม่ได้เลยผ่านหน้าเว็บ เป็นหลักประกันว่าผลเลือกตั้งแก้ไม่ได้
             แม้แต่จากบัญชีแอดมิน จึงไม่ต้องกลัวกดพลาด และไม่ต้องหาปุ่มที่เคยเห็นในปีก่อน
           </Note>
@@ -394,8 +394,7 @@ export default function ManualTab({ onGoTab }) {
             จะมีเส้นทางเข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน
           </p>
           <p>
-            ตรวจได้ที่แท็บ <span className="font-bold">ตั้งค่าระบบ</span> จากป้ายสถานะด้านบนสุด และจากการกด
-            <span className="font-bold"> ตรวจตอนนี้</span> ในกล่องตรวจความพร้อม ซึ่งจะรายงานหัวข้อ
+            ตรวจได้ที่แท็บ <span className="font-bold">ความพร้อมและระบบ</span> จากป้ายสถานะการเข้าสู่ระบบจำลอง และจากผลของกล่องตรวจความพร้อม ซึ่งรันเองเมื่อเปิดแท็บ (กด <span className="font-bold">ตรวจซ้ำ</span> ได้) กล่องนี้จะรายงานหัวข้อ
             <span className="font-bold"> การเข้าสู่ระบบจำลอง (Mock Login)</span> ให้
           </p>
           <Note tone="red">
@@ -416,8 +415,8 @@ export default function ManualTab({ onGoTab }) {
 
       <div className="pb-2">
         <Note tone="slate" icon={PieIcon}>
-          จำสั้น ๆ — <span className="font-bold">ตั้งค่าทั่วไป</span> ให้ครบ <span className="font-bold">จัดการผู้สมัคร</span> ให้ครบ 
-          <span className="font-bold"> ตรวจความพร้อม</span> ให้เขียว วันจริงเฝ้าที่ <span className="font-bold">ภาพรวม</span>  
+          จำสั้น ๆ ว่า <span className="font-bold">ตั้งค่าทั่วไป</span> ให้ครบ <span className="font-bold">จัดการผู้สมัคร</span> ให้ครบ 
+          <span className="font-bold"> ตรวจความพร้อม</span> ให้เขียว วันจริงเฝ้าที่ <span className="font-bold">ศูนย์ควบคุม</span>  
           ปิดหีบแล้วค่อยกด <span className="font-bold">ประกาศผล</span>
         </Note>
       </div>
