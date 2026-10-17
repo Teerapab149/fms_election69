@@ -4,6 +4,7 @@ import { getPath } from "../utils/basePath";
 import { useState, useEffect } from 'react';
 import { X, Save, Trash2, Loader2, Upload, User, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import { sortMembersByPosition, positionRank } from "../utils/memberSort";
 
 const PREDEFINED_POSITIONS = [
     "นายกสโมสรนักศึกษา",
@@ -47,14 +48,26 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     const [error, setError] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    const sortMembers = (membersList) => {
-        return [...membersList].sort((a, b) => {
-            const indexA = PREDEFINED_POSITIONS.indexOf(a.position);
-            const indexB = PREDEFINED_POSITIONS.indexOf(b.position);
-            const priorityA = indexA === -1 ? 999 : indexA;
-            const priorityB = indexB === -1 ? 999 : indexB;
-            return priorityA - priorityB;
-        });
+    // ลำดับที่เก็บ = ลำดับที่หน้าพรรคสาธารณะแสดง (id ก่อน แล้วจัดกลุ่มตามตำแหน่ง ดู
+    // utils/memberSort.js) เดิมที่นี่เรียงใหม่ตามลำดับในรายการตำแหน่งทุกครั้งที่บันทึก
+    // ซึ่งจะล้างลำดับที่แอดมินจัดเองด้วยปุ่มเลื่อนในรายชื่อสมาชิกทิ้งเงียบ ๆ
+    const sortMembers = (membersList) =>
+        sortMembersByPosition([...membersList].sort((a, b) => (a.id ?? 0) - (b.id ?? 0)));
+
+    // สมาชิกใหม่ที่เลือกตำแหน่งจากรายการ แทรกตามลำดับในรายการเหมือนเดิม (ประธานฝ่ายประชาสัมพันธ์
+    // ก่อนสวัสดิการ ฯลฯ) โดยไม่ขยับคนที่มีอยู่แล้ว ตำแหน่งที่พิมพ์เองต่อท้ายกลุ่ม
+    const insertNewMember = (list, member) => {
+        const newIdx = PREDEFINED_POSITIONS.indexOf(member.position);
+        const rank = positionRank(member.position);
+        if (newIdx !== -1) {
+            const at = list.findIndex((m) => {
+                if (positionRank(m.position) !== rank) return false;
+                const i = PREDEFINED_POSITIONS.indexOf(m.position);
+                return i !== -1 && i > newIdx;
+            });
+            if (at !== -1) return [...list.slice(0, at), member, ...list.slice(at)];
+        }
+        return [...list, member];
     };
 
     const MAJOR_SHORT = {
@@ -185,10 +198,8 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 };
             }
         } else {
-            updatedMembers.push({ ...currentMember, tempId: Date.now() });
+            updatedMembers = insertNewMember(updatedMembers, { ...currentMember, tempId: Date.now() });
         }
-
-        updatedMembers = sortMembers(updatedMembers);
 
         await submitToBackend(updatedMembers);
     };
@@ -302,14 +313,14 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         <div className="mb-4 flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
                             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                             <div className="text-xs leading-relaxed text-amber-800">
-                                <p className="font-bold">ลำดับที่เพิ่มมีผลกับการเรียงบนหน้าเว็บ</p>
+                                <p className="font-bold">ลำดับบนหน้าเว็บขึ้นกับตำแหน่ง</p>
                                 <p className="mt-1">
                                     ตำแหน่งหลัก (นายก อุปนายกฝ่ายกิจการภายนอก อุปนายกฝ่ายกิจการภายใน เลขานุการ เหรัญญิก)
                                     ระบบเรียงให้เองเสมอ ไม่ว่าจะเพิ่มก่อนหลัง
                                 </p>
                                 <p className="mt-1">
-                                    แต่ <b>ประธานฝ่ายต่าง ๆ และตำแหน่งอื่น ระบบเรียงตามลำดับที่เพิ่ม</b> —
-                                    ถ้าอยากให้เรียงแบบไหนบนหน้าพรรค ให้เพิ่มไล่ตามลำดับนั้น
+                                    ส่วน <b>ประธานฝ่ายต่าง ๆ และตำแหน่งอื่น</b> ถ้าเลือกตำแหน่งจากรายการ ระบบแทรกตามลำดับในรายการให้
+                                    ถ้าพิมพ์ตำแหน่งเองจะต่อท้ายกลุ่ม แล้วใช้ปุ่มลูกศรในรายชื่อสมาชิกปรับลำดับภายหลังได้
                                 </p>
                             </div>
                         </div>
@@ -383,12 +394,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                             ))}
                                         </select>
 
-                                        {/* ไอคอนลูกศรลง (เพื่อให้หน้าตาเหมือนช่องอื่น) */}
-                                        <div className="absolute right-3 top-3 pointer-events-none text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="m6 9 6 6 6-6" />
-                                            </svg>
-                                        </div>
+                                        <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
                                     </div>
                                 </div>
 
@@ -427,7 +433,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-3 py-2.5 text-xs text-gray-400 text-center">ใช้ตำแหน่งใหม่: &quot;{currentMember.position}&quot;</div>
+                                                <div className="px-3 py-2.5 text-xs text-gray-400 text-center">ใช้ตำแหน่งที่พิมพ์เอง: &quot;{currentMember.position}&quot;</div>
                                             )}
                                         </div>
                                     )}
@@ -446,7 +452,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                         ) : (
                                             <div className="flex flex-col items-center text-gray-300">
                                                 <ImageIcon className="w-8 h-8 opacity-50 mb-1" />
-                                                <span className="text-[10px]">No Image</span>
+                                                <span className="text-[10px]">ยังไม่มีรูป</span>
                                             </div>
                                         )}
                                     </div>
@@ -456,7 +462,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                     </label>
                                 </div>
                                 <div className="text-xs text-gray-500 max-w-[200px]">
-                                    ใช้สำหรับแสดงใน Popup ข้อมูลเพิ่มเติม (ควรเป็นรูป PNG พื้นหลังใส หรือรูปแนวตั้งที่เห็นตัวคนชัดเจน)
+                                    ใช้แสดงในหน้าต่างข้อมูลเพิ่มเติมของสมาชิก (ควรเป็นรูป PNG พื้นหลังใส หรือรูปแนวตั้งที่เห็นตัวคนชัดเจน)
                                 </div>
                             </div>
                         </div>
@@ -505,8 +511,8 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={handleConfirmDelete}
-                title="ยืนยันการลบ?"
-                message={`คุณต้องการลบผู้สมัคร "${currentMember.name}" ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`}
+                title="ยืนยันการลบสมาชิก"
+                message={`ต้องการลบสมาชิก "${currentMember.name}" ใช่หรือไม่ การกระทำนี้ย้อนกลับไม่ได้`}
                 variant="danger"
                 isLoading={isLoading}
             />

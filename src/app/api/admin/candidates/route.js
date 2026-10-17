@@ -365,20 +365,18 @@ async function processMemberModalImage(memberData, formData, partyNumber, existi
  * @returns {Promise<NextResponse|null>} response ที่ต้องคืนทันที หรือ null ถ้าผ่าน
  */
 async function ballotBoxGuard(action) {
-  const [ballots, cfg] = await Promise.all([
-    db.ballot.count(),
-    db.systemConfig.findUnique({ where: { id: 1 }, select: { globalConfig: true } }),
-  ]);
+  // เงื่อนไขอยู่ใน ballotLock.js ที่เดียว (GET /api/admin/ballot-lock ใช้ตัวเดียวกัน)
+  const lock = await getBallotLock();
 
-  if (cfg?.globalConfig?.ballotsAnonymized) {
+  if (lock.reason === "anonymized") {
     return NextResponse.json(
-      { error: `รับรองผลไปแล้ว ${action}ไม่ได้ — ผลการเลือกตั้งถูกปิดผนึกแล้ว` },
+      { error: `รับรองผลไปแล้ว ${action}ไม่ได้ เพราะผลการเลือกตั้งถูกปิดผนึกแล้ว` },
       { status: 409 }
     );
   }
-  if (ballots > 0) {
+  if (lock.reason === "ballots") {
     return NextResponse.json(
-      { error: `มีบัตรลงคะแนนในระบบแล้ว ${ballots} ใบ จึง${action}ไม่ได้ — การแก้โครงสร้างบัตรกลางคันทำให้ผลนับไม่ตรง` },
+      { error: `มีบัตรลงคะแนนในระบบแล้ว ${lock.ballots} ใบ จึง${action}ไม่ได้ เพราะการแก้โครงสร้างบัตรกลางคันทำให้ผลนับไม่ตรง` },
       { status: 409 }
     );
   }
@@ -631,12 +629,13 @@ export async function PUT(req) {
 
 // --- POST (Create) ---
 export async function POST(req) {
+  // auth ก่อนเสมอ: ด่านบัตรตอบจำนวนบัตรในหีบ คนที่ยังไม่ได้เข้าสู่ระบบต้องไม่ได้เห็นตัวเลขนี้
+  const authError = await adminGuard(req);
+  if (authError) return authError;
   {
     const blocked = await ballotBoxGuard("เพิ่มพรรคใหม่");
     if (blocked) return blocked;
   }
-  const authError = await adminGuard(req);
-  if (authError) return authError;
   try {
     const formData = await req.formData();
     const name = formData.get("name");
