@@ -1,9 +1,10 @@
 'use client';
 import { getPath } from "../utils/basePath";
 
-import { useState, useEffect } from 'react';
-import { X, Save, Trash2, Loader2, Upload, User, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import { X, Save, Trash2, Loader2, Upload, User, Plus, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import DiscardChangesDialog from "./DiscardChangesDialog";
 import { sortMembersByPosition, positionRank } from "../utils/memberSort";
 
 const PREDEFINED_POSITIONS = [
@@ -47,6 +48,21 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDiscard, setShowDiscard] = useState(false);
+    const [addedNote, setAddedNote] = useState('');
+    const nameRef = useRef(null);
+    const initialSnap = useRef(null);
+    // true หลังกด "บันทึกและเพิ่มคนถัดไป" อย่างน้อยหนึ่งครั้ง: รายชื่อในโมดัลมาจากคำตอบของ
+    // เซิร์ฟเวอร์แล้ว (สดกว่า prop candidate ที่หน้าแม่ยังไม่ทันโหลดใหม่) effect ด้านล่างจึง
+    // ต้องไม่เอา prop เก่ามาทับรายชื่อ หรือล้างฟอร์มของคนที่กำลังกรอกอยู่
+    const keepSession = useRef(false);
+
+    const memberSnap = (m) => JSON.stringify([m.name || '', m.studentId || '', m.position || '', m.major || '']);
+    const resetMember = (m) => {
+        setCurrentMember(m);
+        initialSnap.current = memberSnap(m);
+    };
+    const BLANK_MEMBER = { name: '', studentId: '', position: '', major: '', imageFile: null, previewUrl: '', modalImageFile: null, modalPreviewUrl: '' };
 
     // ลำดับที่เก็บ = ลำดับที่หน้าพรรคสาธารณะแสดง (id ก่อน แล้วจัดกลุ่มตามตำแหน่ง ดู
     // utils/memberSort.js) เดิมที่นี่เรียงใหม่ตามลำดับในรายการตำแหน่งทุกครั้งที่บันทึก
@@ -83,6 +99,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     };
 
     useEffect(() => {
+        if (!isOpen) keepSession.current = false;
+        else if (keepSession.current) return;
+        setShowDiscard(false);
+        setAddedNote('');
         if (candidate) {
             const membersList = sortMembers(candidate.members || []);
             setAllMembers(membersList);
@@ -90,7 +110,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
             if (focusMemberId) {
                 const target = membersList.find(m => m.id === focusMemberId);
                 if (target) {
-                    setCurrentMember({
+                    resetMember({
                         name: target.name,
                         id: target.id,
                         studentId: target.studentId,
@@ -106,7 +126,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                     });
                 }
             } else {
-                setCurrentMember({
+                resetMember({
                     name: '',
                     studentId: '',
                     position: '',
@@ -122,6 +142,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     }, [candidate, isOpen, focusMemberId]);
 
     const handleChange = (e) => {
+        setAddedNote('');
         const { name, value } = e.target;
         setCurrentMember(prev => ({ ...prev, [name]: value }));
     };
@@ -169,7 +190,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
         setShowDeleteConfirm(false);
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, opts = {}) => {
         e.preventDefault();
         if (!currentMember.name || !currentMember.studentId) {
             setError("กรุณากรอกชื่อและรหัสนักศึกษา");
@@ -201,10 +222,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
             updatedMembers = insertNewMember(updatedMembers, { ...currentMember, tempId: Date.now() });
         }
 
-        await submitToBackend(updatedMembers);
+        await submitToBackend(updatedMembers, { keepOpen: !!opts.keepOpen && !focusMemberId, addedName: currentMember.name });
     };
 
-    const submitToBackend = async (finalMemberList) => {
+    const submitToBackend = async (finalMemberList, opts = {}) => {
         try {
             const data = new FormData();
 
@@ -254,6 +275,22 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 throw new Error(errorData.error || 'Update failed');
             }
 
+            if (opts.keepOpen) {
+                // PUT ลบแล้วสร้างสมาชิกทั้งพรรคใหม่ id เปลี่ยนหมด ต้องใช้รายชื่อจากคำตอบนี้
+                // เป็นฐานของรอบถัดไป ถ้าใช้ของเก่า คนที่เพิ่งเพิ่มจะหายไปเงียบ ๆ ในรอบสอง
+                const saved = await res.json().catch(() => null);
+                if (!saved || !Array.isArray(saved.members)) {
+                    throw new Error('บันทึกแล้ว แต่เซิร์ฟเวอร์ไม่ส่งรายชื่อกลับมา กรุณาปิดหน้าต่างนี้แล้วเปิดใหม่ก่อนเพิ่มคนถัดไป');
+                }
+                keepSession.current = true;
+                setAllMembers(sortMembers(saved.members));
+                resetMember(BLANK_MEMBER);
+                setAddedNote(`เพิ่ม ${opts.addedName} แล้ว (รวม ${saved.members.length} คน)`);
+                if (onUpdate) onUpdate('CREATE', { keepOpen: true });
+                setTimeout(() => nameRef.current?.focus(), 0);
+                return;
+            }
+
             if (onUpdate) onUpdate('UPDATE');
             onClose();
 
@@ -270,18 +307,35 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     );
 
     // Esc ปิดหน้าต่าง — พฤติกรรมเดียวกับหน้าต่างแก้ไขพรรค
+    // มีอะไรแก้ค้างอยู่ไหม (ข้อความ หรือเลือกรูปใหม่) ถ้ามี ปิดต้องถามก่อน
+    const dirty = initialSnap.current !== null && (
+        memberSnap(currentMember) !== initialSnap.current
+        || !!currentMember.imageFile
+        || !!currentMember.modalImageFile
+    );
+    const requestClose = () => {
+        if (isLoading) return;
+        if (dirty) setShowDiscard(true);
+        else onClose();
+    };
+
+    // Esc ปิดหน้าต่าง (กล่องถามยืนยันฟัง Esc เอง จึงไม่ปิดโมดัลหลักซ้อนตามไปด้วย)
     useEffect(() => {
         if (!isOpen) return;
-        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        const onKey = (e) => {
+            if (e.key !== 'Escape' || showDiscard || showDeleteConfirm) return;
+            requestClose();
+        };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [isOpen, onClose]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, onClose, dirty, showDiscard, showDeleteConfirm, isLoading]);
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-gray-100 flex flex-col">
+            <div className="bg-white w-full max-w-lg max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-gray-100 flex flex-col">
 
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
@@ -292,13 +346,19 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                     {/* type="button" สำคัญ: <button> ที่ไม่ระบุ type จะเป็น submit โดยปริยาย
                         ตอนนี้ปุ่มปิดอยู่นอก <form> เลยยังไม่พัง แต่ถ้าย้ายมาร์กอัปเมื่อไหร่
                         การกดกากบาทจะกลายเป็นการบันทึกทันที */}
-                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
+                    <button type="button" onClick={requestClose} aria-label="ปิด" className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1">
+                    {addedNote && (
+                        <div role="status" data-testid="added-note" className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">
+                            <Check className="h-4 w-4 shrink-0" />
+                            <span>{addedNote}</span>
+                        </div>
+                    )}
                     {error && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 animate-shake">
                             <AlertCircle className="w-5 h-5 shrink-0" />
@@ -357,6 +417,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                 <input
                                     type="text"
                                     name="name"
+                                    ref={nameRef}
                                     value={currentMember.name}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
@@ -486,15 +547,27 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         )}
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap justify-end gap-2 sm:gap-3">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={requestClose}
                             disabled={isLoading}
                             className="px-4 py-2 rounded-xl text-gray-700 font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
                         >
                             ยกเลิก
                         </button>
+                        {!focusMemberId && (
+                            <button
+                                type="button"
+                                onClick={(e) => handleSubmit(e, { keepOpen: true })}
+                                disabled={isLoading}
+                                data-testid="save-and-next"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#8A2680]/40 bg-white text-[#8A2680] font-medium hover:bg-[#8A2680]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Plus className="w-4 h-4" />
+                                บันทึกและเพิ่มคนถัดไป
+                            </button>
+                        )}
                         <button
                             onClick={handleSubmit}
                             disabled={isLoading}
@@ -507,6 +580,11 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 </div>
 
             </div>
+            <DiscardChangesDialog
+                isOpen={showDiscard}
+                onKeepEditing={() => setShowDiscard(false)}
+                onDiscard={() => { setShowDiscard(false); onClose(); }}
+            />
             <ConfirmModal
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}

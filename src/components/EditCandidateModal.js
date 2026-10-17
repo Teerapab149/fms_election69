@@ -4,6 +4,7 @@ import { getPath } from "../utils/basePath";
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle, Lock, TriangleAlert } from "lucide-react";
 import useBallotLock from "../hooks/useBallotLock";
+import DiscardChangesDialog from "./DiscardChangesDialog";
 import ConfirmModal from "./ConfirmModal";
 import FormSection from "./FormSection";
 import { SOCIAL_PLATFORMS, normalizeSocial } from "../utils/socialLinks";
@@ -58,6 +59,15 @@ function parsePolicyLines(text) {
         });
 }
 
+// ลายนิ้วมือของค่าในฟอร์ม ใช้เทียบ "ตอนเปิด" กับ "ตอนนี้" เพื่อรู้ว่ามีอะไรแก้ค้างอยู่ไหม
+function formSnapshot(form, soc, imgs) {
+    const keys = ['name', 'number', 'slogan', 'color', 'logoMeaning', 'missions', 'policies'];
+    const socials = Object.entries(soc || {})
+        .filter(([, v]) => String(v ?? '').trim() !== '')
+        .sort(([a], [c]) => a.localeCompare(c));
+    return JSON.stringify([keys.map((k) => String(form?.[k] ?? '')), socials, imgs || []]);
+}
+
 export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdate }) {
     const [formData, setFormData] = useState({
         name: '',
@@ -107,6 +117,8 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
 
     const [isLoading, setIsLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDiscard, setShowDiscard] = useState(false);
+    const initialSnap = useRef(null);
 
     // ถามเซิร์ฟเวอร์ตอนเปิดโมดัล: ถ้ามีบัตรในหีบแล้วหรือรับรองผลแล้ว หมายเลขพรรคแก้ไม่ได้
     // เพิ่มและลบพรรคไม่ได้ ด่านจริงอยู่ที่ ballotBoxGuard ฝั่งเซิร์ฟเวอร์ ตรงนี้บอกล่วงหน้าเฉย ๆ
@@ -154,7 +166,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
 
     useEffect(() => {
         if (candidate) {
-            setFormData({
+            const nextForm = {
                 name: candidate.name || '',
                 number: candidate.number || '',
                 slogan: candidate.slogan || '',
@@ -164,8 +176,11 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 // นโยบายเก็บเป็น [{title, desc}] — .join('\n') เฉย ๆ ได้ "[object Object]"
                 // ออกมาเต็มช่อง และถ้ากดบันทึกต่อคือทับนโยบายจริงทิ้งทั้งหมด (แก้ 2026-07-28)
                 policies: policiesToText(candidate.policies),
-            });
-            setSocials(candidate.socials && typeof candidate.socials === 'object' ? { ...candidate.socials } : {});
+            };
+            const nextSocials = candidate.socials && typeof candidate.socials === 'object' ? { ...candidate.socials } : {};
+            setFormData(nextForm);
+            setSocials(nextSocials);
+            initialSnap.current = formSnapshot(nextForm, nextSocials, normalizeImageUrls(candidate.groupImageUrls || candidate.groupImageUrl));
             setPreviewUrl(candidate.logoUrl || '');
             setSelectedFile(null);
 
@@ -192,15 +207,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             // เรียงตาม id ก่อน เพราะ /api/results ไม่รับประกันลำดับ แต่หน้าพรรคสาธารณะอ่านตาม id
             setMembers(sortMembers([...(candidate.members || [])].sort((a, b) => (a.id ?? 0) - (b.id ?? 0))));
         } else {
-            setFormData({
-                name: '',
-                number: '',
-                slogan: '',
-                color: '',
-                logoMeaning: '',
-                missions: '',
-                policies: ''
-            });
+            const blank = { name: '', number: '', slogan: '', color: '', logoMeaning: '', missions: '', policies: '' };
+            setFormData(blank);
+            initialSnap.current = formSnapshot(blank, {}, []);
             setSocials({});
             setPreviewUrl('');
             setSelectedFile(null);
@@ -222,6 +231,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
         }
         setNewMember({ name: '', studentId: '', position: '', imageFile: null, previewUrl: '' });
         setError(null);
+        setShowDiscard(false);
     }, [candidate, isOpen]);
 
     const handleChange = (e) => {
@@ -443,13 +453,30 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
     };
 
 
+    // มีอะไรแก้ค้างอยู่ไหม (ข้อความ สี social รูปหมู่ที่เอาออก และไฟล์ที่เลือกใหม่) ถ้ามี ปิดต้องถามก่อน
+    const dirty = initialSnap.current !== null && (
+        formSnapshot(formData, socials, existingImages) !== initialSnap.current
+        || !!selectedFile
+        || newGroupFiles.length > 0
+    );
+    const requestClose = () => {
+        if (isLoading) return;
+        if (dirty) setShowDiscard(true);
+        else onClose();
+    };
+
     // Esc ปิดหน้าต่าง — คนที่เปิดผิดใบมักกด Esc ก่อนหาปุ่มยกเลิกเสมอ
     useEffect(() => {
         if (!isOpen) return;
-        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        // กล่องถามยืนยันฟัง Esc เอง (= แก้ต่อ) โมดัลหลักต้องไม่ปิดซ้อนตามไปด้วย
+        const onKey = (e) => {
+            if (e.key !== 'Escape' || showDiscard || showDeleteConfirm) return;
+            requestClose();
+        };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [isOpen, onClose]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, onClose, dirty, showDiscard, showDeleteConfirm, isLoading]);
 
     if (!isOpen) return null;
 
@@ -466,7 +493,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                     </h3>
                     {/* type="button" — ไม่ระบุ = submit โดยปริยาย (ดูหมายเหตุเดียวกันใน
                         EditCandidateMemberModal) */}
-                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
+                    <button type="button" onClick={requestClose} aria-label="ปิด" className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -860,7 +887,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={requestClose}
                             disabled={isLoading}
                             className="px-4 py-2 rounded-xl text-gray-700 font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
                         >
@@ -883,6 +910,12 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                 </div>
 
             </div>
+
+            <DiscardChangesDialog
+                isOpen={showDiscard}
+                onKeepEditing={() => setShowDiscard(false)}
+                onDiscard={() => { setShowDiscard(false); onClose(); }}
+            />
 
             <ConfirmModal
                 isOpen={showDeleteConfirm}

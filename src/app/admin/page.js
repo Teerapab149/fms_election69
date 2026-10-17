@@ -1,7 +1,7 @@
 'use client';
 import { getPath } from "../../utils/basePath";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import CandidateCard from "../../components/CandidateCard";
 import EditCandidateModal from "../../components/EditCandidateModal";
@@ -16,6 +16,8 @@ import SettingsTab from "../../components/admin/SettingsTab";
 import ElectionControl from "../../components/admin/console/ElectionControl";
 import TopBarStatus from "../../components/admin/console/TopBarStatus";
 import { ElectionStateProvider } from "../../components/admin/console/ElectionStateContext";
+import { useToast } from "../../components/admin/console/Toast";
+import { useUnsavedGuard } from "../../components/admin/console/useUnsavedGuard";
 import { Gauge, ShieldCheck, Settings, Palette, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen, Plus, Users, Flag, UserPlus } from "lucide-react";
 import Image from 'next/image';
 
@@ -31,6 +33,7 @@ const CandidatesTab = () => {
 
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', msg: '' });
+  const toast = useToast();
 
   // ballot structure locked (ballots in the box, or certified): the add button stays
   // clickable so the modal can explain why, but it looks and reads as unavailable
@@ -49,6 +52,7 @@ const CandidatesTab = () => {
       if (data.candidates) {
         const sortedCandidates = data.candidates.sort((a, b) => a.id - b.id);
         setCandidates(sortedCandidates);
+        return sortedCandidates;
       }
 
     } catch (err) {
@@ -56,27 +60,30 @@ const CandidatesTab = () => {
     } finally {
       setLoading(false);
     }
+    return null;
   };
 
-  const handleUpdateSuccess = (actionType) => {
-    fetchResults();
+  // opts.keepOpen: the member modal stays open (save and add the next person).
+  // Routine saves show a toast that clears itself; a delete keeps the dialog,
+  // because it is permanent and should be seen.
+  const handleUpdateSuccess = async (actionType, opts) => {
+    const list = await fetchResults();
 
-    let title = "ดำเนินการสำเร็จ";
-    let msg = "ข้อมูลได้ถูกบันทึกเรียบร้อยแล้ว";
-
-    if (actionType === 'DELETE') {
-      title = "ลบข้อมูลสำเร็จ";
-      msg = "ข้อมูลผู้สมัครถูกลบออกจากระบบแล้ว";
-    } else if (actionType === 'CREATE') {
-      title = "เพิ่มข้อมูลสำเร็จ";
-      msg = "เพิ่มผู้สมัครรายใหม่เรียบร้อยแล้ว";
-    } else if (actionType === 'UPDATE') {
-      title = "แก้ไขข้อมูลสำเร็จ";
-      msg = "ข้อมูลผู้สมัครได้รับการอัปเดตแล้ว";
+    if (opts?.keepOpen) {
+      // the modal is still open on the old party object, hand it the fresh one
+      if (list) setSelectedCandidate((prev) => (prev ? (list.find((c) => c.id === prev.id) || prev) : prev));
+      toast.show('บันทึกแล้ว');
+      return;
     }
 
-    setSuccessMessage({ title, msg });
-    setIsSuccessOpen(true);
+    if (actionType === 'DELETE') {
+      setSuccessMessage({ title: 'ลบข้อมูลสำเร็จ', msg: 'ข้อมูลผู้สมัครถูกลบออกจากระบบแล้ว' });
+      setIsSuccessOpen(true);
+    } else if (actionType === 'CREATE') {
+      toast.show('เพิ่มผู้สมัครรายใหม่แล้ว');
+    } else {
+      toast.show('บันทึกการแก้ไขแล้ว');
+    }
   };
 
   const handleEditClick = (candidate = null) => {
@@ -173,6 +180,8 @@ const CandidatesTab = () => {
           )}
         </div>
 
+        {toast.node}
+
         <CompletedActionModal
           isOpen={isSuccessOpen}
           onClose={() => setIsSuccessOpen(false)}
@@ -184,7 +193,7 @@ const CandidatesTab = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           candidate={selectedCandidate}
-          onUpdate={(actionType) => handleUpdateSuccess(actionType)}
+          onUpdate={handleUpdateSuccess}
         />
 
         <EditCandidateMemberModal
@@ -295,6 +304,15 @@ function AdminShell() {
   }, []);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
 
+  // Edits not yet saved in a tab: ask before leaving it. Each tab reports with
+  // setDirty(tabId, bool); only the general settings tab does so far.
+  const guardLabels = { globalConfig: 'ตั้งค่าทั่วไป' };
+  const { setDirty, guard, dialog: unsavedDialog } = useUnsavedGuard(guardLabels);
+  const markGlobalConfigDirty = useCallback((v) => setDirty('globalConfig', v), [setDirty]);
+  const goTab = useCallback((id) => {
+    guard(() => setActiveTab(id));
+  }, [guard]);
+
   // Who is holding this session: asked of the server, not read off the token.
   // A 401/403 means the cookie is gone or the admin flag was taken away since
   // login, and the console has no business staying open: back to the form.
@@ -400,7 +418,7 @@ function AdminShell() {
                     <button
                       type="button"
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => { if (item.id !== activeTab) goTab(item.id); }}
                       title={sidebarCollapsed ? item.label : undefined}
                       aria-current={active ? 'page' : undefined}
                       className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg transition-colors
@@ -422,7 +440,7 @@ function AdminShell() {
         <div className="p-3 border-t border-slate-200">
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => guard(handleLogout)}
             title={sidebarCollapsed ? 'ออกจากระบบ' : undefined}
             aria-label="ออกจากระบบ"
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors ${sidebarCollapsed ? 'md:justify-center md:px-0' : ''}`}
@@ -484,15 +502,16 @@ function AdminShell() {
         </header>
 
         <main className="flex-1 p-4 sm:p-6 md:p-8">
-          {activeTab === 'overview' && <ElectionControl onGoTab={setActiveTab} />}
-          {activeTab === 'globalConfig' && <GlobalConfigTab />}
+          {activeTab === 'overview' && <ElectionControl onGoTab={goTab} />}
+          {activeTab === 'globalConfig' && <GlobalConfigTab onDirtyChange={markGlobalConfigDirty} />}
           {activeTab === 'candidates' && <CandidatesTab />}
           {activeTab === 'pageDesign' && <TemplateChooserTab />}
           {activeTab === 'settings' && <SettingsTab />}
-          {activeTab === 'manual' && <ManualTab onGoTab={setActiveTab} />}
+          {activeTab === 'manual' && <ManualTab onGoTab={goTab} />}
         </main>
       </div>
 
+      {unsavedDialog}
     </div>
   );
 }
