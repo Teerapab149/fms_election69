@@ -24,7 +24,7 @@ export async function POST(request) {
 
         if (!username || !password) {
             return NextResponse.json(
-                { success: false, message: "กรุณากรอก Username และ Password" },
+                { success: false, message: "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน" },
                 { status: 400 }
             );
         }
@@ -56,7 +56,7 @@ export async function POST(request) {
 
         if (!isAllowed) {
             return NextResponse.json(
-                { success: false, message: "คุณไม่มีสิทธิ์เข้าถึง (สำหรับ Admin เท่านั้น)" },
+                { success: false, message: "บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการ" },
                 { status: 403 }
             );
         }
@@ -79,7 +79,7 @@ export async function POST(request) {
         if (!sharedHash && !user.passwordHash) {
             console.error("[admin/login] no admin password is set — run: node scripts/admin.js --rotate-password");
             return NextResponse.json(
-                { success: false, message: "ระบบยังไม่ได้ตั้งรหัสผ่านแอดมิน — ติดต่อผู้ดูแลเซิร์ฟเวอร์" },
+                { success: false, message: "ระบบยังไม่ได้ตั้งรหัสผ่านแอดมิน กรุณาติดต่อผู้ดูแลเซิร์ฟเวอร์" },
                 { status: 500 }
             );
         }
@@ -112,7 +112,7 @@ export async function POST(request) {
         // 5) ออก JWT
         if (!process.env.ADMIN_JWT_SECRET) {
             return NextResponse.json(
-                { success: false, message: "Server misconfig: ADMIN_JWT_SECRET missing" },
+                { success: false, message: "เซิร์ฟเวอร์ตั้งค่าไม่ครบ กรุณาติดต่อผู้ดูแลระบบ" },
                 { status: 500 }
             );
         }
@@ -157,7 +157,7 @@ export async function POST(request) {
     } catch (error) {
         console.error("Login Error:", error);
         return NextResponse.json(
-            { success: false, message: "Server Error" },
+            { success: false, message: "ระบบขัดข้อง กรุณาลองใหม่ภายหลัง" },
             { status: 500 }
         );
     }
