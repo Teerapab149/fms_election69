@@ -24,10 +24,10 @@ export function isBoxClosed({ systemMode = "AUTO", end, now = Date.now() }) {
 export function checkShowResult({ value, systemMode, end, now, certified }) {
   if (value !== true && value !== false) return "ค่าการแสดงผลไม่ถูกต้อง";
   if (certified && value === false) {
-    return "ผลถูกรับรองแล้ว ซ่อนผลไม่ได้ — ผลที่รับรองแล้วต้องแสดงต่อสาธารณะ";
+    return "ผลถูกรับรองแล้ว ซ่อนผลไม่ได้, ผลที่รับรองแล้วต้องแสดงต่อสาธารณะ";
   }
   if (value && !isBoxClosed({ systemMode, end, now })) {
-    return "ยังเปิดแสดงผลไม่ได้ — หีบยังไม่ปิด เปลี่ยนเป็น ENDED หรือรอให้เลยเวลาปิดหีบก่อน แล้วค่อยเปิดแสดงผล";
+    return "ยังเปิดแสดงผลไม่ได้, หีบยังไม่ปิด เปลี่ยนเป็น ENDED หรือรอให้เลยเวลาปิดหีบก่อน แล้วค่อยเปิดแสดงผล";
   }
   return null;
 }
@@ -37,11 +37,11 @@ export function checkSetMode({ mode, showResult, certified, end, now }) {
   if (!valid.includes(mode)) return "โหมดไม่ถูกต้อง";
   // certification is the end of this election (kept from before)
   if (certified && mode !== "ENDED") {
-    return "ผลถูกรับรองแล้ว เปลี่ยนโหมดไม่ได้ — การเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ";
+    return "ผลถูกรับรองแล้ว เปลี่ยนโหมดไม่ได้, การเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ";
   }
   // a published tally with a box that can take votes again
   if (showResult && !isBoxClosed({ systemMode: mode, end, now })) {
-    return "ผลคะแนนกำลังแสดงอยู่ — ปิดการแสดงผลก่อน แล้วจึงเปิดหีบหรือพักระบบได้";
+    return "ผลคะแนนกำลังแสดงอยู่, ปิดการแสดงผลก่อน แล้วจึงเปิดหีบหรือพักระบบได้";
   }
   return null;
 }
@@ -62,7 +62,7 @@ export function checkScheduleChange({
   // certification is the end of this election (as in checkSetMode)
   if (certified) return "ผลถูกรับรองแล้ว แก้วันเวลาเลือกตั้งไม่ได้";
   if (showResult && !isBoxClosed({ systemMode, end: nextEnd, now })) {
-    return "ผลคะแนนกำลังแสดงอยู่ — ซ่อนผลก่อน แล้วจึงแก้วันเวลาให้หีบเปิดอีกครั้งได้";
+    return "ผลคะแนนกำลังแสดงอยู่, ซ่อนผลก่อน แล้วจึงแก้วันเวลาให้หีบเปิดอีกครั้งได้";
   }
   // only once the dates move: a DB that is already inverted can still save its other fields
   if (!(ms(nextEnd) > ms(nextStart))) return "เวลาปิดหีบต้องอยู่หลังเวลาเปิดหีบ";

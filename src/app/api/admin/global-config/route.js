@@ -116,7 +116,7 @@ export async function PUT(request) {
     const attempted = CERTIFICATION_KEYS.filter((k) => k in rest);
     if (attempted.length > 0) {
       return NextResponse.json(
-        { error: `แก้ค่าการรับรองผลที่นี่ไม่ได้ (${attempted.join(", ")}) — การรับรองผลทำได้เฉพาะบัญชีเจ้าหน้าที่คณะผ่านหน้าแดชบอร์ด` },
+        { error: `แก้ค่าการรับรองผลที่นี่ไม่ได้ (${attempted.join(", ")}), การรับรองผลทำได้เฉพาะบัญชีเจ้าหน้าที่คณะผ่านหน้าแดชบอร์ด` },
         { status: 403 }
       );
     }
@@ -154,7 +154,7 @@ export async function PUT(request) {
         });
         if (unreadable.length > 0) {
           change = { raw: Object.fromEntries(unreadable.map((k) => [k, merged[k]])) };
-          throw new GuardError("อ่านวันเวลาเปิดหีบหรือปิดหีบไม่ออก — เลือกวันเวลาใหม่จากช่องในฟอร์ม", 400);
+          throw new GuardError("อ่านวันเวลาเปิดหีบหรือปิดหีบไม่ออก, เลือกวันเวลาใหม่จากช่องในฟอร์ม", 400);
         }
 
         // Compare the RESOLVED instants, not the raw strings: "2026-02-06T08:30"

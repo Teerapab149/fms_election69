@@ -49,7 +49,7 @@ export async function GET(request) {
         group,
         level: "fail",
         title,
-        detail: `ตรวจไม่ได้ — ${e?.message || "เกิดข้อผิดพลาด"}`,
+        detail: `ตรวจไม่ได้, ${e?.message || "เกิดข้อผิดพลาด"}`,
       });
     }
   }
@@ -73,12 +73,12 @@ export async function GET(request) {
     if (ELECTION_END <= ELECTION_START) {
       return {
         level: "fail",
-        detail: `เวลาปิดหีบ (${whenText(ELECTION_END)}) มาก่อนหรือเท่ากับเวลาเปิดหีบ (${whenText(ELECTION_START)}) — ระบบจะไม่เปิดตามที่ตั้งใจ ต้องแก้ที่แท็บตั้งค่าทั่วไป`,
+        detail: `เวลาปิดหีบ (${whenText(ELECTION_END)}) มาก่อนหรือเท่ากับเวลาเปิดหีบ (${whenText(ELECTION_START)}), ระบบจะไม่เปิดตามที่ตั้งใจ ต้องแก้ที่แท็บตั้งค่าทั่วไป`,
       };
     }
     return {
       level: "pass",
-      detail: `เปิดหีบ ${whenText(ELECTION_START)} → ปิดหีบ ${whenText(ELECTION_END)}`,
+      detail: `เปิดหีบ ${whenText(ELECTION_START)} ถึง ปิดหีบ ${whenText(ELECTION_END)}`,
     };
   });
 
@@ -87,7 +87,7 @@ export async function GET(request) {
     if (CAMPAIGN_START > ELECTION_START) {
       return {
         level: "warn",
-        detail: `เวลาเปิดตัวผู้สมัคร (${whenText(CAMPAIGN_START)}) อยู่หลังเวลาเปิดหีบ (${whenText(ELECTION_START)}) — ผู้มีสิทธิ์อาจยังไม่เห็นผู้สมัครตอนเริ่มลงคะแนน`,
+        detail: `เวลาเปิดตัวผู้สมัคร (${whenText(CAMPAIGN_START)}) อยู่หลังเวลาเปิดหีบ (${whenText(ELECTION_START)}), ผู้มีสิทธิ์อาจยังไม่เห็นผู้สมัครตอนเริ่มลงคะแนน`,
       };
     }
     return {
@@ -111,7 +111,7 @@ export async function GET(request) {
       level: "warn",
       detail: `ยังไม่ได้ตั้ง/ค่าไม่ถูกต้อง ${missing.length} ช่อง (${missing
         .map((m) => m.label)
-        .join(", ")}) — ระบบจะใช้ค่าเริ่มต้นในโค้ดแทน แนะนำให้ตั้งที่แท็บตั้งค่าทั่วไป`,
+        .join(", ")}), ระบบจะใช้ค่าเริ่มต้นในโค้ดแทน แนะนำให้ตั้งที่แท็บตั้งค่าทั่วไป`,
     };
   });
 
@@ -120,7 +120,7 @@ export async function GET(request) {
     if (ELECTION_END.getTime() < now && systemMode === "AUTO") {
       return {
         level: "warn",
-        detail: `เวลาปิดหีบ (${whenText(ELECTION_END)}) ผ่านไปแล้วและโหมดเป็น AUTO — ระบบจะแสดงสถานะปิดทันทีที่เปิดหน้าเว็บ`,
+        detail: `เวลาปิดหีบ (${whenText(ELECTION_END)}) ผ่านไปแล้วและโหมดเป็น AUTO, ระบบจะแสดงสถานะปิดทันทีที่เปิดหน้าเว็บ`,
       };
     }
     if (ELECTION_START.getTime() > now) {
@@ -141,7 +141,7 @@ export async function GET(request) {
       if (ELECTION_END.getTime() < now) {
         return {
           level: "warn",
-          detail: `โหมด MANUAL_OPEN (บังคับเปิด) ทั้งที่เลยเวลาปิดหีบ (${whenText(ELECTION_END)}) ไปแล้ว — ตรวจสอบว่ายังต้องการเปิดรับคะแนนอยู่หรือไม่`,
+          detail: `โหมด MANUAL_OPEN (บังคับเปิด) ทั้งที่เลยเวลาปิดหีบ (${whenText(ELECTION_END)}) ไปแล้ว, ตรวจสอบว่ายังต้องการเปิดรับคะแนนอยู่หรือไม่`,
         };
       }
       return { level: "pass", detail: "โหมด MANUAL_OPEN (บังคับเปิดรับคะแนน)" };
@@ -149,13 +149,13 @@ export async function GET(request) {
     if (systemMode === "PAUSE") {
       return {
         level: "warn",
-        detail: "โหมด PAUSE (ระงับชั่วคราว) กำลังทำงานอยู่ — ผู้มีสิทธิ์จะลงคะแนนไม่ได้จนกว่าจะเปลี่ยนโหมด",
+        detail: "โหมด PAUSE (ระงับชั่วคราว) กำลังทำงานอยู่, ผู้มีสิทธิ์จะลงคะแนนไม่ได้จนกว่าจะเปลี่ยนโหมด",
       };
     }
     if (systemMode === "ENDED") {
-      return { level: "pass", detail: "โหมด ENDED — ปิดการเลือกตั้งอย่างเป็นทางการแล้ว" };
+      return { level: "pass", detail: "โหมด ENDED, ปิดการเลือกตั้งอย่างเป็นทางการแล้ว" };
     }
-    return { level: "pass", detail: "โหมด AUTO — ระบบตัดสินเปิด/ปิดตามเวลาที่ตั้งไว้" };
+    return { level: "pass", detail: "โหมด AUTO, ระบบตัดสินเปิด/ปิดตามเวลาที่ตั้งไว้" };
   });
 
   // 6) candidates.exist — มีพรรคจริง (number>0) อย่างน้อย 1
@@ -174,7 +174,7 @@ export async function GET(request) {
     if (!candidates) throw new Error("อ่านข้อมูลพรรคไม่ได้");
     const real = candidates.filter((c) => c.number > 0);
     if (real.length === 0) {
-      return { level: "fail", detail: "ยังไม่มีพรรคผู้สมัคร (เบอร์มากกว่า 0) ในระบบ — เพิ่มพรรคก่อนเปิดเลือกตั้ง" };
+      return { level: "fail", detail: "ยังไม่มีพรรคผู้สมัคร (เบอร์มากกว่า 0) ในระบบ, เพิ่มพรรคก่อนเปิดเลือกตั้ง" };
     }
     return { level: "pass", detail: `มีพรรคผู้สมัคร ${real.length} พรรค` };
   });
@@ -191,7 +191,7 @@ export async function GET(request) {
       if (!hasAbstain) {
         return {
           level: "fail",
-          detail: `มีพรรคจริง ${real.length} พรรค แต่ไม่มีตัวเลือก งดออกเสียง (เบอร์ 0) — บัตรลงคะแนนยังใช้งานไม่ได้`,
+          detail: `มีพรรคจริง ${real.length} พรรค แต่ไม่มีตัวเลือก งดออกเสียง (เบอร์ 0), บัตรลงคะแนนยังใช้งานไม่ได้`,
         };
       }
       return {
@@ -202,7 +202,7 @@ export async function GET(request) {
     if (!hasDisapprove) {
       return {
         level: "fail",
-        detail: "มีพรรคจริงเพียงพรรคเดียวแต่ไม่มีตัวเลือก ไม่รับรอง (เบอร์ -1) — ผิดกติกาการเลือกตั้งพรรคเดียว ต้องเพิ่มก่อนเปิดหีบ",
+        detail: "มีพรรคจริงเพียงพรรคเดียวแต่ไม่มีตัวเลือก ไม่รับรอง (เบอร์ -1), ผิดกติกาการเลือกตั้งพรรคเดียว ต้องเพิ่มก่อนเปิดหีบ",
       };
     }
     if (!hasAbstain) {
@@ -231,7 +231,7 @@ export async function GET(request) {
     if (issues.length === 0) {
       return { level: "pass", detail: `ทุกพรรค (${real.length}) มีสมาชิกและโลโก้ครบ` };
     }
-    return { level: "warn", detail: `พรรคที่ข้อมูลยังไม่ครบ — ${issues.join(", ")}` };
+    return { level: "warn", detail: `พรรคที่ข้อมูลยังไม่ครบ, ${issues.join(", ")}` };
   });
 
   // 9) voters — จำนวนผู้มีสิทธิ์ (ปี 1-4) > 0
@@ -239,7 +239,7 @@ export async function GET(request) {
   await run("voters", "voters", "รายชื่อผู้มีสิทธิ์เลือกตั้ง", async () => {
     const count = await db.user.count({ where: { year: { in: validYears } } });
     if (count === 0) {
-      return { level: "fail", detail: "ยังไม่มีผู้มีสิทธิ์เลือกตั้ง (นักศึกษาปี 1-4) ในระบบ — นำเข้ารายชื่อก่อนเปิดหีบ" };
+      return { level: "fail", detail: "ยังไม่มีผู้มีสิทธิ์เลือกตั้ง (นักศึกษาปี 1-4) ในระบบ, นำเข้ารายชื่อก่อนเปิดหีบ" };
     }
     return { level: "pass", detail: `มีผู้มีสิทธิ์เลือกตั้ง ${count.toLocaleString("th-TH")} คน` };
   });
@@ -257,10 +257,10 @@ export async function GET(request) {
     if (!allEqual) {
       return {
         level: "fail",
-        detail: `ตัวเลขไม่ตรงกัน — ${detail} (ควรเท่ากันทั้งสาม รวมงดออกเสียง/ไม่รับรอง)`,
+        detail: `ตัวเลขไม่ตรงกัน, ${detail} (ควรเท่ากันทั้งสาม รวมงดออกเสียง/ไม่รับรอง)`,
       };
     }
-    return { level: "pass", detail: `ตรงกันทั้งสาม — ${detail}` };
+    return { level: "pass", detail: `ตรงกันทั้งสาม, ${detail}` };
   });
 
   // 11a) config.googleForm — ลิงก์แบบประเมินผล
@@ -276,7 +276,7 @@ export async function GET(request) {
     if (cfg?.showResult && systemMode !== "ENDED") {
       return {
         level: "warn",
-        detail: `เปิดแสดงผลคะแนนอยู่ทั้งที่โหมดยังเป็น ${systemMode} (ยังไม่ ENDED) — ผลอาจรั่วก่อนปิดหีบ`,
+        detail: `เปิดแสดงผลคะแนนอยู่ทั้งที่โหมดยังเป็น ${systemMode} (ยังไม่ ENDED), ผลอาจรั่วก่อนปิดหีบ`,
       };
     }
     return {
@@ -300,7 +300,7 @@ export async function GET(request) {
     }
     return {
       level: "warn",
-      detail: `ธีมที่ตั้งไว้ "${id}" ไม่พบในระบบ — หน้าเว็บจะถอยไปใช้ธีม classic แทน`,
+      detail: `ธีมที่ตั้งไว้ "${id}" ไม่พบในระบบ, หน้าเว็บจะถอยไปใช้ธีม classic แทน`,
     };
   });
 
@@ -319,7 +319,7 @@ export async function GET(request) {
       return {
         level: "fail",
         detail:
-          "เซิร์ฟเวอร์นี้ยังเปิดเส้นทางเข้าสู่ระบบจำลองอยู่ (mock-login provider ถูกลงทะเบียนจริง) — ใครที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน" +
+          "เซิร์ฟเวอร์นี้ยังเปิดเส้นทางเข้าสู่ระบบจำลองอยู่ (mock-login provider ถูกลงทะเบียนจริง), ใครที่รู้ URL callback ของ NextAuth เข้าสู่ระบบเป็นนักศึกษาคนใดก็ได้โดยไม่ต้องใช้รหัสผ่าน" +
           " ปกติของเครื่องนักพัฒนา (dev server) และไม่ต้องแก้อะไรถ้านี่คือเครื่องพัฒนา" +
           " เส้นทางนี้ปิดเองอัตโนมัติเมื่อรันเป็น production build (NODE_ENV=production) จึงไม่มีสวิตช์ให้กดปิดในหน้านี้ ถ้าเครื่องนี้คือเซิร์ฟเวอร์ที่จะใช้วันเลือกตั้งจริง ให้ deploy ด้วย production build ก่อนเปิดให้นักศึกษาใช้ แล้วผลตรวจข้อนี้จะเขียวเอง",
       };
@@ -327,7 +327,7 @@ export async function GET(request) {
     return {
       level: "pass",
       detail:
-        "ปิดการเข้าสู่ระบบจำลองสนิท — provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ ปุ่มบนหน้า login จึงไม่แสดงตามไปด้วย (ใช้ PSU SSO จริงเท่านั้น)",
+        "ปิดการเข้าสู่ระบบจำลองสนิท, provider ไม่ถูกลงทะเบียนบนเซิร์ฟเวอร์นี้ ปุ่มบนหน้า login จึงไม่แสดงตามไปด้วย (ใช้ PSU SSO จริงเท่านั้น)",
     };
   });
 
@@ -344,7 +344,7 @@ export async function GET(request) {
       return {
         level: "fail",
         detail:
-          `เขียนไฟล์ลง ${UPLOAD_ROOT} ไม่ได้ (${e.code || e.message}) — อัปโหลดรูปจะล้มเหลวทั้งหมด` +
+          `เขียนไฟล์ลง ${UPLOAD_ROOT} ไม่ได้ (${e.code || e.message}), อัปโหลดรูปจะล้มเหลวทั้งหมด` +
           " ให้ผู้ดูแลสร้างโฟลเดอร์นี้และให้สิทธิ์เขียนแก่ผู้ใช้ที่รันแอป",
       };
     }
@@ -352,7 +352,7 @@ export async function GET(request) {
       return {
         level: "warn",
         detail:
-          `เก็บรูปไว้ใน ${UPLOAD_ROOT} ซึ่งอยู่ในโฟลเดอร์ซอร์สของแอป — เขียนได้ปกติ แต่การ deploy ที่สร้างโฟลเดอร์ใหม่ (คัดลอก public, clone ใหม่, git clean) จะลบรูปที่อัปโหลดไว้ทั้งหมด` +
+          `เก็บรูปไว้ใน ${UPLOAD_ROOT} ซึ่งอยู่ในโฟลเดอร์ซอร์สของแอป, เขียนได้ปกติ แต่การ deploy ที่สร้างโฟลเดอร์ใหม่ (คัดลอก public, clone ใหม่, git clean) จะลบรูปที่อัปโหลดไว้ทั้งหมด` +
           " ตั้ง UPLOAD_ROOT ให้ชี้ไปไดเรกทอรีนอกซอร์ส แล้วย้ายไฟล์เดิมตามไปเพื่อให้รอดทุกรอบ deploy",
       };
     }

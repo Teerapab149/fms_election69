@@ -102,7 +102,7 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
     return {
       level: "warn",
       detail:
-        "ยังไม่พบประวัติ backup บนเซิร์ฟเวอร์นี้ — " +
+        "ยังไม่พบประวัติ backup บนเซิร์ฟเวอร์นี้, " +
         ANY_SCHEDULER_LOGS +
         " ถ้ามีตัวตั้งเวลารันอยู่แล้วแต่ยังไม่เห็นผล ให้ตรวจว่าเว็บอ่านโฟลเดอร์ backups/status ที่เดียวกับที่ backup เขียน (ตั้ง BACKUP_STATUS_DIR ใน .env ของแอปได้)" +
         " ถ้าใช้ฐานข้อมูลของคณะและเจ้าหน้าที่ฐานข้อมูล (DBA) สำรองให้อยู่แล้ว ข้อนี้ข้ามได้" +
@@ -129,9 +129,9 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
   const checkLogs = where ? `ดู ${RUNNERS[where].logs}` : ANY_SCHEDULER_LOGS;
   const lateText =
     ageLevel === "warn"
-      ? ` — เลยรอบที่ตั้งไว้ (ทุก ${intervalH} ชม.) แล้ว ${checkLogs}`
+      ? `, เลยรอบที่ตั้งไว้ (ทุก ${intervalH} ชม.) แล้ว ${checkLogs}`
       : ageLevel === "fail"
-        ? ` — เก่าเกิน 2 รอบ (ทุก ${intervalH} ชม.) แล้ว backup อัตโนมัติน่าจะหยุดทำงาน ${checkLogs}`
+        ? `, เก่าเกิน 2 รอบ (ทุก ${intervalH} ชม.) แล้ว backup อัตโนมัติน่าจะหยุดทำงาน ${checkLogs}`
         : "";
 
   // ── รอบล่าสุดล้ม ─────────────────────────────────────────────────────────────
@@ -146,13 +146,13 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
         level: ageLevel === "fail" ? "fail" : "warn",
         detail:
           `${okText}${lateText} แต่การคัดลอกออกนอกเครื่องรอบ ${failWhen} ไม่สำเร็จ (${reason})` +
-          " — backup ในเครื่องยังใช้ได้ แต่ถ้าดิสก์เครื่องนี้เสียจะไม่มีสำเนาอื่น" +
+          ", backup ในเครื่องยังใช้ได้ แต่ถ้าดิสก์เครื่องนี้เสียจะไม่มีสำเนาอื่น" +
           unreadableNote,
       };
     }
     return {
       level: "fail",
-      detail: `backup รอบล่าสุด ${failWhen} ล้มเหลว: ${reason} — ${okText}${unreadableNote}`,
+      detail: `backup รอบล่าสุด ${failWhen} ล้มเหลว: ${reason}, ${okText}${unreadableNote}`,
     };
   }
 
