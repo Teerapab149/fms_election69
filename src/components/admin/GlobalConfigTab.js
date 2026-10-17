@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { GLOBAL_CONFIG_FIELDS, GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { DERIVED, isCustom, applyDerived } from "../../utils/globalConfigDerive.mjs";
-import { setupChecklist, thaiDuration } from "../../utils/setupChecklist.mjs";
+import { setupChecklist, thaiDuration, thaiShortDateTime } from "../../utils/setupChecklist.mjs";
 import ThaiDateTimeField from "./ThaiDateTimeField";
 import { getPath } from "../../utils/basePath";
 import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
@@ -16,7 +16,7 @@ import { parseBangkok } from "../../utils/electionConfig";
 import { evaluationPromptText } from "../../utils/activityHours";
 
 // ตั้งค่าทั่วไป = the election's DATA (names, years, dates, poster, form link).
-// Commanding the system (modes, showing results, certifying) is ตั้งค่าระบบ's
+// Commanding the system (modes, showing results, certifying) is ศูนย์ควบคุม's
 // job and deliberately not here: saving this form never opens or closes polls.
 //
 // Layout: the things set again every year come first as a checklist — what each
@@ -119,6 +119,32 @@ function deriveElectionName(cfg) {
     .map((v) => String(v ?? "").trim())
     .filter(Boolean)
     .join(" ");
+}
+
+// ปัญหาของแถว "วันเวลาเลือกตั้ง" ทั้งหมดที่ตรวจเจอ เรียงจากสำคัญสุดไปน้อยสุด
+// (setupChecklist.mjs บอกได้แค่ข้อแรกที่เจอ เลยเคยแสดงเหตุผลอื่นแทนที่วันผ่านไปแล้ว)
+// err = ผิดแน่ ๆ, warn = ควรตรวจ อาจตั้งใจก็ได้
+function scheduleIssues(cfg, now = new Date()) {
+  const c = parseBangkok(cfg?.campaignStartAt);
+  const s = parseBangkok(cfg?.electionStartAt);
+  const e = parseBangkok(cfg?.electionEndAt);
+  const out = [];
+  if (!s || !e) return out;
+  if (e <= now) {
+    out.push({ level: "err", label: "ผ่านไปแล้ว", text: `วันปิดหีบ (${thaiShortDateTime(e)}) ผ่านไปแล้ว ถ้ากำลังเตรียมการเลือกตั้งรอบใหม่ ต้องตั้งวันเปิดและปิดหีบใหม่` });
+  }
+  if (e <= s) out.push({ level: "err", label: "ปิดหีบก่อนเปิดหีบ", text: "วันปิดหีบอยู่ก่อนหรือตรงกับวันเปิดหีบ" });
+  if (c && c > s) out.push({ level: "err", label: "เปิดตัวผู้สมัครหลังเปิดหีบ", text: "วันเปิดตัวผู้สมัครอยู่หลังวันเปิดหีบ นักศึกษาจะยังไม่ทันเห็นผู้สมัครก่อนลงคะแนน" });
+  if (!c && out.length === 0) out.push({ level: "warn", label: "ยังไม่ตั้งวันเปิดตัวผู้สมัคร", text: "ยังไม่ได้ตั้งวันเปิดตัวผู้สมัคร" });
+  // ปีการศึกษาไทยเริ่มราวเดือนมิถุนายน การเลือกตั้งประจำปีการศึกษา X มักจัดในปี พ.ศ. X ถึง X+1
+  const academic = Number(cfg?.academicYearTh);
+  if (Number.isFinite(academic) && academic > 0) {
+    const electionYear = new Date(s.getTime() + 7 * 3600 * 1000).getUTCFullYear() + 543;
+    if (electionYear < academic || electionYear > academic + 1) {
+      out.push({ level: "warn", label: "ปีไม่ตรงกับปีการศึกษา", text: `วันเปิดหีบอยู่ในปี พ.ศ. ${electionYear} แต่ตั้งปีการศึกษา ${academic} (ปกติจะจัดในปี พ.ศ. ${academic} ถึง ${academic + 1}) ควรตรวจว่าตั้งปีถูกแล้ว` });
+    }
+  }
+  return out;
 }
 
 const INPUT = "w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-[#8A2680] focus:ring-2 focus:ring-[#8A2680]/15 focus:outline-none text-sm text-slate-800 transition-colors";
@@ -312,7 +338,20 @@ export default function GlobalConfigTab() {
     );
   }
 
-  const list = setupChecklist(view, new Date());
+  const now = new Date();
+  const base = setupChecklist(view, now);
+  const issues = { schedule: scheduleIssues(view, now) };
+  const list = (() => {
+    const items = base.items.map((item) => {
+      const found = issues[item.key];
+      if (!found || found.length === 0) return item;
+      const level = found.some((i) => i.level === "err") ? "err" : "warn";
+      // ข้อที่สำคัญสุดขึ้นเป็นป้ายสถานะ ที่เหลือแสดงเป็นรายการใต้แถว
+      return { ...item, tone: level, status: found[0].label };
+    });
+    return { items, total: items.length, ready: items.filter((i) => i.tone === "ok" || i.tone === "none").length };
+  })();
+  const pastEnd = issues.schedule.find((i) => i.label === "ผ่านไปแล้ว");
   const wordmark = deriveElectionName(view);
 
   // a key assembled from other fields: the result, and the way to take it over.
@@ -333,7 +372,7 @@ export default function GlobalConfigTab() {
               onChange={(e) => (FIELD[k]?.type === "number" ? setNumber(k, e.target.value) : set(k, e.target.value))} />
             <button type="button" onClick={() => setManualKey(k, false)}
               className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-[#8A2680] hover:underline">
-              <Wand2 className="w-3.5 h-3.5" /> ให้ระบบประกอบให้ ({String(applyDerived(config)[k] ?? "").trim() || "—"})
+              <Wand2 className="w-3.5 h-3.5" /> ให้ระบบประกอบให้ ({String(applyDerived(config)[k] ?? "").trim() || "ยังไม่ตั้ง"})
             </button>
           </>
         ) : (
@@ -440,7 +479,7 @@ export default function GlobalConfigTab() {
             <p className="lg:col-span-3 text-[13px] text-slate-600">เปิดรับลงคะแนน <b>{thaiDuration(e - s)}</b></p>
           )}
           <p className="lg:col-span-3 text-xs text-slate-500">
-            โหมด AUTO เปิด-ปิดหีบตามเวลานี้ การสั่งเปิด-ปิดด้วยมืออยู่ที่เมนู ตั้งค่าระบบ
+            โหมด AUTO เปิด-ปิดหีบตามเวลานี้ การสั่งเปิด-ปิดด้วยมืออยู่ที่เมนู ศูนย์ควบคุม
           </p>
         </div>
       );
@@ -465,14 +504,14 @@ export default function GlobalConfigTab() {
     ),
   };
 
-  const orgSummary = [view.campaignTitle, view.organizationName, `${view.facultyShortEn || "—"}@${view.university || "—"}`]
+  const orgSummary = [view.campaignTitle, view.organizationName, `${view.facultyShortEn || "ยังไม่ตั้ง"}@${view.university || "ยังไม่ตั้ง"}`]
     .map((x) => String(x ?? "").trim()).filter(Boolean).join(", ");
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-28">
       <div className="mb-6">
         <h2 className="text-2xl font-black text-slate-800">ตั้งค่าทั่วไป</h2>
-        <p className="text-sm text-slate-500 mt-1">ข้อมูลของการเลือกตั้งที่แสดงบนเว็บ การสั่งเปิด-ปิดระบบอยู่ที่เมนู ตั้งค่าระบบ</p>
+        <p className="text-sm text-slate-500 mt-1">ข้อมูลของการเลือกตั้งที่แสดงบนเว็บ การสั่งเปิด-ปิดระบบอยู่ที่เมนู ศูนย์ควบคุม</p>
       </div>
 
       {error && (
@@ -483,6 +522,20 @@ export default function GlobalConfigTab() {
               เปิดหน้าเข้าสู่ระบบผู้ดูแลในแท็บใหม่
             </a>
           )}
+        </div>
+      )}
+
+      {pastEnd && (
+        <div role="alert" data-testid="past-election-banner" className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
+          <div className="min-w-0 text-sm text-red-900">
+            <p className="font-bold">ค่าที่ตั้งไว้ยังเป็นของการเลือกตั้งที่จบไปแล้ว</p>
+            <p className="mt-0.5 leading-relaxed">{pastEnd.text}</p>
+            <button type="button" onClick={() => setOpen((prev) => new Set(prev).add("schedule"))}
+              className="mt-2 inline-flex items-center gap-1 text-[13px] font-bold underline underline-offset-2 hover:text-red-700">
+              เปิดแถววันเวลาเลือกตั้งเพื่อแก้
+            </button>
+          </div>
         </div>
       )}
 
@@ -520,6 +573,18 @@ export default function GlobalConfigTab() {
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${t.chip}`}>{item.status}</span>
                   <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden />
                 </button>
+                {issues[item.key]?.length > 0 && (
+                  <ul className="px-6 pb-4 -mt-1 sm:pl-[60px] space-y-1.5" data-testid={`issues-${item.key}`}>
+                    {issues[item.key].map((it) => (
+                      <li key={it.label} className={`flex items-start gap-1.5 text-[13px] leading-relaxed ${it.level === "err" ? "text-red-700" : "text-amber-700"}`}>
+                        {it.level === "err"
+                          ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                          : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}
+                        <span>{it.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {isOpen && <div className="px-6 pb-6 pt-1 sm:pl-[60px]">{EDITORS[item.key]}</div>}
               </li>
             );
@@ -571,7 +636,7 @@ export default function GlobalConfigTab() {
                 <>
                   <span className="py-2">©</span>{slot("facultyShortEn", "อักษรย่อคณะ")}
                   <span className="py-2">@</span>{slot("university", "มหาวิทยาลัย")}
-                  <span className="py-2 text-slate-500">{String(view.copyrightYear ?? "").trim() || "—"}. All Rights Reserved.</span>
+                  <span className="py-2 text-slate-500">{String(view.copyrightYear ?? "").trim() || "ยังไม่ตั้งปี"}. All Rights Reserved.</span>
                 </>
               ),
               where: "ท้ายทุกหน้า ปีตั้งที่ \"ครั้งที่และปีการศึกษา\" ด้านบน",
