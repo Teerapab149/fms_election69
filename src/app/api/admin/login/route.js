@@ -94,10 +94,26 @@ export async function POST(request) {
         // password is lost, so it must not depend on it either.
         //
         // Locked out of a personal password? scripts/admin.js --clear-personal
-        // drops them all back to the shared one.
+        // drops them all back to the shared one — except for STAFF, below.
+        //
+        // STAFF is the role that certifies a result, so the rule above has to
+        // hold structurally and not merely because every script that touches
+        // passwordHash remembers to skip this account. It did not: until
+        // 2026-10-19 --clear-personal cleared every hash with no role filter,
+        // and a STAFF account with a null hash fell through to the shared
+        // committee password here, handing the whole committee the signature
+        // this account exists to keep separate. The script skips STAFF now;
+        // this refusal is the backstop for a row that already lost its hash,
+        // or that someone edits in the database by hand.
         let ok = false;
         if (user.passwordHash) {
             ok = await bcrypt.compare(String(password), user.passwordHash);
+        } else if (user.role === "STAFF") {
+            console.error(`[admin/login] STAFF account ${user.studentId} has no personal password; refusing the shared one. Re-run: node scripts/admin.js --create-staff ${user.studentId} --name "<ชื่อ>"`);
+            return NextResponse.json(
+                { success: false, message: "บัญชีเจ้าหน้าที่นี้ยังไม่ได้ตั้งรหัสของตัวเอง และใช้รหัสกลางของกรรมการเข้าไม่ได้ กรุณาติดต่อผู้ดูแลเซิร์ฟเวอร์ให้ตั้งรหัสให้ใหม่" },
+                { status: 403 }
+            );
         } else if (sharedHash) {
             ok = await bcrypt.compare(String(password), sharedHash);
         }
