@@ -34,23 +34,22 @@ const POSITION_ORDER = [
   "ประธานฝ่ายสถานที่", "ประธานฝ่ายสาธารณสุข"
 ];
 
-// ✅ PREPARE DATA HELPER
-// ฟังก์ชันนี้จะตรวจสอบข้อมูลจาก DB ว่ามีไหม ถ้าไม่มีให้ใส่ Default Text เพื่อไม่ให้หน้าเว็บโล่ง
+// ทำให้รูปร่างข้อมูลแน่นอนก่อนส่งให้ธีม: array เป็น array เสมอ ข้อความว่างเป็น null เสมอ
+// ธีมจะได้ `.map()` และเช็ค falsy ได้โดยไม่ต้องระวังว่า DB ส่งอะไรมา
+//
+// เมื่อก่อนตรงนี้ยัดข้อความอย่าง "ยังไม่มีข้อมูลนโยบาย" ลงไปเป็นสมาชิกตัวแรกของ array
+// เพื่อไม่ให้หน้าเว็บโล่ง แล้วปล่อยให้แต่ละธีมกรองทิ้งเอง ผลคือ 7 ใน 12 หน้าพรรคไม่ได้กรอง
+// แล้วพิมพ์ข้อความนั้นออกมาเป็นนโยบายจริงข้อหนึ่ง นับรวมเป็นจำนวนนโยบายด้วย (หน้า candidates
+// อ่านจาก API ตรง ๆ จึงขึ้น 0 ส่วนหน้าพรรคขึ้น 1 ของพรรคเดียวกัน) ทุกธีมมีด่านของตัวเอง
+// ที่ซ่อนหัวข้อเมื่อไม่มีเนื้อหาอยู่แล้ว ด่านนั้นแค่ถูกป้อนข้อมูลปลอมเข้าไป
+// ถ้าอยากให้ช่องว่างมีคำอธิบาย ต้องเป็นหน้าที่ของธีม ไม่ใช่เอาไปปนกับข้อมูลของพรรค
 const preparePartyData = (party) => {
+  const text = (v) => (typeof v === "string" && v.trim() ? v : null);
   return {
     ...party,
-    // 1. ความหมายโลโก้ (Text)
-    logoMeaning: party.logoMeaning || "ยังไม่มีข้อมูลความหมายสัญลักษณ์",
-
-    // 2. พันธกิจ (JSON Array) -> ตรวจสอบว่าเป็น Array จริงไหม
-    missions: (Array.isArray(party.missions) && party.missions.length > 0)
-      ? party.missions
-      : ["ยังไม่มีข้อมูลพันธกิจ"],
-
-    // 3. นโยบาย (JSON Array) -> ตรวจสอบว่าเป็น Array จริงไหม
-    policies: (Array.isArray(party.policies) && party.policies.length > 0)
-      ? party.policies
-      : ["ยังไม่มีข้อมูลนโยบาย"]
+    logoMeaning: text(party.logoMeaning),
+    missions: Array.isArray(party.missions) ? party.missions : [],
+    policies: Array.isArray(party.policies) ? party.policies : [],
   };
 };
 
