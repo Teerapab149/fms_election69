@@ -235,7 +235,7 @@ export default function ThaiDateTimeField({ id, value, onChange, defaultTime = {
             </span>
             <span className="text-sm text-slate-600">น.</span>
           </div>
-          <p className="mt-1.5 text-right text-[11px] text-slate-400">พิมพ์ตัวเลข หรือกด ↑ ↓ เพื่อปรับทีละ 1</p>
+          <p className="mt-1.5 text-right text-[11px] text-slate-400">พิมพ์ตัวเลข หรือกดลูกศรขึ้นลงบนแป้นพิมพ์เพื่อปรับทีละ 1</p>
 
           <div className="mt-3 flex items-center justify-between">
             <button type="button" onClick={() => { onChange(""); setOpen(false); }}

@@ -246,7 +246,7 @@ async function handleAction(body, auth) {
       // the shared committee password cannot produce this signature.
       if (auth.user?.role !== "STAFF") {
         return NextResponse.json({
-          error: "รับรองผลได้เฉพาะบัญชีเจ้าหน้าที่คณะเท่านั้น — ให้เจ้าหน้าที่เข้าสู่ระบบด้วยบัญชีของตนเองแล้วกดรับรอง",
+          error: "รับรองผลได้เฉพาะบัญชีเจ้าหน้าที่คณะเท่านั้น, ให้เจ้าหน้าที่เข้าสู่ระบบด้วยบัญชีของตนเองแล้วกดรับรอง",
         }, { status: 403 });
       }
 
@@ -303,7 +303,7 @@ async function handleAction(body, auth) {
         success: true,
         certifiedAt,
         certifiedBy: auth.user?.name || auth.user?.studentId || null,
-        message: "รับรองผลเรียบร้อย — ผลถูกล็อก เปิดรับคะแนนเพิ่มไม่ได้อีก",
+        message: "รับรองผลเรียบร้อย, ผลถูกล็อก เปิดรับคะแนนเพิ่มไม่ได้อีก",
       });
     }
 
@@ -325,13 +325,13 @@ async function handleAction(body, auth) {
 
       if (cfg?.globalConfig?.ballotsAnonymized) {
         return NextResponse.json(
-          { error: "รับรองผลไปแล้ว แก้ตัวเลือกในบัตรไม่ได้ — ผลการเลือกตั้งถูกปิดผนึกแล้ว" },
+          { error: "รับรองผลไปแล้ว แก้ตัวเลือกในบัตรไม่ได้, ผลการเลือกตั้งถูกปิดผนึกแล้ว" },
           { status: 409 }
         );
       }
       if (ballots > 0) {
         return NextResponse.json(
-          { error: `มีบัตรลงคะแนนในระบบแล้ว ${ballots} ใบ จึงแก้ตัวเลือกในบัตรไม่ได้ — การแก้โครงสร้างบัตรกลางคันทำให้ผลนับไม่ตรง` },
+          { error: `มีบัตรลงคะแนนในระบบแล้ว ${ballots} ใบ จึงแก้ตัวเลือกในบัตรไม่ได้, การแก้โครงสร้างบัตรกลางคันทำให้ผลนับไม่ตรง` },
           { status: 409 }
         );
       }
@@ -359,7 +359,7 @@ async function handleAction(body, auth) {
         plan,
         options,
         message: changed.length
-          ? `ปรับตัวเลือกในบัตรเรียบร้อย — ${changed.join(", ")}`
+          ? `ปรับตัวเลือกในบัตรเรียบร้อย, ${changed.join(", ")}`
           : "ตัวเลือกในบัตรครบถูกต้องอยู่แล้ว ไม่มีอะไรต้องแก้",
       });
     }

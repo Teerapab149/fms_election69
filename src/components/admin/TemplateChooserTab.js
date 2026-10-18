@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import { injectTemplateTheme, injectTemplateThemeOnReady } from "../../utils/injectTemplateTheme";
+import { useElectionState } from "./console/ElectionStateContext";
+import { describeElection } from "./console/electionStatus";
 
 // Device viewports — each previews the page at its TRUE width (the iframe is a real
 // viewport, so the page reflows) then scales the frame down to fit the column.
@@ -35,7 +37,7 @@ const PAGES = [
   { page: "candidates", label: "ผู้สมัคร หลายพรรค" },
   // note = ข้อความกำกับใต้สไลด์ · ที่นี่มีเพราะข้อมูลตัวอย่างกรอก social media ไว้
   // ให้เห็นว่าหน้าตาเป็นอย่างไร แต่ของจริงจะขึ้นเฉพาะพรรคที่กรอกไว้เท่านั้น
-  { page: "party", label: "ข้อมูลพรรค", note: "ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ในหน้าจัดการผู้สมัคร — ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน" },
+  { page: "party", label: "ข้อมูลพรรค", note: "ส่วน “ช่องทางติดต่อพรรค” ท้ายหน้าจะแสดงเฉพาะเมื่อพรรคนั้นกรอก social media ไว้ในหน้าจัดการผู้สมัคร ถ้าไม่กรอก ส่วนนี้จะหายไปทั้งส่วน" },
   { page: "vote", variant: "multi", label: "ลงคะแนน หลายพรรค" },
   { page: "vote", variant: "single", label: "ลงคะแนน พรรคเดียว" },
   { page: "results", variant: "locked", label: "ผลคะแนน ปิดผล" },
@@ -111,7 +113,7 @@ function BrowserSlide({ familySlug, themeSlug, slide, device, displayW, isCurren
 }
 
 // ── The device-aware peek-carousel stage for the selected template ────────────
-function PreviewStage({ familySlug, themeSlug, accent }) {
+function PreviewStage({ familySlug, themeSlug, accent, thisYearVote }) {
   const [idx, setIdx] = useState(0);
   const [deviceKey, setDeviceKey] = useState("pc");
   const [vw, setVw] = useState(720);
@@ -265,6 +267,9 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
       <div className="flex items-center justify-between gap-3 mt-4 px-1">
         <span className="text-sm font-semibold text-slate-600">
           <span className="text-slate-400 font-normal">{idx + 1}/{PAGES.length}  </span>{slide.label}
+          {slide.page === "vote" && thisYearVote && slide.variant === thisYearVote && (
+            <span className="ml-2 inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">ปีนี้ใช้แบบนี้</span>
+          )}
         </span>
         <div className="flex items-center gap-1.5">
           {PAGES.map((s, i) => (
@@ -281,6 +286,21 @@ function PreviewStage({ familySlug, themeSlug, accent }) {
       {slide.note && (
         <p className="mt-2 px-1 text-[11px] leading-relaxed text-slate-400">{slide.note}</p>
       )}
+      {slide.page === "vote" && (
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-slate-500">
+          {thisYearVote === "single"
+            ? "ปีนี้มีพรรคเดียว นักศึกษาจะเห็นหน้าลงคะแนนแบบพรรคเดียว (รับรอง ไม่รับรอง งดออกเสียง)"
+            : thisYearVote === "multi"
+              ? "ปีนี้มีหลายพรรค นักศึกษาจะเห็นหน้าลงคะแนนแบบหลายพรรค"
+              : "ระบบเลือกหน้าลงคะแนนแบบหลายพรรคหรือพรรคเดียวให้เอง ตามจำนวนพรรคจริงที่ใส่ไว้"}
+        </p>
+      )}
+      <p className="mt-2 px-1 text-[11px] leading-relaxed text-slate-500">
+        ตัวอย่างนี้ใช้ชื่อพรรค สมาชิก และรูปตัวอย่าง ไม่ใช่ข้อมูลจริงของปีนี้ หลังกดใช้ธีมแล้ว ให้เปิดหน้าเว็บจริงตรวจอีกครั้ง{" "}
+        <a href={getPath("/")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-semibold text-[#8A2680] hover:underline">
+          เปิดหน้าแรกของเว็บจริง <ExternalLink className="w-3 h-3" aria-hidden />
+        </a>
+      </p>
     </div>
   );
 }
@@ -386,6 +406,24 @@ export default function TemplateChooserTab() {
   const [applying, setApplying] = useState(false);
   const [toast, setToast] = useState(null);
   const [error, setError] = useState(null);
+  const [realParties, setRealParties] = useState(null);
+  const { stats, now } = useElectionState();
+  const boxOpen = ["open", "running"].includes(describeElection(stats, now).key);
+  const thisYearVote = realParties === null ? null : realParties === 1 ? "single" : realParties >= 2 ? "multi" : null;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(getPath("/api/results"), { credentials: "include", cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const n = (data.candidates || []).filter((c) => c.number > 0).length;
+        if (!cancelled) setRealParties(n);
+      } catch (e) { /* ไม่รู้จำนวนพรรค ก็แค่ไม่ติดป้าย */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -468,7 +506,7 @@ export default function TemplateChooserTab() {
         throw new Error(e.error || `HTTP ${res.status}`);
       }
       setActiveSlug(pending.slug);
-      setToast(`เปลี่ยนเป็น “${pending.name}” แล้ว — หน้าเว็บสาธารณะอัปเดตแล้ว`);
+      setToast(`เปลี่ยนเป็น “${pending.name}” แล้ว หน้าเว็บสาธารณะอัปเดตแล้ว`);
       setTimeout(() => setToast(null), 4000);
     } catch (e) {
       setError(`เปลี่ยนธีมไม่สำเร็จ: ${e.message}`);
@@ -487,7 +525,7 @@ export default function TemplateChooserTab() {
         </div>
         <div className="min-w-0">
           <h2 className="text-xl font-bold tracking-tight text-slate-800">เลือกธีมเว็บไซต์</h2>
-          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูหน้าจริงทุกหน้า แล้วกดใช้ — หน้าเว็บสาธารณะเปลี่ยนทันที แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
+          <p className="text-sm text-slate-500 mt-0.5">เลือกธีมจากด้านซ้าย ดูตัวอย่างทุกหน้า (ใช้ข้อมูลตัวอย่าง ไม่ใช่ข้อมูลจริงของปีนี้) แล้วกดใช้ หน้าเว็บสาธารณะเปลี่ยนทันที แบ่งเป็น <b className="text-slate-600">ทางการ</b> กับ <b className="text-slate-600">งานออกแบบ</b> ทุกธีมใช้ระบบเลือกตั้งชุดเดียวกัน ต่างกันแค่หน้าตา</p>
         </div>
       </div>
 
@@ -596,7 +634,7 @@ export default function TemplateChooserTab() {
                   )}
                 </div>
 
-                <PreviewStage familySlug={selectedFamily?.rep?.slug || selected.slug} themeSlug={selected.slug} accent={accent} />
+                <PreviewStage familySlug={selectedFamily?.rep?.slug || selected.slug} themeSlug={selected.slug} accent={accent} thisYearVote={thisYearVote} />
               </>
             )}
           </div>
@@ -634,7 +672,13 @@ export default function TemplateChooserTab() {
               <Palette className="w-7 h-7" />
             </div>
             <h3 className="text-lg font-bold text-slate-800">ใช้ธีม “{pending.name}”?</h3>
-            <p className="text-sm text-slate-500 mt-1.5 mb-6">หน้าเว็บสาธารณะจะเปลี่ยนเป็นธีมนี้ทันที (เปลี่ยนกลับได้ทุกเมื่อ)</p>
+            <p className={`text-sm text-slate-500 mt-1.5 ${boxOpen ? "mb-4" : "mb-6"}`}>หน้าเว็บสาธารณะจะเปลี่ยนเป็นธีมนี้ทันที (เปลี่ยนกลับได้ทุกเมื่อ)</p>
+            {boxOpen && (
+              <div role="alert" className="mb-6 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left text-xs leading-relaxed text-amber-800">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
+                <span><b>หีบกำลังเปิดรับคะแนนอยู่</b> นักศึกษาที่กำลังโหวตจะเห็นหน้าเว็บเปลี่ยนกลางคัน แนะนำให้เปลี่ยนธีมหลังปิดหีบ ถ้าจำเป็นต้องเปลี่ยนตอนนี้ก็กดยืนยันได้</span>
+              </div>
+            )}
             <div className="flex gap-3">
               <button type="button" disabled={applying} onClick={() => setPending(null)} className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 disabled:opacity-50">
                 ยกเลิก

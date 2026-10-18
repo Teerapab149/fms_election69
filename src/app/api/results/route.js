@@ -124,12 +124,36 @@ async function buildResultsBody(isAdmin) {
 
   // Build each breakdown from the ELIGIBLE groups so 0%-turnout groups still
   // appear (those are exactly the ones the committee needs to chase).
-  const countBy = (rows, key) => Object.fromEntries(rows.map(r => [r[key] ?? '—', r._count._all]));
+  // A user with no value for the field (gender and major are often empty on
+  // imported accounts) lands in an "ไม่ระบุ" row instead of vanishing, so the
+  // voted and eligible counts of every breakdown add up to the overall totals.
+  // Gender is also normalised (M/F/male/female/ชาย/หญิง) into Thai labels and
+  // merged, so "M" and "ชาย" are one row. Counts only: never a party.
+  const UNKNOWN = 'ไม่ระบุ';
+  const GENDER_LABEL = { m: 'ชาย', male: 'ชาย', 'ชาย': 'ชาย', f: 'หญิง', female: 'หญิง', 'หญิง': 'หญิง' };
+  const labelOf = (raw, key) => {
+    const v = raw == null ? '' : String(raw).trim();
+    if (v === '') return UNKNOWN;
+    if (key === 'gender') return GENDER_LABEL[v.toLowerCase()] || v;
+    return v;
+  };
+  const sumBy = (rows, key) => {
+    const m = new Map();
+    for (const r of rows) {
+      const name = labelOf(r[key], key);
+      m.set(name, (m.get(name) || 0) + r._count._all);
+    }
+    return m;
+  };
   const mkGroup = (votedRows, eligRows, key) => {
-    const voted = countBy(votedRows, key);
-    return eligRows
-      .filter(r => r[key] != null && String(r[key]).trim() !== '')
-      .map(r => ({ name: r[key], value: voted[r[key]] ?? 0, eligible: r._count._all }));
+    const voted = sumBy(votedRows, key);
+    const elig = sumBy(eligRows, key);
+    const names = [...elig.keys()];
+    // a voted group that is somehow missing from eligible still has to show
+    for (const n of voted.keys()) if (!elig.has(n)) names.push(n);
+    return names
+      .map(name => ({ name, value: voted.get(name) || 0, eligible: elig.get(name) || 0 }))
+      .sort((a, b) => (a.name === UNKNOWN) - (b.name === UNKNOWN));
   };
 
   return {

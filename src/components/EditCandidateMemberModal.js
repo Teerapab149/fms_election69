@@ -1,9 +1,11 @@
 'use client';
 import { getPath } from "../utils/basePath";
 
-import { useState, useEffect } from 'react';
-import { X, Save, Trash2, Loader2, Upload, User, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import { X, Save, Trash2, Loader2, Upload, User, Plus, Image as ImageIcon, ChevronDown, Check, AlertCircle } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import DiscardChangesDialog from "./DiscardChangesDialog";
+import { sortMembersByPosition, positionRank } from "../utils/memberSort";
 
 const PREDEFINED_POSITIONS = [
     "นายกสโมสรนักศึกษา",
@@ -46,15 +48,42 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDiscard, setShowDiscard] = useState(false);
+    const [addedNote, setAddedNote] = useState('');
+    const nameRef = useRef(null);
+    const initialSnap = useRef(null);
+    // true หลังกด "บันทึกและเพิ่มคนถัดไป" อย่างน้อยหนึ่งครั้ง: รายชื่อในโมดัลมาจากคำตอบของ
+    // เซิร์ฟเวอร์แล้ว (สดกว่า prop candidate ที่หน้าแม่ยังไม่ทันโหลดใหม่) effect ด้านล่างจึง
+    // ต้องไม่เอา prop เก่ามาทับรายชื่อ หรือล้างฟอร์มของคนที่กำลังกรอกอยู่
+    const keepSession = useRef(false);
 
-    const sortMembers = (membersList) => {
-        return [...membersList].sort((a, b) => {
-            const indexA = PREDEFINED_POSITIONS.indexOf(a.position);
-            const indexB = PREDEFINED_POSITIONS.indexOf(b.position);
-            const priorityA = indexA === -1 ? 999 : indexA;
-            const priorityB = indexB === -1 ? 999 : indexB;
-            return priorityA - priorityB;
-        });
+    const memberSnap = (m) => JSON.stringify([m.name || '', m.studentId || '', m.position || '', m.major || '']);
+    const resetMember = (m) => {
+        setCurrentMember(m);
+        initialSnap.current = memberSnap(m);
+    };
+    const BLANK_MEMBER = { name: '', studentId: '', position: '', major: '', imageFile: null, previewUrl: '', modalImageFile: null, modalPreviewUrl: '' };
+
+    // ลำดับที่เก็บ = ลำดับที่หน้าพรรคสาธารณะแสดง (id ก่อน แล้วจัดกลุ่มตามตำแหน่ง ดู
+    // utils/memberSort.js) เดิมที่นี่เรียงใหม่ตามลำดับในรายการตำแหน่งทุกครั้งที่บันทึก
+    // ซึ่งจะล้างลำดับที่แอดมินจัดเองด้วยปุ่มเลื่อนในรายชื่อสมาชิกทิ้งเงียบ ๆ
+    const sortMembers = (membersList) =>
+        sortMembersByPosition([...membersList].sort((a, b) => (a.id ?? 0) - (b.id ?? 0)));
+
+    // สมาชิกใหม่ที่เลือกตำแหน่งจากรายการ แทรกตามลำดับในรายการเหมือนเดิม (ประธานฝ่ายประชาสัมพันธ์
+    // ก่อนสวัสดิการ ฯลฯ) โดยไม่ขยับคนที่มีอยู่แล้ว ตำแหน่งที่พิมพ์เองต่อท้ายกลุ่ม
+    const insertNewMember = (list, member) => {
+        const newIdx = PREDEFINED_POSITIONS.indexOf(member.position);
+        const rank = positionRank(member.position);
+        if (newIdx !== -1) {
+            const at = list.findIndex((m) => {
+                if (positionRank(m.position) !== rank) return false;
+                const i = PREDEFINED_POSITIONS.indexOf(m.position);
+                return i !== -1 && i > newIdx;
+            });
+            if (at !== -1) return [...list.slice(0, at), member, ...list.slice(at)];
+        }
+        return [...list, member];
     };
 
     const MAJOR_SHORT = {
@@ -70,6 +99,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     };
 
     useEffect(() => {
+        if (!isOpen) keepSession.current = false;
+        else if (keepSession.current) return;
+        setShowDiscard(false);
+        setAddedNote('');
         if (candidate) {
             const membersList = sortMembers(candidate.members || []);
             setAllMembers(membersList);
@@ -77,7 +110,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
             if (focusMemberId) {
                 const target = membersList.find(m => m.id === focusMemberId);
                 if (target) {
-                    setCurrentMember({
+                    resetMember({
                         name: target.name,
                         id: target.id,
                         studentId: target.studentId,
@@ -93,7 +126,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                     });
                 }
             } else {
-                setCurrentMember({
+                resetMember({
                     name: '',
                     studentId: '',
                     position: '',
@@ -109,6 +142,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     }, [candidate, isOpen, focusMemberId]);
 
     const handleChange = (e) => {
+        setAddedNote('');
         const { name, value } = e.target;
         setCurrentMember(prev => ({ ...prev, [name]: value }));
     };
@@ -156,7 +190,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
         setShowDeleteConfirm(false);
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, opts = {}) => {
         e.preventDefault();
         if (!currentMember.name || !currentMember.studentId) {
             setError("กรุณากรอกชื่อและรหัสนักศึกษา");
@@ -185,15 +219,13 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 };
             }
         } else {
-            updatedMembers.push({ ...currentMember, tempId: Date.now() });
+            updatedMembers = insertNewMember(updatedMembers, { ...currentMember, tempId: Date.now() });
         }
 
-        updatedMembers = sortMembers(updatedMembers);
-
-        await submitToBackend(updatedMembers);
+        await submitToBackend(updatedMembers, { keepOpen: !!opts.keepOpen && !focusMemberId, addedName: currentMember.name });
     };
 
-    const submitToBackend = async (finalMemberList) => {
+    const submitToBackend = async (finalMemberList, opts = {}) => {
         try {
             const data = new FormData();
 
@@ -243,6 +275,22 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 throw new Error(errorData.error || 'Update failed');
             }
 
+            if (opts.keepOpen) {
+                // PUT ลบแล้วสร้างสมาชิกทั้งพรรคใหม่ id เปลี่ยนหมด ต้องใช้รายชื่อจากคำตอบนี้
+                // เป็นฐานของรอบถัดไป ถ้าใช้ของเก่า คนที่เพิ่งเพิ่มจะหายไปเงียบ ๆ ในรอบสอง
+                const saved = await res.json().catch(() => null);
+                if (!saved || !Array.isArray(saved.members)) {
+                    throw new Error('บันทึกแล้ว แต่เซิร์ฟเวอร์ไม่ส่งรายชื่อกลับมา กรุณาปิดหน้าต่างนี้แล้วเปิดใหม่ก่อนเพิ่มคนถัดไป');
+                }
+                keepSession.current = true;
+                setAllMembers(sortMembers(saved.members));
+                resetMember(BLANK_MEMBER);
+                setAddedNote(`เพิ่ม ${opts.addedName} แล้ว (รวม ${saved.members.length} คน)`);
+                if (onUpdate) onUpdate('CREATE', { keepOpen: true });
+                setTimeout(() => nameRef.current?.focus(), 0);
+                return;
+            }
+
             if (onUpdate) onUpdate('UPDATE');
             onClose();
 
@@ -259,18 +307,35 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
     );
 
     // Esc ปิดหน้าต่าง — พฤติกรรมเดียวกับหน้าต่างแก้ไขพรรค
+    // มีอะไรแก้ค้างอยู่ไหม (ข้อความ หรือเลือกรูปใหม่) ถ้ามี ปิดต้องถามก่อน
+    const dirty = initialSnap.current !== null && (
+        memberSnap(currentMember) !== initialSnap.current
+        || !!currentMember.imageFile
+        || !!currentMember.modalImageFile
+    );
+    const requestClose = () => {
+        if (isLoading) return;
+        if (dirty) setShowDiscard(true);
+        else onClose();
+    };
+
+    // Esc ปิดหน้าต่าง (กล่องถามยืนยันฟัง Esc เอง จึงไม่ปิดโมดัลหลักซ้อนตามไปด้วย)
     useEffect(() => {
         if (!isOpen) return;
-        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        const onKey = (e) => {
+            if (e.key !== 'Escape' || showDiscard || showDeleteConfirm) return;
+            requestClose();
+        };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [isOpen, onClose]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, onClose, dirty, showDiscard, showDeleteConfirm, isLoading]);
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-gray-100 flex flex-col">
+            <div className="bg-white w-full max-w-lg max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden animate-scale-up border border-gray-100 flex flex-col">
 
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
@@ -281,13 +346,19 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                     {/* type="button" สำคัญ: <button> ที่ไม่ระบุ type จะเป็น submit โดยปริยาย
                         ตอนนี้ปุ่มปิดอยู่นอก <form> เลยยังไม่พัง แต่ถ้าย้ายมาร์กอัปเมื่อไหร่
                         การกดกากบาทจะกลายเป็นการบันทึกทันที */}
-                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
+                    <button type="button" onClick={requestClose} aria-label="ปิด" className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1">
+                    {addedNote && (
+                        <div role="status" data-testid="added-note" className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">
+                            <Check className="h-4 w-4 shrink-0" />
+                            <span>{addedNote}</span>
+                        </div>
+                    )}
                     {error && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 animate-shake">
                             <AlertCircle className="w-5 h-5 shrink-0" />
@@ -302,14 +373,14 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         <div className="mb-4 flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
                             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                             <div className="text-xs leading-relaxed text-amber-800">
-                                <p className="font-bold">ลำดับที่เพิ่มมีผลกับการเรียงบนหน้าเว็บ</p>
+                                <p className="font-bold">ลำดับบนหน้าเว็บขึ้นกับตำแหน่ง</p>
                                 <p className="mt-1">
                                     ตำแหน่งหลัก (นายก อุปนายกฝ่ายกิจการภายนอก อุปนายกฝ่ายกิจการภายใน เลขานุการ เหรัญญิก)
                                     ระบบเรียงให้เองเสมอ ไม่ว่าจะเพิ่มก่อนหลัง
                                 </p>
                                 <p className="mt-1">
-                                    แต่ <b>ประธานฝ่ายต่าง ๆ และตำแหน่งอื่น ระบบเรียงตามลำดับที่เพิ่ม</b> —
-                                    ถ้าอยากให้เรียงแบบไหนบนหน้าพรรค ให้เพิ่มไล่ตามลำดับนั้น
+                                    ส่วน <b>ประธานฝ่ายต่าง ๆ และตำแหน่งอื่น</b> ถ้าเลือกตำแหน่งจากรายการ ระบบแทรกตามลำดับในรายการให้
+                                    ถ้าพิมพ์ตำแหน่งเองจะต่อท้ายกลุ่ม แล้วใช้ปุ่มลูกศรในรายชื่อสมาชิกปรับลำดับภายหลังได้
                                 </p>
                             </div>
                         </div>
@@ -332,7 +403,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                     </div>
                                     <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-blue-600">
                                         <Upload className="w-4 h-4" />
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                                        <input type="file" aria-label="อัปโหลดรูปภาพสมาชิก" className="hidden" accept="image/*" onChange={handleImageChange} />
                                     </label>
                                 </div>
                                 <p className="text-xs text-gray-400">รูปภาพสมาชิก</p>
@@ -342,10 +413,12 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         {/* 2. ข้อมูล text */}
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span className="text-red-500">*</span></label>
+                                <label htmlFor="mem-name" className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
+                                    id="mem-name"
                                     name="name"
+                                    ref={nameRef}
                                     value={currentMember.name}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
@@ -354,10 +427,12 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">รหัสนักศึกษา <span className="text-red-500">*</span></label>
+                                    <label htmlFor="mem-studentId" className="block text-sm font-medium text-gray-700 mb-1">รหัสนักศึกษา <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
+                                        id="mem-studentId"
                                         name="studentId"
+                                        autoComplete="off"
                                         value={currentMember.studentId}
                                         onChange={handleChange}
                                         readOnly={!!focusMemberId}
@@ -366,9 +441,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สาขา</label>
+                                    <label htmlFor="mem-major" className="block text-sm font-medium text-gray-700 mb-1">สาขา</label>
                                     <div className="relative">
                                         <select
+                                            id="mem-major"
                                             name="major"
                                             value={currentMember.major || ''}
                                             onChange={handleChange}
@@ -383,20 +459,16 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                             ))}
                                         </select>
 
-                                        {/* ไอคอนลูกศรลง (เพื่อให้หน้าตาเหมือนช่องอื่น) */}
-                                        <div className="absolute right-3 top-3 pointer-events-none text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="m6 9 6 6 6-6" />
-                                            </svg>
-                                        </div>
+                                        <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
                                     </div>
                                 </div>
 
                                 <div className="relative group">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">ตำแหน่ง</label>
+                                    <label htmlFor="mem-position" className="block text-sm font-medium text-gray-700 mb-1">ตำแหน่ง</label>
                                     <div className="relative">
                                         <input
                                             type="text"
+                                            id="mem-position"
                                             name="position"
                                             value={currentMember.position}
                                             onChange={(e) => {
@@ -427,7 +499,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-3 py-2.5 text-xs text-gray-400 text-center">ใช้ตำแหน่งใหม่: &quot;{currentMember.position}&quot;</div>
+                                                <div className="px-3 py-2.5 text-xs text-gray-400 text-center">ใช้ตำแหน่งที่พิมพ์เอง: &quot;{currentMember.position}&quot;</div>
                                             )}
                                         </div>
                                     )}
@@ -437,7 +509,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
 
                         {/* รูป Modal Moved to Bottom */}
                         <div className="flex flex-col items-start gap-2 pt-2 border-t border-gray-100">
-                            <label className="block text-sm font-medium text-gray-700">รูปภาพถ่ายสมาชิกแบบโล่งๆ (ถ้ามี)</label>
+                            <label htmlFor="mem-modal-file" className="block text-sm font-medium text-gray-700">รูปภาพถ่ายสมาชิกแบบโล่งๆ (ถ้ามี)</label>
                             <div className="flex items-center gap-4">
                                 <div className="relative group">
                                     <div className="w-24 h-24 rounded-lg bg-gray-100 border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center">
@@ -446,17 +518,17 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                         ) : (
                                             <div className="flex flex-col items-center text-gray-300">
                                                 <ImageIcon className="w-8 h-8 opacity-50 mb-1" />
-                                                <span className="text-[10px]">No Image</span>
+                                                <span className="text-[10px]">ยังไม่มีรูป</span>
                                             </div>
                                         )}
                                     </div>
                                     <label className="absolute bottom-[-6px] right-[-6px] bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-purple-600 transition-colors">
                                         <Upload className="w-4 h-4" />
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleModalImageChange} />
+                                        <input id="mem-modal-file" type="file" className="hidden" accept="image/*" onChange={handleModalImageChange} />
                                     </label>
                                 </div>
                                 <div className="text-xs text-gray-500 max-w-[200px]">
-                                    ใช้สำหรับแสดงใน Popup ข้อมูลเพิ่มเติม (ควรเป็นรูป PNG พื้นหลังใส หรือรูปแนวตั้งที่เห็นตัวคนชัดเจน)
+                                    ใช้แสดงในหน้าต่างข้อมูลเพิ่มเติมของสมาชิก (ควรเป็นรูป PNG พื้นหลังใส หรือรูปแนวตั้งที่เห็นตัวคนชัดเจน)
                                 </div>
                             </div>
                         </div>
@@ -480,15 +552,27 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         )}
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap justify-end gap-2 sm:gap-3">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={requestClose}
                             disabled={isLoading}
                             className="px-4 py-2 rounded-xl text-gray-700 font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
                         >
                             ยกเลิก
                         </button>
+                        {!focusMemberId && (
+                            <button
+                                type="button"
+                                onClick={(e) => handleSubmit(e, { keepOpen: true })}
+                                disabled={isLoading}
+                                data-testid="save-and-next"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#8A2680]/40 bg-white text-[#8A2680] font-medium hover:bg-[#8A2680]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Plus className="w-4 h-4" />
+                                บันทึกและเพิ่มคนถัดไป
+                            </button>
+                        )}
                         <button
                             onClick={handleSubmit}
                             disabled={isLoading}
@@ -501,12 +585,17 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                 </div>
 
             </div>
+            <DiscardChangesDialog
+                isOpen={showDiscard}
+                onKeepEditing={() => setShowDiscard(false)}
+                onDiscard={() => { setShowDiscard(false); onClose(); }}
+            />
             <ConfirmModal
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={handleConfirmDelete}
-                title="ยืนยันการลบ?"
-                message={`คุณต้องการลบผู้สมัคร "${currentMember.name}" ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`}
+                title="ยืนยันการลบสมาชิก"
+                message={`ต้องการลบสมาชิก "${currentMember.name}" ใช่หรือไม่ การกระทำนี้ย้อนกลับไม่ได้`}
                 variant="danger"
                 isLoading={isLoading}
             />

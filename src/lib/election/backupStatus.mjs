@@ -86,7 +86,8 @@ function ageText(ms) {
  * @param {{ lastOk: string|null, lastFail: string|null, now: number|Date,
  *           formatWhen?: (d: Date) => string }} input
  *   lastOk / lastFail = เนื้อไฟล์ดิบ (null = ไม่มีไฟล์) · อ่านไม่ได้ให้ส่ง "" มา
- * @returns {{ level: "pass"|"warn"|"fail", detail: string }}
+ * @returns {{ level: "pass"|"warn"|"fail", detail: string, techDetail?: string }}
+ *   detail = plain Thai for the committee; techDetail = what the IT staff need (log commands, file names, reasons)
  */
 export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
   const when = typeof formatWhen === "function" ? formatWhen : fallbackWhen;
@@ -94,25 +95,33 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
   const ok = parseStatus(lastOk);
   const bad = parseStatus(lastFail);
   const unreadable = [ok.bad && "LAST_OK", bad.bad && "LAST_FAIL"].filter(Boolean);
+  // plain sentence for the committee, the file names go to techDetail
   const unreadableNote = unreadable.length
-    ? ` (อ่านไฟล์สถานะไม่ได้: ${unreadable.join(", ")} ถือว่าไม่มีไฟล์)`
+    ? " ระบบอ่านบันทึกผลการสำรองข้อมูลไม่ได้ จึงถือว่าไม่มีบันทึกนั้น"
     : "";
+  const unreadableTech = unreadable.length ? `อ่านไฟล์สถานะไม่ได้: ${unreadable.join(", ")} ถือว่าไม่มีไฟล์` : "";
+  const tech = (...parts) => parts.filter(Boolean).join(" | ");
 
   if (!ok.rec && !bad.rec) {
     return {
       level: "warn",
       detail:
-        "ยังไม่พบประวัติ backup บนเซิร์ฟเวอร์นี้ — " +
-        ANY_SCHEDULER_LOGS +
-        " ถ้ามีตัวตั้งเวลารันอยู่แล้วแต่ยังไม่เห็นผล ให้ตรวจว่าเว็บอ่านโฟลเดอร์ backups/status ที่เดียวกับที่ backup เขียน (ตั้ง BACKUP_STATUS_DIR ใน .env ของแอปได้)" +
-        " ถ้าใช้ฐานข้อมูลของคณะและเจ้าหน้าที่ฐานข้อมูล (DBA) สำรองให้อยู่แล้ว ข้อนี้ข้ามได้" +
+        "ยังไม่พบประวัติการสำรองข้อมูลอัตโนมัติบนเครื่องนี้ ถ้าไม่มีใครตั้งการสำรองไว้ ข้อมูลคะแนนจะไม่มีสำเนาเก็บไว้" +
+        " ให้ส่งเรื่องให้เจ้าหน้าที่ IT ตรวจและตั้งการสำรองข้อมูลก่อนวันเลือกตั้ง" +
+        " ถ้าฐานข้อมูลของคณะมีเจ้าหน้าที่ฐานข้อมูล (DBA) สำรองให้อยู่แล้ว ข้อนี้ข้ามได้" +
         unreadableNote,
+      techDetail: tech(
+        ANY_SCHEDULER_LOGS,
+        "ถ้ามีตัวตั้งเวลารันอยู่แล้วแต่ยังไม่เห็นผล ให้ตรวจว่าเว็บอ่านโฟลเดอร์ backups/status ที่เดียวกับที่ backup เขียน (ตั้ง BACKUP_STATUS_DIR ใน .env ของแอปได้)",
+        unreadableTech
+      ),
     };
   }
 
   // ── ประเมินอายุของ backup ที่ดีล่าสุด ────────────────────────────────────────
   let ageLevel = null;
-  let okText = "ยังไม่เคยมี backup ที่สำเร็จ";
+  let okText = "ยังไม่เคยมีการสำรองข้อมูลที่สำเร็จ";
+  let okTech = "";
   let intervalH = DEFAULT_INTERVAL_HOURS;
   if (ok.rec) {
     const ih = Number(ok.rec.interval_hours);
@@ -120,7 +129,8 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
     const age = Math.max(0, nowMs - ok.rec.atDate.getTime());
     const file = safeName(ok.rec.file);
     const rk = runnerOf(ok.rec);
-    okText = `backup ล่าสุดที่สำเร็จ ${when(ok.rec.atDate)} (${ageText(age)})${file ? ` ไฟล์ ${file}` : ""}${rk ? ` ตัวรัน ${RUNNERS[rk].label}` : ""}`;
+    okText = `สำรองข้อมูลสำเร็จครั้งล่าสุด ${when(ok.rec.atDate)} (${ageText(age)})`;
+    okTech = [file && `ไฟล์ ${file}`, rk && `ตัวรัน ${RUNNERS[rk].label}`].filter(Boolean).join(" ");
     if (age <= intervalH * HOUR + HOUR) ageLevel = "pass";
     else if (age <= 2 * intervalH * HOUR + HOUR) ageLevel = "warn";
     else ageLevel = "fail";
@@ -129,10 +139,11 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
   const checkLogs = where ? `ดู ${RUNNERS[where].logs}` : ANY_SCHEDULER_LOGS;
   const lateText =
     ageLevel === "warn"
-      ? ` — เลยรอบที่ตั้งไว้ (ทุก ${intervalH} ชม.) แล้ว ${checkLogs}`
+      ? ` เลยรอบที่ตั้งไว้ (ทุก ${intervalH} ชม.) แล้ว ให้เจ้าหน้าที่ IT ตรวจว่าการสำรองข้อมูลยังทำงานอยู่`
       : ageLevel === "fail"
-        ? ` — เก่าเกิน 2 รอบ (ทุก ${intervalH} ชม.) แล้ว backup อัตโนมัติน่าจะหยุดทำงาน ${checkLogs}`
+        ? ` เก่าเกิน 2 รอบ (ทุก ${intervalH} ชม.) แล้ว การสำรองอัตโนมัติน่าจะหยุดทำงาน ให้แจ้งเจ้าหน้าที่ IT ทันที`
         : "";
+  const lateTech = ageLevel === "warn" || ageLevel === "fail" ? checkLogs : "";
 
   // ── รอบล่าสุดล้ม ─────────────────────────────────────────────────────────────
   // >= ไม่ใช่ >: backup.sh เขียน LAST_OK แล้วต่อด้วย LAST_FAIL stage "offsite" ของรอบเดียวกัน
@@ -145,17 +156,23 @@ export function describeBackupStatus({ lastOk, lastFail, now, formatWhen }) {
       return {
         level: ageLevel === "fail" ? "fail" : "warn",
         detail:
-          `${okText}${lateText} แต่การคัดลอกออกนอกเครื่องรอบ ${failWhen} ไม่สำเร็จ (${reason})` +
-          " — backup ในเครื่องยังใช้ได้ แต่ถ้าดิสก์เครื่องนี้เสียจะไม่มีสำเนาอื่น" +
+          `${okText}${lateText} แต่การคัดลอกสำเนาออกนอกเครื่องรอบ ${failWhen} ไม่สำเร็จ` +
+          " สำเนาในเครื่องยังใช้ได้ แต่ถ้าเครื่องนี้เสียจะไม่มีสำเนาอื่น ให้แจ้งเจ้าหน้าที่ IT" +
           unreadableNote,
+        techDetail: tech(`สาเหตุ: ${reason}`, okTech, lateTech, checkLogs, unreadableTech),
       };
     }
     return {
       level: "fail",
-      detail: `backup รอบล่าสุด ${failWhen} ล้มเหลว: ${reason} — ${okText}${unreadableNote}`,
+      detail: `การสำรองข้อมูลรอบล่าสุด ${failWhen} ล้มเหลว ${okText} ให้แจ้งเจ้าหน้าที่ IT${unreadableNote}`,
+      techDetail: tech(`สาเหตุ: ${reason}`, okTech, checkLogs, unreadableTech),
     };
   }
 
   // ── รอบล่าสุดสำเร็จ ──────────────────────────────────────────────────────────
-  return { level: ageLevel, detail: `${okText}${lateText}${unreadableNote}` };
+  return {
+    level: ageLevel,
+    detail: `${okText}${lateText}${unreadableNote}`,
+    techDetail: tech(okTech, lateTech, unreadableTech),
+  };
 }
