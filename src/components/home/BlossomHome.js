@@ -460,6 +460,8 @@ export default function BlossomHome({
             <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
             {howTo.link && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
           </div>
+          {/* หีบปิดแล้วแต่ยังไม่ประกาศผล: ปุ่มบอกได้แค่สถานะ บรรทัดนี้คือเหตุผล */}
+          {CTA.note && <p className="bl-cta-note">{CTA.note}</p>}
         </section>
 
         {/* ===== feature: pinned poster + meet-candidates copy ===== */}
@@ -754,6 +756,7 @@ export default function BlossomHome({
 
         /* ---- CTA editorial ---- */
         .bl-cta-row { display:flex; align-items:center; gap:26px; flex-wrap:wrap; margin-top:34px; }
+        .bl-cta-note { margin:16px 0 0; max-width:34em; font-family:var(--bl-fb); font-size:15px; line-height:1.65; color:var(--bl-ink2); }
         .bl-cta { display:inline-block; font-family:var(--bl-fd); font-weight:700; font-size:clamp(16px,4vw,19px);
           color:var(--bl-on-primary, var(--bl-card)); background:var(--bl-primary-deep); border:none; cursor:pointer; max-width:100%;
           padding:17px 34px; border-radius:999px; position:relative; overflow:hidden;
