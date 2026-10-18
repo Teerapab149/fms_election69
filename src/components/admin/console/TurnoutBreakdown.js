@@ -87,11 +87,12 @@ export default function TurnoutBreakdown() {
 
   useEffect(() => {
     let cancelled = false;
+    const ctl = new AbortController();
     const load = async () => {
       if (document.visibilityState === "hidden") return;
       try {
         // admin identity = httpOnly admin_token cookie, sent automatically
-        const res = await fetch(getPath("/api/results"), { credentials: "include", cache: "no-store" });
+        const res = await fetch(getPath("/api/results"), { credentials: "include", cache: "no-store", signal: ctl.signal });
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
@@ -104,13 +105,14 @@ export default function TurnoutBreakdown() {
         setLastUpdated(new Date());
         setFailed(false);
       } catch (err) {
+        if (cancelled || err?.name === "AbortError") return;
         console.error("turnout fetch failed:", err);
-        if (!cancelled) setFailed(true);
+        setFailed(true);
       }
     };
     load();
     const id = setInterval(load, 5000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => { cancelled = true; ctl.abort(); clearInterval(id); };
   }, []);
 
   const hasData = demo.byYear.length || demo.byMajor.length || demo.byGender.length;

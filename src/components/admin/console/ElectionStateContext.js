@@ -27,12 +27,17 @@ export function ElectionStateProvider({ children }) {
   const [readinessAt, setReadinessAt] = useState(null);
 
   const inFlight = useRef(false);
+  // set false on unmount, and the in-flight requests are aborted with it, so a
+  // page change in the middle of a request is not reported as a lost connection
+  const alive = useRef(true);
+  const controller = useRef(null);
 
   const refresh = useCallback(async () => {
     if (inFlight.current) return;
     inFlight.current = true;
     try {
-      const res = await fetch(getPath("/api/admin/dashboard"), { credentials: "include", cache: "no-store" });
+      const res = await fetch(getPath("/api/admin/dashboard"), { credentials: "include", cache: "no-store", signal: controller.current?.signal });
+      if (!alive.current) return;
       if (res.status === 401 || res.status === 403) {
         window.location.href = getPath("/admin/login");
         return;
@@ -40,10 +45,12 @@ export function ElectionStateProvider({ children }) {
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = await res.json();
       if (!data.stats) throw new Error("no stats");
+      if (!alive.current) return;
       setStats(data.stats);
       setLastUpdated(new Date());
       setFailed(false);
     } catch (e) {
+      if (!alive.current || e?.name === "AbortError") return;
       console.error("election state fetch failed:", e);
       setFailed(true);
     } finally {
@@ -52,6 +59,9 @@ export function ElectionStateProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    alive.current = true;
+    inFlight.current = false; // a request from a previous mount was aborted
+    controller.current = new AbortController();
     refresh();
     const poll = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
@@ -60,10 +70,20 @@ export function ElectionStateProvider({ children }) {
     const tick = setInterval(() => setNow(Date.now()), 1000);
     const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
     document.addEventListener("visibilitychange", onVisible);
+    // leaving the page (link, reload, close) cancels in-flight requests in the browser:
+    // that is not a lost connection, so stop reporting from here on
+    const onPageHide = () => { alive.current = false; };
+    const onPageShow = () => { alive.current = true; }; // restored from the back-forward cache
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
     return () => {
+      alive.current = false;
+      controller.current?.abort();
       clearInterval(poll);
       clearInterval(tick);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, [refresh]);
 
@@ -71,15 +91,17 @@ export function ElectionStateProvider({ children }) {
     setReadinessRunning(true);
     setReadinessError(null);
     try {
-      const res = await fetch(getPath("/api/admin/readiness"), { credentials: "include", cache: "no-store" });
+      const res = await fetch(getPath("/api/admin/readiness"), { credentials: "include", cache: "no-store", signal: controller.current?.signal });
       if (!res.ok) throw new Error(`สถานะ ${res.status}`);
       const data = await res.json();
+      if (!alive.current) return;
       setReadiness(data);
       setReadinessAt(new Date());
     } catch (e) {
+      if (!alive.current || e?.name === "AbortError") return;
       setReadinessError("ตรวจไม่สำเร็จ " + e.message);
     } finally {
-      setReadinessRunning(false);
+      if (alive.current) setReadinessRunning(false);
     }
   }, []);
 
