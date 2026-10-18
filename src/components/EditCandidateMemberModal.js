@@ -403,7 +403,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                     </div>
                                     <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-blue-600">
                                         <Upload className="w-4 h-4" />
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                                        <input type="file" aria-label="อัปโหลดรูปภาพสมาชิก" className="hidden" accept="image/*" onChange={handleImageChange} />
                                     </label>
                                 </div>
                                 <p className="text-xs text-gray-400">รูปภาพสมาชิก</p>
@@ -413,9 +413,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                         {/* 2. ข้อมูล text */}
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span className="text-red-500">*</span></label>
+                                <label htmlFor="mem-name" className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
+                                    id="mem-name"
                                     name="name"
                                     ref={nameRef}
                                     value={currentMember.name}
@@ -426,10 +427,12 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">รหัสนักศึกษา <span className="text-red-500">*</span></label>
+                                    <label htmlFor="mem-studentId" className="block text-sm font-medium text-gray-700 mb-1">รหัสนักศึกษา <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
+                                        id="mem-studentId"
                                         name="studentId"
+                                        autoComplete="off"
                                         value={currentMember.studentId}
                                         onChange={handleChange}
                                         readOnly={!!focusMemberId}
@@ -438,9 +441,10 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สาขา</label>
+                                    <label htmlFor="mem-major" className="block text-sm font-medium text-gray-700 mb-1">สาขา</label>
                                     <div className="relative">
                                         <select
+                                            id="mem-major"
                                             name="major"
                                             value={currentMember.major || ''}
                                             onChange={handleChange}
@@ -460,10 +464,11 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                 </div>
 
                                 <div className="relative group">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">ตำแหน่ง</label>
+                                    <label htmlFor="mem-position" className="block text-sm font-medium text-gray-700 mb-1">ตำแหน่ง</label>
                                     <div className="relative">
                                         <input
                                             type="text"
+                                            id="mem-position"
                                             name="position"
                                             value={currentMember.position}
                                             onChange={(e) => {
@@ -504,7 +509,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
 
                         {/* รูป Modal Moved to Bottom */}
                         <div className="flex flex-col items-start gap-2 pt-2 border-t border-gray-100">
-                            <label className="block text-sm font-medium text-gray-700">รูปภาพถ่ายสมาชิกแบบโล่งๆ (ถ้ามี)</label>
+                            <label htmlFor="mem-modal-file" className="block text-sm font-medium text-gray-700">รูปภาพถ่ายสมาชิกแบบโล่งๆ (ถ้ามี)</label>
                             <div className="flex items-center gap-4">
                                 <div className="relative group">
                                     <div className="w-24 h-24 rounded-lg bg-gray-100 border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center">
@@ -519,7 +524,7 @@ export default function EditCandidateMemberModal({ isOpen, onClose, candidate, o
                                     </div>
                                     <label className="absolute bottom-[-6px] right-[-6px] bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-purple-600 transition-colors">
                                         <Upload className="w-4 h-4" />
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleModalImageChange} />
+                                        <input id="mem-modal-file" type="file" className="hidden" accept="image/*" onChange={handleModalImageChange} />
                                     </label>
                                 </div>
                                 <div className="text-xs text-gray-500 max-w-[200px]">

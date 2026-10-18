@@ -75,7 +75,7 @@ function ImageField({ value, onChange }) {
           </p>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} className="hidden" />
+          <input ref={inputRef} type="file" aria-label="อัปโหลดโปสเตอร์การเลือกตั้ง" accept="image/jpeg,image/png,image/webp" onChange={pick} className="hidden" />
           <button
             type="button" disabled={busy}
             onClick={() => inputRef.current?.click()}
@@ -432,7 +432,7 @@ export default function GlobalConfigTab({ onDirtyChange } = {}) {
           <div className="mt-2">
             {isManual ? (
               <>
-                <input id={`gc-${k}`} type="number" className={INPUT} value={config[k] ?? ""} onChange={(e) => (keepString ? set(k, e.target.value) : setNumber(k, e.target.value))} />
+                <input id={`gc-${k}`} aria-label={f.label} type="number" className={INPUT} value={config[k] ?? ""} onChange={(e) => (keepString ? set(k, e.target.value) : setNumber(k, e.target.value))} />
                 <button type="button" onClick={() => setManualKey(k, false)}
                   className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-[#8A2680] hover:underline">
                   <Wand2 className="w-3.5 h-3.5" /> ใช้ปีจากวันเปิดหีบ{computed !== "" ? ` (${computed})` : ""}

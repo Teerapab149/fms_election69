@@ -540,14 +540,15 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                     ) : (
                     <form id="candidate-form" onSubmit={handleSubmit} className="space-y-6">
 
-                        <FormSection n="1" title="ข้อมูลหลัก" hint="กรอกหมายเลขกับชื่อพรรคแล้วกดสร้างได้เลย หัวข้อ 2 ถึง 4 มาเติมทีหลังได้" required>
+                        <FormSection n="1" title="ข้อมูลหลัก" hint={candidate ? "หมายเลขกับชื่อพรรคต้องมีเสมอ หัวข้อ 2 ถึง 4 แก้ได้ตามต้องการ แล้วกดบันทึก" : "กรอกหมายเลขกับชื่อพรรคแล้วกดสร้างได้เลย หัวข้อ 2 ถึง 4 มาเติมทีหลังได้"} required>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">หมายเลข <span className="text-red-500">*</span></label>
+                                    <label htmlFor="cand-number" className="block text-sm font-medium text-gray-700 mb-1">หมายเลข <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <Hash className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                                         <input
                                             type="number"
+                                            id="cand-number"
                                             name="number"
                                             value={formData.number}
                                             onChange={handleChange}
@@ -571,9 +572,10 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อพรรค <span className="text-red-500">*</span></label>
+                                    <label htmlFor="cand-name" className="block text-sm font-medium text-gray-700 mb-1">ชื่อพรรค <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
+                                        id="cand-name"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
@@ -582,8 +584,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">ความหมายสัญลักษณ์ <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
+                                    <label htmlFor="cand-logoMeaning" className="block text-sm font-medium text-gray-700 mb-1">ความหมายสัญลักษณ์ <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
                                     <textarea
+                                        id="cand-logoMeaning"
                                         name="logoMeaning"
                                         value={formData.logoMeaning}
                                         onChange={handleChange}
@@ -608,7 +611,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         </div>
                                         <label className="absolute bottom-0 right-0 bg-white border border-gray-200 p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-gray-50 text-[#8A2680]">
                                             <Upload className="w-4 h-4" />
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                            <input type="file" aria-label="อัปโหลดโลโก้พรรค" className="hidden" accept="image/*" onChange={handleFileChange} />
                                         </label>
                                     </div>
                                     <p className="text-xs text-gray-400">โลโก้พรรค กดที่ปุ่มอัปโหลดมุมขวาล่าง</p>
@@ -620,9 +623,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     หมดแล้ว สองช่องนั้นจึงถูกถอดออก (2026-07-28) ข้อมูลเก่าที่เคยอัปไว้ยังอยู่ใน
                                     ฐานข้อมูลและถูกใช้เป็นตัวสำรองต่อไป แค่ไม่ต้องกรอกเพิ่มอีก */}
                                 <div className="w-full">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <span className="block text-sm font-medium text-gray-700 mb-2">
                                         ภาพหมู่ / ภาพกิจกรรมพรรค <span className="text-gray-400 font-normal">(เลือกได้หลายรูป ไม่ใส่ก็ได้)</span>
-                                    </label>
+                                    </span>
                                     <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
                                         <b>ภาพแรก</b> = ภาพหมู่แนวนอนที่โชว์บนหน้าโหวตและหน้าแนะนำพรรค (แนะนำแนวนอน)
                                         <br />
@@ -662,6 +665,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                             <span className="text-[10px] text-gray-500">เพิ่มรูป</span>
                                             <input
                                                 type="file"
+                                                aria-label="เพิ่มภาพหมู่หรือภาพกิจกรรมพรรค"
                                                 className="hidden"
                                                 accept="image/*"
                                                 multiple
@@ -671,7 +675,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สีประจำพรรค <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
+                                    <label htmlFor="cand-color" className="block text-sm font-medium text-gray-700 mb-1">สีประจำพรรค <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="color"
@@ -683,6 +687,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         />
                                         <input
                                             type="text"
+                                            id="cand-color"
                                             name="color"
                                             value={formData.color || ''}
                                             onChange={handleChange}
@@ -757,8 +762,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                         <FormSection n="3" title="เนื้อหาแนะนำพรรค" hint="ทั้งหมดไม่บังคับ ใส่แล้วจะไปแสดงในหน้าแนะนำพรรคที่นักศึกษาเห็น">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">สโลแกน</label>
+                                    <label htmlFor="cand-slogan" className="block text-sm font-medium text-gray-700 mb-1">สโลแกน</label>
                                     <textarea
+                                        id="cand-slogan"
                                         name="slogan"
                                         value={formData.slogan}
                                         onChange={handleChange}
@@ -768,8 +774,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     <p className="text-xs text-gray-400 mt-1">เว้นว่างได้ ระบบจะจัดหน้าให้พอดีเอง</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">พันธกิจ (Missions)</label>
+                                    <label htmlFor="cand-missions" className="block text-sm font-medium text-gray-700 mb-1">พันธกิจ (Missions)</label>
                                     <textarea
+                                        id="cand-missions"
                                         name="missions"
                                         value={formData.missions}
                                         onChange={handleChange}
@@ -782,13 +789,14 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">นโยบาย (Policies)</label>
+                                    <label htmlFor="cand-policies" className="block text-sm font-medium text-gray-700 mb-1">นโยบาย (Policies)</label>
                                     <p className="text-[11px] text-slate-500 mb-1.5 leading-relaxed">
                                         หนึ่งบรรทัดต่อหนึ่งนโยบาย คั่นหัวข้อกับรายละเอียดด้วย <code className="rounded bg-slate-100 px-1">::</code>
                                         <br />
                                         ตัวอย่าง <span className="text-slate-400">ยกระดับโครงการเดิม :: ปรับรูปแบบให้เข้ากับยุคสมัย</span>
                                     </p>
                                     <textarea
+                                        id="cand-policies"
                                         name="policies"
                                         value={formData.policies}
                                         onChange={handleChange}
@@ -838,8 +846,9 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                     const invalid = typed.trim() !== '' && !preview;
                                     return (
                                         <div key={p.key}>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">{p.label}</label>
+                                            <label htmlFor={`cand-social-${p.key}`} className="block text-sm font-medium text-gray-700 mb-1">{p.label}</label>
                                             <input
+                                                id={`cand-social-${p.key}`}
                                                 type="text"
                                                 value={typed}
                                                 onChange={(e) => setSocials((s) => ({ ...s, [p.key]: e.target.value }))}
