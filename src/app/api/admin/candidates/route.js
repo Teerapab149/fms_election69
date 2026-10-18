@@ -6,6 +6,7 @@ import { adminGuard } from "../../../../lib/auth/adminCheck";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
+import { getBallotLock } from "./ballotLock";
 import { uploadDir, candidatePaths, relativeFromUrl } from "../../../../lib/media/storage";
 import { extensionForBuffer } from "../../../../lib/imageOptimize";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
