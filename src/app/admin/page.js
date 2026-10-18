@@ -9,6 +9,7 @@ import EditCandidateMember from "../../components/EditCandidateMember";
 import EditCandidateMemberModal from "../../components/EditCandidateMemberModal";
 import CompletedActionModal from "../../components/CompletedActionModal";
 import useBallotLock from "../../hooks/useBallotLock";
+import TestToolsTab from "../../components/admin/TestToolsTab";
 import TemplateChooserTab from "../../components/admin/TemplateChooserTab";
 import GlobalConfigTab from "../../components/admin/GlobalConfigTab";
 import ManualTab from "../../components/admin/ManualTab";
@@ -18,7 +19,8 @@ import TopBarStatus from "../../components/admin/console/TopBarStatus";
 import { ElectionStateProvider } from "../../components/admin/console/ElectionStateContext";
 import { useToast } from "../../components/admin/console/Toast";
 import { useUnsavedGuard } from "../../components/admin/console/useUnsavedGuard";
-import { Gauge, ShieldCheck, Settings, Palette, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen, Plus, Users, Flag, UserPlus } from "lucide-react";
+import { useElectionState } from "../../components/admin/console/ElectionStateContext";
+import { Gauge, FlaskConical, ShieldCheck, Settings, Palette, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, BookOpen, Plus, Users, Flag, UserPlus } from "lucide-react";
 import Image from 'next/image';
 
 const CandidatesTab = () => {
@@ -282,11 +284,18 @@ const NAV_GROUPS = [
     ],
   },
 ];
-const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
-const TAB_IDS = NAV_ITEMS.map((i) => i.id);
+// shown only when the server says the test tools are on (ADMIN_TEST_TOOLS=1)
+const TEST_TOOLS_ITEM = { id: 'testTools', label: 'เครื่องมือทดสอบ', Icon: FlaskConical };
+const TAB_IDS = [...NAV_GROUPS.flatMap((g) => g.items), TEST_TOOLS_ITEM].map((i) => i.id);
 
 function AdminShell() {
   const router = useRouter();
+  const { readiness } = useElectionState();
+  const testToolsOn = readiness?.testToolsEnabled === true;
+  const navGroups = testToolsOn
+    ? NAV_GROUPS.map((g) => (g.title === 'ระบบ' ? { ...g, items: [...g.items, TEST_TOOLS_ITEM] } : g))
+    : NAV_GROUPS;
+  const navItems = navGroups.flatMap((g) => g.items);
   const [activeTab, setActiveTab] = useState('overview');
   // Collapsible sidebar: icon rail (collapsed) or full labels (expanded).
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -303,6 +312,10 @@ function AdminShell() {
     }
   }, []);
   useEffect(() => { setMobileNavOpen(false); }, [activeTab]);
+  // a deep link or leftover state pointing at the test tools while they are off
+  useEffect(() => {
+    if (readiness && !testToolsOn && activeTab === 'testTools') setActiveTab('overview');
+  }, [readiness, testToolsOn, activeTab]);
 
   // Edits not yet saved in a tab: ask before leaving it. Each tab reports with
   // setDirty(tabId, bool); only the general settings tab does so far.
@@ -345,7 +358,7 @@ function AdminShell() {
   };
 
   const isDevMachine = process.env.NODE_ENV !== 'production';
-  const activeItem = NAV_ITEMS.find((i) => i.id === activeTab) || NAV_ITEMS[0];
+  const activeItem = navItems.find((i) => i.id === activeTab) || navItems[0];
   const adminLabel = adminUser ? (adminUser.name || adminUser.studentId) : 'กำลังตรวจสิทธิ์';
   const adminInitial = adminUser ? String(adminLabel).trim().charAt(0).toUpperCase() : '';
 
@@ -404,7 +417,7 @@ function AdminShell() {
         </div>
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
-          {NAV_GROUPS.map((group, gi) => (
+          {navGroups.map((group, gi) => (
             <div key={group.title} className={gi === 0 ? '' : 'mt-5'}>
               <p className={`px-3.5 mb-1.5 text-[11px] font-semibold text-slate-400 ${sidebarCollapsed ? 'md:hidden' : ''}`}>
                 {group.title}
@@ -508,6 +521,7 @@ function AdminShell() {
           {activeTab === 'pageDesign' && <TemplateChooserTab />}
           {activeTab === 'settings' && <SettingsTab />}
           {activeTab === 'manual' && <ManualTab onGoTab={goTab} />}
+          {activeTab === 'testTools' && testToolsOn && <TestToolsTab />}
         </main>
       </div>
 
