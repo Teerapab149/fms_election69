@@ -273,6 +273,12 @@ const ReadinessCard = () => {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-800">{c.title}</p>
                       <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{c.detail}</p>
+                      {c.techDetail && (
+                        <details className="mt-1.5 group">
+                          <summary className="cursor-pointer text-[11px] font-semibold text-slate-500 hover:text-slate-800 select-none">รายละเอียดสำหรับเจ้าหน้าที่ IT</summary>
+                          <p className="mt-1 text-[11px] text-slate-500 leading-relaxed break-words font-mono">{c.techDetail}</p>
+                        </details>
+                      )}
                       {/* The one item a button can repair: the special ballot options
                           went missing from the database (a DB that had parties set up
                           before the sync existed, or imported data). */}
