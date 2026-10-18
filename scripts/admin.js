@@ -122,7 +122,11 @@ async function rotatePassword(db) {
   }
 
   const admins = await db.user.count({ where: { isAdmin: true } });
-  const personal = await db.user.count({ where: { isAdmin: true, passwordHash: { not: null } } });
+  // นับเฉพาะบัญชีที่ --clear-personal จะล้างจริง บัญชีเจ้าหน้าที่ถูกยกเว้นไว้เสมอ
+  // (ดู KEEPS_OWN_PASSWORD) ถ้านับรวมเข้ามา คำเตือนข้างล่างจะชี้ให้ไปล้างของที่ล้างไม่ได้
+  const personal = await db.user.count({
+    where: { isAdmin: true, passwordHash: { not: null }, NOT: KEEPS_OWN_PASSWORD },
+  });
   banner("รหัสกลางใหม่ — แสดงครั้งเดียว", [
     ["เข้าที่", "/admin/login"],
     ["Username", "รหัส นศ. ของแต่ละคน"],
@@ -139,19 +143,37 @@ async function rotatePassword(db) {
 // รหัสประจำบัญชีควรมีเฉพาะบัญชีสำรอง — ที่ติดมากับบัญชีนักศึกษาคือของเก่าจาก seed
 // ซึ่งรหัสตัวจริงเคยถูก commit ลง repo สาธารณะ (ลบออกแล้ว 2026-07-28 แต่ยังอยู่ใน
 // git history) เท่ากับเป็นรหัสที่ใครก็อ่านได้ ต้องล้างทิ้งให้เหลือแต่รหัสกลาง
+// บัญชีเจ้าหน้าที่ (role STAFF) ต้องไม่โดนล้าง รหัสของบัญชีนั้นคือสิ่งที่ทำให้ลายเซ็น
+// รับรองผลเป็นของคนคนเดียว ถ้าล้างทิ้ง บัญชีนั้นจะตกไปใช้รหัสกลางของกรรมการ แปลว่า
+// กรรมการทุกคนกดรับรองผลในชื่อเจ้าหน้าที่ได้ (เคยเป็นแบบนั้นจริงจนถึง 2026-10-19)
+// ฝั่ง /api/admin/login ปฏิเสธรหัสกลางให้บัญชี STAFF อีกชั้นแล้ว อันนี้คือกันที่ต้นทาง
+const KEEPS_OWN_PASSWORD = { role: "STAFF" };
+
 async function clearPersonal(db) {
   const rows = await db.user.findMany({
-    where: { passwordHash: { not: null } },
+    where: { passwordHash: { not: null }, NOT: KEEPS_OWN_PASSWORD },
     select: { id: true, studentId: true, name: true },
   });
+  const kept = await db.user.findMany({
+    where: { passwordHash: { not: null }, ...KEEPS_OWN_PASSWORD },
+    select: { studentId: true, name: true },
+  });
+  const keptNote = kept.length
+    ? `\n\n  ไม่ได้ล้าง ${kept.length} บัญชีเจ้าหน้าที่ (รับรองผล) ซึ่งต้องมีรหัสของตัวเองเสมอ:\n` +
+      kept.map((r) => `    ${r.studentId}  ${r.name || "-"}`).join("\n")
+    : "";
+
   if (!rows.length) {
-    console.log("\nไม่มีบัญชีไหนมีรหัสของตัวเอง — เหลือแต่รหัสกลางอยู่แล้ว\n");
+    console.log(`\nไม่มีบัญชีไหนที่ต้องล้าง เหลือแต่รหัสกลางอยู่แล้ว${keptNote}\n`);
     return;
   }
-  await db.user.updateMany({ where: { passwordHash: { not: null } }, data: { passwordHash: null } });
+  await db.user.updateMany({
+    where: { passwordHash: { not: null }, NOT: KEEPS_OWN_PASSWORD },
+    data: { passwordHash: null },
+  });
   banner(`ล้างรหัสประจำบัญชีแล้ว ${rows.length} บัญชี`,
     rows.map((r) => [r.studentId, r.name || "-"]),
-    "  ทุกคนใช้รหัสกลางทางเดียว · ถ้าต้องการบัญชีสำรองที่มีรหัสของตัวเอง ให้สร้างใหม่ด้วย --break-glass");
+    "  ทุกคนใช้รหัสกลางทางเดียว ถ้าต้องการบัญชีสำรองที่มีรหัสของตัวเอง ให้สร้างใหม่ด้วย --break-glass" + keptNote);
 }
 
 // บัญชีทางหนีไฟ: ไม่ผูกกับนักศึกษาคนไหน มีรหัสของตัวเองแยกจากรหัสกลาง ใช้ตอนที่
