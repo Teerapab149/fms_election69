@@ -33,13 +33,15 @@ UPDATE "User"
 UPDATE "Candidate" SET score = 0;
 
 -- 4. ปลดธงรับรองผลของปีก่อน (ไม่งั้นเครื่องมือตรวจสอบจะยังถือว่าคะแนนถูกล็อกอยู่)
---    พร้อมลบชื่อผู้รับรองกับวันเวลาของปีก่อน และคืนสถานะระบบเป็นค่าเริ่มต้นของปีใหม่:
+--    พร้อมลบชื่อผู้รับรอง วันเวลา และตัวเลขที่ปักไว้ตอนรับรอง (คะแนนรายพรรค จำนวนบัตร
+--    ปลายโซ่) ของปีก่อน และคืนสถานะระบบเป็นค่าเริ่มต้นของปีใหม่:
 --    - "showResult" = false: เดิมสคริปต์นี้ไม่แตะสวิตช์แสดงผล มันจึงเปิดค้างจากปีก่อน
 --      พอปีใหม่เปิดหีบ คะแนนสดของปีใหม่จะโชว์ให้ทุกคนเห็นตั้งแต่บัตรใบแรก
 --    - "systemMode" = 'AUTO': เปิด-ปิดหีบตามวันเวลาที่ตั้งใน "ตั้งค่าทั่วไป" (เดิมค้าง ENDED)
 UPDATE "SystemConfig"
    SET "globalConfig" = jsonb_set(
-         COALESCE("globalConfig", '{}')::jsonb - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername',
+         COALESCE("globalConfig", '{}')::jsonb - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
+           - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead',
          '{ballotsAnonymized}', 'false'::jsonb, true),
        "showResult" = false,
        "systemMode" = 'AUTO'

@@ -6,8 +6,35 @@
 // variable, which would be baked into the browser bundle at build time and
 // report the machine that built the app instead of the one that is running.
 
-export function isTestToolsEnabled(env = process.env) {
+export function isTestToolsSwitchOn(env = process.env) {
   return env?.ADMIN_TEST_TOOLS === "1";
+}
+
+// The database name inside a postgres URL ("fms_election" in
+// postgresql://user:pw@host:5432/fms_election?schema=public), or "" if the value
+// is missing or not a URL.
+export function databaseNameOf(url) {
+  try {
+    return decodeURIComponent(new URL(String(url)).pathname.replace(/^\//, ""));
+  } catch {
+    return "";
+  }
+}
+
+// A throwaway database: the e2e suite's `<name>_e2e` or a `<name>_test`.
+export function isTestDatabaseName(name) {
+  return /^[A-Za-z0-9_]+_(e2e|test)$/.test(String(name || ""));
+}
+
+// The switch is not enough on a production build. `next start` forces
+// NODE_ENV=production, so there the tools also need DATABASE_URL to point at a
+// throwaway database: a stray ADMIN_TEST_TOOLS=1 in the real server's .env then
+// does nothing. `next dev` (the owner's machine) is unchanged, so the tools can
+// still be tried out against the dev database.
+export function isTestToolsEnabled(env = process.env) {
+  if (!isTestToolsSwitchOn(env)) return false;
+  if (env?.NODE_ENV === "production") return isTestDatabaseName(databaseNameOf(env.DATABASE_URL));
+  return true;
 }
 
 // Every test student gets a studentId starting with this. A real PSU student id

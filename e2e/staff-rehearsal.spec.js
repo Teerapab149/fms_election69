@@ -61,9 +61,9 @@ const STAFF_NAME = 'อีทูอี เจ้าหน้าที่คณ�
 // Texts the guide quotes — asserted verbatim so a wording change that would make
 // the guide lie fails here first.
 const MSG = {
-  staffOnly: 'รับรองผลได้เฉพาะบัญชีเจ้าหน้าที่คณะเท่านั้น — ให้เจ้าหน้าที่เข้าสู่ระบบด้วยบัญชีของตนเองแล้วกดรับรอง',
-  hideRefused: 'ผลถูกรับรองแล้ว ซ่อนผลไม่ได้ — ผลที่รับรองแล้วต้องแสดงต่อสาธารณะ',
-  modeRefused: 'ผลถูกรับรองแล้ว เปลี่ยนโหมดไม่ได้ — การเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ',
+  staffOnly: 'รับรองผลได้เฉพาะบัญชีเจ้าหน้าที่คณะเท่านั้น, ให้เจ้าหน้าที่เข้าสู่ระบบด้วยบัญชีของตนเองแล้วกดรับรอง',
+  hideRefused: 'ผลถูกรับรองแล้ว ซ่อนผลไม่ได้, ผลที่รับรองแล้วต้องแสดงต่อสาธารณะ',
+  modeRefused: 'ผลถูกรับรองแล้ว เปลี่ยนโหมดไม่ได้, การเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ',
   datesRefused: 'ผลถูกรับรองแล้ว แก้วันเวลาเลือกตั้งไม่ได้',
   closeConfirm: 'ปิดหีบทันที ไม่รับคะแนนอีก ผลคะแนนยังไม่แสดงจนกว่าจะเปิดการแสดงผล',
   publishConfirm: 'ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที เมื่อประกาศแล้ว จะเปิดหีบอีกไม่ได้จนกว่าจะซ่อนผลก่อน',
@@ -77,6 +77,8 @@ const nextXff = () => `198.51.100.${(Number(RUN.slice(-2)) + ++xffSeq) % 250 + 1
 
 // committee admin_token for API calls (and for the reset in beforeAll/afterAll)
 let committeeCookie = '';
+// the google form link as the seed left it, put back in afterAll (step 6 sets its own)
+/** @type {string|null|undefined} */ let origForm;
 
 /** Strip certification + hide results (guarded raw SQL — *_e2e only). */
 async function resetCertification() {
@@ -85,7 +87,8 @@ async function resetCertification() {
     `UPDATE "SystemConfig"
         SET "showResult" = false,
             "globalConfig" = CASE WHEN "globalConfig" IS NULL THEN NULL
-              ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername' END
+              ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
+                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' - 'e2eMarker' END
       WHERE id = 1`
   );
 }
@@ -129,16 +132,19 @@ async function uiAdminLogin(browser, username, password) {
   const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Forwarded-For': nextXff() } });
   const page = await ctx.newPage();
   await page.goto(`${BASE_PATH}/admin/login`);
-  await page.getByPlaceholder('Enter admin username').fill(username);
-  await page.getByPlaceholder('••••••••').fill(password);
-  await page.getByRole('button', { name: /Login to System/ }).click();
+  // by id: the page was redesigned (e72ade5) and the English placeholders this
+  // used to find are Thai now
+  await page.locator('#admin-username').fill(username);
+  await page.locator('#admin-password').fill(password);
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).click();
   await page.waitForURL(/\/admin(\?|$)/, { timeout: 20000 });
   return { ctx, page };
 }
 
-/** Open the settings tab and wait for the closing-steps card. */
+/** Open the control center (the closing steps moved there from the settings tab
+ *  when the console was redesigned) and wait for the closing-steps card. */
 async function openClosingSteps(page) {
-  await page.goto(`${BASE_PATH}/admin?tab=settings`);
+  await page.goto(`${BASE_PATH}/admin?tab=overview`);
   await expect(page.getByRole('heading', { name: 'ขั้นตอนปิดการเลือกตั้ง' })).toBeVisible({ timeout: 20000 });
 }
 
@@ -188,6 +194,7 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
     try {
       await resetElection(); // hands vote-flow an open, uncertified box
     } finally {
+      if (origForm !== undefined) await prisma().systemConfig.update({ where: { id: 1 }, data: { googleFormUrl: origForm } });
       await prisma().user.deleteMany({ where: { studentId: { startsWith: 'e2e-staff-' } } });
       await disconnect();
     }
@@ -328,6 +335,74 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
         // the shared committee password does NOT open the staff account
         expect((await apiLogin(STAFF_ID, E2E_ADMIN_PASSWORD)).status).toBe(401);
 
+        // ── the gate: certification refuses a box whose numbers disagree ──
+        // Each tamper is applied to the test DB, the staff account presses
+        // รับรองผล through the real API, and the DB is put back. The refusal must
+        // be 409 with the reason in Thai, and nothing may be certified.
+        const staffLogin = await apiLogin(STAFF_ID, staffPassword);
+        expect(staffLogin.status).toBe(200);
+        const staffCookie = staffLogin.cookie;
+        const db = prisma();
+        const isCertified = async () => {
+          const c = /** @type {any} */ ((await db.systemConfig.findUnique({ where: { id: 1 } }))?.globalConfig);
+          return !!c?.ballotsAnonymized;
+        };
+        const refusedWith = async (label, pattern) => {
+          const r = await dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS' });
+          expect(r.status, `${label}: status (${JSON.stringify(r.body)})`).toBe(409);
+          expect(r.body.error, label).toMatch(pattern);
+          expect(await isCertified(), `${label}: must not be certified`).toBe(false);
+          return r.body.error;
+        };
+        await assertLiveTestDb();
+
+        // a clean box passes the same four checks the gate runs (checked here with the verifier)
+        const clean = await verifyBallotChain();
+        expect(clean.ok, 'precondition: the box verifies').toBe(true);
+
+        const party = (await db.candidate.findMany({ where: { number: { gt: 0 } }, orderBy: { number: 'asc' } }))[0];
+
+        // 1. a score changed by hand: sum(score) is one more than the ballots in the box
+        await db.candidate.update({ where: { id: party.id }, data: { score: { increment: 1 } } });
+        const driftMsg = await refusedWith('score drift', /คะแนนรวมทุกพรรค \d+ คะแนน/);
+        console.log(`[gate] score drift refused: ${driftMsg}`);
+        await db.candidate.update({ where: { id: party.id }, data: { score: party.score } });
+
+        // 2. a turnout flag cleared by hand: one fewer voter than ballots
+        const votedUser = await db.user.findFirst({ where: { isVoted: true }, orderBy: { id: 'asc' } });
+        await db.user.update({ where: { id: votedUser.id }, data: { isVoted: false } });
+        const turnoutMsg = await refusedWith('turnout drift', /ผู้ที่ลงคะแนนแล้ว \d+ คน/);
+        console.log(`[gate] turnout drift refused: ${turnoutMsg}`);
+        await db.user.update({ where: { id: votedUser.id }, data: { isVoted: true } });
+
+        // 3. a ballot altered: the HMAC chain breaks at that row
+        const firstBallot = await db.ballot.findFirst({ orderBy: { seq: 'asc' } });
+        await db.$executeRawUnsafe(`UPDATE "Ballot" SET payload = payload || 'AA' WHERE seq = ${firstBallot.seq}`);
+        const chainMsg = await refusedWith('chain tamper', /โซ่ของบัตรในหีบไม่ผ่านการตรวจ \(ผิดปกติที่บัตรลำดับที่ \d+\)/);
+        console.log(`[gate] chain tamper refused: ${chainMsg}`);
+        await db.$executeRawUnsafe(`UPDATE "Ballot" SET payload = $1 WHERE seq = ${firstBallot.seq}`, firstBallot.payload);
+
+        // 4. the stored chain tip moved: ChainHead no longer matches the last ballot
+        const headRow = await db.chainHead.findUnique({ where: { id: 1 } });
+        await db.$executeRawUnsafe(`UPDATE "ChainHead" SET seq = seq + 1 WHERE id = 1`);
+        const headMsg = await refusedWith('head moved', /ปลายโซ่/);
+        console.log(`[gate] head moved refused: ${headMsg}`);
+        await db.$executeRawUnsafe(`UPDATE "ChainHead" SET seq = ${headRow.seq} WHERE id = 1`);
+
+        expect((await verifyBallotChain()).ok, 'DB restored: the box verifies again').toBe(true);
+
+        // Things certification must carry through untouched: the google form link
+        // (its own column) and a setting saved just before (merged, not replaced)
+        const FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSe2eStaffRehearsal/viewform';
+        origForm = (await db.systemConfig.findUnique({ where: { id: 1 } }))?.googleFormUrl ?? null;
+        await db.systemConfig.update({ where: { id: 1 }, data: { googleFormUrl: FORM } });
+        const put = await fetch(API('/api/admin/global-config'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', cookie: committeeCookie },
+          body: JSON.stringify({ globalConfig: { e2eMarker: RUN } }),
+        });
+        expect(put.status).toBe(200);
+
         // staff signs in through the real form and presses รับรองผล
         const s = await uiAdminLogin(browser, STAFF_ID, staffPassword);
         contexts.push(s.ctx);
@@ -342,6 +417,50 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
         expect(cfg?.certifiedBy).toBe(STAFF_NAME);
         expect(cfg?.certifiedByUsername).toBe(STAFF_ID);
         expect(Number.isNaN(Date.parse(cfg?.certifiedAt))).toBe(false);
+
+        // the record pinned at certification equals the live box, number for number
+        const live = await ballotStats();
+        const rows = await prisma().candidate.findMany({ select: { number: true, name: true, score: true }, orderBy: { number: 'asc' } });
+        expect(cfg?.certifiedTally).toEqual(rows.map((r) => ({ number: r.number, name: r.name, score: r.score })));
+        expect(cfg?.certifiedBallots).toBe(live.ballots);
+        expect(cfg?.certifiedChainHead).toBe(live.head);
+        expect(cfg?.certifiedTally.reduce((a, r) => a + r.score, 0)).toBe(live.ballots);
+        // nothing saved before the certification was lost, and the form link column is intact
+        expect(cfg?.e2eMarker).toBe(RUN);
+        expect((await prisma().systemConfig.findUnique({ where: { id: 1 } }))?.googleFormUrl).toBe(FORM);
+
+        // the control center shows the pinned numbers for staff to copy
+        await s.page.reload();
+        await expect(s.page.getByRole('heading', { name: 'ตัวเลขที่รับรองไว้' })).toBeVisible({ timeout: 20000 });
+        await expect(s.page.getByText(cfg.certifiedChainHead, { exact: true })).toBeVisible();
+        await expect(s.page.getByRole('button', { name: 'คัดลอกเป็นข้อความ' })).toBeVisible();
+        await expect(s.page.getByRole('button', { name: 'ดาวน์โหลดเป็นไฟล์ข้อความ' })).toBeVisible();
+
+        // verify-ballot-chain.js agrees with the record; after an edit it says so and exits 2
+        const verifyRun = () => {
+          try {
+            const out = execFileSync(process.execPath, [path.join('scripts', 'verify-ballot-chain.js')],
+              { env: { ...process.env, DATABASE_URL: TEST_DB_URL }, encoding: 'utf8', cwd: process.cwd(), stdio: ['ignore', 'pipe', 'pipe'] });
+            return { code: 0, out };
+          } catch (e) {
+            return { code: e.status, out: String(e.stdout || '') };
+          }
+        };
+        const okRun = verifyRun();
+        console.log(`[verify] after certification:\n${okRun.out}`);
+        expect(okRun.code).toBe(0);
+        expect(okRun.out).toMatch(/ตัวเลขปัจจุบันตรงกับที่รับรองไว้ทุกค่า/);
+
+        await assertLiveTestDb();
+        const target = await prisma().candidate.findFirst({ where: { number: { gt: 0 } }, orderBy: { number: 'asc' } });
+        await prisma().candidate.update({ where: { id: target.id }, data: { score: { increment: 1 } } });
+        const badRun = verifyRun();
+        console.log(`[verify] after a score edit:\n${badRun.out}`);
+        expect(badRun.code).toBe(2);
+        expect(badRun.out).toMatch(/ตัวเลขปัจจุบันไม่ตรงกับที่รับรองไว้/);
+        expect(badRun.out).toContain(`รับรองไว้ ${target.score} คะแนน ตอนนี้ ${target.score + 1} คะแนน`);
+        await prisma().candidate.update({ where: { id: target.id }, data: { score: target.score } });
+        expect(verifyRun().code).toBe(0);
 
         // H3: certification re-stamps the voters' rows, so no User tuple shares an
         // xmin with a Ballot tuple any more (before it, every ballot paired with
@@ -375,6 +494,32 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
 
         // ENDED stays allowed ("เปลี่ยนโหมดได้แค่ ENDED อย่างเดียว")
         expect((await dashboard(committeeCookie, { action: 'SET_MODE', mode: 'ENDED' })).status).toBe(200);
+
+        // the settings form cannot touch any certification key, old or new (403)
+        for (const key of ['ballotsAnonymized', 'certifiedAt', 'certifiedBy', 'certifiedByUsername', 'certifiedTally', 'certifiedBallots', 'certifiedChainHead']) {
+          const res = await fetch(API('/api/admin/global-config'), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', cookie: committeeCookie },
+            body: JSON.stringify({ globalConfig: { [key]: key === 'ballotsAnonymized' ? false : null } }),
+          });
+          expect(res.status, `PUT ${key}`).toBe(403);
+        }
+        // editing the ballot options after certification is refused (409)
+        const sync = await dashboard(committeeCookie, { action: 'SYNC_BALLOT_OPTIONS' });
+        expect(sync.status).toBe(409);
+        // the test tools do not exist on this server (switch off), and there is no reset action
+        const tools = await fetch(API('/api/admin/test-tools'), { method: 'POST', headers: { 'Content-Type': 'application/json', cookie: committeeCookie }, body: JSON.stringify({ action: 'CLEAR_BALLOTS' }) });
+        expect(tools.status).toBe(404);
+        for (const action of ['RESET_VOTES', 'RESET_CANDIDATES', 'UNCERTIFY', 'CLEAR_BALLOTS']) {
+          expect((await dashboard(committeeCookie, { action })).status, action).toBe(400);
+        }
+        // a second press of รับรองผล is a no-op: the pinned numbers stay the first ones
+        const before = /** @type {any} */ ((await prisma().systemConfig.findUnique({ where: { id: 1 } }))?.globalConfig);
+        const again = await dashboard(committeeCookie, { action: 'ANONYMIZE_BALLOTS' });
+        expect(again.status).toBe(200);
+        expect(again.body.message).toBe('รับรองผลไปก่อนหน้านี้แล้ว');
+        const after = /** @type {any} */ ((await prisma().systemConfig.findUnique({ where: { id: 1 } }))?.globalConfig);
+        expect(after).toEqual(before);
 
         // date edit → 409, and nothing written
         const put = await fetch(API('/api/admin/global-config'), {

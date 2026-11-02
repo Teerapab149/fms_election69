@@ -44,6 +44,35 @@ const VOTE_REFUSAL_MESSAGES = {
   AUTO_CLOSED: "ปิดหีบแล้ว ไม่รับลงคะแนนเพิ่ม",
 };
 
+// What the vote page would be told if the box is closed or certified RIGHT NOW,
+// or null when it is open. The same ladder runs twice: once up front, so a
+// refused request costs nothing, and once more inside the transaction after the
+// ChainHead lock is held (see appendBallotTx), because certifying or closing the
+// box can commit while this request waits for that lock. The second run reads the
+// clock again on purpose: a ballot that arrives in the box after the box closed
+// is exactly what the ladder exists to stop.
+function stateRefusal(systemConfig, now) {
+  // Certified results are final. This sits above every mode check on purpose:
+  // MANUAL_OPEN forces the box open regardless of the clock, so without this a
+  // certified election could still take votes and push score past the tally
+  // someone signed their name to.
+  if (systemConfig?.globalConfig?.ballotsAnonymized) {
+    return { code: "CERTIFIED", error: "ผลการเลือกตั้งได้รับการรับรองแล้ว ไม่รับลงคะแนนเพิ่ม" };
+  }
+  // Mode + schedule (lib/election/systemStatus.mjs voteRefusal): PAUSE and ENDED
+  // refuse, MANUAL_OPEN takes votes whatever the clock says, AUTO follows the
+  // schedule.
+  const { systemMode: mode, start, end } = readElectionState(systemConfig, now);
+  const refusal = voteRefusal({ systemMode: mode, start, end, now });
+  if (refusal) return { code: refusal, error: VOTE_REFUSAL_MESSAGES[refusal] };
+  return null;
+}
+
+// Thrown inside the vote transaction so everything it wrote rolls back.
+class VoteRefused extends Error {
+  constructor({ code, error }) { super(error); this.code = code; }
+}
+
 export async function POST(request) {
   // First, before the session and the rate limit: this route is excluded from the
   // middleware matcher (middleware cost ~22% of vote throughput under a 500-voter
@@ -114,24 +143,8 @@ export async function POST(request) {
 
     // 0. 🛑 SECURITY GATE:
     const systemConfig = await db.systemConfig.findFirst({ where: { id: 1 } });
-    const now = Date.now();
-    const { systemMode: mode, start, end } = readElectionState(systemConfig, now);
-
-    // 0.0 Certified results are final. This sits above every mode check on
-    // purpose: MANUAL_OPEN forces the box open regardless of the clock, so
-    // without this a certified election could still take votes and push score
-    // past the tally someone signed their name to.
-    if (systemConfig?.globalConfig?.ballotsAnonymized) {
-      return refuse("CERTIFIED", "ผลการเลือกตั้งได้รับการรับรองแล้ว ไม่รับลงคะแนนเพิ่ม", 403);
-    }
-
-    // 0.1 Mode + schedule (lib/election/systemStatus.mjs voteRefusal): PAUSE and
-    // ENDED refuse, MANUAL_OPEN takes votes whatever the clock says, AUTO follows
-    // the schedule. Same codes and messages as when this ladder lived here.
-    const refusal = voteRefusal({ systemMode: mode, start, end, now });
-    if (refusal) {
-      return refuse(refusal, VOTE_REFUSAL_MESSAGES[refusal], 403);
-    }
+    const early = stateRefusal(systemConfig, Date.now());
+    if (early) return refuse(early.code, early.error, 403);
 
     // 1. ตรวจสอบข้อมูล
     const parsedId = parseInt(candidateId);
@@ -199,25 +212,46 @@ export async function POST(request) {
     //       real previous rowHash as its prevHash → the chain is gap-free and
     //       verifiable even under a dead heat (proved by the concurrency test).
     //   (c) Tally (unchanged): the atomic Candidate.score increment.
-    const outcome = await db.$transaction(async (tx) => {
-      // (a) claim the one-shot right to vote + stamp the voter's own time
-      const claim = await tx.user.updateMany({
-        where: { id: user.id, isVoted: false },
-        data: { isVoted: true, votedAt },
-      });
-      if (claim.count === 0) return "ALREADY_VOTED";
+    //
+    // Lock order, for anyone adding a lock here: the ChainHead row, then the
+    // SystemConfig row. This request takes only the first (the second is a plain
+    // read after it), certification takes both in that order, and every other
+    // admin action takes only SystemConfig, so no two transactions can each hold
+    // what the other waits for.
+    let outcome;
+    try {
+      outcome = await db.$transaction(async (tx) => {
+        // (a) claim the one-shot right to vote + stamp the voter's own time
+        const claim = await tx.user.updateMany({
+          where: { id: user.id, isVoted: false },
+          data: { isVoted: true, votedAt },
+        });
+        if (claim.count === 0) return "ALREADY_VOTED";
 
-      // (b) append the encrypted ballot to the chain — the shared helper takes
-      //     the ChainHead FOR UPDATE row lock that serializes concurrent votes.
-      await appendBallotTx(tx, { payload, hourBucket, chainSecret });
+        // (b) append the encrypted ballot to the chain. The shared helper takes
+        //     the ChainHead FOR UPDATE row lock that serializes concurrent votes.
+        //     Once it holds that lock it runs the state check again: a box that
+        //     closed or was certified while this request waited refuses the
+        //     ballot, and the throw below undoes the claim in (a).
+        const appended = await appendBallotTx(tx, {
+          payload,
+          hourBucket,
+          chainSecret,
+          recheck: async (t) => stateRefusal(await t.systemConfig.findFirst({ where: { id: 1 } }), Date.now()),
+        });
+        if (appended.refused) throw new VoteRefused(appended.refused);
 
-      // (c) tally — the single source of truth the results API serves
-      await tx.candidate.update({
-        where: { id: parsedId },
-        data: { score: { increment: 1 } },
-      });
-      return "OK";
-    }, VOTE_TX_OPTIONS);
+        // (c) tally, the single source of truth the results API serves
+        await tx.candidate.update({
+          where: { id: parsedId },
+          data: { score: { increment: 1 } },
+        });
+        return "OK";
+      }, VOTE_TX_OPTIONS);
+    } catch (e) {
+      if (e instanceof VoteRefused) return refuse(e.code, e.message, 403);
+      throw e;
+    }
 
     if (outcome === "ALREADY_VOTED") {
       return refuse("ALREADY_VOTED", "คุณใช้สิทธิ์เลือกตั้งไปแล้ว", 403);

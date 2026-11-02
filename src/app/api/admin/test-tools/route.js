@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
-import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { adminGuard, requireAdmin } from "../../../../lib/auth/adminCheck";
 import { bustSiteData } from "../../../../lib/cache/siteData";
 import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
@@ -11,16 +11,19 @@ import {
   buildSampleParty,
   buildSampleVoters,
   TEST_VOTER_PREFIX,
+  databaseNameOf,
 } from "../../../../utils/testTools.mjs";
 
 export const dynamic = "force-dynamic";
 
 // Test tools: seed sample data, clear ballots, clear parties. They can wipe an
 // election, so they answer only when the SERVER environment sets
-// ADMIN_TEST_TOOLS=1 (never a NEXT_PUBLIC_ variable). Order of checks, always:
+// ADMIN_TEST_TOOLS=1 (never a NEXT_PUBLIC_ variable) and, on a production build,
+// only when DATABASE_URL names a throwaway database (_e2e or _test, see
+// utils/testTools.mjs). Order of checks, always:
 //   1. adminGuard (no cookie or no admin flag: 401/403, like every admin route)
-//   2. the env switch (off: 404 { error: "Not found" }, as if the route did not exist)
-//   3. the action
+//   2. the switch (off: 404 { error: "Not found" }, as if the route did not exist)
+//   3. the action, and an audit row for it (TEST_TOOL_<ACTION>) whatever its outcome
 // CLEAR_BALLOTS mirrors the first half of scripts/sql/annual-reset.sql step for
 // step. On production the web DB account cannot delete ballots by design
 // (scripts/sql/ballot-grants.sql); that refusal is reported in Thai, not as a 500.
@@ -73,14 +76,44 @@ export async function GET(request) {
   }
 }
 
+// One row per attempt, after the action, so it records whether it went through.
+// Best-effort: a failed log never changes the response. The table is append-only
+// on a locked-down database, which these tools never touch (CLEAR_BALLOTS is
+// refused there), and CLEAR_BALLOTS does not clear it.
+async function auditToolAction(auth, body, res) {
+  try {
+    let error = null;
+    if (!res.ok) { try { error = (await res.clone().json())?.error || null; } catch { /* not JSON */ } }
+    await db.adminAuditLog.create({
+      data: {
+        action: `TEST_TOOL_${String(body?.action || "UNKNOWN").slice(0, 40)}`,
+        actor: auth.user?.studentId || (auth.user?.id != null ? String(auth.user.id) : null),
+        detail: JSON.stringify({
+          database: databaseNameOf(process.env.DATABASE_URL),
+          result: res.ok ? "ok" : `refused ${res.status}`,
+          ...(error ? { error } : {}),
+        }),
+      },
+    });
+  } catch (e) {
+    console.error("[audit] failed to log test tool action:", e.message);
+  }
+}
+
 export async function POST(request) {
-  const authError = await adminGuard(request);
-  if (authError) return authError;
+  const auth = await requireAdmin(request);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   if (!isTestToolsEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let body = {};
   try { body = await request.json(); } catch { /* handled as an unknown action */ }
 
+  const res = await runAction(body);
+  await auditToolAction(auth, body, res);
+  return res;
+}
+
+async function runAction(body) {
   try {
     let message;
     switch (body.action) {
@@ -94,7 +127,8 @@ export async function POST(request) {
           await tx.$executeRaw`UPDATE "Candidate" SET score = 0`;
           await tx.$executeRaw`UPDATE "SystemConfig"
             SET "globalConfig" = jsonb_set(
-                  COALESCE("globalConfig", '{}')::jsonb - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername',
+                  COALESCE("globalConfig", '{}')::jsonb - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
+                    - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead',
                   '{ballotsAnonymized}', 'false'::jsonb, true),
                 "showResult" = false,
                 "systemMode" = 'AUTO'

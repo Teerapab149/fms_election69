@@ -54,16 +54,30 @@ function hourFloor(nowMs) {
  * held for the shortest possible time (the ciphertext never depends on chain
  * state — only on the choice + a fresh nonce).
  *
+ * `recheck` (optional) runs once the row lock is held and before anything is
+ * written. The caller read the election's state BEFORE it waited for the lock,
+ * and certification or closing the box can commit in that wait; a lock holder
+ * sees every commit made before it got the lock, so this is the first moment
+ * the state can be trusted. It returns null to go on, or any truthy reason to
+ * stop: nothing is written and `{ refused: reason }` comes back, and the caller
+ * is expected to roll its transaction back (by throwing) so that whatever it
+ * wrote earlier, such as the voter's isVoted flag, is undone as well.
+ *
  * @param {*} tx        a Prisma transaction client
- * @param {{payload:string, hourBucket:(string|null), chainSecret:string}} args
- * @returns {Promise<{seq:number, rowHash:string, prevHash:string}>}
+ * @param {{payload:string, hourBucket:(string|null), chainSecret:string,
+ *          recheck?:((tx:*) => Promise<*>)}} args
+ * @returns {Promise<{seq:number, rowHash:string, prevHash:string} | {refused:*}>}
  */
-async function appendBallotTx(tx, { payload, hourBucket, chainSecret }) {
+async function appendBallotTx(tx, { payload, hourBucket, chainSecret, recheck }) {
   const rows = await tx.$queryRaw`
     SELECT "head", "seq" FROM "ChainHead" WHERE "id" = 1 FOR UPDATE
   `;
   if (!rows || rows.length === 0) {
     throw new Error("ChainHead row missing — cannot append ballot (run the v2-SEC migration/seed)");
+  }
+  if (recheck) {
+    const refused = await recheck(tx);
+    if (refused) return { refused };
   }
   const prevHash = rows[0].head;
   const nextSeq = Number(rows[0].seq) + 1;

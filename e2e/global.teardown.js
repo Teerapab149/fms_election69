@@ -13,6 +13,7 @@ const { execSync } = require('child_process');
 const { testPrisma, truncateAll, disconnect, TEST_DB_NAME } = require('./helpers/testDb');
 
 const SERVER_STATE_FILE = path.join(os.tmpdir(), 'fms-e2e-server.json');
+const BALLOT_KEY_FILE = path.join(os.tmpdir(), 'fms-e2e-ballot-private.pem');
 
 function stopServer() {
   let state = null;
@@ -43,6 +44,7 @@ function stopServer() {
 
 module.exports = async function globalTeardown() {
   stopServer();
+  try { fs.unlinkSync(BALLOT_KEY_FILE); } catch {}
   try {
     const db = testPrisma();
     await truncateAll(db); // guarded — refuses anything not ending in _e2e

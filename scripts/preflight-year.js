@@ -59,6 +59,12 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
       add("WARN", "ballotsAnonymized flag still true", "last year's flag — scripts/sql/annual-reset.sql clears it");
     else add("PASS", "ballots not anonymized", "fresh");
 
+    // The tally, ballot count and chain head pinned at certification describe last
+    // year's box. Left in place, verify-ballot-chain.js would compare this year's
+    // box against them and report a false mismatch.
+    if (["certifiedTally", "certifiedBallots", "certifiedChainHead"].some((k) => gc[k] != null))
+      add("FAIL", "last year's certified record is still stored", "scripts/sql/annual-reset.sql clears it");
+
     // ── Parties / ballot shape ──────────────────────────────────────────────
     const realParties = candidates.filter((c) => c.number > 0);
     const testParties = realParties.filter((c) => TEST_PARTY_RE.test(c.name));
