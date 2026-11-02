@@ -34,23 +34,22 @@ const POSITION_ORDER = [
   "ประธานฝ่ายสถานที่", "ประธานฝ่ายสาธารณสุข"
 ];
 
-// ✅ PREPARE DATA HELPER
-// ฟังก์ชันนี้จะตรวจสอบข้อมูลจาก DB ว่ามีไหม ถ้าไม่มีให้ใส่ Default Text เพื่อไม่ให้หน้าเว็บโล่ง
+// ทำให้รูปร่างข้อมูลแน่นอนก่อนส่งให้ธีม: array เป็น array เสมอ ข้อความว่างเป็น null เสมอ
+// ธีมจะได้ `.map()` และเช็ค falsy ได้โดยไม่ต้องระวังว่า DB ส่งอะไรมา
+//
+// เมื่อก่อนตรงนี้ยัดข้อความอย่าง "ยังไม่มีข้อมูลนโยบาย" ลงไปเป็นสมาชิกตัวแรกของ array
+// เพื่อไม่ให้หน้าเว็บโล่ง แล้วปล่อยให้แต่ละธีมกรองทิ้งเอง ผลคือ 7 ใน 12 หน้าพรรคไม่ได้กรอง
+// แล้วพิมพ์ข้อความนั้นออกมาเป็นนโยบายจริงข้อหนึ่ง นับรวมเป็นจำนวนนโยบายด้วย (หน้า candidates
+// อ่านจาก API ตรง ๆ จึงขึ้น 0 ส่วนหน้าพรรคขึ้น 1 ของพรรคเดียวกัน) ทุกธีมมีด่านของตัวเอง
+// ที่ซ่อนหัวข้อเมื่อไม่มีเนื้อหาอยู่แล้ว ด่านนั้นแค่ถูกป้อนข้อมูลปลอมเข้าไป
+// ถ้าอยากให้ช่องว่างมีคำอธิบาย ต้องเป็นหน้าที่ของธีม ไม่ใช่เอาไปปนกับข้อมูลของพรรค
 const preparePartyData = (party) => {
+  const text = (v) => (typeof v === "string" && v.trim() ? v : null);
   return {
     ...party,
-    // 1. ความหมายโลโก้ (Text)
-    logoMeaning: party.logoMeaning || "ยังไม่มีข้อมูลความหมายสัญลักษณ์",
-
-    // 2. พันธกิจ (JSON Array) -> ตรวจสอบว่าเป็น Array จริงไหม
-    missions: (Array.isArray(party.missions) && party.missions.length > 0)
-      ? party.missions
-      : ["ยังไม่มีข้อมูลพันธกิจ"],
-
-    // 3. นโยบาย (JSON Array) -> ตรวจสอบว่าเป็น Array จริงไหม
-    policies: (Array.isArray(party.policies) && party.policies.length > 0)
-      ? party.policies
-      : ["ยังไม่มีข้อมูลนโยบาย"]
+    logoMeaning: text(party.logoMeaning),
+    missions: Array.isArray(party.missions) ? party.missions : [],
+    policies: Array.isArray(party.policies) ? party.policies : [],
   };
 };
 
@@ -91,6 +90,9 @@ const smartLineBreak = (text) => {
 };
 
 const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
+  // ไม่มีโลโก้ก็ใช้ภาพตัวแทนกลาง และไม่เปิด lightbox ของภาพตัวแทน
+  const logoSrc = party.logoUrl ? getPath(party.logoUrl) : getPath("/images/logo/party-placeholder.svg");
+  const openLogo = party.logoUrl ? () => onOpenLightbox(party.logoUrl) : undefined;
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   useEffect(() => {
@@ -149,8 +151,8 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
             {/* LOGO - Floating & Glorious */}
             <div className="shrink-0 relative group/logo">
               <div className="w-28 h-28 xl:w-64 xl:h-64 rounded-full bg-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center border-4 border-white/10 relative z-10 overflow-hidden ring-4 ring-white/20 backdrop-blur-sm"
-                onClick={() => onOpenLightbox(party.logoUrl)}>
-                <img src={getPath(party.logoUrl)} className="w-full h-full object-contain object-center rounded-full bg-white cursor-pointer scale-110 hover:scale-125 transition-transform duration-500" alt="Party Logo" />
+                onClick={openLogo}>
+                <img src={logoSrc} className="w-full h-full object-contain object-center rounded-full bg-white cursor-pointer scale-110 hover:scale-125 transition-transform duration-500" alt="Party Logo" />
               </div>
               {/* Number Badge */}
               <div className="absolute -top-2 -right-2 xl:top-0 xl:right-0 bg-[var(--theme-color)] text-white w-10 h-10 xl:w-16 xl:h-16 flex items-center justify-center rounded-full font-black text-lg xl:text-3xl shadow-lg border-4 border-[#1a1a1a] z-20"
@@ -190,8 +192,8 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
           {/* Mobile Header: Logo + Number */}
           <div className="flex items-end justify-between -mt-16 mb-2">
             <div className="w-36 h-36 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-white relative z-10 overflow-hidden"
-              onClick={() => onOpenLightbox(party.logoUrl)}>
-              <img src={getPath(party.logoUrl)} className="w-full h-full object-contain object-center rounded-full bg-white scale-110" alt="Party Logo" />
+              onClick={openLogo}>
+              <img src={logoSrc} className="w-full h-full object-contain object-center rounded-full bg-white scale-110" alt="Party Logo" />
             </div>
             <div className="bg-[var(--theme-color)] text-white w-16 h-16 flex items-center justify-center rounded-2xl font-black text-3xl shadow-lg mb-2"
               style={{ '--theme-color': theme.main }}>
@@ -221,6 +223,12 @@ const PartyBanner = ({ party, theme, galleryImages, onOpenLightbox }) => {
 
 // Section 2: Vision & Data (Awwwards Style Bento)
 const PartyVisionSection = ({ party, theme }) => {
+  // แต่ละส่วนแสดงเมื่อพรรคมีเนื้อหานั้นจริงเท่านั้น ไม่แต่งข้อความแทน และไม่ทิ้งหัวข้อโล่ง
+  const logoMeaning = typeof party.logoMeaning === "string" ? party.logoMeaning.trim() : "";
+  const missions = Array.isArray(party.missions) ? party.missions : [];
+  const policies = Array.isArray(party.policies) ? party.policies : [];
+  if (!logoMeaning && missions.length === 0 && policies.length === 0) return null;
+  const bothTop = !!logoMeaning && missions.length > 0;
   return (
     <section className="relative w-full py-16 md:py-24 px-6 md:px-12 bg-slate-50 border-b border-slate-200">
 
@@ -240,7 +248,8 @@ const PartyVisionSection = ({ party, theme }) => {
 
           {/* 1. IDENTITY CARD */}
           {/* แก้ไข 2: เปลี่ยน md:col-span-8 เป็น lg:col-span-8 */}
-          <div className="lg:col-span-8 bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-xl transition-all duration-500 h-[500px]">
+          {logoMeaning && (
+          <div className={`${bothTop ? "lg:col-span-8" : "lg:col-span-12"} bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-xl transition-all duration-500 h-[500px]`}>
 
             {/* Header Section */}
             <div className="p-8 md:p-12 pb-4 shrink-0 relative z-20 bg-white/95 backdrop-blur-sm">
@@ -259,17 +268,19 @@ const PartyVisionSection = ({ party, theme }) => {
             {/* Scrollable Content */}
             <div className="px-8 md:px-12 pb-12 overflow-y-auto custom-scrollbar relative z-10 h-full">
               <p className="text-lg md:text-xl font-medium text-slate-800 leading-relaxed whitespace-pre-line pb-32">
-                {party.logoMeaning}
+                {logoMeaning}
               </p>
             </div>
 
             {/* Fade Overlay */}
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none z-20 rounded-b-[2rem]"></div>
           </div>
+          )}
 
           {/* 2. MISSION CARD (แก้ไข: พื้นหลัง Dark Mode เข้มขึ้น, ตัดความสูงส่วนเกิน) */}
           {/* เอา style backgroundColor ออกจาก div หลัก */}
-          <div className="lg:col-span-4 p-8 md:p-12 rounded-[2rem] shadow-lg flex flex-col relative overflow-hidden group hover:shadow-2xl transition-all duration-500 text-white">
+          {missions.length > 0 && (
+          <div className={`${bothTop ? "lg:col-span-4" : "lg:col-span-12"} p-8 md:p-12 rounded-[2rem] shadow-lg flex flex-col relative overflow-hidden group hover:shadow-2xl transition-all duration-500 text-white`}>
 
             {/* ===================================================================== */}
             {/* NEW: เลเยอร์พื้นหลังแบบเข้ม (Darkened Background Layer) */}
@@ -304,7 +315,7 @@ const PartyVisionSection = ({ party, theme }) => {
 
             {/* List Content (ต้องมี relative z-10 เพื่อลอยอยู่เหนือพื้นหลัง) */}
             <div className="space-y-6 relative z-10 pb-4"> {/* เพิ่ม padding bottom นิดหน่อย */}
-              {party.missions.map((item, idx) => (
+              {missions.map((item, idx) => (
                 <div key={idx} className="flex gap-4 items-start group/item">
                   <span className="text-white/50 font-mono text-xl pt-1 font-bold">0{idx + 1}</span>
                   {/* เพิ่ม font-medium และ ปรับ opacity text ให้อ่านง่ายที่สุด */}
@@ -315,7 +326,9 @@ const PartyVisionSection = ({ party, theme }) => {
               ))}
             </div>
           </div>
+          )}
 
+          {policies.length > 0 && (<>
           {/* 3. POLICIES START HEADER */}
           <div className="lg:col-span-12 mt-12 mb-6"> {/* เปลี่ยน md เป็น lg เพื่อความสม่ำเสมอ */}
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-4">
@@ -328,7 +341,7 @@ const PartyVisionSection = ({ party, theme }) => {
 
           {/* 4. POLICIES GRID */}
           <div className="lg:col-span-12 grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-            {party.policies.map((policy, idx) => (
+            {policies.map((policy, idx) => (
               <div key={idx} className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between group h-full relative overflow-hidden hover:border-transparent"
                 style={{ '--hover-color': theme.main }}>
 
@@ -361,6 +374,7 @@ const PartyVisionSection = ({ party, theme }) => {
               </div>
             ))}
           </div>
+          </>)}
 
         </div>
       </div>

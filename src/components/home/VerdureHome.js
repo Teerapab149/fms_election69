@@ -271,6 +271,8 @@ export default function VerdureHome({
               <span className="vd-hero__alt-sub">CANDIDATES {partyCount} {partyCount === 1 ? "PARTY" : "PARTIES"}</span>
             </a>
           </motion.div>
+          {/* หีบปิดแล้วแต่ยังไม่ประกาศผล: ปุ่มบอกได้แค่สถานะ บรรทัดนี้คือเหตุผล */}
+          {CTA.note && <motion.p className="vd-hero__note" {...rise(0.38)}>{CTA.note}</motion.p>}
           {howTo.link && (
             <motion.a href={editorMode ? undefined : howTo.href} className="vd-hero__how" {...rise(0.4)}>
               วิธีลงคะแนน <span aria-hidden>↓</span>
@@ -365,6 +367,8 @@ export default function VerdureHome({
         .vd-hero__deck { margin:0; max-width:820px; font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(22px,2.4vw,30px); line-height:1.35; color:var(--moss); text-wrap:balance; }
         .vd-hero__deck .org { color:var(--terra); }
         .vd-hero__date { margin:14px 0 0; font-family:var(--ft); font-size:16px; color:var(--moss); opacity:.75; }
+
+        .vd-hero__note { margin:14px auto 0; max-width:34em; font-family:var(--ft); font-size:15px; line-height:1.6; color:var(--moss); opacity:.8; }
 
         .vd-hero__acts { display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch; gap:14px; margin-top:30px; }
         /* PRIMARY ACTION — readable on hover (darker terracotta, never moss) */

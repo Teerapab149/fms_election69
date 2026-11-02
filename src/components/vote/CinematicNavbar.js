@@ -16,7 +16,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
  * 2. Desktop (>= lg): Right Anchored Dropdown (relative to Button).
  */
 
-const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyName, partyLogoUrl, user, scrollContainerRef, theme = "dark" }) {
+const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyName, partyLogoUrl, user, scrollContainerRef, theme = "dark", hideMission = false, hidePolicy = false }) {
     const { data: session } = useSession(); // ✅ Use session to get id_token for logout
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -82,8 +82,8 @@ const CinematicNavbar = React.memo(function CinematicNavbar({ onScrollTo, partyN
     const navItems = [
         { label: "Overview", id: "hero" },
         { label: "Identity", id: "symbol" },
-        { label: "Mission", id: "mission" },
-        { label: "Policies", id: "policy" },
+        ...(hideMission ? [] : [{ label: "Mission", id: "mission" }]),
+        ...(hidePolicy ? [] : [{ label: "Policies", id: "policy" }]),
         { label: "Gallery", id: "gallery" },
         { label: "Team", id: "team" },
         { label: "Vote", id: "vote" }

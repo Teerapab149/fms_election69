@@ -529,6 +529,8 @@ export default function ReceiptHome({
                 <span className="rc-note-pin rc-note-pin--r" aria-hidden="true" />
                 <div className="rc-note-h">ปิดหีบเรียบร้อย</div>
                 <p className="rc-note-b">การลงคะแนนสิ้นสุดแล้ว ยอดผู้มาใช้สิทธิ์ทั้งหมดอยู่ในรายงานด้านล่าง</p>
+                {/* ยังไม่ประกาศผล: ปุ่มบอกได้แค่สถานะ บรรทัดนี้คือเหตุผล */}
+                {CTA.note && <p className="rc-note-b">{CTA.note}</p>}
               </div>
             )}
           </section>
