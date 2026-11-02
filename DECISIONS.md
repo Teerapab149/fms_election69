@@ -2676,3 +2676,28 @@ the installed build under the revision the repo expects.
 - ✅ Saved designs + Created templates working
 - ✅ Image library functional
 - ✅ Document handed off to next admin (รุ่นน้อง)
+
+---
+
+### P-LOG-145: [2026-11-02] Next middleware buffers request bodies and cuts them at 10 MB
+**Context:** Moving the CSRF check into middleware made an 11.5 MB party upload return 500
+("Request body exceeded 10MB"). Raising middlewareClientMaxBodySize only moves the limit, and
+the party form sends every member's photos in one request, which the old code accepted at 63 MB.
+**Lesson:** a route that takes large bodies must stay out of the matcher and run the check itself.
+scripts/smoke/crossOriginCoverage.test.mjs fails if an excluded route forgets the call.
+**Tags:** `#middleware` `#uploads` `#csrf`
+
+### P-LOG-146: [2026-11-02] Middleware cost 22% of vote throughput, and one load run hid it
+**Context:** With /api/vote behind middleware, 500 voters at --conn=64 gave p50 2828 ms against
+2232 ms and 103.5 against 132 votes/s. The first single comparison was written off as noise; only
+five alternating runs per side showed it. Calling the same check first in the route removed the
+clear gap (125.4 against 133.5 votes/s, ranges overlap).
+**Lesson:** compare performance with alternating repeated runs, never one run per side.
+**Tags:** `#performance` `#testing` `#middleware`
+
+### P-LOG-147: [2026-11-02] curl cannot prove what a client-rendered page shows
+**Context:** A placeholder check grepped `curl /party?id=2` on three themes and reported them
+clean, but the page fetches its data after mount, so the HTML could never contain the text. The
+commit message then claimed a browser check on all six themes. Only three had one.
+**Lesson:** verify client-rendered content in a browser, and write down only the method actually used.
+**Tags:** `#verification` `#reporting`
