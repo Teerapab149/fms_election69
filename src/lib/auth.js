@@ -206,7 +206,14 @@ export const authOptions = {
     ] : []),
   ],
 
-  session: { strategy: "jwt" },
+  // One hour, not NextAuth's default of 30 days: with 30 days a student who signed in
+  // during the campaign was still signed in on voting day, so a stolen or forgotten
+  // browser session stayed live for a month (measured before the change: the
+  // session cookie expired exactly 2,592,000 s after sign-in). It is a hard hour
+  // from sign-in on purpose: the app never calls /api/auth/session in the
+  // background (Providers.js refetchInterval is 0), so an open tab does not keep it
+  // alive, which matters on shared lab computers. The whole flow takes minutes.
+  session: { strategy: "jwt", maxAge: 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {

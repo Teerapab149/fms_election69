@@ -31,8 +31,10 @@ const {
   setShowResult,
   createIneligibleUser,
   adminLogin,
+  prisma,
   disconnect,
 } = require('./helpers/fixtures');
+const http = require('http');
 
 test.describe('Voting invariants (isolated test DB)', () => {
   test.afterAll(async () => {
@@ -142,6 +144,73 @@ test.describe('Voting invariants (isolated test DB)', () => {
     for (const route of ['/api/admin/dashboard', '/api/admin/readiness']) {
       const res = await page.request.get(API(route));
       expect(res.status(), `${route} must reject a forged admin_token`).toBe(401);
+    }
+  });
+
+  // CSRF (2026-11-02). Before the fix a page on ANOTHER origin that is still
+  // same-site (localhost:3106 vs localhost:3100, the same relationship as
+  // evil.psu.ac.th vs ovs.fms.psu.ac.th) cast the signed-in student's vote with a
+  // text/plain form or a no-cors fetch: ballots +1, isVoted true. The attacker page
+  // is served from a second port and driven by the real browser, because a node
+  // fetch cannot reproduce what the browser does with the session cookie.
+  test('#7 CSRF: a forged cross-origin text/plain vote is refused and casts no ballot', async ({ page }) => {
+    const studentId = uniqueStudentId();
+    const { realParty } = await getBallot();
+    const APP = new URL(API('/')).origin;
+    const EVIL_PORT = 3106;
+    const formHtml = `<!doctype html><body><form id="f" method="POST" action="${APP}/api/vote" enctype="text/plain">` +
+      `<input type="hidden" name='{"candidateId":${realParty.id},"x":"' value='"}'></form>` +
+      `<script>document.getElementById('f').submit()</script></body>`;
+    const fetchHtml = `<!doctype html><body><script>` +
+      `fetch('${APP}/api/vote',{method:'POST',mode:'no-cors',credentials:'include',headers:{'Content-Type':'text/plain'},` +
+      `body:JSON.stringify({candidateId:${realParty.id}})}).finally(()=>{document.title='done'})</script></body>`;
+    const evil = http.createServer((req, res) => {
+      res.setHeader('content-type', 'text/html');
+      res.end(req.url.startsWith('/fetch') ? fetchHtml : formHtml);
+    });
+    await new Promise((ok) => evil.listen(EVIL_PORT, ok));
+    try {
+      await mockLogin(page, studentId);
+      const state = async () => ({
+        ballots: await prisma().ballot.count(),
+        isVoted: (await prisma().user.findUnique({ where: { studentId } })).isVoted,
+      });
+      const before = await state();
+      expect(before.isVoted).toBe(false);
+
+      for (const variant of ['/form', '/fetch']) {
+        const attacker = await page.context().newPage();
+        const statuses = [];
+        attacker.on('response', (r) => { if (r.url().endsWith('/api/vote')) statuses.push(r.status()); });
+        await attacker.goto(`http://localhost:${EVIL_PORT}${variant}`, { waitUntil: 'load' });
+        await expect.poll(() => statuses.length, { message: `${variant}: the forged POST must reach the server`, timeout: 10000 }).toBe(1);
+        expect(statuses[0], `${variant}: forged vote must be refused`).toBe(403);
+        if (variant === '/form') {
+          expect(await attacker.locator('body').innerText()).toContain('BAD_ORIGIN');
+        }
+        await attacker.close();
+        expect(await state(), `${variant}: no ballot, voter still unvoted`).toEqual(before);
+      }
+
+      // The student's own page is unaffected: same session, same-origin vote works.
+      const real = await page.request.post(API('/api/vote'), { data: { candidateId: realParty.id } });
+      expect(real.status(), 'the real vote still goes through').toBe(200);
+      expect((await state()).ballots).toBe(before.ballots + 1);
+
+      // A non-JSON content type is refused by the route itself, even same-origin.
+      const other = uniqueStudentId();
+      const ctx2 = await page.context().browser().newContext();
+      const page2 = await ctx2.newPage();
+      await mockLogin(page2, other);
+      const wrongType = await page2.request.post(API('/api/vote'), {
+        headers: { 'content-type': 'text/plain' },
+        data: JSON.stringify({ candidateId: realParty.id }),
+      });
+      expect(wrongType.status()).toBe(400);
+      expect((await wrongType.json()).code).toBe('BAD_REQUEST');
+      await ctx2.close();
+    } finally {
+      await new Promise((ok) => evil.close(ok));
     }
   });
 

@@ -2,6 +2,8 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { buildAdminRedirectUrl } from './lib/auth/adminRedirectUrl.mjs';
+import { UNSAFE_METHODS } from './lib/security/sameOrigin.mjs';
+import { rejectCrossOrigin } from './lib/security/crossOriginGuard';
 
 // Edge-runtime JWT verification of the admin_token cookie (issued by
 // /api/admin/login via jsonwebtoken HS256 with ADMIN_JWT_SECRET). `jose` is used
@@ -68,7 +70,20 @@ function buildCsp(nonce) {
   ].join("; ");
 }
 
+// CSRF gate for the JSON API. Returns immediately: no admin check, no CSP (a JSON
+// response has no script to protect), no nonce. GET and HEAD fall straight through.
+// /api/auth is skipped here and in the matcher: NextAuth carries its own CSRF token.
+function guardApiOrigin(request) {
+  const path = request.nextUrl.pathname;
+  if (!UNSAFE_METHODS.has(request.method) || path === '/api/auth' || path.startsWith('/api/auth/')) {
+    return NextResponse.next();
+  }
+  return rejectCrossOrigin(request) || NextResponse.next();
+}
+
 export async function middleware(request) {
+  if (request.nextUrl.pathname.startsWith('/api/')) return guardApiOrigin(request);
+
   const nonce = btoa(crypto.randomUUID());
   const csp = buildCsp(nonce);
   const withCsp = (res) => {
@@ -117,11 +132,27 @@ async function guardAdmin(request) {
 }
 
 // Every page (so each HTML response gets a CSP nonce) — guardAdmin() still only
-// acts on /admin + ADMIN_TOOL_PAGES. Excluded: API routes (JSON, no HTML — and
-// /api/vote stays free of middleware overhead), Next's static assets, and the
-// /images rewrite to /api/media.
+// acts on /admin + ADMIN_TOOL_PAGES. API routes used to be excluded wholesale to
+// keep /api/vote free of middleware; that is why a cross-site form could POST a
+// vote (2026-11-02, reproduced in a real browser). They now pass through
+// guardApiOrigin(), which only reads three request headers and returns at once.
+// Still excluded: /api/auth (NextAuth's own CSRF token), /api/media (GET only,
+// serves every uploaded image), Next's static assets, and the /images rewrite.
+// Also excluded: the two multipart upload routes, /api/admin/candidates and
+// /api/admin/global-config/banner. Next 15.5 buffers any body that passes through
+// middleware and cuts it at 10 MB (measured: an 11.5 MB PUT returned 500), and a
+// party form carries every member's photos in one request, so these routes must
+// never be matched. They call rejectCrossOrigin() themselves in each unsafe handler
+// (src/lib/security/crossOriginGuard.js); scripts/smoke/crossOriginCoverage.test.mjs
+// fails if a route that reads a body is in neither place. matcher must stay a
+// literal for Next, so this list cannot be shared from a module.
+// Also excluded, for speed: /api/vote. Measured with scripts/load/vote-load.mjs,
+// 500 voters, --conn=64, five alternating runs each: with the route behind middleware
+// the median p50 was 2828 ms against 2232 ms and throughput 103.5 against 132
+// votes/s, about 22% lost on the one endpoint that takes the burst. The check needs
+// only three headers, so the route runs rejectCrossOrigin() as its first statement.
 export const config = {
   matcher: [
-    '/((?!api/|_next/static|_next/image|images/|favicon\\.ico).*)',
+    '/((?!api/auth/|api/media/|api/vote(?:/|$)|api/admin/candidates(?:/|$)|api/admin/global-config/banner(?:/|$)|_next/static|_next/image|images/|favicon\\.ico).*)',
   ],
 };

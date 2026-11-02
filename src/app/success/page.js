@@ -5,7 +5,7 @@ import { resolveTemplatePage, familyFor } from "../../components/v2/resolve";
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   Check,
   BarChart3,
@@ -277,6 +277,22 @@ export default function SuccessPage({
     if (!canConfirm) return;
     try {
       const res = await fetch(getPath("/api/complete-form"), { method: "POST" });
+      if (res.status === 401) {
+        // The session is a hard hour from sign-in, so a student who sat on the
+        // evaluation form can come back to a dead session. The page still believes
+        // it is signed in, so retrying can only 401 again (measured: 2 of 2). Say so
+        // and send them to sign in, with signOut for the same reason the vote page
+        // uses it: /login bounces a client that still thinks it has a session.
+        // The vote is not touched; signing in again lands on /vote, which sends a
+        // voted student straight back here.
+        setAlertConfig({
+          title: "การเข้าสู่ระบบหมดอายุ",
+          message: "กรุณาเข้าสู่ระบบอีกครั้ง การลงคะแนนของคุณถูกบันทึกแล้วและจะไม่นับซ้ำ หลังเข้าสู่ระบบให้กลับมากดบันทึกแบบประเมินอีกครั้ง",
+          action: () => signOut({ callbackUrl: getPath("/login") }),
+        });
+        setShowAlertModal(true);
+        return;
+      }
       if (!res.ok) throw new Error("Failed to update status");
 
       await update({ isFormCompleted: true });
