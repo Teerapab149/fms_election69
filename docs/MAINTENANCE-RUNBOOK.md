@@ -20,23 +20,23 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 ---
 
 ## 1. งานประจำปี — เปลี่ยนปีการเลือกตั้งใหม่ (checklist)
-> ✅ **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/admin`, 6 แท็บ) ครอบคลุมงานรายปี **เกือบทั้งหมด** —
+> **ตรวจสอบจริง 2026-06-09:** หน้า admin (`/admin`, 6 เมนู ได้แก่ ศูนย์ควบคุม ตั้งค่าทั่วไป จัดการผู้สมัคร เลือกธีม ความพร้อมและระบบ คู่มือใช้งาน) ครอบคลุมงานรายปี **เกือบทั้งหมด**
 > staff ทำเองได้โดยไม่ต้องมี dev **ครบทุกข้อแล้ว** (รวมวันเวลาเลือกตั้ง — ดูข้อ 6, ย้ายเข้า admin แล้ว 2026-06-09).
 
-ทำผ่านหน้า admin (ไม่ต้องแตะโค้ด) ตามแท็บ:
+ทำผ่านหน้า admin (ไม่ต้องแตะโค้ด) ตามเมนู:
 
-1. **ชื่อ/ปี/เลขครั้ง/เนื้อหา** — แท็บ **"ตั้งค่าทั่วไป"**: ชื่อการเลือกตั้ง (SAMO 50→51), เลขครั้งที่,
-   ปีการศึกษา พ.ศ. (2570→2571), ปี ค.ศ., ชื่อโครงการ/องค์กร/คณะ/มหาวิทยาลัย/ปีลิขสิทธิ์ (ทุกช่องมีปุ่ม ↺ คืนค่า).
-2. **พรรค + สมาชิก** — แท็บ **"จัดการผู้สมัคร"**: เพิ่ม/แก้/ลบพรรค + สมาชิก + รูป + สีพรรค (รูปถูก optimize อัตโนมัติ).
-3. **หน้าตา/สี (ธีม)** — แท็บ **"เลือกธีม (Template)"**: เลือก template 1 ใน 31 แบบ (6 ตระกูลมีชุดสีให้เลือก + ธีมเดี่ยวอีก 4)
+1. **ชื่อ/ปี/เลขครั้ง/เนื้อหา** เมนู **"ตั้งค่าทั่วไป"**: ชื่อการเลือกตั้ง (SAMO 50 เป็น 51), เลขครั้งที่,
+   ปีการศึกษา พ.ศ. (2570 เป็น 2571), ปี ค.ศ., ชื่อโครงการ/องค์กร/คณะ/มหาวิทยาลัย/ปีลิขสิทธิ์ (ทุกช่องมีปุ่ม ↺ คืนค่า).
+2. **พรรค + สมาชิก** เมนู **"จัดการผู้สมัคร"**: เพิ่ม/แก้/ลบพรรค + สมาชิก + รูป + สีพรรค (รูปถูก optimize อัตโนมัติ).
+3. **หน้าตา/สี (ธีม)** เมนู **"เลือกธีม"**: เลือก template 1 ใน 32 ชุดสี (8 ตระกูล ตามที่หน้าเลือกธีมแสดง)
    กดดูตัวอย่างก่อนแล้วค่อย Apply → **เปลี่ยน template/ชุดสีก็ทำให้ "รู้สึกใหม่" ได้ทั้งปีโดยไม่ต้องเขียนโค้ด**
    (กลไก variety หลัก)
    > ⚠️ **ไม่มีตัวแก้แบบลากวาง** หน้า admin เป็น "เลือกแล้ว Apply" อย่างเดียว — เลย์เอาต์ของแต่ละ template
    > คงที่ ไม่มีการจัด Sections หน้า Home หรือสลับ variant ของ element จากหน้าเว็บ
-   > (editor ตัวเต็ม `PageDesignTab` ยังอยู่ในโค้ดแต่เข้าได้ทาง URL `?advanced=1` เท่านั้น
-   > เป็นเครื่องมือของ dev ไม่ใช่ของ staff — เพิ่มธีมใหม่คือเขียนไฟล์ธีมแล้ว deploy ดู §7)
-4. **โหมดระบบ + แสดงผล + Google Form** — แท็บ **"ตั้งค่าระบบ"**: `AUTO` (ใช้เวลาจาก electionConfig) /
-   `MANUAL_OPEN` (force เปิด) / `PAUSE` / `ENDED`; toggle บังคับโชว์ผล real-time; ลิงก์ Google Form (หน้า success).
+   > (เพิ่มธีมใหม่คือเขียนไฟล์ธีมแล้ว deploy ดู §7)
+4. **โหมดระบบ + ประกาศผล + Google Form** โหมดและการประกาศผลอยู่ที่เมนู **"ศูนย์ควบคุม"**: `AUTO` (ใช้วันเวลาจากตั้งค่าทั่วไป) /
+   `MANUAL_OPEN` (บังคับเปิด) / `PAUSE` / `ENDED` และขั้นตอนปิดหีบ ประกาศผล รับรองผล ส่วนลิงก์ Google Form (หน้า success)
+   ตั้งที่เมนู **"ตั้งค่าทั่วไป"** กลุ่มแบบประเมินหลังลงคะแนน.
 5. **รีเซ็ตเริ่มปีใหม่** — **ทำที่ฐานข้อมูล ไม่ใช่หน้า admin** (ถอดปุ่มออก 2026-07-28):
    ```bash
    docker compose exec backup sh scripts/backup.sh         # สำรองก่อนเสมอ (§5)
@@ -48,7 +48,7 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
    ผลพลอยได้: ไม่มี API เส้นไหนลบบัตรได้ ต่อให้ session แอดมินหลุดก็ล้างผลไม่ได้.
    (`Candidate.score`=ยอดจริง, `User.isVoted`=กันโหวตซ้ำ.)
 6. ✅ **วันเวลาเลือกตั้ง (เปิด/ปิดหีบ/เปิดตัวผู้สมัคร)** — **ทำใน admin ได้แล้ว (2026-06-09)**:
-   แท็บ **"ตั้งค่าทั่วไป" → กลุ่ม "ช่วงเวลาเลือกตั้ง"** มี date-time picker 3 ช่อง. ใช้เฉพาะโหมด `AUTO`.
+   เมนู **"ตั้งค่าทั่วไป" แถว "วันเวลาเลือกตั้ง"** มี date-time picker 3 ช่อง. ใช้เฉพาะโหมด `AUTO`.
    **ปล่อยว่าง = ใช้ค่า default ในโค้ด** (`src/utils/electionConfig.js`, ยังเป็น fallback กันพลาด)
    → ไม่ต้องแก้โค้ด/redeploy เพื่อเปลี่ยนวันอีกแล้ว.
 7. **ส่งมอบสิทธิ์แอดมินให้กรรมการชุดใหม่** — ต้องรันบนเซิร์ฟเวอร์ (ไม่มีปุ่มในหน้า admin โดยตั้งใจ):
@@ -70,11 +70,11 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
 **A. ปิดปีเก่า (หลังรับรองผล — `showResult=true`, คะแนนสุดท้ายแล้ว):**
 ```
 npm run archive-year         # → archive/<SAMO-XX>/ (results.json + design.json + README)
-git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design"
+# repo นี้เป็น public: เก็บ archive/<SAMO-XX> ไว้ในที่ที่คณะกำหนด และนำเข้า repo เฉพาะเมื่อคณะอนุมัติ
 ```
-เก็บ "ปีนั้น = ผลนี้ + หน้าตานี้" ลง git ถาวร **ก่อน** reset (ตอนคะแนนยังอยู่). ดู `archive/README.md`.
+เก็บ "ปีนั้น = ผลนี้ + หน้าตานี้" ไว้ในที่ที่คณะกำหนดอย่างถาวร **ก่อน** reset (ตอนคะแนนยังอยู่). ดู `archive/README.md`.
 
-**B. รับรองผล / Certify (หลังปิดหีบ + เผยแพร่ผล):** กดปุ่ม **"รับรองผล"** ในแท็บ "ตั้งค่าระบบ"
+**B. รับรองผล / Certify (หลังปิดหีบ + เผยแพร่ผล):** กดปุ่ม **"รับรองผล"** ในขั้นตอนปิดการเลือกตั้งที่เมนู "ศูนย์ควบคุม"
 (action `ANONYMIZE_BALLOTS` — ชื่อเดิม P0-6, ตอนนี้คือ *การรับรองผลอย่างเป็นทางการ*).
 
 ⚠️ **ชื่อ action หลอก — มันไม่ได้ลบอะไร** บัตรทุกใบ **ไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วโดยโครงสร้าง**
@@ -83,6 +83,14 @@ git add archive/<SAMO-XX> && git commit -m "archive(<SAMO-XX>): results + design
 สิ่งที่ปุ่มนี้ทำจริง (อัปเดต 2026-08-15):
 - **กดได้เฉพาะบัญชี `role = STAFF`** (เจ้าหน้าที่คณะ จาก `admin.js --create-staff`) — กรรมการสโมฯ โดน 403
   ที่ API ไม่ใช่แค่ซ่อนปุ่ม เพราะการรับรองผลของตัวเองเป็น conflict of interest
+- **ตรวจก่อนรับรอง (เพิ่มเมื่อ พ.ย. 2569):** ใน transaction เดียวที่ล็อก `ChainHead` และ `SystemConfig` ระบบตรวจโซ่บัตร
+  แล้วเทียบจำนวนบัตร ผลรวม `Candidate.score` และจำนวนผู้ใช้ปี 1 ถึง 4 ที่ `isVoted` ถ้าไม่ตรงกันจะปฏิเสธและบอกเหตุ
+  ไม่รับรองให้ ถ้าผ่านจะบันทึก `certifiedTally` (คะแนนรายตัวเลือก) `certifiedBallots` และ `certifiedChainHead` ลง `globalConfig`
+  ศูนย์ควบคุมแสดงส่วน "ตัวเลขที่รับรองไว้" พร้อมปุ่มคัดลอกและดาวน์โหลด เจ้าหน้าที่ต้องเก็บสำเนานอกระบบ (กระดาษหรืออีกเครื่อง)
+  เพราะฐานข้อมูลที่ถูกแก้ด้วยมืออาจแก้ให้ตรงกับตัวเองได้ แต่ไม่มีทางตรงกับสำเนาที่อยู่ข้างนอก
+  `node scripts/verify-ballot-chain.js` หลังรับรองจะเทียบฐานข้อมูลปัจจุบันกับตัวเลขชุดนี้ด้วย exit 0 คือผ่านทุกข้อ
+  exit 2 คือมีค่าไม่ตรง (โซ่ถูกแก้ ยอดไม่เท่ากัน หรือเปลี่ยนไปจากที่รับรองไว้) exit 1 คือรันไม่ได้ (เช่นไม่มี `BALLOT_CHAIN_SECRET`)
+  `annual-reset.sql` ล้างฟิลด์เหล่านี้ และ `archive-year.js` บันทึกไว้ในไฟล์ archive
 - **ตั้งธง `globalConfig.ballotsAnonymized = true` + บันทึก `certifiedBy` / `certifiedAt`** (ชื่อจริงของคนที่กด)
   ซึ่งไปโผล่เป็นแถบรับรองบนหน้าผลคะแนน (สั่งพิมพ์เป็น PDF แนบรายงานได้) และลงใน `archive-year`
 - **ล็อกจริง** หลังรับรอง `/api/vote` ปฏิเสธทุกคะแนน (403) และเปลี่ยน `systemMode` ไม่ได้ (409)
@@ -114,7 +122,7 @@ CLUSTER "User" USING "User_studentId_key";
 > ใน `archive/<SAMO-XX>/results.json` จะกลายเป็น 0 อย่างถาวร — ไฟล์นั้นคือบันทึกชิ้นเดียว
 > ที่เหลือของปีนั้น กู้กลับไม่ได้
 >
-> ลำดับที่ปลอดภัย: **รับรองผล → `npm run archive-year` → commit ไฟล์ archive → แล้วค่อย
+> ลำดับที่ปลอดภัย: **รับรองผล แล้ว `npm run archive-year` แล้ว เก็บไฟล์ archive ในที่ที่คณะกำหนด (นำเข้า repo เมื่อคณะอนุมัติ) แล้วค่อย
 > ล้าง/ทับรายชื่อ**
 
 > **backup/restore ตรวจตัวเองแล้ว (2026-09-05, เพิ่ม 2026-10-01)** — `backup.sh` จะไม่ลบ backup เก่าจนกว่าจะ
@@ -135,11 +143,12 @@ CLUSTER "User" USING "User_studentId_key";
 
 **D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```
-# ทาง 1 (แนะนำ กรรมการกดเองได้): แท็บ "ตั้งค่าระบบ" → การ์ด "ตรวจความพร้อมระบบ READINESS" → ปุ่ม "ตรวจตอนนี้" (ADM-1)
-#   เรียก GET /api/admin/readiness (read-only) → สรุป pass/warn/fail 16 ข้อ:
+# ทาง 1 (แนะนำ กรรมการกดเองได้): เมนู "ความพร้อมและระบบ" ในหน้าแอดมิน การ์ด "ตรวจความพร้อมระบบ READINESS"
+#   ตรวจให้เองเมื่อเปิดหน้า กดปุ่ม "ตรวจซ้ำ" เมื่อต้องการดูผลใหม่ (ADM-1)
+#   เรียก GET /api/admin/readiness (read-only) สรุป pass/warn/fail 17 ข้อ:
 #   schedule (ลำดับเวลา/เปิดตัวผู้สมัคร/แหล่งเวลา/อดีต), mode.coherence, candidates
 #   (มีพรรค/พรรคเดียวมีตัวเลือกครบ/เนื้อหาครบ), voters, tally.integrity, config
-#   (googleForm/ผลรั่ว/ธีม), env (mock/โฟลเดอร์รูป/backup อัตโนมัติ §5)
+#   (googleForm/ผลรั่ว/ธีม), env (mock/โฟลเดอร์รูป/backup อัตโนมัติ §5/เครื่องมือทดสอบ ADMIN_TEST_TOOLS)
 #   — ต้อง "ไม่มี fail" (warn อ่านทีละข้อ)
 
 # ทาง 2 (CLI สำหรับ dev): script อ่านอย่างเดียว
@@ -153,7 +162,14 @@ npm run preflight            # ✓/⚠/✗ (mode/showResult/พรรคทด�
 ## 2. Environment variables ที่ต้องมี (ตั้งตอน deploy)
 ```
 DATABASE_URL              # PostgreSQL connection string
-NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา)
+NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา อายุ 1 ชั่วโมงหลังล็อกอิน ไม่ต่ออายุเอง)
+NEXTAUTH_URL              # URL จริงของเว็บ เช่น https://ovs.fms.psu.ac.th ตัวตรวจ CSRF (src/lib/security/sameOrigin.mjs)
+                          #    ยอมรับคำขอที่ Origin ตรงกับ Host หรือกับ origin ของค่านี้ ผิดบนเครื่องจริง = โหวตและปุ่มแอดมินถูกปฏิเสธ
+                          #    nginx ต้องส่ง  proxy_set_header Host $http_host;  และ client_max_body_size 200m;
+TRUSTED_PROXY_HOPS        # จำนวนชั้น proxy หน้าแอป (ค่าเริ่มต้น 1 = nginx ชั้นเดียว) มี load balancer หน้า nginx อีกชั้นให้ตั้ง 2
+                          #    ไม่งั้นทุกคนใช้ bucket ตัวกันเดารหัสร่วมกัน พอร์ตของแอปต้อง bind 127.0.0.1 เท่านั้น
+ADMIN_TEST_TOOLS          # ห้ามตั้งบนเครื่องจริง (ข้อตรวจความพร้อมจะไม่ผ่าน) บน production build เครื่องมือทดสอบใช้ได้เฉพาะ
+                          #    ฐานข้อมูลที่ชื่อลงท้าย _e2e หรือ _test และบันทึก audit log
 BASE_PATH                 # subpath ที่ Next.js เสิร์ฟ (ค่า: ว่าง — เสิร์ฟที่ root)
 NEXT_PUBLIC_BASE_PATH     # subpath ที่ getPath() ใช้สร้างลิงก์ (ค่า: ว่าง)
 ASSET_PREFIX              # ที่อยู่ไฟล์ static js/css/รูป (ค่า: ว่าง)
@@ -181,7 +197,8 @@ BACKUP_DATABASE_URL       # ใช้เฉพาะเมื่อให้ ser
 BACKUP_ENV_FILE           # path ไฟล์ KEY='value' ของ backup เช่น /etc/fms-backup.env (ใส่ BACKUP_DATABASE_URL ในนั้น)
 BACKUP_RUNNER             # cron | systemd | pm2 — เขียนลง LAST_OK ให้หน้าตรวจความพร้อมรู้ว่าไปดู log ที่ไหน
 BACKUP_APP_DIR            # โฟลเดอร์โปรเจกต์ (ไม่ตั้ง = cwd ของ backup.sh / ที่ที่ backup-loop.sh อยู่)
-UPLOAD_ROOT               # รูปอัปโหลดอยู่นอก public/images: ใส่ path เดียวกับแอป ไม่งั้นรูปไม่อยู่ใน archive
+UPLOAD_ROOT               # ใช้กับเครื่องที่ไม่ใช้ Docker: path เต็มนอกโฟลเดอร์โปรเจกต์ (เช่น /var/lib/fms-ovs/images) ใส่ path เดียวกันในไฟล์ env ของ backup
+                          #    ไม่งั้นรูปไม่อยู่ใน archive ถ้าใช้ Docker ไม่ต้องตั้ง เพราะ compose ผูก ./public/images ไว้แล้ว
 BACKUP_STATUS_DIR         # ใน .env ของแอป: โฟลเดอร์ backups/status ที่เว็บอ่าน (จำเป็นถ้ารันจาก .next/standalone)
 ```
 > 🔑 **`ELECTION_BALLOT_PUBLIC_KEY` + `BALLOT_CHAIN_SECRET` ไม่ครบ → `/api/vote` fail closed**
@@ -244,7 +261,12 @@ VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
   rate-limit ของ :3000 เองตามเดิม (10/5นาที/IP).
 - ⚠️ `e2e/admin-console.spec.js` (ชุดเก่าของ editor ที่เลิกใช้แล้ว) มี 26 เคส และถูก **exclude ทั้งไฟล์**
   ด้วย `testIgnore` ใน `playwright.config.js` — ยังแดงค้างอยู่ ไม่ได้อยู่ในด่าน gate
-  จำนวนที่รันจริงจึงเป็น **9 เคส 4 ไฟล์** (`npm run e2e`) และ **7 เคส** (`npm run e2e:gate`)
+  จำนวนที่รันจริงนับจากโค้ด (พ.ย. 2569) คือ **28 เคสใน 11 ไฟล์** (`npm run e2e`) และ **8 เคส** (`npm run e2e:gate`)
+  เพิ่มจากเดิมคือ `ballot-unlinkable`, `ballot-order`, `certification-record` (ถอดรหัสนับใหม่ทั้งหีบ แข่งการรับรองกับคะแนน),
+  `staff-rehearsal` (ซ้อมรับรองผลโดยเจ้าหน้าที่ ตรวจ snapshot และการปฏิเสธเมื่อคะแนนไม่ตรง), `test-tools-audit`,
+  `security-h1-h2` และ `check-form`
+- **smoke** นับจากการรันจริง: unit test 246 เคสใน 29 ไฟล์ผ่านทั้งหมดโดยไม่ต้องใช้เซิร์ฟเวอร์ ส่วน `election.test.mjs`
+  ยิงเว็บจริงที่ `BASE` (ค่าเริ่มต้น http://localhost:3000) จึงต้องมีเซิร์ฟเวอร์รันอยู่
 
 ## 4.2 e2e test DB (v2-R11) — วิธีทำงาน + วิธีรัน
 e2e ทั้งชุดแยกตัวจาก dev สมบูรณ์: **DB ของตัวเอง + server ของตัวเอง**. คนดูแลรุ่นถัดไปกดรันได้เลย:
@@ -255,9 +277,8 @@ npm run e2e:gate     # 2) หรือ npm run e2e (ครบชุด) — setu
 สิ่งที่ globalSetup (e2e/global.setup.js) ทำให้อัตโนมัติ:
 1. เช็ค `.next/BUILD_ID` — ไม่มี = fail-fast พร้อมข้อความบอกให้ build (ไม่ build ให้เอง)
 2. สร้าง DB `<ชื่อ dev DB>_e2e` ถ้ายังไม่มี (เช่น `fms_election_e2e`) + sync schema ด้วย
-   `prisma db push` (⚠️ ไม่ใช่ `migrate deploy` — migration history เก่าไม่ครบ schema ปัจจุบัน
-   เช่น `SystemConfig.systemMode` ไม่เคยถูก capture เป็น migration; พบตอนทำ v2-R11 ต้องเก็บ
-   drift นี้เป็น migration จริงก่อน deploy รอบหน้า)
+   `prisma db push` (ใช้ `db push` เพราะเป็นฐานทิ้งและเร็วกว่า ตอนนี้ migration history ครบแล้ว
+   drift เก่าถูกเก็บเป็น migration `20260718180000_catchup_db_push_drift` ฐานเปล่าที่ใช้ `migrate deploy` ได้ schema ตรงกัน)
 3. seed fixture เล็ก: 2 พรรค + งดออกเสียง/ไม่รับรอง + voter 3 คน + admin 1 + SystemConfig
    MANUAL_OPEN + template `receipt` (หน้า success พิมพ์ identity receipt ที่ spec ตรวจ)
 4. รัน `next start -p 3100` ชี้ `DATABASE_URL` ไป test DB (dev :3000 ไม่ถูกแตะ)
@@ -327,7 +348,7 @@ sudo RESTORE_VIA=direct BACKUP_ENV_FILE=/etc/fms-backup.env sh scripts/restore.s
 - **ต่อ DB ด้วย `postgres` ของ service `db`** (compose ตั้ง `PGHOST=db PGUSER=postgres PGPASSWORD=${POSTGRES_PASSWORD}`)
   ไม่ใช่ `DATABASE_URL` ของเว็บ — `fms_app` ไม่มีสิทธิ์อ่าน `_prisma_migrations` ฯลฯ dump ไม่ครบ ·
   service นี้ **ไม่มี `env_file`** โดยตั้งใจ ไม่ต้องรู้ secret อื่นของแอป
-- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** การ์ด "ตรวจความพร้อมระบบ READINESS" → ปุ่ม "ตรวจตอนนี้" → ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
+- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** เมนู "ความพร้อมและระบบ" การ์ด "ตรวจความพร้อมระบบ READINESS" (กด "ตรวจซ้ำ" เพื่อดูใหม่) ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
   `backups/status/` ที่เว็บ mount แบบ `:ro` · เขียว = สำเร็จภายในรอบ+1 ชม. · เหลือง = เลยรอบ / ยังไม่มีประวัติ /
   สำเนานอกเครื่องล้ม · แดง = รอบล่าสุดล้ม (บอกสาเหตุ + เวลา backup ดีล่าสุด) หรือเก่าเกิน 2 รอบ+1 ชม.
 - **ไฟล์เป็นของ root, dump เป็น 0600** — Docker สร้าง `./backups` เป็นของ root และ service รันด้วย root (uid ธรรมดา
@@ -384,7 +405,7 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
 
 ⚠️ **บน production ใช้ `npx prisma migrate deploy`** — `scripts/setup.sh` รันให้อยู่แล้ว และเป็นขั้นตอนใน
-`DEPLOY-CHECKLIST §4` · ตอนนี้รีโปมี migration ครบ 9 ตัว และ drift เก่าถูกเก็บเป็น migration แล้ว
+`DEPLOY-CHECKLIST` ข้อ 3.2 ตอนนี้รีโปมี migration ครบ 11 ตัว และ drift เก่าถูกเก็บเป็น migration แล้ว
 (2026-07-18) จึง deploy ลง DB เปล่าได้จบในคำสั่งเดียว
 **`prisma db push` ใช้เฉพาะบนเครื่อง dev และใน e2e test DB เท่านั้น** (ดู §4.2) — อย่าใช้กับ production
 เพราะมันข้าม migration history · สำรอง DB ก่อนทุกครั้ง
@@ -393,15 +414,15 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 ## 7. ถ้าต้องเพิ่ม template ใหม่ (ต้องใช้ dev)
 แนวทางที่ตกลงไว้: **มี 3-5 template ก็พอ**, เพิ่มแบบ lazy เมื่อต้องการจริง ไม่ตุนไว้ล่วงหน้า.
-มี skill ช่วย: `fms-add-template` / `fms-add-element`. เครื่องมือ author เร็วขึ้น = `/compose-lab`
-(composition editor — เป็น lab สำหรับ dev/author เท่านั้น ไม่ใช่หน้าให้ผู้ใช้ทั่วไปลากเอง).
+มี skill ช่วย: `fms-add-template` / `fms-add-element`. ธีมที่แสดงในหน้าเลือกธีมถูกลงทะเบียนใน
+`src/components/admin/editor/templates/index.js` (ธีมที่ไม่มี `layoutFamily` จะไม่ขึ้นในหน้าเลือก)
 
 ---
 
 ## 8. ใครดูแล / ติดต่อใคร
 - **ผู้สร้างเดิม:** (ระบุชื่อ/ติดต่อ — เติมเอง)
 - **Staff คณะที่ดูแล operation:** (เติมเอง)
-- เอกสารสถานะงานล่าสุด: `docs/TEMPLATE-SYSTEM-STATE.md` และ `PROGRESS.md`
+- เอกสารที่ใช้อยู่: `README.md`, `docs/DEPLOY-CHECKLIST-2026.md`, `docs/STAFF-IT-GUIDE.md` (`PROGRESS.md` เป็นประวัติเก่า)
   (ไฟล์ `docs/HANDOFF-*.md` ที่เคยอยู่ตรงนี้ถูกลบออกจาก tree แล้ว 2026-07-19 — หาได้จาก git history)
 
 > 🔧 จุดที่ควรเติมเองให้ครบ: ชื่อ/เบอร์ผู้ดูแล, ที่อยู่ deploy/Docker host, ที่เก็บ backup env + DB,
@@ -446,8 +467,8 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 ```bash
 node scripts/admin.js --list                 # ใครเป็นแอดมิน + รหัสกลางตั้งหรือยัง
-node scripts/admin.js --grant 9950000101     # ให้สิทธิ์ (ต้องมีแถวใน DB อยู่ก่อน)
-node scripts/admin.js --revoke 9950000101    # ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
+node scripts/admin.js --grant <รหัส นศ.>     # ให้สิทธิ์ (ต้องมีแถวใน DB อยู่ก่อน)
+node scripts/admin.js --revoke <รหัส นศ.>    # ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
 node scripts/admin.js --rotate-password      # ออกรหัสกลางใหม่ แสดงครั้งเดียว
 node scripts/admin.js --break-glass          # บัญชีสำรองที่มีรหัสของตัวเอง
 ```
@@ -486,9 +507,11 @@ node scripts/admin.js --break-glass          # บัญชีสำรองท
 **บัญชีเจ้าหน้าที่คณะ (`--create-staff`)** — บัญชีประจำ ไม่ใช่ทางหนีไฟ ใช้รหัสของตัวเอง
 `year=null` (โหวตไม่ได้ ไม่ถูกนับใน turnout) และเป็น **role เดียวที่กดรับรองผลได้**
 ```bash
-node scripts/admin.js --create-staff anuwat.s --name "ชื่อ นามสกุล"   # เติม --ask-password เพื่อตั้งรหัสเอง
+node scripts/admin.js --create-staff ovs-staff-01 --name "ชื่อ นามสกุล"   # เติม --ask-password เพื่อตั้งรหัสเอง
 ```
 ชื่อที่ใส่จะถูกบันทึกเป็นผู้รับรองผลและขึ้นบนหน้าผลคะแนน
+ชื่อผู้ใช้ (`ovs-staff-01` ในตัวอย่าง) ต้องไม่ซ้ำกับ username PSU Passport ของใครเลย เพราะระบบใช้ username จาก SSO เป็นรหัสผู้ใช้
+ถ้าซ้ำและเจ้าของ username ล็อกอินผ่านหน้า SSO แถวเดียวกันจะถูกเขียนทับ ใช้รูปแบบที่ PSU Passport ไม่ใช้ เช่น มีคำนำหน้า `ovs-`
 
 **หมายเหตุ (แก้ 2026-06-12):** เดิมโค้ดดูแค่ `groups[0]` (กลุ่มแรกเท่านั้น) → แก้ให้สแกน
 ทั้ง array แล้ว ตอนนี้ `roleFromSsoGroups` ยังสแกนทั้ง array เหมือนเดิม แต่ผลลัพธ์เป็นแค่ป้าย

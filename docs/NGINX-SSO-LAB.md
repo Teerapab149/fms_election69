@@ -101,6 +101,11 @@ the actual error; don't keep increasing buffer sizes blindly. Rollback is
 removing the include and restoring the backed-up settings, testing, reloading.
 No application change removes `id_token`; SSO logout remains intact.
 
+Other nginx settings the application depends on (full example in `docs/STAFF-IT-GUIDE.md` section 3.8):
+`proxy_set_header Host $http_host;` (the CSRF check compares `Origin` with `Host`),
+`client_max_body_size 200m;` (nginx defaults to 1 MB, which rejects larger image uploads), and
+the app port bound to `127.0.0.1` only.
+
 Access logs in the lab omit query strings. Nginx **error logs may still contain
 request URLs**: redact OAuth code/state, cookies, tokens, and personal data
 before sharing production logs.
