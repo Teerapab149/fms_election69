@@ -41,7 +41,7 @@ test('safeFilePart: no separator and no dot survives, so a name cannot leave its
     assert.equal(path.dirname(written), targetDir, `${JSON.stringify(h)} went into a subfolder`);
   }
   // the names real studentIds and the e2e fixtures use are left alone
-  assert.equal(safeFilePart('6610510149'), '6610510149');
+  assert.equal(safeFilePart('9950000101'), '9950000101');
   assert.equal(safeFilePart('e2e-mem-1'), 'e2e-mem-1');
   assert.equal(safeFilePart('bulk_7'), 'bulk_7');
   // nothing usable left: the fallback, never an empty name

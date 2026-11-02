@@ -239,13 +239,13 @@ async function askPassword() {
 async function createStaff(db, username) {
   const name = argOf("--name");
   if (!username || username.startsWith("--")) {
-    console.log("\nต้องระบุ username · เช่น  node scripts/admin.js --create-staff anuwat.s --name \"อนุวัฒน์ นามสกุล\"\n");
+    console.log("\nต้องระบุ username เช่น  node scripts/admin.js --create-staff ovs-staff-01 --name \"ชื่อ นามสกุลจริง\"\n");
     process.exitCode = 1;
     return;
   }
   if (!name) {
     console.log(`\nต้องระบุ --name ด้วย เพราะชื่อนี้จะถูกใช้เป็นผู้รับรองผลการเลือกตั้ง
-  เช่น  node scripts/admin.js --create-staff ${username} --name "อนุวัฒน์ นามสกุล"\n`);
+  เช่น  node scripts/admin.js --create-staff ${username} --name "ชื่อ นามสกุลจริง"\n`);
     process.exitCode = 1;
     return;
   }
@@ -314,7 +314,7 @@ async function createStaff(db, username) {
   --grant <รหัส นศ.>       ให้สิทธิ์แอดมิน (รับ email ก็ได้)
   --revoke <รหัส นศ.>      ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
   --create-staff <ชื่อผู้ใช้> --name "<ชื่อจริง>"
-                          บัญชีเจ้าหน้าที่คณะ ใช้รหัสกลางเหมือนแอดมินคนอื่น
+                          บัญชีเจ้าหน้าที่คณะ ใช้รหัสส่วนตัวของตัวเอง (ไม่ใช่รหัสกลาง)
                           ลงคะแนนไม่ได้ · ชื่อจริงใช้เป็นผู้รับรองผล
   --rotate-password       ออกรหัสกลางใหม่ แสดงครั้งเดียว รหัสเดิมตายทันที
   --clear-personal        ล้างรหัสประจำบัญชีทุกบัญชี ให้เหลือแต่รหัสกลาง

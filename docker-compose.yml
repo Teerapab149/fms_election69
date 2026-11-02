@@ -11,7 +11,8 @@ services:
     container_name: fms-election-web
     restart: always
     ports:
-      - "3000:3000"
+      # bind to loopback only: the host nginx reaches it at 127.0.0.1:3000, nothing else can
+      - "127.0.0.1:3000:3000"
     env_file:
       - .env
     volumes:
