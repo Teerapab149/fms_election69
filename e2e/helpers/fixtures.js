@@ -23,6 +23,9 @@ const SERVER = process.env.PW_BASE_URL || 'http://localhost:3100';
 const API = (p) => `${SERVER}${BASE_PATH}${p}`;
 /** Every minted test voter id starts with this so helpers can find/reverse them. */
 const E2E_PREFIX = 'e2e-';
+/** The private half of the suite's throwaway election key (global.setup.js writes
+ *  it; the server under test encrypts with the matching public half). */
+const E2E_BALLOT_KEY_FILE = path.join(require('os').tmpdir(), 'fms-e2e-ballot-private.pem');
 
 /** The test-DB Prisma client (bound to *_e2e — never the dev DB). */
 function prisma() {
@@ -43,6 +46,38 @@ async function assertLiveTestDb() {
  *  unvoted, year-"ปี 1" (eligible) user on first sign-in. */
 function uniqueStudentId() {
   return `${E2E_PREFIX}${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+}
+
+/** Sign a student in WITHOUT a browser (the NextAuth credentials callback, the same
+ *  call the /login page makes) and return the session cookie: `next-auth.session-token=...`.
+ *  An unknown id is minted as a fresh, unvoted, eligible user. Used where a spec
+ *  needs many voters at once; the real /login page is covered by mockLogin. */
+async function mintSession(studentId) {
+  const csrfRes = await fetch(API('/api/auth/csrf'));
+  const { csrfToken } = await csrfRes.json();
+  const jar = (csrfRes.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]);
+  const res = await fetch(API('/api/auth/callback/mock-login'), {
+    method: 'POST',
+    redirect: 'manual',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', cookie: jar.join('; ') },
+    body: new URLSearchParams({ csrfToken, studentId, callbackUrl: `${SERVER}${BASE_PATH}/vote`, json: 'true' }),
+  });
+  const session = (res.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).find((c) => c.startsWith('next-auth.session-token='));
+  if (!session) throw new Error(`mintSession(${studentId}) got ${res.status} and no session cookie`);
+  return session;
+}
+
+/** POST /api/vote with a session cookie. Returns { status, body, text }, and never throws on a refusal. */
+async function castWith(cookie, candidateId) {
+  const res = await fetch(API('/api/vote'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie },
+    body: JSON.stringify({ candidateId }),
+  });
+  const text = await res.text();
+  let body = {};
+  try { body = JSON.parse(text); } catch { /* keep {} */ }
+  return { status: res.status, body, text };
 }
 
 /** Resolve real ballot choices from the LIVE api so tests aren't pinned to seed
@@ -216,6 +251,9 @@ module.exports = {
   SERVER,
   API,
   E2E_PREFIX,
+  E2E_BALLOT_KEY_FILE,
+  mintSession,
+  castWith,
   TEST_DB_URL,
   prisma,
   disconnect,

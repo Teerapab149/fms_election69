@@ -26,6 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const net = require('net');
+const crypto = require('crypto');
 const { spawn, execSync } = require('child_process');
 const {
   TEST_DB_URL,
@@ -37,6 +38,12 @@ const { seedTestDb } = require('./helpers/seed');
 const PORT = Number(process.env.PW_TEST_PORT || 3100);
 const BASE_PATH = process.env.BASE_PATH || '';
 const SERVER_STATE_FILE = path.join(os.tmpdir(), 'fms-e2e-server.json');
+// The suite's own election keypair. The server under test encrypts every ballot
+// with the public half (passed in its environment, so it wins over the .env
+// value); the private half is written here so a spec can decrypt the box and
+// recount it independently. Throwaway: generated per run, deleted in teardown,
+// and it never matches the key of any real election.
+const BALLOT_KEY_FILE = path.join(os.tmpdir(), 'fms-e2e-ballot-private.pem');
 const HEALTH_URL = `http://localhost:${PORT}${BASE_PATH}/api/health`;
 const READY_TIMEOUT_MS = 90_000;
 
@@ -179,6 +186,15 @@ module.exports = async function globalSetup() {
   const seeded = await seedTestDb();
   log(`seeded: ${seeded.parties} parties, ${seeded.voters} voters, admin ${seeded.admin}`);
 
+  // 4b. A throwaway election keypair for this run (see BALLOT_KEY_FILE).
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+  });
+  fs.writeFileSync(BALLOT_KEY_FILE, privateKey, { mode: 0o600 });
+  log(`ballot keypair generated (private half in ${BALLOT_KEY_FILE})`);
+
   // 5. Start the server under test (prod build, test DB).
   log(`starting: next start -p ${PORT} (NODE_ENV=development, DATABASE_URL → test DB)`);
   const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
@@ -191,6 +207,7 @@ module.exports = async function globalSetup() {
       // (see src/lib/auth.js) — a real deployment can never satisfy both.
       E2E_MOCK_LOGIN: 'true',
       DATABASE_URL: TEST_DB_URL,
+      ELECTION_BALLOT_PUBLIC_KEY: publicKey,
       PORT: String(PORT),
       NEXTAUTH_URL: `http://localhost:${PORT}${BASE_PATH}`,
       NEXT_PUBLIC_ENABLE_MOCK_LOGIN: 'true',
@@ -220,6 +237,7 @@ module.exports = async function globalSetup() {
 };
 
 module.exports.SERVER_STATE_FILE = SERVER_STATE_FILE;
+module.exports.BALLOT_KEY_FILE = BALLOT_KEY_FILE;
 module.exports.PORT = PORT;
 
 // Standalone: `node e2e/global.setup.js` (npm run e2e:setup). Prints the
