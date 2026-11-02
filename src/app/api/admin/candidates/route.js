@@ -3,6 +3,7 @@ import { db } from "../../../../lib/db";
 import { bustSiteData } from "../../../../lib/cache/siteData";
 import { optimizeImage } from "../../../../lib/imageOptimize";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { rejectCrossOrigin } from "../../../../lib/security/crossOriginGuard";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
 import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialOptions.mjs";
@@ -385,6 +386,9 @@ async function ballotBoxGuard(action) {
 }
 
 export async function PUT(req) {
+  // Origin first, see POST. This route is excluded from the middleware matcher.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
   const authError = await adminGuard(req);
   if (authError) return authError;
   try {
@@ -630,6 +634,12 @@ export async function PUT(req) {
 
 // --- POST (Create) ---
 export async function POST(req) {
+  // Origin check before everything, including adminGuard: this route is excluded
+  // from the middleware matcher because its multipart body can pass 10 MB, so the
+  // CSRF check lives here. A cross-site request is refused without touching the DB,
+  // and the 403 is identical whether or not the cookie is a valid admin session.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
   // auth ก่อนเสมอ: ด่านบัตรตอบจำนวนบัตรในหีบ คนที่ยังไม่ได้เข้าสู่ระบบต้องไม่ได้เห็นตัวเลขนี้
   const authError = await adminGuard(req);
   if (authError) return authError;
@@ -747,6 +757,9 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
+  // Origin first, see POST. This route is excluded from the middleware matcher.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
   const authError = await adminGuard(req);
   if (authError) return authError;
   let target_id = null;

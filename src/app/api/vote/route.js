@@ -7,6 +7,7 @@ import { encryptBallot } from "../../../lib/ballotCrypto";
 import { appendBallotTx, hourBucketBangkok, hourFloor } from "../../../lib/ballotChain";
 import { readElectionState } from "../../../lib/election/liveStatus";
 import { voteRefusal } from "../../../lib/election/systemStatus.mjs";
+import { rejectCrossOrigin } from "../../../lib/security/crossOriginGuard";
 
 // Interactive-transaction limits for the vote (M1, 2026-09-25).
 //
@@ -44,6 +45,15 @@ const VOTE_REFUSAL_MESSAGES = {
 };
 
 export async function POST(request) {
+  // First, before the session and the rate limit: this route is excluded from the
+  // middleware matcher (middleware cost ~22% of vote throughput under a 500-voter
+  // burst, see the comment above `config` in src/middleware.js), so the CSRF check
+  // lives here. A forged cross-site request is refused for the price of three
+  // header reads, and it never reaches rateLimit, so it cannot use up the signed-in
+  // victim's 15 per minute.
+  const crossOrigin = rejectCrossOrigin(request);
+  if (crossOrigin) return crossOrigin;
+
   try {
     // 🔐 Security Fix: ดึง studentId จาก verified session แทน request body
     const session = await getServerSession(authOptions);
@@ -79,6 +89,16 @@ export async function POST(request) {
         "ระบบลงคะแนนยังไม่พร้อม กุญแจเข้ารหัสบัตรยังไม่ถูกตั้งค่า กรุณาแจ้งผู้ดูแลระบบ",
         503
       );
+    }
+
+    // Only application/json is accepted. A cross-site form can only send
+    // text/plain, multipart or urlencoded without a CORS preflight, so refusing the
+    // rest closes the "text/plain body that happens to parse as JSON" trick even if
+    // the origin check above were ever bypassed. The vote page always sends
+    // application/json (useVoteSystem.js). Checked before the body is read.
+    const contentType = (request.headers.get("content-type") || "").toLowerCase();
+    if (contentType.split(";")[0].trim() !== "application/json") {
+      return refuse("BAD_REQUEST", "ข้อมูลการลงคะแนนไม่ครบถ้วน", 400);
     }
 
     // A body that is not JSON is the client's mistake, not ours: 400, not the

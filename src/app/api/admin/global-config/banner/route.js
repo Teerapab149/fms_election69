@@ -4,6 +4,7 @@ import path from "path";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
 import { optimizeImage, extensionForBuffer } from "../../../../../lib/imageOptimize";
 import { uploadDir } from "../../../../../lib/media/storage";
+import { rejectCrossOrigin } from "../../../../../lib/security/crossOriginGuard";
 
 // POST /api/admin/global-config/banner — upload the election announcement poster.
 //
@@ -26,6 +27,12 @@ const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request) {
+  // Origin first: this route is excluded from the middleware matcher (its body can
+  // pass 10 MB), so the CSRF check lives here. Before requireAdmin on purpose: a
+  // cross-site request is refused without touching the DB, and the 403 is the same
+  // whether or not the cookie in the request is a valid admin session.
+  const crossOrigin = rejectCrossOrigin(request);
+  if (crossOrigin) return crossOrigin;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
