@@ -86,8 +86,10 @@ export default function SinglePartyView({
   const placeholderPath = getPath("/images/logo/party-placeholder.svg");
   const partyLogo = candidate?.logoUrl ? getPath(candidate.logoUrl) : placeholderPath;
   const partyImage = placeholderPath;
-  const policies = candidate?.policies || [];
-  const missions = candidate?.missions || [];
+  const policies = Array.isArray(candidate?.policies) ? candidate.policies : [];
+  const missions = Array.isArray(candidate?.missions) ? candidate.missions : [];
+  // ไม่มีความหมายโลโก้ = ไม่มีคอลัมน์ขวา โลโก้กับหัวข้อต้องอยู่กึ่งกลาง ไม่ทิ้งครึ่งจอโล่ง
+  const hasMeaning = String(candidate?.logoMeaning || "").trim().length > 0;
   const members = useMemo(() => {
     const rawMembers = candidate?.members || [];
     return [...rawMembers].sort((a, b) => {
@@ -467,7 +469,7 @@ export default function SinglePartyView({
 
         {/* Content Wrapper */}
         <div ref={contentRef} className="w-full h-[100dvh] overflow-y-auto overflow-x-hidden bg-white relative">
-          <CinematicNavbar onScrollTo={scrollTo} partyName={partyName} partyLogoUrl={partyLogo} user={user} scrollContainerRef={contentRef} introFinished={introFinished} theme="light" />
+          <CinematicNavbar onScrollTo={scrollTo} partyName={partyName} partyLogoUrl={partyLogo} user={user} scrollContainerRef={contentRef} introFinished={introFinished} theme="light" hideMission={missions.length === 0} hidePolicy={policies.length === 0} />
 
           {/* === 1. HERO SECTION: Redesigned Layout === */}
           <section id="hero" className="relative overflow-hidden">
@@ -568,10 +570,10 @@ export default function SinglePartyView({
                 <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-start relative min-h-[400px]">
 
                   {/* LEFT COL: Header & Desktop Logo */}
-                  <div className="w-full lg:w-5/12 relative z-20 flex flex-col">
+                  <div className={`w-full ${hasMeaning ? "lg:w-5/12" : ""} relative z-20 flex flex-col`}>
 
                     {/* Header Block */}
-                    <div className="mb-4 md:mb-0 lg:mb-10 text-center md:text-left">
+                    <div className={`mb-4 md:mb-0 lg:mb-10 text-center ${hasMeaning ? "md:text-left" : ""}`}>
                       <span className="block text-sm font-bold tracking-[0.3em] text-[var(--spv-gold,#B8860B)] uppercase mb-2 lg:mb-3 transition-colors duration-300 ease-in-out">
                         The Identity
                       </span>
@@ -584,13 +586,13 @@ export default function SinglePartyView({
                     {/* 1. Mobile: Flow naturally below header */}
                     {/* 2. Tablet (md): Float Absolute Top Right */}
                     {/* 3. Desktop (lg): Return to Static Flow below header */}
-                    <div className="
+                    <div className={hasMeaning ? `
                       relative z-10
                       w-56 h-56 mx-auto mb-4                        /* Mobile: mb-4 (Reduced from 6) to pull text up */
                       md:absolute md:top-0 md:right-0 md:w-64 md:h-64 md:mb-0  /* Tablet: Absolute Top Right */
                       lg:static lg:w-[400px] lg:h-[400px] lg:mx-0 lg:mt-2       /* Desktop: lg:mt-2 (Reduced from 8) to move up */
                       drop-shadow-2xl hover:scale-105 transition-transform duration-500
-                    ">
+                    ` : "relative z-10 w-56 h-56 mx-auto mb-4 md:w-64 md:h-64 lg:w-[400px] lg:h-[400px] lg:mt-2 drop-shadow-2xl hover:scale-105 transition-transform duration-500"}>
                       <button
                         type="button"
                         onClick={() => openLightbox(partyLogo, [partyLogo], `โลโก้พรรค ${partyName || ""}`)}
@@ -607,6 +609,7 @@ export default function SinglePartyView({
                   </div>
 
                   {/* RIGHT COL: Scrollable Content Box */}
+                  {hasMeaning && (
                   <div className="w-full lg:w-7/12 relative z-20 md:mt-8 lg:mt-0">
                     {/* md:mt-8 (Reduced from 24) to pull text box up on Tablet. lg:mt-0 aligns with logo top */}
                     <div className="bg-white p-8 lg:p-12 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-gray-100/80 relative">
@@ -618,7 +621,7 @@ export default function SinglePartyView({
                       {/* SCROLLABLE TEXT BOX */}
                       <div className="max-h-[280px] lg:max-h-[360px] overflow-y-auto pr-6 custom-scrollbar hover:scroll-auto relative z-10">
                         <p className="text-lg lg:text-xl font-sans font-light leading-[1.8] text-gray-700 whitespace-pre-line">
-                          {candidate?.logoMeaning || "พรรคยังไม่ได้ระบุความหมายของสัญลักษณ์"}
+                          {candidate.logoMeaning}
                         </p>
                       </div>
 
@@ -630,6 +633,7 @@ export default function SinglePartyView({
                       </div>
                     </div>
                   </div>
+                  )}
 
                 </div>
               </Reveal>
@@ -637,7 +641,7 @@ export default function SinglePartyView({
           </section >
 
           {/* === 3. MISSION (FULL WIDTH SPLIT) === */}
-          < section id="mission" className="w-full flex flex-col md:flex-row min-h-auto md:min-h-[60vh]" >
+          {missions.length > 0 && < section id="mission" className="w-full flex flex-col md:flex-row min-h-auto md:min-h-[60vh]" >
 
             {/* LEFT SIDE: Header (Deep Royal Purple) - 40% */}
             < div className="w-full md:w-[40%] bg-[var(--spv-deep,#2E1065)] transition-colors duration-300 ease-in-out relative px-6 py-12 md:px-10 md:py-24 flex flex-col justify-center items-center text-center overflow-hidden" >
@@ -664,7 +668,7 @@ export default function SinglePartyView({
             {/* RIGHT SIDE: Content (White Background) - 60% */}
             < div className="w-full md:w-[60%] bg-[#F9FAFB] px-6 py-12 md:px-24 md:py-24 flex flex-col justify-center" >
               <div className="grid gap-4 md:gap-6 max-w-3xl mx-auto w-full">
-                {(Array.isArray(missions) ? missions : ["สนับสนุนกิจกรรม", "พัฒนาสิ่งอำนวยความสะดวก"]).map((m, i) => (
+                {missions.map((m, i) => (
                   <Reveal key={i} delay={i * 100}>
                     <div className="flex items-center gap-4 md:gap-6 group p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-gray-200 hover:border-[var(--spv-brand)] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
                       <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl bg-[color-mix(in_srgb,var(--spv-brand)_12%,white)] text-[var(--spv-brand)] flex items-center justify-center font-black text-lg md:text-xl border border-[color-mix(in_srgb,var(--spv-brand)_20%,white)] group-hover:bg-[var(--spv-brand)] group-hover:text-white transition-colors duration-300">
@@ -678,10 +682,10 @@ export default function SinglePartyView({
                 ))}
               </div>
             </div >
-          </section >
+          </section >}
 
           {/* === 4. POLICIES SECTION === */}
-          < section id="policy" className="py-32 bg-white relative" >
+          {policies.length > 0 && < section id="policy" className="py-32 bg-white relative" >
             <div className="container mx-auto px-6 relative z-10">
 
               <div className="text-center max-w-3xl mx-auto mb-16">
@@ -689,7 +693,7 @@ export default function SinglePartyView({
                 <h2 className="text-4xl md:text-6xl font-black text-[var(--spv-dark,#1A1A1A)] mt-3 uppercase tracking-tight transition-colors duration-300 ease-in-out">นโยบายพรรค</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
-                {(Array.isArray(policies) ? policies : ["นโยบายที่ 1", "นโยบายที่ 2", "นโยบายที่ 3"]).map((p, i) => (
+                {policies.map((p, i) => (
                   <Reveal key={i} delay={Math.min(i * 50, 200)}>
                     {/* CONTAINER: Auto Height on Mobile (Fit Content), Auto on Desktop */}
                     <div className="group relative w-full h-full">
@@ -741,7 +745,7 @@ export default function SinglePartyView({
                 }
               `}</style>
             </div>
-          </section >
+          </section >}
 
           {/* === 4. GALLERY SECTION: OPTIMIZED & RESPONSIVE === */}
           < div id="gallery" className="w-full bg-black" >

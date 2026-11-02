@@ -51,7 +51,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
 
   // dynamic chapter numbering — Vision · Mission · Policies · The team
   const chapterKeys = [];
-  if (story || heroImg || logoSrc) chapterKeys.push("vision");
+  if (story) chapterKeys.push("vision");
   if (missions.length) chapterKeys.push("mission");
   if (policies.length) chapterKeys.push("policies");
   if (members.length) chapterKeys.push("team");
@@ -105,9 +105,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
               <h2>Vision &amp; <em>identity.</em></h2>
             </div>
             <div className="vd-vision__body">
-              {story
-                ? <StoryClamp className="vd-sc"><p>{story}</p></StoryClamp>
-                : <p className="vd-muted">พรรค {party?.name} มุ่งมั่นขับเคลื่อนกิจกรรมและพัฒนาสโมสรนักศึกษาคณะวิทยาการจัดการ</p>}
+              <StoryClamp className="vd-sc"><p>{story}</p></StoryClamp>
             </div>
           </section>
         )}
