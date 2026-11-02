@@ -59,6 +59,26 @@ test('admin login: wrong password → 401', async () => {
   assert.equal(r.status, 401);
 });
 
+test('admin login: an account that is not an admin cannot be told apart from one that does not exist', async () => {
+  // Used to answer 403 "no permission" for a real non-admin and 401 for everyone else,
+  // so the form listed which student ids are accounts. Set NONADMIN_USER to a real
+  // non-admin studentId to include that case; the unknown-name case always runs.
+  const post = async (username) => {
+    const r = await fetch(`${BASE}/api/admin/login`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'definitely-wrong' }),
+    });
+    return { status: r.status, body: await r.text() };
+  };
+  const wrongPassword = await post(ADMIN_USER);
+  const noSuchUser = await post(`no-such-user-${Date.now()}`);
+  assert.equal(noSuchUser.status, 401);
+  assert.deepEqual(noSuchUser, wrongPassword, 'unknown name vs wrong password for a real admin');
+  if (process.env.NONADMIN_USER) {
+    assert.deepEqual(await post(process.env.NONADMIN_USER), wrongPassword, 'real non-admin vs wrong password for a real admin');
+  }
+});
+
 test('admin login: correct password → 200 + httpOnly admin_token cookie', noPass, async () => {
   const r = await fetch(`${BASE}/api/admin/login`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
@@ -107,4 +127,19 @@ test('login is rate-limited (429 under a burst)', async () => {
     if (r.status === 429) { got429 = true; break; }
   }
   assert.ok(got429, 'expected a 429 within the burst');
+});
+
+test('login limiter ignores a forged first X-Forwarded-For entry (nginx appends the real one)', async () => {
+  // nginx sends "<what the client wrote>, <address it saw>". A new made-up first entry
+  // per request used to be a new bucket per request, so the limit never applied.
+  let got429 = false;
+  for (let i = 1; i <= 14; i++) {
+    const r = await fetch(`${BASE}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': `198.51.100.${i}, 203.0.113.250` },
+      body: JSON.stringify({ username: ADMIN_USER, password: 'x' }),
+    });
+    if (r.status === 429) { got429 = true; break; }
+  }
+  assert.ok(got429, 'forged first entries must not reset the limit');
 });
