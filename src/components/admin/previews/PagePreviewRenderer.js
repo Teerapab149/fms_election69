@@ -348,7 +348,7 @@ function PartyPreview({ primaryColor }) {
           <div className="text-[10px] font-bold tracking-[0.3em] mb-3 uppercase" style={{ color: `${primaryColor}cc` }}>
             ● Official Party Page
           </div>
-          <h1 className="text-5xl font-black tracking-tight">The Unity Concord</h1>
+          <h1 className="text-5xl font-black tracking-tight">พรรคตัวอย่าง</h1>
           <p className="text-slate-300 mt-3 text-base italic">หลากเอกลักษณ์ รวมเป็นหนึ่ง สู่ความสำเร็จที่ยั่งยืน</p>
         </div>
       </div>

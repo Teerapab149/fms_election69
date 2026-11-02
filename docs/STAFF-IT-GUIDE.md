@@ -101,7 +101,7 @@ Compose ส่งค่า `.env` ให้คอนเทนเนอร์ต�
 | คำสั่ง | ใช้เมื่อใด / ผลที่เกิด |
 |---|---|
 | `bash scripts/setup.sh --check` | ตรวจเครื่องมือ ค่า env สถานะ migration เว็บ และอ่านรายชื่อแอดมิน; ไม่ migrate, ไม่เปิด/build คอนเทนเนอร์, ไม่ตั้งแอดมิน และข้ามการทดสอบเขียนรูป |
-| `bash scripts/setup.sh --admin 6610510149` | ทำ setup ปกติแล้วให้สิทธิ์รหัสตัวอย่างนี้ **เปลี่ยนเป็นรหัสจริงและนำเข้าผู้ใช้นั้นก่อน**; ไม่ได้เปลี่ยนรหัสกลาง |
+| `bash scripts/setup.sh --admin 9950000101` | ทำ setup ปกติแล้วให้สิทธิ์รหัสตัวอย่างนี้ **เปลี่ยนเป็นรหัสจริงและนำเข้าผู้ใช้นั้นก่อน**; ไม่ได้เปลี่ยนรหัสกลาง |
 | `bash scripts/setup.sh --compose docker-compose.faculty.yml` | ใช้ compose ไฟล์ที่เตรียมไว้แทนไฟล์หลัก ทุกคำสั่ง Docker ที่ทำเองต่อจากนั้นต้องใช้ `-f docker-compose.faculty.yml` ให้ตรงกัน |
 
 `--check` ไม่ใช่การตรวจแบบไม่มีผลต่อไฟล์เลย: ถ้ายังไม่มี Prisma ในเครื่อง การเรียก `npx` อาจดาวน์โหลดแพ็กเกจ/cache
@@ -682,7 +682,7 @@ DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --create-staff anuwat.s -
 เติม `--ask-password` หากต้องการตั้งเอง สคริปต์ถามสองครั้งและแสดงข้อความที่พิมพ์บนจอ ไม่รับรหัสผ่านจาก argument
 
 ```bash
-DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --grant 6610510149
+DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --grant 9950000101
 DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --rotate-password
 DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --list
 ```
@@ -696,7 +696,7 @@ DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --list
 | `--list` | อ่านรายชื่อแอดมิน role และสถานะว่าตั้งรหัสกลางแล้วหรือยัง ไม่แสดงรหัสจริงและไม่แก้ข้อมูล ใช้ตรวจว่าชื่อที่ให้สิทธิ์ปรากฏก่อนให้เจ้าตัวลองล็อกอิน |
 
 ```bash
-DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --revoke 6610510149
+DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --revoke 9950000101
 ```
 
 เปลี่ยนเป็นรหัสผู้พ้นหน้าที่ คำสั่งถอด `isAdmin` และล้างรหัสส่วนตัวของบัญชีนั้น มีผลเมื่อเรียก API แอดมินครั้งถัดไป

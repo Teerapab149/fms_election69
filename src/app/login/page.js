@@ -222,7 +222,7 @@ export default function LoginPage() {
                     value={mockStudentId}
                     onChange={(e) => setMockStudentId(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleMockLogin()}
-                    placeholder="e.g. 6610510149"
+                    placeholder="e.g. 6600000000"
                     disabled={mockLoading}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all disabled:opacity-60"
                   />

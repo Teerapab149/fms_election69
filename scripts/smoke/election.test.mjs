@@ -17,7 +17,7 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 
 const BASE = process.env.BASE || 'http://localhost:3000';
-const ADMIN_USER = process.env.ADMIN_USER || '6610510149';
+const ADMIN_USER = process.env.ADMIN_USER || '9950000101';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
 const noPass = { skip: ADMIN_PASS ? false : 'ADMIN_PASS not set — export the shared admin password to run the login tests' };
 

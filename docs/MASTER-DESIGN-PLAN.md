@@ -185,7 +185,7 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
 >   4. ชื่อยาว = ellipsis เสมอ (max-width) · mobile breakpoint แยก (rail/drawer/topbar ต่างกันต่อ template)
 >   5. สีต้องผ่าน token ของตระกูล (--sd-*/--vd-*/--o-*) ไม่ hardcode → morph/ธีมไม่พัง · portal(ถ้ามี dropdown)=P-LOG-077
 >   6. motion เคารพ reduced-motion · ไม่เพิ่ม animation ที่ทำ screenshot timeout เกินจำเป็น
->   7. **verify ต้อง mock-login** (NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true, student 6610510149) เพื่อเห็น logged-in
+>   7. **verify ต้อง mock-login** (NEXT_PUBLIC_ENABLE_MOCK_LOGIN=true, student 9950000101) เพื่อเห็น logged-in
 >      จริงทุกตระกูล + เช็ค logged-out ด้วย · owner eyeball ก่อนปิด (หน้า animate → computed + owner)
 > **เพิ่มเติมจาก advisor review 2026-07-13 (ปิดช่องว่างก่อนเริ่มจริง):**
 >   8. concept board ต้องเสนอ **2-3 ทางเลือกต่อตระกูล** ไม่ใช่ทางเดียว — บทเรียน ประกาศ-concept/T1.1:
@@ -197,7 +197,7 @@ Owner ยอมรับ original ตามเดิมได้ — ถาม�
 >   10. loading state ใช้ **skeleton footprint เท่า chip จริง** (กัน layout shift/กระพริบ) —
 >      ไม่ใช่แค่ "อย่าให้กระพริบ" ลอยๆ
 > **ลำดับ:** concept board 2-3 ทาง/ตระกูล (Fable) → owner เลือกรายตระกูล → worker restyle ทีละตระกูล
-> + verify logged-in (mock 6610510149) + logged-out + loading → commit แยกต่อตระกูล ·
+> + verify logged-in (mock 9950000101) + logged-out + loading → commit แยกต่อตระกูล ·
 > **ห้าม big-bang ทั้ง 4 ในคอมมิตเดียว** · ตระกูลไหน owner ดูแล้วเฉยๆ = ข้ามได้ ไม่ต้องฝืนแก้
 
 **T3.2 · Motion policy เป็นเอกสาร** — ตาราง: surface × พฤติกรรม (live/bare/chrome/interact × PRM on/off) ลง docs/

@@ -1,8 +1,8 @@
 // scripts/admin.js — everything about who can get into /admin.
 //
 //   node scripts/admin.js --list                    ใครเป็นแอดมินตอนนี้
-//   node scripts/admin.js --grant 6610510149        ให้สิทธิ์แอดมิน
-//   node scripts/admin.js --revoke 6610510149       ถอดสิทธิ์ (มีผลทันที)
+//   node scripts/admin.js --grant 9950000101        ให้สิทธิ์แอดมิน
+//   node scripts/admin.js --revoke 9950000101       ถอดสิทธิ์ (มีผลทันที)
 //   node scripts/admin.js --rotate-password         ออกรหัสกลางใหม่ แสดงครั้งเดียว
 //   node scripts/admin.js --break-glass             บัญชีสำรอง มีรหัสของตัวเอง
 //

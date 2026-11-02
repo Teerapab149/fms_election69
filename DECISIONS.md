@@ -2147,7 +2147,7 @@ including comments. Quote CSS identifiers with 'single quotes' or nothing.
 
 ### P-LOG-105: [2026-07-19] A stale `existing*ImageUrl` from the client silently reverts image paths to files that no longer exist
 **Context:** Owner reported broken member photos. Two members' `modalImageUrl`
-pointed at `Modal/8.jpg` while the file on disk was `Modal/8_6810517021.jpg` —
+pointed at `Modal/8.jpg` while the file on disk was `Modal/8_<studentId>.jpg` —
 exactly the name the uploader writes (`${positionNum}_${studentId}.jpg`). Cause:
 `processMemberImage`/`processMemberModalImage` preferred the CLIENT-sent
 `existingImageUrl` over the DB value, so an admin form loaded before an earlier

@@ -50,7 +50,7 @@ export default function GumroadLogin({
                 value={mockStudentId}
                 onChange={(e) => setMockStudentId(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && onMockLogin()}
-                placeholder="e.g. 6610510149"
+                placeholder="e.g. 6600000000"
                 disabled={mockLoading}
               />
               <button type="button" className="grl-btn grl-btn--mock" onClick={onMockLogin} disabled={mockLoading || !mockStudentId.trim()}>

@@ -79,3 +79,11 @@ docs/portfolio-shots/
 # Local database dumps and image archives (backups/<name>/database.dump,
 # public-images.tar.gz) hold real student data. Never commit them.
 backups/
+
+# Photos uploaded through the admin console are real students (owner, 2026-11-03).
+# Never commit them: the repo is public. Files already tracked stay tracked;
+# these rules only stop new uploads from being picked up by add.
+public/images/members/
+public/images/candidates/groupimage/
+public/images/candidates/mobileheroimage/
+public/images/candidates/officialImageUrl/

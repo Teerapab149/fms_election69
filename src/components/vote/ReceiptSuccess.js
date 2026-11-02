@@ -114,7 +114,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
   // clock). Missing fields → their line is omitted cleanly (never "-").
   // editor/preview uses a deterministic mock so the slide is reviewable.
   const voterName = user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : null);
-  const voterId = user?.studentId || (editorMode ? "6610510149" : null);
+  const voterId = user?.studentId || (editorMode ? "6600000000" : null);
   const voterMajor = user?.major || (editorMode ? "สาขาวิชาการตลาด" : null);
   const voterYear = user?.year || (editorMode ? "ปี 3" : null);
   const stamp = editorMode

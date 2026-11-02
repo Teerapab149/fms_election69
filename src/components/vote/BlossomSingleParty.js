@@ -117,7 +117,7 @@ export default function BlossomSingleParty({
   const no = party?.number;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6610510149" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
 
   // which of the three choices is picked (fixed semantic mapping)
   const kind = selectedPartyId == null ? null

@@ -24,7 +24,7 @@
 `https://ovs.fms.psu.ac.th/admin/login`
 
 ```
-Username   รหัส นศ. ของตัวเอง       เช่น 6610510149
+Username   รหัส นศ. ของตัวเอง       เช่น 9950000101
 Password   รหัสกลาง                 20 ตัวอักษรที่ได้จาก IT
 ```
 
