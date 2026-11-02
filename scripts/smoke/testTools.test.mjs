@@ -4,6 +4,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   isTestToolsEnabled,
+  isTestToolsSwitchOn,
+  databaseNameOf,
+  isTestDatabaseName,
   isPermissionError,
   nextFreePartyNumbers,
   buildSampleParty,
@@ -17,6 +20,45 @@ test("enabled only for the exact string 1", () => {
     assert.equal(isTestToolsEnabled({ ADMIN_TEST_TOOLS: v }), false, String(v));
   }
   assert.equal(isTestToolsEnabled({}), false);
+});
+
+const PROD = { ADMIN_TEST_TOOLS: "1", NODE_ENV: "production" };
+
+test("database name is read from the URL, query string and credentials ignored", () => {
+  assert.equal(databaseNameOf("postgresql://u:p%40ss@localhost:5432/fms_election?schema=public"), "fms_election");
+  assert.equal(databaseNameOf("postgresql://u:p@db.example:5432/fms_election_e2e"), "fms_election_e2e");
+  assert.equal(databaseNameOf(undefined), "");
+  assert.equal(databaseNameOf("not a url"), "");
+});
+
+test("only _e2e and _test databases count as throwaway", () => {
+  for (const n of ["fms_election_e2e", "fms_cert_e2e", "ovs_test"]) assert.equal(isTestDatabaseName(n), true, n);
+  for (const n of ["fms_election", "fms_e2e_backup", "ovs_testing", "e2e", "_test", "", undefined, "fms-election_e2e"]) {
+    assert.equal(isTestDatabaseName(n), false, String(n));
+  }
+});
+
+test("on a production build the tools need a throwaway database as well as the switch", () => {
+  assert.equal(isTestToolsEnabled({ ...PROD, DATABASE_URL: "postgresql://u:p@h:5432/fms_election" }), false);
+  assert.equal(isTestToolsEnabled({ ...PROD, DATABASE_URL: "postgresql://u:p@h:5432/fms_election?schema=public" }), false);
+  assert.equal(isTestToolsEnabled({ ...PROD }), false, "no DATABASE_URL");
+  assert.equal(isTestToolsEnabled({ ...PROD, DATABASE_URL: "postgresql://u:p@h:5432/fms_election_e2e" }), true);
+  assert.equal(isTestToolsEnabled({ ...PROD, DATABASE_URL: "postgresql://u:p@h:5432/ovs_test" }), true);
+  // the database alone never turns them on
+  assert.equal(isTestToolsEnabled({ NODE_ENV: "production", DATABASE_URL: "postgresql://u:p@h:5432/x_e2e" }), false);
+});
+
+test("outside production the switch alone decides, so the owner's dev machine is unchanged", () => {
+  const url = "postgresql://u:p@h:5432/fms_election";
+  assert.equal(isTestToolsEnabled({ ADMIN_TEST_TOOLS: "1", NODE_ENV: "development", DATABASE_URL: url }), true);
+  assert.equal(isTestToolsEnabled({ ADMIN_TEST_TOOLS: "1", DATABASE_URL: url }), true);
+  assert.equal(isTestToolsEnabled({ NODE_ENV: "development", DATABASE_URL: url }), false);
+});
+
+test("the readiness check still sees a stale switch on a real database", () => {
+  const env = { ...PROD, DATABASE_URL: "postgresql://u:p@h:5432/fms_election" };
+  assert.equal(isTestToolsSwitchOn(env), true);
+  assert.equal(isTestToolsEnabled(env), false);
 });
 
 test("a NEXT_PUBLIC_ variable never turns it on", () => {

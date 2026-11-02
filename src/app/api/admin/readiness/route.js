@@ -11,7 +11,7 @@ import { isBuiltInSlug } from "../../../../components/admin/editor/templates";
 import { isMockLoginProviderRegistered } from "../../../../lib/auth";
 import { UPLOAD_ROOT, BUNDLED_ROOT } from "../../../../lib/media/storage";
 import { describeBackupStatus } from "../../../../lib/election/backupStatus.mjs";
-import { isTestToolsEnabled } from "../../../../utils/testTools.mjs";
+import { isTestToolsEnabled, isTestToolsSwitchOn } from "../../../../utils/testTools.mjs";
 import { access, readFile, constants as fsConstants } from "fs/promises";
 import path from "path";
 
@@ -257,9 +257,10 @@ export async function GET(request) {
     const agg = await db.candidate.aggregate({ _sum: { score: true } });
     const scoreSum = agg._sum.score || 0;
     const ballotCount = await db.ballot.count();
-    const votedCount = await db.user.count({
-      where: { isVoted: true, year: { in: validYears } },
-    });
+    // no year filter, same as scripts/lib/chainVerify: /api/vote only lets ปี 1 to ปี 4
+    // vote, and a roster import that changed a voter's year used to show up here
+    // as a false mismatch
+    const votedCount = await db.user.count({ where: { isVoted: true } });
     const allEqual = scoreSum === ballotCount && ballotCount === votedCount;
     const detail = `คะแนนรวม ${scoreSum} บัตรในหีบ ${ballotCount} ผู้ที่ลงคะแนนแล้ว ${votedCount}`;
     if (!allEqual) {
@@ -403,10 +404,14 @@ export async function GET(request) {
   // 15) env.testTools, the admin test tools (seed sample data, clear ballots and
   // parties) must never be on for the real election. Read on the server only.
   await run("env.testTools", "env", "เครื่องมือทดสอบของแอดมิน", async () => {
-    if (isTestToolsEnabled()) {
+    // the variable itself is the failure: on a real database the tools refuse to
+    // run anyway (utils/testTools.mjs), but a stale switch is one edit from live
+    if (isTestToolsSwitchOn()) {
       return {
         level: "fail",
-        detail: "เครื่องมือทดสอบเปิดอยู่ ซึ่งล้างบัตรและล้างพรรคได้ ห้ามใช้เครื่องนี้ในวันเลือกตั้งจริง ให้เจ้าหน้าที่ IT ปิดก่อน",
+        detail: isTestToolsEnabled()
+          ? "เครื่องมือทดสอบเปิดอยู่ ซึ่งล้างบัตรและล้างพรรคได้ ห้ามใช้เครื่องนี้ในวันเลือกตั้งจริง ให้เจ้าหน้าที่ IT ปิดก่อน"
+          : "ตั้งสวิตช์เครื่องมือทดสอบไว้ แม้ระบบจะไม่ยอมให้ใช้กับฐานข้อมูลนี้ แต่ควรลบออกก่อนวันเลือกตั้งจริง ให้เจ้าหน้าที่ IT ปิด",
         techDetail: "ตัวแปรแวดล้อมฝั่งเซิร์ฟเวอร์ ADMIN_TEST_TOOLS=1 ให้ลบออกจาก .env หรือ .env.local แล้วรีสตาร์ทเซิร์ฟเวอร์",
       };
     }
