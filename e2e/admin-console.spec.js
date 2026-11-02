@@ -4,9 +4,9 @@ const { test, expect } = require('@playwright/test');
 const BASE = '/admin';
 const LOGIN_URL = '/admin/login';
 
-// Admin credentials from seed data
-const ADMIN_USERNAME = '6610510149';
-const ADMIN_PASSWORD = '6610510149@email.psu.ac.th+ADMIN_FMS2026_2026_secret_9QpZxL';
+// Admin credentials: username is a seeded admin id, password comes from the environment
+const ADMIN_USERNAME = '9950000101';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
 /**
  * Helper: login to admin panel through the login page

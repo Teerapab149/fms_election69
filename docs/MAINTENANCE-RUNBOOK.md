@@ -446,8 +446,8 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 ```bash
 node scripts/admin.js --list                 # ใครเป็นแอดมิน + รหัสกลางตั้งหรือยัง
-node scripts/admin.js --grant 6610510149     # ให้สิทธิ์ (ต้องมีแถวใน DB อยู่ก่อน)
-node scripts/admin.js --revoke 6610510149    # ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
+node scripts/admin.js --grant 9950000101     # ให้สิทธิ์ (ต้องมีแถวใน DB อยู่ก่อน)
+node scripts/admin.js --revoke 9950000101    # ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
 node scripts/admin.js --rotate-password      # ออกรหัสกลางใหม่ แสดงครั้งเดียว
 node scripts/admin.js --break-glass          # บัญชีสำรองที่มีรหัสของตัวเอง
 ```

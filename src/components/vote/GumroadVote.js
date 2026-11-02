@@ -90,7 +90,7 @@ export default function GumroadVote({
   );
   const closeTime = formatThaiTime(ELECTION_END);
 
-  const userName = user?.name || (editorMode ? "Teerapab Boonsri" : "");
+  const userName = user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "");
 
   const POPS = [PINK, LIME, YELLOW, "#A8E1FF"];
 

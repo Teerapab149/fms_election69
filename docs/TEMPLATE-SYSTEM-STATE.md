@@ -103,7 +103,7 @@ register ใน index.js → จบ (BaseStyles/injector/dispatch/chooser ตา
    + `scripts/smoke/election.test.mjs:16` (fallback)** — เป็น dev-seed โดยดีไซน์ + อยู่ใน git history ด้วย
    → ก่อน deploy/แชร์ repo: **ROTATE `ADMIN_JWT_SECRET`/`ADMIN_PASSWORD_AUTH_EXTRA` (owner ทำ)** +
    ticket เสริม: ย้าย seed/e2e password ไปอ่าน env (smoke ทำถูกแล้ว: `process.env.ADMIN_PASS || fallback`)
-   · เช็คซ้ำ `git grep -n 9QpZxL`
+   · เช็คซ้ำด้วย git grep หาชื่อรหัสเดิม (ปัจจุบันไม่เหลือแล้ว)
 4. **[ตัดสินใจ] เลือก template+ธีม production แล้ว apply** (ตอนนี้ DB = gumroad-premium จากการลองของ owner)
    · เช็ค `prisma/schema.prisma` activeTemplateId default ยัง "classic" → ควรเปลี่ยน "original" (Task C เก่า ยังค้าง)
 5. **[ตัดสินใจ] Legacy templates 4 ตัว** ซ่อนจาก chooser หรือคงไว้

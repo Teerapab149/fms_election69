@@ -3,7 +3,7 @@
  * right now.
  *
  * Two jobs:
- *   1. the console shows the real person ("6610510149 · ผู้ดูแลระบบ") instead of
+ *   1. the console shows the real person ("9950000101 · ผู้ดูแลระบบ") instead of
  *      a hardcoded "Administrator", so it is obvious whose actions the audit log
  *      is about to record
  *   2. it is the console's liveness check on its own authority — requireAdmin

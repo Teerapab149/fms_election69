@@ -32,7 +32,7 @@ export default function VerdureLogin({
         {showMock && (
           <div className="vdl-mock">
             <div className="vdl-mock__lbl"><FlaskConical size={13} strokeWidth={2} /> DEV ONLY — MOCK LOGIN</div>
-            <input type="text" className="vdl-input" value={mockStudentId} onChange={(e) => setMockStudentId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onMockLogin()} placeholder="e.g. 6610510149" disabled={mockLoading} />
+            <input type="text" className="vdl-input" value={mockStudentId} onChange={(e) => setMockStudentId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onMockLogin()} placeholder="e.g. 6600000000" disabled={mockLoading} />
             <button type="button" className="vdl-btn vdl-btn--ghost" onClick={onMockLogin} disabled={mockLoading || !mockStudentId.trim()}>
               {mockLoading ? <><Loader2 className="vdl-spin" size={16} /> กำลังเข้าสู่ระบบ…</> : <><FlaskConical size={15} strokeWidth={2} /> Mock Login</>}
             </button>

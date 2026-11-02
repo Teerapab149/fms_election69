@@ -26,7 +26,7 @@ async function mockLogin(page, studentId, opts = {}) {
   const landing = opts.landing || '**/vote**';
   await page.goto(`${BASE_PATH}/login`, { waitUntil: 'networkidle' });
 
-  const input = page.getByPlaceholder('e.g. 6610510149');
+  const input = page.getByPlaceholder('e.g. 6600000000');
   await input.waitFor({ state: 'visible', timeout: 15000 });
   // Type with real keystrokes (not fill) so the controlled-input onChange fires
   // reliably — fill() can land before React attaches its handler, leaving the

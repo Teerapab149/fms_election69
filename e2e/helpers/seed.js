@@ -22,8 +22,8 @@
 const bcrypt = require('bcryptjs');
 const { testPrisma, truncateAll } = require('./testDb');
 
-const ADMIN_STUDENT_ID = '6610510149';
-const ADMIN_EMAIL = '6610510149@email.psu.ac.th';
+const ADMIN_STUDENT_ID = '9950000101';
+const ADMIN_EMAIL = 'admin1@example.test';
 
 // The shared committee password for the test DB only — this database is wiped
 // every run and never leaves the machine, so a fixed value keeps adminLogin()
