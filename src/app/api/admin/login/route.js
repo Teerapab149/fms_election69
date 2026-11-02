@@ -4,6 +4,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { rateLimit, clientIp } from "../../../../lib/rateLimit";
 
+// A bcrypt hash (cost 12, same as scripts/admin.js) of a password nobody holds.
+// Compared against when there is no real hash to check, so "no such account" and
+// "not an admin" cost the same ~300 ms as a wrong password for a real admin.
+const DUMMY_HASH = "$2b$12$dJDOn.O0qUhyjKo4TLgv7e3us66Cv/MAoO68uUX7Gddr0kdtgfYsa";
+
 function isEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || ""));
 }
@@ -45,19 +50,22 @@ export async function POST(request) {
             },
         });
 
-        if (!user) {
+        const cfg = await db.systemConfig.findFirst({
+            where: { id: 1 },
+            select: { adminPasswordHash: true },
+        });
+        const sharedHash = cfg?.adminPasswordHash || null;
+
+        // No such account and "exists but not an admin" get the very same answer
+        // and take the same time as a wrong password, so this form cannot be used
+        // to find out which student ids are real accounts or which are admins.
+        // (Not a per-username lockout: anyone could then lock a committee member
+        // out on election day just by typing their name.)
+        if (!user || user.isAdmin !== true) {
+            await bcrypt.compare(String(password), sharedHash || DUMMY_HASH);
             return NextResponse.json(
                 { success: false, message: "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง" },
                 { status: 401 }
-            );
-        }
-
-        const isAllowed = (user.isAdmin === true);
-
-        if (!isAllowed) {
-            return NextResponse.json(
-                { success: false, message: "บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการ" },
-                { status: 403 }
             );
         }
 
@@ -70,12 +78,6 @@ export async function POST(request) {
         //    2026-07-28: มันสร้างรหัสให้บัญชีที่ยังไม่มี hash โดยอัตโนมัติ ซึ่งรวม
         //    บัญชีที่ SSO เคยตั้ง isAdmin ให้เอง และรูปร่างรหัสของมันมองจากข้างนอก
         //    ไม่ออก (ล็อกเจ้าของออกจากระบบมาแล้วหนึ่งครั้ง)
-        const cfg = await db.systemConfig.findFirst({
-            where: { id: 1 },
-            select: { adminPasswordHash: true },
-        });
-        const sharedHash = cfg?.adminPasswordHash || null;
-
         if (!sharedHash && !user.passwordHash) {
             console.error("[admin/login] no admin password is set — run: node scripts/admin.js --rotate-password");
             return NextResponse.json(

@@ -38,7 +38,9 @@ const CONTENT_TYPES = {
 const notFound = () => new NextResponse("Not Found", { status: 404 });
 
 export async function GET(request, { params }) {
-  const segments = params?.path;
+  // Next 15: params เป็น Promise ใน route handler (วัดบน 15.5 production แล้ว อ่านตรง ๆ ยังได้และไม่มีคำเตือน
+  // จึงไม่ได้พังตอนนี้) await ไว้ก่อนเพราะ Next 16 เอาการอ่านตรง ๆ ออก
+  const { path: segments } = (await params) ?? {};
   if (!Array.isArray(segments) || segments.length === 0) return notFound();
 
   const contentType = CONTENT_TYPES[path.extname(segments[segments.length - 1]).toLowerCase()];

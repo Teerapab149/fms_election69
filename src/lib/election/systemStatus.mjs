@@ -48,14 +48,17 @@ export function liveSystemStatus({ systemMode = "AUTO", start, end, now = Date.n
 // box takes it. The CERTIFIED refusal is not here: the route checks it first,
 // above every mode, because MANUAL_OPEN ignores the clock.
 //
-// Unlike liveSystemStatus, an unknown mode string is NOT treated as AUTO: the
-// vote route never has (only the literal "AUTO" consults the schedule), and
-// this keeps it that way. The route normalises `systemMode || "AUTO"` first,
-// so a missing mode still means AUTO.
+// An unknown mode string is treated as AUTO here, the same as liveSystemStatus
+// (which is what the voter's own page and /api/check-status show). Until
+// 2026-11-03 this gate let an unknown mode through with no clock check at all,
+// so a mode the admin UI cannot set but a hand-edited row can (e.g. "OPEN")
+// kept taking ballots after the end time while the site said ENDED (see P-LOG-141).
+// Only the literal "MANUAL_OPEN" forces the box open. The route normalises
+// `systemMode || "AUTO"` first, so a missing mode still means AUTO.
 export function voteRefusal({ systemMode, start, end, now = Date.now() }) {
   if (systemMode === "PAUSE") return "PAUSED";
   if (systemMode === "ENDED") return "ENDED";
-  if (systemMode !== "AUTO") return null; // MANUAL_OPEN (forced open) or unknown
+  if (systemMode === "MANUAL_OPEN") return null; // forced open, the clock is ignored on purpose
   const { electionStatus } = liveSystemStatus({ systemMode, start, end, now });
   if (electionStatus === "WAITING") return "NOT_STARTED";
   if (electionStatus === "ENDED") return "AUTO_CLOSED";

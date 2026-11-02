@@ -264,15 +264,47 @@ test("check-status + home-info: readElectionState == the old inline blocks", () 
   assert.ok(n >= 3 * 7 * 7 * 2, `matrix too small: ${n}`);
 });
 
-test("vote: voteRefusal == the old inline ladder (codes)", () => {
+// The one deliberate change from the old ladder (see P-LOG-141): an unknown mode
+// string used to pass with no clock check; it now follows the schedule like AUTO.
+const KNOWN_MODES = ["AUTO", "MANUAL_OPEN", "PAUSE", "ENDED"];
+
+test("vote: voteRefusal == the old inline ladder (codes) for every known mode", () => {
+  let n = 0;
   for (const { label, d, now, config } of matrix()) {
     const mode = config?.systemMode || "AUTO"; // the route's normalisation
+    if (!KNOWN_MODES.includes(mode)) continue;
     assert.equal(
       voteRefusal({ systemMode: mode, start: d.ELECTION_START, end: d.ELECTION_END, now }),
       oldVote(config, d, now),
       `vote ${label}`
     );
+    n++;
   }
+  assert.ok(n >= 3 * 7 * 4 * 2, `matrix too small: ${n}`);
+});
+
+test("vote: an unknown mode follows the schedule exactly like AUTO, in every moment and schedule shape", () => {
+  let n = 0;
+  for (const { label, d, now, config } of matrix()) {
+    const mode = config?.systemMode || "AUTO";
+    if (KNOWN_MODES.includes(mode)) continue;
+    assert.equal(
+      voteRefusal({ systemMode: mode, start: d.ELECTION_START, end: d.ELECTION_END, now }),
+      oldVote({ systemMode: "AUTO" }, d, now),
+      `vote ${label}`
+    );
+    n++;
+  }
+  assert.ok(n >= 3 * 7 * 2, `matrix too small: ${n}`);
+  // and never open past the end: the exact thing that used to leak
+  const n0 = SCHEDULES.normal;
+  for (const m of ["OPEN", "open", "weird mode", " AUTO"]) {
+    assert.equal(voteRefusal({ systemMode: m, start: n0.ELECTION_START, end: n0.ELECTION_END, now: n0.ELECTION_END.getTime() + H }), "AUTO_CLOSED", m);
+    assert.equal(voteRefusal({ systemMode: m, start: n0.ELECTION_START, end: n0.ELECTION_END, now: n0.ELECTION_START.getTime() - H }), "NOT_STARTED", m);
+    assert.equal(voteRefusal({ systemMode: m, start: n0.ELECTION_START, end: n0.ELECTION_END, now: n0.ELECTION_START.getTime() + H }), null, m);
+  }
+  // MANUAL_OPEN is still the only mode that ignores the clock
+  assert.equal(voteRefusal({ systemMode: "MANUAL_OPEN", start: n0.ELECTION_START, end: n0.ELECTION_END, now: n0.ELECTION_END.getTime() + H }), null);
 });
 
 test("results: resultsStatus == the old buildResultsBody ladder", () => {
@@ -298,9 +330,9 @@ test("the differences between the ladders are the ones documented", () => {
   // inverted schedule: the live verdict reads the start first, results the end first
   assert.equal(liveSystemStatus({ start: d.ELECTION_START, end: d.ELECTION_END, now }).electionStatus, "WAITING");
   assert.equal(resultsStatus({ systemMode: "AUTO", start: d.ELECTION_START, end: d.ELECTION_END, campaignStart: d.CAMPAIGN_START, now }).status, "ENDED");
-  // an unknown mode string: the live verdict follows the schedule, the vote gate does not refuse
+  // an unknown mode string: the live verdict and the vote gate both follow the schedule
   const n = SCHEDULES.normal;
   const after = n.ELECTION_END.getTime() + H;
   assert.equal(liveSystemStatus({ systemMode: "OPEN", start: n.ELECTION_START, end: n.ELECTION_END, now: after }).electionStatus, "ENDED");
-  assert.equal(voteRefusal({ systemMode: "OPEN", start: n.ELECTION_START, end: n.ELECTION_END, now: after }), null);
+  assert.equal(voteRefusal({ systemMode: "OPEN", start: n.ELECTION_START, end: n.ELECTION_END, now: after }), "AUTO_CLOSED");
 });
