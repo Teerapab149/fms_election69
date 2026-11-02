@@ -8,6 +8,8 @@ import { resolveElectionDates } from "../../../../utils/electionConfig";
 import { isBoxClosed, checkSetMode, checkShowResult } from "../../../../lib/election/adminGuards.mjs";
 import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
 import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.mjs";
+import { verifyChain } from "../../../../lib/chainVerify";
+import { buildCertifiedRecord, explainVerifyFailure, readCertifiedRecord } from "../../../../lib/certificationRecord";
 
 // Mode and result visibility are checked against each other (adminGuards), so
 // they are read and written under a row lock: two admins pressing "reopen" and
@@ -74,6 +76,10 @@ export async function GET(req) {
         electionStart: resolveElectionDates(config.globalConfig).ELECTION_START,
         electionEnd: resolveElectionDates(config.globalConfig).ELECTION_END,
         certified: !!config.globalConfig?.ballotsAnonymized,
+        // the numbers pinned at certification, for staff to copy; null when not
+        // certified (or certified before they were recorded). The tally in it is
+        // only ever present once showResult is on, which certifying requires.
+        certifiedRecord: readCertifiedRecord(config.globalConfig),
         googleFormUrl: config.googleFormUrl || "",
         // SEC-MOCK2 · สถานะ mock-login อ่านฝั่ง server ตอน runtime (read-only)
         // badge ในแท็บ settings ต้องใช้ค่านี้ ห้ามอ่าน NEXT_PUBLIC_* ฝั่ง client
@@ -221,6 +227,8 @@ async function handleAction(body, auth) {
     //   • assert the box is closed + results published (unchanged guard)
     //   • flip the `ballotsAnonymized` flag = the CERTIFICATION marker downstream
     //     tools honour (e.g. reconcile refuses to --fix a certified DB).
+    //   • pin what was certified (tally, ballot count, chain head) and refuse to
+    //     certify at all when the chain, the tally and the turnout disagree.
     // The per-party tally is Candidate.score, kept atomically at vote time — it is
     // ALREADY the frozen record; there is nothing to re-count from a link column.
     // (The residual coarse hourBucket on each Ballot cannot be stripped here: the
@@ -250,11 +258,36 @@ async function handleAction(body, auth) {
         }, { status: 403 });
       }
 
+      const secret = process.env.BALLOT_CHAIN_SECRET;
+      if (!secret) {
+        return NextResponse.json({
+          error: "รับรองผลไม่ได้ เพราะเครื่องนี้ไม่ได้ตั้งกุญแจตรวจโซ่บัตร (BALLOT_CHAIN_SECRET) ให้เจ้าหน้าที่ IT ตั้งค่าก่อน",
+        }, { status: 503 });
+      }
+
       // Who signed, by name, so the results page and the year's archive can say
       // it. The audit log above already recorded the action against a studentId;
       // this is the copy meant to be read by people, not auditors.
       const certifiedAt = new Date().toISOString();
 
+      // Everything below is ONE transaction that holds the ballot-box lock, so the
+      // numbers it checks, the numbers it records and the flag it sets describe the
+      // same instant:
+      //   1. ChainHead FOR UPDATE: /api/vote takes the same lock to append a
+      //      ballot, so no ballot can land between the check and the flag. A vote
+      //      already waiting for it re-reads the state when it gets in and is
+      //      refused (CERTIFIED), see api/vote.
+      //   2. SystemConfig FOR UPDATE: the flag is written onto the row as it is
+      //      NOW, not onto the copy read at the top of this request, so a setting
+      //      saved meanwhile is kept. Only globalConfig is written; googleFormUrl
+      //      is its own column and is not touched.
+      //   Lock order is ChainHead, then SystemConfig, the order /api/vote uses for
+      //   the two it touches (it only reads the second), so they cannot deadlock.
+      //   3. the chain, the head and the three counts (ballots, sum of score,
+      //      people flagged isVoted) must all agree, or nothing is certified.
+      //   4. the tally, ballot count and chain head are written into globalConfig,
+      //      for staff to copy and for verify-ballot-chain.js to compare against.
+      //
       // H3: break the xmin link between voters and ballots. The vote claims the
       // User row and inserts the Ballot row in ONE transaction, so both tuples
       // carry the same xmin and `User JOIN Ballot ON u.xmin = b.xmin` named the
@@ -274,35 +307,75 @@ async function handleAction(body, auth) {
       // updates are HOT and keep the old page, leaving page order intact (fillfactor
       // 50: rho 0.53). The DBA step CLUSTER "User" USING "User_studentId_key" after
       // certification closes that (rho 0.01-0.03), see MAINTENANCE-RUNBOOK 1.1 B.
-      const votedRows = await db.$queryRaw`SELECT "id" FROM "User" WHERE "isVoted" = true`;
-      const votedIds = votedRows.map((r) => r.id);
-      for (let i = votedIds.length - 1; i > 0; i--) {
-        const j = randomInt(i + 1);
-        [votedIds[i], votedIds[j]] = [votedIds[j], votedIds[i]];
-      }
-      await db.$transaction(async (tx) => {
-        for (const id of votedIds) {
-          await tx.$executeRaw`UPDATE "User" SET "votedAt" = "votedAt" WHERE "id" = ${id}`;
-        }
-      }, { maxWait: 15000, timeout: 120000 });
+      //
+      // Doing the re-stamp in this transaction (it used to run in its own, before
+      // the flag) also means a refused certification leaves the voters' rows alone.
+      let outcome;
+      try {
+        outcome = await db.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT "id" FROM "ChainHead" WHERE "id" = 1 FOR UPDATE`;
+          const locked = await lockedConfig(tx);
 
-      await db.systemConfig.update({
-        where: { id: 1 },
-        data: {
-          globalConfig: {
-            ...(cfg.globalConfig || {}),
-            ballotsAnonymized: true,
-            certifiedAt,
-            certifiedBy: auth.user?.name || auth.user?.studentId || null,
-            certifiedByUsername: auth.user?.studentId || null,
-          },
-        },
-      });
+          // the checks above ran on an unlocked read; the locked row is the truth
+          if (locked?.globalConfig?.ballotsAnonymized) return { already: true };
+          const lockedEnded = isBoxClosed({
+            systemMode: locked?.systemMode || "AUTO",
+            end: resolveElectionDates(locked?.globalConfig).ELECTION_END,
+          });
+          if (!lockedEnded || !locked?.showResult) {
+            throw new GuardError("ทำได้เฉพาะหลังปิดหีบและเผยแพร่ผลแล้วเท่านั้น", 400);
+          }
+
+          const verdict = await verifyChain(tx, secret);
+          if (!verdict.ok) throw new GuardError(explainVerifyFailure(verdict), 409);
+
+          const candidates = await tx.candidate.findMany({
+            select: { number: true, name: true, score: true },
+            orderBy: { number: "asc" },
+          });
+          const record = buildCertifiedRecord({
+            candidates,
+            ballots: verdict.counts.ballots,
+            head: verdict.head.head,
+          });
+
+          const votedRows = await tx.$queryRaw`SELECT "id" FROM "User" WHERE "isVoted" = true`;
+          const votedIds = votedRows.map((r) => r.id);
+          for (let i = votedIds.length - 1; i > 0; i--) {
+            const j = randomInt(i + 1);
+            [votedIds[i], votedIds[j]] = [votedIds[j], votedIds[i]];
+          }
+          for (const id of votedIds) {
+            await tx.$executeRaw`UPDATE "User" SET "votedAt" = "votedAt" WHERE "id" = ${id}`;
+          }
+
+          await tx.systemConfig.update({
+            where: { id: 1 },
+            data: {
+              globalConfig: {
+                ...(locked.globalConfig || {}),
+                ballotsAnonymized: true,
+                certifiedAt,
+                certifiedBy: auth.user?.name || auth.user?.studentId || null,
+                certifiedByUsername: auth.user?.studentId || null,
+                ...record,
+              },
+            },
+          });
+          return { already: false, record };
+        }, { maxWait: 15000, timeout: 120000 });
+      } catch (e) {
+        if (e instanceof GuardError) return NextResponse.json({ error: e.message }, { status: e.status });
+        throw e;
+      }
+      if (outcome.already) return NextResponse.json({ message: "รับรองผลไปก่อนหน้านี้แล้ว" });
 
       return NextResponse.json({
         success: true,
         certifiedAt,
         certifiedBy: auth.user?.name || auth.user?.studentId || null,
+        certifiedBallots: outcome.record.certifiedBallots,
+        certifiedChainHead: outcome.record.certifiedChainHead,
         message: "รับรองผลเรียบร้อย, ผลถูกล็อก เปิดรับคะแนนเพิ่มไม่ได้อีก",
       });
     }

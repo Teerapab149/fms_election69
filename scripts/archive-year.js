@@ -87,6 +87,11 @@ function arg(name) {
       // ใครเซ็นรับรองผลปีนี้ — ตั้งตอนเจ้าหน้าที่กดปุ่มรับรองในหน้าแอดมิน
       certifiedBy: gc.certifiedBy ?? null,
       certifiedAt: gc.certifiedAt ?? null,
+      // the numbers pinned when the result was certified (null if certified before
+      // they were recorded). Compare with candidates below: they should be equal.
+      certifiedTally: gc.certifiedTally ?? null,
+      certifiedBallots: gc.certifiedBallots ?? null,
+      certifiedChainHead: gc.certifiedChainHead ?? null,
       turnout: {
         eligible: totalEligible,
         voted: totalVotes,
@@ -141,6 +146,10 @@ ${cfg.showResult ? "" : "\n> ⚠️ Snapshotted while results were NOT yet revea
 ${realRanked.map(fmtRow).join("\n")}
 ${results.candidates.filter((c) => c.number <= 0).map(fmtRow).join("\n")}
 
+${results.certifiedChainHead
+      ? `**Pinned at certification:** ${results.certifiedBallots} ballots, chain head \`${results.certifiedChainHead}\`.
+Keep this line with the printed result; \`node scripts/verify-ballot-chain.js\` compares the database against it.\n`
+      : ""}
 ${realRanked.length ? `**Winner:** ${realRanked[0].name} (${realRanked[0].score} votes)\n` : ""}
 ## Turnout by year
 ${results.demographics.byYear.map((g) => `- ${g.name}: ${g.value}/${g.eligible}`).join("\n") || "- (none)"}

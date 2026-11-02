@@ -5,6 +5,7 @@ import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
 import { checkScheduleChange } from "../../../../lib/election/adminGuards.mjs";
 import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.mjs";
 import { parseBangkok, resolveElectionDates } from "../../../../utils/electionConfig";
+import { CERT_KEYS } from "../../../../lib/certificationRecord";
 
 // A refused schedule change, thrown out of the transaction so it rolls back
 // (same shape as the one in api/admin/dashboard, which is not exported).
@@ -112,8 +113,9 @@ export async function PUT(request) {
     //
     // `ballotsAnonymized` ยังเป็นด่านที่ /api/vote (route.js:59) ใช้ปฏิเสธคะแนนหลัง
     // รับรองผลแล้ว การล้างค่านี้ทิ้งจึงเท่ากับ "เปิดหีบที่ปิดไปแล้ว" กลับมาอีกครั้ง
-    const CERTIFICATION_KEYS = ["ballotsAnonymized", "certifiedAt", "certifiedBy", "certifiedByUsername"];
-    const attempted = CERTIFICATION_KEYS.filter((k) => k in rest);
+    // (the list lives in lib/certificationRecord and includes the tally, ballot
+    // count and chain head pinned at certification, so those cannot be rewritten here)
+    const attempted = CERT_KEYS.filter((k) => k in rest);
     if (attempted.length > 0) {
       return NextResponse.json(
         { error: `แก้ค่าการรับรองผลที่นี่ไม่ได้ (${attempted.join(", ")}), การรับรองผลทำได้เฉพาะบัญชีเจ้าหน้าที่คณะผ่านหน้าแดชบอร์ด` },

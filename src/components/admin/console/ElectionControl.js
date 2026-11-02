@@ -11,12 +11,13 @@
 // Only the layout and wording changed.
 import { useState } from "react";
 import {
-  AlertTriangle, Check, CheckCircle2, ChevronRight, Loader2, PieChart as PieIcon,
+  AlertTriangle, Check, CheckCircle2, ChevronRight, Copy, Download, Loader2, PieChart as PieIcon,
   Power, ShieldCheck, Users, WifiOff, XCircle,
 } from "lucide-react";
 import { getPath } from "../../../utils/basePath";
 import { formatThaiDate, formatThaiTime } from "../../../utils/electionConfig";
 import { checkSetMode, describeModeChange, MODE_LABEL } from "../../../lib/election/adminGuards.mjs";
+import { formatCertifiedRecordText } from "../../../lib/certificationRecord";
 import CompletedActionModal from "../../CompletedActionModal";
 import ErrorActionModal from "../../ErrorActionModal";
 import ConfirmModal from "../../ConfirmModal";
@@ -284,6 +285,94 @@ const ClosingSteps = ({ systemMode, boxClosed, isShowResult, certified, schedule
   );
 };
 
+// ── the numbers pinned at certification ─────────────────────────────────────
+// What the certification step wrote down: score per option, ballots in the box
+// and the chain head. Staff keep a copy outside the system (paper or another
+// machine), so a number changed in the database afterwards can be caught by
+// comparing against it (node scripts/verify-ballot-chain.js does the comparing).
+const CertifiedRecord = ({ record }) => {
+  const [copied, setCopied] = useState(false);
+
+  if (!record) {
+    return (
+      <section className={`${card} p-5 sm:p-6`} aria-labelledby="certified-record-title">
+        <h3 id="certified-record-title" className="text-base font-semibold text-slate-900">ตัวเลขที่รับรองไว้</h3>
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+          ผลนี้ถูกรับรองก่อนที่ระบบจะบันทึกตัวเลขตอนรับรอง จึงไม่มีตัวเลขให้เก็บสำเนา ใช้ผลคะแนนที่หน้าผลคะแนนและรายงานของปีนั้นแทน
+        </p>
+      </section>
+    );
+  }
+
+  const text = formatCertifiedRecordText(record);
+  const when = record.certifiedAt ? new Date(record.certifiedAt) : null;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
+  };
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "certified-record.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const btn = "inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded-lg text-sm font-semibold border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 transition-colors";
+
+  return (
+    <section className={`${card} p-5 sm:p-6`} aria-labelledby="certified-record-title">
+      <h3 id="certified-record-title" className="text-base font-semibold text-slate-900">ตัวเลขที่รับรองไว้</h3>
+      <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+        เจ้าหน้าที่ควรเก็บสำเนาไว้นอกระบบ (พิมพ์หรือเก็บไว้อีกเครื่อง) ถ้ามีใครแก้ตัวเลขในฐานข้อมูลภายหลัง จะตรวจเทียบกับสำเนานี้ได้
+      </p>
+      <dl className="mt-4 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+        <div className="flex gap-2"><dt className="text-slate-500">รับรองโดย</dt><dd className="font-semibold text-slate-900 break-words">{record.certifiedBy || "ไม่ได้บันทึกชื่อ"}</dd></div>
+        <div className="flex gap-2"><dt className="text-slate-500">รับรองเมื่อ</dt><dd className="font-semibold text-slate-900">{when ? `${formatThaiDate(when)} เวลา ${formatThaiTime(when)}` : "ไม่ได้บันทึกเวลา"}</dd></div>
+      </dl>
+      <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-slate-600 text-xs">
+            <tr>
+              <th scope="col" className="text-left font-semibold px-3 py-2">เบอร์</th>
+              <th scope="col" className="text-left font-semibold px-3 py-2">ตัวเลือก</th>
+              <th scope="col" className="text-right font-semibold px-3 py-2">คะแนน</th>
+            </tr>
+          </thead>
+          <tbody>
+            {record.certifiedTally.map((c) => (
+              <tr key={c.number} className="border-t border-slate-100">
+                <td className="px-3 py-2 tabular-nums text-slate-600">{c.number}</td>
+                <td className="px-3 py-2 text-slate-900 break-words">{c.name}</td>
+                <td className="px-3 py-2 text-right tabular-nums font-semibold text-slate-900">{c.score}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <dl className="mt-4 space-y-2 text-sm">
+        <div className="flex gap-2"><dt className="text-slate-500">จำนวนบัตรในหีบ</dt><dd className="font-semibold text-slate-900 tabular-nums">{record.certifiedBallots}</dd></div>
+        <div><dt className="text-slate-500">ปลายโซ่บัตร</dt><dd className="mt-0.5 font-mono text-xs text-slate-900 break-all">{record.certifiedChainHead}</dd></div>
+      </dl>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" onClick={copy} className={btn}>
+          {copied ? <Check className="w-4 h-4" aria-hidden /> : <Copy className="w-4 h-4" aria-hidden />}
+          {copied ? "คัดลอกแล้ว" : "คัดลอกเป็นข้อความ"}
+        </button>
+        <button type="button" onClick={download} className={btn}>
+          <Download className="w-4 h-4" aria-hidden /> ดาวน์โหลดเป็นไฟล์ข้อความ
+        </button>
+      </div>
+    </section>
+  );
+};
+
 // ── the control center ──────────────────────────────────────────────────────
 export default function ElectionControl({ onGoTab }) {
   const { stats, refresh } = useElectionState();
@@ -342,9 +431,9 @@ export default function ElectionControl({ onGoTab }) {
         } else if (action === "ANONYMIZE_BALLOTS") {
           // AUD-COPY, v2-SEC: this action deletes nothing. It sets the flag
           // globalConfig.ballotsAnonymized = true (the certification flag) and
-          // that is all (dashboard/route.js POST). No voter-to-party link was
+          // pins the numbers it certified (dashboard/route.js POST). No voter-to-party link was
           // ever stored (Ballot has no userId, User has no candidateId).
-          setSuccessMessage({ title: "รับรองผลเรียบร้อย!", msg: "ปักธงรับรองผลแล้ว คะแนนรวมของทุกพรรคถูกล็อกไว้ครบ บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ" });
+          setSuccessMessage({ title: "รับรองผลเรียบร้อย!", msg: "ปักธงรับรองผลแล้ว ระบบตรวจโซ่บัตรและจำนวนบัตรกับคะแนนแล้วบันทึกตัวเลขที่รับรองไว้ ดูและเก็บสำเนาได้ที่ส่วนตัวเลขที่รับรองไว้ในหน้านี้ บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ" });
         }
         setIsSuccessOpen(true);
         refresh();
@@ -446,6 +535,8 @@ export default function ElectionControl({ onGoTab }) {
         onCertify={() => setActiveModal("ANONYMIZE_BALLOTS")}
       />
 
+      {certified && <CertifiedRecord record={stats?.certifiedRecord || null} />}
+
       <TurnoutBreakdown />
 
       <CompletedActionModal
@@ -495,7 +586,7 @@ export default function ElectionControl({ onGoTab }) {
            the ballotsAnonymized flag (certification); it deletes nothing, because the
            voter-to-party link was never stored (v2-SEC). */
         title="รับรองผลอย่างเป็นทางการ?"
-        message={"นี่คือการปักธงรับรองผลครั้งสุดท้าย คะแนนรวมของทุกพรรคถูกล็อก เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก ระบบไม่เคยเก็บว่าใครเลือกพรรคใด บัตรทุกใบถูกบันทึกแบบไม่มีชื่อผู้ลงคะแนนอยู่แล้ว จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ กดแล้วย้อนกลับไม่ได้"}
+        message={"นี่คือการปักธงรับรองผลครั้งสุดท้าย ระบบจะตรวจโซ่บัตรและเทียบจำนวนบัตรกับคะแนนและผู้ลงคะแนนก่อน ถ้าไม่ตรงกันจะรับรองไม่ได้ ถ้าผ่านจะบันทึกตัวเลขที่รับรองไว้ให้เก็บสำเนา คะแนนรวมของทุกพรรคถูกล็อก เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก ระบบไม่เคยเก็บว่าใครเลือกพรรคใด บัตรทุกใบถูกบันทึกแบบไม่มีชื่อผู้ลงคะแนนอยู่แล้ว จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ กดแล้วย้อนกลับไม่ได้"}
         variant="danger"
         isLoading={processing}
       />
