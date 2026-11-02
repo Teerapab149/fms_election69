@@ -10,11 +10,32 @@ import { syncCandidateSpecialOptions } from "../../../../lib/candidates/specialO
 import { getBallotLock } from "./ballotLock";
 import { uploadDir, candidatePaths, relativeFromUrl } from "../../../../lib/media/storage";
 import { extensionForBuffer } from "../../../../lib/imageOptimize";
+import {
+  requestTooLarge,
+  requestTooLargeMessage,
+  firstOversizedFile,
+  oversizedFileMessage,
+  parseNumericId,
+  safeFilePart,
+} from "../../../../lib/media/uploadSafety.mjs";
 import { writeFile, mkdir, unlink, rmdir, readdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
 
 const UPLOAD_STORAGE_ERROR_CODES = new Set(["EACCES", "EPERM", "EROFS"]);
+
+// Size gates for the multipart body (lib/media/uploadSafety.mjs). The first runs
+// before req.formData(), which buffers the whole body; the second on the parsed files.
+function requestSizeRefusal(req) {
+  if (!requestTooLarge(req.headers.get("content-length"))) return null;
+  return NextResponse.json({ error: requestTooLargeMessage(), code: "UPLOAD_TOO_LARGE" }, { status: 413 });
+}
+
+function fileSizeRefusal(formData) {
+  const found = firstOversizedFile(formData);
+  if (!found) return null;
+  return NextResponse.json({ error: oversizedFileMessage(found), code: "UPLOAD_FILE_TOO_LARGE" }, { status: 413 });
+}
 
 function uploadStorageErrorResponse(error) {
   const code = error?.code || error?.cause?.code;
@@ -288,7 +309,8 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
     // ต่อท้ายด้วยเวลาอัปโหลด: /api/media cache รูปไว้ (max-age 5 นาที + stale-while-revalidate)
     // ถ้าอัปรูปใหม่ทับชื่อเดิม URL ไม่เปลี่ยน แอดมินจะเห็นรูปเก่าค้างและเข้าใจว่า "แก้ไม่ได้"
     // ไฟล์เก่าลบทิ้งหลัง transaction สำเร็จ (ดู replacedMemberImages ใน PUT)
-    const fileName = `${positionNum}_${memberData.studentId || "x"}_${Date.now().toString(36)}.${extensionForBuffer(optimized)}`;
+    // safeFilePart: studentId is typed by the admin and used to be spliced into the path as is ("../x" left the folder)
+    const fileName = `${positionNum}_${safeFilePart(memberData.studentId)}_${Date.now().toString(36)}.${extensionForBuffer(optimized)}`;
 
     if (!fs.existsSync(targetDir)) {
       await mkdir(targetDir, { recursive: true });
@@ -316,7 +338,7 @@ async function processMemberImage(memberData, formData, partyNumber, existingIma
 async function processMemberModalImage(memberData, formData, partyNumber, existingImagesMap = new Map()) {
   const file = formData.get(`member_modal_file_${memberData.studentId}`);
   const positionNum = getPositionNumber(memberData.position);
-  const studentId = memberData.studentId || `id_${Date.now()}`;
+  const studentId = safeFilePart(memberData.studentId, `id_${Date.now()}`);
 
   if (file && typeof file !== "string") {
     const bytes = await file.arrayBuffer();
@@ -393,10 +415,17 @@ export async function PUT(req) {
   if (authError) return authError;
   try {
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+    const rawId = searchParams.get("id");
+    if (!rawId) return NextResponse.json({ error: "ID required" }, { status: 400 });
+    // a whole positive integer or nothing: the value also names the party{id} upload folder
+    const id = parseNumericId(rawId);
+    if (!id) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
 
+    const tooLarge = requestSizeRefusal(req);
+    if (tooLarge) return tooLarge;
     const formData = await req.formData();
+    const fileTooLarge = fileSizeRefusal(formData);
+    if (fileTooLarge) return fileTooLarge;
 
     const dataToUpdate = {};
     let partyNumberChanged = false;
@@ -648,7 +677,11 @@ export async function POST(req) {
     if (blocked) return blocked;
   }
   try {
+    const tooLarge = requestSizeRefusal(req);
+    if (tooLarge) return tooLarge;
     const formData = await req.formData();
+    const fileTooLarge = fileSizeRefusal(formData);
+    if (fileTooLarge) return fileTooLarge;
     const name = formData.get("name");
     const number = parseInt(formData.get("number"));
     // SLG-1: optional slogan — empty/whitespace-only → null (see PUT handler note).
@@ -765,7 +798,7 @@ export async function DELETE(req) {
   let target_id = null;
   try {
     const { searchParams } = new URL(req.url);
-    target_id = parseInt(searchParams.get("id"));
+    target_id = parseNumericId(searchParams.get("id") || "");
     if (!target_id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
     const blocked = await ballotBoxGuard("ลบพรรค");

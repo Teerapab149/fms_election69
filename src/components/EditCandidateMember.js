@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { User, ChevronDown, ChevronUp, Plus, Users, Pencil, Loader2, AlertCircle } from "lucide-react";
 import { getPath } from "../utils/basePath";
+import { readApiError } from "../utils/apiError.mjs";
 import { sortMembersByPosition, positionRank } from "../utils/memberSort";
 
 // แสดงกี่คนก่อนกด "ดูทั้งหมด" รายชื่อยาวอยู่ในหน้าเลื่อนอีกชั้นไม่ได้ (เดิมเป็นกล่องเลื่อนซ้อน
@@ -59,8 +60,7 @@ export default function EditCandidateMember({ candidate, onClick, onReordered, d
         body: data,
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'เลื่อนลำดับไม่สำเร็จ');
+        throw new Error(await readApiError(res, 'เลื่อนลำดับไม่สำเร็จ'));
       }
       // การบันทึกสร้างสมาชิกใหม่ทุกคน id จึงเปลี่ยนหมด ต้องโหลดรายชื่อใหม่ก่อนให้กดแก้ต่อได้
       // ถ้าหน้าแม่ไม่ได้ส่ง onReordered มา ใช้การเปิดแท็บนี้ใหม่แทน

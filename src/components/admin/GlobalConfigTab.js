@@ -10,6 +10,7 @@ import { DERIVED, isCustom, applyDerived } from "../../utils/globalConfigDerive.
 import { setupChecklist, thaiDuration, thaiShortDateTime } from "../../utils/setupChecklist.mjs";
 import ThaiDateTimeField from "./ThaiDateTimeField";
 import { getPath } from "../../utils/basePath";
+import { readApiError } from "../../utils/apiError.mjs";
 import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useGlobalConfig, useGlobalConfigUpdate } from "../../contexts/GlobalConfigContext";
 import { parseBangkok } from "../../utils/electionConfig";
@@ -50,8 +51,8 @@ function ImageField({ value, onChange }) {
       const res = await fetch(getPath("/api/admin/global-config/banner"), {
         method: "POST", body: fd, credentials: "include",
       });
+      if (!res.ok) throw new Error(await readApiError(res, "อัปโหลดไม่สำเร็จ"));
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "อัปโหลดไม่สำเร็จ");
       onChange(json.url);
     } catch (e2) {
       setErr(e2.message || "อัปโหลดไม่สำเร็จ");

@@ -1,5 +1,6 @@
 'use client';
 import { getPath } from "../utils/basePath";
+import { readApiError } from "../utils/apiError.mjs";
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Loader2, Upload, Hash, User, Image as ImageIcon, Plus, ChevronDown, Check, AlertCircle, Lock, TriangleAlert } from "lucide-react";
@@ -413,8 +414,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
             }
 
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || 'Update failed');
+                throw new Error(await readApiError(res, `บันทึกไม่สำเร็จ (รหัส ${res.status})`));
             }
 
             if (onUpdate) onUpdate(candidate ? 'UPDATE' : 'CREATE');
