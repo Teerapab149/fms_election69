@@ -102,7 +102,7 @@ removing the include and restoring the backed-up settings, testing, reloading.
 No application change removes `id_token`; SSO logout remains intact.
 
 Other nginx settings the application depends on (full example in `docs/STAFF-IT-GUIDE.md` section 3.8):
-`proxy_set_header Host $http_host;` (the CSRF check compares `Origin` with `Host`),
+`proxy_set_header Host $http_host;` (browsers are judged by `Sec-Fetch-Site`; `Origin` against `Host` is the check for clients that do not send it),
 `client_max_body_size 200m;` (nginx defaults to 1 MB, which rejects larger image uploads), and
 the app port bound to `127.0.0.1` only.
 

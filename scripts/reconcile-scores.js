@@ -8,7 +8,7 @@
 // scripts/decrypt-recount.js. What it CAN (and must) still audit before results
 // are published:
 //   • the HMAC chain is intact (no ballot was silently edited/removed), and
-//   • the aggregate invariants hold: #ballots == sum(score) == #isVoted(ปี1-4).
+//   • the aggregate invariants hold: #ballots == sum(score) == #isVoted (every user flagged, no filter on year).
 // This is the same logic scripts/verify-ballot-chain.js runs — shared in
 // scripts/lib/chainVerify.js so the two never drift apart.
 //
@@ -44,7 +44,7 @@ async function main() {
   for (const c of checks) {
     console.log(`${c.ok ? "✅ PASS" : "❌ FAIL"}  ${c.name.padEnd(16)} ${c.detail}`);
   }
-  console.log(`\nballots=${counts.ballots}  sum(score)=${counts.scoreSum}  voted(ปี1-4)=${counts.voted}`);
+  console.log(`\nballots=${counts.ballots}  sum(score)=${counts.scoreSum}  voted(isVoted ทุกคน)=${counts.voted}`);
   console.log(
     ok
       ? "\n✅ reconciled — chain intact and score matches the ballot box."
