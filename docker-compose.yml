@@ -27,6 +27,13 @@ services:
       - ASSET_PREFIX=${ASSET_PREFIX}
       - NODE_ENV=production
 
+      # env_file ด้านบนส่ง .env ทั้งไฟล์ให้ web แต่โปรเซสเว็บไม่ต้องใช้สามค่านี้เลย
+      # (ใช้กับสคริปต์บนโฮสต์และ service db/backup) จึงเขียนทับเป็นค่าว่างไว้
+      # เพื่อให้ถ้าเว็บถูกยึด ก็ไม่ได้รหัสของ role ที่แก้ตารางบัตรได้
+      - MIGRATE_DATABASE_URL=
+      - POSTGRES_PASSWORD=
+      - BACKUP_DATABASE_URL=
+
       # URL Configuration
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTHENTIK_REDIRECT_URI=${AUTHENTIK_REDIRECT_URI}

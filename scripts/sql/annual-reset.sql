@@ -24,10 +24,10 @@ DELETE FROM "Ballot";
 ALTER SEQUENCE "Ballot_seq_seq" RESTART WITH 1;
 UPDATE "ChainHead" SET head = 'GENESIS', seq = 0 WHERE id = 1;
 
--- 2. คืนสิทธิ์โหวตให้นักศึกษาปี 1-4 (เท่ากับที่ระบบเคยทำในปุ่ม "ล้างคะแนน")
+-- 2. คืนสิทธิ์โหวตให้ทุกคน ไม่กรองชั้นปี เพราะตัวตรวจยอดนับ isVoted ทุกคน คนที่พ้นสภาพหลังลงคะแนน
+--    ถ้าค้างสถานะข้ามปี ยอดจะไม่ตรงและรับรองผลปีถัดไปไม่ผ่าน
 UPDATE "User"
-   SET "isVoted" = false, "votedAt" = NULL
- WHERE year IN ('ปี 1', 'ปี 2', 'ปี 3', 'ปี 4');
+   SET "isVoted" = false, "votedAt" = NULL;
 
 -- 3. คะแนนทุกพรรคกลับเป็นศูนย์
 UPDATE "Candidate" SET score = 0;
