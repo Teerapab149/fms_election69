@@ -27,7 +27,7 @@ hash chain ที่ตรวจย้อนหลังได้ — ไม่�
   ธีมเพิ่มแล้ว deploy ไม่ใช่เพิ่มข้อมูลใน DB
 - ผลคะแนน + demographics แบบ real-time โดยคะแนนถูกปิด (embargo) ตั้งแต่ชั้น API
   จนกว่า admin จะสั่งเปิดเผย
-- ฝั่ง admin มีปุ่มตรวจความพร้อมก่อนเปิดระบบ (17 รายการ), audit log บันทึกทุกคำสั่ง
+- ฝั่ง admin มีปุ่มตรวจความพร้อมก่อนเปิดระบบ (18 รายการ), audit log บันทึกทุกคำสั่ง
   และตัวล็อกกันกดรีเซ็ตข้อมูลระหว่างการโหวตยังเปิดอยู่
 
 Stack: Next.js (App Router), PostgreSQL + Prisma, NextAuth (PSU SSO), Tailwind,
