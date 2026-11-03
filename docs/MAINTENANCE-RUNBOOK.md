@@ -266,9 +266,8 @@ VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
   dev server :3000 ตามเดิม.
 - ลำดับ e2e ก่อน smoke ไม่ critical แล้ว (คนละ server คนละ DB) — แต่ smoke ยัง trip login
   rate-limit ของ :3000 เองตามเดิม (10/5นาที/IP).
-- ⚠️ `e2e/admin-console.spec.js` (ชุดเก่าของ editor ที่เลิกใช้แล้ว) มี 26 เคส และถูก **exclude ทั้งไฟล์**
-  ด้วย `testIgnore` ใน `playwright.config.js` — ยังแดงค้างอยู่ ไม่ได้อยู่ในด่าน gate
-  จำนวนที่รันจริงนับจากโค้ด (พ.ย. 2569) คือ **28 เคสใน 11 ไฟล์** (`npm run e2e`) และ **8 เคส** (`npm run e2e:gate`)
+- `e2e/admin-console.spec.js` เขียนใหม่ตามหน้าจอปัจจุบันเมื่อ พ.ย. 2569 ตัดเคสของ editor ที่เลิกใช้แล้ว และรันอยู่ในชุดเต็มแล้ว
+  จำนวนเคสดูจาก `npx playwright test --list` ด่านหลักคือ `npm run e2e` และ **8 เคส** (`npm run e2e:gate`)
   เพิ่มจากเดิมคือ `ballot-unlinkable`, `ballot-order`, `certification-record` (ถอดรหัสนับใหม่ทั้งหีบ แข่งการรับรองกับคะแนน),
   `staff-rehearsal` (ซ้อมรับรองผลโดยเจ้าหน้าที่ ตรวจ snapshot และการปฏิเสธเมื่อคะแนนไม่ตรง), `test-tools-audit`,
   `security-h1-h2` และ `check-form`
