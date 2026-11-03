@@ -164,7 +164,7 @@ npm run preflight            # ✓/⚠/✗ (mode/showResult/พรรคทด�
 DATABASE_URL              # PostgreSQL connection string
 NEXTAUTH_SECRET           # คีย์เข้ารหัส NextAuth (session นักศึกษา อายุ 1 ชั่วโมงหลังล็อกอิน ไม่ต่ออายุเอง)
 NEXTAUTH_URL              # URL จริงของเว็บ เช่น https://ovs.fms.psu.ac.th ตัวตรวจ CSRF (src/lib/security/sameOrigin.mjs)
-                          #    ยอมรับคำขอที่ Origin ตรงกับ Host หรือกับ origin ของค่านี้ ผิดบนเครื่องจริง = โหวตและปุ่มแอดมินถูกปฏิเสธ
+                          #    เบราว์เซอร์ปัจจุบันตัดสินจาก Sec-Fetch-Site ก่อน ค่านี้กับ Host มีผลเฉพาะไคลเอนต์ที่ไม่ส่งหัวนั้น แต่ต้องตั้งให้ตรงโดเมนจริงเสมอ เพราะ SSO ใช้ด้วย
                           #    nginx ต้องส่ง  proxy_set_header Host $http_host;  และ client_max_body_size 200m;
 TRUSTED_PROXY_HOPS        # จำนวนชั้น proxy หน้าแอป (ค่าเริ่มต้น 1 = nginx ชั้นเดียว) มี load balancer หน้า nginx อีกชั้นให้ตั้ง 2
                           #    ไม่งั้นทุกคนใช้ bucket ตัวกันเดารหัสร่วมกัน พอร์ตของแอปต้อง bind 127.0.0.1 เท่านั้น
