@@ -24,6 +24,7 @@ import EditorElement from "../admin/editor/EditorElement";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiTime } from "../../utils/electionConfig";
 import GumroadSingleParty from "./GumroadSingleParty";
+import PrivacyNote from "../PrivacyNote";
 import VotePartyCard from "../composites/vote-party-card/gumroad";
 
 const INK = "#26271c", CREAM = "#FFF6EC", PAPER = "#FFFDFA", PINK = "#FF9CE9",
@@ -184,6 +185,8 @@ export default function GumroadVote({
             </div>
           </div>
         </Wrap>
+
+        <PrivacyNote newTab style={{ marginTop: 28, marginBottom: 64, fontSize: 13, color: "var(--ink)" }} />
       </main>
 
       {/* STICKY VOTE FOOTER */}

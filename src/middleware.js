@@ -56,8 +56,9 @@ function buildCsp(nonce) {
     // 'unsafe-eval' only for next dev (react-refresh); never in a production build
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    // https: — party pages pull a texture from transparenttextures.com; data:/blob:
-    // for inline placeholders and client-side image previews in the admin console
+    // https: an admin may paste an absolute image URL (getPath lets external URLs through); data:/blob:
+    // for inline placeholders, SVG textures (utils/textures.js) and client-side image
+    // previews in the admin console
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src 'self'${dev ? " ws: wss:" : ""}`,

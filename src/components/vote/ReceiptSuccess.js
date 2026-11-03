@@ -148,9 +148,9 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
           <div className="rc-suc-hl-eyebrow">✶ <span className="rc-th">บันทึกคะแนนแล้ว</span>  BALLOT RECORDED ✶</div>
           <div className="rc-suc-display">
             <span className="rc-suc-display-1">เสียงของคุณ</span>
-            <span className="rc-suc-display-2">ถูกนับแล้ว</span>
+            <span className="rc-suc-display-2">บันทึกแล้ว</span>
           </div>
-          <p className="rc-suc-deck">ขอบคุณที่ออกมาใช้สิทธิ์ เสียงของคุณถูกบันทึกอย่างปลอดภัยและเป็นความลับ</p>
+          <p className="rc-suc-deck">ขอบคุณที่ออกมาใช้สิทธิ์ ระบบเก็บบัตรของคุณเข้ารหัสและแยกจากชื่อ ผลคะแนนเปิดเผยเมื่อมีการประกาศผล</p>
         </header>
 
         {/* RIGHT (desktop) / MIDDLE (mobile) — the machine + printing receipt (the
@@ -293,7 +293,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
           </div>
 
           <div className="rc-suc-foot">
-            <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span>  <span className="rc-th">การลงคะแนนของคุณเป็นความลับ</span>  barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
+            <span className="rc-th">ใบเสร็จยืนยันการใช้สิทธิ์เท่านั้น</span>  <span className="rc-th">บัตรเก็บแยกจากชื่อของคุณ</span>  barcode = <span className="rc-th">เลขอ้างอิงเท่านั้น</span>
           </div>
 
           <footer className="rc-suc-copy">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</footer>

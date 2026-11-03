@@ -1,6 +1,7 @@
 "use client";
 
 import { useGlobalConfig } from '../contexts/GlobalConfigContext';
+import PrivacyNote from "./PrivacyNote";
 
 export default function SiteFooter({ className = "" }) {
   const config = useGlobalConfig();
@@ -12,6 +13,7 @@ export default function SiteFooter({ className = "" }) {
       <p className="text-slate-500 text-sm">
         © {config.facultyShortEn}@{config.university} {config.copyrightYear}. All Rights Reserved.
       </p>
+      <PrivacyNote className="mt-1 text-sm text-slate-500" />
     </footer>
   );
 }

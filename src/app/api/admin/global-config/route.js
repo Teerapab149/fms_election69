@@ -6,6 +6,7 @@ import { checkScheduleChange } from "../../../../lib/election/adminGuards.mjs";
 import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.mjs";
 import { parseBangkok, resolveElectionDates } from "../../../../utils/electionConfig";
 import { CERT_KEYS } from "../../../../lib/certificationRecord";
+import { normalizePrivacyEmail, PRIVACY_EMAIL_ERROR } from "../../../../lib/privacyContact.mjs";
 
 // A refused schedule change, thrown out of the transaction so it rolls back
 // (same shape as the one in api/admin/dashboard, which is not exported).
@@ -99,6 +100,20 @@ export async function PUT(request) {
       else {
         googleFormUrl = normalizeFormUrl(rawFormUrl);
         if (googleFormUrl === null) return NextResponse.json({ error: FORM_URL_ERROR }, { status: 400 });
+      }
+    }
+
+    // The address is printed on a public page and put in a mailto: link, so only a
+    // plain single address is stored. Blank clears it. Checked before the lock for
+    // the same reason as the form link above.
+    if ("privacyContactEmail" in rest) {
+      const v = rest.privacyContactEmail;
+      if (v === null || v === undefined || (typeof v === "string" && v.trim() === "")) {
+        rest.privacyContactEmail = "";
+      } else {
+        const email = normalizePrivacyEmail(v);
+        if (email === null) return NextResponse.json({ error: PRIVACY_EMAIL_ERROR }, { status: 400 });
+        rest.privacyContactEmail = email;
       }
     }
 

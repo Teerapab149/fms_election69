@@ -7,6 +7,7 @@
 
 import { getPath } from "../../utils/basePath";
 import { Loader2, AlertCircle, LogIn, FlaskConical, ArrowLeft } from "lucide-react";
+import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../PrivacyNote";
 
 export default function VerdureLogin({
   error, loading, onLogin, showMock = false, mockStudentId, setMockStudentId, mockLoading, onMockLogin, onBack, onAdmin,
@@ -28,6 +29,7 @@ export default function VerdureLogin({
           {loading ? <><Loader2 className="vdl-spin" size={18} /> กำลังเชื่อมต่อระบบ…</> : <><LogIn size={18} strokeWidth={2} /> เข้าสู่ระบบด้วย PSU Passport</>}
         </button>
         <p className="vdl-hint">ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย</p>
+        <PrivacyNote lead={PRIVACY_LOGIN_LEAD} style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.6, color: "var(--moss)" }} />
 
         {showMock && (
           <div className="vdl-mock">

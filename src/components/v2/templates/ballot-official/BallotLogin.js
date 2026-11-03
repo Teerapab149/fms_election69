@@ -15,6 +15,7 @@
 import { MotionConfig } from "framer-motion"; // Motion for React
 import { Loader2, AlertCircle } from "lucide-react";
 import { useGlobalConfig } from "../../../../contexts/GlobalConfigContext";
+import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../../../PrivacyNote";
 import { ballotOfficialTemplate } from "../../../admin/editor/templates/builtIn/ballot-official";
 import { ballotMeta, BallotHeader, BallotFooter, BallotBaseStyles, Phrases, BallotContext } from "./BallotChrome";
 
@@ -53,6 +54,8 @@ export default function BallotLogin({
             <button type="button" className="bo-cta bl__go" onClick={onLogin} disabled={loading}>
               {loading ? <><Loader2 size={18} className="bl__spin" aria-hidden /> {k.going}</> : k.go}
             </button>
+
+            <PrivacyNote lead={PRIVACY_LOGIN_LEAD} style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "var(--bo-muted)" }} />
 
             {showMock && (
               <div className="bl__mock">

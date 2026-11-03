@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Loader2, Eye, EyeOff, AlertCircle, ArrowLeft, ShieldCheck, Lock, KeyRound } from 'lucide-react';
 
 const ASSURANCES = [
-  { icon: Lock, text: 'บัตรลงคะแนนถูกเข้ารหัส และไม่ผูกกับตัวผู้ลงคะแนน' },
+  { icon: Lock, text: 'บัตรลงคะแนนถูกเข้ารหัส และเก็บแยกจากชื่อผู้ลงคะแนน' },
   { icon: ShieldCheck, text: 'สิทธิ์แอดมินตรวจจากฐานข้อมูลทุกครั้งที่เรียกใช้' },
   { icon: KeyRound, text: 'เซสชันหมดอายุใน 2 ชั่วโมง และจำกัดจำนวนครั้งที่ลองเข้าสู่ระบบ' },
 ];

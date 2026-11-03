@@ -22,6 +22,7 @@ import GumroadPartyIntro from "./GumroadPartyIntro";
 import StoryClamp from "./StoryClamp";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
+import PrivacyNote from "../PrivacyNote";
 
 // --- data helpers (party fields are loose JSON from the admin) ---
 const asText = (it) =>
@@ -247,6 +248,7 @@ export default function GumroadSingleParty({
             </button>
           </div>
         </section>
+        <PrivacyNote newTab style={{ marginTop: 28, marginBottom: 64, fontSize: 13, color: "var(--ink)" }} />
       </main>
 
       {/* STICKY FOOTER */}

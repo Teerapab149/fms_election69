@@ -1,5 +1,7 @@
 "use client";
 import { getPath } from "../../utils/basePath";
+import PrivacyNote from "../PrivacyNote";
+import { TEXTURE_PAPER, TEXTURE_CUBES, TEXTURE_STARDUST } from "../../utils/textures";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
@@ -563,7 +565,7 @@ export default function SinglePartyView({
           {/* === 2. Logo Concept (Light Gallery Theme - Hybrid Responsive Layout) === */}
           <section id="symbol" className="w-full bg-[#FAFAF9] relative overflow-hidden py-16 lg:py-24">
             {/* Background Texture (Paper Grain) */}
-            <div className="absolute inset-0 opacity-[0.4] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] mix-blend-multiply pointer-events-none"></div>
+            <div className="absolute inset-0 opacity-[0.4] mix-blend-multiply pointer-events-none" style={{ backgroundImage: TEXTURE_PAPER }}></div>
 
             <div className="container mx-auto px-6 relative z-10">
               <Reveal>
@@ -647,7 +649,7 @@ export default function SinglePartyView({
             < div className="w-full md:w-[40%] bg-[var(--spv-deep,#2E1065)] transition-colors duration-300 ease-in-out relative px-6 py-12 md:px-10 md:py-24 flex flex-col justify-center items-center text-center overflow-hidden" >
               {/* Background Effects (Unity Theme: Purple/Gold) */}
               < div className="absolute inset-0 bg-gradient-to-br from-[var(--spv-deep,#2E1065)] via-[var(--spv-deep-2,#4C1D95)] to-[var(--spv-deep,#2E1065)] opacity-100" ></div >
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+              <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: TEXTURE_CUBES }}></div>
               <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--spv-glow,#D97706)] rounded-full blur-[100px] opacity-20 animate-pulse"></div>
 
               <div className="relative z-10">
@@ -877,7 +879,7 @@ export default function SinglePartyView({
 
           {/* === 6. VOTE === */}
           <section id="vote" className="py-32 bg-[var(--spv-dark,#1A1A1A)] transition-colors duration-300 ease-in-out text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: TEXTURE_STARDUST }} />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--spv-vote-glow,#6A0DAD)] transition-colors duration-300 ease-in-out blur-[150px] opacity-20 rounded-full pointer-events-none" />
             <div className="container mx-auto px-6 relative z-10 max-w-4xl text-center">
               <Reveal>
@@ -922,6 +924,7 @@ export default function SinglePartyView({
 
           <footer className="py-4 bg-black text-white text-center border-t border-white/10">
             <div className="flex justify-center items-center gap-4 mb-4 opacity-50"><p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"} {copyrightYear}. All Rights Reserved.</p></div>
+            <PrivacyNote newTab className="mb-20 text-xs text-slate-300" />
           </footer>
         </div>
       </div>

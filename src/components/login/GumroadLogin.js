@@ -6,6 +6,7 @@
 // arrive as props from app/login/page.js (shared with the other template logins).
 
 import { Loader2, AlertCircle, LogIn, ShieldCheck, FlaskConical, ArrowLeft } from "lucide-react";
+import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../PrivacyNote";
 
 export default function GumroadLogin({
   error,
@@ -40,6 +41,7 @@ export default function GumroadLogin({
               : <><LogIn size={18} strokeWidth={2.5} /> เข้าสู่ระบบด้วย PSU Passport</>}
           </button>
           <p className="grl-hint">ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย</p>
+          <PrivacyNote lead={PRIVACY_LOGIN_LEAD} style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.6, color: "var(--ink2)" }} />
 
           {showMock && (
             <div className="grl-mock">

@@ -103,8 +103,8 @@ export default function VerdureVote({
   return (
     <VerdureShell active="vote" editorMode={editorMode}
       edge={{ num: "04", label: "Ballot", th: "ลงคะแนนเสียง" }}
-      cornermarkTitle="Ballot" cornermarkSub="Secure session"
-      statusChip={<div className="vd-chip-live"><span className="dot" /> BALLOT <strong>SECURE</strong></div>}>
+      cornermarkTitle="Ballot" cornermarkSub="Signed-in session"
+      statusChip={<div className="vd-chip-live"><span className="dot" /> BALLOT <strong>OPEN</strong></div>}>
       <div className="vd-warm-bg" aria-hidden />
       <div className="vd-ballot">
         <div className="vd-ballot__h">
