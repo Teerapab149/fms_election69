@@ -504,7 +504,7 @@ If any "no" answer → flag in final report, don't hide.
 | Need | File |
 |---|---|
 | Project overview / onboarding | README.md |
-| System state + pre-deploy checklist | docs/TEMPLATE-SYSTEM-STATE.md, docs/DEPLOY-CHECKLIST-2026.md |
+| Pre-deploy checklist | docs/DEPLOY-CHECKLIST-2026.md |
 | Design plan + owner taste + tickets | docs/MASTER-DESIGN-PLAN.md |
 | Accumulated lessons | DECISIONS.md (P-LOG-001..NNN) |
 | Current state | PROGRESS.md |

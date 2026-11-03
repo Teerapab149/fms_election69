@@ -18,29 +18,34 @@ hash chain ที่ตรวจย้อนหลังได้ — ไม่�
   พร้อมตัวเลือก รับรอง / ไม่รับรอง / งดออกเสียง
 - หน้าแนะนำพรรคกรอกได้จาก admin ทั้งนโยบาย ทีม รูป และช่องทางติดต่อของพรรคเอง
   (IG / Facebook / TikTok ตรวจ URL ก่อนเก็บ)
-- template ทั้งระบบ **31 แบบ** — 6 ตระกูลที่มีชุดสีให้เลือก (gumroad 6 · fms-official 5 ·
-  blossom 4 · receipt 4 · studio-dark 4 · verdure 4) และธีมเดี่ยวอีก 4 (original,
-  minimal, modern-dark, playful) สลับได้จาก admin คลิกเดียว ดูตัวอย่างก่อนได้ที่
-  `/template-preview` และ `/template-playground` โดยไม่แตะ DB
-  — ตัวธีมเป็นไฟล์โค้ดใน `src/components/admin/editor/templates/builtIn/`
+- ธีมของเว็บให้เลือก 8 ตระกูล รวม 32 ชุดสี (gumroad 6, fms-official 5, blossom 4, receipt 4,
+  studio-dark 4, verdure 4, ballot-official 4, original 1) สลับได้จาก admin คลิกเดียว
+  ดูตัวอย่างก่อนได้ในหน้าเลือกธีม หรือที่ `/template-preview` และ `/template-playground`
+  (สองหน้านี้ไม่แตะ DB และเปิดได้เฉพาะแอดมิน) ธีม minimal, modern-dark และ playful ยังอยู่ในโค้ด
+  แต่ไม่ขึ้นในหน้าเลือกธีม ตัวธีมเป็นไฟล์โค้ดใน `src/components/admin/editor/templates/builtIn/`
   หน้า admin มีแค่ "เลือกแล้ว Apply" ไม่มีตัวแก้แบบลากวาง เพิ่มธีมใหม่คือเขียนไฟล์
   ธีมเพิ่มแล้ว deploy ไม่ใช่เพิ่มข้อมูลใน DB
 - ผลคะแนน + demographics แบบ real-time โดยคะแนนถูกปิด (embargo) ตั้งแต่ชั้น API
   จนกว่า admin จะสั่งเปิดเผย
-- ฝั่ง admin มีปุ่มตรวจความพร้อมก่อนเปิดระบบ (14 รายการ), audit log บันทึกทุกคำสั่ง
+- ฝั่ง admin มีปุ่มตรวจความพร้อมก่อนเปิดระบบ (17 รายการ), audit log บันทึกทุกคำสั่ง
   และตัวล็อกกันกดรีเซ็ตข้อมูลระหว่างการโหวตยังเปิดอยู่
 
 Stack: Next.js (App Router), PostgreSQL + Prisma, NextAuth (PSU SSO), Tailwind,
-Framer Motion, Recharts, Playwright — deploy ด้วย Docker บนโดเมนของตัวเอง (เสิร์ฟจาก root)
+Framer Motion, Recharts, Playwright, deploy ด้วย Node (standalone) หรือ Docker หลัง nginx บนโดเมนของตัวเอง (เสิร์ฟจาก root)
 
 ## เริ่มพัฒนา
 
 ```bash
 npm install
-npx prisma migrate dev
-node prisma/seed.js
-npm run dev        # http://localhost:3000
+npx prisma migrate deploy   # ฐานเปล่า: ลงตารางตาม migration ที่ commit ไว้ (11 ตัว)
+node prisma/seed.js           # ข้อมูลตัวอย่างสำหรับเครื่องพัฒนาเท่านั้น
+npm run dev                   # http://localhost:3000
 ```
+
+ระหว่างพัฒนา เมื่อแก้ `prisma/schema.prisma` ให้ซิงก์ DB ด้วย `npx prisma db push` ตาม
+`docs/MAINTENANCE-RUNBOOK.md` §3 ส่วนเครื่องจริงใช้ `migrate deploy` อย่างเดียว ห้ามใช้ `db push`
+ข้อมูลที่ `seed.js` ใส่เป็นพรรคและรายชื่อตัวอย่าง เครื่องจริงต้องใส่ข้อมูลจริงผ่านหน้าแอดมินและ
+`npm run import-students` เอง
 
 ตัวแปร env ที่ต้องมีใน `.env`:
 
@@ -51,7 +56,10 @@ npm run dev        # http://localhost:3000
 | `ADMIN_JWT_SECRET` | เซ็น cookie ของ admin (รหัสผ่าน admin อยู่ใน DB ไม่ใช่ env — ดู `scripts/admin.js`) |
 | `ELECTION_BALLOT_PUBLIC_KEY`, `BALLOT_CHAIN_SECRET` | กุญแจบัตรลงคะแนน (ดูหัวข้อความปลอดภัย) |
 | `NEXT_PUBLIC_ENABLE_MOCK_LOGIN` | ไม่มีผลกับหน้า login แล้ว (ตัวกั้นจริงคือ `NODE_ENV`) แต่ถ้าตั้งเป็น `true` ค้างไว้ `npm run preflight` จะ FAIL — บน production ไม่ต้องมีบรรทัดนี้ |
-| `UPLOAD_ROOT` | โฟลเดอร์เก็บรูปที่แอดมินอัปโหลด ไม่ตั้ง = `public/images` ใต้โฟลเดอร์ที่รันแอป บน production ควรตั้งไปที่ไดเรกทอรีนอกซอร์ส (เช่น `/var/lib/fms-ovs/images`) ไม่งั้น deploy รอบถัดไปที่สร้างโฟลเดอร์ใหม่จะลบรูปทิ้ง |
+| `NEXTAUTH_URL` | URL จริงของเว็บ เช่น `https://ovs.fms.psu.ac.th` ตัวตรวจ CSRF เทียบ `Origin` กับ `Host` ของคำขอและกับค่านี้ ถ้าผิดบนเครื่องจริง การโหวตและปุ่มแอดมินจะถูกปฏิเสธ nginx ต้องส่ง `Host $http_host` มาด้วย |
+| `UPLOAD_ROOT` | โฟลเดอร์เก็บรูปที่แอดมินอัปโหลด ใช้กับเครื่องที่ไม่ใช้ Docker ไม่ตั้ง = `public/images` ใต้โฟลเดอร์ที่รันแอป บนเครื่องแบบนั้นควรตั้งไปที่ไดเรกทอรีนอกซอร์ส (เช่น `/var/lib/fms-ovs/images`) ไม่งั้น deploy รอบถัดไปที่สร้างโฟลเดอร์ใหม่จะลบรูปทิ้ง ถ้าใช้ Docker ไม่ต้องตั้ง เพราะ `docker-compose.yml` ผูก `./public/images` ไว้แล้ว |
+| `TRUSTED_PROXY_HOPS` | จำนวนชั้น proxy หน้าแอป ค่าเริ่มต้น 1 (nginx ชั้นเดียว) ถ้ามี load balancer อยู่หน้า nginx อีกชั้นให้ตั้ง 2 ไม่งั้นทุกคนใช้ bucket ของตัวกันเดารหัสร่วมกัน พอร์ตของแอปต้อง bind `127.0.0.1` เท่านั้น |
+| `ADMIN_TEST_TOOLS` | ตั้งเป็น `1` เฉพาะเครื่องพัฒนาเพื่อเปิดแท็บเครื่องมือทดสอบในหน้าแอดมิน ห้ามตั้งบนเครื่องจริง (ข้อตรวจความพร้อมจะไม่ผ่าน) และบน production build เครื่องมือนี้ใช้ได้เฉพาะฐานข้อมูลที่ชื่อลงท้าย `_e2e` หรือ `_test` |
 
 ตอน dev เข้าระบบด้วย Mock Login บนหน้า login ได้เลย ส่วน admin ตั้งรหัสด้วย
 `node scripts/admin.js --rotate-password` แล้วใส่ค่าที่ได้เป็น `ADMIN_DEV_PASSWORD`
@@ -92,10 +100,12 @@ production ต้องรัน `scripts/sql/ballot-grants.sql` เพื่อ
 
 ```bash
 npm run build      # ต้องผ่านก่อน deploy เสมอ
-npm run smoke      # sanity 13 เคส (server ต้องรันอยู่)
-npm run e2e        # Playwright 9 เคส 4 ไฟล์: โหวตครบวงจร, งดออกเสียง, หน้าปิดหีบ,
-                   # และ invariant ของบัตร/คะแนน
-                   # (e2e/admin-console.spec.js 26 เคสถูก testIgnore ไว้ — ชุดเก่าของ
+npm run smoke      # unit test 246 เคสใน 29 ไฟล์ (ไม่ต้องใช้เซิร์ฟเวอร์) กับ election.test.mjs
+                   # อีกไฟล์ที่ยิงเว็บจริง ต้องมีเซิร์ฟเวอร์รันอยู่ที่ :3000 (ตั้ง BASE ถ้าใช้พอร์ตอื่น)
+npm run e2e        # Playwright 28 เคสใน 11 ไฟล์: โหวตครบวงจร, งดออกเสียง, หน้าปิดหีบ,
+                   # invariant ของบัตร/คะแนน, ถอดรหัสนับใหม่, ซ้อมรับรองผลของเจ้าหน้าที่,
+                   # snapshot การรับรอง และเครื่องมือทดสอบ
+                   # (e2e/admin-console.spec.js 26 เคสถูก testIgnore ไว้ เป็นชุดเก่าของ
                    #  editor ที่เลิกใช้แล้ว ยังแดงค้าง ดู MAINTENANCE-RUNBOOK §4.1)
 ```
 
@@ -124,7 +134,6 @@ e2e ใช้ฐานข้อมูลทดสอบแยก (`<ชื่อ
 | ขั้นตอน deploy จริงไล่ทีละข้อ | `docs/DEPLOY-CHECKLIST-2026.md` |
 | **คู่มือสโมสรนักศึกษา — หน้าแอดมิน (ส่งมอบงาน)** | `docs/ADMIN-GUIDE.md` |
 | **กุญแจบัตรลงคะแนนและการตรวจสอบผล (ส่งมอบงาน)** | `docs/BALLOT-SECURITY-GUIDE.md` |
-| สถานะระบบ + checklist ก่อน deploy | `docs/TEMPLATE-SYSTEM-STATE.md` |
 | คู่มือดูแลระบบ | `docs/MAINTENANCE-RUNBOOK.md` |
 | กติกาแก้โค้ด | `CLAUDE.md` |
 | บทเรียน/pitfall ทั้งหมด | `DECISIONS.md` |

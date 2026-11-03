@@ -169,7 +169,7 @@ To make this exact year selectable again, register \`design.json\` into
     console.log(`    design.json   (template: ${design.activeTemplateId})`);
     console.log(`    README.md`);
     if (!cfg.showResult) console.log(`    ⚠ results were not revealed — re-run after certification for final scores.`);
-    console.log(`\n  Next: git add archive/${label} && commit — this year is now preserved.\n`);
+    console.log(`\n  Next: keep archive/${label} where the faculty decides, before the yearly reset. This repository is public: commit it only if the faculty approves.\n`);
   } catch (e) {
     console.error("  ✗ archive failed:", e.message);
     process.exitCode = 1;

@@ -5,11 +5,10 @@
 //   1. require .next/BUILD_ID — the suite runs against a PROD build (`next start`).
 //      Missing → throw a friendly "run `next build` first" (no DB, no server).
 //   2. ensure `<devName>_e2e` exists (CREATE DATABASE if missing).
-//   3. sync the schema onto the test DB with `prisma db push` — NOT
-//      `migrate deploy`: the committed migration history is INCOMPLETE (columns
-//      like SystemConfig.systemMode / googleFormUrl / globalConfig were added
-//      via db push in dev and never captured as migrations), so migrate deploy
-//      on a fresh DB produces a stale schema (discovered v2-R11, flagged).
+//   3. sync the schema onto the test DB with `prisma db push`. The committed
+//      migration history is now complete (the old db push drift was captured in
+//      20260718180000_catchup_db_push_drift), so `migrate deploy` would also work
+//      on a fresh DB; db push is kept because the test DB is disposable.
 //   4. seed the small fixture.
 //   5. spawn `next start -p 3100` with DATABASE_URL → test DB, wait until healthy.
 //   6. record the server pid so global.teardown can stop it.

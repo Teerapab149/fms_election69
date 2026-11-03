@@ -52,7 +52,7 @@ printf '========================================================================
 
 # ── 1. เครื่องมือ ───────────────────────────────────────────────────────────
 step "1. เครื่องมือที่ต้องมี"
-command -v node >/dev/null 2>&1 && ok "node $(node -v)" || bad "ไม่มี node — ติดตั้ง Node.js 20 ก่อน"
+command -v node >/dev/null 2>&1 && ok "node $(node -v)" || bad "ไม่มี node ติดตั้ง Node.js 22 ก่อน"
 command -v npm  >/dev/null 2>&1 && ok "npm $(npm -v)"   || bad "ไม่มี npm"
 if command -v docker >/dev/null 2>&1; then ok "docker พร้อม"; HAS_DOCKER=1; else warn "ไม่มี docker — ข้ามขั้นตอนเปิดระบบ (ข้อ 5)"; HAS_DOCKER=0; fi
 if command -v psql >/dev/null 2>&1; then ok "psql พร้อม"; HAS_PSQL=1; else warn "ไม่มี psql — ต้องล็อกสิทธิ์ตารางบัตรเองภายหลัง (ข้อ 4)"; HAS_PSQL=0; fi

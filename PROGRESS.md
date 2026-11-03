@@ -1,7 +1,7 @@
 # PROGRESS.md
 
 > ⚠️ **STALE (2026-06-02 — ยุค editor ที่ถูก retire แล้ว) ห้ามใช้เป็นสถานะปัจจุบัน**
-> สถานะจริง + deploy checklist → `docs/TEMPLATE-SYSTEM-STATE.md` · แผนงานดีไซน์ → `docs/MASTER-DESIGN-PLAN.md`
+> deploy checklist ที่ `docs/DEPLOY-CHECKLIST-2026.md` และ onboarding ที่ `README.md` ส่วนแผนงานดีไซน์ดูที่ `docs/MASTER-DESIGN-PLAN.md`
 > onboarding → `README.md`
 
 **Last saved:** 2026-06-02
