@@ -191,7 +191,7 @@ export default function FmsOfficialVote({
 
       <p className="fo-privacy">
         <ShieldCheck size={15} aria-hidden />
-        ระบบบันทึกเฉพาะตัวเลือกในรูปแบบเข้ารหัส ไม่ผูกกับบัญชีของคุณ ไม่มีใครย้อนดูได้ว่าคุณเลือกอะไร
+        ระบบบันทึกเฉพาะตัวเลือกในรูปแบบเข้ารหัส และเก็บแยกจากชื่อบัญชีของคุณ
       </p>
 
       <style jsx global>{`

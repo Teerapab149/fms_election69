@@ -27,6 +27,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import PrivacyNote from "../PrivacyNote";
 import { getPath } from "../../utils/basePath";
 import { BlossomTopBar } from "../home/BlossomHome";
 import { BlossomBaseStyles } from "../home/BlossomTheme";
@@ -372,6 +373,7 @@ export default function BlossomSingleParty({
       {/* ===== footer — plain classic line (mirrors bl-footer on home) ===== */}
       <footer className="bl-footer">
         <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <PrivacyNote newTab style={{ marginTop: 8, marginBottom: 104, fontSize: 12, letterSpacing: ".04em", textTransform: "none", fontWeight: 400 }} />
       </footer>
 
       <style jsx global>{`

@@ -4,10 +4,13 @@
 // pages. Library element (Lego brick): self-contained, exposes --foot-* vars →
 // gumroad identity literals. Copy text is data (props), not hardcoded.
 
+import PrivacyNote from "../../PrivacyNote";
+
 export default function SiteFooterGumroad({ faculty = "FMS", uni = "PSU", year = "" }) {
   return (
     <footer className="sfoot" data-element="site-footer" data-variant="gumroad">
       <div>© {faculty}@{uni} {year}  ALL RIGHTS RESERVED</div>
+      <PrivacyNote as="div" style={{ fontSize: 13 }} />
       <style jsx global>{`
         .sfoot{
           margin-top:auto; border-top:2.5px solid var(--foot-border, var(--ink, #26271c));

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SmartImage from "../SmartImage";
 import { getPath } from "../../utils/basePath"; // ✅ Import added
+import { TEXTURE_STARDUST } from "../../utils/textures";
 import { ELECTION_CONFIG, ELECTION_SLOGAN } from '../../utils/electionConfig';
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 
@@ -103,7 +104,7 @@ export default function AutoIntro({
 
                 {/* 1.1 NOISE TEXTURE (Pure CSS - No SVG Filter) */}
                 <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none"
-                    style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")', backgroundSize: '200px 200px' }} />
+                    style={{ backgroundImage: TEXTURE_STARDUST, backgroundSize: '200px 200px' }} />
 
                 {/* 2. Top Progress Bar (Visual Indicator Only now) */}
                 {step === 1 && (

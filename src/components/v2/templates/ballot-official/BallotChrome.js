@@ -15,6 +15,7 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-
 import { useGlobalConfig, useActiveTemplateId } from "../../../../contexts/GlobalConfigContext";
 import { LogIn, LogOut } from "lucide-react";
 import { getPath } from "../../../../utils/basePath";
+import PrivacyNote from "../../../PrivacyNote";
 import { voterSignIn, voterSignOut } from "../../../../lib/auth/voterSession";
 import { formatThaiTime } from "../../../../utils/electionConfig";
 import { electionMeta } from "../../shared/election/electionMeta";
@@ -228,6 +229,7 @@ export function BallotFooter({ meta, tone = "day" }) {
       {/* the same line every template signs off with, from ตั้งค่าทั่วไป */}
       <div className="bo-footer__in">
         <span>© {meta.facultyShort}@{meta.university} {meta.copyrightYear}. All Rights Reserved.</span>
+        <PrivacyNote newTab as="span" style={{ marginLeft: 18 }} />
       </div>
     </footer>
   );

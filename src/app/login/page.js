@@ -9,6 +9,7 @@ import Navbar from "../../components/Navbar";
 import { Loader2, AlertCircle, LogIn, ShieldCheck, FlaskConical } from "lucide-react";
 import { getPath } from "../../utils/basePath";
 import SiteFooter from "../../components/SiteFooter";
+import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../../components/PrivacyNote";
 import ThemedLoadingScreen from "../../components/ThemedLoadingScreen";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import StudioDarkLogin from "../../components/login/StudioDarkLogin";
@@ -201,6 +202,7 @@ export default function LoginPage() {
             <p className="mt-4 text-[11px] text-slate-400">
               ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย
             </p>
+            <PrivacyNote lead={PRIVACY_LOGIN_LEAD} className="mt-3 text-xs leading-relaxed text-slate-600" />
 
             {/* ─── Mock Login — DEV ONLY ─────────────────────────────────────
                 แสดงเมื่อ NextAuth ลงทะเบียน provider "mock-login" จริงบนเซิร์ฟเวอร์นี้

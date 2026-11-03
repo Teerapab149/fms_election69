@@ -10,6 +10,7 @@
 
 import { parseBangkok, formatThaiTime } from "./electionConfig.js";
 import { normalizeFormUrl } from "../lib/forms/formUrl.mjs";
+import { normalizePrivacyEmail } from "../lib/privacyContact.mjs";
 
 const TH_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 const TH_MONTHS = [
@@ -113,9 +114,19 @@ export function hoursItem(cfg) {
   };
 }
 
+export function privacyItem(cfg) {
+  const raw = String(cfg?.privacyContactEmail ?? "").trim();
+  const base = { key: "privacy", title: "อีเมลติดต่อเรื่องข้อมูลส่วนบุคคล" };
+  // blank is allowed (the privacy page then tells readers to contact the
+  // faculty directly) but a notice with no way to reach anyone is half a notice
+  if (!raw) return { ...base, value: "ยังไม่ได้ใส่ หน้านโยบายความเป็นส่วนตัวจะบอกให้ติดต่อคณะโดยตรง", tone: "warn", status: "ยังไม่ใส่" };
+  if (!normalizePrivacyEmail(raw)) return { ...base, value: raw, tone: "err", status: "รูปแบบอีเมลไม่ถูกต้อง" };
+  return { ...base, value: raw, tone: "ok", status: "พร้อม" };
+}
+
 /** the whole list, in the order an admin works through it */
 export function setupChecklist(cfg, now = new Date()) {
-  const items = [editionItem(cfg), scheduleItem(cfg, now), posterItem(cfg), formItem(cfg), hoursItem(cfg)];
+  const items = [editionItem(cfg), scheduleItem(cfg, now), posterItem(cfg), formItem(cfg), hoursItem(cfg), privacyItem(cfg)];
   const ready = items.filter((i) => i.tone === "ok" || i.tone === "none").length;
   return { items, ready, total: items.length };
 }

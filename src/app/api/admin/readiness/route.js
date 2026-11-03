@@ -14,6 +14,7 @@ import { describeBackupStatus } from "../../../../lib/election/backupStatus.mjs"
 import { isTestToolsEnabled, isTestToolsSwitchOn } from "../../../../utils/testTools.mjs";
 import { access, readFile, constants as fsConstants } from "fs/promises";
 import path from "path";
+import { normalizePrivacyEmail } from "../../../../lib/privacyContact.mjs";
 
 // Never statically rendered: this route reads headers/request.url per call. Without
 // this Next tries to prerender it at build time, the read throws DynamicServerError,
@@ -279,6 +280,18 @@ export async function GET(request) {
       return { level: "warn", detail: "ยังไม่ได้ตั้งลิงก์แบบประเมิน หน้าขอบคุณหลังลงคะแนนจึงไม่มีปุ่มไปทำแบบประเมิน ตั้งได้ที่เมนูตั้งค่าทั่วไป" };
     }
     return { level: "pass", detail: "ตั้งลิงก์ Google Form ไว้แล้ว" };
+  });
+
+  // 11a2) config.privacyContact: อีเมลติดต่อเรื่องข้อมูลส่วนบุคคลบนหน้า /privacy
+  await run("config.privacyContact", "config", "อีเมลติดต่อเรื่องข้อมูลส่วนบุคคล", async () => {
+    const raw = String(cfg?.globalConfig?.privacyContactEmail ?? "").trim();
+    if (!raw) {
+      return { level: "warn", detail: "ยังไม่ได้ตั้งอีเมลติดต่อเรื่องข้อมูลส่วนบุคคล หน้านโยบายความเป็นส่วนตัวจึงบอกให้นักศึกษาติดต่อคณะโดยตรง ไม่มีช่องอีเมลให้ ตั้งได้ที่เมนูตั้งค่าทั่วไป" };
+    }
+    if (!normalizePrivacyEmail(raw)) {
+      return { level: "warn", detail: "อีเมลติดต่อเรื่องข้อมูลส่วนบุคคลที่เก็บไว้รูปแบบไม่ถูกต้อง หน้านโยบายความเป็นส่วนตัวจึงไม่แสดงอีเมล ตั้งใหม่ได้ที่เมนูตั้งค่าทั่วไป" };
+    }
+    return { level: "pass", detail: "ตั้งอีเมลติดต่อเรื่องข้อมูลส่วนบุคคลไว้แล้ว" };
   });
 
   // 11b) config.leak — showResult เปิดทั้งที่ยังไม่ ENDED

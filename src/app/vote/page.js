@@ -24,6 +24,7 @@ import ReceiptVote, { useBallotDrop } from '../../components/vote/ReceiptVote';
 import { useVoteCast } from '../../hooks/useVoteCast';
 import VoteFooter from '../../components/vote/VoteFooter';
 import ErrorActionModal from '../../components/ErrorActionModal';
+import PrivacyNote from '../../components/PrivacyNote';
 
 // Hook
 import { useVoteSystem } from '../../hooks/useVoteSystem';
@@ -342,6 +343,9 @@ export default function VotePage() {
             config={voteConfig}
           />
         )}
+
+        {/* the classic wrapper reserves pb-32 for the fixed VoteFooter, so this stays clear of it */}
+        {!isSingleParty && <PrivacyNote newTab className="mt-8 text-sm text-slate-600" />}
       </main>
 
       <VoteFooter

@@ -30,6 +30,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import PrivacyNote from "../PrivacyNote";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
@@ -505,6 +506,7 @@ export default function ReceiptSingleParty({
       {/* ===== footer — classic single centered line ===== */}
       <footer className="rc-single-footer">
         <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <PrivacyNote newTab style={{ marginTop: 8, marginBottom: 104, fontSize: 12, letterSpacing: ".04em", textTransform: "none", fontWeight: 400 }} />
       </footer>
 
       <style jsx global>{`

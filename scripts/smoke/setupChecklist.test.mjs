@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { setupChecklist, scheduleItem, formItem, hoursItem, thaiLongDateTime, thaiDuration } from "../../src/utils/setupChecklist.mjs";
+import { setupChecklist, scheduleItem, formItem, hoursItem, privacyItem, thaiLongDateTime, thaiDuration } from "../../src/utils/setupChecklist.mjs";
 import { parseBangkok } from "../../src/utils/electionConfig.js";
 
 const NOW = new Date("2026-09-30T12:00:00+07:00");
@@ -8,6 +8,7 @@ const READY = {
   electionNamePrefix: "SAMO", electionNumber: 50, academicYearTh: 2570,
   campaignStartAt: "2027-01-29T08:30", electionStartAt: "2027-02-06T08:30", electionEndAt: "2027-02-06T17:00",
   electionBannerUrl: "/uploads/poster.jpg", googleFormUrl: "https://docs.google.com/forms/d/e/abc/viewform", activityHours: 2,
+  privacyContactEmail: "election@example.ac.th",
 };
 
 test("a complete year reads as ready", () => {
@@ -34,7 +35,15 @@ test("the form link must be a real https link", () => {
 test("no activity hours is a valid choice, not a gap", () => {
   const h = hoursItem({ activityHours: "" });
   assert.equal(h.tone, "none");
-  assert.equal(setupChecklist({ ...READY, activityHours: "" }, NOW).ready, 5);
+  assert.equal(setupChecklist({ ...READY, activityHours: "" }, NOW).ready, 6);
+});
+test("the privacy contact: blank warns, a bad address is an error, a real one is ready", () => {
+  assert.equal(privacyItem({ privacyContactEmail: "" }).tone, "warn");
+  assert.equal(privacyItem({}).tone, "warn");
+  assert.equal(privacyItem({ privacyContactEmail: "not an email" }).tone, "err");
+  assert.equal(privacyItem({ privacyContactEmail: "a@b.com,c@d.com" }).tone, "err");
+  assert.equal(privacyItem(READY).tone, "ok");
+  assert.equal(setupChecklist({ ...READY, privacyContactEmail: "" }, NOW).ready, 5);
 });
 test("dates read the way a Thai admin reads them", () => {
   assert.equal(thaiLongDateTime(parseBangkok("2027-02-06T08:30")), "วันเสาร์ที่ 6 กุมภาพันธ์ 2570 เวลา 08.30 น.");

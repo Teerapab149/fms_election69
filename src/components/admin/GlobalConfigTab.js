@@ -552,6 +552,13 @@ export default function GlobalConfigTab({ onDirtyChange } = {}) {
         <p className="mt-1 text-xs text-slate-500">รับเฉพาะลิงก์ Google Form (docs.google.com/forms/… หรือ forms.gle/…) ลิงก์อื่นระบบจะไม่บันทึก</p>
       </Field>
     ),
+    privacy: (
+      <Field k="privacyContactEmail">
+        <input id="gc-privacyContactEmail" type="email" inputMode="email" autoComplete="off" className={INPUT} placeholder="name@psu.ac.th"
+          value={config.privacyContactEmail ?? ""} onChange={(e) => set("privacyContactEmail", e.target.value)} />
+        <p className="mt-1 text-xs text-slate-500">ใช้อีเมลกลางของคณะหรือของผู้รับผิดชอบข้อมูล เว้นว่างได้ แต่นักศึกษาจะไม่มีช่องทางส่งคำถามเรื่องข้อมูลของตัวเอง</p>
+      </Field>
+    ),
     hours: (
       <div className="grid sm:grid-cols-[180px_minmax(0,1fr)] gap-4 items-start">
         <Field k="activityHours">

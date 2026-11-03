@@ -43,6 +43,13 @@ Next.js (App Router) + PostgreSQL (Prisma) + NextAuth (PSU SSO OpenID). Deploy �
    psql "<connection string ของ fms_migrate>" -f scripts/sql/annual-reset.sql
    npm run preflight                                       # ยืนยันว่าเป็นศูนย์จริง
    ```
+   ตอนขึ้นปีใหม่ให้ทำต่อด้วย `scripts/sql/purge-voter-data.sql` เพื่อลบข้อมูลรายคน (แยกจาก annual-reset เพราะ
+   annual-reset ยังใช้ล้างบัตรซ้อมหลังนำเข้ารายชื่อจริงแล้ว) ลำดับ: archive-year, สำรอง, annual-reset, purge,
+   แล้วค่อย import-students ปีใหม่ ไฟล์ purge ปฏิเสธเองถ้าหีบยังมีบัตร และเก็บแอดมินกับ STAFF ไว้
+   ```bash
+   psql "<connection string ของ fms_migrate>" -v ON_ERROR_STOP=1 -f scripts/sql/purge-voter-data.sql
+   ```
+   สำเนา backup เก่ายังมีข้อมูลรายคนจนกว่าจะหมดรอบเก็บ
    เหตุผลที่ไม่มีปุ่ม: role `fms_app` ที่เว็บใช้ **ไม่มีสิทธิ์ DELETE บน `Ballot`** โดยตั้งใจ
    (`scripts/sql/ballot-grants.sql`) ปุ่มจึงทำงานได้แค่บน dev และจะพังบน production
    ผลพลอยได้: ไม่มี API เส้นไหนลบบัตรได้ ต่อให้ session แอดมินหลุดก็ล้างผลไม่ได้.
@@ -145,7 +152,7 @@ CLUSTER "User" USING "User_studentId_key";
 ```
 # ทาง 1 (แนะนำ กรรมการกดเองได้): เมนู "ความพร้อมและระบบ" ในหน้าแอดมิน การ์ด "ตรวจความพร้อมระบบ READINESS"
 #   ตรวจให้เองเมื่อเปิดหน้า กดปุ่ม "ตรวจซ้ำ" เมื่อต้องการดูผลใหม่ (ADM-1)
-#   เรียก GET /api/admin/readiness (read-only) สรุป pass/warn/fail 17 ข้อ:
+#   เรียก GET /api/admin/readiness (read-only) สรุป pass/warn/fail 18 ข้อ:
 #   schedule (ลำดับเวลา/เปิดตัวผู้สมัคร/แหล่งเวลา/อดีต), mode.coherence, candidates
 #   (มีพรรค/พรรคเดียวมีตัวเลือกครบ/เนื้อหาครบ), voters, tally.integrity, config
 #   (googleForm/ผลรั่ว/ธีม), env (mock/โฟลเดอร์รูป/backup อัตโนมัติ §5/เครื่องมือทดสอบ ADMIN_TEST_TOOLS)

@@ -137,7 +137,7 @@ export default function SuccessPage({
 
     if (status === "unauthenticated") {
       setAlertConfig({
-        title: "Access Denied",
+        title: "ยังไม่ได้เข้าสู่ระบบ",
         message: "กรุณาเข้าสู่ระบบก่อนใช้งานหน้านี้",
         action: () => router.push("/login")
       });

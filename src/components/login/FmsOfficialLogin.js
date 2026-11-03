@@ -17,6 +17,7 @@ import { getPath } from "../../utils/basePath";
 import { ArrowRight, ArrowLeft, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { fmsMeta, FmsOfficialBaseStyles } from "../home/FmsOfficialChrome";
+import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../PrivacyNote";
 
 export default function FmsOfficialLogin({
   error, loading, onLogin, showMock = false, mockStudentId, setMockStudentId,
@@ -69,6 +70,7 @@ export default function FmsOfficialLogin({
             <ShieldCheck size={15} aria-hidden />
             ระบบยืนยันตัวตนผ่านบัญชี PSU Passport ของมหาวิทยาลัย เพื่อตรวจสอบสิทธิ์ลงคะแนนเท่านั้น
           </p>
+          <PrivacyNote lead={PRIVACY_LOGIN_LEAD} style={{ margin: "10px 0 0", textAlign: "left", fontSize: 12.5, fontWeight: 300, lineHeight: 1.6, color: "var(--fo-muted)" }} />
 
           {showMock && (
             <div className="fo-login__mock">

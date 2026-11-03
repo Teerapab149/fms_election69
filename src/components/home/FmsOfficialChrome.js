@@ -24,6 +24,7 @@ import { useState, useEffect, useRef } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { LogIn, Power } from "lucide-react";
 import { getPath } from "../../utils/basePath";
+import PrivacyNote from "../PrivacyNote";
 import { resolveElectionPosterPath } from "../../utils/electionPoster.mjs";
 import { useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { FMS_OFFICIAL, FMS_OFFICIAL_THEMES, fmsOfficialTheme } from "../../utils/fmsOfficialPalette";
@@ -299,6 +300,7 @@ export function FmsOfficialFooter({ meta }) {
       </div>
       <div className="fo-foot__bar">
         © {meta.facultyShort}@{meta.universityShort} {meta.copyrightYear}. All Rights Reserved.
+        <PrivacyNote newTab as="div" style={{ marginTop: 6, fontSize: 12.5 }} />
       </div>
     </footer>
   );

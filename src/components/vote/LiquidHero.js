@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import SmartImage from "../SmartImage";
 import { getPath } from "../../utils/basePath";
+import { TEXTURE_STARDUST } from "../../utils/textures";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 
 // Throttle helper
@@ -260,7 +261,7 @@ export const LiquidHero = ({ children, className, members = [], isActive = false
                         style={{ maskImage: maskImageValue, WebkitMaskImage: maskImageValue }}
                     >
                         <div className="absolute inset-0 opacity-90" style={{ background: "linear-gradient(to bottom right, var(--spv-hero-a, #2E1065), var(--spv-hero-b, #7e22ce), var(--spv-hero-c, #ec4899))" }} />
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay" />
+                        <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: TEXTURE_STARDUST }} />
 
                         <div className="absolute inset-0 flex flex-col items-center justify-center select-none overflow-hidden">
                             <motion.div style={{ x: textParallaxX1 }}>

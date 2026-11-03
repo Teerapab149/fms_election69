@@ -372,7 +372,7 @@ export default function FmsOfficialSingleParty({
 
             <p className="fo-sb__privacy">
               <ShieldCheck size={14} aria-hidden />
-              บันทึกเฉพาะตัวเลือกในรูปแบบเข้ารหัส ไม่ผูกกับบัญชีของคุณ
+              บันทึกเฉพาะตัวเลือกในรูปแบบเข้ารหัส และเก็บแยกจากชื่อบัญชีของคุณ
             </p>
           </div>
         </aside>

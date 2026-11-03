@@ -13,6 +13,7 @@
 import { getPath } from "../../utils/basePath";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { Loader2, AlertCircle, LogIn, FlaskConical, ArrowLeft } from "lucide-react";
+import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../PrivacyNote";
 
 export default function ReceiptLogin({
   error, loading, onLogin, showMock = false, mockStudentId, setMockStudentId, mockLoading, onMockLogin, onBack, onAdmin,
@@ -37,6 +38,7 @@ export default function ReceiptLogin({
           {loading ? <><Loader2 className="rcl-spin" size={18} /> กำลังเชื่อมต่อระบบ…</> : <><LogIn size={18} strokeWidth={2} /> เข้าสู่ระบบด้วย PSU Passport</>}
         </button>
         <p className="rcl-hint">ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย</p>
+        <PrivacyNote lead={PRIVACY_LOGIN_LEAD} style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.6, color: "var(--rc-ink)" }} />
 
         {showMock && (
           <div className="rcl-mock">

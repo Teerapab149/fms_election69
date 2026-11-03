@@ -17,6 +17,7 @@
 // HARDCODED here per Rule 9. editorMode renders statically (no real nav/signIn).
 
 import { getPath } from "../../utils/basePath";
+import PrivacyNote from "../PrivacyNote";
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -103,6 +104,7 @@ export function VerdureFooter() {
   return (
     <footer className="vd-footer">
       © {g.facultyShortEn || "FMS"}@{g.university || "PSU"} {g.copyrightYear || new Date().getFullYear()}. All Rights Reserved.
+      <PrivacyNote newTab as="div" style={{ marginTop: 8, fontSize: 12, letterSpacing: ".04em", textTransform: "none", fontWeight: 400 }} />
     </footer>
   );
 }

@@ -31,6 +31,7 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import StudioDarkShell from "./StudioDarkShell";
+import PrivacyNote from "../PrivacyNote";
 import StudioDarkPartyIntro from "./StudioDarkPartyIntro";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
 
@@ -358,6 +359,8 @@ export default function StudioDarkSingleParty({
         </div>
       </section>
       </div>{/* /sds-live-wrap */}
+        <PrivacyNote newTab style={{ marginTop: 0, marginBottom: 24, fontSize: 13, color: "var(--sd-ink-2)" }} />
+
 
       {/* CONFIRM — double-check (the vote is one-shot). Entrance animates;
           close is INSTANT — exit callbacks hang under forced reduced-motion

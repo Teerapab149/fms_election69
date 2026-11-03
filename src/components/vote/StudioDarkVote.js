@@ -22,6 +22,7 @@
 
 import { Check } from "lucide-react";
 import StudioDarkShell from "./StudioDarkShell";
+import PrivacyNote from "../PrivacyNote";
 import StudioDarkSingleParty from "./StudioDarkSingleParty";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
@@ -183,6 +184,7 @@ export default function StudioDarkVote({
             {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน →"}
           </button>
         </div>
+        <PrivacyNote newTab style={{ marginTop: 20, marginBottom: 24, fontSize: 13, color: "var(--sd-ink-2)" }} />
       </div>
 
       <style jsx global>{`

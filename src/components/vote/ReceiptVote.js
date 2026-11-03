@@ -36,6 +36,7 @@
 // indicator, not gated content).
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import PrivacyNote from "../PrivacyNote";
 import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
@@ -545,6 +546,7 @@ export default function ReceiptVote({
       {/* ===== footer — classic single centered line ===== */}
       <footer className="rc-vote-footer">
         <p>© {gc.facultyShortEn || "FMS"}@{gc.university || "PSU"}{copyrightYear !== "" ? ` ${copyrightYear}` : ""}. All Rights Reserved.</p>
+        <PrivacyNote newTab style={{ marginTop: 8, marginBottom: 104, fontSize: 12, letterSpacing: ".04em", textTransform: "none", fontWeight: 400 }} />
       </footer>
 
       <style jsx global>{`
