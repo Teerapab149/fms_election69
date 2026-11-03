@@ -7,9 +7,6 @@ const { defineConfig } = require('@playwright/test');
 // global.teardown.js stops the server and truncates the test DB (keeping it).
 module.exports = defineConfig({
   testDir: './e2e',
-  // admin-console.spec.js is a legacy editor suite (stale red cases, runbook §4.1),
-  // not part of the R11 vote-net — keep it out of the default run.
-  testIgnore: '**/admin-console.spec.js',
   timeout: 60000,
   expect: { timeout: 10000 },
   fullyParallel: false,

@@ -1,595 +1,366 @@
 // @ts-check
+// Admin console, pressed through a real browser on the ISOLATED test DB
+// (`<devName>_e2e`) + prod build. The console was rebuilt (control center, general
+// settings, parties, theme chooser, readiness, manual); the cases below walk the
+// screens as they are now. Closing the box, publishing, certifying and the staff
+// account are in staff-rehearsal.spec.js, and are not repeated here.
+//
+// Nothing here changes election state: edits are typed and then cancelled, the
+// theme change is cancelled at the confirm dialog, and the DB is checked after.
+//
+// One committee login (API) is shared by every case through the admin_token
+// cookie. /api/admin/login allows 10 attempts / 5 min per X-Forwarded-For and
+// every spec's adminLogin() shares the unmarked bucket, so the cases that
+// type credentials into the form carry their own made-up address.
 const { test, expect } = require('@playwright/test');
+const { E2E_ADMIN_PASSWORD, ADMIN_STUDENT_ID } = require('./helpers/seed');
+const { BASE_PATH, SERVER, prisma, adminLogin, disconnect } = require('./helpers/fixtures');
 
-const BASE = '/admin';
-const LOGIN_URL = '/admin/login';
+const ADMIN = `${BASE_PATH}/admin`;
+const LOGIN = `${BASE_PATH}/admin/login`;
 
-// Admin credentials: username is a seeded admin id, password comes from the environment
-const ADMIN_USERNAME = '9950000101';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+// sidebar label, top-bar title and a heading that only that tab renders
+const TABS = [
+  { id: 'overview', label: 'ศูนย์ควบคุม', heading: 'โหมดการทำงานของระบบ' },
+  { id: 'globalConfig', label: 'ตั้งค่าทั่วไป', heading: 'ตั้งค่าทั่วไป' },
+  { id: 'candidates', label: 'จัดการผู้สมัคร', heading: 'พรรคผู้สมัคร' },
+  { id: 'pageDesign', label: 'เลือกธีม', heading: 'เลือกธีมเว็บไซต์' },
+  { id: 'settings', label: 'ความพร้อมและระบบ', heading: 'ตรวจความพร้อมระบบ' },
+  { id: 'manual', label: 'คู่มือใช้งาน', heading: 'คู่มือใช้งาน ทำอะไรก่อนหลัง' },
+];
 
-/**
- * Helper: login to admin panel through the login page
- */
-async function loginAsAdmin(page) {
-  await page.goto(LOGIN_URL, { waitUntil: 'networkidle', timeout: 30000 });
-  await page.waitForTimeout(1000);
+const RUN = Number(`${Date.now()}`.slice(-6));
+let xffSeq = 0;
+const nextXff = () => `203.0.113.${(RUN + ++xffSeq) % 250 + 1}`;
 
-  // Fill in login form
-  const usernameInput = page.locator('input[type="text"]');
-  const passwordInput = page.locator('input[type="password"]');
+/** @type {string} */
+let adminToken = '';
 
-  await usernameInput.fill(ADMIN_USERNAME);
-  await passwordInput.fill(ADMIN_PASSWORD);
-
-  // Click login button
-  const loginBtn = page.locator('button[type="submit"]');
-  await loginBtn.click();
-
-  // Wait for redirect to admin page
-  await page.waitForURL('**/admin', { timeout: 15000 }).catch(() => {});
-  await page.waitForTimeout(2000);
+/** Fresh page that is already signed in as the committee admin. */
+async function adminPage(browser, viewport) {
+  const ctx = await browser.newContext(viewport ? { viewport } : {});
+  await ctx.addCookies([{ name: 'admin_token', value: adminToken, url: SERVER }]);
+  const page = await ctx.newPage();
+  /** @type {string[]} */
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+  return { ctx, page, pageErrors };
 }
 
-/**
- * Helper: navigate to a specific admin tab
- */
-async function goToTab(page, tabName) {
-  const btn = page.locator('nav button, aside button').filter({ hasText: tabName });
-  if (await btn.count() > 0) {
-    await btn.first().click();
-    await page.waitForTimeout(2000);
-  }
+async function openTab(page, id, heading) {
+  await page.goto(`${ADMIN}?tab=${id}`);
+  await expect(page.getByRole('heading', { name: heading, exact: true }).first()).toBeVisible({ timeout: 20000 });
 }
 
-// ─────────────────────────────────────────────────────────
-// Module 1: Template Selection (เลือก Template)
-// ─────────────────────────────────────────────────────────
-test.describe('Module 1: Template Selection', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ออกแบบหน้าเว็บ');
+test.describe('Admin console (isolated test DB)', () => {
+  test.beforeAll(async () => {
+    adminToken = (await adminLogin()).replace('admin_token=', '');
   });
 
-  test('TC1.1 - Click "สนุกสนาน" (Playful) template shows confirmation modal', async ({ page }) => {
-    // Look for the Playful template card
-    const playfulCard = page.locator('button', { hasText: 'สนุกสนาน' }).first();
-    await expect(playfulCard).toBeVisible({ timeout: 10000 });
-    await playfulCard.click();
-    await page.waitForTimeout(1000);
-
-    // Wait for confirmation modal to appear
-    // ConfirmModal component is used in PageDesignTab for template application
-    const modal = page.locator('div[class*="fixed"]').filter({ hasText: /ยืนยัน|ต้องการ|template/i });
-    await expect(modal.first()).toBeVisible({ timeout: 5000 });
+  test.afterAll(async () => {
+    await disconnect();
   });
 
-  test('TC1.2 - Click "Confirm" in template modal → Live Preview updates to Playful design', async ({ page }) => {
-    // Click Playful template
-    const playfulCard = page.locator('button', { hasText: 'สนุกสนาน' }).first();
-    await playfulCard.click();
-    await page.waitForTimeout(1000);
+  test('login page: form fields, show-password eye, and a wrong password stays on the page with an error', async ({ browser }) => {
+    const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Forwarded-For': nextXff() } });
+    const page = await ctx.newPage();
+    await page.goto(LOGIN);
 
-    // Find and click confirm button in modal
-    const confirmBtn = page.locator('button').filter({ hasText: /ยืนยัน|ตกลง/i });
-    await expect(confirmBtn.first()).toBeVisible({ timeout: 5000 });
-    await confirmBtn.first().click();
-    await page.waitForTimeout(1500);
+    await expect(page.getByRole('heading', { name: 'เข้าสู่ระบบจัดการ' })).toBeVisible();
+    const user = page.locator('#admin-username');
+    const pass = page.locator('#admin-password');
+    await expect(user).toBeVisible();
+    await expect(pass).toHaveAttribute('type', 'password');
+    await expect(page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true })).toBeVisible();
 
-    // Check that the active preset indicator now says "สนุกสนาน"
-    const activeIndicator = page.locator('span[class*="rounded-full"]').filter({ hasText: /สนุกสนาน/ });
-    await expect(activeIndicator.first()).toBeVisible({ timeout: 5000 });
+    await pass.fill('x-secret');
+    await page.getByRole('button', { name: 'แสดงรหัสผ่าน' }).click();
+    await expect(pass).toHaveAttribute('type', 'text');
+
+    await user.fill(ADMIN_STUDENT_ID);
+    await pass.fill('definitely-not-the-password');
+    await page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).click();
+    await expect(page.getByRole('alert')).toBeVisible({ timeout: 15000 });
+    await expect(page).toHaveURL(/\/admin\/login/);
+    const cookies = await ctx.cookies();
+    expect(cookies.find((c) => c.name === 'admin_token')).toBeUndefined();
+    await ctx.close();
   });
 
-  test('TC1.3 - Click "Cancel" in template modal → active template remains unchanged', async ({ page }) => {
-    // Get current active template text
-    const activePresetBadge = page.locator('span[class*="rounded-full"]').filter({ hasText: /●/ });
-    const initialText = await activePresetBadge.first().textContent({ timeout: 5000 });
+  test('login with the committee password lands on the console and shows who is signed in', async ({ browser }) => {
+    const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Forwarded-For': nextXff() } });
+    const page = await ctx.newPage();
+    await page.goto(LOGIN);
+    await page.locator('#admin-username').fill(ADMIN_STUDENT_ID);
+    await page.locator('#admin-password').fill(E2E_ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).click();
+    await page.waitForURL(/\/admin(\?|$)/, { timeout: 20000 });
 
-    // Click a different template  
-    const playfulCard = page.locator('button', { hasText: 'โมเดิร์นดาร์ก' }).first();
-    await playfulCard.click();
-    await page.waitForTimeout(1000);
+    const header = page.locator('header');
+    await expect(header.getByText('ผู้ดูแลระบบ', { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(header.getByText(ADMIN_STUDENT_ID)).toBeVisible();
+    await ctx.close();
+  });
 
-    // Click cancel button in modal
-    const cancelBtn = page.locator('button').filter({ hasText: /ยกเลิก|cancel/i });
-    if (await cancelBtn.count() > 0) {
-      await cancelBtn.first().click();
-      await page.waitForTimeout(500);
+  test('without a session /admin sends the visitor to the login page and shows no console', async ({ browser }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(ADMIN);
+    await page.waitForURL(/\/admin\/login/, { timeout: 20000 });
+    await expect(page.getByRole('heading', { name: 'เข้าสู่ระบบจัดการ' })).toBeVisible();
+    await expect(page.locator('aside[aria-label="เมนูหลัก"]')).toHaveCount(0);
+    await ctx.close();
+  });
 
-      // Verify the active template remains unchanged
-      const finalText = await activePresetBadge.first().textContent();
-      expect(finalText).toBe(initialText);
+  test('sidebar lists every menu item, marks the current one, and each tab shows its own content', async ({ browser }) => {
+    const { ctx, page, pageErrors } = await adminPage(browser);
+    await page.goto(ADMIN);
+
+    const side = page.locator('aside[aria-label="เมนูหลัก"]');
+    await expect(side).toBeVisible({ timeout: 20000 });
+    for (const t of TABS) await expect(side.getByRole('button', { name: t.label, exact: true })).toBeVisible();
+    await expect(side.getByRole('button', { name: 'ออกจากระบบ' })).toBeVisible();
+    // the test tools stay out of the menu unless the server switches them on
+    await expect(side.getByRole('button', { name: 'เครื่องมือทดสอบ' })).toHaveCount(0);
+
+    for (const t of TABS) {
+      await side.getByRole('button', { name: t.label, exact: true }).click();
+      await expect(page.getByRole('heading', { name: t.heading, exact: true }).first()).toBeVisible({ timeout: 20000 });
+      await expect(side.getByRole('button', { name: t.label, exact: true })).toHaveAttribute('aria-current', 'page');
+      await expect(page.locator('main')).toBeVisible();
+      await expect(page.getByText('Something went wrong')).toHaveCount(0);
     }
+    expect(pageErrors, `uncaught page errors: ${pageErrors.join(' | ')}`).toEqual([]);
+    await ctx.close();
   });
 
-  test('TC1.4 - [Edge Case] Rapid template clicking - modals do not stack/overlap', async ({ page }) => {
-    const templates = ['คลาสสิก', 'โมเดิร์นดาร์ก', 'สนุกสนาน', 'มินิมอล'];
+  test('control center: the current mode matches the DB and only the current mode is locked', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'overview', 'โหมดการทำงานของระบบ');
 
-    for (const name of templates) {
-      const card = page.locator('button', { hasText: name }).first();
-      if (await card.isVisible()) {
-        await card.click();
-        await page.waitForTimeout(200);
-        // Try to dismiss modal quickly if it appears
-        const cancelBtn = page.locator('button').filter({ hasText: /ยกเลิก/i });
-        if (await cancelBtn.count() > 0 && await cancelBtn.first().isVisible()) {
-          await cancelBtn.first().click();
-          await page.waitForTimeout(100);
-        }
-      }
-    }
+    const cfg = await prisma().systemConfig.findUnique({ where: { id: 1 }, select: { systemMode: true } });
+    expect(cfg.systemMode).toBe('MANUAL_OPEN'); // the seed; OPEN on screen
+    const group = page.getByRole('group', { name: 'เลือกโหมดระบบ' });
+    const current = group.locator('button[aria-pressed="true"]');
+    await expect(current).toHaveCount(1);
+    await expect(current).toContainText('OPEN');
+    await expect(current).toContainText('ใช้อยู่ตอนนี้');
+    await expect(current).toBeDisabled();
 
-    await page.waitForTimeout(500);
-    // Verify page didn't crash - check for error boundaries
-    const errorBoundary = page.locator('text=Something went wrong');
-    await expect(errorBoundary).toHaveCount(0);
-
-    // Page content should still be rendered
-    const mainContent = page.locator('main');
-    await expect(mainContent).toBeVisible();
-  });
-});
-
-// ─────────────────────────────────────────────────────────
-// Module 2: Page Navigation (เลือกหน้าเว็บที่ต้องการแก้ไข)
-// ─────────────────────────────────────────────────────────
-test.describe('Module 2: Page Navigation', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ออกแบบหน้าเว็บ');
+    // the closing steps show, and the turnout card equals what the server counts
+    // (specs that ran earlier in the same run already cast votes, so no fixed number)
+    await expect(page.getByRole('heading', { name: 'ขั้นตอนปิดการเลือกตั้ง' })).toBeVisible();
+    const api = await page.request.get(`${BASE_PATH}/api/admin/dashboard`);
+    expect(api.status()).toBe(200);
+    const { votedCount, totalVoters } = (await api.json()).stats;
+    expect(totalVoters).toBeGreaterThan(0);
+    await expect(page.getByText('ผู้ใช้สิทธิ์แล้ว')).toBeVisible();
+    await expect(page.locator('p', { hasText: `${votedCount.toLocaleString()} / ${totalVoters.toLocaleString()} คน` }).first()).toBeVisible();
+    await ctx.close();
   });
 
-  test('TC2.1 - Click "รายชื่อผู้สมัคร" (Candidates) tab → panel and preview update', async ({ page }) => {
-    const candidatesTab = page.locator('button').filter({ hasText: 'รายชื่อผู้สมัคร' });
-    // There might be multiple buttons with this text (sidebar + page selector), find the page selector one
-    const pageSelector = candidatesTab.last();
-    await expect(pageSelector).toBeVisible({ timeout: 10000 });
-    await pageSelector.click();
-    await page.waitForTimeout(1500);
+  test('parties tab: both seeded parties as cards, and a card opens the edit dialog with its name', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'candidates', 'พรรคผู้สมัคร');
 
-    // Check the editing indicator shows the candidates page
-    const editingIndicator = page.locator('span[class*="font-bold"]').filter({ hasText: 'รายชื่อผู้สมัคร' });
-    await expect(editingIndicator.first()).toBeVisible();
+    const parties = await prisma().candidate.findMany({ where: { number: { gt: 0 } }, orderBy: { number: 'asc' }, select: { name: true } });
+    expect(parties.length).toBe(2);
+    await expect(page.getByText(`${parties.length} พรรค`, { exact: true })).toBeVisible();
+    for (const p of parties) await expect(page.getByText(p.name, { exact: true }).first()).toBeVisible();
+    // the two special options are made by the system and are not listed as parties
+    await expect(page.getByText('งดออกเสียง', { exact: true })).toHaveCount(0);
+
+    await page.getByText(parties[0].name, { exact: true }).first().click();
+    const dialogName = page.locator('input[value="' + parties[0].name + '"]');
+    await expect(dialogName.first()).toBeVisible({ timeout: 10000 });
+    await page.getByRole('button', { name: 'ปิด', exact: true }).first().click();
+    await expect(dialogName).toHaveCount(0);
+    await ctx.close();
   });
 
-  test('TC2.2 - Loading states during tab switching - no blank white screen', async ({ page }) => {
-    const tabs = ['หน้าลงคะแนน', 'ผลคะแนน', 'รายชื่อผู้สมัคร', 'หน้าหลัก'];
+  test('theme chooser: the live theme is marked, and cancelling the confirm dialog changes nothing', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'pageDesign', 'เลือกธีมเว็บไซต์');
 
-    for (const tabName of tabs) {
-      // Use the page selector buttons (not sidebar)
-      const tab = page.locator('button').filter({ hasText: tabName });
-      const pageTab = tab.last();
-      if (await pageTab.isVisible()) {
-        await pageTab.click();
-        await page.waitForTimeout(1500);
+    const before = await prisma().systemConfig.findUnique({ where: { id: 1 }, select: { activeTemplateId: true } });
+    await expect(page.getByText('กำลังใช้งานอยู่')).toBeVisible();
 
-        // Verify no blank white screen - main content must be present
-        const mainContent = page.locator('main');
-        await expect(mainContent).toBeVisible();
+    // pick any other family from the list, then try to apply it
+    const other = page.locator('[role="button"][aria-label^="เลือกธีม "]:visible').filter({ hasNotText: 'Receipt Paper' }).first();
+    await expect(other).toBeVisible();
+    const otherName = ((await other.getAttribute('aria-label')) || '').replace('เลือกธีม ', '');
+    await other.click();
+    await expect(page.getByRole('heading', { name: otherName, exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'ใช้ธีมนี้', exact: true }).click();
 
-        // Verify no uncaught errors
-        const errorText = page.locator('text=Something went wrong');
-        await expect(errorText).toHaveCount(0);
-      }
-    }
-  });
-});
+    await expect(page.getByRole('heading', { name: /^ใช้ธีม “.+”\?$/ })).toBeVisible();
+    // the box is open in this DB, so the dialog must warn about changing mid-vote
+    await expect(page.getByText('หีบกำลังเปิดรับคะแนนอยู่')).toBeVisible();
+    await page.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /^ใช้ธีม “/ })).toHaveCount(0);
 
-// ─────────────────────────────────────────────────────────
-// Module 3: Main Sections (Drag & Drop & Visibility)
-// ─────────────────────────────────────────────────────────
-test.describe('Module 3: Main Sections (Reorder & Visibility)', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ออกแบบหน้าเว็บ');
+    const after = await prisma().systemConfig.findUnique({ where: { id: 1 }, select: { activeTemplateId: true } });
+    expect(after.activeTemplateId).toBe(before.activeTemplateId);
+    await ctx.close();
   });
 
-  test('TC3.1 - Section list is displayed with reorder and visibility controls', async ({ page }) => {
-    // Ensure on Home page
-    const homePage = page.locator('button').filter({ hasText: 'หน้าหลัก' }).last();
-    if (await homePage.isVisible()) {
-      await homePage.click();
-      await page.waitForTimeout(1000);
-    }
+  test('general settings: rows open to their fields, edits are counted, and cancel puts every value back', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'globalConfig', 'ตั้งค่าทั่วไป');
 
-    // Verify section items exist (looking for section type labels)
-    const sectionLabels = ['Hero', 'Meet Candidates', 'สถิติ', 'Banner', 'โหวต'];
-    let foundSections = 0;
+    await expect(page.getByRole('heading', { name: /^เตรียมการเลือกตั้ง / })).toBeVisible();
+    await expect(page.getByRole('progressbar')).toBeVisible();
+    // no changes yet, so no save bar
+    await expect(page.getByRole('button', { name: 'บันทึก', exact: true })).toHaveCount(0);
 
-    for (const label of sectionLabels) {
-      const section = page.locator('span').filter({ hasText: new RegExp(label, 'i') });
-      if (await section.count() > 0) {
-        foundSections++;
-      }
-    }
+    await page.getByRole('button', { name: /^ครั้งที่และปีการศึกษา/ }).click();
+    const year = page.locator('#gc-academicYearTh');
+    const prefix = page.locator('#gc-electionNamePrefix');
+    await expect(year).toBeVisible();
+    const yearBefore = await year.inputValue();
+    const prefixBefore = await prefix.inputValue();
 
-    expect(foundSections).toBeGreaterThan(0);
+    await year.fill('2570');
+    await expect(year).toHaveValue('2570');
+    await expect(page.getByText(/แก้ไข 1 ช่อง ยังไม่ได้บันทึก/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'บันทึก', exact: true })).toBeEnabled();
+
+    await prefix.fill('SAMO TEST');
+    await expect(page.getByText(/แก้ไข 2 ช่อง ยังไม่ได้บันทึก/)).toBeVisible();
+
+    await page.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
+    await expect(year).toHaveValue(yearBefore);
+    await expect(prefix).toHaveValue(prefixBefore);
+    await expect(page.getByText(/ยังไม่ได้บันทึก/)).toHaveCount(0);
+    await ctx.close();
   });
 
-  test('TC3.2 - Toggle visibility switch exists and is clickable', async ({ page }) => {
-    const homePage = page.locator('button').filter({ hasText: 'หน้าหลัก' }).last();
-    if (await homePage.isVisible()) {
-      await homePage.click();
-      await page.waitForTimeout(1000);
-    }
+  test('general settings: organization names take emoji and angle brackets, and a 200 character name does not break the layout', async ({ browser }) => {
+    const { ctx, page, pageErrors } = await adminPage(browser);
+    await openTab(page, 'globalConfig', 'ตั้งค่าทั่วไป');
 
-    // Find Eye/EyeOff toggle buttons
-    const eyeButtons = page.locator('button[class*="rounded-lg"]').filter({
-      has: page.locator('svg')
-    });
+    await page.getByRole('button', { name: /^ข้อมูลองค์กร/ }).click();
+    const committee = page.locator('#gc-committeeName');
+    await expect(committee).toBeVisible();
 
-    const eyeCount = await eyeButtons.count();
-    expect(eyeCount).toBeGreaterThan(0);
+    const odd = 'สโมสรนักศึกษา 🚀 <test>';
+    await committee.fill(odd);
+    await expect(committee).toHaveValue(odd);
+    // the typed field is counted, along with the full name built from it
+    await expect(page.getByText(/แก้ไข \d+ ช่อง ยังไม่ได้บันทึก/)).toBeVisible();
 
-    // Click first eye button to toggle visibility
-    if (eyeCount > 0) {
-      await eyeButtons.first().click();
-      await page.waitForTimeout(500);
+    const long = 'A'.repeat(200);
+    await committee.fill(long);
+    await expect(committee).toHaveValue(long);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, 'page grew a horizontal scrollbar').toBeLessThanOrEqual(0);
+    await expect(page.locator('main')).toBeVisible();
 
-      // No crash
-      const errorBoundary = page.locator('text=Something went wrong');
-      await expect(errorBoundary).toHaveCount(0);
-    }
+    await page.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
+    await expect(committee).not.toHaveValue(long);
+    expect(pageErrors).toEqual([]);
+    await ctx.close();
   });
 
-  test('TC3.3 - [Edge Case] Page does not crash when interacting with sections', async ({ page }) => {
-    const homePage = page.locator('button').filter({ hasText: 'หน้าหลัก' }).last();
-    if (await homePage.isVisible()) {
-      await homePage.click();
-      await page.waitForTimeout(1000);
-    }
+  test('leaving general settings with unsaved edits asks first, staying keeps the edit, leaving writes nothing', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'globalConfig', 'ตั้งค่าทั่วไป');
+    await page.getByRole('button', { name: /^ครั้งที่และปีการศึกษา/ }).click();
+    await page.locator('#gc-academicYearTh').fill('2571');
 
-    // Verify no crash
-    const errorBoundary = page.locator('text=Something went wrong');
-    await expect(errorBoundary).toHaveCount(0);
+    await page.locator('aside[aria-label="เมนูหลัก"]').getByRole('button', { name: 'ศูนย์ควบคุม', exact: true }).click();
+    // a dialog stands in the way and the control center has not opened
+    const ask = page.getByRole('alertdialog');
+    await expect(ask).toBeVisible();
+    await expect(ask).toContainText('ยังไม่ได้บันทึกการแก้ไขในตั้งค่าทั่วไป');
+    await expect(page.getByRole('heading', { name: 'โหมดการทำงานของระบบ' })).toHaveCount(0);
 
-    const mainContent = page.locator('main');
-    await expect(mainContent).toBeVisible();
-  });
-});
+    // staying keeps the typed value on the same screen
+    await ask.getByRole('button', { name: 'กลับไปบันทึก' }).click();
+    await expect(ask).toHaveCount(0);
+    await expect(page.locator('#gc-academicYearTh')).toHaveValue('2571');
 
-// ─────────────────────────────────────────────────────────
-// Module 4: Element & Style Editing
-// ─────────────────────────────────────────────────────────
-test.describe('Module 4: Element & Style Editing', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ออกแบบหน้าเว็บ');
-  });
-
-  test('TC4.1 - Color/theme section is visible in the template area', async ({ page }) => {
-    // Look for the template palette section
-    const templateSection = page.locator('div').filter({ hasText: /เลือก Template/i });
-    await expect(templateSection.first()).toBeVisible({ timeout: 10000 });
-
-    // Look for color swatches (the colored circles in template cards)
-    const colorSwatches = page.locator('span[class*="rounded-full"][style*="background"]');
-    const swatchCount = await colorSwatches.count();
-    expect(swatchCount).toBeGreaterThan(0);
+    // leaving without saving goes on to the control center, and nothing was written
+    await page.locator('aside[aria-label="เมนูหลัก"]').getByRole('button', { name: 'ศูนย์ควบคุม', exact: true }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'ออกโดยไม่บันทึก' }).click();
+    await expect(page.getByRole('heading', { name: 'โหมดการทำงานของระบบ' })).toBeVisible({ timeout: 15000 });
+    const saved = await prisma().systemConfig.findUnique({ where: { id: 1 }, select: { globalConfig: true } });
+    expect(JSON.stringify(saved.globalConfig || {})).not.toContain('2571');
+    await ctx.close();
   });
 
-  test('TC4.2 - [Edge Case] UI does not crash after template interactions', async ({ page }) => {
-    // Click a template card (which shows colors)
-    const templateCards = page.locator('button').filter({ hasText: 'มินิมอล' });
-    if (await templateCards.count() > 0) {
-      await templateCards.first().click();
-      await page.waitForTimeout(500);
+  test('readiness tab: the check ran, counts add up to the rows shown, and the re-check button works', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'settings', 'ตรวจความพร้อมระบบ');
 
-      // Confirm
-      const confirmBtn = page.locator('button').filter({ hasText: /ยืนยัน|ตกลง/i });
-      if (await confirmBtn.count() > 0) {
-        await confirmBtn.first().click();
-        await page.waitForTimeout(1000);
-      }
-    }
+    await expect(page.getByText(/ตรวจล่าสุด \d{1,2}:\d{2}/)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText('กำหนดการปัจจุบัน')).toBeVisible();
 
-    // Verify page didn't crash
-    const errorBoundary = page.locator('text=Something went wrong');
-    await expect(errorBoundary).toHaveCount(0);
+    // the same numbers the API reports for this DB
+    const res = await page.request.get(`${BASE_PATH}/api/admin/readiness`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.checks.length).toBeGreaterThan(0);
+    const { pass, warn, fail } = body.summary;
+    expect(pass + warn + fail).toBe(body.checks.length);
+    await expect(page.getByText(`ผ่าน ${pass}`, { exact: true })).toBeVisible();
+    await expect(page.getByText(`เตือน ${warn}`, { exact: true })).toBeVisible();
+    await expect(page.getByText(`ไม่ผ่าน ${fail}`, { exact: true })).toBeVisible();
+    expect(body.testToolsEnabled).toBe(false);
 
-    const mainContent = page.locator('main');
-    await expect(mainContent).toBeVisible();
-  });
-});
+    // the seed has two parties with no logo: the readiness list must say so
+    await expect(page.getByText('ความครบถ้วนของข้อมูลพรรค', { exact: true })).toBeVisible();
+    await expect(page.getByText(/มีพรรคผู้สมัคร 2 พรรค/).first()).toBeVisible();
 
-// ─────────────────────────────────────────────────────────
-// Module 5: Stateful Elements
-// ─────────────────────────────────────────────────────────
-test.describe('Module 5: Stateful Elements', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ออกแบบหน้าเว็บ');
+    const recheck = page.getByRole('button', { name: 'ตรวจซ้ำ', exact: true });
+    await expect(recheck).toBeEnabled();
+    await recheck.click();
+    await expect(recheck).toBeEnabled({ timeout: 20000 });
+    await expect(page.getByText(/ตรวจล่าสุด \d{1,2}:\d{2}/)).toBeVisible();
+    await ctx.close();
   });
 
-  test('TC5.1 - Live Preview renders with stateful content (countdown/status)', async ({ page }) => {
-    // Check for Live Preview panel
-    const livePreview = page.locator('div').filter({ hasText: /Live Preview/i });
-    await expect(livePreview.first()).toBeVisible({ timeout: 10000 });
+  test('manual tab: chips jump to the tab they name', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser);
+    await openTab(page, 'manual', 'คู่มือใช้งาน ทำอะไรก่อนหลัง');
+    await expect(page.getByText('เข้าสู่ระบบ', { exact: false }).first()).toBeVisible();
 
-    // Verify no crash
-    const errorBoundary = page.locator('text=Something went wrong');
-    await expect(errorBoundary).toHaveCount(0);
+    await page.locator('main').getByRole('button', { name: 'ตั้งค่าทั่วไป', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'ตั้งค่าทั่วไป', exact: true }).first()).toBeVisible({ timeout: 15000 });
+    await ctx.close();
   });
 
-  test('TC5.2 - State tabs can be switched without crash', async ({ page }) => {
-    // Navigate and interact with the page - check for any state toggle areas
-    const mainContent = page.locator('main');
-    await expect(mainContent).toBeVisible();
+  test('phone width: the menu hides behind a button and opens as a drawer', async ({ browser }) => {
+    const { ctx, page } = await adminPage(browser, { width: 390, height: 844 });
+    await page.goto(ADMIN);
+    const open = page.getByRole('button', { name: 'เปิดเมนู' });
+    await expect(open).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: 'โหมดการทำงานของระบบ' })).toBeVisible();
 
-    // Verify no crash
-    const errorBoundary = page.locator('text=Something went wrong');
-    await expect(errorBoundary).toHaveCount(0);
-  });
-});
-
-// ─────────────────────────────────────────────────────────
-// Module 6: Global Settings (ตั้งค่าทั่วไป)
-// ─────────────────────────────────────────────────────────
-test.describe('Module 6: Global Settings', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ตั้งค่าทั่วไป');
+    await open.click();
+    const side = page.locator('aside[aria-label="เมนูหลัก"]');
+    await side.getByRole('button', { name: 'ตั้งค่าทั่วไป', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'ตั้งค่าทั่วไป', exact: true }).first()).toBeVisible({ timeout: 15000 });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await ctx.close();
   });
 
-  test('TC6.1 - Global config tab loads with form fields', async ({ page }) => {
-    // Check for the Global Config heading
-    const heading = page.locator('h2').filter({ hasText: 'ตั้งค่าทั่วไป' });
-    await expect(heading).toBeVisible({ timeout: 10000 });
+  test('logout ends the session: the console is gone and /admin asks for a login again', async ({ browser }) => {
+    const ctx = await browser.newContext({ extraHTTPHeaders: { 'X-Forwarded-For': nextXff() } });
+    const page = await ctx.newPage();
+    await page.goto(LOGIN);
+    await page.locator('#admin-username').fill(ADMIN_STUDENT_ID);
+    await page.locator('#admin-password').fill(E2E_ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).click();
+    await page.waitForURL(/\/admin(\?|$)/, { timeout: 20000 });
+    await expect(page.locator('aside[aria-label="เมนูหลัก"]')).toBeVisible({ timeout: 20000 });
 
-    // Check for form inputs
-    const inputs = page.locator('input');
-    const inputCount = await inputs.count();
-    expect(inputCount).toBeGreaterThan(0);
-  });
-
-  test('TC6.2 - Change election name → input accepts and holds the value', async ({ page }) => {
-    // Find the election name input - look for label "ชื่อการเลือกตั้ง"
-    const label = page.locator('label').filter({ hasText: 'ชื่อการเลือกตั้ง' });
-    await expect(label.first()).toBeVisible({ timeout: 10000 });
-
-    // Find the input field associated with it (sibling)
-    const inputField = label.first().locator('..').locator('..').locator('input').first();
-    await inputField.clear();
-    await inputField.fill('SAMO 50 TEST');
-    await page.waitForTimeout(500);
-
-    const value = await inputField.inputValue();
-    expect(value).toBe('SAMO 50 TEST');
-  });
-
-  test('TC6.3 - Enter academic year 2570 → system accepts numeric value', async ({ page }) => {
-    const yearLabel = page.locator('label').filter({ hasText: 'ปีการศึกษา' });
-    await expect(yearLabel.first()).toBeVisible({ timeout: 10000 });
-
-    const inputField = yearLabel.first().locator('..').locator('..').locator('input').first();
-    await inputField.clear();
-    await inputField.fill('2570');
-    await page.waitForTimeout(500);
-
-    const value = await inputField.inputValue();
-    expect(value).toBe('2570');
-  });
-
-  test('TC6.4 - [Edge Case] Special characters and emojis in organization name', async ({ page }) => {
-    const orgLabel = page.locator('label').filter({ hasText: 'ชื่อองค์กร' });
-
-    if (await orgLabel.count() > 0) {
-      await expect(orgLabel.first()).toBeVisible({ timeout: 10000 });
-      const inputField = orgLabel.first().locator('..').locator('..').locator('input').first();
-      const testValue = 'สโมสรนักศึกษา 🚀 <test>';
-      await inputField.clear();
-      await inputField.fill(testValue);
-      await page.waitForTimeout(500);
-
-      // Should not crash
-      const errorBoundary = page.locator('text=Something went wrong');
-      await expect(errorBoundary).toHaveCount(0);
-
-      const value = await inputField.inputValue();
-      expect(value.length).toBeGreaterThan(0);
-    }
-  });
-
-  test('TC6.5 - [Edge Case] Long text (200 chars) in organization name → layout does not break', async ({ page }) => {
-    const orgLabel = page.locator('label').filter({ hasText: 'ชื่อองค์กร' });
-
-    if (await orgLabel.count() > 0) {
-      await expect(orgLabel.first()).toBeVisible({ timeout: 10000 });
-      const inputField = orgLabel.first().locator('..').locator('..').locator('input').first();
-      const longText = 'A'.repeat(200);
-      await inputField.clear();
-      await inputField.fill(longText);
-      await page.waitForTimeout(500);
-
-      // Verify the admin UI doesn't break
-      const errorBoundary = page.locator('text=Something went wrong');
-      await expect(errorBoundary).toHaveCount(0);
-
-      const mainContent = page.locator('main');
-      await expect(mainContent).toBeVisible();
-
-      const value = await inputField.inputValue();
-      expect(value.length).toBe(200);
-    }
-  });
-
-  test('TC6.6 - Save button is present and clickable', async ({ page }) => {
-    const saveBtn = page.locator('button').filter({ hasText: /บันทึก/i });
-    await expect(saveBtn.first()).toBeVisible({ timeout: 10000 });
-    await expect(saveBtn.first()).toBeEnabled();
-  });
-});
-
-// ─────────────────────────────────────────────────────────
-// Module 7: Top Navigation (Preview Mode & Save/Publish)
-// ─────────────────────────────────────────────────────────
-test.describe('Module 7: Top Navigation (Preview Mode & Save/Publish)', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-    await goToTab(page, 'ออกแบบหน้าเว็บ');
-  });
-
-  test('TC7.1 - Click Mobile icon → Live Preview shows mobile viewport frame', async ({ page }) => {
-    // Find the Mobile toggle button in the preview header
-    const mobileBtn = page.locator('button').filter({ hasText: 'Mobile' });
-    await expect(mobileBtn.first()).toBeVisible({ timeout: 10000 });
-    await mobileBtn.first().click();
-    await page.waitForTimeout(1500);
-
-    // Verify mobile frame container appears (rounded phone bezel)
-    const mobileFrame = page.locator('[class*="rounded-[2.5rem]"]');
-    if (await mobileFrame.count() > 0) {
-      await expect(mobileFrame.first()).toBeVisible();
-    }
-
-    // Switch back to desktop
-    const desktopBtn = page.locator('button').filter({ hasText: 'Desktop' });
-    if (await desktopBtn.count() > 0) {
-      await desktopBtn.first().click();
-      await page.waitForTimeout(500);
-    }
-  });
-
-  test('TC7.2 - Save Draft button stores data to localStorage', async ({ page }) => {
-    const saveDraftBtn = page.locator('button').filter({ hasText: 'บันทึกร่าง' });
-    await expect(saveDraftBtn.first()).toBeVisible({ timeout: 10000 });
-    await saveDraftBtn.first().click();
-    await page.waitForTimeout(1500);
-
-    // Verify data was stored in localStorage
-    const draftData = await page.evaluate(() => localStorage.getItem('preview_draft'));
-    expect(draftData).not.toBeNull();
-
-    // Parse and verify structure
-    if (draftData) {
-      const parsed = JSON.parse(draftData);
-      expect(parsed).toHaveProperty('home');
-      expect(parsed).toHaveProperty('theme');
-    }
-  });
-
-  test('TC7.3 - Publish button triggers confirmation when changes exist', async ({ page }) => {
-    // Make a change by switching template
-    const playfulCard = page.locator('button', { hasText: 'สนุกสนาน' }).first();
-    if (await playfulCard.isVisible()) {
-      await playfulCard.click();
-      await page.waitForTimeout(500);
-
-      const confirmTemplateBtn = page.locator('button').filter({ hasText: /ยืนยัน|ตกลง/i });
-      if (await confirmTemplateBtn.count() > 0) {
-        await confirmTemplateBtn.first().click();
-        await page.waitForTimeout(1000);
-      }
-    }
-
-    // Now click publish button
-    const publishBtn = page.locator('button').filter({ hasText: /เผยแพร่/ });
-    if (await publishBtn.count() > 0 && await publishBtn.first().isEnabled()) {
-      await publishBtn.first().click();
-      await page.waitForTimeout(1000);
-
-      // Confirmation modal should appear
-      const confirmModal = page.locator('div[class*="fixed"]').filter({ hasText: /ยืนยัน|เผยแพร่/i });
-      if (await confirmModal.count() > 0) {
-        await expect(confirmModal.first()).toBeVisible();
-      }
-    }
-  });
-});
-
-// ─────────────────────────────────────────────────────────
-// Module: Admin Page Loading & Sidebar Navigation
-// ─────────────────────────────────────────────────────────
-test.describe('Admin Page Loading & Navigation', () => {
-
-  test('TC-NAV.1 - Admin login page loads correctly', async ({ page }) => {
-    await page.goto(LOGIN_URL, { waitUntil: 'networkidle', timeout: 30000 });
-
-    // Check login form elements
-    const usernameInput = page.locator('input[type="text"]');
-    const passwordInput = page.locator('input[type="password"]');
-    const loginBtn = page.locator('button[type="submit"]');
-
-    await expect(usernameInput).toBeVisible({ timeout: 10000 });
-    await expect(passwordInput).toBeVisible();
-    await expect(loginBtn).toBeVisible();
-
-    // Check heading
-    const heading = page.locator('h1', { hasText: 'Administrator' });
-    await expect(heading).toBeVisible();
-  });
-
-  test('TC-NAV.2 - Admin page loads with sidebar after login', async ({ page }) => {
-    await loginAsAdmin(page);
-
-    // Check sidebar is visible
-    const sidebar = page.locator('aside');
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
-
-    // Check all menu items exist
-    const menuItems = ['ภาพรวม', 'ตั้งค่าทั่วไป', 'จัดการผู้สมัคร', 'ออกแบบหน้าเว็บ', 'ตั้งค่าระบบ'];
-    for (const item of menuItems) {
-      const btn = page.locator('button').filter({ hasText: item });
-      await expect(btn.first()).toBeVisible({ timeout: 10000 });
-    }
-  });
-
-  test('TC-NAV.3 - All sidebar tabs switch content without errors', async ({ page }) => {
-    await loginAsAdmin(page);
-
-    const menuItems = ['ตั้งค่าทั่วไป', 'จัดการผู้สมัคร', 'ออกแบบหน้าเว็บ', 'ตั้งค่าระบบ', 'ภาพรวม'];
-
-    for (const item of menuItems) {
-      const btn = page.locator('nav button, aside button').filter({ hasText: item });
-      await btn.first().click();
-      await page.waitForTimeout(2000);
-
-      // Verify no crash
-      const errorBoundary = page.locator('text=Something went wrong');
-      await expect(errorBoundary).toHaveCount(0);
-
-      // Verify content area is visible
-      const mainContent = page.locator('main');
-      await expect(mainContent).toBeVisible();
-    }
-  });
-
-  test('TC-NAV.4 - Console errors check on admin page', async ({ page }) => {
-    const consoleErrors = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
-
-    await loginAsAdmin(page);
-    await page.waitForTimeout(3000);
-
-    // Filter out expected environment errors
-    const criticalErrors = consoleErrors.filter(e =>
-      !e.includes('favicon') &&
-      !e.includes('net::ERR') &&
-      !e.includes('Failed to load resource') &&
-      !e.includes('hydration') &&
-      !e.includes('Encryption failed') &&
-      !e.includes('Configuration Error') &&
-      !e.includes('NEXT_REDIRECT') &&
-      !e.includes('404')
-    );
-
-    if (criticalErrors.length > 0) {
-      test.info().annotations.push({
-        type: 'warning',
-        description: `Console errors: ${criticalErrors.join('; ')}`
-      });
-    }
+    await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
+    await page.waitForURL(/\/admin\/login/, { timeout: 20000 });
+    await page.goto(ADMIN);
+    await page.waitForURL(/\/admin\/login/, { timeout: 20000 });
+    await expect(page.locator('aside[aria-label="เมนูหลัก"]')).toHaveCount(0);
+    await ctx.close();
   });
 });
