@@ -18,6 +18,9 @@
  */
 const fs = require("fs");
 const path = require("path");
+const { loadEnv } = require("./lib/loadEnv");
+loadEnv();
+
 const { PrismaClient } = require("@prisma/client");
 
 const VALID_YEARS = ["ปี 1", "ปี 2", "ปี 3", "ปี 4"];
