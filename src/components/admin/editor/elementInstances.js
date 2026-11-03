@@ -181,7 +181,7 @@ export const ELEMENT_INSTANCES = {
     stateResolverKey: "countdown",
     states: [
       { id: "before",      label: "ก่อนเริ่ม",             description: "ก่อนถึงเวลาเริ่มเลือกตั้ง" },
-      { id: "running",     label: "กำลังเลือกตั้ง",        description: "อยู่ในช่วงเลือกตั้ง — นับถอยหลังจนปิด" },
+      { id: "running",     label: "กำลังเลือกตั้ง",        description: "อยู่ในช่วงเลือกตั้ง นับถอยหลังจนปิด" },
       { id: "paused",      label: "ระบบ PAUSE",            description: "admin สั่งปิดปรับปรุงชั่วคราว" },
       { id: "manualEnded", label: "ปิดด้วย admin (ENDED)", description: "admin บังคับปิดก่อนเวลา" },
       { id: "nextYear",    label: "เลยช่วงเลือกตั้ง",      description: "เลยกำหนดแล้ว รอปีถัดไป" }
@@ -394,12 +394,12 @@ export const ELEMENT_INSTANCES = {
     stateResolverKey: null,
     states: null,
     propertyFields: FIELDS_BUTTON,
-    defaultConfig: { text: "ดูรายชื่อพรรค →", backgroundColor: "#1a1a2e", textColor: "#ffffff", borderRadius: "full" },
+    defaultConfig: { text: "ดูรายชื่อพรรค", backgroundColor: "#1a1a2e", textColor: "#ffffff", borderRadius: "full" },
     presets: {
-      classic: { text: "ดูรายชื่อพรรค →", backgroundColor: "#1a1a2e",     textColor: "#ffffff", borderRadius: "full" },
-      dark:    { text: "ดูรายชื่อพรรค →", backgroundColor: "#06b6d4",     textColor: "#ffffff", borderRadius: "full" },
-      playful: { text: "ไปดูกัน! →",      backgroundColor: "#EC4899",     textColor: "#ffffff", borderRadius: "full" },
-      minimal: { text: "ดูรายชื่อ →",     backgroundColor: "transparent", textColor: "#1E293B", borderRadius: "none" }
+      classic: { text: "ดูรายชื่อพรรค", backgroundColor: "#1a1a2e",     textColor: "#ffffff", borderRadius: "full" },
+      dark:    { text: "ดูรายชื่อพรรค", backgroundColor: "#06b6d4",     textColor: "#ffffff", borderRadius: "full" },
+      playful: { text: "ไปดูกัน!",      backgroundColor: "#EC4899",     textColor: "#ffffff", borderRadius: "full" },
+      minimal: { text: "ดูรายชื่อ",     backgroundColor: "transparent", textColor: "#1E293B", borderRadius: "none" }
     },
     schemaVersion: "v1"
   },
@@ -895,7 +895,7 @@ export const ELEMENT_INSTANCES = {
     stateResolverKey: null,
     states: null,
     propertyFields: FIELDS_TEXT,
-    defaultConfig: { text: "🏆 สรุปผลการเลือกตั้ง (Official Results)", fontSize: "sm", color: "#475569", fontWeight: "700" },
+    defaultConfig: { text: "สรุปผลการเลือกตั้ง", fontSize: "sm", color: "#475569", fontWeight: "700" },
     presets: null,
     schemaVersion: "v1"
   },

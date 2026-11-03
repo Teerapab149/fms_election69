@@ -57,7 +57,7 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
               className={`vd-ppanel ${i % 2 === 1 ? "vd-ppanel--alt" : ""}`}>
               <div className="vd-ppanel__media">
                 {logo ? <img src={logo} alt={p.name} className="logo" /> : photo ? <img src={photo} alt={p.name} /> : (
-                  <div className="vd-ppanel__media-tag">★ Logo<br />placeholder ★</div>
+                  <div className="vd-ppanel__media-tag">ยังไม่มีโลโก้</div>
                 )}
               </div>
               <div className="vd-ppanel__main">
@@ -65,8 +65,8 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
                 <h2 className="vd-ppanel__name">{p.name}</h2>
                 {p.slogan && <p className="vd-ppanel__slogan">{p.slogan}</p>}
                 <div className="vd-ppanel__quick">
-                  <div><div className="lbl">CANDIDATES</div><div className="val vd-tabular">{p.members?.length || "—"}</div></div>
-                  <div><div className="lbl">POLICIES</div><div className="val vd-tabular">{Array.isArray(p.policies) ? pad2(p.policies.length) : "—"}</div></div>
+                  <div><div className="lbl">CANDIDATES</div><div className="val vd-tabular">{p.members?.length || "–"}</div></div>
+                  <div><div className="lbl">POLICIES</div><div className="val vd-tabular">{Array.isArray(p.policies) ? pad2(p.policies.length) : "–"}</div></div>
                   <div><div className="lbl">STATUS</div><div className="val">Active</div></div>
                 </div>
               </div>

@@ -19,6 +19,7 @@ import { Lock, Clock, CheckCheck, LogOut, BarChart3 } from "lucide-react";
 import VerdureShell from "./VerdureShell";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import Arrow from "../Arrow";
 
 const VARIANTS = {
   waiting: { Icon: Clock,      kickerEn: "OPENS SOON", kickerTh: "ยังไม่เปิดโหวต", head: (<>Not yet<br /><em>open.</em></>), edge: "Status" },
@@ -106,13 +107,13 @@ export default function VerdureClosed({ title = "", desc = "", variant = "closed
             {session ? (
               <button type="button" className="vd-btn vd-btn--ghost vd-btn--lg" onClick={() => !editorMode && onLogout()}><LogOut size={16} /> ออกจากระบบ</button>
             ) : (
-              <a href={editorMode ? undefined : getPath("/")} className="vd-btn vd-btn--ghost vd-btn--lg">← กลับหน้าหลัก</a>
+              <a href={editorMode ? undefined : getPath("/")} className="vd-btn vd-btn--ghost vd-btn--lg"><Arrow dir="left" /> กลับหน้าหลัก</a>
             )}
           </div>
         ) : session ? (
           <button type="button" className="vd-btn vd-btn--terra vd-btn--lg" onClick={() => !editorMode && onLogout()}><LogOut size={16} /> ออกจากระบบ</button>
         ) : (
-          <a href={editorMode ? undefined : getPath("/")} className="vd-btn vd-btn--terra vd-btn--lg">← กลับหน้าหลัก</a>
+          <a href={editorMode ? undefined : getPath("/")} className="vd-btn vd-btn--terra vd-btn--lg"><Arrow dir="left" /> กลับหน้าหลัก</a>
         )}
       </div>
 

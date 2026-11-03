@@ -21,6 +21,9 @@ import SocialGlyph from "./SocialGlyph";
 import StudioDarkShell from "./StudioDarkShell";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
 import StoryClamp from "./StoryClamp";
+import Arrow from "../Arrow";
+import { Ico } from "../Arrow";
+import { ZoomIn } from "lucide-react";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -139,8 +142,8 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
           )}
         </div>
         <div className="sdp-h__quick">
-          <div className="sdp-h__row">CANDIDATES <strong>{members.length || "—"}</strong></div>
-          <div className="sdp-h__row">POLICIES <strong>{policies.length || "—"}</strong></div>
+          <div className="sdp-h__row">CANDIDATES <strong>{members.length || "–"}</strong></div>
+          <div className="sdp-h__row">POLICIES <strong>{policies.length || "–"}</strong></div>
           <div className="sdp-h__row">STATUS <strong><em>Active</em></strong></div>
         </div>
       </div>
@@ -159,7 +162,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
             </button>
           ))}
           <div className="sdp-tabs__spacer" />
-          <a href={getPath("/vote")} className="sdp-tabs__action"><span className="sd-thai">ลงคะแนน</span>  Vote →</a>
+          <a href={getPath("/vote")} className="sdp-tabs__action"><span className="sd-thai">ลงคะแนน</span>  Vote <Arrow /></a>
         </nav>
       )}
 
@@ -180,7 +183,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
               onKeyDown={(e) => { if (e.key === "Enter") openLightbox(heroImg, `TEAM PHOTO: ${party?.name || ""}`); }}
             >
               <img src={heroImg} alt={party?.name} />
-              <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span>  <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
+              <figcaption className="sdp-story__cap"><span className="sd-nw">TEAM PHOTO</span>  <span className="sd-thai">คลิกเพื่อขยาย</span> <Ico icon={ZoomIn} /></figcaption>
             </figure>
           )}
           {story && <div className="sdp-vision__story"><StoryClamp className="sdp-sc"><p>{story}</p></StoryClamp></div>}
@@ -232,7 +235,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
                   aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}
                 >
                   <div className={`sdp-tile__photo ${img ? "" : "sd-media-ph"}`}>
-                    {img ? <img src={img} alt={m.name} /> : <span>portrait</span>}
+                    {img ? <img src={img} alt={m.name} /> : <span>ยังไม่มีรูป</span>}
                   </div>
                   <div className="sdp-tile__name">{m.name}</div>
                   {(m.position || m.major) && <div className="sdp-tile__role">{m.position || m.major}</div>}
@@ -271,7 +274,7 @@ export default function StudioDarkParty({ party = {}, galleryImages = [], showBa
       {/* CLOSING CTA */}
       <div className="sdp-cta">
         <p className="sdp-cta__line">Pick <em>№ {no}.</em>&nbsp; Pick the future.</p>
-        <a href={getPath("/vote")} className="sd-btn sd-btn--accent sd-btn--lg">ลงคะแนนให้พรรคนี้ →</a>
+        <a href={getPath("/vote")} className="sd-btn sd-btn--accent sd-btn--lg">ลงคะแนนให้พรรคนี้ <Arrow /></a>
       </div>
 
       {/* shared studio overlays */}

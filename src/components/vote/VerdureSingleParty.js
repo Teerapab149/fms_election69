@@ -14,6 +14,7 @@ import { getPath } from "../../utils/basePath";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import VerdureShell from "./VerdureShell";
 import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
+import Arrow from "../Arrow";
 
 // ── cinematic intro: a warm cream wax-seal curtain that wipes up to reveal the
 // party's wax seal stamps in, the name + slogan reveal. editorMode skips it; a 3s
@@ -143,7 +144,7 @@ export default function VerdureSingleParty({
   const userName = (user?.name || "").trim().split(" ")[0];
 
   const kind = selectedPartyId == null ? null : selectedPartyId === party?.id ? "approve" : selectedPartyId === disapprove?.id ? "disapprove" : selectedPartyId === abstain?.id ? "abstain" : null;
-  const selectionLabel = kind === "approve" ? `รับรอง — ${party?.name || ""}` : kind === "disapprove" ? "ไม่รับรอง Disapprove" : kind === "abstain" ? "งดออกเสียง Abstain" : null;
+  const selectionLabel = kind === "approve" ? `รับรอง ${party?.name || ""}` : kind === "disapprove" ? "ไม่รับรอง Disapprove" : kind === "abstain" ? "งดออกเสียง Abstain" : null;
   const pick = (id) => () => { if (!editorMode && id != null) onSelect(id); };
 
   return (
@@ -182,7 +183,7 @@ export default function VerdureSingleParty({
           {party?.slogan && <p className="vd-booth__slogan">“{party.slogan}”</p>}
           <button type="button" className="vd-booth__cue"
             onClick={() => document.getElementById("vd-decision")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-            เลื่อนลงเพื่อลงคะแนน <span className="cue-arr" aria-hidden>↓</span>
+            เลื่อนลงเพื่อลงคะแนน <span className="cue-arr" aria-hidden><Arrow dir="down" /></span>
           </button>
         </div>
 
@@ -205,7 +206,7 @@ export default function VerdureSingleParty({
         {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมทั้งหมดอยู่ในแกลเลอรีของหน้านั้น
             source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
         <a className="vd-booth__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-          <span className="vd-thai">ดูข้อมูลพรรคแบบเต็ม</span>  Full profile &amp; gallery <span className="arr">↗</span>
+          <span className="vd-thai">ดูข้อมูลพรรคแบบเต็ม</span>  Full profile &amp; gallery <span className="arr"><Arrow dir="up-right" /></span>
         </a>
 
         {story && (
@@ -275,7 +276,7 @@ export default function VerdureSingleParty({
             <div><div className="vd-confirm__lbl">YOUR SELECTION</div><div className="vd-confirm__val">{selectionLabel || "ยังไม่ได้เลือก No selection"}</div></div>
             <button type="button" className={`vd-btn vd-btn--terra vd-btn--lg ${kind == null || isSubmitting || editorMode ? "is-disabled" : ""}`}
               disabled={kind == null || isSubmitting || editorMode} onClick={() => !editorMode && kind != null && setConfirmOpen(true)}>
-              {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"} <span className="arr">↗</span>
+              {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"} <span className="arr"><Arrow dir="up-right" /></span>
             </button>
           </div>
         </section>
@@ -286,11 +287,11 @@ export default function VerdureSingleParty({
           <motion.div className="vd-cm__card" onClick={(e) => e.stopPropagation()} initial={{ opacity: 0, scale: 0.94, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
             <div className="vd-cm__eyebrow"><span className="vd-nw">FINAL CONFIRMATION</span>  <span className="vd-thai">ยืนยันครั้งสุดท้าย</span></div>
             <h3 className="vd-cm__title">ยืนยันการลงคะแนน?</h3>
-            <p className="vd-cm__sub">เลือกแล้ว<strong>เปลี่ยนไม่ได้</strong> — กรุณาตรวจสอบตัวเลือกของคุณ</p>
-            <div className="vd-cm__pick"><span className="lbl">YOUR SELECTION</span><span className="val">{selectionLabel || "—"}</span></div>
+            <p className="vd-cm__sub">เลือกแล้ว<strong>เปลี่ยนไม่ได้</strong> กรุณาตรวจสอบตัวเลือกของคุณ</p>
+            <div className="vd-cm__pick"><span className="lbl">YOUR SELECTION</span><span className="val">{selectionLabel || "–"}</span></div>
             <div className="vd-cm__actions">
               <button type="button" className="vd-btn vd-btn--ghost vd-btn--lg" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>
-              <button type="button" className="vd-btn vd-btn--terra vd-btn--lg" onClick={() => onConfirm()} disabled={isSubmitting}>{isSubmitting ? "กำลังบันทึก…" : "ยืนยัน ลงคะแนนเลย"} <span className="arr">↗</span></button>
+              <button type="button" className="vd-btn vd-btn--terra vd-btn--lg" onClick={() => onConfirm()} disabled={isSubmitting}>{isSubmitting ? "กำลังบันทึก…" : "ยืนยัน ลงคะแนนเลย"} <span className="arr"><Arrow dir="up-right" /></span></button>
             </div>
           </motion.div>
         </motion.div>

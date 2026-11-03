@@ -55,13 +55,13 @@ async function list(db) {
 
   console.log(`\nแอดมินตอนนี้: ${admins.length} คน`);
   for (const a of admins) {
-    const own = a.passwordHash ? " · มีรหัสของตัวเอง" : "";
+    const own = a.passwordHash ? " มีรหัสของตัวเอง" : "";
     console.log(`  ${String(a.studentId).padEnd(18)} ${String(a.name || "-").padEnd(28)} ${String(a.role).padEnd(8)}${own}`);
   }
   console.log(
     cfg?.adminPasswordHash
       ? `\nรหัสกลาง: ตั้งไว้แล้ว (แก้ล่าสุด ${cfg.updatedAt?.toISOString?.() || "-"})`
-      : `\nรหัสกลาง: ⚠ ยังไม่ได้ตั้ง — ไม่มีใครล็อกอินได้ ให้รัน --rotate-password`
+      : `\nรหัสกลาง: ยังไม่ได้ตั้ง ไม่มีใครล็อกอินได้ ให้รัน --rotate-password`
   );
   console.log("");
 }
@@ -70,7 +70,7 @@ async function grant(db, target) {
   const user = await db.user.findFirst({ where: whereFor(target) });
   if (!user) {
     console.error(`\nไม่พบ "${target}" ในฐานข้อมูล`);
-    console.error("  แอดมินต้องเป็นคนที่มีข้อมูลอยู่แล้ว — ให้เขาล็อกอิน PSU SSO หนึ่งครั้ง");
+    console.error("  แอดมินต้องเป็นคนที่มีข้อมูลอยู่แล้ว ให้เขาล็อกอิน PSU SSO หนึ่งครั้ง");
     console.error("  หรือตรวจว่านำเข้ารายชื่อนักศึกษาแล้ว จากนั้นรันคำสั่งนี้ซ้ำ\n");
     process.exitCode = 1;
     return;
@@ -127,15 +127,15 @@ async function rotatePassword(db) {
   const personal = await db.user.count({
     where: { isAdmin: true, passwordHash: { not: null }, NOT: KEEPS_OWN_PASSWORD },
   });
-  banner("รหัสกลางใหม่ — แสดงครั้งเดียว", [
+  banner("รหัสกลางใหม่ แสดงครั้งเดียว", [
     ["เข้าที่", "/admin/login"],
     ["Username", "รหัส นศ. ของแต่ละคน"],
     ["Password", password],
   ], `  ใช้ได้กับแอดมิน ${admins} คนที่ตั้งไว้ (ดูรายชื่อด้วย --list)\n` +
-     "  รหัสเดิมใช้ไม่ได้แล้วตั้งแต่วินาทีนี้ · เก็บลงตัวจัดการรหัสผ่านก่อนปิดหน้าต่าง\n" +
-     "  ในฐานข้อมูลมีแต่ bcrypt hash — เปิดดูย้อนหลังไม่ได้ ลืมแล้วรันคำสั่งนี้ใหม่" +
+     "  รหัสเดิมใช้ไม่ได้แล้วตั้งแต่วินาทีนี้ เก็บลงตัวจัดการรหัสผ่านก่อนปิดหน้าต่าง\n" +
+     "  ในฐานข้อมูลมีแต่ bcrypt hash เปิดดูย้อนหลังไม่ได้ ลืมแล้วรันคำสั่งนี้ใหม่" +
      (personal
-       ? `\n\n  ⚠ มีแอดมิน ${personal} บัญชีที่ยังมีรหัสของตัวเองอยู่ — รหัสนั้นยังใช้ล็อกอินได้\n` +
+       ? `\n\n  มีแอดมิน ${personal} บัญชีที่ยังมีรหัสของตัวเองอยู่ รหัสนั้นยังใช้ล็อกอินได้\n` +
          "    อยู่เฉพาะบัญชีสำรองเท่านั้นถึงจะถูก ถ้าเป็นบัญชีนักศึกษาให้ล้างด้วย --clear-personal"
        : ""));
 }
@@ -200,12 +200,12 @@ async function breakGlass(db) {
     },
   });
 
-  banner("บัญชีสำรอง — แสดงรหัสครั้งเดียว", [
+  banner("บัญชีสำรอง แสดงรหัสครั้งเดียว", [
     ["เข้าที่", "/admin/login"],
     ["Username", username],
     ["Password", password],
   ], "  รหัสนี้เป็นของบัญชีนี้บัญชีเดียว ไม่ใช่รหัสกลาง และไม่ควรบอกใครนอกจากผู้ดูแล\n" +
-     "  บัญชีนี้ลงคะแนนไม่ได้โดยตั้งใจ (ไม่มีชั้นปี) · ปิดการใช้งานด้วย --revoke " + username);
+     "  บัญชีนี้ลงคะแนนไม่ได้โดยตั้งใจ (ไม่มีชั้นปี) ปิดการใช้งานด้วย --revoke " + username);
 }
 
 // A permanent admin account for faculty staff, who are not in the student roll
@@ -225,11 +225,11 @@ async function askPassword() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
   const ask = (q) => new Promise((res) => rl.question(q, res));
   try {
-    console.log("\n  รหัสจะแสดงบนจอขณะพิมพ์ เพื่อให้เห็นว่าพิมพ์ถูก — ดูให้แน่ใจว่าไม่มีใครอยู่ข้างหลัง\n");
+    console.log("\n  รหัสจะแสดงบนจอขณะพิมพ์ เพื่อให้เห็นว่าพิมพ์ถูก ดูให้แน่ใจว่าไม่มีใครอยู่ข้างหลัง\n");
     const a = await ask("ตั้งรหัสผ่านของบัญชีนี้: ");
     if (!a || a.length < 8) { console.error("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร"); process.exit(1); }
     const b = await ask("พิมพ์อีกครั้ง: ");
-    if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน — ยังไม่ได้สร้างบัญชีใดๆ"); process.exit(1); }
+    if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน ยังไม่ได้สร้างบัญชีใดๆ"); process.exit(1); }
     return a;
   } finally {
     rl.close();
@@ -290,7 +290,7 @@ async function createStaff(db, username) {
     ["หรืออีเมล", email],
     ["ชื่อ", name],
     ["Password", chosen ? "รหัสที่คุณเพิ่งตั้ง" : password],
-  ], "  รหัสนี้เป็นของบัญชีนี้บัญชีเดียว · รหัสกลางของกรรมการเปิดบัญชีนี้ไม่ได้\n" +
+  ], "  รหัสนี้เป็นของบัญชีนี้บัญชีเดียว รหัสกลางของกรรมการเปิดบัญชีนี้ไม่ได้\n" +
      "  บัญชีนี้ลงคะแนนไม่ได้และไม่ถูกนับเป็นผู้มีสิทธิ์เลือกตั้ง (ไม่มีชั้นปี)\n" +
      "  ชื่อข้างบนจะถูกบันทึกเป็นผู้รับรองผล เมื่อกดรับรองผลในหน้าแอดมิน\n" +
      "  ถอดสิทธิ์ด้วย  --revoke " + username);
@@ -308,14 +308,14 @@ async function createStaff(db, username) {
     if (has("--break-glass")) return await breakGlass(db);
 
     console.log(`
-จัดการสิทธิ์แอดมิน — เลือกหนึ่งคำสั่ง
+จัดการสิทธิ์แอดมิน เลือกหนึ่งคำสั่ง
 
   --list                  ใครเป็นแอดมินตอนนี้ + รหัสกลางตั้งไว้หรือยัง
   --grant <รหัส นศ.>       ให้สิทธิ์แอดมิน (รับ email ก็ได้)
   --revoke <รหัส นศ.>      ถอดสิทธิ์ มีผลกับ request ถัดไปทันที
   --create-staff <ชื่อผู้ใช้> --name "<ชื่อจริง>"
                           บัญชีเจ้าหน้าที่คณะ ใช้รหัสส่วนตัวของตัวเอง (ไม่ใช่รหัสกลาง)
-                          ลงคะแนนไม่ได้ · ชื่อจริงใช้เป็นผู้รับรองผล
+                          ลงคะแนนไม่ได้ ชื่อจริงใช้เป็นผู้รับรองผล
   --rotate-password       ออกรหัสกลางใหม่ แสดงครั้งเดียว รหัสเดิมตายทันที
   --clear-personal        ล้างรหัสประจำบัญชีทุกบัญชี ยกเว้นบัญชีเจ้าหน้าที่ (STAFF)
                           ให้เหลือแต่รหัสกลาง

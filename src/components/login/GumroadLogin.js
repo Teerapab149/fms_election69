@@ -45,7 +45,7 @@ export default function GumroadLogin({
 
           {showMock && (
             <div className="grl-mock">
-              <div className="grl-mock__lbl"><FlaskConical size={14} strokeWidth={2.5} /> DEV ONLY — MOCK LOGIN</div>
+              <div className="grl-mock__lbl"><FlaskConical size={14} strokeWidth={2.5} /> DEV ONLY: MOCK LOGIN</div>
               <input
                 type="text"
                 className="grl-input"

@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SmartImage from "../SmartImage";
+import { Ico } from "../Arrow";
+import { ZoomIn } from "lucide-react";
 
 /**
  * ThreeDCarousel component - 3D image carousel with auto-play
@@ -90,7 +92,7 @@ const ThreeDCarousel = ({ images, onImageClick = null }) => {
                             {/* บอกให้รู้ว่าภาพกดได้ — ตระกูลอื่นบอกไว้ที่ figcaption ของภาพหมู่ */}
                             {clickable && isActive && (
                                 <span className="absolute left-4 bottom-4 bg-black/60 text-white text-[11px] font-semibold tracking-wider px-3.5 py-1.5 rounded-full backdrop-blur-sm">
-                                    คลิกเพื่อขยาย ⌕
+                                    คลิกเพื่อขยาย <Ico icon={ZoomIn} />
                                 </span>
                             )}
                         </Slide>

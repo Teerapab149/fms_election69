@@ -187,7 +187,7 @@ export default function StudioDarkResults({
                       append <em>.</em> when the name has no Thai characters (2026-09-25 รอบ b) */}
                   <h2 className="sdr-board__title sdr-board__title--name">{winner.name}{!/[฀-๿]/.test(winner.name || "") ? <em>.</em> : null}</h2>
                   <p className="sdr-board__deck">
-                    ชนะการเลือกตั้งด้วยคะแนน <span className="sd-tabular"><RevealInt value={winner.score || 0} enabled={anim} /></span> เสียง — <strong className="sdr-strong sd-tabular"><RevealPct value={pctOf(winner)} enabled={anim} /></strong> ของผู้ลงคะแนนทั้งหมด
+                    ชนะการเลือกตั้งด้วยคะแนน <span className="sd-tabular"><RevealInt value={winner.score || 0} enabled={anim} /></span> เสียง คิดเป็น <strong className="sdr-strong sd-tabular"><RevealPct value={pctOf(winner)} enabled={anim} /></strong> ของผู้ลงคะแนนทั้งหมด
                   </p>
                 </>
               ) : (
@@ -202,7 +202,7 @@ export default function StudioDarkResults({
                 <p className="sdr-board__deck">
                   {ended
                     ? <>ปิดโหวตแล้ว ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้จนกว่าคณะกรรมการจะประกาศผล</>
-                    : <>เพื่อรักษาความเป็นกลาง ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้ — จะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น</>}
+                    : <>เพื่อรักษาความเป็นกลาง ผลคะแนน{singleParty ? "" : "รายพรรค"}ยังถูกปิดไว้ จะเปิดเผยหลังปิดโหวต เมื่อคณะกรรมการประกาศผลเท่านั้น</>}
                 </p>
               </>
             )}
@@ -229,7 +229,7 @@ export default function StudioDarkResults({
                 ) : (
                   <>
                     <h3>ผลจะประกาศ<br />หลัง <em>ปิดโหวต</em></h3>
-                    <p>ระหว่างการลงคะแนน เราเลือกที่จะไม่แสดง{singleParty ? "ผลรับรอง" : "พรรคที่กำลังนำ"} — เพื่อไม่ให้ตัวเลขมีอิทธิพลต่อการตัดสินใจของผู้ที่ยังไม่ได้ลงคะแนน</p>
+                    <p>ระหว่างการลงคะแนน เราเลือกที่จะไม่แสดง{singleParty ? "ผลรับรอง" : "พรรคที่กำลังนำ"} เพื่อไม่ให้ตัวเลขมีอิทธิพลต่อการตัดสินใจของผู้ที่ยังไม่ได้ลงคะแนน</p>
                   </>
                 )}
                 {/* the bare time read the same before opening and during voting,

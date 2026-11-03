@@ -42,7 +42,7 @@ export default function BlossomLogin({
 
         {showMock && (
           <div className="bll-mock">
-            <div className="bll-mock__lbl"><FlaskConical size={13} strokeWidth={2} /> DEV ONLY — MOCK LOGIN</div>
+            <div className="bll-mock__lbl"><FlaskConical size={13} strokeWidth={2} /> DEV ONLY: MOCK LOGIN</div>
             <input type="text" className="bll-input" value={mockStudentId} onChange={(e) => setMockStudentId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onMockLogin()} placeholder="e.g. 6600000000" disabled={mockLoading} />
             <button type="button" className="bll-btn bll-btn--ghost" onClick={onMockLogin} disabled={mockLoading || !mockStudentId.trim()}>
               {mockLoading ? <><Loader2 className="bll-spin" size={16} /> กำลังเข้าสู่ระบบ…</> : <><FlaskConical size={15} strokeWidth={2} /> Mock Login</>}

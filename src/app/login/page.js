@@ -199,7 +199,7 @@ export default function LoginPage() {
               )}
             </button>
 
-            <p className="mt-4 text-[11px] text-slate-400">
+            <p className="mt-4 text-[11px] text-slate-500">
               ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย
             </p>
             <PrivacyNote lead={PRIVACY_LOGIN_LEAD} className="mt-3 text-xs leading-relaxed text-slate-600" />
@@ -214,7 +214,7 @@ export default function LoginPage() {
                 <div className="flex items-center justify-center gap-1.5 mb-4">
                   <FlaskConical className="w-3.5 h-3.5 text-red-500" />
                   <span className="text-[10px] font-black tracking-widest uppercase text-red-500">
-                    DEV ONLY — Mock Login
+                    DEV ONLY: Mock Login
                   </span>
                 </div>
 

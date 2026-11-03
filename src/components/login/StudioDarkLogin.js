@@ -52,7 +52,7 @@ export default function StudioDarkLogin({
 
           {showMock && (
             <div className="sdl-mock">
-              <div className="sdl-mock__lbl"><FlaskConical size={13} strokeWidth={2} /> DEV ONLY — MOCK LOGIN</div>
+              <div className="sdl-mock__lbl"><FlaskConical size={13} strokeWidth={2} /> DEV ONLY: MOCK LOGIN</div>
               <input
                 type="text"
                 className="sdl-input"

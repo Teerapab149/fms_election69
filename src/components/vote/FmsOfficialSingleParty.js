@@ -175,7 +175,7 @@ export default function FmsOfficialSingleParty({
             </div>
           </div>
           <div className="fo-sb__facts">
-            <span>หมายเลข {party?.number ?? "—"}</span>
+            <span>หมายเลข {party?.number ?? "–"}</span>
             {members.length > 0 && <span>ทีมงาน {members.length} คน</span>}
             {policies.length > 0 && <span>นโยบาย {policies.length} ข้อ</span>}
           </div>

@@ -16,6 +16,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useHowToVote } from "../../hooks/useHowToVote";
 import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { AWAITING_RESULTS, isAwaitingResults, deriveElectionStatus } from "../../lib/election/electionStatus.mjs";
+import Arrow from "../Arrow";
 
 // How to vote — Original's real flow: PSU Passport sign-in → the ballot
 // (MultiPartyView) → confirm → the success page, which asks for the
@@ -350,7 +351,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             {howTo.link && (
                                 <div className="w-full flex justify-center lg:justify-start !mt-3">
                                     <a href={howTo.href} className="inline-flex items-center gap-1.5 min-h-[44px] text-sm md:text-base font-bold text-[var(--o-brand)] underline decoration-2 underline-offset-4 hover:text-[var(--o-deep)]">
-                                        วิธีลงคะแนน <span aria-hidden>↓</span>
+                                        วิธีลงคะแนน <span aria-hidden><Arrow dir="down" /></span>
                                     </a>
                                 </div>
                             )}

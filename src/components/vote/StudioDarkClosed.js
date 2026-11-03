@@ -43,6 +43,7 @@ import { Lock, Clock, CheckCheck, LogOut } from "lucide-react";
 import StudioDarkShell from "./StudioDarkShell";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
+import Arrow from "../Arrow";
 
 const VARIANTS = {
   waiting: {
@@ -173,7 +174,7 @@ export default function StudioDarkClosed({
               </button>
             ) : (
               <a href={editorMode ? undefined : getPath("/")} className="sd-btn sd-btn--accent sd-btn--lg">
-                ← กลับหน้าหลัก
+                <Arrow dir="left" /> กลับหน้าหลัก
               </a>
             )}
           </div>

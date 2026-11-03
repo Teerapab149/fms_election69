@@ -331,7 +331,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
 
     const addMember = () => {
         if (!newMember.name || !newMember.studentId) {
-            alert("Please fill in at least Name and Student ID");
+            alert("กรุณากรอกชื่อและรหัสนักศึกษาอย่างน้อยสองช่องนี้");
             return;
         }
         setMembers(prev => {

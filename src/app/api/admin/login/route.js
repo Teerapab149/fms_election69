@@ -79,7 +79,7 @@ export async function POST(request) {
         //    บัญชีที่ SSO เคยตั้ง isAdmin ให้เอง และรูปร่างรหัสของมันมองจากข้างนอก
         //    ไม่ออก (ล็อกเจ้าของออกจากระบบมาแล้วหนึ่งครั้ง)
         if (!sharedHash && !user.passwordHash) {
-            console.error("[admin/login] no admin password is set — run: node scripts/admin.js --rotate-password");
+            console.error("[admin/login] no admin password is set, run: node scripts/admin.js --rotate-password");
             return NextResponse.json(
                 { success: false, message: "ระบบยังไม่ได้ตั้งรหัสผ่านแอดมิน กรุณาติดต่อผู้ดูแลเซิร์ฟเวอร์" },
                 { status: 500 }

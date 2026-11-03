@@ -15,7 +15,7 @@ import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, X, Ban } from "lucide-react";
+import { Check, X, Ban, Lightbulb, Flag, ClipboardList } from "lucide-react";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import GumroadPartyIntro from "./GumroadPartyIntro";
@@ -23,6 +23,8 @@ import StoryClamp from "./StoryClamp";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
 import PrivacyNote from "../PrivacyNote";
+import Arrow, { Ico } from "../Arrow";
+import { ZoomIn } from "lucide-react";
 
 // --- data helpers (party fields are loose JSON from the admin) ---
 const asText = (it) =>
@@ -126,15 +128,15 @@ export default function GumroadSingleParty({
                 <img src={heroImg} alt={party?.name || "party"} />
                 {/* ป้ายบอกให้รู้ว่าภาพกดได้ — ตระกูลอื่นบอกไว้ใน figcaption ของภาพหมู่
                     ตัวนี้ไม่มี figure จึงวางเป็นสติกเกอร์ในภาษาของ family */}
-                <span className="gsp-hero__zoomtag"><span className="gm-thai">คลิกเพื่อขยาย</span> ⌕</span>
+                <span className="gsp-hero__zoomtag"><span className="gm-thai">คลิกเพื่อขยาย</span> <Ico icon={ZoomIn} /></span>
               </button>
             ) : (
-              <span className="gsp-hero__ph">★ TEAM {members.length} MEMBERS ★</span>
+              <span className="gsp-hero__ph">ทีมผู้สมัคร {members.length} คน</span>
             )}
             {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมที่พรรคอัปเพิ่มอยู่ในแกลเลอรีของหน้านั้น
                 source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
             <a className="gsp-hero__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-              ดูข้อมูลพรรคแบบเต็ม →
+              ดูข้อมูลพรรคแบบเต็ม <Arrow />
             </a>
           </div>
           <div className="gsp-hero__body">
@@ -163,17 +165,17 @@ export default function GumroadSingleParty({
           <section className="gsp-section" data-cols={story && missions.length ? "2" : "1"}>
             {story ? (
               <article className="gsp-card">
-                <span className="gsp-sticker gsp-sticker--pink">💡 เรื่องราวของพรรค</span>
+                <span className="gsp-sticker gsp-sticker--pink"><Ico icon={Lightbulb} /> เรื่องราวของพรรค</span>
                 <h2 className="gsp-card__h">แนวคิด & ที่มา</h2>
                 <div className="gsp-story">
                   <StoryClamp className="gsp-sc"><p className="gsp-card__p">{story}</p></StoryClamp>
                 </div>
-                <span className="gsp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> ↓</span>
+                <span className="gsp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> <Arrow dir="down" /></span>
               </article>
             ) : null}
             {missions.length > 0 && (
               <article className="gsp-card gsp-card--ink">
-                <span className="gsp-sticker gsp-sticker--pink">🚩 พันธกิจ</span>
+                <span className="gsp-sticker gsp-sticker--pink"><Ico icon={Flag} /> พันธกิจ</span>
                 <h2 className="gsp-card__h">เป้าหมายของเรา</h2>
                 <div className="gsp-mlist">
                   {missions.map((m, i) => (
@@ -191,7 +193,7 @@ export default function GumroadSingleParty({
         {/* POLICIES */}
         {policies.length > 0 && (
           <section className="gsp-card gsp-block">
-            <span className="gsp-sticker gsp-sticker--lime">📋 นโยบายของพรรค</span>
+            <span className="gsp-sticker gsp-sticker--lime"><Ico icon={ClipboardList} /> นโยบายของพรรค</span>
             <div className="gsp-policies">
               {policies.map((p, i) => (
                 <div className="gsp-policy" key={i}>
@@ -281,9 +283,9 @@ export default function GumroadSingleParty({
                   <span className="gsp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span>  CANDIDATE</span>
                   <h3 className="gsp-modal__name">{modalMember.name}</h3>
                   <dl className="gsp-modal__rows">
-                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>
-                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "—"}</dd></div>
-                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "–"}</dd></div>
+                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "–"}</dd></div>
+                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "–"}</dd></div>
                   </dl>
                 </div>
               </motion.div>
@@ -316,10 +318,10 @@ export default function GumroadSingleParty({
               exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
               <div className="gsp-cm__icon">!</div>
               <h3 className="gsp-cm__title">ยืนยันการลงคะแนน?</h3>
-              <p className="gsp-cm__sub">เลือกแล้ว <strong>เปลี่ยนไม่ได้</strong> — ตรวจสอบให้แน่ใจก่อนนะ</p>
+              <p className="gsp-cm__sub">เลือกแล้ว <strong>เปลี่ยนไม่ได้</strong> ตรวจสอบให้แน่ใจก่อนนะ</p>
               <div className="gsp-cm__pick">
                 <span className="gsp-cm__pick-lbl"><span className="gm-thai">ตัวเลือกของคุณ</span></span>
-                <span className="gsp-cm__pick-val">{selectionLabel || "—"}</span>
+                <span className="gsp-cm__pick-val">{selectionLabel || "–"}</span>
               </div>
               <div className="gsp-cm__actions">
                 <button type="button" className="gsp-cm__cancel" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>

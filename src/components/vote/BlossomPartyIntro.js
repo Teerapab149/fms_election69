@@ -127,7 +127,7 @@ export default function BlossomPartyIntro({ party = {}, onDone = () => {}, durat
           <span className="bl-intro__halo" aria-hidden="true" />
           {logo
             ? <img src={logo} alt="" className="bl-intro__logo" />
-            : <em className="bl-intro__no">{hasNo ? no : "—"}</em>}
+            : <em className="bl-intro__no">{hasNo ? no : "–"}</em>}
         </motion.div>
 
         <motion.span className="bl-intro__rule"

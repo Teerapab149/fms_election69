@@ -73,7 +73,7 @@ async function appendBallotTx(tx, { payload, hourBucket, chainSecret, recheck })
     SELECT "head", "seq" FROM "ChainHead" WHERE "id" = 1 FOR UPDATE
   `;
   if (!rows || rows.length === 0) {
-    throw new Error("ChainHead row missing — cannot append ballot (run the v2-SEC migration/seed)");
+    throw new Error("ไม่พบแถว ChainHead จึงเพิ่มบัตรไม่ได้ (รัน migration หรือ seed ของ v2-SEC)");
   }
   if (recheck) {
     const refused = await recheck(tx);

@@ -25,6 +25,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { StudioDarkBaseStyles } from "./StudioDarkTheme";
+import Arrow from "../Arrow";
 
 const NAV = [
   // NOTE: no "Profile / ข้อมูลพรรค" item — a party's detail page is reached
@@ -153,7 +154,7 @@ export default function StudioDarkRail({ active = "home", editorMode = false, sy
       </div>
     ) : (
       <button type="button" onClick={doSignIn} className={compact ? "sd-signin sd-signin--compact" : "sd-signin"}>
-        เข้าสู่ระบบ <span aria-hidden>→</span>
+        เข้าสู่ระบบ <span aria-hidden><Arrow /></span>
       </button>
     );
 

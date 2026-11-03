@@ -79,7 +79,7 @@ export default function ReceiptPartyIntro({ party = {}, onDone = () => {}, durat
   const density = name.length <= 16 ? "a" : name.length <= 28 ? "b" : name.length <= 44 ? "c" : "d";
   const no = party?.number;
   const hasNo = no != null && no > 0;
-  const numeral = hasNo ? String(no).padStart(2, "0") : "—";
+  const numeral = hasNo ? String(no).padStart(2, "0") : "–";
   const prefix = gc.electionNamePrefix || "SAMO";
   const edition = gc.electionNumber ?? "";
   // เลขที่เอกสารต้องคงที่ ห้ามสุ่ม/ห้ามอิงเวลา — ม่านนี้ render ฝั่ง server ด้วย

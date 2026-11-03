@@ -216,7 +216,7 @@ export default function Navbar() {
           {isLoggedIn ? (
             <>
               <div className="h-px bg-gray-100 my-2 mx-2"></div>
-              <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all active:bg-red-100">
+              <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all active:bg-red-100">
                 <LogOut size={20} />
                 ออกจากระบบ
               </button>

@@ -141,12 +141,12 @@ export async function preloadPartyImages(parties) {
         return url;
     });
 
-    console.log(`🖼️ Preloading ${uniqueUrls.length} images...`);
+    console.log(`Preloading ${uniqueUrls.length} images...`);
 
     // Preload ทุกรูปพร้อมกัน (parallel)
     await Promise.all(uniqueUrls.map(url => preloadImage(url)));
 
-    console.log(`✅ Preloaded ${uniqueUrls.length} images successfully!`);
+    console.log(`Preloaded ${uniqueUrls.length} images successfully!`);
 }
 
 /**

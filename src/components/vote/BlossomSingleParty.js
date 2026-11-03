@@ -36,6 +36,7 @@ import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import BlossomPartyIntro from "./BlossomPartyIntro";
 import BlossomMemberModal, { BlossomLightbox } from "./BlossomMemberModal";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -118,7 +119,7 @@ export default function BlossomSingleParty({
   const no = party?.number;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "–");
 
   // which of the three choices is picked (fixed semantic mapping)
   const kind = selectedPartyId == null ? null
@@ -127,7 +128,7 @@ export default function BlossomSingleParty({
     : (abstain && selectedPartyId === abstain.id) ? "abstain"
     : null;
 
-  const selectionLabel = kind === "approve" ? `รับรอง — ${party?.name || ""}`
+  const selectionLabel = kind === "approve" ? `รับรอง ${party?.name || ""}`
     : kind === "disapprove" ? "ไม่รับรอง Disapprove"
     : kind === "abstain" ? "งดออกเสียง Abstain"
     : null;
@@ -207,7 +208,7 @@ export default function BlossomSingleParty({
         {/* ทางไปหน้าแนะนำพรรคเต็ม (ภาพกิจกรรมทั้งหมดอยู่ที่นั่น) — source=vote
             ทำให้หน้านั้นมีแถบกลับมาโหวต ผู้ลงคะแนนจึงไม่หลงทาง (2026-07-30) */}
         <a className="bl-sp-more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-          <span className="bl-thai">ดูข้อมูลพรรคแบบเต็ม</span> <span className="bl-nw">&amp; GALLERY →</span>
+          <span className="bl-thai">ดูข้อมูลพรรคแบบเต็ม</span> <span className="bl-nw">&amp; GALLERY <Arrow /></span>
         </a>
 
         {/* logo meaning — the story explains the party mark (logo chip ties them) */}
@@ -357,7 +358,7 @@ export default function BlossomSingleParty({
             <p className="bl-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`bl-scm__pick bl-scm__pick--${kind}`}>
               <span className="bl-scm__pick-lab bl-thai bl-thai--nw">การเลือกของคุณ</span>
-              <span className="bl-scm__pick-val">{selectionLabel || "—"}</span>
+              <span className="bl-scm__pick-val">{selectionLabel || "–"}</span>
             </div>
             <div className="bl-scm__actions">
               <button type="button" className="bl-scm__cancel" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>

@@ -234,7 +234,7 @@ export function useVoteSystem() {
       specialOptions: { abstain, disapprove },
       isSingleParty: single,
       ballotIssue: regular.length > 0 && missing.length
-        ? `บัตรเลือกตั้งยังตั้งค่าไม่ครบ — ไม่มีตัวเลือก ${missing.join(" และ ")} ในระบบ`
+        ? `บัตรเลือกตั้งยังตั้งค่าไม่ครบ ไม่มีตัวเลือก ${missing.join(" และ ")} ในระบบ`
         : null
     };
   }, [candidates]);

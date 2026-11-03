@@ -8,13 +8,13 @@ import { evaluationPromptText } from "../../utils/activityHours";
 import { hourWindow } from "../v2/shared/election/voteTime.mjs";
 
 const COPY = {
-  blossom: { kicker: "A LITTLE NOTE OF THANKS", title: <>หนึ่งเสียงของคุณ<br />มีความหมายเสมอ</>, next: "เหลืออีกหนึ่งขั้นตอน" },
-  "fms-official": { kicker: "OUR FACULTY. OUR FUTURE.", title: <>ร่วมกำหนดทิศทาง<br />ไปด้วยกัน</>, next: "อีกหนึ่งขั้นตอน" },
-  gumroad: { kicker: "YOU SHOWED UP. YOU MADE A MARK.", title: <>ใช้สิทธิ์แล้ว<br />เสียงคุณอยู่ในนี้!</>, next: "ต่ออีกนิด ก็ครบแล้ว" },
-  "studio-dark": { kicker: "YOUR VOICE HAS ARRIVED", title: <>Thank you<br />for <em>voting.</em></>, next: "One more step." },
+  blossom: { kicker: "ขอบคุณที่มาใช้สิทธิ์", title: <>ขอบคุณที่<br />มาลงคะแนน</>, next: "เหลืออีกหนึ่งขั้นตอน" },
+  "fms-official": { kicker: "บันทึกการใช้สิทธิ์แล้ว", title: <>ใช้สิทธิ์<br />เรียบร้อยแล้ว</>, next: "อีกหนึ่งขั้นตอน" },
+  gumroad: { kicker: "บันทึกการใช้สิทธิ์แล้ว", title: <>ใช้สิทธิ์แล้ว<br />ขอบคุณที่มาลงคะแนน</>, next: "ต่ออีกนิด ก็ครบแล้ว" },
+  "studio-dark": { kicker: "บันทึกการลงคะแนนแล้ว", title: <>ขอบคุณที่<br />มา<em>ลงคะแนน</em></>, next: "เหลืออีกหนึ่งขั้นตอน" },
   // plain election words (owner): the plant stays as the picture, but "growth"
   // wording read as if this were not a real vote
-  verdure: { kicker: "YOUR VOTE IS RECORDED.", title: <>ลงคะแนน<br />เรียบร้อยแล้ว</>, next: "เหลืออีกหนึ่งขั้นตอน" },
+  verdure: { kicker: "บันทึกการลงคะแนนแล้ว", title: <>ลงคะแนน<br />เรียบร้อยแล้ว</>, next: "เหลืออีกหนึ่งขั้นตอน" },
 };
 
 // Decorative only. The artwork never receives a voter, party, ballot ID or tally.
@@ -122,13 +122,13 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
           <p className="vx-deck">ขอบคุณที่ร่วมเป็นส่วนหนึ่งของ{gc.organizationName || "สโมสรนักศึกษา คณะวิทยาการจัดการ"}</p>
         </section>
         <section className="vx-next">
-          <div className="vx-next-copy"><span className="vx-label">{isUnlocked ? "COMPLETE" : "NEXT STEP"}</span><h2>{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : copy.next}</h2><p>{!hasForm ? "ไม่มีแบบประเมินในปีนี้ ไปหน้าผลคะแนนได้เลย" : isUnlocked ? "ส่งแบบประเมินเรียบร้อยแล้ว ไปยังหน้าผลคะแนนได้เมื่อพร้อม" : evaluationPromptText(gc)}</p></div>
+          <div className="vx-next-copy"><span className="vx-label">{isUnlocked ? "เสร็จสิ้น" : "ขั้นตอนถัดไป"}</span><h2>{isUnlocked ? "ครบทุกขั้นตอนแล้ว" : copy.next}</h2><p>{!hasForm ? "ไม่มีแบบประเมินในปีนี้ ไปหน้าผลคะแนนได้เลย" : isUnlocked ? "ส่งแบบประเมินเรียบร้อยแล้ว ไปยังหน้าผลคะแนนได้เมื่อพร้อม" : evaluationPromptText(gc)}</p></div>
           <div className="vx-actions">
             {isUnlocked ? <>{hasForm && <div className="vx-done"><Check size={16} aria-hidden="true" /> ทำแบบประเมินแล้ว</div>}<a className="vx-button vx-primary" href={editorMode ? undefined : getPath("/results")}>ไปหน้าผลคะแนน <ArrowRight size={17} aria-hidden="true" /></a></> : <><button type="button" className="vx-button vx-primary" onClick={() => !editorMode && onOpenForm()}>เปิดแบบประเมิน <ArrowRight size={17} aria-hidden="true" /></button><span className="vx-lock"><Lock size={13} aria-hidden="true" /> ทำแบบประเมินก่อนดูผลคะแนน</span></>}
             <a className="vx-button vx-home" href={editorMode ? undefined : getPath("/")}>กลับหน้าแรก</a>
           </div>
         </section>
-        <div className="vx-illustration"><VoteCompletionMark family={family} quiet={Boolean(reduce || editorMode)} /><span className="vx-art-caption">{family === "gumroad" ? "ONE PERSON. ONE VOICE." : family === "verdure" ? "ONE STUDENT. ONE VOTE." : "YOUR VOICE MATTERS"}</span></div>
+        <div className="vx-illustration"><VoteCompletionMark family={family} quiet={Boolean(reduce || editorMode)} /><span className="vx-art-caption">หนึ่งคน หนึ่งเสียง</span></div>
         <div className="vx-person">
           <span className="vx-label">ผู้ใช้สิทธิ์</span>
           {user?.name && <strong>{user.name}</strong>}
@@ -157,7 +157,7 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
         .vx-person { grid-column:1; grid-row:2; }
         .vx-illustration { grid-column:2; grid-row:1/span 2; align-self:center; }
         .vx-next { grid-column:1/-1; grid-row:3; margin-top:32px; }
-        .vx-kicker { font-size:10px; letter-spacing:.16em; color:var(--vx-accent); margin:0 0 20px; font-weight:600; }
+        .vx-kicker { font-size:11px; letter-spacing:.06em; color:var(--vx-accent); margin:0 0 20px; font-weight:600; }
         .vx-story h1 { margin:0; font-size:clamp(30px,4vw,54px); line-height:1.35; font-weight:600; letter-spacing:-.025em; }
         .vx-deck { margin:18px 0 0; max-width:480px; color:var(--vx-muted); font-size:14px; line-height:1.8; }
         .vx-person { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; margin-top:25px; font-size:13px; overflow-wrap:anywhere; }
@@ -167,7 +167,7 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
         .vx-date { color:var(--vx-muted); font-size:12px; }
         .vx-illustration { min-width:0; text-align:center; }
         .vx-art { display:block; width:100%; max-width:330px; height:auto; margin:0 auto; }
-        .vx-art-caption { display:block; font-size:9px; letter-spacing:.2em; margin-top:12px; color:var(--vx-muted); }
+        .vx-art-caption { display:block; font-size:11px; letter-spacing:.06em; margin-top:12px; color:var(--vx-muted); }
         .vx-next { border-top:1px solid var(--vx-line); display:grid; grid-template-columns:1fr minmax(240px,.7fr); gap:32px; padding-top:26px; align-items:center; }
         .vx-next h2 { font-size:22px; font-weight:600; line-height:1.5; margin:8px 0; }
         .vx-next p { font-size:13px; line-height:1.8; color:var(--vx-muted); max-width:430px; margin:0; }
@@ -226,7 +226,7 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
           .vx-art { max-width:185px; }
           .vx-art-caption { margin-top:0; }
           .vx-fms-official .vx-illustration { border:0; }
-          .vx-kicker { margin-bottom:12px; font-size:9px; }
+          .vx-kicker { margin-bottom:12px; font-size:11px; }
           /* align-items:center is the desktop two-column rule; left as-is it centres
              the heading and shrink-wraps the buttons once this becomes a column. */
           .vx-next { display:flex; flex-direction:column; align-items:stretch; gap:0; margin-top:24px; padding-top:22px; }

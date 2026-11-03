@@ -317,7 +317,7 @@ export const classicTemplate = {
     // Day 6: bg+textColor removed — --color-text + --color-surface drive.
     // Day 7a: borderRadius "full" (=9999px) removed — matches --radius-button.
     "meet-cta": {
-      config: { text: "ดูรายชื่อพรรค →" }
+      config: { text: "ดูรายชื่อพรรค" }
     },
 
     // === Home / electionBanner ===
@@ -385,7 +385,7 @@ export const classicTemplate = {
       }
     },
     "results-candidates-heading": {
-      config: { text: "🏆 สรุปผลการเลือกตั้ง (Official Results)", fontSize: "sm", color: "#475569", fontWeight: "700" }
+      config: { text: "สรุปผลการเลือกตั้ง", fontSize: "sm", color: "#475569", fontWeight: "700" }
     },
     "results-demographics": {
       config: { visible: true }

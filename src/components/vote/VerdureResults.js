@@ -108,7 +108,7 @@ export default function VerdureResults({
   // inside the inner dashed ring.
   const winnerLabel = undecided
     ? (verdict.outcome === "tie" ? "เสมอกัน" : "ยังไม่มีผล")
-    : singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "—");
+    : singleParty ? (approveWins ? "รับรอง" : "ไม่รับรอง") : (winner ? winner.name : "–");
   const winnerNameSize = winnerLabel.length >= 40 ? "clamp(23px,2.6vw,33px)"
     : winnerLabel.length >= 28 ? "clamp(26px,3.0vw,38px)"
     : null;

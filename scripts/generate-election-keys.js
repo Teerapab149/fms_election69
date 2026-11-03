@@ -69,14 +69,14 @@ function openPrompt() {
 async function getPassphrase({ mode }) {
   if (process.env.KEY_PASSPHRASE) return process.env.KEY_PASSPHRASE;
   const creating = mode === "create";
-  console.log("\n  รหัสผ่านจะแสดงบนจอขณะพิมพ์ เพื่อให้เห็นว่าพิมพ์ถูก — ดูให้แน่ใจว่าไม่มีใครอยู่ข้างหลัง\n");
+  console.log("\n  รหัสผ่านจะแสดงบนจอขณะพิมพ์ เพื่อให้เห็นว่าพิมพ์ถูก ดูให้แน่ใจว่าไม่มีใครอยู่ข้างหลัง\n");
   const prompt = openPrompt();
   try {
     const a = await prompt.ask(creating ? "ตั้งรหัสผ่านใหม่สำหรับไฟล์กุญแจ: " : "ใส่รหัสผ่านของไฟล์กุญแจ: ");
     if (!a || a.length < 8) { console.error("รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร"); process.exit(1); }
     if (creating) {
       const b = await prompt.ask("พิมพ์รหัสผ่านอีกครั้ง: ");
-      if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน — ยังไม่ได้เขียนไฟล์ใดๆ"); process.exit(1); }
+      if (a !== b) { console.error("รหัสผ่านไม่ตรงกัน ยังไม่ได้เขียนไฟล์ใดๆ"); process.exit(1); }
     }
     return a;
   } finally {
@@ -124,10 +124,10 @@ if (decPath) {
     const pass = await getPassphrase({ mode: "open" });
     let payload;
     try { payload = open(envelope, pass); }
-    catch { console.error("เปิดไฟล์ไม่สำเร็จ — รหัสผ่านผิด หรือไฟล์ถูกแก้ไข"); process.exit(1); }
+    catch { console.error("เปิดไฟล์ไม่สำเร็จ รหัสผ่านผิด หรือไฟล์ถูกแก้ไข"); process.exit(1); }
     process.stdout.write(`
 ${line}
-  ไฟล์กุญแจของการเลือกตั้ง ${payload.electionYear || "(ไม่ระบุปี)"} · สร้างเมื่อ ${payload.createdAt}
+  ไฟล์กุญแจของการเลือกตั้ง ${payload.electionYear || "(ไม่ระบุปี)"} สร้างเมื่อ ${payload.createdAt}
 ${line}
 
 --- PRIVATE KEY (ใช้กับ scripts/decrypt-recount.js เท่านั้น) ---------------------
@@ -158,7 +158,7 @@ ${line}
 
   (async () => {
     if (outPath) {
-      if (fs.existsSync(outPath)) { console.error(`มีไฟล์ ${outPath} อยู่แล้ว — ยกเลิกเพื่อไม่ให้ทับกุญแจเดิม`); process.exit(1); }
+      if (fs.existsSync(outPath)) { console.error(`มีไฟล์ ${outPath} อยู่แล้ว ยกเลิกเพื่อไม่ให้ทับกุญแจเดิม`); process.exit(1); }
       const pass = await getPassphrase({ mode: "create" });
       const sealed = seal({
         electionYear: process.env.ELECTION_YEAR || null,
@@ -176,7 +176,7 @@ ${line}
 
   ไฟล์: ${path.resolve(outPath)}
 
-  ในไฟล์มี PRIVATE KEY + CHAIN SECRET · เปิดได้ด้วย
+  ในไฟล์มี PRIVATE KEY + CHAIN SECRET เปิดได้ด้วย
       node scripts/generate-election-keys.js --decrypt ${outPath}
 
 --- วาง 2 บรรทัดนี้ลง .env ของเซิร์ฟเวอร์ (แค่นี้ฝั่งเซิร์ฟเวอร์ก็จบ) --------------
@@ -193,14 +193,14 @@ ${line}
     } else {
       process.stdout.write(`
 ${line}
-  ELECTION BALLOT KEY CEREMONY — แสดงบนจอครั้งเดียว ไม่ได้เขียนไฟล์ใดๆ
+  ELECTION BALLOT KEY CEREMONY แสดงบนจอครั้งเดียว ไม่ได้เขียนไฟล์ใดๆ
 ${line}
 
---- PRIVATE KEY — เก็บ offline เท่านั้น ห้ามขึ้นเซิร์ฟเวอร์ ----------------------
+--- PRIVATE KEY เก็บ offline เท่านั้น ห้ามขึ้นเซิร์ฟเวอร์ ----------------------
 
 ${privateKey.trim()}
 
---- PUBLIC KEY (ตัวเดียวกับใน .env ด้านล่าง — ไม่ต้องจดซ้ำ) -------------------
+--- PUBLIC KEY (ตัวเดียวกับใน .env ด้านล่าง ไม่ต้องจดซ้ำ) -------------------
 
 ${publicKey.trim()}
 

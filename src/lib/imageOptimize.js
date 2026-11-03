@@ -105,7 +105,7 @@ export class UnsupportedImageError extends Error {
 export async function optimizeImage(buffer, { maxWidth = 1600, quality = 80, format = "jpeg", crop = null } = {}) {
   const detected = detectImageFormat(buffer);
   if (!ALLOWED_FORMATS.has(detected)) {
-    console.warn("[imageOptimize] ปฏิเสธไฟล์อัปโหลด — ชนิดจริงคือ:", detected || "ไม่รู้จัก");
+    console.warn("[imageOptimize] ปฏิเสธไฟล์อัปโหลด ชนิดจริงคือ:", detected || "ไม่รู้จัก");
     throw new UnsupportedImageError(detected);
   }
 

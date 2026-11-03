@@ -66,19 +66,19 @@ async function main() {
 
     const intact = tamper.every((c) => c.ok);
     console.log(intact
-      ? "chain integrity: ✅ OK — no ballot was added, removed or altered"
-      : "chain integrity: ❌ FAILED — the ballot box was altered; the recount below cannot be trusted");
-    for (const c of tamper) console.log(`   ${c.ok ? "✅" : "❌"} ${c.name.padEnd(16)} ${c.detail}`);
+      ? "chain integrity: OK, no ballot was added, removed or altered"
+      : "chain integrity: FAILED, the ballot box was altered; the recount below cannot be trusted");
+    for (const c of tamper) console.log(`   ${c.ok ? "PASS" : "FAIL"} ${c.name.padEnd(16)} ${c.detail}`);
 
     if (!books.every((c) => c.ok)) {
       console.log(intact
-        ? "bookkeeping:     ⚠️  counts disagree — the chain itself is intact, so the recount stands,\n                     but reconcile these before certifying:"
-        : "bookkeeping:     ⚠️  counts also disagree (expected once the box has been altered):");
-      for (const c of books) console.log(`   ${c.ok ? "✅" : "⚠️ "} ${c.name.padEnd(16)} ${c.detail}`);
+        ? "bookkeeping:     counts disagree, the chain itself is intact, so the recount stands,\n                     but reconcile these before certifying:"
+        : "bookkeeping:     counts also disagree (expected once the box has been altered):");
+      for (const c of books) console.log(`   ${c.ok ? "PASS" : "WARN"} ${c.name.padEnd(16)} ${c.detail}`);
     }
     console.log("");
   } else {
-    console.log("chain integrity: (skipped — BALLOT_CHAIN_SECRET not set)\n");
+    console.log("chain integrity: (skipped, BALLOT_CHAIN_SECRET not set)\n");
   }
 
   const ballots = await db.ballot.findMany({ orderBy: { seq: "asc" } });
@@ -111,15 +111,15 @@ async function main() {
   for (const [cid, n] of recount) {
     if (!byId.has(cid)) {
       drift++;
-      console.log(`     ? | (unknown candidateId ${cid}) | — | ${n} | DRIFT`);
+      console.log(`     ? | (unknown candidateId ${cid}) | - | ${n} | DRIFT`);
     }
   }
-  if (undecryptable > 0) console.warn(`\n⚠️ ${undecryptable} ballot(s) failed to decrypt (wrong key or corrupt payload).`);
+  if (undecryptable > 0) console.warn(`\n${undecryptable} ballot(s) failed to decrypt (wrong key or corrupt payload).`);
 
   console.log(
     drift === 0 && undecryptable === 0
-      ? "\n✅ recount matches Candidate.score exactly."
-      : `\n❌ ${drift} candidate(s) drifted${undecryptable ? ` + ${undecryptable} undecryptable` : ""}.`
+      ? "\nrecount matches Candidate.score exactly."
+      : `\n${drift} candidate(s) drifted${undecryptable ? ` + ${undecryptable} undecryptable` : ""}.`
   );
   if (drift > 0 || undecryptable > 0) process.exitCode = 2;
 }

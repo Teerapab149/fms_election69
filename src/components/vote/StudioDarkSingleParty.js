@@ -34,6 +34,8 @@ import StudioDarkShell from "./StudioDarkShell";
 import PrivacyNote from "../PrivacyNote";
 import StudioDarkPartyIntro from "./StudioDarkPartyIntro";
 import { StudioDarkMemberModal, StudioDarkLightbox } from "./StudioDarkMemberModal";
+import Arrow, { Ico } from "../Arrow";
+import { ZoomIn } from "lucide-react";
 
 const asText = (it) =>
   typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
@@ -111,7 +113,7 @@ export default function StudioDarkSingleParty({
     selectedPartyId === disapprove?.id ? "disapprove" :
     selectedPartyId === abstain?.id ? "abstain" : null;
   const selectionLabel =
-    kind === "approve" ? `รับรอง — ${party?.name || ""}` :
+    kind === "approve" ? `รับรอง ${party?.name || ""}` :
     kind === "disapprove" ? "ไม่รับรอง Disapprove" :
     kind === "abstain" ? "งดออกเสียง Abstain" : null;
 
@@ -158,8 +160,8 @@ export default function StudioDarkSingleParty({
             </button>
           )}
           <div className="sds-h__quick">
-            <div className="sds-h__row">CANDIDATES <strong>{members.length || "—"}</strong></div>
-            <div className="sds-h__row">POLICIES <strong>{policies.length || "—"}</strong></div>
+            <div className="sds-h__row">CANDIDATES <strong>{members.length || "–"}</strong></div>
+            <div className="sds-h__row">POLICIES <strong>{policies.length || "–"}</strong></div>
             <div className="sds-h__row">VOTE <strong><em>3 choices</em></strong></div>
           </div>
         </div>
@@ -169,9 +171,9 @@ export default function StudioDarkSingleParty({
       <div className="sds-deck">
         <span><span className="sds-accent">●</span> VOTE OPEN</span>
         <p>
-          {userName ? <>สวัสดีคุณ <strong className="sds-uname">{userName}</strong> — </> : null}
+          {userName ? <>สวัสดีคุณ <strong className="sds-uname">{userName}</strong> </> : null}
           ปีนี้มีพรรคลงสมัครเพียงพรรคเดียว อ่านข้อมูลพรรคด้านล่าง แล้วเลือก
-          รับรอง ไม่รับรอง หรืองดออกเสียง ที่ท้ายหน้า — การลงคะแนนทำได้เพียงครั้งเดียวเท่านั้น
+          รับรอง ไม่รับรอง หรืองดออกเสียง ที่ท้ายหน้า การลงคะแนนทำได้เพียงครั้งเดียวเท่านั้น
         </p>
         <span>ONE VOTE ONLY</span>
       </div>
@@ -189,7 +191,7 @@ export default function StudioDarkSingleParty({
                   <div className="sds-story__scroll">
                     <p>{story}</p>
                   </div>
-                  <span className="sds-story__hint"><span className="sd-nw">SCROLL</span>  <span className="sd-thai">เลื่อนอ่านต่อในกรอบ</span> ↓</span>
+                  <span className="sds-story__hint"><span className="sd-nw">SCROLL</span>  <span className="sd-thai">เลื่อนอ่านต่อในกรอบ</span> <Arrow dir="down" /></span>
                 </>
               )}
             </div>
@@ -206,13 +208,13 @@ export default function StudioDarkSingleParty({
                 >
                   <img src={heroImg} alt={party?.name} />
                 </button>
-                <figcaption className="sds-story__cap"><span className="sd-nw">TEAM PHOTO</span>  <span className="sd-thai">คลิกเพื่อขยาย</span> ⌕</figcaption>
+                <figcaption className="sds-story__cap"><span className="sd-nw">TEAM PHOTO</span>  <span className="sd-thai">คลิกเพื่อขยาย</span> <Ico icon={ZoomIn} /></figcaption>
               </figure>
             )}
             {/* ทางไปหน้าแนะนำพรรคเต็ม — ภาพกิจกรรมอยู่ในแท็บ Gallery ของหน้านั้น
                 source=vote ทำให้มีแถบกลับมาโหวต (2026-07-30) */}
             <a className="sds-story__more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-              <span className="sd-thai">ดูข้อมูลพรรคแบบเต็ม</span>  FULL PROFILE →
+              <span className="sd-thai">ดูข้อมูลพรรคแบบเต็ม</span>  FULL PROFILE <Arrow />
             </a>
           </div>
 
@@ -264,9 +266,9 @@ export default function StudioDarkSingleParty({
                   aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}
                 >
                   <div className={`sds-tile__photo ${img ? "" : "sd-media-ph"}`}>
-                    {img ? <img src={img} alt={m.name} /> : <span>portrait</span>}
+                    {img ? <img src={img} alt={m.name} /> : <span>ยังไม่มีรูป</span>}
                     <span className="sds-tile__idx">{pad2(i + 1)}</span>
-                    <span className="sds-tile__zoom">PROFILE ↗</span>
+                    <span className="sds-tile__zoom">PROFILE <Arrow dir="up-right" /></span>
                   </div>
                   <div className="sds-tile__name">{m.name}</div>
                   {(m.position || m.major) && <div className="sds-tile__role">{m.position || m.major}</div>}
@@ -289,7 +291,7 @@ export default function StudioDarkSingleParty({
         >
           {Array.from({ length: 2 }, (_, k) => (
             <span key={k}>
-              CAST YOUR VOTE — <span className="sd-thai">ลงคะแนนเสียงของคุณ</span> — № {no} {party?.name} — ONE VOTE ONLY — <span className="sd-thai">รับรอง / ไม่รับรอง / งดออกเสียง</span> —&nbsp;
+              CAST YOUR VOTE ★ <span className="sd-thai">ลงคะแนนเสียงของคุณ</span> ★ № {no} {party?.name} ★ ONE VOTE ONLY ★ <span className="sd-thai">รับรอง / ไม่รับรอง / งดออกเสียง</span> ★&nbsp;
             </span>
           ))}
         </motion.div>
@@ -354,7 +356,7 @@ export default function StudioDarkSingleParty({
             disabled={kind == null || isSubmitting || editorMode}
             onClick={() => !editorMode && kind != null && setConfirmOpen(true)}
           >
-            {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน →"}
+            {isSubmitting ? "กำลังบันทึก…" : <>ยืนยันการลงคะแนน <Arrow /></>}
           </button>
         </div>
       </section>
@@ -374,15 +376,15 @@ export default function StudioDarkSingleParty({
               transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}>
               <div className="sds-cm__eyebrow"><span className="sd-nw">FINAL CONFIRMATION</span>  <span className="sd-thai">ยืนยันครั้งสุดท้าย</span></div>
               <h3 className="sds-cm__title">ยืนยันการลงคะแนน?</h3>
-              <p className="sds-cm__sub">เลือกแล้ว<strong>เปลี่ยนไม่ได้</strong> — กรุณาตรวจสอบตัวเลือกของคุณ</p>
+              <p className="sds-cm__sub">เลือกแล้ว<strong>เปลี่ยนไม่ได้</strong> กรุณาตรวจสอบตัวเลือกของคุณ</p>
               <div className="sds-cm__pick">
                 <span className="sds-cm__pick-lbl">YOUR SELECTION</span>
-                <span className="sds-cm__pick-val">{selectionLabel || "—"}</span>
+                <span className="sds-cm__pick-val">{selectionLabel || "–"}</span>
               </div>
               <div className="sds-cm__actions">
                 <button type="button" className="sd-btn sd-btn--lg" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>
                 <button type="button" className="sd-btn sd-btn--accent sd-btn--lg" onClick={() => onConfirm()} disabled={isSubmitting}>
-                  {isSubmitting ? "กำลังบันทึก…" : "ยืนยัน ลงคะแนนเลย →"}
+                  {isSubmitting ? "กำลังบันทึก…" : <>ยืนยัน ลงคะแนนเลย <Arrow /></>}
                 </button>
               </div>
             </motion.div>

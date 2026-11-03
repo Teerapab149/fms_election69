@@ -10,12 +10,12 @@ import { studioDarkTheme } from "../../utils/studioDarkPalettes";
 import { fmsOfficialTheme } from "../../utils/fmsOfficialPalette";
 
 const THEMES = {
-  original: { bg: "#f5f2f8", ink: "#422a46", accent: "#8a2680", surface: "#fffdfb", label: "YOUR VOICE MATTERS" },
-  blossom: { bg: "#faf2f1", ink: "#693c53", accent: "#a94c75", surface: "#f4dfdf", label: "A VOICE, WITH CARE" },
-  "fms-official": { bg: "#f5f4f1", ink: "#332e43", accent: "#782b74", surface: "#fdfbf6", label: "FACULTY OF MANAGEMENT SCIENCES" },
-  gumroad: { bg: "#f4e9dd", ink: "#29241f", accent: "#8a2680", surface: "#f7c7df", label: "MAKE YOUR MARK." },
-  "studio-dark": { bg: "#12130e", ink: "#ecebdd", accent: "#d3fc50", surface: "#24271b", label: "YOUR VOICE. IN MOTION." },
-  verdure: { bg: "#eff2e7", ink: "#304834", accent: "#526d3b", surface: "#dbe3ce", label: "ONE STUDENT. ONE VOTE." },
+  original: { bg: "#f5f2f8", ink: "#422a46", accent: "#8a2680", surface: "#fffdfb", label: "กำลังบันทึกบัตรของคุณ" },
+  blossom: { bg: "#faf2f1", ink: "#693c53", accent: "#a94c75", surface: "#f4dfdf", label: "กำลังบันทึกบัตรของคุณ" },
+  "fms-official": { bg: "#f5f4f1", ink: "#332e43", accent: "#782b74", surface: "#fdfbf6", label: "กำลังบันทึกบัตรของคุณ" },
+  gumroad: { bg: "#f4e9dd", ink: "#29241f", accent: "#8a2680", surface: "#f7c7df", label: "กำลังบันทึกบัตรของคุณ" },
+  "studio-dark": { bg: "#12130e", ink: "#ecebdd", accent: "#d3fc50", surface: "#24271b", label: "กำลังบันทึกบัตรของคุณ" },
+  verdure: { bg: "#eff2e7", ink: "#304834", accent: "#526d3b", surface: "#dbe3ce", label: "กำลังบันทึกบัตรของคุณ" },
 };
 
 export function getVoteCastFamily(templateId) {
@@ -57,7 +57,7 @@ export default function VoteCastScene({ family = "original", phase = "pending", 
   return (
     <motion.div ref={overlay} role="dialog" aria-modal="true" aria-label="กำลังส่งบัตรลงคะแนน" tabIndex={-1} onKeyDown={event => { if (event.key === "Tab") event.preventDefault(); }} data-vote-cast={id} data-phase={phase} className="fms-app fixed inset-0 z-[200000] flex flex-col items-center justify-center overflow-hidden px-5 py-8 outline-none"
       style={{ background: theme.bg, color: theme.ink }} initial={{ opacity: quiet ? 1 : 0 }} animate={{ opacity: 1 }} transition={{ duration: quiet ? 0 : 0.15 }}>
-      <div className="mb-7 text-center text-[9px] font-semibold tracking-[.2em] sm:text-[10px]">{theme.label}</div>
+      <div className="mb-7 text-center text-[9px] font-semibold tracking-[.06em] sm:text-[11px]">{theme.label}</div>
       <div aria-hidden="true" className="relative isolate h-[290px] w-[260px] max-w-full">
         <motion.div className="absolute bottom-[130px] left-1/2 z-10 -ml-[63px] h-[100px] w-[126px] overflow-hidden rounded-sm border p-4"
           style={{ background: verdure ? "#b49c70" : "#fffdf7", borderColor: verdure ? "#796445" : "#d8d0cd", color: "#6b5a6d", transformOrigin: "bottom center" }}

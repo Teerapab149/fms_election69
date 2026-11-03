@@ -17,6 +17,7 @@ import SuccessPage from '../../../app/success/page';
 import { DUMMY_ELECTION } from '../../../utils/editorDummyData';
 import { makeParties, resultsCandidates } from '../../../utils/templatePreviewMocks';
 import { getPartyColor } from '../../../utils/partyColors';
+import Arrow from "../../Arrow";
 
 const HOME_BLOCK_MAP = {
   hero:           HeroBlock,
@@ -177,7 +178,7 @@ function HomePreview({ pageLayout, primaryColor }) {
               <span className="text-[9px] font-bold" style={{ color: primaryColor }}>FMS ELECTION {calendarYear}</span>
               <p className="text-sm font-bold mt-1">รู้จักผู้สมัครของคุณหรือยัง?</p>
               <div className="mt-2 inline-flex px-3 py-1 rounded-full bg-slate-900 text-white text-[9px] font-bold">
-                ดูรายชื่อพรรค →
+                ดูรายชื่อพรรค <Arrow />
               </div>
             </div>
           </div>
@@ -187,7 +188,7 @@ function HomePreview({ pageLayout, primaryColor }) {
             {/* Stats */}
             <div>
               <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
-                📊 สถิติผู้เข้าร่วมลงคะแนนโหวต
+                <BarChart3 size={14} aria-hidden="true" /> สถิติผู้เข้าร่วมลงคะแนนโหวต
               </p>
               <div
                 className="rounded-2xl p-4 text-white text-center"

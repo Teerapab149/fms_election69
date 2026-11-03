@@ -155,7 +155,7 @@ export default function BlossomVote({
   const count = parties.length;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "–");
 
   // label for the confirm bar (party name, or the abstain choice)
   const selection = (() => {
