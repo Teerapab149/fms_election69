@@ -28,6 +28,15 @@
 - [ ] ไฟล์รายชื่อผู้มีสิทธิ์เลือกตั้งปีนี้ (csv หรือ xlsx) และรายชื่อพรรคกับสมาชิกจริง
 - [ ] เครื่องอีกเครื่องหนึ่งสำหรับเก็บสำเนา backup และปลายโซ่บัตรนอกเครื่อง (ข้อ 12)
 
+ถ้าเครื่องยังไม่มีโปรแกรมข้างบน ซ้อมแล้วบน Ubuntu 26.04 ด้วยคำสั่งนี้ (Node.js ไม่ได้มาจาก apt ในการซ้อม แต่แตกไฟล์ tarball ของรุ่น 22 จาก nodejs.org ไปที่ `/usr/local` ได้ `node` v22 กับ `npm` 10):
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git curl openssl nginx postgresql postgresql-client rsync cron xz-utils
+```
+
+ติดตั้ง Node.js แล้วตรวจด้วย `node -v` และ `which node` ก่อนไปข้อ 1 ค่า path ของ `node` จะใช้ในไฟล์ systemd ข้อ 6.3
+
 ---
 
 ## 1. ดึงโค้ดและติดตั้งแพ็กเกจ
@@ -79,13 +88,15 @@ openssl rand -base64 24
 
 ### 3.1 สร้าง role และตั้ง URL
 
-ให้ DBA หรือใช้บัญชีผู้ดูแล PostgreSQL สร้างสอง role ในฐานข้อมูลเปล่าชื่อ `fms_election`
-(เปลี่ยน `<รหัส>` เป็นรหัสที่สุ่มไว้ในข้อ 2 แล้วพิมพ์ผ่านคำสั่ง `\password` ไม่เขียนลงไฟล์):
+ให้ DBA หรือใช้บัญชีผู้ดูแล PostgreSQL สร้างฐานข้อมูลเปล่าชื่อ `fms_election` กับสอง role
+(บนเครื่องที่ลง PostgreSQL เองคือ `sudo -u postgres psql` พิมพ์รหัสที่สุ่มไว้ในข้อ 2 ผ่านคำสั่ง `\password` ซึ่งต้องพิมพ์ในหน้า psql ที่โต้ตอบได้ ไม่เขียนลงไฟล์):
 
 ```sql
+CREATE DATABASE fms_election;
 CREATE ROLE fms_migrate LOGIN;
 \password fms_migrate
 ALTER DATABASE fms_election OWNER TO fms_migrate;
+\c fms_election
 ALTER SCHEMA public OWNER TO fms_migrate;
 CREATE ROLE fms_app LOGIN;
 \password fms_app
@@ -93,7 +104,8 @@ GRANT CONNECT ON DATABASE fms_election TO fms_app;
 GRANT USAGE ON SCHEMA public TO fms_app;
 ```
 
-จากนั้นตั้งตัวแปรใน terminal นี้ (พิมพ์แล้วไม่แสดงบนจอ):
+จากนั้นตั้งตัวแปรใน terminal นี้ (พิมพ์แล้วไม่แสดงบนจอ) รูปแบบของ URL คือ `postgresql://fms_app:รหัส@127.0.0.1:5432/fms_election` และ `postgresql://fms_migrate:รหัส@127.0.0.1:5432/fms_election`
+(รหัสที่มีอักขระพิเศษต้องเข้ารหัสแบบ URL เช่น `@` เป็น `%40`):
 
 ```bash
 read -r -s -p 'URL ของ fms_app: ' APP_DATABASE_URL; printf '\n'
@@ -247,9 +259,11 @@ ln -sf "$PWD/.env" .next/standalone/.env
 
 `npm run build` ดาวน์โหลดฟอนต์จาก Google ระหว่าง build (`next/font`) เครื่องที่ build ต้องออกเน็ตไป `fonts.googleapis.com` และ `fonts.gstatic.com` ได้
 CI เคยล้มด้วย error ของ `next/font` หลายรอบ แล้วรันซ้ำผ่าน ถ้าล้มด้วยข้อความเกี่ยวกับฟอนต์ ให้รัน `npm run build` ซ้ำก่อน
+(ตอนซ้อมบนเครื่องสะอาด รอบแรกล้มด้วย `TypeError: Cannot read properties of null (reading '1')` ที่ `next/font/google` หลังขึ้นคำว่า `Retrying 1/3` หลายรอบ รอบที่สองผ่าน
+ส่วนข้อความ `Failed to fetch ... from Google Fonts` ที่ซ้ำทุกรอบแปลว่าเครื่องออกไปสองโดเมนนั้นไม่ได้จริง ซึ่งรันซ้ำไม่ช่วย ให้ใช้วิธีคัดลอกด้านล่าง)
 ถ้าเครื่องจริงออกเน็ตไปสองโดเมนนั้นไม่ได้ ให้ build บนเครื่องอื่นที่ออกได้ (ระบบปฏิบัติการ สถาปัตยกรรม และ Node รุ่นหลักเดียวกับเครื่องจริง) แล้วคัดลอกโฟลเดอร์ `.next/standalone`
 ทั้งโฟลเดอร์ไปเครื่องจริง จากนั้นทำสามบรรทัดที่เหลือ (`cp` สองบรรทัดและ `ln -sf`) บนเครื่องจริง
-ค่า `BASE_PATH` และ `NEXT_PUBLIC_*` ถูกฝังตอน build จึงต้องตั้งให้ถูกบนเครื่องที่ build วิธีคัดลอกนี้ยังไม่ได้พิสูจน์ในโครงการนี้ ให้ทดสอบด้วยตรวจสุขภาพ (ข้อ 6.3) ก่อนใช้จริง
+ค่า `BASE_PATH` และ `NEXT_PUBLIC_*` ถูกฝังตอน build จึงต้องตั้งให้ถูกบนเครื่องที่ build วิธีคัดลอกนี้ซ้ำมาแล้วบนเครื่องซ้อมเครื่องเดียว (บล็อกสองโดเมนแล้ว build ล้ม จากนั้นคัดลอก `.next/standalone` ไปอีกโฟลเดอร์ ทำ `cp` สองบรรทัดกับ `ln -sf` แล้วเปิดได้ health 200 และไฟล์ JS 200) แต่ยังไม่เคยคัดลอกข้ามเครื่องจริง ให้ทดสอบด้วยตรวจสุขภาพ (ข้อ 6.3) ก่อนใช้จริง
 
 ตรวจว่าสำเร็จ:
 - [ ] `npm run build` จบโดยไม่ล้ม
@@ -260,7 +274,7 @@ CI เคยล้มด้วย error ของ `next/font` หลายรอ
 
 พอร์ตของแอปต้องผูกที่ `127.0.0.1` เท่านั้น ถ้าเปิดให้ทุก interface คนจะเรียกแอปตรงโดยไม่ผ่าน nginx ได้
 ซึ่งทำให้ตัวกันเดารหัสและตัวตรวจต้นทางถูกหลบ ตัวอย่างไฟล์ `/etc/systemd/system/fms-ovs.service`
-(แก้ `User` และ path ของ `node` ตาม `which node`):
+(แก้ `User` และ path ของ `node` ตาม `which node` ถ้าไม่แก้และ node อยู่ที่อื่น เช่น `/usr/local/bin/node` service จะล้มด้วย `status=203/EXEC` และ `ss -ltn` ไม่เห็นพอร์ต 3000):
 
 ```ini
 [Unit]
@@ -310,6 +324,8 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:3000$P"
 server {
     listen 443 ssl;
     server_name ovs.fms.psu.ac.th;
+    ssl_certificate /etc/ssl/ovs/fullchain.pem;
+    ssl_certificate_key /etc/ssl/ovs/privkey.pem;
 
     include /etc/nginx/snippets/auth-proxy-buffers.conf;
     client_max_body_size 200m;
@@ -324,11 +340,12 @@ server {
 }
 ```
 
+- [ ] แก้สองบรรทัด `ssl_certificate` ให้ชี้ไฟล์ใบรับรองจริงของคณะ ถ้าไม่มีสองบรรทัดนี้ `nginx -t` จะล้มด้วย `no "ssl_certificate" is defined`
 - [ ] คัดลอก `deploy/nginx/auth-proxy-buffers.conf` ไปที่ `/etc/nginx/snippets/` (กัน 502 ตอนกลับจาก SSO เพราะ header ของ session ยาว)
 - [ ] `Host $http_host` ต้องมี เบราว์เซอร์ปัจจุบันถูกตัดสินจากหัว `Sec-Fetch-Site` ซึ่งไม่ดู Host แต่ไคลเอนต์ที่ไม่ส่งหัวนั้นจะถูกเทียบ `Origin` กับ `Host` ถ้า nginx ส่ง Host ผิด ไคลเอนต์กลุ่มนั้นจะโหวตไม่ได้
 - [ ] `client_max_body_size 200m;` ต้องมี ค่าเริ่มต้นของ nginx คือ 1 MB ทำให้รูปที่ใหญ่กว่า 1 MB ถูกปฏิเสธ
       แอปจำกัดไฟล์ละไม่เกิน 20 MB และรวมไม่เกิน 200 MB ต่อคำขอ แอปใช้ RAM ราว 4 เท่าของขนาดคำขอ ถ้าเครื่อง RAM น้อยให้ลดเลข 200 ลงตามที่รับได้
-- [ ] สำรองไฟล์ config เดิมก่อนแก้ แล้วรัน `sudo nginx -t` ต้องขึ้น `test is successful` จึงค่อย `sudo systemctl reload nginx`
+- [ ] สำรองไฟล์ config เดิมก่อนแก้ แล้วรัน `sudo nginx -t` ต้องขึ้น `test is successful` จึงค่อย `sudo systemctl reload nginx` (ถ้าขึ้นว่า `nginx.service is not active` แปลว่า nginx ยังไม่ได้ทำงาน ให้ใช้ `sudo systemctl enable --now nginx`)
 
 ตรวจว่าสำเร็จ (รันจากเครื่องอื่นหรือเครื่องนี้):
 
@@ -365,6 +382,7 @@ DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --rotate-password
 DATABASE_URL="$APP_DATABASE_URL" node scripts/admin.js --list
 ```
 
+- [ ] `--grant` ทำได้เฉพาะคนที่มีแถวในฐานข้อมูลแล้ว ถ้ารันตอนนี้ก่อนนำเข้ารายชื่อ (ข้อ 10) จะขึ้น `ไม่พบ ... ในฐานข้อมูล` ให้ทำ `--create-staff` ตอนนี้ แล้วกลับมาทำ `--grant` กับ `--rotate-password` หลังนำเข้ารายชื่อในข้อ 10 แล้ว (หรือให้กรรมการล็อกอิน PSU SSO หนึ่งครั้งก่อน)
 - [ ] ชื่อผู้ใช้ของ `--create-staff` ต้องไม่ซ้ำกับ username PSU Passport ของใครเลย (รวมเจ้าตัว) เพราะระบบใช้ username นั้นเป็นรหัสผู้ใช้
       ถ้าซ้ำและเจ้าของ username เผลอล็อกอินผ่านหน้า SSO ข้อมูลของบัญชีเจ้าหน้าที่จะถูกเขียนทับ ตัวอย่างข้างบนใช้รูปแบบ `ovs-staff-01` ที่ PSU Passport ไม่ใช้
 - [ ] คำสั่ง `--create-staff` แสดงรหัสส่วนตัวของเจ้าหน้าที่ครั้งเดียว เก็บเข้าตัวจัดการรหัสผ่านทันที
@@ -446,8 +464,9 @@ mkdir -p backups
 crontab -e
 ```
 
-- [ ] ใน `/etc/fms-backup.env` ใส่ `BACKUP_DATABASE_URL` ของบัญชีที่อ่านได้ทุกตาราง (ไม่ใช่ `fms_app`) และ `UPLOAD_ROOT` เป็น path เดียวกับใน `.env` ของแอป
+- [ ] ใน `/etc/fms-backup.env` ใส่ `BACKUP_DATABASE_URL` ของบัญชีที่อ่านได้ทุกตาราง (ไม่ใช่ `fms_app` ตอนซ้อมใช้ `fms_migrate`) และ `UPLOAD_ROOT` เป็น path เดียวกับใน `.env` ของแอป
 - [ ] ใน crontab เพิ่มบรรทัดจาก `deploy/backup/crontab.example` โดยแก้ `/opt/fms-election` ให้ตรง
+- [ ] บรรทัดตัวอย่างเขียน log ที่ `/var/log/fms-backup.log` ซึ่งผู้ใช้ทั่วไป (เช่น `fms`) สร้างไม่ได้ ถ้าไม่แก้ cron จะล้มทุกรอบด้วย `cannot create /var/log/fms-backup.log: Permission denied` ก่อนที่ `backup.sh` จะเริ่มทำงาน ให้เปลี่ยนเป็น path ที่ผู้ใช้เขียนได้ เช่น `/home/fms/fms-backup.log` หรือสร้างไฟล์นั้นไว้ล่วงหน้าด้วย `sudo touch /var/log/fms-backup.log && sudo chown fms: /var/log/fms-backup.log`
 - [ ] `pg_dump` ต้องมีรุ่นหลักไม่ต่ำกว่าเซิร์ฟเวอร์ฐานข้อมูล
 
 สั่งสำรองหนึ่งรอบทันที แล้วตรวจ:
@@ -459,7 +478,7 @@ ls -l backups backups/status
 
 - [ ] ใน `backups/` มีไฟล์ `db-....sql.gz` และ `images-....tar.gz` และใน `backups/status/` มี `LAST_OK`
 - [ ] ที่หน้า ความพร้อมและระบบ กด ตรวจซ้ำ ข้อสำรองข้อมูลอัตโนมัติ ต้องผ่าน
-- [ ] ซ้อมกู้กับฐานข้อมูลทิ้งได้ 1 ครั้ง ทำกับฐานข้อมูลแยกเท่านั้น ห้ามทำกับฐานจริง เพราะคำสั่งล้าง schema เดิมทิ้ง:
+- [ ] ซ้อมกู้กับฐานข้อมูลทิ้งได้ 1 ครั้ง ทำกับฐานข้อมูลแยกเท่านั้น ห้ามทำกับฐานจริง เพราะคำสั่งล้าง schema เดิมทิ้ง สร้างฐานทิ้งก่อน (`CREATE DATABASE fms_restore_test OWNER fms_migrate;`) และคำสั่งจะถามว่า `Continue? [y/N]` ให้พิมพ์ `y`:
 
 ```bash
 RESTORE_VIA=direct RESTORE_DATABASE_URL="postgresql://<ผู้ใช้>@<เครื่อง>:5432/fms_restore_test" BACKUP_APP_DIR=/opt/fms-election sh scripts/restore.sh backups/db-....sql.gz
