@@ -17,6 +17,7 @@ import { getPath } from "../../utils/basePath";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { verdureMeta } from "../home/VerdureChrome";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -94,7 +95,7 @@ export default function VerdureVote({
   const selectedName = (() => {
     if (selectedPartyId == null) return null;
     const p = regularParties.find((x) => x.id === selectedPartyId);
-    if (p) return `No. ${pad2(p.number)} — ${p.name}`;
+    if (p) return `No. ${pad2(p.number)} ${p.name}`;
     if (disapprove?.id === selectedPartyId) return "ไม่รับรอง Disapprove";
     if (abstain?.id === selectedPartyId) return "งดออกเสียง Abstain";
     return null;
@@ -111,7 +112,7 @@ export default function VerdureVote({
           <div className="vd-ballot__kicker"><span className="rule" /> {meta.wordmark}  <span className="vd-thai">เลือกตั้งประจำปี</span> {meta.ay} <span className="rule" /></div>
           <h1 className="vd-ballot__title">Choose <em>one.</em></h1>
           <div className="vd-ballot__accent" aria-hidden />
-          <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} — </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
+          <p className="vd-ballot__deck">{userName ? <>สวัสดี {userName} </> : null}กรุณาเลือกหนึ่งตัวเลือกด้านล่าง การลงคะแนนสามารถทำได้เพียงครั้งเดียว</p>
         </div>
 
         <div className="vd-ballot__meta">
@@ -132,7 +133,7 @@ export default function VerdureVote({
             kicker={<>PARTY No. {pad2(p.number)}</>}
             name={p.name}
             slogan={p.slogan ? `"${p.slogan}"` : null}
-            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>ดูนโยบาย →</a>}
+            more={<a className="vd-opt__more" href={getPath(`/party?id=${p.number}`)} onClick={(e) => e.stopPropagation()}>ดูนโยบาย <Arrow /></a>}
             selected={selectedPartyId === p.id}
             onClick={() => onSelect(p.id)}
           />
@@ -154,7 +155,7 @@ export default function VerdureVote({
           </div>
           <button type="button" className={`vd-btn vd-btn--terra vd-btn--lg ${selectedPartyId == null || isSubmitting ? "is-disabled" : ""}`}
             disabled={selectedPartyId == null || isSubmitting} onClick={() => onConfirm()}>
-            {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"} <span className="arr">↗</span>
+            {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"} <span className="arr"><Arrow dir="up-right" /></span>
           </button>
         </div>
       </div>

@@ -76,7 +76,7 @@ export const authOptions = {
           // เทียบแบบ constant-time ไม่จำเป็น: ทั้งสองค่าฝั่งเราเป็นคนออกเอง ไม่ใช่ความลับ
           // ที่ต้องกันการเดาทีละไบต์ และการรั่วเวลาที่นี่ไม่ให้ข้อมูลอะไรกับผู้โจมตี
           if (!checks?.state || !params?.state || checks.state !== params.state) {
-            throw new Error("OAuth state mismatch — ปฏิเสธการล็อกอินนี้");
+            throw new Error("OAuth state ไม่ตรงกัน ปฏิเสธการล็อกอินนี้");
           }
 
           const body = new URLSearchParams({
@@ -126,7 +126,7 @@ export const authOptions = {
 
         // ตรวจสอบว่า studentId มีค่าจริงไหมก่อนส่งต่อ
         if (!studentId) {
-          console.error("❌ Critical: StudentID not found in SSO profile!");
+          console.error("Critical: StudentID not found in SSO profile!");
         }
 
         return {
@@ -225,7 +225,7 @@ export const authOptions = {
 
       // ขั้นตอนนี้สำคัญ: 'user' จะมีค่าเฉพาะตอน Sign In ครั้งแรกเท่านั้น
       if (user) {
-        console.log(`🔄 [DB Sync] Start upsert for studentId: ${user.studentId}`);
+        console.log(`[DB Sync] Start upsert for studentId: ${user.studentId}`);
 
         try {
           // บันทึก/อัปเดต ข้อมูลลง Postgres ผ่าน Prisma
@@ -277,7 +277,7 @@ export const authOptions = {
             });
           }
 
-          console.log(`✅ [DB Sync] Success: User ID ${dbUser.id} updated/created.`);
+          console.log(`[DB Sync] Success: User ID ${dbUser.id} updated/created.`);
 
           // นำข้อมูลจาก DB มาใส่ใน Token
           token.id = dbUser.id;
@@ -290,7 +290,7 @@ export const authOptions = {
           token.year = dbUser.year;
 
         } catch (error) {
-          console.error("❌ [DB Sync] Error occurred during Prisma upsert:");
+          console.error("[DB Sync] Error occurred during Prisma upsert:");
           console.error(error);
         }
       }

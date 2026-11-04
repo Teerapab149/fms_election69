@@ -56,7 +56,7 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
     else add("PASS", "showResult = false", "tally hidden until certification");
 
     if (gc.ballotsAnonymized)
-      add("WARN", "ballotsAnonymized flag still true", "last year's flag — scripts/sql/annual-reset.sql clears it");
+      add("WARN", "ballotsAnonymized flag still true", "last year's flag, scripts/sql/annual-reset.sql clears it");
     else add("PASS", "ballots not anonymized", "fresh");
 
     // The tally, ballot count and chain head pinned at certification describe last
@@ -110,9 +110,9 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
     } else if (!(cStart <= eStart && eStart < eEnd)) {
       add("FAIL", "election dates out of order", "need campaign ≤ start < end");
     } else if (eEnd.getTime() < Date.now()) {
-      add("WARN", "election end is in the PAST", "looks like last year's dates — set this year's");
+      add("WARN", "election end is in the PAST", "looks like last year's dates, set this year's");
     } else {
-      add("PASS", "election dates set + ordered", `${eStart.toISOString().slice(0, 16)} → ${eEnd.toISOString().slice(0, 16)}`);
+      add("PASS", "election dates set + ordered", `${eStart.toISOString().slice(0, 16)} to ${eEnd.toISOString().slice(0, 16)}`);
     }
 
     // ── Identity meta ───────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
     // committee. Only committee accounts are meant to share.
     const staff = admins.filter((a) => a.role === "STAFF" && a.passwordHash);
     const personal = admins.filter((a) => a.role !== "STAFF" && a.passwordHash);
-    if (personal.length) add("WARN", `${personal.length} committee admin(s) still have a personal password`, `only break-glass and staff accounts should — clear with --clear-personal: ${personal.map((a) => a.studentId).join(", ")}`);
+    if (personal.length) add("WARN", `${personal.length} committee admin(s) still have a personal password`, `only break-glass and staff accounts should, clear with --clear-personal: ${personal.map((a) => a.studentId).join(", ")}`);
     else add("PASS", "no leftover personal admin passwords", "");
     if (staff.length) add("PASS", `${staff.length} staff account(s) with their own password`, `can certify results: ${staff.map((a) => a.studentId).join(", ")}`);
 
@@ -167,10 +167,10 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
       if (e.message === "__rollback__" || e.message?.includes("__rollback__")) {
         add("PASS", "app can create parties/members", "insert probe succeeded (rolled back)");
       } else if (/permission denied for sequence/i.test(e.message)) {
-        add("FAIL", "app CANNOT create parties — sequence grant missing",
-          "the admin console will fail to add a party while delete still works · fix: psql -f scripts/sql/ballot-grants.sql (GRANT USAGE, SELECT ON ALL SEQUENCES)");
+        add("FAIL", "app CANNOT create parties, sequence grant missing",
+          "the admin console will fail to add a party while delete still works, fix: psql -f scripts/sql/ballot-grants.sql (GRANT USAGE, SELECT ON ALL SEQUENCES)");
       } else if (/permission denied/i.test(e.message)) {
-        add("FAIL", "app CANNOT create parties — grant missing", `${e.message.split("\n")[0]} · fix: psql -f scripts/sql/ballot-grants.sql`);
+        add("FAIL", "app CANNOT create parties, grant missing", `${e.message.split("\n")[0]}, fix: psql -f scripts/sql/ballot-grants.sql`);
       } else {
         add("WARN", "could not probe party creation", e.message.split("\n")[0]);
       }
@@ -191,13 +191,13 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
         await tx.$executeRawUnsafe(`DELETE FROM "Ballot" WHERE false`);
         throw new Error("__rollback__");
       });
-      add("FAIL", "app CAN delete ballots", "least-privilege is NOT in effect — the app role holds DELETE on \"Ballot\"");
+      add("FAIL", "app CAN delete ballots", "least-privilege is NOT in effect, the app role holds DELETE on \"Ballot\"");
     } catch (e) {
       if (/permission denied/i.test(e.message)) {
         add("PASS", "app cannot delete ballots", "least-privilege in effect (SELECT/INSERT only)");
       } else if (e.message === "__rollback__" || e.message?.includes("__rollback__")) {
         add("FAIL", "app CAN delete ballots",
-          "least-privilege is NOT in effect · DATABASE_URL likely points at a superuser instead of fms_app · fix: create the fms_app role, apply scripts/sql/ballot-grants.sql, and repoint DATABASE_URL (STAFF-IT-GUIDE §3.0)");
+          "least-privilege is NOT in effect, DATABASE_URL likely points at a superuser instead of fms_app, fix: create the fms_app role, apply scripts/sql/ballot-grants.sql, and repoint DATABASE_URL (STAFF-IT-GUIDE §3.0)");
       } else {
         add("WARN", "could not probe ballot delete privilege", e.message.split("\n")[0]);
       }
@@ -212,17 +212,17 @@ const add = (status, label, detail = "") => results.push({ status, label, detail
   }
 
   // ── Report ────────────────────────────────────────────────────────────────
-  const icon = { PASS: "✓", WARN: "⚠", FAIL: "✗" };
-  console.log("\n  Election preflight — fresh-year / go-live readiness\n");
+  
+  console.log("\n  Election preflight, fresh-year / go-live readiness\n");
   for (const r of results) {
-    console.log(`  ${icon[r.status]} [${r.status}] ${r.label}${r.detail ? `  — ${r.detail}` : ""}`);
+    console.log(`  [${r.status}] ${r.label}${r.detail ? `, ${r.detail}` : ""}`);
   }
   const fails = results.filter((r) => r.status === "FAIL").length;
   const warns = results.filter((r) => r.status === "WARN").length;
   console.log("");
-  if (fails) console.log(`  ✗ NOT READY — ${fails} blocking issue(s), ${warns} warning(s). Fix the FAILs before go-live.\n`);
-  else if (warns) console.log(`  ⚠ READY WITH WARNINGS — 0 blocking, ${warns} warning(s) to review.\n`);
-  else console.log("  ✓ READY — all checks passed.\n");
+  if (fails) console.log(`  NOT READY, ${fails} blocking issue(s), ${warns} warning(s). Fix the FAILs before go-live.\n`);
+  else if (warns) console.log(`  READY WITH WARNINGS, 0 blocking, ${warns} warning(s) to review.\n`);
+  else console.log("  READY, all checks passed.\n");
 
   process.exitCode = fails ? 1 : 0;
 })();

@@ -82,7 +82,7 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
             <button type="button" className="sdm-x" onClick={onClose} aria-label="ปิด"><X size={18} strokeWidth={2.5} /></button>
             <div className={`sdm-photo ${src ? "" : "sd-media-ph"}`}>
-              {src ? <img src={src} alt={member.name || ""} /> : <span>portrait</span>}
+              {src ? <img src={src} alt={member.name || ""} /> : <span>ยังไม่มีรูป</span>}
               <span className="sdm-photo__tag">CANDIDATE</span>
             </div>
             <div className="sdm-info">
@@ -92,9 +92,9 @@ export function StudioDarkMemberModal({ member = null, onClose = () => {} }) {
               <div className="sdm-eyebrow"><span className="sdm-accent">●</span> CANDIDATE <span className="sd-thai">ผู้สมัคร</span></div>
               <h3 className="sdm-name">{member.name}</h3>
               <dl className="sdm-rows">
-                <div><dt>STUDENT ID <span className="sd-thai">รหัสนักศึกษา</span></dt><dd>{member.studentId || "—"}</dd></div>
-                <div><dt>POSITION <span className="sd-thai">ตำแหน่ง</span></dt><dd>{member.position || "—"}</dd></div>
-                <div><dt>MAJOR <span className="sd-thai">สาขาวิชา</span></dt><dd>{member.major || "—"}</dd></div>
+                <div><dt>STUDENT ID <span className="sd-thai">รหัสนักศึกษา</span></dt><dd>{member.studentId || "–"}</dd></div>
+                <div><dt>POSITION <span className="sd-thai">ตำแหน่ง</span></dt><dd>{member.position || "–"}</dd></div>
+                <div><dt>MAJOR <span className="sd-thai">สาขาวิชา</span></dt><dd>{member.major || "–"}</dd></div>
               </dl>
             </div>
           </motion.div>

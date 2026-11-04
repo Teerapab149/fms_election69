@@ -64,7 +64,7 @@ function toneOf(isVoteNo, isDisapprove) {
 function choiceOf(party, tone) {
   if (tone !== "party") return { label: TONES[tone].label, en: TONES[tone].en, sub: TONES[tone].sub, number: null };
   // ชื่อพรรคไม่มีป้ายอังกฤษ — เป็นข้อความที่สโมสรฯ กรอกเอง ไม่ใช่ศัพท์ของระบบ
-  return { label: party?.name || "—", en: null, sub: party?.number != null ? `เบอร์ ${party.number}` : null, number: party?.number ?? null };
+  return { label: party?.name || "–", en: null, sub: party?.number != null ? `เบอร์ ${party.number}` : null, number: party?.number ?? null };
 }
 
 // Shared behaviour: dialog semantics, Escape, scrim, focus, submitting lock. Every
@@ -130,7 +130,7 @@ const PartyLogo = ({ party }) => <img className="vc-logo" src={getPath(party.log
 function ChoiceMark({ tone, party, number, size = 24 }) {
   if (tone !== "party") return <ToneMark tone={tone} size={size} />;
   if (party?.logoUrl) return <PartyLogo party={party} />;
-  return <span>{number ?? "—"}</span>;
+  return <span>{number ?? "–"}</span>;
 }
 
 // ─────────────────────────────────────────────────────────────── BLOSSOM ──
@@ -159,7 +159,7 @@ function BlossomConfirm(props) {
         <p className="vc-bl__deck">ตรวจดูอีกครั้งนะ เมื่อยืนยันแล้วจะแก้ไขไม่ได้</p>
         <div className="vc-bl__pick" style={tone !== "party" ? { background: t.soft, borderColor: t.line } : undefined}>
           <div className="vc-bl__badge" style={tone !== "party" ? { color: t.accent } : undefined}>
-            {tone === "party" && !party?.logoUrl ? <span className="vc-bl__num">{c.number ?? "—"}</span> : <ChoiceMark tone={tone} party={party} number={c.number} size={26} />}
+            {tone === "party" && !party?.logoUrl ? <span className="vc-bl__num">{c.number ?? "–"}</span> : <ChoiceMark tone={tone} party={party} number={c.number} size={26} />}
           </div>
           <div className="vc-bl__meta">
             <span className="vc-bl__lead" style={tone !== "party" ? { color: t.accent } : undefined}>ท่านเลือก</span>

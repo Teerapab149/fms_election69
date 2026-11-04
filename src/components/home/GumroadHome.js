@@ -19,7 +19,8 @@ import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "./GumroadTheme";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
+import { Ico } from "../Arrow";
 import EditorElement from "../admin/editor/EditorElement";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import HomeTicker from "../elements/home-ticker/gumroad";
@@ -40,6 +41,7 @@ import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { useHowToVote } from "../../hooks/useHowToVote";
+import Arrow from "../Arrow";
 
 // this template's voting flow, in the words its own ballot and done pages use
 const GH_STEPS = [
@@ -217,7 +219,7 @@ export default function GumroadHome({
         {/* HERO TILE */}
         <section className="gh-hero gh-area-hero">
           <div className="gh-hero__top">
-            <span className="gh-sticker gh-sticker--lime">⚡ {facultyEn} ELECTION {calendarYear}</span>
+            <span className="gh-sticker gh-sticker--lime"><Ico icon={Zap} /> {facultyEn} ELECTION {calendarYear}</span>
           </div>
 
           <Wrap id="hero-title">
@@ -242,7 +244,7 @@ export default function GumroadHome({
             <Wrap id="voteCTA-button">
               <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
             </Wrap>
-            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="gh-howlink">วิธีลงคะแนน <span aria-hidden="true">↓</span></a>}
+            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="gh-howlink">วิธีลงคะแนน <span aria-hidden="true"><Arrow dir="down" /></span></a>}
           </div>
 
           {/* MOBILE-ONLY meet shortcut so the "ดูผู้สมัคร" action is visible above the

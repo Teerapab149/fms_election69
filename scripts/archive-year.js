@@ -67,7 +67,7 @@ function arg(name) {
       prisma.user.groupBy({ by: ["year"], where: eligWhere, ...cAll, orderBy: { year: "asc" } }),
       prisma.user.groupBy({ by: ["gender"], where: eligWhere, ...cAll, orderBy: { gender: "asc" } }),
     ]);
-    const countBy = (rows, key) => Object.fromEntries(rows.map((r) => [r[key] ?? "—", r._count._all]));
+    const countBy = (rows, key) => Object.fromEntries(rows.map((r) => [r[key] ?? "-", r._count._all]));
     const mkGroup = (votedRows, eligRows, key) => {
       const voted = countBy(votedRows, key);
       return eligRows
@@ -134,15 +134,15 @@ function arg(name) {
 
     const realRanked = [...results.candidates].filter((c) => c.number > 0).sort((a, b) => b.score - a.score);
     const fmtRow = (c) => `| ${c.number} | ${c.name} | ${c.score} |`;
-    const readme = `# ${gc.electionName || label} — archived results & design
+    const readme = `# ${gc.electionName || label}, archived results & design
 
 _Generated ${generatedAt} by \`scripts/archive-year.js\`._
-${cfg.showResult ? "" : "\n> ⚠️ Snapshotted while results were NOT yet revealed — scores may not be final.\n"}
+${cfg.showResult ? "" : "\n> Snapshotted while results were NOT yet revealed, scores may not be final.\n"}
 ## Results
 - **Turnout:** ${results.turnout.voted} / ${results.turnout.eligible} eligible (**${results.turnout.percent}%**)
 - **Certified:** ${results.ballotsAnonymized
-      ? `yes — signed off by ${results.certifiedBy || "(name not recorded)"}${results.certifiedAt ? ` on ${results.certifiedAt}` : ""}; Candidate.score below is the record`
-      : "no — result was never formally certified"}
+      ? `yes, signed off by ${results.certifiedBy || "(name not recorded)"}${results.certifiedAt ? ` on ${results.certifiedAt}` : ""}; Candidate.score below is the record`
+      : "no, result was never formally certified"}
 
 | № | Party | Score |
 |---|---|---|
@@ -159,22 +159,22 @@ ${results.demographics.byYear.map((g) => `- ${g.name}: ${g.value}/${g.eligible}`
 
 ## Design
 - **Active template:** \`${design.activeTemplateId}\`
-- Overlays captured: pageLayout ${design.pageLayout ? "✓" : "—"}, themeConfig ${design.themeConfig ? "✓" : "—"}, DB template ${design.template ? "✓" : "— (built-in, lives in git)"}
-- Full machine snapshot: [\`design.json\`](./design.json) · [\`results.json\`](./results.json)
+- Overlays captured: pageLayout ${design.pageLayout ? "yes" : "no"}, themeConfig ${design.themeConfig ? "yes" : "no"}, DB template ${design.template ? "yes" : "no (built-in, lives in git)"}
+- Full machine snapshot: [\`design.json\`](./design.json), [\`results.json\`](./results.json)
 
 To make this exact year selectable again, register \`design.json\` into
 \`ARCHIVE_TEMPLATES\` in \`src/components/admin/editor/templates/index.js\`.
 `;
     fs.writeFileSync(path.join(outDir, "README.md"), readme);
 
-    console.log(`\n  ✓ Archived "${label}" → archive/${label}/`);
+    console.log(`\n  Archived "${label}" to archive/${label}/`);
     console.log(`    results.json  (turnout ${results.turnout.percent}%, ${results.candidates.length} options)`);
     console.log(`    design.json   (template: ${design.activeTemplateId})`);
     console.log(`    README.md`);
-    if (!cfg.showResult) console.log(`    ⚠ results were not revealed — re-run after certification for final scores.`);
+    if (!cfg.showResult) console.log(`    results were not revealed, re-run after certification for final scores.`);
     console.log(`\n  Next: keep archive/${label} where the faculty decides, before the yearly reset. This repository is public: commit it only if the faculty approves.\n`);
   } catch (e) {
-    console.error("  ✗ archive failed:", e.message);
+    console.error("  archive failed:", e.message);
     process.exitCode = 1;
   } finally {
     await prisma.$disconnect();

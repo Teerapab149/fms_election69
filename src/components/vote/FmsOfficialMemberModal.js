@@ -69,12 +69,12 @@ export default function FmsOfficialMemberModal({ member = null, onClose = () => 
 
         <div className="fo-mm__body">
           <span className="fo-mm__kicker">ผู้สมัครรับเลือกตั้ง</span>
-          <h3 id="fo-mm-name">{member.name || "—"}</h3>
+          <h3 id="fo-mm-name">{member.name || "–"}</h3>
           <dl className="fo-mm__fields">
             {fields.map(([label, value]) => (
               <div key={label}>
                 <dt>{label}</dt>
-                <dd>{value || "—"}</dd>
+                <dd>{value || "–"}</dd>
               </div>
             ))}
           </dl>

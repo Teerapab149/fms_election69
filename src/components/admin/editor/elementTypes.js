@@ -20,7 +20,7 @@ export const ELEMENT_TYPES = {
   "text-title": {
     id: "text-title",
     name: "ข้อความหัวเรื่อง",
-    description: "Primary heading text — H1-level",
+    description: "Primary heading text, H1-level",
     category: "text",
     layout: { minWidth: null, maxWidth: null, fluid: true, responsive: null },
     componentLibrary: {
@@ -135,7 +135,7 @@ export const ELEMENT_TYPES = {
   "button-stateful": {
     id: "button-stateful",
     name: "ปุ่มสถานะ",
-    description: "Stateful button (voteCTA) — renders differently per runtime state",
+    description: "Stateful button (voteCTA), renders differently per runtime state",
     category: "button",
     layout: { minWidth: null, maxWidth: null, fluid: false, responsive: null },
     componentLibrary: {
@@ -225,7 +225,7 @@ export const ELEMENT_TYPES = {
   "toggle-visibility": {
     id: "toggle-visibility",
     name: "สวิตช์เปิดปิด",
-    description: "Visibility toggle — single boolean `visible` field",
+    description: "Visibility toggle, single boolean `visible` field",
     category: "toggle",
     layout: { minWidth: null, maxWidth: null, fluid: false, responsive: null },
     componentLibrary: {

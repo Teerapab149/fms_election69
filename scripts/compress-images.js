@@ -27,11 +27,11 @@ async function walk(dir) {
 }
 
 async function compressImages() {
-    console.log('🔍 Scanning for images in:', TARGET_DIR);
+    console.log('Scanning for images in:', TARGET_DIR);
 
     try {
         const files = await walk(TARGET_DIR);
-        console.log(`✅ Found ${files.length} images.`);
+        console.log(`Found ${files.length} images.`);
 
         for (const file of files) {
             // const ext = path.extname(file).toLowerCase(); // Moved down
@@ -99,7 +99,7 @@ async function compressImages() {
                 if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
             }
         }
-        console.log('🎉 Compression Complete!');
+        console.log('Compression Complete!');
 
     } catch (error) {
         console.error("Error scanning files:", error);

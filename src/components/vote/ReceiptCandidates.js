@@ -32,6 +32,7 @@ import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -93,7 +94,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
                         <span className="rc-index-name">{p.name}</span>
                         <span className="rc-index-team rc-mono">{p.members?.length ? `${p.members.length} MEMBERS` : "TEAM TBA"}</span>
                       </span>
-                      <span className="rc-index-arrow" aria-hidden="true">↓</span>
+                      <span className="rc-index-arrow" aria-hidden="true"><Arrow dir="down" /></span>
                     </a>
                   </li>
                 ))}
@@ -137,7 +138,7 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
                         <span className="rc-flyer__stat">{memberCount > 0 ? <><span className="rc-th">ทีมงาน</span> {memberCount} <span className="rc-th">คน</span></> : <span className="rc-th">ทีมงานกำลังปรับปรุงข้อมูล</span>}</span>
                       </span>
 
-                      <span className="rc-flyer__cta">เปิดแฟ้มพรรค<span className="rc-flyer__arrow" aria-hidden="true"> →</span></span>
+                      <span className="rc-flyer__cta">เปิดแฟ้มพรรค<span className="rc-flyer__arrow" aria-hidden="true"> <Arrow /></span></span>
                     </a>
                   </li>
                 );
@@ -156,10 +157,10 @@ export default function ReceiptCandidates({ candidates = [], editorMode = false 
           <div className="rc-cand-foot">
             <div className="rc-cand-stubs">
               <a href={editorMode ? undefined : getPath("/")} className="rc-stubcta">
-                <span aria-hidden="true">← </span>กลับหน้าแรก
+                <span aria-hidden="true"><Arrow dir="left" /> </span>กลับหน้าแรก
               </a>
               <a href={editorMode ? undefined : getPath("/vote")} className="rc-stubcta rc-stubcta--go">
-                ไปลงคะแนน<span className="rc-flyer__arrow" aria-hidden="true"> →</span>
+                ไปลงคะแนน<span className="rc-flyer__arrow" aria-hidden="true"> <Arrow /></span>
               </a>
             </div>
             <span className="rc-chip" aria-hidden="true"><span className="rc-foil rc-foil--conic" /></span>

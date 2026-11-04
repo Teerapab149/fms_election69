@@ -137,7 +137,7 @@ const voter = REAL ? await db.user.findFirst({ where: { isVoted: true } }) : nul
 // adminGuard ของ API ที่อ่าน isAdmin ใหม่ทุกครั้ง ตรงนี้จึงไม่ต้องมี user จริงในฐานข้อมูล
 const adminCookie = async () => {
   const secret = env.ADMIN_JWT_SECRET;
-  if (!secret) throw new Error("ADMIN_JWT_SECRET ไม่มีใน .env — /template-preview ต้องใช้ cookie แอดมิน");
+  if (!secret) throw new Error("ADMIN_JWT_SECRET ไม่มีใน .env, /template-preview ต้องใช้ cookie แอดมิน");
   const { SignJWT } = await import("jose");
   const token = await new SignJWT({ sub: "template-gate" })
     .setProtectedHeader({ alg: "HS256" })
@@ -194,11 +194,11 @@ try {
 }
 
 const bad = rows.filter((r) => r.fail.length);
-console.log(`ตรวจ ${rows.length} หน้า-สถานะ · ผ่าน ${rows.length - bad.length} · ไม่ผ่าน ${bad.length}\n`);
+console.log(`ตรวจ ${rows.length} หน้า-สถานะ ผ่าน ${rows.length - bad.length} ไม่ผ่าน ${bad.length}\n`);
 for (const fam of FAMS) {
   const mine = rows.filter((r) => r.fam === fam);
   const b2 = mine.filter((r) => r.fail.length);
-  console.log(`${fam.padEnd(12)} ${b2.length ? "✗" : "✓"} ${mine.length - b2.length}/${mine.length}` +
-    (b2.length ? "\n" + b2.map((r) => `    ${String(r.w).padEnd(5)} ${r.page.padEnd(11)} ${r.fail.join(" · ")}`).join("\n") : ""));
+  console.log(`${fam.padEnd(12)} ${b2.length ? "ไม่ผ่าน" : "ผ่าน"} ${mine.length - b2.length}/${mine.length}` +
+    (b2.length ? "\n" + b2.map((r) => `    ${String(r.w).padEnd(5)} ${r.page.padEnd(11)} ${r.fail.join(", ")}`).join("\n") : ""));
 }
 process.exit(bad.length ? 1 : 0);

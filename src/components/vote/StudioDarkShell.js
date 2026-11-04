@@ -22,6 +22,7 @@ import { getPath } from "../../utils/basePath";
 import { useState, useEffect } from "react";
 import { ArrowUp } from "lucide-react";
 import StudioDarkRail from "../home/StudioDarkRail";
+import Arrow from "../Arrow";
 
 export default function StudioDarkShell({
   active = "home",        // rail nav key: home|candidates|party|vote|results
@@ -32,7 +33,7 @@ export default function StudioDarkShell({
   backLabel = "",
   right = null,           // scene-bar right side (ReactNode)
   editorMode = false,
-  systemMode = "AUTO",
+  systemMode,
   children,
 }) {
   // Back-to-top: appears once the page is scrolled past ~1 viewport. Lives in
@@ -55,7 +56,7 @@ export default function StudioDarkShell({
         <div className="sd-scenebar">
           <div className="sd-scenebar__crumbs">
             {backHref ? (
-              <a href={editorMode ? undefined : getPath(backHref)} className="sd-scenebar__back">← {backLabel}</a>
+              <a href={editorMode ? undefined : getPath(backHref)} className="sd-scenebar__back"><Arrow dir="left" /> {backLabel}</a>
             ) : (
               <span className="num">{num}</span>
             )}

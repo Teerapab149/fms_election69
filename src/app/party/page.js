@@ -560,7 +560,7 @@ const CandidateList = ({ members, theme, onSelectMember, socials }) => {
 };
 
 const SectionLabel = ({ theme, label }) => (
-  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 mb-8 flex items-center gap-4">
+  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-600 mb-8 flex items-center gap-4">
     <div className="w-12 h-[2px] rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 shadow-[0_0_10px_rgba(34,211,238,0.5)]"></div> {label}
   </h3>
 );

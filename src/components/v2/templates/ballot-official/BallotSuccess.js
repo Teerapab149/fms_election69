@@ -76,7 +76,7 @@ export default function BallotSuccess({ user = null, isUnlocked = false, hasForm
                 <span>{meta.wordmark}</span>
               </div>
               <dl className="bs__fields">
-                <div><dt>{s.stubVoter}</dt><dd>{user?.name || "—"}</dd></div>
+                <div><dt>{s.stubVoter}</dt><dd>{user?.name || "–"}</dd></div>
                 {user?.studentId && <div><dt>{s.stubId}</dt><dd className="bs__mono">{user.studentId}</dd></div>}
                 {recorded && <div><dt>{s.stubTime}</dt><dd>{recorded}</dd></div>}
               </dl>

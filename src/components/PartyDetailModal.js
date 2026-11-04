@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { X, ChevronLeft, User, Users } from "lucide-react";
 import { getPath } from "../utils/basePath";
+import { useOnPrimary } from "../utils/onPrimary";
 
 export default function PartyDetailModal({ party, isOpen, onClose, showVoteButton = false, onConfirm }) {
+  const onPrimary = useOnPrimary();
     const [activeMember, setActiveMember] = useState(null);
     const [partyLogoError, setPartyLogoError] = useState(false);
 
@@ -158,7 +160,7 @@ export default function PartyDetailModal({ party, isOpen, onClose, showVoteButto
                 {/* Footer Button */}
                 {showVoteButton && (
                     <div className="p-4 border-t border-slate-100 shrink-0 bg-white z-30">
-                        <button onClick={onConfirm} className="w-full py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold text-base hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] transition shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_25%,transparent)]">โหวตพรรคนี้</button>
+                        <button onClick={onConfirm} ref={onPrimary.ref} style={onPrimary.style} className="w-full py-3 bg-[var(--color-primary)] rounded-xl font-bold text-base hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] transition shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_25%,transparent)]">โหวตพรรคนี้</button>
                     </div>
                 )}
 

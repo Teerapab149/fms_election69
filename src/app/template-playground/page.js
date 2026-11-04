@@ -254,7 +254,7 @@ function PlaygroundBody() {
       {/* ── floating SANDBOX bar — harness UI, not part of the template ── */}
       <div className={`tpg ${barOpen ? 'is-open' : ''}`} role="region" aria-label="แถบควบคุมตัวอย่าง">
         <button type="button" className="tpg__toggle" onClick={() => setBarOpen((o) => !o)} aria-expanded={barOpen}>
-          {barOpen ? '✕ ปิดแถบ' : '⚙ ตัวอย่างแบบโต้ตอบ'}
+          {barOpen ? 'ปิดแถบ' : 'ตัวอย่างแบบโต้ตอบ'}
         </button>
         {barOpen && (
           <div className="tpg__panel">

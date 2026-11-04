@@ -13,7 +13,7 @@ export default function VerdureShell({
   active = "home",
   moss = false,
   editorMode = false,
-  systemMode = "AUTO",
+  systemMode,
   edge = { num: "01", label: "Home", th: "" },
   // null (not a literal string) so VerdureChrome's `cornermarkTitle || meta.wordmark`
   // falls through to the live globalConfig-derived value when a page doesn't

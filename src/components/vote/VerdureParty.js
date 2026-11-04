@@ -16,6 +16,7 @@ import PartySocials from "./PartySocials";
 import VerdureShell from "./VerdureShell";
 import { VerdureMemberModal, VerdureLightbox } from "./VerdureMemberModal";
 import StoryClamp from "./StoryClamp";
+import Arrow from "../Arrow";
 
 const asText = (it) => typeof it === "string" ? it : (it?.text ?? it?.title ?? it?.detail ?? it?.description ?? it?.name ?? "");
 const firstImage = (val) => {
@@ -157,7 +158,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
                 const img = resolveSrc(m?.imageUrl);
                 return (
                   <button type="button" className="vd-rtile" key={m.id || i} onClick={() => setModalMember(m)} aria-label={`ดูข้อมูล ${m.name || "ผู้สมัคร"}`}>
-                    <div className="vd-rtile__photo">{img ? <img src={img} alt={m.name} /> : <span>portrait</span>}</div>
+                    <div className="vd-rtile__photo">{img ? <img src={img} alt={m.name} /> : <span>ยังไม่มีรูป</span>}</div>
                     <div className="vd-rtile__name">{m.name}</div>
                     {(m.position || m.major) && <div className="vd-rtile__role">{m.position || m.major}</div>}
                   </button>
@@ -198,7 +199,7 @@ export default function VerdureParty({ party = {}, galleryImages = [], showBackT
 
         <div className="vd-profile__cta">
           <p className="vd-profile__cta-line">Pick <em>No. {no}.</em> &nbsp;Pick the future.</p>
-          <a href={getPath("/vote")} className="vd-btn vd-btn--terra vd-btn--lg">ลงคะแนนให้พรรคนี้ <span className="arr">↗</span></a>
+          <a href={getPath("/vote")} className="vd-btn vd-btn--terra vd-btn--lg">ลงคะแนนให้พรรคนี้ <span className="arr"><Arrow dir="up-right" /></span></a>
         </div>
       </div>
 

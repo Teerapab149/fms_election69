@@ -57,7 +57,7 @@ export async function GET() {
     return NextResponse.json(body);
 
   } catch (error) {
-    console.error("🔥 Error fetching home info:", error);
+    console.error("Error fetching home info:", error);
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
   }
 }

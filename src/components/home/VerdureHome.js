@@ -31,6 +31,7 @@ import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { useElectionStatus } from "../../hooks/useElectionStatus";
 import { useHowToVote } from "../../hooks/useHowToVote";
 import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
+import Arrow from "../Arrow";
 
 // useElectionStatus action → the voteCTA-button state vocabulary
 const CTA_STATE = { signin: "login", vote: "notVoted", voted: "voted", wait: "closed", paused: "paused", results: "ended" };
@@ -262,7 +263,7 @@ export default function VerdureHome({
             <Wrap id="voteCTA-button">
               <a href={editorMode || CTA.action === "signin" ? undefined : getPath(CTA.href || "/login")}
                 onClick={onCta} className={`vd-home__cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">
-                <span className="vd-home__cta-label">{CTA.label}</span>
+                <span className="vd-home__cta-label">{CTA.label}{!CTA.disabled && <Arrow size="18px" />}</span>
                 <span className="vd-home__cta-sub">{CTA.sub}</span>
               </a>
             </Wrap>
@@ -275,7 +276,7 @@ export default function VerdureHome({
           {CTA.note && <motion.p className="vd-hero__note" {...rise(0.38)}>{CTA.note}</motion.p>}
           {howTo.link && (
             <motion.a href={editorMode ? undefined : howTo.href} className="vd-hero__how" {...rise(0.4)}>
-              วิธีลงคะแนน <span aria-hidden>↓</span>
+              วิธีลงคะแนน <span aria-hidden><Arrow dir="down" /></span>
             </motion.a>
           )}
         </section>
@@ -298,7 +299,7 @@ export default function VerdureHome({
           <section className="vd-sec" aria-labelledby="vd-parties-h">
             <div className="vd-sec__head">
               <h2 id="vd-parties-h">ผู้สมัคร <em>{parties.length} พรรค</em></h2>
-              <a href={href("/candidates")} className="vd-sec__more">ดูนโยบายทั้งหมด <span aria-hidden>→</span></a>
+              <a href={href("/candidates")} className="vd-sec__more">ดูนโยบายทั้งหมด <span aria-hidden><Arrow /></span></a>
             </div>
             <ul className="vd-parties">
               {parties.map((p) => (
@@ -313,7 +314,7 @@ export default function VerdureHome({
                       <span className="vd-party__name">{p.name}</span>
                     </span>
                     {p.slogan && <span className="vd-party__slogan">“{p.slogan}”</span>}
-                    <span className="vd-party__go" aria-hidden>→</span>
+                    <span className="vd-party__go" aria-hidden><Arrow /></span>
                   </a>
                 </li>
               ))}
@@ -375,7 +376,7 @@ export default function VerdureHome({
         .vd-home__cta { display:inline-flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; height:100%; min-height:66px; position:relative; z-index:3; padding:14px 40px; border-radius:999px; background:var(--cta); color:var(--cta-text); border:1px solid var(--cta); box-shadow:0 16px 34px -14px rgba(var(--terra-rgb),.55); cursor:pointer; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s; }
         .vd-home__cta:hover { background:var(--cta-2); border-color:var(--cta-2); transform:translateY(-2px); box-shadow:0 20px 40px -14px rgba(var(--terra-rgb),.6); }
         .vd-home__cta-label { font-family:var(--fs); font-weight:700; font-size:18px; letter-spacing:.01em; color:var(--cta-text); display:inline-flex; align-items:center; gap:11px; }
-        .vd-home__cta-label::after { content:"→"; font-size:18px; }
+        .vd-home__cta-label::after { content:none; font-size:18px; }
         .vd-home__cta.is-disabled { background:var(--cream-3); color:var(--moss); border-color:var(--rule); box-shadow:none; cursor:not-allowed; }
         .vd-home__cta.is-disabled .vd-home__cta-label { color:var(--moss); }
         .vd-home__cta.is-disabled .vd-home__cta-label::after { content:"●"; opacity:.5; }

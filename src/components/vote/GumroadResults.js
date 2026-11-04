@@ -14,7 +14,8 @@
 import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React, { useEffect, useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, BarChart3, Crown, Users } from "lucide-react";
+import Arrow, { Ico } from "../Arrow";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../utils/electionConfig";
@@ -265,17 +266,17 @@ export default function GumroadResults({
                   stays a plain string so the counting state is byte-identical to before */}
               <StatCard tone="pink" lbl={<>★ <span className="gm-thai">คะแนนเสียงรวม</span>  TOTAL</>} value={revealed ? <RevealInt value={totalVotes} enabled={anim} /> : totalVotes.toLocaleString()} sub="นับสะสมตั้งแต่เปิดโหวต" />
               <StatCard lbl={<><span className="gm-thai">ผู้มีสิทธิ์</span>  ELIGIBLE</>} value={revealed ? <RevealInt value={totalEligible} enabled={anim} /> : totalEligible.toLocaleString()} sub="นักศึกษาที่ลงทะเบียน" />
-              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : paused ? "พักการลงคะแนนชั่วคราว" : "↑ อัปเดต Real-time"} />
+              <StatCard tone="lime" lbl={<><span className="gm-thai">ความคืบหน้า</span>  TURNOUT</>} value={revealed ? <RevealFixed value={turnout} digits={2} enabled={anim} /> : turnout.toFixed(2)} unit="%" sub={ended ? "สรุปยอดผู้มาใช้สิทธิ์" : paused ? "พักการลงคะแนนชั่วคราว" : <><Arrow dir="up" /> อัปเดต Real-time</>} />
             </div>
 
             {/* RACE */}
             <section className="gr-race">
               <div className="gr-race__head">
                 <div>
-                  <h3>📊 {singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h3>
+                  <h3><Ico icon={BarChart3} /> {singleParty ? "ผลการรับรองพรรค" : "การกระจายคะแนนรายพรรค"}</h3>
                   <p>{revealed ? (singleParty ? "สรุปผลการรับรอง" : "สรุปผลคะแนนแต่ละพรรค") : "ข้อมูลจะปรากฏเมื่อคณะกรรมการประกาศผล"}</p>
                 </div>
-                <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● FINAL" : "🔒 LOCKED"}</span>
+                <span className={`gr-sticker ${revealed ? "gr-sticker--lime" : "gr-sticker--ink"}`}>{revealed ? "● FINAL" : <><Ico icon={Lock} /> LOCKED</>}</span>
               </div>
               {revealed ? (
                 <div className="gr-reveal">
@@ -301,7 +302,7 @@ export default function GumroadResults({
                         };
                       })()}
                     >
-                      <span className="gr-winner__badge">👑 <span className="gm-thai">ผู้ชนะ</span>  WINNER</span>
+                      <span className="gr-winner__badge"><Ico icon={Crown} /> <span className="gm-thai">ผู้ชนะ</span>  WINNER</span>
                       <div className="gr-winner__main">
                         {logoSrc(winner) && <div className="gr-winner__logo"><img src={logoSrc(winner)} alt={winner.name} /></div>}
                         <div className="gr-winner__id">
@@ -351,7 +352,7 @@ export default function GumroadResults({
                     })}
                   </div>
                   <div className="gr-race__hidden">
-                    <div>🔒 HIDDEN UNTIL ANNOUNCED</div>
+                    <div><Ico icon={Lock} /> HIDDEN UNTIL ANNOUNCED</div>
                     <span>ผลคะแนนจะแสดงเมื่อคณะกรรมการประกาศผล</span>
                   </div>
                 </>
@@ -361,8 +362,8 @@ export default function GumroadResults({
             {/* DEMOGRAPHICS */}
             <section className="gr-demo">
               <div className="gr-demo__head">
-                <span className="gr-sticker gr-sticker--pink">👥 สถิติผู้มาใช้สิทธิ์</span>
-                {!revealed && <span className="gr-sticker gr-sticker--ink">🔒 LOCKED</span>}
+                <span className="gr-sticker gr-sticker--pink"><Ico icon={Users} /> สถิติผู้มาใช้สิทธิ์</span>
+                {!revealed && <span className="gr-sticker gr-sticker--ink"><Ico icon={Lock} /> LOCKED</span>}
               </div>
               {revealed ? (
                 <div className="gr-demo__grid">

@@ -59,7 +59,7 @@ async function removeEmptyDir(dirPath) {
     const files = await readdir(dirPath);
     if (files.length === 0) {
       await rmdir(dirPath);
-      console.log(`🗑️ Removed empty directory: ${dirPath}`);
+      console.log(`Removed empty directory: ${dirPath}`);
     }
   } catch (error) {
     // Ignore error
@@ -83,14 +83,14 @@ async function deleteImageFile(imageUrl) {
       // เช็คว่าไฟล์มีอยู่จริงก่อนลบ
       if (fs.existsSync(filePath)) {
         await unlink(filePath);
-        console.log(`🗑️ Deleted file: ${imageUrl}`);
+        console.log(`Deleted file: ${imageUrl}`);
 
         // ลองลบ parent folder ถ้ามันว่าง
         await removeEmptyDir(path.dirname(filePath));
       }
     }
   } catch (error) {
-    console.error(`❌ Failed to delete file ${imageUrl}:`, error.message);
+    console.error(`Failed to delete file ${imageUrl}:`, error.message);
   }
 }
 
@@ -518,7 +518,7 @@ export async function PUT(req) {
     if (existingMobileHeroImagesJson !== null) {
       const mhImagesToDelete = oldMobileHeroImages.filter(url => !finalMobileHeroImages.includes(url));
       if (mhImagesToDelete.length > 0) {
-        console.log(`🗑️ Deleting ${mhImagesToDelete.length} removed Mobile Hero images...`);
+        console.log(`Deleting ${mhImagesToDelete.length} removed Mobile Hero images...`);
         await deleteMultipleImageFiles(mhImagesToDelete);
       }
     }
@@ -561,7 +561,7 @@ export async function PUT(req) {
     if (existingGroupImagesJson !== null) {
       const imagesToDelete = oldGroupImages.filter(url => !finalGroupImages.includes(url));
       if (imagesToDelete.length > 0) {
-        console.log(`🗑️ Deleting ${imagesToDelete.length} removed images...`);
+        console.log(`Deleting ${imagesToDelete.length} removed images...`);
         await deleteMultipleImageFiles(imagesToDelete);
       }
     }
@@ -652,7 +652,7 @@ export async function PUT(req) {
     return NextResponse.json(updatedCandidate);
 
   } catch (error) {
-    console.error("🔥 Error:", error);
+    console.error("Error:", error);
     if (error.code === 'UNSUPPORTED_IMAGE') return NextResponse.json({ error: error.message }, { status: 400 });
     if (error.code === 'P2002') return NextResponse.json({ error: "เลขพรรคหรือรหัสนักศึกษาซ้ำ" }, { status: 400 });
     const storageError = uploadStorageErrorResponse(error);
@@ -780,7 +780,7 @@ export async function POST(req) {
     return NextResponse.json(newCandidate);
 
   } catch (error) {
-    console.error("🔥 Error:", error);
+    console.error("Error:", error);
     if (error.code === 'UNSUPPORTED_IMAGE') return NextResponse.json({ error: error.message }, { status: 400 });
     if (error.code === 'P2002') return NextResponse.json({ error: "เลขพรรคหรือรหัสนักศึกษาซ้ำ" }, { status: 400 });
     const storageError = uploadStorageErrorResponse(error);
@@ -851,7 +851,7 @@ export async function DELETE(req) {
       }
 
       if (imagesToDelete.length > 0) {
-        console.log(`🗑️ Cleaning up files for candidate ${target_id}...`);
+        console.log(`Cleaning up files for candidate ${target_id}...`);
         // ใช้ setTimeout เพื่อไม่ให้ block response นานเกินไป (Fire and forget)
         deleteMultipleImageFiles(imagesToDelete);
       }

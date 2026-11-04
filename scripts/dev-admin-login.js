@@ -75,14 +75,14 @@ function readEnv(file) {
       body: JSON.stringify({ username, password }),
     });
     const data = await res.json().catch(() => ({}));
-    console.log(`Login ${res.status} ${res.ok ? "OK" : "FAILED"} — ${data.message || ""} (admin: ${admin.name || username})`);
+    console.log(`Login ${res.status} ${res.ok ? "OK" : "FAILED"}, ${data.message || ""} (admin: ${admin.name || username})`);
 
     if (res.ok) {
       const setCookie = res.headers.get("set-cookie") || "";
       const token = (setCookie.match(/admin_token=([^;]+)/) || [])[1];
       if (token) {
         fs.writeFileSync(path.join(process.cwd(), ".dev-admin-token.local"), token);
-        console.log("Saved admin_token → .dev-admin-token.local (gitignored)");
+        console.log("Saved admin_token to .dev-admin-token.local (gitignored)");
       }
     }
     if (process.argv.includes("--show")) {

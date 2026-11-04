@@ -45,7 +45,7 @@ export function buildVotePartyCard({ party, pop, isSel, onSelect, onViewDetails,
         children: [
           logo
             ? { kind: "atom", type: "image", props: { src: logo, alt: party?.name, fit: "contain" } }
-            : { kind: "node", render: <span className="gv-card__ph" style={{ background: pop }}>★ {party?.name?.slice(0, 14) || "PARTY"} ★</span> },
+            : { kind: "node", render: <span className="gv-card__ph" style={{ background: pop }}>★ {party?.name?.slice(0, 14) || "พรรค"} ★</span> },
         ],
       },
       {

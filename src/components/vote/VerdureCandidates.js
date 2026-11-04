@@ -57,7 +57,7 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
               className={`vd-ppanel ${i % 2 === 1 ? "vd-ppanel--alt" : ""}`}>
               <div className="vd-ppanel__media">
                 {logo ? <img src={logo} alt={p.name} className="logo" /> : photo ? <img src={photo} alt={p.name} /> : (
-                  <div className="vd-ppanel__media-tag">★ Logo<br />placeholder ★</div>
+                  <div className="vd-ppanel__media-tag">ยังไม่มีโลโก้</div>
                 )}
               </div>
               <div className="vd-ppanel__main">
@@ -65,8 +65,8 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
                 <h2 className="vd-ppanel__name">{p.name}</h2>
                 {p.slogan && <p className="vd-ppanel__slogan">{p.slogan}</p>}
                 <div className="vd-ppanel__quick">
-                  <div><div className="lbl">CANDIDATES</div><div className="val vd-tabular">{p.members?.length || "—"}</div></div>
-                  <div><div className="lbl">POLICIES</div><div className="val vd-tabular">{Array.isArray(p.policies) ? pad2(p.policies.length) : "—"}</div></div>
+                  <div><div className="lbl">CANDIDATES</div><div className="val vd-tabular">{p.members?.length || "–"}</div></div>
+                  <div><div className="lbl">POLICIES</div><div className="val vd-tabular">{Array.isArray(p.policies) ? pad2(p.policies.length) : "–"}</div></div>
                   <div><div className="lbl">STATUS</div><div className="val">Active</div></div>
                 </div>
               </div>
@@ -114,7 +114,7 @@ export default function VerdureCandidates({ candidates = [], editorMode = false 
         .vd-ppanel__media-tag { position:relative; font-family:var(--fm); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--moss); opacity:.65; text-align:center; padding:6px 14px; background:var(--cream-2); border:1px solid var(--rule); border-radius:999px; }
         .vd-ppanel__main { min-width:0; }
         .vd-ppanel__kicker { font-family:var(--fm); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--moss); opacity:.55; margin-bottom:14px; }
-        .vd-ppanel__kicker .ac { color:var(--terra); opacity:1; font-weight:700; }
+        .vd-ppanel__kicker .ac { color:color-mix(in srgb, var(--terra) 68%, black); opacity:1; font-weight:700; }
         .vd-ppanel__name { font-family:var(--fd); font-style:italic; font-weight:400; font-size:clamp(34px,4.5vw,58px); line-height:1; letter-spacing:-.015em; margin:0 0 14px; color:var(--moss); }
         .vd-ppanel__slogan { font-family:var(--ft); font-size:17px; line-height:1.5; color:var(--moss); opacity:.75; margin:0 0 24px; max-width:480px; }
         .vd-ppanel__quick { display:flex; gap:32px; padding-top:18px; border-top:1px solid var(--rule); }
