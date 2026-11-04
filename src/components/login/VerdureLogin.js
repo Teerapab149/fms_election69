@@ -8,10 +8,12 @@
 import { getPath } from "../../utils/basePath";
 import { Loader2, AlertCircle, LogIn, FlaskConical, ArrowLeft } from "lucide-react";
 import PrivacyNote, { PRIVACY_LOGIN_LEAD } from "../PrivacyNote";
+import { useOnPrimary } from "../../utils/onPrimary";
 
 export default function VerdureLogin({
   error, loading, onLogin, showMock = false, mockStudentId, setMockStudentId, mockLoading, onMockLogin, onBack, onAdmin,
 }) {
+  const onTerra = useOnPrimary(true, "--vdl-on");
   return (
     <div className="vdl-root">
       <span className="vdl-corner vdl-corner--tl">FMS ELECTION / SAMO</span>
@@ -25,7 +27,7 @@ export default function VerdureLogin({
 
         {error && <div className="vdl-error"><AlertCircle size={15} strokeWidth={2} /> {error}</div>}
 
-        <button type="button" className="vdl-btn vdl-btn--terra" onClick={onLogin} disabled={loading}>
+        <button type="button" className="vdl-btn vdl-btn--terra" ref={onTerra.ref} style={onTerra.style} onClick={onLogin} disabled={loading}>
           {loading ? <><Loader2 className="vdl-spin" size={18} /> กำลังเชื่อมต่อระบบ…</> : <><LogIn size={18} strokeWidth={2} /> เข้าสู่ระบบด้วย PSU Passport</>}
         </button>
         <p className="vdl-hint">ระบบจะนำท่านไปยังหน้ายืนยันตัวตนของมหาวิทยาลัย</p>
@@ -74,8 +76,8 @@ export default function VerdureLogin({
 
         .vdl-btn { width:100%; display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:999px; cursor:pointer; font-family:var(--fs); font-weight:600; font-size:15px; padding:16px 22px; border:1px solid transparent; transition:all .25s; }
         .vdl-btn:disabled { opacity:.6; cursor:not-allowed; }
-        .vdl-btn--terra { background:var(--terra); color:var(--cream); border-color:var(--terra); }
-        .vdl-btn--terra:not(:disabled):hover { background:var(--moss); border-color:var(--moss); transform:translateY(-1px); }
+        .vdl-btn--terra { background:var(--terra); color:var(--vdl-on, var(--cream)); border-color:var(--terra); }
+        .vdl-btn--terra:not(:disabled):hover { background:var(--moss); border-color:var(--moss); color:var(--cream); transform:translateY(-1px); }
         .vdl-btn--ghost { background:transparent; color:var(--moss); border-color:var(--rule); }
         .vdl-btn--ghost:not(:disabled):hover { background:var(--moss); color:var(--cream); border-color:var(--moss); }
         .vdl-hint { margin:14px 0 0; font-family:var(--fm); font-size:10px; letter-spacing:.06em; color:var(--moss); opacity:.72; }

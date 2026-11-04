@@ -26,6 +26,7 @@ import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { StudioDarkBaseStyles } from "./StudioDarkTheme";
 import Arrow from "../Arrow";
+import { useVoteStatus } from "../../hooks/useVoteStatus";
 
 const NAV = [
   // NOTE: no "Profile / ข้อมูลพรรค" item — a party's detail page is reached
@@ -38,7 +39,11 @@ const NAV = [
   { key: "results",    num: "04", label: "Returns",    th: "ผลคะแนน",     href: "/results" },
 ];
 
-export default function StudioDarkRail({ active = "home", editorMode = false, systemMode = "AUTO", onSignIn = null }) {
+export default function StudioDarkRail({ active = "home", editorMode = false, systemMode: systemModeProp, onSignIn = null }) {
+  // pages other than /closed do not pass the mode: ask the server, otherwise a
+  // force-open (MANUAL_OPEN) box reads POLLS CLOSED once the calendar end has passed
+  const live = useVoteStatus({ enabled: !editorMode && !systemModeProp });
+  const systemMode = systemModeProp || live.status?.systemMode || "AUTO";
   const globalConfig = useGlobalConfig();
   const { data: session, status } = useSession();
 

@@ -33,7 +33,7 @@ export default function StudioDarkShell({
   backLabel = "",
   right = null,           // scene-bar right side (ReactNode)
   editorMode = false,
-  systemMode = "AUTO",
+  systemMode,
   children,
 }) {
   // Back-to-top: appears once the page is scrolled past ~1 viewport. Lives in

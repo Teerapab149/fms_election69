@@ -68,6 +68,7 @@ export function useVoteSystem() {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     setIsLoading(true);
+    let keepLoading = false;
 
     try {
       // A. Check User & System Status — force:true because this is the vote-page
@@ -84,12 +85,17 @@ export function useVoteSystem() {
       // gate -> success gate) that is two blank loading screens for something the
       // app already knows. Every consumer of the vote status now forces its own
       // read, so nothing here depends on the reload to refresh state.
+      // While the redirect is in flight keep the loading screen up. Letting the
+      // ballot render with no candidates loaded crashed the original family's
+      // view (specialOptions.abstain is null) for anyone who had already voted.
       if (statusData.isSystemOpen === false) {
+        keepLoading = true;
         router.replace("/closed");
         return;
       }
 
       if (statusData.isVoted) {
+        keepLoading = true;
         router.replace("/success");
         return;
       }
@@ -111,7 +117,7 @@ export function useVoteSystem() {
     } catch (error) {
       console.error("Vote System Error:", error);
     } finally {
-      setIsLoading(false);
+      if (!keepLoading) setIsLoading(false);
       isFetchingRef.current = false;
     }
   };

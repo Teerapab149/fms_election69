@@ -150,7 +150,7 @@ export default function Navbar() {
                     <p className="text-xs text-gray-500 mt-0.5">{user.studentId || user.email}</p>
                   </div>
                   <div className="p-2">
-                    <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                    <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
                       <LogOut size={18} />
                       ออกจากระบบ
                     </button>

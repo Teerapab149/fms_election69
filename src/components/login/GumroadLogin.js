@@ -135,7 +135,7 @@ export default function GumroadLogin({
         .grl-foot { margin-top:28px; padding-top:22px; border-top:2px solid #efe6d8; display:flex; flex-direction:column; gap:16px; align-items:center; }
         .grl-btn--ghost { background:#fff; color:var(--ink2); box-shadow:3px 3px 0 var(--ink); font-size:13px; padding:11px 18px; }
         .grl-btn--ghost:hover { transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--ink); }
-        .grl-admin { background:none; border:0; cursor:pointer; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#bdb6a6; transition:color .2s; }
+        .grl-admin { background:none; border:0; cursor:pointer; font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:color-mix(in srgb, var(--ink) 70%, transparent); transition:color .2s; }
         .grl-admin:hover { color:var(--ink); }
 
         .grl-spin { animation:grlSpin 1s linear infinite; }

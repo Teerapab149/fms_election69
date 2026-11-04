@@ -25,12 +25,14 @@ import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 import { resultsPollDelay, resultsRetryDelay } from "../../lib/election/resultsPolling.mjs";
 
+import { useOnPrimary } from "../../utils/onPrimary";
 import { Trophy, Activity, Megaphone, Calendar, Clock, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 import { normalizeFormUrl } from '../../lib/forms/formUrl.mjs';
 
 export default function ResultsPage() {
   const router = useRouter();
+  const onPrimary = useOnPrimary();
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
   // dates-to-admin: resolve effective election dates (admin-set in globalConfig, else
@@ -745,7 +747,7 @@ export default function ResultsPage() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push(modalType === "VOTE" ? "/vote" : "/success")}
-                className="w-full py-4 bg-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] text-white rounded-2xl font-bold text-lg shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] transition-all flex items-center justify-center gap-2 group"
+                ref={onPrimary.ref} style={onPrimary.style} className="w-full py-4 bg-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] rounded-2xl font-bold text-lg shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] transition-all flex items-center justify-center gap-2 group"
               >
                 {modalType === "VOTE" ? "ไปหน้าลงคะแนน" : "ไปทำแบบประเมิน"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />

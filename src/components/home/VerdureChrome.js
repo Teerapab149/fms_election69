@@ -26,6 +26,7 @@ import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfi
 import { VERDURE_THEMES, verdureTheme, hexToRgbTriple } from "../../utils/verdurePalettes";
 import Arrow, { Ico } from "../Arrow";
 import { Power } from "lucide-react";
+import { useVoteStatus } from "../../hooks/useVoteStatus";
 
 // ── Verdure colour themes ────────────────────────────────────────────────────
 // Palette map + helpers live in utils/verdurePalettes.js (plain module) so the
@@ -148,7 +149,9 @@ export function VerdureDock({ active = "home", editorMode = false }) {
 // `election` (from useElectionStatus): when the page has the server's status it
 // passes it, and the chip says exactly what the rest of the page says. Pages
 // without it (they only know systemMode) keep the calendar reading below.
-export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode = "AUTO", statusChip = null, backHref = null, backLabel = "", election = null }) {
+export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode: systemModeProp, statusChip = null, backHref = null, backLabel = "", election = null }) {
+  const live = useVoteStatus({ enabled: !editorMode && !systemModeProp });
+  const systemMode = systemModeProp || live.status?.systemMode || "AUTO";
   const globalConfig = useGlobalConfig();
   const { data: session, status } = useSession();
 
@@ -461,7 +464,7 @@ export function VerdureBaseStyles() {
 }
 
 export default function VerdureChrome({
-  active = "home", moss = false, editorMode = false, systemMode = "AUTO",
+  active = "home", moss = false, editorMode = false, systemMode,
   edge = { num: "01", label: "Home", th: "" }, cornermarkTitle = null,
   cornermarkSub = null, statusChip = null, backHref = null, backLabel = "",
   election = null,

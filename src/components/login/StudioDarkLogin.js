@@ -147,7 +147,7 @@ export default function StudioDarkLogin({
         .sdl-foot { margin-top:30px; padding-top:24px; border-top:1px solid var(--sd-line); display:flex; flex-direction:column; gap:16px; align-items:center; }
         .sdl-btn--ghost { background:transparent; color:var(--sd-ink-2); border-color:var(--sd-line-strong); font-size:13px; padding:11px 18px; }
         .sdl-btn--ghost:hover { color:var(--sd-ink); border-color:var(--sd-ink-3); }
-        .sdl-admin { background:none; border:0; cursor:pointer; font-family:var(--sd-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-4, #555142); transition:color .2s; }
+        .sdl-admin { background:none; border:0; cursor:pointer; font-family:var(--sd-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--sd-ink-3, #878275); transition:color .2s; }
         .sdl-admin:hover { color:var(--sd-accent); }
 
         .sdl-spin { animation:sdlSpin 1s linear infinite; }

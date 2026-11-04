@@ -462,6 +462,7 @@ export default function GumroadSingleParty({
         .gsp-choice--no.is-on{ background:#DA6A67; transform:rotate(1deg); }
         .gsp-choice--abstain.is-on{ background:#E89B4A; transform:rotate(-1deg); }
         .gsp-choice.is-on .gsp-choice__ic{ background:#fff; border-color:var(--ink); }
+        .gsp-choice.is-on .gsp-choice__sub, .gsp-choice.is-on .gsp-choice__en{ color:var(--ink); }
         .gsp-choice--approve.is-on .gsp-choice__ic{ color:#2E8C60; }
         .gsp-choice--no.is-on .gsp-choice__ic{ color:#C24D4A; }
         .gsp-choice--abstain.is-on .gsp-choice__ic{ color:#C87A2C; }

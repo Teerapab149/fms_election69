@@ -454,7 +454,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-usermenu__head { padding:14px 16px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-usermenu__name { font-family:var(--bl-fd); font-weight:700; font-size:14px; color:var(--bl-ink);
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bl-single-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
+        .bl-single-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:11px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-single-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
           cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
@@ -483,7 +483,7 @@ export default function BlossomSingleParty({
 
         /* ---- issue line (masthead) ---- */
         .bl-single-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
-          border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
+          border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:11px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
         .bl-single-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
@@ -497,7 +497,7 @@ export default function BlossomSingleParty({
         /* ---- party feature masthead ---- */
         .bl-single-root .bl-sp-head { margin-top:44px; padding-bottom:26px; border-bottom:1.5px solid var(--bl-ink);
           animation:blSRise .6s ease both .05s; }
-        .bl-single-root .bl-sp-kick { display:inline-flex; align-items:center; gap:9px; font-family:var(--bl-fm); font-size:10.5px;
+        .bl-single-root .bl-sp-kick { display:inline-flex; align-items:center; gap:9px; font-family:var(--bl-fm); font-size:11px;
           letter-spacing:.2em; text-transform:uppercase; color:var(--bl-ink2); }
         .bl-single-root .bl-sp-dot { width:7px; height:7px; border-radius:50%; background:var(--bl-primary);
           animation:blSBlip 1.6s infinite; }
@@ -637,7 +637,7 @@ export default function BlossomSingleParty({
           font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
         .bl-single-root .bl-sp-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink); }
-        .bl-single-root .bl-sp-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+        .bl-single-root .bl-sp-cand__role { font-family:var(--bl-fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
           color:var(--bl-ink2); }
 
         /* ---- the decision — ballot paper card (mirrors ballot bl-vpaper) ---- */
@@ -647,9 +647,9 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-vpaper__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding:15px 22px; border-bottom:1.5px solid var(--bl-ink);
           background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-card)); }
-        .bl-single-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
+        .bl-single-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:11px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
-        .bl-single-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
+        .bl-single-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:11px;
           letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- decision rows (SEMANTIC colours — FIXED per choice, never candy) ---- */

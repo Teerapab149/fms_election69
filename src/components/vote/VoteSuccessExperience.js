@@ -162,7 +162,7 @@ export default function VoteSuccessExperience({ family, user, isUnlocked = false
         .vx-deck { margin:18px 0 0; max-width:480px; color:var(--vx-muted); font-size:14px; line-height:1.8; }
         .vx-person { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; margin-top:25px; font-size:13px; overflow-wrap:anywhere; }
         .vx-person strong { font-size:15px; font-weight:600; }
-        .vx-label { display:block; font-size:10px; letter-spacing:.1em; color:var(--vx-muted); }
+        .vx-label { display:block; font-size:11px; letter-spacing:.1em; color:var(--vx-muted); }
         .vx-person .vx-label,.vx-date { width:100%; }
         .vx-date { color:var(--vx-muted); font-size:12px; }
         .vx-illustration { min-width:0; text-align:center; }

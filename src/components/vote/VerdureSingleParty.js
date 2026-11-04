@@ -468,6 +468,8 @@ export default function VerdureSingleParty({
         .vd-opt.is-selected .vd-opt__name { color:var(--cream); }
         .vd-opt__slogan { font-family:var(--ft); font-size:14px; color:rgba(var(--moss-rgb),.65); margin:0; line-height:1.4; }
         .vd-opt.is-selected .vd-opt__slogan { color:rgba(var(--cream-rgb),.72); }
+        /* the tone fill (green/red/amber) is mid-light: cream text on it read 2.1 to 3.1:1, near-black reads 6:1 or more */
+        .vd-opt.is-selected[class*="vd-tone--"] .vd-opt__kicker, .vd-opt.is-selected[class*="vd-tone--"] .vd-opt__kicker .ac, .vd-opt.is-selected[class*="vd-tone--"] .vd-opt__name, .vd-opt.is-selected[class*="vd-tone--"] .vd-opt__slogan { color:#0b140e; }
         .vd-opt__check { width:42px; height:42px; border-radius:50%; border:1px solid var(--rule); background:transparent; display:grid; place-items:center; color:transparent; font-size:18px; transition:all .25s; flex-shrink:0; }
         .vd-opt.is-selected .vd-opt__check { background:var(--cream); border-color:var(--cream); color:var(--moss); }
         .vd-opt--abstain { background:transparent; border-style:dashed; }

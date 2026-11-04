@@ -57,7 +57,7 @@ export default function VoteCastScene({ family = "original", phase = "pending", 
   return (
     <motion.div ref={overlay} role="dialog" aria-modal="true" aria-label="กำลังส่งบัตรลงคะแนน" tabIndex={-1} onKeyDown={event => { if (event.key === "Tab") event.preventDefault(); }} data-vote-cast={id} data-phase={phase} className="fms-app fixed inset-0 z-[200000] flex flex-col items-center justify-center overflow-hidden px-5 py-8 outline-none"
       style={{ background: theme.bg, color: theme.ink }} initial={{ opacity: quiet ? 1 : 0 }} animate={{ opacity: 1 }} transition={{ duration: quiet ? 0 : 0.15 }}>
-      <div className="mb-7 text-center text-[9px] font-semibold tracking-[.06em] sm:text-[11px]">{theme.label}</div>
+      <div className="mb-7 text-center text-[11px] font-semibold tracking-[.06em]">{theme.label}</div>
       <div aria-hidden="true" className="relative isolate h-[290px] w-[260px] max-w-full">
         <motion.div className="absolute bottom-[130px] left-1/2 z-10 -ml-[63px] h-[100px] w-[126px] overflow-hidden rounded-sm border p-4"
           style={{ background: verdure ? "#b49c70" : "#fffdf7", borderColor: verdure ? "#796445" : "#d8d0cd", color: "#6b5a6d", transformOrigin: "bottom center" }}

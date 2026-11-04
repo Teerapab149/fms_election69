@@ -173,7 +173,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         <h2 className="text-lg sm:text-2xl lg:text-2xl xl:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
                                             โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--o-brand)] to-[var(--o-bright)]">คณะกรรมการบริหาร</span>
                                         </h2>
-                                        <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-500">
+                                        <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-600">
                                             สโมสรนักศึกษาคณะวิทยาการจัดการ
                                         </h3>
                                     </div>
