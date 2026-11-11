@@ -12,7 +12,7 @@
 - **Animation:** Framer Motion (`motion`, `useSpring`, `useMotionValue`, `AnimatePresence`)
 - **Charts:** Recharts (`BarChart`, `PieChart`, `ResponsiveContainer`)
 - **Icons:** Lucide React
-- **Deployment:** Docker on its own domain, served from the root (`https://ovs.fms.psu.ac.th`)
+- **Deployment:** Node standalone behind nginx on its own domain, served from the root (`https://ovs.fms.psu.ac.th`). เครื่องจริงของคณะไม่ใช้ Docker (ดู `docs/DEPLOY-CHECKLIST-2026.md`); Docker ยังใช้ได้เป็นทางเลือก
 
 ## Directory Structure
 ```
@@ -20,7 +20,7 @@ src/
 ├── app/
 │   ├── page.js                    # Home (SSR → HomeContent)
 │   ├── admin/
-│   │   ├── login/page.js          # Admin login (RSA-encrypted token)
+│   │   ├── login/page.js          # Admin login (ชื่อผู้ใช้ + รหัสผ่าน → httpOnly cookie admin_token)
 │   │   └── page.js                # Admin console (tabs: overview, candidates, settings)
 │   ├── candidates/page.js         # Party listing page
 │   ├── party/page.js              # Single party detail (cinematic design)
@@ -56,8 +56,7 @@ src/
 │   └── useVoteSystem.js           # Vote logic hook
 ├── utils/
 │   ├── basePath.js                # ⚠️ CRITICAL: getPath() — ALL internal URLs must use this
-│   ├── electionConfig.js          # Election dates + year constants
-│   ├── auth.js                    # RSA encryption for admin token
+│   ├── electionConfig.js          # resolveElectionDates(globalConfig) + ค่าสำรองของวัน/ปี (ค่าจริงตั้งจากหน้า admin)
 │   └── PartyTheme.js             # Party-specific color themes
 ├── lib/
 │   ├── db.js                      # Prisma client singleton
@@ -162,14 +161,14 @@ session ของ PSU SSO ไม่ให้สิทธิ์อะไรเล
 
 ### 6. API Route Patterns
 - GET routes ดึงข้อมูลปกติ ไม่ต้อง auth (public data)
-- Admin routes ต้อง `verifyAdminToken(request)` ก่อนทำอะไร
+- Admin routes ต้อง `adminGuard(request)` ก่อนทำอะไร (ดูข้อ 2; `verifyAdminToken` ไม่มีแล้ว)
 - ใช้ `db` จาก `../../lib/db` (Prisma singleton)
 - Response format: `NextResponse.json({ ... })`
 - Error format: `NextResponse.json({ error: "message" }, { status: 500 })`
 
 ### 7. Election System Modes
 ```
-AUTO         → ใช้เวลาจาก electionConfig.js ตัดสิน
+AUTO         → ใช้เวลาที่แอดมินตั้งใน globalConfig ตัดสิน (ผ่าน resolveElectionDates ใน electionConfig.js)
 MANUAL_OPEN  → เปิดรับโหวตแบบ force (ไม่สนเวลา)
 PAUSE        → หยุดชั่วคราว (maintenance)
 ENDED        → ปิดอย่างเป็นทางการ
@@ -203,9 +202,14 @@ NEXTAUTH_SECRET       # NextAuth encryption key
 NEXT_PUBLIC_BASE_PATH # Subpath that getPath() prepends — EMPTY on the current root deploy.
                       # Set it (together with BASE_PATH + ASSET_PREFIX) only to serve
                       # under a subpath. Setting one without the others 404s the whole site.
-ADMIN_PRIVATE_KEY     # RSA private key for admin auth
-ADMIN_AUTH_SECRET     # Secret for admin token validation
+NEXTAUTH_URL          # URL จริงของเว็บ (ตัวตรวจ CSRF ใช้เทียบ Origin)
+ADMIN_JWT_SECRET      # เซ็น cookie admin_token (รหัสผ่านแอดมินเก็บเป็น hash ใน DB ไม่ใช่ env)
+AUTHENTIK_CLIENT_ID / AUTHENTIK_CLIENT_SECRET / AUTHENTIK_REDIRECT_URI   # PSU SSO
+ELECTION_BALLOT_PUBLIC_KEY / BALLOT_CHAIN_SECRET   # กุญแจบัตร — ขาดตัวใดตัวหนึ่ง /api/vote ตอบ 503
 ```
+รายการเต็มพร้อมคำอธิบายอยู่ใน `README.md` และ `docs/DEPLOY-CHECKLIST-2026.md` ข้อ 5
+⛔ `ADMIN_PRIVATE_KEY`, `ADMIN_AUTH_SECRET`, `NEXT_PUBLIC_ADMIN_*` เลิกใช้แล้วและห้ามตั้ง (P0-1)
+ที่อยู่ PSU SSO (`psusso.psu.ac.th`) ไม่ได้อ่านจาก env แต่ฝังในโค้ด 13 จุด — รายการอยู่ใน `docs/MAINTENANCE-RUNBOOK.md` หัวข้อ "ที่อยู่ PSU SSO ที่ฝังในโค้ด"
 
 ## Important Notes
 
@@ -228,11 +232,11 @@ ADMIN_AUTH_SECRET     # Secret for admin token validation
 
 ### 🧹 การรัน patch script กับไฟล์ในรีโปนี้
 ไฟล์ส่วนใหญ่เป็น **CRLF** — `String.replace()` แบบหลายบรรทัดจะไม่ match เงียบ ๆ
-สคริปต์จะรายงานว่าสำเร็จทั้งที่ไม่มีอะไรเปลี่ยน ท่าที่ใช้ได้: อ่าน → `.replace(/
+สคริปต์จะรายงานว่าสำเร็จทั้งที่ไม่มีอะไรเปลี่ยน ท่าที่ใช้ได้: อ่าน → `.replace(/
 /g,'
 ')`
 → แก้ → เขียนกลับด้วย `.replace(/
-/g,'
+/g,'
 ')` **และต้อง `if (s === before) process.exit(1)` เสมอ**
 
 - `Candidate.number = 0` → งดออกเสียง (No Vote)
@@ -240,7 +244,7 @@ ADMIN_AUTH_SECRET     # Secret for admin token validation
 - `Candidate.number > 0` → พรรคจริง
 - Valid voter years: `['ปี 1', 'ปี 2', 'ปี 3', 'ปี 4']` เท่านั้น
 - Score ใน DB คือ actual vote count (increment on vote)
-- Election dates ตั้งค่าใน `utils/electionConfig.js` ไม่ได้อยู่ใน DB
+- Election dates ตั้งจากหน้า admin เก็บใน `SystemConfig.globalConfig` (DB); ค่าใน `utils/electionConfig.js` เป็นแค่ค่าสำรองเมื่อ globalConfig ไม่มีหรืออ่านไม่ออก
 
 ## ⚠️ Engineering Discipline
 
@@ -387,7 +391,7 @@ These were learned the hard way. Always assume they apply:
 | `.next` manifest race on Windows | `preview_stop` + `rm -rf .next` + `preview_start` + sleep 15-20s. Happens ~6×/session under sustained HMR + DB switches |
 | `.specs/` is gitignored | Save spec files there; they don't need to commit |
 | `*.md` rule removed from .gitignore | Plain `git add` works for new .md files — no `-f` needed (P-LOG-021) |
-| `STATE_RESOLVERS.voteCTA` for state mapping | Single source of truth at `src/utils/stateResolver.js` (or similar — verify in Task 0) |
+| `STATE_RESOLVERS.voteCTA` for state mapping | Single source of truth at `src/components/admin/editor/stateResolver.js` (verify in Task 0) |
 
 ---
 
@@ -507,7 +511,7 @@ If any "no" answer → flag in final report, don't hide.
 | Pre-deploy checklist | docs/DEPLOY-CHECKLIST-2026.md |
 | Design plan + owner taste + tickets | docs/MASTER-DESIGN-PLAN.md |
 | Accumulated lessons | DECISIONS.md (P-LOG-001..NNN) |
-| Current state | PROGRESS.md |
+| Current state | `git log` + README.md + docs/DEPLOY-CHECKLIST-2026.md (PROGRESS.md หยุดที่ 2026-06-02 และติดป้าย STALE แล้ว — ใช้เป็นประวัติเท่านั้น) |
 | Engineering discipline (this) | CLAUDE.md |
 | Past session specs | .specs/ (gitignored, may not exist on fresh clone) |
 

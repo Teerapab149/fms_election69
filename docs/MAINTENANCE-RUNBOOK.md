@@ -271,7 +271,7 @@ VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
   เพิ่มจากเดิมคือ `ballot-unlinkable`, `ballot-order`, `certification-record` (ถอดรหัสนับใหม่ทั้งหีบ แข่งการรับรองกับคะแนน),
   `staff-rehearsal` (ซ้อมรับรองผลโดยเจ้าหน้าที่ ตรวจ snapshot และการปฏิเสธเมื่อคะแนนไม่ตรง), `test-tools-audit`,
   `security-h1-h2` และ `check-form`
-- **smoke** นับจากการรันจริง: unit test 246 เคสใน 29 ไฟล์ผ่านทั้งหมดโดยไม่ต้องใช้เซิร์ฟเวอร์ ส่วน `election.test.mjs`
+- **smoke** นับจากการรันจริง: unit test 250 เคสใน 30 ไฟล์ผ่านทั้งหมดโดยไม่ต้องใช้เซิร์ฟเวอร์ ส่วน `election.test.mjs`
   ยิงเว็บจริงที่ `BASE` (ค่าเริ่มต้น http://localhost:3000) จึงต้องมีเซิร์ฟเวอร์รันอยู่
 
 ## 4.2 e2e test DB (v2-R11) — วิธีทำงาน + วิธีรัน
@@ -403,12 +403,34 @@ node scripts/reconcile-scores.js          # audit เดียวกัน (แ�
 
 | อาการ | สาเหตุที่พบบ่อย | แก้ |
 |---|---|---|
-| **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT → อัปเดต env (issuer/client id/secret ใน `lib/auth.js`) → redeploy. **อาการนี้มากับเวลา ไม่เกี่ยวโค้ดเรา** |
+| **Login PSU ไม่ได้ทั้งระบบ** | PSU เปลี่ยน SSO endpoint/cert หรือ client secret หมดอายุ | ขอค่าใหม่จาก PSU IT ก่อน · ถ้าเปลี่ยนแค่ client id, client secret หรือ redirect URI → แก้ `AUTHENTIK_CLIENT_ID` / `AUTHENTIK_CLIENT_SECRET` / `AUTHENTIK_REDIRECT_URI` ใน `.env` แล้วรีสตาร์ตเว็บ ไม่ต้องแก้โค้ด · ถ้าเปลี่ยนที่อยู่ SSO (`psusso.psu.ac.th`) หรือชื่อแอปใน SSO (`fms-ovs`) → ต้องแก้โค้ดและ build ใหม่ ดูรายการไฟล์ในหัวข้อ "ที่อยู่ PSU SSO ที่ฝังในโค้ด" ใต้ตารางนี้ |
 | **`npm run build` พัง** | deps/Next.js เปลี่ยน หรือ `.next` ค้าง | `rm -rf .next node_modules && npm install && npm run build`; อ่าน error route แรกที่ fail |
 | **admin เข้าไม่ได้** | ลืมรหัสกลาง · ไม่ได้ถูก `--grant` · `ADMIN_JWT_SECRET` เปลี่ยน/หาย | `node scripts/admin.js --list` ก่อน (บอกทั้งรายชื่อและว่ารหัสกลางตั้งหรือยัง) · ลืมรหัส → `--rotate-password` ออกใหม่ แสดงครั้งเดียว บอกกรรมการทุกคน · ไม่มีชื่อในรายการ → `--grant <รหัส นศ.>` · ยังไม่ได้ → ตรวจ `ADMIN_JWT_SECRET` · ทุกคนล็อกอินไม่ได้พร้อมกันตอนวันจริง → `--break-glass` (§10) |
 | **ลิงก์/รูปพังหลัง deploy · กดเมนูแล้ว 404 ทั้งเว็บ** | ตัวแปร base path ไม่ตรงกัน — ระบบอยู่ root แต่มี `BASE_PATH`/`NEXT_PUBLIC_BASE_PATH`/`ASSET_PREFIX` ตัวใดตัวหนึ่งค้างเป็น `/fms-ovs` (หรือกลับกัน) หรือมี path ตรงๆ ที่ไม่ผ่าน `getPath()` | ทำให้ทั้งสามตัวว่างพร้อมกัน (หรือถ้าตั้งใจอยู่ subpath ก็ตั้งครบทั้งสาม) แล้ว **rebuild** ไม่ใช่แค่ restart — `NEXT_PUBLIC_*` ถูกฝังตอน build (ดู §2); ถ้ายังพังเฉพาะบางลิงก์ ให้หา path ตรงๆ ในโค้ด |
 | **คะแนนเพี้ยน/โหวตซ้ำ** | `User.isVoted` ไม่ได้เซ็ต | ตรวจ logic `api/vote/route.js`; restore DB ถ้าจำเป็น |
+| **ออกจากระบบแล้วค้างที่หน้า PSU หรือขึ้น error ของ PSU** | PSU เปลี่ยนที่อยู่ SSO หรือชื่อแอป ทำให้ลิงก์ออกจากระบบชี้ที่เดิม | แก้ตามหัวข้อ "ที่อยู่ PSU SSO ที่ฝังในโค้ด" ใต้ตารางนี้ |
 | **prisma generate EPERM (Windows)** | dev server ล็อกไฟล์ | หยุด server ก่อน แล้วค่อย `prisma generate` |
+
+**ที่อยู่ PSU SSO ที่ฝังในโค้ด** (ตรวจนับ 2026-11-12)
+
+ที่อยู่ `https://psusso.psu.ac.th` และชื่อแอป `fms-ovs` ไม่ได้อ่านจาก `.env` แต่เขียนไว้ในโค้ด 13 จุด
+ตัวแปร `AUTHENTIK_BASE_URL` และ `AUTHENTIK_ISSUER` ใน `.env` เก่าไม่มีโค้ดส่วนไหนอ่านแล้ว แก้สองตัวนี้ไม่มีผล
+ถ้า PSU เปลี่ยนที่อยู่หรือชื่อแอป ต้องแก้ทุกจุดข้างล่างให้ตรงกัน แล้ว build และ deploy ใหม่:
+
+| ใช้ทำอะไร | ไฟล์ |
+|---|---|
+| ล็อกอิน (ที่อยู่ authorize / token / userinfo และ issuer) | `src/lib/auth.js` ค่าคงที่ `AUTHENTIK_BASE_URL` และบรรทัด `issuer:` |
+| CSP บรรทัด `form-action` ที่อนุญาตที่อยู่ของ PSU | `src/middleware.js` ในฟังก์ชัน `buildCsp` |
+| ลิงก์ออกจากระบบ (`/application/o/fms-ovs/end-session/`) 10 ไฟล์ | `src/lib/auth/voterSession.js`, `src/app/closed/page.js`, `src/components/Navbar.js`, `src/components/vote/CinematicNavbar.js`, และใน `src/components/home/`: `OriginalNavbar.js`, `BlossomHome.js`, `ReceiptHome.js`, `StudioDarkRail.js`, `VerdureChrome.js`, `FmsOfficialChrome.js` |
+
+หาทุกจุดได้ด้วยคำสั่งนี้ ผลต้องไม่เหลือที่อยู่เก่าหลังแก้ (หน้า `/privacy` มีชื่อที่อยู่นี้ในข้อความอธิบายด้วย ให้แก้ตาม):
+
+```bash
+grep -rn "psusso.psu.ac.th" src
+```
+
+ลิงก์ออกจากระบบแยกอยู่ตามธีม ธีมที่ลืมแก้จะล็อกอินได้ปกติแต่ออกจากระบบไม่สำเร็จ
+หลังแก้ให้ทดสอบล็อกอินและออกจากระบบด้วยบัญชีจริงหนึ่งรอบบนทุกธีมที่จะใช้ ก่อนเปิดหีบ และเปิด console ของเบราว์เซอร์ดูว่าไม่มีข้อความ CSP ถูกบล็อก
 
 ⚠️ **บน production ใช้ `npx prisma migrate deploy`** — `scripts/setup.sh` รันให้อยู่แล้ว และเป็นขั้นตอนใน
 `DEPLOY-CHECKLIST` ข้อ 3.2 ตอนนี้รีโปมี migration ครบ 11 ตัว และ drift เก่าถูกเก็บเป็น migration แล้ว
