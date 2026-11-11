@@ -122,7 +122,7 @@ async function parseExcel(filePath) {
 
         return data;
     } catch (error) {
-        console.error('❌ ไม่สามารถอ่านไฟล์ Excel ได้');
+        console.error('ไม่สามารถอ่านไฟล์ Excel ได้');
         console.error(`   Error: ${error.message}`);
         console.error('   กรุณาติดตั้ง exceljs package: npm install exceljs');
         console.error('   หรือแปลงไฟล์เป็น CSV แล้วใช้งานแทน');
@@ -221,12 +221,12 @@ function buildFullName(titleName, firstName, lastName) {
 // ============================================
 
 async function importStudents(filePath) {
-    console.log('\n📚 FMS Election - Student Import Script');
+    console.log('\nFMS Election - Student Import Script');
     console.log('=========================================\n');
 
     // Validate file exists
     if (!fs.existsSync(filePath)) {
-        console.error(`❌ ไม่พบไฟล์: ${filePath}`);
+        console.error(`ไม่พบไฟล์: ${filePath}`);
         process.exit(1);
     }
 
@@ -234,7 +234,7 @@ async function importStudents(filePath) {
     let data = [];
 
     // Parse file based on extension
-    console.log(`📄 กำลังอ่านไฟล์: ${filePath}`);
+    console.log(`กำลังอ่านไฟล์: ${filePath}`);
 
     if (ext === '.csv') {
         const content = fs.readFileSync(filePath, 'utf-8');
@@ -242,20 +242,20 @@ async function importStudents(filePath) {
     } else if (ext === '.xlsx' || ext === '.xls') {
         data = await parseExcel(filePath);
     } else {
-        console.error(`❌ ไม่รองรับไฟล์นามสกุล: ${ext}`);
+        console.error(`ไม่รองรับไฟล์นามสกุล: ${ext}`);
         console.error('   รองรับเฉพาะ .csv, .xlsx, .xls');
         process.exit(1);
     }
 
-    console.log(`✅ พบข้อมูล ${data.length} รายการ\n`);
+    console.log(`พบข้อมูล ${data.length} รายการ\n`);
 
     if (data.length === 0) {
-        console.error('❌ ไม่พบข้อมูลในไฟล์');
+        console.error('ไม่พบข้อมูลในไฟล์');
         process.exit(1);
     }
 
     // Show sample data
-    console.log('📋 ตัวอย่างข้อมูล (5 รายการแรก):');
+    console.log('ตัวอย่างข้อมูล (5 รายการแรก):');
     console.log('-----------------------------------');
     data.slice(0, 5).forEach((row, i) => {
         const normalized = normalizeRow(row);
@@ -264,7 +264,7 @@ async function importStudents(filePath) {
     console.log('-----------------------------------\n');
 
     // Process and import
-    console.log('🔄 กำลัง Import ข้อมูล...\n');
+    console.log('กำลัง Import ข้อมูล...\n');
 
     let created = 0;
     let updated = 0;
@@ -350,18 +350,18 @@ async function importStudents(filePath) {
             }
 
         } catch (error) {
-            console.error(`❌ Error importing ${normalized.studentId}: ${error.message}`);
+            console.error(`Error importing ${normalized.studentId}: ${error.message}`);
             errors++;
         }
     }
 
     // Summary
     console.log('\n=========================================');
-    console.log('📊 สรุปผลการ Import:');
-    console.log(`   ✅ สร้างใหม่: ${created} รายการ`);
-    console.log(`   🔄 อัปเดต: ${updated} รายการ`);
-    console.log(`   ⏭️  ข้าม: ${skipped} รายการ`);
-    console.log(`   ❌ Error: ${errors} รายการ`);
+    console.log('สรุปผลการ Import:');
+    console.log(`   สร้างใหม่: ${created} รายการ`);
+    console.log(`   อัปเดต: ${updated} รายการ`);
+    console.log(`   ข้าม: ${skipped} รายการ`);
+    console.log(`   Error: ${errors} รายการ`);
     console.log('=========================================\n');
 
     // ── ถอนสิทธิ์คนที่หายไปจากทะเบียนใหม่ ────────────────────────────────────────
@@ -396,18 +396,18 @@ async function importStudents(filePath) {
         });
 
         if (stale.length === 0) {
-            console.log('✅ ไม่มีผู้มีสิทธิ์คนไหนหายไปจากทะเบียนใหม่\n');
+            console.log('ไม่มีผู้มีสิทธิ์คนไหนหายไปจากทะเบียนใหม่\n');
         } else if (process.argv.includes('--retire')) {
             const r = await prisma.user.updateMany({
                 where: { studentId: { in: stale.map((u) => u.studentId) } },
                 data: { year: RETIRED_YEAR },
             });
-            console.log(`🚪 ถอนสิทธิ์ ${r.count} คนที่ไม่อยู่ในทะเบียนใหม่ (ตั้ง year = "${RETIRED_YEAR}")`);
+            console.log(`ถอนสิทธิ์ ${r.count} คนที่ไม่อยู่ในทะเบียนใหม่ (ตั้ง year = "${RETIRED_YEAR}")`);
             console.log('   ข้อมูลผู้ใช้และประวัติการใช้สิทธิ์เดิมยังอยู่ครบ ไม่ได้ลบแถวไหนทิ้ง\n');
         } else {
-            console.log(`⚠️  พบ ${stale.length} คนที่ยังมีสิทธิ์อยู่ใน DB แต่ไม่มีในทะเบียนใหม่`);
+            console.log(`พบ ${stale.length} คนที่ยังมีสิทธิ์อยู่ใน DB แต่ไม่มีในทะเบียนใหม่`);
             console.log('   ถ้าไฟล์นี้คือทะเบียนปีปัจจุบันฉบับเต็ม คนเหล่านี้คือผู้ที่พ้นสภาพแล้ว');
-            console.log('   และตอนนี้ยังลงคะแนนได้อยู่ · สั่งถอนสิทธิ์ด้วย:');
+            console.log('   และตอนนี้ยังลงคะแนนได้อยู่ สั่งถอนสิทธิ์ด้วย:');
             console.log(`     node scripts/import-students.js ${path.basename(filePath || '<ไฟล์>')} --retire`);
             console.log('   ตัวอย่าง 5 คนแรก:');
             stale.slice(0, 5).forEach((u) => console.log(`     - ${u.studentId} ${u.name || ''} (${u.year})`));
@@ -420,10 +420,10 @@ async function importStudents(filePath) {
     // caller is usually importing the voter roll, and an empty import is the
     // difference between an election and no election.
     if (created === 0 && updated === 0 && skipped > 0) {
-        console.log('⚠️  ไม่ได้นำเข้าข้อมูลสักรายการ — ข้ามทั้งหมด ' + skipped + ' แถว');
+        console.log('ไม่ได้นำเข้าข้อมูลสักรายการ ข้ามทั้งหมด ' + skipped + ' แถว');
         console.log('   สาเหตุที่พบบ่อยคืออ่านหัวคอลัมน์ไม่ออก ตรวจว่าไฟล์มีคอลัมน์เหล่านี้:');
-        console.log('   studentId · titleName · studNameThai · studSnameThai · yearStatus');
-        console.log('   (หัวคอลัมน์ภาษาไทยก็ได้: รหัสนักศึกษา · คำนำหน้า · ชื่อ · นามสกุล · ชั้นปี)\n');
+        console.log('   studentId, titleName, studNameThai, studSnameThai, yearStatus');
+        console.log('   (หัวคอลัมน์ภาษาไทยก็ได้: รหัสนักศึกษา คำนำหน้า ชื่อ นามสกุล ชั้นปี)\n');
         process.exitCode = 1;
     }
 }
@@ -436,7 +436,7 @@ const args = process.argv.slice(2);
 
 if (args.length === 0) {
     console.log(`
-📚 FMS Election - Student Import Script
+FMS Election - Student Import Script
 
 Usage:
   node scripts/import-students.js <path-to-file>
@@ -476,7 +476,7 @@ importStudents(filePath)
         await prisma.$disconnect();
     })
     .catch(async (error) => {
-        console.error('❌ Fatal error:', error);
+        console.error('Fatal error:', error);
         await prisma.$disconnect();
         process.exitCode = 1;
     });

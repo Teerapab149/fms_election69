@@ -54,7 +54,7 @@ function Option({ opt, selected, onSelect, onViewDetails, editorMode }) {
         <span className={`fo-opt__badge fo-opt__badge--${opt.kind}`}>
           {opt.kind === "party"
             ? opt.number
-            : opt.kind === "disapprove" ? "✕" : "—"}
+            : opt.kind === "disapprove" ? "✕" : "–"}
         </span>
 
         {opt.kind === "party" && (

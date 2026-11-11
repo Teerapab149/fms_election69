@@ -39,9 +39,10 @@ import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import ReceiptPartyIntro from "./ReceiptPartyIntro";
 import ReceiptMemberModal, { ReceiptLightbox } from "./ReceiptMemberModal";
+import Arrow from "../Arrow";
 
 // stamp imprint glyph + Thai label per semantic choice (kind)
-const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "—" };
+const STAMP_GLYPH = { approve: "✓", disapprove: "✕", abstain: "–" };
 const STAMP_LABEL = { approve: "รับรอง", disapprove: "ไม่รับรอง", abstain: "งดออกเสียง" };
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
@@ -134,7 +135,7 @@ export default function ReceiptSingleParty({
   const no = party?.number;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "–");
 
   // which of the three choices is picked (fixed semantic mapping)
   const kind = selectedPartyId == null ? null
@@ -143,7 +144,7 @@ export default function ReceiptSingleParty({
     : (abstain && selectedPartyId === abstain.id) ? "abstain"
     : null;
 
-  const selectionLabel = kind === "approve" ? `รับรอง — ${party?.name || ""}`
+  const selectionLabel = kind === "approve" ? `รับรอง ${party?.name || ""}`
     : kind === "disapprove" ? "ไม่รับรอง Disapprove"
     : kind === "abstain" ? "งดออกเสียง Abstain"
     : null;
@@ -268,7 +269,7 @@ export default function ReceiptSingleParty({
             อยู่ในแกลเลอรีของหน้า /party · source=vote ทำให้หน้านั้นมีแถบกลับมาโหวต
             จึงไม่ทำให้ผู้ลงคะแนนหลงทาง (2026-07-30) */}
         <a className="rc-sp-more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-          <span className="rc-th">ดูข้อมูลพรรคแบบเต็ม</span>  FULL PROFILE &amp; GALLERY →
+          <span className="rc-th">ดูข้อมูลพรรคแบบเต็ม</span>  FULL PROFILE &amp; GALLERY <Arrow />
         </a>
 
         {/* logo meaning — the story explains the party mark (logo chip ties them) */}
@@ -418,7 +419,7 @@ export default function ReceiptSingleParty({
               {abstain && (
                 <StampRow
                   tone="abstain"
-                  glyph="—"
+                  glyph="–"
                   kick={<><span className="rc-th">งดออกเสียง</span>  ABSTAIN</>}
                   name="งดออกเสียง"
                   note="ไม่ประสงค์ลงคะแนนเสียงในการเลือกตั้งครั้งนี้"
@@ -443,7 +444,7 @@ export default function ReceiptSingleParty({
         tabIndex={showJump ? 0 : -1}
         aria-hidden={showJump ? undefined : "true"}
       >
-        ไปที่การตัดสินใจ<span className="rc-jump__arrow" aria-hidden="true"> ↓</span>
+        ไปที่การตัดสินใจ<span className="rc-jump__arrow" aria-hidden="true"> <Arrow dir="down" /></span>
       </button>
 
       {/* ===== fixed confirm tray — paper strip (torn perforation top) + foil button ===== */}
@@ -468,7 +469,7 @@ export default function ReceiptSingleParty({
           >
             {canConfirm && <span className="rc-foil" aria-hidden="true" />}
             <span className="rc-vbar__btn-in">
-              {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"}<span className="rc-vbar__arrow" aria-hidden="true">→</span>
+              {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน"}<span className="rc-vbar__arrow" aria-hidden="true"><Arrow /></span>
             </span>
           </button>
         </div>
@@ -488,14 +489,14 @@ export default function ReceiptSingleParty({
             <p className="rc-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`rc-scm__pick rc-scm__pick--${kind}`}>
               <span className="rc-scm__pick-lab">การเลือกของคุณ</span>
-              <span className="rc-scm__pick-val">{selectionLabel || "—"}</span>
+              <span className="rc-scm__pick-val">{selectionLabel || "–"}</span>
             </div>
             <div className="rc-scm__actions">
               <button type="button" className="rc-scm__cancel" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>
               <button type="button" className="rc-scm__go" onClick={() => onConfirm()} disabled={isSubmitting}>
                 {!isSubmitting && <span className="rc-foil" aria-hidden="true" />}
                 <span className="rc-scm__go-in">
-                  {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-scm__arrow" aria-hidden="true">→</span>
+                  {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-scm__arrow" aria-hidden="true"><Arrow /></span>
                 </span>
               </button>
             </div>

@@ -155,7 +155,7 @@ export default function BlossomVote({
   const count = parties.length;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "–");
 
   // label for the confirm bar (party name, or the abstain choice)
   const selection = (() => {
@@ -368,7 +368,7 @@ export default function BlossomVote({
         .bl-vote-root .bl-usermenu__head { padding:14px 16px; border-bottom:1px solid var(--bl-line); }
         .bl-vote-root .bl-usermenu__name { font-family:var(--bl-fd); font-weight:700; font-size:14px; color:var(--bl-ink);
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bl-vote-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
+        .bl-vote-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:11px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-vote-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
           cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
@@ -397,7 +397,7 @@ export default function BlossomVote({
 
         /* ---- issue line (masthead) ---- */
         .bl-vote-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
-          border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
+          border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:11px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
         .bl-vote-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
@@ -414,7 +414,7 @@ export default function BlossomVote({
         /* ---- masthead: mono kick + hollow display word ---- */
         .bl-vote-root .bl-vote-head { margin-top:44px; padding-bottom:22px; border-bottom:1.5px solid var(--bl-ink);
           animation:blVRise .6s ease both .05s; }
-        .bl-vote-root .bl-vote-kick { display:inline-flex; align-items:center; gap:9px; font-family:var(--bl-fm); font-size:10.5px;
+        .bl-vote-root .bl-vote-kick { display:inline-flex; align-items:center; gap:9px; font-family:var(--bl-fm); font-size:11px;
           letter-spacing:.2em; text-transform:uppercase; color:var(--bl-ink2); }
         .bl-vote-root .bl-vote-dot { width:7px; height:7px; border-radius:50%; background:var(--bl-primary);
           animation:blVBlip 1.6s infinite; }
@@ -451,9 +451,9 @@ export default function BlossomVote({
         .bl-vote-root .bl-vpaper__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding:15px 22px; border-bottom:1.5px solid var(--bl-ink);
           background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-card)); }
-        .bl-vote-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
+        .bl-vote-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:11px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
-        .bl-vote-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
+        .bl-vote-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:11px;
           letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- ballot rows (candidates index grammar, made selectable) ---- */

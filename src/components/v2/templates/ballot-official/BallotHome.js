@@ -28,6 +28,7 @@ import BallotJourney from "./BallotJourney";
 import { useHowToVote } from "../../../../hooks/useHowToVote";
 import { ballotMeta, BallotHeader, BallotStatus, BallotCountdown, BallotFooter, BallotBaseStyles, Phrases } from "./BallotChrome";
 import { formatThaiDate, formatThaiTime } from "../../../../utils/electionConfig";
+import Arrow from "../../../Arrow";
 
 const src = (p) => (!p ? null : String(p).startsWith("http") ? p : getPath(p));
 
@@ -175,7 +176,7 @@ export default function BallotHome({
               </motion.div>
               {howTo.link && (
                 <motion.a variants={RISE} href={editorMode ? undefined : howTo.href} className="bo-howlink">
-                  วิธีลงคะแนน <span aria-hidden>↓</span>
+                  วิธีลงคะแนน <span aria-hidden><Arrow dir="down" /></span>
                 </motion.a>
               )}
             </motion.div>

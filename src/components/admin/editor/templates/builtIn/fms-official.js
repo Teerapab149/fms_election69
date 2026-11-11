@@ -65,7 +65,7 @@ function buildFmsOfficialTemplate(slug, name, description, p) {
 // election; the rest are there so the structure outlives the palette.
 export const fmsOfficialTemplate = buildFmsOfficialTemplate(
   "fms-official", "FMS Official",
-  "ธีมทางการของคณะ — ม่วงพลัม-ขาว อิงสีและตัวอักษรจากเว็บไซต์หลักคณะวิทยาการจัดการ เรียบ น่าเชื่อถือ ใช้ได้ทุกปี",
+  "ธีมทางการของคณะ ม่วงพลัม-ขาว อิงสีและตัวอักษรจากเว็บไซต์หลักคณะวิทยาการจัดการ เรียบ น่าเชื่อถือ ใช้ได้ทุกปี",
   FMS_OFFICIAL_THEMES["fms-official"]);
 
 // ── colour variants ──
@@ -75,22 +75,22 @@ export const fmsOfficialTemplate = buildFmsOfficialTemplate(
 // as a themed product page.
 export const fmsOfficialNavyTemplate = buildFmsOfficialTemplate(
   "fms-official-navy", "FMS Official Navy",
-  "โทนกรมท่า — ทางการแบบราชการสากล น่าเชื่อถือ สุขุม",
+  "โทนกรมท่า ทางการแบบราชการสากล น่าเชื่อถือ สุขุม",
   FMS_OFFICIAL_THEMES["fms-official-navy"]);
 
 export const fmsOfficialEmeraldTemplate = buildFmsOfficialTemplate(
   "fms-official-emerald", "FMS Official Emerald",
-  "โทนเขียวมรกต — สงบ เป็นกลาง ไม่ชนกับสีประจำพรรคใด",
+  "โทนเขียวมรกต สงบ เป็นกลาง ไม่ชนกับสีประจำพรรคใด",
   FMS_OFFICIAL_THEMES["fms-official-emerald"]);
 
 export const fmsOfficialMaroonTemplate = buildFmsOfficialTemplate(
   "fms-official-maroon", "FMS Official Maroon",
-  "โทนแดงเบอร์กันดี — อบอุ่น หนักแน่น ใกล้เคียงอุณหภูมิสีม่วงเดิมที่สุด",
+  "โทนแดงเบอร์กันดี อบอุ่น หนักแน่น ใกล้เคียงอุณหภูมิสีม่วงเดิมที่สุด",
   FMS_OFFICIAL_THEMES["fms-official-maroon"]);
 
 export const fmsOfficialSlateTemplate = buildFmsOfficialTemplate(
   "fms-official-slate", "FMS Official Slate",
-  "โทนเทาน้ำเงิน — เงียบที่สุด ไม่มีสีให้ตีความ เหมาะกับปีที่ผลคะแนนสูสี",
+  "โทนเทาน้ำเงิน เงียบที่สุด ไม่มีสีให้ตีความ เหมาะกับปีที่ผลคะแนนสูสี",
   FMS_OFFICIAL_THEMES["fms-official-slate"]);
 
 export default fmsOfficialTemplate;

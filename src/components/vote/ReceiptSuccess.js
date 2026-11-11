@@ -50,6 +50,7 @@ import { evaluationPromptText } from "../../utils/activityHours";
 import { ReceiptBaseStyles, ReceiptShipMark } from "../home/ReceiptTheme";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import Arrow from "../Arrow";
 
 const TH_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 const HEX = "0123456789ABCDEFGHJKMNPQRTUVWXY";
@@ -284,12 +285,12 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  ล็อก — ทำแบบประเมินก่อน
+                  ล็อกไว้ ทำแบบประเมินก่อน
                 </>
               )}
             </a>
 
-            <a href={editorMode ? undefined : getPath("/")} className="rc-suc-home">← <span className="rc-th">กลับหน้าแรก</span></a>
+            <a href={editorMode ? undefined : getPath("/")} className="rc-suc-home"><Arrow dir="left" /> <span className="rc-th">กลับหน้าแรก</span></a>
           </div>
 
           <div className="rc-suc-foot">
@@ -412,7 +413,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
         /* Thai-in-a-mono-line utility (A10.3 / ruling C4): the Thai half of a bilingual
            mono label wears Chakra Petch so it never silently falls back — Space Mono has
            no Thai glyphs. Font-family ONLY; wording/DOM of the printer moment untouched. */
-        .rc-suc-root .rc-th { font-family:var(--rc-fr) !important; }
+        .rc-suc-root .rc-th { font-family:var(--rc-fr) !important; font-size:max(1em, 11px); }
 
         :where(.rc-suc-root) a { text-decoration:none; }
         .rc-suc-root a:focus-visible, .rc-suc-root button:focus-visible {
@@ -429,7 +430,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
           box-shadow:1px 2px 3px -1px color-mix(in srgb, var(--rc-ink) 30%, transparent); }
         .rc-suc-root .rc-suc-headline::before { left:22px; transform:rotate(-7deg); }
         .rc-suc-root .rc-suc-headline::after { right:22px; transform:rotate(6deg); }
-        .rc-suc-root .rc-suc-hl-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.24em;
+        .rc-suc-root .rc-suc-hl-eyebrow { font-family:var(--rc-fm); font-size:11px; letter-spacing:.24em;
           text-transform:uppercase; color:var(--rc-ink2); margin-bottom:14px; }
         .rc-suc-root .rc-suc-display { display:flex; flex-direction:column; align-items:center;
           font-family:var(--rc-fh); font-weight:700; line-height:1.04; letter-spacing:-.02em;
@@ -441,7 +442,7 @@ export default function ReceiptSuccess({ user = null, isUnlocked = false, hasFor
         .rc-suc-root .rc-suc-deck { margin:16px auto 0; max-width:34ch; font-family:var(--rc-fr);
           font-size:15px; line-height:1.7; color:var(--rc-ink2); }
 
-        .rc-suc-root .rc-suc-eyebrow { font-family:var(--rc-fm); font-size:10px; letter-spacing:.24em;
+        .rc-suc-root .rc-suc-eyebrow { font-family:var(--rc-fm); font-size:11px; letter-spacing:.24em;
           text-transform:uppercase; color:var(--rc-ink2); text-align:center; margin-bottom:12px; }
 
         /* ---- the stage: machine + receipt + desk ephemera ---- */

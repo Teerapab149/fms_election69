@@ -154,7 +154,7 @@ export default function Navbar() {
                     <p className="text-xs text-gray-500 mt-0.5">{user.studentId || user.email}</p>
                   </div>
                   <div className="p-2">
-                    <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                    <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
                       <LogOut size={18} />
                       ออกจากระบบ
                     </button>
@@ -224,7 +224,7 @@ export default function Navbar() {
           {isLoggedIn ? (
             <>
               <div className="h-px bg-gray-100 my-2 mx-2"></div>
-              <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all active:bg-red-100">
+              <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all active:bg-red-100">
                 <LogOut size={20} />
                 ออกจากระบบ
               </button>
@@ -289,7 +289,7 @@ function MobileNavLink({ href, label, en, onClick, isActive }) {
       <span className={`transition-all duration-200 ${isActive ? 'pl-2' : ''}`}>
         {label}
       </span>
-      {en && <span className="ml-auto text-xs font-medium text-slate-500">{en}</span>}
+      {en && <span className="ml-auto text-xs font-medium text-slate-600">{en}</span>}
     </Link>
   );
 }

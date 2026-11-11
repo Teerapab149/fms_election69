@@ -121,7 +121,7 @@ export default function FmsOfficialResults({
             <h2>{ended ? "การใช้สิทธิ์ทั้งหมด" : "การใช้สิทธิ์ ณ ขณะนี้"}</h2>
             <p>{ended
               ? "จำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร"
-              : "ตัวเลขนี้เปิดเผยได้ระหว่างการลงคะแนน — เป็นจำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร"}</p>
+              : "ตัวเลขนี้เปิดเผยได้ระหว่างการลงคะแนน เป็นจำนวนผู้มาใช้สิทธิ์ ไม่ใช่คะแนนของผู้สมัคร"}</p>
           </div>
           <div className="fo-res__summary">
             <div className="fo-card fo-res__sum">
@@ -193,7 +193,7 @@ export default function FmsOfficialResults({
                   className={`fo-race__row ${c.number === 0 ? "fo-tone--abstain" : c.number < 0 ? "fo-tone--disapprove" : ""} ${c.id === winnerId ? "is-winner" : ""}`}
                 >
                   <span className={`fo-race__num ${c.number > 0 ? "" : "is-special"}`}>
-                    {c.number > 0 ? c.number : c.number === 0 ? "—" : "✕"}
+                    {c.number > 0 ? c.number : c.number === 0 ? "–" : "✕"}
                   </span>
                   <span className="fo-race__name">
                     {label(c)}

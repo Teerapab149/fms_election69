@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { AlertTriangle, X, CheckCircle2, Loader2 } from "lucide-react";
+import { useOnPrimary } from "../utils/onPrimary";
 
 export default function ConfirmationModal({
     isOpen,
@@ -23,6 +24,7 @@ export default function ConfirmationModal({
         if (!isOpen) setTyped('');
     }, [isOpen]);
 
+    const onPrimary = useOnPrimary();
     if (!isOpen) return null;
 
     const typeGated = typeof requireTyped === 'string' && requireTyped.length > 0;
@@ -33,7 +35,7 @@ export default function ConfirmationModal({
     const iconColor = isDanger ? 'text-red-600 bg-red-100' : 'text-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_12%,white)]';
     const buttonColor = isDanger
         ? 'bg-red-600 hover:bg-red-700 text-white'
-        : 'bg-[var(--color-primary)] hover:bg-[#701e68] text-white';
+        : 'bg-[var(--color-primary)] hover:bg-[#701e68]';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -107,6 +109,8 @@ export default function ConfirmationModal({
                     <button
                         onClick={() => { if (typedOk) onConfirm(); }}
                         disabled={isLoading || !typedOk}
+                        ref={isDanger ? undefined : onPrimary.ref}
+                        style={isDanger || !typedOk ? undefined : onPrimary.style}
                         className={`w-full py-2.5 px-4 rounded-xl font-semibold shadow-md transition-all flex items-center justify-center gap-2 ${typedOk ? buttonColor : 'bg-gray-300 text-gray-500 shadow-none'} disabled:opacity-70 disabled:cursor-not-allowed`}
                     >
                         {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

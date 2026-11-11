@@ -108,7 +108,7 @@ export default function FmsOfficialPartyIntro({
           animate={{ opacity: 1 }}
           transition={rt({ duration: 0.45, delay: 0.95 })}
         >
-          หมายเลข {no === "" ? "—" : no}
+          หมายเลข {no === "" ? "–" : no}
         </motion.span>
 
         {/* a div, not an h1. The ballot underneath is already rendered and

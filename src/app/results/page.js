@@ -25,12 +25,14 @@ import { getPath } from "../../utils/basePath";
 import { fetchVoteStatus } from "../../hooks/useVoteStatus";
 import { resultsPollDelay, resultsRetryDelay } from "../../lib/election/resultsPolling.mjs";
 
-import { Trophy, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
+import { useOnPrimary } from "../../utils/onPrimary";
+import { Trophy, Activity, Megaphone, Calendar, Clock, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import { useGlobalConfig } from '../../contexts/GlobalConfigContext';
 import { normalizeFormUrl } from '../../lib/forms/formUrl.mjs';
 
 export default function ResultsPage() {
   const router = useRouter();
+  const onPrimary = useOnPrimary();
   const { data: session, status } = useSession();
   const globalConfig = useGlobalConfig();
   // dates-to-admin: resolve effective election dates (admin-set in globalConfig, else
@@ -632,7 +634,7 @@ export default function ResultsPage() {
                 <h2 className="text-lg lg:text-2xl font-bold text-slate-700 flex flex-wrap items-center gap-2 justify-center lg:justify-start">
                   {finalStatus === "ENDED" ? (
                     isRevealed ? (
-                      <><Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-yellow-500" /> สรุปผลการเลือกตั้ง (Official Results)</>
+                      <><Trophy className="w-6 h-6 lg:w-8 lg:h-8 text-yellow-500" /> สรุปผลการเลือกตั้ง</>
                     ) : (
                       <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                         <div className="relative flex h-3 w-3 shrink-0">
@@ -646,7 +648,7 @@ export default function ResultsPage() {
                   ) : finalStatus === "CLOSED" ? (
                     <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold">
                       <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
-                        หยุดรับคะแนนชั่วคราว (PAUSED)
+                        หยุดรับคะแนนชั่วคราว
                       </span>
                     </div>
                   ) : finalStatus === "ONGOING" ? (
@@ -656,18 +658,18 @@ export default function ResultsPage() {
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--color-primary)]"></span>
                       </div>
                       <span className="text-[13px] sm:text-lg lg:text-xl whitespace-nowrap">
-                        {isRevealed ? "📊 สรุปผลคะแนนปัจจุบัน (Real-time Results)" : "ขณะนี้กำลังนับคะแนนเสียงชาว FMS"}
+                        {isRevealed ? "สรุปผลคะแนนปัจจุบัน" : "ขณะนี้กำลังนับคะแนนเสียงชาว FMS"}
                       </span>
                     </div>
                   ) : (
-                    <><span className="text-slate-400 text-2xl">⏳</span> ยังไม่เปิดรับลงคะแนน (Upcoming Election)</>
+                    <><Clock className="w-6 h-6 lg:w-8 lg:h-8 text-slate-400" aria-hidden="true" /> ยังไม่เปิดรับลงคะแนน</>
                   )}
                 </h2>
 
                 {/* only while voting runs: a paused box has no closing time to count to */}
                 {finalStatus === "ONGOING" && (
                   <div className="flex items-center gap-2 text-xs lg:text-base font-bold px-4 py-2 rounded-full border shadow-sm bg-slate-100 text-slate-600 border-slate-200">
-                    <span>{electionStatus === "WAITING" ? "⏳ เริ่มใน:" : "🔴 ปิดใน:"}</span>
+                    <span>{electionStatus === "WAITING" ? "เริ่มใน:" : "ปิดใน:"}</span>
                     <span className="font-mono text-[var(--color-primary)] text-sm lg:text-lg">{mounted ? countdownText : "..."}</span>
                   </div>
                 )}
@@ -692,8 +694,8 @@ export default function ResultsPage() {
                   {isRevealed && (verdict.outcome === 'tie' || verdict.outcome === 'no-votes') && (
                     <div className="mb-4 lg:mb-6 flex items-center justify-center gap-2 text-xs lg:text-base font-bold px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-center">
                       {verdict.outcome === 'tie'
-                        ? 'คะแนนเท่ากัน — รอคณะกรรมการตัดสิน ยังไม่ประกาศผู้ชนะ'
-                        : 'ยังไม่มีคะแนน — ยังไม่มีผลให้ประกาศ'}
+                        ? 'คะแนนเท่ากัน รอคณะกรรมการตัดสิน ยังไม่ประกาศผู้ชนะ'
+                        : 'ยังไม่มีคะแนน จึงยังไม่มีผลให้ประกาศ'}
                     </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
@@ -745,7 +747,7 @@ export default function ResultsPage() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push(modalType === "VOTE" ? "/vote" : "/success")}
-                className="w-full py-4 bg-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] text-white rounded-2xl font-bold text-lg shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] transition-all flex items-center justify-center gap-2 group"
+                ref={onPrimary.ref} style={onPrimary.style} className="w-full py-4 bg-[var(--color-primary)] hover:bg-[color-mix(in_srgb,var(--color-primary)_85%,black)] rounded-2xl font-bold text-lg shadow-lg shadow-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] transition-all flex items-center justify-center gap-2 group"
               >
                 {modalType === "VOTE" ? "ไปหน้าลงคะแนน" : "ไปทำแบบประเมิน"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />

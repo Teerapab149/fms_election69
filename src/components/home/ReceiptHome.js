@@ -43,6 +43,7 @@ import { thaiPhrases, LONG_PHRASE } from "../v2/shared/text/thaiPhrases.mjs";
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
 import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
+import Arrow from "../Arrow";
 
 // The home page's "how to vote" receipt — this template's real flow, in the
 // words its own pages use (the ballot's "หย่อนบัตร" button, the success page's
@@ -498,7 +499,7 @@ export default function ReceiptHome({
                 {/* die-cut grommet — punched hole ringed with metal (present in every
                     state → no layout shift), aria-hidden */}
                 <span className="rc-grommet" aria-hidden="true" />
-                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true">→</span></span>
+                <span className="rc-cta-in"><span>{thaiPhrases(CTA.label).map((ph, i) => <span key={i} className={ph.length > LONG_PHRASE ? "rc-phrase is-long" : "rc-phrase"}>{ph}</span>)}</span><span className="rc-cta-arrow" aria-hidden="true"><Arrow /></span></span>
               </a>
 
               <a href={editorMode ? undefined : getPath("/candidates")} className="rc-ticket-cta">
@@ -507,13 +508,13 @@ export default function ReceiptHome({
                 <span className="rc-tkt-notch rc-tkt-notch--b" aria-hidden="true" />
                 <span className="rc-tkt-main">
                   <span className="rc-tkt-th">ดูผู้สมัคร</span>
-                  <span className="rc-tkt-mono rc-mono">CANDIDATES →</span>
+                  <span className="rc-tkt-mono rc-mono">CANDIDATES <Arrow /></span>
                 </span>
               </a>
             </div>
             {howTo.link && (
               <a href={editorMode ? undefined : howTo.href} className="rc-howlink">
-                วิธีลงคะแนน <span className="rc-mono">HOW TO VOTE ↓</span>
+                วิธีลงคะแนน <span className="rc-mono">HOW TO VOTE <Arrow dir="down" /></span>
               </a>
             )}
 
@@ -725,7 +726,7 @@ export default function ReceiptHome({
               <span className="rc-howto-t">ผลคะแนน</span>
               <span className="rc-howto-d">ประกาศที่หน้าผลคะแนน หลังปิดหีบ เมื่อคณะกรรมการเปิดเผยผล</span>
             </span>
-            <a className="rc-howto-go" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <span aria-hidden="true">→</span></a>
+            <a className="rc-howto-go" href={editorMode ? undefined : getPath("/results")}>ดูผลคะแนน <span aria-hidden="true"><Arrow /></span></a>
           </div>
           <div className="rc-turnout-ref rc-mono">{meta.prefix} {meta.number}  HOW TO VOTE</div>
           <div className="rc-turnout-end" aria-hidden="true" />

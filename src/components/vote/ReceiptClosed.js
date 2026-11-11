@@ -29,6 +29,7 @@ import { getPath } from "../../utils/basePath";
 import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
+import Arrow from "../Arrow";
 
 // reason eyebrow (bilingual, split so the Thai half wears Chakra Petch and the Latin
 // half stays mono — A10.3/ruling C4: Space Mono has no Thai glyphs). Copy stays reason-
@@ -127,11 +128,11 @@ export default function ReceiptClosed({
             <div className="rc-closed-cta">
               {session ? (
                 <button type="button" className="rc-closed-stub" onClick={() => !editorMode && onLogout()} aria-label="ออกจากระบบ">
-                  <span className="rc-closed-stub__in">ออกจากระบบ<span className="rc-closed-stub__arrow" aria-hidden="true"> →</span></span>
+                  <span className="rc-closed-stub__in">ออกจากระบบ<span className="rc-closed-stub__arrow" aria-hidden="true"> <Arrow /></span></span>
                 </button>
               ) : (
                 <a href={editorMode ? undefined : getPath("/")} className="rc-closed-stub">
-                  <span className="rc-closed-stub__in">กลับหน้าแรก<span className="rc-closed-stub__arrow" aria-hidden="true"> →</span></span>
+                  <span className="rc-closed-stub__in">กลับหน้าแรก<span className="rc-closed-stub__arrow" aria-hidden="true"> <Arrow /></span></span>
                 </a>
               )}
             </div>

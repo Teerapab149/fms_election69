@@ -136,15 +136,15 @@ export const blossomTemplate       = buildBlossomTemplate(
   BLOSSOM_THEMES["blossom"]);
 export const blossomSkyTemplate    = buildBlossomTemplate(
   "blossom-sky", "Blossom Sky",
-  "ซอฟต์ป็อปสดใส โทนฟ้าละมุน — สดชื่น เป็นมิตร อ่านง่าย",
+  "ซอฟต์ป็อปสดใส โทนฟ้าละมุน สดชื่น เป็นมิตร อ่านง่าย",
   BLOSSOM_THEMES["blossom-sky"]);
 export const blossomMintTemplate   = buildBlossomTemplate(
   "blossom-mint", "Blossom Mint",
-  "ซอฟต์ป็อปสดใส โทนมินต์เขียว — สะอาดตา สดชื่น มีชีวิตชีวา",
+  "ซอฟต์ป็อปสดใส โทนมินต์เขียว สะอาดตา สดชื่น มีชีวิตชีวา",
   BLOSSOM_THEMES["blossom-mint"]);
 export const blossomButterTemplate = buildBlossomTemplate(
   "blossom-butter", "Blossom Butter",
-  "ซอฟต์ป็อปสดใส โทนเหลืองบัตเตอร์ — อบอุ่น สดใส ชวนยิ้ม",
+  "ซอฟต์ป็อปสดใส โทนเหลืองบัตเตอร์ อบอุ่น สดใส ชวนยิ้ม",
   BLOSSOM_THEMES["blossom-butter"]);
 
 export default blossomTemplate;

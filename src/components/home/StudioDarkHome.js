@@ -33,6 +33,7 @@ import { getVoteCTAVariant } from "../elements/voteCTA-button";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useVoteStatus } from "../../hooks/useVoteStatus";
 import { useHowToVote } from "../../hooks/useHowToVote";
+import Arrow from "../Arrow";
 
 // How to vote — Studio Dark's own flow and words: PSU Passport sign-in → the
 // ballot ("Choose one, then confirm", "ดูนโยบาย") → "ยืนยันการลงคะแนน" →
@@ -229,11 +230,11 @@ export default function StudioDarkHome({
                     <VoteCTA config={voteCTAConfig} data={activeBlockData} resolvedConfig={voteCTAConfig} onSignIn={onSignIn} />
                   </Wrap>
                   <a href={editorMode ? undefined : getPath("/candidates")} className="sd-ghost">
-                    ดูรายชื่อพรรค <span className="sd-ghost__arrow" aria-hidden>↗</span>
+                    ดูรายชื่อพรรค <span className="sd-ghost__arrow" aria-hidden><Arrow dir="up-right" /></span>
                   </a>
                   {howTo.link && (
                     <a href={editorMode ? undefined : howTo.href} className="sd-ghost">
-                      วิธีลงคะแนน <span className="sd-ghost__arrow" aria-hidden>↓</span>
+                      วิธีลงคะแนน <span className="sd-ghost__arrow" aria-hidden><Arrow dir="down" /></span>
                     </a>
                   )}
                 </div>

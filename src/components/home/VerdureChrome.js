@@ -24,6 +24,9 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { resolveElectionDates } from "../../utils/electionConfig";
 import { useGlobalConfig, useActiveTemplateId } from "../../contexts/GlobalConfigContext";
 import { VERDURE_THEMES, verdureTheme, hexToRgbTriple } from "../../utils/verdurePalettes";
+import Arrow, { Ico } from "../Arrow";
+import { Power } from "lucide-react";
+import { useVoteStatus } from "../../hooks/useVoteStatus";
 
 // ── Verdure colour themes ────────────────────────────────────────────────────
 // Palette map + helpers live in utils/verdurePalettes.js (plain module) so the
@@ -57,7 +60,7 @@ export function verdureMeta(gc = {}) {
     founded: String(founded), ordSuffix: ordinalSuffix(num),
     wordmark: `${prefix} ${num}`,                                // "SAMO 49"
     cornermarkSub: `${faculty} Election ${ay}`,                // BE year, per the design ("FMS Election · 2569")
-    tagline: `— ${faculty} Student Council Election —`,          // not year-locked
+    tagline: `${faculty} Student Council Election`,          // not year-locked
   };
 }
 
@@ -146,7 +149,9 @@ export function VerdureDock({ active = "home", editorMode = false }) {
 // `election` (from useElectionStatus): when the page has the server's status it
 // passes it, and the chip says exactly what the rest of the page says. Pages
 // without it (they only know systemMode) keep the calendar reading below.
-export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode = "AUTO", statusChip = null, backHref = null, backLabel = "", election = null }) {
+export function VerdureCornerStatus({ active = "home", editorMode = false, systemMode: systemModeProp, statusChip = null, backHref = null, backLabel = "", election = null }) {
+  const live = useVoteStatus({ enabled: !editorMode && !systemModeProp });
+  const systemMode = systemModeProp || live.status?.systemMode || "AUTO";
   const globalConfig = useGlobalConfig();
   const { data: session, status } = useSession();
 
@@ -220,7 +225,7 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
         <a href={editorMode ? undefined : getPath(backHref)} className="vd-chip-live vd-chip-live--back" aria-label={backLabel}>
           {/* single wrapper span = ONE flex item, so the chip's gap never applies
               inside the label and desktop spacing stays the plain text spaces */}
-          <span className="vd-back-inner">←<span className="vd-back-txt"> {backHead}{backTail ? <span className="vd-back-tail"> {backTail}</span> : null}</span></span>
+          <span className="vd-back-inner"><Arrow dir="left" /><span className="vd-back-txt"> {backHead}{backTail ? <span className="vd-back-tail"> {backTail}</span> : null}</span></span>
         </a>
       ) : (statusChip || defaultChip)}
       {/* HOME used to be the one page with no user pill: on desktop the live
@@ -239,7 +244,7 @@ export function VerdureCornerStatus({ active = "home", editorMode = false, syste
           </div>
           <button type="button" className="vd-user__out" title="ออกจากระบบ Sign out" aria-label="ออกจากระบบ"
             onClick={() => { if (editorMode) return; const bp = process.env.NEXT_PUBLIC_BASE_PATH || ""; const ret = `${window.location.origin}${bp}`; let url = `https://psusso.psu.ac.th/application/o/fms-ovs/end-session/?post_logout_redirect_uri=${encodeURIComponent(ret)}`; if (session?.id_token) url += `&id_token_hint=${session.id_token}`; signOut({ redirect: false }).finally(() => { window.location.href = url; }); }}>
-            ⏻
+            <Ico icon={Power} />
           </button>
         </div>
       )}
@@ -459,7 +464,7 @@ export function VerdureBaseStyles() {
 }
 
 export default function VerdureChrome({
-  active = "home", moss = false, editorMode = false, systemMode = "AUTO",
+  active = "home", moss = false, editorMode = false, systemMode,
   edge = { num: "01", label: "Home", th: "" }, cornermarkTitle = null,
   cornermarkSub = null, statusChip = null, backHref = null, backLabel = "",
   election = null,

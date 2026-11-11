@@ -109,8 +109,8 @@ export default function FmsOfficialParty({
             </span>
           )}
           <div className="fo-party__id">
-            <span className="fo-party__kicker">หมายเลข {party?.number ?? "—"}</span>
-            <h1>{party?.name || "—"}</h1>
+            <span className="fo-party__kicker">หมายเลข {party?.number ?? "–"}</span>
+            <h1>{party?.name || "–"}</h1>
             {party?.slogan && <p>{party.slogan}</p>}
           </div>
         </div>

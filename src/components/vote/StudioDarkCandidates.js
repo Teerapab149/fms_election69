@@ -15,6 +15,7 @@
 
 import { getPath } from "../../utils/basePath";
 import StudioDarkShell from "./StudioDarkShell";
+import Arrow from "../Arrow";
 
 const firstImage = (val) => {
   if (!val) return null;
@@ -79,7 +80,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
                 className="sdc-panel"
                 style={{ "--sdc-i": i }}
               >
-                <div className="sdc-panel__head">
+                <span className="sdc-panel__chip" aria-hidden="true"><Arrow dir="up-right" size="14px" /></span><div className="sdc-panel__head">
                   <h2 className="sdc-panel__no">{no.slice(0, -1)}<em>{no.slice(-1)}</em></h2>
                   <span className="sd-smallcaps">PARTY <span className="sdc-accent">№ {no}</span></span>
                 </div>
@@ -90,7 +91,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
                   ) : logo ? (
                     <img src={logo} alt={p.name} className="sdc-panel__media-logo" />
                   ) : (
-                    <span>★ TEAM PHOTO{p.members?.length ? ` / ${p.members.length} MEMBERS` : ""} ★</span>
+                    <span>ยังไม่มีรูปทีม{p.members?.length ? ` ${p.members.length} คน` : ""}</span>
                   )}
                 </div>
 
@@ -100,15 +101,15 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
                 <div className="sdc-panel__quick">
                   <div className="sdc-panel__cell">
                     <div className="lbl">CANDIDATES</div>
-                    <div className="val">{p.members?.length || "—"}</div>
+                    <div className="val">{p.members?.length || "–"}</div>
                   </div>
                   <div className="sdc-panel__cell">
                     <div className="lbl">POLICIES</div>
-                    <div className="val">{Array.isArray(p.policies) ? p.policies.length : "—"}</div>
+                    <div className="val">{Array.isArray(p.policies) ? p.policies.length : "–"}</div>
                   </div>
                   <div className="sdc-panel__cell">
                     <div className="lbl">VIEW</div>
-                    <div className="val"><em>Profile →</em></div>
+                    <div className="val"><em>Profile <Arrow /></em></div>
                   </div>
                 </div>
               </a>
@@ -123,7 +124,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
         </div>
       ) : (
         <div className="sdc-empty">
-          <div className="sd-media-ph sdc-empty__box"><span>★ NO PARTIES YET ★</span></div>
+          <div className="sd-media-ph sdc-empty__box"><span>ยังไม่มีพรรคที่ลงสมัคร</span></div>
           <p>ยังไม่มีข้อมูลผู้สมัครในขณะนี้</p>
         </div>
       )}
@@ -171,13 +172,13 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
         .sdc-panel:nth-child(2n) { border-right:0; }
         .sdc-panel:hover { background:var(--sd-bg-2); }
         /* hover arrow chip (rotates -45° on hover, fills lime) */
-        .sdc-panel::after {
-          content:"↗"; position:absolute; right:32px; top:48px;
+        .sdc-panel__chip {
+          position:absolute; right:32px; top:48px; z-index:1;
           width:36px; height:36px; border:1px solid var(--sd-line-strong); border-radius:999px;
           display:grid; place-items:center; color:var(--sd-ink-3); font-size:14px;
           transition:transform .25s, border-color .25s, background-color .25s, color .25s;
         }
-        .sdc-panel:hover::after { border-color:var(--sd-accent); background:var(--sd-accent); color:var(--sd-bg); transform:rotate(45deg); }
+        .sdc-panel:hover .sdc-panel__chip { border-color:var(--sd-accent); background:var(--sd-accent); color:var(--sd-bg); transform:rotate(45deg); }
 
         .sdc-panel__head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; padding-right:56px; }
         .sdc-panel__no {
@@ -221,7 +222,7 @@ export default function StudioDarkCandidates({ candidates = [], editorMode = fal
           .sdc-deck { justify-self:start; }
           .sdc-split { grid-template-columns:1fr; }
           .sdc-panel { border-right:0; min-height:0; padding:32px 24px; }
-          .sdc-panel::after { right:24px; top:32px; }
+          .sdc-panel__chip { right:24px; top:32px; }
           .sdc-panel__media { height:200px; }
           .sdc-filler { display:none; }
         }

@@ -44,6 +44,7 @@ import { socialList } from "../../utils/socialLinks";
 import PartySocials from "./PartySocials";
 import ReceiptMemberModal from "./ReceiptMemberModal";
 import StoryClamp from "./StoryClamp";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -139,7 +140,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           <aside className="rc-file-tape" aria-label="ทะเบียนพรรค">
             <span className="rc-file-tape__mast rc-mono">✶ PARTY REGISTER {faculty} ✶</span>
             <dl className="rc-file-reg">
-              <div><dt className="rc-mono"><span className="rc-th">ชื่อพรรค</span>  NAME</dt><dd>{party?.name || "—"}</dd></div>
+              <div><dt className="rc-mono"><span className="rc-th">ชื่อพรรค</span>  NAME</dt><dd>{party?.name || "–"}</dd></div>
               <div><dt className="rc-mono"><span className="rc-th">หมายเลข</span>  NO.</dt><dd>{pad2(no)}</dd></div>
               <div><dt className="rc-mono"><span className="rc-th">จำนวนทีม</span>  TEAM</dt><dd>{teamCount > 0 ? <>{pad2(teamCount)} <span className="rc-th">คน</span></> : <span className="rc-th">รอข้อมูล</span>}</dd></div>
               {party?.slogan && <div className="rc-file-reg__slogan"><dt className="rc-mono"><span className="rc-th">คำขวัญ</span>  SLOGAN</dt><dd>“{party.slogan}”</dd></div>}
@@ -316,10 +317,10 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           <div className="rc-party-stubs">
             {/* single real party → /candidates just redirects back here (candidates/page.js:92-95), so send it home instead */}
             <a href={editorMode ? undefined : getPath(isSingleParty ? "/" : "/candidates")} className="rc-stubcta">
-              <span aria-hidden="true">← </span><span className="rc-th">{isSingleParty ? "กลับหน้าแรก" : "กลับสารบบผู้สมัคร"}</span>
+              <span aria-hidden="true"><Arrow dir="left" /> </span><span className="rc-th">{isSingleParty ? "กลับหน้าแรก" : "กลับสารบบผู้สมัคร"}</span>
             </a>
             <a href={editorMode ? undefined : getPath("/vote")} className="rc-stubcta rc-stubcta--go">
-              <span className="rc-th">ไปลงคะแนน</span><span className="rc-stubcta__arrow" aria-hidden="true"> →</span>
+              <span className="rc-th">ไปลงคะแนน</span><span className="rc-stubcta__arrow" aria-hidden="true"> <Arrow /></span>
             </a>
           </div>
           <span className="rc-party-ref rc-mono" aria-hidden="true">{prefix} {number}  FILE {pad2(no)}</span>
@@ -338,7 +339,7 @@ export default function ReceiptParty({ party = {}, galleryImages = [], showBackT
           className="rc-backvote"
         >
           <span className="rc-backvote__perf" aria-hidden="true" />
-          <span className="rc-backvote__in"><span aria-hidden="true">← </span><span className="rc-th">กลับไปลงคะแนน</span></span>
+          <span className="rc-backvote__in"><span aria-hidden="true"><Arrow dir="left" /> </span><span className="rc-th">กลับไปลงคะแนน</span></span>
         </a>
       )}
 

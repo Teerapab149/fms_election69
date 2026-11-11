@@ -22,6 +22,7 @@
 // บน --color-surface เสมอ ส่วน primary ใช้เป็นขอบปุ่มและแต้มพื้นปุ่ม
 
 import { useEffect } from 'react';
+import { TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Error({ error, reset }) {
@@ -71,7 +72,7 @@ export default function Error({ error, reset }) {
           }}
           aria-hidden="true"
         >
-          ⚠️
+          <TriangleAlert size={26} aria-hidden="true" />
         </div>
 
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text, #1F2937)', fontFamily: 'var(--font-display, inherit)', margin: '0 0 12px' }}>

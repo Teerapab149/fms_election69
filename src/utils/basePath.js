@@ -20,7 +20,7 @@
 export const getPath = (path) => {
     if (path == null || typeof path !== 'string') {
         if (process.env.NODE_ENV !== 'production') {
-            console.warn('[getPath] received non-string input:', path, '— returning empty string');
+            console.warn('[getPath] received non-string input:', path, 'returning empty string');
         }
         return '';
     }

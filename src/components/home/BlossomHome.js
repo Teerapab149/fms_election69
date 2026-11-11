@@ -29,6 +29,7 @@ import { resolveElectionDates, formatThaiDate, formatThaiTime } from "../../util
 import { resolveElementState, buildRuntimeContext } from "../admin/editor/stateResolver";
 import { buildTemplateStyles } from "../../lib/templateTokens";
 import { AWAITING_RESULTS, isAwaitingResults } from "../../lib/election/electionStatus.mjs";
+import Arrow from "../Arrow";
 
 // Thai-run detector — used to pin only the Thai segments of the spinning ring
 // textPath to the family's real Thai font (Space Mono has no Thai glyphs).
@@ -433,7 +434,7 @@ export default function BlossomHome({
 
         {/* ===== hero ===== */}
         <section className="bl-hero">
-          <div className="bl-ring" role="img" aria-label={`${meta.prefix} ${meta.number} — ${meta.faculty} Election ${meta.calYear}`}>
+          <div className="bl-ring" role="img" aria-label={`${meta.prefix} ${meta.number} ${meta.faculty} Election ${meta.calYear}`}>
             <svg viewBox="0 0 200 200">
               <defs><path id="blRingPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
               <text><textPath href="#blRingPath">
@@ -457,8 +458,8 @@ export default function BlossomHome({
 
           <div className="bl-cta-row">
             <a ref={ctaRef} href={ctaHref} onClick={onCta} className={`bl-cta ${CTA.disabled ? "is-disabled" : ""}`} role="button">{CTA.label}</a>
-            <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร ↓</a>
-            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน ↓</a>}
+            <a href={editorMode ? undefined : "#bl-meet"} className="bl-cta2">รู้จักผู้สมัคร <Arrow dir="down" /></a>
+            {howTo.link && <a href={editorMode ? undefined : howTo.href} className="bl-howlink">วิธีลงคะแนน <Arrow dir="down" /></a>}
           </div>
           {/* หีบปิดแล้วแต่ยังไม่ประกาศผล: ปุ่มบอกได้แค่สถานะ บรรทัดนี้คือเหตุผล */}
           {CTA.note && <p className="bl-cta-note">{CTA.note}</p>}
@@ -481,7 +482,7 @@ export default function BlossomHome({
           </div>
           <div className="bl-feature-copy">
             <h2>รู้จัก<em>ผู้สมัคร</em>ของคุณหรือยัง</h2>
-            <p>ก่อนกาบัตร ชวนคุณเปิดอ่านนโยบายและทีมงานของแต่ละพรรคอย่างละเอียด — ทุกเสียงของชาววิทยาการจัดการคือทิศทางของสโมสรนักศึกษาปีต่อไป</p>
+            <p>ก่อนกาบัตร ชวนคุณเปิดอ่านนโยบายและทีมงานของแต่ละพรรคอย่างละเอียด ทุกเสียงของชาววิทยาการจัดการคือทิศทางของสโมสรนักศึกษาปีต่อไป</p>
             <a className="bl-go" href={editorMode ? undefined : getPath("/candidates")}>
               ดูผู้สมัครทั้งหมด
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>

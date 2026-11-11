@@ -24,6 +24,7 @@ import { Check } from "lucide-react";
 import StudioDarkShell from "./StudioDarkShell";
 import PrivacyNote from "../PrivacyNote";
 import StudioDarkSingleParty from "./StudioDarkSingleParty";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
@@ -85,7 +86,7 @@ export default function StudioDarkVote({
   const selectedName = (() => {
     if (selectedPartyId == null) return null;
     const p = regularParties.find((x) => x.id === selectedPartyId);
-    if (p) return `№ ${pad2(p.number)} — ${p.name}`;
+    if (p) return `№ ${pad2(p.number)} ${p.name}`;
     if (disapprove?.id === selectedPartyId) return "ไม่รับรอง Disapprove";
     if (abstain?.id === selectedPartyId) return "งดออกเสียง Abstain";
     return null;
@@ -94,14 +95,14 @@ export default function StudioDarkVote({
   const userName = user?.name || "";
   const viewMeta = (party) => (
     <>
-      <div className="sdv-strip__mrow"><span>Candidates</span><strong>{party.members?.length || "—"}</strong></div>
-      <div className="sdv-strip__mrow"><span>Policies</span><strong>{Array.isArray(party.policies) ? party.policies.length : "—"}</strong></div>
+      <div className="sdv-strip__mrow"><span>Candidates</span><strong>{party.members?.length || "–"}</strong></div>
+      <div className="sdv-strip__mrow"><span>Policies</span><strong>{Array.isArray(party.policies) ? party.policies.length : "–"}</strong></div>
       <button
         type="button"
         className="sdv-strip__view"
         onClick={(e) => { e.stopPropagation(); onViewDetails(party); }}
       >
-        ดูนโยบาย →
+        ดูนโยบาย <Arrow />
       </button>
     </>
   );
@@ -120,7 +121,7 @@ export default function StudioDarkVote({
           <h1 className="sd-scene-h__title">Choose <em>one,</em><br />then confirm.</h1>
         </div>
         <p className="sd-scene-h__deck">
-          {userName ? <>สวัสดีคุณ <strong className="sdv-uname">{userName}</strong> — </> : null}
+          {userName ? <>สวัสดีคุณ <strong className="sdv-uname">{userName}</strong> </> : null}
           กรุณาเลือกหนึ่งตัวเลือกจากด้านล่าง การลงคะแนนทำได้เพียงครั้งเดียวเท่านั้น
         </p>
       </div>
@@ -181,7 +182,7 @@ export default function StudioDarkVote({
             disabled={selectedPartyId == null || isSubmitting}
             onClick={() => onConfirm()}
           >
-            {isSubmitting ? "กำลังบันทึก…" : "ยืนยันการลงคะแนน →"}
+            {isSubmitting ? "กำลังบันทึก…" : <>ยืนยันการลงคะแนน <Arrow /></>}
           </button>
         </div>
         <PrivacyNote newTab style={{ marginTop: 20, marginBottom: 24, fontSize: 13, color: "var(--sd-ink-2)" }} />

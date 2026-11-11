@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, X, Vote } from 'lucide-react';
+import { useOnPrimary } from '../utils/onPrimary';
 
 export default function BackToVoteBar() {
   const router = useRouter();
+  const onPrimary = useOnPrimary();
+  const onPrimary2 = useOnPrimary();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMounting, setIsMounting] = useState(true);
 
@@ -58,7 +61,7 @@ export default function BackToVoteBar() {
               onClick={() => router.push('/vote')}
               className="group flex items-center gap-3 pl-2 pr-6 py-1.5 h-14 hover:bg-slate-50 transition-colors"
             >
-              <div className="bg-[var(--color-primary)] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform shrink-0 ml-1">
+              <div ref={onPrimary.ref} style={onPrimary.style} className="bg-[var(--color-primary)] w-10 h-10 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform shrink-0 ml-1">
                  <ArrowLeft size={20} />
               </div>
               <div className="flex flex-col text-left">
@@ -74,13 +77,15 @@ export default function BackToVoteBar() {
         {/* --- ปุ่ม Trigger (ปุ่มขวาสุด) --- */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
+          ref={onPrimary2.ref}
+          style={isExpanded ? undefined : onPrimary2.style}
           className={`
             relative w-14 h-14 flex items-center justify-center shrink-0
             z-10 rounded-full cursor-pointer
             transition-colors duration-300
             ${isExpanded 
               ? 'bg-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100' 
-              : 'bg-[var(--color-primary)] text-white hover:bg-[#701e68] shadow-md'
+              : 'bg-[var(--color-primary)] hover:bg-[#701e68] shadow-md'
             }
           `}
         >

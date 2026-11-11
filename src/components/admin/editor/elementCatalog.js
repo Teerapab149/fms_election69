@@ -257,6 +257,6 @@ if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
     const instanceCount = Object.keys(ELEMENT_INSTANCES).length;
     const typeCount = Object.keys(ELEMENT_TYPES).length;
     // eslint-disable-next-line no-console
-    console.log(`[elementCatalog] ✓ Validation passed: ${instanceCount} instances, ${typeCount} types`);
+    console.log(`[elementCatalog] Validation passed: ${instanceCount} instances, ${typeCount} types`);
   }
 }

@@ -126,7 +126,7 @@ export default function ResultsEditorPreview({
           <div className="mb-4">
             <h2 className="text-sm font-bold text-slate-600 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              🏆 สรุปผลการเลือกตั้ง (Official Results)
+              สรุปผลการเลือกตั้ง
             </h2>
           </div>
         </Wrap>

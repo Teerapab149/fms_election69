@@ -94,6 +94,7 @@ export const BLOSSOM_THEMES = {
   "blossom": makeTheme({
     canvas: "#FCF9FA", line: "#EDE2E8",
     primary: "#FF6FBF", primaryDeep: "#E24FA3", primarySoft: "#FFE1F0",
+    onPrimary: "#221B26", // text ink on the pink fill, was INK (4.28:1, small button text needs 4.5); fill unchanged
     primaryInk: SUP_PINK.ink,   // #B02E7A — 5.98:1 on card, 4.92:1 on #FFE1F0
     onPrimarySm: "#221B26", // mobile-only CTA text ink — INK darkened ~20% toward
     // black (same hue). 4.28:1 -> 4.694:1 on primaryDeep #E24FA3 at 16-16.48px

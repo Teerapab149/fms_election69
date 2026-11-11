@@ -175,7 +175,7 @@ export default function OriginalSuccess({ user = null, isUnlocked = false, hasFo
           color:#fff; box-shadow:0 22px 44px -22px color-mix(in srgb, var(--os-deep) 62%, transparent); }
         .os-success .os-next::after { content:""; position:absolute; top:-46%; right:-22%; width:66%; height:120%;
           border-radius:50%; background:rgba(255,255,255,.09); pointer-events:none; }
-        .os-eyebrow { display:block; font-size:10.5px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.72); }
+        .os-eyebrow { display:block; font-size:11px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.72); }
         .os-eyebrow--ink { color:var(--color-text-muted,#655e6c); }
         .os-h2 { margin:12px 0 0; font-size:23px; font-weight:800; line-height:1.5; }
         .os-note { margin:10px 0 0; font-size:13px; line-height:1.85; color:rgba(255,255,255,.8); }

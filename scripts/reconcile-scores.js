@@ -29,26 +29,26 @@ const db = new PrismaClient();
 async function main() {
   const secret = process.env.BALLOT_CHAIN_SECRET;
   if (!secret) {
-    console.error("REFUSED: BALLOT_CHAIN_SECRET not set — cannot audit the ballot chain.");
+    console.error("REFUSED: BALLOT_CHAIN_SECRET not set, cannot audit the ballot chain.");
     process.exitCode = 1;
     return;
   }
 
   const cfg = await db.systemConfig.findFirst({ where: { id: 1 } });
   if (cfg?.globalConfig?.ballotsAnonymized === true) {
-    console.log("NOTE: results are certified (ballotsAnonymized flag set) — the frozen Candidate.score is the record. Running a read-only audit anyway:\n");
+    console.log("NOTE: results are certified (ballotsAnonymized flag set), the frozen Candidate.score is the record. Running a read-only audit anyway:\n");
   }
 
   const { checks, ok, counts } = await verifyChain(db, secret);
 
   for (const c of checks) {
-    console.log(`${c.ok ? "✅ PASS" : "❌ FAIL"}  ${c.name.padEnd(16)} ${c.detail}`);
+    console.log(`${c.ok ? "PASS" : "FAIL"}  ${c.name.padEnd(16)} ${c.detail}`);
   }
   console.log(`\nballots=${counts.ballots}  sum(score)=${counts.scoreSum}  voted(isVoted ทุกคน)=${counts.voted}`);
   console.log(
     ok
-      ? "\n✅ reconciled — chain intact and score matches the ballot box."
-      : "\n❌ mismatch — investigate BEFORE publishing results. For a per-candidate recount use scripts/decrypt-recount.js (offline, private key)."
+      ? "\nreconciled, chain intact and score matches the ballot box."
+      : "\nmismatch, investigate BEFORE publishing results. For a per-candidate recount use scripts/decrypt-recount.js (offline, private key)."
   );
   if (!ok) process.exitCode = 2;
 }

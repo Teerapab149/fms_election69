@@ -25,6 +25,7 @@
 // vars/colours (--sc-max, --sc-fade) and may restyle `.sc__hint`.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import Arrow from "../Arrow";
 
 export default function StoryClamp({
   children,
@@ -59,13 +60,13 @@ export default function StoryClamp({
         onScroll={measure}
         tabIndex={overflows ? 0 : undefined}
         role={overflows ? "region" : undefined}
-        aria-label={overflows ? "ความหมายสัญลักษณ์ — เลื่อนเพื่ออ่านต่อ" : undefined}
+        aria-label={overflows ? "ความหมายสัญลักษณ์ เลื่อนเพื่ออ่านต่อ" : undefined}
       >
         {children}
       </div>
 
       {overflows && (
-        <span className="sc__hint" aria-hidden="true">{hint} <span className="sc__caret">↓</span></span>
+        <span className="sc__hint" aria-hidden="true">{hint} <span className="sc__caret"><Arrow dir="down" /></span></span>
       )}
 
       <style jsx global>{`

@@ -16,6 +16,7 @@ import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import { useHowToVote } from "../../hooks/useHowToVote";
 import { GLOBAL_CONFIG_DEFAULTS } from "../../utils/globalConfigDefaults";
 import { AWAITING_RESULTS, isAwaitingResults, deriveElectionStatus } from "../../lib/election/electionStatus.mjs";
+import Arrow from "../Arrow";
 
 // How to vote — Original's real flow: PSU Passport sign-in → the ballot
 // (MultiPartyView) → confirm → the success page, which asks for the
@@ -172,7 +173,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                                         <h2 className="text-lg sm:text-2xl lg:text-2xl xl:text-3xl font-extrabold text-slate-800 leading-tight tracking-tight">
                                             โครงการเลือกตั้ง<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--o-brand)] to-[var(--o-bright)]">คณะกรรมการบริหาร</span>
                                         </h2>
-                                        <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-500">
+                                        <h3 className="text-base sm:text-lg lg:text-lg xl:text-2xl font-semibold text-slate-600">
                                             สโมสรนักศึกษาคณะวิทยาการจัดการ
                                         </h3>
                                     </div>
@@ -350,7 +351,7 @@ export default function OriginalHome({ initialData, onSignIn = null }) {
                             {howTo.link && (
                                 <div className="w-full flex justify-center lg:justify-start !mt-3">
                                     <a href={howTo.href} className="inline-flex items-center gap-1.5 min-h-[44px] text-sm md:text-base font-bold text-[var(--o-brand)] underline decoration-2 underline-offset-4 hover:text-[var(--o-deep)]">
-                                        วิธีลงคะแนน <span aria-hidden>↓</span>
+                                        วิธีลงคะแนน <span aria-hidden><Arrow dir="down" /></span>
                                     </a>
                                 </div>
                             )}

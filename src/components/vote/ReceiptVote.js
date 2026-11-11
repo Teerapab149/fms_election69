@@ -42,6 +42,7 @@ import { ReceiptTopBar } from "../home/ReceiptHome";
 import { ReceiptBaseStyles } from "../home/ReceiptTheme";
 import { useGlobalConfig } from "../../contexts/GlobalConfigContext";
 import ReceiptSingleParty from "./ReceiptSingleParty";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const pad4 = (n) => String(n ?? 0).padStart(4, "0");
@@ -206,7 +207,7 @@ export function ReceiptConfirmSlip({
   // mirror the shared modal's three cases: party / abstain (orange) / disapprove
   // (red) — semantic colours fixed, deliberately NOT var(--rc-*).
   const tone = isVoteNo ? "abstain" : isDisapprove ? "disapprove" : "party";
-  const label = isVoteNo ? "งดออกเสียง" : isDisapprove ? "ไม่รับรอง" : (party?.name || "—");
+  const label = isVoteNo ? "งดออกเสียง" : isDisapprove ? "ไม่รับรอง" : (party?.name || "–");
   // ป้ายอังกฤษกำกับเฉพาะศัพท์ของระบบ ไม่ใช่ชื่อพรรค — เล็กและจางกว่าไทยเสมอ
   const labelEn = isVoteNo ? "Abstain" : isDisapprove ? "Disapprove" : null;
   const subLabel = isVoteNo
@@ -240,7 +241,7 @@ export function ReceiptConfirmSlip({
           <button type="button" ref={confirmRef} className="rc-cslip__go" onClick={() => !isSubmitting && onConfirm()} disabled={isSubmitting}>
             {!isSubmitting && <span className="rc-foil" aria-hidden="true" />}
             <span className="rc-cslip__go-in">
-              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-cslip__arrow" aria-hidden="true">→</span>
+              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-cslip__arrow" aria-hidden="true"><Arrow /></span>
             </span>
           </button>
         </div>
@@ -367,7 +368,7 @@ function VoteRow({
             className="rc-vrow__more"
             onClick={(e) => { e.stopPropagation(); onDetails(); }}
           >
-            ดูรายละเอียด<span aria-hidden="true"> →</span>
+            ดูรายละเอียด<span aria-hidden="true"> <Arrow /></span>
           </button>
         )}
         {/* tiny "เลือกแล้ว" ink stamp pressed into the row corner on selection */}
@@ -412,7 +413,7 @@ export default function ReceiptVote({
   const count = parties.length;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "–");
 
   // label for the confirm bar (party name, or the abstain choice)
   const selection = (() => {
@@ -537,7 +538,7 @@ export default function ReceiptVote({
           >
             {canConfirm && <span className="rc-foil" aria-hidden="true" />}
             <span className="rc-vbar__btn-in">
-              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-vbar__arrow" aria-hidden="true">→</span>
+              {isSubmitting ? "กำลังบันทึก…" : "หย่อนบัตร"}<span className="rc-vbar__arrow" aria-hidden="true"><Arrow /></span>
             </span>
           </button>
         </div>

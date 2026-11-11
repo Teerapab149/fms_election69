@@ -36,6 +36,7 @@ import { sortMembersByPosition } from "../../utils/memberSort";
 import StoryClamp from "./StoryClamp";
 import BlossomPartyIntro from "./BlossomPartyIntro";
 import BlossomMemberModal, { BlossomLightbox } from "./BlossomMemberModal";
+import Arrow from "../Arrow";
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 const resolveSrc = (p) => (!p ? null : (String(p).startsWith("http") ? p : getPath(p)));
@@ -118,7 +119,7 @@ export default function BlossomSingleParty({
   const no = party?.number;
 
   const name = (user?.name || (editorMode ? "นักศึกษาตัวอย่าง" : "")).trim();
-  const sid = user?.studentId || (editorMode ? "6600000000" : "—");
+  const sid = user?.studentId || (editorMode ? "6600000000" : "–");
 
   // which of the three choices is picked (fixed semantic mapping)
   const kind = selectedPartyId == null ? null
@@ -127,7 +128,7 @@ export default function BlossomSingleParty({
     : (abstain && selectedPartyId === abstain.id) ? "abstain"
     : null;
 
-  const selectionLabel = kind === "approve" ? `รับรอง — ${party?.name || ""}`
+  const selectionLabel = kind === "approve" ? `รับรอง ${party?.name || ""}`
     : kind === "disapprove" ? "ไม่รับรอง Disapprove"
     : kind === "abstain" ? "งดออกเสียง Abstain"
     : null;
@@ -207,7 +208,7 @@ export default function BlossomSingleParty({
         {/* ทางไปหน้าแนะนำพรรคเต็ม (ภาพกิจกรรมทั้งหมดอยู่ที่นั่น) — source=vote
             ทำให้หน้านั้นมีแถบกลับมาโหวต ผู้ลงคะแนนจึงไม่หลงทาง (2026-07-30) */}
         <a className="bl-sp-more" href={getPath(`/party?id=${party?.number ?? ""}&source=vote`)}>
-          <span className="bl-thai">ดูข้อมูลพรรคแบบเต็ม</span> <span className="bl-nw">&amp; GALLERY →</span>
+          <span className="bl-thai">ดูข้อมูลพรรคแบบเต็ม</span> <span className="bl-nw">&amp; GALLERY <Arrow /></span>
         </a>
 
         {/* logo meaning — the story explains the party mark (logo chip ties them) */}
@@ -357,7 +358,7 @@ export default function BlossomSingleParty({
             <p className="bl-scm__sub">เมื่อยืนยันแล้ว<b>จะไม่สามารถแก้ไขได้</b> กรุณาตรวจสอบตัวเลือกของคุณ</p>
             <div className={`bl-scm__pick bl-scm__pick--${kind}`}>
               <span className="bl-scm__pick-lab bl-thai bl-thai--nw">การเลือกของคุณ</span>
-              <span className="bl-scm__pick-val">{selectionLabel || "—"}</span>
+              <span className="bl-scm__pick-val">{selectionLabel || "–"}</span>
             </div>
             <div className="bl-scm__actions">
               <button type="button" className="bl-scm__cancel" onClick={() => setConfirmOpen(false)} disabled={isSubmitting}>ยกเลิก</button>
@@ -453,7 +454,7 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-usermenu__head { padding:14px 16px; border-bottom:1px solid var(--bl-line); }
         .bl-single-root .bl-usermenu__name { font-family:var(--bl-fd); font-weight:700; font-size:14px; color:var(--bl-ink);
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bl-single-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.04em; color:var(--bl-ink2);
+        .bl-single-root .bl-usermenu__id { font-family:var(--bl-fm); font-size:11px; letter-spacing:.04em; color:var(--bl-ink2);
           margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bl-single-root .bl-usermenu__out { display:block; width:100%; text-align:left; padding:12px 16px; background:none; border:0;
           cursor:pointer; font-family:var(--bl-fd); font-weight:600; font-size:13px; color:var(--bl-primary-ink); }
@@ -482,7 +483,7 @@ export default function BlossomSingleParty({
 
         /* ---- issue line (masthead) ---- */
         .bl-single-root .bl-issue-line { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 0;
-          border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.18em;
+          border-bottom:1px solid var(--bl-line); font-family:var(--bl-fm); font-size:11px; letter-spacing:.18em;
           text-transform:uppercase; color:var(--bl-ink2); }
         .bl-single-root .bl-issue-line b { color:var(--bl-primary-ink); font-weight:700; }
 
@@ -496,7 +497,7 @@ export default function BlossomSingleParty({
         /* ---- party feature masthead ---- */
         .bl-single-root .bl-sp-head { margin-top:44px; padding-bottom:26px; border-bottom:1.5px solid var(--bl-ink);
           animation:blSRise .6s ease both .05s; }
-        .bl-single-root .bl-sp-kick { display:inline-flex; align-items:center; gap:9px; font-family:var(--bl-fm); font-size:10.5px;
+        .bl-single-root .bl-sp-kick { display:inline-flex; align-items:center; gap:9px; font-family:var(--bl-fm); font-size:11px;
           letter-spacing:.2em; text-transform:uppercase; color:var(--bl-ink2); }
         .bl-single-root .bl-sp-dot { width:7px; height:7px; border-radius:50%; background:var(--bl-primary);
           animation:blSBlip 1.6s infinite; }
@@ -636,7 +637,7 @@ export default function BlossomSingleParty({
           font-family:var(--bl-fd); font-weight:800; font-size:44px; color:var(--bl-primary-ink); }
         .bl-single-root .bl-sp-cand__body { display:flex; flex-direction:column; gap:3px; padding:13px 15px 15px; }
         .bl-single-root .bl-sp-cand__name { font-family:var(--bl-fd); font-weight:800; font-size:15px; line-height:1.2; color:var(--bl-ink); }
-        .bl-single-root .bl-sp-cand__role { font-family:var(--bl-fm); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+        .bl-single-root .bl-sp-cand__role { font-family:var(--bl-fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
           color:var(--bl-ink2); }
 
         /* ---- the decision — ballot paper card (mirrors ballot bl-vpaper) ---- */
@@ -646,9 +647,9 @@ export default function BlossomSingleParty({
         .bl-single-root .bl-vpaper__cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
           padding:15px 22px; border-bottom:1.5px solid var(--bl-ink);
           background:color-mix(in srgb, var(--bl-primary) 6%, var(--bl-card)); }
-        .bl-single-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:10.5px; letter-spacing:.2em;
+        .bl-single-root .bl-vpaper__cap span { font-family:var(--bl-fm); font-size:11px; letter-spacing:.2em;
           text-transform:uppercase; color:var(--bl-ink); font-weight:700; }
-        .bl-single-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:10.5px;
+        .bl-single-root .bl-vpaper__cap em { font-family:var(--bl-fm); font-style:normal; font-size:11px;
           letter-spacing:.14em; color:var(--bl-primary-ink); white-space:nowrap; }
 
         /* ---- decision rows (SEMANTIC colours — FIXED per choice, never candy) ---- */

@@ -103,7 +103,7 @@ export const ELEMENT_TYPES = {
   },
   "vote-disapprove-button": {
     name: "Disapprove Button",
-    description: "Vote page button: cast 'disapprove' (ไม่รับรอง) — single-party only",
+    description: "Vote page button: cast 'disapprove' (ไม่รับรอง), single-party only",
     category: "action",
     variants: ONLY_DEFAULT,
     defaultVariant: "default",
@@ -161,7 +161,7 @@ export const ELEMENT_TYPES = {
   // === data-display ===
   "hero-countdown": {
     name: "Hero Countdown Timer",
-    description: "Countdown pill above hero title — state-aware across election phases",
+    description: "Countdown pill above hero title, state-aware across election phases",
     category: "data-display",
     variants: ONLY_DEFAULT,
     defaultVariant: "default",

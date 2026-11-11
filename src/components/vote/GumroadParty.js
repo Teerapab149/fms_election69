@@ -18,7 +18,8 @@ import { getPath } from "../../utils/basePath";
 import { GumroadBaseStyles } from "../home/GumroadTheme";
 import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ArrowLeft, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Flag, ClipboardList } from "lucide-react";
+import { Ico } from "../Arrow";
 import { sortMembersByPosition } from "../../utils/memberSort";
 import { socialList } from "../../utils/socialLinks";
 import PartySocials from "./PartySocials";
@@ -26,6 +27,7 @@ import { buildPartyTheme, prefersDarkText } from "../../utils/partyColors";
 import SiteNavbar from "../elements/site-navbar/gumroad";
 import MemberTile from "../composites/member-tile/gumroad";
 import StoryClamp from "./StoryClamp";
+import Arrow from "../Arrow";
 
 // --- data helpers (party fields are loose JSON from the admin) ---
 const asText = (it) =>
@@ -121,7 +123,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         <section className="gp-hero">
           <div className="gp-hero__media">
             {heroImg ? <img src={heroImg} alt={party?.name || "party"} /> :
-              <span className="gp-hero__ph">★ TEAM {members.length} MEMBERS ★</span>}
+              <span className="gp-hero__ph">ทีมผู้สมัคร {members.length} คน</span>}
             {/* ภาพเดียว = ภาพนั้นโชว์เป็น hero อยู่แล้ว ปุ่มแกลเลอรีจะเปิด lightbox
                 มาให้ดูรูปเดิมซ้ำ — ขึ้นเมื่อมีรูปที่สองเป็นต้นไปเท่านั้น (2026-07-28) */}
             {gallery.length > 1 && (
@@ -152,17 +154,17 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
           <section className="gp-section" data-cols={story && missions.length ? "2" : "1"}>
             {story ? (
               <article className="gp-card">
-                <span className="gp-sticker gp-sticker--pop">💡 เรื่องราวของพรรค</span>
+                <span className="gp-sticker gp-sticker--pop"><Ico icon={Lightbulb} /> เรื่องราวของพรรค</span>
                 <h2 className="gp-card__h">แนวคิด & ที่มา</h2>
                 <div className="gp-story">
                   <StoryClamp className="gp-sc"><p className="gp-card__p">{story}</p></StoryClamp>
                 </div>
-                <span className="gp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> ↓</span>
+                <span className="gp-story__hint"><span className="gm-thai">เลื่อนเพื่ออ่านต่อ</span> <Arrow dir="down" /></span>
               </article>
             ) : null}
             {missions.length > 0 && (
               <article className="gp-card gp-card--ink">
-                <span className="gp-sticker gp-sticker--pop">🚩 พันธกิจ</span>
+                <span className="gp-sticker gp-sticker--pop"><Ico icon={Flag} /> พันธกิจ</span>
                 <h2 className="gp-card__h">เป้าหมายของเรา</h2>
                 <div className="gp-mlist">
                   {missions.map((m, i) => (
@@ -180,7 +182,7 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
         {/* POLICIES */}
         {policies.length > 0 && (
           <section className="gp-card gp-block">
-            <span className="gp-sticker gp-sticker--lime">📋 นโยบายของพรรค</span>
+            <span className="gp-sticker gp-sticker--lime"><Ico icon={ClipboardList} /> นโยบายของพรรค</span>
             <div className="gp-policies">
               {policies.map((p, i) => (
                 <div className="gp-policy" key={i}>
@@ -276,9 +278,9 @@ export default function GumroadParty({ party = {}, galleryImages = [], showBackT
                   <span className="gp-modal__eyebrow">★ <span className="gm-thai">ผู้สมัคร</span>  CANDIDATE</span>
                   <h3 className="gp-modal__name">{modalMember.name}</h3>
                   <dl className="gp-modal__rows">
-                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "—"}</dd></div>
-                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "—"}</dd></div>
-                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "—"}</dd></div>
+                    <div><dt><span className="gm-thai">รหัสนักศึกษา</span></dt><dd>{modalMember.studentId || "–"}</dd></div>
+                    <div><dt><span className="gm-thai">ตำแหน่ง</span></dt><dd>{modalMember.position || "–"}</dd></div>
+                    <div><dt><span className="gm-thai">สาขาวิชา</span></dt><dd>{modalMember.major || "–"}</dd></div>
                   </dl>
                 </div>
               </motion.div>

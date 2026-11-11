@@ -338,7 +338,7 @@ export const gumroadBubblegumTemplate = buildGumroadTemplate(
   "gumroad-bubblegum",
   "Gumroad Bubblegum",
   GUMROAD_THEMES["gumroad-bubblegum"],
-  "สไตล์ Gumroad บับเบิ้ลกัม ป๊อป — ชมพูเป็นสีหลักทั้งบรรยากาศ ฟ้า-มินต์เป็นลูกคู่พาสเทล ขอบดำอมพลัม เงาคม (ไม่เบลอ)"
+  "สไตล์ Gumroad บับเบิ้ลกัม ป๊อป ชมพูเป็นสีหลักทั้งบรรยากาศ ฟ้า-มินต์เป็นลูกคู่พาสเทล ขอบดำอมพลัม เงาคม (ไม่เบลอ)"
 );
 
 export default gumroadTemplate;

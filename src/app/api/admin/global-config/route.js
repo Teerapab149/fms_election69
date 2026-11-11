@@ -171,7 +171,7 @@ export async function PUT(request) {
         });
         if (unreadable.length > 0) {
           change = { raw: Object.fromEntries(unreadable.map((k) => [k, merged[k]])) };
-          throw new GuardError("อ่านวันเวลาเปิดหีบหรือปิดหีบไม่ออก, เลือกวันเวลาใหม่จากช่องในฟอร์ม", 400);
+          throw new GuardError("อ่านวันเวลาเปิดหีบหรือปิดหีบไม่ออก ให้เลือกวันเวลาใหม่จากช่องในฟอร์ม", 400);
         }
 
         // Compare the RESOLVED instants, not the raw strings: "2026-02-06T08:30"
