@@ -100,7 +100,7 @@ production ต้องรัน `scripts/sql/ballot-grants.sql` เพื่อ
 
 ```bash
 npm run build      # ต้องผ่านก่อน deploy เสมอ
-npm run smoke      # unit test 246 เคสใน 29 ไฟล์ (ไม่ต้องใช้เซิร์ฟเวอร์) กับ election.test.mjs
+npm run smoke      # unit test 250 เคสใน 30 ไฟล์ (ไม่ต้องใช้เซิร์ฟเวอร์) กับ election.test.mjs
                    # อีกไฟล์ที่ยิงเว็บจริง ต้องมีเซิร์ฟเวอร์รันอยู่ที่ :3000 (ตั้ง BASE ถ้าใช้พอร์ตอื่น)
 npm run e2e        # Playwright ทั้งชุด: โหวตครบวงจร, งดออกเสียง, หน้าปิดหีบ,
                    # invariant ของบัตร/คะแนน, ถอดรหัสนับใหม่, ซ้อมรับรองผลของเจ้าหน้าที่,
