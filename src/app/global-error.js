@@ -1,23 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Prompt, Kanit } from 'next/font/google';
 import './globals.css';
-
-// Reuse fonts from layout to ensure design consistency
-const prompt = Prompt({
-    subsets: ['thai', 'latin'],
-    weight: ['300', '400', '500', '600', '700'],
-    variable: '--font-prompt',
-    display: 'swap',
-});
-
-const kanit = Kanit({
-    subsets: ['thai', 'latin'],
-    weight: ['300', '400', '500', '600', '700'],
-    variable: '--font-kanit',
-    display: 'swap',
-});
+import './fonts/fonts.css';
 
 export default function GlobalError({ error, reset }) {
     useEffect(() => {
@@ -41,7 +26,7 @@ export default function GlobalError({ error, reset }) {
 
     return (
         <html lang="th">
-            <body className={`${prompt.variable} ${kanit.variable} font-sans antialiased bg-gray-50 flex items-center justify-center min-h-screen p-4`}>
+            <body className={`fms-fonts font-sans antialiased bg-gray-50 flex items-center justify-center min-h-screen p-4`}>
                 <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center border border-gray-100">
 
                     {/* Error Icon */}

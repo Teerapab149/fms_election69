@@ -48,11 +48,10 @@ jobs:
         run: |
           files=$(ls scripts/smoke/*.test.mjs | grep -v '/election.test.mjs$')
           node --test $files
-      # next/font/google downloads fonts at build time; a transient Google
-      # failure fails the build (seen once locally), so retry once.
+      # Fonts are files in the repository (src/app/fonts), so the build needs no
+      # network. No retry: a failure here is a real one.
       - name: Build
-        shell: bash
-        run: npx next build || (echo "retrying build once (font fetch flake?)" && npx next build)
+        run: npx next build
 
   e2e:
     name: e2e vote-net (Playwright + Postgres)
