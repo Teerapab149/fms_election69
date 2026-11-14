@@ -430,7 +430,20 @@ export async function PUT(req) {
     const dataToUpdate = {};
     let partyNumberChanged = false;
 
-    if (formData.has("name")) dataToUpdate.name = formData.get("name");
+    if (formData.has("name")) {
+      // F6 (audit 2026-11-14): the score lives on the row, not on the name. With
+      // ballots in the box, renaming a party moves its votes under another name on
+      // the results page and into the certified record (two parties could be
+      // swapped outright). The name is locked with the number; slogan, pictures
+      // and policies stay editable.
+      const current = await db.candidate.findUnique({ where: { id }, select: { name: true } });
+      const nextName = String(formData.get("name") ?? "");
+      if (current && current.name !== nextName) {
+        const blocked = await ballotBoxGuard("เปลี่ยนชื่อพรรค");
+        if (blocked) return blocked;
+      }
+      dataToUpdate.name = nextName;
+    }
     if (formData.has("number")) {
       // แก้เนื้อหา (สโลแกน/รูป/นโยบาย) กลางคันยังทำได้ — แก้คำผิดระหว่างวันเลือกตั้งเป็นเรื่องปกติ
       // แต่ "เลขพรรค" คือสิ่งที่ผู้ลงคะแนนใช้ตัดสินใจ เปลี่ยนหลังมีบัตรแล้วไม่ได้
