@@ -26,7 +26,8 @@ for (const f of files.sort()) {
   const methods = ["POST", "PUT", "PATCH", "DELETE"].filter((m) =>
     new RegExp(`export\\s+async\\s+function\\s+${m}\\b`).test(src));
   if (!methods.length) continue;
-  const logs = /adminAuditLog\.create/.test(src);
+  // a direct insert, or the shared helpers in src/lib/audit/adminAudit.js
+  const logs = /adminAuditLog\.create|\baudited\(|\bwriteAudit\(/.test(src);
   if (!logs) gaps += 1;
   console.log(
     relative(process.cwd(), f).replace(/\\/g, "/").replace("src/app", "").replace("/route.js", "").padEnd(52),

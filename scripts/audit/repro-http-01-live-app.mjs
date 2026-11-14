@@ -227,6 +227,7 @@ head("8. cross-site requests (README claim 8)");
     [`Origin: ${BASE}.evil.com`, { origin: `${BASE}.evil.com` }],
   ];
   let allRefused = true;
+  const modeBefore = (await c.systemConfig.findUnique({ where: { id: 1 } })).systemMode;
   for (const [l, h] of cases) {
     const v = await call(s, "/api/vote", { method: "POST", json: { candidateId: A.id }, headers: h });
     const d = await call(admin1.jar, "/api/admin/dashboard", { method: "POST", json: { action: "SET_MODE", mode: "ENDED" }, headers: h });
@@ -235,7 +236,7 @@ head("8. cross-site requests (README claim 8)");
   }
   const u = await c.user.findUnique({ where: { studentId: sid(18) } });
   const mode = (await c.systemConfig.findUnique({ where: { id: 1 } })).systemMode;
-  say(allRefused && !u.isVoted && mode === "MANUAL_OPEN" ? "OK" : "FINDING", `all cross-site variants refused; victim isVoted=${u.isVoted}, mode still ${mode}`);
+  say(allRefused && !u.isVoted && mode === modeBefore ? "OK" : "FINDING", `all cross-site variants refused; victim isVoted=${u.isVoted}, mode unchanged (${mode})`);
   const tp = await call(s, "/api/vote", { method: "POST", headers: { "content-type": "text/plain", origin: BASE }, });
   say(tp.status === 400 ? "OK" : "FINDING", `same-origin but Content-Type text/plain → ${tp.status}`);
 }

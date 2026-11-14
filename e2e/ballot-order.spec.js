@@ -55,7 +55,7 @@ async function resetElection() {
   await prisma().$executeRawUnsafe(
     `UPDATE "SystemConfig" SET "showResult" = false,
        "globalConfig" = CASE WHEN "globalConfig" IS NULL THEN NULL
-         ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername' END
+         ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername' - 'resultsRevealedAt' END
      WHERE id = 1`
   );
   const login = await apiLogin(ADMIN_STUDENT_ID, E2E_ADMIN_PASSWORD);

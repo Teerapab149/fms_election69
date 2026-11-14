@@ -66,7 +66,7 @@ const MSG = {
   modeRefused: 'ผลถูกรับรองแล้วจึงเปลี่ยนโหมดไม่ได้ เพราะการเลือกตั้งครั้งนี้ปิดอย่างเป็นทางการ',
   datesRefused: 'ผลถูกรับรองแล้ว แก้วันเวลาเลือกตั้งไม่ได้',
   closeConfirm: 'ปิดหีบทันที ไม่รับคะแนนอีก ผลคะแนนยังไม่แสดงจนกว่าจะเปิดการแสดงผล',
-  publishConfirm: 'ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที เมื่อประกาศแล้ว จะเปิดหีบอีกไม่ได้จนกว่าจะซ่อนผลก่อน',
+  publishConfirm: 'ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที เมื่อประกาศผลขณะที่มีบัตรในหีบแล้ว จะเปิดหีบหรือพักระบบอีกไม่ได้ แม้ซ่อนผลภายหลัง',
   published: 'เปิดแสดงผลคะแนนแล้ว ทุกคนดูผลได้ที่หน้าผลคะแนน',
   banner: 'ผลการเลือกตั้งนี้ได้รับการรับรองอย่างเป็นทางการแล้ว',
 };
@@ -88,7 +88,7 @@ async function resetCertification() {
         SET "showResult" = false,
             "globalConfig" = CASE WHEN "globalConfig" IS NULL THEN NULL
               ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
-                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' - 'e2eMarker' END
+                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' - 'e2eMarker' - 'resultsRevealedAt' END
       WHERE id = 1`
   );
 }

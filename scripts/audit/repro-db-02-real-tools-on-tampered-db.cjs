@@ -21,6 +21,7 @@ const { db, reset, castVote, shuffle, loadState, auditUrl } = require("./lib/aud
 const state = loadState();
 const keyFile = path.join(os.tmpdir(), `fms-audit-private-${process.pid}.pem`);
 fs.writeFileSync(keyFile, state.privateKey, { mode: 0o600 });
+const headsFile = path.join(os.tmpdir(), `fms-audit-chain-head-${process.pid}.log`);
 
 function tool(script, args = []) {
   const r = spawnSync(process.execPath, [path.join("scripts", script), ...args], {
@@ -38,7 +39,14 @@ function runTools(label) {
   console.log(`  reconcile-scores.js     exit=${r.code}   ${r.out.split("\n").filter((l) => /reconciled|mismatch/.test(l)).join(" ").trim()}`);
   console.log(`  decrypt-recount.js      exit=${d.code}   ${d.out.split("\n").filter((l) => /recount matches|drifted/.test(l)).join(" ").trim()}`);
   for (const l of d.out.split("\n").filter((x) => /\|\s*(ok|DRIFT)\s*$/.test(x))) console.log(`      ${l.trim()}`);
-  return { v: v.code, r: r.code, d: d.code };
+  // the same verifier, given the chain head that was exported while the box was honest
+  let h = null;
+  if (fs.existsSync(headsFile)) {
+    const vh = tool("verify-ballot-chain.js", ["--heads", headsFile]);
+    h = vh.code;
+    console.log(`  verify --heads <exported>  exit=${vh.code}   ${vh.out.split("\n").filter((l) => /ปลายโซ่ที่ export|หายไป|เขียนใหม่/.test(l)).map((l) => l.trim()).join(" | ")}`);
+  }
+  return { v: v.code, r: r.code, d: d.code, h };
 }
 
 async function honest() {
@@ -46,6 +54,8 @@ async function honest() {
   const [abst, A, B] = candidates;       // ordered by number: 0, 1, 2
   const plan = shuffle([...Array(35).fill(A.id), ...Array(20).fill(B.id), ...Array(5).fill(abst.id)], 7);
   for (let i = 0; i < plan.length; i++) await castVote(users[i].id, plan[i]);
+  // what the cron job on the real server does: export the chain head off the box
+  fs.writeFileSync(headsFile, tool("export-chain-head.js").out);
   return { A, B, abst, users };
 }
 
@@ -97,6 +107,8 @@ async function honest() {
   console.log(`  honest          verify=${res.honest.v} reconcile=${res.honest.r} recount=${res.honest.d}`);
   console.log(`  score shift     verify=${res.shift.v} reconcile=${res.shift.r} recount=${res.shift.d}`);
   console.log(`  tail truncation verify=${res.trunc.v} reconcile=${res.trunc.r} recount=${res.trunc.d}`);
+  console.log(`  with --heads    honest=${res.honest.h} score shift=${res.shift.h} tail truncation=${res.trunc.h}`);
   fs.unlinkSync(keyFile);
+  try { fs.unlinkSync(headsFile); } catch {}
   await c.$disconnect();
 })().catch((e) => { console.error(e); try { fs.unlinkSync(keyFile); } catch {} process.exit(1); });

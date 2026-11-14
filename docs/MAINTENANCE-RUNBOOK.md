@@ -271,7 +271,7 @@ VERIFY_REUSE_URL=http://localhost:3000 bash scripts/verify.sh
   เพิ่มจากเดิมคือ `ballot-unlinkable`, `ballot-order`, `certification-record` (ถอดรหัสนับใหม่ทั้งหีบ แข่งการรับรองกับคะแนน),
   `staff-rehearsal` (ซ้อมรับรองผลโดยเจ้าหน้าที่ ตรวจ snapshot และการปฏิเสธเมื่อคะแนนไม่ตรง), `test-tools-audit`,
   `security-h1-h2` และ `check-form`
-- **smoke** นับจากการรันจริง: unit test 250 เคสใน 30 ไฟล์ผ่านทั้งหมดโดยไม่ต้องใช้เซิร์ฟเวอร์ ส่วน `election.test.mjs`
+- **smoke** นับจากการรันจริง: unit test 260 เคสใน 33 ไฟล์ผ่านทั้งหมดโดยไม่ต้องใช้เซิร์ฟเวอร์ ส่วน `election.test.mjs`
   ยิงเว็บจริงที่ `BASE` (ค่าเริ่มต้น http://localhost:3000) จึงต้องมีเซิร์ฟเวอร์รันอยู่
 
 ## 4.2 e2e test DB (v2-R11) — วิธีทำงาน + วิธีรัน

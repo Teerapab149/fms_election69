@@ -128,7 +128,8 @@ async function runAction(body) {
           await tx.$executeRaw`UPDATE "SystemConfig"
             SET "globalConfig" = jsonb_set(
                   COALESCE("globalConfig", '{}')::jsonb - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
-                    - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead',
+                    - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead'
+                    - 'resultsRevealedAt',
                   '{ballotsAnonymized}', 'false'::jsonb, true),
                 "showResult" = false,
                 "systemMode" = 'AUTO'

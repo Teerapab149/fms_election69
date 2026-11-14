@@ -58,6 +58,10 @@ async function main() {
   // over bookkeeping, and printing one line meant nobody could tell which. This
   // is read during a dispute, so it names the failing check.
   const TAMPER_CHECKS = ["chain-integrity", "head-matches"];
+  // A recount over a box whose chain is broken must not exit 0: the counts can
+  // agree with Candidate.score and still describe an altered box. Until
+  // 2026-11-14 only the printed line said so and the exit code stayed 0.
+  let chainBroken = false;
   const secret = process.env.BALLOT_CHAIN_SECRET;
   if (secret) {
     const v = await verifyChain(db, secret);
@@ -65,6 +69,7 @@ async function main() {
     const books = v.checks.filter((c) => !TAMPER_CHECKS.includes(c.name));
 
     const intact = tamper.every((c) => c.ok);
+    chainBroken = !intact;
     console.log(intact
       ? "chain integrity: OK, no ballot was added, removed or altered"
       : "chain integrity: FAILED, the ballot box was altered; the recount below cannot be trusted");
@@ -121,7 +126,8 @@ async function main() {
       ? "\nrecount matches Candidate.score exactly."
       : `\n${drift} candidate(s) drifted${undecryptable ? ` + ${undecryptable} undecryptable` : ""}.`
   );
-  if (drift > 0 || undecryptable > 0) process.exitCode = 2;
+  if (chainBroken) console.log("\nchain integrity FAILED (see the top of this output): this recount cannot be trusted.");
+  if (drift > 0 || undecryptable > 0 || chainBroken) process.exitCode = 2;
 }
 
 main()

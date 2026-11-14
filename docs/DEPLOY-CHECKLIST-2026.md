@@ -563,9 +563,11 @@ DATABASE_URL="$APP_DATABASE_URL" npm run preflight
 
 ```bash
 DATABASE_URL="$APP_DATABASE_URL" node scripts/reconcile-scores.js
-DATABASE_URL="$APP_DATABASE_URL" node scripts/verify-ballot-chain.js; echo "exit=$?"
+DATABASE_URL="$APP_DATABASE_URL" node scripts/verify-ballot-chain.js --heads /path/ที่คัดลอกมาจากเครื่องอื่น/chain-head.log; echo "exit=$?"
 node scripts/export-chain-head.js
 ```
+
+   `--heads` คือไฟล์ปลายโซ่ที่ cron ส่งไปเก็บเครื่องอื่นตามข้อ 12 ใส่ทุกครั้ง เพราะเป็นทางเดียวที่จับได้ว่าบัตรท้ายหีบหาย
 
    ต้องผ่านทุกข้อและ `exit=0` เก็บบรรทัดของ `export-chain-head.js` ไว้เครื่องอื่นอีกชุดหนึ่ง
 

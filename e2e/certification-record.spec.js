@@ -74,7 +74,7 @@ async function resetElection() {
         SET "showResult" = false,
             "globalConfig" = CASE WHEN "globalConfig" IS NULL THEN NULL
               ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
-                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' END
+                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' - 'resultsRevealedAt' END
       WHERE id = 1`
   );
   const r = await dashboard(committeeCookie, { action: 'SET_MODE', mode: 'MANUAL_OPEN' });

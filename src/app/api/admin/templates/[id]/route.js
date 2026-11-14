@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../../lib/db";
 import { bustSiteData } from "../../../../../lib/cache/siteData";
 import { requireAdmin } from "../../../../../lib/auth/adminCheck";
+import { audited } from "../../../../../lib/audit/adminAudit";
 import { getTemplate, isTemplateEditable, isBuiltInSlug } from "../../../../../components/admin/editor/templates";
 import { validateTemplateStyles } from "../../../../../lib/cssSafety.mjs";
 
@@ -25,7 +26,11 @@ export async function GET(request, { params }) {
 }
 
 // PUT /api/admin/templates/:id — update editable template
-export async function PUT(request, { params }) {
+export async function PUT(request, ctx) {
+  return audited(request, "TEMPLATE_UPDATE", () => updateTemplate(request, ctx), ctx);
+}
+
+async function updateTemplate(request, { params }) {
   const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
@@ -87,7 +92,11 @@ export async function PUT(request, { params }) {
 }
 
 // DELETE /api/admin/templates/:id
-export async function DELETE(request, { params }) {
+export async function DELETE(request, ctx) {
+  return audited(request, "TEMPLATE_DELETE", () => deleteTemplate(request, ctx), ctx);
+}
+
+async function deleteTemplate(request, { params }) {
   const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {
