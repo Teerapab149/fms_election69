@@ -3,6 +3,7 @@ import { db } from "../../../../lib/db";
 import { bustSiteData } from "../../../../lib/cache/siteData";
 import { hasVariant } from "../../../../components/elements/registry.js";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { audited } from "../../../../lib/audit/adminAudit";
 import { validateThemeTokens, validateElementVars, validateElementCss } from "../../../../lib/cssSafety.mjs";
 
 // E2E-DIAG: GET below takes no `request` and reads only the DB, so Next 14's App
@@ -67,6 +68,10 @@ export async function GET() {
 
 // PUT — admin only
 export async function PUT(request) {
+  return audited(request, "PAGE_LAYOUT_UPDATE", () => updatePageLayout(request));
+}
+
+async function updatePageLayout(request) {
   const authError = await adminGuard(request);
   if (authError) return authError;
 

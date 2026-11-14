@@ -108,4 +108,53 @@ async function verifyChain(db, secret) {
   };
 }
 
-module.exports = { verifyChain };
+/**
+ * Compare the box with chain heads that were exported earlier and kept OUTSIDE
+ * the database (scripts/export-chain-head.js, one tab-separated line per run:
+ *   <ISO time>  head=<rowHash>  seq=<n>  ballots=<m> ).
+ *
+ * verifyChain() alone cannot see a box that lost its tail: delete the last N
+ * ballots, point ChainHead at the new last row, adjust the counts, and every
+ * remaining link is still valid (audit finding F3, 2026-11-14). An older backup
+ * restored mid-election looks the same. An exported line is the outside witness:
+ * the ballot at that seq must still exist and still carry that hash.
+ *
+ * Pure: takes the text of the log and the ballots (seq + rowHash).
+ * @param {string} text
+ * @param {{seq:number, rowHash:string}[]} ballots
+ * @returns {{ lines:number, checked:number, ok:boolean, problems:string[], latest:({at:string,seq:number}|null) }}
+ */
+function checkExportedHeads(text, ballots) {
+  const bySeq = new Map(ballots.map((b) => [b.seq, b.rowHash]));
+  const lastSeq = ballots.reduce((m, b) => Math.max(m, b.seq), 0);
+  const problems = [];
+  let lines = 0, checked = 0, latest = null;
+  for (const raw of String(text || "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    lines += 1;
+    const head = /(?:^|\s)head=(\S+)/.exec(line)?.[1];
+    const seqText = /(?:^|\s)seq=(\d+)/.exec(line)?.[1];
+    const at = line.split(/\s+/)[0];
+    if (!head || seqText === undefined) {
+      // NO_CHAIN_HEAD lines and anything unreadable are reported, never skipped silently
+      problems.push(`อ่านบรรทัดนี้ไม่ออก: ${line.slice(0, 80)}`);
+      continue;
+    }
+    const seq = Number(seqText);
+    checked += 1;
+    if (!latest || seq >= latest.seq) latest = { at, seq };
+    if (seq === 0) {
+      if (head !== "GENESIS") problems.push(`${at} บันทึกว่าหีบว่าง (seq 0) แต่ปลายโซ่ไม่ใช่ GENESIS`);
+      continue;
+    }
+    if (seq > lastSeq) {
+      problems.push(`${at} เคยมีบัตรถึงลำดับที่ ${seq} แต่ตอนนี้หีบมีถึงลำดับที่ ${lastSeq} บัตรท้ายหีบหายไป ${seq - lastSeq} ใบ`);
+    } else if (bySeq.get(seq) !== head) {
+      problems.push(`${at} บัตรลำดับที่ ${seq} เคยมีลายนิ้วมือ ${head.slice(0, 12)}... แต่ตอนนี้เป็น ${String(bySeq.get(seq)).slice(0, 12)}... โซ่ถูกเขียนใหม่`);
+    }
+  }
+  return { lines, checked, ok: problems.length === 0, problems, latest };
+}
+
+module.exports = { verifyChain, checkExportedHeads };

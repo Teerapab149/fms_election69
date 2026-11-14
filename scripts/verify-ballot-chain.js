@@ -17,13 +17,23 @@
 // certification, 1 = the script could not run. Run it as part of certification,
 // BEFORE flipping showResult on, and again any time later.
 //
+// With --heads <file> (or CHAIN_HEAD_LOG=<file>) it also checks the box against
+// the chain heads exported earlier by scripts/export-chain-head.js and kept off
+// the database server: every exported (seq, head) must still be in the chain.
+// That is the only check that notices ballots removed from the END of the box,
+// or an older backup restored over a newer box (audit finding F3). Give it the
+// copy that was kept on the other machine, not a file on this one.
+//
+//   node scripts/verify-ballot-chain.js --heads /path/to/chain-head.log
+//
 // Requires BALLOT_CHAIN_SECRET (server secret) in env / .env.
 
 const { loadEnv } = require("./lib/loadEnv");
 loadEnv();
 
 const { PrismaClient } = require("@prisma/client");
-const { verifyChain } = require("./lib/chainVerify");
+const fs = require("fs");
+const { verifyChain, checkExportedHeads } = require("./lib/chainVerify");
 const { compareToCertified } = require("../src/lib/certificationRecord");
 
 const db = new PrismaClient();
@@ -69,7 +79,34 @@ async function main() {
     for (const line of cert.differences) console.log(`      ${line}`);
   }
 
-  const allOk = ok && certOk;
+  // Exported heads: the box against the copy kept outside the database.
+  const argv = process.argv.slice(2);
+  const hi = argv.indexOf("--heads");
+  const headsFile = (hi !== -1 && argv[hi + 1]) || process.env.CHAIN_HEAD_LOG || null;
+  let headsOk = true;
+  console.log("");
+  console.log("Exported chain heads");
+  console.log("--------------------");
+  if (!headsFile) {
+    console.log("ไม่ได้ระบุไฟล์ปลายโซ่ที่ export ไว้ (--heads <ไฟล์>) จึงไม่ได้ตรวจว่าบัตรท้ายหีบหายหรือไม่");
+  } else {
+    let text = null;
+    try { text = fs.readFileSync(headsFile, "utf8"); } catch (e) {
+      headsOk = false;
+      console.log(`FAIL  อ่านไฟล์ ${headsFile} ไม่ได้: ${e.message}`);
+    }
+    if (text !== null) {
+      const ballots = await db.ballot.findMany({ select: { seq: true, rowHash: true } });
+      const r = checkExportedHeads(text, ballots);
+      headsOk = r.ok && r.checked > 0;
+      if (r.checked === 0) console.log("FAIL  ไฟล์ไม่มีบรรทัดปลายโซ่ที่อ่านได้เลย");
+      else if (r.ok) console.log(`PASS  ปลายโซ่ที่ export ไว้ ${r.checked} บรรทัดยังอยู่ในโซ่ปัจจุบันครบ (ล่าสุด ${r.latest.at} ลำดับที่ ${r.latest.seq})`);
+      else console.log(`FAIL  ปลายโซ่ที่ export ไว้ไม่ตรงกับหีบปัจจุบัน ${r.problems.length} จุด`);
+      for (const p of r.problems.slice(0, 20)) console.log(`      ${p}`);
+    }
+  }
+
+  const allOk = ok && certOk && headsOk;
   console.log(allOk
     ? "\nCHAIN OK: no tampering or drift detected."
     : "\nVERIFICATION FAILED: see the FAIL line(s) above.");

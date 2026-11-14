@@ -32,7 +32,15 @@ export function checkShowResult({ value, systemMode, end, now, certified }) {
   return null;
 }
 
-export function checkSetMode({ mode, showResult, certified, end, now }) {
+// `everRevealed`: the tally has been public at least once while ballots were in
+// the box (globalConfig.resultsRevealedAt, stamped by SET_SHOW_RESULT). Hiding
+// it again does not un-show it, so from then on the box stays closed: without
+// this, close → publish → hide → reopen let one admin look at the running tally
+// mid-election and carry on (audit finding F4, 2026-11-14). Only
+// scripts/sql/annual-reset.sql clears the stamp.
+export const REVEALED_REOPEN_ERROR = "ผลคะแนนเคยถูกเปิดแสดงไปแล้ว จึงเปิดหีบหรือพักระบบอีกไม่ได้ เพราะคะแนนที่เปิดเผยแล้วอาจชี้นำผู้ที่ยังไม่ได้ลงคะแนน";
+
+export function checkSetMode({ mode, showResult, certified, end, now, everRevealed = false }) {
   const valid = ["AUTO", "PAUSE", "ENDED", "MANUAL_OPEN"];
   if (!valid.includes(mode)) return "โหมดไม่ถูกต้อง";
   // certification is the end of this election (kept from before)
@@ -43,6 +51,8 @@ export function checkSetMode({ mode, showResult, certified, end, now }) {
   if (showResult && !isBoxClosed({ systemMode: mode, end, now })) {
     return "ผลคะแนนกำลังแสดงอยู่ ให้ปิดการแสดงผลก่อน แล้วจึงเปิดหีบหรือพักระบบได้";
   }
+  // a tally that was shown and hidden again is still a tally people have seen
+  if (everRevealed && !isBoxClosed({ systemMode: mode, end, now })) return REVEALED_REOPEN_ERROR;
   return null;
 }
 
@@ -54,6 +64,7 @@ export function checkSetMode({ mode, showResult, certified, end, now }) {
 // → null when allowed (including "the dates did not move"), otherwise the Thai reason
 export function checkScheduleChange({
   systemMode = "AUTO", showResult, certified, prevStart, prevEnd, nextStart, nextEnd, now = Date.now(),
+  everRevealed = false,
 }) {
   const ms = (d) => (d instanceof Date ? d.getTime() : Number(d));
   // both admin clients send the whole config on every save, so an unchanged
@@ -63,6 +74,10 @@ export function checkScheduleChange({
   if (certified) return "ผลถูกรับรองแล้ว แก้วันเวลาเลือกตั้งไม่ได้";
   if (showResult && !isBoxClosed({ systemMode, end: nextEnd, now })) {
     return "ผลคะแนนกำลังแสดงอยู่ ให้ซ่อนผลก่อน แล้วจึงแก้วันเวลาให้หีบเปิดอีกครั้งได้";
+  }
+  // same rule as checkSetMode: moving the end forward is reopening by another route
+  if (everRevealed && !isBoxClosed({ systemMode, end: nextEnd, now })) {
+    return "ผลคะแนนเคยถูกเปิดแสดงไปแล้ว จึงแก้วันเวลาให้หีบเปิดอีกครั้งไม่ได้";
   }
   // only once the dates move: a DB that is already inverted can still save its other fields
   if (!(ms(nextEnd) > ms(nextStart))) return "เวลาปิดหีบต้องอยู่หลังเวลาเปิดหีบ";

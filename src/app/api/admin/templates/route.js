@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../lib/db";
 import { bustSiteData } from "../../../../lib/cache/siteData";
 import { requireAdmin } from "../../../../lib/auth/adminCheck";
+import { audited } from "../../../../lib/audit/adminAudit";
 import { listTemplates, isBuiltInSlug } from "../../../../components/admin/editor/templates";
 import { validateTemplateStyles } from "../../../../lib/cssSafety.mjs";
 
@@ -35,6 +36,10 @@ export async function GET(request) {
 
 // POST /api/admin/templates — create new (DB-stored, user template)
 export async function POST(request) {
+  return audited(request, "TEMPLATE_CREATE", () => createTemplate(request));
+}
+
+async function createTemplate(request) {
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

@@ -5,6 +5,7 @@ import { requireAdmin } from "../../../../../lib/auth/adminCheck";
 import { optimizeImage, extensionForBuffer } from "../../../../../lib/imageOptimize";
 import { uploadDir } from "../../../../../lib/media/storage";
 import { rejectCrossOrigin } from "../../../../../lib/security/crossOriginGuard";
+import { audited } from "../../../../../lib/audit/adminAudit";
 
 // POST /api/admin/global-config/banner — upload the election announcement poster.
 //
@@ -33,6 +34,10 @@ export async function POST(request) {
   // whether or not the cookie in the request is a valid admin session.
   const crossOrigin = rejectCrossOrigin(request);
   if (crossOrigin) return crossOrigin;
+  return audited(request, "BANNER_UPLOAD", () => uploadBanner(request));
+}
+
+async function uploadBanner(request) {
   const auth = await requireAdmin(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

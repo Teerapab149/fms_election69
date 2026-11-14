@@ -3,6 +3,14 @@ import { db } from "../../../../lib/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { rateLimit, clientIp } from "../../../../lib/rateLimit";
+import { passwordVersion } from "../../../../lib/auth/adminSession.mjs";
+import { writeAudit } from "../../../../lib/audit/adminAudit";
+
+// F7: every sign-in attempt that reaches the password check is recorded, pass or
+// fail. The typed username is kept (clipped) because a failed attempt has no
+// account to attribute it to; the password never is.
+const loginAudit = (request, username, result, actor = null) =>
+    writeAudit({ action: "ADMIN_LOGIN", actor, detail: { username: String(username ?? "").slice(0, 64), result, ip: clientIp(request) } });
 
 // A bcrypt hash (cost 12, same as scripts/admin.js) of a password nobody holds.
 // Compared against when there is no real hash to check, so "no such account" and
@@ -63,6 +71,7 @@ export async function POST(request) {
         // out on election day just by typing their name.)
         if (!user || user.isAdmin !== true) {
             await bcrypt.compare(String(password), sharedHash || DUMMY_HASH);
+            await loginAudit(request, username, "refused 401");
             return NextResponse.json(
                 { success: false, message: "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง" },
                 { status: 401 }
@@ -121,6 +130,7 @@ export async function POST(request) {
         }
 
         if (!ok) {
+            await loginAudit(request, username, "refused 401", user.studentId);
             return NextResponse.json(
                 { success: false, message: "ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้อง" },
                 { status: 401 }
@@ -142,6 +152,10 @@ export async function POST(request) {
                 name: user.name,
                 email: user.email,
                 studentId: user.studentId || null,
+                // which password this session was opened with (F8): requireAdmin
+                // refuses the token once that password has been changed
+                pv: passwordVersion(user.passwordHash || sharedHash),
+                ist: Date.now(),   // issue time in ms, compared with the last sign-out
             },
             process.env.ADMIN_JWT_SECRET,
             { expiresIn: "2h" }
@@ -160,6 +174,8 @@ export async function POST(request) {
             },
             { status: 200 }
         );
+
+        await loginAudit(request, username, "ok", user.studentId);
 
         response.cookies.set({
             name: "admin_token",

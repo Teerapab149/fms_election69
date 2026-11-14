@@ -21,15 +21,22 @@ const homeCache = ttlCache("homeStats", HOME_STATS_TTL_MS);
 // nothing on the render path needs them and the hash should not sit in a
 // long-lived object. null = no row yet.
 export function getSiteConfig() {
-  return configCache.get("", () =>
-    db.systemConfig.findFirst({
+  return configCache.get("", async () => {
+    const row = await db.systemConfig.findFirst({
       where: { id: 1 },
       select: {
         id: true, showResult: true, systemMode: true, googleFormUrl: true,
         pageLayout: true, globalConfig: true, activeTemplateId: true,
       },
-    }),
-  );
+    });
+    // adminSessionsEndedAt (which admin account signed out and when, F8) is
+    // server-side bookkeeping: it must never ride along into rendered pages.
+    if (row?.globalConfig && typeof row.globalConfig === "object" && "adminSessionsEndedAt" in row.globalConfig) {
+      const { adminSessionsEndedAt: _dropped, ...publicConfig } = row.globalConfig;
+      return { ...row, globalConfig: publicConfig };
+    }
+    return row;
+  });
 }
 
 // Built-in templates resolve from memory; this matters for DB-forked slugs

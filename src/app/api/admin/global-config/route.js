@@ -7,6 +7,7 @@ import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.
 import { parseBangkok, resolveElectionDates } from "../../../../utils/electionConfig";
 import { CERT_KEYS } from "../../../../lib/certificationRecord";
 import { normalizePrivacyEmail, PRIVACY_EMAIL_ERROR } from "../../../../lib/privacyContact.mjs";
+import { writeAudit } from "../../../../lib/audit/adminAudit";
 
 // A refused schedule change, thrown out of the transaction so it rolls back
 // (same shape as the one in api/admin/dashboard, which is not exported).
@@ -52,8 +53,9 @@ export async function GET(request) {
     // Bridge the googleFormUrl COLUMN into the returned config object so the
     // general-settings form can render/edit it, while success/page.js,
     // check-status, readiness + dashboard keep reading the column directly.
+    const { adminSessionsEndedAt: _sessions, ...stored } = config?.globalConfig ?? {};
     const globalConfig = {
-      ...(config?.globalConfig ?? {}),
+      ...stored,
       googleFormUrl: config?.googleFormUrl ?? "",
     };
     return NextResponse.json({ globalConfig });
@@ -130,6 +132,13 @@ export async function PUT(request) {
     // รับรองผลแล้ว การล้างค่านี้ทิ้งจึงเท่ากับ "เปิดหีบที่ปิดไปแล้ว" กลับมาอีกครั้ง
     // (the list lives in lib/certificationRecord and includes the tally, ballot
     // count and chain head pinned at certification, so those cannot be rewritten here)
+    // resultsRevealedAt (F4) is the same kind of key: clearing it here would let
+    // any admin reopen a box whose tally has already been public.
+    // The stamp is returned by GET, and both admin clients send the whole config
+    // back on every save, so it is dropped here (the stored value survives the
+    // merge below) instead of refused like the certification keys.
+    delete rest.resultsRevealedAt;
+    delete rest.adminSessionsEndedAt;   // server-side session bookkeeping (F8), same treatment
     const attempted = CERT_KEYS.filter((k) => k in rest);
     if (attempted.length > 0) {
       return NextResponse.json(
@@ -152,6 +161,7 @@ export async function PUT(request) {
     // send the whole config each time, so "did the dates change" can only be
     // answered from the locked row.
     let change = null;   // set once the election dates are being moved; audited below
+    let changedKeys = [];
     let updated;
     try {
       updated = await db.$transaction(async (tx) => {
@@ -159,6 +169,9 @@ export async function PUT(request) {
         const current = await tx.systemConfig.findUnique({ where: { id: 1 } });
         const prevConfig = current?.globalConfig ?? {};
         const merged = { ...prevConfig, ...rest };
+        // F7: which settings this save actually changed (names only, for the audit row)
+        changedKeys = Object.keys(rest).filter((k) => JSON.stringify(rest[k]) !== JSON.stringify(prevConfig[k]));
+        if (googleFormUrl !== undefined && googleFormUrl !== (current?.googleFormUrl ?? "")) changedKeys.push("googleFormUrl");
 
         // resolveElectionDates quietly falls back to the built-in defaults on a
         // value it cannot read, so a typo would silently move the election to
@@ -188,6 +201,7 @@ export async function PUT(request) {
             systemMode: current?.systemMode || "AUTO",
             showResult: !!current?.showResult,
             certified: !!prevConfig.ballotsAnonymized,
+            everRevealed: !!prevConfig.resultsRevealedAt,
             prevStart: prev.ELECTION_START,
             prevEnd: prev.ELECTION_END,
             nextStart: next.ELECTION_START,
@@ -214,6 +228,13 @@ export async function PUT(request) {
     // snapshot — drop it so a schedule change shows on the next poll.
     bustResultsSnap();
     await logScheduleChange(auth, change, "ok");
+    if (changedKeys.length > 0) {
+      await writeAudit({
+        action: "SET_GLOBAL_CONFIG",
+        actor: auth.user?.studentId || (auth.user?.id != null ? String(auth.user.id) : null),
+        detail: { keys: changedKeys.slice(0, 40), result: "ok" },
+      });
+    }
 
     return NextResponse.json({
       success: true,

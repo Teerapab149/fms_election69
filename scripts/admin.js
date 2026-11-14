@@ -5,6 +5,17 @@
 //   node scripts/admin.js --revoke 9950000101       ถอดสิทธิ์ (มีผลทันที)
 //   node scripts/admin.js --rotate-password         ออกรหัสกลางใหม่ แสดงครั้งเดียว
 //   node scripts/admin.js --break-glass             บัญชีสำรอง มีรหัสของตัวเอง
+//   node scripts/admin.js --set-password 9950000101 รหัสส่วนตัวของกรรมการคนนั้น แสดงครั้งเดียว
+//   node scripts/admin.js --disable-shared          เลิกใช้รหัสกลาง (ทุกคนต้องมีรหัสส่วนตัวก่อน)
+//
+// Two ways to run the committee (audit finding F7, 2026-11-14):
+//   shared    one password for everyone (--rotate-password). Simple, but the audit
+//             log's "who" is only the student id somebody typed: anyone holding the
+//             shared password can sign in under any committee member's id.
+//   personal  each member gets a password of their own (--set-password), then the
+//             shared one is switched off (--disable-shared). An account with its
+//             own password never accepts the shared one, so from then on a row in
+//             the audit log means that person's password was used.
 //
 // The model, in one paragraph: WHO is a row in User with isAdmin=true, and only
 // this script writes that flag — signing in with PSU SSO never grants or removes
@@ -58,11 +69,19 @@ async function list(db) {
     const own = a.passwordHash ? " มีรหัสของตัวเอง" : "";
     console.log(`  ${String(a.studentId).padEnd(18)} ${String(a.name || "-").padEnd(28)} ${String(a.role).padEnd(8)}${own}`);
   }
-  console.log(
-    cfg?.adminPasswordHash
-      ? `\nรหัสกลาง: ตั้งไว้แล้ว (แก้ล่าสุด ${cfg.updatedAt?.toISOString?.() || "-"})`
-      : `\nรหัสกลาง: ยังไม่ได้ตั้ง ไม่มีใครล็อกอินได้ ให้รัน --rotate-password`
-  );
+  // STAFF never uses the shared password, so it is left out of this count
+  const onShared = admins.filter((a) => !a.passwordHash && a.role !== "STAFF");
+  if (cfg?.adminPasswordHash) {
+    console.log(`\nรหัสกลาง: ตั้งไว้แล้ว (แก้ล่าสุด ${cfg.updatedAt?.toISOString?.() || "-"})`);
+    console.log(onShared.length
+      ? `  มี ${onShared.length} บัญชีที่เข้าด้วยรหัสกลาง ผู้ถือรหัสกลางเข้าในชื่อบัญชีเหล่านี้ได้ทุกบัญชี\n  ให้แต่ละคนมีรหัสของตัวเองด้วย --set-password <รหัส นศ.> แล้วปิดรหัสกลางด้วย --disable-shared`
+      : "  ทุกบัญชีมีรหัสของตัวเองแล้ว ปิดรหัสกลางได้ด้วย --disable-shared");
+  } else if (onShared.length) {
+    console.log(`\nรหัสกลาง: ปิดอยู่ และมี ${onShared.length} บัญชีที่ยังไม่มีรหัสของตัวเอง จึงล็อกอินไม่ได้`);
+    console.log("  ตั้งรหัสให้ด้วย --set-password <รหัส นศ.> หรือเปิดรหัสกลางด้วย --rotate-password");
+  } else {
+    console.log("\nรหัสกลาง: ปิดอยู่ ทุกบัญชีเข้าด้วยรหัสของตัวเอง");
+  }
   console.log("");
 }
 
@@ -135,8 +154,8 @@ async function rotatePassword(db) {
      "  รหัสเดิมใช้ไม่ได้แล้วตั้งแต่วินาทีนี้ เก็บลงตัวจัดการรหัสผ่านก่อนปิดหน้าต่าง\n" +
      "  ในฐานข้อมูลมีแต่ bcrypt hash เปิดดูย้อนหลังไม่ได้ ลืมแล้วรันคำสั่งนี้ใหม่" +
      (personal
-       ? `\n\n  มีแอดมิน ${personal} บัญชีที่ยังมีรหัสของตัวเองอยู่ รหัสนั้นยังใช้ล็อกอินได้\n` +
-         "    อยู่เฉพาะบัญชีสำรองเท่านั้นถึงจะถูก ถ้าเป็นบัญชีนักศึกษาให้ล้างด้วย --clear-personal"
+       ? `\n\n  มีแอดมิน ${personal} บัญชีที่มีรหัสของตัวเอง บัญชีเหล่านั้นใช้รหัสกลางนี้ไม่ได้ ต้องใช้รหัสของตัวเองต่อไป\n` +
+         "    (ดูว่าเป็นใครด้วย --list ถ้ามีบัญชีที่ไม่ควรมีรหัสของตัวเอง ล้างด้วย --clear-personal)"
        : ""));
 }
 
@@ -174,6 +193,65 @@ async function clearPersonal(db) {
   banner(`ล้างรหัสประจำบัญชีแล้ว ${rows.length} บัญชี`,
     rows.map((r) => [r.studentId, r.name || "-"]),
     "  ทุกคนใช้รหัสกลางทางเดียว ถ้าต้องการบัญชีสำรองที่มีรหัสของตัวเอง ให้สร้างใหม่ด้วย --break-glass" + keptNote);
+}
+
+// A password of their own for one committee member (F7). Generated and shown
+// once, or typed with --ask-password; never taken from argv. From then on the
+// account refuses the shared password (api/admin/login), so nobody else can sign
+// in under this id, and every session opened with the old password ends at once
+// (api/admin: the token carries a fingerprint of the hash it was issued against).
+async function setPassword(db, target) {
+  if (!target || target.startsWith("--")) {
+    console.log("\nต้องระบุรหัส นศ. ของแอดมิน เช่น  node scripts/admin.js --set-password 9950000101\n");
+    process.exitCode = 1;
+    return;
+  }
+  const user = await db.user.findFirst({ where: whereFor(target) });
+  if (!user || !user.isAdmin) {
+    console.error(`\n"${target}" ยังไม่ได้เป็นแอดมิน ให้สิทธิ์ก่อนด้วย --grant ${target}\n`);
+    process.exitCode = 1;
+    return;
+  }
+  const chosen = has("--ask-password");
+  const password = chosen ? await askPassword() : generatePassword();
+  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(password, 12) } });
+  banner(user.passwordHash ? "เปลี่ยนรหัสส่วนตัวแล้ว" : "ตั้งรหัสส่วนตัวแล้ว แสดงครั้งเดียว", [
+    ["เข้าที่", "/admin/login"],
+    ["Username", user.studentId],
+    ["ชื่อ", user.name || "-"],
+    ["Password", chosen ? "รหัสที่คุณเพิ่งตั้ง" : password],
+  ], "  รหัสนี้เป็นของบัญชีนี้บัญชีเดียว ส่งให้เจ้าตัวโดยตรง ไม่ผ่านกลุ่มแชต\n" +
+     "  บัญชีนี้ใช้รหัสกลางไม่ได้อีก และถ้ากำลังเข้าระบบค้างไว้จะถูกออกจากระบบทันที\n" +
+     "  ลืมรหัส รันคำสั่งนี้ซ้ำเพื่อออกรหัสใหม่");
+}
+
+// Switch the shared password off. Refused while any committee account would be
+// left with no way in: that is a lockout on election day, not a hardening.
+async function disableShared(db) {
+  const stranded = await db.user.findMany({
+    where: { isAdmin: true, passwordHash: null, NOT: KEEPS_OWN_PASSWORD },
+    select: { studentId: true, name: true },
+    orderBy: { studentId: "asc" },
+  });
+  if (stranded.length) {
+    console.error(`\nยังปิดรหัสกลางไม่ได้ มี ${stranded.length} บัญชีที่ยังไม่มีรหัสของตัวเอง ถ้าปิดตอนนี้จะล็อกอินไม่ได้:`);
+    for (const r of stranded) console.error(`  ${String(r.studentId).padEnd(18)} ${r.name || "-"}`);
+    console.error("\nตั้งรหัสให้แต่ละบัญชีด้วย --set-password <รหัส นศ.> หรือถอดสิทธิ์ด้วย --revoke แล้วรันคำสั่งนี้ซ้ำ\n");
+    process.exitCode = 1;
+    return;
+  }
+  const withOwn = await db.user.count({ where: { isAdmin: true, passwordHash: { not: null } } });
+  if (withOwn === 0) {
+    console.error("\nยังไม่มีแอดมินคนไหนมีรหัสของตัวเอง ปิดรหัสกลางตอนนี้จะไม่มีใครเข้าได้เลย\n");
+    process.exitCode = 1;
+    return;
+  }
+  await db.systemConfig.update({ where: { id: 1 }, data: { adminPasswordHash: null } });
+  banner("ปิดรหัสกลางแล้ว", [
+    ["แอดมิน", `${withOwn} บัญชี เข้าด้วยรหัสของตัวเองทั้งหมด`],
+  ], "  ตั้งแต่นี้ชื่อใน audit log หมายถึงรหัสของบัญชีนั้นถูกใช้จริง\n" +
+     "  แอดมินใหม่: --grant แล้วตามด้วย --set-password\n" +
+     "  เปิดรหัสกลางกลับมาได้ด้วย --rotate-password");
 }
 
 // บัญชีทางหนีไฟ: ไม่ผูกกับนักศึกษาคนไหน มีรหัสของตัวเองแยกจากรหัสกลาง ใช้ตอนที่
@@ -305,6 +383,8 @@ async function createStaff(db, username) {
     if (has("--revoke")) return await revoke(db, argOf("--revoke"));
     if (has("--rotate-password")) return await rotatePassword(db);
     if (has("--clear-personal")) return await clearPersonal(db);
+    if (has("--set-password")) return await setPassword(db, argOf("--set-password"));
+    if (has("--disable-shared")) return await disableShared(db);
     if (has("--break-glass")) return await breakGlass(db);
 
     console.log(`
@@ -321,8 +401,13 @@ async function createStaff(db, username) {
                           ให้เหลือแต่รหัสกลาง
   --break-glass           บัญชีสำรองที่มีรหัสของตัวเอง (--username เปลี่ยนชื่อได้)
                           ใช้ตอนฉุกเฉินเท่านั้น ถอดทิ้งเมื่อแก้ปัญหาเสร็จ
+  --set-password <รหัส นศ.>
+                          ตั้งรหัสส่วนตัวให้แอดมินคนนั้น แสดงครั้งเดียว (--ask-password เพื่อพิมพ์เอง)
+                          บัญชีนั้นจะใช้รหัสกลางไม่ได้อีก
+  --disable-shared        ปิดรหัสกลาง ทำได้เมื่อแอดมินทุกคนมีรหัสส่วนตัวแล้ว
+                          ทำให้ชื่อใน audit log เชื่อได้ว่าเป็นคนนั้นจริง
 
-ล็อกอินต้องมีครบสองอย่าง: ชื่อผู้ใช้ที่ถูกให้สิทธิ์ไว้ + รหัสกลาง
+ล็อกอินต้องมีครบสองอย่าง: ชื่อผู้ใช้ที่ถูกให้สิทธิ์ไว้ + รหัสกลาง หรือรหัสส่วนตัวของบัญชีนั้น
 `);
   } finally {
     await db.$disconnect();

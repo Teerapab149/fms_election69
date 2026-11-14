@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { db } from "../db";
 import { verifyAdminCookie } from "./verifyAdminJwt.js";
+import { isSessionCurrent } from "./adminSession.mjs";
 
 /**
  * Require an authenticated, still-current admin.
@@ -33,7 +34,7 @@ export async function requireAdmin(request) {
   try {
     user = await db.user.findUnique({
       where: { id: Number(payload.sub) },
-      select: { id: true, studentId: true, name: true, role: true, isAdmin: true },
+      select: { id: true, studentId: true, name: true, role: true, isAdmin: true, passwordHash: true },
     });
   } catch (err) {
     console.error("[requireAdmin] admin re-check failed:", err);
@@ -43,6 +44,27 @@ export async function requireAdmin(request) {
   if (!user || user.isAdmin !== true) {
     // Demoted, deleted, or a token minted before the flag was taken away.
     return { ok: false, status: 403, error: "Admin access required", revoked: true };
+  }
+
+  // F8 (audit 2026-11-14): a signed token used to stay good for its full two
+  // hours whatever happened in between. Two more things now end it (see
+  // lib/auth/adminSession.mjs): the password it was issued against has changed,
+  // or this account signed out after the token was issued. A token from before
+  // this check existed carries no pv claim and is refused: sign in again.
+  let cfg = null;
+  try {
+    cfg = await db.systemConfig.findFirst({ where: { id: 1 }, select: { adminPasswordHash: true, globalConfig: true } });
+  } catch (err) {
+    console.error("[requireAdmin] session re-check failed:", err);
+    return { ok: false, status: 500, error: "Admin check failed" };
+  }
+  const current = isSessionCurrent(payload, {
+    currentHash: user.passwordHash || cfg?.adminPasswordHash,
+    globalConfig: cfg?.globalConfig,
+    userId: user.id,
+  });
+  if (!current) {
+    return { ok: false, status: 401, error: "Session ended, sign in again", revoked: true };
   }
 
   return {

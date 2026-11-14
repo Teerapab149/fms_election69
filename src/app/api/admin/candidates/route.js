@@ -3,6 +3,7 @@ import { db } from "../../../../lib/db";
 import { bustSiteData } from "../../../../lib/cache/siteData";
 import { optimizeImage } from "../../../../lib/imageOptimize";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { audited } from "../../../../lib/audit/adminAudit";
 import { rejectCrossOrigin } from "../../../../lib/security/crossOriginGuard";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
@@ -411,6 +412,10 @@ export async function PUT(req) {
   // Origin first, see POST. This route is excluded from the middleware matcher.
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
+  return audited(req, "CANDIDATE_UPDATE", () => updateCandidate(req));
+}
+
+async function updateCandidate(req) {
   const authError = await adminGuard(req);
   if (authError) return authError;
   try {
@@ -430,7 +435,20 @@ export async function PUT(req) {
     const dataToUpdate = {};
     let partyNumberChanged = false;
 
-    if (formData.has("name")) dataToUpdate.name = formData.get("name");
+    if (formData.has("name")) {
+      // F6 (audit 2026-11-14): the score lives on the row, not on the name. With
+      // ballots in the box, renaming a party moves its votes under another name on
+      // the results page and into the certified record (two parties could be
+      // swapped outright). The name is locked with the number; slogan, pictures
+      // and policies stay editable.
+      const current = await db.candidate.findUnique({ where: { id }, select: { name: true } });
+      const nextName = String(formData.get("name") ?? "");
+      if (current && current.name !== nextName) {
+        const blocked = await ballotBoxGuard("เปลี่ยนชื่อพรรค");
+        if (blocked) return blocked;
+      }
+      dataToUpdate.name = nextName;
+    }
     if (formData.has("number")) {
       // แก้เนื้อหา (สโลแกน/รูป/นโยบาย) กลางคันยังทำได้ — แก้คำผิดระหว่างวันเลือกตั้งเป็นเรื่องปกติ
       // แต่ "เลขพรรค" คือสิ่งที่ผู้ลงคะแนนใช้ตัดสินใจ เปลี่ยนหลังมีบัตรแล้วไม่ได้
@@ -669,6 +687,10 @@ export async function POST(req) {
   // and the 403 is identical whether or not the cookie is a valid admin session.
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
+  return audited(req, "CANDIDATE_CREATE", () => createCandidate(req));
+}
+
+async function createCandidate(req) {
   // auth ก่อนเสมอ: ด่านบัตรตอบจำนวนบัตรในหีบ คนที่ยังไม่ได้เข้าสู่ระบบต้องไม่ได้เห็นตัวเลขนี้
   const authError = await adminGuard(req);
   if (authError) return authError;
@@ -793,6 +815,10 @@ export async function DELETE(req) {
   // Origin first, see POST. This route is excluded from the middleware matcher.
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
+  return audited(req, "CANDIDATE_DELETE", () => deleteCandidate(req));
+}
+
+async function deleteCandidate(req) {
   const authError = await adminGuard(req);
   if (authError) return authError;
   let target_id = null;
