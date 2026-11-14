@@ -322,7 +322,7 @@ session ของ PSU SSO ของผู้ที่เป็นแอดมิ
 <a id="v7"></a>
 **V7 สิทธิ์ผู้ลงคะแนน** ผู้ที่ไม่มี session ได้ 401 ผู้ที่ชั้นปีไม่อยู่ในปี 1 ถึง 4 ได้ 403 ตัวเลือกที่ไม่มีอยู่ได้ 400
 ผู้ที่เข้าผ่าน SSO แต่ไม่อยู่ในรายชื่อนำเข้าจะไม่มีชั้นปีและโหวตไม่ได้ (ตรวจจากโค้ด) mock login ถูกลงทะเบียนเฉพาะเมื่อ `NODE_ENV` ไม่ใช่ production
-หรือเมื่อตั้ง `E2E_MOCK_LOGIN=true` พร้อมกับชื่อฐานข้อมูลลงท้าย `_e2e` (ตรวจจากโค้ด ไม่ได้รันบน production build)
+หรือเมื่อตั้ง `E2E_MOCK_LOGIN=true` พร้อมกับชื่อฐานข้อมูลลงท้าย `_e2e` ยืนยันบน production build แล้วว่า `/api/auth/providers` มีเพียง `authentik` และข้อตรวจความพร้อมเรื่องนี้ขึ้นผ่าน (`check-admin-upload-prod.mjs`)
 
 <a id="v8"></a>
 **V8 CSRF การอัปโหลด และ URL** คำขอข้ามเว็บห้ารูปแบบ (Origin ต่างโดเมนใต้ psu.ac.th, same-site, cross-site, Origin เป็น null, โดเมนที่ขึ้นต้นเหมือน)
@@ -364,10 +364,10 @@ session ของ PSU SSO ของผู้ที่เป็นแอดมิ
 - ว่าเครื่องจริงลง `ballot-grants.sql` แล้วหรือไม่ และบัญชีฐานข้อมูลใดมีสิทธิ์อะไร
 - ว่า private key ไม่อยู่บนเซิร์ฟเวอร์จริง และมีผู้ถือกี่คน
 - PSU SSO ของจริง (ค่าที่ส่งกลับ กลุ่มผู้ใช้ การออกจากระบบ)
-- พฤติกรรมของ production build (mock login ปิดจริง, cookie แบบ Secure, HSTS, CSP) การทดสอบ HTTP ทั้งหมดใช้ `next dev`
+- พฤติกรรมของ production build ส่วนใหญ่ (HSTS, CSP) การทดสอบ HTTP ของข้อค้นพบใช้ `next dev` ส่วนที่ยืนยันบน production build แล้วคือ mock login ปิด, cookie แอดมินเป็น Secure/HttpOnly/SameSite=strict และการอัปโหลดรูป
 - `scripts/backup.sh`, `restore.sh`, `setup.sh` และ Docker ไม่ได้รัน เพราะเครื่องนี้ไม่มี `pg_dump`, `psql` และ Docker
 - `import-students.js`, `archive-year.js`, `preflight-year.js`, `generate-election-keys.js`, `admin.js` อ่านเพียงบางส่วน ไม่ได้รัน
-- ชุดทดสอบของโปรเจกต์เอง (`npm run smoke`, `npm run e2e`) และ `npm run build` ไม่ได้รันในรอบนี้
+- `npm run e2e` และ `election.test.mjs` ไม่ได้รัน ส่วน `npm run build` ผ่าน และ unit test ใน `scripts/smoke` ผ่าน 250 จาก 250
 - การฉีดสคริปต์หรือ CSS ผ่านธีมและข้อความที่แอดมินกรอก (อ่าน CSP และตัวกรองแล้ว แต่ไม่ได้ทดสอบเจาะ)
 - ช่องโหว่ของ dependency (`npm audit`) และการทดสอบโหลด
 - การกู้ประวัติจากแถวรุ่นเก่าและ WAL (S2)
@@ -401,6 +401,12 @@ node scripts/audit/repro-db-02-real-tools-on-tampered-db.cjs                    
 ```bash
 node scripts/audit/start-audit-server.cjs                # next dev พอร์ต 3210 ชี้ฐานข้อมูลทดสอบ
 node scripts/audit/repro-http-01-live-app.mjs            # V1 V5 V6 V7 V8 F4 F6 F7 F8 F9 S4
+```
+
+ตรวจการอัปโหลดรูปจากหน้าแอดมินบน production build (ต้อง `npm run build` ก่อน)
+
+```bash
+node scripts/audit/check-admin-upload-prod.mjs           # อัปโหลดทุกชนิด + สิ่งที่ต้องถูกปฏิเสธ 25 ข้อ
 ```
 
 หมายเหตุสำหรับผู้รันซ้ำ: ข้อ 10 ของสคริปต์ HTTP เรียก `/api/debug-db` ซึ่งคอมไพล์ไม่ผ่าน และทำให้ `next dev` ตอบ 500 กับคำขอถัดไปจนกว่าจะรีสตาร์ต
