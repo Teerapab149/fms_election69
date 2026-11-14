@@ -90,8 +90,7 @@ jobs:
         run: node .github/ci-e2e-env.mjs
       - run: npx playwright install --with-deps chromium
       - name: Build
-        shell: bash
-        run: npx next build || (echo "retrying build once (font fetch flake?)" && npx next build)
+        run: npx next build
       # global.setup.js does db push + seed + `next start -p 3100`, then the
       # specs run; same set scripts/verify.sh gates a release on.
       - run: npm run e2e:gate
