@@ -508,7 +508,13 @@ export default function ElectionControl({ onGoTab }) {
         {isShowResult && !certified && (
           <p className="mt-4 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-1.5 leading-relaxed break-words">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />
-            ผลคะแนนกำลังแสดงอยู่ จึงเปิดหีบหรือพักระบบไม่ได้ ถ้าต้องเปิดหีบอีกครั้ง ให้ซ่อนผลในขั้นตอนปิดการเลือกตั้งด้านล่างก่อน
+            ผลคะแนนกำลังแสดงอยู่ จึงเปิดหีบหรือพักระบบไม่ได้ และเมื่อเคยประกาศผลขณะที่มีบัตรในหีบแล้ว จะเปิดหีบอีกไม่ได้แม้ซ่อนผลภายหลัง
+          </p>
+        )}
+        {!isShowResult && everRevealed && !certified && (
+          <p className="mt-4 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-1.5 leading-relaxed break-words">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />
+            ผลคะแนนเคยถูกประกาศไปแล้ว จึงเปิดหีบหรือพักระบบอีกไม่ได้ เพราะคะแนนที่เปิดเผยแล้วอาจชี้นำผู้ที่ยังไม่ได้ลงคะแนน
           </p>
         )}
         {certified && (
@@ -574,7 +580,7 @@ export default function ElectionControl({ onGoTab }) {
            isAdmin || showResult keeps turnout progress on the admin overview. */
         message={isShowResult
           ? "เมื่อซ่อนผลคะแนน คะแนนของแต่ละพรรคจะถูกปิดจากทุกคนรวมถึงแอดมินเอง ความคืบหน้าการใช้สิทธิ์ในศูนย์ควบคุมยังดูได้ตามปกติ"
-          : "ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที เมื่อประกาศแล้ว จะเปิดหีบอีกไม่ได้จนกว่าจะซ่อนผลก่อน"}
+          : "ทุกคนจะเห็นคะแนนรายพรรคและสถิติผู้ใช้สิทธิ์ที่หน้าผลคะแนนทันที เมื่อประกาศผลขณะที่มีบัตรในหีบแล้ว จะเปิดหีบหรือพักระบบอีกไม่ได้ แม้ซ่อนผลภายหลัง"}
         variant="primary"
         isLoading={processing}
       />
