@@ -59,6 +59,23 @@ test("a published tally never goes back to a box that can take votes", () => {
   }
 });
 
+test("a tally that was shown once keeps the box closed, even after it is hidden (F4)", () => {
+  const seen = { showResult: false, certified: false, now, everRevealed: true };
+  // every way of taking votes again is refused
+  assert.match(checkSetMode({ ...seen, mode: "MANUAL_OPEN", end: after.end }) || "", /เคยถูกเปิดแสดง/);
+  assert.match(checkSetMode({ ...seen, mode: "PAUSE", end: during.end }) || "", /เคยถูกเปิดแสดง/);
+  assert.match(checkSetMode({ ...seen, mode: "AUTO", end: during.end }) || "", /เคยถูกเปิดแสดง/);
+  // staying closed is fine
+  assert.equal(checkSetMode({ ...seen, mode: "ENDED", end: during.end }), null);
+  assert.equal(checkSetMode({ ...seen, mode: "AUTO", end: after.end }), null);
+  // the schedule is the same door: the end cannot move back into the future
+  const moved = { systemMode: "AUTO", showResult: false, certified: false, now, everRevealed: true, prevStart: after.start, prevEnd: after.end, nextStart: after.start };
+  assert.match(checkScheduleChange({ ...moved, nextEnd: during.end }) || "", /เคยถูกเปิดแสดง/);
+  assert.equal(checkScheduleChange({ ...moved, nextEnd: new Date(after.end.getTime() + 1000) }), null);
+  // without the stamp nothing changes
+  assert.equal(checkSetMode({ showResult: false, certified: false, now, mode: "MANUAL_OPEN", end: after.end }), null);
+});
+
 test("certification freezes the mode; unknown modes are refused", () => {
   assert.ok(checkSetMode({ mode: "AUTO", showResult: false, certified: true, end: after.end, now }));
   assert.equal(checkSetMode({ mode: "ENDED", showResult: true, certified: true, end: after.end, now }), null);

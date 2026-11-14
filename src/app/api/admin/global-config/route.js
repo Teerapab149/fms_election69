@@ -130,7 +130,9 @@ export async function PUT(request) {
     // รับรองผลแล้ว การล้างค่านี้ทิ้งจึงเท่ากับ "เปิดหีบที่ปิดไปแล้ว" กลับมาอีกครั้ง
     // (the list lives in lib/certificationRecord and includes the tally, ballot
     // count and chain head pinned at certification, so those cannot be rewritten here)
-    const attempted = CERT_KEYS.filter((k) => k in rest);
+    // resultsRevealedAt (F4) is the same kind of key: clearing it here would let
+    // any admin reopen a box whose tally has already been public.
+    const attempted = [...CERT_KEYS, "resultsRevealedAt", "adminSessionsEndedAt"].filter((k) => k in rest);
     if (attempted.length > 0) {
       return NextResponse.json(
         { error: `แก้ค่าการรับรองผลที่นี่ไม่ได้ (${attempted.join(", ")}), การรับรองผลทำได้เฉพาะบัญชีเจ้าหน้าที่คณะผ่านหน้าแดชบอร์ด` },
@@ -188,6 +190,7 @@ export async function PUT(request) {
             systemMode: current?.systemMode || "AUTO",
             showResult: !!current?.showResult,
             certified: !!prevConfig.ballotsAnonymized,
+            everRevealed: !!prevConfig.resultsRevealedAt,
             prevStart: prev.ELECTION_START,
             prevEnd: prev.ELECTION_END,
             nextStart: next.ELECTION_START,

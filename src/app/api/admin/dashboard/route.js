@@ -76,6 +76,8 @@ export async function GET(req) {
         electionStart: resolveElectionDates(config.globalConfig).ELECTION_START,
         electionEnd: resolveElectionDates(config.globalConfig).ELECTION_END,
         certified: !!config.globalConfig?.ballotsAnonymized,
+        // the tally has been public once already: the box can no longer reopen (F4)
+        everRevealed: !!config.globalConfig?.resultsRevealedAt,
         // the numbers pinned at certification, for staff to copy; null when not
         // certified (or certified before they were recorded). The tally in it is
         // only ever present once showResult is on, which certifying requires.
@@ -146,6 +148,7 @@ async function handleAction(body, auth) {
             showResult: !!config?.showResult,
             certified: !!config?.globalConfig?.ballotsAnonymized,
             end: resolveElectionDates(config?.globalConfig).ELECTION_END,
+            everRevealed: !!config?.globalConfig?.resultsRevealedAt,
           });
           if (err) throw new GuardError(err, mode && ["AUTO", "PAUSE", "ENDED", "MANUAL_OPEN"].includes(mode) ? 409 : 400);
           await tx.systemConfig.update({ where: { id: 1 }, data: { systemMode: mode } });
@@ -172,7 +175,16 @@ async function handleAction(body, auth) {
             certified: !!config?.globalConfig?.ballotsAnonymized,
           });
           if (err) throw new GuardError(err, typeof body.value === "boolean" ? 409 : 400);
-          await tx.systemConfig.update({ where: { id: 1 }, data: { showResult: body.value } });
+          // F4: the first time a tally with ballots behind it goes public, say so
+          // for good. checkSetMode / checkScheduleChange read this stamp and keep
+          // the box closed from then on, even after the tally is hidden again.
+          // An empty box has no tally to leak, so rehearsing the buttons before
+          // the election does not lock anything.
+          const data = { showResult: body.value };
+          if (body.value === true && !config?.globalConfig?.resultsRevealedAt && (await tx.ballot.count()) > 0) {
+            data.globalConfig = { ...(config?.globalConfig || {}), resultsRevealedAt: new Date().toISOString() };
+          }
+          await tx.systemConfig.update({ where: { id: 1 }, data });
         });
       } catch (e) {
         if (e instanceof GuardError) return NextResponse.json({ error: e.message }, { status: e.status });

@@ -380,6 +380,7 @@ export default function ElectionControl({ onGoTab }) {
   const isShowResult = !!stats?.showResult;
   const boxClosed = !!stats?.boxClosed;
   const certified = !!stats?.certified;
+  const everRevealed = !!stats?.everRevealed;   // F4: tally was public once, the box cannot reopen
   const schedule = {
     start: stats?.electionStart ? new Date(stats.electionStart) : null,
     end: stats?.electionEnd ? new Date(stats.electionEnd) : null,
@@ -470,7 +471,7 @@ export default function ElectionControl({ onGoTab }) {
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3" role="group" aria-label="เลือกโหมดระบบ">
           {SYSTEM_MODES.map((m) => {
             const isCurrent = systemMode === m.id;
-            const blocked = !isCurrent && !loading && checkSetMode({ mode: m.id, showResult: isShowResult, certified, end: schedule.end });
+            const blocked = !isCurrent && !loading && checkSetMode({ mode: m.id, showResult: isShowResult, certified, end: schedule.end, everRevealed });
             const Icon = m.Icon;
             return (
               <button

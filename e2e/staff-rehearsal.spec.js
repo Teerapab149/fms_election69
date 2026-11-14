@@ -88,7 +88,7 @@ async function resetCertification() {
         SET "showResult" = false,
             "globalConfig" = CASE WHEN "globalConfig" IS NULL THEN NULL
               ELSE "globalConfig" - 'ballotsAnonymized' - 'certifiedAt' - 'certifiedBy' - 'certifiedByUsername'
-                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' - 'e2eMarker' END
+                                  - 'certifiedTally' - 'certifiedBallots' - 'certifiedChainHead' - 'e2eMarker' - 'resultsRevealedAt' END
       WHERE id = 1`
   );
 }
