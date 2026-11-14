@@ -516,7 +516,7 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                             <div className="text-xs leading-relaxed text-amber-900">
                                 <p className="font-bold">{lockReasonText}</p>
                                 <p className="mt-0.5">
-                                    จึงเปลี่ยนหมายเลขพรรคและลบพรรคไม่ได้ เพราะบัตรที่ลงคะแนนไปแล้วอ้างอิงรายชื่อพรรคชุดนี้ ส่วนชื่อ สโลแกน รูป นโยบาย และสมาชิก ยังแก้ได้ตามปกติ
+                                    จึงเปลี่ยนหมายเลขพรรค เปลี่ยนชื่อพรรค และลบพรรคไม่ได้ เพราะบัตรที่ลงคะแนนไปแล้วอ้างอิงรายชื่อพรรคชุดนี้ ส่วนสโลแกน รูป นโยบาย และสมาชิก ยังแก้ได้ตามปกติ
                                 </p>
                             </div>
                         </div>
@@ -580,8 +580,15 @@ export default function EditCandidateModal({ isOpen, onClose, candidate, onUpdat
                                         value={formData.name}
                                         onChange={handleChange}
                                         required
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none"
+                                        disabled={lock.locked && !!candidate}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                                     />
+                                    {lock.locked && candidate && (
+                                        <p className="mt-1 flex items-start gap-1 text-xs font-medium text-amber-700">
+                                            <Lock className="mt-px h-3.5 w-3.5 shrink-0" />
+                                            <span>เปลี่ยนชื่อพรรคไม่ได้แล้ว ({lockReasonText})</span>
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <label htmlFor="cand-logoMeaning" className="block text-sm font-medium text-gray-700 mb-1">ความหมายสัญลักษณ์ <span className="text-gray-400 font-normal">(ไม่บังคับ)</span></label>
