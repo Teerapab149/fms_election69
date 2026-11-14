@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import { db } from "../../../../../../lib/db";
 import { bustSiteData } from "../../../../../../lib/cache/siteData";
 import { requireAdmin } from "../../../../../../lib/auth/adminCheck";
+import { audited } from "../../../../../../lib/audit/adminAudit";
 import { getTemplate, isBuiltInSlug } from "../../../../../../components/admin/editor/templates";
 
 // Next 15: params ใน route handler เป็น Promise แล้ว ต้อง await ก่อนใช้
 // (ของเดิม `{ params }` แล้วอ่าน params.id ตรง ๆ ได้ เพราะ 14 ส่งเป็น object)
 
 // POST /api/admin/templates/:id/lock — toggle lock (D-101 preservation)
-export async function POST(request, { params }) {
+export async function POST(request, ctx) {
+  return audited(request, "TEMPLATE_LOCK", () => lockTemplate(request, ctx), ctx);
+}
+
+async function lockTemplate(request, { params }) {
   const { id } = await params;
   const auth = await requireAdmin(request);
   if (!auth.ok) {

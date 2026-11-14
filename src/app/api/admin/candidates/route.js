@@ -3,6 +3,7 @@ import { db } from "../../../../lib/db";
 import { bustSiteData } from "../../../../lib/cache/siteData";
 import { optimizeImage } from "../../../../lib/imageOptimize";
 import { adminGuard } from "../../../../lib/auth/adminCheck";
+import { audited } from "../../../../lib/audit/adminAudit";
 import { rejectCrossOrigin } from "../../../../lib/security/crossOriginGuard";
 import { sanitizeSocials } from "../../../../utils/socialLinks";
 import { normalizeImageUrls } from "../../../../utils/imageUrls";
@@ -411,6 +412,10 @@ export async function PUT(req) {
   // Origin first, see POST. This route is excluded from the middleware matcher.
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
+  return audited(req, "CANDIDATE_UPDATE", () => updateCandidate(req));
+}
+
+async function updateCandidate(req) {
   const authError = await adminGuard(req);
   if (authError) return authError;
   try {
@@ -682,6 +687,10 @@ export async function POST(req) {
   // and the 403 is identical whether or not the cookie is a valid admin session.
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
+  return audited(req, "CANDIDATE_CREATE", () => createCandidate(req));
+}
+
+async function createCandidate(req) {
   // auth ก่อนเสมอ: ด่านบัตรตอบจำนวนบัตรในหีบ คนที่ยังไม่ได้เข้าสู่ระบบต้องไม่ได้เห็นตัวเลขนี้
   const authError = await adminGuard(req);
   if (authError) return authError;
@@ -806,6 +815,10 @@ export async function DELETE(req) {
   // Origin first, see POST. This route is excluded from the middleware matcher.
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
+  return audited(req, "CANDIDATE_DELETE", () => deleteCandidate(req));
+}
+
+async function deleteCandidate(req) {
   const authError = await adminGuard(req);
   if (authError) return authError;
   let target_id = null;
