@@ -9,6 +9,12 @@
       "autoPort": true
     },
     {
+      "name": "fms-audit",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/audit/start-audit-server.cjs"],
+      "port": 3210
+    },
+    {
       "name": "fms-dev-b",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
