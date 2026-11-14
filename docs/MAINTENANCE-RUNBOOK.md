@@ -91,11 +91,11 @@ npm run archive-year         # → archive/<SAMO-XX>/ (results.json + design.jso
 - **กดได้เฉพาะบัญชี `role = STAFF`** (เจ้าหน้าที่คณะ จาก `admin.js --create-staff`) — กรรมการสโมฯ โดน 403
   ที่ API ไม่ใช่แค่ซ่อนปุ่ม เพราะการรับรองผลของตัวเองเป็น conflict of interest
 - **ตรวจก่อนรับรอง (เพิ่มเมื่อ พ.ย. 2569):** ใน transaction เดียวที่ล็อก `ChainHead` และ `SystemConfig` ระบบตรวจโซ่บัตร
-  แล้วเทียบจำนวนบัตร ผลรวม `Candidate.score` และจำนวนผู้ใช้ปี 1 ถึง 4 ที่ `isVoted` ถ้าไม่ตรงกันจะปฏิเสธและบอกเหตุ
+  แล้วเทียบจำนวนบัตร ผลรวม `Candidate.score` และจำนวนผู้ใช้ทุกคนที่ `isVoted` (ไม่กรองชั้นปี) ถ้าไม่ตรงกันจะปฏิเสธและบอกเหตุ
   ไม่รับรองให้ ถ้าผ่านจะบันทึก `certifiedTally` (คะแนนรายตัวเลือก) `certifiedBallots` และ `certifiedChainHead` ลง `globalConfig`
   ศูนย์ควบคุมแสดงส่วน "ตัวเลขที่รับรองไว้" พร้อมปุ่มคัดลอกและดาวน์โหลด เจ้าหน้าที่ต้องเก็บสำเนานอกระบบ (กระดาษหรืออีกเครื่อง)
   เพราะฐานข้อมูลที่ถูกแก้ด้วยมืออาจแก้ให้ตรงกับตัวเองได้ แต่ไม่มีทางตรงกับสำเนาที่อยู่ข้างนอก
-  `node scripts/verify-ballot-chain.js` หลังรับรองจะเทียบฐานข้อมูลปัจจุบันกับตัวเลขชุดนี้ด้วย exit 0 คือผ่านทุกข้อ
+  `node scripts/verify-ballot-chain.js --heads <ไฟล์>` หลังรับรองจะเทียบฐานข้อมูลปัจจุบันกับตัวเลขชุดนี้ด้วย exit 0 คือผ่านทุกข้อ
   exit 2 คือมีค่าไม่ตรง (โซ่ถูกแก้ ยอดไม่เท่ากัน หรือเปลี่ยนไปจากที่รับรองไว้) exit 1 คือรันไม่ได้ (เช่นไม่มี `BALLOT_CHAIN_SECRET`)
   `annual-reset.sql` ล้างฟิลด์เหล่านี้ และ `archive-year.js` บันทึกไว้ในไฟล์ archive
 - **ตั้งธง `globalConfig.ballotsAnonymized = true` + บันทึก `certifiedBy` / `certifiedAt`** (ชื่อจริงของคนที่กด)
@@ -150,7 +150,7 @@ CLUSTER "User" USING "User_studentId_key";
 
 **D. ตรวจก่อนเปิดหีบ (gate) — มี 2 ทาง ใช้คู่กัน:**
 ```
-# ทาง 1 (แนะนำ กรรมการกดเองได้): เมนู "ความพร้อมและระบบ" ในหน้าแอดมิน การ์ด "ตรวจความพร้อมระบบ READINESS"
+# ทาง 1 (แนะนำ กรรมการกดเองได้): เมนู "ความพร้อมและระบบ" ในหน้าแอดมิน การ์ด "ตรวจความพร้อมระบบ"
 #   ตรวจให้เองเมื่อเปิดหน้า กดปุ่ม "ตรวจซ้ำ" เมื่อต้องการดูผลใหม่ (ADM-1)
 #   เรียก GET /api/admin/readiness (read-only) สรุป pass/warn/fail 18 ข้อ:
 #   schedule (ลำดับเวลา/เปิดตัวผู้สมัคร/แหล่งเวลา/อดีต), mode.coherence, candidates
@@ -354,7 +354,7 @@ sudo RESTORE_VIA=direct BACKUP_ENV_FILE=/etc/fms-backup.env sh scripts/restore.s
 - **ต่อ DB ด้วย `postgres` ของ service `db`** (compose ตั้ง `PGHOST=db PGUSER=postgres PGPASSWORD=${POSTGRES_PASSWORD}`)
   ไม่ใช่ `DATABASE_URL` ของเว็บ — `fms_app` ไม่มีสิทธิ์อ่าน `_prisma_migrations` ฯลฯ dump ไม่ครบ ·
   service นี้ **ไม่มี `env_file`** โดยตั้งใจ ไม่ต้องรู้ secret อื่นของแอป
-- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** เมนู "ความพร้อมและระบบ" การ์ด "ตรวจความพร้อมระบบ READINESS" (กด "ตรวจซ้ำ" เพื่อดูใหม่) ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
+- **ผลรอบล่าสุดอยู่ในหน้าแอดมิน:** เมนู "ความพร้อมและระบบ" การ์ด "ตรวจความพร้อมระบบ" (กด "ตรวจซ้ำ" เพื่อดูใหม่) ข้อ "สำรองข้อมูลอัตโนมัติ (backup)" (`env.backup`) อ่าน
   `backups/status/` ที่เว็บ mount แบบ `:ro` · เขียว = สำเร็จภายในรอบ+1 ชม. · เหลือง = เลยรอบ / ยังไม่มีประวัติ /
   สำเนานอกเครื่องล้ม · แดง = รอบล่าสุดล้ม (บอกสาเหตุ + เวลา backup ดีล่าสุด) หรือเก่าเกิน 2 รอบ+1 ชม.
 - **ไฟล์เป็นของ root, dump เป็น 0600** — Docker สร้าง `./backups` เป็นของ root และ service รันด้วย root (uid ธรรมดา
@@ -382,9 +382,9 @@ sudo RESTORE_VIA=direct BACKUP_ENV_FILE=/etc/fms-backup.env sh scripts/restore.s
 หน้า results อ่านคะแนนจากคอลัมน์ `Candidate.score` (single source of truth, 2026-06-12).
 ⚠️ **v2-SEC เปลี่ยนวิธีตรวจ:** บัตรตอนนี้ **นิรนาม+เข้ารหัส (ไม่มี `User.candidateId`)** — recount
 รายพรรคจาก plaintext ทำไม่ได้บนเซิร์ฟเวอร์ (ทำได้เฉพาะ offline ด้วย private key — §11). ก่อนประกาศผล
-ให้ตรวจ 2 อย่าง: **โซ่ HMAC ไม่ถูกแก้** + **invariant รวมตรงกัน** (`#บัตร == sum(score) == #isVoted ปี1-4`):
+ให้ตรวจ 2 อย่าง: **โซ่ HMAC ไม่ถูกแก้** + **invariant รวมตรงกัน** (`#บัตร == sum(score) == #isVoted ทุกคน ไม่กรองชั้นปี`):
 ```
-node scripts/verify-ballot-chain.js       # recompute โซ่ทั้งตาราง + cross-check ChainHead + count
+node scripts/verify-ballot-chain.js --heads <ไฟล์ chain-head.log ที่เก็บไว้เครื่องอื่น>   # recompute โซ่ทั้งตาราง + cross-check ChainHead + count + บัตรท้ายหีบหายหรือไม่
 node scripts/reconcile-scores.js          # audit เดียวกัน (แชร์ scripts/lib/chainVerify.js) — ต้อง PASS
 ```
 > ทั้งสองต้องการ `BALLOT_CHAIN_SECRET` ใน env/.env. **ไม่มี `--fix` อีกแล้ว** — score ถูก maintain
@@ -574,7 +574,7 @@ node scripts/generate-election-keys.js                      # ไม่ใส่
 
 **ระหว่าง/หลังเลือกตั้ง:**
 ```
-node scripts/verify-ballot-chain.js       # ตรวจโซ่ + count (certification, ก่อนเปิด showResult)
+node scripts/verify-ballot-chain.js --heads <ไฟล์ chain-head.log ที่เก็บไว้เครื่องอื่น>   # ตรวจโซ่ + count + ปลายโซ่นอกเครื่อง (ก่อนรับรองผล)
 node scripts/export-chain-head.js         # เก็บปลายโซ่ไว้นอก DB เป็นระยะ (cron) → จับ tamper ที่ปลอมโซ่ด้วย
 node scripts/decrypt-recount.js --key <path-to-private.pem>   # OFFLINE เท่านั้น, เฉพาะข้อพิพาท (นับรายพรรค)
 ```
