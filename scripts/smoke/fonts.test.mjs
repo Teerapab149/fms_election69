@@ -53,6 +53,18 @@ test("every --font-* variable the site reads is defined in fonts.css", () => {
   assert.deepEqual([...used].filter((v) => !defined.has(v) && !themeTokens.has(v)).sort(), []);
 });
 
+test("every font family in fonts.css has its license file next to it", () => {
+  // The SIL OFL lets these fonts ship inside software that is sold, on condition
+  // that the license travels with the font files.
+  const families = new Set(
+    [...css.matchAll(/font-family:\s*'([^']+)'/g)].map((m) => m[1]).filter((f) => !/ Fallback$/.test(f))
+  );
+  const licenses = new Set(fs.readdirSync(path.join(FONTS_DIR, "licenses")));
+  assert.ok(families.size > 0);
+  const missing = [...families].filter((f) => !licenses.has(f.toLowerCase().replace(/[^a-z0-9]/g, "") + ".txt"));
+  assert.deepEqual(missing, []);
+});
+
 test("the root layout and the global error page load fonts.css and set the variable class", () => {
   for (const name of ["layout.js", "global-error.js"]) {
     const src = fs.readFileSync(path.join(ROOT, "src", "app", name), "utf8");

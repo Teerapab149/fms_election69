@@ -1,0 +1,28 @@
+FMS Online Voting System (FMS-OVS)
+Copyright (c) 2025-2026 Teerapab Boonsri. All rights reserved.
+
+This software and its documentation are proprietary. No licence to use, copy,
+modify, distribute, sublicense or sell any part of it is granted by this file
+or by access to the source code. Any right to use the software is granted
+only by a separate written agreement signed by the copyright holder, and only
+on the terms of that agreement.
+
+Third-party components keep their own licences and are not covered by this
+notice:
+  - npm packages listed in package.json / package-lock.json, under the
+    licence stated by each package;
+  - the web fonts in src/app/fonts/files, under the SIL Open Font License 1.1;
+    the licence of each family is in src/app/fonts/licenses and must be
+    distributed together with the font files.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, EXCEPT AS A SEPARATE WRITTEN AGREEMENT STATES OTHERWISE.
+
+---
+
+ภาษาไทย (สรุป ไม่แทนข้อความภาษาอังกฤษข้างบน)
+
+ซอฟต์แวร์และเอกสารชุดนี้เป็นกรรมสิทธิ์ของผู้ถือลิขสิทธิ์ สงวนสิทธิ์ทั้งหมด
+การเข้าถึงซอร์สโค้ดไม่ได้ให้สิทธิ์ใช้ คัดลอก แก้ไข แจกจ่าย หรือขาย
+สิทธิ์ใช้งานมีได้เฉพาะตามสัญญาเป็นลายลักษณ์อักษรที่ผู้ถือลิขสิทธิ์ลงนาม
+ส่วนประกอบของผู้อื่น (แพ็กเกจ npm และฟอนต์) เป็นไปตามสัญญาอนุญาตของแต่ละรายการ
