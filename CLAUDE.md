@@ -19,6 +19,7 @@
 src/
 ├── app/
 │   ├── page.js                    # Home (SSR → HomeContent)
+│   ├── fonts/                     # ฟอนต์ทั้งหมด (fonts.css + files/) สร้างโดย scripts/vendor-fonts.mjs — ห้ามใช้ next/font/google (build จะกลับไปพึ่ง Google)
 │   ├── admin/
 │   │   ├── login/page.js          # Admin login (ชื่อผู้ใช้ + รหัสผ่าน → httpOnly cookie admin_token)
 │   │   └── page.js                # Admin console (tabs: overview, candidates, settings)

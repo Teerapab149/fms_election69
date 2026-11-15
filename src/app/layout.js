@@ -1,7 +1,9 @@
 import './globals.css';
+// Web fonts are files in this repository (src/app/fonts), not fetched from Google
+// at build time. The list of families lives in scripts/vendor-fonts.mjs.
+import './fonts/fonts.css';
 import Providers from "../components/Providers";
 import ImageErrorGuard from "../components/ImageErrorGuard";
-import { Prompt, Kanit, Archivo_Black, Space_Grotesk, Anuphan, Inter, JetBrains_Mono, Instrument_Serif, DM_Serif_Display, Manrope, IBM_Plex_Sans_Thai, Space_Mono, Chakra_Petch, Noto_Sans_Thai, Noto_Sans_Thai_Looped } from 'next/font/google';
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "../lib/auth";
@@ -54,145 +56,6 @@ async function getThemeTokenCss() {
     return { tokenCss: "", activeTemplateId: "classic" };
   }
 }
-
-const prompt = Prompt({
-  subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-prompt',
-  display: 'swap',
-});
-
-const kanit = Kanit({
-  subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-kanit',
-  display: 'swap',
-});
-
-// Display + mono families for the committed templates (gumroad "Active Pulse" et al).
-// Archivo Black = chunky blocky headings; Space Grotesk = mono labels / data.
-// Latin-only: Thai script always falls through to Kanit (see GumroadHome --fd/--fm).
-const archivoBlack = Archivo_Black({
-  subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-archivo',
-  display: 'swap',
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-space-grotesk',
-  display: 'swap',
-});
-
-// Site-wide body font: Anuphan — a loopless (ไม่มีหัว) modern humanist Thai sans.
-// Replaces Kanit as the default `font-sans` (tailwind.config.js). Kanit stays
-// loaded as the fallback + for long-form text on future pages (user's exception).
-const anuphan = Anuphan({
-  subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-anuphan',
-  display: 'swap',
-});
-
-// Studio Dark v2 template families. Geist (the prototype's sans) ships as a
-// separate Vercel npm package, not next/font/google — to avoid adding a runtime
-// dep we substitute Inter, a near-identical neutral grotesque available in
-// Google Fonts (exact-match upgrade later = `npm i geist`). JetBrains Mono =
-// small-caps data/labels (sub for Geist Mono); Instrument Serif (italic) = the
-// real lime-accent signature, available as-is. All latin-only → Thai falls
-// through to Anuphan (the dark minimal vibe pairs well with the loopless Anuphan).
-// Loading is mandatory — a declared font-family does nothing unless next/font
-// loads it (impeccable rule).
-const studioSans = Inter({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-studio-sans',
-  display: 'swap',
-});
-
-const studioMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-studio-mono',
-  display: 'swap',
-});
-
-const instrumentSerif = Instrument_Serif({
-  subsets: ['latin'],
-  weight: ['400'],
-  style: ['normal', 'italic'],
-  variable: '--font-instrument-serif',
-  display: 'swap',
-});
-
-// Verdure template families (moss/cream/terracotta editorial). DM Serif Display
-// (italic) = the big serif "50"/headlines; Manrope = the sans; IBM Plex Sans Thai
-// = the Thai body (loopless, pairs with the serif); Space Mono = the mono labels.
-// Loading is mandatory — a declared font-family does nothing unless next/font
-// loads it (impeccable rule; root cause of the gumroad font drift).
-const dmSerif = DM_Serif_Display({
-  subsets: ['latin'],
-  weight: ['400'],
-  style: ['normal', 'italic'],
-  variable: '--font-dm-serif',
-  display: 'swap',
-});
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-manrope',
-  display: 'swap',
-});
-
-const plexThai = IBM_Plex_Sans_Thai({
-  subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-plex-thai',
-  display: 'swap',
-});
-
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-space-mono',
-  display: 'swap',
-});
-
-// Receipt template family (Template #6 — "Paper Materiality"). Chakra Petch = the
-// squared, technical Thai receipt voice with tabular numerals (the "printer slip"
-// sound); paired with IBM Plex Sans Thai (structural headings, already loaded) +
-// Space Mono (Latin/digits/ballot-ref, already loaded). Loading is mandatory — a
-// declared font-family does nothing unless next/font loads it AND it is consumed
-// via a CSS var (--rc-fr on .rc-root). impeccable rule; root cause of the gumroad
-// font drift.
-const chakraPetch = Chakra_Petch({
-  subsets: ['thai', 'latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-chakra',
-  display: 'swap',
-});
-
-// ballot-official (v2 official family). One superfamily, two voices: Noto Sans
-// Thai (loopless) carries headings, controls and short text; its Looped sibling
-// is kept for long reading only — policies, biographies. Owner's call: looped
-// everywhere read as too bureaucratic. preload:false so other templates do not pay.
-const notoThai = Noto_Sans_Thai({
-  subsets: ['thai', 'latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-noto-thai',
-  display: 'swap',
-  preload: false,
-});
-const notoThaiLooped = Noto_Sans_Thai_Looped({
-  subsets: ['thai', 'latin'],
-  weight: ['400', '500'],
-  variable: '--font-noto-thai-looped',
-  display: 'swap',
-  preload: false,
-});
 
 // Deploy origin (for absolute og/twitter image URLs) — derived from NEXTAUTH_URL
 // so link previews resolve to the real host, not localhost. basePath rides along
@@ -248,7 +111,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${anuphan.variable} ${archivoBlack.variable} ${spaceGrotesk.variable} ${studioSans.variable} ${studioMono.variable} ${instrumentSerif.variable} ${dmSerif.variable} ${manrope.variable} ${plexThai.variable} ${spaceMono.variable} ${chakraPetch.variable} ${notoThai.variable} ${notoThaiLooped.variable} font-sans antialiased`}>
+      <body className="fms-fonts font-sans antialiased">
 
         {/* Site-wide Layer 1 token scope — every page inherits the theme */}
         {tokenCss && <style dangerouslySetInnerHTML={{ __html: tokenCss }} />}
