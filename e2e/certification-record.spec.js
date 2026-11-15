@@ -32,6 +32,7 @@ const {
   verifyBallotChain,
   mintSession,
   castWith,
+  recountFromScores,
   disconnect,
 } = require('./helpers/fixtures');
 const { decryptBallot } = require('../src/lib/ballotCrypto');
@@ -208,7 +209,21 @@ test.describe('Certification record and ballot-box lock (isolated test DB)', () 
 
     // close, publish, certify as the staff account
     await closeAndPublish();
-    const cert = await dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS' });
+    // F1: the per-option numbers come from the recount above, the way staff copy
+    // them from decrypt-recount.js. Missing or wrong numbers certify nothing.
+    const recount = Object.fromEntries(candidates.map((c) => [String(c.number), counts.get(c.id) || 0]));
+    const notCertified = async () => !((await prisma().systemConfig.findUnique({ where: { id: 1 } }))?.globalConfig?.ballotsAnonymized);
+    const none = await dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS' });
+    expect(none.status, JSON.stringify(none.body)).toBe(400);
+    expect(none.body.error).toMatch(/decrypt-recount.js/);
+    expect(await notCertified()).toBe(true);
+    const someone = candidates.find((c) => (counts.get(c.id) || 0) > 0);
+    const wrong = { ...recount, [String(someone.number)]: recount[String(someone.number)] - 1 };
+    const off = await dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS', recount: wrong });
+    expect(off.status, JSON.stringify(off.body)).toBe(409);
+    expect(off.body.error).toMatch(/ไม่ตรงกับผลนับซ้ำ/);
+    expect(await notCertified()).toBe(true);
+    const cert = await dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS', recount });
     expect(cert.status, JSON.stringify(cert.body)).toBe(200);
     const gc = /** @type {any} */ ((await prisma().systemConfig.findUnique({ where: { id: 1 } }))?.globalConfig);
     expect(gc.ballotsAnonymized).toBe(true);
@@ -231,6 +246,12 @@ test.describe('Certification record and ballot-box lock (isolated test DB)', () 
       { env: { ...process.env, DATABASE_URL: TEST_DB_URL }, encoding: 'utf8', cwd: process.cwd() }
     );
     expect(out).toContain('recount matches Candidate.score exactly');
+    // F1: it ends with the numbers staff type into the certification window, and
+    // they are exactly the ones that were accepted above
+    const typed = out.split('ตัวเลขสำหรับกรอกในหน้ารับรองผล')[1] || '';
+    for (const c of candidates) {
+      expect(typed, `recount line for number ${c.number}`).toMatch(new RegExp(`^\\s*${c.number}\\s+.*\\s${recount[String(c.number)]}\\s*$`, 'm'));
+    }
 
     // nothing enters after the record: a fresh voter is refused and the box is unchanged
     const late = (await mintMany(1, 'late'))[0];
@@ -345,7 +366,8 @@ test.describe('Certification record and ballot-box lock (isolated test DB)', () 
     // close and publish while those seven wait, then start certifying: it queues
     // for the same lock, behind them
     await closeAndPublish();
-    const certification = dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS' });
+    // the seven waiting votes are refused, so the scores now are the final ones
+    const certification = dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS', recount: await recountFromScores() });
     await waitForLockWaiters(8);
     await lock.release();
 
@@ -387,7 +409,8 @@ test.describe('Certification record and ballot-box lock (isolated test DB)', () 
         headers: { 'Content-Type': 'application/json', cookie: committeeCookie },
         body: JSON.stringify({ globalConfig: { e2eRace: RUN } }),
       });
-      const [cert, saved] = await Promise.all([dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS' }), put]);
+      const recount = await recountFromScores();
+      const [cert, saved] = await Promise.all([dashboard(staffCookie, { action: 'ANONYMIZE_BALLOTS', recount }), put]);
       expect(cert.status, JSON.stringify(cert.body)).toBe(200);
       expect(saved.status).toBe(200);
       const row = await prisma().systemConfig.findUnique({ where: { id: 1 } });

@@ -127,7 +127,17 @@ async function main() {
       : `\n${drift} candidate(s) drifted${undecryptable ? ` + ${undecryptable} undecryptable` : ""}.`
   );
   if (chainBroken) console.log("\nchain integrity FAILED (see the top of this output): this recount cannot be trusted.");
-  if (drift > 0 || undecryptable > 0 || chainBroken) process.exitCode = 2;
+  if (drift > 0 || undecryptable > 0 || chainBroken) {
+    process.exitCode = 2;
+    console.log("\nห้ามรับรองผล: ผลนับซ้ำไม่ตรงกับคะแนนในระบบ หรือโซ่บัตรไม่ผ่าน แจ้งผู้รับผิดชอบการเลือกตั้ง");
+    return;
+  }
+  // The certification window asks for these numbers, one box per option
+  // (F1: certification is refused unless they equal the scores in the system).
+  console.log("\nตัวเลขสำหรับกรอกในหน้ารับรองผล (เบอร์ ชื่อ คะแนนนับซ้ำ):");
+  for (const c of candidates) {
+    console.log(`  ${String(c.number).padStart(3)}  ${c.name}  ${recount.get(c.id) || 0}`);
+  }
 }
 
 main()

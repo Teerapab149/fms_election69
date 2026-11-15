@@ -298,11 +298,16 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
       });
 
       await test.step('5. §5 ขั้นที่ 3 — committee pressing รับรองผล gets 403 with the staff-only message', async () => {
-        await pressAndConfirm(committee, 'รับรองผล', 'รับรองผลอย่างเป็นทางการ?', null);
-        const dialog = committee.getByRole('alertdialog');
-        await expect(dialog.getByRole('heading', { name: 'ดำเนินการไม่สำเร็จ (403)' })).toBeVisible();
-        await expect(dialog.getByText(MSG.staffOnly, { exact: true })).toBeVisible();
-        await dialog.getByRole('button', { name: 'ปิด', exact: true }).click();
+        // the certification window asks a non-staff account for nothing: it shows
+        // the staff-only message in place of the recount boxes (F1 window)
+        const certBtn = committee.getByRole('button', { name: 'รับรองผล', exact: true });
+        await expect(certBtn).toBeEnabled({ timeout: 15000 });
+        await certBtn.click();
+        const win = committee.getByRole('dialog');
+        await expect(win.getByRole('heading', { name: 'รับรองผลอย่างเป็นทางการ' })).toBeVisible();
+        await expect(win.getByText(MSG.staffOnly, { exact: true })).toBeVisible();
+        await expect(win.getByRole('button', { name: 'ยืนยันรับรองผล' })).toHaveCount(0);
+        await win.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
 
         // nothing signed
         const cfg = await prisma().systemConfig.findUnique({ where: { id: 1 } });
@@ -407,7 +412,21 @@ test.describe('Staff rehearsal — ADMIN-GUIDE §3-§5 (isolated test DB)', () =
         const s = await uiAdminLogin(browser, STAFF_ID, staffPassword);
         contexts.push(s.ctx);
         await openClosingSteps(s.page);
-        await pressAndConfirm(s.page, 'รับรองผล', 'รับรองผลอย่างเป็นทางการ?', null);
+        // F1: the window asks for every option's recount; staff type them from
+        // decrypt-recount.js, here Candidate.score stands in for that output
+        const certBtn = s.page.getByRole('button', { name: 'รับรองผล', exact: true });
+        await expect(certBtn).toBeEnabled({ timeout: 15000 });
+        await certBtn.click();
+        const win = s.page.getByRole('dialog');
+        await expect(win.getByRole('heading', { name: 'รับรองผลอย่างเป็นทางการ' })).toBeVisible();
+        const confirmCert = win.getByRole('button', { name: 'ยืนยันรับรองผล', exact: true });
+        await expect(confirmCert).toBeDisabled();
+        for (const c of await db.candidate.findMany({ select: { number: true, name: true, score: true } })) {
+          const label = c.number > 0 ? `เบอร์ ${c.number} ${c.name}` : c.name;
+          await win.getByLabel(label, { exact: true }).fill(String(c.score || 0));
+        }
+        await expect(confirmCert).toBeEnabled();
+        await confirmCert.click();
         await expect(s.page.getByRole('heading', { name: 'รับรองผลเรียบร้อย!' })).toBeVisible();
         await s.page.getByRole('button', { name: 'ปิด', exact: true }).click();
         await expect(s.page.getByText('รับรองแล้ว', { exact: true })).toBeVisible();

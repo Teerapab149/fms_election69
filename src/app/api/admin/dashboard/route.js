@@ -9,7 +9,7 @@ import { isBoxClosed, checkSetMode, checkShowResult } from "../../../../lib/elec
 import { bustResultsSnap } from "../../../../lib/election/resultsCache.mjs";
 import { normalizeFormUrl, FORM_URL_ERROR } from "../../../../lib/forms/formUrl.mjs";
 import { verifyChain } from "../../../../lib/chainVerify";
-import { buildCertifiedRecord, explainVerifyFailure, readCertifiedRecord } from "../../../../lib/certificationRecord";
+import { buildCertifiedRecord, checkRecount, explainVerifyFailure, readCertifiedRecord } from "../../../../lib/certificationRecord";
 
 // Mode and result visibility are checked against each other (adminGuards), so
 // they are read and written under a row lock: two admins pressing "reopen" and
@@ -345,6 +345,11 @@ async function handleAction(body, auth) {
             select: { number: true, name: true, score: true },
             orderBy: { number: "asc" },
           });
+          // F1: the checks above only compare totals. The per-party scores are
+          // confirmed only by the offline recount with the private key, so its
+          // numbers must be typed in and must match, or nothing is certified.
+          const recountRefusal = checkRecount(candidates, body.recount);
+          if (recountRefusal) throw new GuardError(recountRefusal.error, recountRefusal.status);
           const record = buildCertifiedRecord({
             candidates,
             ballots: verdict.counts.ballots,
