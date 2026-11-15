@@ -21,6 +21,7 @@ import { formatCertifiedRecordText } from "../../../lib/certificationRecord";
 import CompletedActionModal from "../../CompletedActionModal";
 import ErrorActionModal from "../../ErrorActionModal";
 import ConfirmModal from "../../ConfirmModal";
+import CertifyModal from "./CertifyModal";
 import { useElectionState } from "./ElectionStateContext";
 import { SYSTEM_MODES } from "./modes";
 import { TONES, MODE_SHORT, MODE_THAI, describeElection, formatClock, splitDuration } from "./electionStatus";
@@ -400,7 +401,9 @@ export default function ElectionControl({ onGoTab }) {
   // re-read after every action instead of flipping local state: another admin
   // may have changed something in the meantime, and the screen must show what
   // the server now holds
-  const handleConfirmAction = async () => {
+  // `extra` carries the recount numbers from the certification window; the
+  // other windows call this with nothing (or a click event, which is ignored).
+  const handleConfirmAction = async (extra) => {
     if (!activeModal) return;
 
     setProcessing(true);
@@ -413,6 +416,9 @@ export default function ElectionControl({ onGoTab }) {
       }
       if (action === "SET_SHOW_RESULT") {
         body.value = !isShowResult; // the value the admin saw the switch offer
+      }
+      if (action === "ANONYMIZE_BALLOTS") {
+        body.recount = extra?.recount; // F1: the server compares these with the scores
       }
 
       const res = await fetch(getPath("/api/admin/dashboard"), {
@@ -434,7 +440,7 @@ export default function ElectionControl({ onGoTab }) {
           // globalConfig.ballotsAnonymized = true (the certification flag) and
           // pins the numbers it certified (dashboard/route.js POST). No voter-to-party link was
           // ever stored (Ballot has no userId, User has no candidateId).
-          setSuccessMessage({ title: "รับรองผลเรียบร้อย!", msg: "ปักธงรับรองผลแล้ว ระบบตรวจโซ่บัตรและจำนวนบัตรกับคะแนนแล้วบันทึกตัวเลขที่รับรองไว้ ดูและเก็บสำเนาได้ที่ส่วนตัวเลขที่รับรองไว้ในหน้านี้ บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ" });
+          setSuccessMessage({ title: "รับรองผลเรียบร้อย!", msg: "ปักธงรับรองผลแล้ว ระบบตรวจโซ่บัตร จำนวนบัตรกับคะแนน และคะแนนรายตัวเลือกตรงกับผลนับซ้ำ แล้วบันทึกตัวเลขที่รับรองไว้ ดูและเก็บสำเนาได้ที่ส่วนตัวเลขที่รับรองไว้ในหน้านี้ บัตรทุกใบไม่มีลิงก์ถึงผู้ลงคะแนนอยู่แล้วตั้งแต่ตอนบันทึก จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ" });
         }
         setIsSuccessOpen(true);
         refresh();
@@ -585,16 +591,12 @@ export default function ElectionControl({ onGoTab }) {
         isLoading={processing}
       />
 
-      <ConfirmModal
+      {/* F1: certifying needs the offline recount's numbers (CertifyModal);
+          ANONYMIZE_BALLOTS still deletes nothing, see dashboard/route.js */}
+      <CertifyModal
         isOpen={activeModal === "ANONYMIZE_BALLOTS"}
         onClose={() => setActiveModal(null)}
-        onConfirm={handleConfirmAction}
-        /* AUD-COPY: must agree with dashboard/route.js. ANONYMIZE_BALLOTS only sets
-           the ballotsAnonymized flag (certification); it deletes nothing, because the
-           voter-to-party link was never stored (v2-SEC). */
-        title="รับรองผลอย่างเป็นทางการ?"
-        message={"นี่คือการปักธงรับรองผลครั้งสุดท้าย ระบบจะตรวจโซ่บัตรและเทียบจำนวนบัตรกับคะแนนและผู้ลงคะแนนก่อน ถ้าไม่ตรงกันจะรับรองไม่ได้ ถ้าผ่านจะบันทึกตัวเลขที่รับรองไว้ให้เก็บสำเนา คะแนนรวมของทุกพรรคถูกล็อก เครื่องมือตรวจสอบจะไม่แก้ไขฐานข้อมูลอีก ระบบไม่เคยเก็บว่าใครเลือกพรรคใด บัตรทุกใบถูกบันทึกแบบไม่มีชื่อผู้ลงคะแนนอยู่แล้ว จึงไม่มีข้อมูลรายบุคคลเหลือให้ลบ กดแล้วย้อนกลับไม่ได้"}
-        variant="danger"
+        onConfirm={(recount) => handleConfirmAction({ recount })}
         isLoading={processing}
       />
     </div>

@@ -24,6 +24,7 @@ const {
   assertLiveTestDb,
   uniqueStudentId,
   getBallot,
+  recountFromScores,
   disconnect,
 } = require('./helpers/fixtures');
 
@@ -138,7 +139,7 @@ test.describe('Voter-row physical order vs cast order (H3)', () => {
     expect((await dashboard(committee.cookie, { action: 'SET_SHOW_RESULT', value: true })).status).toBe(200);
     const staff = await apiLogin(STAFF_ID, pw);
     expect(staff.status).toBe(200);
-    const cert = await dashboard(staff.cookie, { action: 'ANONYMIZE_BALLOTS' });
+    const cert = await dashboard(staff.cookie, { action: 'ANONYMIZE_BALLOTS', recount: await recountFromScores() });
     expect(cert.status, JSON.stringify(cert.body)).toBe(200);
 
     const after = await observedOrders(castOrder);

@@ -136,9 +136,67 @@ function formatCertifiedRecordText(record, { electionName } = {}) {
   return lines.join("\n");
 }
 
+/** "เบอร์ 1 (ชื่อพรรค)", or just the name for งดออกเสียง (0) / ไม่รับรอง (-1). */
+function optionLabel(c) {
+  return c.number > 0 ? `เบอร์ ${c.number} (${c.name})` : c.name;
+}
+
+/**
+ * F1: certification needs the per-option counts from the offline recount
+ * (scripts/decrypt-recount.js, which decrypts every ballot with the private
+ * key). The chain check and the three totals cannot see a vote moved from one
+ * party to another when the total stays the same; only the recount can, and
+ * until now nothing made anyone run it.
+ *
+ * `recount` is what staff typed: { "<number>": count } for every option on the
+ * ballot, counts as integers or digit strings. Returns null when every option
+ * is there and equals Candidate.score, else { status, error } in Thai.
+ *
+ * @param {{number:number, name:string, score:number|null}[]} candidates
+ * @param {unknown} recount
+ * @returns {null | { status: number, error: string }}
+ */
+function checkRecount(candidates, recount) {
+  const how = "ใช้ตัวเลขจากคำสั่ง decrypt-recount.js ที่รันด้วยกุญแจส่วนตัวเท่านั้น ห้ามคัดลอกจากหน้าผลคะแนน";
+  if (!recount || typeof recount !== "object" || Array.isArray(recount)) {
+    return { status: 400, error: `ต้องกรอกคะแนนจากการนับซ้ำด้วยกุญแจส่วนตัวให้ครบทุกตัวเลือกก่อนรับรองผล ${how}` };
+  }
+  const onBallot = new Set(candidates.map((c) => String(c.number)));
+  const extra = Object.keys(recount).filter((k) => !onBallot.has(k));
+  if (extra.length) {
+    return { status: 400, error: `ไม่มีตัวเลือกหมายเลข ${extra.join(", ")} ในบัตรเลือกตั้งนี้` };
+  }
+  const missing = [];
+  const typed = new Map();
+  for (const c of candidates) {
+    const raw = recount[String(c.number)];
+    if (raw === undefined || raw === null || raw === "") { missing.push(optionLabel(c)); continue; }
+    const n = typeof raw === "number" ? raw : (/^\s*\d+\s*$/.test(String(raw)) ? Number(raw) : NaN);
+    if (!Number.isInteger(n) || n < 0) {
+      return { status: 400, error: `คะแนนนับซ้ำของ ${optionLabel(c)} ต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป` };
+    }
+    typed.set(c.number, n);
+  }
+  if (missing.length) {
+    return { status: 400, error: `ยังไม่ได้กรอกคะแนนนับซ้ำของ ${missing.join(", ")} ${how}` };
+  }
+  const diffs = candidates
+    .filter((c) => typed.get(c.number) !== (c.score || 0))
+    .map((c) => `${optionLabel(c)} ในระบบ ${c.score || 0} นับซ้ำ ${typed.get(c.number)}`);
+  if (diffs.length) {
+    return {
+      status: 409,
+      error: `คะแนนในระบบไม่ตรงกับผลนับซ้ำ จึงรับรองผลไม่ได้: ${diffs.join("; ")} ` +
+        "ตรวจว่ากรอกตัวเลขถูกต้อง ถ้าถูกต้องแล้ว ให้หยุดและแจ้งผู้รับผิดชอบการเลือกตั้ง เพราะคะแนนในฐานข้อมูลอาจถูกแก้",
+    };
+  }
+  return null;
+}
+
 module.exports = {
   CERT_KEYS,
   RECORD_KEYS,
+  checkRecount,
   buildCertifiedRecord,
   explainVerifyFailure,
   readCertifiedRecord,

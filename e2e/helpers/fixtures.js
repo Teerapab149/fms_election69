@@ -146,6 +146,14 @@ async function candidateScore(id) {
   return c?.score ?? 0;
 }
 
+/** The numbers staff type into the certification window (F1): { "<number>": count }
+ *  for every option. Here they come from Candidate.score, which stands in for the
+ *  offline recount; specs that test the gate itself pass their own numbers. */
+async function recountFromScores() {
+  const rows = await prisma().candidate.findMany({ select: { number: true, score: true } });
+  return Object.fromEntries(rows.map((r) => [String(r.number), r.score || 0]));
+}
+
 /** Reset a voter's turnout flag on the test DB via RAW SQL (spec: SQL between
  *  tests, guarded first). Lets a deterministic voter be re-used across tests. */
 async function resetVoter(studentId) {
@@ -265,6 +273,7 @@ module.exports = {
   setSystemMode,
   setShowResult,
   candidateScore,
+  recountFromScores,
   resetVoter,
   createIneligibleUser,
   ballotStats,
