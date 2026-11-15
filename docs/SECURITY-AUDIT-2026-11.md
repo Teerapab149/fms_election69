@@ -372,6 +372,35 @@ session ของ PSU SSO ของผู้ที่เป็นแอดมิ
 
 ---
 
+## ช่องโหว่ของ dependency (`npm audit`) ตรวจเมื่อ 2026-11-15
+
+รัน `npm audit fix` (ไม่ใช้ `--force`) แล้ว รายการทั้งหมดลดจาก 22 (high 9, moderate 13) เหลือ 13 (high 4, moderate 9)
+ตัวที่ถูกแก้ทั้งหมดเป็นเครื่องมือตอนพัฒนาและตอน build (eslint, browserslist, js-yaml, picomatch, flatted, ajv และอื่น ๆ)
+ไม่มีแพ็กเกจที่เว็บใช้ตอนรันเปลี่ยนรุ่น
+
+นับเฉพาะแพ็กเกจที่ไม่ใช่ dev (`npm audit --omit=dev`) ยังเหลือ 7 รายการเท่าเดิม ทุกตัวต้องขึ้นรุ่นหลักจึงจะหาย
+(next 16, prisma 7, exceljs 3.4 ซึ่งเป็นรุ่นถอยหลัง) จึงยังไม่อัปเกรด เพราะเสี่ยงกับระบบที่ใช้จริงมากกว่าตัวช่องโหว่ ประเมินทีละตัวได้ดังนี้
+
+| แพ็กเกจ | ข้อแจ้ง | ระบบเรียกถึงตอนรันจริงหรือไม่ | หลักฐาน |
+|---|---|---|---|
+| `postcss` 8.4.31 ที่ติดมากับ `next` (ทำให้ `next` ถูกแจ้งด้วย) | XSS ใน CSS stringify, อ่านไฟล์ `.map` ผ่าน `sourceMappingURL` (GHSA-qx2v-qp2m-jg93, GHSA-6g55-p6wh-862q, GHSA-fxqj-rqcc-2cmp, GHSA-r28c-9q8g-f849) | ไม่ ใช้เฉพาะตอน build กับไฟล์ CSS ของโปรเจกต์เอง | ทุกไฟล์ใน `next/dist` ที่ `require("postcss")` อยู่ใต้ `build/webpack` หรือเป็นตัวย่อ/แปลง CSS ตอน build; โค้ดใน `src/` ไม่ import postcss; CSS ที่แอดมินแก้ได้ (ธีม) สร้างด้วย `src/lib/templateTokens` และกรองด้วย `src/lib/cssSafety.mjs` ไม่ผ่าน postcss |
+| `prisma` (CLI), `@prisma/config`, `deepmerge-ts` | stack exhaustion เมื่อ merge object ที่วนอ้างตัวเอง (GHSA-ggr8-5vv4-36mx) | ไม่ ใช้เฉพาะคำสั่ง `prisma generate` / `migrate` ที่ IT รันเองกับไฟล์ config ของโปรเจกต์ | ไม่อยู่ใน `.next/standalone`; เว็บใช้ `@prisma/client` ซึ่งไม่พึ่ง `deepmerge-ts` (`npm ls deepmerge-ts`) |
+| `exceljs`, `uuid` 8.3.2 | ไม่ตรวจขอบ buffer ใน uuid v3/v5/v6 เมื่อส่ง `buf` (GHSA-w5hq-g745-h8pq) | ไม่ | exceljs ใช้เฉพาะ `scripts/import-students.js` ที่ IT รันบนเครื่องกับไฟล์รายชื่อของคณะ; exceljs เรียกเฉพาะ `uuid.v4` (`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js`) ไม่ใช่ v3/v5/v6; ไม่อยู่ใน `.next/standalone` |
+
+ข้อสรุป: ไม่พบเส้นทางที่ผู้ใช้เว็บส่งข้อมูลไปถึงโค้ดที่มีช่องโหว่เหล่านี้ ข้อนี้ได้จากการค้นโค้ดและดูไฟล์ที่ติดไปกับ build ไม่ได้ทดสอบเจาะ
+ควรอัปเกรด next และ prisma เป็นรุ่นหลักใหม่ในช่วงที่ไม่มีการเลือกตั้ง พร้อมรัน e2e ทั้งชุดและซ้อมระบบใหม่
+
+วิธีทำซ้ำ:
+
+```bash
+npm audit --omit=dev
+npm ls deepmerge-ts uuid postcss --all
+grep -rlE "require\(\"postcss\"\)|require\('postcss'\)" node_modules/next/dist --include=*.js
+grep -rln "exceljs" src scripts
+```
+
+---
+
 ## สิ่งที่ไม่ได้ตรวจ หรือตรวจจากในเครื่องไม่ได้
 
 - การตั้งค่า nginx, TLS, การผูกพอร์ต, firewall และค่า `.env` ของเครื่องจริง
@@ -383,7 +412,7 @@ session ของ PSU SSO ของผู้ที่เป็นแอดมิ
 - `import-students.js`, `archive-year.js`, `preflight-year.js`, `generate-election-keys.js`, `admin.js` อ่านเพียงบางส่วน ไม่ได้รัน
 - ชุดทดสอบของโปรเจกต์รันครบแล้วบน checkout สะอาดของ commit นี้ (Windows, Node 22, PostgreSQL 18.6): `npm run build` ผ่าน (รอบแรกล้มที่การดึงฟอนต์จาก Google ตามที่ DEPLOY-CHECKLIST เตือนไว้ รอบสองผ่าน), unit test 250 จาก 250, `election.test.mjs` 11 จาก 11, `npm run e2e` ผ่าน 109 ข้าม 1 ไม่ได้รันบน Linux ซึ่งเป็นระบบของเครื่องจริง
 - การฉีดสคริปต์หรือ CSS ผ่านธีมและข้อความที่แอดมินกรอก (อ่าน CSP และตัวกรองแล้ว แต่ไม่ได้ทดสอบเจาะ)
-- ช่องโหว่ของ dependency (`npm audit`) และการทดสอบโหลด
+- การทดสอบโหลด (ส่วน dependency ตรวจแล้ว ดูหัวข้อด้านบน)
 - การกู้ตัวผู้ลงคะแนนจาก WAL หลังรับรองผล (ส่วนที่เหลือของ S2)
 
 ---
