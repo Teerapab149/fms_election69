@@ -261,7 +261,7 @@ node scripts/generate-election-keys.js --decrypt key-2569.enc
 **นี่คือเหตุผลเดียวที่ chain secret ต้องเป็นความลับ** ไม่ได้เอาไว้เข้ารหัสหรือถอดรหัสอะไรทั้งนั้น
 
 ```bash
-node scripts/verify-ballot-chain.js     # ตรวจทั้งเส้น + นับจำนวนใบ
+node scripts/verify-ballot-chain.js --heads <ไฟล์ chain-head.log ที่เก็บไว้เครื่องอื่น>     # ตรวจทั้งเส้น + นับจำนวนใบ + บัตรท้ายหีบหายหรือไม่
 node scripts/verify-ballot-chain.js --heads /ที่เก็บนอกเครื่อง/chain-head.log   # + เทียบกับปลายโซ่ที่ export ไว้
 ```
 
@@ -321,10 +321,10 @@ node scripts/export-chain-head.js       # ตั้ง cron เก็บปล�
 | ก่อนเปิดหีบ | พิธีสร้างกุญแจบนเครื่อง offline ใส่ public key + chain secret ลง env | IT |
 | ก่อนเปิดหีบ | apply `scripts/sql/ballot-grants.sql` `npm run preflight` ต้องผ่าน | IT |
 | ระหว่างเปิดหีบ | cron `export-chain-head.js` เก็บปลายโซ่ | IT |
-| ปิดหีบแล้ว ก่อนประกาศ | `verify-ballot-chain.js` แล้วตามด้วย `reconcile-scores.js` | IT |
+| ปิดหีบแล้ว ก่อนประกาศ | `verify-ballot-chain.js --heads <ไฟล์ที่ export ไว้นอกเครื่อง>` แล้วตามด้วย `reconcile-scores.js` | IT |
 | ก่อนรับรองผล | รัน `verify-ballot-chain.js --heads <ไฟล์ที่ export ไว้นอกเครื่อง>` ให้ผ่าน แล้วถอดบัตรนับใหม่ด้วย `decrypt-recount.js` บนเครื่อง offline ต่อหน้าพยาน (ขั้นตอนใน §8) ผลต้องตรงกับคะแนนทุกพรรค | IT และผู้ถือกุญแจ |
 | หลังเผยแพร่ผล | กด **รับรองผล** ในหน้าแอดมิน ต้องเป็นบัญชีเจ้าหน้าที่ ชื่อคุณจะถูกบันทึกเป็นผู้รับรอง ระบบตรวจโซ่และตัวเลขให้ก่อน แล้วบันทึกตัวเลขที่รับรอง | เจ้าหน้าที่ |
-| หลังรับรองผล | เก็บสำเนา "ตัวเลขที่รับรองไว้" นอกระบบ แล้วรัน `verify-ballot-chain.js` อีกครั้งให้ได้ exit 0 | เจ้าหน้าที่และ IT |
+| หลังรับรองผล | เก็บสำเนา "ตัวเลขที่รับรองไว้" นอกระบบ แล้วรัน `verify-ballot-chain.js --heads <ไฟล์>` อีกครั้งให้ได้ exit 0 | เจ้าหน้าที่และ IT |
 | ขึ้นปีใหม่ | สร้างกุญแจชุดใหม่ จัดการกุญแจปีเก่าตาม [§6](#6-อายุของกุญแจ) | IT |
 
 > **ยังไม่มีบัญชีเจ้าหน้าที่?** สร้างครั้งเดียวตอนรับระบบ `node scripts/admin.js --create-staff <ชื่อผู้ใช้>
