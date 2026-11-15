@@ -12,7 +12,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { PrismaClient } = require("@prisma/client");
 const { encryptBallot } = require("../../../src/lib/ballotCrypto");
-const { appendBallotTx, hourBucketBangkok, hourFloor } = require("../../../src/lib/ballotChain");
+const { appendBallotTx, tallyVoteTx, hourBucketBangkok, hourFloor } = require("../../../src/lib/ballotChain");
 
 const STATE_FILE = path.join(__dirname, "..", ".audit-state.local"); // *.local is gitignored
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
@@ -84,7 +84,7 @@ async function castVote(userId, candidateId, { at = Date.now(), client = db(), s
     const claim = await tx.user.updateMany({ where: { id: userId, isVoted: false }, data: { isVoted: true, votedAt: hourFloor(at) } });
     if (claim.count === 0) return "ALREADY_VOTED";
     await appendBallotTx(tx, { payload, hourBucket: hourBucketBangkok(at), chainSecret: state.chainSecret });
-    await tx.candidate.update({ where: { id: candidateId }, data: { score: { increment: 1 } } });
+    await tallyVoteTx(tx, candidateId);
     return "OK";
   }, { maxWait: 15000, timeout: 15000 });
 }

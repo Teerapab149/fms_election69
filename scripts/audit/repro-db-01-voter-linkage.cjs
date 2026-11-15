@@ -33,7 +33,15 @@ async function measure(label, truth, state) {
   // B — Candidate.xmin: the row version of each candidate was written by the
   // transaction of the LAST vote for it; the voter's row carries the same xid.
   const b = await c.$queryRawUnsafe(`SELECT u.id, c.id AS cand FROM "User" u JOIN "Candidate" c ON u.xmin = c.xmin WHERE u."isVoted"`);
-  const bRight = b.filter((r) => truth.get(r.id).cand === r.cand).length;
+  // A voter is NAMED only when the join pairs them with exactly one candidate.
+  // Since the tally writes every Candidate row in each vote (tallyVoteTx), the
+  // last voter's id sits on every row: the join returns that voter once per
+  // candidate, which says nothing about their choice.
+  const bByVoter = new Map();
+  for (const r of b) bByVoter.set(r.id, [...(bByVoter.get(r.id) || []), r.cand]);
+  const bNamedRows = [...bByVoter].filter(([, cands]) => cands.length === 1);
+  const bRight = bNamedRows.filter(([id, [cand]]) => truth.get(id).cand === cand).length;
+  const bAmbiguous = bByVoter.size - bNamedRows.length;
 
   // C — physical order. A SELECT with no ORDER BY on a small table is a
   // sequential scan in ctid order, which is also the order COPY (pg_dump)
@@ -48,9 +56,9 @@ async function measure(label, truth, state) {
 
   console.log(`\n── ${label}`);
   console.log(`A xmin join User↔Ballot         : ${a.length} pairs returned, ${aRight}/${N} voters matched to their own ballot`);
-  console.log(`B xmin join User↔Candidate      : ${b.length} voter(s) named WITH their choice, ${bRight} correct (no private key used)`);
+  console.log(`B xmin join User↔Candidate      : ${bNamedRows.length} voter(s) named WITH their choice, ${bRight} correct (no private key used); ${bAmbiguous} voter(s) paired with every candidate, choice not revealed`);
   console.log(`C physical order (ctid / COPY)   : ${cRight}/${N} voters matched to their own ballot; rank correlation with cast order ${rho.toFixed(3)}`);
-  return { aRight, bRight: b.length ? bRight : 0, bNamed: b.length, cRight };
+  return { aRight, bRight, bNamed: bNamedRows.length, cRight };
 }
 
 (async () => {
