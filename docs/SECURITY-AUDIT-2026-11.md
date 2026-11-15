@@ -6,6 +6,21 @@
 > ข้อ F1, F2 และ F5 เป็นข้อจำกัดของสถาปัตยกรรม ยังอยู่ และต้องจัดการด้วยขั้นตอนตามที่เขียนไว้ในแต่ละข้อ
 > **2026-11-15:** F1 ถูกแก้ในระบบแล้ว รับรองผลต้องกรอกผลนับซ้ำและต้องตรงทุกตัวเลือก (ดูบรรทัด "สถานะ" ของ F1) · F5 เส้น B ถูกแก้ในโค้ดแล้ว เส้นอื่นของ F5 ยังอยู่ · F2 ยังอยู่ เพิ่มวิธีตรวจจับจาก log แล้ว
 > เนื้อหาที่เหลือของรายงานบรรยายระบบ ณ commit ที่ตรวจ
+
+**สถานะล่าสุด (2026-11-15)** รายละเอียดอยู่ในบรรทัด "สถานะ" ของแต่ละข้อ
+
+| ข้อ | สถานะ |
+|---|---|
+| [F1](#f1) | แก้แล้ว ระบบบังคับให้กรอกผลนับซ้ำและต้องตรงทุกตัวเลือกก่อนรับรอง |
+| [F2](#f2) | ยังอยู่ (สถาปัตยกรรม) มีวิธีตรวจจับจาก log ของ nginx และการแจ้งของนักศึกษา |
+| [F3](#f3) | แก้แล้ว (`verify-ballot-chain.js --heads`) |
+| [F4](#f4) | แก้แล้ว |
+| [F5](#f5) | บางส่วน เส้น B แก้แล้ว เส้น A D E W ยังอยู่ |
+| [F6](#f6) | แก้แล้ว |
+| [F7](#f7) | แก้แล้วบางส่วน ระบุตัวคนได้เมื่อใช้รหัสส่วนตัว |
+| [F8](#f8) | แก้แล้ว |
+| [F9](#f9) | แก้แล้ว |
+| dependency | ประเมินแล้ว ดูหัวข้อ "ช่องโหว่ของ dependency" |
 สคริปต์ทดสอบอยู่ใน `scripts/audit/` บน branch `audit/security-review-2026-11` ไม่มีการแก้โค้ดของระบบ
 
 ## สรุปสำหรับผู้ตัดสินใจ
@@ -406,7 +421,7 @@ session ของ PSU SSO ของผู้ที่เป็นแอดมิ
 
 | แพ็กเกจ | ข้อแจ้ง | ระบบเรียกถึงตอนรันจริงหรือไม่ | หลักฐาน |
 |---|---|---|---|
-| `postcss` 8.4.31 ที่ติดมากับ `next` (ทำให้ `next` ถูกแจ้งด้วย) | XSS ใน CSS stringify, อ่านไฟล์ `.map` ผ่าน `sourceMappingURL` (GHSA-qx2v-qp2m-jg93, GHSA-6g55-p6wh-862q, GHSA-fxqj-rqcc-2cmp, GHSA-r28c-9q8g-f849) | ไม่ ใช้เฉพาะตอน build กับไฟล์ CSS ของโปรเจกต์เอง | ทุกไฟล์ใน `next/dist` ที่ `require("postcss")` อยู่ใต้ `build/webpack` หรือเป็นตัวย่อ/แปลง CSS ตอน build; โค้ดใน `src/` ไม่ import postcss; CSS ที่แอดมินแก้ได้ (ธีม) สร้างด้วย `src/lib/templateTokens` และกรองด้วย `src/lib/cssSafety.mjs` ไม่ผ่าน postcss |
+| `postcss` 8.4.31 ที่ติดมากับ `next` (ทำให้ `next` ถูกแจ้งด้วย) | XSS ใน CSS stringify, อ่านไฟล์ `.map` ผ่าน `sourceMappingURL` (GHSA-qx2v-qp2m-jg93, GHSA-6g55-p6wh-862q, GHSA-fxqj-rqcc-2cmp, GHSA-r28c-9q8g-f849) | ไม่ ใช้เฉพาะตอน build กับไฟล์ CSS ของโปรเจกต์เอง | ทุกไฟล์ใน `next/dist` ที่ `require("postcss")` อยู่ใต้ `build/webpack` หรือเป็นตัวย่อ/แปลง CSS ตอน build; โค้ดใน `src/` ไม่ import postcss; CSS ที่แอดมินแก้ได้ (ธีม) สร้างด้วย `src/lib/templateTokens.js` และกรองด้วย `src/lib/cssSafety.mjs` ไม่ผ่าน postcss |
 | `prisma` (CLI), `@prisma/config`, `deepmerge-ts` | stack exhaustion เมื่อ merge object ที่วนอ้างตัวเอง (GHSA-ggr8-5vv4-36mx) | ไม่ ใช้เฉพาะคำสั่ง `prisma generate` / `migrate` ที่ IT รันเองกับไฟล์ config ของโปรเจกต์ | ไม่อยู่ใน `.next/standalone`; เว็บใช้ `@prisma/client` ซึ่งไม่พึ่ง `deepmerge-ts` (`npm ls deepmerge-ts`) |
 | `exceljs`, `uuid` 8.3.2 | ไม่ตรวจขอบ buffer ใน uuid v3/v5/v6 เมื่อส่ง `buf` (GHSA-w5hq-g745-h8pq) | ไม่ | exceljs ใช้เฉพาะ `scripts/import-students.js` ที่ IT รันบนเครื่องกับไฟล์รายชื่อของคณะ; exceljs เรียกเฉพาะ `uuid.v4` (`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js`) ไม่ใช่ v3/v5/v6; ไม่อยู่ใน `.next/standalone` |
 
