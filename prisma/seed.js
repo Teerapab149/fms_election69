@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs'); // Import bcryptjs
 const { loadEnv } = require('../scripts/lib/loadEnv');
 const { encryptBallot } = require('../src/lib/ballotCrypto');
-const { appendBallotTx, hourBucketBangkok, hourFloor } = require('../src/lib/ballotChain');
+const { appendBallotTx, tallyVoteTx, hourBucketBangkok, hourFloor } = require('../src/lib/ballotChain');
 
 loadEnv();
 const prisma = new PrismaClient();
@@ -282,10 +282,7 @@ async function main() {
       const hourBucket = hourBucketBangkok(votedAt.getTime());
       await prisma.$transaction(async (tx) => {
         await appendBallotTx(tx, { payload, hourBucket, chainSecret });
-        await tx.candidate.update({
-          where: { id: votedCandidateId },
-          data: { score: { increment: 1 } },
-        });
+        await tallyVoteTx(tx, votedCandidateId);
       });
     }
   }

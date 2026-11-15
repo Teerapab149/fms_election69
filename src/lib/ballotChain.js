@@ -94,4 +94,37 @@ async function appendBallotTx(tx, { payload, hourBucket, chainSecret, recheck })
   return { seq: nextSeq, rowHash, prevHash };
 }
 
-module.exports = { appendBallotTx, hourBucketBangkok, hourFloor };
+/**
+ * Add one vote to the tally INSIDE the caller's transaction (the same one that
+ * claimed the voter's isVoted flag and appended the ballot).
+ *
+ * Every Candidate row is written, not only the chosen one. PostgreSQL stamps
+ * each row it writes with the writing transaction's id (`xmin`), and the voter's
+ * User row carries the same id. Writing only the chosen row meant that
+ * `User.xmin = Candidate.xmin` named the last voter of every candidate together
+ * with their choice, without any key (SECURITY-AUDIT F5, line B: 3 of 3 right).
+ * With every row written, every candidate carries the latest voter's id, which
+ * says nothing about whom they chose.
+ *
+ * Call it after appendBallotTx: votes queue on the ChainHead row lock first, so
+ * two votes never hold Candidate row locks in different orders.
+ *
+ * Throws (rolling the caller's transaction back) unless exactly one row is the
+ * chosen candidate, so a ballot can never be appended without its tally.
+ *
+ * @param {*} tx            a Prisma transaction client
+ * @param {number} candidateId
+ */
+async function tallyVoteTx(tx, candidateId) {
+  const rows = await tx.$queryRaw`
+    UPDATE "Candidate"
+       SET "score" = "score" + CASE WHEN "id" = ${candidateId} THEN 1 ELSE 0 END
+     RETURNING ("id" = ${candidateId}) AS "chosen"
+  `;
+  const chosen = rows.filter((r) => r.chosen === true).length;
+  if (chosen !== 1) {
+    throw new Error(`นับคะแนนไม่สำเร็จ: พบพรรคที่เลือก ${chosen} แถว (ต้องเป็น 1)`);
+  }
+}
+
+module.exports = { appendBallotTx, tallyVoteTx, hourBucketBangkok, hourFloor };

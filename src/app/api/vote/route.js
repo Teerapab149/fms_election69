@@ -4,7 +4,7 @@ import { authOptions } from "../../../lib/auth";
 import { db } from "../../../lib/db";
 import { rateLimit } from "../../../lib/rateLimit";
 import { encryptBallot } from "../../../lib/ballotCrypto";
-import { appendBallotTx, hourBucketBangkok, hourFloor } from "../../../lib/ballotChain";
+import { appendBallotTx, tallyVoteTx, hourBucketBangkok, hourFloor } from "../../../lib/ballotChain";
 import { readElectionState } from "../../../lib/election/liveStatus";
 import { voteRefusal } from "../../../lib/election/systemStatus.mjs";
 import { rejectCrossOrigin } from "../../../lib/security/crossOriginGuard";
@@ -211,7 +211,8 @@ export async function POST(request) {
     //       block on it and commit one-after-another, so every ballot gets the
     //       real previous rowHash as its prevHash → the chain is gap-free and
     //       verifiable even under a dead heat (proved by the concurrency test).
-    //   (c) Tally (unchanged): the atomic Candidate.score increment.
+    //   (c) Tally: the atomic Candidate.score increment, written to every
+    //       Candidate row so xmin links no voter to a choice (tallyVoteTx).
     //
     // Lock order, for anyone adding a lock here: the ChainHead row, then the
     // SystemConfig row. This request takes only the first (the second is a plain
@@ -241,11 +242,10 @@ export async function POST(request) {
         });
         if (appended.refused) throw new VoteRefused(appended.refused);
 
-        // (c) tally, the single source of truth the results API serves
-        await tx.candidate.update({
-          where: { id: parsedId },
-          data: { score: { increment: 1 } },
-        });
+        // (c) tally, the single source of truth the results API serves. It
+        //     writes every Candidate row, not just the chosen one, so a row's
+        //     xmin cannot name the last voter of that candidate (tallyVoteTx).
+        await tallyVoteTx(tx, parsedId);
         return "OK";
       }, VOTE_TX_OPTIONS);
     } catch (e) {
