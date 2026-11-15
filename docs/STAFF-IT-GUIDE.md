@@ -43,6 +43,7 @@
 | **(พ.ย. 2569)** `verify-ballot-chain.js --heads <ไฟล์>` เทียบหีบกับปลายโซ่ที่ export ไว้นอกเครื่อง และ `decrypt-recount.js` ออกด้วยรหัส 2 เมื่อโซ่ขาด | ต้องตั้ง cron `export-chain-head.js` ส่งออกนอกเครื่อง และใส่ `--heads` ทุกครั้งที่ตรวจ ไม่งั้นจับกรณีบัตรท้ายหีบหายไม่ได้ | [§4.3](#operations), [§6.1](#update) |
 | **(พ.ย. 2569)** ประกาศผลขณะมีบัตรในหีบแล้ว หีบเปิดอีกไม่ได้ แม้ซ่อนผล ปลดได้ด้วย `annual-reset.sql` เท่านั้น | ถ้าซ้อมจนถึงประกาศผล ต้องล้างคะแนนซ้อมก่อนวันจริง | [§5](#annual-reset) |
 | **(พ.ย. 2569)** ชื่อพรรคถูกล็อกพร้อมหมายเลขเมื่อมีบัตรใบแรก | กรรมการที่ขอแก้ชื่อหลังซ้อมต้องให้ล้างคะแนนซ้อมก่อน | [คู่มือแอดมิน](ADMIN-GUIDE.md) |
+| **(15 พ.ย. 2569)** repository เป็น private | `git pull` บนเครื่องจริงจะล้มจนกว่าจะตั้ง deploy key ตาม [§3.1 สิทธิ์ดึงโค้ด](#repo-access) ต้องทำก่อนอัปเดตครั้งถัดไป |
 | **(พ.ย. 2569)** ไฟล์ฟอนต์อยู่ในโปรเจกต์ (`src/app/fonts/`) `npm run build` ไม่ต่อออกไป Google แล้ว | build ไม่ล้มแบบสุ่มเพราะ Google Fonts อีก และเครื่องที่ออกไป `fonts.googleapis.com` ไม่ได้ก็ build ได้ ถ้าจะเพิ่มหรือเปลี่ยนฟอนต์ ให้แก้รายการใน `scripts/vendor-fonts.mjs` แล้วรัน `node scripts/vendor-fonts.mjs` บนเครื่องที่ออกเน็ตได้ จากนั้น commit โฟลเดอร์ `src/app/fonts/` |
 | ใบเสร็จหลังลงคะแนนแสดงช่วงเวลาเป็นหนึ่งชั่วโมง เช่น 10.00–11.00 น. ไม่มีนาทีและวินาที | นักศึกษาเห็น ไม่ต้องทำอะไร เวลาที่ละเอียดใช้จับคู่ผู้โหวตกับบัตรได้ | [คู่มือความปลอดภัยบัตร](BALLOT-SECURITY-GUIDE.md) |
 | ผลที่รับรองแล้วซ่อนไม่ได้ และแก้วันเวลาเลือกตั้งไม่ได้ | แอดมินจะเจอข้อความปฏิเสธ จะแก้อะไรต้องแก้ก่อนรับรอง | [§4.3](#operations) |
@@ -178,6 +179,46 @@ Compose ส่งค่า `.env` ให้คอนเทนเนอร์ต�
 ต้องมี Linux, Bash, Git, Node.js 22 ตาม Dockerfile, npm, Docker พร้อม Compose plugin,
 PostgreSQL client (`psql`), `curl`, `openssl` และพื้นที่สำหรับ image กับ backup
 ให้ผู้ดูแลเครื่องติดตั้งเครื่องมือด้วยวิธีมาตรฐานของคณะก่อน คู่มือนี้เริ่มเมื่อได้รับโฟลเดอร์โค้ดรุ่นที่จะใช้งานแล้ว
+
+<a id="repo-access"></a>
+
+#### สิทธิ์ดึงโค้ดจาก repository (ทำครั้งเดียวต่อเครื่อง)
+
+repository เป็น private ตั้งแต่ 15 พ.ย. 2569 เครื่องที่ไม่มีสิทธิ์จะ `git clone` หรือ `git pull` ไม่ได้
+และขึ้น `Repository not found` หรือ `Authentication failed` ให้เครื่องจริงใช้ deploy key คือกุญแจ SSH ที่อ่านได้อย่างเดียว ใช้ได้กับ repository นี้ที่เดียว
+และเจ้าของ repository ถอนได้ทันทีโดยไม่กระทบเครื่องอื่น รันด้วยผู้ใช้ที่เป็นเจ้าของโฟลเดอร์โค้ด (ผู้ใช้เดียวกับที่รัน `git pull`):
+
+```bash
+ssh-keygen -t ed25519 -N "" -C "fms-ovs deploy $(hostname)" -f ~/.ssh/fms_ovs_deploy
+cat ~/.ssh/fms_ovs_deploy.pub
+```
+
+บรรทัดที่สองแสดงกุญแจสาธารณะ (ขึ้นต้น `ssh-ed25519`) ส่งบรรทัดนั้นให้เจ้าของ repository เพื่อเพิ่มที่ Settings → Deploy keys
+โดย **ไม่ติ๊ก** Allow write access ห้ามส่งไฟล์ `~/.ssh/fms_ovs_deploy` (ไม่มี `.pub`) ให้ใคร เพราะเป็นกุญแจส่วนตัว
+จากนั้นเพิ่มท้ายไฟล์ `~/.ssh/config` (สร้างใหม่ถ้ายังไม่มี แล้ว `chmod 600 ~/.ssh/config`):
+
+```
+Host github-fms-ovs
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/fms_ovs_deploy
+  IdentitiesOnly yes
+```
+
+ถ้าเครื่องออกพอร์ต 22 ไม่ได้ ให้เปลี่ยนสองบรรทัดเป็น `HostName ssh.github.com` และ `Port 443`
+ทดสอบหลังเจ้าของเพิ่มกุญแจแล้ว:
+
+```bash
+ssh -T git@github-fms-ovs
+```
+
+ต้องขึ้น `successfully authenticated` (คำสั่งจบด้วยรหัส 1 เป็นเรื่องปกติ เพราะ GitHub ไม่เปิด shell ให้)
+ครั้งแรกจะถาม fingerprint ของ github.com ให้เทียบกับค่าที่ GitHub ประกาศในหน้า "GitHub's SSH key fingerprints" ก่อนตอบ `yes`
+
+- เครื่องใหม่: `git clone git@github-fms-ovs:Teerapab149/fms_election69.git /opt/fms-election`
+- เครื่องที่ clone ไว้แล้วด้วย https: `git remote set-url origin git@github-fms-ovs:Teerapab149/fms_election69.git` แล้ว `git ls-remote origin -h refs/heads/main` ต้องเห็นรหัส commit หนึ่งบรรทัด
+
+ถ้าวันหนึ่งคณะย้าย repository ไปเก็บเอง ให้เปลี่ยนเฉพาะที่อยู่หลัง `github-fms-ovs:` และ `HostName` ตามที่เก็บใหม่
 
 ```bash
 pwd
@@ -1105,6 +1146,8 @@ tar -tzf /srv/fms-backup/images-before-update.tar.gz
 
 ### 6.2 อัปเดตตามรุ่นที่ตกลง
 
+ถ้า `git pull` ขึ้น `Repository not found` หรือ `Authentication failed` แปลว่าเครื่องยังไม่มีสิทธิ์ดึงโค้ดจาก repository ที่เป็น private ให้ทำ [§3.1 สิทธิ์ดึงโค้ด](#repo-access) ก่อน
+
 ส่วนนี้ใช้กับแบบ Docker (`setup.sh`) ถ้าไม่ใช้ Docker ให้ข้ามไป [§6.2.1](#update-no-docker) ท้ายหัวข้อนี้
 
 ทำในช่วงหยุดรับคะแนน (`PAUSE`) ตรวจว่ามี backup ตาม §6.1 แล้ว และจด HEAD เดิมก่อนดึงโค้ด:
@@ -1143,6 +1186,8 @@ git status --short
 git rev-parse HEAD
 git pull --ff-only
 ```
+
+ถ้า `git pull` ขึ้น `Repository not found` หรือ `Authentication failed` ให้ทำ [§3.1 สิทธิ์ดึงโค้ด](#repo-access) ก่อน
 
 สองคำสั่งแรกเหมือน §6.2 จด `HEAD` เดิมไว้ใช้ย้อนรุ่นด้านล่าง จากนั้น:
 
