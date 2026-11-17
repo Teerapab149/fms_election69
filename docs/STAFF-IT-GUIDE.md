@@ -44,7 +44,7 @@
 | **(พ.ย. 2569)** ประกาศผลขณะมีบัตรในหีบแล้ว หีบเปิดอีกไม่ได้ แม้ซ่อนผล ปลดได้ด้วย `annual-reset.sql` เท่านั้น | ถ้าซ้อมจนถึงประกาศผล ต้องล้างคะแนนซ้อมก่อนวันจริง | [§5](#annual-reset) |
 | **(พ.ย. 2569)** ชื่อพรรคถูกล็อกพร้อมหมายเลขเมื่อมีบัตรใบแรก | กรรมการที่ขอแก้ชื่อหลังซ้อมต้องให้ล้างคะแนนซ้อมก่อน | [คู่มือแอดมิน](ADMIN-GUIDE.md) |
 | **(15 พ.ย. 2569)** รับรองผลต้องกรอกคะแนนรายตัวเลือกจาก `decrypt-recount.js` และต้องตรงกับคะแนนในระบบ | ต้องนับซ้ำก่อนรับรองทุกปี ไม่เช่นนั้นกดรับรองไม่ผ่าน ดู §4.3 ขั้น 3 |
-| **(15 พ.ย. 2569)** repository เป็น private | `git pull` บนเครื่องจริงจะล้มจนกว่าจะตั้ง deploy key ตาม [§3.1 สิทธิ์ดึงโค้ด](#repo-access) ต้องทำก่อนอัปเดตครั้งถัดไป |
+| **(17 พ.ย. 2569)** repository เปิดให้อ่านได้โดยไม่ต้องล็อกอิน | `git clone` และ `git pull` ใช้ได้ทันที ไม่ต้องตั้งกุญแจ ถ้าภายหลังถูกปิดเป็น private ให้ตั้ง deploy key ตาม [§3.1 ดึงโค้ด](#repo-access) |
 | **(พ.ย. 2569)** ไฟล์ฟอนต์อยู่ในโปรเจกต์ (`src/app/fonts/`) `npm run build` ไม่ต่อออกไป Google แล้ว | build ไม่ล้มแบบสุ่มเพราะ Google Fonts อีก และเครื่องที่ออกไป `fonts.googleapis.com` ไม่ได้ก็ build ได้ ถ้าจะเพิ่มหรือเปลี่ยนฟอนต์ ให้แก้รายการใน `scripts/vendor-fonts.mjs` แล้วรัน `node scripts/vendor-fonts.mjs` บนเครื่องที่ออกเน็ตได้ จากนั้น commit โฟลเดอร์ `src/app/fonts/` |
 | ใบเสร็จหลังลงคะแนนแสดงช่วงเวลาเป็นหนึ่งชั่วโมง เช่น 10.00–11.00 น. ไม่มีนาทีและวินาที | นักศึกษาเห็น ไม่ต้องทำอะไร เวลาที่ละเอียดใช้จับคู่ผู้โหวตกับบัตรได้ | [คู่มือความปลอดภัยบัตร](BALLOT-SECURITY-GUIDE.md) |
 | ผลที่รับรองแล้วซ่อนไม่ได้ และแก้วันเวลาเลือกตั้งไม่ได้ | แอดมินจะเจอข้อความปฏิเสธ จะแก้อะไรต้องแก้ก่อนรับรอง | [§4.3](#operations) |
@@ -183,10 +183,20 @@ PostgreSQL client (`psql`), `curl`, `openssl` และพื้นที่ส�
 
 <a id="repo-access"></a>
 
-#### สิทธิ์ดึงโค้ดจาก repository (ทำครั้งเดียวต่อเครื่อง)
+#### ดึงโค้ดจาก repository
 
-repository เป็น private ตั้งแต่ 15 พ.ย. 2569 เครื่องที่ไม่มีสิทธิ์จะ `git clone` หรือ `git pull` ไม่ได้
-และขึ้น `Repository not found` หรือ `Authentication failed` ให้เครื่องจริงใช้ deploy key คือกุญแจ SSH ที่อ่านได้อย่างเดียว ใช้ได้กับ repository นี้ที่เดียว
+repository เปิดให้อ่านได้โดยไม่ต้องล็อกอิน (ตั้งแต่ 17 พ.ย. 2569) ไม่ต้องมีบัญชี GitHub และไม่ต้องตั้งกุญแจใด ๆ:
+
+```bash
+git clone https://github.com/Teerapab149/fms_election69.git /opt/fms-election
+```
+
+เครื่องที่ clone ไว้แล้ว `git pull` ได้ตามเดิม ตรวจที่อยู่ด้วย `git remote -v` ต้องเห็น `https://github.com/Teerapab149/fms_election69.git`
+ถ้าเห็นที่อยู่แบบอื่นและ `git pull` ไม่ผ่าน ให้รัน `git remote set-url origin https://github.com/Teerapab149/fms_election69.git`
+การอ่านโค้ดได้ไม่ได้ให้สิทธิ์ใช้งาน สิทธิ์ใช้งานเป็นไปตามไฟล์ `LICENSE` และสัญญากับผู้พัฒนา
+
+**ส่วนที่เหลือของหัวข้อนี้ใช้เฉพาะเมื่อ repository ถูกปิดเป็น private ภายหลัง** (ผู้พัฒนาจะแจ้งล่วงหน้า) ถ้ายังเปิดอยู่ ข้ามไปได้เลย
+เมื่อปิดแล้ว `git clone` หรือ `git pull` จะขึ้น `Repository not found` หรือ `Authentication failed` ให้เครื่องจริงใช้ deploy key คือกุญแจ SSH ที่อ่านได้อย่างเดียว ใช้ได้กับ repository นี้ที่เดียว
 และเจ้าของ repository ถอนได้ทันทีโดยไม่กระทบเครื่องอื่น รันด้วยผู้ใช้ที่เป็นเจ้าของโฟลเดอร์โค้ด (ผู้ใช้เดียวกับที่รัน `git pull`):
 
 ```bash
@@ -216,7 +226,7 @@ ssh -T git@github-fms-ovs
 ต้องขึ้น `successfully authenticated` (คำสั่งจบด้วยรหัส 1 เป็นเรื่องปกติ เพราะ GitHub ไม่เปิด shell ให้)
 ครั้งแรกจะถาม fingerprint ของ github.com ให้เทียบกับค่าที่ GitHub ประกาศในหน้า "GitHub's SSH key fingerprints" ก่อนตอบ `yes`
 
-- เครื่องใหม่: `git clone git@github-fms-ovs:Teerapab149/fms_election69.git /opt/fms-election`
+- เครื่องใหม่ (กรณี private): `git clone git@github-fms-ovs:Teerapab149/fms_election69.git /opt/fms-election`
 - เครื่องที่ clone ไว้แล้วด้วย https: `git remote set-url origin git@github-fms-ovs:Teerapab149/fms_election69.git` แล้ว `git ls-remote origin -h refs/heads/main` ต้องเห็นรหัส commit หนึ่งบรรทัด
 
 ถ้าวันหนึ่งคณะย้าย repository ไปเก็บเอง ให้เปลี่ยนเฉพาะที่อยู่หลัง `github-fms-ovs:` และ `HostName` ตามที่เก็บใหม่
@@ -271,7 +281,7 @@ sed -i 's/\r$//' scripts/setup.sh
 
 ### 3.2 เลือกฐานข้อมูลและตั้ง `.env`
 
-**ติดตั้งใหม่สำหรับการเลือกตั้งจริง ให้หมุน secret ทุกตัว** repository เคยเป็นสาธารณะจนถึง 15 พ.ย. 2569 และรุ่นเก่าเคยฝัง secret ของแอดมินไว้ในโค้ดฝั่งเบราว์เซอร์ จึงถือว่าค่าเก่าทุกตัวหลุดแล้ว
+**ติดตั้งใหม่สำหรับการเลือกตั้งจริง ให้หมุน secret ทุกตัว** repository เป็นสาธารณะ และรุ่นเก่าเคยฝัง secret ของแอดมินไว้ในโค้ดฝั่งเบราว์เซอร์ จึงถือว่าค่าเก่าทุกตัวหลุดแล้ว
 ห้ามคัดลอกค่าใดจาก `.env` เครื่องเก่า จากไฟล์ compose เก่า หรือจากเอกสารเก่า สุ่มใหม่ทั้งหมด:
 `NEXTAUTH_SECRET`, `ADMIN_JWT_SECRET`, รหัสผ่านของ `fms_app` และ `fms_migrate` (และ `POSTGRES_PASSWORD` ถ้าใช้ DB ใน Docker)
 ส่วน `BALLOT_CHAIN_SECRET` กับกุญแจบัตรสร้างใหม่ในพิธีของ §3.3 ข้อมูลตัวอย่างของ repository (`prisma/seed.js`) ไม่ใช่ข้อมูลจริง
@@ -1173,7 +1183,7 @@ tar -tzf /srv/fms-backup/images-before-update.tar.gz
 
 ### 6.2 อัปเดตตามรุ่นที่ตกลง
 
-ถ้า `git pull` ขึ้น `Repository not found` หรือ `Authentication failed` แปลว่าเครื่องยังไม่มีสิทธิ์ดึงโค้ดจาก repository ที่เป็น private ให้ทำ [§3.1 สิทธิ์ดึงโค้ด](#repo-access) ก่อน
+ถ้า `git pull` ขึ้น `Repository not found` หรือ `Authentication failed` แปลว่า repository ถูกปิดเป็น private แล้ว ให้ทำส่วน deploy key ใน [§3.1 ดึงโค้ด](#repo-access) ก่อน
 
 ส่วนนี้ใช้กับแบบ Docker (`setup.sh`) ถ้าไม่ใช้ Docker ให้ข้ามไป [§6.2.1](#update-no-docker) ท้ายหัวข้อนี้
 
@@ -1214,7 +1224,7 @@ git rev-parse HEAD
 git pull --ff-only
 ```
 
-ถ้า `git pull` ขึ้น `Repository not found` หรือ `Authentication failed` ให้ทำ [§3.1 สิทธิ์ดึงโค้ด](#repo-access) ก่อน
+ถ้า `git pull` ขึ้น `Repository not found` หรือ `Authentication failed` แปลว่า repository ถูกปิดเป็น private แล้ว ให้ทำส่วน deploy key ใน [§3.1 ดึงโค้ด](#repo-access) ก่อน
 
 สองคำสั่งแรกเหมือน §6.2 จด `HEAD` เดิมไว้ใช้ย้อนรุ่นด้านล่าง จากนั้น:
 
