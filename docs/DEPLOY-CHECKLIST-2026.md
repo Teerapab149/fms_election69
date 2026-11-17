@@ -44,18 +44,18 @@ sudo apt-get install -y git curl openssl nginx postgresql postgresql-client rsyn
 ```bash
 sudo mkdir -p /opt/fms-election
 sudo chown "$(id -un)":"$(id -gn)" /opt/fms-election
-git clone git@github-fms-ovs:Teerapab149/fms_election69.git /opt/fms-election
+git clone https://github.com/Teerapab149/fms_election69.git /opt/fms-election
 cd /opt/fms-election
 node -v
 npm ci
 npx prisma generate
 ```
 
-repository เป็น private ต้องตั้ง deploy key ตาม STAFF-IT-GUIDE §3.1 หัวข้อ "สิทธิ์ดึงโค้ด" ก่อน `git clone` และเจ้าของ repository ต้องเพิ่มกุญแจสาธารณะของเครื่องนี้แล้ว
+repository เปิดให้อ่านได้โดยไม่ต้องล็อกอิน ไม่ต้องตั้งกุญแจ ถ้า `git clone` ขึ้น `Repository not found` แปลว่าถูกปิดเป็น private แล้ว ให้ทำส่วน deploy key ใน STAFF-IT-GUIDE §3.1 หัวข้อ "ดึงโค้ดจาก repository"
 ถ้าคณะเก็บ repository เอง ให้แทนที่อยู่ด้วยที่อยู่ของคณะ
 
 ตรวจว่าสำเร็จ:
-- [ ] `ssh -T git@github-fms-ovs` ขึ้น `successfully authenticated`
+- [ ] `git rev-parse HEAD` แสดงรหัสรุ่นที่ตกลงกับผู้พัฒนา
 - [ ] `node -v` ขึ้น `v22.` นำหน้า
 - [ ] `npm ci` จบโดยไม่มีบรรทัด `npm ERR!`
 - [ ] `npx prisma generate` ขึ้น `Generated Prisma Client`
